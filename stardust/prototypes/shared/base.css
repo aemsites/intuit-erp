@@ -1,0 +1,155 @@
+/* ==========================================================================
+   Intuit Enterprise Suite — replica shared base (design tokens + chrome)
+   Values lifted from erp.intuit.com computed styles / customProps.
+   Font: "AvenirNext forINTUIT" is a licensed kit — NOT rehosted. Kept first
+   in the stack; Mulish is the metric-matched substitute (Google Fonts).
+   ========================================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Mulish:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap');
+
+:root{
+  --font: "AvenirNext forINTUIT", Mulish, Helvetica, Arial, sans-serif;
+
+  --white:#ffffff;
+  --sand:#f7f8f3;
+  --tofu:#f3f2ef;
+  --sky:#dbedee;
+  --text:#21262a;
+  --text-muted:#6b6c72;
+  --text-soft:#8d9096;
+  --heading:#11181c;
+  --primary:#0077c5;
+  --primary-dark:#055393;
+  --navy:#00254a;
+  --navy-hover:#001a36;
+  --navy-mid:#053d6d;
+  --ink-teal:#0d333f;
+  --blue-bright:#0097e6;
+  --blue-light:#34bfff;
+  --green:#0a8543;
+  --green-bright:#0fd46c;
+  --info:#236cff;
+  --line:#d4d7dc;
+
+  --radius:4px;
+  --radius-card:12px;
+  --container:1380px;
+  --gutter:30px;
+  --section-y:92px;
+}
+
+*{box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%;}
+body{
+  margin:0;
+  font-family:var(--font);
+  font-size:16px;
+  line-height:1.5;
+  color:var(--text);
+  background:var(--white);
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+img{max-width:100%;display:block;}
+a{color:inherit;text-decoration:none;}
+h1,h2,h3,h4,h5{margin:0;font-weight:400;color:var(--heading);}
+p{margin:0;}
+button{font-family:inherit;cursor:pointer;}
+
+.container{max-width:var(--container);margin:0 auto;padding:0 40px;}
+.container-narrow{max-width:1180px;margin:0 auto;padding:0 40px;}
+
+/* ---- buttons ---- */
+.btn{display:inline-flex;align-items:center;justify-content:center;
+  height:44px;padding:0 30px;border-radius:var(--radius);
+  font-size:16px;font-weight:600;line-height:1;border:2px solid transparent;
+  transition:background-color .15s ease,color .15s ease,border-color .15s ease;white-space:nowrap;}
+.btn-primary{background:var(--navy);color:#fff;border-color:var(--navy);}
+.btn-primary:hover{background:var(--navy-hover);}
+.btn-outline{background:transparent;color:#fff;border-color:#fff;}
+.btn-outline:hover{background:rgba(255,255,255,.12);}
+.btn-outline-dark{background:transparent;color:var(--navy);border-color:var(--navy);}
+.btn-outline-dark:hover{background:rgba(0,37,74,.06);}
+.btn-white{background:#fff;color:var(--ink-teal);border-color:#fff;}
+.eyebrow{font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);}
+
+/* ==========================================================================
+   Global header — brand strip + sticky nav + events bar (all white/light)
+   ========================================================================== */
+.ies-topstrip{background:#fff;border-bottom:1px solid var(--line);}
+.ies-topstrip .container{display:flex;align-items:center;gap:30px;height:36px;}
+.intuit-word{font-weight:800;font-size:15px;letter-spacing:.02em;color:var(--primary);}
+.bs-wm{display:inline-flex;align-items:center;gap:7px;font-size:14px;font-weight:600;color:var(--heading);letter-spacing:-.01em;}
+.bs-ic{width:17px;height:17px;border-radius:50%;font-style:normal;font-size:9px;font-weight:700;color:#fff;display:inline-flex;align-items:center;justify-content:center;}
+.bs-tt{background:#e11d1d;} .bs-ck{background:#199e77;font-size:8px;} .bs-qb{background:#2ca01c;font-size:8px;} .bs-mc{background:#ffe01b;color:#000;}
+
+.ies-nav{position:sticky;top:0;z-index:50;background:#fff;}
+.ies-nav.scrolled{box-shadow:0 1px 0 rgba(0,0,0,.06);border-bottom:2px solid var(--navy);}
+.ies-nav .container{display:flex;align-items:center;height:60px;gap:30px;}
+.nav-logo{display:flex;align-items:baseline;gap:6px;font-size:22px;}
+.nav-logo .ies-intuit{color:var(--primary);font-weight:800;letter-spacing:.01em;}
+.nav-logo .ies-word{font-weight:400;color:var(--primary);}
+.nav-main{display:flex;align-items:center;gap:26px;margin-left:10px;}
+.nav-main button,.nav-main a{background:none;border:0;padding:2px 0;font-size:16px;font-weight:400;color:var(--heading);display:inline-flex;align-items:center;gap:6px;font-family:inherit;}
+.nav-main .caret{width:8px;height:8px;border-right:2px solid var(--primary);border-bottom:2px solid var(--primary);transform:rotate(45deg);margin-top:-3px;}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:22px;}
+.nav-cta{height:40px;padding:0 24px;font-size:16px;font-weight:600;background:var(--navy);color:#fff;border-color:var(--navy);}
+.nav-toggle{display:none;}
+
+.ies-events{background:#c9f2fa;color:var(--heading);}
+.ies-events .container{text-align:center;padding-top:17px;padding-bottom:17px;font-size:15px;}
+.ies-events a{font-weight:700;text-decoration:underline;}
+
+/* ==========================================================================
+   Global footer
+   ========================================================================== */
+.ies-footer{color:var(--text);font-size:14px;}
+.ftr-main{background:#fff;border-top:1px solid var(--line);padding:56px 0 0;}
+.footer-cols{display:grid;grid-template-columns:repeat(4,1fr);gap:32px;}
+.footer-cols h4{font-size:16px;font-weight:700;color:var(--text);margin-bottom:18px;}
+.footer-cols ul{list-style:none;margin:0;padding:0;}
+.footer-cols li{margin-bottom:12px;}
+.footer-cols a{color:var(--text-muted);}
+.footer-cols a:hover{color:var(--primary);text-decoration:underline;}
+
+.footer-search{margin-top:40px;}
+.footer-search input{width:300px;max-width:100%;height:40px;border:1px solid var(--line);border-radius:4px;padding:0 14px;font-size:14px;font-family:inherit;color:var(--text);}
+
+.footer-sitemap{display:flex;align-items:center;gap:24px;padding:22px 0;margin-top:34px;border-top:1px solid var(--line);}
+.footer-sitemap .country{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:4px;padding:9px 14px;font-size:14px;color:var(--text);background:#fff;}
+.footer-sitemap .social{margin-left:auto;display:flex;align-items:center;gap:20px;}
+.footer-sitemap .social a{color:var(--text-muted);display:inline-flex;}
+.footer-sitemap .social a:hover{color:var(--primary);}
+
+.ftr-legal{background:#f5f6f7;padding:40px 0 48px;}
+.legal-grid{display:grid;grid-template-columns:220px 1fr 220px;gap:40px;align-items:start;}
+.ftr-logo{display:block;font-size:34px;margin-bottom:22px;}
+.legal-left ul{list-style:none;margin:0;padding:0;}
+.legal-left li{margin-bottom:12px;}
+.legal-left a{color:var(--text-muted);}
+.legal-center .brand-logos{display:flex;align-items:center;gap:22px;flex-wrap:wrap;margin-bottom:20px;}
+.footer-copy{color:var(--text-soft);font-size:12px;line-height:1.6;margin-bottom:12px;max-width:none;}
+.footer-copy a{color:var(--primary);}
+.legal-right .legal-links{font-size:13px;color:var(--text-muted);margin-bottom:20px;}
+.legal-right .legal-links a{color:var(--text-muted);}
+.truste{border:1px solid var(--line);border-radius:4px;padding:10px 12px;font-size:12px;font-weight:700;color:var(--green);display:inline-block;line-height:1.3;}
+.truste small{font-weight:400;color:var(--text-soft);font-size:10px;}
+
+/* ==========================================================================
+   Mobile (<= 768px)
+   ========================================================================== */
+@media (max-width:768px){
+  :root{--section-y:48px;}
+  .container,.container-narrow{padding:0 20px;}
+  .ies-topstrip{display:none;}
+  .ies-nav .container{height:56px;gap:12px;}
+  .nav-main{display:none;}
+  .nav-right{gap:12px;}
+  .nav-cta{height:36px;padding:0 16px;font-size:14px;}
+  .ies-events .container{font-size:13px;padding-top:12px;padding-bottom:12px;}
+  .nav-toggle{display:inline-flex;flex-direction:column;gap:4px;background:none;border:0;padding:6px;}
+  .nav-toggle span{width:22px;height:2px;background:currentColor;display:block;}
+  .footer-cols{grid-template-columns:1fr 1fr;gap:24px 20px;}
+  .footer-sitemap{flex-wrap:wrap;gap:16px;}
+  .footer-sitemap .social{margin-left:0;}
+  .legal-grid{grid-template-columns:1fr;gap:28px;}
+}

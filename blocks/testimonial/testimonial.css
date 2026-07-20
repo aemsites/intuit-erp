@@ -1,0 +1,45 @@
+/* testimonial — index video band + compare quote. Lifted from .video-band / .cmp-testi */
+
+/* ---- .video (index) ---- */
+.section.testimonial-container:has(.testimonial.video) { background: #fff; padding: var(--section-y) 0; }
+.testimonial-container .default-content-wrapper h2 {
+  font-size: 38px; line-height: 1.15; font-weight: 400; color: var(--heading);
+  text-align: center; margin: 0 0 40px;
+}
+.testimonial.video .video-frame {
+  position: relative; border-radius: 12px; overflow: hidden;
+  aspect-ratio: 16 / 8.3; background: #0b2233;
+}
+.testimonial.video .video-poster { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.8); }
+.testimonial.video .video-play {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: 64px; height: 64px; border-radius: 50%; background: rgb(255 255 255 / 90%);
+  border: 0; color: var(--navy); font-size: 22px; cursor: pointer;
+}
+.testimonial.video .video-caption { position: absolute; left: 36px; bottom: 30px; color: #fff; max-width: 32em; }
+.testimonial.video .video-eyebrow { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.85; margin: 0 0 8px; }
+.testimonial.video .video-quote { font-size: 22px; font-weight: 400; margin: 0 0 10px; }
+.testimonial.video .video-attr { font-size: 14px; opacity: 0.9; margin: 0; }
+.testimonial.video .video-attr a { text-decoration: underline; color: #fff; }
+
+/* ---- default (compare cyan band) ---- */
+.section.testimonial-container:has(.testimonial:not(.video)) { background: var(--sky); padding: var(--section-y) 0; }
+.testimonial:not(.video) .cmp-testi-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center;
+  max-width: 1120px; margin: 0 auto;
+}
+.testimonial .cmp-quote-mark { width: 52px; height: auto; margin-bottom: 20px; }
+.testimonial .cmp-quote { margin: 0 0 22px; font-size: 24px; line-height: 1.4; font-weight: 400; color: var(--heading); }
+.testimonial .cmp-quote-name { font-size: 15px; font-weight: 700; color: var(--heading); margin: 0; }
+.testimonial .cmp-quote-role { font-size: 14px; color: var(--text-muted); margin: 0; }
+.testimonial .cmp-testi-media img { width: 100%; border-radius: 12px; }
+
+@media (width <= 768px) {
+  .testimonial-container .default-content-wrapper h2 { font-size: 28px; }
+  .testimonial.video .video-frame { aspect-ratio: 4 / 3; }
+  .testimonial.video .video-caption { left: 20px; right: 20px; bottom: 20px; }
+  .testimonial.video .video-quote { font-size: 18px; }
+  .testimonial:not(.video) .cmp-testi-grid { grid-template-columns: 1fr; gap: 28px; }
+  .testimonial .cmp-testi-media { order: -1; }
+  .testimonial .cmp-quote { font-size: 20px; }
+}

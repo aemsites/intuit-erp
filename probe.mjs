@@ -1,0 +1,10 @@
+import { chromium } from 'playwright';
+const browser = await chromium.launch();
+const page = await browser.newPage({ userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36' });
+await page.goto('https://erp.intuit.com/', { waitUntil: 'domcontentloaded', timeout: 30000 });
+await page.waitForTimeout(3000);
+const links = await page.$$eval('a[href]', as => [...new Set(as.map(a => a.getAttribute('href')))]);
+console.log('TITLE:', await page.title());
+console.log('LINK COUNT:', links.length);
+console.log(links.filter(h => h && !h.startsWith('http') || (h||'').includes('erp.intuit.com')).slice(0,200).join('\n'));
+await browser.close();

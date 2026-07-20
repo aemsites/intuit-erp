@@ -1,0 +1,101 @@
+/* ===== ERP Solutions — replica of erp.intuit.com/erp-solutions/ ===== */
+
+/* ---- shared section heading ---- */
+.section-h2{font-size:38px;line-height:1.15;font-weight:400;color:var(--heading);}
+.section-h2.center{text-align:center;}
+
+/* ---- HERO (dark band, like home) ---- */
+.hero{background:linear-gradient(105deg,#00254a 0%,#053d6d 55%,#3b2f7a 100%);color:#fff;overflow:hidden;}
+.hero-grid{display:grid;grid-template-columns:1.02fr 1fr;gap:48px;align-items:center;min-height:420px;padding-top:70px;padding-bottom:70px;}
+.hero-title{font-size:48px;line-height:56px;font-weight:400;max-width:11em;margin-bottom:22px;color:#fff;}
+.hero-lede{font-size:17px;line-height:1.5;color:#dfe8f2;max-width:32em;margin-bottom:30px;}
+.hero-actions{display:flex;gap:16px;flex-wrap:wrap;}
+.hero-media{position:relative;}
+.hero-media img{width:100%;border-radius:10px;box-shadow:0 24px 60px rgba(0,0,0,.35);}
+
+/* ---- POWERING COMPLEX ---- */
+.power{background:#fff;padding:var(--section-y) 0;}
+.power .section-h2{margin-bottom:22px;}
+.power-intro{max-width:44em;margin:0 auto 56px;text-align:center;font-size:16px;line-height:1.55;color:var(--text-muted);}
+.power-grid{display:grid;grid-template-columns:1fr 1.15fr;gap:56px;align-items:center;}
+.power-list{display:flex;flex-direction:column;gap:26px;}
+.power-item{padding-left:24px;border-left:3px solid transparent;}
+.power-item.featured{border-left-color:var(--primary);}
+.power-item h3{font-size:22px;font-weight:500;color:var(--heading);margin-bottom:8px;}
+.power-item p{font-size:14px;line-height:1.55;color:var(--text-muted);}
+.power-media img{width:100%;border-radius:var(--radius-card);}
+
+/* ---- SOLUTIONS ---- */
+.solutions{background:#fff;padding:0 0 var(--section-y);}
+.center-eyebrow{text-align:center;margin-bottom:16px;}
+.solutions .section-h2{margin-bottom:20px;}
+.solutions-intro{max-width:40em;margin:0 auto 52px;text-align:center;font-size:16px;line-height:1.55;color:var(--text-muted);}
+.solutions-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+.sol-card{border-radius:var(--radius-card);padding:44px 40px;display:flex;flex-direction:column;}
+.sol-card-blue{background:#dbe9f7;}
+.sol-card-sand{background:var(--sand);}
+.sol-card .eyebrow{margin-bottom:16px;}
+.sol-title{font-size:34px;line-height:1.15;font-weight:400;color:var(--heading);margin-bottom:26px;}
+.sol-lead{font-size:16px;font-weight:600;color:var(--heading);margin-bottom:14px;}
+.sol-bullets{list-style:disc;margin:0 0 30px;padding-left:20px;}
+.sol-bullets li{font-size:15px;color:var(--text);line-height:1.4;margin-bottom:10px;}
+.sol-card .btn{align-self:flex-start;margin-bottom:36px;}
+.sol-shot{margin-top:auto;border-radius:8px;overflow:hidden;box-shadow:0 8px 24px rgba(13,51,63,.15);}
+.sol-shot img{width:100%;display:block;}
+
+/* ---- FAQ (reuse of home pattern) ---- */
+.faq{background:#fff;padding:20px 0 var(--section-y);}
+.faq-title{font-size:32px;font-weight:400;text-align:center;margin-bottom:36px;color:var(--heading);}
+.faq-list{border-top:1px solid var(--line);}
+.faq-item{border-bottom:1px solid var(--line);}
+.faq-item summary{list-style:none;cursor:pointer;padding:20px 40px 20px 0;font-size:16px;font-weight:600;color:var(--heading);position:relative;}
+.faq-item summary::-webkit-details-marker{display:none;}
+.faq-item summary::after{content:"⌃";position:absolute;right:6px;top:20px;transform:rotate(180deg);transition:transform .2s;color:var(--text-muted);}
+.faq-item[open] summary::after{transform:rotate(0);}
+.faq-answer{padding:0 40px 22px 0;font-size:14px;color:var(--text-muted);line-height:1.6;}
+.faq-answer p{margin-bottom:12px;}
+.faq-answer ul{margin:0 0 12px;padding-left:20px;}
+.faq-answer li{margin-bottom:8px;}
+.faq-answer a{color:var(--primary);text-decoration:underline;}
+
+/* ---- LET'S CONNECT ---- */
+.connect{background:#eaf3fb;padding:var(--section-y) 0;text-align:center;}
+.connect-title{font-size:38px;font-weight:400;color:var(--heading);margin-bottom:16px;}
+.connect-sub{font-size:16px;color:var(--text);max-width:40em;margin:0 auto 18px;line-height:1.5;}
+.connect-acct{margin-bottom:16px;}
+.connect-acct a{color:var(--primary);font-weight:600;text-decoration:underline;}
+.connect-consent{font-size:13px;color:var(--text-muted);max-width:48em;margin:0 auto 30px;line-height:1.5;}
+.connect-consent a{color:var(--primary);text-decoration:underline;}
+.connect-form{display:flex;gap:12px;align-items:flex-end;justify-content:center;flex-wrap:nowrap;margin-bottom:24px;}
+.cf-field{flex:1 1 0;min-width:0;text-align:left;display:flex;flex-direction:column;}
+.cf-field span{display:none;}
+.cf-field input{width:100%;height:48px;border:1px solid var(--line);border-radius:var(--radius);padding:0 14px;font-size:14px;font-family:inherit;color:var(--text);background:#fff;}
+.cf-field input::placeholder{color:var(--text-muted);}
+.cf-submit{flex:0 0 auto;height:48px;}
+.connect-recaptcha{font-size:12px;color:var(--text-muted);max-width:48em;margin:0 auto;line-height:1.5;}
+.connect-recaptcha a{color:var(--primary);text-decoration:underline;}
+
+/* ---- DISCLOSURE BAR ---- */
+.disclosure{background:var(--info);padding:0;}
+.disclosure .container-narrow{padding-top:0;padding-bottom:0;}
+.disclosure-item summary{list-style:none;cursor:pointer;color:#fff;text-align:center;padding:16px 0;font-size:14px;}
+.disclosure-item summary::-webkit-details-marker{display:none;}
+.disclosure-body{color:#fff;font-size:13px;padding:0 0 20px;line-height:1.6;opacity:.95;}
+.disclosure-body p{margin-bottom:6px;}
+
+/* ===== MOBILE ===== */
+@media (max-width:768px){
+  .hero-grid{grid-template-columns:1fr;gap:28px;min-height:0;padding-top:36px;padding-bottom:36px;}
+  .hero-title{font-size:34px;line-height:42px;}
+  .hero-lede{font-size:15px;}
+  .hero-actions{flex-direction:column;align-items:stretch;}
+  .section-h2{font-size:28px;}
+  .power-grid{grid-template-columns:1fr;gap:36px;}
+  .solutions-grid{grid-template-columns:1fr;}
+  .sol-card{padding:32px 26px;}
+  .sol-title{font-size:28px;}
+  .connect-title{font-size:28px;}
+  .connect-form{flex-direction:column;align-items:stretch;}
+  .cf-field,.cf-submit{width:100%;}
+  .faq-title{font-size:24px;}
+}

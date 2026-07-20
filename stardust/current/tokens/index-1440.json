@@ -1,0 +1,734 @@
+{
+  "url": "https://erp.intuit.com/",
+  "slug": "index",
+  "width": 1440,
+  "capturedAt": "2026-07-20T17:40:35.235Z",
+  "ramp": {
+    "h1": {
+      "font-family": "\"AvenirNext forINTUIT\", Helvetica, Arial, sans-serif",
+      "font-size": "16px",
+      "font-weight": "700",
+      "line-height": "normal",
+      "letter-spacing": "normal",
+      "color": "rgb(255, 255, 255)",
+      "background-color": "rgba(0, 0, 0, 0)",
+      "padding": "0px",
+      "margin": "0px",
+      "border": "0px none rgb(255, 255, 255)",
+      "border-radius": "0px",
+      "box-shadow": "none",
+      "text-transform": "none",
+      "max-width": "none",
+      "width": "578.453px",
+      "display": "block",
+      "gap": "normal",
+      "text-align": "start",
+      "_rect": {
+        "w": 578,
+        "h": 120,
+        "x": 50,
+        "y": -640
+      },
+      "_text": "Enterprise-grade finance built to scale"
+    },
+    "h2": {
+      "font-family": "\"AvenirNext forINTUIT\", Helvetica, Arial, sans-serif",
+      "font-size": "48px",
+      "font-weight": "400",
+      "line-height": "67.2px",
+      "letter-spacing": "normal",
+      "color": "rgb(33, 38, 42)",
+      "background-color": "rgba(0, 0, 0, 0)",
+      "padding": "0px",
+      "margin": "0px",
+      "border": "0px none rgb(33, 38, 42)",
+      "border-radius": "0px",
+      "box-shadow": "none",
+      "text-transform": "none",
+      "max-width": "none",
+      "width": "1440px",
+      "display": "block",
+      "gap": "normal",
+      "text-align": "center",
+      "_rect": {
+        "w": 1440,
+        "h": 67,
+        "x": 0,
+        "y": -47
+      },
+      "_text": "Outcomes built on 40+ years of Intuit expertise"
+    },
+    "h3": {
+      "font-family": "\"AvenirNext forINTUIT\", Avenir, Helvetica, Arial, sans-serif",
+      "font-size": "18.72px",
+      "font-weight": "400",
+      "line-height": "24.336px",
+      "letter-spacing": "normal",
+      "color": "rgb(17, 17, 17)",
+      "background-color": "rgba(0, 0, 0, 0)",
+      "padding": "0px 15px 0px 0px",
+      "margin": "0px",
+      "border": "0px none rgb(17, 17, 17)",
+      "border-radius": "0px",
+      "box-shadow": "none",
+      "text-transform": "none",
+      "max-width": "none",
+      "width": "auto",
+      "display": "block",
+      "gap": "normal",
+      "text-align": "left",
+      "_rect": {
+        "w": 0,
+        "h": 0,
+        "x": 0,
+        "y": 0
+      },
+      "_text": "Close in days, not months"
+    },
+    "h4": {
+      "font-family": "\"AvenirNext forINTUIT\", Avenir, Arial",
+      "font-size": "0px",
+      "font-weight": "700",
+      "line-height": "20px",
+      "letter-spacing": "normal",
+      "color": "rgb(57, 58, 61)",
+      "background-color": "rgba(0, 0, 0, 0)",
+      "padding": "0px",
+      "margin": "0px",
+      "border": "0px none rgb(57, 58, 61)",
+      "border-radius": "0px",
+      "box-shadow": "none",
+      "text-transform": "none",
+      "max-width": "90%",
+      "width": "55%",
+      "display": "block",
+      "gap": "normal",
+      "text-align": "left",
+      "_rect": {
+        "w": 0,
+        "h": 0,
+        "x": 0,
+        "y": 0
+      },
+      "_text": "Essential Website Cookies"
+    },
+    "h5": {
+      "font-family": "\"AvenirNext forINTUIT\", Avenir, Arial",
+      "font-size": "13.008px",
+      "font-weight": "700",
+      "line-height": "20px",
+      "letter-spacing": "normal",
+      "color": "rgb(57, 58, 61)",
+      "background-color": "rgba(0, 0, 0, 0)",
+      "padding": "0px",
+      "margin": "0px",
+      "border": "0px none rgb(57, 58, 61)",
+      "border-radius": "0px",
+      "box-shadow": "none",
+      "text-transform": "none",
+      "max-width": "none",
+      "width": "calc(100% - 130px)",
+      "display": "block",
+      "gap": "normal",
+      "text-align": "left",
+      "_rect": {
+        "w": 0,
+        "h": 0,
+        "x": 0,
+        "y": 0
+      },
+      "_text": "Advertising (Targeting) Cookies"
+    },
+    "p": {
+      "font-family": "\"AvenirNext forINTUIT\", Helvetica, Arial, sans-serif",
+      "font-size": "16px",
+      "font-weight": "400",
+      "line-height": "normal",
+      "letter-spacing": "normal",
+      "color": "rgb(0, 0, 0)",
+      "background-color": "rgba(0, 0, 0, 0)",
+      "padding": "0px",
+      "margin": "0px",
+      "border": "0px none rgb(0, 0, 0)",
+      "border-radius": "0px",
+      "box-shadow": "none",
+      "text-transform": "none",
+      "max-width": "none",
+      "width": "1380px",
+      "display": "block",
+      "gap": "normal",
+      "text-align": "center",
+      "_rect": {
+        "w": 1380,
+        "h": 24,
+        "x": 30,
+        "y": -798
+      },
+      "_text": "Check out upcoming events and learn more about Intuit Enterp"
+    }
+  },
+  "buttons": [
+    {
+      "font-family": "\"AvenirNext forINTUIT\", Avenir, Helvetica, Arial, sans-serif",
+      "font-size": "16px",
+      "font-weight": "400",
+      "line-height": "normal",
+      "letter-spacing": "normal",
+      "color": "rgb(33, 38, 42)",
+      "background-color": "rgba(0, 0, 0, 0)",
+      "padding": "2px 0px",
+      "margin": "0px",
+      "border": "0px none rgb(33, 38, 42)",
+      "border-radius": "0px",
+      "box-shadow": "none",
+      "text-transform": "none",
+      "max-width": "none",
+      "width": "104.844px",
+      "display": "flex",
+      "gap": "8px",
+      "text-align": "center",
+      "_rect": {
+        "w": 105,
+        "h": 26,
+        "x": 301,
+        "y": 17
+      },
+      "_text": "Capabilities"
+    },
+    {
+      "font-family": "\"AvenirNext forINTUIT\", Avenir, Helvetica, Arial, sans-serif",
+      "font-size": "16px",
+      "font-weight": "400",
+      "line-height": "normal",
+      "letter-spacing": "normal",
+      "color": "rgb(33, 38, 42)",
+      "background-color": "rgba(0, 0, 0, 0)",
+      "padding": "2px 0px",
+      "margin": "0px",
+      "border": "0px none rgb(33, 38, 42)",
+      "border-radius": "0px",
+      "box-shadow": "none",
+      "text-transform": "none",
+      "max-width": "none",
+      "width": "117.406px",
+      "display": "flex",
+      "gap": "8px",
+      "text-align": "center",
+      "_rect": {
+        "w": 117,
+        "h": 26,
+        "x": 430,
+        "y": 17
+      },
+      "_text": "Industry tools"
+    },
+    {
+      "font-family": "\"AvenirNext forINTUIT\", Avenir, Helvetica, Arial, sans-serif",
+      "font-size": "16px",
+      "font-weight": "400",
+      "line-height": "normal",
+      "letter-spacing": "normal",
+      "color": "rgb(33, 38, 42)",
+      "background-color": "rgba(0, 0, 0, 0)",
+      "padding": "2px 0px",
+      "margin": "0px",
+      "border": "0px none rgb(33, 38, 42)",
+      "border-radius": "0px",
+      "box-shadow": "none",
+      "text-transform": "none",
+      "max-width": "none",
+      "width": "68.2031px",
+      "display": "flex",
+      "gap": "8px",
+      "text-align": "center",
+      "_rect": {
+        "w": 68,
+        "h": 26,
+        "x": 571,
+        "y": 17
+      },
+      "_text": "Pricing"
+    },
+    {
+      "font-family": "\"AvenirNext forINTUIT\", Avenir, Helvetica, Arial, sans-serif",
+      "font-size": "16px",
+      "font-weight": "400",
+      "line-height": "normal",
+      "letter-spacing": "normal",
+      "color": "rgb(33, 38, 42)",
+      "background-color": "rgba(0, 0, 0, 0)",
+      "padding": "2px 0px",
+      "margin": "0px",
+      "border": "0px none rgb(33, 38, 42)",
+      "border-radius": "0px",
+      "box-shadow": "none",
+      "text-transform": "none",
+      "max-width": "none",
+      "width": "92.6562px",
+      "display": "flex",
+      "gap": "8px",
+      "text-align": "center",
+      "_rect": {
+        "w": 93,
+        "h": 26,
+        "x": 663,
+        "y": 17
+      },
+      "_text": "Resources"
+    },
+    {
+      "font-family": "\"AvenirNext forINTUIT\", Avenir, Helvetica, Arial, sans-serif",
+      "font-size": "16px",
+      "font-weight": "400",
+      "line-height": "normal",
+      "letter-spacing": "normal",
+      "color": "rgb(33, 38, 42)",
+      "background-color": "rgba(0, 0, 0, 0)",
+      "padding": "2px 0px",
+      "margin": "0px",
+      "border": "0px none rgb(33, 38, 42)",
+      "border-radius": "0px",
+      "box-shadow": "none",
+      "text-transform": "none",
+      "max-width": "none",
+      "width": "77.3281px",
+      "display": "flex",
+      "gap": "8px",
+      "text-align": "center",
+      "_rect": {
+        "w": 77,
+        "h": 26,
+        "x": 780,
+        "y": 17
+      },
+      "_text": "Support"
+    },
+    {
+      "font-family": "\"AvenirNext forINTUIT\", Avenir, Helvetica, Arial, sans-serif",
+      "font-size": "16px",
+      "font-weight": "500",
+      "line-height": "normal",
+      "letter-spacing": "normal",
+      "color": "rgb(33, 38, 42)",
+      "background-color": "rgba(0, 0, 0, 0)",
+      "padding": "2px 0px",
+      "margin": "0px",
+      "border": "0px none rgb(33, 38, 42)",
+      "border-radius": "0px",
+      "box-shadow": "none",
+      "text-transform": "none",
+      "max-width": "none",
+      "width": "149.844px",
+      "display": "flex",
+      "gap": "4px",
+      "text-align": "start",
+      "_rect": {
+        "w": 150,
+        "h": 30,
+        "x": 881,
+        "y": 15
+      },
+      "_text": "For accounting firms"
+    },
+    {
+      "font-family": "\"AvenirNext forINTUIT\", Avenir, Helvetica, Arial, sans-serif",
+      "font-size": "13.3333px",
+      "font-weight": "400",
+      "line-height": "normal",
+      "letter-spacing": "normal",
+      "color": "rgb(0, 0, 0)",
+      "background-color": "rgb(0, 37, 74)",
+      "padding": "0px 30px",
+      "margin": "0px",
+      "border": "1px solid rgba(0, 0, 0, 0)",
+      "border-radius": "4px",
+      "box-shadow": "none",
+      "text-transform": "none",
+      "max-width": "none",
+      "width": "171.891px",
+      "display": "flex",
+      "gap": "normal",
+      "text-align": "center",
+      "_rect": {
+        "w": 172,
+        "h": 36,
+        "x": 1228,
+        "y": 12
+      },
+      "_text": "Schedule a call"
+    },
+    {
+      "font-family": "\"AvenirNext forINTUIT\", Avenir, Helvetica, Arial, sans-serif",
+      "font-size": "16px",
+      "font-weight": "600",
+      "line-height": "normal",
+      "letter-spacing": "normal",
+      "color": "rgb(255, 255, 255)",
+      "background-color": "rgba(0, 0, 0, 0)",
+      "padding": "0px 20px",
+      "margin": "0px",
+      "border": "2px solid rgb(255, 255, 255)",
+      "border-radius": "4px",
+      "box-shadow": "none",
+      "text-transform": "none",
+      "max-width": "none",
+      "width": "154.438px",
+      "display": "inline-flex",
+      "gap": "normal",
+      "text-align": "center",
+      "_rect": {
+        "w": 154,
+        "h": 48,
+        "x": 294,
+        "y": -394
+      },
+      "_text": "Schedule a call"
+    },
+    {
+      "font-family": "\"AvenirNext forINTUIT\", Avenir, Helvetica, Arial, sans-serif",
+      "font-size": "16px",
+      "font-weight": "600",
+      "line-height": "24px",
+      "letter-spacing": "normal",
+      "color": "rgb(13, 51, 63)",
+      "background-color": "rgb(255, 255, 255)",
+      "padding": "0px 20px",
+      "margin": "0px",
+      "border": "0px none rgb(13, 51, 63)",
+      "border-radius": "4px",
+      "box-shadow": "none",
+      "text-transform": "none",
+      "max-width": "none",
+      "width": "224.188px",
+      "display": "flex",
+      "gap": "8px",
+      "text-align": "left",
+      "_rect": {
+        "w": 224,
+        "h": 48,
+        "x": 50,
+        "y": -393
+      },
+      "_text": "Watch product demo"
+    },
+    {
+      "font-family": "Arial",
+      "font-size": "13.3333px",
+      "font-weight": "400",
+      "line-height": "normal",
+      "letter-spacing": "normal",
+      "color": "rgb(0, 0, 0)",
+      "background-color": "rgb(12, 26, 48)",
+      "padding": "0px",
+      "margin": "0px",
+      "border": "0px none rgb(0, 0, 0)",
+      "border-radius": "50%",
+      "box-shadow": "none",
+      "text-transform": "none",
+      "max-width": "none",
+      "width": "12px",
+      "display": "block",
+      "gap": "normal",
+      "text-align": "center",
+      "_rect": {
+        "w": 13,
+        "h": 13,
+        "x": 1199,
+        "y": 353
+      },
+      "_text": ""
+    },
+    {
+      "font-family": "Arial",
+      "font-size": "13.3333px",
+      "font-weight": "400",
+      "line-height": "normal",
+      "letter-spacing": "normal",
+      "color": "rgb(0, 0, 0)",
+      "background-color": "rgb(203, 209, 214)",
+      "padding": "0px",
+      "margin": "0px",
+      "border": "0px none rgb(0, 0, 0)",
+      "border-radius": "50%",
+      "box-shadow": "none",
+      "text-transform": "none",
+      "max-width": "none",
+      "width": "12px",
+      "display": "block",
+      "gap": "normal",
+      "text-align": "center",
+      "_rect": {
+        "w": 12,
+        "h": 12,
+        "x": 1232,
+        "y": 353
+      },
+      "_text": ""
+    },
+    {
+      "font-family": "Arial",
+      "font-size": "13.3333px",
+      "font-weight": "400",
+      "line-height": "normal",
+      "letter-spacing": "normal",
+      "color": "rgb(255, 255, 255)",
+      "background-color": "rgb(133, 146, 153)",
+      "padding": "1px 6px",
+      "margin": "0px",
+      "border": "0px none rgb(255, 255, 255)",
+      "border-radius": "50%",
+      "box-shadow": "rgba(0, 0, 0, 0.05) 0px 2px 6px 0px",
+      "text-transform": "none",
+      "max-width": "none",
+      "width": "60px",
+      "display": "flex",
+      "gap": "normal",
+      "text-align": "center",
+      "_rect": {
+        "w": 60,
+        "h": 60,
+        "x": 1268,
+        "y": 329
+      },
+      "_text": ""
+    }
+  ],
+  "body": {
+    "font-family": "\"AvenirNext forINTUIT\", Helvetica, Arial, sans-serif",
+    "font-size": "16px",
+    "font-weight": "400",
+    "line-height": "normal",
+    "letter-spacing": "normal",
+    "color": "rgb(0, 0, 0)",
+    "background-color": "rgba(0, 0, 0, 0)",
+    "padding": "0px",
+    "margin": "0px",
+    "border": "0px none rgb(0, 0, 0)",
+    "border-radius": "0px",
+    "box-shadow": "none",
+    "text-transform": "none",
+    "max-width": "none",
+    "width": "1440px",
+    "display": "block",
+    "gap": "normal",
+    "text-align": "start",
+    "_rect": {
+      "w": 1440,
+      "h": 7976,
+      "x": 0,
+      "y": -904
+    },
+    "_text": "!function(a){a.raas=a.raas||{};a.raas.appVariables=new funct"
+  },
+  "html": {
+    "font-family": "\"AvenirNext forINTUIT\", Helvetica, Arial, sans-serif",
+    "font-size": "16px",
+    "line-height": "normal",
+    "color": "rgb(0, 0, 0)",
+    "background-color": "rgba(0, 0, 0, 0)",
+    "_rect": {
+      "w": 1440,
+      "h": 7976,
+      "x": 0,
+      "y": -904
+    },
+    "_text": "function getCookieVal(e){try{return document.cookie.toString"
+  },
+  "rootCandidates": [
+    {
+      "sel": "#main",
+      "max-width": "none",
+      "width": "1440px",
+      "margin": "0px",
+      "padding": "0px",
+      "display": "block",
+      "_rect": {
+        "w": 1440,
+        "h": 7976,
+        "x": 0,
+        "y": -904
+      },
+      "_text": "{\n  \"@context\": \"https://schema.org\",\n  \"@graph\": [\n  {\n  \"@"
+    },
+    {
+      "sel": "[role=\"main\"]",
+      "max-width": "none",
+      "width": "1440px",
+      "margin": "0px",
+      "padding": "0px",
+      "display": "block",
+      "_rect": {
+        "w": 1440,
+        "h": 7976,
+        "x": 0,
+        "y": -904
+      },
+      "_text": "{\n  \"@context\": \"https://schema.org\",\n  \"@graph\": [\n  {\n  \"@"
+    },
+    {
+      "sel": "#__next",
+      "max-width": "none",
+      "width": "1440px",
+      "margin": "0px",
+      "padding": "0px",
+      "display": "block",
+      "_rect": {
+        "w": 1440,
+        "h": 7976,
+        "x": 0,
+        "y": -904
+      },
+      "_text": "{\n  \"@context\": \"https://schema.org\",\n  \"@graph\": [\n  {\n  \"@"
+    },
+    {
+      "sel": "body>div",
+      "max-width": "none",
+      "width": "1440px",
+      "margin": "0px",
+      "padding": "0px",
+      "display": "block",
+      "_rect": {
+        "w": 1440,
+        "h": 7976,
+        "x": 0,
+        "y": -904
+      },
+      "_text": "{\n  \"@context\": \"https://schema.org\",\n  \"@graph\": [\n  {\n  \"@"
+    }
+  ],
+  "topMw": [
+    [
+      "1380px",
+      3
+    ],
+    [
+      "700px",
+      2
+    ],
+    [
+      "1360px",
+      1
+    ],
+    [
+      "540px",
+      1
+    ]
+  ],
+  "secPads": [
+    {
+      "pt": "40px",
+      "pb": "40px",
+      "bg": "rgb(255, 255, 255)",
+      "text": "Customer outcomes with Intuit Enterprise"
+    },
+    {
+      "pt": "40px",
+      "pb": "80px",
+      "bg": "rgba(0, 0, 0, 0)",
+      "text": "CLOSE MANAGEMENT\n            Close in da"
+    },
+    {
+      "pt": "20px",
+      "pb": "20px",
+      "bg": "rgba(0, 0, 0, 0)",
+      "text": "Professional Services\n          Unified "
+    },
+    {
+      "pt": "0px",
+      "pb": "0px",
+      "bg": "rgba(0, 0, 0, 0)",
+      "text": "Manage Consent PreferencesEssential Webs"
+    },
+    {
+      "pt": "0px",
+      "pb": "0px",
+      "bg": "rgba(0, 0, 0, 0)",
+      "text": "Back ButtonCookie List Search IconFilter"
+    },
+    {
+      "pt": "0px",
+      "pb": "0px",
+      "bg": "rgba(0, 0, 0, 0)",
+      "text": "Clear checkbox label labelApply Cancel"
+    },
+    {
+      "pt": "0px",
+      "pb": "0px",
+      "bg": "rgba(0, 0, 0, 0)",
+      "text": "Consent Leg.Interest checkbox label labe"
+    }
+  ],
+  "headerInfo": {
+    "position": "relative",
+    "height": "60px",
+    "background-color": "rgba(0, 0, 0, 0)",
+    "padding": "0px",
+    "box-shadow": "none",
+    "display": "block",
+    "_rect": {
+      "w": 1440,
+      "h": 60,
+      "x": 0,
+      "y": 0
+    },
+    "_text": "CapabilitiesIndustry toolsPricingResourcesSupportFor account"
+  },
+  "fonts": [
+    {
+      "family": "AvenirNext forINTUIT",
+      "weight": "400",
+      "style": "normal",
+      "status": "loaded"
+    },
+    {
+      "family": "AvenirNext forINTUIT",
+      "weight": "400",
+      "style": "italic",
+      "status": "unloaded"
+    },
+    {
+      "family": "AvenirNext forINTUIT",
+      "weight": "500",
+      "style": "normal",
+      "status": "loaded"
+    },
+    {
+      "family": "AvenirNext forINTUIT",
+      "weight": "500",
+      "style": "italic",
+      "status": "unloaded"
+    },
+    {
+      "family": "AvenirNext forINTUIT",
+      "weight": "600",
+      "style": "normal",
+      "status": "loaded"
+    },
+    {
+      "family": "AvenirNext forINTUIT",
+      "weight": "600",
+      "style": "italic",
+      "status": "unloaded"
+    },
+    {
+      "family": "AvenirNext forINTUIT",
+      "weight": "700",
+      "style": "normal",
+      "status": "loaded"
+    },
+    {
+      "family": "AvenirNext forINTUIT",
+      "weight": "700",
+      "style": "italic",
+      "status": "unloaded"
+    },
+    {
+      "family": "AvenirNext forINTUIT",
+      "weight": "800",
+      "style": "normal",
+      "status": "unloaded"
+    }
+  ],
+  "docH": 7976,
+  "vw": 1440
+}

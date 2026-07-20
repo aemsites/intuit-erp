@@ -1,0 +1,31 @@
+/* faq — accordion (index, compare, erp-solutions). Lifted from .faq */
+.section.faq-container { background: #fff; padding: 20px 0 var(--section-y); }
+.section.faq-container:has(.faq.cmp) { background: #f7f8f3; padding: var(--section-y) 0; }
+.faq-container .default-content-wrapper h2,
+.faq-container .default-content-wrapper h3 {
+  font-size: 30px; font-weight: 400; text-align: center; margin: 0 0 36px; color: var(--heading);
+}
+.faq-container > div { max-width: 1180px; }
+
+.faq .faq-list { border-top: 1px solid var(--line); }
+.faq .faq-item { border-bottom: 1px solid var(--line); }
+.faq .faq-item summary {
+  list-style: none; cursor: pointer; padding: 20px 40px 20px 0; font-size: 16px;
+  font-weight: 600; color: var(--heading); position: relative;
+}
+.faq .faq-item summary::-webkit-details-marker { display: none; }
+.faq .faq-item summary::after {
+  content: "\2303"; position: absolute; right: 6px; top: 20px; transform: rotate(180deg);
+  transition: transform 0.2s; color: var(--text-muted);
+}
+.faq .faq-item[open] summary::after { transform: rotate(0); }
+.faq .faq-answer { padding: 0 40px 22px 0; font-size: 14px; color: var(--text-muted); line-height: 1.6; }
+.faq .faq-answer p { margin: 0 0 12px; }
+.faq .faq-answer ul { margin: 0 0 12px; padding-left: 20px; }
+.faq .faq-answer li { margin-bottom: 8px; }
+.faq .faq-answer a { color: var(--primary); text-decoration: underline; }
+
+@media (width <= 768px) {
+  .faq-container .default-content-wrapper h2,
+  .faq-container .default-content-wrapper h3 { font-size: 24px; }
+}

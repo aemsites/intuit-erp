@@ -1,0 +1,15 @@
+/* logo-strip — customer logos on a dark band (index). Lifted from .logostrip */
+.section.logo-strip-container { background: #00203f; }
+.logo-strip { padding: 22px 0; }
+.logo-strip .logostrip-row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 30px; flex-wrap: nowrap; overflow: hidden;
+}
+.logo-strip .logostrip-row img {
+  height: 26px; width: auto; opacity: 0.9;
+  filter: brightness(0) invert(1); flex: 0 0 auto;
+}
+
+@media (width <= 768px) {
+  .logo-strip .logostrip-row { flex-wrap: wrap; justify-content: center; gap: 22px 30px; }
+}

@@ -1,0 +1,54 @@
+/* header — IES chrome (brand strip + sticky nav + events bar). Lifted from base.css */
+
+header { height: auto; min-height: 146px; }
+header .header { background: #fff; }
+header .header .container { max-width: var(--container); margin: 0 auto; padding: 0 40px; }
+
+/* brand strip */
+.header .ies-topstrip { background: #fff; border-bottom: 1px solid var(--line); }
+.header .ies-topstrip .container { display: flex; align-items: center; gap: 30px; height: 36px; }
+.header .intuit-word { font-weight: 800; font-size: 15px; letter-spacing: 0.02em; color: var(--primary); }
+.header .bs-wm { display: inline-flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 600; color: var(--heading); letter-spacing: -0.01em; }
+.header .bs-ic { width: 17px; height: 17px; border-radius: 50%; font-style: normal; font-size: 9px; font-weight: 700; color: #fff; display: inline-flex; align-items: center; justify-content: center; }
+.header .bs-tt { background: #e11d1d; }
+.header .bs-ck { background: #199e77; font-size: 8px; }
+.header .bs-qb { background: #2ca01c; font-size: 8px; }
+.header .bs-mc { background: #ffe01b; color: #000; }
+
+/* sticky nav */
+.header .ies-nav { position: sticky; top: 0; z-index: 50; background: #fff; }
+.header .ies-nav.scrolled { box-shadow: 0 1px 0 rgb(0 0 0 / 6%); border-bottom: 2px solid var(--navy); }
+.header .ies-nav .container { display: flex; align-items: center; height: 60px; gap: 30px; }
+.header .nav-logo { display: flex; align-items: baseline; gap: 6px; font-size: 22px; }
+.header .nav-logo .ies-intuit { color: var(--primary); font-weight: 800; letter-spacing: 0.01em; }
+.header .nav-logo .ies-word { font-weight: 400; color: var(--primary); }
+.header .nav-main { display: flex; align-items: center; gap: 26px; margin-left: 10px; }
+.header .nav-main button, .header .nav-main a { background: none; border: 0; padding: 2px 0; font-size: 16px; font-weight: 400; color: var(--heading); display: inline-flex; align-items: center; gap: 6px; font-family: inherit; cursor: pointer; }
+.header .nav-main .caret { width: 8px; height: 8px; border-right: 2px solid var(--primary); border-bottom: 2px solid var(--primary); transform: rotate(45deg); margin-top: -3px; }
+.header .nav-right { margin-left: auto; display: flex; align-items: center; gap: 22px; }
+.header .nav-cta { height: 40px; padding: 0 24px; font-size: 16px; font-weight: 600; background: var(--navy); color: #fff; border-color: var(--navy); }
+.header .nav-cta:hover { color: #fff; text-decoration: none; }
+.header .nav-toggle { display: none; }
+
+/* events bar */
+.header .ies-events { background: #c9f2fa; color: var(--heading); }
+.header .ies-events .container { text-align: center; padding-top: 17px; padding-bottom: 17px; font-size: 15px; }
+.header .ies-events a { font-weight: 700; text-decoration: underline; color: var(--heading); }
+
+@media (width <= 768px) {
+  header { min-height: 106px; }
+  .header .container { padding: 0 20px; }
+  .header .ies-topstrip { display: none; }
+  .header .ies-nav .container { height: 56px; gap: 12px; }
+  .header .nav-main { display: none; }
+  .header.nav-open .nav-main {
+    display: flex; flex-direction: column; align-items: flex-start; gap: 14px;
+    position: absolute; left: 0; right: 0; top: 56px; background: #fff; padding: 18px 20px;
+    border-bottom: 1px solid var(--line); box-shadow: 0 12px 24px rgb(0 0 0 / 8%); z-index: 49;
+  }
+  .header .nav-right { gap: 12px; }
+  .header .nav-cta { height: 36px; padding: 0 16px; font-size: 14px; }
+  .header .ies-events .container { font-size: 13px; padding-top: 12px; padding-bottom: 12px; }
+  .header .nav-toggle { display: inline-flex; flex-direction: column; gap: 4px; background: none; border: 0; padding: 6px; cursor: pointer; }
+  .header .nav-toggle span { width: 22px; height: 2px; background: currentcolor; display: block; }
+}

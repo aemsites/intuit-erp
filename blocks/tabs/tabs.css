@@ -1,0 +1,29 @@
+/* tabs — feature explorer (accounting). Lifted from .explorer / .tabs / .tab-panel */
+.section.tabs-container { background: #fff; padding: var(--section-y) 0; }
+.tabs-container .default-content-wrapper h2 {
+  font-size: 38px; line-height: 1.15; font-weight: 400; color: var(--heading);
+  text-align: center; margin: 0 0 40px;
+}
+.tabs .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--line); }
+.tabs .tab {
+  flex: 1; background: none; border: 0; border-bottom: 2px solid transparent;
+  padding: 16px 12px; font-size: 15px; font-weight: 400; color: var(--text-muted);
+  font-family: inherit; margin-bottom: -1px; text-align: center; cursor: pointer;
+}
+.tabs .tab.active { color: var(--heading); border-bottom-color: var(--navy); font-weight: 600; }
+.tabs .tab-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 0; align-items: stretch; margin-top: 34px; }
+.tabs .tab-media { background: var(--sky); border-radius: var(--radius-card); padding: 40px 34px; display: flex; align-items: center; justify-content: center; }
+.tabs .tab-media img { width: 100%; border-radius: 6px; box-shadow: 0 8px 24px rgb(13 51 63 / 14%); }
+.tabs .tab-copy { display: flex; flex-direction: column; justify-content: center; padding: 20px 10px 20px 64px; }
+.tabs .tab-copy .eyebrow { margin-bottom: 16px; }
+.tabs .tab-h3 { font-size: 30px; line-height: 1.2; font-weight: 400; color: var(--heading); margin: 0 0 18px; }
+.tabs .tab-body { font-size: 16px; line-height: 1.6; color: var(--text-muted); max-width: 28em; margin: 0; }
+
+@media (width <= 768px) {
+  .tabs-container .default-content-wrapper h2 { font-size: 28px; }
+  .tabs .tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .tabs .tab { flex: 0 0 auto; white-space: nowrap; }
+  .tabs .tab-panel { grid-template-columns: 1fr; gap: 24px; }
+  .tabs .tab-copy { padding: 0; }
+  .tabs .tab-h3 { font-size: 24px; }
+}

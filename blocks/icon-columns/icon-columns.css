@@ -1,0 +1,17 @@
+/* icon-columns — 3 feature columns (compare). Lifted from .cmp-grow */
+.section.icon-columns-container { background: #fff; padding: var(--section-y) 0 64px; }
+.icon-columns-container .default-content-wrapper h2 {
+  font-size: 38px; line-height: 1.15; font-weight: 400; color: var(--heading);
+  text-align: center; margin: 0 0 52px;
+}
+.icon-columns .cmp-grow-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 48px; max-width: 1120px; margin: 0 auto; }
+.icon-columns .cmp-col-icon { width: 56px; height: 56px; margin-bottom: 20px; }
+.icon-columns .cmp-col-eyebrow { margin-bottom: 12px; color: var(--text-muted); }
+.icon-columns .cmp-col-title { font-size: 24px; line-height: 1.25; font-weight: 400; color: var(--heading); margin: 0 0 16px; }
+.icon-columns .cmp-col-body { font-size: 15px; line-height: 1.55; color: var(--text-muted); margin: 0; }
+
+@media (width <= 768px) {
+  .icon-columns-container .default-content-wrapper h2 { font-size: 28px; }
+  .icon-columns .cmp-grow-grid { grid-template-columns: 1fr; gap: 36px; }
+  .icon-columns .cmp-col-title { font-size: 22px; }
+}

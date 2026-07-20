@@ -1,0 +1,77 @@
+{
+  "_provenance": {
+    "writtenBy": "stardust:replica",
+    "mode": "bounded-single",
+    "synthesizedFrom": [
+      "stardust/current/pages/*.json",
+      "stardust/current/tokens/*.json"
+    ]
+  },
+  "colors": {
+    "background": "#ffffff",
+    "surface-sand": "#f7f8f3",
+    "surface-tofu": "#f3f2ef",
+    "surface-sky": "#dbedee",
+    "text": "#21262a",
+    "text-muted": "#6b6c72",
+    "text-soft": "#8d9096",
+    "primary": "#0077c5",
+    "primary-dark": "#055393",
+    "navy": "#00254a",
+    "navy-hover": "#001a36",
+    "navy-mid": "#053d6d",
+    "ink-teal": "#0d333f",
+    "blue-bright": "#0097e6",
+    "blue-light": "#34bfff",
+    "accent-green": "#0a8543",
+    "accent-green-bright": "#0fd46c",
+    "info-band": "#236cff"
+  },
+  "typography": {
+    "brandFamily": "AvenirNext forINTUIT",
+    "substituteFamily": "Mulish",
+    "stack": "\"AvenirNext forINTUIT\", Mulish, Helvetica, Arial, sans-serif",
+    "baseSize": "16px",
+    "ramp": {
+      "heroH1": { "size1440": "48px", "lh1440": "60px", "size360": "40px", "lh360": "52px", "weight": 400 },
+      "sectionH2": { "size1440": "48px", "lh1440": "67.2px", "size360": "30px", "lh360": "33.9px", "weight": 400 },
+      "subH3": { "size1440": "18.72px", "lh1440": "24.34px", "weight": 400 },
+      "body": { "size": "16px", "lh": "1.5", "weight": 400 },
+      "small": { "size": "14px", "weight": 400 }
+    }
+  },
+  "rounded": "4px",
+  "spacing": { "sectionY": "80px", "sectionYCompact": "40px", "container": "1380px", "innerContent": "1360px", "gutter": "30px" },
+  "components": [
+    "button-primary", "button-outline", "global-header", "global-footer",
+    "hero", "stat-band", "feature-grid", "media-text-split", "tabs",
+    "comparison-table", "pricing-cta-band", "faq-accordion", "testimonial"
+  ],
+  "extensions": {
+    "fonts": {
+      "brandFamily": "AvenirNext forINTUIT",
+      "licensed": true,
+      "rehosted": false,
+      "substitute": "Mulish",
+      "note": "Domain-licensed Avenir Next kit; not rehosted. Brand name kept first in stack so a licensed drop-in wins. Metric-matched substitute Mulish."
+    },
+    "motifs": {
+      "radius": "4px buttons; 8-12px cards",
+      "shadow": "soft card shadow rgba(0,0,0,.08) blur ~24px",
+      "heroGradient": "deep blue #00254a -> indigo #053d6d, occasional violet edge",
+      "sectionFills": ["#ffffff", "#f7f8f3", "#f3f2ef", "#dbedee"]
+    },
+    "voice": {
+      "primaryCta": "Schedule a call",
+      "secondaryCtas": ["For accountants", "Watch product demo", "Find out more", "Explore agents"]
+    },
+    "systemComponents": ["global-header", "global-footer", "schedule-a-call-band", "faq-accordion", "pricing-details-disclosure"],
+    "brandPartners": {
+      "_note": "Sibling-brand wordmark colors used in the Intuit brand strip — NOT IES palette tokens; intentional in a faithful replica. Replaced by official brand logo assets at deploy.",
+      "turbotax": "#0e6f3f",
+      "creditKarma": "#199e77",
+      "quickbooks": "#2ca01c",
+      "mailchimp": "#c8b100"
+    }
+  }
+}

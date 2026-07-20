@@ -1,0 +1,74 @@
+/* media-text — media+text splits and related layouts. Lifted from prototype
+   .why/.media-row, .built, .switch, .agents, .roles, .migration, .power */
+
+/* section band + head */
+.section.media-text-container { background: #fff; padding: var(--section-y) 0; }
+.media-text-container .default-content-wrapper h2 {
+  font-size: 38px; line-height: 1.15; font-weight: 400; color: var(--heading);
+  text-align: center; margin: 0 0 40px;
+}
+.media-text-container .default-content-wrapper > p {
+  max-width: 44em; margin: 0 auto 40px; text-align: center; font-size: 16px;
+  line-height: 1.55; color: var(--text-muted);
+}
+
+/* ---- split rows (default / reverse / sky) ---- */
+.media-text .media-row {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; padding: 44px 0;
+}
+.media-text .media-row.row-reverse .media-visual { order: -1; }
+.media-text .media-visual img { width: 100%; border-radius: 14px; box-shadow: 0 12px 40px rgb(13 51 63 / 14%); }
+.media-text .media-copy .media-eyebrow { margin-bottom: 16px; color: var(--text-muted); }
+.media-text .media-copy h2,
+.media-text .media-copy h3 { font-size: 34px; line-height: 1.2; font-weight: 400; color: var(--heading); margin: 0 0 18px; }
+.media-text .media-copy .media-body { font-size: 15px; line-height: 1.6; color: var(--text-muted); max-width: 34em; margin: 0 0 14px; }
+.media-text .media-copy .button-wrapper { margin-top: 12px; }
+
+/* ---- .center (pricing "Built for the way") ---- */
+.section.media-text-container:has(.media-text.center) { background: var(--tofu); padding: 76px 0; }
+.media-text.center .media-center { text-align: center; }
+.media-text.center .media-center h2 { font-size: 38px; font-weight: 400; color: var(--heading); text-align: center; margin: 0 0 22px; }
+.media-text.center .media-center .media-body { max-width: 44em; margin: 0 auto; text-align: center; font-size: 17px; line-height: 1.6; color: var(--text); }
+
+/* ---- .sky (pricing "Switch now and save") ---- */
+.section.media-text-container:has(.media-text.sky) { background: var(--sky); padding: 80px 0; }
+.media-text.sky .media-row { padding: 0; gap: 60px; }
+.media-text.sky .media-copy h2 { font-size: 40px; margin-bottom: 20px; }
+.media-text.sky .media-copy .media-body { font-size: 17px; color: var(--text); max-width: 26em; margin-bottom: 18px; }
+.media-text.sky .media-copy p a { color: var(--primary); text-decoration: underline; font-size: 15px; }
+
+/* ---- .cards (index "A migration path") ---- */
+.section.media-text-container:has(.media-text.cards) { background: #fff; padding: 0 0 var(--section-y); }
+.media-text.cards .mig-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; }
+.media-text.cards .mig-card { background: var(--sand); border-radius: var(--radius-card); padding: 36px; }
+.media-text.cards .mig-card .media-eyebrow { margin-bottom: 14px; }
+.media-text.cards .mig-card h3 { font-size: 26px; font-weight: 400; color: var(--heading); margin: 0 0 12px; }
+.media-text.cards .mig-card .media-body { font-size: 15px; color: var(--text-muted); margin: 0 0 26px; line-height: 1.5; }
+.media-text.cards .mig-visual { background: #fff; border-radius: 10px; padding: 22px; box-shadow: 0 2px 12px rgb(0 0 0 / 6%); }
+.media-text.cards .mig-visual img { width: 100%; border-radius: 8px; }
+.media-text.cards .mig-visual .mig-visual-head { font-weight: 600; margin: 0 0 16px; color: var(--heading); }
+.media-text.cards .mig-steps { list-style: none; margin: 0; padding: 0; }
+.media-text.cards .mig-steps li { font-size: 14px; color: var(--text-muted); padding: 9px 0; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 10px; }
+.media-text.cards .mig-steps li:last-child { border-bottom: 0; }
+.media-text.cards .mig-steps li.done { color: var(--green); }
+.media-text.cards .mig-steps .tick { width: 18px; height: 18px; border-radius: 50%; background: var(--green); color: #fff; font-size: 11px; display: inline-flex; align-items: center; justify-content: center; }
+
+/* ---- .power (erp-solutions "Powering complex …") ---- */
+.media-text.power .power-grid { display: grid; grid-template-columns: 1fr 1.15fr; gap: 56px; align-items: center; }
+.media-text.power .power-list { display: flex; flex-direction: column; gap: 26px; }
+.media-text.power .power-item { padding-left: 24px; border-left: 3px solid transparent; }
+.media-text.power .power-item.featured { border-left-color: var(--primary); }
+.media-text.power .power-item h3 { font-size: 22px; font-weight: 500; color: var(--heading); margin: 0 0 8px; }
+.media-text.power .power-item p { font-size: 14px; line-height: 1.55; color: var(--text-muted); margin: 0; }
+.media-text.power .power-media img { width: 100%; border-radius: var(--radius-card); }
+
+@media (width <= 768px) {
+  .media-text .media-row { grid-template-columns: 1fr; gap: 24px; padding: 28px 0; }
+  .media-text .media-row.row-reverse .media-visual { order: 0; }
+  .media-text .media-copy h2,
+  .media-text .media-copy h3 { font-size: 26px; }
+  .media-text.cards .mig-grid,
+  .media-text.sky .media-row,
+  .media-text.power .power-grid { grid-template-columns: 1fr; gap: 28px; }
+  .media-text.sky .media-copy h2 { font-size: 30px; }
+}

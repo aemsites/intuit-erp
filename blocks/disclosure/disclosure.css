@@ -1,0 +1,9 @@
+/* disclosure — blue pricing-details bar (index, erp-solutions). Lifted from .disclosure */
+.section.disclosure-container { background: var(--info); padding: 0; }
+.disclosure-container > div { max-width: 1180px; }
+.disclosure .disclosure-item summary {
+  list-style: none; cursor: pointer; color: #fff; text-align: center; padding: 16px 0; font-size: 14px;
+}
+.disclosure .disclosure-item summary::-webkit-details-marker { display: none; }
+.disclosure .disclosure-body { color: #fff; font-size: 13px; padding: 0 0 20px; line-height: 1.6; opacity: 0.95; }
+.disclosure .disclosure-body p { margin: 0 0 6px; }

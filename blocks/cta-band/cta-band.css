@@ -1,0 +1,22 @@
+/* cta-band — split stat + dark CTA card (index "first call"). Lifted from .firstcall */
+.section.cta-band-container { background: #fff; padding: 0 0 var(--section-y); }
+.cta-band .firstcall-grid { display: grid; grid-template-columns: 1fr 1.6fr; gap: 26px; align-items: stretch; }
+.cta-band .firstcall-stat {
+  background: var(--sky); border-radius: var(--radius-card); padding: 56px 44px;
+  display: flex; flex-direction: column; justify-content: center;
+}
+.cta-band .fc-num { font-size: 64px; font-weight: 400; color: var(--navy); line-height: 1; margin-bottom: 14px; }
+.cta-band .fc-desc { font-size: 18px; color: var(--text); max-width: 14em; margin: 0; }
+.cta-band .firstcall-card { background: var(--navy); color: #fff; border-radius: var(--radius-card); padding: 56px 44px; }
+.cta-band .fc-eyebrow { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.8; margin: 0 0 14px; }
+.cta-band .fc-title { font-size: 30px; font-weight: 400; margin: 0 0 16px; color: #fff; }
+.cta-band .fc-body { font-size: 15px; line-height: 1.6; color: #d5e0ec; max-width: 40em; margin: 0 0 26px; }
+.cta-band .firstcall-card a.button.primary { background: #fff; color: var(--ink-teal); border-color: #fff; }
+.cta-band .firstcall-card a.button.primary:hover { background: #eef4f6; border-color: #eef4f6; }
+.cta-band .firstcall-card .button-wrapper { margin: 0; }
+
+@media (width <= 768px) {
+  .cta-band .firstcall-grid { grid-template-columns: 1fr; gap: 16px; }
+  .cta-band .firstcall-stat, .cta-band .firstcall-card { padding: 28px; }
+  .cta-band .fc-num { font-size: 52px; }
+}

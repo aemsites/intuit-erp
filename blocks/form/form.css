@@ -1,0 +1,44 @@
+/* form — "Let's connect" lead form. Lifted from .connect / .cmp-connect / .cf */
+
+.section.form-container { background: #fff; padding: 20px 0 var(--section-y); text-align: center; }
+.form-container .default-content-wrapper { text-align: center; }
+.form-container .default-content-wrapper h2 { font-size: 38px; line-height: 1.1; font-weight: 400; color: var(--heading); margin: 0 0 16px; }
+.form-container .default-content-wrapper p { font-size: 16px; color: var(--text); max-width: 44em; margin: 0 auto 12px; line-height: 1.55; }
+.form-container .default-content-wrapper p a { color: var(--primary); text-decoration: underline; }
+.form-container .default-content-wrapper:last-of-type p { font-size: 12px; color: var(--text-muted); }
+
+/* fields */
+.form .lead-fields { display: flex; align-items: center; justify-content: center; gap: 20px; flex-wrap: nowrap; margin-top: 40px; }
+.form .ff { flex: 1; min-width: 0; text-align: left; display: flex; flex-direction: column; }
+.form .ff span { display: none; }
+.form .ff input {
+  width: 100%; height: 46px; border: 0; border-bottom: 1px solid var(--line); background: transparent;
+  padding: 0 4px; font-size: 15px; font-family: inherit; color: var(--text);
+}
+.form .ff input::placeholder { color: var(--text-muted); }
+.form .ff input:focus { outline: none; border-bottom-color: var(--primary); }
+.form .form-submit {
+  flex: 0 0 auto; height: 46px; padding: 0 30px; border: 0; border-radius: var(--radius);
+  background: var(--navy); color: #fff; font-size: 16px; font-weight: 600; cursor: pointer;
+}
+.form .form-submit:hover { background: var(--navy-hover); }
+
+/* ---- .boxed (compare) — labelled boxed inputs ---- */
+.form.boxed .lead-fields { flex-wrap: wrap; gap: 14px; align-items: flex-end; }
+.form.boxed .ff { flex: 1 1 150px; min-width: 130px; }
+.form.boxed .ff span { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
+.form.boxed .ff input { height: 48px; border: 1px solid var(--line); border-radius: 4px; padding: 0 14px; }
+.form.boxed .ff input:focus { outline: 2px solid var(--primary); outline-offset: -1px; border-color: var(--primary); }
+.form.boxed .form-submit { height: 48px; }
+
+/* ---- .sky (erp-solutions) — sky band + hidden labels ---- */
+.section.form-container:has(.form.sky) { background: #eaf3fb; padding: var(--section-y) 0; }
+.form.sky .lead-fields { flex-wrap: nowrap; align-items: flex-end; }
+.form.sky .ff span { display: none; }
+.form.sky .ff input { background: #fff; }
+
+@media (width <= 768px) {
+  .form-container .default-content-wrapper h2 { font-size: 28px; }
+  .form .lead-fields { flex-direction: column; align-items: stretch; gap: 14px; }
+  .form .ff, .form .form-submit { width: 100%; }
+}

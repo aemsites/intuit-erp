@@ -1,0 +1,18 @@
+/* feature-grid — 2x2 image cards (index). Lifted from .features */
+.section.feature-grid-container { background: #eef2f6; padding: var(--section-y) 0; }
+.feature-grid-container .default-content-wrapper h2 {
+  font-size: 38px; line-height: 1.15; font-weight: 400; color: var(--heading);
+  text-align: center; margin: 0 0 44px;
+}
+.feature-grid .feature-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; }
+.feature-grid .feature-card { background: #fff; border-radius: var(--radius-card); overflow: hidden; box-shadow: 0 2px 12px rgb(0 0 0 / 5%); }
+.feature-grid .feature-img { background: #dfeafc; padding: 26px 26px 0; }
+.feature-grid .feature-img img { width: 100%; border-radius: 8px 8px 0 0; }
+.feature-grid .feature-body { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 22px 26px 26px; }
+.feature-grid .feature-title { font-size: 20px; font-weight: 500; color: var(--heading); margin: 0; }
+.feature-grid .feature-plus { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); background: #fff; font-size: 20px; color: var(--text); line-height: 1; flex: 0 0 auto; cursor: pointer; }
+
+@media (width <= 768px) {
+  .feature-grid-container .default-content-wrapper h2 { font-size: 28px; }
+  .feature-grid .feature-grid { grid-template-columns: 1fr; }
+}
