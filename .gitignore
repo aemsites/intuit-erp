@@ -1,5 +1,15 @@
 node_modules/
 qa/
-.env*
+.env
+.env.*
+.da-deploy/
 stardust/prototypes/shared/media/
 .DS_Store
+*.log
+# local scratch/dev helpers
+probe.mjs
+shot.mjs
+cropit.mjs
+scratch_crop.mjs
+qa-harness.mjs
+qa-probe.mjs

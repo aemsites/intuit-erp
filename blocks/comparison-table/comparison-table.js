@@ -10,9 +10,9 @@
  * The column-header row is repeated inside every group, matching the prototype.
  * CSS: blocks/comparison-table/comparison-table.css
  */
-function valueCell(text) {
+function valueCell(cell) {
   const td = document.createElement('td');
-  const t = text.trim();
+  const t = cell.textContent.trim();
   const low = t.toLowerCase();
   if (t === '✓' || low === 'yes' || low === 'check') {
     td.className = 'yes';
@@ -22,7 +22,7 @@ function valueCell(text) {
     td.innerHTML = '&ndash;';
   } else {
     td.className = 'txt';
-    td.textContent = t;
+    td.innerHTML = cell.innerHTML;
   }
   return td;
 }
@@ -74,7 +74,7 @@ export default function decorate(block) {
     th.scope = 'row';
     th.textContent = cells[0].textContent.trim();
     tr.append(th);
-    cells.slice(1).forEach((c) => tr.append(valueCell(c.textContent)));
+    cells.slice(1).forEach((c) => tr.append(valueCell(c)));
     tbody.append(tr);
   });
 

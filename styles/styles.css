@@ -41,6 +41,12 @@
   --link-hover-color: #055393;
   --line: #d4d7dc;
 
+  /* aliases used by lifted block CSS (prototype token names) */
+  --text: var(--text-color);
+  --heading: var(--heading-color);
+  --sand: var(--light-color);
+  --ink-teal: #0d333f;
+
   /* fonts */
   --body-font-family: "AvenirNext forINTUIT", "Mulish Variable", mulish-fallback, arial, sans-serif;
   --heading-font-family: var(--body-font-family);

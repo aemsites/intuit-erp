@@ -54,7 +54,11 @@ async function fetchFragment(path) {
 export default async function decorate(block) {
   const navMeta = getMetadata('nav');
   const navPath = navMeta ? new URL(navMeta, window.location).pathname : '/nav';
-  block.innerHTML = (await fetchFragment(navPath)) || CHROME;
+  // Prefer the authored fragment only when it preserves the chrome markup;
+  // the EDS content pipeline strips the ies-* classes, so fall back to the
+  // canonical embedded chrome for a faithful, reliable render.
+  const frag = await fetchFragment(navPath);
+  block.innerHTML = (frag && frag.includes('ies-nav')) ? frag : CHROME;
 
   // sticky-nav scroll-morph
   const nav = block.querySelector('#iesNav, .ies-nav');

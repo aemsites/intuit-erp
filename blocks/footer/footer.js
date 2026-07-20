@@ -131,5 +131,9 @@ async function fetchFragment(path) {
 export default async function decorate(block) {
   const footerMeta = getMetadata('footer');
   const footerPath = footerMeta ? new URL(footerMeta, window.location).pathname : '/footer';
-  block.innerHTML = (await fetchFragment(footerPath)) || CHROME;
+  // Prefer the authored fragment only when it preserves the chrome markup;
+  // the EDS content pipeline strips the ies-* classes, so fall back to the
+  // canonical embedded chrome for a faithful, reliable render.
+  const frag = await fetchFragment(footerPath);
+  block.innerHTML = (frag && frag.includes('ies-footer')) ? frag : CHROME;
 }
