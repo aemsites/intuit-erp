@@ -438,7 +438,14 @@ img { display: block; max-width: 100%; height: auto; }
 .schedule-modal-close:hover { background: var(--line); }
 .schedule-modal-loading { text-align: center; color: var(--text-muted); padding: 40px 0; }
 .schedule-modal-body .section.form-container { padding: 0; background: transparent; }
-.schedule-modal-body .form .lead-fields { flex-direction: column; align-items: stretch; gap: 14px; margin-top: 24px; }
+/* .form.boxed matches blocks/form/form.css's ".form.boxed .lead-fields" in
+   specificity (3 classes each); since form.css loads after this stylesheet,
+   that rule wins on a tie. Match ".form.boxed" explicitly so this wins instead. */
+.schedule-modal-body .form.boxed .lead-fields,
+.schedule-modal-body .form .lead-fields {
+  flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 14px; margin-top: 24px;
+}
+.schedule-modal-body .form.boxed .ff, .schedule-modal-body .form .ff { flex: 1 1 auto; min-width: 0; }
 .schedule-modal-body .form .form-submit { width: 100%; }
 body.modal-open { overflow: hidden; }
 
