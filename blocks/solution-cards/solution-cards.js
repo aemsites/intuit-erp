@@ -4,8 +4,12 @@
  * One row per card, cells:
  *   1. eyebrow   2. title   3. lead   4. bullets (<ul>)   5. CTA (<strong><a>)   6. media <img>
  * First card = blue skin, second = sand.
+ * A CTA linking to "#schedule" opens the shared "Schedule a call" modal
+ * (scripts/schedule-modal.js) instead of navigating.
  * CSS: blocks/solution-cards/solution-cards.css
  */
+import { openScheduleModal } from '../../scripts/schedule-modal.js';
+
 function pic(cell) {
   if (!cell) return null;
   const p = cell.querySelector('picture, img');
@@ -45,6 +49,12 @@ export default function decorate(block) {
     }
     if (cells[4] && cells[4].querySelector('a')) {
       [...cells[4].childNodes].forEach((n) => card.append(n));
+      card.querySelectorAll('a[href="#schedule"]').forEach((a) => {
+        a.addEventListener('click', (e) => {
+          e.preventDefault();
+          openScheduleModal();
+        });
+      });
     }
     const shot = pic(cells[5]);
     if (shot) {

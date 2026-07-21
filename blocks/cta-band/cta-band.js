@@ -3,8 +3,12 @@
  * One row, cells:
  *   1. big stat number   2. stat description
  *   3. eyebrow   4. heading   5. body   6. CTA (<strong><a>)
+ * A CTA linking to "#schedule" opens the shared "Schedule a call" modal
+ * (scripts/schedule-modal.js) instead of navigating.
  * CSS: blocks/cta-band/cta-band.css
  */
+import { openScheduleModal } from '../../scripts/schedule-modal.js';
+
 export default function decorate(block) {
   const row = block.querySelector(':scope > div');
   if (!row) return;
@@ -42,4 +46,11 @@ export default function decorate(block) {
 
   grid.append(stat, card);
   block.replaceChildren(grid);
+
+  card.querySelectorAll('a[href="#schedule"]').forEach((a) => {
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      openScheduleModal();
+    });
+  });
 }
