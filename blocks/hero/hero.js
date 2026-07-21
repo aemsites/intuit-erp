@@ -8,40 +8,32 @@
  *   4. CTAs paragraph          (optional — <em><a> secondary, <strong><a> primary)
  *   5. media <img>             (optional; omitted on the .hero.form variant)
  *
- * Variant .hero.form (pricing) renders a static "Let's connect" lead card on
- * the right instead of the media image.
+ * Variant .hero.form (pricing) loads the shared "Let's connect" fragment
+ * (content/fragments/schedule-call.html) into a card on the right instead of
+ * the media image.
  * A CTA linking to "#schedule" (index page) opens the shared "Schedule a
  * call" modal (scripts/schedule-modal.js) instead of navigating.
  * CSS: blocks/hero/hero.css
  */
 import { openScheduleModal } from '../../scripts/schedule-modal.js';
+import { loadFragment } from '../fragment/fragment.js';
 
-function leadCard() {
+const SCHEDULE_CALL_FRAGMENT = '/fragments/schedule-call';
+
+async function leadCard() {
   const wrap = document.createElement('div');
   wrap.className = 'hero-form';
-  wrap.innerHTML = `
-    <div class="lead-card">
-      <h2 class="lead-title">Let's connect</h2>
-      <p class="lead-sub">Schedule a call to see if Intuit Enterprise Suite is a good fit.</p>
-      <a class="lead-acct" href="https://erp.intuit.com/accountant/">I'm an accountant</a>
-      <div class="lead-row">
-        <label class="field"><input type="text" placeholder="First name*"></label>
-        <label class="field"><input type="text" placeholder="Last name*"></label>
-      </div>
-      <label class="field"><input type="text" placeholder="Business name*"></label>
-      <label class="field"><input type="email" placeholder="Business email*"></label>
-      <label class="field"><input type="tel" placeholder="Business phone*"></label>
-      <div class="recaptcha">
-        <div class="rc-left"><span class="rc-box" aria-hidden="true"></span><span class="rc-label">I'm not a robot</span></div>
-        <div class="rc-brand"><div class="rc-logo" aria-hidden="true"></div><div class="rc-brandtext">reCAPTCHA</div><div class="rc-terms">Privacy - Terms</div></div>
-      </div>
-      <p class="lead-legal">When you schedule a call, you agree to be contacted by Intuit about related products and services. See the <a href="https://www.intuit.com/privacy/statement/">Global Privacy Statement</a> for details.</p>
-      <button class="btn btn-primary lead-submit" type="button">Schedule a call</button>
-    </div>`;
+  wrap.innerHTML = '<p class="hero-form-loading">Loading…</p>';
+  const fragment = await loadFragment(SCHEDULE_CALL_FRAGMENT);
+  if (fragment) {
+    wrap.replaceChildren(...fragment.childNodes);
+  } else {
+    wrap.querySelector('.hero-form-loading').textContent = 'Sorry, something went wrong loading this form. Please try again.';
+  }
   return wrap;
 }
 
-export default function decorate(block) {
+export default async function decorate(block) {
   const isForm = block.classList.contains('form');
   const rows = [...block.children];
 
@@ -102,7 +94,7 @@ export default function decorate(block) {
   grid.append(copy);
 
   if (isForm) {
-    grid.append(leadCard());
+    grid.append(await leadCard());
   } else if (mediaEl) {
     const media = document.createElement('div');
     media.className = 'hero-media';
