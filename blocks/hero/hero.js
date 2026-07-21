@@ -59,18 +59,33 @@ export default function decorate(block) {
 
   // classify copy children
   const heading = copy.querySelector('h1, h2, h3');
+  const ctaParas = [];
   copy.querySelectorAll('p').forEach((p) => {
-    if (p.classList.contains('button-wrapper')) {
-      p.classList.add('hero-actions');
-      return;
-    }
-    if (p.querySelector('a')) return;
+    if (p.querySelector('a')) { ctaParas.push(p); return; }
     if (heading && p.compareDocumentPosition(heading) & Node.DOCUMENT_POSITION_FOLLOWING) {
       p.classList.add('eyebrow', 'hero-eyebrow');
     } else {
       p.classList.add('hero-lede');
     }
   });
+
+  // Buttonize CTAs ourselves so it works whether or not the global decorator
+  // fired (two links in one <p> is not buttonized by vanilla EDS). <strong> =>
+  // primary, <em> => secondary; collect all CTAs into one .hero-actions row.
+  if (ctaParas.length) {
+    const actions = document.createElement('p');
+    actions.className = 'button-wrapper hero-actions';
+    ctaParas.forEach((p) => {
+      p.querySelectorAll('a').forEach((a) => {
+        const wrap = a.closest('strong, em');
+        const variant = wrap && wrap.tagName === 'EM' ? 'secondary' : 'primary';
+        a.classList.add('button', variant);
+        actions.append(a);
+      });
+    });
+    ctaParas[0].replaceWith(actions);
+    ctaParas.slice(1).forEach((p) => p.remove());
+  }
 
   const grid = document.createElement('div');
   grid.className = 'hero-grid';

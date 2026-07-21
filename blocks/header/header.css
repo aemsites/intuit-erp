@@ -26,8 +26,8 @@ header .header .container { max-width: var(--container); margin: 0 auto; padding
 .header .nav-main button, .header .nav-main a { background: none; border: 0; padding: 2px 0; font-size: 16px; font-weight: 400; color: var(--heading); display: inline-flex; align-items: center; gap: 6px; font-family: inherit; cursor: pointer; }
 .header .nav-main .caret { width: 8px; height: 8px; border-right: 2px solid var(--primary); border-bottom: 2px solid var(--primary); transform: rotate(45deg); margin-top: -3px; }
 .header .nav-right { margin-left: auto; display: flex; align-items: center; gap: 22px; }
-.header .nav-cta { height: 40px; padding: 0 24px; font-size: 16px; font-weight: 600; background: var(--navy); color: #fff; border-color: var(--navy); }
-.header .nav-cta:hover { color: #fff; text-decoration: none; }
+.header .nav-cta { display: inline-flex; align-items: center; justify-content: center; height: 40px; padding: 0 24px; font-size: 16px; font-weight: 600; line-height: 1; border: 2px solid var(--navy); border-radius: var(--radius); background: var(--navy); color: #fff; text-decoration: none; }
+.header .nav-cta:hover { color: #fff; text-decoration: none; background: var(--navy-hover); border-color: var(--navy-hover); }
 .header .nav-toggle { display: none; }
 
 /* events bar */
