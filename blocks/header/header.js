@@ -29,18 +29,18 @@ const NAV = [
       {
         heading: 'Automation & AI',
         links: [
-          { text: 'AI agents', href: 'https://erp.intuit.com/ai-agents/' },
-          { text: 'Workforce automation', href: 'https://erp.intuit.com/workforce-automation/' },
-          { text: 'Payments & bill pay', href: 'https://erp.intuit.com/automation-tools/payments-bill-pay/' },
+          { text: 'AI agents', href: '/ai-agents', internal: true },
+          { text: 'Workforce automation', href: '/workforce-automation', internal: true },
+          { text: 'Payments & bill pay', href: '/payments-bill-pay', internal: true },
         ],
       },
       {
         heading: 'Finance & reporting',
         links: [
-          { text: 'Multi-entity consolidation', href: 'https://erp.intuit.com/accounting/multi-entity/' },
-          { text: 'Business intelligence & reporting', href: 'https://erp.intuit.com/accounting/business-intelligence-reports/' },
-          { text: 'Business forecasting', href: 'https://erp.intuit.com/accounting/business-forecasting/' },
-          { text: 'Custom ERP', href: 'https://erp.intuit.com/custom-erp/' },
+          { text: 'Multi-entity consolidation', href: '/multi-entity', internal: true },
+          { text: 'Business intelligence & reporting', href: '/business-intelligence-reports', internal: true },
+          { text: 'Business forecasting', href: '/business-forecasting', internal: true },
+          { text: 'Custom ERP', href: '/custom-erp', internal: true },
         ],
       },
     ],
@@ -52,9 +52,9 @@ const NAV = [
       {
         heading: 'By industry',
         links: [
-          { text: 'Construction', href: 'https://erp.intuit.com/construction/' },
-          { text: 'Professional services', href: 'https://erp.intuit.com/professional-services/' },
-          { text: 'Financial services', href: 'https://erp.intuit.com/financial-services/' },
+          { text: 'Construction', href: '/construction', internal: true },
+          { text: 'Professional services', href: '/professional-services', internal: true },
+          { text: 'Financial services', href: '/financial-services', internal: true },
         ],
       },
     ],
