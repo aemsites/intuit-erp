@@ -2,11 +2,15 @@
  * header — Intuit Enterprise Suite chrome: brand strip + sticky nav + cyan
  * events bar. Reads the authorable /nav fragment when available (deployed),
  * otherwise renders the built-in chrome so it always paints (local QA + preview).
- * Sticky-nav scroll-morph, the click-to-open flyout menus, and the mobile menu
- * toggle are wired here.
+ * Sticky-nav scroll-morph, the click-to-open flyout menus, the mobile menu
+ * toggle, and the "Schedule a call" modal are wired here.
  * CSS: blocks/header/header.css · source fragment: content/nav.html
+ * Modal content: content/fragments/schedule-call.html (DA fragment, editable)
  */
 import { getMetadata } from '../../scripts/aem.js';
+import { loadFragment } from '../fragment/fragment.js';
+
+const SCHEDULE_CALL_FRAGMENT = '/fragments/schedule-call';
 
 // Primary nav model. `menu` entries open a flyout panel; `link` entries navigate
 // directly. Links marked `internal: true` resolve to pages that already live on
@@ -134,7 +138,12 @@ const CHROME = `
     <a class="nav-logo" href="/"><span class="ies-intuit">INTUIT</span><span class="ies-word">Enterprise&nbsp;Suite</span></a>
     ${NAV_MAIN}
     <div class="nav-right">
-      <a class="btn btn-primary nav-cta" href="#schedule">Schedule a call</a>
+      <button type="button" class="btn btn-primary nav-cta">
+        <span>Schedule a call</span>
+        <svg class="nav-cta-icon" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false">
+          <path d="M3 8h9M8.5 3.5 13 8l-4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
       <button class="nav-toggle" aria-label="Menu"><span></span><span></span><span></span></button>
     </div>
   </div>
@@ -188,6 +197,61 @@ function wireFlyouts(block) {
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeAll(); });
 }
 
+// "Schedule a call" modal — content is a DA fragment (content/fragments/schedule-call.html)
+// so the form can be edited without a code change. Built once, fetched once, reused.
+let scheduleOverlay;
+let scheduleBody;
+let scheduleLoad;
+let scheduleLastFocused;
+
+function onScheduleKeydown(e) {
+  if (e.key === 'Escape') closeScheduleModal();
+}
+
+function closeScheduleModal() {
+  if (!scheduleOverlay) return;
+  scheduleOverlay.classList.remove('is-open');
+  document.body.classList.remove('modal-open');
+  document.removeEventListener('keydown', onScheduleKeydown);
+  if (scheduleLastFocused) scheduleLastFocused.focus();
+}
+
+function buildScheduleModal() {
+  if (scheduleOverlay) return scheduleOverlay;
+  const overlay = document.createElement('div');
+  overlay.className = 'schedule-modal-overlay';
+  overlay.innerHTML = `
+    <div class="schedule-modal" role="dialog" aria-modal="true" aria-label="Schedule a call">
+      <button type="button" class="schedule-modal-close" aria-label="Close">&times;</button>
+      <div class="schedule-modal-body">
+        <p class="schedule-modal-loading">Loading&hellip;</p>
+      </div>
+    </div>`;
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) closeScheduleModal(); });
+  overlay.querySelector('.schedule-modal-close').addEventListener('click', closeScheduleModal);
+  document.body.append(overlay);
+  scheduleOverlay = overlay;
+  scheduleBody = overlay.querySelector('.schedule-modal-body');
+  return overlay;
+}
+
+async function openScheduleModal() {
+  scheduleLastFocused = document.activeElement;
+  const overlay = buildScheduleModal();
+  overlay.classList.add('is-open');
+  document.body.classList.add('modal-open');
+  document.addEventListener('keydown', onScheduleKeydown);
+  overlay.querySelector('.schedule-modal-close').focus();
+
+  if (!scheduleLoad) scheduleLoad = loadFragment(SCHEDULE_CALL_FRAGMENT);
+  const fragment = await scheduleLoad;
+  if (fragment) {
+    scheduleBody.replaceChildren(...fragment.childNodes);
+  } else {
+    scheduleBody.textContent = 'Sorry, something went wrong loading this form. Please try again.';
+  }
+}
+
 export default async function decorate(block) {
   const navMeta = getMetadata('nav');
   const navPath = navMeta ? new URL(navMeta, window.location).pathname : '/nav';
@@ -216,4 +280,9 @@ export default async function decorate(block) {
       toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
     });
   }
+
+  // "Schedule a call" — opens the modal instead of navigating
+  block.querySelectorAll('.nav-cta').forEach((btn) => {
+    btn.addEventListener('click', () => openScheduleModal());
+  });
 }
