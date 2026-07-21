@@ -11,6 +11,17 @@ import {
   loadCSS,
   buildBlock,
 } from './aem.js';
+import { runExperimentation } from './experiment-loader.js';
+
+// no custom prod domain configured yet — treat only the .aem.live CDN as
+// prod (no pill overlay); .aem.page previews and localhost stay in debug mode.
+const experimentationConfig = {
+  isProd: () => window.location.hostname.endsWith('.aem.live'),
+  audiences: {
+    mobile: () => window.innerWidth < 600,
+    desktop: () => window.innerWidth >= 600,
+  },
+};
 
 if (window.trustedTypes && window.trustedTypes.createPolicy) {
   const innerTT = window.trustedTypes.createPolicy('tt-inner', {
@@ -162,6 +173,7 @@ export function decorateMain(main) {
 async function loadEager(doc) {
   document.documentElement.lang = 'en';
   decorateTemplateAndTheme();
+  await runExperimentation(doc, experimentationConfig);
   const main = doc.querySelector('main');
   if (main) {
     decorateMain(main);
