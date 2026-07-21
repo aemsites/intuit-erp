@@ -246,7 +246,10 @@ async function openScheduleModal() {
   if (!scheduleLoad) scheduleLoad = loadFragment(SCHEDULE_CALL_FRAGMENT);
   const fragment = await scheduleLoad;
   if (fragment) {
-    scheduleBody.replaceChildren(...fragment.childNodes);
+    // Clone rather than move: fragment is cached and reused on every open,
+    // and replaceChildren() with the live nodes would strip them out of
+    // fragment on the first use, leaving it (and every reopen after) empty.
+    scheduleBody.replaceChildren(...[...fragment.childNodes].map((n) => n.cloneNode(true)));
   } else {
     scheduleBody.textContent = 'Sorry, something went wrong loading this form. Please try again.';
   }
