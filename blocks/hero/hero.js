@@ -77,7 +77,7 @@ export default function decorate(block) {
     actions.className = 'button-wrapper hero-actions';
     ctaParas.forEach((p) => {
       p.querySelectorAll('a').forEach((a) => {
-        const wrap = a.closest('strong, em');
+        const wrap = a.closest('strong, em') || a.querySelector('strong, em');
         const variant = wrap && wrap.tagName === 'EM' ? 'secondary' : 'primary';
         a.classList.add('button', variant);
         actions.append(a);
