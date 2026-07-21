@@ -1,0 +1,29 @@
+{
+  "personality": "confident, precise, outcome-led, institutional, approachable",
+  "tone": "Enterprise-grade but not corporate-cold. Copy is quantified and outcome-led (\"Close in days, not months\", \"299% ROI\") rather than adjective-heavy, and reads calm and institutional rather than hyped.",
+  "vocabulary": [
+    "multi-entity",
+    "consolidation",
+    "intercompany eliminations",
+    "consolidated reporting",
+    "AI-native",
+    "audit-ready",
+    "close",
+    "month-end close",
+    "migration",
+    "onboarding",
+    "Customer Success Manager",
+    "ProAdvisor",
+    "entities",
+    "dimensional reporting",
+    "workforce automation"
+  ],
+  "avoidWords": ["disrupt", "revolutionary", "game-changing", "synergy", "unicorn", "hustle", "supercharge"],
+  "sentenceStyle": "Short, declarative claims backed by a number or timeframe (\"Close in days, not months\", \"90% set up in less than 30 days\"). Body copy runs 1-2 sentences before a proof point or CTA. Avoids stacked adjectives and hype.",
+  "toneByContext": {
+    "recommendations": "Direct and specific — names the exact capability (e.g. multi-entity consolidation, audit-ready controls) and the outcome it produces, not generic benefit language.",
+    "comparisons": "Even-handed and factual — presents Intuit Enterprise Suite against QuickBooks Desktop Enterprise or legacy ERPs on concrete axes (cost, time-to-value, control) rather than disparaging alternatives.",
+    "educational": "Calm and precise, defines terms simply (e.g. what an ERP is) without condescension, aimed at a finance leader who is time-constrained but not a novice.",
+    "discovery": "Inviting but grounded — frames breadth of capability (\"solutions that match your complexity\") without overselling."
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "title": "Find the right fit for your finance team",
+  "subtitle": "Ask about consolidation, automation, migration, or anything else on your mind.",
+  "placeholder": "e.g. Compare Intuit Enterprise Suite vs QuickBooks Desktop",
+  "suggestions": [
+    { "type": "explore", "label": "Multi-entity consolidation", "query": "Show me multi-entity consolidation" },
+    { "type": "explore", "label": "AI Finance Agent", "query": "Tell me about the AI Finance Agent" },
+    { "type": "explore", "label": "vs QuickBooks Desktop", "query": "Compare Intuit Enterprise Suite vs QuickBooks Desktop Enterprise" },
+    { "type": "explore", "label": "Best ERP for construction", "query": "Best ERP for a construction company" },
+    { "type": "explore", "label": "Audit-ready controls", "query": "Tell me about audit-ready controls" },
+    { "type": "explore", "label": "Migrating from QuickBooks Online", "query": "How do I migrate from QuickBooks Online" },
+    { "type": "explore", "label": "Nonprofit consolidated reporting", "query": "Best solution for nonprofit consolidated reporting" },
+    { "type": "explore", "label": "What connects to IES", "query": "What apps connect to Intuit Enterprise Suite" },
+    { "type": "explore", "label": "ProAdvisor pricing", "query": "What is ProAdvisor preferred pricing" },
+    { "type": "explore", "label": "Fastest way to close", "query": "What's the fastest way to close the books" },
+    { "type": "explore", "label": "Multi-entity vs single-entity", "query": "Compare multi-entity consolidation vs single-entity accounting" },
+    { "type": "explore", "label": "How long is migration", "query": "How long does migration take" }
+  ]
+}

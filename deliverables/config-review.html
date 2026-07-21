@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Config Review - erp.intuit.com</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root { --bg:#1C1917;--fg:#F5F0E8;--accent:#FF3D00;--teal:#00E5A0;--dim:rgba(245,240,232,0.55);--faint:rgba(245,240,232,0.06);--border:rgba(245,240,232,0.1); }
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.6;padding:32px;max-width:1100px;margin:0 auto}
+h1{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:600;margin-bottom:8px}
+h2{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;margin:32px 0 12px;color:var(--teal)}
+h3{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--dim);margin:16px 0 8px}
+h4{font-size:10px;font-weight:600;color:var(--dim);margin:10px 0 4px;text-transform:uppercase;letter-spacing:0.08em}
+.section{margin-bottom:24px;padding:16px;border:1px solid var(--border);border-radius:10px}
+.stats{display:flex;gap:16px;margin-bottom:24px;flex-wrap:wrap}
+.stat{text-align:center;padding:16px 24px;background:var(--faint);border-radius:10px;border:1px solid var(--border)}
+.stat-num{font-size:24px;font-weight:700;color:var(--accent)}
+.stat-label{font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:0.1em;margin-top:4px}
+
+/* Products */
+.products-list{display:flex;flex-direction:column;gap:8px}
+.product-card{border:1px solid var(--border);border-radius:10px;overflow:hidden;cursor:pointer;transition:all 0.2s}
+.product-card:hover{border-color:rgba(0,229,160,0.3)}
+.product-card.expanded{border-color:var(--teal)}
+.product-card.expanded .expand-icon{transform:rotate(45deg)}
+.product-card.expanded .product-detail{display:grid}
+.product-summary{display:flex;align-items:center;gap:12px;padding:10px 14px}
+.product-thumb{width:48px;height:48px;object-fit:cover;border-radius:8px;background:#fff}
+.product-info{flex:1}
+.product-name{font-weight:600;font-size:11px}
+.product-meta{font-size:9px;color:var(--dim);display:flex;gap:8px;margin-top:2px}
+.product-meta .cat{text-transform:uppercase;letter-spacing:0.05em}
+.product-meta .price{color:var(--teal);font-weight:600}
+.product-meta .img-count{color:var(--accent)}
+.expand-icon{font-size:16px;color:var(--dim);transition:transform 0.2s}
+.product-detail{display:none;grid-template-columns:1fr 1fr;gap:16px;padding:16px;border-top:1px solid var(--border);background:var(--faint)}
+.product-gallery{display:flex;gap:8px;flex-wrap:wrap}
+.gallery-img{width:120px;height:120px;object-fit:cover;border-radius:8px;background:#fff;border:1px solid var(--border)}
+.product-desc{font-size:11px;color:var(--fg);margin-bottom:10px;line-height:1.6}
+.product-detail ul{list-style:none;padding:0;margin:4px 0 12px}
+.product-detail li{font-size:10px;color:var(--dim);padding:2px 0}
+.product-detail li::before{content:"→ ";color:var(--teal)}
+.kw{display:inline-block;padding:2px 8px;background:rgba(0,229,160,0.08);border:1px solid rgba(0,229,160,0.2);border-radius:12px;font-size:9px;color:var(--teal);margin:2px}
+.kw-list{margin:4px 0 8px}
+.product-persona,.product-usecase{font-size:9px;color:var(--dim);margin:4px 0}
+.product-link{display:inline-block;margin-top:8px;font-size:10px;color:var(--teal);text-decoration:none;border:1px solid rgba(0,229,160,0.3);padding:4px 12px;border-radius:20px}
+.product-link:hover{background:rgba(0,229,160,0.1)}
+
+/* Personas */
+.personas-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.persona-card{padding:12px;background:var(--faint);border-radius:8px;border:1px solid var(--border)}
+.persona-name{font-weight:600;color:var(--teal);margin-bottom:4px}
+.persona-desc{font-size:10px;color:var(--fg);margin-bottom:6px}
+.persona-kw{font-size:9px;color:var(--dim)}
+
+/* Suggestions */
+.suggestion-chip{display:inline-flex;flex-direction:column;padding:8px 14px;background:var(--faint);border:1px solid var(--border);border-radius:12px;margin:4px;max-width:320px;vertical-align:top}
+.sug-label{font-weight:600;font-size:11px;color:var(--fg)}
+.sug-query{font-size:9px;color:var(--dim);margin-top:2px}
+.sug-meta{margin-bottom:12px;padding:10px;background:var(--faint);border-radius:8px;border:1px solid var(--border)}
+.sug-meta span{display:block;margin:2px 0}
+.sug-meta .sug-title{font-weight:600;color:var(--fg)}
+.sug-meta .sug-sub{color:var(--dim);font-size:10px}
+.sug-meta .sug-ph{color:var(--accent);font-size:10px;font-style:italic}
+
+/* Brand */
+.brand-section p{margin-bottom:8px}
+
+/* Use cases */
+.usecase-card{padding:10px;background:var(--faint);border-radius:8px;border:1px solid var(--border);margin-bottom:8px}
+.usecase-name{font-weight:600;color:var(--fg);margin-bottom:4px}
+.usecase-desc{font-size:10px;color:var(--dim);margin-bottom:4px}
+.usecase-kw{font-size:9px;color:var(--dim)}
+
+/* Features */
+.feature-chip{display:inline-block;padding:4px 12px;background:var(--faint);border:1px solid var(--border);border-radius:20px;font-size:10px;color:var(--fg);margin:3px}
+</style>
+</head>
+<body>
+<h1>Config Review: <span style="color:var(--accent)">erp.intuit.com</span></h1>
+<p style="color:var(--dim);margin-bottom:24px">Review all configuration before deploy. Click any product to expand details and see all assets.</p>
+
+<div class="stats">
+  <div class="stat"><div class="stat-num">5</div><div class="stat-label">Products</div></div>
+  <div class="stat"><div class="stat-num">16</div><div class="stat-label">Images</div></div>
+  <div class="stat"><div class="stat-num">5</div><div class="stat-label">Personas</div></div>
+  <div class="stat"><div class="stat-num">12</div><div class="stat-label">Suggestions</div></div>
+  <div class="stat"><div class="stat-num">6</div><div class="stat-label">Features</div></div>
+  <div class="stat"><div class="stat-num">5</div><div class="stat-label">Use Cases</div></div>
+</div>
+
+<h2>Products (5)</h2>
+<div class="section">
+  <p style="color:var(--dim);margin-bottom:12px;font-size:10px">Click any product to expand — see all images, description, features, keywords, and metadata.</p>
+  <div class="products-list"><div class="product-card">
+  <div class="product-summary">
+    <img src="https://main--aem-intuit-erp--keepthebyte.aem.page/media/b45522c9-bento-default-intercompany-transactions-featur.png" alt="Multi-Entity Consolidation" class="product-thumb" loading="lazy">
+    <div class="product-info">
+      <div class="product-name">Multi-Entity Consolidation</div>
+      <div class="product-meta"><span class="cat">Consolidation &amp; Reporting</span><span class="price">$</span><span class="img-count">4 imgs</span></div>
+    </div>
+    <div class="expand-icon">+</div>
+  </div>
+  <div class="product-detail">
+    <div class="product-gallery"><img src="https://main--aem-intuit-erp--keepthebyte.aem.page/media/b45522c9-bento-default-intercompany-transactions-featur.png" alt="Multi-Entity Consolidation" class="gallery-img" loading="lazy"><img src="https://main--aem-intuit-erp--keepthebyte.aem.page/media/ceefe2ab-ies-multi-entity-management-screen-icom-202409.png" alt="Multi-Entity Consolidation" class="gallery-img" loading="lazy"><img src="https://main--aem-intuit-erp--keepthebyte.aem.page/media/fdabb4ee-consolidated-view-dashboard-product-ies-us-435x244.png" alt="Multi-Entity Consolidation" class="gallery-img" loading="lazy"><img src="https://main--aem-intuit-erp--keepthebyte.aem.page/media/3dc90872-laptop-dashboard-photo-ies-us-555x416-2x.jpg" alt="Multi-Entity Consolidation" class="gallery-img" loading="lazy"></div>
+    <div class="product-detail-content">
+      <p class="product-desc">Manage users, entities, locations, and subsidiaries from a single sign-in. Create intercompany transactions with automatic eliminations and stay focused with consolidated reports across your business.</p>
+      <h4>Features</h4><ul><li>Single sign-in across all entities</li><li>Automatic intercompany eliminations</li><li>Consolidated multi-entity reports</li></ul>
+      <h4>Highlights</h4><ul><li>260+ entities managed on one platform (Diocese of Brooklyn)</li><li>2-hour migration consolidating all 8 entities (HFMM Legacy Group)</li></ul>
+      <div class="product-tags">
+        <h4>Keywords</h4><div class='kw-list'><span class="kw">multi-entity</span><span class="kw">consolidation</span><span class="kw">consolidated reporting</span><span class="kw">intercompany eliminations</span><span class="kw">subsidiaries</span><span class="kw">multiple entities</span><span class="kw">entity management</span><span class="kw">single source of truth</span></div>
+        <div class='product-persona'>Persona: <strong>multi-entity-finance-leader</strong></div>
+        <div class='product-usecase'>Use case: <strong>consolidated-reporting</strong></div>
+      </div>
+      <a href="https://erp.intuit.com/erp-solutions/" class="product-link" target="_blank">View on site &rarr;</a>
+    </div>
+  </div>
+</div><div class="product-card">
+  <div class="product-summary">
+    <img src="https://main--aem-intuit-erp--keepthebyte.aem.page/media/149e7127-bento-default-finance-ai-feature-ies-664x350-2.png" alt="AI Finance Agents" class="product-thumb" loading="lazy">
+    <div class="product-info">
+      <div class="product-name">AI Finance Agents</div>
+      <div class="product-meta"><span class="cat">AI &amp; Automation</span><span class="price">$</span><span class="img-count">3 imgs</span></div>
+    </div>
+    <div class="expand-icon">+</div>
+  </div>
+  <div class="product-detail">
+    <div class="product-gallery"><img src="https://main--aem-intuit-erp--keepthebyte.aem.page/media/149e7127-bento-default-finance-ai-feature-ies-664x350-2.png" alt="AI Finance Agents" class="gallery-img" loading="lazy"><img src="https://main--aem-intuit-erp--keepthebyte.aem.page/media/cbead55b-ies-finance-agent-screen-icom-20250730-488x471.png" alt="AI Finance Agents" class="gallery-img" loading="lazy"><img src="https://main--aem-intuit-erp--keepthebyte.aem.page/media/4d950361-web-product-ies-us-profibility-dashboard-with-ai-2.png" alt="AI Finance Agents" class="gallery-img" loading="lazy"></div>
+    <div class="product-detail-content">
+      <p class="product-desc">Automate manual bookkeeping tasks like updating transactions, combining data, and reviewing for inconsistencies with the Accounting Agent, plus get a faster month-end close with accuracy you can count on. The Finance Agent steers clear of costly mistakes with monthly financial summaries, budget insights, and performance monitoring.</p>
+      <h4>Features</h4><ul><li>Accounting Agent automates bookkeeping tasks</li><li>Finance Agent delivers monthly summaries + budget insights</li><li>AI cleans and standardizes financial data during migration</li></ul>
+      <h4>Highlights</h4><ul><li>66% faster month-end close (Lango)</li><li>20 hours per week saved on manual reporting (Sylvia Brafman Mental Health Center)</li></ul>
+      <div class="product-tags">
+        <h4>Keywords</h4><div class='kw-list'><span class="kw">AI</span><span class="kw">automation</span><span class="kw">accounting agent</span><span class="kw">finance agent</span><span class="kw">month-end close</span><span class="kw">budget insights</span><span class="kw">automate bookkeeping</span><span class="kw">financial planning</span></div>
+        <div class='product-persona'>Persona: <strong>quickbooks-upgrader</strong></div>
+        <div class='product-usecase'>Use case: <strong>ai-assisted-close</strong></div>
+      </div>
+      <a href="https://erp.intuit.com/ai-agents/" class="product-link" target="_blank">View on site &rarr;</a>
+    </div>
+  </div>
+</div><div class="product-card">
+  <div class="product-summary">
+    <img src="https://main--aem-intuit-erp--keepthebyte.aem.page/media/68666ed7-bento-default-audit-ready-controls-feature-ies.png" alt="Audit-Ready Controls" class="product-thumb" loading="lazy">
+    <div class="product-info">
+      <div class="product-name">Audit-Ready Controls</div>
+      <div class="product-meta"><span class="cat">Controls &amp; Governance</span><span class="price">$</span><span class="img-count">3 imgs</span></div>
+    </div>
+    <div class="expand-icon">+</div>
+  </div>
+  <div class="product-detail">
+    <div class="product-gallery"><img src="https://main--aem-intuit-erp--keepthebyte.aem.page/media/68666ed7-bento-default-audit-ready-controls-feature-ies.png" alt="Audit-Ready Controls" class="gallery-img" loading="lazy"><img src="https://main--aem-intuit-erp--keepthebyte.aem.page/media/a814eea7-ies-custom-role-screen-icom-20250731-320x339.p.png" alt="Audit-Ready Controls" class="gallery-img" loading="lazy"><img src="https://main--aem-intuit-erp--keepthebyte.aem.page/media/600a48db-invoice-automated-workflow-feature-ies-us-668x668-.png" alt="Audit-Ready Controls" class="gallery-img" loading="lazy"></div>
+    <div class="product-detail-content">
+      <p class="product-desc">Assign users to standard user roles or create custom roles with permissions you control, ensuring each team member sees only what they need. Role-based permissions, parallel approvals, and transaction approval history build governance into your workflow so your audit trail is complete.</p>
+      <h4>Features</h4><ul><li>Custom roles and permissions</li><li>Parallel approval workflows</li><li>Complete transaction approval history</li></ul>
+      <h4>Highlights</h4><ul><li>Every entry tracked, every action auditable</li></ul>
+      <div class="product-tags">
+        <h4>Keywords</h4><div class='kw-list'><span class="kw">audit-ready</span><span class="kw">controls</span><span class="kw">custom roles</span><span class="kw">permissions</span><span class="kw">approval workflow</span><span class="kw">governance</span><span class="kw">compliance</span><span class="kw">audit trail</span></div>
+        <div class='product-persona'>Persona: <strong>nonprofit-professional-services</strong></div>
+        <div class='product-usecase'>Use case: <strong>audit-ready-governance</strong></div>
+      </div>
+      <a href="https://erp.intuit.com/erp-solutions/" class="product-link" target="_blank">View on site &rarr;</a>
+    </div>
+  </div>
+</div><div class="product-card">
+  <div class="product-summary">
+    <img src="https://main--aem-intuit-erp--keepthebyte.aem.page/media/4ce2bb71-quickbooks-migration-product-ies-en-us-2x.png" alt="QuickBooks &amp; Legacy ERP Migration" class="product-thumb" loading="lazy">
+    <div class="product-info">
+      <div class="product-name">QuickBooks &amp; Legacy ERP Migration</div>
+      <div class="product-meta"><span class="cat">Migration &amp; Onboarding</span><span class="price">$</span><span class="img-count">4 imgs</span></div>
+    </div>
+    <div class="expand-icon">+</div>
+  </div>
+  <div class="product-detail">
+    <div class="product-gallery"><img src="https://main--aem-intuit-erp--keepthebyte.aem.page/media/4ce2bb71-quickbooks-migration-product-ies-en-us-2x.png" alt="QuickBooks &amp; Legacy ERP Migration" class="gallery-img" loading="lazy"><img src="https://main--aem-intuit-erp--keepthebyte.aem.page/media/a375547f-quickbooks-desktop-enterprise-dashboard-produc.png" alt="QuickBooks &amp; Legacy ERP Migration" class="gallery-img" loading="lazy"><img src="https://main--aem-intuit-erp--keepthebyte.aem.page/media/e2b97e54-construction-person-hardhat-smiling-photo-icom.png" alt="QuickBooks &amp; Legacy ERP Migration" class="gallery-img" loading="lazy"><img src="https://main--aem-intuit-erp--keepthebyte.aem.page/media/873c2125-web-photo-ies-us-customer-service-professional-2x..jpg" alt="QuickBooks &amp; Legacy ERP Migration" class="gallery-img" loading="lazy"></div>
+    <div class="product-detail-content">
+      <p class="product-desc">Whether migrating from QuickBooks Online, QuickBooks Desktop, or a non-Intuit solution, a dedicated Professional Services team scopes the work, migrates your data, and a Customer Success Manager runs guided onboarding so you go live in days, not months.</p>
+      <h4>Features</h4><ul><li>Your Chart of Accounts, classes, and vendor lists come with you</li><li>AI cleans and standardizes your data before go-live</li><li>Dedicated Customer Success Manager for onboarding</li></ul>
+      <h4>Highlights</h4><ul><li>Many customers reach first value in as few as 14 days</li><li>2-hour migration consolidating all 8 entities (HFMM Legacy Group)</li></ul>
+      <div class="product-tags">
+        <h4>Keywords</h4><div class='kw-list'><span class="kw">QuickBooks migration</span><span class="kw">upgrade from QuickBooks</span><span class="kw">legacy ERP switch</span><span class="kw">data migration</span><span class="kw">onboarding</span><span class="kw">go-live</span><span class="kw">QuickBooks Desktop Enterprise</span></div>
+        <div class='product-persona'>Persona: <strong>quickbooks-upgrader</strong></div>
+        <div class='product-usecase'>Use case: <strong>erp-migration</strong></div>
+      </div>
+      <a href="https://erp.intuit.com/migration/" class="product-link" target="_blank">View on site &rarr;</a>
+    </div>
+  </div>
+</div><div class="product-card">
+  <div class="product-summary">
+    <img src="https://main--aem-intuit-erp--keepthebyte.aem.page/media/b8f7aaaa-web-product-ies-us-integration-hub-2x.png" alt="Connected Ecosystem &amp; Workforce" class="product-thumb" loading="lazy">
+    <div class="product-info">
+      <div class="product-name">Connected Ecosystem &amp; Workforce</div>
+      <div class="product-meta"><span class="cat">Platform &amp; Integrations</span><span class="price">$</span><span class="img-count">2 imgs</span></div>
+    </div>
+    <div class="expand-icon">+</div>
+  </div>
+  <div class="product-detail">
+    <div class="product-gallery"><img src="https://main--aem-intuit-erp--keepthebyte.aem.page/media/b8f7aaaa-web-product-ies-us-integration-hub-2x.png" alt="Connected Ecosystem &amp; Workforce" class="gallery-img" loading="lazy"><img src="https://main--aem-intuit-erp--keepthebyte.aem.page/media/f253f6c6-web-photo-ies-us-business-owner-benefits-2x.jpg" alt="Connected Ecosystem &amp; Workforce" class="gallery-img" loading="lazy"></div>
+    <div class="product-detail-content">
+      <p class="product-desc">The platform includes native workforce and money management solutions, so there&#x27;s no need for additional systems. Connect seamlessly to an open ecosystem of best-in-class applications, including payroll, payments, and 850+ specialized apps.</p>
+      <h4>Features</h4><ul><li>Native payroll, payments, and people management</li><li>Connects to 850+ specialized apps</li><li>Custom product bundle and agreement per business</li></ul>
+      <h4>Highlights</h4><ul><li>Up to 60% off list price with ProAdvisor preferred pricing</li></ul>
+      <div class="product-tags">
+        <h4>Keywords</h4><div class='kw-list'><span class="kw">integrations</span><span class="kw">payroll</span><span class="kw">payments</span><span class="kw">workforce management</span><span class="kw">ecosystem</span><span class="kw">apps</span><span class="kw">connect</span><span class="kw">open platform</span></div>
+        <div class='product-persona'>Persona: <strong>proadvisor-accountant</strong></div>
+        <div class='product-usecase'>Use case: <strong>ecosystem-integration</strong></div>
+      </div>
+      <a href="https://erp.intuit.com/pricing/" class="product-link" target="_blank">View on site &rarr;</a>
+    </div>
+  </div>
+</div></div>
+</div>
+
+<h2>Brand Voice</h2>
+<div class="section brand-section">
+  <h3>Personality</h3><p>confident, precise, outcome-led, institutional, approachable</p>
+  <h3>Tone</h3><p>Enterprise-grade but not corporate-cold. Copy is quantified and outcome-led (&quot;Close in days, not months&quot;, &quot;299% ROI&quot;) rather than adjective-heavy, and reads calm and institutional rather than hyped.</p>
+  <h3>Vocabulary</h3><p style="color:var(--teal)">multi-entity, consolidation, intercompany eliminations, consolidated reporting, AI-native, audit-ready, close, month-end close, migration, onboarding</p>
+  <h3>Avoid Words</h3><p style="color:var(--accent)">disrupt, revolutionary, game-changing, synergy, unicorn, hustle, supercharge</p>
+</div>
+
+<h2>Personas (5)</h2>
+<div class="section"><div class="personas-grid"><div class="persona-card">
+  <div class="persona-name">Multi-Entity Finance Leader</div>
+  <div class="persona-desc">CFO or controller running finance for a company with multiple entities, subsidiaries, or locations who needs one consolidated view instead of stitching together spreadsheets.</div>
+  <div class="persona-kw">Keywords: multi-entity, consolidation, subsidiaries, intercompany, consolidated reporting, multiple entities, close process, entity management</div>
+</div><div class="persona-card">
+  <div class="persona-name">QuickBooks Upgrader</div>
+  <div class="persona-desc">Finance lead who has outgrown QuickBooks Online or Desktop and is evaluating an ERP step-up, wanting a fast, low-disruption migration rather than a rebuild.</div>
+  <div class="persona-kw">Keywords: quickbooks, outgrown quickbooks, upgrade, switch erp, quickbooks desktop enterprise, migration, go live, step up from quickbooks</div>
+</div><div class="persona-card">
+  <div class="persona-name">Construction &amp; Field Services Controller</div>
+  <div class="persona-desc">Controller at a project-based construction, field-services, or trades business (the site&#x27;s most common named customer segment) weighing Intuit Enterprise Suite against other mid-market ERPs.</div>
+  <div class="persona-kw">Keywords: construction, field services, job costing, project accounting, trades business, specialty contractor, month-end close, compare erp</div>
+</div><div class="persona-card">
+  <div class="persona-name">Accountant / ProAdvisor</div>
+  <div class="persona-desc">Accounting firm or ProAdvisor helping clients evaluate and migrate to Intuit Enterprise Suite, motivated by preferred pricing and hands-on migration support.</div>
+  <div class="persona-kw">Keywords: proadvisor, accountant, accounting firm, client migration, professional services, preferred pricing, im an accountant</div>
+</div><div class="persona-card">
+  <div class="persona-name">Nonprofit &amp; Professional Services Finance Director</div>
+  <div class="persona-desc">Finance director at a nonprofit or professional-services organization managing multiple locations, grants, or programs, prioritizing governance, compliance, and audit-readiness over deal pricing.</div>
+  <div class="persona-kw">Keywords: nonprofit, professional services, compliance, audit trail, grants, multi-location, governance, controls</div>
+</div></div></div>
+
+<h2>Use Cases (5)</h2>
+<div class="section"><div class="usecase-card">
+  <div class="usecase-name">Consolidated Multi-Entity Reporting</div>
+  <div class="usecase-desc">Rolling up financials across multiple entities, subsidiaries, or locations into one consolidated view without manual spreadsheet work.</div>
+  <div class='usecase-kw'>Keywords: consolidated reporting, roll up entities, multi-entity view, combine financials, entity reporting, consolidation</div>
+</div><div class="usecase-card">
+  <div class="usecase-name">AI-Assisted Month-End Close</div>
+  <div class="usecase-desc">Using the Accounting Agent and Finance Agent to automate bookkeeping tasks, catch inconsistencies, and speed up the monthly close.</div>
+  <div class='usecase-kw'>Keywords: month-end close, speed up close, automate bookkeeping, close faster, finance agent, accounting agent</div>
+</div><div class="usecase-card">
+  <div class="usecase-name">Audit-Ready Controls &amp; Governance</div>
+  <div class="usecase-desc">Setting up custom roles, permissions, and approval workflows so every transaction is tracked and the audit trail is complete.</div>
+  <div class='usecase-kw'>Keywords: audit trail, governance, custom roles, approval workflow, compliance, controls</div>
+</div><div class="usecase-card">
+  <div class="usecase-name">QuickBooks / Legacy ERP Migration</div>
+  <div class="usecase-desc">Moving off QuickBooks Online, QuickBooks Desktop, or a non-Intuit ERP with a guided, Professional-Services-led migration and onboarding.</div>
+  <div class='usecase-kw'>Keywords: migrate from quickbooks, switch erp, data migration, onboarding, go live, legacy erp</div>
+</div><div class="usecase-card">
+  <div class="usecase-name">Connected Ecosystem &amp; Workforce</div>
+  <div class="usecase-desc">Connecting native payroll, payments, and workforce tools with the broader app ecosystem instead of running separate point solutions.</div>
+  <div class='usecase-kw'>Keywords: integrations, payroll, payments, workforce, connect apps, point solutions</div>
+</div></div>
+
+<h2>Features (6)</h2>
+<div class="section"><div><span class="feature-chip">AI Automation</span><span class="feature-chip">Multi-Entity Consolidation</span><span class="feature-chip">Audit-Ready Controls</span><span class="feature-chip">Guided Migration &amp; Onboarding</span><span class="feature-chip">Open App Ecosystem</span><span class="feature-chip">Multi-Dimensional Reporting</span></div></div>
+
+<h2>Suggestions (12)</h2>
+<div class="section">
+  <div class="sug-meta">
+    <span class="sug-title">Find the right fit for your finance team</span>
+    <span class="sug-sub">Ask about consolidation, automation, migration, or anything else on your mind.</span>
+    <span class="sug-ph">Placeholder: "e.g. Compare Intuit Enterprise Suite vs QuickBooks Desktop"</span>
+  </div>
+  <div><div class="suggestion-chip"><span class="sug-label">Multi-entity consolidation</span><span class="sug-query">Show me multi-entity consolidation</span></div><div class="suggestion-chip"><span class="sug-label">AI Finance Agent</span><span class="sug-query">Tell me about the AI Finance Agent</span></div><div class="suggestion-chip"><span class="sug-label">vs QuickBooks Desktop</span><span class="sug-query">Compare Intuit Enterprise Suite vs QuickBooks Desktop Enterprise</span></div><div class="suggestion-chip"><span class="sug-label">Best ERP for construction</span><span class="sug-query">Best ERP for a construction company</span></div><div class="suggestion-chip"><span class="sug-label">Audit-ready controls</span><span class="sug-query">Tell me about audit-ready controls</span></div><div class="suggestion-chip"><span class="sug-label">Migrating from QuickBooks Online</span><span class="sug-query">How do I migrate from QuickBooks Online</span></div><div class="suggestion-chip"><span class="sug-label">Nonprofit consolidated reporting</span><span class="sug-query">Best solution for nonprofit consolidated reporting</span></div><div class="suggestion-chip"><span class="sug-label">What connects to IES</span><span class="sug-query">What apps connect to Intuit Enterprise Suite</span></div><div class="suggestion-chip"><span class="sug-label">ProAdvisor pricing</span><span class="sug-query">What is ProAdvisor preferred pricing</span></div><div class="suggestion-chip"><span class="sug-label">Fastest way to close</span><span class="sug-query">What&#x27;s the fastest way to close the books</span></div><div class="suggestion-chip"><span class="sug-label">Multi-entity vs single-entity</span><span class="sug-query">Compare multi-entity consolidation vs single-entity accounting</span></div><div class="suggestion-chip"><span class="sug-label">How long is migration</span><span class="sug-query">How long does migration take</span></div></div>
+</div>
+
+<h2>CTA Template</h2>
+<div class="section"><pre style="font-size:10px;color:var(--dim);overflow-x:auto;white-space:pre-wrap">{
+  &quot;html&quot;: &quot;&lt;div style=\&quot;background:linear-gradient(105deg,#00254a 0%,#053d6d 55%,#3b2f7a 100%);padding:56px 32px;text-align:center;border-radius:12px;margin:24px 0;\&quot;&gt;&lt;h2 style=\&quot;color:#ffffff;font-family:&#x27;AvenirNext forINTUIT&#x27;,Mulish,Helvetica,Arial,sans-serif;font-size:32px;font-weight:400;margin:0 0 12px;line-height:1.2;\&quot;&gt;{{title}}&lt;/h2&gt;&lt;p style=\&quot;color:#e6eef6;font-family:&#x27;AvenirNext forINTUIT&#x27;,Mulish,Helvetica,Arial,sans-serif;font-size:17px;margin:0 auto 28px;max-width:34em;line-height:1.5;\&quot;&gt;{{description}}&lt;/p&gt;&lt;a href=\&quot;{{href}}\&quot; style=\&quot;display:inline-block;background:#ffffff;color:#0d333f;font-family:&#x27;AvenirNext forINTUIT&#x27;,Mulish,Helvetica,Arial,sans-serif;font-size:16px;font-weight:600;padding:14px 32px;border-radius:4px;text-decoration:none;\&quot;&gt;{{buttonText}}&lt;/a&gt;&lt;/div&gt;&quot;,
+  &quot;slots&quot;: [
+    &quot;title&quot;,
+    &quot;description&quot;,
+    &quot;buttonText&quot;
+  ],
+  &quot;fallback&quot;: {
+    &quot;title&quot;: &quot;See what Intuit Enterprise Suite can do for your finance team&quot;,
+    &quot;description&quot;: &quot;Explore consolidation, automation, and migration support built for growing multi-entity businesses.&quot;,
+    &quot;buttonText&quot;: &quot;Schedule a call&quot;
+  }
+}</pre></div>
+
+<script>
+document.querySelectorAll('.product-card').forEach(card => {
+  card.addEventListener('click', () => card.classList.toggle('expanded'));
+});
+</script>
+</body>
+</html>

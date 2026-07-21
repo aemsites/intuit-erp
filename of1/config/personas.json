@@ -1,0 +1,82 @@
+[
+  {
+    "id": "multi-entity-finance-leader",
+    "name": "Multi-Entity Finance Leader",
+    "description": "CFO or controller running finance for a company with multiple entities, subsidiaries, or locations who needs one consolidated view instead of stitching together spreadsheets.",
+    "keywords": ["multi-entity", "consolidation", "subsidiaries", "intercompany", "consolidated reporting", "multiple entities", "close process", "entity management"],
+    "priorities": ["consolidated reporting across entities", "automatic intercompany eliminations", "a single source of truth"],
+    "recommendedProducts": ["multi-entity-consolidation", "audit-ready-controls"],
+    "intentProfile": {
+      "explore": 0.3,
+      "research": 0.8,
+      "compare": 0.6,
+      "purchase": 0.4,
+      "deals": 0.2,
+      "support": 0.3
+    }
+  },
+  {
+    "id": "quickbooks-upgrader",
+    "name": "QuickBooks Upgrader",
+    "description": "Finance lead who has outgrown QuickBooks Online or Desktop and is evaluating an ERP step-up, wanting a fast, low-disruption migration rather than a rebuild.",
+    "keywords": ["quickbooks", "outgrown quickbooks", "upgrade", "switch erp", "quickbooks desktop enterprise", "migration", "go live", "step up from quickbooks"],
+    "priorities": ["fast, guided migration", "keep existing Chart of Accounts and lists", "avoid disruptive legacy ERP implementations"],
+    "recommendedProducts": ["quickbooks-legacy-migration", "ai-finance-agents"],
+    "intentProfile": {
+      "explore": 0.4,
+      "research": 0.5,
+      "compare": 0.5,
+      "purchase": 0.8,
+      "deals": 0.2,
+      "support": 0.3
+    }
+  },
+  {
+    "id": "construction-field-services-controller",
+    "name": "Construction & Field Services Controller",
+    "description": "Controller at a project-based construction, field-services, or trades business (the site's most common named customer segment) weighing Intuit Enterprise Suite against other mid-market ERPs.",
+    "keywords": ["construction", "field services", "job costing", "project accounting", "trades business", "specialty contractor", "month-end close", "compare erp"],
+    "priorities": ["faster month-end close", "project-based accounting across jobs", "proof from similar construction customers"],
+    "recommendedProducts": ["multi-entity-consolidation", "ai-finance-agents"],
+    "intentProfile": {
+      "explore": 0.4,
+      "research": 0.6,
+      "compare": 0.8,
+      "purchase": 0.4,
+      "deals": 0.3,
+      "support": 0.2
+    }
+  },
+  {
+    "id": "proadvisor-accountant",
+    "name": "Accountant / ProAdvisor",
+    "description": "Accounting firm or ProAdvisor helping clients evaluate and migrate to Intuit Enterprise Suite, motivated by preferred pricing and hands-on migration support.",
+    "keywords": ["proadvisor", "accountant", "accounting firm", "client migration", "professional services", "preferred pricing", "im an accountant"],
+    "priorities": ["ProAdvisor preferred pricing", "professional services support for client migrations", "an open ecosystem of apps clients already use"],
+    "recommendedProducts": ["connected-ecosystem", "quickbooks-legacy-migration"],
+    "intentProfile": {
+      "explore": 0.2,
+      "research": 0.5,
+      "compare": 0.4,
+      "purchase": 0.3,
+      "deals": 0.7,
+      "support": 0.8
+    }
+  },
+  {
+    "id": "nonprofit-professional-services",
+    "name": "Nonprofit & Professional Services Finance Director",
+    "description": "Finance director at a nonprofit or professional-services organization managing multiple locations, grants, or programs, prioritizing governance, compliance, and audit-readiness over deal pricing.",
+    "keywords": ["nonprofit", "professional services", "compliance", "audit trail", "grants", "multi-location", "governance", "controls"],
+    "priorities": ["audit-ready controls and complete approval history", "consolidated reporting across programs or locations", "role-based permissions for oversight"],
+    "recommendedProducts": ["audit-ready-controls", "multi-entity-consolidation"],
+    "intentProfile": {
+      "explore": 0.3,
+      "research": 0.6,
+      "compare": 0.4,
+      "purchase": 0.3,
+      "deals": 0.2,
+      "support": 0.7
+    }
+  }
+]

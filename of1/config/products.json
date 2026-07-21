@@ -1,0 +1,175 @@
+[
+  {
+    "id": "multi-entity-consolidation",
+    "name": "Multi-Entity Consolidation",
+    "category": "Consolidation & Reporting",
+    "price": "",
+    "currency": "USD",
+    "images": [
+      "https://main--aem-intuit-erp--keepthebyte.aem.page/media/b45522c9-bento-default-intercompany-transactions-featur.png",
+      "https://main--aem-intuit-erp--keepthebyte.aem.page/media/ceefe2ab-ies-multi-entity-management-screen-icom-202409.png",
+      "https://main--aem-intuit-erp--keepthebyte.aem.page/media/fdabb4ee-consolidated-view-dashboard-product-ies-us-435x244.png",
+      "https://main--aem-intuit-erp--keepthebyte.aem.page/media/3dc90872-laptop-dashboard-photo-ies-us-555x416-2x.jpg"
+    ],
+    "url": "https://erp.intuit.com/erp-solutions/",
+    "description": "Manage users, entities, locations, and subsidiaries from a single sign-in. Create intercompany transactions with automatic eliminations and stay focused with consolidated reports across your business.",
+    "features": [
+      "Single sign-in across all entities",
+      "Automatic intercompany eliminations",
+      "Consolidated multi-entity reports"
+    ],
+    "highlights": [
+      "260+ entities managed on one platform (Diocese of Brooklyn)",
+      "2-hour migration consolidating all 8 entities (HFMM Legacy Group)"
+    ],
+    "persona": "multi-entity-finance-leader",
+    "useCase": "consolidated-reporting",
+    "keywords": [
+      "multi-entity",
+      "consolidation",
+      "consolidated reporting",
+      "intercompany eliminations",
+      "subsidiaries",
+      "multiple entities",
+      "entity management",
+      "single source of truth"
+    ]
+  },
+  {
+    "id": "ai-finance-agents",
+    "name": "AI Finance Agents",
+    "category": "AI & Automation",
+    "price": "",
+    "currency": "USD",
+    "images": [
+      "https://main--aem-intuit-erp--keepthebyte.aem.page/media/149e7127-bento-default-finance-ai-feature-ies-664x350-2.png",
+      "https://main--aem-intuit-erp--keepthebyte.aem.page/media/cbead55b-ies-finance-agent-screen-icom-20250730-488x471.png",
+      "https://main--aem-intuit-erp--keepthebyte.aem.page/media/4d950361-web-product-ies-us-profibility-dashboard-with-ai-2.png"
+    ],
+    "url": "https://erp.intuit.com/ai-agents/",
+    "description": "Automate manual bookkeeping tasks like updating transactions, combining data, and reviewing for inconsistencies with the Accounting Agent, plus get a faster month-end close with accuracy you can count on. The Finance Agent steers clear of costly mistakes with monthly financial summaries, budget insights, and performance monitoring.",
+    "features": [
+      "Accounting Agent automates bookkeeping tasks",
+      "Finance Agent delivers monthly summaries + budget insights",
+      "AI cleans and standardizes financial data during migration"
+    ],
+    "highlights": [
+      "66% faster month-end close (Lango)",
+      "20 hours per week saved on manual reporting (Sylvia Brafman Mental Health Center)"
+    ],
+    "persona": "quickbooks-upgrader",
+    "useCase": "ai-assisted-close",
+    "keywords": [
+      "AI",
+      "automation",
+      "accounting agent",
+      "finance agent",
+      "month-end close",
+      "budget insights",
+      "automate bookkeeping",
+      "financial planning"
+    ]
+  },
+  {
+    "id": "audit-ready-controls",
+    "name": "Audit-Ready Controls",
+    "category": "Controls & Governance",
+    "price": "",
+    "currency": "USD",
+    "images": [
+      "https://main--aem-intuit-erp--keepthebyte.aem.page/media/68666ed7-bento-default-audit-ready-controls-feature-ies.png",
+      "https://main--aem-intuit-erp--keepthebyte.aem.page/media/a814eea7-ies-custom-role-screen-icom-20250731-320x339.p.png",
+      "https://main--aem-intuit-erp--keepthebyte.aem.page/media/600a48db-invoice-automated-workflow-feature-ies-us-668x668-.png"
+    ],
+    "url": "https://erp.intuit.com/erp-solutions/",
+    "description": "Assign users to standard user roles or create custom roles with permissions you control, ensuring each team member sees only what they need. Role-based permissions, parallel approvals, and transaction approval history build governance into your workflow so your audit trail is complete.",
+    "features": [
+      "Custom roles and permissions",
+      "Parallel approval workflows",
+      "Complete transaction approval history"
+    ],
+    "highlights": [
+      "Every entry tracked, every action auditable"
+    ],
+    "persona": "nonprofit-professional-services",
+    "useCase": "audit-ready-governance",
+    "keywords": [
+      "audit-ready",
+      "controls",
+      "custom roles",
+      "permissions",
+      "approval workflow",
+      "governance",
+      "compliance",
+      "audit trail"
+    ]
+  },
+  {
+    "id": "quickbooks-legacy-migration",
+    "name": "QuickBooks & Legacy ERP Migration",
+    "category": "Migration & Onboarding",
+    "price": "",
+    "currency": "USD",
+    "images": [
+      "https://main--aem-intuit-erp--keepthebyte.aem.page/media/4ce2bb71-quickbooks-migration-product-ies-en-us-2x.png",
+      "https://main--aem-intuit-erp--keepthebyte.aem.page/media/a375547f-quickbooks-desktop-enterprise-dashboard-produc.png",
+      "https://main--aem-intuit-erp--keepthebyte.aem.page/media/e2b97e54-construction-person-hardhat-smiling-photo-icom.png",
+      "https://main--aem-intuit-erp--keepthebyte.aem.page/media/873c2125-web-photo-ies-us-customer-service-professional-2x..jpg"
+    ],
+    "url": "https://erp.intuit.com/migration/",
+    "description": "Whether migrating from QuickBooks Online, QuickBooks Desktop, or a non-Intuit solution, a dedicated Professional Services team scopes the work, migrates your data, and a Customer Success Manager runs guided onboarding so you go live in days, not months.",
+    "features": [
+      "Your Chart of Accounts, classes, and vendor lists come with you",
+      "AI cleans and standardizes your data before go-live",
+      "Dedicated Customer Success Manager for onboarding"
+    ],
+    "highlights": [
+      "Many customers reach first value in as few as 14 days",
+      "2-hour migration consolidating all 8 entities (HFMM Legacy Group)"
+    ],
+    "persona": "quickbooks-upgrader",
+    "useCase": "erp-migration",
+    "keywords": [
+      "QuickBooks migration",
+      "upgrade from QuickBooks",
+      "legacy ERP switch",
+      "data migration",
+      "onboarding",
+      "go-live",
+      "QuickBooks Desktop Enterprise"
+    ]
+  },
+  {
+    "id": "connected-ecosystem",
+    "name": "Connected Ecosystem & Workforce",
+    "category": "Platform & Integrations",
+    "price": "",
+    "currency": "USD",
+    "images": [
+      "https://main--aem-intuit-erp--keepthebyte.aem.page/media/b8f7aaaa-web-product-ies-us-integration-hub-2x.png",
+      "https://main--aem-intuit-erp--keepthebyte.aem.page/media/f253f6c6-web-photo-ies-us-business-owner-benefits-2x.jpg"
+    ],
+    "url": "https://erp.intuit.com/pricing/",
+    "description": "The platform includes native workforce and money management solutions, so there's no need for additional systems. Connect seamlessly to an open ecosystem of best-in-class applications, including payroll, payments, and 850+ specialized apps.",
+    "features": [
+      "Native payroll, payments, and people management",
+      "Connects to 850+ specialized apps",
+      "Custom product bundle and agreement per business"
+    ],
+    "highlights": [
+      "Up to 60% off list price with ProAdvisor preferred pricing"
+    ],
+    "persona": "proadvisor-accountant",
+    "useCase": "ecosystem-integration",
+    "keywords": [
+      "integrations",
+      "payroll",
+      "payments",
+      "workforce management",
+      "ecosystem",
+      "apps",
+      "connect",
+      "open platform"
+    ]
+  }
+]

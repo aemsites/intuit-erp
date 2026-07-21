@@ -1,0 +1,72 @@
+[
+  {
+    "id": "what-is-an-erp",
+    "question": "What is an ERP system?",
+    "answer": "An ERP (Enterprise Resource Planning) system is a comprehensive software solution for mid-to-large-size businesses. It integrates and manages key functions like marketing, accounting, sales, costing, strategic planning, and product delivery. As companies grow, leaders often evaluate their software and consider the benefits of adopting an ERP system to streamline operations and enhance efficiency.",
+    "relatedProducts": [],
+    "category": "general"
+  },
+  {
+    "id": "is-ies-an-erp",
+    "question": "Is Intuit Enterprise Suite an ERP?",
+    "answer": "Yes, Intuit Enterprise Suite is an AI-native ERP designed for growing companies. It offers a unified platform that goes beyond basic accounting, is simple and scalable, and integrates AI to provide automated experiences and intelligent business insights - consolidating finances, payroll, payments, workforce, and marketing into one connected platform, with robust multi-entity management for businesses with multiple entities or subsidiaries.",
+    "relatedProducts": ["multi-entity-consolidation", "ai-finance-agents"],
+    "category": "general"
+  },
+  {
+    "id": "company-size-fit",
+    "question": "What size company is Intuit Enterprise Suite built for?",
+    "answer": "Intuit Enterprise Suite is built for businesses with growing financial complexity - especially those managing multiple entities, locations, or projects. If your team has outgrown QuickBooks Online but isn't ready for the cost and complexity of a traditional ERP, Intuit Enterprise Suite is designed for how your business is structured today - and how it will scale tomorrow.",
+    "relatedProducts": ["multi-entity-consolidation"],
+    "category": "fit"
+  },
+  {
+    "id": "qbd-cloud-version",
+    "question": "Is this a cloud based version of QuickBooks Desktop Enterprise?",
+    "answer": "No. Intuit Enterprise Suite is a new category of software distinct from our QuickBooks Online and Desktop products. Think of it as the next evolution for businesses that have outgrown basic accounting and need a solution to scale operations.",
+    "relatedProducts": ["quickbooks-legacy-migration"],
+    "category": "fit"
+  },
+  {
+    "id": "best-fit-companies",
+    "question": "What types of companies is IES best suited for?",
+    "answer": "Intuit Enterprise Suite is ideal for multi-entity organizations that need a unified, consolidated view; project-based businesses including construction and specialty trades; product-based businesses such as manufacturing, wholesale, and distribution; and companies with dedicated finance teams that require audit-ready controls, advanced reporting, and AI-powered automation.",
+    "relatedProducts": ["multi-entity-consolidation", "audit-ready-controls"],
+    "category": "fit"
+  },
+  {
+    "id": "support-availability",
+    "question": "Is support available?",
+    "answer": "Yes, comprehensive support is a cornerstone of Intuit Enterprise Suite. Core product support is available Monday through Friday, 6 AM - 6 PM PT (excluding Saturday and Sunday). A dedicated Customer Success Manager is also assigned to your account and available during onboarding to answer questions and keep your business running.",
+    "relatedProducts": [],
+    "category": "support"
+  },
+  {
+    "id": "training-available",
+    "question": "Is there training on IES available?",
+    "answer": "Yes. While the platform is designed for ease of use, comprehensive training ensures your team hits the ground running, with a dedicated customer success manager guiding initial setup and a variety of tailored training plans from self-paced modules to live expert sessions.",
+    "relatedProducts": ["quickbooks-legacy-migration"],
+    "category": "support"
+  },
+  {
+    "id": "migration-ease",
+    "question": "How easy is it to migrate to Intuit Enterprise Suite?",
+    "answer": "Whether you're migrating from QuickBooks Online, QuickBooks Desktop, or a non-Intuit solution, Intuit is there to make the transition smooth, accurate, and effective.",
+    "relatedProducts": ["quickbooks-legacy-migration"],
+    "category": "migration"
+  },
+  {
+    "id": "upgrading-from-qbo",
+    "question": "Upgrading from QuickBooks Online - what happens to my data?",
+    "answer": "If you are upgrading from QuickBooks Online, your data is automatically migrated to Intuit Enterprise Suite and no additional work is needed. The Professional Services team will assist if you'd like to customize the migration, and your Customer Success Manager will schedule onboarding calls to make sure your team is set up for success.",
+    "relatedProducts": ["quickbooks-legacy-migration"],
+    "category": "migration"
+  },
+  {
+    "id": "switching-from-qbd-or-other",
+    "question": "Switching from QuickBooks Desktop or a non-Intuit solution - how does migration work?",
+    "answer": "The Professional Services team helps migrate your data to Intuit Enterprise Suite and configure it based on your needs, plus provides employee training resources. Your Account Manager arranges a scoping meeting with the Data Migration team, who provide an estimate; once approved, the team completes the migration and your Customer Success Manager begins onboarding, including help with third-party app integrations, workflows, and reports.",
+    "relatedProducts": ["quickbooks-legacy-migration", "connected-ecosystem"],
+    "category": "migration"
+  }
+]

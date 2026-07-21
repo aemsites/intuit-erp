@@ -1,0 +1,44 @@
+[
+  {
+    "id": "ai-automation",
+    "name": "AI Automation",
+    "description": "The Accounting Agent automates manual bookkeeping tasks and the Finance Agent surfaces monthly summaries, budget insights, and performance monitoring.",
+    "productIds": ["ai-finance-agents"],
+    "category": "automation"
+  },
+  {
+    "id": "multi-entity-consolidation",
+    "name": "Multi-Entity Consolidation",
+    "description": "Manage users, entities, locations, and subsidiaries from a single sign-in with automatic intercompany eliminations and consolidated reporting.",
+    "productIds": ["multi-entity-consolidation"],
+    "category": "consolidation"
+  },
+  {
+    "id": "audit-ready-controls",
+    "name": "Audit-Ready Controls",
+    "description": "Custom roles and permissions, parallel approvals, and complete transaction approval history so every entry is tracked and every action is auditable.",
+    "productIds": ["audit-ready-controls"],
+    "category": "governance"
+  },
+  {
+    "id": "guided-migration",
+    "name": "Guided Migration & Onboarding",
+    "description": "A dedicated Professional Services team and Customer Success Manager migrate your data and Chart of Accounts and get you live in days, not months.",
+    "productIds": ["quickbooks-legacy-migration"],
+    "category": "migration"
+  },
+  {
+    "id": "open-ecosystem",
+    "name": "Open App Ecosystem",
+    "description": "Native payroll, payments, and workforce tools plus connections to 850+ specialized apps, so there's no need for additional point solutions.",
+    "productIds": ["connected-ecosystem"],
+    "category": "platform"
+  },
+  {
+    "id": "multi-dimensional-reporting",
+    "name": "Multi-Dimensional Reporting",
+    "description": "Real-time, multi-dimensional reports and deeper insights across entities so finance leaders make faster decisions.",
+    "productIds": ["multi-entity-consolidation", "ai-finance-agents"],
+    "category": "reporting"
+  }
+]
