@@ -96,8 +96,7 @@ function linkHTML(l) {
   const cls = `flyout-link${l.internal ? ' is-internal' : ''}`;
   const tgt = l.internal ? '' : ' target="_blank" rel="noopener"';
   const desc = l.desc ? `<span class="flyout-desc">${l.desc}</span>` : '';
-  const tag = l.internal ? '<span class="flyout-tag">On this site</span>' : '';
-  return `<a class="${cls}" href="${l.href}"${tgt}><span class="flyout-label">${l.text}${tag}</span>${desc}</a>`;
+  return `<a class="${cls}" href="${l.href}"${tgt}><span class="flyout-label">${l.text}</span>${desc}</a>`;
 }
 
 function navItemHTML(entry, idx) {

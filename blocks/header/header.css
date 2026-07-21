@@ -40,7 +40,6 @@ header .header .container { max-width: var(--container); margin: 0 auto; padding
 .header .flyout-label { display: flex; align-items: flex-start; gap: 8px; font-size: 15px; font-weight: 600; color: var(--heading); line-height: 1.25; }
 .header .flyout-desc { display: block; font-size: 13px; color: var(--text-muted); margin-top: 2px; }
 .header .flyout-link:hover .flyout-label { color: var(--primary); }
-.header .flyout-tag { flex-shrink: 0; white-space: nowrap; margin-top: 1px; font-size: 10px; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; color: var(--primary); background: color-mix(in srgb, var(--primary) 10%, #fff); border-radius: 999px; padding: 2px 7px; }
 .header .nav-right { margin-left: auto; display: flex; align-items: center; gap: 22px; }
 .header .nav-cta { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 24px; font-size: 16px; font-weight: 600; line-height: 1; font-family: inherit; border: 2px solid var(--navy); border-radius: var(--radius); background: var(--navy); color: #fff; text-decoration: none; cursor: pointer; }
 .header .nav-cta:hover { color: #fff; text-decoration: none; background: var(--navy-hover); border-color: var(--navy-hover); }
