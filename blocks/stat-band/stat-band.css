@@ -1,6 +1,6 @@
-/* stat-band — stat figures (index light cards, pricing dark). Lifted from .stats / .perf */
+/* stat-band — stat figures (index light carousel, pricing dark static grid). Lifted from erp.intuit.com #outcomes-slider / .perf */
 
-/* --- default (index): sky cards on white --- */
+/* --- default (index): sky cards on white, paged carousel --- */
 .section.stat-band-container { background: #fff; padding: 64px 0 60px; }
 .stat-band-container .default-content-wrapper h2 {
   font-size: 30px; font-weight: 400; text-align: center; color: var(--heading);
@@ -10,17 +10,33 @@
   text-align: center; font-size: 12px; color: var(--text-soft); margin-top: 30px;
 }
 
-.stat-band .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px; }
+.stat-band { --cards-per-view: 4; }
+.stat-band .stats-viewport { width: 100%; overflow: hidden; }
+.stat-band .stats-track { display: flex; gap: 22px; transition: transform 0.4s ease; }
+.stat-band .stats-track .stat {
+  flex: 0 0 calc((100% - (var(--cards-per-view) - 1) * 22px) / var(--cards-per-view));
+  min-width: 0;
+}
 .stat-band .stat { background: var(--sky); border-radius: var(--radius-card); padding: 34px 28px; }
 .stat-band .stat-num { font-size: 56px; line-height: 1.02; font-weight: 400; color: var(--primary); margin-bottom: 14px; }
 .stat-band .stat-desc { font-size: 15px; color: var(--text); margin: 0 0 30px; line-height: 1.35; }
 .stat-band .stat-co { font-size: 14px; font-weight: 700; color: var(--heading); margin: 0 0 4px; }
 .stat-band .stat-seg { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-soft); margin: 0; }
 
-.stat-band .stats-dots { display: flex; gap: 10px; align-items: center; justify-content: center; margin-top: 14px; }
-.stat-band .stats-dots .dot { width: 8px; height: 8px; border-radius: 50%; background: #cbd1d6; }
+.stat-band .stats-controls { display: flex; align-items: center; justify-content: center; gap: 24px; margin-top: 24px; }
+.stat-band .stats-dots { display: flex; gap: 10px; align-items: center; }
+.stat-band .stats-dots .dot { width: 8px; height: 8px; border-radius: 50%; background: #cbd1d6; border: none; padding: 0; cursor: pointer; }
 .stat-band .stats-dots .dot.active { background: var(--navy); }
-.stat-band .stats-dots .arrow { margin-left: 8px; width: 30px; height: 30px; border-radius: 50%; background: var(--navy); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+.stat-band .stats-nav { display: flex; gap: 12px; }
+.stat-band .stats-arrow {
+  width: 40px; height: 40px; border-radius: 50%; border: none; background: var(--navy); color: #fff;
+  display: flex; align-items: center; justify-content: center; font-size: 18px; line-height: 1; cursor: pointer;
+}
+.stat-band .stats-arrow:disabled { background: #859299; opacity: 0.6; cursor: not-allowed; }
+
+@media (width <= 767px) { .stat-band { --cards-per-view: 1; } }
+@media (768px <= width <= 1023px) { .stat-band { --cards-per-view: 2; } }
+@media (1024px <= width <= 1279px) { .stat-band { --cards-per-view: 3; } }
 
 /* --- .stat-band.dark (pricing "Data-backed performance") --- */
 .section.stat-band-container:has(.stat-band.dark) { background: var(--navy); padding: var(--section-y) 0; }
@@ -28,13 +44,12 @@
 .stat-band-container:has(.stat-band.dark) .default-content-wrapper p {
   font-size: 11px; line-height: 1.6; color: #8ba4bd; margin-top: 56px; text-align: left;
 }
-.stat-band.dark .stats-grid { grid-template-columns: repeat(3, 1fr); gap: 40px; }
+.stat-band.dark .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; }
 .stat-band.dark .stat { background: none; border-radius: 0; padding: 0; text-align: center; }
 .stat-band.dark .stat-num { font-size: 80px; line-height: 1; color: var(--blue-light); margin-bottom: 22px; }
 .stat-band.dark .stat-desc { font-size: 15px; line-height: 1.5; color: #d5e0ec; max-width: 22em; margin: 0 auto; }
 
 @media (width <= 768px) {
-  .stat-band .stats-grid { grid-template-columns: 1fr 1fr; gap: 24px 16px; }
   .stat-band-container .default-content-wrapper h2 { font-size: 22px; }
   .stat-band.dark .stats-grid { grid-template-columns: 1fr; gap: 44px; }
   .stat-band.dark .stat-num { font-size: 64px; }

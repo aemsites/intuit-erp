@@ -74,7 +74,12 @@
       "nav",
       "footer"
     ],
-    "status": "content live in DA (editable in Experience Workspace)"
+    "status": "LIVE \u2014 all 7 docs previewed+published; images DA-hosted; editable in Experience Workspace",
+    "siteConfigRegistered": true,
+    "codeSync": "forced via admin code API; code+media+content serving",
+    "mediaUploaded": 33,
+    "liveHome": "https://main--aem-intuit-erp--keepthebyte.aem.live/",
+    "editHome": "https://da.live/edit#/keepthebyte/aem-intuit-erp/index"
   },
   "eds": {
     "runtime": "vanilla-eds",
