@@ -1,0 +1,6 @@
+/* cards — baseline layout only. Full OF1 generated-content styling lives in
+   blocks/of1/of1.css (.generated-section .cards), which is more specific. */
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+.cards > div { display: flex; flex-direction: column; }
+.cards picture { display: block; }
+.cards img { width: 100%; height: auto; display: block; }

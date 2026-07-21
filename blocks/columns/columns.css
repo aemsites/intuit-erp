@@ -1,0 +1,4 @@
+/* columns — baseline layout only. Full OF1 generated-content styling lives in
+   blocks/of1/of1.css (.generated-section .columns), which is more specific. */
+.columns > div { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; }
+.columns img { width: 100%; height: auto; display: block; }

@@ -1,0 +1,3 @@
+/* text — baseline layout only. Full OF1 generated-content styling lives in
+   blocks/of1/of1.css (.generated-section .text), which is more specific. */
+.text > div { max-width: 46em; margin: 0 auto; }
