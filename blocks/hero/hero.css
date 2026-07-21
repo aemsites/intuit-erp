@@ -40,26 +40,28 @@
 .hero .hero-media { position: relative; isolation: isolate; }
 .hero .hero-media img { position: relative; z-index: 1; width: 100%; border-radius: 12px; box-shadow: 0 24px 60px rgb(0 0 0 / 35%); }
 
-/* radial glow behind the hero image — lifted from erp.intuit.com's Lottie glow treatment */
+/* radial glow behind the hero image — adapted from erp.intuit.com's Lottie glow treatment.
+   Fades straight to 0% alpha (no opaque-navy midpoint) so it blends over the hero's
+   diagonal navy/teal/purple background instead of showing a seam against it. */
 .hero .hero-media::before,
 .hero .hero-media::after {
   content: ""; position: absolute; z-index: -1; pointer-events: none;
 }
 .hero .hero-media::before {
-  top: -20%; bottom: -20%; left: -25%; right: -25%;
+  top: -30%; bottom: -30%; left: -32%; right: -32%;
   background: radial-gradient(
-    ellipse 74% 68% at 50% 50%,
-    #33b5ff 0%, #0099ff 10%, #0077ff 22%, #0060d4 36%,
-    rgb(0 80 190 / 72%) 48%, rgb(0 37 74 / 38%) 62%, rgb(0 37 74 / 0%) 82%
+    ellipse 62% 58% at 50% 50%,
+    rgb(51 181 255 / 85%) 0%, rgb(0 153 255 / 55%) 32%, rgb(0 119 255 / 22%) 58%, rgb(0 119 255 / 0%) 80%
   );
+  filter: blur(64px);
 }
 .hero .hero-media::after {
-  top: -25%; bottom: -25%; left: -15%; right: -15%;
+  top: -14%; bottom: -14%; left: -16%; right: -16%;
   background: radial-gradient(
-    ellipse 82% 74% at 50% 50%,
-    rgb(51 181 255 / 100%) 0%, rgb(0 153 255 / 75%) 28%, rgb(0 119 255 / 45%) 48%, rgb(0 119 255 / 0%) 72%
+    ellipse 56% 52% at 50% 50%,
+    rgb(150 210 255 / 65%) 0%, rgb(51 181 255 / 30%) 45%, rgb(51 181 255 / 0%) 78%
   );
-  filter: blur(72px);
+  filter: blur(28px);
 }
 
 /* on-dark button treatment — primary = white fill, secondary = white outline */
