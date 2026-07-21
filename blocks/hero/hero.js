@@ -10,8 +10,11 @@
  *
  * Variant .hero.form (pricing) renders a static "Let's connect" lead card on
  * the right instead of the media image.
+ * A CTA linking to "#schedule" (index page) opens the shared "Schedule a
+ * call" modal (scripts/schedule-modal.js) instead of navigating.
  * CSS: blocks/hero/hero.css
  */
+import { openScheduleModal } from '../../scripts/schedule-modal.js';
 
 function leadCard() {
   const wrap = document.createElement('div');
@@ -86,6 +89,13 @@ export default function decorate(block) {
     ctaParas[0].replaceWith(actions);
     ctaParas.slice(1).forEach((p) => p.remove());
   }
+
+  copy.querySelectorAll('a[href="#schedule"]').forEach((a) => {
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      openScheduleModal();
+    });
+  });
 
   const grid = document.createElement('div');
   grid.className = 'hero-grid';

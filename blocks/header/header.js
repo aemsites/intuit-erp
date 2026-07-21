@@ -2,15 +2,13 @@
  * header — Intuit Enterprise Suite chrome: brand strip + sticky nav + cyan
  * events bar. Reads the authorable /nav fragment when available (deployed),
  * otherwise renders the built-in chrome so it always paints (local QA + preview).
- * Sticky-nav scroll-morph, the click-to-open flyout menus, the mobile menu
- * toggle, and the "Schedule a call" modal are wired here.
+ * Sticky-nav scroll-morph, the click-to-open flyout menus, and the mobile
+ * menu toggle are wired here. The nav CTA opens the shared "Schedule a call"
+ * modal (scripts/schedule-modal.js) — also used by the hero CTA.
  * CSS: blocks/header/header.css · source fragment: content/nav.html
- * Modal content: content/fragments/schedule-call.html (DA fragment, editable)
  */
 import { getMetadata } from '../../scripts/aem.js';
-import { loadFragment } from '../fragment/fragment.js';
-
-const SCHEDULE_CALL_FRAGMENT = '/fragments/schedule-call';
+import { openScheduleModal } from '../../scripts/schedule-modal.js';
 
 // Primary nav model. `menu` entries open a flyout panel; `link` entries navigate
 // directly. Links marked `internal: true` resolve to pages that already live on
@@ -195,64 +193,6 @@ function wireFlyouts(block) {
 
   document.addEventListener('click', (e) => { if (!nav.contains(e.target)) closeAll(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeAll(); });
-}
-
-// "Schedule a call" modal — content is a DA fragment (content/fragments/schedule-call.html)
-// so the form can be edited without a code change. Built once, fetched once, reused.
-let scheduleOverlay;
-let scheduleBody;
-let scheduleLoad;
-let scheduleLastFocused;
-
-function onScheduleKeydown(e) {
-  if (e.key === 'Escape') closeScheduleModal();
-}
-
-function closeScheduleModal() {
-  if (!scheduleOverlay) return;
-  scheduleOverlay.classList.remove('is-open');
-  document.body.classList.remove('modal-open');
-  document.removeEventListener('keydown', onScheduleKeydown);
-  if (scheduleLastFocused) scheduleLastFocused.focus();
-}
-
-function buildScheduleModal() {
-  if (scheduleOverlay) return scheduleOverlay;
-  const overlay = document.createElement('div');
-  overlay.className = 'schedule-modal-overlay';
-  overlay.innerHTML = `
-    <div class="schedule-modal" role="dialog" aria-modal="true" aria-label="Schedule a call">
-      <button type="button" class="schedule-modal-close" aria-label="Close">&times;</button>
-      <div class="schedule-modal-body">
-        <p class="schedule-modal-loading">Loading&hellip;</p>
-      </div>
-    </div>`;
-  overlay.addEventListener('click', (e) => { if (e.target === overlay) closeScheduleModal(); });
-  overlay.querySelector('.schedule-modal-close').addEventListener('click', closeScheduleModal);
-  document.body.append(overlay);
-  scheduleOverlay = overlay;
-  scheduleBody = overlay.querySelector('.schedule-modal-body');
-  return overlay;
-}
-
-async function openScheduleModal() {
-  scheduleLastFocused = document.activeElement;
-  const overlay = buildScheduleModal();
-  overlay.classList.add('is-open');
-  document.body.classList.add('modal-open');
-  document.addEventListener('keydown', onScheduleKeydown);
-  overlay.querySelector('.schedule-modal-close').focus();
-
-  if (!scheduleLoad) scheduleLoad = loadFragment(SCHEDULE_CALL_FRAGMENT);
-  const fragment = await scheduleLoad;
-  if (fragment) {
-    // Clone rather than move: fragment is cached and reused on every open,
-    // and replaceChildren() with the live nodes would strip them out of
-    // fragment on the first use, leaving it (and every reopen after) empty.
-    scheduleBody.replaceChildren(...[...fragment.childNodes].map((n) => n.cloneNode(true)));
-  } else {
-    scheduleBody.textContent = 'Sorry, something went wrong loading this form. Please try again.';
-  }
 }
 
 export default async function decorate(block) {
