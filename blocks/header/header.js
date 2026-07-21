@@ -2,10 +2,122 @@
  * header — Intuit Enterprise Suite chrome: brand strip + sticky nav + cyan
  * events bar. Reads the authorable /nav fragment when available (deployed),
  * otherwise renders the built-in chrome so it always paints (local QA + preview).
- * Sticky-nav scroll-morph and the mobile menu toggle are wired here.
+ * Sticky-nav scroll-morph, the click-to-open flyout menus, and the mobile menu
+ * toggle are wired here.
  * CSS: blocks/header/header.css · source fragment: content/nav.html
  */
 import { getMetadata } from '../../scripts/aem.js';
+
+// Primary nav model. `menu` entries open a flyout panel; `link` entries navigate
+// directly. Links marked `internal: true` resolve to pages that already live on
+// this site (they get an "On this site" tag); the rest fall back to the live
+// erp.intuit.com pages so the whole nav is clickable while the migration is in flight.
+const NAV = [
+  {
+    type: 'menu',
+    label: 'Capabilities',
+    columns: [
+      {
+        heading: 'Platform',
+        links: [
+          { text: 'ERP solutions overview', desc: 'The mid-market ERP for modern finance', href: '/erp-solutions', internal: true },
+          { text: 'Accounting', desc: 'Powerful, connected financial tools', href: '/accounting', internal: true },
+        ],
+      },
+      {
+        heading: 'Automation & AI',
+        links: [
+          { text: 'AI agents', href: 'https://erp.intuit.com/ai-agents/' },
+          { text: 'Workforce automation', href: 'https://erp.intuit.com/workforce-automation/' },
+          { text: 'Payments & bill pay', href: 'https://erp.intuit.com/automation-tools/payments-bill-pay/' },
+        ],
+      },
+      {
+        heading: 'Finance & reporting',
+        links: [
+          { text: 'Multi-entity consolidation', href: 'https://erp.intuit.com/accounting/multi-entity/' },
+          { text: 'Business intelligence & reporting', href: 'https://erp.intuit.com/accounting/business-intelligence-reports/' },
+          { text: 'Business forecasting', href: 'https://erp.intuit.com/accounting/business-forecasting/' },
+          { text: 'Custom ERP', href: 'https://erp.intuit.com/custom-erp/' },
+        ],
+      },
+    ],
+  },
+  {
+    type: 'menu',
+    label: 'Industry tools',
+    columns: [
+      {
+        heading: 'By industry',
+        links: [
+          { text: 'Construction', href: 'https://erp.intuit.com/construction/' },
+          { text: 'Professional services', href: 'https://erp.intuit.com/professional-services/' },
+          { text: 'Financial services', href: 'https://erp.intuit.com/financial-services/' },
+        ],
+      },
+    ],
+  },
+  { type: 'link', label: 'Pricing', href: '/pricing', internal: true },
+  {
+    type: 'menu',
+    label: 'Resources',
+    columns: [
+      {
+        heading: 'Explore',
+        links: [
+          { text: 'Compare Intuit Enterprise Suite', desc: 'See how IES stacks up', href: '/compare', internal: true },
+          { text: 'Blog', href: 'https://erp.intuit.com/blog/' },
+          { text: 'Events', href: 'https://erp.intuit.com/events/' },
+          { text: 'Case studies', href: 'https://erp.intuit.com/blog/case-study/' },
+          { text: 'Migration', href: 'https://erp.intuit.com/migration/' },
+        ],
+      },
+    ],
+  },
+  {
+    type: 'menu',
+    label: 'Support',
+    columns: [
+      {
+        heading: 'Get help',
+        links: [
+          { text: 'Account management', href: 'https://erp.intuit.com/account-management/' },
+          { text: 'Migration', href: 'https://erp.intuit.com/migration/' },
+        ],
+      },
+    ],
+  },
+  { type: 'link', label: 'For accounting firms', href: 'https://erp.intuit.com/accountant/', cls: 'acct-link' },
+];
+
+function linkHTML(l) {
+  const cls = `flyout-link${l.internal ? ' is-internal' : ''}`;
+  const tgt = l.internal ? '' : ' target="_blank" rel="noopener"';
+  const desc = l.desc ? `<span class="flyout-desc">${l.desc}</span>` : '';
+  const tag = l.internal ? '<span class="flyout-tag">On this site</span>' : '';
+  return `<a class="${cls}" href="${l.href}"${tgt}><span class="flyout-label">${l.text}${tag}</span>${desc}</a>`;
+}
+
+function navItemHTML(entry, idx) {
+  if (entry.type === 'link') {
+    const cls = entry.cls || 'nav-link';
+    const tgt = entry.internal ? '' : ' target="_blank" rel="noopener"';
+    return `<a class="${cls}" href="${entry.href}"${tgt}>${entry.label}</a>`;
+  }
+  const id = `flyout-${idx}`;
+  const cols = entry.columns.map((c) => `
+        <div class="flyout-col">
+          ${c.heading ? `<p class="flyout-heading">${c.heading}</p>` : ''}
+          ${c.links.map(linkHTML).join('')}
+        </div>`).join('');
+  return `
+      <div class="nav-item">
+        <button type="button" aria-expanded="false" aria-controls="${id}">${entry.label}<i class="caret"></i></button>
+        <div class="flyout" id="${id}" hidden><div class="flyout-inner">${cols}</div></div>
+      </div>`;
+}
+
+const NAV_MAIN = `<nav class="nav-main" aria-label="Primary">${NAV.map(navItemHTML).join('')}</nav>`;
 
 const CHROME = `
 <div class="ies-topstrip">
@@ -20,14 +132,7 @@ const CHROME = `
 <div class="ies-nav" id="iesNav">
   <div class="container">
     <a class="nav-logo" href="/"><span class="ies-intuit">INTUIT</span><span class="ies-word">Enterprise&nbsp;Suite</span></a>
-    <nav class="nav-main" aria-label="Primary">
-      <button type="button">Capabilities<i class="caret"></i></button>
-      <button type="button">Industry tools<i class="caret"></i></button>
-      <button type="button">Pricing<i class="caret"></i></button>
-      <button type="button">Resources<i class="caret"></i></button>
-      <button type="button">Support<i class="caret"></i></button>
-      <a href="https://erp.intuit.com/accountant/" class="acct-link">For accounting firms</a>
-    </nav>
+    ${NAV_MAIN}
     <div class="nav-right">
       <a class="btn btn-primary nav-cta" href="#schedule">Schedule a call</a>
       <button class="nav-toggle" aria-label="Menu"><span></span><span></span><span></span></button>
@@ -51,14 +156,46 @@ async function fetchFragment(path) {
   return null;
 }
 
+// Wire the click-to-open flyouts: one panel open at a time, closes on outside
+// click or Escape. Works as a stacked accordion on mobile via CSS.
+function wireFlyouts(block) {
+  const nav = block.querySelector('.nav-main');
+  if (!nav) return;
+  const items = [...nav.querySelectorAll('.nav-item')];
+  if (!items.length) return;
+
+  const setOpen = (item, open) => {
+    item.classList.toggle('open', open);
+    const btn = item.querySelector('button');
+    const panel = item.querySelector('.flyout');
+    if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if (panel) panel.hidden = !open;
+  };
+  const closeAll = (except) => items.forEach((it) => { if (it !== except) setOpen(it, false); });
+
+  items.forEach((item) => {
+    const btn = item.querySelector('button');
+    if (!btn) return;
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const willOpen = !item.classList.contains('open');
+      closeAll(item);
+      setOpen(item, willOpen);
+    });
+  });
+
+  document.addEventListener('click', (e) => { if (!nav.contains(e.target)) closeAll(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeAll(); });
+}
+
 export default async function decorate(block) {
   const navMeta = getMetadata('nav');
   const navPath = navMeta ? new URL(navMeta, window.location).pathname : '/nav';
-  // Prefer the authored fragment only when it preserves the chrome markup;
-  // the EDS content pipeline strips the ies-* classes, so fall back to the
-  // canonical embedded chrome for a faithful, reliable render.
+  // Prefer the authored fragment only when it preserves the chrome markup AND the
+  // flyout structure; the EDS content pipeline strips the ies-* classes, so fall
+  // back to the canonical embedded chrome for a faithful, reliable render.
   const frag = await fetchFragment(navPath);
-  block.innerHTML = (frag && frag.includes('ies-nav')) ? frag : CHROME;
+  block.innerHTML = (frag && frag.includes('nav-item') && frag.includes('flyout')) ? frag : CHROME;
 
   // sticky-nav scroll-morph
   const nav = block.querySelector('#iesNav, .ies-nav');
@@ -67,6 +204,8 @@ export default async function decorate(block) {
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
   }
+
+  wireFlyouts(block);
 
   // mobile menu toggle
   const toggle = block.querySelector('.nav-toggle');
