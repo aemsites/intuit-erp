@@ -37,8 +37,30 @@
 
 .hero .hero-actions { display: flex; gap: 16px; flex-wrap: wrap; margin: 0; }
 
-.hero .hero-media { position: relative; }
-.hero .hero-media img { width: 100%; border-radius: 12px; box-shadow: 0 24px 60px rgb(0 0 0 / 35%); }
+.hero .hero-media { position: relative; isolation: isolate; }
+.hero .hero-media img { position: relative; z-index: 1; width: 100%; border-radius: 12px; box-shadow: 0 24px 60px rgb(0 0 0 / 35%); }
+
+/* radial glow behind the hero image — lifted from erp.intuit.com's Lottie glow treatment */
+.hero .hero-media::before,
+.hero .hero-media::after {
+  content: ""; position: absolute; z-index: -1; pointer-events: none;
+}
+.hero .hero-media::before {
+  top: -20%; bottom: -20%; left: -25%; right: -25%;
+  background: radial-gradient(
+    ellipse 74% 68% at 50% 50%,
+    #33b5ff 0%, #0099ff 10%, #0077ff 22%, #0060d4 36%,
+    rgb(0 80 190 / 72%) 48%, rgb(0 37 74 / 38%) 62%, rgb(0 37 74 / 0%) 82%
+  );
+}
+.hero .hero-media::after {
+  top: -25%; bottom: -25%; left: -15%; right: -15%;
+  background: radial-gradient(
+    ellipse 82% 74% at 50% 50%,
+    rgb(51 181 255 / 100%) 0%, rgb(0 153 255 / 75%) 28%, rgb(0 119 255 / 45%) 48%, rgb(0 119 255 / 0%) 72%
+  );
+  filter: blur(72px);
+}
 
 /* on-dark button treatment — primary = white fill, secondary = white outline */
 .hero a.button.primary { background: #fff; color: var(--ink-teal, #0d333f); border-color: #fff; }

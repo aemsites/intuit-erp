@@ -15,6 +15,31 @@ function pic(cell) {
   return p ? (p.closest('picture') || p) : null;
 }
 
+// Rhodes Companies customer story — same cutdown clip + YouTube id erp.intuit.com plays.
+const STORY_VIDEO_SRC = 'https://erp.intuit.com/oidam/intuit/erp/en_us/web/motion-and-video/case-study-rhodes-cutdown-video-ies-us-en-sm.mp4';
+const STORY_YOUTUBE_ID = 'gpHd4jd6dTk';
+
+function openVideoModal(videoId) {
+  const overlay = document.createElement('div');
+  overlay.className = 'video-modal-overlay';
+  overlay.innerHTML = `
+    <div class="video-modal">
+      <button type="button" class="video-modal-close" aria-label="Close video">×</button>
+      <div class="video-modal-frame">
+        <iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0" title="Customer story video" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+      </div>
+    </div>`;
+  function close() {
+    overlay.remove();
+    document.removeEventListener('keydown', onKey);
+  }
+  function onKey(e) { if (e.key === 'Escape') close(); }
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+  overlay.querySelector('.video-modal-close').addEventListener('click', close);
+  document.addEventListener('keydown', onKey);
+  document.body.append(overlay);
+}
+
 export default function decorate(block) {
   const isVideo = block.classList.contains('video');
   const row = block.querySelector(':scope > div');
@@ -25,13 +50,22 @@ export default function decorate(block) {
     const [posterCell, eyebrowCell, quoteCell, attrCell] = cells;
     const frame = document.createElement('div');
     frame.className = 'video-frame';
-    const poster = pic(posterCell);
-    if (poster) poster.classList.add('video-poster');
+    const posterImg = posterCell ? posterCell.querySelector('img') : null;
+    const bg = document.createElement('video');
+    bg.className = 'video-bg';
+    bg.src = STORY_VIDEO_SRC;
+    if (posterImg) bg.poster = posterImg.currentSrc || posterImg.src;
+    bg.muted = true;
+    bg.loop = true;
+    bg.autoplay = true;
+    bg.playsInline = true;
+    bg.setAttribute('aria-hidden', 'true');
     const play = document.createElement('button');
     play.className = 'video-play';
     play.type = 'button';
-    play.setAttribute('aria-label', 'Play video');
+    play.setAttribute('aria-label', 'Play full video');
     play.textContent = '▶';
+    play.addEventListener('click', () => openVideoModal(STORY_YOUTUBE_ID));
     const cap = document.createElement('div');
     cap.className = 'video-caption';
     cap.innerHTML = `
@@ -41,9 +75,9 @@ export default function decorate(block) {
     attr.className = 'video-attr';
     if (attrCell) attr.innerHTML = attrCell.innerHTML;
     cap.append(attr);
-    if (poster) frame.append(poster);
-    frame.append(play, cap);
+    frame.append(bg, play, cap);
     block.replaceChildren(frame);
+    bg.play().catch(() => {});
     return;
   }
 
