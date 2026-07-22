@@ -6,6 +6,9 @@
  * Block rows = one row per stat:
  *   default (index): number / description / company / segment — paged carousel
  *   .stat-band.dark (pricing "Data-backed performance"): number / description — static grid
+ *   .stat-band.plain (research guide stat trios): number / description —
+ *     the same static grid as .dark, but light bordered boxes on the page
+ *     background instead of a navy band.
  *   .stat-band.glance (case study "Results at a glance"): number / description —
  *     rendered as a plain bulleted sentence per row ("{number} {description}"),
  *     matching erp.intuit.com's results box, not a number/caption grid.
@@ -136,9 +139,9 @@ export default function decorate(block) {
     return;
   }
 
-  const dark = block.classList.contains('dark');
+  const staticGrid = block.classList.contains('dark') || block.classList.contains('plain');
   const track = document.createElement('div');
-  track.className = dark ? 'stats-grid' : 'stats-track';
+  track.className = staticGrid ? 'stats-grid' : 'stats-track';
 
   rows.forEach((row) => {
     const cells = [...row.children];
@@ -172,5 +175,5 @@ export default function decorate(block) {
 
   block.replaceChildren(track);
 
-  if (!dark) buildCarousel(block, track);
+  if (!staticGrid) buildCarousel(block, track);
 }

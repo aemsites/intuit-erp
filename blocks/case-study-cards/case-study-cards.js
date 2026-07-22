@@ -13,26 +13,10 @@
  * CSS: blocks/case-study-cards/case-study-cards.css
  */
 import { createOptimizedPicture } from '../../scripts/aem.js';
+import { loadIndex, formatDate } from '../../scripts/content-index.js';
 
 const INDEX_PATH = '/case-studies/query-index.json';
 const PAGE_SIZE = 6;
-
-let indexPromise;
-function loadIndex() {
-  if (!indexPromise) {
-    indexPromise = fetch(INDEX_PATH)
-      .then((resp) => (resp.ok ? resp.json() : { data: [] }))
-      .then((json) => json.data || [])
-      .catch(() => []);
-  }
-  return indexPromise;
-}
-
-function formatDate(value) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value || '';
-  return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-}
 
 function cardHTML(item, featured) {
   const card = document.createElement('a');
@@ -57,7 +41,7 @@ export default async function decorate(block) {
   const recommended = block.classList.contains('recommended');
   block.textContent = '';
 
-  const items = [...await loadIndex()]
+  const items = [...await loadIndex(INDEX_PATH)]
     .filter((item) => item.path !== window.location.pathname)
     .sort((a, b) => new Date(b.date) - new Date(a.date));
 

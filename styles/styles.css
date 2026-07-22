@@ -402,12 +402,12 @@ blockquote {
   position: relative; margin: 48px 0; padding: 0 0 0 44px;
   font-size: 28px; line-height: 1.35; font-weight: 400; color: var(--heading);
 }
-.text blockquote::before {
+blockquote::before {
   content: '\201C'; position: absolute; left: 0; top: -0.1em;
   font-size: 48px; line-height: 1; color: var(--primary); font-weight: 700;
 }
-.text blockquote p { margin: 0; }
-.text blockquote cite { display: block; margin-top: 14px; font-size: 14px; font-style: normal; font-weight: 600; color: var(--text-muted); }
+blockquote p { margin: 0; }
+blockquote cite { display: block; margin-top: 14px; font-size: 14px; font-style: normal; font-weight: 600; color: var(--text-muted); }
 
 /* buttons — EDS decorates <strong><a> -> .button.primary, <em><a> -> .button.secondary */
 a.button:any-link, button.button {

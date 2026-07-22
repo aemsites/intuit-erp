@@ -71,6 +71,7 @@ const NAV = [
           { text: 'Blog', href: 'https://erp.intuit.com/blog/' },
           { text: 'Events', href: 'https://erp.intuit.com/events/' },
           { text: 'Case studies', href: '/case-studies', internal: true },
+          { text: 'Research & Downloads', href: '/research', internal: true },
           { text: 'Migration', href: 'https://erp.intuit.com/migration/' },
         ],
       },

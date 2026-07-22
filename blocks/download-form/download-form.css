@@ -1,0 +1,24 @@
+/* download-form — gated-content CTA band (research guide "download the report") */
+.section.download-form-container { background: var(--navy); padding: var(--section-y) 0; }
+.download-grid { max-width: var(--container); margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: start; }
+
+.download-copy { color: #fff; padding-top: 8px; }
+.download-copy h2, .download-copy h3 { font-size: 32px; font-weight: 700; color: #fff; margin: 0 0 16px; }
+.download-copy p { font-size: 16px; line-height: 1.6; color: #d5e0ec; margin: 0 0 20px; }
+.download-copy ul { margin: 0; padding-left: 20px; }
+.download-copy li { font-size: 15px; line-height: 1.6; color: #d5e0ec; margin-bottom: 10px; }
+.download-copy li strong { color: #fff; }
+
+.download-card { background: #fff; border-radius: var(--radius-card); padding: 32px; box-shadow: 0 20px 50px rgb(0 0 0 / 25%); }
+.download-card h3 { font-size: 22px; font-weight: 700; color: var(--heading); margin: 0 0 20px; }
+.download-card .form .lead-fields { flex-direction: column; align-items: stretch; gap: 14px; margin-top: 0; }
+.download-card .form .ff, .download-card .form .form-submit { width: 100%; }
+.download-card .form .ff input.invalid { border-color: #d33; }
+.download-card .form-submit { margin-top: 4px; }
+
+.download-success { text-align: center; padding: 40px 0; }
+.download-success p { font-size: 17px; font-weight: 600; color: var(--heading); margin: 0; }
+
+@media (width <= 900px) {
+  .download-grid { grid-template-columns: 1fr; gap: 32px; }
+}
