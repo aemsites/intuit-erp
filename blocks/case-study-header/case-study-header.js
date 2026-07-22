@@ -15,9 +15,10 @@
  * copy-link) and a floating table of contents from every <h2> in the page
  * (safe: decorateMain() runs over the full page before any block decorates,
  * so all sections' headings already exist in the DOM at this point). Utility
- * headings that aren't real narrative sections (e.g. "Recommended for you",
- * "Hear from our customers") are authored with an `h2.section-label` class
- * so they're excluded from the table of contents.
+ * sections that aren't real narrative content (e.g. "Recommended for you",
+ * "Hear from our customers") are authored as <h3>, not <h2>, so they're
+ * naturally excluded — DA doesn't preserve custom classes on headings
+ * through its content roundtrip, so heading level is the durable signal.
  * CSS: blocks/case-study-header/case-study-header.css
  */
 import { toClassName } from '../../scripts/aem.js';
@@ -49,7 +50,7 @@ function shareRow() {
 }
 
 function buildToc() {
-  const headings = [...document.querySelectorAll('main h2')].filter((h) => !h.classList.contains('section-label'));
+  const headings = [...document.querySelectorAll('main h2')];
   if (!headings.length) return null;
   const nav = document.createElement('nav');
   nav.className = 'case-study-toc';

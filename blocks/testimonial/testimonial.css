@@ -2,7 +2,8 @@
 
 /* ---- .video (index) ---- */
 .section.testimonial-container:has(.testimonial.video) { background: #fff; padding: var(--section-y) 0; }
-.testimonial-container .default-content-wrapper h2 {
+.testimonial-container .default-content-wrapper h2,
+.testimonial-container .default-content-wrapper h3 {
   font-size: 38px; line-height: 1.15; font-weight: 400; color: var(--heading);
   text-align: center; margin: 0 0 40px;
 }
@@ -49,7 +50,8 @@
 .testimonial .cmp-testi-media img { width: 100%; border-radius: 12px; }
 
 @media (width <= 768px) {
-  .testimonial-container .default-content-wrapper h2 { font-size: 28px; }
+  .testimonial-container .default-content-wrapper h2,
+  .testimonial-container .default-content-wrapper h3 { font-size: 28px; }
   .testimonial.video .video-frame { aspect-ratio: 4 / 3; }
   .testimonial.video .video-caption { left: 20px; right: 20px; bottom: 20px; }
   .testimonial.video .video-quote { font-size: 18px; }

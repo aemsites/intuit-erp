@@ -12,7 +12,7 @@
 .case-study-card-body h3 a:hover { color: var(--primary); text-decoration: none; }
 .case-study-card-date { margin: 0; font-size: 13px; color: var(--text-muted); }
 .case-study-load-more { display: flex; justify-content: center; margin-top: 40px; }
-.recommended .case-study-load-more { display: none; }
+.case-study-load-more[hidden], .recommended .case-study-load-more { display: none; }
 
 @media (width <= 900px) {
   .case-study-grid { grid-template-columns: repeat(2, 1fr); }

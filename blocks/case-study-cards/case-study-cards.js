@@ -75,7 +75,9 @@ export default async function decorate(block) {
       grid.append(cardHTML(item, shown === 0 && i < 2));
     });
     shown += PAGE_SIZE;
-    loadMoreBtn.hidden = shown >= items.length;
+    // hide the wrapper, not the button: button.button's specificity beats
+    // the UA [hidden] rule, so a hidden button would still render visible
+    loadMoreWrap.hidden = shown >= items.length;
   };
 
   const loadMoreWrap = document.createElement('div');
