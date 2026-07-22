@@ -32,6 +32,17 @@
   --transition: 0.2s ease-out;
 }
 
+/* ─── Native button reset ─────────────────────────────────── */
+/* Chips/submit buttons are real <button> elements; without this reset,
+   some browsers/OS accent-color settings can bleed a non-brand highlight
+   into hover/focus/active states instead of the CSS below. */
+
+.of1 button {
+  appearance: none;
+  -webkit-appearance: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
 /* ─── Container & Layout ──────────────────────────────────── */
 
 .section.of1-container {
@@ -130,9 +141,12 @@
   transition: background var(--transition), transform var(--transition);
 }
 
-.of1-submit:hover {
+.of1-submit:hover,
+.of1-submit:focus-visible,
+.of1-submit:active {
   background: var(--primary-hover);
   transform: translateY(-50%) scale(1.05);
+  outline: none;
 }
 
 /* ─── Quick Suggestion Chips ──────────────────────────────── */
@@ -147,6 +161,9 @@
 }
 
 .of1-chip {
+  appearance: none;
+  -webkit-appearance: none;
+  -webkit-tap-highlight-color: transparent;
   font-family: var(--font-body);
   font-size: 14px;
   font-weight: 500;
@@ -159,9 +176,12 @@
   transition: background var(--transition), border-color var(--transition);
 }
 
-.of1-chip:hover {
+.of1-chip:hover,
+.of1-chip:focus-visible,
+.of1-chip:active {
   background: var(--surface-muted);
   border-color: var(--primary);
+  outline: none;
 }
 
 /* ─── Loading Skeleton ────────────────────────────────────── */
@@ -579,8 +599,11 @@ div.generated-section > section {
   transition: background var(--transition);
 }
 
-.suggestion-submit:hover {
+.suggestion-submit:hover,
+.suggestion-submit:focus-visible,
+.suggestion-submit:active {
   background: var(--primary-hover);
+  outline: none;
 }
 
 .suggestion-submit svg {
@@ -612,9 +635,12 @@ div.generated-section > section {
   transition: background var(--transition), border-color var(--transition);
 }
 
-.suggestion-btn:hover {
+.suggestion-btn:hover,
+.suggestion-btn:focus-visible,
+.suggestion-btn:active {
   background: var(--surface-muted);
   border-color: var(--primary);
+  outline: none;
 }
 
 .suggestion-restart {
