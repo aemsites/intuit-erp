@@ -23,7 +23,13 @@
 .generated-section,
 .generative-suggestions,
 .generative-breadcrumb {
-  --primary: var(--primary, #0077c5);
+  /* --primary, --radius, --radius-card are intentionally NOT re-mapped here:
+     styles.css's :root already defines them with the correct brand values,
+     and custom properties inherit. `--primary: var(--primary, ...)` on this
+     same element would self-reference before the inherited value is visible,
+     which CSS resolves as a cyclic/invalid declaration (computes to nothing,
+     not the fallback) — that's what caused the OF1 submit button and every
+     --primary-consuming rule below to render with no color at all. */
   --primary-hover: var(--primary-dark, #055393);
   --text: var(--text-color, #21262a);
   --text-secondary: var(--text-muted, #6b6c72);
@@ -32,8 +38,6 @@
   --surface-dark: var(--navy, #00254a);
   --accent: var(--blue-bright, #0097e6);
   --border: var(--line, #d4d7dc);
-  --radius: var(--radius, 4px);
-  --radius-card: var(--radius-card, 12px);
   --radius-pill: 999px;
   --font-heading: var(--heading-font-family, "AvenirNext forINTUIT", "Mulish Variable", arial, sans-serif);
   --font-body: var(--body-font-family, "AvenirNext forINTUIT", "Mulish Variable", arial, sans-serif);
