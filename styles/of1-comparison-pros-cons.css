@@ -1,0 +1,77 @@
+@import url("/styles/of1-template-base.css");
+
+.of1-container { max-width: var(--container-max); margin: 0 auto; padding: 0 40px; }
+.of1-section { padding: var(--space-section) 0; }
+.of1-eyebrow { font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--color-fg-dim); margin-bottom: 16px; }
+
+.of1-cta { display: inline-flex; align-items: center; justify-content: center; height: 44px; padding: 0 30px; border-radius: var(--radius); font-size: 16px; font-weight: 600; line-height: 1; border: 2px solid transparent; transition: background-color .15s ease, color .15s ease, border-color .15s ease; white-space: nowrap; }
+.of1-cta-primary { background: var(--color-navy); color: #fff; border-color: var(--color-navy); }
+.of1-cta-primary:hover { background: var(--color-navy-hover); }
+.of1-cta-white { background: #fff; color: var(--color-ink-teal, #0d333f); border-color: #fff; }
+
+/* ---- HERO ---- */
+.of1-cmp-pc-hero { background: linear-gradient(105deg, #00254a 0%, #053d6d 55%, #3b2f7a 100%); color: #fff; overflow: hidden; }
+.of1-cmp-pc-hero-grid { display: grid; grid-template-columns: 1.05fr 1fr; gap: 40px; align-items: center; min-height: 472px; padding-top: 76px; padding-bottom: 76px; }
+.of1-cmp-pc-hero .of1-eyebrow { color: #9fd0ff; }
+.of1-cmp-pc-hero h1 { color: #fff; font-size: 48px; line-height: 60px; max-width: 9em; margin-bottom: 20px; }
+.of1-cmp-pc-hero-lede { font-size: 18px; line-height: 1.5; color: #e6eef6; max-width: 26em; margin-bottom: 30px; }
+.of1-cmp-pc-hero-media img { width: 100%; border-radius: 10px; box-shadow: 0 24px 60px rgba(0, 0, 0, .35); }
+
+/* ---- INTRO ---- */
+.of1-cmp-pc-intro { background: #fff; text-align: center; padding-bottom: 24px; }
+.of1-cmp-pc-intro-inner { max-width: 760px; margin: 0 auto; }
+.of1-cmp-pc-intro h2 { font-size: 38px; line-height: 1.15; margin-bottom: 16px; }
+.of1-cmp-pc-intro-body { font-size: 18px; color: var(--color-fg-dim); line-height: 1.5; }
+
+/* ---- TABBED PROS / CONS ---- */
+.of1-cmp-pc-tabs-section { background: #eef2f6; padding-top: 48px; }
+.of1-cmp-pc-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--color-border); }
+.of1-cmp-pc-tab { flex: 1; background: none; border: 0; border-bottom: 2px solid transparent; padding: 16px 12px; font-size: 16px; font-weight: 400; color: var(--color-fg-dim); font-family: inherit; margin-bottom: -1px; text-align: center; cursor: pointer; }
+.of1-cmp-pc-tab.active { color: var(--color-fg); border-bottom-color: var(--color-navy); font-weight: 600; }
+.of1-cmp-pc-panel { display: none; margin-top: 34px; background: #fff; border-radius: var(--radius-card); padding: 40px 40px 44px; box-shadow: 0 2px 12px rgba(0, 0, 0, .05); }
+.of1-cmp-pc-panel.active { display: block; }
+.of1-cmp-pc-panel-tag { font-size: 16px; color: var(--color-fg-dim); margin-bottom: 28px; }
+.of1-cmp-pc-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+.of1-cmp-pc-col { padding: 26px 28px; border-radius: 10px; }
+.of1-cmp-pc-col-pro { background: var(--color-sky); }
+.of1-cmp-pc-col-con { background: var(--color-tofu); }
+.of1-cmp-pc-col-head { font-size: 18px; font-weight: 600; margin-bottom: 18px; }
+.of1-cmp-pc-col-pro .of1-cmp-pc-col-head { color: var(--color-green, #0a8543); }
+.of1-cmp-pc-col-con .of1-cmp-pc-col-head { color: var(--color-primary-dark); }
+.of1-cmp-pc-list { list-style: none; margin: 0; padding: 0; }
+.of1-cmp-pc-list li { font-size: 15px; color: var(--color-fg); padding: 11px 0 11px 30px; position: relative; line-height: 1.45; border-bottom: 1px solid rgba(0, 0, 0, .06); }
+.of1-cmp-pc-list li:last-child { border-bottom: 0; }
+.of1-cmp-pc-col-pro .of1-cmp-pc-list li::before { content: "+"; position: absolute; left: 4px; top: 10px; font-size: 18px; font-weight: 700; color: var(--color-green, #0a8543); line-height: 1; }
+.of1-cmp-pc-col-con .of1-cmp-pc-list li::before { content: "-"; position: absolute; left: 6px; top: 8px; font-size: 20px; font-weight: 700; color: var(--color-fg-dim); line-height: 1; }
+
+/* ---- BEST FOR ---- */
+.of1-cmp-pc-bestfor { background: #fff; }
+.of1-cmp-pc-bestfor-title { font-size: 38px; line-height: 1.15; text-align: center; margin-bottom: 44px; }
+.of1-cmp-pc-bestfor-grid { display: grid; grid-template-columns: repeat(var(--item-count, 3), 1fr); gap: 24px; }
+.of1-cmp-pc-bestfor-grid[data-item-count="1"] { grid-template-columns: 1fr; max-width: 520px; margin: 0 auto; }
+.of1-cmp-pc-bestfor-grid[data-item-count="2"] { grid-template-columns: repeat(2, 1fr); }
+.of1-cmp-pc-bestfor-card { background: var(--color-surface); border-radius: var(--radius-card); padding: 34px 30px; }
+.of1-cmp-pc-bestfor-name { font-size: 20px; font-weight: 500; margin-bottom: 12px; }
+.of1-cmp-pc-bestfor-body { font-size: 15px; color: var(--color-fg-dim); line-height: 1.55; }
+
+/* ---- BOTTOM LINE ---- */
+.of1-cmp-pc-bottomline { background: #fff; padding-top: 0; }
+.of1-cmp-pc-bottomline-card { background: var(--color-navy); color: #fff; border-radius: var(--radius-card); padding: 60px 48px; text-align: center; }
+.of1-cmp-pc-bottomline-eyebrow { color: #9fd0ff; }
+.of1-cmp-pc-bottomline-title { color: #fff; font-size: 34px; margin-bottom: 16px; }
+.of1-cmp-pc-bottomline-body { font-size: 18px; color: #d5e0ec; line-height: 1.6; max-width: 42em; margin: 0 auto; }
+
+/* ---- CLOSING CTA ---- */
+.of1-cmp-pc-cta { background: #fff; padding-top: 0; text-align: center; }
+.of1-cmp-pc-cta-title { font-size: 34px; margin-bottom: 14px; }
+.of1-cmp-pc-cta-body { font-size: 17px; color: var(--color-fg-dim); margin-bottom: 28px; }
+
+@media (max-width: 768px) {
+  .of1-container { padding: 0 20px; }
+  .of1-cmp-pc-hero-grid { grid-template-columns: 1fr; gap: 28px; min-height: 0; padding-top: 36px; padding-bottom: 36px; }
+  .of1-cmp-pc-hero h1 { font-size: 40px; line-height: 52px; }
+  .of1-cmp-pc-intro h2, .of1-cmp-pc-bestfor-title { font-size: 28px; }
+  .of1-cmp-pc-columns { grid-template-columns: 1fr; gap: 20px; }
+  .of1-cmp-pc-bestfor-grid, .of1-cmp-pc-bestfor-grid[data-item-count="2"] { grid-template-columns: 1fr; }
+  .of1-cmp-pc-panel { padding: 28px 24px; }
+}

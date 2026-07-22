@@ -1,0 +1,78 @@
+@import url("/styles/of1-template-base.css");
+
+/* OF1 budget — roi-story. Stat band + vertical payback timeline. */
+
+.of1-roi-container { max-width: var(--container-max); margin: 0 auto; padding: 0 40px; }
+.of1-roi-container-narrow { max-width: 820px; margin: 0 auto; padding: 0 40px; }
+.of1-section { padding: var(--space-section) 0; }
+.of1-roi-h2 { font-size: 38px; line-height: 1.15; font-weight: 400; color: #11181c; }
+.of1-roi-center { text-align: center; }
+.of1-roi-sub { font-size: 18px; color: var(--color-fg-dim); text-align: center; max-width: 34em; margin: 14px auto 0; }
+
+.of1-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  height: 44px; padding: 0 30px; border-radius: var(--radius);
+  font-size: 16px; font-weight: 600; line-height: 1; border: 2px solid transparent;
+  transition: background-color .15s ease, color .15s ease, border-color .15s ease; white-space: nowrap;
+}
+.of1-btn-outline { background: transparent; color: #fff; border-color: #fff; }
+.of1-btn-outline:hover { background: rgba(255,255,255,.12); }
+.of1-btn-white { background: #fff; color: var(--color-ink-teal, #0d333f); border-color: #fff; }
+.of1-eyebrow { font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--color-fg-dim); }
+
+/* Hero */
+.of1-roi-hero { background: linear-gradient(105deg,#00254a 0%,#053d6d 55%,#3b2f7a 100%); color: #fff; overflow: hidden; }
+.of1-roi-hero-grid { max-width: var(--container-max); margin: 0 auto; padding: 76px 40px; display: grid; grid-template-columns: 1.05fr 1fr; gap: 40px; align-items: center; }
+.of1-roi-hero-eyebrow { color: #9fd0ff; margin-bottom: 18px; }
+.of1-roi-hero h1 { font-size: 48px; line-height: 60px; font-weight: 400; color: #fff; max-width: 9em; margin-bottom: 20px; }
+.of1-roi-hero-lede { font-size: 18px; line-height: 1.5; color: #e6eef6; max-width: 28em; margin-bottom: 30px; }
+.of1-roi-hero-actions { display: flex; gap: 16px; flex-wrap: wrap; }
+.of1-roi-hero-media img { width: 100%; border-radius: 10px; box-shadow: 0 24px 60px rgba(0,0,0,.35); }
+
+/* Stat band */
+.of1-roi-band { background: #fff; }
+.of1-roi-band-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 22px; margin-top: 48px; }
+.of1-roi-stat { background: var(--color-sky); border-radius: var(--radius-card); padding: 34px 28px; }
+.of1-roi-stat-num { font-size: 56px; line-height: 1.02; font-weight: 400; color: var(--color-accent); margin-bottom: 14px; }
+.of1-roi-stat-desc { font-size: 15px; color: var(--color-fg); margin-bottom: 30px; line-height: 1.35; }
+.of1-roi-stat-co { font-size: 14px; font-weight: 700; color: #11181c; }
+.of1-roi-band-foot { text-align: center; font-size: 12px; color: #8d9096; margin-top: 30px; }
+
+/* Timeline */
+.of1-roi-timeline { background: var(--color-tofu); }
+.of1-roi-steps { list-style: none; margin: 48px 0 0; padding: 0; position: relative; }
+.of1-roi-steps::before { content: ""; position: absolute; left: 60px; top: 12px; bottom: 12px; width: 2px; background: var(--color-border); }
+.of1-roi-step { position: relative; display: grid; grid-template-columns: 120px 1fr; gap: 28px; align-items: start; padding: 18px 0; }
+.of1-roi-step-marker { position: relative; z-index: 1; display: inline-flex; align-items: center; justify-content: center; height: 40px; padding: 0 14px; background: var(--color-navy); color: #fff; border-radius: 20px; font-size: 14px; font-weight: 700; white-space: nowrap; }
+.of1-roi-step-body { background: #fff; border-radius: var(--radius-card); padding: 24px 28px; box-shadow: 0 2px 12px rgba(0,0,0,.06); }
+.of1-roi-step-title { font-size: 20px; font-weight: 400; color: #11181c; margin-bottom: 8px; }
+.of1-roi-step-text { font-size: 15px; line-height: 1.5; color: var(--color-fg-dim); }
+
+/* Story */
+.of1-roi-story { background: #fff; text-align: center; }
+.of1-roi-story-eyebrow { font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--color-fg-dim); margin-bottom: 20px; }
+.of1-roi-story-quote { font-size: 26px; line-height: 1.4; font-weight: 400; color: #11181c; margin: 0 0 22px; }
+.of1-roi-story-attr { font-size: 16px; font-weight: 700; color: #11181c; }
+.of1-roi-story-co { font-size: 15px; color: var(--color-fg-dim); }
+
+/* CTA */
+.of1-roi-cta { background: var(--color-tofu); }
+.of1-roi-cta-card { background: var(--color-navy); color: #fff; border-radius: var(--radius-card); padding: 56px 48px; text-align: center; }
+.of1-roi-cta-eyebrow { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; opacity: .8; margin-bottom: 14px; }
+.of1-roi-cta-title { font-size: 32px; font-weight: 400; margin-bottom: 16px; color: #fff; }
+.of1-roi-cta-body { font-size: 16px; line-height: 1.6; color: #d5e0ec; max-width: 44em; margin: 0 auto 26px; }
+
+@media (max-width: 768px) {
+  .of1-section { padding: 48px 0; }
+  .of1-roi-hero-grid { grid-template-columns: 1fr; gap: 28px; padding: 40px 20px; }
+  .of1-roi-hero h1 { font-size: 34px; line-height: 44px; }
+  .of1-roi-container, .of1-roi-container-narrow { padding: 0 20px; }
+  .of1-roi-h2 { font-size: 28px; }
+  .of1-roi-band-grid { grid-template-columns: 1fr 1fr; gap: 16px; }
+  .of1-roi-steps::before { left: 20px; }
+  .of1-roi-step { grid-template-columns: 1fr; gap: 12px; padding-left: 0; }
+  .of1-roi-step-marker { justify-self: start; }
+  .of1-roi-story-quote { font-size: 20px; }
+  .of1-roi-hero-actions { flex-direction: column; align-items: stretch; }
+  .of1-roi-cta-card { padding: 36px 24px; }
+}

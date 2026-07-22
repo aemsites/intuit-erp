@@ -1,0 +1,5 @@
+{
+  "useRouting": true,
+  "baseUrl": "https://main--aem-intuit-erp--keepthebyte.aem.page",
+  "catalogPath": "/templates/templates-catalog.json"
+}

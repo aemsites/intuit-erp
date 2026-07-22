@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OF1 — Template gallery</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #1C1917;
+      --fg: #F5F0E8;
+      --muted: rgba(245,240,232,0.55);
+      --accent: #00E5A0;
+      --orange: #FF3D00;
+      --border: rgba(245,240,232,0.1);
+      --surface: #242220;
+      --font-display: 'Cormorant Garamond', serif;
+      --font-body: 'JetBrains Mono', monospace;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; height: 100%; }
+    body { font-family: var(--font-body); font-size: 11px; color: var(--fg); background: var(--bg); display: flex; flex-direction: column; }
+
+    .gallery-header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 20px 32px 0; flex: 0 0 auto; }
+    .gallery-title-row { display: flex; align-items: baseline; gap: 16px; margin-bottom: 8px; flex-wrap: wrap; }
+    .gallery-title { font-family: var(--font-display); font-size: 24px; font-weight: 600; margin: 0; }
+    .gallery-subtitle { color: var(--muted); font-size: 11px; }
+    .gallery-meta { margin-left: auto; font-size: 10px; color: var(--muted); font-family: var(--font-mono); }
+
+    .gallery-controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 8px 0 0; }
+    .gallery-intent-pill {
+      background: transparent;
+      border: 1px solid var(--border);
+      padding: 6px 14px;
+      border-radius: 999px;
+      font: inherit;
+      font-size: 11px;
+      color: var(--muted);
+      cursor: pointer;
+      transition: color .15s, border-color .15s, background .15s;
+    }
+    .gallery-intent-pill:hover { color: var(--fg); border-color: var(--accent); }
+    .gallery-intent-pill[aria-selected="true"] { background: var(--accent); border-color: var(--accent); color: var(--bg); font-weight: 600; }
+    .gallery-intent-pill .gallery-intent-count { opacity: 0.6; margin-left: 6px; font-size: 10px; }
+
+    .gallery-tabs { display: flex; gap: 2px; flex-wrap: wrap; margin-top: 12px; }
+    .gallery-tab {
+      background: transparent;
+      border: 0;
+      padding: 10px 14px;
+      font: inherit;
+      font-size: 11px;
+      color: var(--muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: color .15s, border-color .15s;
+      position: relative;
+      bottom: -1px;
+    }
+    .gallery-tab:hover { color: var(--fg); }
+    .gallery-tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); font-weight: 600; }
+    .gallery-tab-tag {
+      display: inline-block;
+      margin-left: 6px;
+      font-size: 9px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      padding: 2px 5px;
+      border-radius: 3px;
+      background: rgba(255,61,0,0.1);
+      color: var(--orange);
+      vertical-align: middle;
+    }
+
+    .gallery-body { flex: 1 1 auto; position: relative; background: #0f0e0d; padding: 12px; overflow: hidden; }
+    .gallery-frame { width: 100%; height: 100%; border: 0; background: #fff; border-radius: 6px; display: block; }
+    .gallery-empty { display: flex; align-items: center; justify-content: center; height: 100%; color: var(--muted); font-size: 12px; }
+
+    .gallery-footer { flex: 0 0 auto; padding: 10px 32px; background: var(--surface); border-top: 1px solid var(--border); font-size: 10px; color: var(--muted); display: flex; gap: 24px; align-items: center; }
+    .gallery-footer a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    .gallery-footer a:hover { text-decoration: underline; }
+    .gallery-footer .gallery-tip { flex: 1 1 auto; }
+    .gallery-footer code { background: rgba(245,240,232,0.06); padding: 1px 4px; border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<div class="gallery-header">
+  <div class="gallery-title-row">
+    <h1 class="gallery-title">OF1 templates</h1>
+    <span class="gallery-subtitle">Layouts the OF1 worker can pick per intent. Click a pill, then a tab.</span>
+    <span class="gallery-meta" id="gallery-meta">loading catalog…</span>
+  </div>
+  <div class="gallery-controls" id="gallery-intents"></div>
+  <div class="gallery-tabs" role="tablist" id="gallery-tabs"></div>
+</div>
+
+<div class="gallery-body">
+  <iframe class="gallery-frame" id="gallery-frame" title="Template preview"></iframe>
+</div>
+
+<div class="gallery-footer">
+  <span class="gallery-tip">Tip: edit <code>templates/&lt;name&gt;.sample.json</code> and re-run <code>python3 tools/fill-template.py templates/&lt;name&gt;.html templates/&lt;name&gt;.sample.json drafts/&lt;name&gt;-sample.html</code> to refresh the preview.</span>
+  <a id="gallery-open-link" href="#" target="_blank" rel="noopener">Open preview in new tab ↗</a>
+</div>
+
+<script nonce="aem">
+  const CATALOG_URL = '/templates/templates-catalog.json';
+  const INTENT_ORDER = ['comparison', 'recommendation', 'deep-dive', 'budget', 'discovery'];
+  const previewUrlFor = (name) => `/drafts/${name}-sample.html`;
+
+  function parseHash() {
+    const h = (location.hash || '').replace(/^#/, '');
+    const params = new URLSearchParams(h);
+    return { intent: params.get('intent') || null, name: params.get('name') || null };
+  }
+  function writeHash(intent, name) {
+    const params = new URLSearchParams();
+    if (intent) params.set('intent', intent);
+    if (name) params.set('name', name);
+    const next = '#' + params.toString();
+    if (location.hash !== next) history.replaceState(null, '', next);
+  }
+
+  async function init() {
+    const intentBar = document.getElementById('gallery-intents');
+    const tabs = document.getElementById('gallery-tabs');
+    const frame = document.getElementById('gallery-frame');
+    const meta = document.getElementById('gallery-meta');
+    const openLink = document.getElementById('gallery-open-link');
+
+    let catalog;
+    try {
+      const resp = await fetch(CATALOG_URL, { cache: 'no-cache' });
+      if (!resp.ok) throw new Error('catalog ' + resp.status);
+      catalog = await resp.json();
+    } catch (err) {
+      meta.textContent = 'catalog load failed: ' + err.message;
+      frame.outerHTML = '<div class="gallery-empty">Catalog could not be loaded.</div>';
+      return;
+    }
+
+    meta.textContent = catalog.count + ' templates · catalog';
+
+    const intentsInCatalog = Object.keys(catalog.byIntent || {});
+    const orderedIntents = [...INTENT_ORDER.filter((i) => intentsInCatalog.includes(i)),
+      ...intentsInCatalog.filter((i) => !INTENT_ORDER.includes(i))];
+
+    const initial = parseHash();
+    const initialIntent = orderedIntents.includes(initial.intent) ? initial.intent : orderedIntents[0];
+
+    orderedIntents.forEach((intent) => {
+      const btn = document.createElement('button');
+      btn.className = 'gallery-intent-pill';
+      btn.dataset.intent = intent;
+      const count = (catalog.byIntent[intent] || []).length;
+      btn.innerHTML = `${intent}<span class="gallery-intent-count">${count}</span>`;
+      btn.addEventListener('click', () => selectIntent(intent));
+      intentBar.appendChild(btn);
+    });
+
+    function selectIntent(intent, preferName) {
+      intentBar.querySelectorAll('.gallery-intent-pill').forEach((p) => {
+        p.setAttribute('aria-selected', p.dataset.intent === intent ? 'true' : 'false');
+      });
+
+      tabs.innerHTML = '';
+      const names = catalog.byIntent[intent] || [];
+      const variants = names
+        .map((name) => catalog.templates.find((t) => t.name === name))
+        .filter(Boolean);
+
+      if (variants.length === 0) {
+        tabs.innerHTML = '<span style="padding:12px;color:var(--muted);">No templates for this intent yet.</span>';
+        frame.removeAttribute('src');
+        openLink.removeAttribute('href');
+        writeHash(intent, null);
+        return;
+      }
+
+      const targetName = preferName && variants.find((v) => v.name === preferName)
+        ? preferName
+        : variants[0].name;
+
+      variants.forEach((v) => {
+        const btn = document.createElement('button');
+        btn.className = 'gallery-tab';
+        btn.role = 'tab';
+        btn.dataset.name = v.name;
+        btn.title = v.description || '';
+        const label = v.name.replace(/^of1-/, '').replace(intent + '-', '').replace(intent, '') || v.name;
+        const items = (v.minItems || v.maxItems)
+          ? `<span class="gallery-tab-tag">${v.minItems || 1}${v.maxItems && v.maxItems !== v.minItems ? '–' + v.maxItems : ''} items</span>`
+          : '';
+        btn.innerHTML = `<span>${label}</span>${items}`;
+        btn.addEventListener('click', () => selectVariant(intent, v.name));
+        tabs.appendChild(btn);
+      });
+
+      selectVariant(intent, targetName);
+    }
+
+    function selectVariant(intent, name) {
+      const url = previewUrlFor(name);
+      frame.src = url;
+      openLink.href = url;
+      tabs.querySelectorAll('.gallery-tab').forEach((t) => {
+        t.setAttribute('aria-selected', t.dataset.name === name ? 'true' : 'false');
+      });
+      writeHash(intent, name);
+    }
+
+    selectIntent(initialIntent, initial.name);
+  }
+
+  init();
+</script>
+
+</body>
+</html>
