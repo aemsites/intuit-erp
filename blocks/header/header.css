@@ -58,7 +58,7 @@ header .header .container { max-width: var(--container); margin: 0 auto; padding
 
 @media (width <= 768px) {
   header { min-height: 106px; }
-  .header .container { padding: 0 20px; }
+  header .header .container { padding: 0 20px; }
   .header .ies-topstrip { display: none; }
   .header .ies-nav .container { height: 56px; gap: 12px; }
   .header .nav-main { display: none; }
@@ -75,7 +75,11 @@ header .header .container { max-width: var(--container); margin: 0 auto; padding
   .header .flyout { position: static; border: 0; border-top: 0; box-shadow: none; padding: 0 0 8px 14px; }
   .header .flyout-inner { flex-direction: column; gap: 16px; }
   .header .nav-right { gap: 12px; }
-  .header .nav-cta { height: 36px; padding: 0 16px; font-size: 14px; }
+  /* matches erp.intuit.com: the mobile top bar shows only the logo + menu
+     toggle — the CTA doesn't fit next to the full "Enterprise Suite"
+     wordmark without overflowing the viewport, and the hero already
+     repeats "Schedule a call" on every page. */
+  .header .nav-cta { display: none; }
   .header .ies-events .container { font-size: 13px; padding-top: 12px; padding-bottom: 12px; }
   .header .nav-toggle { display: inline-flex; flex-direction: column; gap: 4px; background: none; border: 0; padding: 6px; cursor: pointer; }
   .header .nav-toggle span { width: 22px; height: 2px; background: currentcolor; display: block; }
