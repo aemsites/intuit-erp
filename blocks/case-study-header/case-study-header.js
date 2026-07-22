@@ -16,9 +16,11 @@
  *                          block uses that as the card thumbnail.
  *
  * Also builds a share-icon row (JS-generated, LinkedIn/X share intents +
- * copy-link) and a floating table of contents from every <h2> in the page
- * (safe: decorateMain() runs over the full page before any block decorates,
- * so all sections' headings already exist in the DOM at this point). Utility
+ * copy-link) and a boxed table of contents (inline in the article, right
+ * after the banner — not a floating rail, so it's visible at every viewport
+ * width) from every <h2> in the page (safe: decorateMain() runs over the
+ * full page before any block decorates, so all sections' headings already
+ * exist in the DOM at this point). Utility
  * sections that aren't real narrative content (e.g. "Recommended for you",
  * "Hear from our customers") are authored as <h3>, not <h2>, so they're
  * naturally excluded — DA doesn't preserve custom classes on headings
@@ -100,7 +102,6 @@ function buildToc() {
     return li;
   });
   nav.append(label, list);
-  document.body.append(nav);
   watchActiveSection(headings, items);
   return nav;
 }
@@ -146,6 +147,8 @@ export default function decorate(block) {
     wrap.append(banner);
   }
 
+  const toc = buildToc();
+  if (toc) wrap.append(toc);
+
   block.replaceChildren(wrap);
-  buildToc();
 }

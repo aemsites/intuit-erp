@@ -24,21 +24,20 @@
 .case-study-banner-tile img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .case-study-banner-tile ~ .case-study-banner-tile { display: none; }
 
-.case-study-toc { position: fixed; top: 50%; transform: translateY(-50%); left: max(24px, calc((100vw - var(--container)) / 2 - 240px)); width: 200px; display: none; }
-.case-study-toc-label { font-size: 16px; font-weight: 700; color: var(--heading); margin: 0 0 12px; }
-.case-study-toc ol { list-style: none; margin: 0; padding: 0; border-left: 2px solid var(--line); counter-reset: toc; }
-.case-study-toc li { position: relative; margin: 0; counter-increment: toc; }
-.case-study-toc li.active::before { content: ''; position: absolute; left: -2px; top: 0; bottom: 0; width: 2px; background: var(--primary); }
-.case-study-toc a { display: block; padding: 8px 0 8px 16px; font-size: 12px; line-height: 1.4; color: var(--text-muted); }
+/* boxed table of contents — inline in the article flow (not a floating
+   rail), so it's visible at every viewport width, not just ultra-wide ones. */
+.case-study-toc { max-width: 46em; margin: 32px auto 0; border: 1px solid var(--line); border-radius: var(--radius-card); padding: 22px 28px; }
+.case-study-toc-label { font-size: 16px; font-weight: 700; color: var(--heading); margin: 0 0 10px; }
+.case-study-toc ol { list-style: none; margin: 0; padding: 0; counter-reset: toc; }
+.case-study-toc li { margin: 0; counter-increment: toc; border-top: 1px solid var(--line); }
+.case-study-toc li:first-child { border-top: 0; }
+.case-study-toc a { display: block; padding: 10px 0; font-size: 14px; line-height: 1.4; color: var(--text); }
 .case-study-toc a::before { content: counter(toc) '. '; font-weight: 600; }
-.case-study-toc li.active a { color: var(--heading); }
+.case-study-toc li.active a { color: var(--primary); font-weight: 600; }
 .case-study-toc a:hover { color: var(--primary); text-decoration: none; }
-
-@media (width >= 1700px) {
-  .case-study-toc { display: block; }
-}
 
 @media (width <= 768px) {
   .case-study-copy h1 { font-size: 30px; }
   .case-study-banner { padding-top: 68%; }
+  .case-study-toc { padding: 18px 20px; }
 }
