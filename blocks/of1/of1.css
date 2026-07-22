@@ -4,6 +4,17 @@
    of1-generative-block-styler, retuned to this site's tokens
    (styles/styles.css :root + stardust/current/DESIGN.json).
    of1.js is shared infrastructure and is never edited — only this CSS.
+
+   Specificity note: the OF1 client SDK injects its own generic
+   of1-client.css at runtime (of1.js init()), targeting nearly every
+   selector below with equal specificity and hardcoded fallback colors
+   (#ffea00-family). Whichever stylesheet loads later in <head> wins
+   ties — and depending on load order that can be the SDK's generic
+   defaults, not our brand CSS. Every top-level selector below is
+   prefixed with `main` (a stable ancestor of everything the OF1 block
+   renders, whether nested inside the block or appended as a sibling
+   section) to reliably out-specificity the SDK's bare selectors
+   without needing !important anywhere.
    ============================================================ */
 
 /* ─── Brand Token Mapping ──────────────────────────────────── */
@@ -37,7 +48,7 @@
    some browsers/OS accent-color settings can bleed a non-brand highlight
    into hover/focus/active states instead of the CSS below. */
 
-.of1 button {
+main .of1 button {
   appearance: none;
   -webkit-appearance: none;
   -webkit-tap-highlight-color: transparent;
@@ -50,14 +61,14 @@
 }
 
 .of1-wrapper {
-  max-width: 100% !important;
+  max-width: 100%;
   margin: 0;
-  padding: 0 !important;
+  padding: 0;
 }
 
 /* ─── Search Landing UI ────────────────────────────────────── */
 
-.of1-search-ui {
+main .of1-search-ui {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -68,7 +79,7 @@
   text-align: center;
 }
 
-.of1-title {
+main .of1-title {
   font-family: var(--font-heading);
   font-size: clamp(2.25rem, 5vw, 3.5rem);
   font-weight: 400;
@@ -80,7 +91,7 @@
   width: 100%;
 }
 
-.of1-subtitle {
+main .of1-subtitle {
   font-family: var(--font-body);
   font-size: 1.0625rem;
   color: var(--text-secondary);
@@ -92,14 +103,14 @@
 
 /* ─── Input & Submit ──────────────────────────────────────── */
 
-.of1-input-wrapper {
+main .of1-input-wrapper {
   position: relative;
   width: 100%;
   max-width: 720px;
   margin: 0 auto;
 }
 
-.of1-input {
+main .of1-input {
   width: 100%;
   font-family: var(--font-body);
   font-size: 17px;
@@ -112,34 +123,25 @@
   transition: border-color var(--transition), box-shadow var(--transition);
 }
 
-.of1-input::placeholder {
+main .of1-input::placeholder {
   color: var(--text-secondary);
 }
 
-.of1-input:focus {
+main .of1-input:focus {
   outline: none;
-  /* !important: the OF1 client SDK injects its own generic of1-client.css
-     AFTER this stylesheet (dynamically, from of1.js init()), with matching
-     selectors and a hardcoded #ffea00-family fallback color. Since we can't
-     edit or reorder the shared SDK CSS, !important is the only way to keep
-     this brand token from being silently overridden. */
-  border-color: var(--primary) !important;
-  box-shadow: 0 0 0 3px rgb(0 119 197 / 15%) !important;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgb(0 119 197 / 15%);
 }
 
-.of1-submit {
+main .of1-submit {
   position: absolute;
   right: 10px;
   top: 50%;
   transform: translateY(-50%);
-  /* !important: same base-state override as :hover below — the SDK's
-     of1-client.css base .of1-submit rule sets color: #ffea00 and
-     border-radius: 0, which also flips the SVG arrow (stroke: currentColor)
-     to yellow and squares off the button even before any interaction. */
-  background: var(--primary) !important;
-  color: #fff !important;
+  background: var(--primary);
+  color: #fff;
   border: none;
-  border-radius: 50% !important;
+  border-radius: 50%;
   width: 52px;
   height: 52px;
   display: flex;
@@ -150,22 +152,22 @@
   transition: background var(--transition), transform var(--transition);
 }
 
-.of1-submit svg {
+main .of1-submit svg {
   width: 22px;
   height: 22px;
 }
 
-.of1-submit:hover,
-.of1-submit:focus-visible,
-.of1-submit:active {
-  background: var(--primary-hover) !important;
+main .of1-submit:hover,
+main .of1-submit:focus-visible,
+main .of1-submit:active {
+  background: var(--primary-hover);
   transform: translateY(-50%) scale(1.05);
   outline: none;
 }
 
 /* ─── Quick Suggestion Chips ──────────────────────────────── */
 
-.of1-chips {
+main .of1-chips {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
@@ -174,7 +176,7 @@
   max-width: 700px;
 }
 
-.of1-chip {
+main .of1-chip {
   appearance: none;
   -webkit-appearance: none;
   -webkit-tap-highlight-color: transparent;
@@ -190,61 +192,61 @@
   transition: background var(--transition), border-color var(--transition);
 }
 
-.of1-chip:hover,
-.of1-chip:focus-visible,
-.of1-chip:active {
-  background: var(--surface-muted) !important;
-  border-color: var(--primary) !important;
+main .of1-chip:hover,
+main .of1-chip:focus-visible,
+main .of1-chip:active {
+  background: var(--surface-muted);
+  border-color: var(--primary);
   outline: none;
 }
 
 /* ─── Loading Skeleton ────────────────────────────────────── */
 
-.of1-skeleton-wrap {
+main .of1-skeleton-wrap {
   padding: 48px 24px;
   max-width: 1200px;
   margin: 0 auto;
 }
 
-.of1-skeleton {
+main .of1-skeleton {
   background: var(--surface-muted);
   border-radius: var(--radius-card);
   animation: of1-shimmer 1.5s ease-in-out infinite;
 }
 
-.of1-skeleton-hero {
+main .of1-skeleton-hero {
   width: 100%;
   height: 320px;
   border-radius: var(--radius-card);
   margin-bottom: 32px;
 }
 
-.of1-skeleton-heading {
+main .of1-skeleton-heading {
   width: 60%;
   height: 28px;
   border-radius: 8px;
   margin-bottom: 16px;
 }
 
-.of1-skeleton-text {
+main .of1-skeleton-text {
   width: 90%;
   height: 16px;
   border-radius: 6px;
   margin-bottom: 12px;
 }
 
-.of1-skeleton-text.short {
+main .of1-skeleton-text.short {
   width: 45%;
 }
 
-.of1-skeleton-card-grid {
+main .of1-skeleton-card-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 24px;
   margin-top: 32px;
 }
 
-.of1-skeleton-card {
+main .of1-skeleton-card {
   height: 220px;
   border-radius: var(--radius-card);
 }
@@ -257,21 +259,21 @@
 
 /* ─── Generated Sections ──────────────────────────────────── */
 
-.generated-section {
+main .generated-section {
   animation: of1-fade-in 0.4s ease-out both;
 }
 
 /* Legacy flow sections (EDS-decorated divs) need full-width overrides.
    Template-routed sections (<section>) have their own CSS — don't touch. */
-div.generated-section {
+main div.generated-section {
   padding: 0;
   margin: 0;
   max-width: none;
   width: 100%;
 }
 
-div.generated-section > .section,
-div.generated-section > section {
+main div.generated-section > .section,
+main div.generated-section > section {
   max-width: none;
   width: 100%;
 }
@@ -284,12 +286,12 @@ div.generated-section > section {
 /* ─── Generated Hero ──────────────────────────────────────── */
 /* EDS DOM: .hero-wrapper > .hero.block > div (row) > div (text cell) + div (image cell with picture > img) */
 
-.generated-section .hero-wrapper {
-  max-width: 100% !important;
-  padding: 0 !important;
+main .generated-section .hero-wrapper {
+  max-width: 100%;
+  padding: 0;
 }
 
-.generated-section .hero {
+main .generated-section .hero {
   position: relative;
   min-height: 480px;
   display: flex;
@@ -299,34 +301,34 @@ div.generated-section > section {
   border-radius: var(--radius-card);
 }
 
-.generated-section .hero picture {
+main .generated-section .hero picture {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
 }
 
-.generated-section .hero picture img {
+main .generated-section .hero picture img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.generated-section .hero::after {
+main .generated-section .hero::after {
   content: "";
   position: absolute;
   inset: 0;
   background: linear-gradient(to top, rgb(0 37 74 / 80%), transparent 60%);
 }
 
-.generated-section .hero > div {
+main .generated-section .hero > div {
   position: relative;
   z-index: 1;
   color: #fff;
 }
 
-.generated-section .hero h1,
-.generated-section .hero h2 {
+main .generated-section .hero h1,
+main .generated-section .hero h2 {
   font-family: var(--font-heading);
   font-weight: 400;
   font-size: clamp(1.75rem, 4vw, 2.75rem);
@@ -334,7 +336,7 @@ div.generated-section > section {
   margin-bottom: 12px;
 }
 
-.generated-section .hero p {
+main .generated-section .hero p {
   font-family: var(--font-body);
   font-size: 1rem;
   line-height: 1.6;
@@ -342,7 +344,7 @@ div.generated-section > section {
   max-width: 560px;
 }
 
-.generated-section .hero a {
+main .generated-section .hero a {
   display: inline-block;
   margin-top: 16px;
   padding: 12px 28px;
@@ -356,19 +358,19 @@ div.generated-section > section {
   transition: background var(--transition);
 }
 
-.generated-section .hero a:hover {
-  background: var(--surface-muted) !important;
+main .generated-section .hero a:hover {
+  background: var(--surface-muted);
 }
 
 /* ─── Generated Cards ─────────────────────────────────────── */
 /* EDS DOM: .cards-wrapper > .cards.block > div (one per card) > div (cell content) */
 
-.generated-section .cards-wrapper {
+main .generated-section .cards-wrapper {
   max-width: 1200px;
   margin: 0 auto;
 }
 
-.generated-section .cards {
+main .generated-section .cards {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 24px;
@@ -377,7 +379,7 @@ div.generated-section > section {
   margin: 0 auto;
 }
 
-.generated-section .cards > div {
+main .generated-section .cards > div {
   background: var(--surface-muted);
   border: 1px solid var(--border);
   border-radius: var(--radius-card);
@@ -385,18 +387,18 @@ div.generated-section > section {
   transition: box-shadow var(--transition), transform var(--transition);
 }
 
-.generated-section .cards > div:hover {
+main .generated-section .cards > div:hover {
   box-shadow: var(--shadow-lift);
   transform: translateY(-2px);
 }
 
-.generated-section .cards img {
+main .generated-section .cards img {
   width: 100%;
   aspect-ratio: 4 / 3;
   object-fit: cover;
 }
 
-.generated-section .cards h3 {
+main .generated-section .cards h3 {
   font-family: var(--font-heading);
   font-size: 1.125rem;
   font-weight: 500;
@@ -405,7 +407,7 @@ div.generated-section > section {
   line-height: 1.3;
 }
 
-.generated-section .cards p {
+main .generated-section .cards p {
   font-family: var(--font-body);
   font-size: 0.875rem;
   color: var(--text-secondary);
@@ -413,7 +415,7 @@ div.generated-section > section {
   line-height: 1.5;
 }
 
-.generated-section .cards a {
+main .generated-section .cards a {
   display: inline-block;
   margin: 0 20px 20px;
   color: var(--primary);
@@ -424,19 +426,19 @@ div.generated-section > section {
   transition: color var(--transition);
 }
 
-.generated-section .cards a:hover {
+main .generated-section .cards a:hover {
   color: var(--primary-hover);
   text-decoration: underline;
 }
 
 /* ─── Generated Columns ───────────────────────────────────── */
 
-.generated-section .columns-wrapper {
+main .generated-section .columns-wrapper {
   max-width: 1200px;
   margin: 0 auto;
 }
 
-.generated-section .columns > div {
+main .generated-section .columns > div {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 32px;
@@ -444,14 +446,14 @@ div.generated-section > section {
   margin: 0 auto;
 }
 
-.generated-section .columns h2,
-.generated-section .columns h3 {
+main .generated-section .columns h2,
+main .generated-section .columns h3 {
   font-family: var(--font-heading);
   font-weight: 400;
   color: var(--heading-color, var(--text));
 }
 
-.generated-section .columns p {
+main .generated-section .columns p {
   font-family: var(--font-body);
   color: var(--text-secondary);
   line-height: 1.6;
@@ -460,15 +462,15 @@ div.generated-section > section {
 /* ─── Generated Text ──────────────────────────────────────── */
 /* EDS DOM: .text-wrapper > .text.block > div (row) > div (cell: heading + paragraphs) */
 
-.generated-section .text-wrapper {
+main .generated-section .text-wrapper {
   max-width: 720px;
   margin: 0 auto;
   padding: 0 24px;
 }
 
-.generated-section .text h1,
-.generated-section .text h2,
-.generated-section .text h3 {
+main .generated-section .text h1,
+main .generated-section .text h2,
+main .generated-section .text h3 {
   font-family: var(--font-heading);
   font-weight: 400;
   color: var(--heading-color, var(--text));
@@ -476,7 +478,7 @@ div.generated-section > section {
   margin: 0 0 16px;
 }
 
-.generated-section .text p {
+main .generated-section .text p {
   font-family: var(--font-body);
   color: var(--text-secondary);
   font-size: 1rem;
@@ -484,13 +486,13 @@ div.generated-section > section {
   margin: 0 0 16px;
 }
 
-.generated-section .text a {
+main .generated-section .text a {
   color: var(--primary);
   font-weight: 600;
   text-decoration: none;
 }
 
-.generated-section .text a:hover {
+main .generated-section .text a:hover {
   color: var(--primary-hover);
   text-decoration: underline;
 }
@@ -498,12 +500,12 @@ div.generated-section > section {
 /* ─── Generated Tables ────────────────────────────────────── */
 /* EDS DOM: .table-wrapper > .table.block > div (row) > div + div (cells) — NO <table>/<th>/<td> */
 
-.generated-section .table-wrapper {
+main .generated-section .table-wrapper {
   max-width: 1000px;
   margin: 0 auto;
 }
 
-.generated-section .table {
+main .generated-section .table {
   width: 100%;
   font-family: var(--font-body);
   font-size: 0.875rem;
@@ -511,45 +513,45 @@ div.generated-section > section {
   overflow: hidden;
 }
 
-.generated-section .table > div {
+main .generated-section .table > div {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   border-bottom: 1px solid var(--border);
 }
 
-.generated-section .table > div:first-child {
+main .generated-section .table > div:first-child {
   background: var(--surface-dark);
   color: #fff;
   font-weight: 600;
 }
 
-.generated-section .table > div:first-child > div {
+main .generated-section .table > div:first-child > div {
   padding: 12px 16px;
   color: #fff;
 }
 
-.generated-section .table > div:nth-child(even) {
+main .generated-section .table > div:nth-child(even) {
   background: var(--surface-muted);
 }
 
-.generated-section .table > div > div {
+main .generated-section .table > div > div {
   padding: 12px 16px;
   color: var(--text);
 }
 
 /* ─── Follow-up Suggestions ───────────────────────────────── */
 
-.generative-suggestions {
+main .generative-suggestions {
   padding: 40px 24px;
   text-align: center;
 }
 
-.generative-suggestions.dimmed {
+main .generative-suggestions.dimmed {
   opacity: 0.4;
   pointer-events: none;
 }
 
-.suggestion-input-row {
+main .suggestion-input-row {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -557,7 +559,7 @@ div.generated-section > section {
   width: 100%;
 }
 
-.suggestions-header {
+main .suggestions-header {
   font-family: var(--font-body);
   font-size: 10px;
   font-weight: 600;
@@ -567,13 +569,13 @@ div.generated-section > section {
   opacity: 0.7;
 }
 
-.suggestion-custom {
+main .suggestion-custom {
   position: relative;
   width: 600px;
   max-width: 100%;
 }
 
-.suggestion-input {
+main .suggestion-input {
   width: 100%;
   font-family: var(--font-body);
   font-size: 15px;
@@ -588,15 +590,15 @@ div.generated-section > section {
   transition: border-color var(--transition);
 }
 
-.suggestion-input::placeholder {
+main .suggestion-input::placeholder {
   color: rgb(128 128 128 / 60%);
 }
 
-.suggestion-input:focus {
-  border-color: var(--primary) !important;
+main .suggestion-input:focus {
+  border-color: var(--primary);
 }
 
-.suggestion-submit {
+main .suggestion-submit {
   position: absolute;
   right: 8px;
   top: 50%;
@@ -613,20 +615,20 @@ div.generated-section > section {
   transition: background var(--transition);
 }
 
-.suggestion-submit:hover,
-.suggestion-submit:focus-visible,
-.suggestion-submit:active {
-  background: var(--primary-hover) !important;
+main .suggestion-submit:hover,
+main .suggestion-submit:focus-visible,
+main .suggestion-submit:active {
+  background: var(--primary-hover);
   outline: none;
 }
 
-.suggestion-submit svg {
+main .suggestion-submit svg {
   width: 16px;
   height: 16px;
   stroke: #fff;
 }
 
-.suggestions-buttons {
+main .suggestions-buttons {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
@@ -634,7 +636,7 @@ div.generated-section > section {
   align-items: center;
 }
 
-.suggestion-btn {
+main .suggestion-btn {
   display: inline-flex;
   align-items: center;
   background: transparent;
@@ -649,15 +651,15 @@ div.generated-section > section {
   transition: background var(--transition), border-color var(--transition);
 }
 
-.suggestion-btn:hover,
-.suggestion-btn:focus-visible,
-.suggestion-btn:active {
-  background: var(--surface-muted) !important;
-  border-color: var(--primary) !important;
+main .suggestion-btn:hover,
+main .suggestion-btn:focus-visible,
+main .suggestion-btn:active {
+  background: var(--surface-muted);
+  border-color: var(--primary);
   outline: none;
 }
 
-.suggestion-restart {
+main .suggestion-restart {
   font-family: var(--font-body);
   font-size: 11px;
   opacity: 0.6;
@@ -672,39 +674,39 @@ div.generated-section > section {
   gap: 6px;
 }
 
-.suggestion-restart:hover {
+main .suggestion-restart:hover {
   opacity: 1;
 }
 
 /* ─── Responsive ──────────────────────────────────────────── */
 
 @media (width <= 768px) {
-  .of1-search-ui {
+  main .of1-search-ui {
     padding: 64px 16px 48px;
   }
 
-  .of1-title {
+  main .of1-title {
     font-size: 2rem;
   }
 
-  .generated-section .hero {
+  main .generated-section .hero {
     min-height: 360px;
     padding: 32px;
   }
 
-  .generated-section .cards {
+  main .generated-section .cards {
     grid-template-columns: 1fr;
   }
 
-  .generated-section .columns > div {
+  main .generated-section .columns > div {
     grid-template-columns: 1fr;
   }
 
-  .of1-skeleton-card-grid {
+  main .of1-skeleton-card-grid {
     grid-template-columns: 1fr;
   }
 
-  .of1-skeleton-hero {
+  main .of1-skeleton-hero {
     height: 200px;
   }
 }
@@ -715,7 +717,7 @@ div.generated-section > section {
    Template-routed sections carry `.of1-section` and manage their own width
    via their own stylesheet — exclude them so this legacy full-bleed override
    doesn't stomp their max-width. */
-.generated-section:not(.of1-section),
+main .generated-section:not(.of1-section),
 main > .section.generated-section:not(.of1-section) {
   max-width: 100% !important;
   width: 100% !important;
@@ -727,13 +729,13 @@ main > .section.generated-section:not(.of1-section) {
 }
 
 /* Hero wrapper is full-bleed */
-.generated-section .hero-wrapper {
+main .generated-section .hero-wrapper {
   max-width: 100% !important;
   width: 100% !important;
 }
 
 /* Inner content areas that SHOULD have constrained width */
-.generated-section .default-content-wrapper {
+main .generated-section .default-content-wrapper {
   max-width: 1200px;
   margin-left: auto;
   margin-right: auto;
