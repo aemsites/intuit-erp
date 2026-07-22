@@ -35,8 +35,9 @@ function formatDate(value) {
 }
 
 function cardHTML(item, featured) {
-  const article = document.createElement('article');
-  article.className = featured ? 'case-study-card featured' : 'case-study-card';
+  const card = document.createElement('a');
+  card.className = featured ? 'case-study-card featured' : 'case-study-card';
+  card.href = item.path;
   const picWrap = document.createElement('div');
   picWrap.className = 'case-study-card-image';
   if (item.image) {
@@ -46,10 +47,10 @@ function cardHTML(item, featured) {
   body.className = 'case-study-card-body';
   body.innerHTML = `
     <p class="eyebrow">Case study</p>
-    <h3><a href="${item.path}">${item.title}</a></h3>
+    <h3>${item.title}</h3>
     <p class="case-study-card-date">${formatDate(item.date)}</p>`;
-  article.append(picWrap, body);
-  return article;
+  card.append(picWrap, body);
+  return card;
 }
 
 export default async function decorate(block) {

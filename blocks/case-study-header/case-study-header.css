@@ -1,9 +1,12 @@
 /* case-study-header — article header banner + floating table of contents */
 .section.case-study-header-container { padding: 56px 0 40px; }
 .case-study-header-inner { max-width: 46em; margin: 0 auto 40px; }
-.case-study-copy .case-study-eyebrow { margin: 0 0 14px; }
-.case-study-copy h1 { font-size: 40px; line-height: 1.15; font-weight: 600; color: var(--heading); margin: 0 0 18px; }
-.case-study-copy .case-study-byline { font-size: 14px; color: var(--text-muted); margin: 0 0 20px; }
+.case-study-copy .case-study-eyebrow {
+  font-size: 16px; font-weight: 600; letter-spacing: normal; text-transform: uppercase;
+  color: var(--heading); margin: 0 0 4px;
+}
+.case-study-copy h1 { font-size: 48px; line-height: 1.25; font-weight: 700; color: var(--heading); margin: 0 0 16px; }
+.case-study-copy .case-study-byline { font-size: 15px; color: var(--text); margin: 0 0 20px; }
 
 .case-study-share { display: flex; align-items: center; gap: 16px; }
 .case-study-share a, .case-study-share button {
@@ -13,16 +16,22 @@
 }
 .case-study-share a:hover, .case-study-share button:hover { color: var(--primary); border-color: var(--primary); }
 
-.case-study-banner { max-width: 46em; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 4px; border-radius: var(--radius-card); overflow: hidden; aspect-ratio: 16 / 6; }
-.case-study-banner-tile { background: var(--navy); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+/* single hero photo (matches erp.intuit.com — not a two-tile logo+photo banner).
+   position:relative + padding-top, not the `aspect-ratio` property: see the
+   flex/aspect-ratio bug note in case-study-cards.css — same defensive pattern. */
+.case-study-banner { max-width: 46em; margin: 0 auto; position: relative; padding-top: 60%; border-radius: 12px; overflow: hidden; background: var(--sand); }
+.case-study-banner-tile { position: absolute; inset: 0; }
 .case-study-banner-tile img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.case-study-banner-tile:last-child img { object-fit: contain; padding: 20%; }
+.case-study-banner-tile ~ .case-study-banner-tile { display: none; }
 
 .case-study-toc { position: fixed; top: 50%; transform: translateY(-50%); left: max(24px, calc((100vw - var(--container)) / 2 - 240px)); width: 200px; display: none; }
-.case-study-toc-label { font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); margin: 0 0 12px; }
-.case-study-toc ol { list-style: none; margin: 0; padding: 0; border-left: 2px solid var(--line); }
-.case-study-toc li { margin: 0; }
-.case-study-toc a { display: block; padding: 8px 0 8px 16px; font-size: 13px; line-height: 1.4; color: var(--text-muted); }
+.case-study-toc-label { font-size: 16px; font-weight: 700; color: var(--heading); margin: 0 0 12px; }
+.case-study-toc ol { list-style: none; margin: 0; padding: 0; border-left: 2px solid var(--line); counter-reset: toc; }
+.case-study-toc li { position: relative; margin: 0; counter-increment: toc; }
+.case-study-toc li.active::before { content: ''; position: absolute; left: -2px; top: 0; bottom: 0; width: 2px; background: var(--primary); }
+.case-study-toc a { display: block; padding: 8px 0 8px 16px; font-size: 12px; line-height: 1.4; color: var(--text-muted); }
+.case-study-toc a::before { content: counter(toc) '. '; font-weight: 600; }
+.case-study-toc li.active a { color: var(--heading); }
 .case-study-toc a:hover { color: var(--primary); text-decoration: none; }
 
 @media (width >= 1700px) {
@@ -30,6 +39,6 @@
 }
 
 @media (width <= 768px) {
-  .case-study-copy h1 { font-size: 28px; }
-  .case-study-banner { aspect-ratio: 16 / 10; }
+  .case-study-copy h1 { font-size: 30px; }
+  .case-study-banner { padding-top: 68%; }
 }

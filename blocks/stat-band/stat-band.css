@@ -55,17 +55,27 @@
   .stat-band.dark .stat-num { font-size: 64px; }
 }
 
-/* --- .stat-band.glance ("Results at a glance" case-study callout) --- */
-.section.stat-band-container:has(.stat-band.glance) { background: transparent; padding: 0; }
-.stat-band.glance .stats-grid {
-  display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px;
-  max-width: 46em; margin: 0 auto; background: var(--sky);
-  border-radius: var(--radius-card); padding: 34px 36px;
+/* --- .stat-band.glance ("Results at a glance" case-study callout) ---
+   Matches erp.intuit.com's results box: a cyan band holding an h3 label
+   (styled below via case-study body CSS) and a plain bulleted list of
+   full sentences — not a number/caption grid. */
+.section.stat-band-container:has(.stat-band.glance) { background: #c2f5ff; padding: 0; }
+.stat-band-container:has(.stat-band.glance) .default-content-wrapper {
+  max-width: 46em; margin: 0 auto; padding: 32px 40px 0;
 }
-.stat-band.glance .stat { background: none; border-radius: 0; padding: 0; }
-.stat-band.glance .stat-num { font-size: 40px; line-height: 1.1; color: var(--navy); margin-bottom: 8px; }
-.stat-band.glance .stat-desc { font-size: 14px; line-height: 1.4; color: var(--text); margin: 0; }
+.stat-band-container:has(.stat-band.glance) .default-content-wrapper h3 {
+  font-size: 28px; font-weight: 700; color: var(--heading); margin: 0;
+}
+.stat-band.glance .glance-list {
+  max-width: 46em; margin: 0 auto; padding: 12px 40px 32px 64px;
+  list-style: disc; list-style-position: outside;
+}
+.stat-band.glance .glance-list li { font-size: 18px; line-height: 1.5; color: var(--heading); margin-bottom: 8px; }
+.stat-band.glance .glance-list li:last-child { margin-bottom: 0; }
+.stat-band.glance .glance-num { font-weight: 700; }
 
 @media (width <= 768px) {
-  .stat-band.glance .stats-grid { grid-template-columns: 1fr; gap: 22px; padding: 28px 24px; }
+  .stat-band-container:has(.stat-band.glance) .default-content-wrapper { padding: 24px 20px 0; }
+  .stat-band.glance .glance-list { padding: 12px 20px 24px 44px; }
+  .stat-band.glance .glance-list li { font-size: 16px; }
 }

@@ -1,15 +1,23 @@
 /* case-study-cards — auto-populated grid, sourced from /case-studies/query-index.json */
 .case-study-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 28px; }
-.case-study-card { grid-column: span 2; display: flex; flex-direction: column; background: #fff; border-radius: var(--radius-card); overflow: hidden; box-shadow: 0 2px 12px rgb(0 0 0 / 6%); }
+.case-study-card {
+  grid-column: span 2; display: flex; flex-direction: column; background: #fff;
+  border-radius: var(--radius-card); overflow: hidden; box-shadow: 0 2px 12px rgb(0 0 0 / 6%);
+  text-decoration: none; color: inherit; transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.case-study-card:hover { box-shadow: 0 10px 28px rgb(0 0 0 / 12%); transform: translateY(-2px); text-decoration: none; }
+.case-study-card:hover .case-study-card-body h3 { color: var(--primary); }
 .case-study-card.featured { grid-column: span 3; }
-.case-study-card-image { aspect-ratio: 16 / 10; background: var(--sand); }
-.case-study-card-image picture, .case-study-card-image img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* padding-top aspect-ratio hack, not the `aspect-ratio` property: Chromium has a
+   flex-column + aspect-ratio interaction bug where the box's height tracks each
+   image's natural ratio instead of the declared one, so cards end up different
+   heights depending on which image is used. */
+.case-study-card-image { position: relative; padding-top: 62.5%; background: var(--sand); }
+.case-study-card-image picture, .case-study-card-image img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
 .case-study-card-body { padding: 20px 22px 24px; }
 .case-study-card-body .eyebrow { margin: 0 0 10px; }
-.case-study-card-body h3 { margin: 0 0 10px; font-size: 20px; line-height: 1.3; font-weight: 600; }
+.case-study-card-body h3 { margin: 0 0 10px; font-size: 20px; line-height: 1.3; font-weight: 600; color: var(--heading); transition: color 0.15s ease; }
 .case-study-card.featured .case-study-card-body h3 { font-size: 24px; }
-.case-study-card-body h3 a { color: var(--heading); }
-.case-study-card-body h3 a:hover { color: var(--primary); text-decoration: none; }
 .case-study-card-date { margin: 0; font-size: 13px; color: var(--text-muted); }
 .case-study-load-more { display: flex; justify-content: center; margin-top: 40px; }
 .case-study-load-more[hidden], .recommended .case-study-load-more { display: none; }

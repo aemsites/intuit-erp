@@ -1,10 +1,14 @@
 /**
- * stat-band — band of stat figures (index carousel, pricing static grid).
+ * stat-band — band of stat figures (index carousel, pricing static grid,
+ * case-study "Results at a glance" callout).
  *
- * Section head (h2) is authored as default content before the block.
+ * Section head (h2/h3) is authored as default content before the block.
  * Block rows = one row per stat:
  *   default (index): number / description / company / segment — paged carousel
  *   .stat-band.dark (pricing "Data-backed performance"): number / description — static grid
+ *   .stat-band.glance (case study "Results at a glance"): number / description —
+ *     rendered as a plain bulleted sentence per row ("{number} {description}"),
+ *     matching erp.intuit.com's results box, not a number/caption grid.
  * An optional trailing paragraph (foot/disclaimer) is authored as default content.
  * CSS: blocks/stat-band/stat-band.css
  */
@@ -112,13 +116,29 @@ function buildCarousel(block, track) {
 }
 
 export default function decorate(block) {
-  const dark = block.classList.contains('dark');
-  const glance = block.classList.contains('glance');
-  const staticGrid = dark || glance;
   const rows = [...block.children];
 
+  if (block.classList.contains('glance')) {
+    const list = document.createElement('ul');
+    list.className = 'glance-list';
+    rows.forEach((row) => {
+      const cells = [...row.children];
+      if (!cells.length) return;
+      const li = document.createElement('li');
+      const num = document.createElement('strong');
+      num.className = 'glance-num';
+      num.textContent = txt(cells[0]);
+      li.append(num);
+      if (cells[1]) li.append(` ${txt(cells[1])}`);
+      list.append(li);
+    });
+    block.replaceChildren(list);
+    return;
+  }
+
+  const dark = block.classList.contains('dark');
   const track = document.createElement('div');
-  track.className = staticGrid ? 'stats-grid' : 'stats-track';
+  track.className = dark ? 'stats-grid' : 'stats-track';
 
   rows.forEach((row) => {
     const cells = [...row.children];
@@ -152,5 +172,5 @@ export default function decorate(block) {
 
   block.replaceChildren(track);
 
-  if (!staticGrid) buildCarousel(block, track);
+  if (!dark) buildCarousel(block, track);
 }

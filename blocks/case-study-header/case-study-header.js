@@ -5,11 +5,15 @@
  *   1. eyebrow text        ("Case study")
  *   2. <h1> headline
  *   3. byline paragraph    ("By {author} · Published {date}")
- *   4. media row           cell 1 = person/site photo, cell 2 = company logo
- *                          (photo first so it becomes the page's lead image —
- *                          the Helix pipeline auto-derives og:image from the
- *                          first image on the page, which the case-study-cards
- *                          block uses as the card thumbnail)
+ *   4. media row           cell 1 = the single hero photo (matches
+ *                          erp.intuit.com's one-image banner, not a
+ *                          two-tile logo+photo split). Extra cells are
+ *                          accepted but hidden via CSS, so existing pages
+ *                          authored with a second (logo) cell still work.
+ *                          This is also the page's lead image, since the
+ *                          Helix pipeline auto-derives og:image from the
+ *                          first image on the page — the case-study-cards
+ *                          block uses that as the card thumbnail.
  *
  * Also builds a share-icon row (JS-generated, LinkedIn/X share intents +
  * copy-link) and a floating table of contents from every <h2> in the page
@@ -49,6 +53,35 @@ function shareRow() {
   return nav;
 }
 
+// Highlights the ToC entry for the last section heading that's scrolled past
+// the top threshold, matching the blue active-bar behavior on
+// erp.intuit.com's sticky table of contents. An IntersectionObserver with a
+// narrow band leaves gaps between headings with nothing marked active, so
+// this tracks scroll position directly instead.
+function watchActiveSection(headings, items) {
+  const THRESHOLD = 140;
+  let ticking = false;
+  const update = () => {
+    ticking = false;
+    let current = 0;
+    headings.forEach((h, i) => {
+      if (h.getBoundingClientRect().top <= THRESHOLD) current = i;
+    });
+    items.forEach((li, i) => li.classList.toggle('active', i === current));
+  };
+  const schedule = () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(update);
+  };
+  document.addEventListener('scroll', schedule, { passive: true });
+  // Images loading after this runs (the banner photo especially) push
+  // heading positions down, so a plain synchronous call here can capture a
+  // bogus pre-layout snapshot. A ResizeObserver on <main> catches every
+  // later layout shift (images, fonts) and recomputes, not just scrolling.
+  new ResizeObserver(schedule).observe(document.querySelector('main'));
+}
+
 function buildToc() {
   const headings = [...document.querySelectorAll('main h2')];
   if (!headings.length) return null;
@@ -59,14 +92,16 @@ function buildToc() {
   label.className = 'case-study-toc-label';
   label.textContent = 'Table of contents';
   const list = document.createElement('ol');
-  headings.forEach((h, i) => {
+  const items = headings.map((h, i) => {
     if (!h.id) h.id = `${toClassName(h.textContent)}-${i}`;
     const li = document.createElement('li');
     li.innerHTML = `<a href="#${h.id}">${h.textContent}</a>`;
     list.append(li);
+    return li;
   });
   nav.append(label, list);
   document.body.append(nav);
+  watchActiveSection(headings, items);
   return nav;
 }
 
