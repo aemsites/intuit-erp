@@ -113,10 +113,12 @@ function buildCarousel(block, track) {
 
 export default function decorate(block) {
   const dark = block.classList.contains('dark');
+  const glance = block.classList.contains('glance');
+  const staticGrid = dark || glance;
   const rows = [...block.children];
 
   const track = document.createElement('div');
-  track.className = dark ? 'stats-grid' : 'stats-track';
+  track.className = staticGrid ? 'stats-grid' : 'stats-track';
 
   rows.forEach((row) => {
     const cells = [...row.children];
@@ -150,5 +152,5 @@ export default function decorate(block) {
 
   block.replaceChildren(track);
 
-  if (!dark) buildCarousel(block, track);
+  if (!staticGrid) buildCarousel(block, track);
 }

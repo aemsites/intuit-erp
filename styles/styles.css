@@ -380,8 +380,34 @@ main .section:empty { display: none; }
 /* narrow container variant (prototype .container-narrow = 1180px) */
 main .section.narrow > div { max-width: 1180px; }
 
+/* case-studies index intro (Template: "Case Studies Index" metadata -> body.case-studies-index) */
+body.case-studies-index main > .section:first-of-type .default-content-wrapper {
+  max-width: 46em; margin: 0 auto; text-align: center;
+}
+body.case-studies-index main > .section:first-of-type h1 { font-size: 40px; font-weight: 600; margin: 0 0 16px; }
+body.case-studies-index main > .section:first-of-type p { font-size: 17px; color: var(--text-muted); }
+
 /* eyebrow utility */
 .eyebrow { font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
+
+/* case-study article body (Template: "Case Study" metadata -> body.case-study):
+   narrow the plain prose sections (h2/p/blockquote, no block) to article width.
+   Blocks (case-study-header, stat-band.glance, testimonial, case-study-cards,
+   cta-band) get their own wrapper class from decorateBlock() and manage their
+   own width, so this only touches default-content-wrapper. */
+body.case-study main .default-content-wrapper { max-width: 46em; margin: 0 auto; }
+
+/* pull-quote (case-study article body prose) */
+blockquote {
+  position: relative; margin: 48px 0; padding: 0 0 0 44px;
+  font-size: 28px; line-height: 1.35; font-weight: 400; color: var(--heading);
+}
+.text blockquote::before {
+  content: '\201C'; position: absolute; left: 0; top: -0.1em;
+  font-size: 48px; line-height: 1; color: var(--primary); font-weight: 700;
+}
+.text blockquote p { margin: 0; }
+.text blockquote cite { display: block; margin-top: 14px; font-size: 14px; font-style: normal; font-weight: 600; color: var(--text-muted); }
 
 /* buttons — EDS decorates <strong><a> -> .button.primary, <em><a> -> .button.secondary */
 a.button:any-link, button.button {

@@ -70,7 +70,7 @@ const NAV = [
           { text: 'Compare Intuit Enterprise Suite', desc: 'See how IES stacks up', href: '/compare', internal: true },
           { text: 'Blog', href: 'https://erp.intuit.com/blog/' },
           { text: 'Events', href: 'https://erp.intuit.com/events/' },
-          { text: 'Case studies', href: 'https://erp.intuit.com/blog/case-study/' },
+          { text: 'Case studies', href: '/case-studies', internal: true },
           { text: 'Migration', href: 'https://erp.intuit.com/migration/' },
         ],
       },
