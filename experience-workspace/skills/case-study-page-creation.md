@@ -1,6 +1,6 @@
 ---
 name: case-study-page-creation
-description: Create a new case study page from a customer brief, following the Intuit Enterprise Suite site's case-study template (header, results-at-a-glance, body sections with real quotes, download/CTA bands, recommended cards), then preview it.
+description: Create a new case study page from a customer brief, following the Intuit Enterprise Suite site's case-study template (header, results-at-a-glance, body sections with real quotes, download/CTA bands, recommended cards), then preview, brand-check, and fidelity-check it.
 version: 1
 status: approved
 ---
@@ -41,7 +41,7 @@ Include:
    - body → plain `h2` + `p` + `blockquote` → narrative sections in order
    - promo → `media-text` (default) → reusable "Unlock growth for your complex business" insert (optional, can be dropped if the story doesn't need a mid-article breather)
    - video → `testimonial` (`video` variant) → reuse the existing Rhodes Companies customer story
-   - related → `resource-cards`... — wait, use `case-study-cards` (`recommended` variant) → 3 related case studies
+   - related → `case-study-cards` (`recommended` variant) → 3 related case studies
    - closing → `cta-band` → schedule-a-call CTA
 4. **Images** — which existing DA media asset(s) will be used, or what needs to be uploaded first
 
@@ -52,7 +52,7 @@ End with:
 
 ## Step 3 — Generate the page
 
-Use `da_create_source` (org `keepthebyte`, repo `aem-intuit-erp`, path `case-studies/<slug>.html`) with valid EDS HTML. Rules:
+Use `content_create` with valid EDS HTML at path `case-studies/<slug>.html`. Rules:
 
 - Start with `<body>`, end with `</body>`; wrap content in `<main>…</main>` with `<header></header>` before it and `<footer></footer>` after
 - No `<!DOCTYPE>`, `<html>`, `<head>`, inline styles, or literal `<table>` for blocks
@@ -61,11 +61,7 @@ Use `da_create_source` (org `keepthebyte`, repo `aem-intuit-erp`, path `case-stu
 
 **Every image `src` must be an absolute URL** — either an already-uploaded DA asset (`https://content.da.live/keepthebyte/aem-intuit-erp/media/<file>`) or a fully-qualified external URL (e.g. hotlinking the real photo from the source erp.intuit.com article, which this site already does elsewhere). **A root-relative path like `/media/<file>.png` silently breaks**: DA's content pipeline can't resolve it and stores `src="about:error"` instead — the image will look fine in your authored HTML but render broken everywhere.
 
-Before writing the page, check whether the image you want is already uploaded:
-```
-da_list_sources(org: "keepthebyte", repo: "aem-intuit-erp", path: "media")
-```
-If it's not there, either use `da_upload_media` to add it, or hotlink the real image directly from the source article (confirm the URL actually loads first).
+Before writing the page, check the site's DA media library for the asset you want. If it's not there, upload it (or hotlink the real image directly from the source article — confirm the URL actually loads first).
 
 **Header media row cell order matters**: put the lead **photo first, logo second** (or logo omitted). The Helix pipeline derives the page's `og:image` from the first image on the page, and the `case-study-cards` index block uses that as the card thumbnail — a logo-first page gets a logo for a thumbnail, which looks wrong on the index grid.
 
@@ -159,17 +155,23 @@ Share the DA edit link after creating: `https://da.live/edit#/keepthebyte/aem-in
 
 ## Step 4 — Preview
 
-Preview requires an authenticated DA session, which the author already has in Experience Workspace — hit **Preview** in the DA sidekick (an automated call from outside that session will get a 401). Once previewed, share the URL:
+Run `content_preview` immediately after creation. Share the Previewed URL:
 
 `https://main--aem-intuit-erp--keepthebyte.aem.page/case-studies/<slug>`
 
-Publishing (also via the sidekick) is what makes the page appear on `/case-studies` and in `/case-studies/query-index.json` — that's the whole point of the query-index setup, so call this out to the author rather than treating the page as "done" once merely previewed.
+Note: previewing is not publishing. Publishing (via the DA sidekick, a separate manual action) is what makes the page appear on `/case-studies` and in `/case-studies/query-index.json` — call this out to the author rather than treating the page as "done" once merely previewed.
 
 ---
 
-## Step 5 — Fidelity check
+## Step 5 — Brand check and fix
 
-Report as a checklist. This project's case studies are held to a real-source-only standard — this step exists to catch fabrication and the two structural bugs above, not brand tone (there's no governance agent on this project).
+Run the **`brand-check-and-fix`** skill (`experience-workspace/skills/brand-check-and-fix.md`) against the page created in Step 3, using its Live Preview URL from Step 4. That skill handles reading the content, evaluating it with `mcp__governance-agent__evaluate_text`, fixing any violations in one `content_update`, and re-confirming compliance — follow it as written and fold its checklist output into this run.
+
+---
+
+## Step 6 — Fidelity check
+
+This is specific to case studies, on top of the general brand check above — it catches fabrication and this template's two structural gotchas. Report as a checklist.
 
 ```
 :::checklist
@@ -181,17 +183,18 @@ Report as a checklist. This project's case studies are held to a real-source-onl
 :::
 ```
 
-If anything fails, fix it with `da_update_source` and re-check.
+If anything fails, fix it with `content_update` and re-check.
 
 ---
 
-## Step 6 — Final summary
+## Step 7 — Final summary
 
 ```
 :::checklist
 - [x] Page created at case-studies/<slug>
 - [x] Edit at https://da.live/edit#/keepthebyte/aem-intuit-erp/case-studies/<slug>
 - [x] Previewed at https://main--aem-intuit-erp--keepthebyte.aem.page/case-studies/<slug>
+- [x] Brand check — all checks passed
 - [x] Fidelity check — all checks passed
 :::
 ```
