@@ -118,8 +118,13 @@
 
 .of1-input:focus {
   outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgb(0 119 197 / 15%);
+  /* !important: the OF1 client SDK injects its own generic of1-client.css
+     AFTER this stylesheet (dynamically, from of1.js init()), with matching
+     selectors and a hardcoded #ffea00-family fallback color. Since we can't
+     edit or reorder the shared SDK CSS, !important is the only way to keep
+     this brand token from being silently overridden. */
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px rgb(0 119 197 / 15%) !important;
 }
 
 .of1-submit {
@@ -144,7 +149,7 @@
 .of1-submit:hover,
 .of1-submit:focus-visible,
 .of1-submit:active {
-  background: var(--primary-hover);
+  background: var(--primary-hover) !important;
   transform: translateY(-50%) scale(1.05);
   outline: none;
 }
@@ -179,8 +184,8 @@
 .of1-chip:hover,
 .of1-chip:focus-visible,
 .of1-chip:active {
-  background: var(--surface-muted);
-  border-color: var(--primary);
+  background: var(--surface-muted) !important;
+  border-color: var(--primary) !important;
   outline: none;
 }
 
@@ -343,7 +348,7 @@ div.generated-section > section {
 }
 
 .generated-section .hero a:hover {
-  background: var(--surface-muted);
+  background: var(--surface-muted) !important;
 }
 
 /* ─── Generated Cards ─────────────────────────────────────── */
@@ -579,7 +584,7 @@ div.generated-section > section {
 }
 
 .suggestion-input:focus {
-  border-color: var(--primary);
+  border-color: var(--primary) !important;
 }
 
 .suggestion-submit {
@@ -602,7 +607,7 @@ div.generated-section > section {
 .suggestion-submit:hover,
 .suggestion-submit:focus-visible,
 .suggestion-submit:active {
-  background: var(--primary-hover);
+  background: var(--primary-hover) !important;
   outline: none;
 }
 
@@ -638,8 +643,8 @@ div.generated-section > section {
 .suggestion-btn:hover,
 .suggestion-btn:focus-visible,
 .suggestion-btn:active {
-  background: var(--surface-muted);
-  border-color: var(--primary);
+  background: var(--surface-muted) !important;
+  border-color: var(--primary) !important;
   outline: none;
 }
 
