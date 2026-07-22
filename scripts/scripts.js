@@ -13,6 +13,7 @@ import {
 } from './aem.js';
 import { runExperimentation } from './experiment-loader.js';
 import captureChatgptContext from './chatgpt-context.js';
+import captureGoogleAdsContext from './google-ads-context.js';
 
 // no custom prod domain configured yet — treat only the .aem.live CDN as
 // prod (no pill overlay); .aem.page previews and localhost stay in debug mode.
@@ -175,6 +176,7 @@ async function loadEager(doc) {
   document.documentElement.lang = 'en';
   decorateTemplateAndTheme();
   if (window.location.pathname === '/construction') captureChatgptContext();
+  if (window.location.pathname === '/erp-solutions') captureGoogleAdsContext();
   await runExperimentation(doc, experimentationConfig);
   const main = doc.querySelector('main');
   if (main) {
