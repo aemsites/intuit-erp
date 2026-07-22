@@ -95,19 +95,19 @@
 .of1-input-wrapper {
   position: relative;
   width: 100%;
-  max-width: 600px;
+  max-width: 720px;
   margin: 0 auto;
 }
 
 .of1-input {
   width: 100%;
   font-family: var(--font-body);
-  font-size: 15px;
+  font-size: 17px;
   color: var(--text);
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-pill);
-  padding: 16px 60px 16px 24px;
+  padding: 22px 76px 22px 30px;
   line-height: 1.4;
   transition: border-color var(--transition), box-shadow var(--transition);
 }
@@ -129,21 +129,30 @@
 
 .of1-submit {
   position: absolute;
-  right: 8px;
+  right: 10px;
   top: 50%;
   transform: translateY(-50%);
-  background: var(--primary);
-  color: #fff;
+  /* !important: same base-state override as :hover below — the SDK's
+     of1-client.css base .of1-submit rule sets color: #ffea00 and
+     border-radius: 0, which also flips the SVG arrow (stroke: currentColor)
+     to yellow and squares off the button even before any interaction. */
+  background: var(--primary) !important;
+  color: #fff !important;
   border: none;
-  border-radius: 50%;
-  width: 42px;
-  height: 42px;
+  border-radius: 50% !important;
+  width: 52px;
+  height: 52px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 16px;
   cursor: pointer;
   transition: background var(--transition), transform var(--transition);
+}
+
+.of1-submit svg {
+  width: 22px;
+  height: 22px;
 }
 
 .of1-submit:hover,
