@@ -110,19 +110,20 @@ main .of1-subtitle {
 main .of1-input-wrapper {
   position: relative;
   width: 100%;
-  max-width: 720px;
+  max-width: 640px;
   margin: 0 auto;
 }
 
 main .of1-input {
+  box-sizing: border-box;
   width: 100%;
   font-family: var(--font-body);
-  font-size: 17px;
+  font-size: 16px;
   color: var(--text);
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-pill);
-  padding: 22px 76px 22px 30px;
+  padding: 17px 62px 17px 26px;
   line-height: 1.4;
   transition: border-color var(--transition), box-shadow var(--transition);
 }
@@ -139,26 +140,26 @@ main .of1-input:focus {
 
 main .of1-submit {
   position: absolute;
-  right: 10px;
+  right: 6px;
   top: 50%;
   transform: translateY(-50%);
   background: var(--primary);
   color: #fff;
   border: none;
   border-radius: 50%;
-  width: 52px;
-  height: 52px;
+  width: 42px;
+  height: 42px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: 14px;
   cursor: pointer;
   transition: background var(--transition), transform var(--transition);
 }
 
 main .of1-submit svg {
-  width: 22px;
-  height: 22px;
+  width: 18px;
+  height: 18px;
 }
 
 main .of1-submit:hover,
