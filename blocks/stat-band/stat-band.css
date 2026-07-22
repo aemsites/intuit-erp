@@ -56,7 +56,7 @@
 }
 
 /* --- .stat-band.plain (research guide stat trios) --- */
-.section.stat-band-container:has(.stat-band.plain) { background: transparent; padding: 0; }
+.section.stat-band-container:has(.stat-band.plain) { background: transparent; padding: var(--section-y) 0; }
 .stat-band-container:has(.stat-band.plain) .default-content-wrapper { max-width: 46em; margin: 0 auto; }
 .stat-band-container:has(.stat-band.plain) .default-content-wrapper h2 { font-size: 30px; font-weight: 700; text-align: left; margin: 0 0 24px; }
 .stat-band.plain .stats-grid { max-width: 46em; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
