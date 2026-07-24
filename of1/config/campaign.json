@@ -1,0 +1,12 @@
+[
+  {
+    "param": "mkt_tok",
+    "value": "demo-q3-nurture-multientity",
+    "context": "Existing Intuit Enterprise Suite customer, Q3 nurture campaign, evaluating multi-entity consolidation after a recent acquisition."
+  },
+  {
+    "param": "mkt_tok",
+    "value": "demo-quickbooks-upgrade",
+    "context": "QuickBooks Desktop Enterprise customer being nurtured toward a guided ERP migration, sensitive to a fast, low-disruption switch."
+  }
+]
