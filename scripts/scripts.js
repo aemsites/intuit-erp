@@ -12,15 +12,7 @@ import {
   buildBlock,
 } from './aem.js';
 import runExperimentation from './experiment-loader.js';
-import captureFirmographicContext from './firmographic-context.js';
-import resolveAudiences from './audience-provider.js';
-import runOf1Personalization from './of1-personalize.js';
 import { initMartech, martechEager, martechLazy } from '../plugins/martech/src/index.js';
-
-// OF1 worker origin + tenant id. of1-endpoint.json holds the tenant's /of1
-// page URL; the worker API lives at this origin.
-const OF1_BASE_URL = 'https://of1-gen-web-service.franklin-prod.workers.dev';
-const OF1_TENANT_ID = 'main--aem-intuit-erp--keepthebyte';
 
 // Adobe Web SDK / AEP datastream. Placeholder for the POC — replace with the
 // real AEP sandbox datastreamId + orgId when provisioned. The datastream id is
@@ -218,18 +210,6 @@ async function loadEager(doc) {
     } catch (e) {
       martechLoadedPromise = null;
     }
-  }
-
-  // Firmographic (account-based) personalization — resolve the visiting
-  // company (mock: ?account=/?firmo=), enrich audiences, and let OF1 rewrite
-  // the page. Runs before content reveal to avoid flicker. Never blocks render
-  // on failure (all helpers degrade to no-op).
-  const firmoContext = await captureFirmographicContext(OF1_BASE_URL, OF1_TENANT_ID);
-  if (firmoContext && firmoContext.firmographics) {
-    firmoContext.audiences = await resolveAudiences({
-      firmographics: { ...firmoContext.firmographics, audiences: firmoContext.audiences },
-    });
-    await runOf1Personalization(firmoContext, OF1_BASE_URL, OF1_TENANT_ID);
   }
 
   await runExperimentation(doc, experimentationConfig);
