@@ -15,9 +15,9 @@
   },
   {
     "param": "demo_signal",
-    "value": "chatgpt-erp-compare",
-    "source": "ai",
-    "label": "ChatGPT",
-    "context": "Asked ChatGPT to compare ERP options for a 50-person construction firm."
+    "value": "google-ads-erp-search",
+    "source": "ads",
+    "label": "Google Ads",
+    "context": "Clicked a Google Ads search ad for \"ERP software for construction companies\"."
   }
 ]
