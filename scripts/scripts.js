@@ -12,8 +12,6 @@ import {
   buildBlock,
 } from './aem.js';
 import runExperimentation from './experiment-loader.js';
-import captureChatgptContext from './chatgpt-context.js';
-import captureGoogleAdsContext from './google-ads-context.js';
 import captureFirmographicContext from './firmographic-context.js';
 import resolveAudiences from './audience-provider.js';
 import runOf1Personalization from './of1-personalize.js';
@@ -210,9 +208,6 @@ async function loadEager(doc) {
       martechLoadedPromise = null;
     }
   }
-
-  if (window.location.pathname === '/construction') captureChatgptContext();
-  if (window.location.pathname === '/erp-solutions') captureGoogleAdsContext();
 
   // Firmographic (account-based) personalization — resolve the visiting
   // company (mock: ?account=/?firmo=), enrich audiences, and let OF1 rewrite
