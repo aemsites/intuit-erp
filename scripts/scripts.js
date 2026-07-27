@@ -14,6 +14,14 @@ import {
 import runExperimentation from './experiment-loader.js';
 import captureChatgptContext from './chatgpt-context.js';
 import captureGoogleAdsContext from './google-ads-context.js';
+import captureFirmographicContext from './firmographic-context.js';
+import resolveAudiences from './audience-provider.js';
+import runOf1Personalization from './of1-personalize.js';
+
+// OF1 worker origin + tenant id. of1-endpoint.json holds the tenant's /of1
+// page URL; the worker API lives at this origin.
+const OF1_BASE_URL = 'https://of1-gen-web-service.franklin-prod.workers.dev';
+const OF1_TENANT_ID = 'main--aem-intuit-erp--keepthebyte';
 
 // no custom prod domain configured yet — treat only the .aem.live CDN as
 // prod (no pill overlay); .aem.page previews and localhost stay in debug mode.
@@ -177,6 +185,19 @@ async function loadEager(doc) {
   decorateTemplateAndTheme();
   if (window.location.pathname === '/construction') captureChatgptContext();
   if (window.location.pathname === '/erp-solutions') captureGoogleAdsContext();
+
+  // Firmographic (account-based) personalization — resolve the visiting
+  // company (mock: ?account=/?firmo=), enrich audiences, and let OF1 rewrite
+  // the page. Runs before content reveal to avoid flicker. Never blocks render
+  // on failure (all helpers degrade to no-op).
+  const firmoContext = await captureFirmographicContext(OF1_BASE_URL);
+  if (firmoContext && firmoContext.firmographics) {
+    firmoContext.audiences = await resolveAudiences({
+      firmographics: { ...firmoContext.firmographics, audiences: firmoContext.audiences },
+    });
+    await runOf1Personalization(firmoContext, OF1_BASE_URL, OF1_TENANT_ID);
+  }
+
   await runExperimentation(doc, experimentationConfig);
   const main = doc.querySelector('main');
   if (main) {
