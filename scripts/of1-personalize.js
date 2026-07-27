@@ -45,6 +45,8 @@ export default async function runOf1Personalization(context, of1BaseUrl, tenantI
   };
 
   let res;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 5000);
   try {
     res = await fetch(`${of1BaseUrl}/api/personalize`, {
       method: 'POST',
@@ -56,10 +58,13 @@ export default async function runOf1Personalization(context, of1BaseUrl, tenantI
         firmographics: context.firmographics,
         audiences: context.audiences || [],
       }),
+      signal: controller.signal,
     });
   } catch (e) {
+    clearTimeout(timer);
     return;
   }
+  clearTimeout(timer);
   if (!res || !res.ok || !res.body) return;
 
   const reader = res.body.getReader();

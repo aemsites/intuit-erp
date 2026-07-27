@@ -4,15 +4,20 @@
  * lives entirely server-side in of1-gen-web. Public source safe.
  */
 export default async function resolveFirmographics(identity, of1BaseUrl) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 4000);
   try {
     const res = await fetch(`${of1BaseUrl}/api/firmographics`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(identity),
+      signal: controller.signal,
     });
     if (!res.ok) return null;
     return await res.json();
   } catch (e) {
     return null;
+  } finally {
+    clearTimeout(timer);
   }
 }
