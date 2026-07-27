@@ -11,7 +11,6 @@ const MAX_ELEMENTS = 12;
 
 function collectElements(main) {
   const elements = {};
-  const nodes = [];
   let i = 0;
   for (const el of main.querySelectorAll(PERSONALIZE_TAGS.join(','))) {
     const text = (el.textContent || '').trim();
@@ -19,11 +18,10 @@ function collectElements(main) {
     const id = `T${i}`;
     el.dataset.of1Id = id;
     elements[id] = { tag: el.tagName.toLowerCase(), text };
-    nodes.push(el);
     i += 1;
     if (i >= MAX_ELEMENTS) break;
   }
-  return { elements, nodes };
+  return { elements };
 }
 
 function applyMutation(main, mutation) {
@@ -68,22 +66,34 @@ export default async function runOf1Personalization(context, of1BaseUrl, tenantI
   const decoder = new TextDecoder();
   let buffer = '';
   // Stream NDJSON: apply each mutation line as it arrives.
-  // eslint-disable-next-line no-constant-condition
-  while (true) {
-    // eslint-disable-next-line no-await-in-loop
-    const { value, done } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split('\n');
-    buffer = lines.pop() || '';
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed) continue;
-      try {
-        applyMutation(main, JSON.parse(trimmed));
-      } catch (e) {
-        // skip non-JSON / partial lines
+  try {
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      // eslint-disable-next-line no-await-in-loop
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+        try {
+          applyMutation(main, JSON.parse(trimmed));
+        } catch (e) {
+          // skip non-JSON / partial lines
+        }
       }
+    }
+  } catch (e) {
+    // stream aborted mid-flight — apply what we have and stop
+  }
+  // Flush final buffered line if any.
+  if (buffer.trim()) {
+    try {
+      applyMutation(main, JSON.parse(buffer.trim()));
+    } catch (e) {
+      // skip non-JSON / partial lines
     }
   }
 }
