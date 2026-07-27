@@ -1,3 +1,4 @@
 helix-importer-ui
 *.min.js
 plugins/experimentation
+plugins/martech/**/*.min.js

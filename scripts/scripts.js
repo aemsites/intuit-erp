@@ -17,11 +17,21 @@ import captureGoogleAdsContext from './google-ads-context.js';
 import captureFirmographicContext from './firmographic-context.js';
 import resolveAudiences from './audience-provider.js';
 import runOf1Personalization from './of1-personalize.js';
+import { initMartech, martechEager, martechLazy } from '../plugins/martech/src/index.js';
 
 // OF1 worker origin + tenant id. of1-endpoint.json holds the tenant's /of1
 // page URL; the worker API lives at this origin.
 const OF1_BASE_URL = 'https://of1-gen-web-service.franklin-prod.workers.dev';
 const OF1_TENANT_ID = 'main--aem-intuit-erp--keepthebyte';
+
+// Adobe Web SDK / AEP datastream. Placeholder for the POC — replace with the
+// real AEP sandbox datastreamId + orgId when provisioned. The datastream id is
+// public (not a secret) and safe in client source. While the id starts with
+// "REPLACE_", martech is NOT initialized (see loadEager), so this changes
+// nothing today and cannot affect the live demo.
+const AEP_DATASTREAM_ID = 'REPLACE_WITH_DATASTREAM_ID';
+const AEP_ORG_ID = 'REPLACE_WITH_ORG_ID@AdobeOrg';
+const MARTECH_ENABLED = !AEP_DATASTREAM_ID.startsWith('REPLACE_');
 
 // no custom prod domain configured yet — treat only the .aem.live CDN as
 // prod (no pill overlay); .aem.page previews and localhost stay in debug mode.
@@ -183,6 +193,24 @@ export function decorateMain(main) {
 async function loadEager(doc) {
   document.documentElement.lang = 'en';
   decorateTemplateAndTheme();
+
+  // Adobe Web SDK (aem-martech). Kept INERT until a real AEP datastream id is
+  // set (MARTECH_ENABLED). When enabled, initMartech kicks off the datastream
+  // call that will surface RTCDP/AJO propositions; martechEager applies any
+  // personalization decisions before content reveal (flicker-free). Guarded so
+  // a missing/placeholder datastream never initializes Alloy or hides the body.
+  let martechLoadedPromise = null;
+  if (MARTECH_ENABLED) {
+    try {
+      martechLoadedPromise = initMartech(
+        { datastreamId: AEP_DATASTREAM_ID, orgId: AEP_ORG_ID },
+        { personalization: true },
+      );
+    } catch (e) {
+      martechLoadedPromise = null;
+    }
+  }
+
   if (window.location.pathname === '/construction') captureChatgptContext();
   if (window.location.pathname === '/erp-solutions') captureGoogleAdsContext();
 
@@ -203,7 +231,10 @@ async function loadEager(doc) {
   if (main) {
     decorateMain(main);
     document.body.classList.add('appear');
-    await loadSection(main.querySelector('.section'), waitForFirstImage);
+    await Promise.all([
+      martechLoadedPromise ? martechLoadedPromise.then(martechEager) : Promise.resolve(),
+      loadSection(main.querySelector('.section'), waitForFirstImage),
+    ]);
   }
 
   try {
@@ -231,6 +262,8 @@ async function loadLazy(doc) {
   if (hash && element) element.scrollIntoView();
 
   loadFooter(doc.querySelector('footer'));
+
+  if (MARTECH_ENABLED) { try { await martechLazy(); } catch (e) { /* non-fatal */ } }
 
   loadCSS(`${window.hlx.codeBasePath}/styles/lazy-styles.css`);
   loadFonts();
