@@ -1,0 +1,52 @@
+{
+  "enterprise-construction": {
+    "name": "Ridgeline Construction Group",
+    "domain": "ridgeline-cg.com",
+    "industry": "Construction",
+    "employeeCount": 5000,
+    "revenue": "$800M",
+    "location": "Denver, CO, USA",
+    "techStack": ["NetSuite", "Salesforce"],
+    "audiences": ["enterprise-active-opportunity"]
+  },
+  "midmarket-fintech": {
+    "name": "Northwind Capital",
+    "domain": "northwindcap.com",
+    "industry": "Financial Services",
+    "employeeCount": 900,
+    "revenue": "$250M",
+    "location": "Boston, MA, USA",
+    "techStack": ["Sage Intacct"],
+    "audiences": ["enterprise-fintech"]
+  },
+  "smb-quickbooks": {
+    "name": "Bright Path Consulting",
+    "domain": "brightpathco.com",
+    "industry": "Professional Services",
+    "employeeCount": 80,
+    "revenue": "$12M",
+    "location": "Austin, TX, USA",
+    "techStack": ["QuickBooks Online"],
+    "audiences": ["smb-upgrade-candidate"]
+  },
+  "accounting-firm": {
+    "name": "Meridian Advisors",
+    "domain": "meridianadvisors.com",
+    "industry": "Accounting",
+    "employeeCount": 200,
+    "revenue": "$30M",
+    "location": "Chicago, IL, USA",
+    "techStack": ["QuickBooks Online Accountant"],
+    "audiences": ["partner-proadvisor"]
+  },
+  "nonprofit": {
+    "name": "Open Horizons Foundation",
+    "domain": "openhorizons.org",
+    "industry": "Nonprofit",
+    "employeeCount": 400,
+    "revenue": "$45M",
+    "location": "Seattle, WA, USA",
+    "techStack": ["Sage Intacct"],
+    "audiences": ["governance-focused"]
+  }
+}

@@ -224,7 +224,7 @@ async function loadEager(doc) {
   // company (mock: ?account=/?firmo=), enrich audiences, and let OF1 rewrite
   // the page. Runs before content reveal to avoid flicker. Never blocks render
   // on failure (all helpers degrade to no-op).
-  const firmoContext = await captureFirmographicContext(OF1_BASE_URL);
+  const firmoContext = await captureFirmographicContext(OF1_BASE_URL, OF1_TENANT_ID);
   if (firmoContext && firmoContext.firmographics) {
     firmoContext.audiences = await resolveAudiences({
       firmographics: { ...firmoContext.firmographics, audiences: firmoContext.audiences },
