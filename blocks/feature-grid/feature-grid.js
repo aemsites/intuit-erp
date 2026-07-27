@@ -24,7 +24,9 @@ function buildCard(row) {
   const expandedPic = (picCells[1] || picCells[0])?.querySelector('picture, img');
   const ctaCell = cells.find((c) => c.querySelector('a'));
   const ctaLink = ctaCell?.querySelector('a');
-  const textCells = cells.filter((c) => c !== ctaCell && !picCells.includes(c) && c.textContent.trim());
+  const textCells = cells.filter(
+    (c) => c !== ctaCell && !picCells.includes(c) && c.textContent.trim(),
+  );
   const [tagCell, titleCell, bodyCell] = textCells;
   const tagText = tagCell ? tagCell.textContent.trim() : '';
   const titleText = titleCell ? titleCell.textContent.trim() : '';

@@ -62,12 +62,14 @@ header .header .container { max-width: var(--container); margin: 0 auto; padding
   .header .ies-topstrip { display: none; }
   .header .ies-nav .container { height: 56px; gap: 12px; }
   .header .nav-main { display: none; }
+
   .header.nav-open .nav-main {
     display: flex; flex-direction: column; align-items: stretch; gap: 6px;
     position: absolute; left: 0; right: 0; top: 56px; background: #fff; padding: 14px 20px 20px;
     border-bottom: 1px solid var(--line); box-shadow: 0 12px 24px rgb(0 0 0 / 8%); z-index: 49;
     max-height: calc(100vh - 56px); overflow-y: auto;
   }
+
   /* flyouts become stacked accordions inside the mobile menu */
   .header .nav-item { display: block; width: 100%; }
   .header .nav-item button { width: 100%; justify-content: space-between; padding: 10px 0; }
@@ -75,6 +77,7 @@ header .header .container { max-width: var(--container); margin: 0 auto; padding
   .header .flyout { position: static; border: 0; border-top: 0; box-shadow: none; padding: 0 0 8px 14px; }
   .header .flyout-inner { flex-direction: column; gap: 16px; }
   .header .nav-right { gap: 12px; }
+
   /* matches erp.intuit.com: the mobile top bar shows only the logo + menu
      toggle — the CTA doesn't fit next to the full "Enterprise Suite"
      wordmark without overflowing the viewport, and the hero already

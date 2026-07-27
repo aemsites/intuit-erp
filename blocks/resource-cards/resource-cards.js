@@ -56,14 +56,14 @@ export default async function decorate(block) {
   }
 
   let shown = 0;
+  const loadMoreWrap = document.createElement('div');
+  loadMoreWrap.className = 'resource-load-more';
   const renderNext = () => {
     items.slice(shown, shown + PAGE_SIZE).forEach((item) => grid.append(cardHTML(item)));
     shown += PAGE_SIZE;
     loadMoreWrap.hidden = shown >= items.length;
   };
 
-  const loadMoreWrap = document.createElement('div');
-  loadMoreWrap.className = 'resource-load-more';
   const loadMoreBtn = document.createElement('button');
   loadMoreBtn.type = 'button';
   loadMoreBtn.className = 'button secondary';

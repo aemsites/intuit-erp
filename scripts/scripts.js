@@ -11,7 +11,7 @@ import {
   loadCSS,
   buildBlock,
 } from './aem.js';
-import { runExperimentation } from './experiment-loader.js';
+import runExperimentation from './experiment-loader.js';
 import captureChatgptContext from './chatgpt-context.js';
 import captureGoogleAdsContext from './google-ads-context.js';
 

@@ -66,19 +66,6 @@ function buildCarousel(block, track) {
     nextBtn.disabled = current >= totalGroups - 1;
   }
 
-  function buildDots() {
-    dots.innerHTML = '';
-    for (let i = 0; i < totalGroups; i += 1) {
-      const dot = document.createElement('button');
-      dot.type = 'button';
-      dot.className = 'dot';
-      dot.setAttribute('aria-label', `Go to outcomes group ${i + 1} of ${totalGroups}`);
-      dot.addEventListener('click', () => goTo(i));
-      dots.append(dot);
-    }
-    updateDots();
-  }
-
   function applyTransform() {
     const card = cards[0];
     if (!card) return;
@@ -93,6 +80,19 @@ function buildCarousel(block, track) {
     applyTransform();
     updateDots();
     updateButtons();
+  }
+
+  function buildDots() {
+    dots.innerHTML = '';
+    for (let i = 0; i < totalGroups; i += 1) {
+      const dot = document.createElement('button');
+      dot.type = 'button';
+      dot.className = 'dot';
+      dot.setAttribute('aria-label', `Go to outcomes group ${i + 1} of ${totalGroups}`);
+      dot.addEventListener('click', () => goTo(i));
+      dots.append(dot);
+    }
+    updateDots();
   }
 
   function syncLayout() {

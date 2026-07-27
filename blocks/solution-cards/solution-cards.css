@@ -1,13 +1,16 @@
 /* solution-cards — two large solution cards (erp-solutions). Lifted from .solutions */
 .section.solution-cards-container { background: #fff; padding: 0 0 var(--section-y); }
+
 .solution-cards-container .default-content-wrapper p:first-of-type {
   text-align: center; margin: 0 0 16px; font-size: 13px; font-weight: 700;
   letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted);
 }
+
 .solution-cards-container .default-content-wrapper h2 {
   font-size: 38px; line-height: 1.15; font-weight: 400; color: var(--heading);
   text-align: center; margin: 0 0 20px;
 }
+
 .solution-cards-container .default-content-wrapper p:last-of-type {
   max-width: 40em; margin: 0 auto 52px; text-align: center; font-size: 16px;
   line-height: 1.55; color: var(--text-muted); text-transform: none; letter-spacing: 0; font-weight: 400;

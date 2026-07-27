@@ -377,6 +377,7 @@ main .section { padding: 0; }
 /* replica: colored section bands sit flush — no inter-section margin */
 main > .section { margin: 0; }
 main .section:empty { display: none; }
+
 /* narrow container variant (prototype .container-narrow = 1180px) */
 main .section.narrow > div { max-width: 1180px; }
 
@@ -402,6 +403,7 @@ blockquote {
   position: relative; margin: 48px 0; padding: 0 0 0 44px;
   font-size: 28px; line-height: 1.35; font-weight: 400; color: var(--heading);
 }
+
 blockquote::before {
   content: '\201C'; position: absolute; left: 0; top: -0.1em;
   font-size: 48px; line-height: 1; color: var(--primary); font-weight: 700;
@@ -417,17 +419,20 @@ a.button:any-link, button.button {
   border: 2px solid transparent; text-decoration: none; margin: 0;
   transition: background-color .15s ease, color .15s ease, border-color .15s ease;
 }
+
 a.button.primary, button.button.primary {
   background: var(--navy); color: #fff; border-color: var(--navy);
 }
 a.button.primary:hover { background: var(--navy-hover); border-color: var(--navy-hover); }
+
 a.button.secondary, button.button.secondary {
   background: transparent; color: var(--navy); border-color: var(--navy);
 }
-a.button.secondary:hover { background: rgba(0 37 74 / 6%); }
+a.button.secondary:hover { background: rgb(0 37 74 / 6%); }
+
 /* on-dark secondary (hero bands) */
 .section.dark a.button.secondary, .hero a.button.secondary { color: #fff; border-color: #fff; }
-.section.dark a.button.secondary:hover, .hero a.button.secondary:hover { background: rgba(255 255 255 / 12%); }
+.section.dark a.button.secondary:hover, .hero a.button.secondary:hover { background: rgb(255 255 255 / 12%); }
 p.button-wrapper { display: inline-flex; gap: 16px; flex-wrap: wrap; margin: 0; }
 
 body { font-weight: 400; }
@@ -449,6 +454,7 @@ img { display: block; max-width: 100%; height: auto; }
   opacity: 0; visibility: hidden; transition: opacity 0.2s ease, visibility 0.2s ease;
 }
 .schedule-modal-overlay.is-open { opacity: 1; visibility: visible; }
+
 .schedule-modal {
   position: relative; background: #fff; border-radius: var(--radius-card);
   width: 100%; max-width: 640px; max-height: 90vh; overflow-y: auto;
@@ -456,6 +462,7 @@ img { display: block; max-width: 100%; height: auto; }
   transform: translateY(12px); transition: transform 0.2s ease;
 }
 .schedule-modal-overlay.is-open .schedule-modal { transform: translateY(0); }
+
 .schedule-modal-close {
   position: absolute; top: 16px; right: 16px; width: 32px; height: 32px; border-radius: 50%;
   border: 0; background: var(--sky); color: var(--navy); font-size: 20px; line-height: 1;
@@ -464,12 +471,13 @@ img { display: block; max-width: 100%; height: auto; }
 .schedule-modal-close:hover { background: var(--line); }
 .schedule-modal-loading { text-align: center; color: var(--text-muted); padding: 40px 0; }
 .schedule-modal-body .section.form-container { padding: 0; background: transparent; }
+
 /* .form.boxed matches blocks/form/form.css's ".form.boxed .lead-fields" in
    specificity (3 classes each); since form.css loads after this stylesheet,
    that rule wins on a tie. Match ".form.boxed" explicitly so this wins instead. */
 .schedule-modal-body .form.boxed .lead-fields,
 .schedule-modal-body .form .lead-fields {
-  flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 14px; margin-top: 24px;
+  flex-flow: column nowrap; align-items: stretch; gap: 14px; margin-top: 24px;
 }
 .schedule-modal-body .form.boxed .ff, .schedule-modal-body .form .ff { flex: 1 1 auto; min-width: 0; }
 .schedule-modal-body .form .form-submit { width: 100%; }

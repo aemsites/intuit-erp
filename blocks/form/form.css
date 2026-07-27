@@ -11,12 +11,14 @@
 .form .lead-fields { display: flex; align-items: center; justify-content: center; gap: 20px; flex-wrap: nowrap; margin-top: 40px; }
 .form .ff { flex: 1; min-width: 0; text-align: left; display: flex; flex-direction: column; }
 .form .ff span { display: none; }
+
 .form .ff input {
   width: 100%; height: 46px; border: 0; border-bottom: 1px solid var(--line); background: transparent;
   padding: 0 4px; font-size: 15px; font-family: inherit; color: var(--text);
 }
 .form .ff input::placeholder { color: var(--text-muted); }
 .form .ff input:focus { outline: none; border-bottom-color: var(--primary); }
+
 .form .form-submit {
   flex: 0 0 auto; height: 46px; padding: 0 30px; border: 0; border-radius: var(--radius);
   background: var(--navy); color: #fff; font-size: 16px; font-weight: 600; cursor: pointer;

@@ -14,7 +14,10 @@ let body;
 let load;
 let lastFocused;
 
+// onKeydown/closeScheduleModal are mutually referential hoisted function
+// declarations; safe at runtime, not a bug.
 function onKeydown(e) {
+  // eslint-disable-next-line no-use-before-define
   if (e.key === 'Escape') closeScheduleModal();
 }
 

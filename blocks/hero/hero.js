@@ -57,6 +57,7 @@ export default async function decorate(block) {
   const ctaParas = [];
   copy.querySelectorAll('p').forEach((p) => {
     if (p.querySelector('a')) { ctaParas.push(p); return; }
+    // eslint-disable-next-line no-bitwise -- compareDocumentPosition returns a bitmask
     if (heading && p.compareDocumentPosition(heading) & Node.DOCUMENT_POSITION_FOLLOWING) {
       p.classList.add('eyebrow', 'hero-eyebrow');
     } else {

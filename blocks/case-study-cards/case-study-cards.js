@@ -55,6 +55,8 @@ export default async function decorate(block) {
   }
 
   let shown = 0;
+  const loadMoreWrap = document.createElement('div');
+  loadMoreWrap.className = 'case-study-load-more';
   const renderNext = () => {
     items.slice(shown, shown + PAGE_SIZE).forEach((item, i) => {
       grid.append(cardHTML(item, shown === 0 && i < 2));
@@ -65,8 +67,6 @@ export default async function decorate(block) {
     loadMoreWrap.hidden = shown >= items.length;
   };
 
-  const loadMoreWrap = document.createElement('div');
-  loadMoreWrap.className = 'case-study-load-more';
   const loadMoreBtn = document.createElement('button');
   loadMoreBtn.type = 'button';
   loadMoreBtn.className = 'button secondary';

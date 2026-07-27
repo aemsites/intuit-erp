@@ -12,6 +12,7 @@
 .download-card { background: #fff; border-radius: var(--radius-card); padding: 32px; box-shadow: 0 20px 50px rgb(0 0 0 / 25%); }
 .download-card h3 { font-size: 22px; font-weight: 700; color: var(--heading); margin: 0 0 20px; }
 .download-card .form .lead-fields { flex-direction: column; align-items: stretch; gap: 14px; margin-top: 0; }
+
 /* .form.boxed .ff sets `flex: 1 1 150px` for its normal *row* layout, where
    150px is a min-width. Once lead-fields switches to flex-direction: column
    above, that same 150px basis is reread as a min-height, stretching every

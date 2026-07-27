@@ -47,16 +47,18 @@
 .hero .hero-media::after {
   content: ""; position: absolute; z-index: -1; pointer-events: none;
 }
+
 .hero .hero-media::before {
-  top: -30%; bottom: -30%; left: -32%; right: -32%;
+  inset: -30% -32%;
   background: radial-gradient(
     ellipse 62% 58% at 50% 50%,
     rgb(51 181 255 / 85%) 0%, rgb(0 153 255 / 55%) 32%, rgb(0 119 255 / 22%) 58%, rgb(0 119 255 / 0%) 80%
   );
   filter: blur(64px);
 }
+
 .hero .hero-media::after {
-  top: -14%; bottom: -14%; left: -16%; right: -16%;
+  inset: -14% -16%;
   background: radial-gradient(
     ellipse 56% 52% at 50% 50%,
     rgb(150 210 255 / 65%) 0%, rgb(51 181 255 / 30%) 45%, rgb(51 181 255 / 0%) 78%
@@ -74,11 +76,13 @@
    shared schedule-call fragment (content/fragments/schedule-call.html) ---- */
 .hero.form .hero-grid { grid-template-columns: 1fr 470px; gap: 60px; min-height: 560px; }
 .hero.form .hero-copy h1 { font-size: 52px; max-width: 7em; margin-bottom: 0; }
+
 .hero .hero-form {
   justify-self: end; width: 100%; background: #fff; border-radius: 12px;
   padding: 34px 34px 30px; box-shadow: 0 24px 60px rgb(0 0 0 / 28%); color: var(--text);
 }
 .hero .hero-form-loading { text-align: center; color: var(--text-muted); font-size: 14px; padding: 20px 0; }
+
 /* .form.boxed matches blocks/form/form.css's ".form.boxed .lead-fields" in
    specificity (3 classes each); match ".form.boxed" explicitly so this wins
    regardless of block-CSS load order (see schedule-modal for the same fix). */
@@ -86,6 +90,7 @@
 .hero .hero-form .default-content-wrapper h2 { font-size: 26px; font-weight: 500; color: var(--heading); text-align: center; margin: 0 0 8px; }
 .hero .hero-form .default-content-wrapper p { font-size: 14px; color: var(--text-muted); text-align: center; line-height: 1.45; margin: 0 0 12px; }
 .hero .hero-form .default-content-wrapper p a { color: var(--primary); font-weight: 600; }
+
 .hero .hero-form .form.boxed .lead-fields,
 .hero .hero-form .form .lead-fields { flex-direction: column; align-items: stretch; gap: 14px; margin-top: 16px; }
 .hero .hero-form .form.boxed .ff, .hero .hero-form .form .ff { flex: 1 1 auto; min-width: 0; }

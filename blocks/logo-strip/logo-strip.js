@@ -21,7 +21,10 @@ function waitForImages(imgs) {
 function measure(block, viewport, track, setA, setB) {
   const originalItems = [...setA.children].filter((el) => !el.classList.contains('clone'));
   const viewportWidth = viewport.getBoundingClientRect().width;
-  const widestLogo = originalItems.reduce((max, el) => Math.max(max, el.getBoundingClientRect().width), 0);
+  const widestLogo = originalItems.reduce(
+    (max, el) => Math.max(max, el.getBoundingClientRect().width),
+    0,
+  );
   const target = viewportWidth + widestLogo;
 
   let guard = 0;

@@ -3,7 +3,8 @@
  * which emits plain `.cards > div` rows rather than authoring this block
  * directly. Kept structurally as-is (no ul/li wrap) to match the DOM
  * blocks/of1/of1.css already targets.
- * CSS: blocks/cards/cards.css (baseline) + blocks/of1/of1.css (.generated-section .cards, full styling)
+ * CSS: blocks/cards/cards.css (baseline) + blocks/of1/of1.css
+ *      (.generated-section .cards, full styling)
  */
 import { createOptimizedPicture } from '../../scripts/aem.js';
 

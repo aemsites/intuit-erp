@@ -1,6 +1,7 @@
 /* case-study-header — article header banner + floating table of contents */
 .section.case-study-header-container { padding: 56px 0 40px; }
 .case-study-header-inner { max-width: 46em; margin: 0 auto 40px; }
+
 .case-study-copy .case-study-eyebrow {
   font-size: 16px; font-weight: 600; letter-spacing: normal; text-transform: uppercase;
   color: var(--heading); margin: 0 0 4px;
@@ -9,6 +10,7 @@
 .case-study-copy .case-study-byline { font-size: 15px; color: var(--text); margin: 0 0 20px; }
 
 .case-study-share { display: flex; align-items: center; gap: 16px; }
+
 .case-study-share a, .case-study-share button {
   display: inline-flex; align-items: center; justify-content: center;
   color: var(--text-muted); background: none; border: 1px solid var(--line);

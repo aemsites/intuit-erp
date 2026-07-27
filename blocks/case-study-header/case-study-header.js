@@ -123,6 +123,7 @@ export default function decorate(block) {
 
   const heading = copy.querySelector('h1');
   copy.querySelectorAll('p').forEach((p) => {
+    // eslint-disable-next-line no-bitwise -- compareDocumentPosition returns a bitmask
     if (heading && (p.compareDocumentPosition(heading) & Node.DOCUMENT_POSITION_FOLLOWING)) {
       p.classList.add('eyebrow', 'case-study-eyebrow');
     } else {

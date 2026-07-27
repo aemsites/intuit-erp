@@ -1,5 +1,6 @@
 /* icon-columns — 3 feature columns (compare). Lifted from .cmp-grow */
 .section.icon-columns-container { background: #fff; padding: var(--section-y) 0 64px; }
+
 .icon-columns-container .default-content-wrapper h2 {
   font-size: 38px; line-height: 1.15; font-weight: 400; color: var(--heading);
   text-align: center; margin: 0 0 52px;

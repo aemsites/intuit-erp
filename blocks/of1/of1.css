@@ -48,13 +48,13 @@
 }
 
 /* ─── Native button reset ─────────────────────────────────── */
+
 /* Chips/submit buttons are real <button> elements; without this reset,
    some browsers/OS accent-color settings can bleed a non-brand highlight
    into hover/focus/active states instead of the CSS below. */
 
 main .of1 button {
   appearance: none;
-  -webkit-appearance: none;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -183,7 +183,6 @@ main .of1-chips {
 
 main .of1-chip {
   appearance: none;
-  -webkit-appearance: none;
   -webkit-tap-highlight-color: transparent;
   font-family: var(--font-body);
   font-size: 14px;
@@ -289,6 +288,7 @@ main div.generated-section > section {
 }
 
 /* ─── Generated Hero ──────────────────────────────────────── */
+
 /* EDS DOM: .hero-wrapper > .hero.block > div (row) > div (text cell) + div (image cell with picture > img) */
 
 main .generated-section .hero-wrapper {
@@ -368,6 +368,7 @@ main .generated-section .hero a:hover {
 }
 
 /* ─── Generated Cards ─────────────────────────────────────── */
+
 /* EDS DOM: .cards-wrapper > .cards.block > div (one per card) > div (cell content) */
 
 main .generated-section .cards-wrapper {
@@ -465,6 +466,7 @@ main .generated-section .columns p {
 }
 
 /* ─── Generated Text ──────────────────────────────────────── */
+
 /* EDS DOM: .text-wrapper > .text.block > div (row) > div (cell: heading + paragraphs) */
 
 main .generated-section .text-wrapper {
@@ -503,6 +505,7 @@ main .generated-section .text a:hover {
 }
 
 /* ─── Generated Tables ────────────────────────────────────── */
+
 /* EDS DOM: .table-wrapper > .table.block > div (row) > div + div (cells) — NO <table>/<th>/<td> */
 
 main .generated-section .table-wrapper {
@@ -591,7 +594,7 @@ main .suggestion-input {
   outline: none;
   background: transparent;
   color: inherit;
-  -webkit-appearance: none;
+  appearance: none;
   transition: border-color var(--transition);
 }
 
@@ -717,6 +720,7 @@ main .suggestion-restart:hover {
 }
 
 /* ─── Full-width fix for generated sections ───────────────── */
+
 /* Generated sections themselves are full-width; wrappers for content blocks
    (cards, columns, table) keep their max-width to constrain inner content.
    Template-routed sections carry `.of1-section` and manage their own width

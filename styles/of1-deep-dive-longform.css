@@ -19,7 +19,7 @@
 .of1-longform-hero-eyebrow { color: #9fd0ff; margin-bottom: 18px; }
 .of1-longform-hero-title { font-size: 48px; line-height: 60px; font-weight: 400; max-width: 9em; margin-bottom: 20px; color: #fff; }
 .of1-longform-hero-lede { font-size: 18px; line-height: 1.5; color: #e6eef6; max-width: 26em; margin-bottom: 30px; }
-.of1-longform-hero-media img { width: 100%; border-radius: 10px; box-shadow: 0 24px 60px rgba(0, 0, 0, .35); }
+.of1-longform-hero-media img { width: 100%; border-radius: 10px; box-shadow: 0 24px 60px rgb(0 0 0 / 35%); }
 
 /* ---- OVERVIEW ---- */
 .of1-longform-overview { background: #fff; padding: var(--space-section) 0 40px; }
@@ -32,7 +32,7 @@
 .of1-longform-caps { background: #eef2f6; padding: var(--space-section) 0; }
 .of1-longform-caps-title { margin-bottom: 44px; }
 .of1-longform-caps-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 26px; }
-.of1-longform-cap { background: #fff; border-radius: var(--radius-card); padding: 34px 32px; box-shadow: 0 2px 12px rgba(0, 0, 0, .05); }
+.of1-longform-cap { background: #fff; border-radius: var(--radius-card); padding: 34px 32px; box-shadow: 0 2px 12px rgb(0 0 0 / 5%); }
 .of1-longform-cap-index { font-size: 15px; font-weight: 700; color: var(--color-accent); letter-spacing: .04em; margin-bottom: 14px; }
 .of1-longform-cap h3 { font-size: 22px; font-weight: 500; color: var(--color-fg); margin-bottom: 10px; }
 .of1-longform-cap p { font-size: 15px; line-height: 1.55; color: var(--color-fg-dim); }
@@ -41,7 +41,7 @@
 .of1-longform-detail { background: #fff; padding: var(--space-section) 0; }
 .of1-longform-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
 .of1-longform-detail-media { background: var(--color-sky); border-radius: var(--radius-card); padding: 40px 34px; display: flex; align-items: center; justify-content: center; }
-.of1-longform-detail-media img { width: 100%; border-radius: 6px; box-shadow: 0 8px 24px rgba(13, 51, 63, .14); }
+.of1-longform-detail-media img { width: 100%; border-radius: 6px; box-shadow: 0 8px 24px rgb(13 51 63 / 14%); }
 .of1-longform-detail .eyebrow { margin-bottom: 16px; }
 .of1-longform-detail-title { margin-bottom: 18px; max-width: 12em; }
 .of1-longform-detail-body { font-size: 16px; line-height: 1.6; color: var(--color-fg-dim); margin-bottom: 22px; max-width: 30em; }

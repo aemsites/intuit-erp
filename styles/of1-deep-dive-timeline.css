@@ -19,7 +19,7 @@
 .of1-timeline-hero-eyebrow { color: #9fd0ff; margin-bottom: 18px; }
 .of1-timeline-hero-title { font-size: 48px; line-height: 60px; font-weight: 400; max-width: 9em; margin-bottom: 20px; color: #fff; }
 .of1-timeline-hero-lede { font-size: 18px; line-height: 1.5; color: #e6eef6; max-width: 26em; margin-bottom: 30px; }
-.of1-timeline-hero-media img { width: 100%; border-radius: 10px; box-shadow: 0 24px 60px rgba(0, 0, 0, .35); }
+.of1-timeline-hero-media img { width: 100%; border-radius: 10px; box-shadow: 0 24px 60px rgb(0 0 0 / 35%); }
 
 /* ---- INTRO ---- */
 .of1-timeline-intro { background: #fff; padding: var(--space-section) 0 40px; }

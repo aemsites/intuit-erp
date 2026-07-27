@@ -1,5 +1,6 @@
 /* case-study-cards — auto-populated grid, sourced from /case-studies/query-index.json */
 .case-study-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 28px; }
+
 .case-study-card {
   grid-column: span 2; display: flex; flex-direction: column; background: #fff;
   border-radius: var(--radius-card); overflow: hidden; box-shadow: 0 2px 12px rgb(0 0 0 / 6%);
@@ -8,6 +9,7 @@
 .case-study-card:hover { box-shadow: 0 10px 28px rgb(0 0 0 / 12%); transform: translateY(-2px); text-decoration: none; }
 .case-study-card:hover .case-study-card-body h3 { color: var(--primary); }
 .case-study-card.featured { grid-column: span 3; }
+
 /* padding-top aspect-ratio hack, not the `aspect-ratio` property: Chromium has a
    flex-column + aspect-ratio interaction bug where the box's height tracks each
    image's natural ratio instead of the declared one, so cards end up different

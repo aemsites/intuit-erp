@@ -16,7 +16,7 @@
   transition: background-color .15s ease, color .15s ease, border-color .15s ease; white-space: nowrap;
 }
 .of1-btn-outline { background: transparent; color: #fff; border-color: #fff; }
-.of1-btn-outline:hover { background: rgba(255,255,255,.12); }
+.of1-btn-outline:hover { background: rgb(255 255 255 / 12%); }
 .of1-btn-white { background: #fff; color: var(--color-ink-teal, #0d333f); border-color: #fff; }
 .of1-eyebrow { font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--color-fg-dim); }
 
@@ -27,7 +27,7 @@
 .of1-coi-hero h1 { font-size: 48px; line-height: 60px; font-weight: 400; color: #fff; max-width: 10em; margin-bottom: 20px; }
 .of1-coi-hero-lede { font-size: 18px; line-height: 1.5; color: #e6eef6; max-width: 28em; margin-bottom: 30px; }
 .of1-coi-hero-actions { display: flex; gap: 16px; flex-wrap: wrap; }
-.of1-coi-hero-media img { width: 100%; border-radius: 10px; box-shadow: 0 24px 60px rgba(0,0,0,.35); }
+.of1-coi-hero-media img { width: 100%; border-radius: 10px; box-shadow: 0 24px 60px rgb(0 0 0 / 35%); }
 
 /* Toll grid */
 .of1-coi-toll { background: #fff; }
@@ -48,11 +48,11 @@
 .of1-coi-col-title { font-size: 24px; font-weight: 400; margin-bottom: 22px; color: #11181c; }
 .of1-coi-col-switch .of1-coi-col-title { color: #fff; }
 .of1-coi-list { list-style: none; margin: 0; padding: 0; }
-.of1-coi-list li { font-size: 15px; line-height: 1.5; padding: 14px 0 14px 30px; position: relative; border-bottom: 1px solid rgba(0,0,0,.08); }
+.of1-coi-list li { font-size: 15px; line-height: 1.5; padding: 14px 0 14px 30px; position: relative; border-bottom: 1px solid rgb(0 0 0 / 8%); }
 .of1-coi-list li:last-child { border-bottom: 0; }
 .of1-coi-list-stay li { color: var(--color-fg-dim); }
 .of1-coi-list-stay li::before { content: "-"; position: absolute; left: 6px; color: var(--color-fg-dim); font-weight: 700; }
-.of1-coi-list-switch li { color: #d5e0ec; border-bottom-color: rgba(255,255,255,.14); }
+.of1-coi-list-switch li { color: #d5e0ec; border-bottom-color: rgb(255 255 255 / 14%); }
 .of1-coi-list-switch li::before { content: "+"; position: absolute; left: 4px; color: var(--color-green, #0fd46c); font-weight: 700; }
 
 /* Proof */

@@ -2,16 +2,19 @@
 
 /* ---- .video (index) ---- */
 .section.testimonial-container:has(.testimonial.video) { background: #fff; padding: var(--section-y) 0; }
+
 .testimonial-container .default-content-wrapper h2,
 .testimonial-container .default-content-wrapper h3 {
   font-size: 38px; line-height: 1.15; font-weight: 400; color: var(--heading);
   text-align: center; margin: 0 0 40px;
 }
+
 .testimonial.video .video-frame {
   position: relative; border-radius: 12px; overflow: hidden;
   aspect-ratio: 16 / 8.3; background: #0b2233;
 }
 .testimonial.video .video-bg { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.8); }
+
 .testimonial.video .video-play {
   position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
   width: 64px; height: 64px; border-radius: 50%; background: rgb(255 255 255 / 90%);
@@ -31,6 +34,7 @@
 .video-modal { position: relative; width: min(960px, 100%); }
 .video-modal-frame { position: relative; width: 100%; aspect-ratio: 16 / 9; }
 .video-modal-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; border-radius: 8px; }
+
 .video-modal-close {
   position: absolute; top: -44px; right: 0; width: 36px; height: 36px; border-radius: 50%;
   background: rgb(255 255 255 / 15%); color: #fff; border: 0; font-size: 20px; line-height: 1; cursor: pointer;
@@ -39,6 +43,7 @@
 
 /* ---- default (compare cyan band) ---- */
 .section.testimonial-container:has(.testimonial:not(.video)) { background: var(--sky); padding: var(--section-y) 0; }
+
 .testimonial:not(.video) .cmp-testi-grid {
   display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center;
   max-width: 1120px; margin: 0 auto;

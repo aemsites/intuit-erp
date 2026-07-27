@@ -24,6 +24,7 @@ function buildCopy(textCell) {
   [...copy.querySelectorAll('p')].forEach((p) => {
     if (p.classList.contains('button-wrapper')) return;
     if (p.querySelector('a')) return;
+    // eslint-disable-next-line no-bitwise -- compareDocumentPosition returns a bitmask
     if (heading && (p.compareDocumentPosition(heading) & Node.DOCUMENT_POSITION_FOLLOWING)) {
       p.classList.add('eyebrow', 'media-eyebrow');
     } else {

@@ -3,10 +3,12 @@
 
 /* section band + head */
 .section.media-text-container { background: #fff; padding: var(--section-y) 0; }
+
 .media-text-container .default-content-wrapper h2 {
   font-size: 38px; line-height: 1.15; font-weight: 400; color: var(--heading);
   text-align: center; margin: 0 0 40px;
 }
+
 .media-text-container .default-content-wrapper > p {
   max-width: 44em; margin: 0 auto 40px; text-align: center; font-size: 16px;
   line-height: 1.55; color: var(--text-muted);
@@ -19,6 +21,7 @@
 .media-text .media-row.row-reverse .media-visual { order: -1; }
 .media-text .media-visual img { width: 100%; border-radius: 14px; box-shadow: 0 12px 40px rgb(13 51 63 / 14%); }
 .media-text .media-copy .media-eyebrow { margin-bottom: 16px; color: var(--text-muted); }
+
 .media-text .media-copy h2,
 .media-text .media-copy h3 { font-size: 34px; line-height: 1.2; font-weight: 400; color: var(--heading); margin: 0 0 18px; }
 .media-text .media-copy .media-body { font-size: 15px; line-height: 1.6; color: var(--text-muted); max-width: 34em; margin: 0 0 14px; }
@@ -65,8 +68,10 @@
 @media (width <= 768px) {
   .media-text .media-row { grid-template-columns: 1fr; gap: 24px; padding: 28px 0; }
   .media-text .media-row.row-reverse .media-visual { order: 0; }
+
   .media-text .media-copy h2,
   .media-text .media-copy h3 { font-size: 26px; }
+
   .media-text.cards .mig-grid,
   .media-text.sky .media-row,
   .media-text.power .power-grid { grid-template-columns: 1fr; gap: 28px; }

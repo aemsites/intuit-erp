@@ -1,6 +1,7 @@
 /* cta-band — split stat + dark CTA card (index "first call"). Lifted from .firstcall */
 .section.cta-band-container { background: #fff; padding: 0 0 var(--section-y); }
 .cta-band .firstcall-grid { display: grid; grid-template-columns: 1fr 1.6fr; gap: 26px; align-items: stretch; }
+
 .cta-band .firstcall-stat {
   background: var(--sky); border-radius: var(--radius-card); padding: 56px 44px;
   display: flex; flex-direction: column; justify-content: center;

@@ -1,5 +1,6 @@
 /* resource-cards — auto-populated grid, sourced from /research/query-index.json */
 .resource-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
+
 .resource-card {
   display: flex; flex-direction: column; background: #fff;
   border-radius: var(--radius-card); overflow: hidden; box-shadow: 0 2px 12px rgb(0 0 0 / 6%);
@@ -7,6 +8,7 @@
 }
 .resource-card:hover { box-shadow: 0 10px 28px rgb(0 0 0 / 12%); transform: translateY(-2px); text-decoration: none; }
 .resource-card:hover .resource-card-body h3 { color: var(--primary); }
+
 /* padding-top aspect-ratio, not the `aspect-ratio` property: see the
    flex-column + aspect-ratio Chromium bug noted in case-study-cards.css. */
 .resource-card-image { position: relative; padding-top: 62.5%; background: var(--sand); }

@@ -3,7 +3,7 @@
    and DESIGN.json — see of1-template-generation skill § base mode. */
 :root {
   /* Colors */
-  --color-bg: #ffffff;
+  --color-bg: #fff;
   --color-fg: #21262a;
   --color-fg-dim: #6b6c72;
   --color-accent: #0077c5;
@@ -11,8 +11,8 @@
   --color-border: #d4d7dc;
 
   /* Typography */
-  --font-display: "AvenirNext forINTUIT", Mulish, Helvetica, Arial, sans-serif;
-  --font-body: "AvenirNext forINTUIT", Mulish, Helvetica, Arial, sans-serif;
+  --font-display: "AvenirNext forINTUIT", mulish, helvetica, arial, sans-serif;
+  --font-body: "AvenirNext forINTUIT", mulish, helvetica, arial, sans-serif;
   --weight-display: 400;
   --weight-body: 400;
 
@@ -28,7 +28,7 @@
   --space-section: 92px;
   --space-container: 30px;
   --radius: 4px;
-  --shadow-card: 0 12px 24px rgba(0, 0, 0, 0.08);
+  --shadow-card: 0 12px 24px rgb(0 0 0 / 8%);
 
   /* Extended brand tokens (from DESIGN.json / prototype CSS) */
   --color-navy: #00254a;

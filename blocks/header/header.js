@@ -22,8 +22,12 @@ const NAV = [
       {
         heading: 'Platform',
         links: [
-          { text: 'ERP solutions overview', desc: 'The mid-market ERP for modern finance', href: '/erp-solutions', internal: true },
-          { text: 'Accounting', desc: 'Powerful, connected financial tools', href: '/accounting', internal: true },
+          {
+            text: 'ERP solutions overview', desc: 'The mid-market ERP for modern finance', href: '/erp-solutions', internal: true,
+          },
+          {
+            text: 'Accounting', desc: 'Powerful, connected financial tools', href: '/accounting', internal: true,
+          },
         ],
       },
       {
@@ -59,7 +63,9 @@ const NAV = [
       },
     ],
   },
-  { type: 'link', label: 'Pricing', href: '/pricing', internal: true },
+  {
+    type: 'link', label: 'Pricing', href: '/pricing', internal: true,
+  },
   {
     type: 'menu',
     label: 'Resources',
@@ -67,7 +73,9 @@ const NAV = [
       {
         heading: 'Explore',
         links: [
-          { text: 'Compare Intuit Enterprise Suite', desc: 'See how IES stacks up', href: '/compare', internal: true },
+          {
+            text: 'Compare Intuit Enterprise Suite', desc: 'See how IES stacks up', href: '/compare', internal: true,
+          },
           { text: 'Blog', href: 'https://erp.intuit.com/blog/' },
           { text: 'Events', href: 'https://erp.intuit.com/events/' },
           { text: 'Case studies', href: '/case-studies', internal: true },
@@ -90,7 +98,9 @@ const NAV = [
       },
     ],
   },
-  { type: 'link', label: 'For accounting firms', href: 'https://erp.intuit.com/accountant/', cls: 'acct-link' },
+  {
+    type: 'link', label: 'For accounting firms', href: 'https://erp.intuit.com/accountant/', cls: 'acct-link',
+  },
 ];
 
 function linkHTML(l) {

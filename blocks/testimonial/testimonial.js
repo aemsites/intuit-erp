@@ -29,8 +29,11 @@ function openVideoModal(videoId) {
         <iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0" title="Customer story video" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
       </div>
     </div>`;
+  // close/onKey are mutually referential hoisted function declarations; one direction
+  // will always textually precede the other's declaration, so this is safe, not a bug.
   function close() {
     overlay.remove();
+    // eslint-disable-next-line no-use-before-define
     document.removeEventListener('keydown', onKey);
   }
   function onKey(e) { if (e.key === 'Escape') close(); }
