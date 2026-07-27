@@ -12,6 +12,9 @@ import {
   buildBlock,
 } from './aem.js';
 import runExperimentation from './experiment-loader.js';
+// Vendored via git subtree at plugins/martech (see its README), not an
+// installed npm package, so this necessarily crosses a package.json boundary.
+// eslint-disable-next-line import/no-relative-packages
 import { initMartech, martechEager, martechLazy } from '../plugins/martech/src/index.js';
 
 // Adobe Web SDK / AEP datastream. Placeholder for the POC — replace with the
