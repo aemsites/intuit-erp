@@ -31,3 +31,39 @@
   .event-grid { grid-template-columns: 1fr; }
   .event-card { grid-column: span 1; }
 }
+
+/* ---- carousel paging (a bucket with more events than fit in one row) ---- */
+.event-cards { --cards-per-view: 3; }
+.event-cards .events-viewport { width: 100%; overflow: hidden; }
+
+.event-cards .events-track.event-grid {
+  display: flex;
+  gap: 28px;
+  transition: transform 0.4s ease;
+}
+
+.event-cards .events-track.event-grid .event-card {
+  flex: 0 0 calc((100% - (var(--cards-per-view) - 1) * 28px) / var(--cards-per-view));
+  min-width: 0;
+}
+
+.event-cards .events-controls { display: flex; align-items: center; justify-content: center; gap: 24px; margin-top: 28px; }
+.event-cards .events-dots { display: flex; gap: 20px; align-items: center; }
+
+.event-cards .events-dots .dot {
+  width: 12px; height: 12px; border-radius: 50%; background: #cbd1d6; border: none; padding: 0;
+  cursor: pointer; position: relative; transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+/* expand the hit area to a 24×24px minimum touch target without growing the visible dot */
+.event-cards .events-dots .dot::after { content: ""; position: absolute; inset: -6px; }
+.event-cards .events-dots .dot.active { background: var(--navy); transform: scale(1.1); }
+.event-cards .events-nav { display: flex; gap: 12px; }
+
+.event-cards .events-arrow {
+  width: 40px; height: 40px; border-radius: 50%; border: none; background: var(--navy); color: #fff;
+  display: flex; align-items: center; justify-content: center; font-size: 18px; line-height: 1; cursor: pointer;
+}
+.event-cards .events-arrow:disabled { background: #859299; opacity: 0.6; cursor: not-allowed; }
+
+@media (width <= 900px) { .event-cards { --cards-per-view: 1; } }
