@@ -9,7 +9,7 @@
 }
 
 .stat-band-container .default-content-wrapper p {
-  text-align: center; font-size: 12px; color: var(--text-soft); margin-top: 30px;
+  text-align: center; font-size: 12px; color: #404b52; margin-top: 30px;
 }
 
 .stat-band { --cards-per-view: 4; }
@@ -27,9 +27,16 @@
 .stat-band .stat-seg { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: #404b52; margin: 0; }
 
 .stat-band .stats-controls { display: flex; align-items: center; justify-content: center; gap: 24px; margin-top: 24px; }
-.stat-band .stats-dots { display: flex; gap: 10px; align-items: center; }
-.stat-band .stats-dots .dot { width: 8px; height: 8px; border-radius: 50%; background: #cbd1d6; border: none; padding: 0; cursor: pointer; }
-.stat-band .stats-dots .dot.active { background: var(--navy); }
+.stat-band .stats-dots { display: flex; gap: 20px; align-items: center; }
+
+.stat-band .stats-dots .dot {
+  width: 12px; height: 12px; border-radius: 50%; background: #cbd1d6; border: none; padding: 0;
+  cursor: pointer; position: relative; transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+/* expand the hit area to a 24×24px minimum touch target without growing the visible dot */
+.stat-band .stats-dots .dot::after { content: ""; position: absolute; inset: -6px; }
+.stat-band .stats-dots .dot.active { background: var(--navy); transform: scale(1.1); }
 .stat-band .stats-nav { display: flex; gap: 12px; }
 
 .stat-band .stats-arrow {
