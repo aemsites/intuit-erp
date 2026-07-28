@@ -67,12 +67,12 @@ function buildCarousel(block, track) {
   }
 
   function applyTransform() {
-    const card = cards[0];
-    if (!card) return;
-    const cardWidth = card.getBoundingClientRect().width;
-    const gap = parseFloat(getComputedStyle(track).columnGap || getComputedStyle(track).gap || '0') || 0;
-    const step = (cardWidth + gap) * perView;
-    track.style.transform = `translateX(-${current * step}px)`;
+    // One "page" (perView cards + gaps) always spans exactly the track's own
+    // box width — that's what the .stat flex-basis calc() is built to do —
+    // so translateX(-100%) per page is exact with no layout read needed
+    // (measuring via getBoundingClientRect/getComputedStyle here was forcing
+    // a synchronous reflow right after the DOM/style writes above it).
+    track.style.transform = `translateX(-${current * 100}%)`;
   }
 
   function goTo(idx) {
