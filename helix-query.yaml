@@ -40,7 +40,7 @@ indices:
     target: /events/query-index.json
     properties:
       title:
-        select: div > div > div:has(#title) > div:last-child
+        select: div > div > div:has(#title-1) > div:last-child
         value: textContent(el)
       type:
         select: div > div > div:has(#type) > div:last-child
@@ -61,14 +61,14 @@ indices:
         select: div > div > div:has(#speakers) > div:last-child
         value: textContent(el)
       image:
-        select: div > div > div:has(#image) img
-        value: attribute(el, "src")
+        select: div > div > div:has(#image) > div:last-child
+        value: textContent(el)
       ctaLabel:
-        select: div > div > div:has(#ctaLabel) > div:last-child
+        select: div > div > div:has(#ctalabel) > div:last-child
         value: textContent(el)
       ctaUrl:
-        select: div > div > div:has(#ctaUrl) a
-        value: attribute(el, "href")
+        select: div > div > div:has(#ctaurl) > div:last-child
+        value: textContent(el)
       status:
         select: div > div > div:has(#status) > div:last-child
         value: textContent(el)
