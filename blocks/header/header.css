@@ -56,7 +56,12 @@ header .header .container { max-width: var(--container); margin: 0 auto; padding
 .header .ies-events .container { text-align: center; padding-top: 17px; padding-bottom: 17px; font-size: 15px; }
 .header .ies-events a { font-weight: 700; text-decoration: underline; color: var(--heading); }
 
-@media (width <= 768px) {
+/* Matches erp.intuit.com: its 6-item nav + CTA also switches to the hamburger
+   well above the general 768px content breakpoint (it stays collapsed through
+   ~1240px and only shows the full row at ~1250px+) because that row simply
+   doesn't fit any narrower — same shape of problem we have here. Verified our
+   own row wraps/overlaps below 1300px and is clean at and above it. */
+@media (width <= 1299px) {
   header { min-height: 106px; }
   header .header .container { padding: 0 20px; }
   .header .ies-topstrip { display: none; }
