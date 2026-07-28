@@ -34,3 +34,41 @@ indices:
       date:
         select: head > meta[name="date"]
         value: attribute(el, "content")
+  events:
+    include:
+      - /events/*
+    target: /events/query-index.json
+    properties:
+      title:
+        select: div > div > div:has(#title) > div:last-child
+        value: textContent(el)
+      type:
+        select: div > div > div:has(#type) > div:last-child
+        value: textContent(el)
+      description:
+        select: div > div > div:has(#description) > div:last-child
+        value: textContent(el)
+      date:
+        select: div > div > div:has(#date) > div:last-child
+        value: textContent(el)
+      time:
+        select: div > div > div:has(#time) > div:last-child
+        value: textContent(el)
+      location:
+        select: div > div > div:has(#location) > div:last-child
+        value: textContent(el)
+      speakers:
+        select: div > div > div:has(#speakers) > div:last-child
+        value: textContent(el)
+      image:
+        select: div > div > div:has(#image) img
+        value: attribute(el, "src")
+      ctaLabel:
+        select: div > div > div:has(#ctaLabel) > div:last-child
+        value: textContent(el)
+      ctaUrl:
+        select: div > div > div:has(#ctaUrl) a
+        value: attribute(el, "href")
+      status:
+        select: div > div > div:has(#status) > div:last-child
+        value: textContent(el)

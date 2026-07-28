@@ -1,0 +1,33 @@
+/* event-cards — auto-populated grid, sourced from /events/query-index.json */
+.event-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 28px; }
+
+.event-card {
+  grid-column: span 2; display: flex; flex-direction: column; background: #fff;
+  border-radius: var(--radius-card); overflow: hidden; box-shadow: 0 2px 12px rgb(0 0 0 / 6%);
+}
+
+.event-card-image { position: relative; padding-top: 62.5%; background: var(--sand); }
+.event-card-image picture, .event-card-image img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.event-card-badge {
+  position: absolute; top: 14px; left: 14px; padding: 5px 12px; border-radius: 999px;
+  background: #fff; color: var(--primary); font-size: 12px; font-weight: 700;
+  letter-spacing: 0.03em; text-transform: uppercase;
+}
+
+.event-card-body { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 20px 22px 24px; flex: 1; }
+.event-card-body h3 { margin: 0; font-size: 20px; line-height: 1.3; font-weight: 600; color: var(--heading); }
+.event-card-meta { margin: 0; font-size: 13px; font-weight: 600; color: var(--primary); }
+.event-card-description { margin: 0; font-size: 15px; line-height: 1.5; color: var(--text-muted); }
+.event-card-speakers { margin: 0; font-size: 13px; color: var(--text-muted); }
+.event-card-body .button { margin-top: auto; padding-top: 4px; }
+
+@media (width <= 900px) {
+  .event-grid { grid-template-columns: repeat(2, 1fr); }
+  .event-card { grid-column: span 2; }
+}
+
+@media (width <= 600px) {
+  .event-grid { grid-template-columns: 1fr; }
+  .event-card { grid-column: span 1; }
+}
