@@ -11,7 +11,7 @@ import {
   loadCSS,
   buildBlock,
 } from './aem.js';
-import runExperimentation from './experiment-loader.js';
+import { runExperimentation, runExperimentationLazy } from './experiment-loader.js';
 // Vendored via git subtree at plugins/martech (see its README), not an
 // installed npm package, so this necessarily crosses a package.json boundary.
 // eslint-disable-next-line import/no-relative-packages
@@ -253,6 +253,8 @@ async function loadLazy(doc) {
   loadFooter(doc.querySelector('footer'));
 
   if (MARTECH_ENABLED) { try { await martechLazy(); } catch (e) { /* non-fatal */ } }
+
+  await runExperimentationLazy(doc, experimentationConfig);
 
   loadCSS(`${window.hlx.codeBasePath}/styles/lazy-styles.css`);
   loadFonts();

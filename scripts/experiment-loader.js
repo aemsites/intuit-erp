@@ -11,7 +11,7 @@ const isExperimentationEnabled = () => document.head.querySelector('[name^="expe
  * @param {Object} config The experimentation configuration.
  * @returns {Promise<void>} A promise that resolves when the experimentation module is loaded.
  */
-export default async function runExperimentation(document, config) {
+export async function runExperimentation(document, config) {
   if (!isExperimentationEnabled()) {
     window.addEventListener('message', async (event) => {
       if (event.data?.type === 'hlx:experimentation-get-config') {
@@ -34,6 +34,35 @@ export default async function runExperimentation(document, config) {
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error('Failed to load experimentation module (eager):', error);
+    return null;
+  }
+}
+
+/**
+ * Loads the experimentation simulation UI (lazy). Authoring aid only — this is a
+ * no-op in production; the coarse check below avoids even fetching the plugin
+ * there, and the plugin re-checks authoritatively before showing anything.
+ * @param {Document} document The document object.
+ * @param {Object} config The experimentation configuration.
+ * @returns {Promise<void>} A promise that resolves when the simulation UI is loaded.
+ */
+export async function runExperimentationLazy(document, config) {
+  const { host, hostname, origin } = window.location;
+  const isPreview = hostname === 'localhost'
+    || hostname.endsWith('.page')
+    || (typeof config.isProd === 'function' && !config.isProd())
+    || (config.prodHost && ![host, hostname, origin].includes(config.prodHost));
+  if (!isPreview) {
+    return null;
+  }
+
+  try {
+    // eslint-disable-next-line import/no-relative-packages
+    const { loadLazy } = await import('../plugins/experimentation/src/index.js');
+    return loadLazy(document, config);
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('Failed to load experimentation module (lazy):', error);
     return null;
   }
 }
