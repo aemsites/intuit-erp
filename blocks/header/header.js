@@ -214,12 +214,25 @@ export default async function decorate(block) {
   const frag = await fetchFragment(navPath);
   block.innerHTML = (frag && frag.includes('nav-item') && frag.includes('flyout')) ? frag : CHROME;
 
-  // sticky-nav scroll-morph
+  // sticky-nav scroll-morph. Reading window.scrollY forces a synchronous
+  // layout if styles were just invalidated (e.g. the innerHTML write above),
+  // so the read is rAF-deferred rather than run inline — this also throttles
+  // it to once per frame instead of once per scroll event.
   const nav = block.querySelector('#iesNav, .ies-nav');
   if (nav) {
-    const onScroll = () => nav.classList.toggle('scrolled', window.scrollY > 36);
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
+    let scrollTicking = false;
+    const onScroll = () => {
+      nav.classList.toggle('scrolled', window.scrollY > 36);
+      scrollTicking = false;
+    };
+    const requestScrollTick = () => {
+      if (!scrollTicking) {
+        scrollTicking = true;
+        requestAnimationFrame(onScroll);
+      }
+    };
+    requestScrollTick();
+    window.addEventListener('scroll', requestScrollTick, { passive: true });
   }
 
   wireFlyouts(block);
