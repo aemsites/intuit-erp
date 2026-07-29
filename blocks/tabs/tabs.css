@@ -14,6 +14,7 @@
 }
 .tabs .tab.active { color: var(--heading); border-bottom-color: var(--navy); font-weight: 600; }
 .tabs .tab-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 0; align-items: stretch; margin-top: 34px; }
+.tabs .tab-panel[hidden] { display: none; }
 .tabs .tab-media { background: var(--sky); border-radius: var(--radius-card); padding: 40px 34px; display: flex; align-items: center; justify-content: center; }
 .tabs .tab-media img { width: 100%; border-radius: 6px; box-shadow: 0 8px 24px rgb(13 51 63 / 14%); }
 .tabs .tab-copy { display: flex; flex-direction: column; justify-content: center; padding: 20px 10px 20px 64px; }

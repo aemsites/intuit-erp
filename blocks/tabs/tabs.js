@@ -1,8 +1,9 @@
 /**
  * tabs — feature explorer (accounting). Section head (h2) as default content.
  * Row 1: tab labels (one cell per label).
- * Row 2: active panel — cells: media <img> / eyebrow / heading / body.
- * First tab active; clicking a tab marks it selected. CSS: blocks/tabs/tabs.css
+ * Rows 2+: one panel per label, same order — cells: media <img> / eyebrow / heading / body.
+ * Clicking a tab swaps both the active label and the visible panel.
+ * CSS: blocks/tabs/tabs.css
  */
 function pic(cell) {
   if (!cell) return null;
@@ -10,39 +11,17 @@ function pic(cell) {
   return p ? (p.closest('picture') || p) : null;
 }
 
-export default function decorate(block) {
-  const rows = [...block.children];
-  const labelRow = rows[0];
-  const panelRow = rows[1];
-
-  const tablist = document.createElement('div');
-  tablist.className = 'tabs';
-  tablist.setAttribute('role', 'tablist');
-  [...(labelRow ? labelRow.children : [])].forEach((cell, i) => {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = i === 0 ? 'tab active' : 'tab';
-    btn.setAttribute('role', 'tab');
-    btn.setAttribute('aria-selected', i === 0 ? 'true' : 'false');
-    btn.textContent = cell.textContent.trim();
-    tablist.append(btn);
-  });
-  tablist.addEventListener('click', (e) => {
-    const t = e.target.closest('.tab');
-    if (!t) return;
-    tablist.querySelectorAll('.tab').forEach((b) => {
-      b.classList.toggle('active', b === t);
-      b.setAttribute('aria-selected', b === t ? 'true' : 'false');
-    });
-  });
-
+function buildPanel(cells, index) {
   const panel = document.createElement('div');
   panel.className = 'tab-panel';
-  const cells = [...(panelRow ? panelRow.children : [])];
+  panel.id = `tab-panel-${index}`;
+  panel.hidden = index !== 0;
+
   const media = document.createElement('div');
   media.className = 'tab-media';
   const img = pic(cells[0]);
   if (img) media.append(img);
+
   const copy = document.createElement('div');
   copy.className = 'tab-copy';
   if (cells[1] && cells[1].textContent.trim()) {
@@ -63,7 +42,40 @@ export default function decorate(block) {
     b.innerHTML = cells[3].innerHTML;
     copy.append(b);
   }
-  panel.append(media, copy);
 
-  block.replaceChildren(tablist, panel);
+  panel.append(media, copy);
+  return panel;
+}
+
+export default function decorate(block) {
+  const rows = [...block.children];
+  const labelRow = rows[0];
+  const panels = rows.slice(1).map((row, i) => buildPanel([...row.children], i));
+
+  const tablist = document.createElement('div');
+  tablist.className = 'tabs';
+  tablist.setAttribute('role', 'tablist');
+  [...(labelRow ? labelRow.children : [])].forEach((cell, i) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = i === 0 ? 'tab active' : 'tab';
+    btn.setAttribute('role', 'tab');
+    btn.setAttribute('aria-selected', i === 0 ? 'true' : 'false');
+    if (panels[i]) btn.setAttribute('aria-controls', panels[i].id);
+    btn.textContent = cell.textContent.trim();
+    tablist.append(btn);
+  });
+
+  tablist.addEventListener('click', (e) => {
+    const target = e.target.closest('.tab');
+    if (!target) return;
+    const idx = [...tablist.children].indexOf(target);
+    [...tablist.children].forEach((b, i) => {
+      b.classList.toggle('active', i === idx);
+      b.setAttribute('aria-selected', i === idx ? 'true' : 'false');
+    });
+    panels.forEach((p, i) => { p.hidden = i !== idx; });
+  });
+
+  block.replaceChildren(tablist, ...panels);
 }
