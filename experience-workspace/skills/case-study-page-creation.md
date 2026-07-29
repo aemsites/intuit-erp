@@ -36,7 +36,7 @@ Present a short content plan and wait for user confirmation before creating anyt
 Include:
 
 1. **Path** — `blog/case-study/<kebab-case-slug>` (from the company name)
-2. **Metadata** — Title, Description, Date, Template (`Case Study`)
+2. **Metadata** — Title, Description, Date, Template (`Case Study`), Industry (one of: `CONSTRUCTION`, `NONPROFIT`, `HEALTHCARE`, `TECHNOLOGY`, `FIELD SERVICES`, `PROFESSIONAL SERVICES`, `FINANCIAL SERVICES` — pick whichever best describes what the *customer's own company* does, not who they serve; used to filter/personalize the case-study index later, so it must be set on every page)
 3. **Section outline** — table: section | block used | one-line note
    - header → `case-study-header` → eyebrow/h1/byline + lead photo
    - stats → `stat-band` (`glance` variant) → 3 results-at-a-glance sentences
@@ -83,6 +83,7 @@ The page has an auto-generated table of contents built from every `<h2>` in the 
         <div><div>Description</div><div>…</div></div>
         <div><div>Date</div><div>Month DD, YYYY</div></div>
         <div><div>Template</div><div>Case Study</div></div>
+        <div><div>Industry</div><div>{one of the 7 industry values from Step 2}</div></div>
       </div>
     </div>
 

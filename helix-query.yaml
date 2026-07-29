@@ -17,6 +17,9 @@ indices:
       date:
         select: head > meta[name="date"]
         value: attribute(el, "content")
+      industry:
+        select: head > meta[name="industry"]
+        value: attribute(el, "content")
   research:
     include:
       - /blog/research/*
