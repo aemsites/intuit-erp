@@ -36,6 +36,7 @@
 
 .case-study-cards.latest .case-study-grid { grid-template-columns: repeat(4, 1fr); }
 .case-study-cards.latest .case-study-card { grid-column: span 1; }
+.case-study-cards.latest { padding-bottom: 40px; }
 .case-study-view-all { display: flex; justify-content: center; margin: 40px 0 0; }
 
 @media (width <= 900px) {
