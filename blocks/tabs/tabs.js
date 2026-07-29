@@ -2,7 +2,11 @@
  * tabs — feature explorer (accounting). Section head (h2) as default content.
  * Row 1: tab labels (one cell per label).
  * Rows 2+: one panel per label, same order — cells: media <img> / eyebrow / heading / body.
- * Clicking a tab swaps both the active label and the visible panel.
+ *
+ * Switching tabs crossfades panels (all stacked absolutely inside a
+ * height-synced wrapper) instead of a hard show/hide — matches the fade
+ * erp.intuit.com/accounting uses, so there's no layout jump and both the
+ * outgoing and incoming panel are visible mid-transition.
  * CSS: blocks/tabs/tabs.css
  */
 function pic(cell) {
@@ -13,9 +17,8 @@ function pic(cell) {
 
 function buildPanel(cells, index) {
   const panel = document.createElement('div');
-  panel.className = 'tab-panel';
+  panel.className = index === 0 ? 'tab-panel is-active' : 'tab-panel';
   panel.id = `tab-panel-${index}`;
-  panel.hidden = index !== 0;
 
   const media = document.createElement('div');
   media.className = 'tab-media';
@@ -66,6 +69,23 @@ export default function decorate(block) {
     tablist.append(btn);
   });
 
+  const panelWrap = document.createElement('div');
+  panelWrap.className = 'tab-panel-wrap';
+  panelWrap.append(...panels);
+
+  // Panels are position:absolute (so outgoing/incoming can overlap during the
+  // fade) which takes them out of flow, so the wrapper's height is synced
+  // from JS to the tallest panel — otherwise it would collapse to 0.
+  const syncHeight = () => {
+    const heights = panels.map((p) => p.scrollHeight);
+    panelWrap.style.height = `${Math.max(...heights, 0)}px`;
+  };
+  panelWrap.querySelectorAll('img').forEach((img) => {
+    if (img.complete) return;
+    img.addEventListener('load', syncHeight, { once: true });
+  });
+  window.addEventListener('resize', syncHeight);
+
   tablist.addEventListener('click', (e) => {
     const target = e.target.closest('.tab');
     if (!target) return;
@@ -74,8 +94,9 @@ export default function decorate(block) {
       b.classList.toggle('active', i === idx);
       b.setAttribute('aria-selected', i === idx ? 'true' : 'false');
     });
-    panels.forEach((p, i) => { p.hidden = i !== idx; });
+    panels.forEach((p, i) => p.classList.toggle('is-active', i === idx));
   });
 
-  block.replaceChildren(tablist, ...panels);
+  block.replaceChildren(tablist, panelWrap);
+  syncHeight();
 }

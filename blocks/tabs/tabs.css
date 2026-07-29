@@ -13,8 +13,18 @@
   font-family: inherit; margin-bottom: -1px; text-align: center; cursor: pointer;
 }
 .tabs .tab.active { color: var(--heading); border-bottom-color: var(--navy); font-weight: 600; }
-.tabs .tab-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 0; align-items: stretch; margin-top: 34px; }
-.tabs .tab-panel[hidden] { display: none; }
+
+/* height is set inline from JS (synced to the tallest panel) — panels are
+   position:absolute so the outgoing/incoming pair can crossfade in place
+   instead of the layout jumping straight from one to the other */
+.tabs .tab-panel-wrap { position: relative; margin-top: 34px; }
+
+.tabs .tab-panel {
+  position: absolute; inset: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 0; align-items: stretch;
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transition: opacity 0.4s cubic-bezier(0.35, 0, 0.5, 1), visibility 0.4s cubic-bezier(0.35, 0, 0.5, 1);
+}
+.tabs .tab-panel.is-active { opacity: 1; visibility: visible; pointer-events: auto; }
 .tabs .tab-media { background: var(--sky); border-radius: var(--radius-card); padding: 40px 34px; display: flex; align-items: center; justify-content: center; }
 .tabs .tab-media img { width: 100%; border-radius: 6px; box-shadow: 0 8px 24px rgb(13 51 63 / 14%); }
 .tabs .tab-copy { display: flex; flex-direction: column; justify-content: center; padding: 20px 10px 20px 64px; }
