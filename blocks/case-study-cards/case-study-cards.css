@@ -34,6 +34,15 @@
 .case-study-load-more { display: flex; justify-content: center; margin-top: 40px; }
 .case-study-load-more[hidden], .recommended .case-study-load-more { display: none; }
 
+.case-study-cards.latest .case-study-grid { grid-template-columns: repeat(4, 1fr); }
+.case-study-cards.latest .case-study-card { grid-column: span 1; }
+.case-study-view-all { display: flex; justify-content: center; margin: 40px 0 0; }
+
+@media (width <= 900px) {
+  .case-study-cards.latest .case-study-grid { grid-template-columns: repeat(2, 1fr); }
+  .case-study-cards.latest .case-study-card { grid-column: span 1; }
+}
+
 @media (width <= 900px) {
   .case-study-grid { grid-template-columns: repeat(2, 1fr); }
   .case-study-card, .case-study-card.featured { grid-column: span 2; }

@@ -16,6 +16,11 @@
  *                          re-fetch on click.
  *   .recommended           fixed set of 3, excludes the current page (used
  *                          on case-study detail pages).
+ *   .latest                fixed set of 4 newest, uniform card size (no
+ *                          featured treatment), plus a "View all case
+ *                          studies" link below the grid — used as a compact
+ *                          teaser section (e.g. on the homepage), not the
+ *                          full paginated index.
  * CSS: blocks/case-study-cards/case-study-cards.css
  */
 import { createOptimizedPicture } from '../../scripts/aem.js';
@@ -52,6 +57,7 @@ function cardHTML(item, featured) {
 
 export default async function decorate(block) {
   const recommended = block.classList.contains('recommended');
+  const latest = block.classList.contains('latest');
   block.textContent = '';
 
   const allItems = [...await loadIndex(INDEX_PATH)]
@@ -63,6 +69,17 @@ export default async function decorate(block) {
     grid.className = 'case-study-grid';
     block.append(grid);
     allItems.slice(0, 3).forEach((item) => grid.append(cardHTML(item, false)));
+    return;
+  }
+
+  if (latest) {
+    const grid = document.createElement('div');
+    grid.className = 'case-study-grid';
+    allItems.slice(0, 4).forEach((item) => grid.append(cardHTML(item, false)));
+    const viewAll = document.createElement('p');
+    viewAll.className = 'case-study-view-all';
+    viewAll.innerHTML = '<a class="button secondary" href="/blog/case-study">View all case studies</a>';
+    block.append(grid, viewAll);
     return;
   }
 
