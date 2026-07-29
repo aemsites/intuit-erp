@@ -41,15 +41,17 @@ const NAV = [
         links: [
           { text: 'AI agents', href: '/ai-agents', internal: true },
           { text: 'Workforce automation', href: '/workforce-automation', internal: true },
-          { text: 'Payments & bill pay', href: '/payments-bill-pay', internal: true },
+          { text: 'Payments & bill pay', href: '/automation-tools/payments-bill-pay', internal: true },
         ],
       },
       {
         heading: 'Finance & reporting',
         links: [
-          { text: 'Multi-entity consolidation', href: '/multi-entity', internal: true },
-          { text: 'Business intelligence & reporting', href: '/business-intelligence-reports', internal: true },
-          { text: 'Business forecasting', href: '/business-forecasting', internal: true },
+          { text: 'Multi-entity consolidation', href: '/accounting/multi-entity', internal: true },
+          {
+            text: 'Business intelligence & reporting', href: '/accounting/business-intelligence-reports', internal: true,
+          },
+          { text: 'Business forecasting', href: '/accounting/business-forecasting', internal: true },
           { text: 'Custom ERP', href: '/custom-erp', internal: true },
         ],
       },
