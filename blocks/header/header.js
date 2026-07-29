@@ -77,7 +77,9 @@ const NAV = [
             text: 'Compare Intuit Enterprise Suite', desc: 'See how IES stacks up', href: '/compare', internal: true,
           },
           { text: 'Blog', href: 'https://erp.intuit.com/blog/' },
-          { text: 'Events', href: 'https://erp.intuit.com/events/' },
+          {
+            text: 'Events', href: '/events', internal: true,
+          },
           { text: 'Case studies', href: '/case-studies', internal: true },
           { text: 'Research & Downloads', href: '/research', internal: true },
           { text: 'Migration', href: 'https://erp.intuit.com/migration/' },
@@ -158,7 +160,7 @@ const CHROME = `
 </div>
 <div class="ies-events">
   <div class="container">
-    Check out upcoming events and learn more about Intuit Enterprise Suite. <a href="https://erp.intuit.com/events/">Learn more</a>
+    Check out upcoming events and learn more about Intuit Enterprise Suite. <a href="/events">Learn more</a>
   </div>
 </div>`;
 
