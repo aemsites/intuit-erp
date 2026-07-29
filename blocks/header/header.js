@@ -1,19 +1,25 @@
 /**
  * header — Intuit Enterprise Suite chrome: brand strip + sticky nav + cyan
- * events bar. Reads the authorable /nav fragment when available (deployed),
- * otherwise renders the built-in chrome so it always paints (local QA + preview).
+ * events bar. Brand strip, logo, CTA, and events bar are the fixed built-in
+ * chrome (CHROME below); the primary nav-main menu is authorable content —
+ * see blocks/nav-menu/nav-menu.js and content/nav.html's nav-menu block —
+ * with NAV/navItemHTML below kept only as the fallback render if that
+ * content is missing or malformed, so the header always paints.
  * Sticky-nav scroll-morph, the click-to-open flyout menus, and the mobile
  * menu toggle are wired here. The nav CTA opens the shared "Schedule a call"
  * modal (scripts/schedule-modal.js) — also used by the hero CTA.
- * CSS: blocks/header/header.css · source fragment: content/nav.html
+ * CSS: blocks/header/header.css · nav content: content/nav.html (nav-menu block)
  */
 import { getMetadata } from '../../scripts/aem.js';
 import { openScheduleModal } from '../../scripts/schedule-modal.js';
+import { loadFragment } from '../fragment/fragment.js';
 
-// Primary nav model. `menu` entries open a flyout panel; `link` entries navigate
-// directly. Links marked `internal: true` resolve to pages that already live on
-// this site (they get an "On this site" tag); the rest fall back to the live
-// erp.intuit.com pages so the whole nav is clickable while the migration is in flight.
+// Fallback nav model, used only when the authorable nav-menu block (see
+// blocks/nav-menu/nav-menu.js) isn't available. `menu` entries open a flyout
+// panel; `link` entries navigate directly. Links marked `internal: true`
+// resolve to pages that already live on this site; the rest fall back to the
+// live erp.intuit.com pages so the whole nav is clickable while the
+// migration is in flight.
 const NAV = [
   {
     type: 'menu',
@@ -131,9 +137,10 @@ function navItemHTML(entry, idx) {
       </div>`;
 }
 
-const NAV_MAIN = `<nav class="nav-main" aria-label="Primary">${NAV.map(navItemHTML).join('')}</nav>`;
+const NAV_MAIN_FALLBACK = `<nav class="nav-main" aria-label="Primary">${NAV.map(navItemHTML).join('')}</nav>`;
 
-const CHROME = `
+function chromeHTML(navMainHTML) {
+  return `
 <div class="ies-topstrip">
   <div class="container">
     <a href="https://www.intuit.com/" class="intuit-word" aria-label="Intuit">INTUIT</a>
@@ -146,7 +153,7 @@ const CHROME = `
 <div class="ies-nav" id="iesNav">
   <div class="container">
     <a class="nav-logo" href="/"><span class="ies-intuit">INTUIT</span><span class="ies-word">Enterprise&nbsp;Suite</span></a>
-    ${NAV_MAIN}
+    ${navMainHTML}
     <div class="nav-right">
       <button type="button" class="btn btn-primary nav-cta">
         <span>Schedule a call</span>
@@ -163,15 +170,19 @@ const CHROME = `
     Check out upcoming events and learn more about Intuit Enterprise Suite. <a href="/events">Learn more</a>
   </div>
 </div>`;
+}
 
-async function fetchFragment(path) {
+// The nav-menu block (blocks/nav-menu/nav-menu.js) is decorated in full by
+// loadFragment before it returns, so menuBlock's markup is already the final
+// nav-item/flyout DOM — just needs the <nav> landmark wrapped around it.
+async function fetchNavMainHTML(path) {
   try {
-    const resp = await fetch(`${path}.plain.html`);
-    if (resp.ok) {
-      const text = await resp.text();
-      if (text && text.trim()) return text;
+    const frag = await loadFragment(path);
+    const menuBlock = frag && frag.querySelector('.nav-menu');
+    if (menuBlock && menuBlock.querySelector('.nav-item, .nav-link, .acct-link')) {
+      return `<nav class="nav-main" aria-label="Primary">${menuBlock.innerHTML}</nav>`;
     }
-  } catch (e) { /* fall back to built-in chrome */ }
+  } catch (e) { /* fall back to built-in nav */ }
   return null;
 }
 
@@ -210,11 +221,8 @@ function wireFlyouts(block) {
 export default async function decorate(block) {
   const navMeta = getMetadata('nav');
   const navPath = navMeta ? new URL(navMeta, window.location).pathname : '/nav';
-  // Prefer the authored fragment only when it preserves the chrome markup AND the
-  // flyout structure; the EDS content pipeline strips the ies-* classes, so fall
-  // back to the canonical embedded chrome for a faithful, reliable render.
-  const frag = await fetchFragment(navPath);
-  block.innerHTML = (frag && frag.includes('nav-item') && frag.includes('flyout')) ? frag : CHROME;
+  const navMainHTML = (await fetchNavMainHTML(navPath)) || NAV_MAIN_FALLBACK;
+  block.innerHTML = chromeHTML(navMainHTML);
 
   // sticky-nav scroll-morph. Reading window.scrollY forces a synchronous
   // layout if styles were just invalidated (e.g. the innerHTML write above),
