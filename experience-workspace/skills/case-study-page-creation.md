@@ -7,7 +7,7 @@ status: approved
 
 # Case Study Page Creation
 
-Create a new case study page under `/case-studies/` from a customer brief. Publishing it is the only step required to make it appear on the `/case-studies` index — the listing is query-index-driven, not hand-maintained.
+Create a new case study page under `/blog/case-study/` from a customer brief. Publishing it is the only step required to make it appear on the `/blog/case-study` index — the listing is query-index-driven, not hand-maintained.
 
 ---
 
@@ -25,6 +25,8 @@ Ask the user for the brief. Extract the following automatically if pasted in ful
 
 If the user names a real, not-yet-migrated case study from erp.intuit.com/blog/case-study/ instead of writing a brief from scratch, fetch that page and extract the same fields from the real content — never fabricate numbers, quotes, or attributions. This site's case studies are always grounded in real source material.
 
+Note the source site's own case-study slugs are typically suffixed `-intuit-enterprise-suite` (e.g. `elton-r-construction-intuit-enterprise-suite`) — match that pattern for the new page's slug rather than shortening it, so this site's path lines up with the equivalent real erp.intuit.com URL.
+
 ---
 
 ## Step 2 — Plan (concise)
@@ -33,7 +35,7 @@ Present a short content plan and wait for user confirmation before creating anyt
 
 Include:
 
-1. **Path** — `case-studies/<kebab-case-slug>` (from the company name)
+1. **Path** — `blog/case-study/<kebab-case-slug>` (from the company name)
 2. **Metadata** — Title, Description, Date, Template (`Case Study`)
 3. **Section outline** — table: section | block used | one-line note
    - header → `case-study-header` → eyebrow/h1/byline + lead photo
@@ -52,14 +54,14 @@ End with:
 
 ## Step 3 — Generate the page
 
-Use `content_create` with valid EDS HTML at path `case-studies/<slug>.html`. Rules:
+Use `content_create` with valid EDS HTML at path `blog/case-study/<slug>.html`. Rules:
 
 - Start with `<body>`, end with `</body>`; wrap content in `<main>…</main>` with `<header></header>` before it and `<footer></footer>` after
 - No `<!DOCTYPE>`, `<html>`, `<head>`, inline styles, or literal `<table>` for blocks
 
 ### Images — the #1 way this breaks
 
-**Every image `src` must be an absolute URL** — either an already-uploaded DA asset (`https://content.da.live/keepthebyte/aem-intuit-erp/media/<file>`) or a fully-qualified external URL (e.g. hotlinking the real photo from the source erp.intuit.com article, which this site already does elsewhere). **A root-relative path like `/media/<file>.png` silently breaks**: DA's content pipeline can't resolve it and stores `src="about:error"` instead — the image will look fine in your authored HTML but render broken everywhere.
+**Every image `src` must be an absolute URL** — either an already-uploaded DA asset (`https://content.da.live/aemsites/intuit-erp/media/<file>`) or a fully-qualified external URL (e.g. hotlinking the real photo from the source erp.intuit.com article, which this site already does elsewhere). **A root-relative path like `/media/<file>.png` silently breaks**: DA's content pipeline can't resolve it and stores `src="about:error"` instead — the image will look fine in your authored HTML but render broken everywhere.
 
 Before writing the page, check the site's DA media library for the asset you want. If it's not there, upload it (or hotlink the real image directly from the source article — confirm the URL actually loads first).
 
@@ -149,7 +151,7 @@ The page has an auto-generated table of contents built from every `<h2>` in the 
 </body>
 ```
 
-Share the DA edit link after creating: `https://da.live/edit#/keepthebyte/aem-intuit-erp/case-studies/<slug>`
+Share the DA edit link after creating: `https://da.live/edit#/aemsites/intuit-erp/blog/case-study/<slug>`
 
 ---
 
@@ -157,9 +159,9 @@ Share the DA edit link after creating: `https://da.live/edit#/keepthebyte/aem-in
 
 Run `content_preview` immediately after creation. Share the Previewed URL:
 
-`https://main--aem-intuit-erp--keepthebyte.aem.page/case-studies/<slug>`
+`https://main--intuit-erp--aemsites.aem.page/blog/case-study/<slug>`
 
-Note: previewing is not publishing. Publishing (via the DA sidekick, a separate manual action) is what makes the page appear on `/case-studies` and in `/case-studies/query-index.json` — call this out to the author rather than treating the page as "done" once merely previewed.
+Note: previewing is not publishing. Publishing (via the DA sidekick, a separate manual action) is what makes the page appear on `/blog/case-study` and in `/blog/case-study/query-index.json` — call this out to the author rather than treating the page as "done" once merely previewed.
 
 ---
 
@@ -191,9 +193,9 @@ If anything fails, fix it with `content_update` and re-check.
 
 ```
 :::checklist
-- [x] Page created at case-studies/<slug>
-- [x] Edit at https://da.live/edit#/keepthebyte/aem-intuit-erp/case-studies/<slug>
-- [x] Previewed at https://main--aem-intuit-erp--keepthebyte.aem.page/case-studies/<slug>
+- [x] Page created at blog/case-study/<slug>
+- [x] Edit at https://da.live/edit#/aemsites/intuit-erp/blog/case-study/<slug>
+- [x] Previewed at https://main--intuit-erp--aemsites.aem.page/blog/case-study/<slug>
 - [x] Brand check — all checks passed
 - [x] Fidelity check — all checks passed
 :::
@@ -202,6 +204,6 @@ If anything fails, fix it with `content_update` and re-check.
 Flag remaining manual actions:
 ```
 :::alert-warning
-Publish the page in the DA sidekick to make it appear on /case-studies and in the query-index.
+Publish the page in the DA sidekick to make it appear on /blog/case-study and in the query-index.
 :::
 ```
