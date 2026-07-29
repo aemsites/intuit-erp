@@ -1,4 +1,14 @@
 /* case-study-cards — auto-populated grid, sourced from /case-studies/query-index.json */
+.case-study-filter { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 28px; }
+
+.case-study-filter-pill {
+  padding: 8px 18px; border-radius: 999px; border: 1.5px solid var(--line);
+  background: #fff; color: var(--text-muted); font: inherit; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.case-study-filter-pill:hover { border-color: var(--primary); color: var(--primary); }
+.case-study-filter-pill[aria-pressed="true"] { background: var(--navy); border-color: var(--navy); color: #fff; }
+
 .case-study-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 28px; }
 
 .case-study-card {
