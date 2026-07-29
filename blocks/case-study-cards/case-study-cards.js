@@ -1,7 +1,7 @@
 /**
  * case-study-cards — auto-populated grid of case studies, driven entirely by
- * /case-studies/query-index.json (see helix-query.yaml). Authoring a new page
- * under /case-studies/ and publishing it is enough to make it appear here —
+ * /blog/case-study/query-index.json (see helix-query.yaml). Authoring a new
+ * page under /blog/case-study/ and publishing it is enough to make it appear here —
  * no block config, no authored rows.
  *
  * Variants:
@@ -15,7 +15,7 @@
 import { createOptimizedPicture } from '../../scripts/aem.js';
 import { loadIndex, formatDate } from '../../scripts/content-index.js';
 
-const INDEX_PATH = '/case-studies/query-index.json';
+const INDEX_PATH = '/blog/case-study/query-index.json';
 const PAGE_SIZE = 6;
 
 function cardHTML(item, featured) {

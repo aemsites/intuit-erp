@@ -1,7 +1,7 @@
 /**
  * resource-cards — auto-populated grid of research guides/whitepapers,
- * driven entirely by /research/query-index.json (see helix-query.yaml).
- * Authoring a new page under /research/ and publishing it is enough to
+ * driven entirely by /blog/research/query-index.json (see helix-query.yaml).
+ * Authoring a new page under /blog/research/ and publishing it is enough to
  * make it appear here — no block config, no authored rows.
  *
  * Unlike case-study-cards, every card is the same size (the live
@@ -16,7 +16,7 @@
 import { createOptimizedPicture } from '../../scripts/aem.js';
 import { loadIndex, formatDate } from '../../scripts/content-index.js';
 
-const INDEX_PATH = '/research/query-index.json';
+const INDEX_PATH = '/blog/research/query-index.json';
 const PAGE_SIZE = 6;
 
 function cardHTML(item) {

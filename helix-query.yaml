@@ -2,8 +2,8 @@ version: 1
 indices:
   case-studies:
     include:
-      - /case-studies/*
-    target: /case-studies/query-index.json
+      - /blog/case-study/*
+    target: /blog/case-study/query-index.json
     properties:
       title:
         select: head > meta[property="og:title"]
@@ -19,8 +19,8 @@ indices:
         value: attribute(el, "content")
   research:
     include:
-      - /research/*
-    target: /research/query-index.json
+      - /blog/research/*
+    target: /blog/research/query-index.json
     properties:
       title:
         select: head > meta[property="og:title"]
