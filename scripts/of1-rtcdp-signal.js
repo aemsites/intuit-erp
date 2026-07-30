@@ -25,3 +25,41 @@ export function buildOf1SignalXdm(payload, page) {
     },
   };
 }
+
+// Requests the OF1 anonymous profile via the existing postMessage handshake
+// (the extension owns the response). Resolves null on timeout so callers no-op.
+export function requestOf1Profile(timeoutMs = 2500) {
+  return new Promise((resolve) => {
+    let done = false;
+    const finish = (val) => {
+      if (done) return;
+      done = true;
+      window.removeEventListener('message', onMessage);
+      resolve(val);
+    };
+    const onMessage = (event) => {
+      if (event.data?.type === 'OF1_PERSONALIZE') finish(event.data.payload || {});
+    };
+    window.addEventListener('message', onMessage);
+    window.postMessage({ type: 'OF1_REQUEST_PROFILE', domain: window.location.hostname }, '*');
+    setTimeout(() => finish(null), timeoutMs);
+  });
+}
+
+// Orchestrates request → map → send. `sendEvent` is injected (the martech
+// plugin's sendEvent in production). Returns true iff an event was sent.
+// Fail-open: no profile, or a rejected send, resolves to false and never throws.
+export async function sendOf1Signal({ sendEvent, timeoutMs = 2500 } = {}) {
+  try {
+    const payload = await requestOf1Profile(timeoutMs);
+    if (!payload) return false;
+    const xdm = buildOf1SignalXdm(payload, {
+      url: window.location.href,
+      name: document.title || window.location.pathname,
+    });
+    await sendEvent({ xdm });
+    return true;
+  } catch {
+    return false;
+  }
+}
