@@ -14,8 +14,11 @@ import {
 import { runExperimentation, runExperimentationLazy } from './experiment-loader.js';
 // Vendored via git subtree at plugins/martech (see its README), not an
 // installed npm package, so this necessarily crosses a package.json boundary.
-// eslint-disable-next-line import/no-relative-packages
-import { initMartech, martechEager, martechLazy } from '../plugins/martech/src/index.js';
+import {
+  initMartech, martechEager, martechLazy, updateUserConsent, sendEvent,
+  // eslint-disable-next-line import/no-relative-packages
+} from '../plugins/martech/src/index.js';
+import { sendOf1Signal } from './of1-rtcdp-signal.js';
 
 // Adobe Web SDK / AEP datastream. The datastream id is public (not a secret)
 // and safe in client source. While the id starts with "REPLACE_", martech is
@@ -254,7 +257,14 @@ async function loadLazy(doc) {
 
   loadFooter(doc.querySelector('footer'));
 
-  if (MARTECH_ENABLED) { try { await martechLazy(); } catch (e) { /* non-fatal */ } }
+  if (MARTECH_ENABLED) {
+    try { await martechLazy(); } catch (e) { /* non-fatal */ }
+    // Demo posture: auto-grant collection consent (martech inits consent
+    // 'pending', which would otherwise drop sendEvent). Then push the OF1
+    // anonymous signal to RTCDP. Both fail-open — never block the page.
+    try { await updateUserConsent({ collect: true }); } catch (e) { /* non-fatal */ }
+    sendOf1Signal({ sendEvent }).catch(() => {});
+  }
 
   await runExperimentationLazy(doc, experimentationConfig);
 
