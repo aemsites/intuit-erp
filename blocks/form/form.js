@@ -74,7 +74,9 @@ export default function decorate(block) {
       return;
     }
     // Fire the identity event (fail-open — never block the confirmation).
-    try { sendEvent(buildIdentityXdm(fields)).catch(() => {}); } catch (e) { /* non-fatal */ }
+    try {
+      sendEvent({ xdm: buildIdentityXdm(fields) }).catch(() => {});
+    } catch (e) { /* non-fatal */ }
     note.textContent = 'Thanks — we’ll be in touch shortly.';
     btn.disabled = true;
   });
