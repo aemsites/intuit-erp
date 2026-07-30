@@ -23,7 +23,7 @@ import { initMartech, martechEager, martechLazy } from '../plugins/martech/src/i
 // "REPLACE_", martech is NOT initialized (see loadEager), so this changes
 // nothing today and cannot affect the live demo.
 const AEP_DATASTREAM_ID = 'REPLACE_WITH_DATASTREAM_ID';
-const AEP_ORG_ID = 'REPLACE_WITH_ORG_ID@AdobeOrg';
+const AEP_ORG_ID = '87020D54659BEED90A495E68@AdobeOrg';
 const MARTECH_ENABLED = !AEP_DATASTREAM_ID.startsWith('REPLACE_');
 
 // no custom prod domain configured yet — treat only the .aem.live CDN as

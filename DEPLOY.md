@@ -89,6 +89,55 @@ re-authoring them through the DA form editor once the schema exists is what make
 author-friendly going forward, and is worth a quick diff against these placeholders to
 confirm the row shape matches.
 
+## Adobe Experience Platform (aem-martech)
+
+`plugins/martech` is a vendored, unmodified copy of
+[adobe-rnd/aem-martech](https://github.com/adobe-rnd/aem-martech) (Adobe Web SDK /
+Alloy + Adobe Client Data Layer), pulled in via `git subtree`. The site already
+calls into it — `head.html` preloads `plugins/martech/src/index.js` and
+preconnects to `edge.adobedc.net`; `scripts/scripts.js` imports `initMartech`,
+`martechEager`, and `martechLazy` and calls them from `loadEager`/`loadLazy` — but
+none of it runs by default.
+
+**Activation is a single flag, gated by two constants in `scripts/scripts.js`:**
+
+```js
+const AEP_DATASTREAM_ID = 'REPLACE_WITH_DATASTREAM_ID';
+const AEP_ORG_ID = 'REPLACE_WITH_ORG_ID@AdobeOrg';
+const MARTECH_ENABLED = !AEP_DATASTREAM_ID.startsWith('REPLACE_');
+```
+
+As long as `AEP_DATASTREAM_ID` starts with `REPLACE_`, `MARTECH_ENABLED` is
+`false` and `initMartech()`/`martechEager()`/`martechLazy()` are never called —
+`alloy.min.js` never loads, no request ever reaches `edge.adobedc.net`. Both
+call sites are wrapped in try/catch so a bad or placeholder config can't break
+page load or block the `appear` reveal. To turn it on:
+
+1. Provision an AEP datastream in the target sandbox and get its
+   **datastream id** and the Experience Cloud **org id** (`{org id}@AdobeOrg`).
+   The datastream id is not a secret and is safe in client-side source.
+2. Replace both constants in `scripts/scripts.js` with the real values.
+   `MARTECH_ENABLED` flips to `true` automatically — no other code changes
+   needed to get events flowing.
+3. `initMartech()` is currently called with `{ personalization: true }` only;
+   analytics/data-layer options fall back to the plugin's own defaults (see
+   `plugins/martech/README.md` for the full config surface — `launchUrls`,
+   `decisionScopes`, etc.) if those need tuning.
+4. **Consent**: `updateUserConsent()` (exported by the plugin) is not called
+   anywhere in this repo. The SDK defaults to `defaultConsent: 'pending'`, so
+   real personalization/analytics calls won't fire until something (a CMP
+   integration, or a stopgap default-consent call) invokes it.
+5. Debug mode auto-enables on `localhost` and any `.hlx.page`/`.aem.page`
+   preview host, so branch previews are safe to test against a real sandbox
+   before touching `.aem.live`.
+
+Note: an earlier, unrelated refactor removed `scripts/audience-provider.js` —
+a bridge that would have translated AEP personalization propositions into
+on-site audience ids for a separate firmographic-personalization system, which
+moved to a browser-extension-driven approach instead. That bridge does not
+exist today; re-add an equivalent only if a concrete need for
+proposition-driven on-site personalization comes up.
+
 ## Fidelity notes
 - Font "AvenirNext forINTUIT" is a licensed kit — NOT rehosted; Mulish (OFL, self-hosted)
   is the metric substitute, brand family kept first in the stack so a licensed drop-in wins.
