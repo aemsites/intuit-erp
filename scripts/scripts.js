@@ -17,12 +17,14 @@ import { runExperimentation, runExperimentationLazy } from './experiment-loader.
 // eslint-disable-next-line import/no-relative-packages
 import { initMartech, martechEager, martechLazy } from '../plugins/martech/src/index.js';
 
-// Adobe Web SDK / AEP datastream. Placeholder for the POC — replace with the
-// real AEP sandbox datastreamId + orgId when provisioned. The datastream id is
-// public (not a secret) and safe in client source. While the id starts with
-// "REPLACE_", martech is NOT initialized (see loadEager), so this changes
-// nothing today and cannot affect the live demo.
-const AEP_DATASTREAM_ID = 'REPLACE_WITH_DATASTREAM_ID';
+// Adobe Web SDK / AEP datastream. The datastream id is public (not a secret)
+// and safe in client source. While the id starts with "REPLACE_", martech is
+// NOT initialized (see loadEager), so this changes nothing and cannot affect
+// the live demo.
+// NOTE: datastream id below is UNCONFIRMED — provided ahead of verification,
+// pending confirmation from the AEP side. Do not merge to main until it's
+// confirmed valid and this comment is removed.
+const AEP_DATASTREAM_ID = 'a114467b-290b-4429-9d7e-56bc5b5786fa';
 const AEP_ORG_ID = '87020D54659BEED90A495E68@AdobeOrg';
 const MARTECH_ENABLED = !AEP_DATASTREAM_ID.startsWith('REPLACE_');
 
