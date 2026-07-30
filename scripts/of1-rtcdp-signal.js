@@ -31,13 +31,14 @@ export function buildOf1SignalXdm(payload, page) {
 export function requestOf1Profile(timeoutMs = 2500) {
   return new Promise((resolve) => {
     let done = false;
+    let onMessage;
     const finish = (val) => {
       if (done) return;
       done = true;
       window.removeEventListener('message', onMessage);
       resolve(val);
     };
-    const onMessage = (event) => {
+    onMessage = (event) => {
       if (event.data?.type === 'OF1_PERSONALIZE') finish(event.data.payload || {});
     };
     window.addEventListener('message', onMessage);
