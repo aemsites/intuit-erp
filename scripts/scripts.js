@@ -23,10 +23,9 @@ import { sendOf1Signal, readAlloySegmentIds } from './of1-rtcdp-signal.js';
 // Adobe Web SDK / AEP datastream. The datastream id is public (not a secret)
 // and safe in client source. While the id starts with "REPLACE_", martech is
 // NOT initialized (see loadEager), so this changes nothing and cannot affect
-// the live demo.
-// NOTE: datastream id below is UNCONFIRMED — provided ahead of verification,
-// pending confirmation from the AEP side. Do not merge to main until it's
-// confirmed valid and this comment is removed.
+// the live demo. Datastream confirmed valid against the sapphiredemo1 org
+// (developersandbox1) — verified live in Adobe Assurance (events, identity
+// stitch, and RTCDP segment resolution all working).
 const AEP_DATASTREAM_ID = 'a114467b-290b-4429-9d7e-56bc5b5786fa';
 const AEP_ORG_ID = '87020D54659BEED90A495E68@AdobeOrg';
 const MARTECH_ENABLED = !AEP_DATASTREAM_ID.startsWith('REPLACE_');
