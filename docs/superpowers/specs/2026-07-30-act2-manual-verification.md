@@ -6,9 +6,25 @@
 
 ---
 
+## ✅ VERIFIED LIVE 2026-07-31
+
+This flow was verified end-to-end in Adobe Assurance against org `sapphiredemo1`
+(datastream `a114467b...`, which maps to sandbox `developersandbox1`):
+- **Beat 1:** `web.webpagedetails.pageViews` carried `_intuit.of1Signal` (interests/intent/pagesViewed) + a real ECID `00393545737177858283143271135068800585`; consent `general=in`.
+- **Beat 2:** `web.formFilledOut` carried `identityMap.Email` (ambiguous) + the **same ECID** → stitch confirmed.
+
+**Preview URL (note the branch-name slug):** the branch is `feat/of1-rtcdp-signals`,
+which AEM slugifies to `feat-of1-rtcdp-signals`. Use:
+`https://feat-of1-rtcdp-signals--intuit-erp--aemsites.aem.page`
+
+**Gotchas learned during verification:**
+- The OF1 extension is **disabled in incognito by default** — use a normal window (or explicitly allow the extension in incognito), else `of1Signal` is empty.
+- The "Schedule a call" form is shown in a **modal**; there are two `.form` blocks on `/construction`. A modal-clone bug (fixed in commit 3653563) had left the modal button's handler unbound — ensure you're on a build at/after that commit.
+- The Edge accepts `_intuit.of1Signal`, but it is **not stored on-profile** yet (`datasets.profile: []` in the response) — persistence needs Cedric's schema field group. An AEM edge-lookup destination with 2 segments already exists in the sandbox (path to the future real fork).
+
 ## Prerequisites
 
-1. **Branch deployed:** `feat/of1-rtcdp-signals` deployed to the preview environment (typically `main--intuit-erp--aemsites.hlx.page` or a staging URL).
+1. **Branch deployed:** `feat/of1-rtcdp-signals` at `https://feat-of1-rtcdp-signals--intuit-erp--aemsites.aem.page`.
 2. **OF1 extension installed** in your browser on the Intuit OF1 tab/window (the browser extension that supplies the anonymous profile via postMessage).
 3. **Adobe Assurance session active** on the tenant (`87020D54659BEED90A495E68@AdobeOrg`):
    - Launch [Adobe Assurance](https://experience.adobe.com/assurance) in a separate tab.
