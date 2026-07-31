@@ -26,7 +26,7 @@
 
 **[02:14] Marcus:** Got it. Okay so — Priya, where on the page were you thinking this goes?
 
-**[02:20] Priya:** Right now under the hero there's the "What changes when the system finally works" testimonial, then "Deliver projects on time and on budget" with the three icon columns — engineering and design, management consulting, legal services. I don't want to touch that section, it's doing fine. I think we add a new section right after it, before the FAQ, specifically about the spring capabilities. Something like "Built for how professional services firms actually run" as the heading, then the three things I mentioned as a row of features — Command Center, dimensional reporting, and peer benchmarking.
+**[02:20] Priya:** Right now under the hero there's the "Streamlining for business growth" testimonial, then "Work the way you want," then the capability tabs section, then "Deliver projects on time and on budget" with the five icon columns — engineering and design, management consulting, legal services, IT services and systems, and accounting and audit services. I don't want to touch any of that, it's doing fine. I think we add a new section right after the icon columns, ahead of the customer testimonials and resources blocks, before the FAQ — specifically about the spring capabilities. Something like "Built for how professional services firms actually run" as the heading, then the three things I mentioned as a row of features — Command Center, dimensional reporting, and peer benchmarking.
 
 **[03:15] Marcus:** Makes sense. Do we have real numbers for peer benchmarking yet, or is it too early?
 
