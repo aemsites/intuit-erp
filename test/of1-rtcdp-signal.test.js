@@ -43,6 +43,12 @@ describe('buildOf1SignalXdm (flat)', () => {
     expect(obj.topInterests).toEqual([]);
     expect(obj.topIntent).toBe('');
     expect(obj.pagesViewed).toEqual([]);
+    expect(obj.entrySource).toBe('');
+  });
+
+  it('carries entrySource from the payload', () => {
+    const obj = buildOf1SignalXdm({ entrySource: 'ai' }, page)[OF1_SIGNAL.prefix][OF1_SIGNAL.object];
+    expect(obj.entrySource).toBe('ai');
   });
 });
 

@@ -26,6 +26,7 @@ export function buildOf1SignalXdm(payload, page) {
         topInterests: interests.map((i) => i.topic).filter(Boolean).slice(0, MAX_INTERESTS),
         topIntent: p.intentProfile?.topIntent || '',
         pagesViewed: pages.map((v) => v.path).filter(Boolean).slice(0, MAX_PAGES),
+        entrySource: p.entrySource || '',
         capturedAt: new Date().toISOString(),
       },
     },
