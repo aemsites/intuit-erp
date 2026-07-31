@@ -6,6 +6,10 @@
  *   1. quote-mark <img>   2. quote text   3. name   4. role   5. headshot <img>
  * Variant .video (index) — one row, cells:
  *   1. poster <img>   2. eyebrow   3. quote   4. attribution (may contain a link)
+ *   5. YouTube video id (optional — defaults to the Rhodes Companies story clip)
+ * When a YouTube id is authored, the poster photo is shown as a static
+ * background (no muted autoplay loop, since we only have a YouTube id, not
+ * a cutdown mp4 for that story) and the play button opens that video.
  * CSS: blocks/testimonial/testimonial.css
  */
 
@@ -50,25 +54,38 @@ export default function decorate(block) {
   const cells = [...row.children];
 
   if (isVideo) {
-    const [posterCell, eyebrowCell, quoteCell, attrCell] = cells;
+    const [posterCell, eyebrowCell, quoteCell, attrCell, youtubeCell] = cells;
+    const authoredYoutubeId = youtubeCell ? youtubeCell.textContent.trim() : '';
+    const youtubeId = authoredYoutubeId || STORY_YOUTUBE_ID;
+
     const frame = document.createElement('div');
     frame.className = 'video-frame';
     const posterImg = posterCell ? posterCell.querySelector('img') : null;
-    const bg = document.createElement('video');
-    bg.className = 'video-bg';
-    bg.src = STORY_VIDEO_SRC;
-    if (posterImg) bg.poster = posterImg.currentSrc || posterImg.src;
-    bg.muted = true;
-    bg.loop = true;
-    bg.autoplay = true;
-    bg.playsInline = true;
-    bg.setAttribute('aria-hidden', 'true');
+
+    let bg;
+    if (authoredYoutubeId) {
+      // no cutdown mp4 for this story — show the poster photo as a static
+      // background instead of faking a muted autoplay loop.
+      bg = posterImg ? posterImg.cloneNode(true) : document.createElement('img');
+      bg.className = 'video-bg';
+      bg.setAttribute('aria-hidden', 'true');
+    } else {
+      bg = document.createElement('video');
+      bg.className = 'video-bg';
+      bg.src = STORY_VIDEO_SRC;
+      if (posterImg) bg.poster = posterImg.currentSrc || posterImg.src;
+      bg.muted = true;
+      bg.loop = true;
+      bg.autoplay = true;
+      bg.playsInline = true;
+      bg.setAttribute('aria-hidden', 'true');
+    }
     const play = document.createElement('button');
     play.className = 'video-play';
     play.type = 'button';
     play.setAttribute('aria-label', 'Play full video');
     play.textContent = '▶';
-    play.addEventListener('click', () => openVideoModal(STORY_YOUTUBE_ID));
+    play.addEventListener('click', () => openVideoModal(youtubeId));
     const cap = document.createElement('div');
     cap.className = 'video-caption';
     cap.innerHTML = `
@@ -80,7 +97,7 @@ export default function decorate(block) {
     cap.append(attr);
     frame.append(bg, play, cap);
     block.replaceChildren(frame);
-    bg.play().catch(() => {});
+    if (bg.tagName === 'VIDEO') bg.play().catch(() => {});
     return;
   }
 
