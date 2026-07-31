@@ -28,7 +28,11 @@ import { sendOf1Signal, readAlloySegmentIds } from './of1-rtcdp-signal.js';
 // stitch, and RTCDP segment resolution all working).
 const AEP_DATASTREAM_ID = 'a114467b-290b-4429-9d7e-56bc5b5786fa';
 const AEP_ORG_ID = '87020D54659BEED90A495E68@AdobeOrg';
-const MARTECH_ENABLED = !AEP_DATASTREAM_ID.startsWith('REPLACE_');
+// Experience Workspace previews the page from a *.preview.da.live domain —
+// martech (Alloy) loading there can interfere with that preview, so it's
+// disabled regardless of datastream config on that host.
+const MARTECH_ENABLED = !AEP_DATASTREAM_ID.startsWith('REPLACE_')
+  && !window.location.hostname.endsWith('.preview.da.live');
 
 // no custom prod domain configured yet — treat only the .aem.live CDN as
 // prod (no pill overlay); .aem.page previews and localhost stay in debug mode.
