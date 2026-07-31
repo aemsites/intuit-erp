@@ -1,12 +1,43 @@
 [
   {
     "url": "/erp-solutions",
-    "questions": [
-      "What ERP is best for multi-entity consolidation?",
-      "How do I automate intercompany eliminations?",
-      "What's the best ERP upgrade from QuickBooks?",
-      "How fast can I close the books each month?",
-      "Which ERP handles multi-entity accounting easily?"
+    "topics": [
+      {
+        "topic": "Choosing an ERP for a growing mid-market business",
+        "questions": [
+          "What is an ERP system and when does a business need one?",
+          "What's the best ERP for a mid-market company that has outgrown QuickBooks?",
+          "How is Intuit Enterprise Suite different from a traditional ERP?",
+          "What ERP should I consider if I'm scaling a multi-entity business?"
+        ]
+      },
+      {
+        "topic": "Multi-entity consolidation and intercompany automation",
+        "questions": [
+          "What ERP is best for multi-entity consolidation?",
+          "How do I automate intercompany eliminations?",
+          "Which ERP handles multi-entity accounting easily?",
+          "How can I get a single consolidated view across multiple business entities?"
+        ]
+      },
+      {
+        "topic": "Audit readiness, controls, and real-time financial visibility",
+        "questions": [
+          "How can I make my finance close audit-ready by design?",
+          "What ERP gives real-time financial visibility instead of month-end reporting?",
+          "How do role-based permissions and approval workflows improve my audit trail?",
+          "How fast can I close the books each month with an AI-native ERP?"
+        ]
+      },
+      {
+        "topic": "Migrating to Intuit Enterprise Suite",
+        "questions": [
+          "What's the best ERP upgrade path from QuickBooks Online or QuickBooks Desktop?",
+          "How long does it take to migrate to Intuit Enterprise Suite?",
+          "What happens to my data when I upgrade from QuickBooks Online?",
+          "Do I need help from a professional services team to migrate from a non-Intuit platform?"
+        ]
+      }
     ]
   }
 ]
