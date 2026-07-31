@@ -26,33 +26,21 @@ const NAV = [
     label: 'Capabilities',
     columns: [
       {
-        heading: 'Platform',
+        heading: 'Financial management',
         links: [
-          {
-            text: 'ERP solutions overview', desc: 'The mid-market ERP for modern finance', href: '/erp-solutions', internal: true,
-          },
-          {
-            text: 'Accounting', desc: 'Powerful, connected financial tools', href: '/accounting', internal: true,
-          },
+          { text: 'Overview', href: '/accounting', internal: true },
+          { text: 'Multi-entity management', href: '/accounting/multi-entity', internal: true },
+          { text: 'Intelligent reporting', href: '/accounting/business-intelligence-reports', internal: true },
+          { text: 'Dimensional forecasting', href: '/accounting/business-forecasting', internal: true },
+          { text: 'Intuit AI', href: '/ai-agents', internal: true },
         ],
       },
       {
-        heading: 'Automation & AI',
+        heading: 'Streamlined tools',
         links: [
-          { text: 'AI agents', href: '/ai-agents', internal: true },
-          { text: 'Workforce automation', href: '/workforce-automation', internal: true },
+          { text: 'Overview', href: '/workforce-automation', internal: true },
+          { text: 'HR & payroll', href: 'https://erp.intuit.com/human-capital-management/' },
           { text: 'Payments & bill pay', href: '/automation-tools/payments-bill-pay', internal: true },
-        ],
-      },
-      {
-        heading: 'Finance & reporting',
-        links: [
-          { text: 'Multi-entity consolidation', href: '/accounting/multi-entity', internal: true },
-          {
-            text: 'Business intelligence & reporting', href: '/accounting/business-intelligence-reports', internal: true,
-          },
-          { text: 'Business forecasting', href: '/accounting/business-forecasting', internal: true },
-          { text: 'Custom ERP', href: '/custom-erp', internal: true },
         ],
       },
     ],
@@ -62,8 +50,8 @@ const NAV = [
     label: 'Industry tools',
     columns: [
       {
-        heading: 'By industry',
         links: [
+          { text: 'Overview', href: '/custom-erp', internal: true },
           { text: 'Construction', href: '/construction', internal: true },
           { text: 'Professional services', href: '/professional-services', internal: true },
           { text: 'Financial services', href: '/financial-services', internal: true },
@@ -72,25 +60,65 @@ const NAV = [
     ],
   },
   {
-    type: 'link', label: 'Pricing', href: '/pricing', internal: true,
+    type: 'menu',
+    label: 'Pricing',
+    columns: [
+      {
+        links: [
+          { text: 'Plans', href: '/pricing', internal: true },
+          { text: 'Enterprise solutions', href: '/erp-solutions', internal: true },
+        ],
+      },
+    ],
   },
   {
     type: 'menu',
     label: 'Resources',
     columns: [
       {
-        heading: 'Explore',
+        heading: 'Resource center',
         links: [
-          {
-            text: 'Compare Intuit Enterprise Suite', desc: 'See how IES stacks up', href: '/compare', internal: true,
-          },
-          { text: 'Blog', href: 'https://erp.intuit.com/blog/' },
-          {
-            text: 'Events', href: '/events', internal: true,
-          },
+          { text: 'Overview', href: 'https://erp.intuit.com/blog/' },
+        ],
+      },
+      {
+        heading: 'Insights & learning',
+        links: [
+          { text: 'Thought leadership', href: 'https://erp.intuit.com/blog/thought-leadership/' },
+          { text: 'Trends & research', href: '/blog/research', internal: true },
+          { text: 'Compare ERPs', href: '/compare', internal: true },
+        ],
+      },
+      {
+        heading: 'Industry knowledge',
+        links: [
+          { text: 'Construction', href: 'https://erp.intuit.com/blog/construction/' },
+          { text: 'Professional services', href: 'https://erp.intuit.com/blog/professional-services/' },
+          { text: 'Manufacturing', href: 'https://erp.intuit.com/blog/manufacturing/' },
+          { text: 'Non-profit', href: 'https://erp.intuit.com/blog/non-profit/' },
+          { text: 'Retail', href: 'https://erp.intuit.com/blog/retail/' },
+          { text: 'Food service', href: 'https://erp.intuit.com/blog/food-service/' },
+        ],
+      },
+      {
+        heading: 'Customer stories',
+        links: [
           { text: 'Case studies', href: '/blog/case-study', internal: true },
-          { text: 'Research & Downloads', href: '/blog/research', internal: true },
-          { text: 'Migration', href: '/migration', internal: true },
+          { text: 'Testimonials', href: 'https://erp.intuit.com/blog/videos/customer-testimonials/' },
+        ],
+      },
+      {
+        heading: 'Events & webinars',
+        links: [
+          { text: 'Upcoming events', href: '/events', internal: true },
+          { text: 'On-demand webinars', href: 'https://ieswebinars.intuit.com/hub/ondemand' },
+        ],
+      },
+      {
+        heading: 'Product resources',
+        links: [
+          { text: 'Product demos', href: 'https://ieswebinars.intuit.com/hub/productdemo' },
+          { text: 'New features & releases', href: 'https://erp.intuit.com/blog/product-update/' },
         ],
       },
     ],
@@ -100,10 +128,9 @@ const NAV = [
     label: 'Support',
     columns: [
       {
-        heading: 'Get help',
         links: [
+          { text: 'How-to migrate', href: '/migration', internal: true },
           { text: 'Account management', href: 'https://erp.intuit.com/account-management/' },
-          { text: 'Migration', href: '/migration', internal: true },
         ],
       },
     ],
