@@ -3,11 +3,11 @@
 // wiring (sendOf1Signal) is verified manually in Adobe Assurance. Fail-open:
 // any missing piece resolves to a no-op so the page is never affected.
 
-// Tenant-namespaced XDM location for the OF1 signal. The real prefix is
-// org-derived and unknown today — the Edge accepts an unknown object, but it
-// only persists on-profile once a matching schema field group exists AEP-side.
-// Single source of truth so it is a one-line swap when Cedric confirms it.
-export const OF1_SIGNAL = { prefix: '_intuit', object: 'of1Signal' };
+// Tenant-namespaced XDM location for the OF1 signal. Must byte-match the AEP
+// schema field group path or ingestion drops the object. Confirmed against the
+// "Experience Event Schema" in the sapphiredemo1 org (developersandbox1):
+// the tenant prefix is `_sapphiredemo1` and the object is `of1Signal`.
+export const OF1_SIGNAL = { prefix: '_sapphiredemo1', object: 'of1Signal' };
 const MAX_INTERESTS = 5;
 const MAX_PAGES = 10;
 
