@@ -34,7 +34,7 @@
   },
   {
     "param": "utm_campaign",
-    "value": "multientity-realtime-decisions-nurture",
+    "value": "somethinguseful",
     "source": "email",
     "label": "E-Mail",
     "context": "Visitor clicked through from a multi-entity consolidation nurture email emphasizing real-time, trustworthy financial data over scattered, stale, rearview reporting at close. Personalize the landing page toward consolidated multi-entity views, automated intercompany eliminations, and a faster month-end close, echoing the email's \"from rearview reporting to real-time decisions\" narrative."
