@@ -18,7 +18,7 @@ header .header .container { max-width: var(--container); margin: 0 auto; padding
 /* sticky nav */
 .header .ies-nav { position: sticky; top: 0; z-index: 50; background: #fff; }
 .header .ies-nav.scrolled { box-shadow: 0 1px 0 rgb(0 0 0 / 6%); border-bottom: 2px solid var(--navy); }
-.header .ies-nav .container { display: flex; align-items: center; height: 60px; gap: 30px; }
+.header .ies-nav .container { position: relative; display: flex; align-items: center; height: 60px; gap: 30px; }
 .header .nav-logo { display: flex; align-items: baseline; gap: 6px; font-size: 22px; }
 .header .nav-logo .ies-intuit { color: var(--primary); font-weight: 800; letter-spacing: 0.01em; }
 .header .nav-logo .ies-word { font-weight: 400; color: var(--primary); }
@@ -33,6 +33,15 @@ header .header .container { max-width: var(--container); margin: 0 auto; padding
 /* flyout panels */
 .header .flyout { position: absolute; top: 100%; left: 0; z-index: 60; background: #fff; border: 1px solid var(--line); border-top: 3px solid var(--navy); box-shadow: 0 18px 40px rgb(0 0 0 / 12%); padding: 22px 26px; }
 .header .flyout[hidden] { display: none; }
+
+/* Wide (4+ column) flyouts, e.g. Resources, are too wide to stay anchored
+   under their own trigger without running off the right edge of the
+   viewport. Their .nav-item drops out of the positioning chain (position:
+   static) so the flyout resolves against .container instead — the full nav
+   row — and hangs from its right edge, growing leftward into the row's
+   full width rather than rightward off-screen. */
+.header .nav-item:has(.flyout-wide) { position: static; }
+.header .flyout-wide { left: auto; right: 0; }
 .header .flyout-inner { display: flex; gap: 24px; }
 .header .flyout-col { min-width: 150px; }
 .header .flyout-heading { margin: 0 0 8px; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }

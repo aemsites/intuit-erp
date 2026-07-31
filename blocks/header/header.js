@@ -159,10 +159,11 @@ function navItemHTML(entry, idx) {
           ${c.heading ? `<p class="flyout-heading">${c.heading}</p>` : ''}
           ${c.links.map(linkHTML).join('')}
         </div>`).join('');
+  const wideCls = entry.columns.length > 3 ? ' flyout-wide' : '';
   return `
       <div class="nav-item">
         <button type="button" aria-expanded="false" aria-controls="${id}">${entry.label}<i class="caret"></i></button>
-        <div class="flyout" id="${id}" hidden><div class="flyout-inner">${cols}</div></div>
+        <div class="flyout${wideCls}" id="${id}" hidden><div class="flyout-inner">${cols}</div></div>
       </div>`;
 }
 
