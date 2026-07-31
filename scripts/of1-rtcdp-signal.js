@@ -47,20 +47,39 @@ export function requestOf1Profile(timeoutMs = 2500) {
   });
 }
 
+// Extracts RTCDP/AJO segment IDs from the on-page Alloy sendEvent result.
+// The Edge returns segment membership under result.destinations[].segments[].id
+// (verified live: the alias:"aem" edge-lookup destination). Deduped; [] on any
+// absent/invalid shape (fail-open — the page must never break if AEP is off).
+export function readAlloySegmentIds(sendEventResult) {
+  const destinations = sendEventResult?.destinations;
+  if (!Array.isArray(destinations)) return [];
+  const ids = [];
+  for (const d of destinations) {
+    const segments = Array.isArray(d?.segments) ? d.segments : [];
+    for (const s of segments) {
+      if (s?.id && !ids.includes(s.id)) ids.push(s.id);
+    }
+  }
+  return ids;
+}
+
 // Orchestrates request → map → send. `sendEvent` is injected (the martech
-// plugin's sendEvent in production). Returns true iff an event was sent.
-// Fail-open: no profile, or a rejected send, resolves to false and never throws.
+// plugin's sendEvent in production). Returns { sent, result } — result is the
+// raw Alloy sendEvent response (or null) so callers can read RTCDP segments.
+// Fail-open: no profile, or a rejected send, resolves to { sent: false, result: null }
+// and never throws.
 export async function sendOf1Signal({ sendEvent, timeoutMs = 2500 } = {}) {
   try {
     const payload = await requestOf1Profile(timeoutMs);
-    if (!payload) return false;
+    if (!payload) return { sent: false, result: null };
     const xdm = buildOf1SignalXdm(payload, {
       url: window.location.href,
       name: document.title || window.location.pathname,
     });
-    await sendEvent({ xdm });
-    return true;
+    const result = await sendEvent({ xdm });
+    return { sent: true, result: result || null };
   } catch {
-    return false;
+    return { sent: false, result: null };
   }
 }

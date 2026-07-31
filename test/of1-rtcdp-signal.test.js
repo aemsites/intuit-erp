@@ -62,17 +62,17 @@ describe('sendOf1Signal', () => {
     const sendEvent = vi.fn().mockResolvedValue({});
     const promise = sendOf1Signal({ sendEvent, timeoutMs: 1000 });
     window.postMessage({ type: 'OF1_PERSONALIZE', payload: { interests: [{ topic: 'job costing', score: 9 }] } }, '*');
-    const sent = await promise;
-    expect(sent).toBe(true);
+    const outcome = await promise;
+    expect(outcome).toEqual({ sent: true, result: {} });
     expect(sendEvent).toHaveBeenCalledTimes(1);
     const arg = sendEvent.mock.calls[0][0];
     expect(arg.xdm[SIG.prefix][SIG.object].interests).toEqual([{ topic: 'job costing', score: 9 }]);
   });
 
-  it('is a no-op (returns false) when no profile arrives', async () => {
+  it('is a no-op (returns { sent: false, result: null }) when no profile arrives', async () => {
     const sendEvent = vi.fn();
-    const sent = await sendOf1Signal({ sendEvent, timeoutMs: 10 });
-    expect(sent).toBe(false);
+    const outcome = await sendOf1Signal({ sendEvent, timeoutMs: 10 });
+    expect(outcome).toEqual({ sent: false, result: null });
     expect(sendEvent).not.toHaveBeenCalled();
   });
 
@@ -80,6 +80,6 @@ describe('sendOf1Signal', () => {
     const sendEvent = vi.fn().mockRejectedValue(new Error('edge down'));
     const promise = sendOf1Signal({ sendEvent, timeoutMs: 1000 });
     window.postMessage({ type: 'OF1_PERSONALIZE', payload: { interests: [] } }, '*');
-    await expect(promise).resolves.toBe(false);
+    await expect(promise).resolves.toEqual({ sent: false, result: null });
   });
 });
