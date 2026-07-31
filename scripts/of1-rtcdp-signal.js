@@ -8,18 +8,24 @@
 // only persists on-profile once a matching schema field group exists AEP-side.
 // Single source of truth so it is a one-line swap when Cedric confirms it.
 export const OF1_SIGNAL = { prefix: '_intuit', object: 'of1Signal' };
+const MAX_INTERESTS = 5;
+const MAX_PAGES = 10;
 
-// Maps an OF1 profile payload + page info into an XDM sendEvent payload. Pure.
+// Maps an OF1 profile payload + page info into a FLAT, profile-friendly XDM
+// sendEvent payload. Flattened (topInterests/topIntent/pagesViewed) so it
+// models cleanly as an AEP event field group and is easy to segment on. Pure.
 export function buildOf1SignalXdm(payload, page) {
   const p = payload || {};
+  const interests = Array.isArray(p.interests) ? p.interests : [];
+  const pages = Array.isArray(p.pageVisits) ? p.pageVisits : [];
   return {
     eventType: 'web.webpagedetails.pageViews',
     web: { webPageDetails: { URL: page.url, name: page.name } },
     [OF1_SIGNAL.prefix]: {
       [OF1_SIGNAL.object]: {
-        interests: Array.isArray(p.interests) ? p.interests : [],
-        intent: p.intentProfile || null,
-        pagesViewed: Array.isArray(p.pageVisits) ? p.pageVisits : [],
+        topInterests: interests.map((i) => i.topic).filter(Boolean).slice(0, MAX_INTERESTS),
+        topIntent: p.intentProfile?.topIntent || '',
+        pagesViewed: pages.map((v) => v.path).filter(Boolean).slice(0, MAX_PAGES),
         capturedAt: new Date().toISOString(),
       },
     },

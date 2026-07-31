@@ -11,12 +11,12 @@ import {
 
 const page = { url: 'https://x.aem.page/construction', name: 'construction' };
 
-describe('buildOf1SignalXdm', () => {
-  it('maps interests, intent, and pages under the tenant-namespaced object', () => {
+describe('buildOf1SignalXdm (flat)', () => {
+  it('flattens interests→topInterests, intent→topIntent, pages→pagesViewed', () => {
     const xdm = buildOf1SignalXdm({
-      interests: [{ topic: 'job costing', score: 82 }, { topic: 'construction', score: 70 }],
-      intentProfile: { type: 'research', journeyStage: 'consideration' },
-      pageVisits: ['/construction', '/blog/construction-case-study'],
+      interests: [{ topic: 'QuickBooks Migration', score: 90, source: 'x' }, { topic: 'AI Finance Agents', score: 80, source: 'y' }],
+      intentProfile: { intents: [], topIntent: 'purchase', topScore: 100, updatedAt: 1 },
+      pageVisits: [{ path: '/migration/', title: 'M', dwellTimeMs: 10 }, { path: '/ai-agents/', title: 'A', dwellTimeMs: 5 }],
     }, page);
 
     expect(xdm.eventType).toBe('web.webpagedetails.pageViews');
@@ -24,20 +24,24 @@ describe('buildOf1SignalXdm', () => {
     expect(xdm.web.webPageDetails.name).toBe(page.name);
 
     const obj = xdm[OF1_SIGNAL.prefix][OF1_SIGNAL.object];
-    expect(obj.interests).toEqual([
-      { topic: 'job costing', score: 82 },
-      { topic: 'construction', score: 70 },
-    ]);
-    expect(obj.intent).toEqual({ type: 'research', journeyStage: 'consideration' });
-    expect(obj.pagesViewed).toEqual(['/construction', '/blog/construction-case-study']);
+    expect(obj.topInterests).toEqual(['QuickBooks Migration', 'AI Finance Agents']);
+    expect(obj.topIntent).toBe('purchase');
+    expect(obj.pagesViewed).toEqual(['/migration/', '/ai-agents/']);
     expect(typeof obj.capturedAt).toBe('string');
   });
 
-  it('tolerates an empty/partial profile without throwing', () => {
-    const xdm = buildOf1SignalXdm({}, page);
-    const obj = xdm[OF1_SIGNAL.prefix][OF1_SIGNAL.object];
-    expect(obj.interests).toEqual([]);
-    expect(obj.intent).toBeNull();
+  it('caps interests at 5 and pages at 10', () => {
+    const interests = Array.from({ length: 8 }, (_, i) => ({ topic: `t${i}`, score: 1, source: '' }));
+    const pageVisits = Array.from({ length: 14 }, (_, i) => ({ path: `/p${i}`, title: '', dwellTimeMs: 1 }));
+    const obj = buildOf1SignalXdm({ interests, intentProfile: null, pageVisits }, page)[OF1_SIGNAL.prefix][OF1_SIGNAL.object];
+    expect(obj.topInterests).toHaveLength(5);
+    expect(obj.pagesViewed).toHaveLength(10);
+  });
+
+  it('tolerates an empty/partial profile: empty arrays and empty topIntent', () => {
+    const obj = buildOf1SignalXdm({}, page)[OF1_SIGNAL.prefix][OF1_SIGNAL.object];
+    expect(obj.topInterests).toEqual([]);
+    expect(obj.topIntent).toBe('');
     expect(obj.pagesViewed).toEqual([]);
   });
 });
@@ -66,7 +70,7 @@ describe('sendOf1Signal', () => {
     expect(outcome).toEqual({ sent: true, result: {} });
     expect(sendEvent).toHaveBeenCalledTimes(1);
     const arg = sendEvent.mock.calls[0][0];
-    expect(arg.xdm[SIG.prefix][SIG.object].interests).toEqual([{ topic: 'job costing', score: 9 }]);
+    expect(arg.xdm[SIG.prefix][SIG.object].topInterests).toEqual(['job costing']);
   });
 
   it('is a no-op (returns { sent: false, result: null }) when no profile arrives', async () => {
