@@ -14,16 +14,20 @@ import {
 import { runExperimentation, runExperimentationLazy } from './experiment-loader.js';
 // Vendored via git subtree at plugins/martech (see its README), not an
 // installed npm package, so this necessarily crosses a package.json boundary.
-// eslint-disable-next-line import/no-relative-packages
-import { initMartech, martechEager, martechLazy } from '../plugins/martech/src/index.js';
+import {
+  initMartech, martechEager, martechLazy, updateUserConsent, sendEvent,
+  // eslint-disable-next-line import/no-relative-packages
+} from '../plugins/martech/src/index.js';
+import { sendOf1Signal, readAlloySegmentIds } from './of1-rtcdp-signal.js';
 
-// Adobe Web SDK / AEP datastream. Placeholder for the POC — replace with the
-// real AEP sandbox datastreamId + orgId when provisioned. The datastream id is
-// public (not a secret) and safe in client source. While the id starts with
-// "REPLACE_", martech is NOT initialized (see loadEager), so this changes
-// nothing today and cannot affect the live demo.
-const AEP_DATASTREAM_ID = 'REPLACE_WITH_DATASTREAM_ID';
-const AEP_ORG_ID = 'REPLACE_WITH_ORG_ID@AdobeOrg';
+// Adobe Web SDK / AEP datastream. The datastream id is public (not a secret)
+// and safe in client source. While the id starts with "REPLACE_", martech is
+// NOT initialized (see loadEager), so this changes nothing and cannot affect
+// the live demo. Datastream confirmed valid against the sapphiredemo1 org
+// (developersandbox1) — verified live in Adobe Assurance (events, identity
+// stitch, and RTCDP segment resolution all working).
+const AEP_DATASTREAM_ID = 'a114467b-290b-4429-9d7e-56bc5b5786fa';
+const AEP_ORG_ID = '87020D54659BEED90A495E68@AdobeOrg';
 const MARTECH_ENABLED = !AEP_DATASTREAM_ID.startsWith('REPLACE_');
 
 // no custom prod domain configured yet — treat only the .aem.live CDN as
@@ -252,7 +256,21 @@ async function loadLazy(doc) {
 
   loadFooter(doc.querySelector('footer'));
 
-  if (MARTECH_ENABLED) { try { await martechLazy(); } catch (e) { /* non-fatal */ } }
+  if (MARTECH_ENABLED) {
+    try { await martechLazy(); } catch (e) { /* non-fatal */ }
+    // Demo posture: auto-grant collection consent (martech inits consent
+    // 'pending', which would otherwise drop sendEvent). Then push the OF1
+    // anonymous signal to RTCDP. Both fail-open — never block the page.
+    try { await updateUserConsent({ collect: true }); } catch (e) { /* non-fatal */ }
+    // Capture the segments the page's Alloy already resolved and hand them to
+    // the OF1 extension (page owns the Alloy call; the extension maps + displays).
+    sendOf1Signal({ sendEvent }).then((r) => {
+      const ids = readAlloySegmentIds(r && r.result);
+      if (ids.length) {
+        window.postMessage({ type: 'OF1_AUDIENCE_SEGMENTS', domain: window.location.hostname, ids }, '*');
+      }
+    }).catch(() => {});
+  }
 
   await runExperimentationLazy(doc, experimentationConfig);
 

@@ -6,6 +6,7 @@
  * without a code change. Built once, fetched once, reused across opens.
  */
 import { loadFragment } from '../blocks/fragment/fragment.js';
+import { loadSections } from './aem.js';
 
 const SCHEDULE_CALL_FRAGMENT = '/fragments/schedule-call';
 
@@ -63,6 +64,16 @@ export async function openScheduleModal() {
     // and replaceChildren() with the live nodes would strip them out of
     // fragment on the first use, leaving it (and every reopen after) empty.
     body.replaceChildren(...[...fragment.childNodes].map((n) => n.cloneNode(true)));
+
+    // cloneNode() copies DOM + attributes but NOT event listeners, so the
+    // cloned form's Schedule-a-call handler (attached by form.js during the
+    // fragment's initial decoration) is lost. Re-decorate the clones: the
+    // clone carries blockStatus/sectionStatus "loaded", which loadBlock and
+    // loadSection both skip — reset them to "initialized" so loadSections
+    // re-runs form.js's decorate() on the clone and re-binds the handler.
+    body.querySelectorAll('[data-block-status]').forEach((b) => { b.dataset.blockStatus = 'initialized'; });
+    body.querySelectorAll('.section[data-section-status]').forEach((s) => { s.dataset.sectionStatus = 'initialized'; });
+    await loadSections(body);
   } else {
     body.textContent = 'Sorry, something went wrong loading this form. Please try again.';
   }

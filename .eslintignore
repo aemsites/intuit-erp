@@ -2,3 +2,5 @@ helix-importer-ui
 *.min.js
 plugins/experimentation
 plugins/martech
+vitest.config.js
+test
