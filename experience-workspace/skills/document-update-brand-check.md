@@ -1,49 +1,52 @@
 ---
-name: transcript-update-brand-check
-description: Extract the website-change discussion from an uploaded meeting transcript, turn it into a content update plan, apply it to the current page, then brand-check it via the brand-check-and-fix skill.
+name: document-update-brand-check
+description: Extract change instructions from any provided resource or file (a call recap, JIRA ticket, email, Slack thread, design brief, etc.), turn them into a content update plan, apply it to the current page, then brand-check it via the brand-check-and-fix skill.
 version: 1
 status: approved
 ---
 
-# Transcript Update + Brand Check
+# Document Update + Brand Check
 
-Update the currently open page based on a meeting transcript instead of hand-typed instructions: pull out only the parts of the conversation that were actually about website changes, confirm a plan from that, apply it, then validate the result against brand guidelines.
-
----
-
-## Step 1 — Get the transcript
-
-If the user has not provided a transcript (pasted text or an attached file), ask:
-
-> "Please share the meeting transcript you'd like me to work from."
-
-Do not proceed until it's received. A transcript is expected to cover more than just this site — don't ask the user to pre-trim it, that's Step 2's job.
+Update the currently open page from any resource or file that contains change instructions, instead of hand-typed instructions. It can be anything that might have those instructions mixed in with other content — a call recap, a JIRA/ticket description, an email thread, a Slack conversation export, a design brief, a PRD excerpt. Pull out only the parts that are actually about website changes, confirm a plan from that, apply it, then validate the result against brand guidelines.
 
 ---
 
-## Step 2 — Extract the website-change discussion
+## Step 1 — Get the source document
 
-Read the full transcript and pull out **only** the parts that discuss actual website content changes — new pages, copy edits, section additions/removals, CTA changes, structural changes, etc. Ignore scheduling chatter, administrative asides, and topics unrelated to this site's content.
+If the user has not provided a document (pasted text or an attached file), ask:
+
+> "Please share the resource or file you'd like me to work from — a call recap, ticket description, email, Slack thread, or anything similar that contains the change instructions you want applied."
+
+Do not proceed until it's received. The document is expected to potentially cover more than just this site, or include non-actionable discussion alongside real instructions — don't ask the user to pre-trim it, that's Step 2's job.
+
+---
+
+## Step 2 — Extract the website-change instructions
+
+Read the full resource/file and pull out **only** the parts that describe actual website content changes — new pages, copy edits, section additions/removals, CTA changes, structural changes, etc. Ignore whatever doesn't belong: scheduling chatter and administrative asides in a call recap, engineering/implementation notes in a ticket that don't affect visible content, unrelated topics in an email or Slack thread, etc.
+
+Some sources are noisier than others — a call recap needs heavier filtering than a focused ticket description — but the same discipline applies to all of them: don't assume everything in the source is in scope.
 
 For each relevant point found, note:
-- A short quote or close paraphrase of what was said
-- Who said it, if attributable from the transcript
+- A short quote or close paraphrase of the instruction
+- Where it came from, if attributable (a speaker name, a ticket field like "Acceptance Criteria", an author, etc.)
 - The concrete change it implies
 
 Present this as a short list, e.g.:
 
 ```
 :::checklist
-- [x] **Speaker A** — "we should soften the migration page's hero, it reads too aggressive" → tone down hero copy on /migration
-- [x] **Speaker B** — "let's add the Q3 stat once finance confirms it" → flagged as not-yet-actionable, no confirmed number given
+- [x] **Call recap, Speaker A** — "we should soften the migration page's hero, it reads too aggressive" → tone down hero copy on /migration
+- [x] **JIRA-1234, Acceptance Criteria** — "CTA on pricing page should read 'Talk to sales' not 'Schedule a call'" → rename pricing hero CTA
+- [x] **Email from finance** — "let's add the Q3 stat once it's confirmed" → flagged as not-yet-actionable, no confirmed number given
 :::
 ```
 
 Then ask:
 
-> "Is this everything relevant, or did I miss/misread something from the transcript?"
+> "Is this everything relevant, or did I miss/misread something from the document?"
 
-Wait for confirmation before moving on — this is the step most likely to need correction, since transcripts are noisy and attribution can be ambiguous.
+Wait for confirmation before moving on — this is the step most likely to need correction, since real-world source documents are noisy and attribution can be ambiguous.
 
 ---
 
@@ -60,13 +63,13 @@ Analyze the current page against the confirmed extraction from Step 2. Produce a
 - Which sections will be added, removed, or modified
 - What copy changes will be made (headlines, body text, CTAs, etc.)
 - Any structural changes (new blocks, removed blocks, reordered sections)
-- Which extracted transcript point each change traces back to
+- Which extracted instruction each change traces back to
 
 Present the plan as a numbered or bulleted list and ask:
 
 > "Does this plan look correct? Should I go ahead with these changes?"
 
-Wait for explicit confirmation before proceeding. If the transcript only yielded one or two confirmed items, keep the plan just as small — don't pad it with unrelated cleanup.
+Wait for explicit confirmation before proceeding. If the source document only yielded one or two confirmed items, keep the plan just as small — don't pad it with unrelated cleanup.
 
 ---
 
@@ -80,7 +83,7 @@ Once the user confirms the plan:
    - Sections as top-level `<div>` tags inside `<main>`
    - Blocks as `<div class="block-name">` with row/column child `<div>` elements
    - No `<!DOCTYPE>`, `<html>`, `<head>`, inline styles, or literal `<table>` for blocks
-3. Briefly confirm what was changed in plain prose, tying each change back to its transcript source.
+3. Briefly confirm what was changed in plain prose, tying each change back to its source.
 
 ---
 
@@ -100,8 +103,8 @@ Once the brand check has passed (or remaining issues have been flagged per that 
 
 ## Notes
 
-- **Extraction is the part most likely to go wrong** — a transcript is noisy, multi-topic, and attribution can be ambiguous. Always get explicit confirmation on the extracted excerpts (Step 2) before planning, and again on the plan itself (Step 4), rather than compounding an extraction mistake into a content change.
-- Don't invent action items from vague discussion — if something was floated but not decided (e.g. "let's add the Q3 stat once finance confirms it"), flag it as not-yet-actionable rather than including it in the plan.
+- **Extraction is the part most likely to go wrong** — source documents are noisy or multi-purpose, and attribution can be ambiguous regardless of format. Always get explicit confirmation on the extracted instructions (Step 2) before planning, and again on the plan itself (Step 4), rather than compounding an extraction mistake into a content change.
+- Don't invent action items from vague or undecided discussion — if something was floated but not decided (e.g. "let's add the Q3 stat once finance confirms it"), flag it as not-yet-actionable rather than including it in the plan.
 - Apply all content changes in a single `content_update` call — never make multiple partial edits.
 - Never output raw HTML in responses, and never ask the user to copy-paste HTML.
 - Brand checking is delegated entirely to `brand-check-and-fix` — do not duplicate its evaluate/fix/re-check steps inline in this skill.
