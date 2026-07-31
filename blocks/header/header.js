@@ -90,7 +90,7 @@ const NAV = [
           },
           { text: 'Case studies', href: '/blog/case-study', internal: true },
           { text: 'Research & Downloads', href: '/blog/research', internal: true },
-          { text: 'Migration', href: 'https://erp.intuit.com/migration/' },
+          { text: 'Migration', href: '/migration', internal: true },
         ],
       },
     ],
@@ -103,7 +103,7 @@ const NAV = [
         heading: 'Get help',
         links: [
           { text: 'Account management', href: 'https://erp.intuit.com/account-management/' },
-          { text: 'Migration', href: 'https://erp.intuit.com/migration/' },
+          { text: 'Migration', href: '/migration', internal: true },
         ],
       },
     ],
