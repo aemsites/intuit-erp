@@ -38,7 +38,13 @@
 
 **[03:58] Priya:** Good catch, I need to double check the reports count against the actual release notes before anyone touches that copy — don't want to just bump the number without verifying it. Let's leave the FAQ alone for now and revisit it as a follow-up, not part of this pass.
 
-**[04:22] Marcus:** Okay. So to play it back — new section, after the icon-columns block, before FAQ, built with the columns block, three capabilities: Multi-Entity Command Center, dimension-based reporting, peer benchmarking descriptive-only. FAQ stays untouched this round. Anything else on that page specifically?
+**[04:05] Priya:** Oh — one more small thing while we're in there. Let's update the hero headline too. Right now it's "A platform that works the way you do." I'd like to change it to "A platform that works the way you do — powered by Intuit AI" so the spring AI messaging shows up right at the top of the page, not buried in the new section further down.
+
+**[04:12] Marcus:** Easy enough, that's just a heading swap. Anything else changing up top, or just the headline text?
+
+**[04:16] Priya:** Just the headline text, nothing structural — same placement, same styling, same CTAs underneath it.
+
+**[04:22] Marcus:** Okay. So to play it back — hero headline updated to "A platform that works the way you do — powered by Intuit AI," new section after the icon-columns block, before FAQ, built with the columns block, three capabilities: Multi-Entity Command Center, dimension-based reporting, peer benchmarking descriptive-only. FAQ stays untouched this round. Anything else on that page specifically?
 
 **[04:49] Priya:** That's it for the page. I'll get you the exact capability descriptions by end of day tomorrow so whoever's building it has real copy, not placeholder text.
 
