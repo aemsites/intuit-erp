@@ -28,6 +28,8 @@
 
 **[02:20] Priya:** Right now under the hero there's the "Streamlining for business growth" testimonial, then "Work the way you want," then the capability tabs section, then "Deliver projects on time and on budget" with the five icon columns — engineering and design, management consulting, legal services, IT services and systems, and accounting and audit services. I don't want to touch any of that, it's doing fine. I think we add a new section right after the icon columns, ahead of the customer testimonials and resources blocks, before the FAQ — specifically about the spring capabilities. Something like "Built for how professional services firms actually run" as the heading, then the three things I mentioned as a row of features — Command Center, dimensional reporting, and peer benchmarking.
 
+**[02:40] Priya:** One implementation note — let's build that as the columns block, not feature-grid. Feature-grid wants two images per card plus a CTA link for the click-to-expand behavior, and we don't have any of that here, just three short blurbs. Columns is the simpler layout and it's already in the block library.
+
 **[03:15] Marcus:** Makes sense. Do we have real numbers for peer benchmarking yet, or is it too early?
 
 **[03:22] Priya:** Too early, we don't have anything I'd sign off on publicly yet. Let's keep that one descriptive — what it does, not a specific stat — until we have a number we trust.
@@ -36,7 +38,7 @@
 
 **[03:58] Priya:** Good catch, I need to double check the reports count against the actual release notes before anyone touches that copy — don't want to just bump the number without verifying it. Let's leave the FAQ alone for now and revisit it as a follow-up, not part of this pass.
 
-**[04:22] Marcus:** Okay. So to play it back — new section, after the icon-columns block, before FAQ, three capabilities: Multi-Entity Command Center, dimension-based reporting, peer benchmarking descriptive-only. FAQ stays untouched this round. Anything else on that page specifically?
+**[04:22] Marcus:** Okay. So to play it back — new section, after the icon-columns block, before FAQ, built with the columns block, three capabilities: Multi-Entity Command Center, dimension-based reporting, peer benchmarking descriptive-only. FAQ stays untouched this round. Anything else on that page specifically?
 
 **[04:49] Priya:** That's it for the page. I'll get you the exact capability descriptions by end of day tomorrow so whoever's building it has real copy, not placeholder text.
 
