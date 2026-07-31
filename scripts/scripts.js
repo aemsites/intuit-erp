@@ -18,7 +18,7 @@ import {
   initMartech, martechEager, martechLazy, updateUserConsent, sendEvent,
   // eslint-disable-next-line import/no-relative-packages
 } from '../plugins/martech/src/index.js';
-import { sendOf1Signal } from './of1-rtcdp-signal.js';
+import { sendOf1Signal, readAlloySegmentIds } from './of1-rtcdp-signal.js';
 
 // Adobe Web SDK / AEP datastream. The datastream id is public (not a secret)
 // and safe in client source. While the id starts with "REPLACE_", martech is
@@ -263,7 +263,14 @@ async function loadLazy(doc) {
     // 'pending', which would otherwise drop sendEvent). Then push the OF1
     // anonymous signal to RTCDP. Both fail-open — never block the page.
     try { await updateUserConsent({ collect: true }); } catch (e) { /* non-fatal */ }
-    sendOf1Signal({ sendEvent }).catch(() => {});
+    // Capture the segments the page's Alloy already resolved and hand them to
+    // the OF1 extension (page owns the Alloy call; the extension maps + displays).
+    sendOf1Signal({ sendEvent }).then((r) => {
+      const ids = readAlloySegmentIds(r && r.result);
+      if (ids.length) {
+        window.postMessage({ type: 'OF1_AUDIENCE_SEGMENTS', domain: window.location.hostname, ids }, '*');
+      }
+    }).catch(() => {});
   }
 
   await runExperimentationLazy(doc, experimentationConfig);
