@@ -71,5 +71,27 @@
   Net: don't rely on the controller to bulk-fetch the source; subagents have reliable network.
 - Per-page migration commits in small groups (2-3) so a stall never loses more than the current group.
 
+## IMAGE URL STRATEGY (user directive) — every content image must be a fully-qualified source URL
+Target DA org is **`da.live/#/aemsites/intuit-erp`** (NOT `keepthebyte`). On DA preview, DA auto-ingests
+images referenced by fully-qualified external URLs into the pipeline. So every CONTENT image must be a
+real, fully-qualified `https://erp.intuit.com/...` (or `digitalasset.intuit.com` / `www.intuit.com/oidam`)
+source URL. Fix these two bad patterns:
+- **`https://content.da.live/keepthebyte/aem-intuit-erp/media/<hash>-<name>`** (wrong org) → reconstruct.
+- **`src="/media/<hash>-<name>"`** (root-relative) → reconstruct.
+**Reconstruction (verified working, images return 200 even while pages 429):** strip the `<hash>-` prefix;
+the DA filename's mangled trailing `-.<ext>` becomes `-2x.<ext>`; then
+`https://erp.intuit.com/oidam/intuit/erp/en_us/web/image/<subpath>/<name>` where `<subpath>` ∈
+{logo, feature, product, photo, images}. Curl-verify each candidate (200 image/*) before committing.
+Many correct URLs already exist as good refs elsewhere in content/ (build a filename→good-URL map first).
+Example: `…/keepthebyte/…/d3d8a46c-redhammer-dk-md-logo-ies-us-en-2x.png`
+      → `https://erp.intuit.com/oidam/intuit/erp/en_us/web/image/logo/redhammer-dk-md-logo-ies-us-en-2x.png` (200).
+**Leave alone (NOT content images):**
+- `/media/017826e1-svgexport-17.svg` — decorative testimonial quote-mark; a git CODE asset the
+  `testimonial` block requires as its first authored cell; no erp.intuit.com URL exists (inline SVG in
+  source React). All testimonial usages (incl. pre-existing) use this git asset.
+- `/media/erp-*.png` — stardust prototype placeholders, only on `content/library/blocks/*` demo pages.
+Already-good hosts (no change): `erp.intuit.com`, `digitalasset.intuit.com`, `www.intuit.com/oidam`.
+Scope: all migrated content headed to DA — mine + pre-existing marketing/case-study pages (~35 files).
+
 ## Block-variant changelog
 _(record any block/CSS changes made during migration here)_
