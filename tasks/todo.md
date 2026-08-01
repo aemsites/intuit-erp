@@ -100,3 +100,21 @@ quote-mark svg (git code asset) + prototype placeholders (library demo pages onl
 - `/blog/guide/*` → `/blog/research/*` redirects (guides were consolidated)
 - `accountant.html` logo-strip sections omitted (logo-strip block exists; faithful-but-pragmatic)
 - Phase 2: the ~223-page `/blog/*` article + category + author corpus (separate spec/plan)
+
+## Fidelity fix list (post-migration visual deltas to address)
+- [ ] **Carousel block (missing)** — source uses `mds-components/vertical-carousel` (slider of
+  testimonial/content cards) for sections like accountant "Trusted by firms"; migration flattened
+  these into stacked `testimonial` blocks (no carousel/slider block exists in repo; `testimonial`
+  has no carousel variant). DECISION: **defer**, and when built **match the source's look**
+  (card slider + arrows/dots, keyboard/swipe a11y, responsive). Build reusable `carousel` block via
+  content-driven-development, then audit + remap flattened sliders across solution pages
+  (accountant has ~12 carousel components; likely also professional-services/construction/financial-services).
+- [ ] **Webinar/schedule-call form variant** — source "Let's connect" lead form uses borderless
+  UNDERLINE inputs, placeholder-only (no label above). We authored `class="form boxed"` (boxed inputs
+  + labels above). FIX: change `form boxed` → `form` (the block's DEFAULT variant is already the
+  correct underline style — `.form .ff span{display:none}`, `border-bottom` only; no block code change).
+  Affected: all `content/webinar-*.html` (8) + `webinar-mikemichalowicz/consultation-livestream.html`.
+  Also VERIFY against source before changing the shared `fragments/schedule-call.html` and
+  `accountant/free-consultation/ies*.html` (they're `boxed` too, but confirm the source uses underline
+  there before flipping — the shared fragment affects many pages). Leave `library/blocks/form.html`
+  (variant demo) and any real `compare` boxed usage alone.
