@@ -26,7 +26,7 @@
  *
  * CSS: blocks/blog-template/blog-template.css
  */
-import { getMetadata, toClassName } from '../../scripts/aem.js';
+import { getMetadata, toClassName, loadCSS } from '../../scripts/aem.js';
 
 /**
  * Builds a table-of-contents nav from the h2/h3 headings inside `main`.
@@ -81,7 +81,9 @@ export function buildByline({
   if (tag) {
     const eyebrow = document.createElement('p');
     eyebrow.className = 'blog-byline-tag';
-    eyebrow.textContent = tag;
+    // display-only: slugs like "case-study" read as "case study" (CSS uppercases);
+    // the underlying category value is unchanged so blog-cards filters still match.
+    eyebrow.textContent = tag.replace(/-/g, ' ');
     wrapper.append(eyebrow);
   }
 
@@ -134,6 +136,10 @@ export function isBlogPage() {
 export function buildBlogTemplate(main) {
   main.classList.add('blog-article');
 
+  // 0. load this autoblock's stylesheet — it is invoked directly (not via the
+  //    block loader), so its CSS would otherwise never be fetched.
+  loadCSS(`${window.hlx.codeBasePath}/blocks/blog-template/blog-template.css`);
+
   // 1. byline from metadata → top of section 1
   const byline = buildByline({
     author: getMetadata('author'),
@@ -145,13 +151,15 @@ export function buildBlogTemplate(main) {
   if (firstSection) firstSection.prepend(byline);
   else main.prepend(byline);
 
-  // 2. left-rail TOC from prose headings
+  // 2. left-rail TOC from prose headings — appended to the END of main so the
+  //    H1 + hero (section 1) stay first in the DOM; CSS grid places the rail
+  //    into the left column on wide viewports.
   const toc = buildToc(main);
   if (toc) {
     const tocWrap = document.createElement('div');
     tocWrap.className = 'blog-toc-rail';
     tocWrap.append(toc);
-    main.prepend(tocWrap);
+    main.append(tocWrap);
   }
 
   // 3. right-rail fragment link — the existing fragment autoblock (which runs
