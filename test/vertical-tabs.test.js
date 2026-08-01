@@ -31,4 +31,23 @@ describe('vertical-tabs', () => {
     expect(panels[1].classList.contains('is-active')).toBe(true);
     expect(panels[0].classList.contains('is-active')).toBe(false);
   });
+  it('ArrowDown/ArrowUp move the active tab and panel (vertical tablist keys)', () => {
+    const block = make();
+    decorate(block);
+    document.body.append(block); // focus() only affects document.activeElement when connected
+    const tabs = block.querySelectorAll('.vt-nav button');
+    const panels = block.querySelectorAll('.vt-panel');
+    tabs[0].focus();
+    tabs[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    expect(tabs[1].getAttribute('aria-selected')).toBe('true');
+    expect(panels[1].classList.contains('is-active')).toBe(true);
+    expect(panels[0].classList.contains('is-active')).toBe(false);
+
+    tabs[1].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
+    expect(tabs[0].getAttribute('aria-selected')).toBe('true');
+    expect(panels[0].classList.contains('is-active')).toBe(true);
+    expect(panels[1].classList.contains('is-active')).toBe(false);
+
+    block.remove();
+  });
 });

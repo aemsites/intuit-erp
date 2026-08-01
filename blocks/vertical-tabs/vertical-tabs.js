@@ -11,9 +11,10 @@
  *   (default/plain)  simple text nav
  *   .pill            nav items styled as rounded pills with icons
  *
- * Clicking a nav button, or using ArrowLeft/ArrowRight/Home/End while a nav
- * button has focus, switches the active tab + panel and moves focus (WAI-ARIA
- * tabs pattern — roving tabindex).
+ * Clicking a nav button, or using ArrowLeft/ArrowRight/ArrowUp/ArrowDown/
+ * Home/End while a nav button has focus, switches the active tab + panel and
+ * moves focus (WAI-ARIA tabs pattern — roving tabindex; Up/Down are included
+ * alongside Left/Right since the nav is laid out vertically).
  * CSS: blocks/vertical-tabs/vertical-tabs.css
  */
 
@@ -129,8 +130,8 @@ export default function decorate(block) {
     const current = tabs.indexOf(document.activeElement);
     if (current === -1) return;
     let next = null;
-    if (e.key === 'ArrowRight') next = (current + 1) % tabs.length;
-    else if (e.key === 'ArrowLeft') next = (current - 1 + tabs.length) % tabs.length;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next = (current + 1) % tabs.length;
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') next = (current - 1 + tabs.length) % tabs.length;
     else if (e.key === 'Home') next = 0;
     else if (e.key === 'End') next = tabs.length - 1;
     if (next === null) return;

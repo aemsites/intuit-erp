@@ -75,7 +75,7 @@
 
 .vertical-tabs .vt-media img {
   width: 100%;
-  border-radius: 6px;
+  border-radius: var(--radius);
 }
 
 .vertical-tabs .vt-heading {
