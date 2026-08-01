@@ -1,0 +1,109 @@
+/* industry-tabs — horizontal tab strip fed from an external JSON feed. */
+.industry-tabs {
+  display: block;
+}
+
+.industry-tabs .it-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0 0 24px;
+  border-bottom: 1px solid var(--line);
+}
+
+.industry-tabs .it-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  padding: 14px 16px;
+  font-family: inherit;
+  font-size: var(--body-font-size-m);
+  font-weight: 400;
+  color: var(--text-muted);
+  text-align: left;
+  cursor: pointer;
+}
+
+.industry-tabs .it-tab[aria-selected="true"] {
+  color: var(--heading);
+  font-weight: 600;
+  border-bottom-color: var(--primary);
+}
+
+.industry-tabs .it-tab:hover,
+.industry-tabs .it-tab:focus-visible {
+  color: var(--heading);
+  background: var(--sky);
+}
+
+/* panels: hard show/hide by default; crossfade is the same visual outcome
+   without a layout jump since only one panel is ever laid out at a time */
+.industry-tabs .it-panel {
+  display: none;
+}
+
+.industry-tabs .it-panel.is-active {
+  display: block;
+  animation: it-fade-in 0.25s ease;
+}
+
+@keyframes it-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.industry-tabs .it-media {
+  background: var(--sky);
+  border-radius: var(--radius-card);
+  padding: 24px;
+  margin: 0 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.industry-tabs .it-media img {
+  width: 100%;
+  border-radius: var(--radius);
+}
+
+.industry-tabs .it-heading {
+  font-size: var(--heading-font-size-m);
+  line-height: 1.2;
+  font-weight: 400;
+  color: var(--heading);
+  margin: 0 0 14px;
+}
+
+.industry-tabs .it-body {
+  font-size: var(--body-font-size-m);
+  line-height: 1.6;
+  color: var(--text-muted);
+  max-width: 32em;
+}
+
+.industry-tabs .it-body p {
+  margin: 0;
+}
+
+@media (width >= 600px) {
+  .industry-tabs .it-tab {
+    padding: 14px 20px;
+  }
+}
+
+@media (width >= 900px) {
+  .industry-tabs .it-panel.is-active {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+    align-items: center;
+  }
+
+  .industry-tabs .it-media {
+    margin: 0;
+  }
+}
