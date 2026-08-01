@@ -25,17 +25,17 @@ Spec: `docs/superpowers/specs/2026-07-31-erp-intuit-migration-phase1-design.md`
 - [ ] DA push (case-study batch)
 
 ## Task 3 — Research/guide template (forrester-tei-cost-savings)
-- [ ] forrester-tei-cost-savings (representative, locks block set + path convention)
+- [x] forrester-tei-cost-savings (representative, locks block set + path convention)
 
 ## Task 4 — Research/guide batch (8)
-- [ ] business-solutions-survey-2024
-- [ ] ai-workplace-whitepaper
-- [ ] construction-accounting-erp-guide
-- [ ] construction-digital-transformation-whitepaper
-- [ ] data-analytics
-- [ ] lt-webinar-capture
-- [ ] unlocking-business-growth
-- [ ] webinars-on-demand
+- [x] business-solutions-survey-2024
+- [x] ai-workplace-whitepaper
+- [x] construction-accounting-erp-guide
+- [x] construction-digital-transformation-whitepaper
+- [x] data-analytics
+- [x] lt-webinar-capture
+- [x] unlocking-business-growth
+- [x] webinars-on-demand
 - [ ] DA push (research batch)
 
 ## Task 5 — Solution / marketing (8)
