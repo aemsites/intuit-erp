@@ -1,0 +1,15 @@
+.highlight { margin: 2rem 0; }
+
+.highlight .highlight-inner {
+  background: var(--sky);
+  border-radius: var(--radius-card);
+  padding: 2rem;
+}
+
+.highlight.sky .highlight-inner { background: var(--sky); }
+
+.highlight .highlight-inner > :first-child { margin-top: 0; }
+
+.highlight .highlight-inner > :last-child { margin-bottom: 0; }
+
+@media (min-width: 900px) { .highlight .highlight-inner { padding: 3rem; } }
