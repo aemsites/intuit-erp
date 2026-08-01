@@ -12,12 +12,13 @@
  * Content model additions:
  *   - Tooltip: a row-header cell may carry a nested `<span class="tip">…</span>`
  *     or a second `<p>` holding help text. It renders as a "What does this
- *     mean?" popover button appended to the row `<th>`.
- *   - Legend: a final single-cell row whose label — after stripping any nested
- *     tip/second-paragraph — is exactly "legend" (case-insensitive) supplies
- *     legend text via that same nested tip/second-paragraph. It renders as
- *     `.ct-legend`, detected BEFORE band detection (a single-cell "legend" row
- *     would otherwise match the band heuristic below and render as a band).
+ *     mean?" popover button + sibling popover appended to the row `<th>`.
+ *   - Legend: a final row whose first cell is exactly "legend" (case-
+ *     insensitive) is ALWAYS treated as the legend, never a band (checked
+ *     BEFORE band detection — a single-cell "legend" row would otherwise
+ *     match the band heuristic below). Legend text comes from the second
+ *     cell when present, else from a nested tip/second-paragraph on the
+ *     first cell. Renders as `.ct-legend`.
  *   - Mobile-adaptive: the block carries a `data-adaptive` attribute and each
  *     value `<td>` a `data-label` (its column header), consumed by CSS for a
  *     card view under 600px.
@@ -26,6 +27,23 @@
  */
 
 let tipSeq = 0;
+// Tooltip wrappers currently expanded, so a single document-level click
+// listener can close any of them when a click lands outside their wrapper.
+const openTips = new Set();
+let outsideClickBound = false;
+
+function bindOutsideClick() {
+  if (outsideClickBound) return;
+  outsideClickBound = true;
+  document.addEventListener('click', (e) => {
+    [...openTips].forEach((wrapper) => {
+      if (!wrapper.contains(e.target)) {
+        wrapper.querySelector('.ct-tip-btn').setAttribute('aria-expanded', 'false');
+        openTips.delete(wrapper);
+      }
+    });
+  });
+}
 
 /**
  * Extracts a nested tooltip/legend text from a cell: either a `span.tip` or a
@@ -52,15 +70,22 @@ function extractTip(cell) {
 }
 
 /**
- * Builds a "What does this mean?" tooltip trigger: a real <button> containing
- * a `.ct-tip-popover` with the given text. Toggled via `aria-expanded` on
- * click (native <button> keyboard activation — Enter/Space — fires the same
- * click handler) and closed with Escape.
+ * Builds a "What does this mean?" tooltip disclosure: a `<span class="ct-tip">`
+ * wrapper containing a real `<button class="ct-tip-btn">` and a SIBLING
+ * `.ct-tip-popover` holding the given text (the popover is deliberately not a
+ * child of the button — a click on the popover's own text must not bubble
+ * into the button's click handler and immediately re-close it). Toggled via
+ * `aria-expanded` on click (native <button> keyboard activation — Enter/Space
+ * — fires the same click handler), closed with Escape, and closed by a click
+ * anywhere outside the wrapper.
  * @param {string} text
- * @returns {HTMLButtonElement}
+ * @returns {HTMLSpanElement} the `.ct-tip` wrapper
  */
 export function buildTooltip(text) {
   tipSeq += 1;
+  const wrapper = document.createElement('span');
+  wrapper.className = 'ct-tip';
+
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.className = 'ct-tip-btn';
@@ -71,28 +96,39 @@ export function buildTooltip(text) {
   const popover = document.createElement('span');
   popover.className = 'ct-tip-popover';
   popover.id = `ct-tip-${tipSeq}`;
-  popover.setAttribute('role', 'tooltip');
   popover.textContent = text;
-  btn.append(popover);
   btn.setAttribute('aria-controls', popover.id);
 
+  const close = () => {
+    btn.setAttribute('aria-expanded', 'false');
+    openTips.delete(wrapper);
+  };
+
   btn.addEventListener('click', (e) => {
-    e.stopPropagation();
+    e.stopPropagation(); // keep the opening click from also hitting the document listener
     const expanded = btn.getAttribute('aria-expanded') === 'true';
     btn.setAttribute('aria-expanded', String(!expanded));
+    if (expanded) openTips.delete(wrapper); else openTips.add(wrapper);
   });
   btn.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && btn.getAttribute('aria-expanded') === 'true') {
-      btn.setAttribute('aria-expanded', 'false');
+      close();
       btn.focus();
     }
   });
-  return btn;
+
+  wrapper.append(btn, popover);
+  bindOutsideClick();
+  return wrapper;
 }
 
 /**
  * Detects a legend row and returns its legend text, or null if `cells` isn't
- * one. Must run BEFORE band detection (see file header).
+ * one. Must run BEFORE band detection (see file header). Once the first cell
+ * reads exactly "legend", the row is ALWAYS a legend (never a band), even if
+ * no text can be found for it (returns '' rather than null in that case) —
+ * legend text is taken from the second cell when present, else from a nested
+ * tip/second-paragraph on the first cell.
  * @param {Element[]} cells
  * @returns {string|null}
  */
@@ -102,11 +138,16 @@ function getLegendText(cells) {
     const clone = cells[0].cloneNode(true);
     const tip = extractTip(clone);
     const label = clone.textContent.trim().toLowerCase();
-    return (label === 'legend' && tip) ? tip : null;
+    return label === 'legend' ? tip : null;
   }
   const label = cells[0].textContent.trim().toLowerCase();
   if (label !== 'legend') return null;
-  return cells.slice(1).map((c) => c.textContent.trim()).filter(Boolean).join(' ');
+  const second = cells[1].textContent.trim();
+  if (second) return second;
+  const clone = cells[0].cloneNode(true);
+  const tip = extractTip(clone);
+  if (tip) return tip;
+  return cells.slice(2).map((c) => c.textContent.trim()).filter(Boolean).join(' ');
 }
 
 function valueCell(cell, label) {
@@ -187,9 +228,9 @@ export default function decorate(block) {
     const tipText = extractTip(cells[0]);
     th.textContent = cells[0].textContent.trim();
     if (tipText) {
-      const tipBtn = buildTooltip(tipText);
-      th.append(tipBtn);
-      const popover = tipBtn.querySelector('.ct-tip-popover');
+      const tipWrapper = buildTooltip(tipText);
+      th.append(tipWrapper);
+      const popover = tipWrapper.querySelector('.ct-tip-popover');
       th.setAttribute('aria-describedby', popover.id);
     }
     tr.append(th);

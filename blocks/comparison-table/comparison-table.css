@@ -40,8 +40,10 @@
 }
 .comparison-table .cmp-table tbody tr:nth-child(even):not(.cmp-band, .cmp-head) { background: #f8fafb; }
 
-/* tooltip: "What does this mean?" popover button appended to a row-header th */
-.comparison-table .cmp-table th[scope="row"] { position: relative; }
+/* tooltip: "What does this mean?" disclosure appended to a row-header th.
+   The popover is a SIBLING of the button (not a child) so a click on the
+   popover's own text doesn't bubble into the button's click handler. */
+.comparison-table .ct-tip { position: relative; display: inline-block; vertical-align: middle; }
 
 .comparison-table .ct-tip-btn {
   display: inline-flex; align-items: center; justify-content: center;
@@ -64,7 +66,7 @@
   transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s;
 }
 
-.comparison-table .ct-tip-btn[aria-expanded="true"] .ct-tip-popover {
+.comparison-table .ct-tip-btn[aria-expanded="true"] + .ct-tip-popover {
   opacity: 1; visibility: visible; transform: translateY(0); pointer-events: auto;
 }
 
@@ -92,7 +94,7 @@
 
   .comparison-table[data-adaptive] .cmp-table tr:not(.cmp-band) {
     border: 1px solid var(--line); border-radius: var(--radius-card);
-    margin-bottom: 12px; padding: 4px 16px; background: #fff;
+    margin-bottom: 12px; padding: 4px 16px; background: var(--background-color);
   }
 
   .comparison-table[data-adaptive] .cmp-table th[scope="row"] {

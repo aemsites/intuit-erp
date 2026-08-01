@@ -13,17 +13,25 @@ function make(rowsHtml) {
 }
 
 describe('buildTooltip', () => {
-  it('returns a button[aria-expanded=false] containing a .ct-tip-popover with the given text', () => {
-    const btn = buildTooltip('Includes free onboarding calls.');
-    expect(btn.tagName).toBe('BUTTON');
+  it('returns a .ct-tip wrapper with a button.ct-tip-btn[aria-expanded=false] and a sibling .ct-tip-popover holding the text', () => {
+    const wrapper = buildTooltip('Includes free onboarding calls.');
+    expect(wrapper.classList.contains('ct-tip')).toBe(true);
+    const btn = wrapper.querySelector('button.ct-tip-btn');
+    expect(btn).not.toBeNull();
     expect(btn.getAttribute('aria-expanded')).toBe('false');
-    const popover = btn.querySelector('.ct-tip-popover');
+    const popover = wrapper.querySelector('.ct-tip-popover');
     expect(popover).not.toBeNull();
     expect(popover.textContent).toBe('Includes free onboarding calls.');
+    // the popover must be a SIBLING of the button, not nested inside it —
+    // otherwise a click on the popover's own text bubbles into the button's
+    // click handler and immediately re-closes it (click-trap).
+    expect(btn.contains(popover)).toBe(false);
+    expect(popover.parentElement).toBe(wrapper);
   });
 
   it('toggles aria-expanded on click', () => {
-    const btn = buildTooltip('Some help text');
+    const wrapper = buildTooltip('Some help text');
+    const btn = wrapper.querySelector('button');
     btn.click();
     expect(btn.getAttribute('aria-expanded')).toBe('true');
     btn.click();
@@ -31,11 +39,35 @@ describe('buildTooltip', () => {
   });
 
   it('closes on Escape when expanded', () => {
-    const btn = buildTooltip('Some help text');
+    const wrapper = buildTooltip('Some help text');
+    const btn = wrapper.querySelector('button');
     btn.click();
     expect(btn.getAttribute('aria-expanded')).toBe('true');
     btn.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     expect(btn.getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('a click on the popover text itself does not close the tooltip (no click-trap)', () => {
+    const wrapper = buildTooltip('Some help text');
+    document.body.append(wrapper);
+    const btn = wrapper.querySelector('button');
+    const popover = wrapper.querySelector('.ct-tip-popover');
+    btn.click();
+    expect(btn.getAttribute('aria-expanded')).toBe('true');
+    popover.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(btn.getAttribute('aria-expanded')).toBe('true');
+    wrapper.remove();
+  });
+
+  it('closes when a click lands outside the wrapper (document click-outside)', () => {
+    const wrapper = buildTooltip('Some help text');
+    document.body.append(wrapper);
+    const btn = wrapper.querySelector('button');
+    btn.click();
+    expect(btn.getAttribute('aria-expanded')).toBe('true');
+    document.body.click();
+    expect(btn.getAttribute('aria-expanded')).toBe('false');
+    wrapper.remove();
   });
 });
 
@@ -53,7 +85,7 @@ describe('comparison-table decorate', () => {
     expect(block.querySelector('.ct-legend')).toBeNull();
   });
 
-  it('renders a final legend row as .ct-legend, not as a band', () => {
+  it('renders a final single-cell legend row (nested tip) as .ct-legend, not as a band', () => {
     const block = make([
       row('', 'Intuit Enterprise Suite', 'NetSuite', 'Sage Intacct', 'MS Dynamics'),
       row('Implementation'),
@@ -66,6 +98,34 @@ describe('comparison-table decorate', () => {
     expect(legend.textContent.trim()).toBe('Included in base subscription');
     // the legend row must not also have produced an extra band
     expect(block.querySelectorAll('.cmp-band').length).toBe(1);
+  });
+
+  it('renders a two-cell legend row ([legend, text]) as .ct-legend, not as a band', () => {
+    const block = make([
+      row('', 'Intuit Enterprise Suite', 'NetSuite', 'Sage Intacct', 'MS Dynamics'),
+      row('Implementation'),
+      row('Onboarding timeline', 'Less than 2 months', '6 months', '4 months', '6 months'),
+      row('legend', 'Included in base subscription'),
+    ].join(''));
+    decorate(block);
+    const legend = block.querySelector('.ct-legend');
+    expect(legend).not.toBeNull();
+    expect(legend.textContent.trim()).toBe('Included in base subscription');
+    expect(block.querySelectorAll('.cmp-band').length).toBe(1);
+  });
+
+  it('treats a single-cell "Legend" row as legend even with no tip/text at all (never a band)', () => {
+    const block = make([
+      row('', 'Intuit Enterprise Suite', 'NetSuite', 'Sage Intacct', 'MS Dynamics'),
+      row('Implementation'),
+      row('Onboarding timeline', 'Less than 2 months', '6 months', '4 months', '6 months'),
+      '<div><div>Legend</div></div>',
+    ].join(''));
+    decorate(block);
+    expect(block.querySelectorAll('.cmp-band').length).toBe(1);
+    const legend = block.querySelector('.ct-legend');
+    expect(legend).not.toBeNull();
+    expect(legend.textContent.trim()).toBe('');
   });
 
   it('extracts a row-header tooltip (nested span.tip) into a button + popover, wired via aria-describedby', () => {
@@ -85,6 +145,8 @@ describe('comparison-table decorate', () => {
     const popover = th.querySelector('.ct-tip-popover');
     expect(popover.id).toBe(describedbyId);
     expect(popover.textContent).toBe('Time to go live.');
+    // popover is a sibling of the button, not nested inside it
+    expect(btn.contains(popover)).toBe(false);
   });
 
   it('renders a row-header tooltip from a second <p> as well', () => {
