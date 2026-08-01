@@ -13,9 +13,9 @@
  * Optional leading config rows (Marketo / ChiliPiper, authored before the
  * fixed fields, parsed by `parseFormConfig`): `formId`, `munchkin`,
  * `chiliPiperSubDomain`, `chiliPiperRouter`, `header`, `subheader`,
- * `disclaimer`. These are stamped as `data-mkto-form-id` / `data-cp-subdomain`
- * / `data-cp-router` on the rendered form element and used to render an
- * optional header/subheader/disclaimer. Live Marketo Forms2 + ChiliPiper
+ * `disclaimer`. These are stamped as `data-mkto-form-id` / `data-mkto-munchkin`
+ * / `data-cp-subdomain` / `data-cp-router` on the rendered form element and
+ * used to render an optional header/subheader/disclaimer. Live Marketo Forms2 + ChiliPiper
  * submission are DEFERRED — see `loadMarketoForm()` below — so no network
  * calls are made for these yet; the fixed 5-field form + identity sendEvent
  * remain the only working submission path.

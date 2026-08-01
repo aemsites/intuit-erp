@@ -12,11 +12,15 @@
 .form .form-subheader { font-size: 15px; color: var(--text-muted); margin: 0 0 16px; line-height: 1.5; }
 .form .form-disclaimer { font-size: 12px; color: var(--text-muted); margin: 16px 0 0; line-height: 1.5; }
 
-/* fields — inline single row by default (underline variant) */
-.form .lead-fields {
-  display: flex; align-items: center; justify-content: center; gap: 20px; flex-wrap: nowrap;
-  max-width: 960px; margin: 40px auto 0;
-}
+/* fields */
+.form .lead-fields { display: flex; align-items: center; justify-content: center; gap: 20px; flex-wrap: nowrap; margin-top: 40px; }
+
+/* default (underline) variant only — bounds the row so it can't sprawl
+   edge-to-edge and squish on wide sections. Scoped away from .boxed/.sky/
+   .hero/.card so those already-live variants keep their existing width and
+   are provably unaffected by this change. */
+.form:not(.boxed, .sky, .hero, .card) .lead-fields { max-width: 960px; margin: 40px auto 0; }
+
 .form .ff { flex: 1; min-width: 0; text-align: left; display: flex; flex-direction: column; }
 .form .ff span { display: none; }
 
