@@ -114,7 +114,11 @@ function buildAutoBlocks(main) {
   try {
     // Blog article autoblock — must run FIRST so the right-rail /fragments/ link
     // it injects is present when the fragment collection below queries for it.
-    if (isBlogPage()) buildBlogTemplate(main);
+    // Guard on main.isConnected: decorateMain also runs on the DETACHED main that
+    // loadFragment builds for the right-rail fragment. isBlogPage() checks the page
+    // URL (still /blog/*), so without this guard the autoblock re-injects a right-rail
+    // link into every loaded fragment and buildAutoBlocks re-loads it — infinite loop.
+    if (isBlogPage() && main.isConnected) buildBlogTemplate(main);
     // auto load `*/fragments/*` references
     const fragments = [...main.querySelectorAll('a[href*="/fragments/"]')].filter((f) => !f.closest('.fragment'));
     if (fragments.length > 0) {
