@@ -15,4 +15,4 @@ qa-harness.mjs
 qa-probe.mjs
 .claude/*
 .agents/*
-
+.superpowers/*
