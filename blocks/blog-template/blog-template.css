@@ -1,0 +1,133 @@
+/*
+ * blog-template — 3-col article layout applied to <main.blog-article>.
+ * Mobile-first: everything stacks. TOC (left rail) and right-rail fragment
+ * fold into the flow on small screens and become sticky side columns at wider
+ * breakpoints. Tokens reused from styles/styles.css (:22-74).
+ *
+ * Grid columns at >=1200px:  [toc] [prose] [right-rail]
+ * At >=900px:                [prose] [right-rail]  (TOC inlines above prose)
+ */
+
+/* byline (section 1) */
+.blog-article .blog-byline {
+  margin-bottom: 24px;
+}
+
+.blog-article .blog-byline-tag {
+  margin: 0 0 8px;
+  color: var(--primary);
+  font-size: var(--body-font-size-xs);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.blog-article .blog-byline-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--body-font-size-s);
+}
+
+.blog-article .blog-byline-author {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.blog-article .blog-byline-updated {
+  color: var(--text-soft);
+}
+
+/* table of contents */
+.blog-article .blog-toc {
+  font-size: var(--body-font-size-s);
+}
+
+.blog-article .blog-toc-label {
+  margin: 0 0 12px;
+  color: var(--text-soft);
+  font-size: var(--body-font-size-xs);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.blog-article .blog-toc ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-left: 1px solid var(--line);
+}
+
+.blog-article .blog-toc li {
+  margin: 0;
+}
+
+.blog-article .blog-toc-h3 a {
+  padding-left: 28px;
+}
+
+.blog-article .blog-toc a {
+  display: block;
+  padding: 6px 0 6px 16px;
+  margin-left: -1px;
+  border-left: 2px solid transparent;
+  color: var(--text-muted);
+  text-decoration: none;
+  line-height: 1.35;
+}
+
+.blog-article .blog-toc a:hover {
+  color: var(--link-color);
+  border-left-color: var(--line);
+}
+
+/* right rail */
+.blog-article .blog-rail > * {
+  margin-top: 0;
+}
+
+/* layout — mobile first: single column, natural flow */
+.blog-article .blog-toc-rail {
+  margin-bottom: 32px;
+}
+
+/* tablet: 2 columns (prose / right-rail); TOC stays inline above prose */
+@media (min-width: 900px) {
+  .blog-article {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 280px;
+    column-gap: 40px;
+    align-items: start;
+  }
+
+  .blog-article > .blog-toc-rail {
+    grid-column: 1 / -1;
+  }
+
+  .blog-article .blog-rail {
+    position: sticky;
+    top: calc(var(--nav-height) + 24px);
+  }
+}
+
+/* desktop: 3 columns (toc / prose / right-rail) */
+@media (min-width: 1200px) {
+  .blog-article {
+    grid-template-columns: 240px minmax(0, 1fr) 300px;
+    column-gap: 48px;
+  }
+
+  .blog-article > .blog-toc-rail {
+    grid-column: 1;
+    grid-row: 1 / span 99;
+    margin-bottom: 0;
+  }
+
+  .blog-article .blog-toc {
+    position: sticky;
+    top: calc(var(--nav-height) + 24px);
+  }
+}

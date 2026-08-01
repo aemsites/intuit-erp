@@ -19,6 +19,7 @@ import {
   // eslint-disable-next-line import/no-relative-packages
 } from '../plugins/martech/src/index.js';
 import { sendOf1Signal, readAlloySegmentIds } from './of1-rtcdp-signal.js';
+import { isBlogPage, buildBlogTemplate } from '../blocks/blog-template/blog-template.js';
 
 // Adobe Web SDK / AEP datastream. The datastream id is public (not a secret)
 // and safe in client source. While the id starts with "REPLACE_", martech is
@@ -111,6 +112,9 @@ function buildWidgetAutoBlocks(main) {
  */
 function buildAutoBlocks(main) {
   try {
+    // Blog article autoblock — must run FIRST so the right-rail /fragments/ link
+    // it injects is present when the fragment collection below queries for it.
+    if (isBlogPage()) buildBlogTemplate(main);
     // auto load `*/fragments/*` references
     const fragments = [...main.querySelectorAll('a[href*="/fragments/"]')].filter((f) => !f.closest('.fragment'));
     if (fragments.length > 0) {
