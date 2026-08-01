@@ -12,16 +12,16 @@ Spec: `docs/superpowers/specs/2026-07-31-erp-intuit-migration-phase1-design.md`
 - [x] western-companies (representative, locks block set)
 
 ## Task 2 — Case-study batch (10)
-- [ ] fefa-financial
-- [ ] fire-and-ice
-- [ ] fixe
-- [ ] four-points-rv-resorts
-- [ ] hfmm-legacy-group-growth
-- [ ] humble-house
-- [ ] lallier-construction
-- [ ] lango
-- [ ] nick-schiffer-construction-webinar
-- [ ] sylvia-brafman
+- [x] fefa-financial
+- [x] fire-and-ice
+- [x] fixe
+- [x] four-points-rv-resorts
+- [x] hfmm-legacy-group-growth
+- [x] humble-house
+- [x] lallier-construction
+- [x] lango
+- [x] nick-schiffer-construction-webinar
+- [x] sylvia-brafman
 - [ ] DA push (case-study batch)
 
 ## Task 3 — Research/guide template (forrester-tei-cost-savings)

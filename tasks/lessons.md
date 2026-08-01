@@ -20,11 +20,20 @@
   enterprise-technology-benchmark-report` — all render correctly locally. Quality bar good.
 
 ## Workflow discoveries (Task 1) — apply to ALL page tasks
-- **The `.claude/skills/skills/*` EDS skills (page-import etc.) are NOT invocable** via the
-  Skill tool ("Unknown skill"); they are reference docs only. Migrate content by **manually
-  extracting the source's `__NEXT_DATA__` JSON** (the site is Next.js): `curl -A "Mozilla/5.0
-  …" <src-url>` then parse the `<script id="__NEXT_DATA__">…</script>` payload. Raw curl WITH a
-  browser User-Agent returns 200 and the full structured content.
+- **EDS skills are now INSTALLED as a plugin** (`aem-edge-delivery-services@adobe-skills`,
+  user scope, enabled). Installed via:
+  `claude plugin marketplace add adobe/skills` then
+  `claude plugin install aem-edge-delivery-services@adobe-skills`.
+  All 24 skills (`page-import`, `content-driven-development`, `da-content`, …) are invocable
+  via the Skill tool in freshly-dispatched agents / new sessions. Update with
+  `claude plugin update aem-edge-delivery-services@adobe-skills`. (An earlier symlink hack under
+  `.claude/skills/` was reversed in favor of this proper install. The vendored bundle still sits
+  git-ignored at `.claude/skills/skills/` — redundant now but harmless.)
+- **Fallback if `page-import`'s scraper is blocked:** erp.intuit.com uses Akamai bot-detection;
+  the browser/Playwright scraper may be blocked. If so, extract the source's `__NEXT_DATA__` JSON
+  (the site is Next.js): `curl -A "Mozilla/5.0 …" <src-url>` then parse the
+  `<script id="__NEXT_DATA__">…</script>` payload. Raw curl WITH a browser User-Agent returns 200
+  and the full structured content. (This proven method built western-companies + fefa-financial.)
 - **Browser tools cannot reach erp.intuit.com** (Akamai bot-detection + sandbox domain policy).
   Use the curl+`__NEXT_DATA__` path, not the browser, for source content.
 - **Source rate-limits (429)** on bursts — space requests a few seconds apart, always send a
@@ -48,6 +57,19 @@
   contrary to the playbook's Step 1 note.
 - **DA authoring tools** in the playbook (`content_create`/`content_preview`) map to our
   **local-first** flow: write the file to `content/<path>.html`; DA push is a later batch step.
+
+## Execution/tooling lessons (rate-limit + sandbox)
+- **Source (erp.intuit.com) rate-limits hard (429), intermittently.** A single blocking
+  `curl -s -A <UA> --retry 15 --retry-delay 20 --retry-all-errors --retry-max-time 400 --max-time 45 <URL>`
+  absorbs the backoff INSIDE curl and reliably lands 200 — no external wait needed.
+- **Subagents STALL if they use the Monitor tool / `run_in_background` / `sleep` for backoff** —
+  they spawn a wait-command, end their turn, and never resume (progress commits durably, but the
+  dispatch is wasted). FIX: instruct implementers to do all waiting via the blocking `curl --retry`
+  above; forbid Monitor/background/sleep. One dispatch then finishes the whole batch.
+- **Controller (this session) Bash gets network-sandboxed on long/background calls** — curl returns
+  empty and even `rm`/`cat`/`tee` are "command not found". Short foreground curls sometimes work.
+  Net: don't rely on the controller to bulk-fetch the source; subagents have reliable network.
+- Per-page migration commits in small groups (2-3) so a stall never loses more than the current group.
 
 ## Block-variant changelog
 _(record any block/CSS changes made during migration here)_
