@@ -16,3 +16,5 @@ qa-probe.mjs
 .claude/*
 .agents/*
 .superpowers/*
+content/
+tasks/
