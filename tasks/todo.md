@@ -74,5 +74,29 @@ Spec: `docs/superpowers/specs/2026-07-31-erp-intuit-migration-phase1-design.md`
 ## Deferred / follow-ups
 - [ ] `/blog/guide/*` → `/blog/research/*` redirects (non-blocking)
 
-## Review
-_(to be filled at completion)_
+## Task 8 — Reconciliation
+- [x] Gap re-check vs sitemap (65 in-scope; all migratable pages present)
+- [x] query-index coverage (helix-query.yaml globs cover case-study/research/events — populate on publish)
+- [x] Lint — N/A (zero blocks/scripts/styles changes; pure content migration)
+- [ ] DA push (all batches) — DEFERRED, queued for authorization
+- [x] Review section written
+
+## Review — Phase 1 complete
+**Migrated this session (39 pages, all render 200 locally at `/content/<path>`):**
+- 11 case studies (`/blog/case-study/*`) — template locked on western-companies
+- 9 research/guides (`/blog/research/*`, guides consolidated here)
+- 8 solution/marketing (`account-management`, `accountant` +2 sub, `migration`, `contact`, `oa`, `ibs`)
+- 9 webinar landings (`/webinar-*`, thin lead-form stubs — faithful to source)
+
+**Images:** all content images normalized to fully-qualified `erp.intuit.com` (+`digitalasset`/`www.intuit.com`)
+source URLs for DA auto-ingestion; org corrected off `keepthebyte`. Intentional keeps: testimonial
+quote-mark svg (git code asset) + prototype placeholders (library demo pages only).
+
+**Could not migrate (source 404 — removed from live site since the July sitemap):**
+- `/webinar-fof-may`, `/nickschiffer-encore-0326`
+
+**Deferred / follow-ups (non-blocking):**
+- DA push of all batches (queued — DA prod MCP connected, awaiting go-ahead)
+- `/blog/guide/*` → `/blog/research/*` redirects (guides were consolidated)
+- `accountant.html` logo-strip sections omitted (logo-strip block exists; faithful-but-pragmatic)
+- Phase 2: the ~223-page `/blog/*` article + category + author corpus (separate spec/plan)
