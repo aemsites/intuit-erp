@@ -49,19 +49,19 @@ Spec: `docs/superpowers/specs/2026-07-31-erp-intuit-migration-phase1-design.md`
 - [ ] DA push (solution batch)
 
 ## Task 6 — Webinar-landing template (webinar-shawnvandyke)
-- [ ] webinar-shawnvandyke (representative, locks block set)
+- [x] webinar-shawnvandyke (representative, locks block set)
 
 ## Task 7 — Webinar-landing batch (10)
-- [ ] webinar-fof-april1
-- [ ] webinar-fof-march
-- [ ] webinar-fof-may
-- [ ] webinar-fofqbo
-- [ ] webinar-lt-simulive
-- [ ] webinar-matthiggins
-- [ ] webinar-mikemichalowicz/consultation-livestream
-- [ ] webinar-on-demand-cp
-- [ ] webinar-product-demo-cp
-- [ ] nickschiffer-encore-0326
+- [x] webinar-fof-april1
+- [x] webinar-fof-march
+- [~] webinar-fof-may (SOURCE 404 — removed from live site)
+- [x] webinar-fofqbo
+- [x] webinar-lt-simulive
+- [x] webinar-matthiggins
+- [x] webinar-mikemichalowicz/consultation-livestream
+- [x] webinar-on-demand-cp
+- [x] webinar-product-demo-cp
+- [~] nickschiffer-encore-0326 (SOURCE 404 — removed from live site)
 - [ ] DA push (webinar batch)
 
 ## Task 8 — Final reconciliation
