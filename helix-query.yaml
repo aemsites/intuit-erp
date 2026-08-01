@@ -45,6 +45,8 @@ indices:
       - /blog/research/**
       - /blog/guide/**
       - /blog/author/**
+      - /blog/category/**
+      - /blog/
     target: /blog/query-index.json
     properties:
       title:

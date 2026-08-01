@@ -54,7 +54,7 @@
 }
 
 .comparison-table .ct-tip-btn:hover,
-.comparison-table .ct-tip-btn:focus-visible { background: var(--primary); color: #fff; }
+.comparison-table .ct-tip-btn:focus-visible { background: var(--primary); color: var(--background-color); }
 
 .comparison-table .ct-tip-popover {
   position: absolute; left: 0; top: 100%; z-index: 5; margin-top: 6px;

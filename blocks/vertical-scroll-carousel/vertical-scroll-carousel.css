@@ -50,7 +50,7 @@
 
 /* active state — highlights the item currently in focus on scroll */
 .vertical-scroll-carousel .vsc-item.is-active .vsc-heading {
-  color: var(--heading-color);
+  color: var(--heading);
 }
 
 .vertical-scroll-carousel .vsc-item.is-active .vsc-media {
