@@ -4,18 +4,18 @@
    blocks/carousel/carousel.js (its own stylesheet, loaded on demand, covers
    the slide/track/controls chrome) — only the grid layout lives here. */
 
-.blog-cards-grid {
+.blog-cards .blog-cards-grid {
   display: grid;
   grid-template-columns: 1fr;
   gap: 28px;
 }
 
 @media (min-width: 600px) {
-  .blog-cards-grid { grid-template-columns: repeat(2, 1fr); }
+  .blog-cards .blog-cards-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
 @media (min-width: 900px) {
-  .blog-cards-grid { grid-template-columns: repeat(3, 1fr); }
+  .blog-cards .blog-cards-grid { grid-template-columns: repeat(3, 1fr); }
 }
 
 .blog-cards .blog-card {
@@ -94,6 +94,38 @@
   color: var(--text-muted);
 }
 
-/* .carousel.cards (rendered by blocks/carousel/carousel.js) already applies
-   its own multi-per-view slide sizing; nothing extra needed here beyond
-   inheriting .blog-card's look inside each slide. */
+/* ---- carousel-variant overrides ----
+   blocks/carousel/carousel.css's `.cards` look styles its slides with
+   generic type selectors — `.carousel.cards .carousel-slide h3/p/img`
+   (specificity 0,3,1) — which otherwise beat this file's `.blog-cards
+   .blog-card-title` etc. (0,2,0) and silently reset the title's/date's
+   margin and color and the image's height. Each rule below adds exactly
+   one more class than the block-name + `.blog-card` prefix already gives
+   (0,4,0 / 0,4,1), which always outranks carousel's 0,3,1 regardless of the
+   type selector, restoring only the properties carousel's generic
+   selectors actually clobber (matching values — e.g. img width/display,
+   or h3 font-size/line-height, which happen to already agree with
+   carousel's — are left alone). The slide's own background/border/radius
+   (from `.carousel.cards .carousel-slide`) is intentionally left as-is:
+   it now double-frames the card's own border/background — a cosmetic
+   nested-frame overlap, not a clobbered property — see task-11-report.md
+   Fix Round 1 for the call to leave that as a follow-up rather than fix
+   here. */
+.blog-cards .carousel-slide .blog-card .blog-card-title {
+  margin: 0;
+  color: var(--text);
+}
+
+.blog-cards .carousel-slide .blog-card .blog-card-description {
+  margin: 0;
+}
+
+.blog-cards .carousel-slide .blog-card .blog-card-date {
+  margin: auto 0 0;
+  font-size: 13px;
+  color: var(--text-soft);
+}
+
+.blog-cards .carousel-slide .blog-card .blog-card-image img {
+  height: 100%;
+}
