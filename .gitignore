@@ -22,3 +22,4 @@ docs/superpowers/
 # local-only working folders (kept on disk, not tracked)
 stardust/
 .impeccable/
+.playwright-mcp/
