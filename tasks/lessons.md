@@ -5,11 +5,14 @@
 - **Guide→research consolidation:** source `/blog/guide/*` pages migrate under `/blog/research/*` (single index + query-index). Two research pages already there stay put.
 
 ## Baseline notes (Task 0 spot-check)
-- **Preview URL convention:** run `aem up --html-folder content` (backgrounded). Local
-  `content/<path>.html` is served at **`http://localhost:3000/content/<path>`** — the
-  html-folder mounts at `/content` by default. Plain `/<path>` (no prefix) proxies to
-  the aem.page backend and 404s for content not yet pushed to DA. Always verify local
-  work at the `/content/...` URL.
+- **Preview method (CORRECTED):** requires **aem-cli ≥ 16.20** (the cached 16.16.6 is too old —
+  it proxies everything and its `--html-folder` serves `.html` RAW/undecorated). Run
+  **`npx -y @adobe/aem-cli@latest up --no-open`** (do NOT pass `--html-folder`). v16.21.4 logs
+  "Serving content from local content/, proxying missing files from …aem.page" and auto-serves +
+  DECORATES `content/<path>.html` at its clean natural path **`http://localhost:3000/<path>`**
+  (NO `/content` prefix), wrapping with head.html + injecting styles/scripts. Missing paths proxy
+  to the aem.page backend. (Earlier `--html-folder content` guidance was wrong — that mounts at
+  `/content` and, on the old CLI, serves raw undecorated body → pages look unstyled.)
 - **Source is client-rendered:** raw `curl https://erp.intuit.com/<path>/` returns no
   headings/body (JS-hydrated). Structural/visual comparison against source must use the
   `page-import` scraper (renders JS) or the browser tool — NOT raw curl of the source.
