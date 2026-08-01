@@ -8,13 +8,14 @@
  * At >=900px:                [prose] [right-rail]  (TOC inlines above prose)
  */
 
-/* byline (section 1) */
-.blog-article .blog-byline {
-  margin-bottom: 24px;
-}
-
-.blog-article .blog-byline-tag {
-  margin: 0 0 8px;
+/* ============================================================
+   hero (section 1) — eyebrow, h1, byline meta, hero image.
+   Natural DOM order (eyebrow -> h1 -> meta -> image) is also the correct
+   mobile stacking order, so mobile needs no layout rules beyond image
+   rounding; the 2-col band is added back in the >=900px section below.
+   ============================================================ */
+.blog-article .blog-hero .blog-byline-tag {
+  margin: 0 0 12px;
   color: var(--primary);
   font-size: var(--body-font-size-xs);
   font-weight: 700;
@@ -22,66 +23,147 @@
   text-transform: uppercase;
 }
 
-.blog-article .blog-byline-meta {
+.blog-article .blog-hero h1 {
+  margin: 0 0 16px;
+}
+
+.blog-article .blog-hero .blog-byline-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 16px;
-  margin: 0;
+  margin: 0 0 24px;
   color: var(--text-muted);
   font-size: var(--body-font-size-s);
 }
 
-.blog-article .blog-byline-author {
+/* "By {author} · Published on {date} · Updated {updated}" — the middle dot
+   separator is CSS-generated, not authored text, so each piece stays a
+   clean, independently-omittable span. */
+.blog-article .blog-hero .blog-byline-meta > * + *::before {
+  content: '·';
+  margin: 0 8px;
+  color: var(--text-soft);
+}
+
+.blog-article .blog-hero .blog-byline-author {
   color: var(--text);
   font-weight: 700;
 }
 
-.blog-article .blog-byline-updated {
+.blog-article .blog-hero .blog-byline-author a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.blog-article .blog-hero .blog-byline-author a:hover {
+  color: var(--primary);
+}
+
+.blog-article .blog-hero .blog-byline-updated {
   color: var(--text-soft);
 }
 
-/* table of contents */
-.blog-article .blog-toc {
-  font-size: var(--body-font-size-s);
-}
-
-.blog-article .blog-toc-label {
-  margin: 0 0 12px;
-  color: var(--text-soft);
-  font-size: var(--body-font-size-xs);
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.blog-article .blog-toc ol {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  border-left: 1px solid var(--line);
-}
-
-.blog-article .blog-toc li {
+.blog-article .blog-hero .blog-hero-image {
   margin: 0;
 }
 
-.blog-article .blog-toc-h3 a {
-  padding-left: 28px;
-}
-
-.blog-article .blog-toc a {
+.blog-article .blog-hero .blog-hero-image img {
   display: block;
-  padding: 6px 0 6px 16px;
-  margin-left: -1px;
-  border-left: 2px solid transparent;
-  color: var(--text-muted);
-  text-decoration: none;
-  line-height: 1.35;
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-card);
 }
 
-.blog-article .blog-toc a:hover {
+/* ============================================================
+   table of contents — numbered, collapsible. `.blog-toc-toggle` is the
+   always-visible bar/heading; `.blog-toc-list` is the numbered link list
+   that hides when `.blog-toc-collapsed` is set on the `.blog-toc-rail`
+   wrapper. The expand/collapse icon and the desktop "vertical tab" look are
+   pure CSS off that one class + [aria-expanded] — see the breakpoint
+   sections below for the mobile-panel vs desktop-rail treatments.
+   ============================================================ */
+.blog-article .blog-toc {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+}
+
+.blog-article .blog-toc-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  margin: 0;
+  border: 0;
+  background: none;
+  padding: 16px 20px;
+  font: inherit;
+  font-weight: 700;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.blog-article .blog-toc-toggle::after {
+  content: '\2715'; /* ✕ — mobile: collapse the expanded panel */
+  flex: none;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.blog-article .blog-toc-rail.blog-toc-collapsed .blog-toc-toggle::after {
+  content: '+'; /* mobile: tap to expand */
+}
+
+.blog-article .blog-toc-list {
+  margin: 0;
+  padding: 4px 20px 18px;
+  list-style: none;
+  counter-reset: toc;
+}
+
+.blog-article .blog-toc-rail.blog-toc-collapsed .blog-toc-list {
+  display: none;
+}
+
+.blog-article .blog-toc-list li {
+  counter-increment: toc;
+  border-top: 1px solid var(--line);
+}
+
+.blog-article .blog-toc-list li:first-child {
+  border-top: 0;
+}
+
+.blog-article .blog-toc-list a {
+  display: block;
+  padding: 10px 0 10px 10px;
+  margin-left: -2px;
+  border-left: 3px solid transparent;
+  color: var(--text-muted);
+  font-size: var(--body-font-size-s);
+  line-height: 1.4;
+  text-decoration: none;
+}
+
+.blog-article .blog-toc-list a::before {
+  content: counter(toc) '. ';
+  font-weight: 700;
+  color: var(--text);
+}
+
+.blog-article .blog-toc-list a:hover {
   color: var(--link-color);
-  border-left-color: var(--line);
+}
+
+.blog-article .blog-toc-list a.active {
+  border-left-color: var(--primary);
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.blog-article .blog-toc-list a.active::before {
+  color: var(--primary);
 }
 
 /* right rail */
@@ -89,12 +171,16 @@
   margin-top: 0;
 }
 
-/* layout — mobile first: single column, natural flow */
+/* ============================================================
+   layout — mobile first: single column, natural flow. The TOC panel sits
+   right after the hero (DOM order), which is exactly where it should render
+   on mobile — no positioning rules needed at this breakpoint.
+   ============================================================ */
 .blog-article .blog-toc-rail {
   margin-bottom: 32px;
 }
 
-/* tablet: 2 columns (prose / right-rail); TOC stays inline above prose */
+/* tablet: 2 columns (prose / right-rail); TOC inlines full-width above prose */
 @media (min-width: 900px) {
   .blog-article {
     display: grid;
@@ -103,13 +189,120 @@
     align-items: start;
   }
 
+  /* every other section (prose sections) defaults to the prose column; the
+     hero, TOC and right-rail get their own explicit placement below. Without
+     this, plain grid auto-placement round-robins each `main > div` section
+     across both columns instead of keeping the article body in one column. */
+  .blog-article > .section {
+    grid-column: 1;
+  }
+
+  /* hero pinned to row 1 (full width) — it must have an explicit row, not
+     just an explicit column: otherwise auto-placement tries to slot this
+     full-width item into row 1 too, but that row's other column is already
+     claimed for 99 rows by .blog-rail below, so it gets bumped to whatever
+     row comes after that reservation ends (i.e. off the bottom of the
+     article). Giving the rail's span an explicit start row of 2 instead of
+     1 leaves row 1 free for the hero and keeps everything else stacking
+     directly below it. */
+  .blog-article > .blog-hero {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
   .blog-article > .blog-toc-rail {
     grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .blog-article > .blog-rail {
+    grid-column: 2;
+    grid-row: 3 / span 99;
   }
 
   .blog-article .blog-rail {
     position: sticky;
     top: calc(var(--nav-height) + 24px);
+  }
+
+  /* hero band: full grid width, light background, 2-col split inside */
+  .blog-article > .blog-hero {
+    background: var(--sky);
+  }
+
+  .blog-article .blog-hero > .default-content-wrapper {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: 48px;
+    align-items: center;
+    padding-top: 56px;
+    padding-bottom: 56px;
+  }
+
+  .blog-article .blog-hero .blog-byline-tag,
+  .blog-article .blog-hero h1,
+  .blog-article .blog-hero .blog-byline-meta {
+    grid-column: 1;
+  }
+
+  .blog-article .blog-hero .blog-byline-meta {
+    margin-bottom: 0;
+  }
+
+  .blog-article .blog-hero .blog-hero-image {
+    grid-column: 2;
+    grid-row: 1 / span 99;
+  }
+
+  .blog-article .blog-hero .blog-hero-image img {
+    border-radius: 20px;
+  }
+
+  /* desktop rail: heading + collapse chevron, sticky */
+  .blog-article .blog-toc-rail {
+    margin-bottom: 0;
+  }
+
+  .blog-article .blog-toc {
+    position: sticky;
+    top: calc(var(--nav-height) + 24px);
+  }
+
+  .blog-article .blog-toc-toggle {
+    border-bottom: 1px solid var(--line);
+  }
+
+  .blog-article .blog-toc-toggle::after {
+    content: '\2039'; /* ‹ — collapse to vertical tab */
+    font-size: 18px;
+    color: var(--text-muted);
+  }
+
+  /* minimized state: thin vertical tab, rotated label + expand chevron (›) */
+  .blog-article .blog-toc-rail.blog-toc-collapsed {
+    width: 44px;
+  }
+
+  .blog-article .blog-toc-rail.blog-toc-collapsed .blog-toc-list {
+    display: none;
+  }
+
+  .blog-article .blog-toc-rail.blog-toc-collapsed .blog-toc-toggle {
+    flex-direction: column;
+    justify-content: center;
+    gap: 14px;
+    padding: 20px 10px;
+    border-bottom: 0;
+  }
+
+  .blog-article .blog-toc-rail.blog-toc-collapsed .blog-toc-label {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    white-space: nowrap;
+  }
+
+  .blog-article .blog-toc-rail.blog-toc-collapsed .blog-toc-toggle::after {
+    content: '\203A'; /* › — expand back to the full rail */
   }
 }
 
@@ -120,14 +313,26 @@
     column-gap: 48px;
   }
 
+  .blog-article > .section {
+    grid-column: 2;
+  }
+
+  /* hero pinned to row 1, full width — same reasoning as the 900px tier
+     above: without an explicit row, this full-span item collides with the
+     toc-rail/right-rail's 99-row reservations and gets bumped off-screen. */
+  .blog-article > .blog-hero {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
   .blog-article > .blog-toc-rail {
     grid-column: 1;
-    grid-row: 1 / span 99;
+    grid-row: 2 / span 99;
     margin-bottom: 0;
   }
 
-  .blog-article .blog-toc {
-    position: sticky;
-    top: calc(var(--nav-height) + 24px);
+  .blog-article > .blog-rail {
+    grid-column: 3;
+    grid-row: 2 / span 99;
   }
 }
