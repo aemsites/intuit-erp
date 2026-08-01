@@ -42,6 +42,7 @@ function buildMedia(cell) {
     const video = document.createElement('video');
     video.className = 'vsc-video';
     video.src = videoLink.getAttribute('href');
+    video.autoplay = true;
     video.muted = true;
     video.loop = true;
     video.playsInline = true;
@@ -68,7 +69,7 @@ function buildCopy(headingCell, bodyCell) {
   if (bodyCell && bodyCell.textContent.trim()) {
     const body = document.createElement('div');
     body.className = 'vsc-body';
-    body.innerHTML = bodyCell.innerHTML;
+    [...bodyCell.childNodes].forEach((n) => body.append(n));
     copy.append(body);
   }
 
