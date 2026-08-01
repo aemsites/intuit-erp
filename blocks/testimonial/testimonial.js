@@ -10,6 +10,9 @@
  * When a YouTube id is authored, the poster photo is shown as a static
  * background (no muted autoplay loop, since we only have a YouTube id, not
  * a cutdown mp4 for that story) and the play button opens that video.
+ * Variant .card (migration rationale / account testimonials) — one or more
+ * rows, each row a card with cells:
+ *   1. photo <img>   2. quote   3. name   4. title (optional)
  * CSS: blocks/testimonial/testimonial.css
  */
 
@@ -47,7 +50,49 @@ function openVideoModal(videoId) {
   document.body.append(overlay);
 }
 
+function buildCard(row) {
+  const [photoCell, quoteCell, nameCell, titleCell] = [...row.children];
+  const figure = document.createElement('figure');
+  figure.className = 'testimonial-card';
+
+  const media = pic(photoCell);
+  if (media) {
+    const img = media.tagName === 'IMG' ? media : media.querySelector('img');
+    if (img) img.classList.add('testimonial-photo');
+    figure.append(media);
+  }
+
+  const quote = document.createElement('blockquote');
+  if (quoteCell) quote.innerHTML = quoteCell.innerHTML;
+  figure.append(quote);
+
+  const figcaption = document.createElement('figcaption');
+  const name = nameCell ? nameCell.textContent.trim() : '';
+  const title = titleCell ? titleCell.textContent.trim() : '';
+  if (name) {
+    const nameEl = document.createElement('p');
+    nameEl.className = 'testimonial-name';
+    nameEl.textContent = name;
+    figcaption.append(nameEl);
+  }
+  if (title) {
+    const titleEl = document.createElement('p');
+    titleEl.className = 'testimonial-title';
+    titleEl.textContent = title;
+    figcaption.append(titleEl);
+  }
+  figure.append(figcaption);
+
+  return figure;
+}
+
 export default function decorate(block) {
+  if (block.classList.contains('card')) {
+    const figures = [...block.querySelectorAll(':scope > div')].map(buildCard);
+    block.replaceChildren(...figures);
+    return;
+  }
+
   const isVideo = block.classList.contains('video');
   const row = block.querySelector(':scope > div');
   if (!row) return;

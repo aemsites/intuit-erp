@@ -42,7 +42,10 @@
 .video-modal-close:hover { background: rgb(255 255 255 / 28%); }
 
 /* ---- default (compare cyan band) ---- */
-.section.testimonial-container:has(.testimonial:not(.video)) { background: var(--sky); padding: var(--section-y) 0; }
+.section.testimonial-container:has(.testimonial:not(.video, .card)) { background: var(--sky); padding: var(--section-y) 0; }
+
+/* ---- .card section background ---- */
+.section.testimonial-container:has(.testimonial.card) { background: var(--background-color); padding: var(--section-y) 0; }
 
 .testimonial:not(.video) .cmp-testi-grid {
   display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center;
@@ -63,4 +66,37 @@
   .testimonial:not(.video) .cmp-testi-grid { grid-template-columns: 1fr; gap: 28px; }
   .testimonial .cmp-testi-media { order: -1; }
   .testimonial .cmp-quote { font-size: 20px; }
+}
+
+/* ---- .card (photo + quote row) ---- */
+.testimonial.card {
+  display: flex; flex-direction: column; gap: 24px;
+  max-width: var(--container); margin: 0 auto;
+}
+
+.testimonial .testimonial-card {
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  background: var(--sky); border-radius: var(--radius-card);
+  padding: 40px 32px; margin: 0; flex: 1 1 100%;
+}
+
+.testimonial .testimonial-photo {
+  width: 88px; height: 88px; border-radius: 50%; object-fit: cover; margin-bottom: 20px;
+}
+
+.testimonial .testimonial-card blockquote {
+  margin: 0 0 20px; font-size: 18px; line-height: 1.5; font-weight: 400; color: var(--heading);
+}
+
+.testimonial .testimonial-card figcaption { margin: 0; }
+.testimonial .testimonial-card .testimonial-name { font-size: 15px; font-weight: 700; color: var(--heading); margin: 0; }
+.testimonial .testimonial-card .testimonial-title { font-size: 14px; color: var(--text-muted); margin: 4px 0 0; }
+
+@media (min-width: 600px) {
+  .testimonial.card { flex-flow: row wrap; }
+  .testimonial .testimonial-card { flex: 1 1 calc(50% - 12px); }
+}
+
+@media (min-width: 900px) {
+  .testimonial .testimonial-card { flex: 1 1 calc(33.333% - 16px); }
 }
