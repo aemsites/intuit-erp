@@ -73,9 +73,9 @@ Remaining work is therefore **mostly content migration**, not block-building.
   (`construction`, one case study, one research page) against the live source on
   localhost to calibrate the quality bar and confirm block behavior. Fix only if
   broken.
-- **Phase 1 — Case studies (~11).** Reconcile source naming (source uses
-  `-intuit-enterprise-suite` suffixes; repo uses short slugs) → confirm final slug
-  convention before batch. Batch-migrate, verify each.
+- **Phase 1 — Case studies (~11).** Slug convention **decided**: use short slugs
+  (e.g. `redhammer`, `pulseroller`), dropping the source `-intuit-enterprise-suite`
+  suffix. Batch-migrate, verify each.
 - **Phase 2 — Research & guides (~11).** Watch for gated/whitepaper download
   variants and webinar-capture pages.
 - **Phase 3 — Solution / marketing (~6).** Most bespoke; may need minor block
@@ -122,8 +122,8 @@ New or adjusted blocks are tracked in a running block-variant changelog.
 
 ## Risks / open items
 
-- **Slug reconciliation** for case studies (source suffix vs. repo short slug) —
-  decide the canonical convention in Phase 1 before batch.
+- ~~Slug reconciliation for case studies~~ — **decided**: short slugs, no
+  `-intuit-enterprise-suite` suffix.
 - **Gated/form pages** (research downloads, webinar registration) may hit
   form-handler or martech wiring not present locally; verify the `form` /
   `download-form` behavior early.
