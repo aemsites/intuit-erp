@@ -20,6 +20,7 @@ import {
 } from '../plugins/martech/src/index.js';
 import { sendOf1Signal, readAlloySegmentIds } from './of1-rtcdp-signal.js';
 import { isBlogPage, buildBlogTemplate } from '../blocks/blog-template/blog-template.js';
+import { isVideoLink } from '../blocks/video/video.js';
 
 // Adobe Web SDK / AEP datastream. The datastream id is public (not a secret)
 // and safe in client source. While the id starts with "REPLACE_", martech is
@@ -107,6 +108,26 @@ function buildWidgetAutoBlocks(main) {
 }
 
 /**
+ * Turns a section-level paragraph that is only a link to a video host
+ * (YouTube/Vimeo), optionally wrapping a poster <img>, into a `video` block.
+ * Skips inline prose links and links already inside a block cell (e.g.
+ * testimonial.video), so only standalone thumbnail-links are upgraded.
+ * @param {Element} main The container element
+ */
+function buildVideoAutoBlocks(main) {
+  main.querySelectorAll('p a[href]').forEach((a) => {
+    if (!isVideoLink(a.getAttribute('href'))) return;
+    const p = a.closest('p');
+    // section-level only: p is a direct child of a section div under main
+    if (!p || !p.parentElement || p.parentElement.parentElement !== main) return;
+    if (p.querySelectorAll('a').length !== 1) return;
+    // the link must be the whole paragraph (image poster has no text)
+    if (p.textContent.replace(a.textContent, '').trim()) return;
+    p.replaceWith(buildBlock('video', { elems: [a.cloneNode(true)] }));
+  });
+}
+
+/**
  * Builds all synthetic blocks in a container element.
  * @param {Element} main The container element
  */
@@ -137,6 +158,7 @@ function buildAutoBlocks(main) {
       });
     }
     buildWidgetAutoBlocks(main);
+    buildVideoAutoBlocks(main);
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error('Auto Blocking failed', error);
