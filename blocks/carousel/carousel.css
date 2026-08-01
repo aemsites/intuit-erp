@@ -1,0 +1,142 @@
+/* carousel — one-card-at-a-time slider (arrows + dots). Shared mechanics,
+   two look variants: .testimonial (dark quote band) and .cards (customer
+   story / article cards). Scoped under .carousel per project convention. */
+
+.carousel { position: relative; max-width: var(--container); margin: 0 auto; }
+
+.carousel .carousel-viewport { overflow: hidden; width: 100%; }
+
+.carousel .carousel-track {
+  display: flex;
+  transition: transform 0.4s ease;
+}
+
+.carousel .carousel-slide {
+  flex: 0 0 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.carousel .carousel-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  margin-top: 28px;
+}
+
+.carousel .carousel-dots {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.carousel .carousel-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  background: var(--line);
+  cursor: pointer;
+  position: relative;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+/* expand the hit area to a comfortable touch target without growing the visible dot */
+.carousel .carousel-dot::after { content: ""; position: absolute; inset: -7px; }
+
+.carousel .carousel-dot.is-active { background: var(--primary); transform: scale(1.2); }
+
+.carousel .carousel-prev,
+.carousel .carousel-next {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: var(--navy);
+  color: var(--background-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.carousel .carousel-prev:hover:not(:disabled),
+.carousel .carousel-next:hover:not(:disabled) { background: var(--navy-hover); }
+
+.carousel .carousel-prev:disabled,
+.carousel .carousel-next:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ---- .testimonial — dark band, quote + photo/video card ---- */
+.carousel.testimonial {
+  background: var(--navy);
+  border-radius: var(--radius-card);
+  padding: 56px 32px;
+}
+
+.carousel.testimonial .carousel-slide {
+  display: flex;
+  justify-content: center;
+}
+
+.carousel.testimonial .carousel-slide > div {
+  width: 100%;
+  max-width: 760px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  text-align: center;
+  color: var(--background-color);
+  border: 1px solid rgb(255 255 255 / 20%);
+  border-radius: var(--radius-card);
+  padding: 40px 32px;
+}
+
+.carousel.testimonial .carousel-slide img { border-radius: 50%; width: 88px; height: 88px; object-fit: cover; }
+
+.carousel.testimonial .carousel-slide p { margin: 0; font-size: 20px; line-height: 1.5; }
+
+.carousel.testimonial .carousel-slide a.button { border-color: var(--background-color); color: var(--background-color); }
+
+.carousel.testimonial .carousel-dot { background: rgb(255 255 255 / 30%); }
+.carousel.testimonial .carousel-dot.is-active { background: var(--background-color); }
+
+.carousel.testimonial .carousel-prev,
+.carousel.testimonial .carousel-next { background: rgb(255 255 255 / 15%); }
+
+.carousel.testimonial .carousel-prev:hover:not(:disabled),
+.carousel.testimonial .carousel-next:hover:not(:disabled) { background: rgb(255 255 255 / 28%); }
+
+/* ---- .cards — customer story / article cards, multi-per-view ---- */
+.carousel.cards { --carousel-cards-per-view: 1; }
+
+.carousel.cards .carousel-track { gap: 24px; }
+
+.carousel.cards .carousel-slide {
+  flex: 0 0 calc((100% - (var(--carousel-cards-per-view) - 1) * 24px) / var(--carousel-cards-per-view));
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+}
+
+.carousel.cards .carousel-slide img { width: 100%; height: auto; display: block; }
+
+.carousel.cards .carousel-slide > div { display: flex; flex-direction: column; height: 100%; }
+
+.carousel.cards .carousel-slide h3 { margin: 20px 22px 8px; font-size: 20px; line-height: 1.3; color: var(--heading); }
+
+.carousel.cards .carousel-slide p { margin: 0 22px 20px; font-size: 15px; line-height: 1.5; color: var(--text-muted); }
+
+@media (min-width: 600px) {
+  .carousel.cards { --carousel-cards-per-view: 2; }
+}
+
+@media (min-width: 900px) {
+  .carousel.cards { --carousel-cards-per-view: 3; }
+}
