@@ -13,8 +13,9 @@ cropit.mjs
 scratch_crop.mjs
 qa-harness.mjs
 qa-probe.mjs
-.claude/*
-.agents/*
-.superpowers/*
+.claude/
+.agents/
+.superpowers/
 content/
 tasks/
+docs/superpowers/
