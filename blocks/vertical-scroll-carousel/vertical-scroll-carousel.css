@@ -1,0 +1,94 @@
+/* vertical-scroll-carousel — scroll-activated media stack.
+   Mobile: plain stacked list (media above copy, no sticky/JS required).
+   >=900px: two-column rows; media column sticks while its copy scrolls by. */
+
+.vertical-scroll-carousel {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.vertical-scroll-carousel .vsc-item {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.vertical-scroll-carousel .vsc-copy {
+  padding: 4px 0;
+}
+
+.vertical-scroll-carousel .vsc-heading {
+  font-size: var(--heading-font-size-s);
+  font-weight: 400;
+  color: var(--text-soft);
+  margin: 0 0 12px;
+  transition: color 0.2s ease;
+}
+
+.vertical-scroll-carousel .vsc-body {
+  font-size: var(--body-font-size-m);
+  line-height: 1.6;
+  color: var(--text-muted);
+  max-width: 34em;
+  margin: 0;
+}
+
+.vertical-scroll-carousel .vsc-media {
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: var(--light-color);
+}
+
+.vertical-scroll-carousel .vsc-media img,
+.vertical-scroll-carousel .vsc-media video {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* active state — highlights the item currently in focus on scroll */
+.vertical-scroll-carousel .vsc-item.is-active .vsc-heading {
+  color: var(--heading-color);
+}
+
+.vertical-scroll-carousel .vsc-item.is-active .vsc-media {
+  border-color: var(--primary);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 10%);
+}
+
+@media (min-width: 900px) {
+  .vertical-scroll-carousel .vsc-item {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 60px;
+    min-height: 90vh;
+    padding: 40px 0;
+  }
+
+  .vertical-scroll-carousel .vsc-copy {
+    flex: 1 1 40%;
+    align-self: center;
+  }
+
+  .vertical-scroll-carousel .vsc-media {
+    flex: 1 1 55%;
+    position: sticky;
+    top: calc(var(--nav-height, 96px) + 40px);
+    opacity: 0.55;
+    transform: scale(0.97);
+    transition: opacity 0.3s ease, transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .vertical-scroll-carousel .vsc-item.is-active .vsc-media {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (min-width: 1200px) {
+  .vertical-scroll-carousel .vsc-heading {
+    font-size: var(--heading-font-size-m);
+  }
+}
