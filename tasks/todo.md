@@ -9,7 +9,7 @@ Spec: `docs/superpowers/specs/2026-07-31-erp-intuit-migration-phase1-design.md`
 - [x] Tracker seeded
 
 ## Task 1 — Case-study template (western-companies)
-- [ ] western-companies (representative, locks block set)
+- [x] western-companies (representative, locks block set)
 
 ## Task 2 — Case-study batch (10)
 - [ ] fefa-financial
