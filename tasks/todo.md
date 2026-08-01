@@ -39,13 +39,13 @@ Spec: `docs/superpowers/specs/2026-07-31-erp-intuit-migration-phase1-design.md`
 - [ ] DA push (research batch)
 
 ## Task 5 — Solution / marketing (8)
-- [ ] oa / ibs triage
-- [ ] account-management
-- [ ] accountant
-- [ ] accountant/free-consultation/ies
-- [ ] accountant/free-consultation/ies/coffee
-- [ ] migration
-- [ ] contact
+- [x] oa / ibs triage
+- [x] account-management
+- [x] accountant
+- [x] accountant/free-consultation/ies
+- [x] accountant/free-consultation/ies/coffee
+- [x] migration
+- [x] contact
 - [ ] DA push (solution batch)
 
 ## Task 6 — Webinar-landing template (webinar-shawnvandyke)
