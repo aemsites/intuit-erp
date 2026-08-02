@@ -1,13 +1,11 @@
 /* header — IES chrome (brand strip + sticky nav + events bar). Lifted from base.css */
 
-/* min-height reserves space to avoid layout shift while decorate() runs
-   async — sized for the topstrip + nav alone, since the events bar is now
-   an opt-in per page (see eventsBarHTML in header.js) rather than always
-   present; .has-events-bar (added by decorate() when a page opts in) bumps
-   it back up so those pages don't shift either. Previously fixed at 146px
-   assuming the bar was always there, which left a blank gap on every page
-   that didn't have it. */
-header { height: auto; min-height: 92px; }
+/* min-height avoids layout shift while decorate() runs async. position:sticky
+   lives here (not on .ies-nav inside) so the containing block is <body> —
+   full page height — not the ~92px header box that was limiting .ies-nav's
+   sticky range. z-index hoisted here too; .flyout (z-index:60) still stacks
+   correctly inside this stacking context. */
+header { height: auto; min-height: 92px; position: sticky; top: 0; z-index: 50; }
 header .header.has-events-bar { min-height: 146px; }
 header .header { background: #fff; }
 header .header .container { max-width: var(--container); margin: 0 auto; padding: 0 40px; }
@@ -36,8 +34,8 @@ body.nav-scroll-lock { overflow: hidden; }
 .header .bs-logo-quickbooks svg:last-child { height: 13.5px; width: auto; margin-bottom: -2px; }
 .header .bs-logo-mailchimp svg:last-child { height: 12.5px; width: auto; margin-bottom: -2px; }
 
-/* sticky nav */
-.header .ies-nav { position: sticky; top: 0; z-index: 50; background: #fff; }
+/* sticky nav — position:sticky has moved to the <header> element; see header rule above */
+.header .ies-nav { background: #fff; }
 .header .ies-nav.scrolled { box-shadow: 0 1px 0 rgb(0 0 0 / 6%); border-bottom: 2px solid var(--navy); }
 .header .ies-nav .container { position: relative; display: flex; align-items: center; height: 60px; gap: 30px; }
 .header .nav-logo { display: flex; align-items: center; }
@@ -229,8 +227,8 @@ body.nav-scroll-lock { overflow: hidden; }
      also a <button> nested inside .nav-item (via .flyout), so the
      descendant form was matching it too and its space-between was shoving
      "Back" to the far right instead of right after the chevron icon. */
-  .header .nav-item > button { width: 100%; justify-content: space-between; padding: 24px 0; }
-  .header .nav-main > .nav-link, .header .nav-main > .acct-link { display: block; padding: 24px 0; }
+  .header .nav-item > button:not(.flyout-back) { width: 100%; justify-content: space-between; padding: 24px 0; font-size: 24px; font-weight: 500; }
+  .header .nav-main > .nav-link, .header .nav-main > .acct-link { display: block; padding: 24px 0; font-size: 24px; font-weight: 500; }
 
   /* Drill-down, matching erp.intuit.com's mobile nav: opening a menu item
      doesn't expand an accordion in place under it — the top-level list
@@ -304,7 +302,7 @@ body.nav-scroll-lock { overflow: hidden; }
   .header .nav-mobile-brands .bs-logo-quickbooks svg:last-child { height: 17px; margin-bottom: -2px; }
   .header .nav-mobile-brands .bs-logo-mailchimp svg:last-child { height: 16.5px; margin-bottom: -2px; }
   .header .ies-events .container { font-size: 13px; padding-top: 12px; padding-bottom: 12px; }
-  .header .nav-toggle { display: inline-flex; flex-direction: column; gap: 4px; background: none; border: 0; padding: 6px; cursor: pointer; }
+  .header .nav-toggle { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; width: 36px; height: 36px; box-sizing: border-box; background: none; border: 1px solid var(--text); border-radius: 4px; padding: 0; cursor: pointer; }
 
   .header .nav-toggle span {
     width: 22px; height: 2px; background: currentcolor; display: block;

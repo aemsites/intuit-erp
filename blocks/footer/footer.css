@@ -41,6 +41,8 @@ footer .footer .container { max-width: var(--container); margin: 0 auto; padding
 .footer .ftr-brand-mailchimp svg:last-child { height: 12.5px; width: auto; }
 .footer .footer-copy { color: var(--text); font-size: 12px; line-height: 1.6; margin: 0 0 12px; max-width: none; }
 .footer .footer-copy a { color: var(--primary-dark); }
+.footer .footer-copy-btn { background: none; border: none; padding: 0; font: inherit; color: var(--primary-dark); cursor: pointer; }
+.footer .footer-copy-btn:hover { text-decoration: underline; }
 .footer .legal-right .legal-links { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; }
 .footer .legal-right .legal-links a { color: var(--text-muted); }
 .footer .truste { display: inline-block; line-height: 0; }
