@@ -61,10 +61,28 @@ header .header .container { max-width: var(--container); margin: 0 auto; padding
 .header .flyout-desc { display: block; font-size: 13px; color: var(--text-muted); margin-top: 2px; }
 .header .flyout-link:hover .flyout-label { color: var(--primary); }
 .header .nav-right { margin-left: auto; display: flex; align-items: center; gap: 22px; }
-.header .nav-cta { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 24px; font-size: 16px; font-weight: 600; line-height: 1; font-family: inherit; border: 2px solid var(--navy); border-radius: var(--radius); background: var(--navy); color: #fff; text-decoration: none; cursor: pointer; }
+
+/* font-weight 500 (Medium), matching erp.intuit.com's own CTA label exactly
+   — 600 (Demi Bold) reads visibly heavier since Avenir Next ships 500 as a
+   distinct static weight here, not a synthesized fallback. */
+.header .nav-cta { position: relative; overflow: hidden; display: inline-flex; align-items: center; justify-content: center; height: 40px; padding: 0 24px; font-size: 16px; font-weight: 500; line-height: 1; font-family: inherit; border: 2px solid var(--navy); border-radius: var(--radius); background: var(--navy); color: #fff; text-decoration: none; cursor: pointer; }
 .header .nav-cta:hover { color: #fff; text-decoration: none; background: var(--navy-hover); border-color: var(--navy-hover); }
-.header .nav-cta-icon { flex: 0 0 auto; transition: transform 0.2s ease; }
-.header .nav-cta:hover .nav-cta-icon { transform: translateX(3px); }
+
+/* Matches erp.intuit.com's own CTA-reveal interaction: the label nudges left
+   and the chevron slides in from beyond the button's edge, its opacity fade
+   delayed 0.2s behind the slide so it appears to arrive rather than just
+   fade up in place. Total slide distance (24px) equals the button's own
+   horizontal padding, same ratio as the source. */
+.header .nav-cta-text { position: relative; right: 0; transition: right 0.3s cubic-bezier(0.35, 0, 0.5, 1); }
+.header .nav-cta:hover .nav-cta-text, .header .nav-cta:focus-visible .nav-cta-text { right: 8px; }
+
+.header .nav-cta-icon {
+  position: absolute; top: 50%; right: 0; width: 8px; height: 8px;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transform: translate(8px, -50%);
+  transition: transform 0.3s cubic-bezier(0.35, 0, 0.5, 1), opacity 0.3s cubic-bezier(0.35, 0, 0.5, 1) 0.2s;
+}
+.header .nav-cta:hover .nav-cta-icon, .header .nav-cta:focus-visible .nav-cta-icon { opacity: 1; transform: translate(-16px, -50%); }
 .header .nav-toggle { display: none; }
 
 @media (width <= 768px) {
