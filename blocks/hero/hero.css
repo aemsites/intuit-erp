@@ -48,6 +48,25 @@
 .hero .hero-media { position: relative; isolation: isolate; }
 .hero .hero-media img { position: relative; z-index: 1; width: 100%; border-radius: 12px; box-shadow: 0 24px 60px rgb(0 0 0 / 35%); }
 
+/* homepage dashboard mockup, once the Lottie animation (hero.js) mounts:
+   layered exactly over the static image (which stays in the DOM, sized as
+   normal, just hidden) so there's no layout shift and no gap if the
+   animation fails to load. */
+.hero .hero-dashboard-lottie {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgb(0 0 0 / 35%);
+}
+
+.hero .hero-dashboard-lottie svg { display: block; width: 100%; height: 100%; }
+
+/* class goes on whichever element hero.js wraps mediaEl in — a <picture> when
+   the author supplied responsive sources, or a bare <img> otherwise */
+.hero .hero-media .hero-dashboard-fallback { visibility: hidden; }
+
 /* radial glow behind the hero image — adapted from erp.intuit.com's Lottie glow treatment.
    Fades straight to 0% alpha (no opaque-navy midpoint) so it blends over the hero's
    diagonal navy/teal/purple background instead of showing a seam against it. */
