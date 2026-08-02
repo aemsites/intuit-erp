@@ -1,18 +1,18 @@
 /*
  * blog-template — 3-col article layout applied to <main.blog-article>.
- * Mobile-first: everything stacks. TOC (left rail) and right-rail fragment
- * fold into the flow on small screens and become sticky side columns at wider
- * breakpoints. Tokens reused from styles/styles.css (:22-74).
- *
- * Grid columns at >=1200px:  [toc] [prose] [right-rail]
- * At >=900px:                [prose] [right-rail]  (TOC inlines above prose)
+ * Mobile-first: everything stacks, the TOC defaults to a collapsed sticky
+ * bar, and the share widget sits in the hero. At >=900px a single grid
+ * layout takes over: [toc rail] [prose] [right rail]. Tokens reused from
+ * styles/styles.css (:22-74).
  */
 
 /* ============================================================
-   hero (section 1) — eyebrow, h1, byline meta, hero image.
-   Natural DOM order (eyebrow -> h1 -> meta -> image) is also the correct
-   mobile stacking order, so mobile needs no layout rules beyond image
-   rounding; the 2-col band is added back in the >=900px section below.
+   hero (section 1) — eyebrow, h1, byline meta, hero image, share widget.
+   Natural DOM order (eyebrow -> h1 -> share -> meta -> image) is also the
+   correct mobile stacking order, so mobile needs no layout rules beyond
+   image rounding; the 2-col band is added back in the >=900px section
+   below. `.blog-share` is relocated OUT of the hero at >=900px (see the
+   TOC-rail rules), so it never appears in both places at once.
    ============================================================ */
 .blog-article .blog-hero .blog-byline-tag {
   margin: 0 0 12px;
@@ -73,13 +73,60 @@
   border-radius: var(--radius-card);
 }
 
+.blog-article .blog-hero .blog-share {
+  margin: 0 0 24px;
+}
+
+/* ============================================================
+   share widget — "Share this article:" label (desktop only) + 4 filled
+   blue-circle / white-glyph social links. One `.blog-share` element,
+   relocated between the hero and the TOC rail by JS (relocateShare); the
+   styling here applies wherever it currently lives.
+   ============================================================ */
+.blog-article .blog-share {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.blog-article .blog-share-label {
+  display: none;
+  margin-right: 4px;
+  color: var(--text-muted);
+  font-size: var(--body-font-size-s);
+  font-weight: 600;
+}
+
+.blog-article .blog-share-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+}
+
+.blog-article .blog-share-link:hover {
+  background: var(--primary-dark);
+}
+
+.blog-article .blog-share-link svg {
+  display: block;
+}
+
 /* ============================================================
    table of contents — numbered, collapsible. `.blog-toc-toggle` is the
    always-visible bar/heading; `.blog-toc-list` is the numbered link list
    that hides when `.blog-toc-collapsed` is set on the `.blog-toc-rail`
    wrapper. The expand/collapse icon and the desktop "vertical tab" look are
    pure CSS off that one class + [aria-expanded] — see the breakpoint
-   sections below for the mobile-panel vs desktop-rail treatments.
+   section below for the mobile-panel vs desktop-rail treatments. Mobile
+   defaults to collapsed (JS), and while collapsed the label text is swapped
+   for the active section's heading by the scroll-spy (also JS).
    ============================================================ */
 .blog-article .blog-toc {
   border: 1px solid var(--line);
@@ -95,13 +142,19 @@
   width: 100%;
   margin: 0;
   border: 0;
-  background: none;
+  background: #fff;
   padding: 16px 20px;
   font: inherit;
   font-weight: 700;
   color: var(--text);
   text-align: left;
   cursor: pointer;
+}
+
+.blog-article .blog-toc-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .blog-article .blog-toc-toggle::after {
@@ -112,7 +165,16 @@
 }
 
 .blog-article .blog-toc-rail.blog-toc-collapsed .blog-toc-toggle::after {
-  content: '+'; /* mobile: tap to expand */
+  content: '\2304'; /* ⌄ — mobile, collapsed: tap to expand */
+}
+
+/* collapsed mobile bar pins to the top of the screen as you scroll (below
+   the site's own sticky nav, so the two don't overlap); expanded, it's back
+   in normal flow (no sense pinning the whole open panel to the viewport). */
+.blog-article .blog-toc-rail.blog-toc-collapsed {
+  position: sticky;
+  top: var(--nav-height);
+  z-index: 5;
 }
 
 .blog-article .blog-toc-list {
@@ -174,62 +236,71 @@
 /* ============================================================
    layout — mobile first: single column, natural flow. The TOC panel sits
    right after the hero (DOM order), which is exactly where it should render
-   on mobile — no positioning rules needed at this breakpoint.
+   on mobile — no positioning rules needed at this breakpoint beyond the
+   collapsed-bar sticky rule above.
    ============================================================ */
 .blog-article .blog-toc-rail {
   margin-bottom: 32px;
 }
 
-/* tablet: 2 columns (prose / right-rail); TOC inlines full-width above prose */
+/* desktop: single 3-col grid — [toc rail] [prose] [right rail]. One
+   breakpoint (matches the JS's matchMedia('(min-width: 900px)') used for
+   the share-widget relocation and the TOC's mobile/desktop defaults, so the
+   two never disagree about what counts as "desktop"). */
 @media (min-width: 900px) {
   .blog-article {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 280px;
-    column-gap: 40px;
+    grid-template-columns: 240px minmax(0, 1fr) 300px;
+    column-gap: 48px;
     align-items: start;
   }
 
   /* every other section (prose sections) defaults to the prose column; the
-     hero, TOC and right-rail get their own explicit placement below. Without
-     this, plain grid auto-placement round-robins each `main > div` section
-     across both columns instead of keeping the article body in one column. */
+     hero, TOC and right-rail get their own explicit placement below.
+     Without this, plain grid auto-placement round-robins each `main > div`
+     section across all 3 columns instead of keeping the article body in
+     one column. */
   .blog-article > .section {
-    grid-column: 1;
+    grid-column: 2;
   }
 
   /* hero pinned to row 1 (full width) — it must have an explicit row, not
      just an explicit column: otherwise auto-placement tries to slot this
-     full-width item into row 1 too, but that row's other column is already
-     claimed for 99 rows by .blog-rail below, so it gets bumped to whatever
-     row comes after that reservation ends (i.e. off the bottom of the
-     article). Giving the rail's span an explicit start row of 2 instead of
-     1 leaves row 1 free for the hero and keeps everything else stacking
-     directly below it. */
+     full-width item into row 1 too, but row 1 in the toc/right-rail columns
+     is already claimed by their (much taller) row-span reservations below,
+     so it gets bumped to whatever row comes after those reservations end
+     (i.e. off the bottom of the article). Starting the rails' span at row 2
+     instead of row 1 leaves row 1 free for the hero. */
   .blog-article > .blog-hero {
     grid-column: 1 / -1;
     grid-row: 1;
-  }
-
-  .blog-article > .blog-toc-rail {
-    grid-column: 1 / -1;
-    grid-row: 2;
-  }
-
-  .blog-article > .blog-rail {
-    grid-column: 2;
-    grid-row: 3 / span 99;
-  }
-
-  .blog-article .blog-rail {
-    position: sticky;
-    top: calc(var(--nav-height) + 24px);
-  }
-
-  /* hero band: full grid width, light background, 2-col split inside */
-  .blog-article > .blog-hero {
     background: var(--sky);
   }
 
+  /* fallback span for the two sticky rails — JS (tocRailRowEnd) sets a
+     precise `grid-row` end via inline style once it knows which row the
+     article's last TOC-eligible section lands in, so the rail unsticks
+     there instead of overlapping trailing appendix sections (e.g.
+     "Recommended for you") or the footer. This generous `span` is only used
+     as a fallback (no TOC, e.g. <2 headings). */
+  .blog-article > .blog-toc-rail {
+    grid-column: 1;
+    grid-row: 2 / span 999;
+    margin-bottom: 0;
+    position: sticky;
+    top: calc(var(--nav-height) + 24px);
+    align-self: start;
+  }
+
+  .blog-article > .blog-rail {
+    grid-column: 3;
+    grid-row: 2 / span 999;
+    position: sticky;
+    top: calc(var(--nav-height) + 24px);
+    align-self: start;
+  }
+
+  /* hero band: 2-col split inside (text left, image right) */
   .blog-article .blog-hero > .default-content-wrapper {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -258,16 +329,16 @@
     border-radius: 20px;
   }
 
-  /* desktop rail: heading + collapse chevron, sticky */
-  .blog-article .blog-toc-rail {
-    margin-bottom: 0;
+  /* share widget: label shows, sits above the TOC nav at the top of the rail */
+  .blog-article .blog-share-label {
+    display: inline;
   }
 
-  .blog-article .blog-toc {
-    position: sticky;
-    top: calc(var(--nav-height) + 24px);
+  .blog-article .blog-toc-rail > .default-content-wrapper > .blog-share {
+    margin: 0 0 16px;
   }
 
+  /* desktop rail: heading + collapse chevron */
   .blog-article .blog-toc-toggle {
     border-bottom: 1px solid var(--line);
   }
@@ -280,6 +351,7 @@
 
   /* minimized state: thin vertical tab, rotated label + expand chevron (›) */
   .blog-article .blog-toc-rail.blog-toc-collapsed {
+    top: calc(var(--nav-height) + 24px);
     width: 44px;
   }
 
@@ -303,36 +375,5 @@
 
   .blog-article .blog-toc-rail.blog-toc-collapsed .blog-toc-toggle::after {
     content: '\203A'; /* › — expand back to the full rail */
-  }
-}
-
-/* desktop: 3 columns (toc / prose / right-rail) */
-@media (min-width: 1200px) {
-  .blog-article {
-    grid-template-columns: 240px minmax(0, 1fr) 300px;
-    column-gap: 48px;
-  }
-
-  .blog-article > .section {
-    grid-column: 2;
-  }
-
-  /* hero pinned to row 1, full width — same reasoning as the 900px tier
-     above: without an explicit row, this full-span item collides with the
-     toc-rail/right-rail's 99-row reservations and gets bumped off-screen. */
-  .blog-article > .blog-hero {
-    grid-column: 1 / -1;
-    grid-row: 1;
-  }
-
-  .blog-article > .blog-toc-rail {
-    grid-column: 1;
-    grid-row: 2 / span 99;
-    margin-bottom: 0;
-  }
-
-  .blog-article > .blog-rail {
-    grid-column: 3;
-    grid-row: 2 / span 99;
   }
 }

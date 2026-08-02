@@ -1,6 +1,7 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   buildToc, buildByline, buildEyebrow, buildBylineMeta,
+  buildShare, relocateShare, tocRailRowEnd,
 } from '../blocks/blog-template/blog-template.js';
 
 describe('buildToc', () => {
@@ -93,5 +94,96 @@ describe('buildBylineMeta', () => {
     const el = buildBylineMeta();
     expect(el.tagName).toBe('P');
     expect(el.childElementCount).toBe(0);
+  });
+});
+
+describe('buildShare', () => {
+  it('builds a label plus 4 social links in Facebook, X, LinkedIn, YouTube order', () => {
+    const el = buildShare();
+    expect(el.tagName).toBe('P');
+    expect(el.className).toBe('blog-share');
+    expect(el.querySelector('.blog-share-label').textContent).toBe('Share this article:');
+    const links = [...el.querySelectorAll('.blog-share-link')];
+    expect(links.map((a) => a.getAttribute('aria-label'))).toEqual([
+      'Facebook', 'X', 'LinkedIn', 'YouTube',
+    ]);
+    expect(links.map((a) => a.getAttribute('href'))).toEqual([
+      'https://www.facebook.com/intuit',
+      'https://twitter.com/intuit',
+      'https://www.linkedin.com/company/intuit',
+      'https://www.youtube.com/user/intuit',
+    ]);
+    links.forEach((a) => {
+      expect(a.getAttribute('target')).toBe('_blank');
+      expect(a.getAttribute('rel')).toBe('noopener');
+      expect(a.querySelector('svg')).toBeTruthy();
+    });
+  });
+});
+
+describe('relocateShare', () => {
+  const fakeMQ = (matches) => {
+    const listeners = [];
+    return {
+      matches,
+      addEventListener: (type, cb) => listeners.push(cb),
+      fire: (nowMatches) => listeners.forEach((cb) => cb({ matches: nowMatches })),
+    };
+  };
+
+  it('places at the mobile position when the query does not match', () => {
+    const share = document.createElement('p');
+    const placeMobile = vi.fn();
+    const placeDesktop = vi.fn();
+    relocateShare(share, placeMobile, placeDesktop, fakeMQ(false));
+    expect(placeMobile).toHaveBeenCalledOnce();
+    expect(placeDesktop).not.toHaveBeenCalled();
+  });
+
+  it('places at the desktop position when the query matches', () => {
+    const share = document.createElement('p');
+    const placeMobile = vi.fn();
+    const placeDesktop = vi.fn();
+    relocateShare(share, placeMobile, placeDesktop, fakeMQ(true));
+    expect(placeDesktop).toHaveBeenCalledOnce();
+    expect(placeMobile).not.toHaveBeenCalled();
+  });
+
+  it('falls back to the mobile position when there is no desktop placement (no TOC)', () => {
+    const share = document.createElement('p');
+    const placeMobile = vi.fn();
+    relocateShare(share, placeMobile, null, fakeMQ(true));
+    expect(placeMobile).toHaveBeenCalledOnce();
+  });
+
+  it('re-places on breakpoint change', () => {
+    const share = document.createElement('p');
+    const placeMobile = vi.fn();
+    const placeDesktop = vi.fn();
+    const mq = fakeMQ(false);
+    relocateShare(share, placeMobile, placeDesktop, mq);
+    mq.fire(true);
+    expect(placeDesktop).toHaveBeenCalledOnce();
+  });
+});
+
+describe('tocRailRowEnd', () => {
+  it('returns null when there are no headings', () => {
+    expect(tocRailRowEnd([document.createElement('div')], [])).toBeNull();
+  });
+
+  it('computes the row-end line from the index of the last heading\'s section', () => {
+    const main = document.createElement('main');
+    main.innerHTML = `
+      <div>hero</div>
+      <div><h2 id="a">A</h2></div>
+      <div><h2 id="b">B</h2></div>
+      <div><h3>Recommended for you</h3></div>
+    `;
+    const sections = [...main.children];
+    const headings = [main.querySelector('#a'), main.querySelector('#b')];
+    // hero = index 0 (row 1); "B"'s section = index 2 (row 3) -> end line 4,
+    // leaving the trailing "Recommended for you" section (index 3) excluded.
+    expect(tocRailRowEnd(sections, headings)).toBe(4);
   });
 });
