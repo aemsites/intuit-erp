@@ -245,6 +245,14 @@ function renderTabs(block, items) {
 
 /* ---- default variant: accordion (disclosure) ------------------------------ */
 
+/**
+ * Below 768px the source abandons the accordion: every item is expanded, each
+ * with its own image inline beneath its body, and all the card chrome is
+ * dropped. That's DOM state (all regions open), not just styling, so the JS
+ * drives it off this query and the CSS keys off the `is-stacked` class.
+ */
+const STACKED_QUERY = '(width < 768px)';
+
 function renderAccordion(block, items) {
   const acc = document.createElement('div');
   acc.className = 'vt-acc';
@@ -298,6 +306,17 @@ function renderAccordion(block, items) {
     }
 
     wrap.append(header, region);
+
+    // Per-item image for the stacked mobile layout. The shared media column
+    // still gets the original node; this is a clone so both layouts can hold
+    // one (CSS shows exactly one of them at any width).
+    if (item.media) {
+      const itemMedia = document.createElement('div');
+      itemMedia.className = 'vt-item-media';
+      itemMedia.append(item.media.cloneNode(true));
+      region.append(itemMedia);
+    }
+
     acc.append(wrap);
 
     const mw = document.createElement('div');
@@ -311,15 +330,49 @@ function renderAccordion(block, items) {
   });
 
   const wraps = [...acc.children];
+  let openIndex = 0;
+
   const setOpen = (index) => {
+    openIndex = index;
     wraps.forEach((w, i) => w.classList.toggle('is-open', i === index));
     headers.forEach((h, i) => h.setAttribute('aria-expanded', i === index ? 'true' : 'false'));
     regions.forEach((r, i) => { r.hidden = i !== index; });
     medias.forEach((m, i) => m.classList.toggle('is-active', i === index));
   };
 
+  const mq = window.matchMedia(STACKED_QUERY);
+
+  /**
+   * Stacked (mobile): every region is shown and the headers stop acting as
+   * controls — so they lose aria-expanded/aria-controls entirely rather than
+   * advertising a collapse that cannot happen. Restoring re-applies whichever
+   * item was last open.
+   */
+  const applyMode = () => {
+    const stacked = mq.matches;
+    acc.classList.toggle('is-stacked', stacked);
+    if (stacked) {
+      regions.forEach((r) => { r.hidden = false; });
+      headers.forEach((h) => {
+        h.removeAttribute('aria-expanded');
+        h.removeAttribute('aria-controls');
+        h.disabled = true;
+      });
+    } else {
+      headers.forEach((h, i) => {
+        h.setAttribute('aria-controls', regions[i].id);
+        h.disabled = false;
+      });
+      setOpen(openIndex);
+    }
+  };
+
+  applyMode();
+  mq.addEventListener('change', applyMode);
+
   // one item is always open (tab-like): clicking a header opens it.
   acc.addEventListener('click', (e) => {
+    if (mq.matches) return; // stacked: everything is already open
     const header = e.target.closest('.vt-tab');
     if (!header) return;
     const idx = headers.indexOf(header);

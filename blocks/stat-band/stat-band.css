@@ -1,32 +1,43 @@
 /* stat-band — stat figures (index light carousel, pricing dark static grid). Lifted from erp.intuit.com #outcomes-slider / .perf */
 
 /* --- default (index): sky cards on white, paged carousel --- */
-.section.stat-band-container { background: #fff; padding: 64px 0 60px; }
+.section.stat-band-container { background: #fff; padding: 40px 0; }
 
 .stat-band-container .default-content-wrapper h2 {
-  font-size: 48px; font-weight: 400; text-align: center; color: var(--heading);
+  font-size: 48px; line-height: 1.4; font-weight: 400; text-align: center; color: var(--text-color);
   margin: 0 0 48px;
 }
 
-.stat-band-container .default-content-wrapper p {
-  text-align: center; font-size: 12px; color: #404b52; margin-top: 30px;
+/* footnote/disclaimer — JS moves it inside the block, above the controls */
+.stat-band-container .default-content-wrapper p,
+.stat-band .stats-foot {
+  text-align: center; font-size: 12px; line-height: 1.5; color: #000; margin: 12px 0;
 }
 
 .stat-band { --cards-per-view: 4; }
 .stat-band .stats-viewport { width: 100%; overflow: hidden; }
-.stat-band .stats-track { display: flex; gap: 22px; transition: transform 0.4s ease; }
+.stat-band .stats-track { display: flex; gap: 20px; transition: transform 0.4s ease; }
 
 .stat-band .stats-track .stat {
-  flex: 0 0 calc((100% - (var(--cards-per-view) - 1) * 22px) / var(--cards-per-view));
+  flex: 0 0 calc((100% - (var(--cards-per-view) - 1) * 20px) / var(--cards-per-view));
   min-width: 0;
 }
-.stat-band .stat { box-sizing: border-box; background: #eff4f9; border-radius: var(--radius-card); padding: 34px 28px; }
-.stat-band .stat-num { font-size: 60px; line-height: 1.2; font-weight: 400; letter-spacing: -0.03em; color: #0052ea; margin-bottom: 14px; }
-.stat-band .stat-desc { font-size: 15px; color: #404b52; margin: 0 0 30px; line-height: 1.35; }
-.stat-band .stat-co { font-size: 14px; font-weight: 700; color: #000; margin: 0 0 4px; }
-.stat-band .stat-seg { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: #404b52; margin: 0; }
 
-.stat-band .stats-controls { display: flex; align-items: center; justify-content: center; gap: 24px; margin-top: 24px; }
+.stat-band .stat {
+  box-sizing: border-box; background: #eff4f9; border-radius: 16px; padding: 20px;
+  display: flex; flex-direction: column; gap: 16px;
+}
+
+/* number+desc group, then company+segment group — the 16px card gap sits
+   between the two groups, so each element's own margin stays 0 */
+.stat-band .stat-head { display: block; }
+.stat-band .stat-foot { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.stat-band .stat-num { font-size: 60px; line-height: 1.2; font-weight: 400; letter-spacing: -0.03em; color: #0052ea; margin: 0; }
+.stat-band .stat-desc { font-size: 16px; line-height: 1.5; color: #404b52; margin: 0; }
+.stat-band .stat-co { font-size: 14px; line-height: 1.5; font-weight: 600; color: #000; margin: 0; }
+.stat-band .stat-seg { font-size: 12px; line-height: 1.2; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: #404b52; margin: 0; }
+
+.stat-band .stats-controls { display: flex; align-items: center; justify-content: flex-end; gap: 24px; margin-top: 24px; }
 .stat-band .stats-dots { display: flex; gap: 20px; align-items: center; }
 
 .stat-band .stats-dots .dot {
@@ -40,16 +51,22 @@
 .stat-band .stats-nav { display: flex; gap: 12px; }
 
 .stat-band .stats-arrow {
-  width: 40px; height: 40px; border-radius: 50%; border: none; background: var(--navy); color: #fff;
-  display: flex; align-items: center; justify-content: center; font-size: 18px; line-height: 1; cursor: pointer;
+  width: 60px; height: 60px; border-radius: 50%; border: none; background: var(--navy); color: #fff;
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
 }
-.stat-band .stats-arrow:disabled { background: #859299; opacity: 0.6; cursor: not-allowed; }
+.stat-band .stats-arrow svg { width: 24px; height: 24px; fill: currentcolor; }
+.stat-band .stats-arrow:disabled { background: #859299; opacity: 0.4; cursor: not-allowed; }
 
 /* mobile: one card per view and, matching erp.intuit.com, dots only — the
    prev/next arrows are hidden (swipe/dots drive paging on small screens). */
 @media (width <= 767px) {
   .stat-band { --cards-per-view: 1; }
   .stat-band .stats-nav { display: none; }
+  .section.stat-band-container { padding: 20px 0; }
+  .stat-band-container .default-content-wrapper h2 { font-size: 34px; margin-bottom: 24px; }
+  .stat-band .stat { padding: 20px 30px; }
+  .stat-band .stat-num { font-size: 48px; }
+  .stat-band .stats-controls { justify-content: center; padding: 20px; margin-top: 0; }
 }
 
 @media (768px <= width <= 1023px) { .stat-band { --cards-per-view: 2; } }
@@ -57,61 +74,68 @@
 @media (1024px <= width <= 1279px) { .stat-band { --cards-per-view: 3; } }
 
 /* --- .stat-band.dark (pricing "Data-backed performance") --- */
-.section.stat-band-container:has(.stat-band.dark) { background: var(--navy); padding: var(--section-y) 0; }
-.stat-band-container:has(.stat-band.dark) .default-content-wrapper h2 { color: #fff; font-size: 38px; margin-bottom: 64px; }
+.section.stat-band-container:has(.stat-band.dark) { background: var(--navy); padding: 120px 0 100px; }
 
-.stat-band-container:has(.stat-band.dark) .default-content-wrapper p {
-  font-size: 11px; line-height: 1.6; color: #8ba4bd; margin-top: 56px; text-align: left;
+.stat-band-container:has(.stat-band.dark) .default-content-wrapper h2 {
+  color: #fff; font-size: 48px; line-height: 1.4; font-weight: 500; margin: 0 0 80px;
 }
-.stat-band.dark .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; }
-.stat-band.dark .stat { background: none; border-radius: 0; padding: 0; text-align: center; }
-.stat-band.dark .stat-num { font-size: 80px; line-height: 1; color: var(--blue-light); margin-bottom: 22px; }
-.stat-band.dark .stat-desc { font-size: 15px; line-height: 1.5; color: #d5e0ec; max-width: 22em; margin: 0 auto; }
+
+.stat-band-container:has(.stat-band.dark) .default-content-wrapper p,
+.stat-band.dark .stats-foot {
+  font-size: 14px; line-height: 1.4; color: #fff; margin: 0; text-align: center;
+}
+.stat-band.dark .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.stat-band.dark .stat { background: none; border-radius: 0; padding: 0; text-align: center; display: block; }
+.stat-band.dark .stat-num { font-size: 84px; line-height: 1.4; color: #81f2fe; margin: 0 0 8px; }
+
+.stat-band.dark .stat-desc {
+  font-size: 20px; line-height: 28px; color: #fff; width: 75%; margin: 0 auto 20px;
+}
 
 @media (width <= 768px) {
-  .stat-band-container .default-content-wrapper h2 { font-size: 34px; }
-  .stat-band .stat-num { font-size: 48px; }
+  .section.stat-band-container:has(.stat-band.dark) { padding: 80px 0 40px; }
+  .stat-band-container:has(.stat-band.dark) .default-content-wrapper h2 { font-size: 34px; margin-bottom: 60px; }
   .stat-band.dark .stats-grid { grid-template-columns: 1fr; gap: 44px; }
   .stat-band.dark .stat-num { font-size: 64px; }
+  .stat-band.dark .stat-desc { width: auto; }
 }
 
-/* --- .stat-band.plain (research guide stat trios) --- */
-.section.stat-band-container:has(.stat-band.plain) { background: transparent; padding: var(--section-y) 0; }
-.stat-band-container:has(.stat-band.plain) .default-content-wrapper { max-width: 46em; margin: 0 auto; }
-.stat-band-container:has(.stat-band.plain) .default-content-wrapper h2 { font-size: 30px; font-weight: 700; text-align: left; margin: 0 0 24px; }
-.stat-band.plain .stats-grid { max-width: 46em; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-.stat-band.plain .stat { background: #fff; border: 1px solid var(--line); border-radius: var(--radius-card); padding: 24px; text-align: center; }
-.stat-band.plain .stat-num { font-size: 40px; line-height: 1.1; font-weight: 700; color: var(--heading); margin-bottom: 8px; }
-.stat-band.plain .stat-desc { font-size: 14px; line-height: 1.4; color: var(--text-muted); margin: 0; }
+/* --- .stat-band.plain (case-study inline stat callout) ---
+   erp.intuit.com renders these as its `.colored-box`: a cyan band, wider than
+   the body column, holding one centered bold sentence per authored row. */
+.section.stat-band-container:has(.stat-band.plain) { background: transparent; padding: 0; }
+
+.stat-band.plain .stats-box {
+  box-sizing: border-box; background: #c2f5ff; padding: 40px;
+  max-width: 740px; margin: 0 auto; text-align: center;
+}
+
+.stat-band.plain .stat-line {
+  font-size: 18px; line-height: 1.4; font-weight: 700; color: #000; margin: 0;
+}
+.stat-band.plain .stat-line + .stat-line { margin-top: 18px; }
 
 @media (width <= 768px) {
-  .stat-band.plain .stats-grid { grid-template-columns: 1fr; gap: 14px; }
+  .stat-band.plain .stats-box { padding: 24px 20px; }
+  .stat-band.plain .stat-line { font-size: 16px; }
 }
 
-/* --- .stat-band.glance ("Results at a glance" case-study callout) ---
-   Matches erp.intuit.com's results box: a cyan band holding an h3 label
-   (styled below via case-study body CSS) and a plain bulleted list of
-   full sentences — not a number/caption grid. */
-.section.stat-band-container:has(.stat-band.glance) { background: #c2f5ff; padding: 0; }
-
-.stat-band-container:has(.stat-band.glance) .default-content-wrapper {
-  max-width: 46em; margin: 0 auto; padding: 32px 40px 0;
-}
-
-.stat-band-container:has(.stat-band.glance) .default-content-wrapper h3 {
-  font-size: 28px; font-weight: 700; color: var(--heading); margin: 0;
-}
+/* --- .stat-band.glance (research/guide stat list) ---
+   erp.intuit.com renders these as a plain bulleted list in the article column
+   — no colored band — with the whole sentence bold, not just the number. */
+.section.stat-band-container:has(.stat-band.glance) { background: transparent; padding: 0; }
 
 .stat-band.glance .glance-list {
-  max-width: 46em; margin: 0 auto; padding: 12px 40px 32px 64px;
-  list-style: disc; list-style-position: outside;
+  max-width: 46em; margin: 0; padding: 0 0 0 40px;
+  list-style: disc outside;
 }
-.stat-band.glance .glance-list li { font-size: 18px; line-height: 1.5; color: var(--heading); margin-bottom: 8px; }
+
+.stat-band.glance .glance-list li {
+  font-size: 20px; line-height: 28px; font-weight: 700; color: #000; margin: 0 0 20px;
+}
 .stat-band.glance .glance-list li:last-child { margin-bottom: 0; }
-.stat-band.glance .glance-num { font-weight: 700; }
 
 @media (width <= 768px) {
-  .stat-band-container:has(.stat-band.glance) .default-content-wrapper { padding: 24px 20px 0; }
-  .stat-band.glance .glance-list { padding: 12px 20px 24px 44px; }
-  .stat-band.glance .glance-list li { font-size: 16px; }
+  .stat-band.glance .glance-list { padding-left: 24px; }
+  .stat-band.glance .glance-list li { font-size: 18px; line-height: 1.4; }
 }

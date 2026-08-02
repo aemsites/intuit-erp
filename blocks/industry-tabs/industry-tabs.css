@@ -10,7 +10,7 @@
 main > .section.industry-tabs-container {
   box-sizing: border-box;
   width: calc(100% - 24px);
-  max-width: 1400px;
+  max-width: 1160px;
   margin: 0 auto;
   padding: 80px 20px 40px;
   background: var(--navy);
@@ -18,8 +18,11 @@ main > .section.industry-tabs-container {
   color: #fff;
 }
 
-/* inner content column (original: 1160px centered inside the card) */
-main > .section.industry-tabs-container > div { max-width: 1160px; margin: 0 auto; padding: 0; }
+main > .section.industry-tabs-container > div { padding: 0; }
+
+/* once the card grows past 1160px the tab UI stays in a 1160px column, so the
+   rail + panel band doesn't stretch with the heading above it */
+.industry-tabs-container .industry-tabs-wrapper { max-width: 1160px; margin: 0 auto; }
 
 .industry-tabs-container .default-content-wrapper h2 {
   font-size: 28px; line-height: 1.4; font-weight: 400; color: #fff;
@@ -27,13 +30,20 @@ main > .section.industry-tabs-container > div { max-width: 1160px; margin: 0 aut
 }
 
 .industry-tabs-container .default-content-wrapper p {
-  font-size: 16px; line-height: 1.5; color: #fff;
-  text-align: center; margin: 0 auto; max-width: 640px;
+  box-sizing: border-box;
+  font-size: 16px; line-height: 1.4; color: #fff;
+  text-align: center; margin: 0 auto;
+}
+
+@media (width >= 600px) {
+  .industry-tabs-container .default-content-wrapper p { padding: 0 60px; }
 }
 
 /* ---- mobile: accordion ---- */
-.industry-tabs { margin-top: 40px; }
-.industry-tabs .it-nav { display: flex; flex-direction: column; gap: 4px; }
+.industry-tabs { --it-surface: #001d3c; margin-top: 40px; }
+
+/* 12px between accordion rows; the tab and its panel are one row */
+.industry-tabs .it-nav { display: flex; flex-direction: column; gap: 12px; }
 
 .industry-tabs .it-item { display: contents; }
 
@@ -47,7 +57,7 @@ main > .section.industry-tabs-container > div { max-width: 1160px; margin: 0 aut
   border: 0;
   border-left: 3px solid transparent;
   border-radius: 2px;
-  padding: 8px 12px;
+  padding: 6px 12px;
   font-family: inherit;
   font-size: 16px;
   line-height: 24px;
@@ -57,19 +67,19 @@ main > .section.industry-tabs-container > div { max-width: 1160px; margin: 0 aut
   cursor: pointer;
 }
 
-.industry-tabs { --it-surface: #001d3c; }
-
 .industry-tabs .it-tab .it-tab-label { flex: 1; }
 
 .industry-tabs .it-tab[aria-selected="true"] { border-left-color: var(--info); }
 
 /* tab icon (authored white .svg <img>, or EDS :icon-*: span) */
 .industry-tabs .it-tab > img,
-.industry-tabs .it-tab .icon { width: 24px; height: 24px; flex-shrink: 0; }
+.industry-tabs .it-tab .icon {
+  width: 24px; height: 24px; flex-shrink: 0; object-fit: contain;
+}
 .industry-tabs .it-tab .icon img { width: 100%; height: 100%; }
 
 .industry-tabs .it-chevron {
-  display: inline-flex; width: 20px; height: 20px; flex-shrink: 0; color: #fff;
+  display: inline-flex; width: 28px; height: 28px; flex-shrink: 0; color: #fff;
   transition: transform 0.2s ease;
 }
 .industry-tabs .it-chevron svg { width: 100%; height: 100%; }
@@ -80,7 +90,7 @@ main > .section.industry-tabs-container > div { max-width: 1160px; margin: 0 aut
 .industry-tabs .it-panel { display: none; }
 
 .industry-tabs .it-panel.is-active {
-  display: flex; flex-direction: column; gap: 40px;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 40px;
   padding: 40px 0;
   animation: it-fade-in 0.25s ease;
 }
@@ -91,7 +101,13 @@ main > .section.industry-tabs-container > div { max-width: 1160px; margin: 0 aut
   to { opacity: 1; }
 }
 
-.industry-tabs .it-copy { display: flex; flex-direction: column; gap: 16px; }
+/* the copy is inset from the panel edges on mobile; the image stays full-bleed */
+.industry-tabs .it-copy {
+  display: flex; flex-direction: column; gap: 12px;
+  align-self: stretch;
+  padding: 0 12px;
+  margin-bottom: 24px;
+}
 
 .industry-tabs .it-heading {
   font-size: 24px;
@@ -101,7 +117,10 @@ main > .section.industry-tabs-container > div { max-width: 1160px; margin: 0 aut
   margin: 0;
 }
 
-.industry-tabs .it-copy-body { display: flex; flex-direction: column; gap: 24px; }
+.industry-tabs .it-copy-body {
+  display: flex; flex-direction: column; gap: 24px;
+  padding-top: 8px;
+}
 
 .industry-tabs .it-body {
   font-size: 16px;
@@ -113,29 +132,36 @@ main > .section.industry-tabs-container > div { max-width: 1160px; margin: 0 aut
 .industry-tabs .it-cta { margin: 0; }
 
 .industry-tabs .it-cta a {
-  color: #fff;
+  color: inherit;
   text-decoration: underline;
   text-underline-offset: 3px;
   font-weight: 400;
 }
 .industry-tabs .it-cta a:hover { text-decoration: none; }
 
-.industry-tabs .it-media { margin: 0; }
+.industry-tabs .it-media { margin: 0; align-self: stretch; }
 
+/* 16:9 product shot, capped at the original's 768px intrinsic width */
 .industry-tabs .it-media img {
-  display: block; width: 100%; height: auto;
-  border-radius: 4px; object-fit: cover;
+  display: block;
+  width: 768px;
+  max-width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  border-radius: 4px;
+  object-fit: cover;
 }
 
 /* customer quote on the dark surface */
 .industry-tabs .it-quote {
-  margin: 0;
+  align-self: stretch;
+  margin: 16px 0 0;
   padding: 0 0 0 20px;
   border-left: 4px solid var(--info);
 }
 
 .industry-tabs .it-quote blockquote {
-  margin: 0 0 16px;
+  margin: 0 0 8px;
   padding: 0;
   font-size: 20px;
   line-height: 30px;
@@ -153,6 +179,7 @@ main > .section.industry-tabs-container > div { max-width: 1160px; margin: 0 aut
   line-height: 21px;
   font-weight: 400;
   color: #fff;
+  opacity: 0.9;
 }
 
 @media (width >= 600px) {
@@ -163,42 +190,58 @@ main > .section.industry-tabs-container > div { max-width: 1160px; margin: 0 aut
 @media (width >= 900px) {
   main > .section.industry-tabs-container { padding: 120px 20px 60px; }
 
-  .industry-tabs-container .default-content-wrapper h2 { font-size: 40px; line-height: 56px; }
+  .industry-tabs-container .default-content-wrapper h2 { font-size: 34px; line-height: 1.4; }
 
-  .industry-tabs-container .default-content-wrapper p {
-    font-size: 20px; line-height: 28px; max-width: 780px;
-  }
+  .industry-tabs { position: relative; margin-top: 60px; }
 
-  .industry-tabs { position: relative; margin-top: 60px; min-height: 600px; }
+  /* the rail holds the tabs at 25%; the panel supplies the rounded right-hand
+     card, so the two read as one continuous band with a 4px seam */
+  .industry-tabs .it-nav { width: 25%; gap: 4px; }
 
-  /* rail is the flat surface behind the tabs; the panel supplies the rounded
-     right-hand card, so the two read as one continuous band */
-  .industry-tabs .it-nav { width: 289px; gap: 4px; }
-
-  .industry-tabs .it-tab {
-    justify-content: flex-start;
-    padding: 6px 12px;
-    font-weight: 600;
-  }
+  .industry-tabs .it-tab { justify-content: flex-start; }
 
   .industry-tabs .it-tab[aria-selected="true"] { background: var(--it-surface); }
   .industry-tabs .it-tab:not([aria-selected="true"]) { background: var(--navy); }
-  .industry-tabs .it-tab:not([aria-selected="true"]):hover { background: rgb(0 29 60 / 60%); }
+  .industry-tabs .it-tab:not([aria-selected="true"]):hover { background: var(--it-surface); }
 
   .industry-tabs .it-chevron { display: none; }
 
-  /* pull the active panel out of the rail into the right column */
-  .industry-tabs .it-panel { position: absolute; top: 0; left: 289px; right: 0; }
+  /* pull the active panel out of the rail into the right column. It's absolute
+     so the tabs stay stacked in the rail; industry-tabs.js keeps the block's
+     min-height in sync with the active panel. */
+  .industry-tabs .it-panel { position: absolute; top: 0; left: 25%; right: 0; margin-left: 4px; }
 
   .industry-tabs .it-panel.is-active {
     background: var(--it-surface);
     border-radius: 0 16px 16px 0;
     padding: 40px;
-    gap: 40px;
   }
 
   /* heading beside body/link, image + quote full width beneath */
-  .industry-tabs .it-copy { flex-direction: row; gap: 60px; align-items: flex-start; }
-  .industry-tabs .it-heading { flex: 1 1 0; max-width: 270px; font-size: 34px; line-height: 36px; }
-  .industry-tabs .it-copy-body { flex: 1 0 0; gap: 24px; }
+  .industry-tabs .it-copy {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 60px;
+    padding: 0;
+    margin-bottom: 0;
+  }
+
+  .industry-tabs .it-heading { flex: 1 1 0; max-width: 270px; }
+  .industry-tabs .it-copy-body { flex: 1 0 0; }
+}
+
+/* the original reaches its full type scale at 1200px, and only then grows the
+   panel heading to 34px */
+@media (width >= 1200px) {
+  .industry-tabs-container .default-content-wrapper h2 { font-size: 40px; line-height: 56px; }
+  .industry-tabs-container .default-content-wrapper p { font-size: 20px; line-height: 28px; }
+  .industry-tabs .it-heading { font-size: 34px; line-height: 36px; }
+}
+
+/* widest step: the card grows past its 1160px cap, and the subhead narrows to
+   2/3 of it so it doesn't outrun the heading */
+@media (width >= 1440px) {
+  main > .section.industry-tabs-container { max-width: 1400px; }
+  .industry-tabs-container .default-content-wrapper p { max-width: 66.7%; padding: 0 80px; }
 }
