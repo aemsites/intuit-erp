@@ -58,7 +58,7 @@
 .media-text.sky .media-copy p a { color: var(--primary); text-decoration: underline; font-size: 15px; }
 
 /* ---- .cards (index "A migration path") ---- */
-.section.media-text-container:has(.media-text.cards) { background: #fff; padding: 0 0 var(--section-y); }
+.section.media-text-container:has(.media-text.cards) { background: #fff; padding: var(--section-y) 0; }
 .media-text.cards .mig-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; }
 .media-text.cards .mig-card { background: var(--sand); border-radius: var(--radius-card); padding: 36px; }
 .media-text.cards .mig-card .media-eyebrow { margin-bottom: 14px; }
