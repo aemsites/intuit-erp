@@ -1,23 +1,75 @@
-/* cta-band — split stat + dark CTA card (index "first call"). Lifted from .firstcall */
+/*
+ * cta-band — split stat + dark CTA card (index "first call"). Values matched to
+ * erp.intuit.com: 1:2 columns, 24px radius, 80px padding, stat desc 34px, title 48px.
+ */
 .section.cta-band-container { background: #fff; padding: 0 0 var(--section-y); }
-.cta-band .firstcall-grid { display: grid; grid-template-columns: 1fr 1.6fr; gap: 26px; align-items: stretch; }
+.cta-band .firstcall-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; align-items: stretch; }
 
 .cta-band .firstcall-stat {
-  background: var(--sky); border-radius: var(--radius-card); padding: 56px 44px;
+  background: #d6e8f8; border-radius: 24px; padding: 80px;
   display: flex; flex-direction: column; justify-content: center;
 }
-.cta-band .fc-num { font-size: 64px; font-weight: 400; color: var(--navy); line-height: 1; margin-bottom: 14px; }
-.cta-band .fc-desc { font-size: 18px; color: var(--text); max-width: 14em; margin: 0; }
-.cta-band .firstcall-card { background: var(--navy); color: #fff; border-radius: var(--radius-card); padding: 56px 44px; }
-.cta-band .fc-eyebrow { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.8; margin: 0 0 14px; }
-.cta-band .fc-title { font-size: 30px; font-weight: 400; margin: 0 0 16px; color: #fff; }
-.cta-band .fc-body { font-size: 15px; line-height: 1.6; color: #d5e0ec; max-width: 40em; margin: 0 0 26px; }
-.cta-band .firstcall-card a.button.primary { background: #fff; color: var(--ink-teal); border-color: #fff; }
+.cta-band .fc-num { font-size: 60px; font-weight: 400; color: #000; line-height: 1.1; margin-bottom: 20px; }
+.cta-band .fc-desc { font-size: 34px; font-weight: 400; line-height: 1.4; color: #000; max-width: 9em; margin: 0; }
+.cta-band .firstcall-card { background: var(--navy); color: #fff; border-radius: 24px; padding: 80px; }
+.cta-band .fc-eyebrow { font-size: 12px; letter-spacing: 0.02em; text-transform: uppercase; opacity: 0.85; margin: 0 0 18px; }
+.cta-band .fc-title { font-size: 48px; font-weight: 400; line-height: 1.1; margin: 0 0 24px; color: #fff; }
+.cta-band .fc-body { font-size: 16px; line-height: 1.6; color: #d5e0ec; max-width: 40em; margin: 0 0 32px; }
+.cta-band .firstcall-card a.button.primary { background: #fff; color: var(--ink-teal); border-color: #fff; border-radius: 4px; }
 .cta-band .firstcall-card a.button.primary:hover { background: #eef4f6; border-color: #eef4f6; }
 .cta-band .firstcall-card .button-wrapper { margin: 0; }
 
+/*
+ * simple variant — full-bleed light band, centered black statement, ghost
+ * button (guide download pages). Matches erp.intuit.com guide CTA:
+ * bg #eaf6f7, text #000 34px/700 centered, outline button (2px navy, 4px radius).
+ */
+main > .section.cta-band-container:has(.cta-band.simple) { padding: 0; }
+main > .section.cta-band-container:has(.cta-band.simple) > div { max-width: none; padding: 0; }
+
+.cta-band.simple { background: #eaf6f7; }
+
+.cta-band.simple .firstcall-grid {
+  display: block; max-width: 720px; margin: 0 auto; padding: 60px 30px; text-align: center;
+}
+
+.cta-band.simple .firstcall-card {
+  background: none; color: #000; border-radius: 0; padding: 0; display: block;
+}
+
+/*
+ * Heading + body are separate fields but the original renders them as one
+ * continuous statement, so flow them inline (both are identical 24px/700) with
+ * a space between; the button-wrapper stays block and drops to its own line.
+ */
+.cta-band.simple .fc-title,
+.cta-band.simple .fc-body {
+  display: inline;
+  font-size: 24px; font-weight: 700; line-height: 32px; color: #000; margin: 0; max-width: none;
+  -webkit-font-smoothing: antialiased;
+}
+.cta-band.simple .fc-title::after { content: "\0020"; }
+
+.cta-band.simple .firstcall-card .button-wrapper {
+  margin: 40px 0 0; display: flex; justify-content: center;
+}
+
+.cta-band.simple .firstcall-card a.button {
+  background: none; color: var(--navy); border: 2px solid var(--navy); border-radius: 4px;
+  height: 48px; padding: 0 28px; font-size: 16px; font-weight: 600;
+}
+
+.cta-band.simple .firstcall-card a.button:hover,
+.cta-band.simple .firstcall-card a.button:focus-visible {
+  background: var(--navy); color: #fff;
+}
+
 @media (width <= 768px) {
   .cta-band .firstcall-grid { grid-template-columns: 1fr; gap: 16px; }
-  .cta-band .firstcall-stat, .cta-band .firstcall-card { padding: 28px; }
-  .cta-band .fc-num { font-size: 52px; }
+  .cta-band .firstcall-stat, .cta-band .firstcall-card { padding: 40px 28px; }
+  .cta-band .fc-num { font-size: 48px; }
+  .cta-band .fc-desc { font-size: 24px; }
+  .cta-band .fc-title { font-size: 32px; }
+  .cta-band.simple .firstcall-grid { padding: 44px 24px; }
+  .cta-band.simple .fc-title, .cta-band.simple .fc-body { font-size: 20px; line-height: 28px; }
 }
