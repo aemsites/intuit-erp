@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-syntax */
 // Sends OF1's anonymous interest/intent signals into RTCDP via the on-page Web
 // SDK (Alloy). Pure mapping (buildOf1SignalXdm) is unit-tested; the DOM/Alloy
 // wiring (sendOf1Signal) is verified manually in Adobe Assurance. Fail-open:
