@@ -152,6 +152,36 @@ const NAV = [
   },
 ];
 
+const CTA_CHEVRON_SVG = `<svg viewBox="0 0 6 10" width="6" height="10" focusable="false">
+            <path fill="currentColor" d="M0.750913 2.86102e-06C0.602552 -0.00039196 0.457411 0.0412617 0.333906 0.119678C0.210401 0.198094 0.1141 0.309739 0.0572195 0.440448C0.000339537 0.571156 -0.0145552 0.715035 0.0144259 0.853832C0.0434069 0.992628 0.114957 1.12008 0.219998 1.22003L4.18876 4.99511L0.234226 8.7809C0.164751 8.84731 0.109669 8.92613 0.0721264 9.01285C0.0345832 9.09957 0.0153135 9.19249 0.0154178 9.28631C0.0155221 9.38013 0.0349982 9.47302 0.0727341 9.55966C0.11047 9.6463 0.165727 9.72501 0.235349 9.79128C0.304972 9.85755 0.387596 9.91009 0.478506 9.94591C0.569415 9.98172 0.66683 10.0001 0.765186 10C0.863543 9.9999 0.960916 9.98132 1.05175 9.94533C1.14258 9.90933 1.22508 9.85662 1.29456 9.79021L5.78075 5.49798C5.92114 5.36402 6 5.18237 6 4.99296C6 4.80356 5.92114 4.62191 5.78075 4.48795L1.27958 0.208579C1.21024 0.142269 1.12783 0.0897026 1.03709 0.0539055C0.946361 0.0181093 0.8491 -0.000210762 0.750913 2.86102e-06Z"/>
+          </svg>`;
+
+// Appended to .nav-main by decorate() (not part of chromeHTML's nav row) so
+// it's present regardless of whether the nav-menu content is authored or
+// falls back to NAV_MAIN_FALLBACK. Mobile-only — see header.css — matching
+// erp.intuit.com's own mobile menu, which puts a "Schedule a call" CTA and
+// the cross-sell brand strip inside the opened drawer, after the nav links.
+function mobileExtraHTML() {
+  return `
+    <div class="nav-mobile-extra">
+      <button type="button" class="btn btn-primary nav-cta">
+        <span class="nav-cta-text">Schedule a call</span>
+        <span class="nav-cta-icon" aria-hidden="true">${CTA_CHEVRON_SVG}</span>
+      </button>
+      <div class="nav-mobile-brands">
+        <a href="https://www.intuit.com/" class="bs-logo bs-logo-intuit" aria-label="Intuit">${LOGO_INTUIT}</a>
+        <a href="https://turbotax.intuit.com/" class="bs-logo bs-logo-turbotax" target="_blank" rel="noopener" aria-label="TurboTax">${LOGO_TURBOTAX_ICON}${LOGO_TURBOTAX_WORD}</a>
+        <a href="https://www.creditkarma.com/" class="bs-logo bs-logo-creditkarma" target="_blank" rel="noopener" aria-label="Credit Karma">${LOGO_CREDITKARMA_ICON}${LOGO_CREDITKARMA_WORD}</a>
+        <a href="https://quickbooks.intuit.com/" class="bs-logo bs-logo-quickbooks" target="_blank" rel="noopener" aria-label="QuickBooks">${LOGO_QUICKBOOKS_ICON}${LOGO_QUICKBOOKS_WORD}</a>
+        <a href="https://mailchimp.com/" class="bs-logo bs-logo-mailchimp" target="_blank" rel="noopener" aria-label="Mailchimp">${LOGO_MAILCHIMP_ICON}${LOGO_MAILCHIMP_WORD}</a>
+      </div>
+    </div>`;
+}
+
+// Mobile-only "Back" control at the top of each flyout, returning to the
+// top-level list — see the drill-down CSS in header.css. Hidden on desktop.
+const FLYOUT_BACK_HTML = '<button type="button" class="flyout-back"><i class="flyout-back-icon"></i>Back</button>';
+
 function linkHTML(l) {
   const cls = `flyout-link${l.internal ? ' is-internal' : ''}`;
   const tgt = l.internal ? '' : ' target="_blank" rel="noopener"';
@@ -171,11 +201,10 @@ function navItemHTML(entry, idx) {
           ${c.heading ? `<p class="flyout-heading">${c.heading}</p>` : ''}
           ${c.links.map(linkHTML).join('')}
         </div>`).join('');
-  const wideCls = entry.columns.length > 3 ? ' flyout-wide' : '';
   return `
       <div class="nav-item">
         <button type="button" aria-expanded="false" aria-controls="${id}">${entry.label}<i class="caret"></i></button>
-        <div class="flyout${wideCls}" id="${id}" hidden><div class="flyout-inner">${cols}</div></div>
+        <div class="flyout" id="${id}" aria-hidden="true">${FLYOUT_BACK_HTML}<div class="flyout-inner">${cols}</div></div>
       </div>`;
 }
 
@@ -199,11 +228,7 @@ function chromeHTML(navMainHTML) {
     <div class="nav-right">
       <button type="button" class="btn btn-primary nav-cta">
         <span class="nav-cta-text">Schedule a call</span>
-        <span class="nav-cta-icon" aria-hidden="true">
-          <svg viewBox="0 0 6 10" width="6" height="10" focusable="false">
-            <path fill="currentColor" d="M0.750913 2.86102e-06C0.602552 -0.00039196 0.457411 0.0412617 0.333906 0.119678C0.210401 0.198094 0.1141 0.309739 0.0572195 0.440448C0.000339537 0.571156 -0.0145552 0.715035 0.0144259 0.853832C0.0434069 0.992628 0.114957 1.12008 0.219998 1.22003L4.18876 4.99511L0.234226 8.7809C0.164751 8.84731 0.109669 8.92613 0.0721264 9.01285C0.0345832 9.09957 0.0153135 9.19249 0.0154178 9.28631C0.0155221 9.38013 0.0349982 9.47302 0.0727341 9.55966C0.11047 9.6463 0.165727 9.72501 0.235349 9.79128C0.304972 9.85755 0.387596 9.91009 0.478506 9.94591C0.569415 9.98172 0.66683 10.0001 0.765186 10C0.863543 9.9999 0.960916 9.98132 1.05175 9.94533C1.14258 9.90933 1.22508 9.85662 1.29456 9.79021L5.78075 5.49798C5.92114 5.36402 6 5.18237 6 4.99296C6 4.80356 5.92114 4.62191 5.78075 4.48795L1.27958 0.208579C1.21024 0.142269 1.12783 0.0897026 1.03709 0.0539055C0.946361 0.0181093 0.8491 -0.000210762 0.750913 2.86102e-06Z"/>
-          </svg>
-        </span>
+        <span class="nav-cta-icon" aria-hidden="true">${CTA_CHEVRON_SVG}</span>
       </button>
       <button class="nav-toggle" aria-label="Menu"><span></span><span></span><span></span></button>
     </div>
@@ -231,7 +256,10 @@ async function fetchNavMainHTML(path) {
 }
 
 // Wire the click-to-open flyouts: one panel open at a time, closes on outside
-// click or Escape. Works as a stacked accordion on mobile via CSS.
+// click or Escape. Desktop shows the open one as a dropdown; mobile drills
+// into it full-screen instead (see header.css) — nav-main's "has-open"
+// class (kept in sync with whether any item is open) drives that slide, and
+// each flyout's "Back" control (.flyout-back) just calls closeAll().
 function wireFlyouts(block) {
   const nav = block.querySelector('.nav-main');
   if (!nav) return;
@@ -243,7 +271,8 @@ function wireFlyouts(block) {
     const btn = item.querySelector('button');
     const panel = item.querySelector('.flyout');
     if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-    if (panel) panel.hidden = !open;
+    if (panel) panel.setAttribute('aria-hidden', open ? 'false' : 'true');
+    nav.classList.toggle('has-open', items.some((it) => it.classList.contains('open')));
   };
   const closeAll = (except) => items.forEach((it) => { if (it !== except) setOpen(it, false); });
 
@@ -258,6 +287,10 @@ function wireFlyouts(block) {
     });
   });
 
+  nav.querySelectorAll('.flyout-back').forEach((backBtn) => {
+    backBtn.addEventListener('click', () => closeAll());
+  });
+
   document.addEventListener('click', (e) => { if (!nav.contains(e.target)) closeAll(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeAll(); });
 }
@@ -267,6 +300,7 @@ export default async function decorate(block) {
   const navPath = navMeta ? new URL(navMeta, window.location).pathname : '/nav';
   const navMainHTML = (await fetchNavMainHTML(navPath)) || NAV_MAIN_FALLBACK;
   block.innerHTML = chromeHTML(navMainHTML);
+  block.querySelector('.nav-main')?.insertAdjacentHTML('beforeend', mobileExtraHTML());
 
   // sticky-nav scroll-morph. Reading window.scrollY forces a synchronous
   // layout if styles were just invalidated (e.g. the innerHTML write above),

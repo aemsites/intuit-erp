@@ -35,32 +35,87 @@ header .header .container { max-width: var(--container); margin: 0 auto; padding
 .header .nav-logo svg { height: 20px; width: auto; display: block; }
 .header .nav-main { display: flex; align-items: stretch; gap: 26px; margin-left: 10px; }
 .header .nav-item { position: relative; display: inline-flex; align-items: center; }
-.header .nav-main button, .header .nav-main > a, .header .nav-main .nav-link { background: none; border: 0; padding: 2px 0; font-size: 16px; font-weight: 400; color: var(--heading); display: inline-flex; align-items: center; gap: 6px; font-family: inherit; cursor: pointer; text-decoration: none; }
-.header .nav-main button:hover, .header .nav-main .nav-link:hover { color: var(--primary); }
-.header .nav-main .caret { width: 8px; height: 8px; border-right: 2px solid var(--primary); border-bottom: 2px solid var(--primary); transform: rotate(45deg); margin-top: -3px; transition: transform 0.15s ease; }
-.header .nav-item.open button { color: var(--primary); }
+
+/* underline reveal matches erp.intuit.com's own nav-link/trigger component:
+   a 1px currentColor bar grows left-to-right on hover/focus/open over a full
+   0.85s using its distinctive slow-settle easing — much longer and gentler
+   than a typical hover transition, which is what reads as "unique" here.
+   `button:not(.flyout-back)` — .flyout-back is also a <button> nested
+   inside .nav-main (via .flyout), so the plain descendant selector was
+   matching it too, clobbering its own padding/gap/font-weight and giving it
+   an unwanted underline. */
+.header .nav-main button:not(.flyout-back), .header .nav-main > a, .header .nav-main .nav-link { position: relative; background: none; border: 0; padding: 2px 0; font-size: 16px; font-weight: 400; color: var(--heading); display: inline-flex; align-items: center; gap: 6px; font-family: inherit; cursor: pointer; text-decoration: none; }
+
+.header .nav-main button:not(.flyout-back)::after, .header .nav-main > a::after, .header .nav-main .nav-link::after {
+  content: ''; position: absolute; left: 0; bottom: 0; height: 1px; width: 100%; background: currentcolor;
+  transform: scaleX(0); transform-origin: left;
+  transition: transform 0.85s cubic-bezier(0.02, 0.05, 0.01, 0.99);
+}
+
+/* Text color is unchanged on hover/open on the real site — only the
+   underline moves. Color is currentColor throughout (not a hardcoded blue),
+   rotation (45deg -> -135deg is already the correct 180deg flip) unchanged;
+   timing/easing now match erp.intuit.com's standard "slow" easing over
+   0.3s (was a quick linear-ish 0.15s ease), and its rendered size (~7px) is
+   a touch smaller than our previous 8px. */
+.header .nav-main .caret { width: 7px; height: 7px; border-right: 1.5px solid currentcolor; border-bottom: 1.5px solid currentcolor; transform: rotate(45deg); margin-top: -2px; transition: transform 0.3s cubic-bezier(0.35, 0, 0.5, 1); }
 .header .nav-item.open .caret { transform: rotate(-135deg); margin-top: 2px; }
 
-/* flyout panels */
-.header .flyout { position: absolute; top: 100%; left: 0; z-index: 60; background: #fff; border: 1px solid var(--line); border-top: 3px solid var(--navy); box-shadow: 0 18px 40px rgb(0 0 0 / 12%); padding: 22px 26px; }
-.header .flyout[hidden] { display: none; }
-
-/* Wide (4+ column) flyouts, e.g. Resources, are too wide to stay anchored
-   under their own trigger without running off the right edge of the
-   viewport. Their .nav-item drops out of the positioning chain (position:
-   static) so the flyout resolves against .container instead — the full nav
-   row — and hangs from its right edge, growing leftward into the row's
-   full width rather than rightward off-screen. */
-.header .nav-item:has(.flyout-wide) { position: static; }
-.header .flyout-wide { left: auto; right: 0; }
-.header .flyout-inner { display: flex; gap: 24px; }
-.header .flyout-col { min-width: 150px; }
+/* Full-bleed mega-panel, matching erp.intuit.com's own dropdown: the panel
+   background spans the entire nav row edge-to-edge — not a small boxed
+   dropdown anchored under the trigger — with its columns held to the same
+   max-width/padding as the rest of the header via .flyout-inner, generous
+   40px vertical padding, and a wider column min-width. It shows/hides via
+   opacity + a slight vertical settle (no hard display toggle), matching the
+   source closer than an instant show/hide. Un-widened from a small dropdown
+   box, every flyout now gets this same full-width treatment (previously
+   only 4+ column ones did via `.flyout-wide`, now removed as redundant). */
+.header .flyout {
+  position: absolute; top: 100%; left: 0; right: 0; z-index: 60;
+  background: #fff; border-bottom: 1px solid var(--line);
+  padding-block: 40px;
+  opacity: 0; pointer-events: none; transform: translateY(8px);
+  transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
+.header .nav-item.open .flyout { opacity: 1; pointer-events: auto; transform: translateY(0); }
+.header .flyout-inner { max-width: var(--container); margin: 0 auto; padding: 0 40px; display: flex; flex-wrap: wrap; gap: 24px; row-gap: 20px; }
+.header .flyout-col { min-width: 220px; }
 .header .flyout-heading { margin: 0 0 8px; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
-.header .flyout-link { display: block; padding: 8px 0; }
+.header .flyout-link { display: block; padding: 10px 0; }
 .header .flyout-label { display: flex; align-items: flex-start; gap: 8px; font-size: 15px; font-weight: 600; color: var(--heading); line-height: 1.25; }
 .header .flyout-desc { display: block; font-size: 13px; color: var(--text-muted); margin-top: 2px; }
 .header .flyout-link:hover .flyout-label { color: var(--primary); }
+
+/* mobile-only drill-down "Back" control (see @media below) — desktop's
+   dropdown has no equivalent, so it must be hidden here explicitly rather
+   than relying on the mobile block alone (a bare <button> defaults to
+   visible/inline-block, which is why it was showing up in the desktop
+   flyout too). */
+.header .flyout-back { display: none; }
+
+/* .nav-item/.container drop out of the positioning chain at desktop widths
+   only, so .flyout (position:absolute, left:0;right:0) resolves against
+   .ies-nav — which spans the full viewport, unlike .container's max-width —
+   giving the true edge-to-edge bleed. Scoped to this breakpoint so it can't
+   affect the unrelated mobile drill-down drawer, which already overrides
+   .flyout's positioning entirely below 1300px. Also where the underline
+   reveal actually triggers — it's a hover effect, so it has no business
+   firing on mobile taps (real hover doesn't exist there, but some mobile
+   browsers simulate a lingering "sticky hover" after tap, which was making
+   it flash on regardless). */
+@media (min-width: 1300px) {
+  .header .nav-item { position: static; }
+  .header .ies-nav .container { position: static; }
+
+  .header .nav-main button:not(.flyout-back):hover::after, .header .nav-main > a:hover::after, .header .nav-main .nav-link:hover::after,
+  .header .nav-main button:not(.flyout-back):focus-visible::after, .header .nav-main .nav-link:focus-visible::after,
+  .header .nav-item.open button:not(.flyout-back)::after { transform: scaleX(1); }
+}
 .header .nav-right { margin-left: auto; display: flex; align-items: center; gap: 22px; }
+
+/* CTA + brand strip appended to the mobile menu only (see decorate() in
+   header.js); desktop already shows both elsewhere (.nav-right, .ies-topstrip). */
+.header .nav-mobile-extra { display: none; }
 
 /* font-weight 500 (Medium), matching erp.intuit.com's own CTA label exactly
    — 600 (Demi Bold) reads visibly heavier since Avenir Next ships 500 as a
@@ -107,25 +162,109 @@ header .header .container { max-width: var(--container); margin: 0 auto; padding
   .header .nav-main { display: none; }
 
   .header.nav-open .nav-main {
-    display: flex; flex-direction: column; align-items: stretch; gap: 6px;
-    position: absolute; left: 0; right: 0; top: 56px; background: #fff; padding: 14px 20px 20px;
+    display: block; position: absolute; left: 0; right: 0; top: 56px; background: #fff;
     border-bottom: 1px solid var(--line); box-shadow: 0 12px 24px rgb(0 0 0 / 8%); z-index: 49;
-    max-height: calc(100vh - 56px); overflow-y: auto;
+    box-sizing: border-box; height: calc(100vh - 56px); overflow: hidden auto;
+    padding-top: 14px; padding-bottom: 20px;
   }
 
-  /* flyouts become stacked accordions inside the mobile menu */
-  .header .nav-item { display: block; width: 100%; }
-  .header .nav-item button { width: 100%; justify-content: space-between; padding: 10px 0; }
-  .header .nav-main > .nav-link, .header .nav-main > .acct-link { padding: 10px 0; }
-  .header .flyout { position: static; border: 0; border-top: 0; box-shadow: none; padding: 0 0 8px 14px; }
+  /* position:static (not the desktop default, relative) so .flyout's
+     position:absolute below resolves against .nav-main (full-screen, since
+     that's the nearest positioned ancestor once this drops out) instead of
+     against a single ~44px-tall .nav-item row — without this override the
+     drilled-in submenu panel renders squashed into that row's height rather
+     than filling the screen. */
+  .header .nav-item { position: static; display: block; width: 100%; padding: 0 20px; }
+  .header .nav-main > a { padding: 0 20px; }
+
+  /* Matches erp.intuit.com's mobile menu: entries are separated by a thin
+     divider (not present before) with generous 24px vertical padding (was
+     10px) — the source's own mega-nav-button-group spacing, which drops the
+     divider only for its desktop row layout, not here. Divider runs down
+     through .nav-mobile-extra (the CTA), consistent with the rest of the
+     list; nothing below that needs it, since the brand strip already has
+     its own separator. Targets .nav-link/.acct-link by class (not just the
+     bare `a`) so it reliably outranks the base rule's `border: 0` shorthand
+     on plain nav-main links — same specificity via the element selector
+     alone left this one at the mercy of source order, and "For accounting
+     firms" (the one plain-link entry) was inconsistently losing its border. */
+  .header .nav-item, .header .nav-main > a, .header .nav-main > .nav-link, .header .nav-main > .acct-link, .header .nav-mobile-extra { border-top: 1px solid rgb(0 37 74 / 20%); }
+  .header .nav-item:first-child, .header .nav-main > a:first-child { border-top: 0; }
+
+  /* Direct-child combinator, not a descendant selector: .flyout-back is
+     also a <button> nested inside .nav-item (via .flyout), so the
+     descendant form was matching it too and its space-between was shoving
+     "Back" to the far right instead of right after the chevron icon. */
+  .header .nav-item > button { width: 100%; justify-content: space-between; padding: 24px 0; }
+  .header .nav-main > .nav-link, .header .nav-main > .acct-link { display: block; padding: 24px 0; }
+
+  /* Drill-down, matching erp.intuit.com's mobile nav: opening a menu item
+     doesn't expand an accordion in place under it — the top-level list
+     slides fully out to the left and the item's own submenu slides in from
+     the right to replace it edge-to-edge, with a "Back" control (added to
+     each .flyout, see header.js/nav-menu.js) returning to the top-level
+     list. This mirrors the source's stacked mobile-main-section /
+     mobile-submenu-section panels rather than our previous in-place
+     accordion. .nav-mobile-extra (CTA + brand links, appended after the nav
+     links in decorate()) is part of the same sliding top-level panel, since
+     it also hides during drill-down on the source. */
+  .header .nav-item, .header .nav-main > a, .header .nav-mobile-extra {
+    transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+  }
+
+  .header .nav-main.has-open > .nav-item:not(.open),
+  .header .nav-main.has-open > a,
+  .header .nav-main.has-open > .nav-mobile-extra {
+    transform: translateX(-100%); opacity: 0; pointer-events: none;
+  }
+
+  .header .nav-main.has-open .nav-item.open > button {
+    transform: translateX(-100%); opacity: 0; pointer-events: none;
+    transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+  }
+
+  .header .flyout {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    overflow-y: auto; border: 0; box-shadow: none; padding: 14px 20px 20px;
+    transform: translateX(100%);
+    transition: transform 0.3s ease-in-out;
+  }
+  .header .nav-item.open .flyout { transform: translateX(0); }
   .header .flyout-inner { flex-direction: column; gap: 16px; }
+
+  .header .flyout-back {
+    display: flex; align-items: center; gap: 10px; width: 100%;
+    background: none; border: 0; padding: 14px 0 10px; margin-bottom: 8px;
+    font-size: 16px; font-weight: 500; font-family: inherit; color: var(--heading); cursor: pointer;
+  }
+  .header .flyout-back-icon { width: 7px; height: 7px; border-left: 1.5px solid currentcolor; border-bottom: 1.5px solid currentcolor; transform: rotate(45deg); }
   .header .nav-right { gap: 12px; }
 
-  /* matches erp.intuit.com: the mobile top bar shows only the logo + menu
-     toggle — the CTA doesn't fit next to the full "Enterprise Suite"
-     wordmark without overflowing the viewport, and the hero already
-     repeats "Schedule a call" on every page. */
-  .header .nav-cta { display: none; }
+  /* The desktop CTA (in .nav-right, next to the hamburger) still doesn't
+     fit next to the full wordmark — but unlike that one, erp.intuit.com
+     does put a "Schedule a call" CTA inside the opened mobile menu itself,
+     after the nav links and before the brand strip; see .nav-mobile-extra. */
+  .header .nav-right .nav-cta { display: none; }
+  .header .nav-mobile-extra { display: flex; flex-direction: column; padding: 24px 20px 20px; }
+  .header .nav-mobile-extra .nav-cta { width: 100%; }
+
+  .header .nav-mobile-brands {
+    display: flex; flex-direction: column; gap: 16px; margin-top: 24px; padding-top: 24px;
+    border-top: 1px solid var(--line);
+  }
+
+  /* a-logotype's "medium" variant, not "small" (used in .ies-topstrip) — a
+     touch-friendly stacked list reads too small at the topstrip's tiny size. */
+  .header .nav-mobile-brands .bs-logo-intuit svg { height: 13.5px; }
+
+  .header .nav-mobile-brands .bs-logo-turbotax svg:first-child,
+  .header .nav-mobile-brands .bs-logo-creditkarma svg:first-child,
+  .header .nav-mobile-brands .bs-logo-quickbooks svg:first-child,
+  .header .nav-mobile-brands .bs-logo-mailchimp svg:first-child { height: 19px; }
+  .header .nav-mobile-brands .bs-logo-turbotax svg:last-child { height: 13.5px; margin-top: -1px; }
+  .header .nav-mobile-brands .bs-logo-creditkarma svg:last-child { height: 13.5px; margin-top: -1px; }
+  .header .nav-mobile-brands .bs-logo-quickbooks svg:last-child { height: 17px; margin-bottom: -2px; }
+  .header .nav-mobile-brands .bs-logo-mailchimp svg:last-child { height: 16.5px; margin-bottom: -2px; }
   .header .ies-events .container { font-size: 13px; padding-top: 12px; padding-bottom: 12px; }
   .header .nav-toggle { display: inline-flex; flex-direction: column; gap: 4px; background: none; border: 0; padding: 6px; cursor: pointer; }
   .header .nav-toggle span { width: 22px; height: 2px; background: currentcolor; display: block; }
