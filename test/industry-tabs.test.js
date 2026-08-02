@@ -1,7 +1,7 @@
 import {
   describe, it, expect, vi,
 } from 'vitest';
-import { renderPanels } from '../blocks/industry-tabs/industry-tabs.js';
+import decorate, { renderPanels } from '../blocks/industry-tabs/industry-tabs.js';
 
 const data = [
   {
@@ -106,61 +106,24 @@ describe('industry-tabs renderPanels', () => {
   });
 });
 
-describe('industry-tabs decorate (network isolation)', () => {
-  it('fetches the JSON URL from the block cell link and renders panels on success (bare array)', async () => {
-    const { default: decorate } = await import('../blocks/industry-tabs/industry-tabs.js');
+describe('industry-tabs decorate (authored content only)', () => {
+  it('renders tabs+panels from authored rows, without any fetch', () => {
     const block = document.createElement('div');
     block.className = 'industry-tabs block';
-    block.innerHTML = '<div><div><a href="/foo/data.json">data.json</a></div></div>';
-    globalThis.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => data,
-    });
-    await decorate(block);
-    expect(globalThis.fetch).toHaveBeenCalledWith('/foo/data.json');
-    expect(block.querySelectorAll('[role="tab"]').length).toBe(2);
-  });
-
-  it('handles a { data: [...] } wrapped shape', async () => {
-    const { default: decorate } = await import('../blocks/industry-tabs/industry-tabs.js');
-    const block = document.createElement('div');
-    block.className = 'industry-tabs block';
-    block.innerHTML = '<div><div><a href="/foo/data.json">data.json</a></div></div>';
-    globalThis.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({ data }),
-    });
-    await decorate(block);
-    expect(block.querySelectorAll('[role="tab"]').length).toBe(2);
-  });
-
-  it('degrades gracefully without throwing when fetch fails', async () => {
-    const { default: decorate } = await import('../blocks/industry-tabs/industry-tabs.js');
-    const block = document.createElement('div');
-    block.className = 'industry-tabs block';
-    block.innerHTML = '<div><div><a href="/foo/data.json">data.json</a></div></div>';
-    globalThis.fetch = vi.fn().mockRejectedValue(new Error('network down'));
-    await expect(decorate(block)).resolves.not.toThrow();
-    expect(block.querySelectorAll('[role="tab"]').length).toBe(0);
-  });
-
-  it('degrades gracefully without throwing when the response is not ok', async () => {
-    const { default: decorate } = await import('../blocks/industry-tabs/industry-tabs.js');
-    const block = document.createElement('div');
-    block.className = 'industry-tabs block';
-    block.innerHTML = '<div><div><a href="/foo/data.json">data.json</a></div></div>';
-    globalThis.fetch = vi.fn().mockResolvedValue({ ok: false });
-    await expect(decorate(block)).resolves.not.toThrow();
-    expect(block.querySelectorAll('[role="tab"]').length).toBe(0);
-  });
-
-  it('degrades gracefully without throwing when there is no source link', async () => {
-    const { default: decorate } = await import('../blocks/industry-tabs/industry-tabs.js');
-    const block = document.createElement('div');
-    block.className = 'industry-tabs block';
+    block.innerHTML = '<div><div>Construction</div><div><h3>H</h3><p>B</p></div></div>'
+      + '<div><div>Retail</div><div><h3>H2</h3><p>B2</p></div></div>';
     globalThis.fetch = vi.fn();
-    await expect(decorate(block)).resolves.not.toThrow();
+    decorate(block);
     expect(globalThis.fetch).not.toHaveBeenCalled();
+    expect(block.querySelectorAll('[role="tab"]').length).toBe(2);
+    expect(block.querySelectorAll('[role="tabpanel"]').length).toBe(2);
+    expect(block.querySelector('[role="tabpanel"]').textContent).toContain('H');
+  });
+
+  it('renders nothing (no throw) for an empty block', () => {
+    const block = document.createElement('div');
+    block.className = 'industry-tabs block';
+    expect(() => decorate(block)).not.toThrow();
     expect(block.querySelectorAll('[role="tab"]').length).toBe(0);
   });
 });

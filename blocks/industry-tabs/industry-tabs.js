@@ -1,23 +1,21 @@
 /**
- * industry-tabs — tabs whose panel content is fetched from an external JSON
- * feed rather than authored in the block table. Homepage "The workflows your
- * industry actually runs on" section.
+ * industry-tabs — tabs whose panels are authored inline in the block.
+ * Homepage "The workflows your industry actually runs on" section.
  *
  * Reuses the WAI-ARIA tabs interaction/markup pattern established by
  * `vertical-tabs` (role=tablist/tab/tabpanel, aria-selected, aria-controls,
- * roving tabindex, Arrow/Home/End keyboard, first tab active) but is built
- * independently — vertical-tabs decorates authored DOM rows, while this
- * block renders from fetched JSON data instead.
+ * roving tabindex, Arrow/Home/End keyboard, first tab active).
  *
- * Content model: the block cell holds a single link to the JSON source,
- * e.g. <a href="/path/to/IES_HP_INDUSTRY.json">...</a>.
+ * Content model: each block row = one tab. Cell 1 is the tab (optional
+ * `:icon-name:` + label text); cell 2 is the panel content — heading, body,
+ * optional "Explore…" link, optional product image, and an optional customer
+ * quote authored as `<blockquote>` + `<cite>` attribution.
  *
- * Expected item shape: { label, heading, body, image }
+ * Item shape: { label, icon?, heading, body, image?, linkHref?, linkText?,
+ * quote?, attribution? }
  *
  * `renderPanels(container, data)` is pure (no network) so it's directly
- * unit-testable; `decorate` isolates all fetch/network concerns and
- * degrades gracefully (renders nothing) on missing link, fetch failure, a
- * non-OK response, or empty/malformed data.
+ * unit-testable; `decorate` parses the authored rows and renders them.
  *
  * CSS: blocks/industry-tabs/industry-tabs.css
  */
@@ -152,15 +150,8 @@ export function renderPanels(container, data) {
   return container;
 }
 
-function extractData(json) {
-  if (Array.isArray(json)) return json;
-  if (json && Array.isArray(json.data)) return json.data;
-  return [];
-}
-
 // Build the panel-data array from authored block rows (label cell + content
-// cell). Returns [] when the block isn't in authored form (e.g. the single
-// JSON-link cell), so the caller can fall back to the JSON-feed path.
+// cell). Rows with fewer than two cells are ignored.
 function parseAuthored(block) {
   return [...block.children]
     .map((row) => [...row.children])
@@ -182,28 +173,8 @@ function parseAuthored(block) {
     });
 }
 
-export default async function decorate(block) {
-  // Curated inline panels (authored rows) take precedence over the JSON feed.
-  const authored = parseAuthored(block);
-  if (authored.length) {
-    block.textContent = '';
-    renderPanels(block, authored);
-    return;
-  }
-
-  const link = block.querySelector('a');
-  const url = link ? link.getAttribute('href') : null;
+export default function decorate(block) {
+  const items = parseAuthored(block);
   block.textContent = '';
-
-  if (!url) return;
-
-  try {
-    const resp = await fetch(url);
-    if (!resp.ok) return;
-    const json = await resp.json();
-    renderPanels(block, extractData(json));
-  } catch {
-    // fetch failed (network error, bad JSON, etc.) — degrade gracefully,
-    // leave the block empty rather than throwing
-  }
+  renderPanels(block, items);
 }
