@@ -47,16 +47,9 @@ function buildPanel(item, index) {
   panel.setAttribute('aria-labelledby', `it-tab-${index}`);
   panel.tabIndex = 0;
 
-  if (item.image) {
-    const wrap = document.createElement('div');
-    wrap.className = 'it-media';
-    const img = document.createElement('img');
-    img.src = item.image;
-    img.alt = item.heading || item.label || '';
-    img.loading = 'lazy';
-    wrap.append(img);
-    panel.append(wrap);
-  }
+  // main = copy (heading/body/link) beside the product image
+  const main = document.createElement('div');
+  main.className = 'it-main';
 
   const copy = document.createElement('div');
   copy.className = 'it-copy';
@@ -84,7 +77,19 @@ function buildPanel(item, index) {
     cta.append(a);
     copy.append(cta);
   }
-  panel.append(copy);
+  main.append(copy);
+
+  if (item.image) {
+    const wrap = document.createElement('div');
+    wrap.className = 'it-media';
+    const img = document.createElement('img');
+    img.src = item.image;
+    img.alt = item.imageAlt || item.heading || item.label || '';
+    img.loading = 'lazy';
+    wrap.append(img);
+    main.append(wrap);
+  }
+  panel.append(main);
 
   if (item.quote) {
     const fig = document.createElement('figure');
@@ -174,12 +179,11 @@ function parseAuthored(block) {
     .filter((cells) => cells.length >= 2)
     .map((cells) => {
       const labelCell = cells[0];
-      const iconEl = labelCell.querySelector('.icon');
-      const label = [...labelCell.childNodes]
-        .filter((n) => !(n.nodeType === 1 && n.classList?.contains('icon')))
-        .map((n) => n.textContent)
-        .join('')
-        .trim();
+      // icon may be an EDS icon span (:name:) or an authored <img>
+      const iconEl = labelCell.querySelector('.icon, img');
+      // label = cell text minus any icon glyph; also strip a raw :token: so it
+      // works whether or not EDS decorateIcons has run on the cell yet.
+      const label = labelCell.textContent.replace(/:[a-z0-9-]+:/gi, '').trim();
 
       const content = cells[1];
       const headingEl = content.querySelector('h2, h3, h4');
@@ -195,6 +199,7 @@ function parseAuthored(block) {
         heading: headingEl ? headingEl.textContent.trim() : '',
         body: bodyEl ? bodyEl.textContent.trim() : '',
         image: img ? img.getAttribute('src') : undefined,
+        imageAlt: img ? (img.getAttribute('alt') || '') : undefined,
         linkHref: linkEl ? linkEl.getAttribute('href') : undefined,
         linkText: linkEl ? linkEl.textContent.trim() : undefined,
         quote: quoteEl ? quoteEl.textContent.trim() : undefined,

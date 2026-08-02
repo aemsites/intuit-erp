@@ -139,18 +139,18 @@ describe('industry-tabs parseAuthored (via decorate)', () => {
     const block = document.createElement('div');
     block.className = 'industry-tabs block';
     block.innerHTML = '<div>'
-      + '<div><span class="icon icon-construction"></span> Construction</div>'
+      + '<div><img src="/construction-icon.svg" alt=""> Construction</div>'
       + '<div><h3>Protect profit</h3><p>Body copy here.</p>'
       + '<p><a href="/construction/">Explore construction edition</a></p>'
-      + '<img src="/dash.png"><blockquote>Finally connects.</blockquote>'
+      + '<img src="/dash.png" alt="Construction dashboard"><blockquote>Finally connects.</blockquote>'
       + '<cite>Scott Franchini, Partner, RedHammer</cite></div>'
       + '</div>';
     decorate(block);
     const tab = block.querySelector('[role="tab"]');
     const panel = block.querySelector('[role="tabpanel"]');
-    expect(tab.querySelector('.icon.icon-construction')).not.toBeNull();
+    expect(tab.querySelector('img[src="/construction-icon.svg"]')).not.toBeNull();
     expect(tab.textContent).toContain('Construction');
-    expect(panel.querySelector('img')).not.toBeNull();
+    expect(panel.querySelector('.it-media img[src="/dash.png"]')).not.toBeNull();
     expect(panel.querySelector('.it-quote blockquote').textContent).toContain('Finally connects.');
     expect(panel.querySelector('.it-quote cite').textContent).toContain('Scott Franchini');
     expect(panel.textContent).toContain('Body copy here.');

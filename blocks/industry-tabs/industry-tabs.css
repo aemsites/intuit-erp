@@ -77,14 +77,41 @@
 .industry-tabs .it-cta .button.secondary { color: #fff; border-color: #fff; }
 .industry-tabs .it-cta .button.secondary:hover { background: rgb(255 255 255 / 12%); }
 
-.industry-tabs .it-media {
-  background: rgb(255 255 255 / 8%);
-  border-radius: var(--radius-card);
-  padding: 24px;
-  margin: 0 0 20px;
+.industry-tabs .it-main { display: grid; gap: 28px; align-items: start; }
+.industry-tabs .it-media { margin: 0; }
+.industry-tabs .it-media img { display: block; width: 100%; border-radius: var(--radius-card); }
+
+/* tab icon (authored white .svg <img>, or EDS :icon-*: span) on the navy rail */
+.industry-tabs .it-tab > img,
+.industry-tabs .it-tab .icon { width: 22px; height: 22px; flex-shrink: 0; opacity: 0.7; }
+.industry-tabs .it-tab .icon img { width: 100%; height: 100%; }
+
+.industry-tabs .it-tab[aria-selected="true"] > img,
+.industry-tabs .it-tab[aria-selected="true"] .icon,
+.industry-tabs .it-tab:hover > img,
+.industry-tabs .it-tab:hover .icon { opacity: 1; }
+
+/* customer quote on the dark band */
+.industry-tabs .it-quote {
+  margin: 28px 0 0;
+  padding: 4px 0 4px 18px;
+  border-left: 3px solid var(--sky);
+  max-width: 40em;
 }
 
-.industry-tabs .it-media img { width: 100%; border-radius: var(--radius); }
+.industry-tabs .it-quote blockquote {
+  margin: 0 0 10px;
+  font-size: 20px;
+  line-height: 1.45;
+  font-weight: 400;
+  color: #fff;
+}
+
+.industry-tabs .it-quote cite {
+  font-style: normal;
+  font-size: 14px;
+  color: rgb(255 255 255 / 70%);
+}
 
 @media (width >= 900px) {
   .industry-tabs {
@@ -115,4 +142,6 @@
   }
 
   .industry-tabs .it-panels { min-height: 200px; }
+
+  .industry-tabs .it-main { grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; }
 }
