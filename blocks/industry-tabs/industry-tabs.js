@@ -79,7 +79,6 @@ function buildPanel(item, index) {
     const a = document.createElement('a');
     a.href = item.linkHref;
     a.textContent = item.linkText || 'Learn more';
-    a.className = 'button secondary';
     cta.append(a);
     copyBody.append(cta);
   }

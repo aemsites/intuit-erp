@@ -74,8 +74,14 @@
 
 .industry-tabs .it-body p { margin: 0; }
 .industry-tabs .it-cta { margin: 20px 0 0; }
-.industry-tabs .it-cta .button.secondary { color: #fff; border-color: #fff; }
-.industry-tabs .it-cta .button.secondary:hover { background: rgb(255 255 255 / 12%); }
+
+.industry-tabs .it-cta a {
+  color: #fff;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-weight: 600;
+}
+.industry-tabs .it-cta a:hover { text-decoration: none; }
 
 .industry-tabs .it-media { margin: 24px 0 0; }
 .industry-tabs .it-media img { display: block; width: 100%; border-radius: var(--radius-card); }
