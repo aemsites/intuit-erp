@@ -12,23 +12,38 @@ footer .footer .container { max-width: var(--container); margin: 0 auto; padding
 .footer .footer-cols a { color: var(--text-muted); }
 .footer .footer-cols a:hover { color: var(--primary); text-decoration: underline; }
 
+/* accordion toggle — on desktop it just renders as the plain column heading;
+   the caret and the interactivity only surface at the mobile breakpoint */
+.footer .footer-col .col-toggle { display: inline-flex; align-items: center; gap: 8px; padding: 0; margin: 0; background: none; border: 0; font: inherit; font-size: 16px; font-weight: 700; color: var(--text); text-align: left; cursor: default; }
+.footer .footer-col .caret { display: none; }
+
+/* shared chevron for the country selector (all breakpoints) and the mobile
+   accordion toggles */
+.footer .caret { display: inline-block; width: 8px; height: 8px; border-right: 2px solid currentcolor; border-bottom: 2px solid currentcolor; transform: rotate(45deg); margin-top: -3px; transition: transform 0.15s ease; }
+
+.footer .footer-col.open .caret,
+.footer .country.open .caret { transform: rotate(-135deg); margin-top: 2px; }
+
 .footer .footer-search { margin-top: 40px; }
 .footer .footer-search input { width: 300px; max-width: 100%; height: 40px; border: 1px solid var(--line); border-radius: 4px; padding: 0 14px; font-size: 14px; font-family: inherit; color: var(--text); }
 
 .footer .footer-sitemap { display: flex; align-items: center; gap: 24px; padding: 22px 0; margin-top: 34px; border-top: 1px solid var(--line); }
 .footer .footer-sitemap a { color: var(--text-muted); }
+.footer .footer-sitemap .social { margin-left: auto; display: flex; align-items: center; gap: 20px; }
+.footer .footer-sitemap .social a { color: var(--text-muted); display: inline-flex; }
+.footer .footer-sitemap .social a:hover { color: var(--primary); }
+
+/* country selector — a desktop chip inside the sitemap row, plus a mobile
+   accordion-style row rendered under the columns (hidden here, shown < 900px) */
+.footer .country-mobile { display: none; }
 .footer .footer-sitemap .country { position: relative; }
 .footer .country-toggle { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); border-radius: 4px; padding: 9px 14px; font-size: 14px; color: var(--text); background: #fff; font-family: inherit; cursor: pointer; }
-.footer .country-toggle .caret { font-size: 11px; transition: transform 0.15s ease; }
-.footer .country.open .country-toggle .caret { transform: rotate(180deg); }
+.footer .country-toggle .caret { color: var(--text-muted); }
 .footer .country-menu { position: absolute; top: calc(100% + 8px); left: 0; z-index: 20; min-width: 220px; margin: 0; padding: 8px 0; list-style: none; background: #fff; border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 6px 20px rgb(0 0 0 / 12%); }
 .footer .country-menu[hidden] { display: none; }
 .footer .country-menu a { display: flex; align-items: center; gap: 10px; padding: 9px 18px; font-size: 14px; color: var(--text); white-space: nowrap; }
 .footer .country-menu a:hover { background: #f5f6f7; }
 .footer .country-menu .flag { font-size: 16px; line-height: 1; }
-.footer .footer-sitemap .social { margin-left: auto; display: flex; align-items: center; gap: 20px; }
-.footer .footer-sitemap .social a { color: var(--text-muted); display: inline-flex; }
-.footer .footer-sitemap .social a:hover { color: var(--primary); }
 
 .footer .ftr-legal { background: #f5f6f7; padding: 40px 0 48px; }
 .footer .legal-grid { display: grid; grid-template-columns: 220px 1fr 220px; gap: 40px; align-items: start; }
@@ -54,10 +69,75 @@ footer .footer .container { max-width: var(--container); margin: 0 auto; padding
 .footer .truste { display: inline-block; line-height: 0; }
 .footer .truste img { width: 142px; height: 45px; }
 
-@media (width <= 768px) {
+/* ── mobile (< 900px): mirror erp.intuit.com — link columns collapse into
+   accordions, the country selector and search stack beneath them, sitemap +
+   social share a row, and the legal tier regroups (logos on one line, About
+   links beside the copyright). Uniform light-gray background throughout. ── */
+@media (width <= 900px) {
+  footer, footer .footer, .footer .ftr-main, .footer .ftr-legal { background: #f5f6f7; }
   footer .footer .container { padding: 0 20px; }
-  .footer .footer-cols { grid-template-columns: 1fr 1fr; gap: 24px 20px; }
-  .footer .footer-sitemap { flex-wrap: wrap; gap: 16px; }
+
+  /* stack the top tier so DOM order (cols → country → search → sitemap) shows */
+  .footer .ftr-main { border-top: 0; padding: 4px 0 0; }
+  .footer .ftr-main .container { display: flex; flex-direction: column; }
+
+  /* link columns → accordions */
+  .footer .footer-cols { display: block; grid-template-columns: none; gap: 0; border-top: 1px solid var(--line); }
+  .footer .footer-col { border-bottom: 1px solid var(--line); }
+  .footer .footer-col h4 { margin: 0; }
+  .footer .footer-col .col-toggle { display: flex; justify-content: space-between; align-items: center; width: 100%; min-height: 60px; cursor: pointer; }
+  .footer .footer-col .caret { display: inline-block; color: var(--text-muted); }
+  .footer .footer-col ul { display: none; padding: 0 0 18px; }
+  .footer .footer-col.open ul { display: block; }
+
+  /* country selector row (mobile copy) */
+  .footer .country-desktop { display: none; }
+  .footer .country-mobile { display: block; border-bottom: 1px solid var(--line); position: relative; }
+  .footer .country-mobile .country-toggle { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 60px; padding: 0; border: 0; border-radius: 0; background: none; font-size: 16px; font-weight: 700; color: var(--text); }
+  .footer .country-mobile .country-toggle .caret { margin-left: auto; }
+  .footer .country-mobile .country-menu { position: static; min-width: 0; margin: 0; padding: 0 0 14px; border: 0; border-radius: 0; box-shadow: none; }
+  .footer .country-mobile .country-menu a { padding: 11px 0 11px 26px; }
+
+  /* search */
+  .footer .footer-search { margin: 0; padding: 22px 0; }
+  .footer .footer-search input { width: 100%; max-width: 320px; }
+
+  /* sitemap + social on one line */
+  .footer .footer-sitemap { margin: 0; padding: 20px 0; justify-content: space-between; gap: 16px; border-bottom: 1px solid var(--line); }
   .footer .footer-sitemap .social { margin-left: 0; }
-  .footer .legal-grid { grid-template-columns: 1fr; gap: 28px; }
+
+  /* legal tier: flatten the three columns and regroup via grid areas */
+  .footer .ftr-legal { padding: 32px 0 40px; }
+  .footer .legal-left, .footer .legal-center, .footer .legal-right { display: contents; }
+
+  .footer .legal-grid {
+    grid-template-columns: max-content 1fr;
+    grid-template-areas:
+      "logo   brand"
+      "nav    copy"
+      "truste truste"
+      "links  links";
+    gap: 24px 28px;
+  }
+  .footer .legal-grid .ftr-logo { grid-area: logo; margin: 0; align-self: center; }
+  .footer .legal-grid .brand-logos { grid-area: brand; margin: 0; }
+  .footer .legal-grid .legal-nav { grid-area: nav; margin: 0; }
+  .footer .legal-grid .legal-copy { grid-area: copy; }
+  .footer .legal-grid .truste { grid-area: truste; }
+  .footer .legal-grid .legal-links { grid-area: links; margin: 0; }
+}
+
+@media (width <= 599px) {
+  /* very narrow: give the copyright its own full-width column below the links */
+  .footer .legal-grid {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "logo"
+      "brand"
+      "nav"
+      "copy"
+      "truste"
+      "links";
+    row-gap: 20px;
+  }
 }
