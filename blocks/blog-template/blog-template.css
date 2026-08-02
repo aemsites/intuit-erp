@@ -274,6 +274,7 @@
   .blog-article > .blog-hero {
     grid-column: 1 / -1;
     grid-row: 1;
+    margin-bottom: 44px;
     background: var(--sky);
   }
 

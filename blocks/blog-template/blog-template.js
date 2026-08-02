@@ -324,12 +324,16 @@ function wireToc(tocWrap, nav, headings, mq) {
     label.textContent = (showActiveSection && activeText) ? activeText : 'Table of contents';
   };
 
-  // mobile starts collapsed (a bar); desktop starts expanded (the full rail)
-  if (!mq.matches) {
-    tocWrap.classList.add('blog-toc-collapsed');
-    toggle.setAttribute('aria-expanded', 'false');
-  }
-  updateLabel();
+  // mobile starts collapsed (a bar); desktop starts expanded (the full rail).
+  // Re-apply on breakpoint cross so a resized window lands in the right default
+  // (a desktop browser narrowed to mobile should collapse, and vice-versa).
+  const applyDefaultState = (isDesktop) => {
+    tocWrap.classList.toggle('blog-toc-collapsed', !isDesktop);
+    toggle.setAttribute('aria-expanded', String(isDesktop));
+    updateLabel();
+  };
+  applyDefaultState(mq.matches);
+  mq.addEventListener('change', (e) => applyDefaultState(e.matches));
 
   toggle.addEventListener('click', () => {
     const collapsed = tocWrap.classList.toggle('blog-toc-collapsed');
