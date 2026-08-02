@@ -75,7 +75,17 @@ const CHROME = `
       </div>
       <div class="footer-sitemap">
         <a href="https://www.intuit.com/sitemap/">Sitemap</a>
-        <label class="country"><span class="flag" aria-hidden="true">🇺🇸</span> Select Country <span aria-hidden="true">▾</span></label>
+        <div class="country">
+          <button type="button" class="country-toggle" aria-haspopup="listbox" aria-expanded="false" aria-controls="footer-country-menu">
+            <span class="flag" aria-hidden="true">🇺🇸</span> Select Country <span class="caret" aria-hidden="true">▾</span>
+          </button>
+          <ul class="country-menu" id="footer-country-menu" role="listbox" hidden>
+            <li role="option"><a href="https://www.intuit.com/"><span class="flag" aria-hidden="true">🇺🇸</span> United States</a></li>
+            <li role="option"><a href="https://www.intuit.com/ca/"><span class="flag" aria-hidden="true">🇨🇦</span> Canada (English)</a></li>
+            <li role="option"><a href="https://www.intuit.com/fr-ca/"><span class="flag" aria-hidden="true">🇨🇦</span> Canada (French)</a></li>
+            <li role="option"><a href="https://www.intuit.com/in/"><span class="flag" aria-hidden="true">🇮🇳</span> India</a></li>
+          </ul>
+        </div>
         <div class="social">
           <a href="https://www.facebook.com/intuit" aria-label="Facebook"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M13.5 21v-8h2.7l.4-3.1h-3.1V7.9c0-.9.25-1.5 1.55-1.5H17V3.6c-.3 0-1.3-.1-2.45-.1-2.42 0-4.05 1.48-4.05 4.2v2.2H7.7V13h2.8v8h3z"/></svg></a>
           <a href="https://twitter.com/intuit" aria-label="X"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M17.5 3h3l-6.6 7.6L22 21h-6.3l-4.4-5.8L6.2 21H3.2l7-8.1L2.5 3h6.4l4 5.3L17.5 3zm-1.1 16h1.7L7.7 4.8H5.9L16.4 19z"/></svg></a>
@@ -137,6 +147,33 @@ async function fetchFragment(path) {
   return null;
 }
 
+// Wire the "Select Country" dropdown: click/keyboard toggles the locale menu,
+// which closes on outside click or Escape. Mirrors the header flyout idiom.
+function wireCountry(block) {
+  const country = block.querySelector('.country');
+  const btn = country && country.querySelector('.country-toggle');
+  const menu = country && country.querySelector('.country-menu');
+  if (!btn || !menu) return;
+
+  const setOpen = (open) => {
+    country.classList.toggle('open', open);
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    menu.hidden = !open;
+  };
+
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    setOpen(!country.classList.contains('open'));
+  });
+  document.addEventListener('click', (e) => { if (!country.contains(e.target)) setOpen(false); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && country.classList.contains('open')) {
+      setOpen(false);
+      btn.focus();
+    }
+  });
+}
+
 export default async function decorate(block) {
   const footerMeta = getMetadata('footer');
   const footerPath = footerMeta ? new URL(footerMeta, window.location).pathname : '/footer';
@@ -145,4 +182,5 @@ export default async function decorate(block) {
   // canonical embedded chrome for a faithful, reliable render.
   const frag = await fetchFragment(footerPath);
   block.innerHTML = (frag && frag.includes('ies-footer')) ? frag : CHROME;
+  wireCountry(block);
 }

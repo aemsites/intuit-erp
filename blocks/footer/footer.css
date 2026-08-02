@@ -17,7 +17,15 @@ footer .footer .container { max-width: var(--container); margin: 0 auto; padding
 
 .footer .footer-sitemap { display: flex; align-items: center; gap: 24px; padding: 22px 0; margin-top: 34px; border-top: 1px solid var(--line); }
 .footer .footer-sitemap a { color: var(--text-muted); }
-.footer .footer-sitemap .country { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); border-radius: 4px; padding: 9px 14px; font-size: 14px; color: var(--text); background: #fff; }
+.footer .footer-sitemap .country { position: relative; }
+.footer .country-toggle { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); border-radius: 4px; padding: 9px 14px; font-size: 14px; color: var(--text); background: #fff; font-family: inherit; cursor: pointer; }
+.footer .country-toggle .caret { font-size: 11px; transition: transform 0.15s ease; }
+.footer .country.open .country-toggle .caret { transform: rotate(180deg); }
+.footer .country-menu { position: absolute; top: calc(100% + 8px); left: 0; z-index: 20; min-width: 220px; margin: 0; padding: 8px 0; list-style: none; background: #fff; border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 6px 20px rgb(0 0 0 / 12%); }
+.footer .country-menu[hidden] { display: none; }
+.footer .country-menu a { display: flex; align-items: center; gap: 10px; padding: 9px 18px; font-size: 14px; color: var(--text); white-space: nowrap; }
+.footer .country-menu a:hover { background: #f5f6f7; }
+.footer .country-menu .flag { font-size: 16px; line-height: 1; }
 .footer .footer-sitemap .social { margin-left: auto; display: flex; align-items: center; gap: 20px; }
 .footer .footer-sitemap .social a { color: var(--text-muted); display: inline-flex; }
 .footer .footer-sitemap .social a:hover { color: var(--primary); }
