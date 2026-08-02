@@ -178,8 +178,9 @@
 }
 
 .blog-article .blog-toc-list {
+  position: relative;
   margin: 0;
-  padding: 4px 20px 18px;
+  padding: 4px 0 18px;
   list-style: none;
   counter-reset: toc;
 }
@@ -189,6 +190,7 @@
 }
 
 .blog-article .blog-toc-list li {
+  position: relative;
   counter-increment: toc;
   border-top: 1px solid var(--line);
 }
@@ -197,11 +199,21 @@
   border-top: 0;
 }
 
+/* active item: solid blue bar on the list's far-left edge (not just the
+   link's own inset) — a pseudo-element on the <li> rather than a border on
+   the <a>, so it reaches all the way to the card's edge regardless of the
+   link's own padding. */
+.blog-article .blog-toc-list li:has(a.active)::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: var(--primary);
+}
+
 .blog-article .blog-toc-list a {
   display: block;
-  padding: 10px 0 10px 10px;
-  margin-left: -2px;
-  border-left: 3px solid transparent;
+  padding: 10px 20px 10px 24px;
   color: var(--text-muted);
   font-size: var(--body-font-size-s);
   line-height: 1.4;
@@ -219,13 +231,23 @@
 }
 
 .blog-article .blog-toc-list a.active {
-  border-left-color: var(--primary);
   color: var(--primary);
   font-weight: 600;
 }
 
 .blog-article .blog-toc-list a.active::before {
   color: var(--primary);
+}
+
+/* faint vertical scroll-track line inside the body panel, right edge */
+.blog-article .blog-toc-list::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  right: 8px;
+  bottom: 18px;
+  width: 1px;
+  background: rgb(0 0 0 / 8%);
 }
 
 /* right rail */
@@ -339,18 +361,49 @@
     margin: 0 0 16px;
   }
 
-  /* desktop rail: heading + collapse chevron */
+  /* flush-left card: the rail's own wrapper inherits the site-wide 40px
+     side padding meant for centering normal page content (main > .section >
+     div { padding: 0 40px }), which insets the TOC card from the page's
+     left edge. Zero it here so the card (and the share icons above it)
+     reach x=0 — the rail's grid column already starts flush at the page's
+     left edge, this is purely about the padding inside it. */
+  .blog-article > .blog-toc-rail > .default-content-wrapper {
+    padding: 0;
+  }
+
+  /* card: white header + light blue-gray body + soft shadow, flush left so
+     square corners on the left, rounded only on the right. */
+  .blog-article .blog-toc {
+    border: 0;
+    border-radius: 0 var(--radius-card) var(--radius-card) 0;
+    background: #eef1f6;
+    box-shadow: 0 10px 30px rgb(0 0 0 / 10%);
+  }
+
   .blog-article .blog-toc-toggle {
     border-bottom: 1px solid var(--line);
   }
 
+  /* thin CSS-drawn chevron (same border-corner technique as the site nav's
+     caret, blocks/header/header.css: 45deg = down, so -45deg = right,
+     135deg = left) instead of a text glyph, which rendered too heavy. */
   .blog-article .blog-toc-toggle::after {
-    content: '\2039'; /* ‹ — collapse to vertical tab */
-    font-size: 18px;
-    color: var(--text-muted);
+    content: '';
+    width: 7px;
+    height: 7px;
+    flex: none;
+    border-right: 2px solid var(--text-muted);
+    border-bottom: 2px solid var(--text-muted);
+    transform: rotate(135deg); /* ‹ collapse */
   }
 
-  /* minimized state: thin vertical tab, rotated label + expand chevron (›) */
+  /* minimized state: thin (44px) vertical tab, flush left, same card
+     shadow. A small white square — `::before`, reordered to the top of the
+     column via flex `order` — sits above the rotated "Table of contents"
+     label, which fills the rest of the tab in the blue-gray body color. The
+     chevron itself is `::after`, absolutely positioned so it can stay the
+     same small border-corner shape centered over that white square instead
+     of stretching to fill it. */
   .blog-article .blog-toc-rail.blog-toc-collapsed {
     top: calc(var(--nav-height) + 24px);
     width: 44px;
@@ -361,20 +414,38 @@
   }
 
   .blog-article .blog-toc-rail.blog-toc-collapsed .blog-toc-toggle {
+    position: relative;
     flex-direction: column;
-    justify-content: center;
-    gap: 14px;
-    padding: 20px 10px;
+    align-items: stretch;
+    gap: 0;
+    padding: 0;
+    background: #eef1f6;
     border-bottom: 0;
   }
 
+  .blog-article .blog-toc-rail.blog-toc-collapsed .blog-toc-toggle::before {
+    content: '';
+    order: -1;
+    width: 100%;
+    aspect-ratio: 1;
+    background: #fff;
+  }
+
   .blog-article .blog-toc-rail.blog-toc-collapsed .blog-toc-label {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    padding: 16px 0;
     writing-mode: vertical-rl;
     transform: rotate(180deg);
     white-space: nowrap;
   }
 
   .blog-article .blog-toc-rail.blog-toc-collapsed .blog-toc-toggle::after {
-    content: '\203A'; /* › — expand back to the full rail */
+    top: 18px;
+    left: 18px;
+    position: absolute;
+    transform: rotate(-45deg); /* › expand */
   }
 }
