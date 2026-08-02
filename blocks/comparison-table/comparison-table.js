@@ -19,9 +19,8 @@
  *     match the band heuristic below). Legend text comes from the second
  *     cell when present, else from a nested tip/second-paragraph on the
  *     first cell. Renders as `.ct-legend`.
- *   - Mobile-adaptive: the block carries a `data-adaptive` attribute and each
- *     value `<td>` a `data-label` (its column header), consumed by CSS for a
- *     card view under 600px.
+ *   - Mobile: the table scrolls horizontally within `.cmp-table-scroll`
+ *     (see CSS), matching the original rather than reflowing into cards.
  *
  * CSS: blocks/comparison-table/comparison-table.css
  */
@@ -150,9 +149,8 @@ function getLegendText(cells) {
   return cells.slice(2).map((c) => c.textContent.trim()).filter(Boolean).join(' ');
 }
 
-function valueCell(cell, label) {
+function valueCell(cell) {
   const td = document.createElement('td');
-  if (label) td.dataset.label = label;
   const t = cell.textContent.trim();
   const low = t.toLowerCase();
   if (t === '✓' || low === 'yes' || low === 'check') {
@@ -171,8 +169,6 @@ function valueCell(cell, label) {
 export default function decorate(block) {
   const rows = [...block.children];
   if (!rows.length) return;
-
-  block.setAttribute('data-adaptive', '');
 
   const cols = [...rows[0].children].map((c) => c.textContent.trim());
   const ncol = cols.length; // includes the empty label column
@@ -216,7 +212,10 @@ export default function decorate(block) {
       table.append(tbody);
       const bandTr = document.createElement('tr');
       bandTr.className = 'cmp-band';
-      bandTr.innerHTML = `<td colspan="${ncol}">${cells[0].textContent.trim()}</td>`;
+      // label wrapped in a span so it can be pinned (sticky) to the left on
+      // mobile while the value columns scroll — a <td> can't stick when the
+      // scroll container is the ancestor .cmp-table-scroll div.
+      bandTr.innerHTML = `<td colspan="${ncol}"><span>${cells[0].textContent.trim()}</span></td>`;
       tbody.append(bandTr);
       tbody.append(headRow());
       return;
@@ -234,9 +233,35 @@ export default function decorate(block) {
       th.setAttribute('aria-describedby', popover.id);
     }
     tr.append(th);
-    cells.slice(1).forEach((c, i) => tr.append(valueCell(c, cols[i + 1])));
+    cells.slice(1).forEach((c) => tr.append(valueCell(c)));
     tbody.append(tr);
   });
+
+  // Relocate authored footnotes (default content that starts with a digit,
+  // e.g. "1 Based on…") to sit directly beneath the group that references them
+  // via <sup> markers — matching the prototype, where the disclaimer follows
+  // the Implementation group rather than trailing the whole table.
+  const section = block.closest('.section');
+  const footPs = section
+    ? [...section.querySelectorAll('.default-content-wrapper p')].filter((p) => /^\s*\d/.test(p.textContent))
+    : [];
+  if (footPs.length) {
+    const supEl = table.querySelector('sup');
+    const targetTbody = (supEl && supEl.closest('tbody')) || table.querySelector('tbody');
+    if (targetTbody) {
+      const tr = document.createElement('tr');
+      tr.className = 'cmp-footnote';
+      const td = document.createElement('td');
+      td.colSpan = ncol;
+      footPs.forEach((p) => td.append(p)); // append moves the node out of its wrapper
+      tr.append(td);
+      targetTbody.append(tr);
+      // remove default-content wrappers left empty after moving the footnotes
+      section.querySelectorAll('.default-content-wrapper').forEach((w) => {
+        if (!w.textContent.trim() && !w.querySelector('img, picture, svg')) w.remove();
+      });
+    }
+  }
 
   const scroll = document.createElement('div');
   scroll.className = 'cmp-table-scroll';
