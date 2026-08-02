@@ -29,6 +29,8 @@ function buildTab(item, index) {
   btn.setAttribute('aria-selected', index === 0 ? 'true' : 'false');
   btn.tabIndex = index === 0 ? 0 : -1;
 
+  if (item.icon) btn.insertAdjacentHTML('afterbegin', item.icon);
+
   const label = document.createElement('span');
   label.className = 'it-tab-label';
   label.textContent = item.label || '';
@@ -83,6 +85,20 @@ function buildPanel(item, index) {
     copy.append(cta);
   }
   panel.append(copy);
+
+  if (item.quote) {
+    const fig = document.createElement('figure');
+    fig.className = 'it-quote';
+    const bq = document.createElement('blockquote');
+    bq.textContent = item.quote;
+    fig.append(bq);
+    if (item.attribution) {
+      const cite = document.createElement('cite');
+      cite.textContent = item.attribution;
+      fig.append(cite);
+    }
+    panel.append(fig);
+  }
 
   return panel;
 }
@@ -157,18 +173,32 @@ function parseAuthored(block) {
     .map((row) => [...row.children])
     .filter((cells) => cells.length >= 2)
     .map((cells) => {
+      const labelCell = cells[0];
+      const iconEl = labelCell.querySelector('.icon');
+      const label = [...labelCell.childNodes]
+        .filter((n) => !(n.nodeType === 1 && n.classList?.contains('icon')))
+        .map((n) => n.textContent)
+        .join('')
+        .trim();
+
       const content = cells[1];
       const headingEl = content.querySelector('h2, h3, h4');
       const linkEl = content.querySelector('a');
-      const bodyEl = [...content.querySelectorAll('p')].find((p) => !p.querySelector('a'));
+      const bodyEl = [...content.querySelectorAll('p')]
+        .find((p) => !p.querySelector('a') && !p.closest('blockquote') && !p.closest('figure'));
       const img = content.querySelector('img');
+      const quoteEl = content.querySelector('blockquote');
+      const citeEl = content.querySelector('cite');
       return {
-        label: cells[0].textContent.trim(),
+        label,
+        icon: iconEl ? iconEl.outerHTML : undefined,
         heading: headingEl ? headingEl.textContent.trim() : '',
         body: bodyEl ? bodyEl.textContent.trim() : '',
         image: img ? img.getAttribute('src') : undefined,
         linkHref: linkEl ? linkEl.getAttribute('href') : undefined,
         linkText: linkEl ? linkEl.textContent.trim() : undefined,
+        quote: quoteEl ? quoteEl.textContent.trim() : undefined,
+        attribution: citeEl ? citeEl.textContent.trim() : undefined,
       };
     });
 }

@@ -104,6 +104,57 @@ describe('industry-tabs renderPanels', () => {
     expect(el.querySelectorAll('[role="tab"]').length).toBe(0);
     expect(el.querySelectorAll('[role="tabpanel"]').length).toBe(0);
   });
+
+  it('renders a tab icon when the item carries icon markup', () => {
+    const el = make();
+    renderPanels(el, [
+      {
+        label: 'Construction', heading: 'H', body: 'B', icon: '<span class="icon icon-construction"></span>',
+      },
+      { label: 'Retail', heading: 'H2', body: 'B2' },
+    ]);
+    const tabs = el.querySelectorAll('[role="tab"]');
+    expect(tabs[0].querySelector('.icon.icon-construction')).not.toBeNull();
+    expect(tabs[0].textContent).toContain('Construction');
+    expect(tabs[1].querySelector('.icon')).toBeNull();
+  });
+
+  it('renders a panel quote + attribution when present', () => {
+    const el = make();
+    renderPanels(el, [
+      {
+        label: 'Construction', heading: 'H', body: 'B', quote: 'Great product.', attribution: 'Scott Franchini, Partner, RedHammer',
+      },
+      { label: 'Retail', heading: 'H2', body: 'B2' },
+    ]);
+    const panels = el.querySelectorAll('[role="tabpanel"]');
+    expect(panels[0].querySelector('.it-quote blockquote').textContent).toContain('Great product.');
+    expect(panels[0].querySelector('.it-quote cite').textContent).toContain('Scott Franchini');
+    expect(panels[1].querySelector('.it-quote')).toBeNull();
+  });
+});
+
+describe('industry-tabs parseAuthored (via decorate)', () => {
+  it('extracts icon markup and quote/attribution from authored rows', () => {
+    const block = document.createElement('div');
+    block.className = 'industry-tabs block';
+    block.innerHTML = '<div>'
+      + '<div><span class="icon icon-construction"></span> Construction</div>'
+      + '<div><h3>Protect profit</h3><p>Body copy here.</p>'
+      + '<p><a href="/construction/">Explore construction edition</a></p>'
+      + '<img src="/dash.png"><blockquote>Finally connects.</blockquote>'
+      + '<cite>Scott Franchini, Partner, RedHammer</cite></div>'
+      + '</div>';
+    decorate(block);
+    const tab = block.querySelector('[role="tab"]');
+    const panel = block.querySelector('[role="tabpanel"]');
+    expect(tab.querySelector('.icon.icon-construction')).not.toBeNull();
+    expect(tab.textContent).toContain('Construction');
+    expect(panel.querySelector('img')).not.toBeNull();
+    expect(panel.querySelector('.it-quote blockquote').textContent).toContain('Finally connects.');
+    expect(panel.querySelector('.it-quote cite').textContent).toContain('Scott Franchini');
+    expect(panel.textContent).toContain('Body copy here.');
+  });
 });
 
 describe('industry-tabs decorate (authored content only)', () => {
