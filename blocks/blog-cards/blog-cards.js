@@ -43,19 +43,21 @@ const DEFAULT_SOURCE = '/blog/query-index.json';
 export function filterEntries(entries, {
   category, author, limit, excludePath,
 } = {}) {
-  let out = entries;
+  let out = entries.filter((entry) => entry.title);
   if (category) out = out.filter((entry) => entry.category === category);
   if (author) out = out.filter((entry) => entry.author === author);
   if (excludePath) out = out.filter((entry) => entry.path !== excludePath);
   out = [...out].sort((a, b) => new Date(b.date) - new Date(a.date));
-  if (limit) out = out.slice(0, limit);
+  if (limit > 0) out = out.slice(0, limit);
   return out;
 }
 
 /**
- * Pure DOM builder for one card. Feed values are untrusted, so every field
- * is written via textContent/attribute assignment — never innerHTML.
- * @param {object} entry one query-index row (path, title, description, date, image, ...)
+ * Pure DOM builder for one card. Mirrors the source's threegrids "small" card:
+ * image, then a body of category (uppercase) → title → date. No description or
+ * author. Feed values are untrusted, so every field is written via
+ * textContent/attribute assignment — never innerHTML.
+ * @param {object} entry one query-index row (path, title, date, image, category, ...)
  * @returns {HTMLAnchorElement} `<a class="blog-card">`
  */
 export function cardEl(entry) {
@@ -65,28 +67,37 @@ export function cardEl(entry) {
 
   const imageWrap = document.createElement('div');
   imageWrap.className = 'blog-card-image';
-  const img = document.createElement('img');
-  img.src = entry.image || '';
-  img.alt = entry.title || '';
-  img.loading = 'lazy';
-  imageWrap.append(img);
+  if (entry.image) {
+    const img = document.createElement('img');
+    img.src = entry.image;
+    img.alt = entry.title || '';
+    img.loading = 'lazy';
+    imageWrap.append(img);
+  }
 
   const body = document.createElement('div');
   body.className = 'blog-card-body';
 
+  if (entry.category) {
+    const category = document.createElement('p');
+    category.className = 'blog-card-category';
+    category.textContent = entry.category;
+    body.append(category);
+  }
+
   const title = document.createElement('h3');
   title.className = 'blog-card-title';
   title.textContent = entry.title || '';
+  body.append(title);
 
-  const description = document.createElement('p');
-  description.className = 'blog-card-description';
-  description.textContent = entry.description || '';
+  const dateText = formatDate(entry.date);
+  if (dateText) {
+    const date = document.createElement('p');
+    date.className = 'blog-card-date';
+    date.textContent = dateText;
+    body.append(date);
+  }
 
-  const date = document.createElement('p');
-  date.className = 'blog-card-date';
-  date.textContent = formatDate(entry.date);
-
-  body.append(title, description, date);
   card.append(imageWrap, body);
   return card;
 }
