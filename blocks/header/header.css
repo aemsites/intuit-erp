@@ -1,13 +1,11 @@
 /* header — IES chrome (brand strip + sticky nav + events bar). Lifted from base.css */
 
-/* min-height reserves space to avoid layout shift while decorate() runs
-   async — sized for the topstrip + nav alone, since the events bar is now
-   an opt-in per page (see eventsBarHTML in header.js) rather than always
-   present; .has-events-bar (added by decorate() when a page opts in) bumps
-   it back up so those pages don't shift either. Previously fixed at 146px
-   assuming the bar was always there, which left a blank gap on every page
-   that didn't have it. */
-header { height: auto; min-height: 92px; }
+/* min-height avoids layout shift while decorate() runs async. position:sticky
+   lives here (not on .ies-nav inside) so the containing block is <body> —
+   full page height — not the ~92px header box that was limiting .ies-nav's
+   sticky range. z-index hoisted here too; .flyout (z-index:60) still stacks
+   correctly inside this stacking context. */
+header { height: auto; min-height: 92px; position: sticky; top: 0; z-index: 50; }
 header .header.has-events-bar { min-height: 146px; }
 header .header { background: #fff; }
 header .header .container { max-width: var(--container); margin: 0 auto; padding: 0 40px; }
@@ -29,8 +27,8 @@ header .header .container { max-width: var(--container); margin: 0 auto; padding
 .header .bs-logo-quickbooks svg:last-child { height: 13.5px; width: auto; margin-bottom: -2px; }
 .header .bs-logo-mailchimp svg:last-child { height: 12.5px; width: auto; margin-bottom: -2px; }
 
-/* sticky nav */
-.header .ies-nav { position: sticky; top: 0; z-index: 50; background: #fff; }
+/* sticky nav — position:sticky has moved to the <header> element; see header rule above */
+.header .ies-nav { background: #fff; }
 .header .ies-nav.scrolled { box-shadow: 0 1px 0 rgb(0 0 0 / 6%); border-bottom: 2px solid var(--navy); }
 .header .ies-nav .container { position: relative; display: flex; align-items: center; height: 60px; gap: 30px; }
 .header .nav-logo { display: flex; align-items: center; }
