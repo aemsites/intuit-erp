@@ -86,6 +86,17 @@ function enhanceScroll(block) {
   nextBtn.addEventListener('click', () => viewport.scrollBy({ left: viewport.clientWidth, behavior: 'smooth' }));
   viewport.addEventListener('scroll', () => window.requestAnimationFrame(update), { passive: true });
   window.addEventListener('resize', update);
+
+  // block.js's CSS loads in parallel with (not before) this decorate() call,
+  // so the very first synchronous update() below can run against unstyled
+  // (block-stacked, not flex-row) content and wrongly conclude nothing
+  // overflows. A ResizeObserver re-checks the moment the real layout — from
+  // the CSS finishing, images loading, fonts swapping, etc. — actually lands,
+  // instead of leaving the controls stuck until the next manual scroll/resize.
+  if (typeof ResizeObserver !== 'undefined') {
+    new ResizeObserver(update).observe(track);
+  }
+
   update();
 }
 
