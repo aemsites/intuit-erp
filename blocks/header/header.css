@@ -230,6 +230,35 @@ body.nav-scroll-lock { overflow: hidden; }
   .header .nav-item > button:not(.flyout-back) { width: 100%; justify-content: space-between; padding: 24px 0; font-size: 24px; font-weight: 500; }
   .header .nav-main > .nav-link, .header .nav-main > .acct-link { display: block; padding: 24px 0; font-size: 24px; font-weight: 500; }
 
+  /* Circle-chevron control, matching erp.intuit.com's mobile drawer. The base
+     .caret rule above draws a bare diagonal chevron via border-right/
+     border-bottom + rotate(45deg) — a down/up indicator that's correct for
+     the desktop dropdown (opens below, collapses back), but wrong here: the
+     mobile drawer is a drill-down (each tap slides a new full-screen panel
+     in from the right, not an in-place accordion — see the drill-down rules
+     below), so its icon needs to point right, not down, and sit inside a
+     circular button, per the source. Redefined as an empty circle with the
+     arrow mark moved onto ::before so the circle's own border and the
+     chevron's border-drawn shape don't have to fight over the same box. */
+  .header .nav-item > button:not(.flyout-back) .caret {
+    position: relative; width: 28px; height: 28px; box-sizing: border-box;
+    border: 1px solid var(--line); border-radius: 50%;
+    transform: none; margin-top: 0;
+  }
+
+  .header .nav-item > button:not(.flyout-back) .caret::before {
+    content: '';
+    position: absolute; top: 50%; left: 50%;
+    width: 6px; height: 6px;
+    border-right: 1.5px solid currentcolor; border-bottom: 1.5px solid currentcolor;
+    transform: translate(-65%, -50%) rotate(-45deg);
+  }
+
+  /* The item's own button (and its caret) already slides off-screen on open
+     — see .nav-main.has-open .nav-item.open > button below — so unlike the
+     desktop dropdown indicator, no open-state rotation is needed here. */
+  .header .nav-item.open > button:not(.flyout-back) .caret { transform: none; }
+
   /* Drill-down, matching erp.intuit.com's mobile nav: opening a menu item
      doesn't expand an accordion in place under it — the top-level list
      slides fully out to the left and the item's own submenu slides in from
