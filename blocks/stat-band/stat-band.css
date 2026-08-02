@@ -45,7 +45,12 @@
 }
 .stat-band .stats-arrow:disabled { background: #859299; opacity: 0.6; cursor: not-allowed; }
 
-@media (width <= 767px) { .stat-band { --cards-per-view: 1; } }
+/* mobile: one card per view and, matching erp.intuit.com, dots only — the
+   prev/next arrows are hidden (swipe/dots drive paging on small screens). */
+@media (width <= 767px) {
+  .stat-band { --cards-per-view: 1; }
+  .stat-band .stats-nav { display: none; }
+}
 
 @media (768px <= width <= 1023px) { .stat-band { --cards-per-view: 2; } }
 

@@ -1,7 +1,7 @@
 /* hero — dark gradient lead band (all pages). CSS lifted from prototype .hero */
 
 .section.hero-container {
-  background: linear-gradient(105deg, #00254a 0%, #053d6d 55%, #3b2f7a 100%);
+  background: var(--navy);
   color: #fff;
   overflow: hidden;
 }
@@ -79,6 +79,22 @@
 .hero a.button.primary:hover { background: #eef4f6; border-color: #eef4f6; }
 .hero a.button.secondary { background: transparent; color: #fff; border-color: #fff; }
 .hero a.button.secondary:hover { background: rgb(255 255 255 / 12%); }
+
+/* video CTAs ("Watch product demo") get a leading circular play icon,
+   matching erp.intuit.com. The icon (ring + triangle) is one SVG used as a
+   mask filled with currentColor, so it tracks the button's text color on
+   either the primary (dark) or secondary (white) variant. */
+.hero a.button.icon-video { gap: 10px; }
+
+.hero a.button.icon-video::before {
+  content: "";
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  background-color: currentcolor;
+  mask: center / contain no-repeat
+    url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="black" stroke-width="2"/><path d="M10 8l6 4-6 4z" fill="black"/></svg>');
+}
 
 /* ---- .hero.form (pricing) — lead card on the right, content from the
    shared schedule-call fragment (content/fragments/schedule-call.html) ---- */
