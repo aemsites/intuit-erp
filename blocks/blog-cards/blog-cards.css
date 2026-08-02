@@ -1,20 +1,19 @@
 /* blog-cards — dynamic card grid/carousel sourced from a blog query-index
-   JSON feed (see blocks/blog-cards/blog-cards.js). Mobile-first: 1 column by
-   default, 2 at 600px, 3 at 900px+. The .carousel variant is rendered by
-   blocks/carousel/carousel.js (its own stylesheet, loaded on demand, covers
-   the slide/track/controls chrome) — only the grid layout lives here. */
+   JSON feed (see blocks/blog-cards/blog-cards.js). Styling mirrors the source
+   Intuit "threegrids / small" content card: borderless, rounded, category →
+   title → date, scale-on-hover. Grid stays 3-up from tablet (768px) as on the
+   source. The .carousel variant is rendered by blocks/carousel/carousel.js
+   (its own stylesheet, loaded on demand) — only the grid layout lives here. */
 
 .blog-cards .blog-cards-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 28px;
+  gap: 20px 12px;
+  max-width: 1440px;
+  margin: 0 auto;
 }
 
-@media (min-width: 600px) {
-  .blog-cards .blog-cards-grid { grid-template-columns: repeat(2, 1fr); }
-}
-
-@media (min-width: 900px) {
+@media (min-width: 768px) {
   .blog-cards .blog-cards-grid { grid-template-columns: repeat(3, 1fr); }
 }
 
@@ -22,22 +21,17 @@
   display: flex;
   flex-direction: column;
   background: var(--background-color);
-  border: 1px solid var(--line);
   border-radius: var(--radius-card);
   overflow: hidden;
   text-decoration: none;
   color: inherit;
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  transition: all 0.3s ease-in-out;
 }
 
 .blog-cards .blog-card:hover {
-  box-shadow: 0 10px 28px rgb(0 0 0 / 12%);
-  transform: translateY(-2px);
+  box-shadow: 0 6px 24px 0 rgb(0 0 0 / 20%);
+  transform: scale(1.02);
   text-decoration: none;
-}
-
-.blog-cards .blog-card:hover .blog-card-title {
-  color: var(--link-color);
 }
 
 /* padding-top aspect-ratio, not the `aspect-ratio` property — matches the
@@ -60,31 +54,44 @@
 .blog-cards .blog-card-body {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 20px 22px 24px;
+  padding: 20px;
   flex: 1;
 }
 
-.blog-cards .blog-card-title {
+.blog-cards .blog-card-category {
   margin: 0;
-  font-size: 20px;
-  line-height: 1.3;
-  font-weight: 600;
-  color: var(--text);
-  transition: color 0.15s ease;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  color: var(--color-black, #000);
+  text-transform: uppercase;
+  overflow-wrap: break-word;
 }
 
-.blog-cards .blog-card-description {
-  margin: 0;
-  font-size: 15px;
-  line-height: 1.5;
-  color: var(--text-muted);
+.blog-cards .blog-card-title {
+  margin: 8px 0;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 700;
+  color: #000;
+  overflow-wrap: break-word;
+}
+
+/* Title scales with the source's threegrids/small card: 12px mobile,
+   20px tablet, 28px desktop. */
+@media (min-width: 768px) {
+  .blog-cards .blog-card-title { font-size: 20px; line-height: 28px; }
+}
+
+@media (min-width: 1200px) {
+  .blog-cards .blog-card-title { margin: 12px 0; font-size: 28px; line-height: 36px; }
 }
 
 .blog-cards .blog-card-date {
   margin: auto 0 0;
-  font-size: 13px;
-  color: var(--text-soft);
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--text-muted);
 }
 
 .blog-cards .blog-cards-empty {
@@ -111,19 +118,20 @@
    nested-frame overlap, not a clobbered property — see task-11-report.md
    Fix Round 1 for the call to leave that as a follow-up rather than fix
    here. */
-.blog-cards .carousel-slide .blog-card .blog-card-title {
+.blog-cards .carousel-slide .blog-card .blog-card-category {
   margin: 0;
-  color: var(--text);
+  color: var(--color-black, #000);
 }
 
-.blog-cards .carousel-slide .blog-card .blog-card-description {
-  margin: 0;
+.blog-cards .carousel-slide .blog-card .blog-card-title {
+  margin: 8px 0;
+  color: #000;
 }
 
 .blog-cards .carousel-slide .blog-card .blog-card-date {
   margin: auto 0 0;
-  font-size: 13px;
-  color: var(--text-soft);
+  font-size: 12px;
+  color: var(--text-muted);
 }
 
 .blog-cards .carousel-slide .blog-card .blog-card-image img {
