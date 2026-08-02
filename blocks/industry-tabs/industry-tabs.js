@@ -155,12 +155,24 @@ export function renderPanels(container, data) {
     nav.append(itemEl);
   });
 
+  // Desktop only: panels are absolutely positioned in the right column, so the
+  // container needs a min-height matching the active panel or it collapses and
+  // the panel bleeds into the next section. Re-measure on switch / resize /
+  // image load. On mobile (panels in flow) clear it.
+  function syncHeight() {
+    const desktop = window.matchMedia && window.matchMedia('(min-width: 900px)').matches;
+    if (!desktop) { container.style.minHeight = ''; return; }
+    const active = panels.find((p) => p.classList.contains('is-active'));
+    if (active) container.style.minHeight = `${active.offsetHeight}px`;
+  }
+
   nav.addEventListener('click', (e) => {
     const btn = e.target.closest('.it-tab');
     if (!btn) return;
     const idx = tabs.indexOf(btn);
     if (idx === -1) return;
     activate(tabs, panels, idx);
+    syncHeight();
   });
 
   nav.addEventListener('keydown', (e) => {
@@ -175,9 +187,13 @@ export function renderPanels(container, data) {
     e.preventDefault();
     activate(tabs, panels, next);
     tabs[next].focus();
+    syncHeight();
   });
 
   container.append(nav);
+  syncHeight();
+  window.addEventListener('resize', syncHeight);
+  container.querySelectorAll('.it-media img').forEach((img) => img.addEventListener('load', syncHeight));
   return container;
 }
 
