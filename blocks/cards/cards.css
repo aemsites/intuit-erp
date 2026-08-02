@@ -23,32 +23,121 @@
 .cards .cards-card-body p:has(a) { margin-top: 32px; }
 .cards .cards-card-body a { color: var(--info); font-weight: 400; }
 
-/* icon cards: blue box, small square icon, white text — shared by the
-   navy-section variant (.dark, e.g. accountant "Resources for firms") and the
-   white-section variant (.accent, e.g. ai-agents "Resources for growing
-   businesses"), which differ only in the surrounding section background. */
-.cards.dark, .cards.accent { grid-template-columns: repeat(3, 1fr); gap: 24px; }
+/* icon cards (no .carousel/.boxed shape class): blue box, small square icon,
+   white text — shared by the navy-section variant (.dark, e.g. accountant
+   "Resources for firms") and the white-section variant (.accent, e.g.
+   ai-agents "Resources for growing businesses"), which differ only in the
+   surrounding section background. .carousel/.boxed are unrelated *shapes* of
+   photo cards that also use .dark/.accent purely for section-background
+   tone, so every rule here is scoped to exclude them. */
+.cards.dark:not(.carousel, .boxed),
+.cards.accent:not(.carousel, .boxed) { grid-template-columns: repeat(3, 1fr); gap: 24px; }
 
-.cards.dark > div, .cards.accent > div {
+.cards.dark:not(.carousel, .boxed) > div,
+.cards.accent:not(.carousel, .boxed) > div {
   background: #236cff; border-radius: var(--radius-card); padding: 32px 28px; color: #fff;
 }
-.cards.dark > div > div:first-child, .cards.accent > div > div:first-child { width: 40px; margin-bottom: 32px; }
 
-.cards.dark picture, .cards.dark img,
-.cards.accent picture, .cards.accent img { width: 40px; height: 40px; }
+.cards.dark:not(.carousel, .boxed) > div > div:first-child,
+.cards.accent:not(.carousel, .boxed) > div > div:first-child { width: 40px; margin-bottom: 32px; }
 
-.cards.dark .cards-card-body h3, .cards.accent .cards-card-body h3 {
+.cards.dark:not(.carousel, .boxed) picture, .cards.dark:not(.carousel, .boxed) img,
+.cards.accent:not(.carousel, .boxed) picture, .cards.accent:not(.carousel, .boxed) img { width: 40px; height: 40px; }
+
+.cards.dark:not(.carousel, .boxed) .cards-card-body h3,
+.cards.accent:not(.carousel, .boxed) .cards-card-body h3 {
   font-size: 28px; font-weight: 400; line-height: 1.15; color: #fff; margin: 0 0 16px;
 }
-.cards.dark .cards-card-body p, .cards.accent .cards-card-body p { color: rgb(255 255 255 / 90%); }
-.cards.dark .cards-card-body p:has(a), .cards.accent .cards-card-body p:has(a) { margin-top: 20px; }
-.cards.dark a, .cards.accent a { color: #fff; font-weight: 400; text-decoration: underline; }
 
-/* dark full-bleed band (accountant "Resources for firms") — .accent keeps the
-   section's own (white) background instead. */
+.cards.dark:not(.carousel, .boxed) .cards-card-body p,
+.cards.accent:not(.carousel, .boxed) .cards-card-body p { color: rgb(255 255 255 / 90%); }
+
+.cards.dark:not(.carousel, .boxed) .cards-card-body p:has(a),
+.cards.accent:not(.carousel, .boxed) .cards-card-body p:has(a) { margin-top: 20px; }
+
+.cards.dark:not(.carousel, .boxed) a,
+.cards.accent:not(.carousel, .boxed) a { color: #fff; font-weight: 400; text-decoration: underline; }
+
+/* dark full-bleed band (accountant "Resources for firms"; also used by the
+   .carousel/.boxed dark instances below) — .accent keeps the section's own
+   (white) background instead. */
 .section.cards-container:has(.cards.dark) { background: var(--navy); padding: var(--section-y) 0; }
 .cards-container:has(.cards.dark) .default-content-wrapper h2 { color: #fff; }
 
 @media (width <= 768px) {
-  .cards.dark, .cards.accent { grid-template-columns: 1fr; }
+  .cards.dark:not(.carousel, .boxed), .cards.accent:not(.carousel, .boxed) { grid-template-columns: 1fr; }
+}
+
+/* ---- .carousel / .boxed — single-row, horizontally-scrolling photo cards
+   (events, financial-services, professional-services, oa). Cards scroll via
+   native overflow (free touch/trackpad swipe); the progress bar + counter +
+   prev/next buttons are only shown once cards.js detects real overflow —
+   oa's 3 cards fit on screen today and get no controls at all. ---- */
+.cards.carousel, .cards.boxed { display: block; }
+
+.cards.carousel .cards-viewport, .cards.boxed .cards-viewport {
+  display: block;
+  overflow-x: auto;
+  scrollbar-width: none;
+  scroll-snap-type: x mandatory;
+}
+
+.cards.carousel .cards-viewport::-webkit-scrollbar,
+.cards.boxed .cards-viewport::-webkit-scrollbar { display: none; width: 0; height: 0; }
+
+.cards.carousel .cards-track, .cards.boxed .cards-track { display: flex; gap: 32px; }
+.cards.boxed .cards-track { justify-content: center; }
+
+.cards.carousel .cards-track > div, .cards.boxed .cards-track > div {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 320px;
+  scroll-snap-align: start;
+}
+
+/* .carousel — plain photo + text directly on the section background; the
+   .dark instance (professional-services) needs white text since there's no
+   card chrome behind it (.accent, e.g. events, keeps the normal dark text). */
+.cards.dark.carousel .cards-card-body h3,
+.cards.dark.carousel .cards-card-body p { color: #fff; }
+.cards.dark.carousel .cards-card-body a { color: #fff; text-decoration: underline; }
+
+/* .boxed — white rounded card (oa); text stays the normal dark color even in
+   a .dark section since it sits on the card's own white background. */
+.cards.boxed .cards-track > div { background: #fff; border-radius: 20px; overflow: hidden; }
+.cards.boxed .cards-card-body { padding: 24px; }
+.cards.boxed .cards-card-body h3 { margin-top: 20px; }
+
+.cards.carousel .cards-controls, .cards.boxed .cards-controls {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-top: 32px;
+}
+.cards.carousel .cards-controls[hidden], .cards.boxed .cards-controls[hidden] { display: none; }
+
+.cards .cards-counter { flex: 0 0 auto; margin: 0; font-size: 14px; color: var(--text-muted); white-space: nowrap; }
+.cards.dark .cards-counter { color: rgb(255 255 255 / 70%); }
+
+.cards .cards-progress-track { flex: 1 1 auto; height: 2px; background: rgb(0 37 74 / 15%); }
+.cards.dark .cards-progress-track { background: rgb(255 255 255 / 25%); }
+.cards .cards-progress-fill { height: 100%; background: var(--heading); }
+.cards.dark .cards-progress-fill { background: #fff; }
+
+.cards .cards-nav-buttons { display: flex; flex: 0 0 auto; gap: 12px; }
+
+.cards .cards-nav {
+  width: 48px; height: 48px; border-radius: 50%; border: none; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: rgb(0 37 74 / 8%); color: var(--navy); cursor: pointer;
+}
+.cards .cards-nav svg { width: 8px; height: 12px; }
+.cards .cards-nav:not(:disabled):hover { background: rgb(0 37 74 / 15%); }
+.cards .cards-nav:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.cards.dark .cards-nav { background: rgb(255 255 255 / 15%); color: #fff; }
+.cards.dark .cards-nav:not(:disabled):hover { background: rgb(255 255 255 / 28%); }
+
+@media (width <= 768px) {
+  .cards.carousel .cards-track > div, .cards.boxed .cards-track > div { flex-basis: 260px; }
 }
