@@ -108,7 +108,7 @@ const CHROME = `
           <p class="footer-copy">© 2026 Intuit Inc. All rights reserved.</p>
           <p class="footer-copy">Intuit, QuickBooks, QB, TurboTax, Credit Karma, and Mailchimp are registered trademarks of Intuit Inc. Terms and conditions, features, support, pricing, and service options subject to change without notice.</p>
           <p class="footer-copy">Money movement services are provided by Intuit Payments Inc., licensed as a Money Transmitter by the New York State Department of Financial Services. For details about our money transmission licenses, or for Texas customers with complaints about our service, please <a href="https://www.intuit.com/legal/licenses/payment-licenses/">click here.</a></p>
-          <p class="footer-copy"><a href="https://security.intuit.com/index.php/intuit-cookie-policy/">About cookies</a> | <a href="#">Your California Privacy Rights</a></p>
+          <p class="footer-copy"><a href="https://security.intuit.com/index.php/intuit-cookie-policy/">About cookies</a> | <button type="button" class="ot-sdk-show-settings footer-copy-btn">Manage cookies</button></p>
         </div>
         <div class="legal-right">
           <div class="legal-links">
