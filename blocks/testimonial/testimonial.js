@@ -86,6 +86,170 @@ function buildCard(row) {
   return figure;
 }
 
+// Parse a YouTube watch/short/embed URL into its id; '' if not a URL (a bare
+// id authored directly is returned as-is by the caller's fallback).
+function ytId(url) {
+  if (!url) return '';
+  const m = url.match(/(?:youtube(?:-nocookie)?\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/);
+  return m ? m[1] : '';
+}
+
+/**
+ * Builds one video story frame from a row's positional cells:
+ *   [poster img, eyebrow, quote, attribution (may hold a link),
+ *    youtube (url or id), mp4 link (optional), logo img (optional)]
+ * When an mp4 cell is present the frame shows that clip inline (muted loop)
+ * as the background; otherwise an authored youtube shows the poster photo as
+ * a static background, and the bare default falls back to the Rhodes clip.
+ * The centered play button opens the full video (youtube) in a modal.
+ * @param {Element[]} cells the row's cells
+ * @returns {HTMLDivElement} the `.video-frame`
+ */
+export function buildVideoFrame(cells) {
+  const [posterCell, eyebrowCell, quoteCell, attrCell, youtubeCell, mp4Cell, logoCell] = cells;
+  const authoredYoutube = youtubeCell ? youtubeCell.textContent.trim() : '';
+  const youtubeId = ytId(authoredYoutube) || authoredYoutube || STORY_YOUTUBE_ID;
+  const mp4Link = mp4Cell ? mp4Cell.querySelector('a[href*=".mp4"]') : null;
+
+  const frame = document.createElement('div');
+  frame.className = 'video-frame';
+  const posterImg = posterCell ? posterCell.querySelector('img') : null;
+
+  let bg;
+  if (mp4Link) {
+    bg = document.createElement('video');
+    bg.className = 'video-bg';
+    bg.setAttribute('src', mp4Link.getAttribute('href'));
+    if (posterImg) bg.poster = posterImg.currentSrc || posterImg.src;
+    bg.muted = true;
+    bg.loop = true;
+    bg.autoplay = true;
+    bg.playsInline = true;
+    bg.setAttribute('aria-hidden', 'true');
+  } else if (authoredYoutube) {
+    // no cutdown mp4 for this story — show the poster photo as a static
+    // background instead of faking a muted autoplay loop.
+    bg = posterImg ? posterImg.cloneNode(true) : document.createElement('img');
+    bg.className = 'video-bg';
+    bg.setAttribute('aria-hidden', 'true');
+  } else {
+    bg = document.createElement('video');
+    bg.className = 'video-bg';
+    bg.src = STORY_VIDEO_SRC;
+    if (posterImg) bg.poster = posterImg.currentSrc || posterImg.src;
+    bg.muted = true;
+    bg.loop = true;
+    bg.autoplay = true;
+    bg.playsInline = true;
+    bg.setAttribute('aria-hidden', 'true');
+  }
+
+  const logoImg = logoCell ? logoCell.querySelector('img') : null;
+  const play = document.createElement('button');
+  play.className = 'video-play';
+  play.type = 'button';
+  play.setAttribute('aria-label', 'Play full video');
+  play.textContent = '▶';
+  play.addEventListener('click', () => openVideoModal(youtubeId));
+
+  const cap = document.createElement('div');
+  cap.className = 'video-caption';
+  cap.innerHTML = `
+    <p class="video-eyebrow">${eyebrowCell ? eyebrowCell.textContent.trim() : ''}</p>
+    <p class="video-quote">${quoteCell ? quoteCell.textContent.trim() : ''}</p>`;
+  const attr = document.createElement('p');
+  attr.className = 'video-attr';
+  if (attrCell) attr.innerHTML = attrCell.innerHTML;
+  cap.append(attr);
+
+  const parts = [];
+  if (logoImg) { logoImg.classList.add('video-logo'); parts.push(logoImg); }
+  parts.push(bg, play, cap);
+  frame.append(...parts);
+  if (bg.tagName === 'VIDEO') {
+    // autoplay may be blocked or unimplemented (jsdom) — swallow either way
+    try { const p = bg.play(); if (p && p.catch) p.catch(() => {}); } catch { /* noop */ }
+  }
+  return frame;
+}
+
+function buildThumb(row, index, frameId) {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'video-thumb';
+  btn.setAttribute('role', 'tab');
+  btn.setAttribute('aria-selected', index === 0 ? 'true' : 'false');
+  btn.setAttribute('aria-controls', frameId);
+  btn.tabIndex = index === 0 ? 0 : -1;
+  const src = row.querySelector('img');
+  if (src) {
+    const img = document.createElement('img');
+    img.src = src.currentSrc || src.getAttribute('src');
+    img.alt = src.getAttribute('alt') || '';
+    btn.append(img);
+  }
+  return btn;
+}
+
+/**
+ * Adaptive video-testimonial builder. One story row → a bare frame (no
+ * switcher). Two or more rows → a `.video-switcher` with all frames stacked
+ * in a `.video-stage` (only the active one shown) and a `.video-thumbs`
+ * tablist of speaker-avatar buttons that switch the active story.
+ * @param {Element[]} rows the block's `:scope > div` story rows
+ * @returns {HTMLElement} a `.video-frame` (single) or `.video-switcher` (many)
+ */
+export function buildVideoSection(rows) {
+  if (rows.length <= 1) return buildVideoFrame([...(rows[0]?.children || [])]);
+
+  const frames = rows.map((r, i) => {
+    const f = buildVideoFrame([...r.children]);
+    f.id = `video-story-${i}`;
+    f.classList.toggle('is-active', i === 0);
+    return f;
+  });
+  const stage = document.createElement('div');
+  stage.className = 'video-stage';
+  stage.append(...frames);
+
+  const thumbs = rows.map((r, i) => buildThumb(r, i, frames[i].id));
+  const thumbsWrap = document.createElement('div');
+  thumbsWrap.className = 'video-thumbs';
+  thumbsWrap.setAttribute('role', 'tablist');
+  thumbsWrap.setAttribute('aria-label', 'Customer stories');
+  thumbsWrap.append(...thumbs);
+
+  function activate(idx) {
+    thumbs.forEach((t, i) => {
+      t.setAttribute('aria-selected', i === idx ? 'true' : 'false');
+      t.tabIndex = i === idx ? 0 : -1;
+    });
+    frames.forEach((f, i) => f.classList.toggle('is-active', i === idx));
+  }
+  thumbsWrap.addEventListener('click', (e) => {
+    const btn = e.target.closest('.video-thumb');
+    if (btn) activate(thumbs.indexOf(btn));
+  });
+  thumbsWrap.addEventListener('keydown', (e) => {
+    const cur = thumbs.indexOf(document.activeElement);
+    if (cur === -1) return;
+    let next = null;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next = (cur + 1) % thumbs.length;
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') next = (cur - 1 + thumbs.length) % thumbs.length;
+    else if (e.key === 'Home') next = 0;
+    else if (e.key === 'End') next = thumbs.length - 1;
+    if (next === null) return;
+    e.preventDefault();
+    activate(next);
+    thumbs[next].focus();
+  });
+
+  const section = document.createElement('div');
+  section.className = 'video-switcher';
+  section.append(stage, thumbsWrap);
+  return section;
+}
+
 export default function decorate(block) {
   if (block.classList.contains('card')) {
     const figures = [...block.querySelectorAll(':scope > div')].map(buildCard);
@@ -93,58 +257,16 @@ export default function decorate(block) {
     return;
   }
 
-  const isVideo = block.classList.contains('video');
+  if (block.classList.contains('video')) {
+    const rows = [...block.querySelectorAll(':scope > div')];
+    if (!rows.length) return;
+    block.replaceChildren(buildVideoSection(rows));
+    return;
+  }
+
   const row = block.querySelector(':scope > div');
   if (!row) return;
   const cells = [...row.children];
-
-  if (isVideo) {
-    const [posterCell, eyebrowCell, quoteCell, attrCell, youtubeCell] = cells;
-    const authoredYoutubeId = youtubeCell ? youtubeCell.textContent.trim() : '';
-    const youtubeId = authoredYoutubeId || STORY_YOUTUBE_ID;
-
-    const frame = document.createElement('div');
-    frame.className = 'video-frame';
-    const posterImg = posterCell ? posterCell.querySelector('img') : null;
-
-    let bg;
-    if (authoredYoutubeId) {
-      // no cutdown mp4 for this story — show the poster photo as a static
-      // background instead of faking a muted autoplay loop.
-      bg = posterImg ? posterImg.cloneNode(true) : document.createElement('img');
-      bg.className = 'video-bg';
-      bg.setAttribute('aria-hidden', 'true');
-    } else {
-      bg = document.createElement('video');
-      bg.className = 'video-bg';
-      bg.src = STORY_VIDEO_SRC;
-      if (posterImg) bg.poster = posterImg.currentSrc || posterImg.src;
-      bg.muted = true;
-      bg.loop = true;
-      bg.autoplay = true;
-      bg.playsInline = true;
-      bg.setAttribute('aria-hidden', 'true');
-    }
-    const play = document.createElement('button');
-    play.className = 'video-play';
-    play.type = 'button';
-    play.setAttribute('aria-label', 'Play full video');
-    play.textContent = '▶';
-    play.addEventListener('click', () => openVideoModal(youtubeId));
-    const cap = document.createElement('div');
-    cap.className = 'video-caption';
-    cap.innerHTML = `
-      <p class="video-eyebrow">${eyebrowCell ? eyebrowCell.textContent.trim() : ''}</p>
-      <p class="video-quote">${quoteCell ? quoteCell.textContent.trim() : ''}</p>`;
-    const attr = document.createElement('p');
-    attr.className = 'video-attr';
-    if (attrCell) attr.innerHTML = attrCell.innerHTML;
-    cap.append(attr);
-    frame.append(bg, play, cap);
-    block.replaceChildren(frame);
-    if (bg.tagName === 'VIDEO') bg.play().catch(() => {});
-    return;
-  }
 
   const [markCell, quoteCell, nameCell, roleCell, mediaCell] = cells;
   const grid = document.createElement('div');
