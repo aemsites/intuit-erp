@@ -1,7 +1,7 @@
 .highlight { margin: 2rem 0; }
 
 .highlight .highlight-inner {
-  background: var(--sky);
+  background: var(--tofu);
   border-radius: var(--radius-card);
   padding: 2rem;
 }
