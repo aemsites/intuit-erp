@@ -204,8 +204,8 @@ header .header .container { max-width: var(--container); margin: 0 auto; padding
      also a <button> nested inside .nav-item (via .flyout), so the
      descendant form was matching it too and its space-between was shoving
      "Back" to the far right instead of right after the chevron icon. */
-  .header .nav-item > button { width: 100%; justify-content: space-between; padding: 24px 0; }
-  .header .nav-main > .nav-link, .header .nav-main > .acct-link { display: block; padding: 24px 0; }
+  .header .nav-item > button:not(.flyout-back) { width: 100%; justify-content: space-between; padding: 24px 0; font-size: 24px; font-weight: 500; }
+  .header .nav-main > .nav-link, .header .nav-main > .acct-link { display: block; padding: 24px 0; font-size: 24px; font-weight: 500; }
 
   /* Drill-down, matching erp.intuit.com's mobile nav: opening a menu item
      doesn't expand an accordion in place under it — the top-level list

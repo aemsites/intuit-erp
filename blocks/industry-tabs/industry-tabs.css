@@ -5,7 +5,14 @@
    Fed from authored inline panels. */
 
 .section.industry-tabs-container { background: var(--navy); padding: var(--section-y) 0; color: #fff; }
-.industry-tabs-container .default-content-wrapper h2 { color: #fff; text-align: left; margin: 0 0 12px; }
+
+/* explicit size (matches erp.intuit.com's own section heading here) instead
+   of the generic global h2 default, which doesn't scale down for mobile */
+.industry-tabs-container .default-content-wrapper h2 { font-size: 28px; line-height: 1.4; color: #fff; text-align: left; margin: 0 0 12px; }
+
+@media (width >= 900px) {
+  .industry-tabs-container .default-content-wrapper h2 { font-size: 40px; line-height: 1.4; }
+}
 
 .industry-tabs-container .default-content-wrapper p {
   color: rgb(255 255 255 / 78%); text-align: left; margin: 0 0 40px; max-width: 42em;
@@ -59,7 +66,7 @@
 }
 
 .industry-tabs .it-heading {
-  font-size: 28px;
+  font-size: 24px;
   line-height: 1.2;
   font-weight: 400;
   color: #fff;
@@ -130,6 +137,6 @@
   .industry-tabs .it-panel { position: absolute; top: 0; left: 316px; right: 0; padding: 0; }
 
   .industry-tabs .it-copy { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
-  .industry-tabs .it-heading { font-size: 32px; margin: 0; }
+  .industry-tabs .it-heading { font-size: 34px; margin: 0; }
   .industry-tabs .it-media { max-width: 680px; margin: 28px 0 0; }
 }

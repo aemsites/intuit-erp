@@ -4,7 +4,7 @@
 .section.stat-band-container { background: #fff; padding: 64px 0 60px; }
 
 .stat-band-container .default-content-wrapper h2 {
-  font-size: 30px; font-weight: 400; text-align: center; color: var(--heading);
+  font-size: 48px; font-weight: 400; text-align: center; color: var(--heading);
   margin: 0 0 48px;
 }
 
@@ -21,7 +21,7 @@
   min-width: 0;
 }
 .stat-band .stat { background: #eff4f9; border-radius: var(--radius-card); padding: 34px 28px; }
-.stat-band .stat-num { font-size: 56px; line-height: 1.2; font-weight: 400; letter-spacing: -0.03em; color: #0052ea; margin-bottom: 14px; }
+.stat-band .stat-num { font-size: 60px; line-height: 1.2; font-weight: 400; letter-spacing: -0.03em; color: #0052ea; margin-bottom: 14px; }
 .stat-band .stat-desc { font-size: 15px; color: #404b52; margin: 0 0 30px; line-height: 1.35; }
 .stat-band .stat-co { font-size: 14px; font-weight: 700; color: #000; margin: 0 0 4px; }
 .stat-band .stat-seg { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: #404b52; margin: 0; }
@@ -64,7 +64,8 @@
 .stat-band.dark .stat-desc { font-size: 15px; line-height: 1.5; color: #d5e0ec; max-width: 22em; margin: 0 auto; }
 
 @media (width <= 768px) {
-  .stat-band-container .default-content-wrapper h2 { font-size: 22px; }
+  .stat-band-container .default-content-wrapper h2 { font-size: 34px; }
+  .stat-band .stat-num { font-size: 48px; }
   .stat-band.dark .stats-grid { grid-template-columns: 1fr; gap: 44px; }
   .stat-band.dark .stat-num { font-size: 64px; }
 }
