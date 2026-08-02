@@ -10,6 +10,13 @@ header .header.has-events-bar { min-height: 146px; }
 header .header { background: #fff; }
 header .header .container { max-width: var(--container); margin: 0 auto; padding: 0 40px; }
 
+/* body-scroll lock while the mobile nav drawer is open (toggled in
+   header.js) — a dedicated class rather than reusing schedule-modal's own
+   `body.modal-open`, since the "Schedule a call" CTA inside the open drawer
+   can open that modal on top; closing it must not release this lock while
+   the drawer is still open behind it. */
+body.nav-scroll-lock { overflow: hidden; }
+
 /* brand strip — logo sizing/spacing matches erp.intuit.com's icom-components
    a-logotype "small" variant exactly (icon 15.5px + 4.5px gap; per-brand
    wordmark heights, since each brand's type is a different cap-height) */
@@ -166,12 +173,25 @@ header .header .container { max-width: var(--container); margin: 0 auto; padding
   header .header .container { padding: 0 20px; }
   .header .ies-topstrip { display: none; }
   .header .ies-nav .container { height: 56px; gap: 12px; }
-  .header .nav-main { display: none; }
 
+  /* margin-left:10px reset — it's a desktop-row spacing value (base rule
+     above) that isn't relevant to the drawer layout below, and left it
+     open a sliver of the page's own background visible down the drawer's
+     left edge instead of the drawer's opaque background reaching edge-to-
+     edge. */
+  .header .nav-main { display: none; margin-left: 0; }
+
+  /* position: fixed (not absolute) pinned to the viewport, not to the
+     nearest positioned ancestor — an ancestor-relative panel only covers as
+     much of the page as that ancestor's own box, which let the hero content
+     below it show through once the page had scrolled. Fixed + inset:0 (minus
+     the 56px top bar) plus the body scroll lock in header.js's toggle
+     handler is what actually guarantees nothing behind it is visible or
+     reachable while it's open, matching erp.intuit.com's own drawer. */
   .header.nav-open .nav-main {
-    display: block; position: absolute; left: 0; right: 0; top: 56px; background: #fff;
+    display: block; position: fixed; inset: 56px 0 0; background: #fff;
     border-bottom: 1px solid var(--line); box-shadow: 0 12px 24px rgb(0 0 0 / 8%); z-index: 49;
-    box-sizing: border-box; height: calc(100vh - 56px); overflow: hidden auto;
+    box-sizing: border-box; overflow: hidden auto;
     padding-top: 14px; padding-bottom: 20px;
   }
 
@@ -181,7 +201,12 @@ header .header .container { max-width: var(--container); margin: 0 auto; padding
      against a single ~44px-tall .nav-item row — without this override the
      drilled-in submenu panel renders squashed into that row's height rather
      than filling the screen. */
-  .header .nav-item { position: static; display: block; width: 100%; padding: 0 20px; }
+
+  /* box-sizing: border-box — width:100% is content width by default, so the
+     20px side padding was adding on top of the drawer's full width instead
+     of being carved out of it, overflowing .nav-main by 40px and causing a
+     slight horizontal scroll in the open drawer. */
+  .header .nav-item { position: static; display: block; width: 100%; padding: 0 20px; box-sizing: border-box; }
   .header .nav-main > a { padding: 0 20px; }
 
   /* Matches erp.intuit.com's mobile menu: entries are separated by a thin
@@ -230,9 +255,13 @@ header .header .container { max-width: var(--container); margin: 0 auto; padding
     transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
   }
 
+  /* box-sizing: border-box — same reason as .nav-item above: width:100% is
+     content-box by default, so the side padding was overflowing this panel
+     by 40px too. */
   .header .flyout {
     position: absolute; top: 0; left: 0; width: 100%; height: 100%;
     overflow-y: auto; border: 0; box-shadow: none; padding: 14px 20px 20px;
+    box-sizing: border-box;
     transform: translateX(100%);
     transition: transform 0.3s ease-in-out;
   }
@@ -274,5 +303,17 @@ header .header .container { max-width: var(--container); margin: 0 auto; padding
   .header .nav-mobile-brands .bs-logo-mailchimp svg:last-child { height: 16.5px; margin-bottom: -2px; }
   .header .ies-events .container { font-size: 13px; padding-top: 12px; padding-bottom: 12px; }
   .header .nav-toggle { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; width: 36px; height: 36px; box-sizing: border-box; background: none; border: 1px solid var(--text); border-radius: 4px; padding: 0; cursor: pointer; }
-  .header .nav-toggle span { width: 22px; height: 2px; background: currentcolor; display: block; }
+
+  .header .nav-toggle span {
+    width: 22px; height: 2px; background: currentcolor; display: block;
+    transition: transform 0.25s ease-in-out, opacity 0.25s ease-in-out;
+  }
+
+  /* morphs the 3-bar hamburger into an "X" on open, matching
+     erp.intuit.com's own toggle — top/bottom bars rotate 45deg into an X
+     and converge on the middle bar's position (gap + bar height), which
+     fades out since it'd otherwise cut across the X's center. */
+  .header.nav-open .nav-toggle span:first-child { transform: translateY(6px) rotate(45deg); }
+  .header.nav-open .nav-toggle span:nth-child(2) { opacity: 0; }
+  .header.nav-open .nav-toggle span:last-child { transform: translateY(-6px) rotate(-45deg); }
 }

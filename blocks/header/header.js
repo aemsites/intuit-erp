@@ -348,13 +348,17 @@ export default async function decorate(block) {
 
   wireFlyouts(block);
 
-  // mobile menu toggle
+  // mobile menu toggle — locks body scroll and morphs the hamburger into an
+  // "X" while the full-screen drawer is open (see .header.nav-open .nav-main
+  // in header.css), matching erp.intuit.com's own mobile menu behavior.
   const toggle = block.querySelector('.nav-toggle');
   const navMain = block.querySelector('.nav-main');
   if (toggle && navMain) {
     toggle.addEventListener('click', () => {
       const open = block.classList.toggle('nav-open');
       toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      toggle.setAttribute('aria-label', open ? 'Close menu' : 'Menu');
+      document.body.classList.toggle('nav-scroll-lock', open);
     });
   }
 
