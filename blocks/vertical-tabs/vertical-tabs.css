@@ -34,6 +34,11 @@
   object-fit: contain;
 }
 
+/* trailing chevron: hidden by default; only the pill variant's active tab shows it */
+.vertical-tabs .vt-tab-chevron {
+  display: none;
+}
+
 .vertical-tabs .vt-tab[aria-selected="true"] {
   color: var(--heading);
   font-weight: 600;
@@ -106,20 +111,192 @@
   margin-top: 8px;
 }
 
-/* pill variant — rounded nav items with icons */
+/* default (plain) variant — ACCORDION matching source "Deliver scalable
+   strategic advisory" (an Intuit "VerticalCarousel"): nav items are large
+   headings; clicking one expands its body inline inside a white card with a 1px
+   #c3ced5 border and a 4px blue left accent, while a shared media column on the
+   right shows the open item's image. Scoped :not(.pill) so the pill tabs are
+   untouched. DOM: .vt-acc (items) + .vt-media-col (stacked media). */
+.vertical-tabs:not(.pill) .vt-acc {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* each item reserves a transparent border so opening adds no layout shift */
+.vertical-tabs:not(.pill) .vt-item {
+  border: 1px solid transparent;
+  border-left-width: 4px;
+  border-radius: var(--radius);
+}
+
+.vertical-tabs:not(.pill) .vt-item.is-open {
+  background: #fff;
+  border-color: #c3ced5;              /* source card border */
+  border-left-color: var(--primary);  /* blue accent bar */
+}
+
+/* header = large heading label (source: 28px / 500); no own border or fill */
+.vertical-tabs:not(.pill) .vt-tab {
+  align-items: flex-start;
+  gap: 12px;
+  border: 0;
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  font-size: 28px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: #5d686f;                     /* source inactive label grey */
+}
+
+.vertical-tabs:not(.pill) .vt-tab-label {
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+}
+
+.vertical-tabs:not(.pill) .vt-item.is-open .vt-tab {
+  color: #000;                        /* source active heading is black */
+}
+
+.vertical-tabs:not(.pill) .vt-tab:hover,
+.vertical-tabs:not(.pill) .vt-tab:focus-visible {
+  background: none;
+  color: var(--heading);
+}
+
+/* expanded body region — sits under the heading inside the card */
+.vertical-tabs:not(.pill) .vt-region {
+  padding: 0 24px 22px;
+}
+
+.vertical-tabs:not(.pill) .vt-region[hidden] {
+  display: none;
+}
+
+/* body — source: near-black text, 1.5 line-height */
+.vertical-tabs:not(.pill) .vt-body {
+  color: var(--text-color);
+  line-height: 1.5;
+  max-width: 40em;
+}
+
+/* shared media column: only the open item's image is shown, 16px radius */
+.vertical-tabs:not(.pill) .vt-media {
+  display: none;
+  background: none;
+  padding: 0;
+  margin: 0;
+}
+
+.vertical-tabs:not(.pill) .vt-media.is-active {
+  display: block;
+}
+
+.vertical-tabs:not(.pill) .vt-media img {
+  border-radius: 16px;
+}
+
+/* "Learn more" — plain text link (source shows no button here) */
+.vertical-tabs:not(.pill) .vt-cta,
+.vertical-tabs:not(.pill) a.vt-cta.button:any-link {
+  height: auto;
+  margin-top: 16px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--link-color);
+  font-weight: 600;
+}
+
+.vertical-tabs:not(.pill) a.vt-cta.button:any-link:hover {
+  background: none;
+  color: var(--link-hover-color);
+  text-decoration: underline;
+}
+
+/* pill variant — borderless rounded nav items with icons.
+   Selected pill lifts as a white card with a soft blue shadow (matches source). */
 .vertical-tabs.pill .vt-nav {
   gap: 10px;
 }
 
 .vertical-tabs.pill .vt-tab {
-  border: 1px solid var(--line);
+  border: 0;
   border-radius: 999px;
-  padding: 12px 20px;
+  padding: 20px 32px;
+}
+
+/* reveal the chevron only on the active pill (matches the source's › affordance);
+   margin-left:auto pushes it to the far edge while icon+label stay grouped left */
+.vertical-tabs.pill .vt-tab[aria-selected="true"] .vt-tab-chevron {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  margin-left: auto;
+  padding-left: 12px;
+  color: var(--heading);
+}
+
+.vertical-tabs.pill .vt-tab-chevron svg {
+  width: 20px;
+  height: 20px;
 }
 
 .vertical-tabs.pill .vt-tab[aria-selected="true"] {
-  border-color: var(--primary);
-  background: var(--sky);
+  color: var(--heading);
+  font-weight: 400;
+  background: #fff;
+  box-shadow: 0 4px 16px rgb(35 108 255 / 8%);
+}
+
+.vertical-tabs.pill .vt-tab:hover,
+.vertical-tabs.pill .vt-tab:focus-visible {
+  background: #fff;
+}
+
+/* pill panels: image sits on its own, no tinted media box */
+.vertical-tabs.pill .vt-media {
+  background: none;
+  padding: 0;
+  margin: 0 0 20px;
+}
+
+/* pill panel copy — larger, darker heading + 18px body (matches source) */
+.vertical-tabs.pill .vt-heading {
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.31;
+  color: rgb(57 58 61);
+}
+
+.vertical-tabs.pill .vt-body {
+  font-size: 18px;
+  line-height: 1.5;
+  color: rgb(57 58 61);
+}
+
+/* pill CTA — solid navy button (source: #00254a fill, white text, 48px) */
+.vertical-tabs.pill .vt-cta,
+.vertical-tabs.pill a.vt-cta:any-link {
+  height: 48px;
+  margin-top: 16px;
+  border-color: var(--navy);
+  background: var(--navy);
+  color: #fff;
+  font-weight: 500;
+}
+
+.vertical-tabs.pill .vt-cta:hover,
+.vertical-tabs.pill a.vt-cta:any-link:hover {
+  border-color: var(--navy-hover);
+  background: var(--navy-hover);
+  color: #fff;
+}
+
+/* default accordion: on mobile the media column sits below the items */
+.vertical-tabs:not(.pill) .vt-media-col {
+  margin-top: 24px;
 }
 
 @media (width >= 900px) {
@@ -132,5 +309,30 @@
 
   .vertical-tabs .vt-nav {
     margin: 0;
+  }
+
+  /* accordion: items left, shared media right (source layout) */
+  .vertical-tabs:not(.pill) .vt-media-col {
+    margin-top: 0;
+    position: sticky;
+    top: 24px;
+  }
+
+  /* pill: active panel lays media beside copy (source shows them side-by-side) */
+  .vertical-tabs.pill .vt-panel.is-active {
+    display: flex;
+    gap: 48px;
+    align-items: start;
+  }
+
+  .vertical-tabs.pill .vt-media {
+    flex: 0 0 42%;
+    margin: 0;
+    align-self: stretch;
+  }
+
+  .vertical-tabs.pill .vt-copy {
+    flex: 1 1 0;
+    min-width: 0;
   }
 }
