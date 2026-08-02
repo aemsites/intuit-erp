@@ -275,6 +275,6 @@ header .header .container { max-width: var(--container); margin: 0 auto; padding
   .header .nav-mobile-brands .bs-logo-quickbooks svg:last-child { height: 17px; margin-bottom: -2px; }
   .header .nav-mobile-brands .bs-logo-mailchimp svg:last-child { height: 16.5px; margin-bottom: -2px; }
   .header .ies-events .container { font-size: 13px; padding-top: 12px; padding-bottom: 12px; }
-  .header .nav-toggle { display: inline-flex; flex-direction: column; gap: 4px; background: none; border: 0; padding: 6px; cursor: pointer; }
+  .header .nav-toggle { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; width: 36px; height: 36px; box-sizing: border-box; background: none; border: 1px solid var(--text); border-radius: 4px; padding: 0; cursor: pointer; }
   .header .nav-toggle span { width: 22px; height: 2px; background: currentcolor; display: block; }
 }
