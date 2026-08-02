@@ -53,6 +53,26 @@ export function filterEntries(entries, {
 }
 
 /**
+ * The card's eyebrow label. Prefers the entry's own `category`, falling back to
+ * the category segment of `/blog/<category>/<slug>` paths — the per-collection
+ * indices (e.g. /blog/case-study/query-index.json) carry no `category` column,
+ * but the source site still shows an eyebrow on those cards ("CASE STUDY").
+ *
+ * Display-only: hyphens become spaces so slugs like "product-update" read as
+ * "PRODUCT UPDATE" once CSS uppercases them (same treatment, and reason, as
+ * buildEyebrow in blocks/blog-template/blog-template.js). The underlying
+ * category value is untouched, so filterEntries' matching is unaffected.
+ * @param {object} entry one query-index row
+ * @returns {string} label, or '' when the entry has no category to show
+ */
+export function categoryLabel(entry) {
+  const segments = (entry.path || '').split('/').filter(Boolean);
+  // /blog/<category>/<slug> — anything shallower (a listing page) has no category
+  const fromPath = segments.length > 2 ? segments[1] : '';
+  return (entry.category || fromPath).replace(/-/g, ' ');
+}
+
+/**
  * Pure DOM builder for one card. Mirrors the source's threegrids "small" card:
  * image, then a body of category (uppercase) → title → date. No description or
  * author. Feed values are untrusted, so every field is written via
@@ -78,10 +98,11 @@ export function cardEl(entry) {
   const body = document.createElement('div');
   body.className = 'blog-card-body';
 
-  if (entry.category) {
+  const categoryText = categoryLabel(entry);
+  if (categoryText) {
     const category = document.createElement('p');
     category.className = 'blog-card-category';
-    category.textContent = entry.category;
+    category.textContent = categoryText;
     body.append(category);
   }
 
