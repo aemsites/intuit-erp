@@ -4,24 +4,35 @@ header { height: auto; min-height: 146px; }
 header .header { background: #fff; }
 header .header .container { max-width: var(--container); margin: 0 auto; padding: 0 40px; }
 
-/* brand strip */
+/* brand strip — logo sizing/spacing matches erp.intuit.com's icom-components
+   a-logotype "small" variant exactly (icon 15.5px + 4.5px gap; per-brand
+   wordmark heights, since each brand's type is a different cap-height) */
 .header .ies-topstrip { background: #fff; border-bottom: 1px solid var(--line); }
-.header .ies-topstrip .container { display: flex; align-items: center; gap: 30px; height: 36px; }
-.header .intuit-word { font-weight: 800; font-size: 15px; letter-spacing: 0.02em; color: var(--primary); }
-.header .bs-wm { display: inline-flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 600; color: var(--heading); letter-spacing: -0.01em; }
-.header .bs-ic { width: 17px; height: 17px; border-radius: 50%; font-style: normal; font-size: 9px; font-weight: 700; color: #fff; display: inline-flex; align-items: center; justify-content: center; }
-.header .bs-tt { background: #e11d1d; }
-.header .bs-ck { background: #199e77; font-size: 8px; }
-.header .bs-qb { background: #2ca01c; font-size: 8px; }
-.header .bs-mc { background: #ffe01b; color: #000; }
+.header .ies-topstrip .container { display: flex; align-items: center; gap: 24px; height: 30px; }
+.header .bs-logo { display: inline-flex; align-items: center; }
+.header .bs-logo-intuit svg { height: 11px; width: auto; }
+
+.header .bs-logo-turbotax svg:first-child,
+.header .bs-logo-creditkarma svg:first-child,
+.header .bs-logo-quickbooks svg:first-child,
+.header .bs-logo-mailchimp svg:first-child { height: 15.5px; width: auto; margin-right: 4.5px; }
+.header .bs-logo-turbotax svg:last-child { height: 11px; width: auto; margin-top: -1px; }
+.header .bs-logo-creditkarma svg:last-child { height: 10px; width: auto; }
+.header .bs-logo-quickbooks svg:last-child { height: 13.5px; width: auto; margin-bottom: -2px; }
+.header .bs-logo-mailchimp svg:last-child { height: 12.5px; width: auto; margin-bottom: -2px; }
 
 /* sticky nav */
 .header .ies-nav { position: sticky; top: 0; z-index: 50; background: #fff; }
 .header .ies-nav.scrolled { box-shadow: 0 1px 0 rgb(0 0 0 / 6%); border-bottom: 2px solid var(--navy); }
 .header .ies-nav .container { position: relative; display: flex; align-items: center; height: 60px; gap: 30px; }
-.header .nav-logo { display: flex; align-items: baseline; gap: 6px; font-size: 22px; }
-.header .nav-logo .ies-intuit { color: var(--primary); font-weight: 800; letter-spacing: 0.01em; }
-.header .nav-logo .ies-word { font-weight: 400; color: var(--primary); }
+.header .nav-logo { display: flex; align-items: center; }
+
+/* 20px, not the a-logotype component's generic "large" default of 17px —
+   erp.intuit.com ships a page-specific override bumping this exact logo
+   to 20px (confirmed via its inline `[class*=ALogotype-text-wrapper]
+   [class*=ALogotype-large]` style block), so the component default alone
+   renders it visibly smaller than the live site. */
+.header .nav-logo svg { height: 20px; width: auto; display: block; }
 .header .nav-main { display: flex; align-items: stretch; gap: 26px; margin-left: 10px; }
 .header .nav-item { position: relative; display: inline-flex; align-items: center; }
 .header .nav-main button, .header .nav-main > a, .header .nav-main .nav-link { background: none; border: 0; padding: 2px 0; font-size: 16px; font-weight: 400; color: var(--heading); display: inline-flex; align-items: center; gap: 6px; font-family: inherit; cursor: pointer; text-decoration: none; }

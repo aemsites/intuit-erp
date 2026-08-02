@@ -6,6 +6,13 @@
  * CSS: blocks/footer/footer.css · source fragment: content/footer.html
  */
 import { getMetadata } from '../../scripts/aem.js';
+import {
+  FOOTER_LOGO_INTUIT,
+  FOOTER_LOGO_TURBOTAX,
+  FOOTER_LOGO_CREDITKARMA,
+  FOOTER_LOGO_QUICKBOOKS,
+} from './brand-logos.js';
+import { LOGO_MAILCHIMP_ICON, LOGO_MAILCHIMP_WORD } from '../header/brand-logos.js';
 
 const CHROME = `
 <div class="ies-footer">
@@ -82,7 +89,7 @@ const CHROME = `
     <div class="container">
       <div class="legal-grid">
         <div class="legal-left">
-          <span class="intuit-word ftr-logo">INTUIT</span>
+          <a href="https://www.intuit.com/" class="ftr-logo" aria-label="Intuit">${FOOTER_LOGO_INTUIT}</a>
           <ul>
             <li><a href="https://www.intuit.com/company/">About Intuit</a></li>
             <li><a href="https://www.intuit.com/careers/">Join Our Team</a></li>
@@ -93,10 +100,10 @@ const CHROME = `
         </div>
         <div class="legal-center">
           <div class="brand-logos">
-            <span class="bs-wm"><i class="bs-ic bs-tt">✓</i>turbotax</span>
-            <span class="bs-wm"><i class="bs-ic bs-ck">ck</i>creditkarma</span>
-            <span class="bs-wm"><i class="bs-ic bs-qb">qb</i>quickbooks</span>
-            <span class="bs-wm"><i class="bs-ic bs-mc">c</i>mailchimp</span>
+            <a href="https://turbotax.intuit.com/" class="ftr-brand" target="_blank" rel="noopener" aria-label="TurboTax">${FOOTER_LOGO_TURBOTAX}</a>
+            <a href="https://www.creditkarma.com/" class="ftr-brand" target="_blank" rel="noopener" aria-label="Credit Karma">${FOOTER_LOGO_CREDITKARMA}</a>
+            <a href="https://quickbooks.intuit.com/" class="ftr-brand" target="_blank" rel="noopener" aria-label="QuickBooks">${FOOTER_LOGO_QUICKBOOKS}</a>
+            <a href="https://mailchimp.com/" class="ftr-brand ftr-brand-mailchimp" target="_blank" rel="noopener" aria-label="Mailchimp">${LOGO_MAILCHIMP_ICON}${LOGO_MAILCHIMP_WORD}</a>
           </div>
           <p class="footer-copy">© 2026 Intuit Inc. All rights reserved.</p>
           <p class="footer-copy">Intuit, QuickBooks, QB, TurboTax, Credit Karma, and Mailchimp are registered trademarks of Intuit Inc. Terms and conditions, features, support, pricing, and service options subject to change without notice.</p>
@@ -110,7 +117,9 @@ const CHROME = `
             <a href="https://security.intuit.com">Security</a> |
             <a href="https://www.intuit.com/compliance/">Compliance</a>
           </div>
-          <div class="truste">TRUSTe<br><small>Verified Privacy</small></div>
+          <a class="truste" href="https://privacy.trustarc.com/privacy-seal/validation?rid=ab182efc-5237-493d-8952-9295f7f3800b" target="_blank" rel="noopener">
+            <img src="https://hostedseal.trustarc.com/privacy-seal/seal?rid=ab182efc-5237-493d-8952-9295f7f3800b" width="142" height="45" alt="TRUSTe" loading="lazy">
+          </a>
         </div>
       </div>
     </div>

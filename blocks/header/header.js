@@ -13,6 +13,18 @@
 import { getMetadata } from '../../scripts/aem.js';
 import { openScheduleModal } from '../../scripts/schedule-modal.js';
 import { loadFragment } from '../fragment/fragment.js';
+import {
+  LOGO_INTUIT,
+  LOGO_TURBOTAX_ICON,
+  LOGO_TURBOTAX_WORD,
+  LOGO_CREDITKARMA_ICON,
+  LOGO_CREDITKARMA_WORD,
+  LOGO_QUICKBOOKS_ICON,
+  LOGO_QUICKBOOKS_WORD,
+  LOGO_MAILCHIMP_ICON,
+  LOGO_MAILCHIMP_WORD,
+  LOGO_IES,
+} from './brand-logos.js';
 
 // Fallback nav model, used only when the authorable nav-menu block (see
 // blocks/nav-menu/nav-menu.js) isn't available. `menu` entries open a flyout
@@ -173,16 +185,16 @@ function chromeHTML(navMainHTML) {
   return `
 <div class="ies-topstrip">
   <div class="container">
-    <a href="https://www.intuit.com/" class="intuit-word" aria-label="Intuit">INTUIT</a>
-    <a href="https://turbotax.intuit.com/" class="bs-wm"><i class="bs-ic bs-tt">✓</i>turbotax</a>
-    <a href="https://www.creditkarma.com/" class="bs-wm"><i class="bs-ic bs-ck">ck</i>creditkarma</a>
-    <a href="https://quickbooks.intuit.com/" class="bs-wm"><i class="bs-ic bs-qb">qb</i>quickbooks</a>
-    <a href="https://mailchimp.com/" class="bs-wm"><i class="bs-ic bs-mc">c</i>mailchimp</a>
+    <a href="https://www.intuit.com/" class="bs-logo bs-logo-intuit" aria-label="Intuit">${LOGO_INTUIT}</a>
+    <a href="https://turbotax.intuit.com/" class="bs-logo bs-logo-turbotax" target="_blank" rel="noopener" aria-label="TurboTax">${LOGO_TURBOTAX_ICON}${LOGO_TURBOTAX_WORD}</a>
+    <a href="https://www.creditkarma.com/" class="bs-logo bs-logo-creditkarma" target="_blank" rel="noopener" aria-label="Credit Karma">${LOGO_CREDITKARMA_ICON}${LOGO_CREDITKARMA_WORD}</a>
+    <a href="https://quickbooks.intuit.com/" class="bs-logo bs-logo-quickbooks" target="_blank" rel="noopener" aria-label="QuickBooks">${LOGO_QUICKBOOKS_ICON}${LOGO_QUICKBOOKS_WORD}</a>
+    <a href="https://mailchimp.com/" class="bs-logo bs-logo-mailchimp" target="_blank" rel="noopener" aria-label="Mailchimp">${LOGO_MAILCHIMP_ICON}${LOGO_MAILCHIMP_WORD}</a>
   </div>
 </div>
 <div class="ies-nav" id="iesNav">
   <div class="container">
-    <a class="nav-logo" href="/"><span class="ies-intuit">INTUIT</span><span class="ies-word">Enterprise&nbsp;Suite</span></a>
+    <a class="nav-logo" href="/" aria-label="Intuit Enterprise Suite">${LOGO_IES}</a>
     ${navMainHTML}
     <div class="nav-right">
       <button type="button" class="btn btn-primary nav-cta">
