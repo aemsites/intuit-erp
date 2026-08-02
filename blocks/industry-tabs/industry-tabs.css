@@ -1,6 +1,8 @@
-/* industry-tabs — dark "workflows your industry actually runs on" section:
-   section heading/subtext on top, then a vertical tab list (left) + the active
-   industry panel (right). Fed from authored inline panels. */
+/* industry-tabs — dark "workflows your industry actually runs on" section.
+   Mobile: an accordion (icon + label + chevron; panel expands beneath the row).
+   Desktop (>=900px): a left tab rail with the active panel in the right column.
+   Each tab is paired with its panel in an .it-item so the same DOM does both.
+   Fed from authored inline panels. */
 
 .section.industry-tabs-container { background: var(--navy); padding: var(--section-y) 0; color: #fff; }
 .industry-tabs-container .default-content-wrapper h2 { color: #fff; text-align: left; margin: 0 0 12px; }
@@ -9,47 +11,46 @@
   color: rgb(255 255 255 / 78%); text-align: left; margin: 0 0 40px; max-width: 42em;
 }
 
-.industry-tabs { display: block; }
+/* ---- mobile: accordion ---- */
+.industry-tabs .it-nav { display: flex; flex-direction: column; }
 
-.industry-tabs .it-nav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin: 0 0 24px;
-  border-bottom: 1px solid rgb(255 255 255 / 20%);
-}
+.industry-tabs .it-item { border-bottom: 1px solid rgb(255 255 255 / 15%); }
 
 .industry-tabs .it-tab {
+  width: 100%;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   background: none;
   border: 0;
-  border-bottom: 2px solid transparent;
-  padding: 12px 14px;
+  border-left: 3px solid transparent;
+  padding: 16px 8px;
   font-family: inherit;
   font-size: var(--body-font-size-m);
-  font-weight: 400;
-  color: rgb(255 255 255 / 70%);
+  font-weight: 600;
+  color: #fff;
   text-align: left;
   cursor: pointer;
 }
 
-.industry-tabs .it-tab[aria-selected="true"] {
-  color: #fff;
-  font-weight: 600;
-  border-bottom-color: #fff;
-}
+.industry-tabs .it-tab .it-tab-label { flex: 1; }
 
-.industry-tabs .it-tab:hover,
-.industry-tabs .it-tab:focus-visible { color: #fff; }
+.industry-tabs .it-tab[aria-selected="true"] { border-left-color: var(--sky); }
+
+/* tab icon (authored white .svg <img>, or EDS :icon-*: span) */
+.industry-tabs .it-tab > img,
+.industry-tabs .it-tab .icon { width: 22px; height: 22px; flex-shrink: 0; }
+.industry-tabs .it-tab .icon img { width: 100%; height: 100%; }
+
+.industry-tabs .it-chevron {
+  display: inline-flex; width: 22px; height: 22px; flex-shrink: 0; color: #fff;
+  transition: transform 0.2s ease;
+}
+.industry-tabs .it-chevron svg { width: 100%; height: 100%; }
+.industry-tabs .it-tab[aria-selected="true"] .it-chevron { transform: rotate(180deg); }
 
 .industry-tabs .it-panel { display: none; }
-
-.industry-tabs .it-panel.is-active {
-  display: block;
-  animation: it-fade-in 0.25s ease;
-}
+.industry-tabs .it-panel.is-active { display: block; padding: 4px 8px 28px; animation: it-fade-in 0.25s ease; }
 
 @keyframes it-fade-in {
   from { opacity: 0; }
@@ -58,7 +59,7 @@
 }
 
 .industry-tabs .it-heading {
-  font-size: 32px;
+  font-size: 28px;
   line-height: 1.2;
   font-weight: 400;
   color: #fff;
@@ -69,34 +70,22 @@
   font-size: var(--body-font-size-m);
   line-height: 1.6;
   color: rgb(255 255 255 / 80%);
-  max-width: 34em;
 }
 
 .industry-tabs .it-body p { margin: 0; }
-.industry-tabs .it-cta { margin: 24px 0 0; }
+.industry-tabs .it-cta { margin: 20px 0 0; }
 .industry-tabs .it-cta .button.secondary { color: #fff; border-color: #fff; }
 .industry-tabs .it-cta .button.secondary:hover { background: rgb(255 255 255 / 12%); }
 
-.industry-tabs .it-main { display: grid; gap: 28px; align-items: start; }
-.industry-tabs .it-media { margin: 0; }
+.industry-tabs .it-media { margin: 24px 0 0; }
 .industry-tabs .it-media img { display: block; width: 100%; border-radius: var(--radius-card); }
-
-/* tab icon (authored white .svg <img>, or EDS :icon-*: span) on the navy rail */
-.industry-tabs .it-tab > img,
-.industry-tabs .it-tab .icon { width: 22px; height: 22px; flex-shrink: 0; opacity: 0.7; }
-.industry-tabs .it-tab .icon img { width: 100%; height: 100%; }
-
-.industry-tabs .it-tab[aria-selected="true"] > img,
-.industry-tabs .it-tab[aria-selected="true"] .icon,
-.industry-tabs .it-tab:hover > img,
-.industry-tabs .it-tab:hover .icon { opacity: 1; }
 
 /* customer quote on the dark band */
 .industry-tabs .it-quote {
-  margin: 28px 0 0;
+  margin: 24px 0 0;
   padding: 4px 0 4px 18px;
   border-left: 3px solid var(--sky);
-  max-width: 40em;
+  max-width: 44em;
 }
 
 .industry-tabs .it-quote blockquote {
@@ -113,35 +102,34 @@
   color: rgb(255 255 255 / 70%);
 }
 
+/* ---- desktop: left tab rail + active panel in the right column ---- */
 @media (width >= 900px) {
-  .industry-tabs {
-    display: grid;
-    grid-template-columns: 260px 1fr;
-    gap: 56px;
-    align-items: start;
-  }
+  .industry-tabs { position: relative; min-height: 620px; }
 
   .industry-tabs .it-nav {
-    flex-flow: column nowrap;
-    gap: 0;
-    margin: 0;
-    border-bottom: 0;
+    width: 260px;
     border-left: 1px solid rgb(255 255 255 / 20%);
   }
 
+  .industry-tabs .it-item { border-bottom: 0; }
+
   .industry-tabs .it-tab {
-    border-bottom: 0;
-    border-left: 2px solid transparent;
     margin-left: -1px;
     padding: 12px 20px;
+    font-weight: 400;
+    color: rgb(255 255 255 / 70%);
   }
 
-  .industry-tabs .it-tab[aria-selected="true"] {
-    border-bottom-color: transparent;
-    border-left-color: #fff;
-  }
+  .industry-tabs .it-tab[aria-selected="true"],
+  .industry-tabs .it-tab:hover { color: #fff; }
+  .industry-tabs .it-tab[aria-selected="true"] { border-left-color: #fff; font-weight: 600; }
 
-  .industry-tabs .it-panels { min-height: 200px; }
+  .industry-tabs .it-chevron { display: none; }
 
-  .industry-tabs .it-main { grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; }
+  /* pull the active panel out of the rail into the right column */
+  .industry-tabs .it-panel { position: absolute; top: 0; left: 316px; right: 0; padding: 0; }
+
+  .industry-tabs .it-copy { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+  .industry-tabs .it-heading { font-size: 32px; margin: 0; }
+  .industry-tabs .it-media { max-width: 680px; margin: 28px 0 0; }
 }

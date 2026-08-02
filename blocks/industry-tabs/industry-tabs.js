@@ -36,6 +36,13 @@ function buildTab(item, index) {
   label.textContent = item.label || '';
   btn.append(label);
 
+  // chevron — visible only in the mobile accordion layout (CSS-hidden on desktop)
+  const chevron = document.createElement('span');
+  chevron.className = 'it-chevron';
+  chevron.setAttribute('aria-hidden', 'true');
+  chevron.innerHTML = '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  btn.append(chevron);
+
   return btn;
 }
 
@@ -47,10 +54,7 @@ function buildPanel(item, index) {
   panel.setAttribute('aria-labelledby', `it-tab-${index}`);
   panel.tabIndex = 0;
 
-  // main = copy (heading/body/link) beside the product image
-  const main = document.createElement('div');
-  main.className = 'it-main';
-
+  // copy = heading beside body/link; the product image sits full-width below
   const copy = document.createElement('div');
   copy.className = 'it-copy';
   if (item.heading) {
@@ -59,13 +63,15 @@ function buildPanel(item, index) {
     heading.textContent = item.heading;
     copy.append(heading);
   }
+  const copyBody = document.createElement('div');
+  copyBody.className = 'it-copy-body';
   if (item.body) {
     const body = document.createElement('div');
     body.className = 'it-body';
     const p = document.createElement('p');
     p.textContent = item.body;
     body.append(p);
-    copy.append(body);
+    copyBody.append(body);
   }
   if (item.linkHref) {
     const cta = document.createElement('p');
@@ -75,9 +81,10 @@ function buildPanel(item, index) {
     a.textContent = item.linkText || 'Learn more';
     a.className = 'button secondary';
     cta.append(a);
-    copy.append(cta);
+    copyBody.append(cta);
   }
-  main.append(copy);
+  copy.append(copyBody);
+  panel.append(copy);
 
   if (item.image) {
     const wrap = document.createElement('div');
@@ -87,9 +94,8 @@ function buildPanel(item, index) {
     img.alt = item.imageAlt || item.heading || item.label || '';
     img.loading = 'lazy';
     wrap.append(img);
-    main.append(wrap);
+    panel.append(wrap);
   }
-  panel.append(main);
 
   if (item.quote) {
     const fig = document.createElement('figure');
@@ -138,12 +144,16 @@ export function renderPanels(container, data) {
   const nav = document.createElement('div');
   nav.className = 'it-nav';
   nav.setAttribute('role', 'tablist');
-  nav.setAttribute('aria-orientation', 'horizontal');
-  nav.append(...tabs);
-
-  const panelsWrap = document.createElement('div');
-  panelsWrap.className = 'it-panels';
-  panelsWrap.append(...panels);
+  nav.setAttribute('aria-orientation', 'vertical');
+  // each tab is paired with its panel in an .it-item, so the panel can render
+  // directly beneath its tab on mobile (accordion) while the desktop CSS lays
+  // the tabs out as a left rail with the active panel in the right column.
+  items.forEach((_, i) => {
+    const itemEl = document.createElement('div');
+    itemEl.className = 'it-item';
+    itemEl.append(tabs[i], panels[i]);
+    nav.append(itemEl);
+  });
 
   nav.addEventListener('click', (e) => {
     const btn = e.target.closest('.it-tab');
@@ -167,7 +177,7 @@ export function renderPanels(container, data) {
     tabs[next].focus();
   });
 
-  container.append(nav, panelsWrap);
+  container.append(nav);
   return container;
 }
 
