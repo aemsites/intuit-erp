@@ -16,6 +16,11 @@ function make() {
   return el;
 }
 
+// the block branches on the 900px breakpoint (collapsible accordion vs tab rail)
+function matchMediaDesktop(isDesktop) {
+  window.matchMedia = vi.fn(() => ({ matches: isDesktop }));
+}
+
 describe('industry-tabs renderPanels', () => {
   it('builds N tabs + N panels, first tab/panel active', () => {
     const el = make();
@@ -96,6 +101,34 @@ describe('industry-tabs renderPanels', () => {
     tabs[1].dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true }));
     expect(tabs[0].getAttribute('aria-selected')).toBe('true');
     el.remove();
+  });
+
+  it('re-clicking the open tab collapses it on mobile (accordion)', () => {
+    matchMediaDesktop(false);
+    const el = make();
+    renderPanels(el, data);
+    const tabs = el.querySelectorAll('[role="tab"]');
+    const panels = el.querySelectorAll('[role="tabpanel"]');
+    tabs[0].click();
+    expect(panels[0].classList.contains('is-active')).toBe(false);
+    expect(tabs[0].getAttribute('aria-selected')).toBe('false');
+    // the collapsed row stays keyboard-reachable
+    expect(tabs[0].tabIndex).toBe(0);
+
+    tabs[0].click();
+    expect(panels[0].classList.contains('is-active')).toBe(true);
+    expect(tabs[0].getAttribute('aria-selected')).toBe('true');
+  });
+
+  it('re-clicking the open tab does NOT collapse it on desktop (tab rail)', () => {
+    matchMediaDesktop(true);
+    const el = make();
+    renderPanels(el, data);
+    const tabs = el.querySelectorAll('[role="tab"]');
+    const panels = el.querySelectorAll('[role="tabpanel"]');
+    tabs[0].click();
+    expect(panels[0].classList.contains('is-active')).toBe(true);
+    expect(tabs[0].getAttribute('aria-selected')).toBe('true');
   });
 
   it('degrades gracefully (renders nothing) on empty data, without throwing', () => {

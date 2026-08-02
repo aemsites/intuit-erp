@@ -113,11 +113,19 @@ function buildPanel(item, index) {
   return panel;
 }
 
-function activate(tabs, panels, index) {
+// The desktop layout is a tab rail (exactly one panel always open); mobile is
+// an accordion, where re-tapping the open row collapses it — matching
+// erp.intuit.com, which allows an all-collapsed state on mobile only.
+const isDesktop = () => !!(window.matchMedia && window.matchMedia('(min-width: 900px)').matches);
+
+// index -1 collapses everything (mobile only). `focusIndex` keeps one tab
+// reachable by Tab key in that state, since no tab is selected to hold it.
+function activate(tabs, panels, index, focusIndex = index) {
+  const roving = index === -1 ? focusIndex : index;
   tabs.forEach((tab, i) => {
-    const active = i === index;
-    tab.setAttribute('aria-selected', active ? 'true' : 'false');
-    tab.tabIndex = active ? 0 : -1;
+    tab.setAttribute('aria-selected', i === index ? 'true' : 'false');
+    tab.setAttribute('aria-expanded', i === index ? 'true' : 'false');
+    tab.tabIndex = i === roving ? 0 : -1;
   });
   panels.forEach((panel, i) => panel.classList.toggle('is-active', i === index));
 }
@@ -159,8 +167,7 @@ export function renderPanels(container, data) {
   // the panel bleeds into the next section. Re-measure on switch / resize /
   // image load. On mobile (panels in flow) clear it.
   function syncHeight() {
-    const desktop = window.matchMedia && window.matchMedia('(min-width: 900px)').matches;
-    if (!desktop) { container.style.minHeight = ''; return; }
+    if (!isDesktop()) { container.style.minHeight = ''; return; }
     const active = panels.find((p) => p.classList.contains('is-active'));
     if (active) container.style.minHeight = `${active.offsetHeight}px`;
   }
@@ -170,7 +177,8 @@ export function renderPanels(container, data) {
     if (!btn) return;
     const idx = tabs.indexOf(btn);
     if (idx === -1) return;
-    activate(tabs, panels, idx);
+    const collapse = !isDesktop() && btn.getAttribute('aria-selected') === 'true';
+    activate(tabs, panels, collapse ? -1 : idx, idx);
     syncHeight();
   });
 
@@ -191,9 +199,30 @@ export function renderPanels(container, data) {
 
   container.append(nav);
   syncHeight();
-  window.addEventListener('resize', syncHeight);
+  window.addEventListener('resize', () => {
+    // the desktop rail has no collapsed state, so reopen the focused tab if the
+    // viewport grows while the mobile accordion is fully collapsed
+    if (isDesktop() && !panels.some((p) => p.classList.contains('is-active'))) {
+      const focused = tabs.findIndex((t) => t.tabIndex === 0);
+      activate(tabs, panels, focused === -1 ? 0 : focused);
+    }
+    syncHeight();
+  });
   container.querySelectorAll('.it-media img').forEach((img) => img.addEventListener('load', syncHeight));
   return container;
+}
+
+// Attribution is authored as a plain paragraph that opens with a literal
+// "<cite>" token (the CMS escapes the tag), so it arrives as text rather than
+// a real <cite> element. Match either form.
+const CITE_PREFIX = /^<cite>\s*/i;
+
+function parseAttribution(content) {
+  const citeEl = content.querySelector('cite');
+  if (citeEl) return citeEl.textContent.trim();
+  const p = [...content.querySelectorAll('p')]
+    .find((el) => CITE_PREFIX.test(el.textContent.trim()));
+  return p ? p.textContent.trim().replace(CITE_PREFIX, '') : undefined;
 }
 
 // Build the panel-data array from authored block rows (label cell + content
@@ -214,10 +243,10 @@ function parseAuthored(block) {
       const headingEl = content.querySelector('h2, h3, h4');
       const linkEl = content.querySelector('a');
       const bodyEl = [...content.querySelectorAll('p')]
-        .find((p) => !p.querySelector('a') && !p.closest('blockquote') && !p.closest('figure'));
+        .find((p) => !p.querySelector('a') && !p.closest('blockquote') && !p.closest('figure')
+          && !CITE_PREFIX.test(p.textContent.trim()));
       const img = content.querySelector('img');
       const quoteEl = content.querySelector('blockquote');
-      const citeEl = content.querySelector('cite');
       return {
         label,
         icon: iconEl ? iconEl.outerHTML : undefined,
@@ -228,7 +257,7 @@ function parseAuthored(block) {
         linkHref: linkEl ? linkEl.getAttribute('href') : undefined,
         linkText: linkEl ? linkEl.textContent.trim() : undefined,
         quote: quoteEl ? quoteEl.textContent.trim() : undefined,
-        attribution: citeEl ? citeEl.textContent.trim() : undefined,
+        attribution: parseAttribution(content),
       };
     });
 }
