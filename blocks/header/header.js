@@ -150,7 +150,7 @@ const NAV = [
     ],
   },
   {
-    type: 'link', label: 'For accounting firms', href: 'https://erp.intuit.com/accountant/', cls: 'acct-link',
+    type: 'link', label: 'For accounting firms', href: '/accountant', cls: 'acct-link', internal: true,
   },
 ];
 
