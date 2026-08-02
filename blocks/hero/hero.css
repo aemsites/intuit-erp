@@ -10,17 +10,25 @@
   display: grid;
   grid-template-columns: 1.05fr 1fr;
   gap: 48px;
-  align-items: center;
-  min-height: 440px;
-  padding-top: 72px;
-  padding-bottom: 72px;
+  align-items: start;
+  padding-top: 80px;
+  padding-bottom: 80px;
 }
 
-.hero .hero-copy .hero-eyebrow { color: #9fd0ff; margin-bottom: 18px; }
+/* matches erp.intuit.com's kicker: regular weight (not the shared
+   .eyebrow class's bold), white, 12px/16px */
+.hero .hero-copy .hero-eyebrow {
+  color: #fff;
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: normal;
+  margin-bottom: 16px;
+}
 
 .hero .hero-copy h1 {
   font-size: 48px;
-  line-height: 1.16;
+  line-height: 1.25;
   font-weight: 400;
   max-width: 10em;
   margin: 0 0 20px;
@@ -28,11 +36,11 @@
 }
 
 .hero .hero-copy .hero-lede {
-  font-size: 18px;
-  line-height: 1.5;
+  font-size: 20px;
+  line-height: 1.4;
   color: #e6eef6;
   max-width: 28em;
-  margin: 0 0 30px;
+  margin: 0 0 40px;
 }
 
 .hero .hero-actions { display: flex; gap: 16px; flex-wrap: wrap; margin: 0; }
@@ -121,7 +129,7 @@
 .hero .hero-form .form .ff input:focus { outline: 2px solid var(--primary); outline-offset: -1px; border-color: var(--primary); }
 
 @media (width <= 768px) {
-  .hero .hero-grid { grid-template-columns: 1fr; gap: 28px; min-height: 0; padding-top: 36px; padding-bottom: 36px; }
+  .hero .hero-grid { grid-template-columns: 1fr; gap: 28px; padding-top: 40px; padding-bottom: 40px; }
   .hero .hero-copy h1 { font-size: 36px; }
   .hero .hero-copy .hero-lede { font-size: 16px; }
   .hero .hero-actions { flex-direction: column; align-items: stretch; }
