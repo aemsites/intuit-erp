@@ -95,8 +95,9 @@
   display: none;
   margin-right: 4px;
   color: var(--text-muted);
-  font-size: var(--body-font-size-s);
-  font-weight: 600;
+  font-size: 12px; /* matches source share label (no 12px token) */
+  font-weight: 500;
+  line-height: 16px;
 }
 
 .blog-article .blog-share-link {
@@ -383,7 +384,7 @@
   .blog-article .blog-share-label {
     display: block;
     flex-basis: 100%;
-    margin: 0;
+    margin: 0 0 8px;
   }
 
   .blog-article .blog-toc-rail > .default-content-wrapper > .blog-share {
