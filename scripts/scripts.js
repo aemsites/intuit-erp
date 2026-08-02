@@ -19,6 +19,8 @@ import {
   // eslint-disable-next-line import/no-relative-packages
 } from '../plugins/martech/src/index.js';
 import { sendOf1Signal, readAlloySegmentIds } from './of1-rtcdp-signal.js';
+import { isBlogPage, buildBlogTemplate } from '../blocks/blog-template/blog-template.js';
+import { isVideoLink } from '../blocks/video/video.js';
 
 // Adobe Web SDK / AEP datastream. The datastream id is public (not a secret)
 // and safe in client source. While the id starts with "REPLACE_", martech is
@@ -106,11 +108,38 @@ function buildWidgetAutoBlocks(main) {
 }
 
 /**
+ * Turns a section-level paragraph that is only a link to a video host
+ * (YouTube/Vimeo), optionally wrapping a poster <img>, into a `video` block.
+ * Skips inline prose links and links already inside a block cell (e.g.
+ * testimonial.video), so only standalone thumbnail-links are upgraded.
+ * @param {Element} main The container element
+ */
+function buildVideoAutoBlocks(main) {
+  main.querySelectorAll('p a[href]').forEach((a) => {
+    if (!isVideoLink(a.getAttribute('href'))) return;
+    const p = a.closest('p');
+    // section-level only: p is a direct child of a section div under main
+    if (!p || !p.parentElement || p.parentElement.parentElement !== main) return;
+    if (p.querySelectorAll('a').length !== 1) return;
+    // the link must be the whole paragraph (image poster has no text)
+    if (p.textContent.replace(a.textContent, '').trim()) return;
+    p.replaceWith(buildBlock('video', { elems: [a.cloneNode(true)] }));
+  });
+}
+
+/**
  * Builds all synthetic blocks in a container element.
  * @param {Element} main The container element
  */
 function buildAutoBlocks(main) {
   try {
+    // Blog article autoblock — must run FIRST so the right-rail /fragments/ link
+    // it injects is present when the fragment collection below queries for it.
+    // Guard on main.isConnected: decorateMain also runs on the DETACHED main that
+    // loadFragment builds for the right-rail fragment. isBlogPage() checks the page
+    // URL (still /blog/*), so without this guard the autoblock re-injects a right-rail
+    // link into every loaded fragment and buildAutoBlocks re-loads it — infinite loop.
+    if (isBlogPage() && main.isConnected) buildBlogTemplate(main);
     // auto load `*/fragments/*` references
     const fragments = [...main.querySelectorAll('a[href*="/fragments/"]')].filter((f) => !f.closest('.fragment'));
     if (fragments.length > 0) {
@@ -129,6 +158,7 @@ function buildAutoBlocks(main) {
       });
     }
     buildWidgetAutoBlocks(main);
+    buildVideoAutoBlocks(main);
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error('Auto Blocking failed', error);

@@ -1,8 +1,0 @@
-{
-  "runtime": "vanilla-eds",
-  "blockWrapperClass": "block",
-  "buttonClasses": ".button / .button.primary / .button.secondary / p.button-wrapper",
-  "fragmentScriptPolicy": "executed",
-  "emptySectionCollapse": true,
-  "note": "Standard adobe/aem-boilerplate runtime (scripts/aem.js + scripts.js). Header/footer are blocks reading /nav and /footer fragments. Content deployed to DA via MCP; block code needs a GitHub repo + AEM Code Sync bound to the DA site to render on aem.page."
-}

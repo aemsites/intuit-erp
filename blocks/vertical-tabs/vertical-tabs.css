@@ -1,0 +1,136 @@
+/* vertical-tabs — left-nav interactive tabs (plain + pill). */
+.vertical-tabs {
+  display: block;
+}
+
+.vertical-tabs .vt-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0 0 24px;
+}
+
+.vertical-tabs .vt-tab {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  background: none;
+  border: 0;
+  border-left: 2px solid transparent;
+  padding: 14px 16px;
+  font-family: inherit;
+  font-size: var(--body-font-size-m);
+  font-weight: 400;
+  color: var(--text-muted);
+  text-align: left;
+  cursor: pointer;
+}
+
+.vertical-tabs .vt-tab-icon {
+  width: 24px;
+  height: 24px;
+  flex: none;
+  object-fit: contain;
+}
+
+.vertical-tabs .vt-tab[aria-selected="true"] {
+  color: var(--heading);
+  font-weight: 600;
+  border-left-color: var(--primary);
+  background: var(--sky);
+}
+
+.vertical-tabs .vt-tab:hover,
+.vertical-tabs .vt-tab:focus-visible {
+  color: var(--heading);
+  background: var(--sky);
+}
+
+/* panels: hard show/hide by default; crossfade is the same visual outcome
+   without a layout jump since only one panel is ever laid out at a time */
+.vertical-tabs .vt-panel {
+  display: none;
+}
+
+.vertical-tabs .vt-panel.is-active {
+  display: block;
+  animation: vt-fade-in 0.25s ease;
+}
+
+@keyframes vt-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.vertical-tabs .vt-media {
+  background: var(--sky);
+  border-radius: var(--radius-card);
+  padding: 24px;
+  margin: 0 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vertical-tabs .vt-media img {
+  width: 100%;
+  border-radius: var(--radius);
+}
+
+.vertical-tabs .vt-heading {
+  font-size: var(--heading-font-size-m);
+  line-height: 1.2;
+  font-weight: 400;
+  color: var(--heading);
+  margin: 0 0 14px;
+}
+
+.vertical-tabs .vt-body {
+  font-size: var(--body-font-size-m);
+  line-height: 1.6;
+  color: var(--text-muted);
+  max-width: 32em;
+}
+
+.vertical-tabs .vt-body p {
+  margin: 0 0 14px;
+}
+
+.vertical-tabs .vt-body ul {
+  margin: 0 0 14px;
+  padding-left: 1.2em;
+}
+
+.vertical-tabs .vt-cta {
+  margin-top: 8px;
+}
+
+/* pill variant — rounded nav items with icons */
+.vertical-tabs.pill .vt-nav {
+  gap: 10px;
+}
+
+.vertical-tabs.pill .vt-tab {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 12px 20px;
+}
+
+.vertical-tabs.pill .vt-tab[aria-selected="true"] {
+  border-color: var(--primary);
+  background: var(--sky);
+}
+
+@media (width >= 900px) {
+  .vertical-tabs {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 48px;
+    align-items: start;
+  }
+
+  .vertical-tabs .vt-nav {
+    margin: 0;
+  }
+}
