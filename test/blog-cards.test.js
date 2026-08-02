@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { filterEntries, cardEl } from '../blocks/blog-cards/blog-cards.js';
+import { filterEntries, cardEl, categoryLabel } from '../blocks/blog-cards/blog-cards.js';
 
 const data = [
   {
@@ -29,6 +29,23 @@ describe('filterEntries', () => {
   });
 });
 
+describe('categoryLabel', () => {
+  it('prefers the entry\'s own category', () => {
+    expect(categoryLabel(data[0])).toBe('financials');
+  });
+  it('falls back to the path segment for indices with no category column', () => {
+    // /blog/case-study/query-index.json rows carry no `category`
+    expect(categoryLabel({ path: '/blog/case-study/sparq-partners' })).toBe('case study');
+  });
+  it('renders hyphenated slugs as words (CSS uppercases them)', () => {
+    expect(categoryLabel({ category: 'product-update' })).toBe('product update');
+  });
+  it('returns empty for listing pages, which have no category segment', () => {
+    expect(categoryLabel({ path: '/blog/erp' })).toBe('');
+    expect(categoryLabel({})).toBe('');
+  });
+});
+
 describe('cardEl', () => {
   it('builds an anchor card with title, image and link', () => {
     const el = cardEl(data[0]);
@@ -36,5 +53,14 @@ describe('cardEl', () => {
     expect(el.getAttribute('href')).toBe('/blog/financials/a');
     expect(el.querySelector('img').getAttribute('src')).toBe('/a.jpg');
     expect(el.textContent).toContain('A');
+  });
+  it('renders category, title and date in the source card\'s order', () => {
+    const el = cardEl(data[0]);
+    const body = [...el.querySelector('.blog-card-body').children].map((c) => c.className);
+    expect(body).toEqual(['blog-card-category', 'blog-card-title', 'blog-card-date']);
+  });
+  it('omits the category for an entry with no category to show', () => {
+    const el = cardEl({ path: '/blog/erp', title: 'Listing' });
+    expect(el.querySelector('.blog-card-category')).toBeNull();
   });
 });

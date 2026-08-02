@@ -24,9 +24,16 @@
 .form .ff { flex: 1; min-width: 0; text-align: left; display: flex; flex-direction: column; }
 .form .ff span { display: none; }
 
+/* box-sizing: border-box — width:100% is content width by default, so the
+   side padding below (and .boxed/.card's wider 14px variant) was adding on
+   top of the field's full width instead of being carved out of it. That
+   overflowed the page horizontally by a few px site-wide wherever this form
+   renders (e.g. the homepage's "Let's connect" section), which is reachable
+   as a slight rubber-band horizontal scroll even while an unrelated
+   overflow-locked panel (like the mobile nav drawer) is open. */
 .form .ff input {
   width: 100%; height: 46px; border: 0; border-bottom: 1px solid var(--line); background: transparent;
-  padding: 0 4px; font-size: 15px; font-family: inherit; color: var(--text);
+  padding: 0 4px; font-size: 15px; font-family: inherit; color: var(--text); box-sizing: border-box;
 }
 .form .ff input::placeholder { color: var(--text-muted); }
 .form .ff input:focus { outline: none; border-bottom-color: var(--primary); }

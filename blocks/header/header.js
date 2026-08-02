@@ -1,10 +1,12 @@
 /**
- * header — Intuit Enterprise Suite chrome: brand strip + sticky nav + cyan
- * events bar. Brand strip, logo, CTA, and events bar are the fixed built-in
- * chrome (CHROME below); the primary nav-main menu is authorable content —
- * see blocks/nav-menu/nav-menu.js and content/nav.html's nav-menu block —
- * with NAV/navItemHTML below kept only as the fallback render if that
- * content is missing or malformed, so the header always paints.
+ * header — Intuit Enterprise Suite chrome: brand strip + sticky nav + an
+ * optional cyan events/announcement bar. Brand strip, logo, and CTA are
+ * fixed built-in chrome (CHROME below); the events bar is opt-in per page
+ * via its Metadata block (see eventsBarHTML) so it doesn't show everywhere
+ * by default; the primary nav-main menu is authorable content — see
+ * blocks/nav-menu/nav-menu.js and content/nav.html's nav-menu block — with
+ * NAV/navItemHTML below kept only as the fallback render if that content is
+ * missing or malformed, so the header always paints.
  * Sticky-nav scroll-morph, the click-to-open flyout menus, and the mobile
  * menu toggle are wired here. The nav CTA opens the shared "Schedule a call"
  * modal (scripts/schedule-modal.js) — also used by the hero CTA.
@@ -148,9 +150,39 @@ const NAV = [
     ],
   },
   {
-    type: 'link', label: 'For accounting firms', href: 'https://erp.intuit.com/accountant/', cls: 'acct-link',
+    type: 'link', label: 'For accounting firms', href: '/accountant', cls: 'acct-link', internal: true,
   },
 ];
+
+const CTA_CHEVRON_SVG = `<svg viewBox="0 0 6 10" width="6" height="10" focusable="false">
+            <path fill="currentColor" d="M0.750913 2.86102e-06C0.602552 -0.00039196 0.457411 0.0412617 0.333906 0.119678C0.210401 0.198094 0.1141 0.309739 0.0572195 0.440448C0.000339537 0.571156 -0.0145552 0.715035 0.0144259 0.853832C0.0434069 0.992628 0.114957 1.12008 0.219998 1.22003L4.18876 4.99511L0.234226 8.7809C0.164751 8.84731 0.109669 8.92613 0.0721264 9.01285C0.0345832 9.09957 0.0153135 9.19249 0.0154178 9.28631C0.0155221 9.38013 0.0349982 9.47302 0.0727341 9.55966C0.11047 9.6463 0.165727 9.72501 0.235349 9.79128C0.304972 9.85755 0.387596 9.91009 0.478506 9.94591C0.569415 9.98172 0.66683 10.0001 0.765186 10C0.863543 9.9999 0.960916 9.98132 1.05175 9.94533C1.14258 9.90933 1.22508 9.85662 1.29456 9.79021L5.78075 5.49798C5.92114 5.36402 6 5.18237 6 4.99296C6 4.80356 5.92114 4.62191 5.78075 4.48795L1.27958 0.208579C1.21024 0.142269 1.12783 0.0897026 1.03709 0.0539055C0.946361 0.0181093 0.8491 -0.000210762 0.750913 2.86102e-06Z"/>
+          </svg>`;
+
+// Appended to .nav-main by decorate() (not part of chromeHTML's nav row) so
+// it's present regardless of whether the nav-menu content is authored or
+// falls back to NAV_MAIN_FALLBACK. Mobile-only — see header.css — matching
+// erp.intuit.com's own mobile menu, which puts a "Schedule a call" CTA and
+// the cross-sell brand strip inside the opened drawer, after the nav links.
+function mobileExtraHTML() {
+  return `
+    <div class="nav-mobile-extra">
+      <button type="button" class="btn btn-primary nav-cta">
+        <span class="nav-cta-text">Schedule a call</span>
+        <span class="nav-cta-icon" aria-hidden="true">${CTA_CHEVRON_SVG}</span>
+      </button>
+      <div class="nav-mobile-brands">
+        <a href="https://www.intuit.com/" class="bs-logo bs-logo-intuit" aria-label="Intuit">${LOGO_INTUIT}</a>
+        <a href="https://turbotax.intuit.com/" class="bs-logo bs-logo-turbotax" target="_blank" rel="noopener" aria-label="TurboTax">${LOGO_TURBOTAX_ICON}${LOGO_TURBOTAX_WORD}</a>
+        <a href="https://www.creditkarma.com/" class="bs-logo bs-logo-creditkarma" target="_blank" rel="noopener" aria-label="Credit Karma">${LOGO_CREDITKARMA_ICON}${LOGO_CREDITKARMA_WORD}</a>
+        <a href="https://quickbooks.intuit.com/" class="bs-logo bs-logo-quickbooks" target="_blank" rel="noopener" aria-label="QuickBooks">${LOGO_QUICKBOOKS_ICON}${LOGO_QUICKBOOKS_WORD}</a>
+        <a href="https://mailchimp.com/" class="bs-logo bs-logo-mailchimp" target="_blank" rel="noopener" aria-label="Mailchimp">${LOGO_MAILCHIMP_ICON}${LOGO_MAILCHIMP_WORD}</a>
+      </div>
+    </div>`;
+}
+
+// Mobile-only "Back" control at the top of each flyout, returning to the
+// top-level list — see the drill-down CSS in header.css. Hidden on desktop.
+const FLYOUT_BACK_HTML = '<button type="button" class="flyout-back"><i class="flyout-back-icon"></i>Back</button>';
 
 function linkHTML(l) {
   const cls = `flyout-link${l.internal ? ' is-internal' : ''}`;
@@ -171,17 +203,36 @@ function navItemHTML(entry, idx) {
           ${c.heading ? `<p class="flyout-heading">${c.heading}</p>` : ''}
           ${c.links.map(linkHTML).join('')}
         </div>`).join('');
-  const wideCls = entry.columns.length > 3 ? ' flyout-wide' : '';
   return `
       <div class="nav-item">
         <button type="button" aria-expanded="false" aria-controls="${id}">${entry.label}<i class="caret"></i></button>
-        <div class="flyout${wideCls}" id="${id}" hidden><div class="flyout-inner">${cols}</div></div>
+        <div class="flyout" id="${id}" aria-hidden="true">${FLYOUT_BACK_HTML}<div class="flyout-inner">${cols}</div></div>
       </div>`;
 }
 
 const NAV_MAIN_FALLBACK = `<nav class="nav-main" aria-label="Primary">${NAV.map(navItemHTML).join('')}</nav>`;
 
-function chromeHTML(navMainHTML) {
+// Cyan events bar under the nav — off by default, per-page opt-in via the
+// page's Metadata block (e.g. a row labeled "Events Bar" with value "true"
+// becomes <meta name="events-bar" content="true">, following the same
+// kebab-cased convention as "nav"/"footer"/"right-rail" elsewhere). Text,
+// link, and CTA label are independently overridable the same way, so a
+// page can reuse the bar for an unrelated announcement instead of events.
+function eventsBarHTML() {
+  const enabled = ['true', 'yes'].includes(getMetadata('events-bar').trim().toLowerCase());
+  if (!enabled) return '';
+  const text = getMetadata('events-bar-text') || 'Check out upcoming events and learn more about Intuit Enterprise Suite.';
+  const href = getMetadata('events-bar-link') || '/events';
+  const cta = getMetadata('events-bar-cta') || 'Learn more';
+  return `
+<div class="ies-events">
+  <div class="container">
+    ${text} <a href="${href}">${cta}</a>
+  </div>
+</div>`;
+}
+
+function chromeHTML(navMainHTML, eventsHTML) {
   return `
 <div class="ies-topstrip">
   <div class="container">
@@ -199,21 +250,13 @@ function chromeHTML(navMainHTML) {
     <div class="nav-right">
       <button type="button" class="btn btn-primary nav-cta">
         <span class="nav-cta-text">Schedule a call</span>
-        <span class="nav-cta-icon" aria-hidden="true">
-          <svg viewBox="0 0 6 10" width="6" height="10" focusable="false">
-            <path fill="currentColor" d="M0.750913 2.86102e-06C0.602552 -0.00039196 0.457411 0.0412617 0.333906 0.119678C0.210401 0.198094 0.1141 0.309739 0.0572195 0.440448C0.000339537 0.571156 -0.0145552 0.715035 0.0144259 0.853832C0.0434069 0.992628 0.114957 1.12008 0.219998 1.22003L4.18876 4.99511L0.234226 8.7809C0.164751 8.84731 0.109669 8.92613 0.0721264 9.01285C0.0345832 9.09957 0.0153135 9.19249 0.0154178 9.28631C0.0155221 9.38013 0.0349982 9.47302 0.0727341 9.55966C0.11047 9.6463 0.165727 9.72501 0.235349 9.79128C0.304972 9.85755 0.387596 9.91009 0.478506 9.94591C0.569415 9.98172 0.66683 10.0001 0.765186 10C0.863543 9.9999 0.960916 9.98132 1.05175 9.94533C1.14258 9.90933 1.22508 9.85662 1.29456 9.79021L5.78075 5.49798C5.92114 5.36402 6 5.18237 6 4.99296C6 4.80356 5.92114 4.62191 5.78075 4.48795L1.27958 0.208579C1.21024 0.142269 1.12783 0.0897026 1.03709 0.0539055C0.946361 0.0181093 0.8491 -0.000210762 0.750913 2.86102e-06Z"/>
-          </svg>
-        </span>
+        <span class="nav-cta-icon" aria-hidden="true">${CTA_CHEVRON_SVG}</span>
       </button>
       <button class="nav-toggle" aria-label="Menu"><span></span><span></span><span></span></button>
     </div>
   </div>
 </div>
-<div class="ies-events">
-  <div class="container">
-    Check out upcoming events and learn more about Intuit Enterprise Suite. <a href="/events">Learn more</a>
-  </div>
-</div>`;
+${eventsHTML}`;
 }
 
 // The nav-menu block (blocks/nav-menu/nav-menu.js) is decorated in full by
@@ -231,7 +274,10 @@ async function fetchNavMainHTML(path) {
 }
 
 // Wire the click-to-open flyouts: one panel open at a time, closes on outside
-// click or Escape. Works as a stacked accordion on mobile via CSS.
+// click or Escape. Desktop shows the open one as a dropdown; mobile drills
+// into it full-screen instead (see header.css) — nav-main's "has-open"
+// class (kept in sync with whether any item is open) drives that slide, and
+// each flyout's "Back" control (.flyout-back) just calls closeAll().
 function wireFlyouts(block) {
   const nav = block.querySelector('.nav-main');
   if (!nav) return;
@@ -243,7 +289,8 @@ function wireFlyouts(block) {
     const btn = item.querySelector('button');
     const panel = item.querySelector('.flyout');
     if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-    if (panel) panel.hidden = !open;
+    if (panel) panel.setAttribute('aria-hidden', open ? 'false' : 'true');
+    nav.classList.toggle('has-open', items.some((it) => it.classList.contains('open')));
   };
   const closeAll = (except) => items.forEach((it) => { if (it !== except) setOpen(it, false); });
 
@@ -258,6 +305,10 @@ function wireFlyouts(block) {
     });
   });
 
+  nav.querySelectorAll('.flyout-back').forEach((backBtn) => {
+    backBtn.addEventListener('click', () => closeAll());
+  });
+
   document.addEventListener('click', (e) => { if (!nav.contains(e.target)) closeAll(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeAll(); });
 }
@@ -266,7 +317,13 @@ export default async function decorate(block) {
   const navMeta = getMetadata('nav');
   const navPath = navMeta ? new URL(navMeta, window.location).pathname : '/nav';
   const navMainHTML = (await fetchNavMainHTML(navPath)) || NAV_MAIN_FALLBACK;
-  block.innerHTML = chromeHTML(navMainHTML);
+  const eventsHTML = eventsBarHTML();
+  block.innerHTML = chromeHTML(navMainHTML, eventsHTML);
+  // The min-height reserved to avoid layout shift while this decorates
+  // async only needs to be the taller value (see header.css) on the pages
+  // that actually opted into the events bar.
+  block.classList.toggle('has-events-bar', !!eventsHTML);
+  block.querySelector('.nav-main')?.insertAdjacentHTML('beforeend', mobileExtraHTML());
 
   // sticky-nav scroll-morph. Reading window.scrollY forces a synchronous
   // layout if styles were just invalidated (e.g. the innerHTML write above),
@@ -291,13 +348,17 @@ export default async function decorate(block) {
 
   wireFlyouts(block);
 
-  // mobile menu toggle
+  // mobile menu toggle — locks body scroll and morphs the hamburger into an
+  // "X" while the full-screen drawer is open (see .header.nav-open .nav-main
+  // in header.css), matching erp.intuit.com's own mobile menu behavior.
   const toggle = block.querySelector('.nav-toggle');
   const navMain = block.querySelector('.nav-main');
   if (toggle && navMain) {
     toggle.addEventListener('click', () => {
       const open = block.classList.toggle('nav-open');
       toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      toggle.setAttribute('aria-label', open ? 'Close menu' : 'Menu');
+      document.body.classList.toggle('nav-scroll-lock', open);
     });
   }
 

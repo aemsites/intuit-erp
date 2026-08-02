@@ -12,7 +12,7 @@ export default function decorate(block) {
   const details = document.createElement('details');
   details.className = 'disclosure-item';
   const summary = document.createElement('summary');
-  summary.innerHTML = `${summaryText} <span class="disc-caret">▾</span>`;
+  summary.innerHTML = `${summaryText} <svg class="disc-caret" aria-hidden="true" width="17" height="8" viewBox="0 0 17 8" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 1l7.5 6L16 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
   const body = document.createElement('div');
   body.className = 'disclosure-body';
   if (bodyCell) body.innerHTML = bodyCell.innerHTML;

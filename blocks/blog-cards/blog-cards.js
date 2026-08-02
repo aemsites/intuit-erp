@@ -43,19 +43,41 @@ const DEFAULT_SOURCE = '/blog/query-index.json';
 export function filterEntries(entries, {
   category, author, limit, excludePath,
 } = {}) {
-  let out = entries;
+  let out = entries.filter((entry) => entry.title);
   if (category) out = out.filter((entry) => entry.category === category);
   if (author) out = out.filter((entry) => entry.author === author);
   if (excludePath) out = out.filter((entry) => entry.path !== excludePath);
   out = [...out].sort((a, b) => new Date(b.date) - new Date(a.date));
-  if (limit) out = out.slice(0, limit);
+  if (limit > 0) out = out.slice(0, limit);
   return out;
 }
 
 /**
- * Pure DOM builder for one card. Feed values are untrusted, so every field
- * is written via textContent/attribute assignment — never innerHTML.
- * @param {object} entry one query-index row (path, title, description, date, image, ...)
+ * The card's eyebrow label. Prefers the entry's own `category`, falling back to
+ * the category segment of `/blog/<category>/<slug>` paths — the per-collection
+ * indices (e.g. /blog/case-study/query-index.json) carry no `category` column,
+ * but the source site still shows an eyebrow on those cards ("CASE STUDY").
+ *
+ * Display-only: hyphens become spaces so slugs like "product-update" read as
+ * "PRODUCT UPDATE" once CSS uppercases them (same treatment, and reason, as
+ * buildEyebrow in blocks/blog-template/blog-template.js). The underlying
+ * category value is untouched, so filterEntries' matching is unaffected.
+ * @param {object} entry one query-index row
+ * @returns {string} label, or '' when the entry has no category to show
+ */
+export function categoryLabel(entry) {
+  const segments = (entry.path || '').split('/').filter(Boolean);
+  // /blog/<category>/<slug> — anything shallower (a listing page) has no category
+  const fromPath = segments.length > 2 ? segments[1] : '';
+  return (entry.category || fromPath).replace(/-/g, ' ');
+}
+
+/**
+ * Pure DOM builder for one card. Mirrors the source's threegrids "small" card:
+ * image, then a body of category (uppercase) → title → date. No description or
+ * author. Feed values are untrusted, so every field is written via
+ * textContent/attribute assignment — never innerHTML.
+ * @param {object} entry one query-index row (path, title, date, image, category, ...)
  * @returns {HTMLAnchorElement} `<a class="blog-card">`
  */
 export function cardEl(entry) {
@@ -65,28 +87,38 @@ export function cardEl(entry) {
 
   const imageWrap = document.createElement('div');
   imageWrap.className = 'blog-card-image';
-  const img = document.createElement('img');
-  img.src = entry.image || '';
-  img.alt = entry.title || '';
-  img.loading = 'lazy';
-  imageWrap.append(img);
+  if (entry.image) {
+    const img = document.createElement('img');
+    img.src = entry.image;
+    img.alt = entry.title || '';
+    img.loading = 'lazy';
+    imageWrap.append(img);
+  }
 
   const body = document.createElement('div');
   body.className = 'blog-card-body';
 
+  const categoryText = categoryLabel(entry);
+  if (categoryText) {
+    const category = document.createElement('p');
+    category.className = 'blog-card-category';
+    category.textContent = categoryText;
+    body.append(category);
+  }
+
   const title = document.createElement('h3');
   title.className = 'blog-card-title';
   title.textContent = entry.title || '';
+  body.append(title);
 
-  const description = document.createElement('p');
-  description.className = 'blog-card-description';
-  description.textContent = entry.description || '';
+  const dateText = formatDate(entry.date);
+  if (dateText) {
+    const date = document.createElement('p');
+    date.className = 'blog-card-date';
+    date.textContent = dateText;
+    body.append(date);
+  }
 
-  const date = document.createElement('p');
-  date.className = 'blog-card-date';
-  date.textContent = formatDate(entry.date);
-
-  body.append(title, description, date);
   card.append(imageWrap, body);
   return card;
 }

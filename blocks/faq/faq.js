@@ -2,9 +2,15 @@
  * faq — accordion of question/answer pairs (index, compare, erp-solutions).
  * Section head (h2) authored as default content.
  * One row per Q/A: cell 1 = question, cell 2 = answer (may contain rich HTML).
- * First item opens by default. Variant .faq.cmp = light band (compare).
+ * First item opens by default; the rest collapsed. Variant .faq.cmp = light band.
+ * Open/close is animated in CSS (height via grid-template-rows + opacity fade,
+ * matching the source's ~0.24s height / opacity transition), driven by the
+ * button's [aria-expanded] state rather than native <details>.
  * CSS: blocks/faq/faq.css
  */
+const CHEVRON = '<path d="M3.5 6L8 10.5L12.5 6" fill="none" stroke="currentColor" '
+  + 'stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>';
+
 export default function decorate(block) {
   const rows = [...block.children];
   const list = document.createElement('div');
@@ -13,16 +19,46 @@ export default function decorate(block) {
   rows.forEach((row, i) => {
     const cells = [...row.children];
     if (!cells.length) return;
-    const details = document.createElement('details');
-    details.className = 'faq-item';
-    if (i === 0) details.open = true;
-    const summary = document.createElement('summary');
-    summary.textContent = cells[0].textContent.trim();
+    const open = i === 0;
+
+    const item = document.createElement('div');
+    item.className = 'faq-item';
+
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'faq-toggle';
+    button.setAttribute('aria-expanded', open ? 'true' : 'false');
+
+    const label = document.createElement('span');
+    label.className = 'faq-question';
+    label.textContent = cells[0].textContent.trim();
+
+    const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    icon.setAttribute('class', 'faq-chevron');
+    icon.setAttribute('viewBox', '0 0 16 16');
+    icon.setAttribute('aria-hidden', 'true');
+    icon.setAttribute('focusable', 'false');
+    icon.innerHTML = CHEVRON;
+    button.append(label, icon);
+
+    const panel = document.createElement('div');
+    panel.className = 'faq-panel';
+    const id = `faq-panel-${i}`;
+    panel.id = id;
+    button.setAttribute('aria-controls', id);
+
     const answer = document.createElement('div');
     answer.className = 'faq-answer';
     if (cells[1]) answer.innerHTML = cells[1].innerHTML;
-    details.append(summary, answer);
-    list.append(details);
+    panel.append(answer);
+
+    button.addEventListener('click', () => {
+      const isOpen = button.getAttribute('aria-expanded') === 'true';
+      button.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+    });
+
+    item.append(button, panel);
+    list.append(item);
   });
 
   block.replaceChildren(list);

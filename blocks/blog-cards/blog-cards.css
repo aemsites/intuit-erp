@@ -1,54 +1,64 @@
 /* blog-cards — dynamic card grid/carousel sourced from a blog query-index
-   JSON feed (see blocks/blog-cards/blog-cards.js). Mobile-first: 1 column by
-   default, 2 at 600px, 3 at 900px+. The .carousel variant is rendered by
-   blocks/carousel/carousel.js (its own stylesheet, loaded on demand, covers
-   the slide/track/controls chrome) — only the grid layout lives here. */
+   JSON feed (see blocks/blog-cards/blog-cards.js).
+
+   Styling replicates the source Intuit "threegrids / small" content card
+   (erp.intuit.com/qbmds-components/.../qrc-content-card{,-grid}.css):
+   borderless, rounded, white body, category → title → date, scale-on-hover.
+   The source's breakpoints are 768px / 1200px / 1360px rather than this
+   project's usual 600/900/1200, so they are used verbatim here — the card
+   is a like-for-like replica and its type/media steps are what make it read
+   as the same component:
+     ≤767px       horizontal card — 166px image on the left, body on the right
+     768–1199px   3-up grid, 121px image, 20px title
+     1200px+      248px image
+     1360px+      28px title, 16px category (the source's full desktop card)
+
+   Text elements are selected as `.blog-cards .blog-card .blog-card-body
+   .blog-card-x` (specificity 0,4,0) so they outrank the generic type
+   selectors in blocks/carousel/carousel.css — `.carousel.cards
+   .carousel-slide h3/p` (0,3,1) — which the .carousel variant pulls in on
+   demand and would otherwise reset the type scale set below. */
 
 .blog-cards .blog-cards-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 28px;
+
+  /* row 20px / column 12px — the source's card margin-bottom + its
+     `calc(--spacing-small - --spacing-xxsmall)` column gap */
+  gap: 20px 12px;
+  max-width: 1440px;
+  margin: 0 auto;
 }
 
-@media (min-width: 600px) {
-  .blog-cards .blog-cards-grid { grid-template-columns: repeat(2, 1fr); }
-}
-
-@media (min-width: 900px) {
-  .blog-cards .blog-cards-grid { grid-template-columns: repeat(3, 1fr); }
-}
-
+/* The card's own `overflow: hidden` + radius is what rounds the image and the
+   white body, so neither needs its own corner rounding. */
 .blog-cards .blog-card {
   display: flex;
-  flex-direction: column;
   background: var(--background-color);
-  border: 1px solid var(--line);
   border-radius: var(--radius-card);
   overflow: hidden;
   text-decoration: none;
   color: inherit;
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  transition: all 0.3s ease-in-out;
 }
 
 .blog-cards .blog-card:hover {
-  box-shadow: 0 10px 28px rgb(0 0 0 / 12%);
-  transform: translateY(-2px);
+  box-shadow: 0 6px 24px 0 rgb(0 0 0 / 20%);
+  transform: scale(1.02);
   text-decoration: none;
 }
 
-.blog-cards .blog-card:hover .blog-card-title {
-  color: var(--link-color);
-}
-
-/* padding-top aspect-ratio, not the `aspect-ratio` property — matches the
-   flex-column + aspect-ratio rendering issue noted in case-study-cards.css */
 .blog-cards .blog-card-image {
   position: relative;
-  padding-top: 56.25%;
+
+  /* the source sizes the media box in fixed px per breakpoint rather than by
+     aspect ratio, so cards in a row line up regardless of source image ratio */
+  flex: 0 0 166px;
+  height: 188px;
   background: var(--light-color);
 }
 
-.blog-cards .blog-card-image img {
+.blog-cards .blog-card .blog-card-image img {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -58,33 +68,46 @@
 }
 
 .blog-cards .blog-card-body {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 20px 22px 24px;
   flex: 1;
+  min-width: 0;
+  padding: 0 20px;
+  overflow: hidden;
 }
 
-.blog-cards .blog-card-title {
+/* Category, title and date all flow from the top of the body — the source
+   leaves the date directly below the title (cards in a row are equal height,
+   but their dates are not bottom-aligned to each other). */
+.blog-cards .blog-card .blog-card-body .blog-card-category {
   margin: 0;
-  font-size: 20px;
-  line-height: 1.3;
-  font-weight: 600;
-  color: var(--text);
-  transition: color 0.15s ease;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  color: #dd2366;
+  text-transform: uppercase;
+  overflow-wrap: break-word;
 }
 
-.blog-cards .blog-card-description {
-  margin: 0;
-  font-size: 15px;
-  line-height: 1.5;
-  color: var(--text-muted);
+/* the source adds this breathing room only on the narrowest phones, where the
+   body is a short column beside the image */
+@media (max-width: 480px) {
+  .blog-cards .blog-card .blog-card-body .blog-card-category { padding-top: 8px; }
 }
 
-.blog-cards .blog-card-date {
-  margin: auto 0 0;
-  font-size: 13px;
-  color: var(--text-soft);
+.blog-cards .blog-card .blog-card-body .blog-card-title {
+  margin: 8px 0;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 700;
+  color: #000;
+  overflow-wrap: break-word;
+}
+
+.blog-cards .blog-card .blog-card-body .blog-card-date {
+  margin: 12px 0;
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 400;
+  color: var(--dark-color);
 }
 
 .blog-cards .blog-cards-empty {
@@ -94,38 +117,61 @@
   color: var(--text-muted);
 }
 
-/* ---- carousel-variant overrides ----
-   blocks/carousel/carousel.css's `.cards` look styles its slides with
-   generic type selectors — `.carousel.cards .carousel-slide h3/p/img`
-   (specificity 0,3,1) — which otherwise beat this file's `.blog-cards
-   .blog-card-title` etc. (0,2,0) and silently reset the title's/date's
-   margin and color and the image's height. Each rule below adds exactly
-   one more class than the block-name + `.blog-card` prefix already gives
-   (0,4,0 / 0,4,1), which always outranks carousel's 0,3,1 regardless of the
-   type selector, restoring only the properties carousel's generic
-   selectors actually clobber (matching values — e.g. img width/display,
-   or h3 font-size/line-height, which happen to already agree with
-   carousel's — are left alone). The slide's own background/border/radius
-   (from `.carousel.cards .carousel-slide`) is intentionally left as-is:
-   it now double-frames the card's own border/background — a cosmetic
-   nested-frame overlap, not a clobbered property — see task-11-report.md
-   Fix Round 1 for the call to leave that as a follow-up rather than fix
-   here. */
-.blog-cards .carousel-slide .blog-card .blog-card-title {
-  margin: 0;
-  color: var(--text);
+/* ---- 768px+: the vertical 3-up card ---- */
+@media (min-width: 768px) {
+  .blog-cards .blog-cards-grid { grid-template-columns: repeat(3, 1fr); }
+
+  .blog-cards .blog-card { flex-direction: column; }
+
+  .blog-cards .blog-card-image {
+    flex: 0 0 auto;
+    height: 121px;
+  }
+
+  .blog-cards .blog-card-body {
+    /* fills the rest of the card so the white body reaches its bottom edge */
+    flex: 1;
+    padding: 20px;
+  }
+
+  .blog-cards .blog-card .blog-card-body .blog-card-category { font-weight: 400; }
+
+  .blog-cards .blog-card .blog-card-body .blog-card-title {
+    font-size: 20px;
+    line-height: 28px;
+  }
+
+  .blog-cards .blog-card .blog-card-body .blog-card-date {
+    margin: 16px 0;
+    font-size: 16px;
+    line-height: 24px;
+  }
 }
 
-.blog-cards .carousel-slide .blog-card .blog-card-description {
-  margin: 0;
+@media (min-width: 1200px) {
+  .blog-cards .blog-card-image { height: 248px; }
 }
 
-.blog-cards .carousel-slide .blog-card .blog-card-date {
-  margin: auto 0 0;
-  font-size: 13px;
-  color: var(--text-soft);
+/* The source's own stylesheet only applies its `small` card type scale from
+   1360px up, so between 1200px and 1359px its title silently falls back to
+   16px/400 — an unintended gap in that file. The 20px/700 tablet step above
+   carries through that band here instead of replicating the fallback. */
+@media (min-width: 1360px) {
+  .blog-cards .blog-card .blog-card-body .blog-card-category { font-size: 16px; }
+
+  .blog-cards .blog-card .blog-card-body .blog-card-title {
+    margin: 12px 0;
+    font-size: 28px;
+    line-height: 36px;
+  }
 }
 
+/* ---- carousel-variant override ----
+   Everything else is covered by the 0,4,0 selectors above, but the image is
+   `.blog-cards .blog-card .blog-card-image img` (0,3,1) — an exact
+   specificity tie with carousel.css's `.carousel.cards .carousel-slide img`,
+   which wins on load order (carousel.css arrives later, on demand). One more
+   class restores the absolute fill the layout above relies on. */
 .blog-cards .carousel-slide .blog-card .blog-card-image img {
   height: 100%;
 }

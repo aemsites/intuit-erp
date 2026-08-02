@@ -84,16 +84,13 @@ function menuItemHTML(label, menuCell, idx) {
           ${c.heading ? `<p class="flyout-heading">${c.heading}</p>` : ''}
           ${c.links.map(flyoutLinkHTML).join('')}
         </div>`).join('');
-  // Wide (4+ column) flyouts like Resources are too wide to stay anchored
-  // under their own trigger button without running off the right edge of
-  // the viewport — flyout-wide repositions them relative to the whole nav
-  // row instead (see header.css), giving them the full row's width to grow
-  // into leftward.
-  const wideCls = cols.length > 3 ? ' flyout-wide' : '';
+  // .flyout-back is mobile-only (see header.css) — the drill-down "Back"
+  // control that returns to the top-level list; header.js's wireFlyouts
+  // wires its click regardless of which module produced this markup.
   return `
       <div class="nav-item">
         <button type="button" aria-expanded="false" aria-controls="${id}">${label}<i class="caret"></i></button>
-        <div class="flyout${wideCls}" id="${id}" hidden><div class="flyout-inner">${colsHTML}</div></div>
+        <div class="flyout" id="${id}" aria-hidden="true"><button type="button" class="flyout-back"><i class="flyout-back-icon"></i>Back</button><div class="flyout-inner">${colsHTML}</div></div>
       </div>`;
 }
 

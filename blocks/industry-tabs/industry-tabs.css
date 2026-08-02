@@ -1,32 +1,66 @@
-/* industry-tabs — dark "workflows your industry actually runs on" section.
+/* industry-tabs — "The workflows your industry actually runs on".
+   Replica of erp.intuit.com: a rounded navy card holding a centered heading +
+   subhead, then a tab UI on a darker inner surface.
    Mobile: an accordion (icon + label + chevron; panel expands beneath the row).
    Desktop (>=900px): a left tab rail with the active panel in the right column.
-   Each tab is paired with its panel in an .it-item so the same DOM does both.
-   Fed from authored inline panels. */
+   Each tab is paired with its panel in an .it-item so the same DOM does both. */
 
-.section.industry-tabs-container { background: var(--navy); padding: var(--section-y) 0; color: #fff; }
-.industry-tabs-container .default-content-wrapper h2 { color: #fff; text-align: left; margin: 0 0 12px; }
+/* the navy rounded card — original: bg #00254a, radius 8px, 12px side gutters,
+   padding 80px 20px 40px (mobile) / 120px 20px 60px (desktop) */
+main > .section.industry-tabs-container {
+  box-sizing: border-box;
+  width: calc(100% - 24px);
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 80px 20px 40px;
+  background: var(--navy);
+  border-radius: 8px;
+  color: #fff;
+}
+
+main > .section.industry-tabs-container > div { padding: 0; }
+
+/* once the card grows past 1160px the tab UI stays in a 1160px column, so the
+   rail + panel band doesn't stretch with the heading above it */
+.industry-tabs-container .industry-tabs-wrapper { max-width: 1160px; margin: 0 auto; }
+
+.industry-tabs-container .default-content-wrapper h2 {
+  font-size: 28px; line-height: 1.4; font-weight: 400; color: #fff;
+  text-align: center; margin: 0 0 20px;
+}
 
 .industry-tabs-container .default-content-wrapper p {
-  color: rgb(255 255 255 / 78%); text-align: left; margin: 0 0 40px; max-width: 42em;
+  box-sizing: border-box;
+  font-size: 16px; line-height: 1.4; color: #fff;
+  text-align: center; margin: 0 auto;
+}
+
+@media (width >= 600px) {
+  .industry-tabs-container .default-content-wrapper p { padding: 0 60px; }
 }
 
 /* ---- mobile: accordion ---- */
-.industry-tabs .it-nav { display: flex; flex-direction: column; }
+.industry-tabs { --it-surface: #001d3c; margin-top: 40px; }
 
-.industry-tabs .it-item { border-bottom: 1px solid rgb(255 255 255 / 15%); }
+/* 12px between accordion rows; the tab and its panel are one row */
+.industry-tabs .it-nav { display: flex; flex-direction: column; gap: 12px; }
+
+.industry-tabs .it-item { display: contents; }
 
 .industry-tabs .it-tab {
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 12px;
-  background: none;
+  justify-content: space-between;
+  gap: 8px;
+  background: var(--it-surface);
   border: 0;
   border-left: 3px solid transparent;
-  padding: 16px 8px;
+  border-radius: 2px;
+  padding: 6px 12px;
   font-family: inherit;
-  font-size: var(--body-font-size-m);
+  font-size: 16px;
+  line-height: 24px;
   font-weight: 600;
   color: #fff;
   text-align: left;
@@ -35,22 +69,31 @@
 
 .industry-tabs .it-tab .it-tab-label { flex: 1; }
 
-.industry-tabs .it-tab[aria-selected="true"] { border-left-color: var(--sky); }
+.industry-tabs .it-tab[aria-selected="true"] { border-left-color: var(--info); }
 
 /* tab icon (authored white .svg <img>, or EDS :icon-*: span) */
 .industry-tabs .it-tab > img,
-.industry-tabs .it-tab .icon { width: 22px; height: 22px; flex-shrink: 0; }
+.industry-tabs .it-tab .icon {
+  width: 24px; height: 24px; flex-shrink: 0; object-fit: contain;
+}
 .industry-tabs .it-tab .icon img { width: 100%; height: 100%; }
 
 .industry-tabs .it-chevron {
-  display: inline-flex; width: 22px; height: 22px; flex-shrink: 0; color: #fff;
+  display: inline-flex; width: 28px; height: 28px; flex-shrink: 0; color: #fff;
   transition: transform 0.2s ease;
 }
 .industry-tabs .it-chevron svg { width: 100%; height: 100%; }
-.industry-tabs .it-tab[aria-selected="true"] .it-chevron { transform: rotate(180deg); }
+
+/* upstream points the chevron down on the open row and up on collapsed rows */
+.industry-tabs .it-tab:not([aria-selected="true"]) .it-chevron { transform: rotate(180deg); }
 
 .industry-tabs .it-panel { display: none; }
-.industry-tabs .it-panel.is-active { display: block; padding: 4px 8px 28px; animation: it-fade-in 0.25s ease; }
+
+.industry-tabs .it-panel.is-active {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 40px;
+  padding: 40px 0;
+  animation: it-fade-in 0.25s ease;
+}
 
 @keyframes it-fade-in {
   from { opacity: 0; }
@@ -58,78 +101,147 @@
   to { opacity: 1; }
 }
 
+/* the copy is inset from the panel edges on mobile; the image stays full-bleed */
+.industry-tabs .it-copy {
+  display: flex; flex-direction: column; gap: 12px;
+  align-self: stretch;
+  padding: 0 12px;
+  margin-bottom: 24px;
+}
+
 .industry-tabs .it-heading {
-  font-size: 28px;
-  line-height: 1.2;
+  font-size: 24px;
+  line-height: 36px;
   font-weight: 400;
   color: #fff;
-  margin: 0 0 16px;
+  margin: 0;
+}
+
+.industry-tabs .it-copy-body {
+  display: flex; flex-direction: column; gap: 24px;
+  padding-top: 8px;
 }
 
 .industry-tabs .it-body {
-  font-size: var(--body-font-size-m);
-  line-height: 1.6;
-  color: rgb(255 255 255 / 80%);
+  font-size: 16px;
+  line-height: 24px;
+  color: #fff;
 }
 
 .industry-tabs .it-body p { margin: 0; }
-.industry-tabs .it-cta { margin: 20px 0 0; }
-.industry-tabs .it-cta .button.secondary { color: #fff; border-color: #fff; }
-.industry-tabs .it-cta .button.secondary:hover { background: rgb(255 255 255 / 12%); }
+.industry-tabs .it-cta { margin: 0; }
 
-.industry-tabs .it-media { margin: 24px 0 0; }
-.industry-tabs .it-media img { display: block; width: 100%; border-radius: var(--radius-card); }
+.industry-tabs .it-cta a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-weight: 400;
+}
+.industry-tabs .it-cta a:hover { text-decoration: none; }
 
-/* customer quote on the dark band */
+.industry-tabs .it-media { margin: 0; align-self: stretch; }
+
+/* 16:9 product shot, capped at the original's 768px intrinsic width */
+.industry-tabs .it-media img {
+  display: block;
+  width: 768px;
+  max-width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+/* customer quote on the dark surface */
 .industry-tabs .it-quote {
-  margin: 24px 0 0;
-  padding: 4px 0 4px 18px;
-  border-left: 3px solid var(--sky);
-  max-width: 44em;
+  align-self: stretch;
+  margin: 16px 0 0;
+  padding: 0 0 0 20px;
+  border-left: 4px solid var(--info);
 }
 
 .industry-tabs .it-quote blockquote {
-  margin: 0 0 10px;
+  margin: 0 0 8px;
+  padding: 0;
   font-size: 20px;
-  line-height: 1.45;
+  line-height: 30px;
   font-weight: 400;
   color: #fff;
 }
 
+/* the global pull-quote rule adds a decorative “ glyph — not present upstream */
+.industry-tabs .it-quote blockquote::before { content: none; }
+
 .industry-tabs .it-quote cite {
+  display: block;
   font-style: normal;
   font-size: 14px;
-  color: rgb(255 255 255 / 70%);
+  line-height: 21px;
+  font-weight: 400;
+  color: #fff;
+  opacity: 0.9;
+}
+
+@media (width >= 600px) {
+  main > .section.industry-tabs-container { padding-bottom: 60px; }
 }
 
 /* ---- desktop: left tab rail + active panel in the right column ---- */
 @media (width >= 900px) {
-  .industry-tabs { position: relative; min-height: 620px; }
+  main > .section.industry-tabs-container { padding: 120px 20px 60px; }
 
-  .industry-tabs .it-nav {
-    width: 260px;
-    border-left: 1px solid rgb(255 255 255 / 20%);
-  }
+  .industry-tabs-container .default-content-wrapper h2 { font-size: 34px; line-height: 1.4; }
 
-  .industry-tabs .it-item { border-bottom: 0; }
+  .industry-tabs { position: relative; margin-top: 60px; }
 
-  .industry-tabs .it-tab {
-    margin-left: -1px;
-    padding: 12px 20px;
-    font-weight: 400;
-    color: rgb(255 255 255 / 70%);
-  }
+  /* the rail holds the tabs at 25%; the panel supplies the rounded right-hand
+     card, so the two read as one continuous band with a 4px seam */
+  .industry-tabs .it-nav { width: 25%; gap: 4px; }
 
-  .industry-tabs .it-tab[aria-selected="true"],
-  .industry-tabs .it-tab:hover { color: #fff; }
-  .industry-tabs .it-tab[aria-selected="true"] { border-left-color: #fff; font-weight: 600; }
+  .industry-tabs .it-tab { justify-content: flex-start; }
+
+  .industry-tabs .it-tab[aria-selected="true"] { background: var(--it-surface); }
+  .industry-tabs .it-tab:not([aria-selected="true"]) { background: var(--navy); }
+  .industry-tabs .it-tab:not([aria-selected="true"]):hover { background: var(--it-surface); }
 
   .industry-tabs .it-chevron { display: none; }
 
-  /* pull the active panel out of the rail into the right column */
-  .industry-tabs .it-panel { position: absolute; top: 0; left: 316px; right: 0; padding: 0; }
+  /* pull the active panel out of the rail into the right column. It's absolute
+     so the tabs stay stacked in the rail; industry-tabs.js keeps the block's
+     min-height in sync with the active panel. */
+  .industry-tabs .it-panel { position: absolute; top: 0; left: 25%; right: 0; margin-left: 4px; }
 
-  .industry-tabs .it-copy { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
-  .industry-tabs .it-heading { font-size: 32px; margin: 0; }
-  .industry-tabs .it-media { max-width: 680px; margin: 28px 0 0; }
+  .industry-tabs .it-panel.is-active {
+    background: var(--it-surface);
+    border-radius: 0 16px 16px 0;
+    padding: 40px;
+  }
+
+  /* heading beside body/link, image + quote full width beneath */
+  .industry-tabs .it-copy {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 60px;
+    padding: 0;
+    margin-bottom: 0;
+  }
+
+  .industry-tabs .it-heading { flex: 1 1 0; max-width: 270px; }
+  .industry-tabs .it-copy-body { flex: 1 0 0; }
+}
+
+/* the original reaches its full type scale at 1200px, and only then grows the
+   panel heading to 34px */
+@media (width >= 1200px) {
+  .industry-tabs-container .default-content-wrapper h2 { font-size: 40px; line-height: 56px; }
+  .industry-tabs-container .default-content-wrapper p { font-size: 20px; line-height: 28px; }
+  .industry-tabs .it-heading { font-size: 34px; line-height: 36px; }
+}
+
+/* widest step: the card grows past its 1160px cap, and the subhead narrows to
+   2/3 of it so it doesn't outrun the heading */
+@media (width >= 1440px) {
+  main > .section.industry-tabs-container { max-width: 1400px; }
+  .industry-tabs-container .default-content-wrapper p { max-width: 66.7%; padding: 0 80px; }
 }
