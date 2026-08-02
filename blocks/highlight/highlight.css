@@ -8,6 +8,22 @@
 
 .highlight.sky .highlight-inner { background: var(--sky); }
 
+/* dark full-bleed band (events "Product demos" / "How growing…", construction 72/92) */
+.section.highlight-container:has(.highlight.dark) { background: var(--navy); }
+.highlight.dark { margin: 0; }
+
+.highlight.dark .highlight-inner {
+  background: transparent; border-radius: 0; color: #fff; text-align: center;
+  padding: var(--section-y) 0;
+}
+.highlight.dark .highlight-inner :is(h1, h2, h3, h4) { color: #fff; }
+.highlight.dark .highlight-inner p { color: rgb(255 255 255 / 82%); }
+.highlight.dark .highlight-inner a:not(.button) { color: #fff; }
+.highlight.dark .highlight-inner .button.primary { background: #fff; color: var(--navy); border-color: #fff; }
+.highlight.dark .highlight-inner .button.primary:hover { background: rgb(255 255 255 / 88%); border-color: rgb(255 255 255 / 88%); }
+.highlight.dark .highlight-inner .button.secondary { background: transparent; color: #fff; border-color: #fff; }
+.highlight.dark .highlight-inner .button.secondary:hover { background: rgb(255 255 255 / 12%); }
+
 .highlight .highlight-inner > :first-child { margin-top: 0; }
 
 .highlight .highlight-inner > :last-child { margin-bottom: 0; }

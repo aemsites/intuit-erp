@@ -74,6 +74,16 @@ function buildPanel(item, index) {
     body.append(p);
     copy.append(body);
   }
+  if (item.linkHref) {
+    const cta = document.createElement('p');
+    cta.className = 'it-cta';
+    const a = document.createElement('a');
+    a.href = item.linkHref;
+    a.textContent = item.linkText || 'Learn more';
+    a.className = 'button secondary';
+    cta.append(a);
+    copy.append(cta);
+  }
   panel.append(copy);
 
   return panel;
@@ -148,7 +158,39 @@ function extractData(json) {
   return [];
 }
 
+// Build the panel-data array from authored block rows (label cell + content
+// cell). Returns [] when the block isn't in authored form (e.g. the single
+// JSON-link cell), so the caller can fall back to the JSON-feed path.
+function parseAuthored(block) {
+  return [...block.children]
+    .map((row) => [...row.children])
+    .filter((cells) => cells.length >= 2)
+    .map((cells) => {
+      const content = cells[1];
+      const headingEl = content.querySelector('h2, h3, h4');
+      const linkEl = content.querySelector('a');
+      const bodyEl = [...content.querySelectorAll('p')].find((p) => !p.querySelector('a'));
+      const img = content.querySelector('img');
+      return {
+        label: cells[0].textContent.trim(),
+        heading: headingEl ? headingEl.textContent.trim() : '',
+        body: bodyEl ? bodyEl.textContent.trim() : '',
+        image: img ? img.getAttribute('src') : undefined,
+        linkHref: linkEl ? linkEl.getAttribute('href') : undefined,
+        linkText: linkEl ? linkEl.textContent.trim() : undefined,
+      };
+    });
+}
+
 export default async function decorate(block) {
+  // Curated inline panels (authored rows) take precedence over the JSON feed.
+  const authored = parseAuthored(block);
+  if (authored.length) {
+    block.textContent = '';
+    renderPanels(block, authored);
+    return;
+  }
+
   const link = block.querySelector('a');
   const url = link ? link.getAttribute('href') : null;
   block.textContent = '';

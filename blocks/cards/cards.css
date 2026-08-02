@@ -4,3 +4,21 @@
 .cards > div { display: flex; flex-direction: column; }
 .cards picture { display: block; }
 .cards img { width: 100%; height: auto; display: block; }
+
+/* dark full-bleed band w/ blue cards (accountant "Resources for firms") */
+.section.cards-container:has(.cards.dark) { background: var(--navy); padding: var(--section-y) 0; }
+.cards-container:has(.cards.dark) .default-content-wrapper h2 { color: #fff; }
+.cards.dark { grid-template-columns: repeat(3, 1fr); gap: 24px; }
+
+.cards.dark > div {
+  background: #236cff; border-radius: var(--radius-card); padding: 32px 28px; color: #fff;
+}
+.cards.dark > div > div:first-child { width: 40px; margin-bottom: 20px; }
+.cards.dark picture, .cards.dark img { width: 40px; height: 40px; }
+.cards.dark h3 { font-size: 22px; font-weight: 500; color: #fff; margin: 0 0 12px; }
+.cards.dark p { font-size: 15px; line-height: 1.5; color: rgb(255 255 255 / 90%); margin: 0 0 14px; }
+.cards.dark a { color: #fff; font-weight: 600; text-decoration: underline; }
+
+@media (width <= 768px) {
+  .cards.dark { grid-template-columns: 1fr; }
+}

@@ -18,13 +18,13 @@
 import { openScheduleModal } from '../../scripts/schedule-modal.js';
 import { loadFragment } from '../fragment/fragment.js';
 
-const SCHEDULE_CALL_FRAGMENT = '/fragments/schedule-call';
+const DEFAULT_FORM_FRAGMENT = '/fragments/schedule-call';
 
-async function leadCard() {
+async function leadCard(path) {
   const wrap = document.createElement('div');
   wrap.className = 'hero-form';
   wrap.innerHTML = '<p class="hero-form-loading">Loading…</p>';
-  const fragment = await loadFragment(SCHEDULE_CALL_FRAGMENT);
+  const fragment = await loadFragment(path || DEFAULT_FORM_FRAGMENT);
   if (fragment) {
     wrap.replaceChildren(...fragment.childNodes);
   } else {
@@ -40,10 +40,22 @@ export default async function decorate(block) {
   const copy = document.createElement('div');
   copy.className = 'hero-copy';
   let mediaEl = null;
+  let formFragment = DEFAULT_FORM_FRAGMENT;
 
   rows.forEach((row) => {
     const cell = row.firstElementChild;
     if (!cell) return;
+    // author-specified form fragment: a cell that is just the fragment PATH as
+    // plain text (e.g. "/fragments/request-a-detailed-demo"). Lets the .form
+    // variant load a page-specific card instead of the default schedule-call
+    // form. Deliberately plain text, NOT a link — a raw <a href="/fragments/…">
+    // is globally auto-loaded/replaced by buildAutoBlocks (scripts.js) before
+    // this block decorates, which would race with and defeat this lookup.
+    const cellText = cell.textContent.trim();
+    if (isForm && /^\/fragments\/\S+$/.test(cellText) && !cell.querySelector('img, picture')) {
+      formFragment = cellText;
+      return;
+    }
     const pic = cell.querySelector('picture, img');
     if (pic && cell.textContent.trim() === '') {
       mediaEl = cell.querySelector('picture') || pic;
@@ -95,7 +107,7 @@ export default async function decorate(block) {
   grid.append(copy);
 
   if (isForm) {
-    grid.append(await leadCard());
+    grid.append(await leadCard(formFragment));
   } else if (mediaEl) {
     const media = document.createElement('div');
     media.className = 'hero-media';

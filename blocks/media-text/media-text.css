@@ -4,6 +4,9 @@
 /* section band + head */
 .section.media-text-container { background: #fff; padding: var(--section-y) 0; }
 
+/* tint variant — warm-gray band (accounting "Work faster … AI agents") */
+.section.media-text-container:has(.media-text.tint) { background: var(--tofu); }
+
 .media-text-container .default-content-wrapper h2 {
   font-size: 38px; line-height: 1.15; font-weight: 400; color: var(--heading);
   text-align: center; margin: 0 0 40px;
@@ -32,6 +35,20 @@
 .media-text.center .media-center { text-align: center; }
 .media-text.center .media-center h2 { font-size: 38px; font-weight: 400; color: var(--heading); text-align: center; margin: 0 0 22px; }
 .media-text.center .media-center .media-body { max-width: 44em; margin: 0 auto; text-align: center; font-size: 17px; line-height: 1.6; color: var(--text); }
+
+/* ---- .dark (accountant "Empowering your firm's success") ---- */
+.section.media-text-container:has(.media-text.dark) { background: var(--navy); padding: var(--section-y) 0; }
+.media-text-container:has(.media-text.dark) .default-content-wrapper h2 { color: #fff; }
+
+.media-text.dark .media-copy h2,
+.media-text.dark .media-copy h3 { color: #fff; }
+
+.media-text.dark .media-copy .media-body,
+.media-text.dark .media-copy .media-eyebrow,
+.media-text.dark .media-copy p,
+.media-text.dark .media-copy li { color: rgb(255 255 255 / 82%); }
+.media-text.dark .media-copy strong { color: #fff; }
+.media-text.dark .media-copy a { color: #fff; text-decoration: underline; }
 
 /* ---- .sky (pricing "Switch now and save") ---- */
 .section.media-text-container:has(.media-text.sky) { background: var(--sky); padding: 80px 0; }
