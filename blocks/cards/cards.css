@@ -1,24 +1,54 @@
-/* cards — baseline layout only. Full OF1 generated-content styling lives in
-   blocks/of1/of1.css (.generated-section .cards), which is more specific. */
-.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+/* cards — image-and-text grid (erp.intuit.com "Resources" cards). Photo cards
+   (events, financial-services, professional-services, oa) are square images
+   with plain text below, no card chrome. Full OF1 generated-content styling
+   lives in blocks/of1/of1.css (.generated-section .cards), which is more
+   specific. */
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 32px; }
 .cards > div { display: flex; flex-direction: column; }
 .cards picture { display: block; }
 .cards img { width: 100%; height: auto; display: block; }
 
-/* dark full-bleed band w/ blue cards (accountant "Resources for firms") */
-.section.cards-container:has(.cards.dark) { background: var(--navy); padding: var(--section-y) 0; }
-.cards-container:has(.cards.dark) .default-content-wrapper h2 { color: #fff; }
-.cards.dark { grid-template-columns: repeat(3, 1fr); gap: 24px; }
+.cards .cards-card-body h3 {
+  font-size: var(--heading-font-size-m);
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 32px 0 0;
+}
 
-.cards.dark > div {
+.cards .cards-card-body p { font-size: 16px; line-height: 1.5; margin: 16px 0 0; }
+
+/* the "Read more"-style link paragraph always follows directly after the
+   heading (or, in icon cards below, after the body copy) with a wider gap
+   than the body copy itself gets. */
+.cards .cards-card-body p:has(a) { margin-top: 32px; }
+.cards .cards-card-body a { color: var(--info); font-weight: 400; }
+
+/* icon cards: blue box, small square icon, white text — shared by the
+   navy-section variant (.dark, e.g. accountant "Resources for firms") and the
+   white-section variant (.accent, e.g. ai-agents "Resources for growing
+   businesses"), which differ only in the surrounding section background. */
+.cards.dark, .cards.accent { grid-template-columns: repeat(3, 1fr); gap: 24px; }
+
+.cards.dark > div, .cards.accent > div {
   background: #236cff; border-radius: var(--radius-card); padding: 32px 28px; color: #fff;
 }
-.cards.dark > div > div:first-child { width: 40px; margin-bottom: 20px; }
-.cards.dark picture, .cards.dark img { width: 40px; height: 40px; }
-.cards.dark h3 { font-size: 22px; font-weight: 500; color: #fff; margin: 0 0 12px; }
-.cards.dark p { font-size: 15px; line-height: 1.5; color: rgb(255 255 255 / 90%); margin: 0 0 14px; }
-.cards.dark a { color: #fff; font-weight: 600; text-decoration: underline; }
+.cards.dark > div > div:first-child, .cards.accent > div > div:first-child { width: 40px; margin-bottom: 32px; }
+
+.cards.dark picture, .cards.dark img,
+.cards.accent picture, .cards.accent img { width: 40px; height: 40px; }
+
+.cards.dark .cards-card-body h3, .cards.accent .cards-card-body h3 {
+  font-size: 28px; font-weight: 400; line-height: 1.15; color: #fff; margin: 0 0 16px;
+}
+.cards.dark .cards-card-body p, .cards.accent .cards-card-body p { color: rgb(255 255 255 / 90%); }
+.cards.dark .cards-card-body p:has(a), .cards.accent .cards-card-body p:has(a) { margin-top: 20px; }
+.cards.dark a, .cards.accent a { color: #fff; font-weight: 400; text-decoration: underline; }
+
+/* dark full-bleed band (accountant "Resources for firms") — .accent keeps the
+   section's own (white) background instead. */
+.section.cards-container:has(.cards.dark) { background: var(--navy); padding: var(--section-y) 0; }
+.cards-container:has(.cards.dark) .default-content-wrapper h2 { color: #fff; }
 
 @media (width <= 768px) {
-  .cards.dark { grid-template-columns: 1fr; }
+  .cards.dark, .cards.accent { grid-template-columns: 1fr; }
 }
