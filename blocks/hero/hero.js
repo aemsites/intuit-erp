@@ -88,6 +88,12 @@ export default async function decorate(block) {
         const wrap = a.closest('strong, em') || a.querySelector('strong, em');
         const variant = wrap && wrap.tagName === 'EM' ? 'secondary' : 'primary';
         a.classList.add('button', variant);
+        // video CTAs (YouTube/Vimeo) get a leading play icon, matching
+        // erp.intuit.com's "Watch product demo" affordance. CSS renders the
+        // glyph via .icon-video::before.
+        if (/(?:youtube\.com|youtu\.be|vimeo\.com)/i.test(a.href)) {
+          a.classList.add('icon-video');
+        }
         actions.append(a);
       });
     });
