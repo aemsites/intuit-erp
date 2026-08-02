@@ -1,34 +1,76 @@
 /* faq — accordion (index, compare, erp-solutions). Lifted from .faq */
 .section.faq-container { background: #fff; padding: 20px 0 var(--section-y); }
-.section.faq-container:has(.faq.cmp) { background: #f7f8f3; padding: var(--section-y) 0; }
+.section.faq-container:has(.faq.cmp) { background: #f3f3f3; padding: var(--section-y) 0; }
 
 .faq-container .default-content-wrapper h2,
 .faq-container .default-content-wrapper h3 {
-  font-size: 30px; font-weight: 400; text-align: center; margin: 0 0 36px; color: var(--heading);
+  font-size: 48px; line-height: 60px; font-weight: 400; text-align: center;
+  margin: 0 0 60px; color: var(--heading);
 }
 .faq-container > div { max-width: 1180px; }
 
-.faq .faq-list { border-top: 1px solid var(--line); }
-.faq .faq-item { border-bottom: 1px solid var(--line); }
+/* Original constrains the accordion to a centered ~two-thirds column, not the full band. */
+.faq .faq-list { max-width: 780px; margin: 0 auto; border-top: 1px solid rgb(0 0 0 / 20%); }
+.faq .faq-item { border-bottom: 1px solid rgb(0 0 0 / 20%); }
 
-.faq .faq-item summary {
-  list-style: none; cursor: pointer; padding: 20px 40px 20px 0; font-size: 16px;
-  font-weight: 600; color: var(--heading); position: relative;
+.faq .faq-toggle {
+  width: 100%; box-sizing: border-box; margin: 0; padding: 20px 0; border: 0;
+  background: none; cursor: pointer; text-align: left; font: inherit;
+  font-size: 16px; line-height: 24px; font-weight: 600; color: #000;
+  display: flex; align-items: flex-start; gap: 20px;
+  transition: color 0.2s;
 }
-.faq .faq-item summary::-webkit-details-marker { display: none; }
+.faq .faq-question { flex: 1; }
 
-.faq .faq-item summary::after {
-  content: "\2303"; position: absolute; right: 6px; top: 20px; transform: rotate(180deg);
-  transition: transform 0.2s; color: var(--text-muted);
+/* Original collapses the question's bottom padding when open; the gap moves to the answer. */
+.faq .faq-toggle[aria-expanded="true"] { padding-bottom: 0; }
+
+/* Hover/focus turns the question super-blue, matching the source (BlueText variant). */
+.faq .faq-toggle:hover,
+.faq .faq-toggle:focus-visible { color: #236cff; }
+
+/* Thin chevron SVG, centered on the question line; rotates 180° when open. */
+.faq .faq-chevron {
+  flex: 0 0 auto; width: 16px; height: 16px; margin-top: 4px; color: var(--text);
+  transition: transform 0.24s ease-in-out, color 0.2s;
 }
-.faq .faq-item[open] summary::after { transform: rotate(0); }
-.faq .faq-answer { padding: 0 40px 22px 0; font-size: 14px; color: var(--text-muted); line-height: 1.6; }
+
+.faq .faq-toggle:hover .faq-chevron,
+.faq .faq-toggle:focus-visible .faq-chevron { color: #236cff; }
+.faq .faq-toggle[aria-expanded="true"] .faq-chevron { transform: rotate(180deg); }
+
+/* Height animates via grid-template-rows; the source uses ~0.24s ease-in-out. */
+.faq .faq-panel {
+  display: grid; grid-template-rows: 0fr;
+  transition: grid-template-rows 0.24s ease-in-out;
+}
+.faq .faq-toggle[aria-expanded="true"] + .faq-panel { grid-template-rows: 1fr; }
+.faq .faq-panel > .faq-answer { overflow: hidden; }
+
+/* Content fades in after the panel opens (source: opacity ~0.4s ease 0.25s). */
+.faq .faq-answer {
+  padding: 0 40px 20px 0; font-size: 14px; color: var(--text); line-height: 1.43;
+  opacity: 0; transition: opacity 0.4s ease;
+}
+
+.faq .faq-toggle[aria-expanded="true"] + .faq-panel .faq-answer {
+  padding-top: 8px; opacity: 1; transition: opacity 0.4s ease 0.25s;
+}
 .faq .faq-answer p { margin: 0 0 12px; }
 .faq .faq-answer ul { margin: 0 0 12px; padding-left: 20px; }
 .faq .faq-answer li { margin-bottom: 8px; }
-.faq .faq-answer a { color: var(--primary); text-decoration: underline; }
+.faq .faq-answer a { color: var(--primary); text-decoration: none; }
+.faq .faq-answer a:hover { text-decoration: underline; }
 
 @media (width <= 768px) {
   .faq-container .default-content-wrapper h2,
-  .faq-container .default-content-wrapper h3 { font-size: 24px; }
+  .faq-container .default-content-wrapper h3 { font-size: 34px; line-height: 44px; margin-bottom: 40px; }
+  .faq .faq-list { max-width: none; }
+  .faq .faq-answer { padding-right: 20px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .faq .faq-panel,
+  .faq .faq-answer,
+  .faq .faq-chevron { transition: none; }
 }
