@@ -580,3 +580,7 @@ body.modal-open { overflow: hidden; }
 @media (width <= 768px) {
   .schedule-modal { padding: 28px 20px; }
 }
+
+.library-metadata-wrapper {
+  display: none;
+}
