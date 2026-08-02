@@ -25,6 +25,7 @@
 
 .blog-article .blog-hero h1 {
   margin: 0 0 16px;
+  font-weight: 700;
 }
 
 .blog-article .blog-hero .blog-byline-meta {
@@ -323,14 +324,31 @@
     align-self: start;
   }
 
-  /* hero band: 2-col split inside (text left, image right) */
+  /* hero band: 2-col split inside (text left, image right). The text
+     column is deliberately wider than the image (1.55fr vs 1fr, ~638px at
+     1320px viewport) — tuned so the H1 reliably wraps ~4 lines like the
+     source (measured: the wrap flips from 5 lines to 4 right around
+     628-630px, so 1.4fr's ~614px was juuust on the wrong side of that
+     threshold) instead of being squeezed into a narrow half-and-half split.
+     `max-width` here is a required OVERRIDE, not decoration: this page's
+     body carries the `case-study` template class (Template: "Case Study"
+     metadata), and `body.case-study main .default-content-wrapper {
+     max-width: 46em }` (styles.css:483) — meant for a different, narrower
+     prose template — otherwise caps this wrapper at 46em (~736px) instead
+     of letting the hero content span wider than the prose column below
+     it. 1180px matches the site's existing "narrow" container variant
+     (.section.narrow, styles.css:466). */
   .blog-article .blog-hero > .default-content-wrapper {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
     column-gap: 48px;
     align-items: center;
-    padding-top: 56px;
-    padding-bottom: 56px;
+
+    /* content-box (no border-box reset on this element): 40px padding each
+       side adds on top, so 1100px content + 80px padding = 1180px rendered
+       — matching the site's "narrow" container variant. */
+    max-width: 1100px;
+    padding: 56px 40px;
   }
 
   .blog-article .blog-hero .blog-byline-tag,
