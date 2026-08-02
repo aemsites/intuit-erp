@@ -528,9 +528,11 @@ a.button.secondary, button.button.secondary {
 }
 a.button.secondary:hover { background: rgb(0 37 74 / 6%); }
 
-/* on-dark secondary (hero bands) */
+/* on-dark secondary (hero bands) — matches erp.intuit.com's real qbmds
+   button component (Button_rwSecondary_White): hover is a full color
+   inversion (solid white fill, dark text), not a translucent white tint. */
 .section.dark a.button.secondary, .hero a.button.secondary { color: #fff; border-color: #fff; }
-.section.dark a.button.secondary:hover, .hero a.button.secondary:hover { background: rgb(255 255 255 / 12%); }
+.section.dark a.button.secondary:hover, .hero a.button.secondary:hover { background: #fff; color: #09222a; border-color: #fff; }
 p.button-wrapper { display: inline-flex; gap: 16px; flex-wrap: wrap; margin: 0; }
 
 body { font-weight: 400; }

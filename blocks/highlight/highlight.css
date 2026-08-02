@@ -22,7 +22,7 @@
 .highlight.dark .highlight-inner .button.primary { background: #fff; color: var(--navy); border-color: #fff; }
 .highlight.dark .highlight-inner .button.primary:hover { background: rgb(255 255 255 / 88%); border-color: rgb(255 255 255 / 88%); }
 .highlight.dark .highlight-inner .button.secondary { background: transparent; color: #fff; border-color: #fff; }
-.highlight.dark .highlight-inner .button.secondary:hover { background: rgb(255 255 255 / 12%); }
+.highlight.dark .highlight-inner .button.secondary:hover { background: #fff; color: #09222a; border-color: #fff; }
 
 .highlight .highlight-inner > :first-child { margin-top: 0; }
 

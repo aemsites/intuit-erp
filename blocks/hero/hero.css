@@ -46,7 +46,14 @@
 .hero .hero-actions { display: flex; gap: 16px; flex-wrap: wrap; margin: 0; }
 
 .hero .hero-media { position: relative; isolation: isolate; }
-.hero .hero-media img { position: relative; z-index: 1; width: 100%; border-radius: 12px; box-shadow: 0 24px 60px rgb(0 0 0 / 35%); }
+
+/* max-height caps the band's overall height for square/portrait photos
+   (e.g. /accounting's hero) — matches erp.intuit.com's own hero, which sets
+   a fixed min-height on the whole band (not driven by the image) and clips
+   overflow, rather than letting the image dictate the row's height like
+   ours did. Landscape images (e.g. the homepage dashboard mockup) are
+   already shorter than this cap, so it's a no-op there. */
+.hero .hero-media img { position: relative; z-index: 1; width: 100%; max-height: 420px; object-fit: cover; border-radius: 12px; box-shadow: 0 24px 60px rgb(0 0 0 / 35%); }
 
 /* homepage dashboard mockup, once the Lottie animation (hero.js) mounts:
    layered exactly over the static image (which stays in the DOM, sized as
@@ -93,11 +100,13 @@
   filter: blur(28px);
 }
 
-/* on-dark button treatment — primary = white fill, secondary = white outline */
+/* on-dark primary treatment (white fill); secondary's on-dark treatment
+   (white outline, inverts to solid white + dark text on hover) is shared
+   across all dark sections via styles.css so it can't drift out of sync
+   here again — this used to duplicate (and, being loaded after the shared
+   rule, silently override) it with a stale translucent-tint hover. */
 .hero a.button.primary { background: #fff; color: var(--ink-teal, #0d333f); border-color: #fff; }
 .hero a.button.primary:hover { background: #eef4f6; border-color: #eef4f6; }
-.hero a.button.secondary { background: transparent; color: #fff; border-color: #fff; }
-.hero a.button.secondary:hover { background: rgb(255 255 255 / 12%); }
 
 /* video CTAs ("Watch product demo") get a leading circular play icon,
    matching erp.intuit.com. The icon (ring + triangle) is one SVG used as a
