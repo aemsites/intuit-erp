@@ -18,6 +18,17 @@
 
 function txt(cell) { return cell ? cell.textContent.trim() : ''; }
 
+const ARROW_SVG = {
+  prev: '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>',
+  next: '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/></svg>',
+};
+
+// `glance` and `plain` present each row as one sentence rather than a
+// number-over-caption pair, so join the cells into a single string.
+function statSentence(cells) {
+  return [txt(cells[0]), txt(cells[1])].filter(Boolean).join(' ');
+}
+
 function cardsPerView() {
   const w = window.innerWidth;
   if (w < 768) return 1;
@@ -38,18 +49,28 @@ function buildCarousel(block, track) {
   prevBtn.type = 'button';
   prevBtn.className = 'stats-arrow prev';
   prevBtn.setAttribute('aria-label', 'Previous outcomes');
-  prevBtn.textContent = '‹';
+  prevBtn.innerHTML = ARROW_SVG.prev;
   const nextBtn = document.createElement('button');
   nextBtn.type = 'button';
   nextBtn.className = 'stats-arrow next';
   nextBtn.setAttribute('aria-label', 'Next outcomes');
-  nextBtn.textContent = '›';
+  nextBtn.innerHTML = ARROW_SVG.next;
   const nav = document.createElement('div');
   nav.className = 'stats-nav';
   nav.append(prevBtn, nextBtn);
   const controls = document.createElement('div');
   controls.className = 'stats-controls';
   controls.append(dots, nav);
+
+  // upstream orders the disclaimer above the paging controls, but EDS authors it
+  // as a default-content sibling after the block — pull it in when present
+  const foot = block.parentElement?.nextElementSibling?.querySelector(':scope > p');
+  if (foot) {
+    const wrapper = foot.closest('.default-content-wrapper');
+    foot.classList.add('stats-foot');
+    block.append(foot);
+    if (wrapper && !wrapper.children.length) wrapper.remove();
+  }
   block.append(controls);
 
   const cards = [...track.children];
@@ -128,18 +149,29 @@ export default function decorate(block) {
       const cells = [...row.children];
       if (!cells.length) return;
       const li = document.createElement('li');
-      const num = document.createElement('strong');
-      num.className = 'glance-num';
-      num.textContent = txt(cells[0]);
-      li.append(num);
-      if (cells[1]) li.append(` ${txt(cells[1])}`);
+      li.textContent = statSentence(cells);
       list.append(li);
     });
     block.replaceChildren(list);
     return;
   }
 
-  const staticGrid = block.classList.contains('dark') || block.classList.contains('plain');
+  if (block.classList.contains('plain')) {
+    const box = document.createElement('div');
+    box.className = 'stats-box';
+    rows.forEach((row) => {
+      const cells = [...row.children];
+      if (!cells.length) return;
+      const line = document.createElement('p');
+      line.className = 'stat-line';
+      line.textContent = statSentence(cells);
+      box.append(line);
+    });
+    block.replaceChildren(box);
+    return;
+  }
+
+  const staticGrid = block.classList.contains('dark');
   const track = document.createElement('div');
   track.className = staticGrid ? 'stats-grid' : 'stats-track';
 
@@ -148,28 +180,37 @@ export default function decorate(block) {
     if (!cells.length) return;
     const stat = document.createElement('div');
     stat.className = 'stat';
+    // number+desc and company+segment are grouped so the card's flex gap falls
+    // between the two blocks, as upstream (.os-card-header / .os-card-footer)
+    const head = document.createElement('div');
+    head.className = 'stat-head';
     const num = document.createElement('div');
     num.className = 'stat-num';
     num.textContent = txt(cells[0]);
-    stat.append(num);
+    head.append(num);
     if (cells[1]) {
       const desc = document.createElement('p');
       desc.className = 'stat-desc';
       desc.innerHTML = cells[1].innerHTML;
-      stat.append(desc);
+      head.append(desc);
     }
+    stat.append(head);
+
+    const footer = document.createElement('div');
+    footer.className = 'stat-foot';
     if (cells[2] && txt(cells[2])) {
       const co = document.createElement('p');
       co.className = 'stat-co';
       co.textContent = txt(cells[2]);
-      stat.append(co);
+      footer.append(co);
     }
     if (cells[3] && txt(cells[3])) {
       const seg = document.createElement('p');
       seg.className = 'stat-seg';
       seg.textContent = txt(cells[3]);
-      stat.append(seg);
+      footer.append(seg);
     }
+    if (footer.children.length) stat.append(footer);
     track.append(stat);
   });
 
