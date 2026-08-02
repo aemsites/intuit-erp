@@ -379,6 +379,7 @@
      "Table of contents" share a left edge — the rail's wrapper padding is
      zeroed (flush-left card, below), so without this the icons would touch
      the page's edge. */
+     
   /* label takes its own full-width row so all four icons wrap onto a single
      row below it (rather than the label + first icons sharing a line). */
   .blog-article .blog-share-label {
