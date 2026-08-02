@@ -64,6 +64,11 @@
 .section.cards-container:has(.cards.dark) { background: var(--navy); padding: var(--section-y) 0; }
 .cards-container:has(.cards.dark) .default-content-wrapper h2 { color: #fff; }
 
+/* .boxed (oa) is the one instance whose section heading is centered rather
+   than left-aligned, matching erp.intuit.com's "All your entities. All in
+   one place." band. */
+.cards-container:has(.cards.boxed) .default-content-wrapper { text-align: center; }
+
 @media (width <= 768px) {
   .cards.dark:not(.carousel, .boxed), .cards.accent:not(.carousel, .boxed) { grid-template-columns: 1fr; }
 }
