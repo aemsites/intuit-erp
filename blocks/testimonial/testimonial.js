@@ -103,9 +103,12 @@ function ytId(url) {
  * a static background, and the bare default falls back to the Rhodes clip.
  * The centered play button opens the full video (youtube) in a modal.
  * @param {Element[]} cells the row's cells
+ * @param {{caption?:boolean}} [opts] when caption is false the in-frame
+ *   caption is omitted (the switcher renders a shared caption bar instead)
  * @returns {HTMLDivElement} the `.video-frame`
  */
-export function buildVideoFrame(cells) {
+export function buildVideoFrame(cells, opts = {}) {
+  const { caption = true } = opts;
   const [posterCell, eyebrowCell, quoteCell, attrCell, youtubeCell, mp4Cell, logoCell] = cells;
   const authoredYoutube = youtubeCell ? youtubeCell.textContent.trim() : '';
   const youtubeId = ytId(authoredYoutube) || authoredYoutube || STORY_YOUTUBE_ID;
@@ -152,25 +155,65 @@ export function buildVideoFrame(cells) {
   play.textContent = '▶';
   play.addEventListener('click', () => openVideoModal(youtubeId));
 
-  const cap = document.createElement('div');
-  cap.className = 'video-caption';
-  cap.innerHTML = `
-    <p class="video-eyebrow">${eyebrowCell ? eyebrowCell.textContent.trim() : ''}</p>
-    <p class="video-quote">${quoteCell ? quoteCell.textContent.trim() : ''}</p>`;
-  const attr = document.createElement('p');
-  attr.className = 'video-attr';
-  if (attrCell) attr.innerHTML = attrCell.innerHTML;
-  cap.append(attr);
-
   const parts = [];
   if (logoImg) { logoImg.classList.add('video-logo'); parts.push(logoImg); }
-  parts.push(bg, play, cap);
+  parts.push(bg, play);
+  if (caption) {
+    const cap = document.createElement('div');
+    cap.className = 'video-caption';
+    cap.innerHTML = `
+      <p class="video-eyebrow">${eyebrowCell ? eyebrowCell.textContent.trim() : ''}</p>
+      <p class="video-quote">${quoteCell ? quoteCell.textContent.trim() : ''}</p>`;
+    const attr = document.createElement('p');
+    attr.className = 'video-attr';
+    if (attrCell) attr.innerHTML = attrCell.innerHTML;
+    cap.append(attr);
+    parts.push(cap);
+  }
   frame.append(...parts);
   if (bg.tagName === 'VIDEO') {
     // autoplay may be blocked or unimplemented (jsdom) — swallow either way
     try { const p = bg.play(); if (p && p.catch) p.catch(() => {}); } catch { /* noop */ }
   }
   return frame;
+}
+
+// Per-story caption data for the shared switcher info bar.
+function storyData(cells) {
+  const [posterCell, eyebrowCell, quoteCell, attrCell] = cells;
+  const posterImg = posterCell ? posterCell.querySelector('img') : null;
+  return {
+    avatarSrc: posterImg ? (posterImg.currentSrc || posterImg.getAttribute('src')) : '',
+    avatarAlt: posterImg ? (posterImg.getAttribute('alt') || '') : '',
+    eyebrow: eyebrowCell ? eyebrowCell.textContent.trim() : '',
+    quote: quoteCell ? quoteCell.textContent.trim() : '',
+    attrHtml: attrCell ? attrCell.innerHTML : '',
+  };
+}
+
+// The translucent, blurred bottom info bar shared by the switcher: active
+// story avatar + eyebrow/quote/attribution, with the thumbnail tabs on the
+// right. Content is (re)populated by fillCaption on switch.
+function buildCaption() {
+  const cap = document.createElement('div');
+  cap.className = 'video-caption';
+  cap.innerHTML = `
+    <img class="video-avatar" alt="">
+    <div class="video-caption-text">
+      <p class="video-eyebrow"></p>
+      <p class="video-quote"></p>
+      <p class="video-attr"></p>
+    </div>`;
+  return cap;
+}
+
+function fillCaption(cap, d) {
+  const avatar = cap.querySelector('.video-avatar');
+  avatar.hidden = !d.avatarSrc;
+  if (d.avatarSrc) { avatar.src = d.avatarSrc; avatar.alt = d.avatarAlt; }
+  cap.querySelector('.video-eyebrow').textContent = d.eyebrow;
+  cap.querySelector('.video-quote').textContent = d.quote;
+  cap.querySelector('.video-attr').innerHTML = d.attrHtml;
 }
 
 function buildThumb(row, index, frameId) {
@@ -192,18 +235,20 @@ function buildThumb(row, index, frameId) {
 }
 
 /**
- * Adaptive video-testimonial builder. One story row → a bare frame (no
- * switcher). Two or more rows → a `.video-switcher` with all frames stacked
- * in a `.video-stage` (only the active one shown) and a `.video-thumbs`
- * tablist of speaker-avatar buttons that switch the active story.
+ * Adaptive video-testimonial builder. One story row → a bare frame (in-frame
+ * caption). Two or more rows → a `.video-switcher`: all frames stacked in a
+ * `.video-stage` (only the active one shown) plus a shared translucent info
+ * bar (`.video-caption`) holding the active story's avatar + eyebrow/quote/
+ * attribution and the speaker-avatar thumbnail tabs that switch stories.
  * @param {Element[]} rows the block's `:scope > div` story rows
  * @returns {HTMLElement} a `.video-frame` (single) or `.video-switcher` (many)
  */
 export function buildVideoSection(rows) {
   if (rows.length <= 1) return buildVideoFrame([...(rows[0]?.children || [])]);
 
-  const frames = rows.map((r, i) => {
-    const f = buildVideoFrame([...r.children]);
+  const stories = rows.map((r) => [...r.children]);
+  const frames = stories.map((cells, i) => {
+    const f = buildVideoFrame(cells, { caption: false });
     f.id = `video-story-${i}`;
     f.classList.toggle('is-active', i === 0);
     return f;
@@ -212,12 +257,17 @@ export function buildVideoSection(rows) {
   stage.className = 'video-stage';
   stage.append(...frames);
 
+  const data = stories.map(storyData);
+  const bar = buildCaption();
+  fillCaption(bar, data[0]);
+
   const thumbs = rows.map((r, i) => buildThumb(r, i, frames[i].id));
   const thumbsWrap = document.createElement('div');
   thumbsWrap.className = 'video-thumbs';
   thumbsWrap.setAttribute('role', 'tablist');
   thumbsWrap.setAttribute('aria-label', 'Customer stories');
   thumbsWrap.append(...thumbs);
+  bar.append(thumbsWrap);
 
   function activate(idx) {
     thumbs.forEach((t, i) => {
@@ -225,6 +275,7 @@ export function buildVideoSection(rows) {
       t.tabIndex = i === idx ? 0 : -1;
     });
     frames.forEach((f, i) => f.classList.toggle('is-active', i === idx));
+    fillCaption(bar, data[idx]);
   }
   thumbsWrap.addEventListener('click', (e) => {
     const btn = e.target.closest('.video-thumb');
@@ -246,7 +297,7 @@ export function buildVideoSection(rows) {
 
   const section = document.createElement('div');
   section.className = 'video-switcher';
-  section.append(stage, thumbsWrap);
+  section.append(stage, bar);
   return section;
 }
 

@@ -83,4 +83,21 @@ describe('buildVideoSection (adaptive)', () => {
     expect(thumbs[2].tabIndex).toBe(0);
     expect(thumbs[0].tabIndex).toBe(-1);
   });
+
+  it('renders one shared info bar (avatar + text + thumbs) that updates on switch', () => {
+    const el = buildVideoSection(rows(3));
+    const bars = el.querySelectorAll('.video-caption');
+    expect(bars.length).toBe(1);
+    const bar = bars[0];
+    // frames themselves carry no caption in switcher mode
+    expect(el.querySelector('.video-frame .video-caption')).toBeNull();
+    // bar holds the active story's details + the thumbs
+    expect(bar.querySelector('.video-quote').textContent).toBe('Quote 0');
+    expect(bar.querySelector('.video-avatar').getAttribute('src')).toBe('/p0.jpg');
+    expect(bar.querySelector('.video-thumbs .video-thumb')).not.toBeNull();
+    // switching updates the shared bar
+    el.querySelectorAll('.video-thumb')[2].click();
+    expect(bar.querySelector('.video-quote').textContent).toBe('Quote 2');
+    expect(bar.querySelector('.video-avatar').getAttribute('src')).toBe('/p2.jpg');
+  });
 });
