@@ -285,17 +285,23 @@ export function relocateShare(share, placeMobile, placeDesktop, mq) {
 
 /**
  * True when the current page is a /blog/* article (not a listing/author/category
- * root, which are card-list pages rendered by blog-cards). Gate for the autoblock.
+ * page, which are card-list pages rendered by blog-cards). Gate for the autoblock.
+ *
+ * Keyed on the page's own `Template` metadata: only `Blog Article` pages get the
+ * article template. `Category`, `Author`, the blog root and search are listings
+ * and must NOT get the hero band / TOC / share widget. When template metadata is
+ * absent we fall back to path shape — an article lives at `/blog/<category>/<slug>`
+ * (two-plus segments, first segment not `author`).
  * @returns {boolean}
  */
 export function isBlogPage() {
   const path = window.location.pathname;
   if (!path.startsWith('/blog/')) return false;
-  // exclude the listing roots: /blog/, /blog/author/*, /blog/category/*
-  if (path === '/blog/' || path === '/blog') return false;
-  if (path.startsWith('/blog/author/') || path === '/blog/author') return false;
-  if (path.startsWith('/blog/category/') || path === '/blog/category') return false;
-  return true;
+  const template = getMetadata('template').trim().toLowerCase();
+  if (template) return template === 'blog article';
+  // fallback (no template metadata): /blog/<category>/<slug>, not /blog/author/*
+  const segments = path.replace(/\/+$/, '').slice('/blog/'.length).split('/').filter(Boolean);
+  return segments.length >= 2 && segments[0] !== 'author';
 }
 
 /**

@@ -473,6 +473,15 @@ body.case-studies-index main > .section:first-of-type .default-content-wrapper {
 body.case-studies-index main > .section:first-of-type h1 { font-size: 40px; font-weight: 600; margin: 0 0 16px; }
 body.case-studies-index main > .section:first-of-type p { font-size: 17px; color: var(--text-muted); }
 
+/* blog category listing intro (Template: "Category" metadata -> body.category) */
+body.category main > .section:first-of-type { padding-top: 5rem; }
+
+body.category main > .section:first-of-type .default-content-wrapper {
+  max-width: 46em; margin: 0 auto; text-align: center;
+}
+body.category main > .section:first-of-type h1 { font-size: 40px; font-weight: 600; margin: 0 0 16px; }
+body.category main > .section:first-of-type p { font-size: 17px; color: var(--text-muted); }
+
 /* eyebrow utility */
 .eyebrow { font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
 

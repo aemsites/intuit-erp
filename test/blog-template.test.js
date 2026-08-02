@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import {
   buildToc, buildByline, buildEyebrow, buildBylineMeta,
-  buildShare, relocateShare, tocRailRowEnd,
+  buildShare, relocateShare, tocRailRowEnd, isBlogPage,
 } from '../blocks/blog-template/blog-template.js';
 
 describe('buildToc', () => {
@@ -185,5 +185,41 @@ describe('tocRailRowEnd', () => {
     // hero = index 0 (row 1); "B"'s section = index 2 (row 3) -> end line 4,
     // leaving the trailing "Recommended for you" section (index 3) excluded.
     expect(tocRailRowEnd(sections, headings)).toBe(4);
+  });
+});
+
+describe('isBlogPage', () => {
+  const setPage = (path, template) => {
+    window.history.pushState({}, '', path);
+    document.head.innerHTML = template ? `<meta name="template" content="${template}">` : '';
+  };
+
+  it('is true for a Blog Article template page', () => {
+    setPage('/blog/operations/shipping-options', 'Blog Article');
+    expect(isBlogPage()).toBe(true);
+  });
+
+  it('is false for a Category listing page', () => {
+    setPage('/blog/acquisition-and-mergers', 'Category');
+    expect(isBlogPage()).toBe(false);
+  });
+
+  it('is false for an Author listing page', () => {
+    setPage('/blog/author/gene-marks', 'Author');
+    expect(isBlogPage()).toBe(false);
+  });
+
+  it('is false outside /blog/', () => {
+    setPage('/accountant', 'Blog Article');
+    expect(isBlogPage()).toBe(false);
+  });
+
+  it('falls back to path shape when template metadata is absent', () => {
+    setPage('/blog/operations/shipping-options', null);
+    expect(isBlogPage()).toBe(true); // /blog/<category>/<slug>
+    setPage('/blog/acquisition-and-mergers', null);
+    expect(isBlogPage()).toBe(false); // single-segment category
+    setPage('/blog/author/gene-marks', null);
+    expect(isBlogPage()).toBe(false); // author listing
   });
 });
