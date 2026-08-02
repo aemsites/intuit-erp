@@ -435,6 +435,12 @@
      rendering as a squat ~76px nub instead of a proper tall tab. */
   .blog-article .blog-toc-rail.blog-toc-collapsed {
     top: calc(var(--nav-height) + 24px);
+  }
+
+  /* only the TOC nav collapses to the 44px vertical tab — the rail (and the
+     share widget above it) keep the full column width, so "Share this article"
+     never reflows/shrinks when the TOC is minimized. */
+  .blog-article .blog-toc-rail.blog-toc-collapsed .blog-toc {
     width: 44px;
   }
 
