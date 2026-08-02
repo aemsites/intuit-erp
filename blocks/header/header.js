@@ -1,10 +1,12 @@
 /**
- * header — Intuit Enterprise Suite chrome: brand strip + sticky nav + cyan
- * events bar. Brand strip, logo, CTA, and events bar are the fixed built-in
- * chrome (CHROME below); the primary nav-main menu is authorable content —
- * see blocks/nav-menu/nav-menu.js and content/nav.html's nav-menu block —
- * with NAV/navItemHTML below kept only as the fallback render if that
- * content is missing or malformed, so the header always paints.
+ * header — Intuit Enterprise Suite chrome: brand strip + sticky nav + an
+ * optional cyan events/announcement bar. Brand strip, logo, and CTA are
+ * fixed built-in chrome (CHROME below); the events bar is opt-in per page
+ * via its Metadata block (see eventsBarHTML) so it doesn't show everywhere
+ * by default; the primary nav-main menu is authorable content — see
+ * blocks/nav-menu/nav-menu.js and content/nav.html's nav-menu block — with
+ * NAV/navItemHTML below kept only as the fallback render if that content is
+ * missing or malformed, so the header always paints.
  * Sticky-nav scroll-morph, the click-to-open flyout menus, and the mobile
  * menu toggle are wired here. The nav CTA opens the shared "Schedule a call"
  * modal (scripts/schedule-modal.js) — also used by the hero CTA.
@@ -210,7 +212,27 @@ function navItemHTML(entry, idx) {
 
 const NAV_MAIN_FALLBACK = `<nav class="nav-main" aria-label="Primary">${NAV.map(navItemHTML).join('')}</nav>`;
 
-function chromeHTML(navMainHTML) {
+// Cyan events bar under the nav — off by default, per-page opt-in via the
+// page's Metadata block (e.g. a row labeled "Events Bar" with value "true"
+// becomes <meta name="events-bar" content="true">, following the same
+// kebab-cased convention as "nav"/"footer"/"right-rail" elsewhere). Text,
+// link, and CTA label are independently overridable the same way, so a
+// page can reuse the bar for an unrelated announcement instead of events.
+function eventsBarHTML() {
+  const enabled = ['true', 'yes'].includes(getMetadata('events-bar').trim().toLowerCase());
+  if (!enabled) return '';
+  const text = getMetadata('events-bar-text') || 'Check out upcoming events and learn more about Intuit Enterprise Suite.';
+  const href = getMetadata('events-bar-link') || '/events';
+  const cta = getMetadata('events-bar-cta') || 'Learn more';
+  return `
+<div class="ies-events">
+  <div class="container">
+    ${text} <a href="${href}">${cta}</a>
+  </div>
+</div>`;
+}
+
+function chromeHTML(navMainHTML, eventsHTML) {
   return `
 <div class="ies-topstrip">
   <div class="container">
@@ -234,11 +256,7 @@ function chromeHTML(navMainHTML) {
     </div>
   </div>
 </div>
-<div class="ies-events">
-  <div class="container">
-    Check out upcoming events and learn more about Intuit Enterprise Suite. <a href="/events">Learn more</a>
-  </div>
-</div>`;
+${eventsHTML}`;
 }
 
 // The nav-menu block (blocks/nav-menu/nav-menu.js) is decorated in full by
@@ -299,7 +317,12 @@ export default async function decorate(block) {
   const navMeta = getMetadata('nav');
   const navPath = navMeta ? new URL(navMeta, window.location).pathname : '/nav';
   const navMainHTML = (await fetchNavMainHTML(navPath)) || NAV_MAIN_FALLBACK;
-  block.innerHTML = chromeHTML(navMainHTML);
+  const eventsHTML = eventsBarHTML();
+  block.innerHTML = chromeHTML(navMainHTML, eventsHTML);
+  // The min-height reserved to avoid layout shift while this decorates
+  // async only needs to be the taller value (see header.css) on the pages
+  // that actually opted into the events bar.
+  block.classList.toggle('has-events-bar', !!eventsHTML);
   block.querySelector('.nav-main')?.insertAdjacentHTML('beforeend', mobileExtraHTML());
 
   // sticky-nav scroll-morph. Reading window.scrollY forces a synchronous
