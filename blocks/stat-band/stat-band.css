@@ -20,7 +20,7 @@
   flex: 0 0 calc((100% - (var(--cards-per-view) - 1) * 22px) / var(--cards-per-view));
   min-width: 0;
 }
-.stat-band .stat { background: #eff4f9; border-radius: var(--radius-card); padding: 34px 28px; }
+.stat-band .stat { box-sizing: border-box; background: #eff4f9; border-radius: var(--radius-card); padding: 34px 28px; }
 .stat-band .stat-num { font-size: 60px; line-height: 1.2; font-weight: 400; letter-spacing: -0.03em; color: #0052ea; margin-bottom: 14px; }
 .stat-band .stat-desc { font-size: 15px; color: #404b52; margin: 0 0 30px; line-height: 1.35; }
 .stat-band .stat-co { font-size: 14px; font-weight: 700; color: #000; margin: 0 0 4px; }
