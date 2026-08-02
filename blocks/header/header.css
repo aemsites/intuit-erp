@@ -1,6 +1,14 @@
 /* header — IES chrome (brand strip + sticky nav + events bar). Lifted from base.css */
 
-header { height: auto; min-height: 146px; }
+/* min-height reserves space to avoid layout shift while decorate() runs
+   async — sized for the topstrip + nav alone, since the events bar is now
+   an opt-in per page (see eventsBarHTML in header.js) rather than always
+   present; .has-events-bar (added by decorate() when a page opts in) bumps
+   it back up so those pages don't shift either. Previously fixed at 146px
+   assuming the bar was always there, which left a blank gap on every page
+   that didn't have it. */
+header { height: auto; min-height: 92px; }
+header .header.has-events-bar { min-height: 146px; }
 header .header { background: #fff; }
 header .header .container { max-width: var(--container); margin: 0 auto; padding: 0 40px; }
 
@@ -155,7 +163,8 @@ header .header .container { max-width: var(--container); margin: 0 auto; padding
    doesn't fit any narrower — same shape of problem we have here. Verified our
    own row wraps/overlaps below 1300px and is clean at and above it. */
 @media (width <= 1299px) {
-  header { min-height: 106px; }
+  header { min-height: 60px; }
+  header .header.has-events-bar { min-height: 106px; }
   header .header .container { padding: 0 20px; }
   .header .ies-topstrip { display: none; }
   .header .ies-nav .container { height: 56px; gap: 12px; }
