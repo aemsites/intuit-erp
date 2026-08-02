@@ -10,6 +10,11 @@
  * Sticky-nav scroll-morph, the click-to-open flyout menus, and the mobile
  * menu toggle are wired here. The nav CTA opens the shared "Schedule a call"
  * modal (scripts/schedule-modal.js) — also used by the hero CTA.
+ * On /blog/* pages only, a second "Resource center" nav bar renders below the
+ * primary one (see secondaryNavHTML/isResourceCenterPath) — matching
+ * erp.intuit.com, which has a dedicated Resource Center nav there too
+ * (issue #59). On desktop it's this secondary nav that becomes sticky on
+ * scroll, not the primary one — see the has-secondary-nav rules in header.css.
  * CSS: blocks/header/header.css · nav content: content/nav.html (nav-menu block)
  */
 import { getMetadata } from '../../scripts/aem.js';
@@ -27,6 +32,35 @@ import {
   LOGO_MAILCHIMP_WORD,
   LOGO_IES,
 } from './brand-logos.js';
+
+// Shared with SECONDARY_NAV_ITEMS below (the /blog/* "Resource center" nav,
+// see issue #59) so both navs list the exact same categories/links from one
+// source instead of two copies drifting apart.
+const INSIGHTS_LEARNING_LINKS = [
+  { text: 'Thought leadership', href: 'https://erp.intuit.com/blog/thought-leadership/' },
+  { text: 'Trends & research', href: '/blog/research', internal: true },
+  { text: 'Compare ERPs', href: '/compare', internal: true },
+];
+const INDUSTRY_KNOWLEDGE_LINKS = [
+  { text: 'Construction', href: 'https://erp.intuit.com/blog/construction/' },
+  { text: 'Professional services', href: 'https://erp.intuit.com/blog/professional-services/' },
+  { text: 'Manufacturing', href: 'https://erp.intuit.com/blog/manufacturing/' },
+  { text: 'Non-profit', href: 'https://erp.intuit.com/blog/non-profit/' },
+  { text: 'Retail', href: 'https://erp.intuit.com/blog/retail/' },
+  { text: 'Food service', href: 'https://erp.intuit.com/blog/food-service/' },
+];
+const CUSTOMER_STORIES_LINKS = [
+  { text: 'Case studies', href: '/blog/case-study', internal: true },
+  { text: 'Testimonials', href: 'https://erp.intuit.com/blog/videos/customer-testimonials/' },
+];
+const EVENTS_WEBINARS_LINKS = [
+  { text: 'Upcoming events', href: '/events', internal: true },
+  { text: 'On-demand webinars', href: 'https://ieswebinars.intuit.com/hub/ondemand' },
+];
+const PRODUCT_RESOURCES_LINKS = [
+  { text: 'Product demos', href: 'https://ieswebinars.intuit.com/hub/productdemo' },
+  { text: 'New features & releases', href: 'https://erp.intuit.com/blog/product-update/' },
+];
 
 // Fallback nav model, used only when the authorable nav-menu block (see
 // blocks/nav-menu/nav-menu.js) isn't available. `menu` entries open a flyout
@@ -95,46 +129,11 @@ const NAV = [
           { text: 'Overview', href: 'https://erp.intuit.com/blog/' },
         ],
       },
-      {
-        heading: 'Insights & learning',
-        links: [
-          { text: 'Thought leadership', href: 'https://erp.intuit.com/blog/thought-leadership/' },
-          { text: 'Trends & research', href: '/blog/research', internal: true },
-          { text: 'Compare ERPs', href: '/compare', internal: true },
-        ],
-      },
-      {
-        heading: 'Industry knowledge',
-        links: [
-          { text: 'Construction', href: 'https://erp.intuit.com/blog/construction/' },
-          { text: 'Professional services', href: 'https://erp.intuit.com/blog/professional-services/' },
-          { text: 'Manufacturing', href: 'https://erp.intuit.com/blog/manufacturing/' },
-          { text: 'Non-profit', href: 'https://erp.intuit.com/blog/non-profit/' },
-          { text: 'Retail', href: 'https://erp.intuit.com/blog/retail/' },
-          { text: 'Food service', href: 'https://erp.intuit.com/blog/food-service/' },
-        ],
-      },
-      {
-        heading: 'Customer stories',
-        links: [
-          { text: 'Case studies', href: '/blog/case-study', internal: true },
-          { text: 'Testimonials', href: 'https://erp.intuit.com/blog/videos/customer-testimonials/' },
-        ],
-      },
-      {
-        heading: 'Events & webinars',
-        links: [
-          { text: 'Upcoming events', href: '/events', internal: true },
-          { text: 'On-demand webinars', href: 'https://ieswebinars.intuit.com/hub/ondemand' },
-        ],
-      },
-      {
-        heading: 'Product resources',
-        links: [
-          { text: 'Product demos', href: 'https://ieswebinars.intuit.com/hub/productdemo' },
-          { text: 'New features & releases', href: 'https://erp.intuit.com/blog/product-update/' },
-        ],
-      },
+      { heading: 'Insights & learning', links: INSIGHTS_LEARNING_LINKS },
+      { heading: 'Industry knowledge', links: INDUSTRY_KNOWLEDGE_LINKS },
+      { heading: 'Customer stories', links: CUSTOMER_STORIES_LINKS },
+      { heading: 'Events & webinars', links: EVENTS_WEBINARS_LINKS },
+      { heading: 'Product resources', links: PRODUCT_RESOURCES_LINKS },
     ],
   },
   {
@@ -152,6 +151,19 @@ const NAV = [
   {
     type: 'link', label: 'For accounting firms', href: '/accountant', cls: 'acct-link', internal: true,
   },
+];
+
+// The secondary "Resource center" nav — a second, dedicated nav bar erp.intuit.com
+// renders only on /blog/* pages (issue #59), separate from the primary nav above.
+// Same `navItemHTML` menu-entry shape as NAV, built from the shared link arrays
+// above so both navs can't drift apart. Search (also present on the live
+// secondary nav) is tracked separately as issue #60 — not implemented here.
+const SECONDARY_NAV_ITEMS = [
+  { type: 'menu', label: 'Insights & learning', columns: [{ links: INSIGHTS_LEARNING_LINKS }] },
+  { type: 'menu', label: 'Industries', columns: [{ links: INDUSTRY_KNOWLEDGE_LINKS }] },
+  { type: 'menu', label: 'Customer stories', columns: [{ links: CUSTOMER_STORIES_LINKS }] },
+  { type: 'menu', label: 'Events & webinars', columns: [{ links: EVENTS_WEBINARS_LINKS }] },
+  { type: 'menu', label: 'Product resources', columns: [{ links: PRODUCT_RESOURCES_LINKS }] },
 ];
 
 const CTA_CHEVRON_SVG = `<svg viewBox="0 0 6 10" width="6" height="10" focusable="false">
@@ -191,13 +203,16 @@ function linkHTML(l) {
   return `<a class="${cls}" href="${l.href}"${tgt}><span class="flyout-label">${l.text}</span>${desc}</a>`;
 }
 
-function navItemHTML(entry, idx) {
+// idPrefix keeps flyout ids unique when the primary and secondary nav (see
+// SECONDARY_NAV_ITEMS) render on the same page — both call this with their
+// own prefix so ids never collide.
+function navItemHTML(entry, idx, idPrefix = 'flyout') {
   if (entry.type === 'link') {
     const cls = entry.cls || 'nav-link';
     const tgt = entry.internal ? '' : ' target="_blank" rel="noopener"';
     return `<a class="${cls}" href="${entry.href}"${tgt}>${entry.label}</a>`;
   }
-  const id = `flyout-${idx}`;
+  const id = `${idPrefix}-${idx}`;
   const cols = entry.columns.map((c) => `
         <div class="flyout-col">
           ${c.heading ? `<p class="flyout-heading">${c.heading}</p>` : ''}
@@ -210,7 +225,32 @@ function navItemHTML(entry, idx) {
       </div>`;
 }
 
-const NAV_MAIN_FALLBACK = `<nav class="nav-main" aria-label="Primary">${NAV.map(navItemHTML).join('')}</nav>`;
+const NAV_MAIN_FALLBACK = `<nav class="nav-main" aria-label="Primary">${NAV.map((e, i) => navItemHTML(e, i)).join('')}</nav>`;
+
+// True on /blog and every /blog/* page — the whole Resource Center section,
+// not just article pages (contrast with blog-template.js's narrower
+// isBlogPage(), which is limited to article templates for its TOC/hero UI).
+export function isResourceCenterPath(pathname = window.location.pathname) {
+  return pathname === '/blog' || pathname.startsWith('/blog/');
+}
+
+// The secondary "Resource center" nav bar (issue #59) — desktop renders it as
+// its own row with a brand link + inline flyout items; mobile collapses it
+// behind its own toggle (.secondary-nav-toggle), independent of the primary
+// hamburger — see header.css. Returns '' outside the Resource Center section
+// so decorate() can skip wiring it up entirely.
+function secondaryNavHTML() {
+  if (!isResourceCenterPath()) return '';
+  const items = SECONDARY_NAV_ITEMS.map((e, i) => navItemHTML(e, i, 'secondary-flyout')).join('');
+  return `
+<nav class="ies-secondary-nav" aria-label="Resource center">
+  <div class="container">
+    <a class="secondary-nav-brand" href="/blog">Resource center</a>
+    <button type="button" class="secondary-nav-toggle" aria-expanded="false" aria-controls="secondary-nav-items" aria-label="Toggle Resource center menu"><i class="caret"></i></button>
+    <div class="nav-main secondary-nav-items" id="secondary-nav-items">${items}</div>
+  </div>
+</nav>`;
+}
 
 // Cyan events bar under the nav — off by default, per-page opt-in via the
 // page's Metadata block (e.g. a row labeled "Events Bar" with value "true"
@@ -232,7 +272,7 @@ function eventsBarHTML() {
 </div>`;
 }
 
-function chromeHTML(navMainHTML, eventsHTML) {
+function chromeHTML(navMainHTML, eventsHTML, secondaryNavHtml) {
   return `
 <div class="ies-topstrip">
   <div class="container">
@@ -256,6 +296,7 @@ function chromeHTML(navMainHTML, eventsHTML) {
     </div>
   </div>
 </div>
+${secondaryNavHtml}
 ${eventsHTML}`;
 }
 
@@ -273,14 +314,14 @@ async function fetchNavMainHTML(path) {
   return null;
 }
 
-// Wire the click-to-open flyouts: one panel open at a time, closes on outside
-// click or Escape. Desktop shows the open one as a dropdown; mobile drills
-// into it full-screen instead (see header.css) — nav-main's "has-open"
-// class (kept in sync with whether any item is open) drives that slide, and
-// each flyout's "Back" control (.flyout-back) just calls closeAll().
-function wireFlyouts(block) {
-  const nav = block.querySelector('.nav-main');
-  if (!nav) return;
+// Wire the click-to-open flyouts for one nav group (primary .nav-main, or the
+// secondary Resource Center nav's .secondary-nav-items — see wireFlyouts):
+// one panel open at a time within the group, closes on outside click or
+// Escape. Desktop shows the open one as a dropdown; mobile drills into it
+// full-screen instead (see header.css) — the group's "has-open" class (kept
+// in sync with whether any item is open) drives that slide, and each
+// flyout's "Back" control (.flyout-back) just calls closeAll().
+function wireFlyoutGroup(nav) {
   const items = [...nav.querySelectorAll('.nav-item')];
   if (!items.length) return;
 
@@ -313,17 +354,30 @@ function wireFlyouts(block) {
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeAll(); });
 }
 
+// Primary nav and, on /blog/* pages, the secondary Resource Center nav (see
+// secondaryNavHTML) each get their own independent group — opening a flyout
+// in one never affects the other.
+function wireFlyouts(block) {
+  block.querySelectorAll('.nav-main').forEach(wireFlyoutGroup);
+}
+
 export default async function decorate(block) {
   const navMeta = getMetadata('nav');
   const navPath = navMeta ? new URL(navMeta, window.location).pathname : '/nav';
   const navMainHTML = (await fetchNavMainHTML(navPath)) || NAV_MAIN_FALLBACK;
   const eventsHTML = eventsBarHTML();
-  block.innerHTML = chromeHTML(navMainHTML, eventsHTML);
+  const secondaryHTML = secondaryNavHTML();
+  block.innerHTML = chromeHTML(navMainHTML, eventsHTML, secondaryHTML);
   // The min-height reserved to avoid layout shift while this decorates
   // async only needs to be the taller value (see header.css) on the pages
-  // that actually opted into the events bar.
+  // that actually opted into the events bar / have the secondary nav.
   block.classList.toggle('has-events-bar', !!eventsHTML);
-  block.querySelector('.nav-main')?.insertAdjacentHTML('beforeend', mobileExtraHTML());
+  block.classList.toggle('has-secondary-nav', !!secondaryHTML);
+  // Also on the outer <header> element (not just this block) — that's where
+  // position:sticky lives (see header.css), and on /blog/* pages it's the
+  // secondary nav that should stick on scroll, not the primary one.
+  block.closest('header')?.classList.toggle('has-secondary-nav', !!secondaryHTML);
+  block.querySelector('.ies-nav .nav-main')?.insertAdjacentHTML('beforeend', mobileExtraHTML());
 
   // sticky-nav scroll-morph. Reading window.scrollY forces a synchronous
   // layout if styles were just invalidated (e.g. the innerHTML write above),
@@ -352,13 +406,25 @@ export default async function decorate(block) {
   // "X" while the full-screen drawer is open (see .header.nav-open .nav-main
   // in header.css), matching erp.intuit.com's own mobile menu behavior.
   const toggle = block.querySelector('.nav-toggle');
-  const navMain = block.querySelector('.nav-main');
+  const navMain = block.querySelector('.ies-nav .nav-main');
   if (toggle && navMain) {
     toggle.addEventListener('click', () => {
       const open = block.classList.toggle('nav-open');
       toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
       toggle.setAttribute('aria-label', open ? 'Close menu' : 'Menu');
       document.body.classList.toggle('nav-scroll-lock', open);
+    });
+  }
+
+  // Secondary (Resource Center) nav's own mobile accordion toggle — separate
+  // from the primary hamburger above, so opening one never opens the other
+  // (see the .ies-secondary-nav rules in header.css).
+  const secondaryNav = block.querySelector('.ies-secondary-nav');
+  const secondaryToggle = block.querySelector('.secondary-nav-toggle');
+  if (secondaryNav && secondaryToggle) {
+    secondaryToggle.addEventListener('click', () => {
+      const open = secondaryNav.classList.toggle('open');
+      secondaryToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
     });
   }
 

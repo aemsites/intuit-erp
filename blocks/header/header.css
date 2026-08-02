@@ -7,6 +7,8 @@
    correctly inside this stacking context. */
 header { height: auto; min-height: 92px; position: sticky; top: 0; z-index: 50; }
 header .header.has-events-bar { min-height: 146px; }
+header .header.has-secondary-nav { min-height: 140px; }
+header .header.has-secondary-nav.has-events-bar { min-height: 194px; }
 header .header { background: #fff; }
 header .header .container { max-width: var(--container); margin: 0 auto; padding: 0 40px; }
 
@@ -119,10 +121,20 @@ body.nav-scroll-lock { overflow: hidden; }
 @media (min-width: 1300px) {
   .header .nav-item { position: static; }
   .header .ies-nav .container { position: static; }
+  .header .ies-secondary-nav .container { position: static; }
 
   .header .nav-main button:not(.flyout-back):hover::after, .header .nav-main > a:hover::after, .header .nav-main .nav-link:hover::after,
   .header .nav-main button:not(.flyout-back):focus-visible::after, .header .nav-main .nav-link:focus-visible::after,
   .header .nav-item.open button:not(.flyout-back)::after { transform: scaleX(1); }
+
+  /* On /blog/* pages it's the secondary Resource Center nav that sticks on
+     scroll, not the primary one (confirmed against erp.intuit.com) — the
+     primary topstrip + nav row scroll away normally instead. position:sticky
+     otherwise lives on <header> itself (see the base rule at the top of this
+     file); overriding it back to static here only when a secondary nav is
+     present hands stickiness to this bar instead. */
+  header.has-secondary-nav { position: static; }
+  .header .ies-secondary-nav { position: sticky; top: 0; z-index: 51; }
 }
 .header .nav-right { margin-left: auto; display: flex; align-items: center; gap: 22px; }
 
@@ -153,6 +165,26 @@ body.nav-scroll-lock { overflow: hidden; }
 .header .nav-cta:hover .nav-cta-icon, .header .nav-cta:focus-visible .nav-cta-icon { opacity: 1; transform: translate(-16px, -50%); }
 .header .nav-toggle { display: none; }
 
+/* Secondary "Resource center" nav — /blog/* pages only (see
+   secondaryNavHTML/isResourceCenterPath in header.js), matching
+   erp.intuit.com's own dedicated Resource Center nav bar there (issue #59).
+   Its item list reuses .nav-main/.nav-item/.flyout wholesale for the desktop
+   dropdown look — see the two @media blocks below for the handful of
+   mobile-only overrides needed so it doesn't share the primary hamburger's
+   open/close state or full-screen drill-down. */
+.header .ies-secondary-nav { background: #fff; border-bottom: 1px solid var(--line); }
+.header .ies-secondary-nav .container { display: flex; align-items: center; height: 48px; gap: 20px; }
+.header .secondary-nav-brand { font-size: 15px; font-weight: 600; color: var(--heading); text-decoration: none; }
+.header .secondary-nav-brand:hover { color: var(--primary); }
+
+/* Pushes the item list to the right, matching erp.intuit.com's own
+   right-aligned secondary nav (its own markup calls the class
+   "SecondaryNav_dNavRight") — the base .nav-main rule's 10px left margin is
+   tuned for sitting next to the primary logo, not relevant here. */
+.header .ies-secondary-nav .nav-main { margin-left: auto; gap: 20px; }
+.header .secondary-nav-toggle { display: none; }
+.header .secondary-nav-toggle .caret { width: 7px; height: 7px; border-right: 1.5px solid currentcolor; border-bottom: 1.5px solid currentcolor; transition: transform 0.2s ease; }
+
 @media (width <= 768px) {
   .schedule-modal { padding: 28px 20px; }
 }
@@ -170,6 +202,8 @@ body.nav-scroll-lock { overflow: hidden; }
 @media (width <= 1299px) {
   header { min-height: 60px; }
   header .header.has-events-bar { min-height: 106px; }
+  header .header.has-secondary-nav { min-height: 108px; }
+  header .header.has-secondary-nav.has-events-bar { min-height: 154px; }
   header .header .container { padding: 0 20px; }
   .header .ies-topstrip { display: none; }
   .header .ies-nav .container { height: 56px; gap: 12px; }
@@ -345,4 +379,60 @@ body.nav-scroll-lock { overflow: hidden; }
   .header.nav-open .nav-toggle span:first-child { transform: translateY(6px) rotate(45deg); }
   .header.nav-open .nav-toggle span:nth-child(2) { opacity: 0; }
   .header.nav-open .nav-toggle span:last-child { transform: translateY(-6px) rotate(-45deg); }
+
+  /* Secondary "Resource center" nav, mobile — its own persistent accordion
+     bar directly under the header row (not inside the primary hamburger
+     drawer), matching erp.intuit.com. The brand link doubles as a heading;
+     .secondary-nav-toggle is a separate control (not the same element as the
+     link, for a11y — one control shouldn't both navigate and expand/collapse)
+     that shows/hides the category list. */
+
+  /* height:auto (overriding the desktop row's fixed 48px) + min-height +
+     flex-wrap so the expanded item list (flex-basis:100% below) drops onto
+     its own full-width row underneath the brand+toggle row and the container
+     can grow to fit it, instead of clipping to a fixed-height row. */
+  .header .ies-secondary-nav .container { height: auto; min-height: 52px; flex-wrap: wrap; }
+
+  .header .secondary-nav-toggle {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px; margin-left: auto; background: none; border: 0; padding: 0; cursor: pointer;
+  }
+  .header .secondary-nav-toggle .caret { transform: rotate(45deg); }
+  .header .ies-secondary-nav.open .secondary-nav-toggle .caret { transform: rotate(-135deg); }
+
+  /* .nav-main is reused here for the item list purely to inherit the
+     .nav-item/.flyout row styling and drill-down transitions "for free" —
+     its visibility must NOT follow the primary hamburger's .header.nav-open
+     state, so these overrides are deliberately more specific than the base
+     .header .nav-main / .header.nav-open .nav-main rules above. */
+  .header .ies-secondary-nav .nav-main { display: none; margin-left: 0; }
+
+  .header .ies-secondary-nav.open .nav-main {
+    display: block; position: static; width: 100%; flex-basis: 100%;
+    background: #fff; padding: 4px 20px 12px; border-top: 1px solid var(--line);
+  }
+  .header .ies-secondary-nav .nav-item { position: relative; }
+
+  /* Plain inline accordion for each category's links — unlike the primary
+     drawer's full-screen drill-down (not needed for a 2-3-link list here),
+     tapping a category just expands its links in place directly below it, so
+     .flyout's full-screen positioning/slide transform is neutralized back to
+     a simple block reveal. No drill-down means no "Back" control either. */
+  .header .ies-secondary-nav .flyout {
+    position: static; width: auto; height: auto; box-sizing: border-box;
+    padding: 0 0 8px 20px; opacity: 1; pointer-events: auto; transform: none;
+    display: none; border: 0; box-shadow: none;
+  }
+  .header .ies-secondary-nav .nav-item.open .flyout { display: block; transform: none; }
+  .header .ies-secondary-nav .flyout-inner { flex-direction: column; gap: 4px; }
+  .header .ies-secondary-nav .flyout-back { display: none; }
+
+  /* Reusing .nav-main also pulls in the primary drawer's "siblings slide
+     off-screen, opened item's own button fades out" rules (.nav-main.has-open
+     ...) — appropriate for a full-screen drill-down, wrong for this plain
+     accordion, so both are neutralized back to a no-op here. */
+  .header .ies-secondary-nav .nav-main.has-open > .nav-item:not(.open),
+  .header .ies-secondary-nav .nav-main.has-open .nav-item.open > button {
+    transform: none; opacity: 1; pointer-events: auto;
+  }
 }
