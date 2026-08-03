@@ -295,6 +295,28 @@
   margin-top: 0;
 }
 
+.blog-article > .blog-rail {
+  margin: 40px 0;
+}
+
+@media (min-width: 900px) {
+  .blog-article > .blog-rail {
+    margin: 0;
+  }
+}
+
+
+.blog-article .blog-rail .default-content-wrapper > .section + .section {
+  margin-top: 40px;
+}
+
+@media (min-width: 900px) {
+  .blog-article .blog-rail .default-content-wrapper > .section + .section {
+    margin-top: 20px;
+  }
+}
+
+
 /* First rail entry is a highlighted promo card (upstream `.ProductBanner`):
    agave-cyan fill, 12px radius, 20px padding, with a dark ink-teal button.
    The remaining entries are plain link lists. The rail is a shared fragment,
@@ -311,6 +333,9 @@
 .blog-article .blog-rail .default-content-wrapper > .section:first-child h3 {
   margin-top: 0;
   color: var(--ink-teal);
+  font-size: var(--heading-font-size-s);
+  font-style: normal;
+  font-weight: 700;
 }
 
 .blog-article .blog-rail .default-content-wrapper > .section:first-child p {
@@ -691,6 +716,18 @@ main.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail):has(.bl
   font-size: 28px;
   line-height: 36px;
   margin: 32px 0 16px;
+}
+
+/* rail h3 — compact on desktop (narrow rail column); full-size on mobile (full width).
+   Beats the prose-reset rules above (same 0,3,1 specificity, later cascade) */
+@media (min-width: 900px) {
+  .blog-article > .blog-rail .default-content-wrapper h3 {
+    font-family: var(--body-font-family);
+    font-size: var(--body-font-size-xs);
+    font-weight: 600;
+    line-height: normal;
+    margin: 0 0 12px;
+  }
 }
 
 /* highlight callout — upstream `.colored-box`: agave fill, square corners,
