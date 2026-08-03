@@ -3,43 +3,43 @@
 .section.feature-grid-container { background: #eef2f6; padding: var(--section-y) 0; overflow: hidden; }
 
 .feature-grid-container .default-content-wrapper h2 {
-  font-size: 38px; line-height: 1.15; font-weight: 400; color: var(--heading);
+  font-size: 48px; line-height: 1.4; font-weight: 400; color: var(--text-color);
   text-align: center; margin: 0 0 44px;
 }
 
 .feature-grid .feature-grid { display: flex; flex-direction: column; gap: 24px; }
 
 .feature-grid .feature-row {
-  display: flex; gap: 24px; height: 548px;
+  display: flex; justify-content: flex-start; gap: 24px; width: 100%; height: 548px;
   transition: height 0.6s cubic-bezier(0.25, 1, 0.5, 1);
 }
-.feature-grid .feature-row:has(.expanded) { height: 780px; }
+
+/* 739px — upstream's taller variant. It hardcodes 704px and bumps only its
+   long-copy row to 739px; using the taller value throughout keeps every CTA
+   clear of the card's clipped edge without per-row content coupling. */
+.feature-grid .feature-row:has(.expanded) { height: 739px; }
 
 .feature-grid .feature-card {
-  background: #fff; border-radius: var(--radius-card); padding: 36px;
+  background: #fff; border-radius: 16px; padding: 36px;
   box-shadow: 0 4px 12px rgb(0 0 0 / 3%); position: relative; overflow: hidden;
-  cursor: pointer; box-sizing: border-box; display: flex; flex-direction: column;
-  flex: 1 1 0;
+  cursor: pointer; height: 100%; box-sizing: border-box; display: flex; flex-direction: column;
+  border: none; text-align: left; font-family: inherit; flex-grow: 1; flex-shrink: 1;
   transition: flex-basis 0.6s cubic-bezier(0.25, 1, 0.5, 1), background-color 0.4s ease, box-shadow 0.4s ease;
 }
 .feature-grid .feature-card:not(.expanded):hover { box-shadow: 0 6px 16px rgb(0 36 71 / 4%), inset 0 0 0 2px #d0dfed; }
 
-.feature-grid .feature-card.expanded {
-  flex: 1 1 0;
+/* uneven default card widths, alternating per row like erp.intuit.com's
+   .wp-w-528/.wp-w-664. Deliberately single-class selectors (as upstream) so the
+   .expanded rule below outranks them on specificity — JS assigns the class. */
+.fg-w-528 { flex-basis: 528px; }
+.fg-w-664 { flex-basis: 664px; }
+
+/* expanded card takes a fixed 1011px; the partner shrinks to a title-only sliver */
+.feature-card.expanded {
+  flex: 0 0 1011px;
   background: var(--navy); color: #fff; cursor: default;
 }
-
-.feature-grid .feature-row:has(.expanded) .feature-card:not(.expanded) {
-  flex: 0 0 220px;
-}
-
-/* uneven default card widths (528px/664px split), alternating per row like
-   erp.intuit.com's .wp-w-528/.wp-w-664 — only while nothing in the row is
-   expanded, since the rule above takes over once a card is clicked. */
-.feature-grid .feature-row:not(:has(.expanded)):nth-child(odd) .feature-card:nth-child(1) { flex-grow: 528; }
-.feature-grid .feature-row:not(:has(.expanded)):nth-child(odd) .feature-card:nth-child(2) { flex-grow: 664; }
-.feature-grid .feature-row:not(:has(.expanded)):nth-child(even) .feature-card:nth-child(1) { flex-grow: 664; }
-.feature-grid .feature-row:not(:has(.expanded)):nth-child(even) .feature-card:nth-child(2) { flex-grow: 528; }
+.feature-row:has(.expanded) .feature-card:not(.expanded) { flex: 0 0 325px; }
 
 .feature-grid .feature-preview, .feature-grid .feature-expanded {
   width: 100%; height: 100%; display: flex; flex-direction: column;
@@ -49,44 +49,97 @@
 .feature-grid .feature-card.expanded .feature-expanded { display: flex; opacity: 1; transform: translateY(0); transition-delay: 0.25s; }
 .feature-grid .feature-card.expanded .feature-preview { display: none !important; }
 
-.feature-grid .feature-img { width: 100%; height: 220px; border-radius: 8px; margin-bottom: 24px; background: #fff; overflow: hidden; }
-.feature-grid .feature-img img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
+.feature-grid .feature-img {
+  width: 100%; height: 350px; border-radius: 8px; margin-bottom: 24px; background: #fff;
+  display: flex; align-items: center; justify-content: center; padding: 0; box-sizing: border-box;
+}
+
+/* a card authored without an image shouldn't reserve the 350px visual slot */
+.feature-grid .feature-img:empty { display: none; }
+.feature-grid .feature-img img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; box-shadow: none; }
 .feature-grid .feature-row:has(.expanded) .feature-card:not(.expanded) .feature-img { display: none !important; }
-.feature-grid .feature-row:has(.expanded) .feature-card:not(.expanded) .feature-title { margin-top: auto; margin-bottom: 0; }
+
+.feature-grid .feature-row:has(.expanded) .feature-card:not(.expanded) .feature-preview {
+  height: 100%; display: flex; flex-direction: column;
+}
+
+.feature-grid .feature-row:has(.expanded) .feature-card:not(.expanded) .feature-title {
+  line-height: 1.3; margin-top: auto; margin-bottom: 0; padding-right: 40px; box-sizing: border-box;
+}
 
 .feature-grid .feature-expanded-img {
-  width: 100%; aspect-ratio: 939 / 400; border-radius: 8px; margin-bottom: 24px;
-  overflow: hidden; background: rgb(255 255 255 / 6%); flex-shrink: 0;
+  display: flex; width: 100%; height: 400px; background: transparent; border-radius: 8px;
+  align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0;
 }
-.feature-grid .feature-expanded-img img { width: 100%; height: 100%; object-fit: contain; border-radius: 8px; }
 
-.feature-grid .feature-tag { font-size: 12px; letter-spacing: 0.06em; color: var(--text-muted); text-transform: uppercase; font-weight: 600; margin-bottom: 12px; }
+/* upstream's expanded visual is a link to the related story, with a 17px
+   radius and a subtle zoom on hover */
+.feature-grid .feature-expanded-img img,
+.feature-grid .feature-expanded-img a {
+  width: 100%; height: 100%; display: block; border-radius: 17px; object-fit: cover;
+  transition: transform 0.3s ease;
+}
+.feature-grid .feature-expanded-img a { overflow: hidden; text-decoration: none; }
+.feature-grid .feature-expanded-img a:hover img { transform: scale(1.03); }
+
+/* upstream separates the expanded visual from the text block by 24px and
+   reserves 40px below it so the toggle never overlaps the CTA */
+.feature-grid .feature-expanded-text { margin-top: 24px; width: 100%; padding-bottom: 40px; }
+
+.feature-grid .feature-tag { font-size: 12px; line-height: 1.35; letter-spacing: 1px; color: #000; text-transform: uppercase; font-weight: 500; margin-bottom: 12px; display: block; }
 .feature-grid .feature-card.expanded .feature-tag { color: #fff; }
-.feature-grid .feature-title { font-size: 20px; font-weight: 500; color: var(--heading); line-height: 1.3; margin: 0; padding-right: 40px; }
-.feature-grid .feature-card.expanded .feature-title { color: #fff; font-size: 26px; margin: 0 0 14px; padding-right: 0; }
-.feature-grid .feature-body-text { font-size: 15px; line-height: 1.6; color: #e6eef6; margin: 0 0 20px; }
+.feature-grid .feature-title { font-size: 24px; font-weight: 400; color: #111; line-height: 1.3; margin: 0; padding-right: 15px; }
+
+.feature-grid .feature-card.expanded .feature-title {
+  color: #fff; font-size: 1.8rem; line-height: 1.3; margin: 20px 15px 15px 0; padding-right: 15px;
+}
+
+.feature-grid .feature-body-text {
+  font-size: 1.05rem; line-height: 1.6; color: #ccc; margin: 0 0 20px;
+}
 
 .feature-grid .feature-cta {
   display: inline-block; align-self: flex-start; background: transparent; border: 1.5px solid #fff;
-  color: #fff; padding: 11px 22px; border-radius: var(--radius); font-weight: 600; font-size: 15px;
-  text-decoration: none; transition: background 0.2s ease, color 0.2s ease;
+  color: #fff; padding: 12px 24px; border-radius: 6px; font-weight: 600; font-size: 0.95rem;
+  text-decoration: none; cursor: pointer; transition: background 0.2s ease, color 0.2s ease;
 }
 .feature-grid .feature-cta:hover { background: #fff; color: var(--navy); }
 
 .feature-grid .feature-toggle {
-  position: absolute; bottom: 36px; right: 36px; font-size: 26px; line-height: 1; color: var(--text-muted);
-  pointer-events: none; transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1), color 0.4s ease;
+  position: absolute; bottom: 36px; right: 36px; font-size: 2.2rem; line-height: 1; color: #333;
+  background: none; border: none; pointer-events: none; z-index: 10;
+  transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1), color 0.4s ease;
 }
 .feature-grid .feature-card.expanded .feature-toggle { color: #fff; transform: rotate(45deg); }
 
-@media (width <= 900px) {
-  .feature-grid-container .default-content-wrapper h2 { font-size: 28px; }
+/* upstream stacks the grid below 1300px, not at the usual 900px breakpoint */
+@media (width <= 1300px) {
+  .section.feature-grid-container { padding: 30px 0; }
+  .feature-grid-container .default-content-wrapper h2 { font-size: 34px; margin-bottom: 24px; }
   .feature-grid .feature-row { flex-direction: column; height: auto !important; gap: 24px; }
-  .feature-grid .feature-card { flex-basis: auto !important; padding: 26px 22px; }
+
+  /* stacked: cards size to content, so the desktop 528/664 basis must not apply */
+  .feature-grid .feature-card { width: 100% !important; flex: 1 1 auto !important; height: auto !important; padding: 30px 24px; }
   .feature-grid .feature-row:has(.expanded) .feature-card:not(.expanded) { flex-basis: auto !important; }
   .feature-grid .feature-row:has(.expanded) .feature-card:not(.expanded) .feature-img { display: block !important; }
-  .feature-grid .feature-row:has(.expanded) .feature-card:not(.expanded) .feature-title { margin-top: 0; }
-  .feature-grid .feature-img { height: auto; }
-  .feature-grid .feature-img img { height: auto; }
-  .feature-grid .feature-toggle { bottom: 24px; right: 24px; }
+
+  .feature-grid .feature-row:has(.expanded) .feature-card:not(.expanded) .feature-title {
+    margin-top: 0 !important; padding-right: 0 !important;
+  }
+
+  .feature-grid .feature-img { display: block; height: auto !important; margin-bottom: 16px; }
+  .feature-grid .feature-img img { object-fit: contain !important; width: 100% !important; height: auto !important; }
+
+  .feature-grid .feature-expanded-img {
+    display: block; aspect-ratio: 21 / 9; height: auto !important; background: transparent !important;
+  }
+
+  .feature-grid .feature-expanded-img a { display: block; width: 100%; height: auto !important; }
+  .feature-grid .feature-expanded-img img { object-fit: cover !important; width: 100% !important; height: auto !important; }
+  .feature-grid .feature-card.expanded .feature-title { font-size: 1.5rem; margin-top: 15px; }
+  .feature-grid .feature-toggle { bottom: 24px; right: 24px; font-size: 2rem; }
+}
+
+@media (width <= 767px) {
+  .feature-grid .feature-expanded-img img { border-radius: 8px !important; }
 }
