@@ -34,15 +34,43 @@ function buildDot(index) {
   return dot;
 }
 
+/**
+ * `.feature` slides author the pull-quote and its attribution as one string,
+ * separated by an em dash: `“…quote…” — Name, Role, Company`. The source
+ * styles those as two distinct blocks (40px quote, 16px attribution), so split
+ * them into separate elements. Left alone if there's no dash to split on.
+ * @param {Element} slide a `.carousel-slide`
+ */
+function splitFeatureQuote(slide) {
+  const copyCell = [...slide.children].find((c) => !c.querySelector('picture, img'));
+  const p = copyCell?.querySelector('p');
+  if (!p) return;
+  const raw = p.textContent;
+  const dash = raw.lastIndexOf('—');
+  if (dash === -1) return;
+  const quote = raw.slice(0, dash).trim();
+  const attribution = raw.slice(dash + 1).trim();
+  if (!quote || !attribution) return;
+  p.textContent = quote;
+  p.className = 'carousel-quote';
+  const cite = document.createElement('p');
+  cite.className = 'carousel-attribution';
+  cite.textContent = attribution;
+  p.after(cite);
+}
+
 export default function decorate(block) {
   const slides = [...block.querySelectorAll(':scope > div')];
   if (!slides.length) return;
+
+  const isFeature = block.classList.contains('feature');
 
   slides.forEach((slide, i) => {
     slide.className = 'carousel-slide';
     slide.setAttribute('role', 'group');
     slide.setAttribute('aria-roledescription', 'slide');
     slide.setAttribute('aria-label', `Slide ${i + 1} of ${slides.length}`);
+    if (isFeature) splitFeatureQuote(slide);
   });
 
   const track = document.createElement('div');

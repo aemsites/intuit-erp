@@ -140,3 +140,113 @@
 @media (min-width: 900px) {
   .carousel.cards { --carousel-cards-per-view: 3; }
 }
+
+/* ---- .feature — full-bleed navy slide: photo left, pull-quote right
+   (ai-agents "customer voices"). Unlike `.testimonial`, the navy is on the
+   SLIDE rather than the block, so the rounded panel travels with the track
+   and the controls sit on the page background below it.
+
+   The section padding is load-bearing: on /ai-agents the preceding section is
+   a navy `stat-band dark` band that abuts this one exactly, so without it the
+   two navy areas merge and the slide's rounded top corners vanish. Upstream
+   leaves ~80px of page background above the slide. ---- */
+.carousel-container:has(.carousel.feature) { padding: 80px 0 0; }
+
+.carousel.feature .carousel-track { gap: 0; }
+
+.carousel.feature .carousel-slide {
+  display: flex;
+  flex-direction: column;
+  background: var(--navy);
+  border-radius: 10px;
+  overflow: hidden;
+  color: var(--background-color);
+}
+
+/* media cell */
+.carousel.feature .carousel-slide > div:first-child { flex: none; }
+
+.carousel.feature .carousel-slide img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* copy cell */
+.carousel.feature .carousel-slide > div:last-child {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 24px;
+  padding: 40px 38px 60px;
+}
+
+.carousel.feature .carousel-quote {
+  margin: 0;
+  font-size: 28px;
+  line-height: 1.4;
+  font-weight: 400;
+}
+
+.carousel.feature .carousel-attribution {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.4;
+  font-weight: 400;
+}
+
+/* Controls: 60px ink-teal circles 30px apart, with a white chevron. Disabled
+   is a straight opacity knock-back rather than a colour change (upstream keeps
+   the same fill at 0.3). Dots are 12px black at 0.75 / 0.25 opacity.
+
+   Upstream right-aligns the row as [dots][prev][next] against the slide's
+   right edge, where the shared default centres it as [prev][dots][next] — so
+   the arrows are re-ordered here rather than in the JS, which would change
+   the DOM (and tab order) for every other variant. */
+.carousel.feature .carousel-controls {
+  gap: 30px;
+  justify-content: flex-end;
+}
+
+.carousel.feature .carousel-dots { order: 1; margin-right: 4px; }
+.carousel.feature .carousel-prev { order: 2; }
+.carousel.feature .carousel-next { order: 3; }
+
+.carousel.feature .carousel-prev,
+.carousel.feature .carousel-next {
+  width: 60px;
+  height: 60px;
+  background: var(--ink-teal);
+  color: #fff;
+  font-size: 24px;
+}
+
+.carousel.feature .carousel-prev:hover:not(:disabled),
+.carousel.feature .carousel-next:hover:not(:disabled) { background: #09222a; }
+
+.carousel.feature .carousel-prev:disabled,
+.carousel.feature .carousel-next:disabled {
+  background: var(--ink-teal);
+  opacity: 0.3;
+}
+
+.carousel.feature .carousel-dot { background: rgb(0 0 0 / 25%); }
+.carousel.feature .carousel-dot.is-active { background: rgb(0 0 0 / 75%); }
+
+@media (width >= 900px) {
+  /* photo/copy split is 35/65 upstream (441px / 822px of a 1263px slide) */
+  .carousel.feature .carousel-slide {
+    flex-direction: row;
+    border-radius: var(--radius-card);
+  }
+
+  .carousel.feature .carousel-slide > div:first-child { flex: 0 0 35%; }
+
+  .carousel.feature .carousel-slide > div:last-child {
+    flex: 1 1 auto;
+    padding: 80px;
+  }
+
+  .carousel.feature .carousel-quote { font-size: 40px; }
+}
