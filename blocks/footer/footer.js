@@ -202,6 +202,19 @@ function wireCountry(block) {
   });
 }
 
+// The OneTrust widget (wired via the .ot-sdk-show-settings class) overwrites
+// this button's label from its own account config once it loads, clobbering
+// our "Manage cookies" casing (issue #79) — keep correcting it back rather
+// than fighting OneTrust for the click-wiring itself.
+function normalizeCookieLabel(block) {
+  const btn = block.querySelector('.ot-sdk-show-settings');
+  if (!btn) return;
+  const desired = 'Manage cookies';
+  const fix = () => { if (btn.textContent !== desired) btn.textContent = desired; };
+  fix();
+  new MutationObserver(fix).observe(btn, { childList: true, characterData: true, subtree: true });
+}
+
 export default async function decorate(block) {
   const footerMeta = getMetadata('footer');
   const footerPath = footerMeta ? new URL(footerMeta, window.location).pathname : '/footer';
@@ -212,6 +225,7 @@ export default async function decorate(block) {
   block.innerHTML = (frag && frag.includes('ies-footer')) ? frag : CHROME;
   wireAccordions(block);
   wireCountry(block);
+  normalizeCookieLabel(block);
   // Resource Center search (issue #60): the "Search this site" input submits
   // to /blog/search on Enter.
   wireFooterSearch(block);

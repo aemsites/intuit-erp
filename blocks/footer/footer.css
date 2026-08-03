@@ -3,8 +3,8 @@ footer { background: #fff; }
 footer .footer { background: #fff; }
 footer .footer .container { max-width: var(--container); margin: 0 auto; padding: 0 40px; }
 
-.footer .ies-footer { color: var(--text); font-size: 14px; }
-.footer .ftr-main { background: #fff; border-top: 1px solid var(--line); padding: 56px 0 0; }
+.footer .ies-footer { color: var(--text); font-size: 14px; background: #f4f5f8; }
+.footer .ftr-main { border-top: 1px solid var(--line); padding: 56px 0 0; }
 .footer .footer-cols { display: grid; grid-template-columns: repeat(4, 1fr); gap: 32px; }
 .footer .footer-cols h4 { font-size: 16px; font-weight: 700; color: var(--text); margin: 0 0 18px; }
 .footer .footer-cols ul { list-style: none; margin: 0; padding: 0; }
@@ -45,7 +45,7 @@ footer .footer .container { max-width: var(--container); margin: 0 auto; padding
 .footer .country-menu a:hover { background: #f5f6f7; }
 .footer .country-menu .flag { font-size: 16px; line-height: 1; }
 
-.footer .ftr-legal { background: #f5f6f7; padding: 40px 0 48px; }
+.footer .ftr-legal { padding: 40px 0 48px; }
 .footer .legal-grid { display: grid; grid-template-columns: 220px 1fr 220px; gap: 40px; align-items: start; }
 .footer .legal-left ul { list-style: none; margin: 0; padding: 0; }
 .footer .legal-left li { margin-bottom: 12px; }
@@ -63,9 +63,8 @@ footer .footer .container { max-width: var(--container); margin: 0 auto; padding
 .footer .ftr-brand-mailchimp svg:first-child { height: 20px; width: auto; margin-right: 4.5px; }
 .footer .ftr-brand-mailchimp svg:last-child { height: 12.5px; width: auto; }
 .footer .footer-copy { color: var(--text); font-size: 12px; line-height: 1.6; margin: 0 0 12px; max-width: none; }
-.footer .footer-copy a { color: var(--primary-dark); }
-.footer .footer-copy-btn { background: none; border: none; padding: 0; font: inherit; color: var(--primary-dark); cursor: pointer; }
-.footer .footer-copy-btn:hover { text-decoration: underline; }
+.footer .footer-copy a { color: inherit; text-decoration: underline; }
+.footer .footer-copy-btn { background: none; border: none; padding: 0; font: inherit; color: inherit; text-decoration: underline; cursor: pointer; }
 .footer .legal-right .legal-links { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; }
 .footer .legal-right .legal-links a { color: var(--text-muted); }
 .footer .truste { display: inline-block; line-height: 0; }
@@ -76,7 +75,6 @@ footer .footer .container { max-width: var(--container); margin: 0 auto; padding
    social share a row, and the legal tier regroups (logos on one line, About
    links beside the copyright). Uniform light-gray background throughout. ── */
 @media (width <= 900px) {
-  footer, footer .footer, .footer .ftr-main, .footer .ftr-legal { background: #f5f6f7; }
   footer .footer .container { padding: 0 20px; }
 
   /* stack the top tier so DOM order (cols → country → search → sitemap) shows */
@@ -89,7 +87,10 @@ footer .footer .container { max-width: var(--container); margin: 0 auto; padding
   .footer .footer-col h4 { margin: 0; }
   .footer .footer-col .col-toggle { display: flex; justify-content: space-between; align-items: center; width: 100%; min-height: 60px; cursor: pointer; }
   .footer .footer-col .caret { display: inline-block; color: var(--text-muted); }
-  .footer .footer-col ul { display: none; padding: 0 0 18px; }
+
+  /* collapsed rows stay on the ambient gray band; the revealed list switches
+     to white, matching source's FooterMenuSection_menuList treatment */
+  .footer .footer-col ul { display: none; background: #fff; margin: 0 -20px; padding: 12px 20px 18px; }
   .footer .footer-col.open ul { display: block; }
 
   /* country selector row (mobile copy) */
