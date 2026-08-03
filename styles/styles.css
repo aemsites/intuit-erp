@@ -254,6 +254,28 @@ body.author header {
   }
 }
 
+/* Events-bar pages (events-bar metadata → body.has-events-bar, set eagerly in
+   scripts.js) get a taller header. Reserve its real rendered height up front so
+   the lazily-loaded bar lands in reserved space instead of shoving content down
+   (CLS). Values are measured rendered heights: topstrip+nav+bar on desktop; the
+   topstrip hides and the bar's text shrinks ≤1299px; the bar's text wraps to two
+   lines on phones (≤540px). Keep in sync with header.css's .has-events-bar. */
+body.has-events-bar header {
+  min-height: 149px;
+}
+
+@media (width <= 1299px) {
+  body.has-events-bar header {
+    min-height: 106px;
+  }
+}
+
+@media (width <= 540px) {
+  body.has-events-bar header {
+    min-height: 122px;
+  }
+}
+
 header .header,
 footer .footer {
   visibility: hidden;

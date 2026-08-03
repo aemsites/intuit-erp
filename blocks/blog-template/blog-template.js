@@ -283,26 +283,10 @@ export function relocateShare(share, placeMobile, placeDesktop, mq) {
   mq.addEventListener('change', (e) => place(e.matches));
 }
 
-/**
- * True when the current page is a /blog/* article (not a listing/author/category
- * page, which are card-list pages rendered by blog-cards). Gate for the autoblock.
- *
- * Keyed on the page's own `Template` metadata: only `Blog Article` pages get the
- * article template. `Category`, `Author`, the blog root and search are listings
- * and must NOT get the hero band / TOC / share widget. When template metadata is
- * absent we fall back to path shape — an article lives at `/blog/<category>/<slug>`
- * (two-plus segments, first segment not `author`).
- * @returns {boolean}
- */
-export function isBlogPage() {
-  const path = window.location.pathname;
-  if (!path.startsWith('/blog/')) return false;
-  const template = getMetadata('template').trim().toLowerCase();
-  if (template) return template === 'blog article';
-  // fallback (no template metadata): /blog/<category>/<slug>, not /blog/author/*
-  const segments = path.replace(/\/+$/, '').slice('/blog/'.length).split('/').filter(Boolean);
-  return segments.length >= 2 && segments[0] !== 'author';
-}
+// isBlogPage moved to ./blog-detect.js so scripts.js can gate blog decoration
+// in the eager phase without pulling this whole module onto every page's
+// critical path. Re-exported here so the public API is unchanged.
+export { isBlogPage } from './blog-detect.js';
 
 /**
  * Wires up the TOC's interactive behavior once it's in the document:
