@@ -394,7 +394,10 @@ export function buildBlogTemplate(main) {
   if (firstSection) {
     firstSection.classList.add('blog-hero');
 
-    const eyebrow = buildEyebrow(getMetadata('category') || getMetadata('tags'));
+    // an article may carry several comma-separated categories; the byline shows
+    // the primary (first) one.
+    const primaryCategory = (getMetadata('category') || '').split(',')[0].trim();
+    const eyebrow = buildEyebrow(primaryCategory || getMetadata('tags'));
     meta = buildBylineMeta({
       author: getMetadata('author'),
       date: getMetadata('date'),

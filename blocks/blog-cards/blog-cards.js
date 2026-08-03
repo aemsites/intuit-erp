@@ -99,7 +99,12 @@ export function filterEntries(entries, {
   const authors = toList(author);
   const templates = toList(template).map((t) => t.toLowerCase());
   let out = entries.filter((entry) => entry.title && !isListingPage(entry));
-  if (categories.length) out = out.filter((entry) => categories.includes(entry.category));
+  if (categories.length) {
+    // an entry may carry several comma-separated categories; it matches when any
+    // of them is requested (e.g. a "case-study, food-service" case study shows
+    // on the food-service category page).
+    out = out.filter((entry) => toList(entry.category).some((c) => categories.includes(c)));
+  }
   if (authors.length) out = out.filter((entry) => authors.includes(entry.author));
   if (templates.length) {
     out = out.filter((entry) => templates.includes((entry.template || '').trim().toLowerCase()));
@@ -127,7 +132,10 @@ export function categoryLabel(entry) {
   const segments = (entry.path || '').split('/').filter(Boolean);
   // /blog/<category>/<slug> — anything shallower (a listing page) has no category
   const fromPath = segments.length > 2 ? segments[1] : '';
-  return (entry.category || fromPath).replace(/-/g, ' ');
+  // an entry may carry several comma-separated categories; show the primary
+  // (first) one so multi-category cards read as one clean label.
+  const primary = toList(entry.category)[0] || fromPath;
+  return (primary || '').replace(/-/g, ' ');
 }
 
 /**
