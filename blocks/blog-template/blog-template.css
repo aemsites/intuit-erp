@@ -16,42 +16,44 @@
    ============================================================ */
 .blog-article .blog-hero .blog-byline-tag {
   margin: 0 0 12px;
-  color: var(--primary);
-  font-size: var(--body-font-size-xs);
-  font-weight: 700;
+  color: var(--text-muted);
+  font-size: var(--body-font-size-xxs);
+  font-weight: 500;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
+.blog-article > .blog-hero {
+  background: var(--blog-hero-bg);
+}
+
+@media (max-width: 1023px) {
+  .blog-article > .blog-hero {
+    padding: 24px 0;
+  }
+}
+
 .blog-article .blog-hero h1 {
   margin: 0 0 16px;
+  font-size: 40px;
   font-weight: 700;
 }
 
 .blog-article .blog-hero .blog-byline-meta {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 4px;
   margin: 0 0 24px;
   color: var(--text-muted);
   font-size: var(--body-font-size-s);
 }
 
-/* "By {author} · Published on {date} · Updated {updated}" — the middle dot
-   separator is CSS-generated, not authored text, so each piece stays a
-   clean, independently-omittable span. */
-.blog-article .blog-hero .blog-byline-meta > * + *::before {
-  content: '·';
-  margin: 0 8px;
-  color: var(--text-soft);
-}
-
 .blog-article .blog-hero .blog-byline-author {
-  color: var(--text);
-  font-weight: 700;
+  color: inherit;
 }
 
 .blog-article .blog-hero .blog-byline-author a {
-  color: inherit;
+  color: var(--link-color);
   text-decoration: underline;
 }
 
@@ -95,7 +97,7 @@
   display: none;
   margin-right: 4px;
   color: var(--text-muted);
-  font-size: 12px; /* matches source share label (no 12px token) */
+  font-size: var(--body-font-size-xxs);
   font-weight: 500;
   line-height: 16px;
 }
@@ -252,7 +254,7 @@
   display: block;
   padding: 8px 20px 8px 24px;
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: var(--body-font-size-xxs);
   line-height: 16px;
   font-weight: 600;
   text-decoration: none;
@@ -383,7 +385,7 @@
     grid-column: 1 / -1;
     grid-row: 1;
     margin-bottom: 44px;
-    background: var(--blog-hero-bg);
+    padding: 0;
   }
 
   /* Only the LEFT rail is sticky. Upstream pins the TOC (it's a jump-link nav,
@@ -423,52 +425,6 @@
   .blog-article > .blog-rail {
     grid-column: 3;
     align-self: start;
-  }
-
-  /* hero band: 2-col split inside (text left, image right). The text
-     column is deliberately wider than the image (1.55fr vs 1fr, ~638px at
-     1320px viewport) — tuned so the H1 reliably wraps ~4 lines like the
-     source (measured: the wrap flips from 5 lines to 4 right around
-     628-630px, so 1.4fr's ~614px was juuust on the wrong side of that
-     threshold) instead of being squeezed into a narrow half-and-half split.
-     `max-width` here is a required OVERRIDE, not decoration: this page's
-     body carries the `case-study` template class (Template: "Case Study"
-     metadata), and `body.case-study main .default-content-wrapper {
-     max-width: 46em }` (styles.css:483) — meant for a different, narrower
-     prose template — otherwise caps this wrapper at 46em (~736px) instead
-     of letting the hero content span wider than the prose column below
-     it. 1180px matches the site's existing "narrow" container variant
-     (.section.narrow, styles.css:466). */
-  .blog-article .blog-hero > .default-content-wrapper {
-    display: grid;
-    grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
-    column-gap: 48px;
-    align-items: center;
-
-    /* content-box (no border-box reset on this element): 40px padding each
-       side adds on top, so 1100px content + 80px padding = 1180px rendered
-       — matching the site's "narrow" container variant. */
-    max-width: 1100px;
-    padding: 56px 40px;
-  }
-
-  .blog-article .blog-hero .blog-byline-tag,
-  .blog-article .blog-hero h1,
-  .blog-article .blog-hero .blog-byline-meta {
-    grid-column: 1;
-  }
-
-  .blog-article .blog-hero .blog-byline-meta {
-    margin-bottom: 0;
-  }
-
-  .blog-article .blog-hero .blog-hero-image {
-    grid-column: 2;
-    grid-row: 1 / span 99;
-  }
-
-  .blog-article .blog-hero .blog-hero-image img {
-    border-radius: 20px;
   }
 
   /* share widget: label shows, sits above the TOC nav at the top of the
@@ -609,6 +565,59 @@
   }
 }
 
+/* ============================================================
+   hero 2-col layout — kicks in at 1024px (user confirmed this is
+   the breakpoint where mobile stacked view transitions to desktop).
+   ============================================================ */
+@media (min-width: 1024px) {
+  .blog-article .blog-hero > .default-content-wrapper {
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.5fr);
+    column-gap: 48px;
+    align-items: center;
+    padding: 40px;
+  }
+
+  .blog-article .blog-hero .blog-byline-tag,
+  .blog-article .blog-hero h1,
+  .blog-article .blog-hero .blog-byline-meta {
+    grid-column: 1;
+  }
+
+  .blog-article .blog-hero h1 {
+    font-size: var(--heading-font-size-xxl);
+  }
+
+  .blog-article .blog-hero .blog-byline-meta {
+    flex-direction: row;
+    flex-wrap: wrap;
+    column-gap: 24px;
+    margin-bottom: 0;
+  }
+
+  .blog-article > .blog-hero > .default-content-wrapper > .blog-byline-tag {
+    font-size: var(--body-font-size-xxs);
+  }
+
+  .blog-article > .blog-hero > .default-content-wrapper > .blog-byline-meta {
+    font-size: var(--body-font-size-s);
+  }
+
+  .blog-article .blog-hero .blog-hero-image {
+    grid-column: 2;
+    grid-row: 1 / span 99;
+    align-self: stretch;
+    overflow: hidden;
+    border-radius: 20px;
+  }
+
+  .blog-article .blog-hero .blog-hero-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
 /* ---- in-article blocks ----
    Blocks authored inside the article body all land in a single `.section`,
    so that section's class list is the union of every block's container class
@@ -644,6 +653,14 @@ main.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail):has(.bl
   font-size: 16px;
   line-height: 1.5;
   color: #000;
+}
+
+/* Hero byline font-size overrides — must beat the prose-reset rule above (0,3,1) */
+@media (max-width: 1023px) {
+  .blog-article > .blog-hero > .default-content-wrapper > .blog-byline-tag,
+  .blog-article > .blog-hero > .default-content-wrapper > .blog-byline-meta {
+    font-size: var(--body-font-size-xxs);
+  }
 }
 
 .blog-article > .section > .default-content-wrapper :is(ul, ol) {
