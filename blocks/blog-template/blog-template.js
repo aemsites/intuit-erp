@@ -330,9 +330,9 @@ function wireToc(tocWrap, nav, headings, mq) {
     label.textContent = (showActiveSection && activeText) ? activeText : 'Table of contents';
   };
 
-  // mobile starts collapsed (a bar); desktop starts expanded (the full rail).
-  // Re-apply on breakpoint cross so a resized window lands in the right default
-  // (a desktop browser narrowed to mobile should collapse, and vice-versa).
+  // mobile starts collapsed (a sticky bar whose label tracks the section the
+  // reader is in); desktop starts expanded (the full rail). Re-apply on
+  // breakpoint cross so a resized window lands in the right default.
   const applyDefaultState = (isDesktop) => {
     tocWrap.classList.toggle('blog-toc-collapsed', !isDesktop);
     toggle.setAttribute('aria-expanded', String(isDesktop));
@@ -341,11 +341,42 @@ function wireToc(tocWrap, nav, headings, mq) {
   applyDefaultState(mq.matches);
   mq.addEventListener('change', (e) => applyDefaultState(e.matches));
 
+  // Once the reader has clicked the toggle themselves, their choice wins and
+  // the auto-collapse below stops firing — matching the source, which never
+  // re-collapses a rail the reader has deliberately re-opened.
+  let userToggled = false;
+
   toggle.addEventListener('click', () => {
+    userToggled = true;
     const collapsed = tocWrap.classList.toggle('blog-toc-collapsed');
     toggle.setAttribute('aria-expanded', String(!collapsed));
     updateLabel();
   });
+
+  // Desktop: collapse the rail to its narrow tab once the reader is properly
+  // into the article, so the prose gets the width back. One-way — scrolling
+  // back up does NOT re-expand it, and a reader who re-opens it manually keeps
+  // it open (both verified against the source).
+  //
+  // Triggers when the first article heading scrolls up out of the viewport,
+  // which tracks the article's own layout instead of a hard-coded offset. The
+  // scroll-position guard is load-bearing: IntersectionObserver always fires
+  // an initial callback on observe(), and at that point the block's images are
+  // still unsized, so the heading's reported rect can be at/above the viewport
+  // top and the rail would fold away instantly at scrollY 0.
+  const collapseTrigger = headings[0];
+  if (collapseTrigger && typeof IntersectionObserver !== 'undefined') {
+    const autoObserver = new IntersectionObserver(([entry]) => {
+      if (!mq.matches || userToggled || !entry) return;
+      if (window.scrollY < window.innerHeight) return;
+      if (entry.isIntersecting || entry.boundingClientRect.top > 0) return;
+      if (tocWrap.classList.contains('blog-toc-collapsed')) return;
+      tocWrap.classList.add('blog-toc-collapsed');
+      toggle.setAttribute('aria-expanded', 'false');
+      updateLabel();
+    }, { threshold: 0 });
+    autoObserver.observe(collapseTrigger);
+  }
 
   if (!headings.length || typeof IntersectionObserver === 'undefined') return;
 

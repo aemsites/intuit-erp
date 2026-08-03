@@ -130,9 +130,23 @@
    defaults to collapsed (JS), and while collapsed the label text is swapped
    for the active section's heading by the scroll-spy (also JS).
    ============================================================ */
+
+/* The rail's wrapper inherits the site-wide 40px side padding used to centre
+   ordinary page content (`main > .section > div`), which insets the bar from
+   the viewport edges; zero it so the bar reaches both edges like upstream. */
+.blog-article > .blog-toc-rail > .default-content-wrapper {
+  padding: 0;
+}
+
+/* Mobile: a full-bleed grey bar with a soft drop shadow — no border, no
+   corner rounding, and it spans the viewport rather than sitting inset as a
+   card. (The desktop rail overrides these into the rounded flush-left card
+   further down.) */
 .blog-article .blog-toc {
-  border: 1px solid var(--line);
-  border-radius: var(--radius-card);
+  border: 0;
+  border-radius: 0;
+  background: var(--toc-bar-bg);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
   overflow: hidden;
 }
 
@@ -142,13 +156,16 @@
   justify-content: space-between;
   gap: 12px;
   width: 100%;
+  height: 60px;
   margin: 0;
   border: 0;
-  background: #fff;
-  padding: 16px 20px;
+  background: transparent;
+  padding: 0 20px;
   font: inherit;
+  font-size: 16px;
+  line-height: 24px;
   font-weight: 700;
-  color: var(--text);
+  color: var(--toc-bar-text);
   text-align: left;
   cursor: pointer;
 }
@@ -162,21 +179,38 @@
 .blog-article .blog-toc-toggle::after {
   content: '\2715'; /* ✕ — mobile: collapse the expanded panel */
   flex: none;
-  font-size: 14px;
-  color: var(--text-muted);
+  font-size: 18px;
+  color: var(--toc-bar-text);
 }
 
 .blog-article .blog-toc-rail.blog-toc-collapsed .blog-toc-toggle::after {
   content: '\2304'; /* ⌄ — mobile, collapsed: tap to expand */
 }
 
-/* collapsed mobile bar pins to the top of the screen as you scroll (below
-   the site's own sticky nav, so the two don't overlap); expanded, it's back
-   in normal flow (no sense pinning the whole open panel to the viewport). */
+/* Collapsed mobile bar pins to the top of the screen as you scroll; expanded,
+   it's back in normal flow (no sense pinning the whole open panel to the
+   viewport).
+
+   The offset must clear the header's FULL height, which on /blog* is the
+   primary nav plus the Resource Center secondary nav — taller than
+   `--nav-height`, which only covers the primary one. With the smaller offset
+   the bar pinned underneath the header (z-index 50) and was invisible for the
+   whole scroll. Values match the header heights reserved in styles.css. */
 .blog-article .blog-toc-rail.blog-toc-collapsed {
   position: sticky;
-  top: var(--nav-height);
+  top: 117px;
   z-index: 5;
+}
+
+@media (width >= 1300px) {
+  .blog-article .blog-toc-rail.blog-toc-collapsed {
+    top: 172px;
+  }
+}
+
+/* the rail animates between its expanded card and collapsed tab widths */
+.blog-article .blog-toc {
+  transition: width 0.3s ease;
 }
 
 .blog-article .blog-toc-list {
@@ -191,14 +225,10 @@
   display: none;
 }
 
+/* no separator rules between entries — upstream's list is a plain stack */
 .blog-article .blog-toc-list li {
   position: relative;
   counter-increment: toc;
-  border-top: 1px solid var(--line);
-}
-
-.blog-article .blog-toc-list li:first-child {
-  border-top: 0;
 }
 
 /* active item: solid blue bar, INSET ~16px from the card's edge (not flush
@@ -215,12 +245,16 @@
   background: var(--primary);
 }
 
+/* upstream's TOC entries are deliberately small and tight — 12px/16px semibold
+   in ~32px rows — which is what keeps the whole card to ~400px instead of
+   running most of the viewport height. */
 .blog-article .blog-toc-list a {
   display: block;
-  padding: 10px 20px 10px 24px;
+  padding: 8px 20px 8px 24px;
   color: var(--text-muted);
-  font-size: var(--body-font-size-s);
-  line-height: 1.4;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
   text-decoration: none;
 }
 
@@ -259,6 +293,41 @@
   margin-top: 0;
 }
 
+/* First rail entry is a highlighted promo card (upstream `.ProductBanner`):
+   agave-cyan fill, 12px radius, 20px padding, with a dark ink-teal button.
+   The remaining entries are plain link lists. The rail is a shared fragment,
+   so "first section" is the promo by authoring convention — keyed on position
+   rather than a variant class the fragment would have to carry. */
+.blog-article .blog-rail .default-content-wrapper > .section:first-child {
+  box-sizing: border-box;
+  margin-bottom: 32px;
+  border-radius: 12px;
+  background: var(--rail-promo);
+  padding: 20px;
+}
+
+.blog-article .blog-rail .default-content-wrapper > .section:first-child h3 {
+  margin-top: 0;
+  color: var(--ink-teal);
+}
+
+.blog-article .blog-rail .default-content-wrapper > .section:first-child p {
+  color: var(--ink-teal);
+}
+
+/* the promo's own CTA is the dark ink-teal pill upstream uses, not the
+   site-wide navy primary button */
+.blog-article .blog-rail .default-content-wrapper > .section:first-child .button {
+  border-color: var(--ink-teal);
+  background: var(--ink-teal);
+  color: #fff;
+}
+
+.blog-article .blog-rail .default-content-wrapper > .section:first-child .button:hover {
+  border-color: #09222a;
+  background: #09222a;
+}
+
 /* ============================================================
    layout — mobile first: single column, natural flow. The TOC panel sits
    right after the hero (DOM order), which is exactly where it should render
@@ -290,6 +359,19 @@
     grid-column: 2;
   }
 
+  /* "Related" / "Recommended for you" appendix breaks out of the prose column
+     to span the full page width, as upstream does — its 3-up card grid needs
+     ~1345px to give 440px cards.
+
+     `grid-row` is as load-bearing as `grid-column` here: the rails occupy
+     row 2 (JS sets `grid-row: 2 / 3`), and a full-width item with no explicit
+     row auto-places into that same row 2, landing underneath both rails and
+     overlapping them. Row 3 puts it cleanly below. */
+  .blog-article > .blog-cards-container {
+    grid-column: 1 / -1;
+    grid-row: 3;
+  }
+
   /* hero pinned to row 1 (full width) — it must have an explicit row, not
      just an explicit column: otherwise auto-placement tries to slot this
      full-width item into row 1 too, but row 1 in the toc/right-rail columns
@@ -304,26 +386,42 @@
     background: var(--blog-hero-bg);
   }
 
-  /* fallback span for the two sticky rails — JS (tocRailRowEnd) sets a
-     precise `grid-row` end via inline style once it knows which row the
-     article's last TOC-eligible section lands in, so the rail unsticks
-     there instead of overlapping trailing appendix sections (e.g.
-     "Recommended for you") or the footer. This generous `span` is only used
-     as a fallback (no TOC, e.g. <2 headings). */
-  .blog-article > .blog-toc-rail {
-    grid-column: 1;
+  /* Only the LEFT rail is sticky. Upstream pins the TOC (it's a jump-link nav,
+     so it has to stay reachable) but lets the right rail scroll away with the
+     article body like ordinary content — verified on the source: the TOC holds
+     a constant viewport offset while the right rail's offset keeps decreasing.
+
+     JS (tocRailRowEnd) sets a precise `grid-row` end inline once it knows
+     which row the article's last TOC-eligible section lands in, so the rail
+     unsticks there instead of running past the article body; the `span 999`
+     here is only the fallback for when there's no TOC (<2 headings).
+
+     The row end alone isn't enough, though: a sticky grid *item* resolves its
+     containing block against the grid container, not its own area, so the
+     rail was free to travel the full height of `main` and slid down over the
+     full-width "Related" appendix (grid-column 1 / -1). Stretching the item
+     and sticking its inner wrapper instead confines the travel to the row,
+     which is what the row end was always trying to express. */
+  .blog-article > .blog-toc-rail,
+  .blog-article > .blog-rail {
     grid-row: 2 / span 999;
-    margin-bottom: 0;
-    position: sticky;
-    top: calc(var(--nav-height) + 24px);
-    align-self: start;
   }
 
-  .blog-article > .blog-rail {
-    grid-column: 3;
-    grid-row: 2 / span 999;
+  .blog-article > .blog-toc-rail {
+    grid-column: 1;
+    margin-bottom: 0;
+    align-self: stretch;
+  }
+
+  .blog-article > .blog-toc-rail > * {
     position: sticky;
     top: calc(var(--nav-height) + 24px);
+  }
+
+  /* right rail scrolls normally, so it sits at the top of its area rather
+     than stretching to fill the row */
+  .blog-article > .blog-rail {
+    grid-column: 3;
     align-self: start;
   }
 
@@ -416,6 +514,16 @@
     border-bottom: 1px solid var(--line);
   }
 
+  /* Cap the link list and let it scroll internally. This is what keeps the
+     card compact (~400px) upstream regardless of how many headings an article
+     has — without it a long TOC grows the card to most of the viewport. Only
+     applies to the desktop rail; the mobile panel expands to fit. */
+  .blog-article .blog-toc-list {
+    max-height: 360px;
+    padding-bottom: 4px;
+    overflow-y: auto;
+  }
+
   /* thin CSS-drawn chevron (same border-corner technique as the site nav's
      caret, blocks/header/header.css: 45deg = down, so -45deg = right,
      135deg = left) instead of a text glyph, which rendered too heavy. */
@@ -499,4 +607,147 @@
     position: absolute;
     transform: rotate(-45deg); /* › expand */
   }
+}
+
+/* ---- in-article blocks ----
+   Blocks authored inside the article body all land in a single `.section`,
+   so that section's class list is the union of every block's container class
+   (e.g. `highlight-container testimonial-container media-text-container
+   faq-container`). Each block's own stylesheet paints a full-bleed band on
+   its `-container` class, which on a normal one-block-per-section page is
+   correct — but here those bands stack up and flood the whole prose column
+   (the plain-testimonial rule tinted the entire article sky blue).
+
+   The article body is white upstream, with tint applied per block instead.
+   Neutralise the band treatments inside the article and let the blocks
+   paint themselves.
+
+   The `:has(.block)` is load-bearing for specificity, not just meaning: the
+   band rules being overridden look like
+   `.section.testimonial-container:has(.testimonial:not(.video, .card))`
+   and score (0,4,0), which would beat this selector without it. It also
+   reads correctly — only sections that actually hold blocks carry a band. */
+main.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail):has(.block) {
+  background: #fff;
+  padding: 0;
+}
+
+/* Same collision, different property: blocks style their section's *heading*
+   copy (`.{block}-container .default-content-wrapper > p`) as a centered,
+   width-clamped section intro. In the article that wrapper holds the actual
+   prose, so those rules were centering every body paragraph. Article copy is
+   left-aligned and fills the column. */
+.blog-article > .section > .default-content-wrapper > p {
+  max-width: none;
+  margin: 0 0 20px;
+  text-align: left;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #000;
+}
+
+.blog-article > .section > .default-content-wrapper :is(ul, ol) {
+  margin: 0 0 20px;
+  padding-left: 24px;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #000;
+}
+
+.blog-article > .section > .default-content-wrapper li { margin: 0 0 8px; }
+
+/* section headings: upstream in-article h2 is bold 40px/52px black, and the
+   same block-container collision applies (faq.css was winning with a centered
+   48px section-head treatment). */
+.blog-article > .section > .default-content-wrapper :is(h2, h3) {
+  text-align: left;
+  color: #000;
+  font-weight: 700;
+}
+
+.blog-article > .section > .default-content-wrapper h2 {
+  font-size: 40px;
+  line-height: 52px;
+  margin: 40px 0 20px;
+}
+
+.blog-article > .section > .default-content-wrapper h3 {
+  font-size: 28px;
+  line-height: 36px;
+  margin: 32px 0 16px;
+}
+
+/* highlight callout — upstream `.colored-box`: agave fill, square corners,
+   40px side padding, and no radius (the standalone-page treatment is a
+   rounded sky card, which is why this is scoped to the article). */
+.blog-article .highlight { margin: 32px 0; }
+
+.blog-article .highlight.sky .highlight-inner,
+.blog-article .highlight .highlight-inner {
+  background: var(--agave);
+  border-radius: 0;
+  padding: 24px 40px;
+}
+
+/* testimonial — upstream `.quote-box`: a tofu panel holding a bold lead-in
+   heading, the quote at 18px, and an attribution line. The marketing-page
+   treatment is a 2-up grid with a 24px pull-quote, so this is
+   article-scoped. On mobile it stays within the column; the 40px-per-side
+   breakout only applies once there IS a prose column to break out of (see
+   the >=900px rule below) — applying it here too pushed the panel past the
+   viewport's left edge and caused horizontal scroll. */
+.blog-article .testimonial:not(.video) {
+  box-sizing: border-box;
+  margin: 32px 0;
+  background: var(--tofu);
+  padding: 8px 20px 24px;
+}
+
+@media (width >= 900px) {
+  .blog-article .testimonial:not(.video) {
+    width: calc(100% + 80px);
+    margin: 32px -40px;
+    padding: 8px 40px 24px;
+  }
+}
+
+.blog-article .testimonial:not(.video) .cmp-testi-grid {
+  display: block;
+  max-width: none;
+  margin: 0;
+}
+
+/* the global blockquote treatment (styles.css) adds a 48px decorative “ glyph
+   and a 44px indent to hang it in; upstream's in-article quote has neither —
+   the quote marks are part of the authored text. */
+.blog-article .testimonial:not(.video) .cmp-quote {
+  margin: 0 0 18px;
+  padding: 0;
+  font-size: 18px;
+  line-height: 1.5;
+  color: #000;
+}
+
+.blog-article .testimonial:not(.video) .cmp-quote::before { content: none; }
+
+.blog-article .testimonial:not(.video) .cmp-quote-name,
+.blog-article .testimonial:not(.video) .cmp-quote-role {
+  display: inline;
+  font-size: 18px;
+  font-weight: 400;
+  color: #000;
+}
+
+/* upstream renders attribution as one "- Name, Role" line */
+.blog-article .testimonial:not(.video) .cmp-quote-name::before { content: '- '; }
+.blog-article .testimonial:not(.video) .cmp-quote-name::after { content: ', '; }
+
+/* related-cards category label: pink w400 on the blog index (which is what
+   blog-cards styles by default and is correct there), but black w500 in the
+   in-article "Related" grid. */
+.blog-article .blog-cards .blog-card .blog-card-body .blog-card-category {
+  color: #000;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 16px;
 }

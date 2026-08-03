@@ -27,6 +27,10 @@
   --light-color: #f7f8f3;      /* sand */
   --tofu: #f3f2ef;
   --sky: #dbedee;
+  --agave: #c2f5ff;            /* in-article callout fill */
+  --rail-promo: #81f2fe;       /* blog right-rail promo card fill */
+  --toc-bar-bg: #f0f4f6;       /* blog TOC bar / rail card fill */
+  --toc-bar-text: #282828;
   --wintermint: #eff4f9;
   --blog-hero-bg: var(--wintermint);   /* blog article hero band */
   --dark-color: #6b6c72;
