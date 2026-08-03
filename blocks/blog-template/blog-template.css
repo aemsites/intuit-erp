@@ -589,8 +589,7 @@
   }
 
   .blog-article .blog-hero .blog-byline-meta {
-    flex-direction: row;
-    flex-wrap: wrap;
+    flex-flow: row wrap;
     column-gap: 24px;
     margin-bottom: 0;
   }
