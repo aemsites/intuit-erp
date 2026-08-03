@@ -267,7 +267,7 @@ body.nav-scroll-lock { overflow: hidden; }
 /* events bar */
 .header .ies-events { background: #c9f2fa; color: var(--heading); }
 .header .ies-events .container { text-align: center; padding-top: 17px; padding-bottom: 17px; font-size: 15px; }
-.header .ies-events a { font-weight: 700; text-decoration: underline; color: var(--heading); }
+.header .ies-events a { font-weight: 500; text-decoration: underline; color: var(--heading); }
 
 /* Matches erp.intuit.com: its 6-item nav + CTA also switches to the hamburger
    well above the general 768px content breakpoint (it stays collapsed through
