@@ -217,6 +217,36 @@ header {
   height: var(--nav-height);
 }
 
+/* Resource Center pages (/blog*) render a secondary nav below the primary one.
+   Reserve its height eagerly too — keyed on the body.<template> class those
+   pages already get from decorateTemplateAndTheme — so the lazily-loaded header
+   lands in its own reserved space instead of shoving content down (CLS). Values
+   are the header's actual rendered heights (desktop / ≤1299px). Add any new
+   /blog* template class here. */
+body.blog-home header,
+body.blog-article header,
+body.category header,
+body.search header,
+body.research header,
+body.guide header,
+body.case-study header,
+body.author header {
+  min-height: 172px;
+}
+
+@media (width <= 1299px) {
+  body.blog-home header,
+  body.blog-article header,
+  body.category header,
+  body.search header,
+  body.research header,
+  body.guide header,
+  body.case-study header,
+  body.author header {
+    min-height: 117px;
+  }
+}
+
 header .header,
 footer .footer {
   visibility: hidden;
