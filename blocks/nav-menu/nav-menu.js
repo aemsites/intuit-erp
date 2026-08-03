@@ -87,10 +87,14 @@ function menuItemHTML(label, menuCell, idx) {
   // .flyout-back is mobile-only (see header.css) — the drill-down "Back"
   // control that returns to the top-level list; header.js's wireFlyouts
   // wires its click regardless of which module produced this markup.
+  // .flyout-title mirrors header.js's own navItemHTML: the drill-down
+  // panel's mobile-only page-title heading repeating the trigger's label,
+  // since that trigger itself has slid off-screen by the time the panel is
+  // showing (issue #78).
   return `
       <div class="nav-item">
         <button type="button" aria-expanded="false" aria-controls="${id}">${label}<i class="caret"></i></button>
-        <div class="flyout" id="${id}" aria-hidden="true"><button type="button" class="flyout-back"><i class="flyout-back-icon"></i>Back</button><div class="flyout-inner">${colsHTML}</div></div>
+        <div class="flyout" id="${id}" aria-hidden="true"><button type="button" class="flyout-back"><i class="flyout-back-icon"></i>Back</button><h2 class="flyout-title">${label}</h2><div class="flyout-inner">${colsHTML}</div></div>
       </div>`;
 }
 

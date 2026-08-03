@@ -1,11 +1,10 @@
 /* header — IES chrome (brand strip + sticky nav + events bar). Lifted from base.css */
 
-/* min-height avoids layout shift while decorate() runs async. position:sticky
-   lives here (not on .ies-nav inside) so the containing block is <body> —
-   full page height — not the ~92px header box that was limiting .ies-nav's
-   sticky range. z-index hoisted here too; .flyout (z-index:60) still stacks
-   correctly inside this stacking context. */
-header { height: auto; min-height: 92px; position: sticky; top: 0; z-index: 50; }
+/* min-height avoids layout shift while decorate() runs async. <header> itself
+   is plain, non-sticky flow — .ies-topstrip and .ies-events scroll away with
+   the page like any other content; only .ies-nav (position:fixed, below) is
+   pinned, with .ies-nav-spacer reserving its height here so nothing jumps. */
+header { height: auto; min-height: 92px; }
 header .header.has-events-bar { min-height: 146px; }
 header .header.has-secondary-nav { min-height: 172px; }
 header .header.has-secondary-nav.has-events-bar { min-height: 226px; }
@@ -36,8 +35,20 @@ body.nav-scroll-lock { overflow: hidden; }
 .header .bs-logo-quickbooks svg:last-child { height: 13.5px; width: auto; margin-bottom: -2px; }
 .header .bs-logo-mailchimp svg:last-child { height: 12.5px; width: auto; margin-bottom: -2px; }
 
-/* sticky nav — position:sticky has moved to the <header> element; see header rule above */
-.header .ies-nav { background: #fff; }
+/* Sticky nav — position:fixed directly (not position:sticky: a sticky
+   element's "stuck" range is clamped to its own containing block, and
+   .ies-nav's parent here is only as tall as its siblings, giving it far too
+   little room to stay stuck through a full page scroll). .ies-nav-spacer
+   (the actual flow element, sized to match .ies-nav's own height below)
+   reserves its place so nothing jumps when it's pulled out of flow.
+   `top` is driven by header.js's scroll listener, sliding from the
+   topstrip's height down to 0 in exact 1:1 lockstep with scroll — matching
+   erp.intuit.com's own nav (confirmed live: same computed-`top`-per-scroll-y
+   technique, not a CSS transition) — rather than an abrupt display:none
+   snap. .ies-topstrip and .ies-events are plain flow content above/below
+   the spacer, so they simply scroll away on their own (issue #78). */
+.header .ies-nav-spacer { height: 60px; }
+.header .ies-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 50; background: #fff; }
 .header .ies-nav.scrolled { box-shadow: 0 1px 0 rgb(0 0 0 / 6%); border-bottom: 2px solid var(--navy); }
 .header .ies-nav .container { position: relative; display: flex; align-items: center; height: 60px; gap: 30px; }
 .header .nav-logo { display: flex; align-items: center; }
@@ -58,10 +69,15 @@ body.nav-scroll-lock { overflow: hidden; }
    `button:not(.flyout-back)` — .flyout-back is also a <button> nested
    inside .nav-main (via .flyout), so the plain descendant selector was
    matching it too, clobbering its own padding/gap/font-weight and giving it
-   an unwanted underline. */
-.header .nav-main button:not(.flyout-back), .header .nav-main > a, .header .nav-main .nav-link { position: relative; background: none; border: 0; padding: 2px 0; font-size: 16px; font-weight: 400; color: var(--heading); display: inline-flex; align-items: center; gap: 6px; font-family: inherit; cursor: pointer; text-decoration: none; }
+   an unwanted underline. .nav-cta (the "Schedule a call" CTA appended into
+   .nav-main on mobile — see .nav-mobile-extra in header.js) is excluded the
+   same way: this reset selector's extra class+:not() specificity otherwise
+   beat the dedicated .header .nav-cta rule further below despite coming
+   first in the file, stripping its navy fill/border down to plain text
+   (issue #78). */
+.header .nav-main button:not(.flyout-back, .nav-cta), .header .nav-main > a, .header .nav-main .nav-link { position: relative; background: none; border: 0; padding: 2px 0; font-size: 16px; font-weight: 400; color: var(--heading); display: inline-flex; align-items: center; gap: 6px; font-family: inherit; cursor: pointer; text-decoration: none; }
 
-.header .nav-main button:not(.flyout-back)::after, .header .nav-main > a::after, .header .nav-main .nav-link::after {
+.header .nav-main button:not(.flyout-back, .nav-cta)::after, .header .nav-main > a::after, .header .nav-main .nav-link::after {
   content: ''; position: absolute; left: 0; bottom: 0; height: 1px; width: 100%; background: currentcolor;
   transform: scaleX(0); transform-origin: left;
   transition: transform 0.85s cubic-bezier(0.02, 0.05, 0.01, 0.99);
@@ -99,15 +115,32 @@ body.nav-scroll-lock { overflow: hidden; }
   transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
 }
 .header .nav-item.open .flyout { opacity: 1; pointer-events: auto; transform: translateY(0); }
-.header .flyout-inner { max-width: var(--container); margin: 0 auto; padding: 0 40px; display: flex; flex-wrap: wrap; gap: 24px; row-gap: 20px; }
 
-/* min-width kept just under (--container - 40px*2 padding) / 6 columns so a
-   6-column flyout (Resources) still fits on one row without wrapping its
-   last column; see issue #64. */
-.header .flyout-col { min-width: 200px; }
-.header .flyout-heading { margin: 0 0 8px; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
+/* nowrap + flex:1 on each column (below) so they always divide the row's
+   full width equally regardless of column count — matching erp.intuit.com
+   exactly (confirmed live: a 2-column flyout's columns are ~668px each, a
+   6-column one's are ~207px each, always summing to the same full row width)
+   — rather than packing tightly on the left and leaving empty space on the
+   right for menus with fewer columns/items (issue #78). */
+.header .flyout-inner { max-width: var(--container); margin: 0 auto; padding: 0 40px; display: flex; flex-wrap: nowrap; gap: 24px; }
+.header .flyout-col { flex: 1 1 0; min-width: 0; }
+
+/* flyout-title (the drill-down page-title heading, mobile-only — see
+   navItemHTML in header.js) is desktop-hidden; the desktop dropdown has no
+   equivalent since its own trigger stays visible. */
+.header .flyout-title { display: none; }
+
+/* Sentence case, dark 600-weight text — matching erp.intuit.com's own column
+   heading exactly (16px/600/black, no uppercase or letter-spacing; confirmed
+   via computed styles on its "Financial management" flyout heading). Not a
+   small-caps "eyebrow" label like .flyout-desc/.secondary-nav-brand elsewhere.
+   .flyout-label is a lighter 500 alongside it (also confirmed live: heading
+   600, link 500, both otherwise the same 16px/black) so there's real, if
+   subtle, contrast between a column's heading and its links — the mobile
+   drill-down below uses its own, more pronounced version of this contrast. */
+.header .flyout-heading { margin: 0 0 10px; font-size: 16px; font-weight: 600; color: var(--heading); }
 .header .flyout-link { display: block; padding: 10px 0; }
-.header .flyout-label { display: flex; align-items: flex-start; gap: 8px; font-size: 15px; font-weight: 600; color: var(--heading); line-height: 1.25; }
+.header .flyout-label { display: flex; align-items: flex-start; gap: 8px; font-size: 15px; font-weight: 500; color: var(--heading); line-height: 1.25; }
 .header .flyout-desc { display: block; font-size: 13px; color: var(--text-muted); margin-top: 2px; }
 .header .flyout-link:hover .flyout-label { color: var(--primary); }
 
@@ -139,16 +172,16 @@ body.nav-scroll-lock { overflow: hidden; }
 
   /* On /blog/* pages it's the secondary Resource Center nav that stays stuck
      to the top on scroll, with the primary topstrip + nav row scrolling away
-     above it (confirmed against erp.intuit.com). <header> itself is already
-     position:sticky (base rule at top of file); making the secondary nav
-     *independently* sticky can't achieve this — its containing block is the
-     content-height .header box, so it can't stay stuck past that. Instead,
-     keep <header> sticky but pull its sticky offset up by the primary rows'
-     height so those rows scroll out of view and the secondary nav lands flush
-     at the top: topstrip (30px + 1px border) + nav (60px + borders) = 93px,
-     which is exactly the secondary nav's offsetTop within the header. */
-  header.has-secondary-nav { top: -93px; }
-  .header .ies-secondary-nav { z-index: 51; }
+     above it (confirmed against erp.intuit.com). Primary nav reverts to
+     normal flow here (undoing the position:fixed base rule) so it scrolls
+     away with the topstrip instead of staying pinned; the secondary nav
+     takes over the fixed-with-a-spacer treatment instead, sliding up to
+     cover the topstrip+primary-nav height exactly the same way the primary
+     nav does elsewhere — see header.js's scroll listener. */
+  .header.has-secondary-nav .ies-nav { position: static; }
+  .header.has-secondary-nav .ies-nav-spacer { height: auto; }
+  .header.has-secondary-nav .ies-secondary-nav-spacer { height: 80px; }
+  .header.has-secondary-nav .ies-secondary-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 51; }
 }
 .header .nav-right { margin-left: auto; display: flex; align-items: center; gap: 22px; }
 
@@ -248,6 +281,7 @@ body.nav-scroll-lock { overflow: hidden; }
   header .header.has-secondary-nav.has-events-bar { min-height: 154px; }
   header .header .container { padding: 0 20px; }
   .header .ies-topstrip { display: none; }
+  .header .ies-nav-spacer { height: 56px; }
   .header .ies-nav .container { height: 56px; gap: 12px; }
 
   /* margin-left:10px reset — it's a desktop-row spacing value (base rule
@@ -295,8 +329,11 @@ body.nav-scroll-lock { overflow: hidden; }
      bare `a`) so it reliably outranks the base rule's `border: 0` shorthand
      on plain nav-main links — same specificity via the element selector
      alone left this one at the mercy of source order, and "For accounting
-     firms" (the one plain-link entry) was inconsistently losing its border. */
-  .header .nav-item, .header .nav-main > a, .header .nav-main > .nav-link, .header .nav-main > .acct-link, .header .nav-mobile-extra { border-top: 1px solid rgb(0 37 74 / 20%); }
+     firms" (the one plain-link entry) was inconsistently losing its border.
+     .nav-mobile-extra (the CTA section) deliberately has no border-top of
+     its own here — source shows a clean gap with no divider line directly
+     above "Schedule a call" (issue #78). */
+  .header .nav-item, .header .nav-main > a, .header .nav-main > .nav-link, .header .nav-main > .acct-link { border-top: 1px solid rgb(0 37 74 / 20%); }
   .header .nav-item:first-child, .header .nav-main > a:first-child { border-top: 0; }
 
   /* Direct-child combinator, not a descendant selector: .flyout-back is
@@ -304,7 +341,14 @@ body.nav-scroll-lock { overflow: hidden; }
      descendant form was matching it too and its space-between was shoving
      "Back" to the far right instead of right after the chevron icon. */
   .header .nav-item > button:not(.flyout-back) { width: 100%; justify-content: space-between; padding: 24px 0; font-size: 24px; font-weight: 500; }
-  .header .nav-main > .nav-link, .header .nav-main > .acct-link { display: block; padding: 24px 0; font-size: 24px; font-weight: 500; }
+
+  /* padding: 24px 20px, not 24px 0 — the shorthand's missing horizontal value
+     was clobbering the 20px inset every other item gets from .nav-item's own
+     padding (this element sits directly in .nav-main, with no .nav-item
+     wrapper of its own to supply it), leaving "For accounting firms" flush
+     against the drawer's left edge instead of aligned with the rest of the
+     list (issue #78). */
+  .header .nav-main > .nav-link, .header .nav-main > .acct-link { display: block; padding: 24px 20px; font-size: 24px; font-weight: 500; }
 
   /* Circle-chevron control, matching erp.intuit.com's mobile drawer. The base
      .caret rule above draws a bare diagonal chevron via border-right/
@@ -315,17 +359,22 @@ body.nav-scroll-lock { overflow: hidden; }
      below), so its icon needs to point right, not down, and sit inside a
      circular button, per the source. Redefined as an empty circle with the
      arrow mark moved onto ::before so the circle's own border and the
-     chevron's border-drawn shape don't have to fight over the same box. */
+     chevron's border-drawn shape don't have to fight over the same box.
+     Border color is the source's own light blue-tinted outline (confirmed via
+     its computed style: rgba(4 88 121 / 30%)), not the neutral --line gray
+     used elsewhere for plain dividers/borders. 48px, not 28px — confirmed
+     against source's own top-level drawer circle (getBoundingClientRect:
+     48x48) — ours read visibly smaller/thinner by comparison (issue #78). */
   .header .nav-item > button:not(.flyout-back) .caret {
-    position: relative; width: 28px; height: 28px; box-sizing: border-box;
-    border: 1px solid var(--line); border-radius: 50%;
+    position: relative; width: 48px; height: 48px; box-sizing: border-box;
+    border: 1px solid rgb(4 88 121 / 30%); border-radius: 50%;
     transform: none; margin-top: 0;
   }
 
   .header .nav-item > button:not(.flyout-back) .caret::before {
     content: '';
     position: absolute; top: 50%; left: 50%;
-    width: 6px; height: 6px;
+    width: 8px; height: 8px;
     border-right: 1.5px solid currentcolor; border-bottom: 1.5px solid currentcolor;
     transform: translate(-65%, -50%) rotate(-45deg);
   }
@@ -349,6 +398,49 @@ body.nav-scroll-lock { overflow: hidden; }
     transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
   }
 
+  /* Entrance animation for the top-level list when the hamburger drawer
+     opens — matching erp.intuit.com, which animates its list in (its own
+     items carry a "slide-up" class) rather than showing it instantly.
+     `animation`, not `transition`: .nav-item/etc are reused DOM nodes whose
+     `display` just flips none->block each time the drawer opens, and a
+     transition needs an actual property change to animate from, which a
+     display flip alone doesn't give it — an animation replays from its own
+     `from` state every time .header.nav-open newly applies, so it retriggers
+     reliably on every open.
+     Targets `.nav-item > button` (the visible row), not `.nav-item` itself:
+     a lingering animated `transform` — even a completed one sitting at the
+     identity matrix — makes its element a containing block for its own
+     position:absolute descendants, which broke the full-screen flyout
+     drill-down below (it started resolving against this ~48px-tall .nav-item
+     instead of the fixed .nav-main). The button has no such descendants, so
+     it can safely carry the animation instead; .nav-main > a and
+     .nav-mobile-extra have none either and are unaffected.
+     `backwards`, not `both`/`forwards`: fill-mode:forwards keeps overriding
+     the button's `transform` with the animation's own resolved value
+     indefinitely (for as long as .header.nav-open matches) — which for the
+     currently drilled-into item would fight with .nav-main.has-open
+     .nav-item.open > button's own transform:translateX(-100%) below,
+     stopping its button from sliding off-screen. `backwards` only pins the
+     from-state during the (staggered) delay, so once each item's own
+     animation actually finishes it cleanly reverts to the normal cascade
+     (transform: none, no containing-block side effect either) rather than
+     holding on top of it. */
+  @keyframes nav-drawer-item-in {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: none; }
+  }
+
+  .header.nav-open .nav-item > button, .header.nav-open .nav-main > a, .header.nav-open .nav-mobile-extra {
+    animation: nav-drawer-item-in 0.35s cubic-bezier(0.35, 0, 0.5, 1) backwards;
+  }
+  .header.nav-open .nav-item:nth-of-type(2) > button { animation-delay: 0.03s; }
+  .header.nav-open .nav-item:nth-of-type(3) > button { animation-delay: 0.06s; }
+  .header.nav-open .nav-item:nth-of-type(4) > button { animation-delay: 0.09s; }
+  .header.nav-open .nav-item:nth-of-type(5) > button { animation-delay: 0.12s; }
+  .header.nav-open .nav-item:nth-of-type(6) > button { animation-delay: 0.15s; }
+  .header.nav-open .nav-main > a { animation-delay: 0.18s; }
+  .header.nav-open .nav-mobile-extra { animation-delay: 0.21s; }
+
   .header .nav-main.has-open > .nav-item:not(.open),
   .header .nav-main.has-open > a,
   .header .nav-main.has-open > .nav-mobile-extra {
@@ -371,7 +463,49 @@ body.nav-scroll-lock { overflow: hidden; }
     transition: transform 0.3s ease-in-out;
   }
   .header .nav-item.open .flyout { transform: translateX(0); }
-  .header .flyout-inner { flex-direction: column; gap: 16px; }
+
+  /* padding: 0, not the base rule's 0 40px — that desktop-only inset was
+     still active at mobile (only flex-direction/gap were overridden here),
+     stacking on top of .flyout's own 20px padding and pushing every heading/
+     link 40px further right than .flyout-title/.flyout-back (which sit
+     outside .flyout-inner and only get .flyout's 20px) — confirmed live via
+     getBoundingClientRect (60px vs 20px left edge). gap: 0 — column-to-
+     column spacing is now carried by .flyout-col's own margin/border/padding
+     below, matching source's divider rhythm instead of a flat gap. */
+  .header .flyout-inner { flex-direction: column; gap: 0; padding: 0; }
+
+  /* Divider line above every column, including the first (right below
+     .flyout-title) — matching source exactly (confirmed live: a 1px
+     rgba(0 37 74 / 20%) rule sits above each section, rendered via a
+     ::before on its list wrapper for the first one and a border-top on
+     each subsequent group, but visually identical and uniform, so one rule
+     covering every .flyout-col reproduces both). margin-top/padding-top
+     split the ~50px gap on either side of the line, roughly matching
+     source's own spacing from the last element above to the line, and from
+     the line to the next heading. */
+  .header .flyout-col { margin-top: 24px; padding-top: 24px; border-top: 1px solid rgb(0 37 74 / 20%); }
+
+  /* Drill-down page-title heading (see navItemHTML in header.js) — desktop-
+     hidden by the base rule; shown only in the primary drawer's own
+     full-screen drill-down (:not(.secondary-nav-items) excludes the
+     secondary Resource Center nav's plain inline accordion below, which has
+     no equivalent title). 36px/500/black, matching source's own
+     SubMenuOverlay-category-title exactly. margin-bottom: 0 — the divider's
+     own margin-top above now supplies the gap before the line instead of
+     double-stacking with this heading's own trailing margin (issue #78). */
+  .header .nav-main:not(.secondary-nav-items) .flyout-title { display: block; margin: 4px 0 0; font-size: 36px; font-weight: 500; line-height: 1.3; color: var(--heading); }
+
+  /* Mobile drill-down heading/link styling differs from the desktop dropdown
+     (base rule above): source's own SubMenuOverlay uses a smaller, faded
+     16px/500/80%-opacity label for the column heading against larger
+     20px/500 black links — a more pronounced size-and-fade contrast than
+     desktop's subtler 600-vs-500 weight difference — with generous vertical
+     rhythm throughout (~40px heading-to-link, ~36px link-to-link), all
+     confirmed against its live computed styles/layout (issue #78). */
+  .header .flyout-heading { font-size: 16px; font-weight: 500; opacity: 0.8; margin: 10px 0 30px; }
+  .header .flyout-label { font-size: 20px; font-weight: 500; }
+  .header .flyout-link { padding: 18px 0; }
+  .header .flyout-link:first-of-type { padding-top: 0; }
 
   .header .flyout-back {
     display: flex; align-items: center; gap: 10px; width: 100%;
@@ -389,23 +523,43 @@ body.nav-scroll-lock { overflow: hidden; }
   .header .nav-mobile-extra { display: flex; flex-direction: column; padding: 24px 20px 20px; }
   .header .nav-mobile-extra .nav-cta { width: 100%; }
 
-  .header .nav-mobile-brands {
-    display: flex; flex-direction: column; gap: 16px; margin-top: 24px; padding-top: 24px;
-    border-top: 1px solid var(--line);
+  /* Each brand renders as its own full-width filled button/bar (icon + name
+     + trailing chevron), not a small inline icon+wordmark row — matching
+     erp.intuit.com's own mobile drawer exactly (confirmed live: 48px bars,
+     16px gap between them, no divider line — deliberately no border-top
+     here, just spacing, since source shows a clean gap above the first bar
+     too; issue #78). List semantics (li/ul), not a border-separated stack. */
+  .header .nav-mobile-brands { display: flex; flex-direction: column; gap: 16px; margin: 40px 0 0; padding: 0; list-style: none; }
+
+  .header .mobile-brand-btn {
+    position: relative; display: flex; align-items: center; gap: 12px;
+    height: 48px; padding: 0 48px 0 20px; box-sizing: border-box;
+    border-radius: var(--radius); background: var(--navy); color: #fff;
+    font-size: 16px; font-weight: 500; text-decoration: none;
+  }
+  .header .mobile-brand-btn > svg:first-child { flex: none; width: 20px; height: 20px; }
+
+  /* display:flex + align-items/justify-content:center, not just top:50% +
+     translateY(-50%) alone — that only centers this span's own box, but the
+     inner svg carries its own intrinsic width="6" height="10" attributes
+     (from the shared CTA_CHEVRON_SVG constant, sized for other contexts)
+     that a plain non-flex span doesn't scale to fit, so the taller-than-8px
+     arrow was rendering top-aligned inside the box instead of centered.
+     Flex alignment centers the svg on both axes regardless of that size
+     mismatch — the same pattern .nav-cta-icon already relies on. */
+  .header .mobile-brand-chevron {
+    position: absolute; top: 50%; right: 20px; width: 8px; height: 8px;
+    display: flex; align-items: center; justify-content: center;
+    transform: translateY(-50%);
   }
 
-  /* a-logotype's "medium" variant, not "small" (used in .ies-topstrip) — a
-     touch-friendly stacked list reads too small at the topstrip's tiny size. */
-  .header .nav-mobile-brands .bs-logo-intuit svg { height: 13.5px; }
-
-  .header .nav-mobile-brands .bs-logo-turbotax svg:first-child,
-  .header .nav-mobile-brands .bs-logo-creditkarma svg:first-child,
-  .header .nav-mobile-brands .bs-logo-quickbooks svg:first-child,
-  .header .nav-mobile-brands .bs-logo-mailchimp svg:first-child { height: 19px; }
-  .header .nav-mobile-brands .bs-logo-turbotax svg:last-child { height: 13.5px; margin-top: -1px; }
-  .header .nav-mobile-brands .bs-logo-creditkarma svg:last-child { height: 13.5px; margin-top: -1px; }
-  .header .nav-mobile-brands .bs-logo-quickbooks svg:last-child { height: 17px; margin-bottom: -2px; }
-  .header .nav-mobile-brands .bs-logo-mailchimp svg:last-child { height: 16.5px; margin-bottom: -2px; }
+  /* Intuit's own bar uses its brand-blue fill (the same #236cff as the
+     logomark itself, confirmed live) with the full lockup logo inverted to
+     white via filter — its wordmark svg is solid-fill, not currentColor, so
+     recoloring it for a dark background needs the filter rather than a CSS
+     color override. */
+  .header .mobile-brand-intuit { background: #236cff; }
+  .header .mobile-brand-intuit > svg:first-child { width: auto; height: 16px; filter: brightness(0) invert(1); }
   .header .ies-events .container { font-size: 13px; padding-top: 12px; padding-bottom: 12px; }
   .header .nav-toggle { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; width: 36px; height: 36px; box-sizing: border-box; background: none; border: 1px solid var(--text); border-radius: 4px; padding: 0; cursor: pointer; }
 
