@@ -20,8 +20,12 @@ import {
   // eslint-disable-next-line import/no-relative-packages
 } from '../plugins/martech/src/index.js';
 import { sendOf1Signal, readAlloySegmentIds } from './of1-rtcdp-signal.js';
-import { isBlogPage, buildBlogTemplate } from '../blocks/blog-template/blog-template.js';
-import { isVideoLink } from '../blocks/video/video.js';
+// Cheap predicates only — the heavy blog-template / video blocks they belong to
+// are NOT pulled onto the eager critical path here. buildBlogTemplate is
+// dynamically imported in loadEager for blog pages only (see below); the full
+// video block loads lazily when a video is actually decorated.
+import { isBlogPage } from '../blocks/blog-template/blog-detect.js';
+import { isVideoLink } from '../blocks/video/video-info.js';
 
 // Adobe Web SDK / AEP datastream. The datastream id is public (not a secret)
 // and safe in client source. While the id starts with "REPLACE_", martech is
@@ -128,6 +132,11 @@ function buildVideoAutoBlocks(main) {
   });
 }
 
+// Populated in loadEager (via dynamic import) only on blog article pages, so the
+// ~21KB blog-template module never loads on other pages. Stays undefined
+// elsewhere, which also serves as the "is this a blog page" gate below.
+let buildBlogTemplate;
+
 /**
  * Builds all synthetic blocks in a container element.
  * @param {Element} main The container element
@@ -137,10 +146,11 @@ function buildAutoBlocks(main) {
     // Blog article autoblock — must run FIRST so the right-rail /fragments/ link
     // it injects is present when the fragment collection below queries for it.
     // Guard on main.isConnected: decorateMain also runs on the DETACHED main that
-    // loadFragment builds for the right-rail fragment. isBlogPage() checks the page
-    // URL (still /blog/*), so without this guard the autoblock re-injects a right-rail
-    // link into every loaded fragment and buildAutoBlocks re-loads it — infinite loop.
-    if (isBlogPage() && main.isConnected) buildBlogTemplate(main);
+    // loadFragment builds for the right-rail fragment. buildBlogTemplate is only
+    // set on blog pages (loadEager); the isConnected guard stops the autoblock
+    // from re-injecting a right-rail link into every loaded fragment (which
+    // buildAutoBlocks would then re-load — an infinite loop).
+    if (buildBlogTemplate && main.isConnected) buildBlogTemplate(main);
     // auto load `*/fragments/*` references
     const fragments = [...main.querySelectorAll('a[href*="/fragments/"]')].filter((f) => !f.closest('.fragment'));
     if (fragments.length > 0) {
@@ -267,6 +277,12 @@ async function loadEager(doc) {
   await runExperimentation(doc, experimentationConfig);
   const main = doc.querySelector('main');
   if (main) {
+    // Blog article pages need buildBlogTemplate during eager decoration; import
+    // it here — only for those pages — so buildAutoBlocks can call it
+    // synchronously while every other page skips the ~21KB module entirely.
+    if (isBlogPage()) {
+      ({ buildBlogTemplate } = await import('../blocks/blog-template/blog-template.js'));
+    }
     decorateMain(main);
     document.body.classList.add('appear');
     await Promise.all([
