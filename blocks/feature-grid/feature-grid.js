@@ -36,10 +36,10 @@ function buildCard(row) {
   card.setAttribute('role', 'button');
   card.tabIndex = 0;
   card.setAttribute('aria-expanded', 'false');
-  // upstream labels the card with "{tag}: {title}" so screen readers announce
-  // what the control expands, not just the visible title
-  const label = [tagText, titleText].filter(Boolean).join(': ');
-  if (label) card.setAttribute('aria-label', label);
+  // No aria-label override: the visible tag + title text (below) already IS
+  // the accessible name via content, and duplicating it in an aria-label with
+  // different punctuation (a ": " the rendered text doesn't have) makes the
+  // computed name no longer contain the visible text verbatim (WCAG 2.5.3).
 
   const previewEl = previewPic?.closest('picture') || previewPic;
   const expandedEl = expandedPic?.closest('picture') || expandedPic;
