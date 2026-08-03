@@ -130,9 +130,23 @@
    defaults to collapsed (JS), and while collapsed the label text is swapped
    for the active section's heading by the scroll-spy (also JS).
    ============================================================ */
+
+/* The rail's wrapper inherits the site-wide 40px side padding used to centre
+   ordinary page content (`main > .section > div`), which insets the bar from
+   the viewport edges; zero it so the bar reaches both edges like upstream. */
+.blog-article > .blog-toc-rail > .default-content-wrapper {
+  padding: 0;
+}
+
+/* Mobile: a full-bleed grey bar with a soft drop shadow — no border, no
+   corner rounding, and it spans the viewport rather than sitting inset as a
+   card. (The desktop rail overrides these into the rounded flush-left card
+   further down.) */
 .blog-article .blog-toc {
-  border: 1px solid var(--line);
-  border-radius: var(--radius-card);
+  border: 0;
+  border-radius: 0;
+  background: var(--toc-bar-bg);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
   overflow: hidden;
 }
 
@@ -142,13 +156,16 @@
   justify-content: space-between;
   gap: 12px;
   width: 100%;
+  height: 60px;
   margin: 0;
   border: 0;
-  background: #fff;
-  padding: 16px 20px;
+  background: transparent;
+  padding: 0 20px;
   font: inherit;
+  font-size: 16px;
+  line-height: 24px;
   font-weight: 700;
-  color: var(--text);
+  color: var(--toc-bar-text);
   text-align: left;
   cursor: pointer;
 }
@@ -162,21 +179,38 @@
 .blog-article .blog-toc-toggle::after {
   content: '\2715'; /* ✕ — mobile: collapse the expanded panel */
   flex: none;
-  font-size: 14px;
-  color: var(--text-muted);
+  font-size: 18px;
+  color: var(--toc-bar-text);
 }
 
 .blog-article .blog-toc-rail.blog-toc-collapsed .blog-toc-toggle::after {
   content: '\2304'; /* ⌄ — mobile, collapsed: tap to expand */
 }
 
-/* collapsed mobile bar pins to the top of the screen as you scroll (below
-   the site's own sticky nav, so the two don't overlap); expanded, it's back
-   in normal flow (no sense pinning the whole open panel to the viewport). */
+/* Collapsed mobile bar pins to the top of the screen as you scroll; expanded,
+   it's back in normal flow (no sense pinning the whole open panel to the
+   viewport).
+
+   The offset must clear the header's FULL height, which on /blog* is the
+   primary nav plus the Resource Center secondary nav — taller than
+   `--nav-height`, which only covers the primary one. With the smaller offset
+   the bar pinned underneath the header (z-index 50) and was invisible for the
+   whole scroll. Values match the header heights reserved in styles.css. */
 .blog-article .blog-toc-rail.blog-toc-collapsed {
   position: sticky;
-  top: var(--nav-height);
+  top: 117px;
   z-index: 5;
+}
+
+@media (width >= 1300px) {
+  .blog-article .blog-toc-rail.blog-toc-collapsed {
+    top: 172px;
+  }
+}
+
+/* the rail animates between its expanded card and collapsed tab widths */
+.blog-article .blog-toc {
+  transition: width 0.3s ease;
 }
 
 .blog-article .blog-toc-list {
@@ -191,14 +225,10 @@
   display: none;
 }
 
+/* no separator rules between entries — upstream's list is a plain stack */
 .blog-article .blog-toc-list li {
   position: relative;
   counter-increment: toc;
-  border-top: 1px solid var(--line);
-}
-
-.blog-article .blog-toc-list li:first-child {
-  border-top: 0;
 }
 
 /* active item: solid blue bar, INSET ~16px from the card's edge (not flush
@@ -215,12 +245,16 @@
   background: var(--primary);
 }
 
+/* upstream's TOC entries are deliberately small and tight — 12px/16px semibold
+   in ~32px rows — which is what keeps the whole card to ~400px instead of
+   running most of the viewport height. */
 .blog-article .blog-toc-list a {
   display: block;
-  padding: 10px 20px 10px 24px;
+  padding: 8px 20px 8px 24px;
   color: var(--text-muted);
-  font-size: var(--body-font-size-s);
-  line-height: 1.4;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
   text-decoration: none;
 }
 
@@ -257,6 +291,41 @@
 /* right rail */
 .blog-article .blog-rail > * {
   margin-top: 0;
+}
+
+/* First rail entry is a highlighted promo card (upstream `.ProductBanner`):
+   agave-cyan fill, 12px radius, 20px padding, with a dark ink-teal button.
+   The remaining entries are plain link lists. The rail is a shared fragment,
+   so "first section" is the promo by authoring convention — keyed on position
+   rather than a variant class the fragment would have to carry. */
+.blog-article .blog-rail .default-content-wrapper > .section:first-child {
+  box-sizing: border-box;
+  margin-bottom: 32px;
+  border-radius: 12px;
+  background: var(--rail-promo);
+  padding: 20px;
+}
+
+.blog-article .blog-rail .default-content-wrapper > .section:first-child h3 {
+  margin-top: 0;
+  color: var(--ink-teal);
+}
+
+.blog-article .blog-rail .default-content-wrapper > .section:first-child p {
+  color: var(--ink-teal);
+}
+
+/* the promo's own CTA is the dark ink-teal pill upstream uses, not the
+   site-wide navy primary button */
+.blog-article .blog-rail .default-content-wrapper > .section:first-child .button {
+  border-color: var(--ink-teal);
+  background: var(--ink-teal);
+  color: #fff;
+}
+
+.blog-article .blog-rail .default-content-wrapper > .section:first-child .button:hover {
+  border-color: #09222a;
+  background: #09222a;
 }
 
 /* ============================================================
@@ -317,7 +386,11 @@
     background: var(--blog-hero-bg);
   }
 
-  /* Sticky rails, scoped to their own grid row.
+  /* Only the LEFT rail is sticky. Upstream pins the TOC (it's a jump-link nav,
+     so it has to stay reachable) but lets the right rail scroll away with the
+     article body like ordinary content — verified on the source: the TOC holds
+     a constant viewport offset while the right rail's offset keeps decreasing.
+
      JS (tocRailRowEnd) sets a precise `grid-row` end inline once it knows
      which row the article's last TOC-eligible section lands in, so the rail
      unsticks there instead of running past the article body; the `span 999`
@@ -325,23 +398,31 @@
 
      The row end alone isn't enough, though: a sticky grid *item* resolves its
      containing block against the grid container, not its own area, so the
-     rails were free to travel the full height of `main` and slid down over
-     the full-width "Related" appendix (grid-column 1 / -1). Stretching the
-     item and sticking its inner wrapper instead confines the travel to the
-     row, which is what the row end was always trying to express. */
+     rail was free to travel the full height of `main` and slid down over the
+     full-width "Related" appendix (grid-column 1 / -1). Stretching the item
+     and sticking its inner wrapper instead confines the travel to the row,
+     which is what the row end was always trying to express. */
   .blog-article > .blog-toc-rail,
   .blog-article > .blog-rail {
     grid-row: 2 / span 999;
+  }
+
+  .blog-article > .blog-toc-rail {
+    grid-column: 1;
+    margin-bottom: 0;
     align-self: stretch;
   }
 
-  .blog-article > .blog-toc-rail { grid-column: 1; margin-bottom: 0; }
-  .blog-article > .blog-rail { grid-column: 3; }
-
-  .blog-article > .blog-toc-rail > *,
-  .blog-article > .blog-rail > * {
+  .blog-article > .blog-toc-rail > * {
     position: sticky;
     top: calc(var(--nav-height) + 24px);
+  }
+
+  /* right rail scrolls normally, so it sits at the top of its area rather
+     than stretching to fill the row */
+  .blog-article > .blog-rail {
+    grid-column: 3;
+    align-self: start;
   }
 
   /* hero band: 2-col split inside (text left, image right). The text
@@ -431,6 +512,16 @@
 
   .blog-article .blog-toc-toggle {
     border-bottom: 1px solid var(--line);
+  }
+
+  /* Cap the link list and let it scroll internally. This is what keeps the
+     card compact (~400px) upstream regardless of how many headings an article
+     has — without it a long TOC grows the card to most of the viewport. Only
+     applies to the desktop rail; the mobile panel expands to fit. */
+  .blog-article .blog-toc-list {
+    max-height: 360px;
+    padding-bottom: 4px;
+    overflow-y: auto;
   }
 
   /* thin CSS-drawn chevron (same border-corner technique as the site nav's
