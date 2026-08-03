@@ -178,7 +178,7 @@ body.nav-scroll-lock { overflow: hidden; }
    open/close state or full-screen drill-down. */
 .header .ies-secondary-nav { background: #fff; border-bottom: 1px solid var(--line); }
 .header .ies-secondary-nav .container { display: flex; align-items: center; height: 48px; gap: 20px; }
-.header .secondary-nav-brand { font-size: 15px; font-weight: 600; color: var(--heading); text-decoration: none; }
+.header .secondary-nav-brand { font-size: 16px; font-weight: 600; color: var(--heading); text-decoration: none; }
 .header .secondary-nav-brand:hover { color: var(--primary); }
 
 /* Pushes the item list to the right, matching erp.intuit.com's own
@@ -426,9 +426,18 @@ body.nav-scroll-lock { overflow: hidden; }
 
   /* cursor:pointer signals the whole top bar toggles the accordion (wired in
      header.js), not just the caret; the expanded item list resets to default
-     so its links/text don't inherit it. */
-  .header .ies-secondary-nav .container { height: auto; min-height: 52px; flex-wrap: wrap; cursor: pointer; }
+     so its links/text don't inherit it. align-content:flex-start keeps the
+     brand+toggle head row pinned to the top when the item list wraps onto its
+     own line below, rather than the two flex lines redistributing and pulling
+     the head upward. */
+  .header .ies-secondary-nav .container { height: auto; min-height: 60px; flex-wrap: wrap; align-content: flex-start; cursor: pointer; }
   .header .ies-secondary-nav .secondary-nav-items { cursor: default; }
+
+  /* Give the brand the full 60px head-row height (centered) so that row's
+     height is fixed whether the accordion is open or closed — otherwise, once
+     the items wrap below, the head line collapses to just the text height and
+     the brand + caret visibly jump up. */
+  .header .ies-secondary-nav .secondary-nav-brand { display: flex; align-items: center; min-height: 60px; }
 
   .header .secondary-nav-toggle {
     display: inline-flex; align-items: center; justify-content: center;
