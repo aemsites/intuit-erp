@@ -492,3 +492,48 @@ body.nav-scroll-lock { overflow: hidden; }
     transform: none; opacity: 1; pointer-events: auto;
   }
 }
+
+/* rc-search — Resource Center secondary-nav search widget (issue #60). Dormant
+   until the secondary "Resource center" nav (issue #59) renders. Collapsed, it's
+   just a magnifier at the far right of the nav; open, the nav items give way to
+   a highlighted search field (icon · input · clear) that fills their strip while
+   the "Resource center" brand stays put, matching erp.intuit.com. */
+.header .ies-secondary-nav .rc-search { display: flex; align-items: center; }
+
+.header .ies-secondary-nav .rc-search-toggle {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px; padding: 0; border: 0; background: transparent;
+  color: var(--primary); cursor: pointer;
+}
+.header .ies-secondary-nav .rc-search-form { display: none; flex: 1; align-items: center; gap: 8px; }
+
+.header .ies-secondary-nav .rc-search-input {
+  flex: 1; min-width: 0; height: 40px; border: 0; outline: 0; background: transparent;
+  font-family: inherit; font-size: 18px; color: var(--heading);
+}
+.header .ies-secondary-nav .rc-search-input::placeholder { color: var(--text-soft); opacity: 1; }
+.header .ies-secondary-nav .rc-search-input::-webkit-search-cancel-button { display: none; }
+
+.header .ies-secondary-nav .rc-search-clear {
+  flex: none; border: 0; background: transparent; cursor: pointer;
+  font-size: 24px; line-height: 1; color: var(--text-muted); padding: 0 4px;
+}
+.header .ies-secondary-nav .rc-search-clear:hover { color: var(--heading); }
+
+/* open: the nav items (and the mobile caret) give way to the search field,
+   which fills their strip; the "Resource center" brand stays on the left. */
+.header .ies-secondary-nav.rc-search-active .secondary-nav-items,
+.header .ies-secondary-nav.rc-search-active .secondary-nav-toggle { display: none; }
+
+.header .ies-secondary-nav.rc-search-active .rc-search {
+  flex: 1; margin-left: 24px; height: 40px; gap: 4px;
+  background: var(--sky); border-radius: 4px; padding: 0 6px 0 10px;
+}
+.header .ies-secondary-nav .rc-search.rc-search-open .rc-search-form { display: flex; }
+
+/* Below the desktop breakpoint the brand keeps its row and the field drops to
+   a full-width row under it (smaller type so the placeholder fits). */
+@media (width <= 1299px) {
+  .header .ies-secondary-nav.rc-search-active .rc-search { margin-left: 0; flex-basis: 100%; }
+  .header .ies-secondary-nav .rc-search-input { font-size: 16px; }
+}

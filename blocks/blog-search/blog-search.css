@@ -1,0 +1,77 @@
+/* blog-search — Resource Center search results page (issue #60) */
+.blog-search { max-width: 1000px; margin: 0 auto; padding: 0 0 24px; }
+
+/* Visually-hidden h1 — the editable input below is the visual heading, so the
+   real h1 is kept for heading hierarchy / SEO only. */
+.blog-search .search-title {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0;
+}
+
+/* The large underlined search field, matching erp.intuit.com's search page. */
+.blog-search .search-form {
+  display: flex; align-items: center; gap: 12px;
+  border-bottom: 2px solid var(--primary); margin: 0 0 32px;
+}
+
+.blog-search .search-input {
+  flex: 1; min-width: 0; border: 0; outline: 0; background: transparent;
+  font-family: var(--heading-font-family); font-weight: 700; line-height: 1.2;
+  font-size: 20px; color: var(--heading); padding: 8px 0;
+}
+.blog-search .search-input::placeholder { color: var(--text-soft); opacity: 1; }
+
+/* drop the browser's native type=search clear button — the stylized .search-clear
+   is the single, canonical clear control (it also resets the results). */
+.blog-search .search-input::-webkit-search-cancel-button { display: none; }
+
+.blog-search .search-clear {
+  flex: none; border: 0; background: transparent; cursor: pointer;
+  font-size: 28px; line-height: 1; color: var(--text-muted); padding: 0 4px;
+}
+.blog-search .search-clear:hover { color: var(--heading); }
+.blog-search:not(.has-query) .search-clear { display: none; }
+
+.blog-search .search-count {
+  margin: 0 0 24px; font-size: var(--heading-font-size-s);
+  font-weight: 700; color: var(--heading);
+}
+.blog-search:not(.has-query) .search-count { display: none; }
+
+.blog-search .search-results { display: flex; flex-direction: column; }
+
+.blog-search .search-result {
+  display: flex; gap: 20px; align-items: center;
+  padding: 22px 0; border-top: 1px solid var(--line);
+  text-decoration: none; color: inherit;
+}
+.blog-search .search-result:first-child { border-top: 0; }
+
+.blog-search .search-result-image {
+  flex: none; width: 120px; height: 80px; border-radius: var(--radius);
+  overflow: hidden; background: var(--sand);
+}
+
+.blog-search .search-result-image picture,
+.blog-search .search-result-image img {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+}
+.blog-search .search-result-body { min-width: 0; }
+
+.blog-search .search-result-body h3 {
+  margin: 0 0 8px; font-size: var(--heading-font-size-m); line-height: 1.3;
+  font-weight: 700; color: var(--heading); transition: color 0.15s ease;
+}
+.blog-search .search-result:hover .search-result-body h3 { color: var(--primary); }
+.blog-search .search-result-date { margin: 0; font-size: var(--body-font-size-xs); color: var(--text-muted); }
+
+.blog-search .search-load-more { display: flex; justify-content: center; margin-top: 40px; }
+
+/* the flex wrapper overrides the [hidden] attribute — hide it explicitly */
+.blog-search .search-load-more[hidden] { display: none; }
+
+@media (min-width: 600px) {
+  .blog-search .search-input { font-size: var(--heading-font-size-xl); }
+  .blog-search .search-result { gap: 28px; padding: 26px 0; }
+  .blog-search .search-result-image { width: 200px; height: 120px; border-radius: var(--radius-card); }
+}

@@ -143,3 +143,6 @@ footer .footer .container { max-width: var(--container); margin: 0 auto; padding
     row-gap: 20px;
   }
 }
+
+/* footer "Search this site" — submits to /blog/search on Enter (issue #60) */
+.footer .footer-search input:focus { outline: 0; border-color: var(--primary); }

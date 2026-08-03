@@ -486,6 +486,10 @@ body.category main > .section:first-of-type .default-content-wrapper {
 body.category main > .section:first-of-type h1 { font-size: 40px; font-weight: 600; margin: 0 0 16px; }
 body.category main > .section:first-of-type p { font-size: 17px; color: var(--text-muted); }
 
+/* search results page (Template: "Search" metadata -> body.search): give the
+   first section the same top breathing room below the nav as category pages */
+body.search main > .section:first-of-type { padding-top: 5rem; }
+
 /* eyebrow utility */
 .eyebrow { font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
 
