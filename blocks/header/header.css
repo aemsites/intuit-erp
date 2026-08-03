@@ -539,8 +539,17 @@ body.nav-scroll-lock { overflow: hidden; }
   }
   .header .mobile-brand-btn > svg:first-child { flex: none; width: 20px; height: 20px; }
 
+  /* display:flex + align-items/justify-content:center, not just top:50% +
+     translateY(-50%) alone — that only centers this span's own box, but the
+     inner svg carries its own intrinsic width="6" height="10" attributes
+     (from the shared CTA_CHEVRON_SVG constant, sized for other contexts)
+     that a plain non-flex span doesn't scale to fit, so the taller-than-8px
+     arrow was rendering top-aligned inside the box instead of centered.
+     Flex alignment centers the svg on both axes regardless of that size
+     mismatch — the same pattern .nav-cta-icon already relies on. */
   .header .mobile-brand-chevron {
     position: absolute; top: 50%; right: 20px; width: 8px; height: 8px;
+    display: flex; align-items: center; justify-content: center;
     transform: translateY(-50%);
   }
 
