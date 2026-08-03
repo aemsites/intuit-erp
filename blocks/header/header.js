@@ -338,6 +338,19 @@ async function fetchNavMainHTML(path) {
 // full-screen instead (see header.css) — the group's "has-open" class (kept
 // in sync with whether any item is open) drives that slide, and each
 // flyout's "Back" control (.flyout-back) just calls closeAll().
+// aria-hidden="true" on a still-focusable subtree is an accessibility
+// violation (keyboard/AT users can tab into content the screen reader is
+// told doesn't exist), so a closed flyout's links/buttons also need
+// tabindex="-1" pulled out of the tab order; reopening restores default
+// (DOM-order) focusability by removing the override entirely.
+const FLYOUT_FOCUSABLE = 'a[href], button:not(:disabled)';
+function syncFlyoutFocusability(panel, open) {
+  panel.querySelectorAll(FLYOUT_FOCUSABLE).forEach((el) => {
+    if (open) el.removeAttribute('tabindex');
+    else el.setAttribute('tabindex', '-1');
+  });
+}
+
 function wireFlyoutGroup(nav) {
   const items = [...nav.querySelectorAll('.nav-item')];
   if (!items.length) return;
@@ -347,9 +360,15 @@ function wireFlyoutGroup(nav) {
     const btn = item.querySelector('button');
     const panel = item.querySelector('.flyout');
     if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-    if (panel) panel.setAttribute('aria-hidden', open ? 'false' : 'true');
+    if (panel) {
+      panel.setAttribute('aria-hidden', open ? 'false' : 'true');
+      syncFlyoutFocusability(panel, open);
+    }
     nav.classList.toggle('has-open', items.some((it) => it.classList.contains('open')));
   };
+  // panels start aria-hidden="true" in the authored markup, so their
+  // focusable descendants need the same tabindex="-1" sync up front.
+  nav.querySelectorAll('.flyout').forEach((panel) => syncFlyoutFocusability(panel, false));
   const closeAll = (except) => items.forEach((it) => { if (it !== except) setOpen(it, false); });
 
   items.forEach((item) => {

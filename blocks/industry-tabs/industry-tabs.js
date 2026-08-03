@@ -2,9 +2,14 @@
  * industry-tabs — tabs whose panels are authored inline in the block.
  * Homepage "The workflows your industry actually runs on" section.
  *
- * Reuses the WAI-ARIA tabs interaction/markup pattern established by
- * `vertical-tabs` (role=tablist/tab/tabpanel, aria-selected, aria-controls,
- * roving tabindex, Arrow/Home/End keyboard, first tab active).
+ * Each row's panel renders directly beneath its own tab (mobile accordion
+ * *and* desktop rail share the same interleaved tab→panel→tab→panel DOM
+ * order — see `industry-tabs.css`). WAI-ARIA's tabs pattern forbids a
+ * tabpanel from being a descendant of its tablist, which this interleaving
+ * would violate, so this uses the disclosure/accordion pattern instead
+ * (button + aria-expanded/aria-controls + role=region), matching
+ * `vertical-tabs`' default accordion variant. Roving tabindex + Arrow/Home/End
+ * keyboard still apply, same as a tablist.
  *
  * Content model: each block row = one tab. Cell 1 is the tab (optional
  * `:icon-name:` + label text); cell 2 is the panel content — heading, body,
@@ -25,8 +30,7 @@ function buildTab(item, index) {
   btn.type = 'button';
   btn.className = 'it-tab';
   btn.id = `it-tab-${index}`;
-  btn.setAttribute('role', 'tab');
-  btn.setAttribute('aria-selected', index === 0 ? 'true' : 'false');
+  btn.setAttribute('aria-expanded', index === 0 ? 'true' : 'false');
   btn.tabIndex = index === 0 ? 0 : -1;
 
   if (item.icon) btn.insertAdjacentHTML('afterbegin', item.icon);
@@ -50,9 +54,8 @@ function buildPanel(item, index) {
   const panel = document.createElement('div');
   panel.className = index === 0 ? 'it-panel is-active' : 'it-panel';
   panel.id = `it-panel-${index}`;
-  panel.setAttribute('role', 'tabpanel');
+  panel.setAttribute('role', 'region');
   panel.setAttribute('aria-labelledby', `it-tab-${index}`);
-  panel.tabIndex = 0;
 
   // copy = heading beside body/link; the product image sits full-width below
   const copy = document.createElement('div');
@@ -123,7 +126,6 @@ const isDesktop = () => !!(window.matchMedia && window.matchMedia('(min-width: 9
 function activate(tabs, panels, index, focusIndex = index) {
   const roving = index === -1 ? focusIndex : index;
   tabs.forEach((tab, i) => {
-    tab.setAttribute('aria-selected', i === index ? 'true' : 'false');
     tab.setAttribute('aria-expanded', i === index ? 'true' : 'false');
     tab.tabIndex = i === roving ? 0 : -1;
   });
@@ -150,8 +152,6 @@ export function renderPanels(container, data) {
 
   const nav = document.createElement('div');
   nav.className = 'it-nav';
-  nav.setAttribute('role', 'tablist');
-  nav.setAttribute('aria-orientation', 'vertical');
   // each tab is paired with its panel in an .it-item, so the panel can render
   // directly beneath its tab on mobile (accordion) while the desktop CSS lays
   // the tabs out as a left rail with the active panel in the right column.
@@ -177,7 +177,7 @@ export function renderPanels(container, data) {
     if (!btn) return;
     const idx = tabs.indexOf(btn);
     if (idx === -1) return;
-    const collapse = !isDesktop() && btn.getAttribute('aria-selected') === 'true';
+    const collapse = !isDesktop() && btn.getAttribute('aria-expanded') === 'true';
     activate(tabs, panels, collapse ? -1 : idx, idx);
     syncHeight();
   });
