@@ -27,6 +27,51 @@ describe('filterEntries', () => {
     const out = filterEntries(data, { category: 'financials', excludePath: '/blog/financials/a' });
     expect(out.map((e) => e.title)).toEqual(['C']);
   });
+  it('excludes listing pages by their template metadata, not their path', () => {
+    const mixed = [
+      { path: '/blog', title: 'Blog | Intuit Enterprise Suite', template: 'Blog Home', date: '2026-04-01' },
+      { path: '/blog/erp', title: 'ERP | Enterprise | Intuit', template: 'Category', date: '2026-04-01' },
+      { path: '/blog/search', title: 'Search', template: 'Search', date: '2026-04-01' },
+      ...data,
+    ];
+    const out = filterEntries(mixed);
+    expect(out.map((e) => e.path)).toEqual([
+      '/blog/erp/b', '/blog/financials/a', '/blog/financials/c',
+    ]);
+  });
+  it('matches listing templates case-insensitively', () => {
+    const out = filterEntries([
+      { path: '/blog', title: 'Home', template: 'BLOG HOME' },
+      { path: '/blog/erp/b', title: 'B', template: 'Blog Article', date: '2026-03-01' },
+    ]);
+    expect(out.map((e) => e.title)).toEqual(['B']);
+  });
+  it('keeps content pages regardless of path depth (case studies live at /blog/case-study/*)', () => {
+    // Case-study rows are real articles; only the /blog/case-study index is a listing.
+    const out = filterEntries([
+      { path: '/blog/case-study', title: 'Customer success stories', template: 'Category', date: '2026-04-01' },
+      { path: '/blog/case-study/sparq-partners', title: 'Sparq', template: 'Case Study', date: '2026-03-01' },
+    ]);
+    expect(out.map((e) => e.path)).toEqual(['/blog/case-study/sparq-partners']);
+  });
+  it('accepts multiple categories (comma-separated) and merges newest-first', () => {
+    const out = filterEntries(data, { category: 'erp, financials' });
+    expect(out.map((e) => e.title)).toEqual(['B', 'A', 'C']);
+  });
+  it('accepts multiple categories as an array', () => {
+    const out = filterEntries(data, { category: ['financials', 'erp'], limit: 2 });
+    expect(out.map((e) => e.title)).toEqual(['B', 'A']);
+  });
+  it('filters by template (case-insensitively) — one blog index for every collection', () => {
+    const mixed = [
+      { path: '/blog/erp/b', title: 'Article', template: 'Blog Article', date: '2026-03-01' },
+      { path: '/blog/case-study/x', title: 'Case', template: 'Case Study', date: '2026-02-01' },
+      { path: '/blog/research/y', title: 'Research', template: 'Research', date: '2026-01-01' },
+    ];
+    expect(filterEntries(mixed, { template: 'case study' }).map((e) => e.title)).toEqual(['Case']);
+    expect(filterEntries(mixed, { template: 'Case Study, Research' }).map((e) => e.title))
+      .toEqual(['Case', 'Research']);
+  });
 });
 
 describe('categoryLabel', () => {

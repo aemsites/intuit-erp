@@ -1,8 +1,10 @@
 /**
- * case-study-cards — auto-populated grid of case studies, driven entirely by
- * /blog/case-study/query-index.json (see helix-query.yaml). Authoring a new
- * page under /blog/case-study/ and publishing it is enough to make it appear here —
- * no block config, no authored rows.
+ * case-study-cards — auto-populated grid of case studies, driven by the shared
+ * /blog/query-index.json (see helix-query.yaml), filtered to rows whose
+ * `template` is "Case Study". Authoring a new page under /blog/case-study/ and
+ * publishing it is enough to make it appear here — no block config, no authored
+ * rows. (The feed is the single blog index, not a per-collection one; the
+ * content type is identified by page metadata via `template`.)
  *
  * Variants:
  *   (default, index page)  all case studies, newest first; first 2 rendered
@@ -26,7 +28,8 @@
 import { createOptimizedPicture } from '../../scripts/aem.js';
 import { loadIndex, formatDate } from '../../scripts/content-index.js';
 
-const INDEX_PATH = '/blog/case-study/query-index.json';
+const INDEX_PATH = '/blog/query-index.json';
+const TEMPLATE = 'case study';
 const PAGE_SIZE = 6;
 
 // "PROFESSIONAL SERVICES" -> "Professional services", for pill labels —
@@ -61,6 +64,7 @@ export default async function decorate(block) {
   block.textContent = '';
 
   const allItems = [...await loadIndex(INDEX_PATH)]
+    .filter((item) => (item.template || '').trim().toLowerCase() === TEMPLATE)
     .filter((item) => item.path !== window.location.pathname)
     .sort((a, b) => new Date(b.date) - new Date(a.date));
 

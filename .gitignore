@@ -23,3 +23,8 @@ docs/superpowers/
 stardust/
 .impeccable/
 .playwright-mcp/
+.hlx/
+
+.hlx/.da-token.json
+
+content
