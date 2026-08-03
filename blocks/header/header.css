@@ -463,24 +463,49 @@ body.nav-scroll-lock { overflow: hidden; }
     transition: transform 0.3s ease-in-out;
   }
   .header .nav-item.open .flyout { transform: translateX(0); }
-  .header .flyout-inner { flex-direction: column; gap: 16px; }
+
+  /* padding: 0, not the base rule's 0 40px — that desktop-only inset was
+     still active at mobile (only flex-direction/gap were overridden here),
+     stacking on top of .flyout's own 20px padding and pushing every heading/
+     link 40px further right than .flyout-title/.flyout-back (which sit
+     outside .flyout-inner and only get .flyout's 20px) — confirmed live via
+     getBoundingClientRect (60px vs 20px left edge). gap: 0 — column-to-
+     column spacing is now carried by .flyout-col's own margin/border/padding
+     below, matching source's divider rhythm instead of a flat gap. */
+  .header .flyout-inner { flex-direction: column; gap: 0; padding: 0; }
+
+  /* Divider line above every column, including the first (right below
+     .flyout-title) — matching source exactly (confirmed live: a 1px
+     rgba(0 37 74 / 20%) rule sits above each section, rendered via a
+     ::before on its list wrapper for the first one and a border-top on
+     each subsequent group, but visually identical and uniform, so one rule
+     covering every .flyout-col reproduces both). margin-top/padding-top
+     split the ~50px gap on either side of the line, roughly matching
+     source's own spacing from the last element above to the line, and from
+     the line to the next heading. */
+  .header .flyout-col { margin-top: 24px; padding-top: 24px; border-top: 1px solid rgb(0 37 74 / 20%); }
 
   /* Drill-down page-title heading (see navItemHTML in header.js) — desktop-
      hidden by the base rule; shown only in the primary drawer's own
      full-screen drill-down (:not(.secondary-nav-items) excludes the
      secondary Resource Center nav's plain inline accordion below, which has
      no equivalent title). 36px/500/black, matching source's own
-     SubMenuOverlay-category-title exactly (issue #78). */
-  .header .nav-main:not(.secondary-nav-items) .flyout-title { display: block; margin: 4px 0 20px; font-size: 36px; font-weight: 500; line-height: 1.3; color: var(--heading); }
+     SubMenuOverlay-category-title exactly. margin-bottom: 0 — the divider's
+     own margin-top above now supplies the gap before the line instead of
+     double-stacking with this heading's own trailing margin (issue #78). */
+  .header .nav-main:not(.secondary-nav-items) .flyout-title { display: block; margin: 4px 0 0; font-size: 36px; font-weight: 500; line-height: 1.3; color: var(--heading); }
 
   /* Mobile drill-down heading/link styling differs from the desktop dropdown
      (base rule above): source's own SubMenuOverlay uses a smaller, faded
      16px/500/80%-opacity label for the column heading against larger
      20px/500 black links — a more pronounced size-and-fade contrast than
-     desktop's subtler 600-vs-500 weight difference, confirmed against its
-     live computed styles (issue #78). */
-  .header .flyout-heading { font-size: 16px; font-weight: 500; opacity: 0.8; margin: 4px 0 12px; }
+     desktop's subtler 600-vs-500 weight difference — with generous vertical
+     rhythm throughout (~40px heading-to-link, ~36px link-to-link), all
+     confirmed against its live computed styles/layout (issue #78). */
+  .header .flyout-heading { font-size: 16px; font-weight: 500; opacity: 0.8; margin: 10px 0 30px; }
   .header .flyout-label { font-size: 20px; font-weight: 500; }
+  .header .flyout-link { padding: 18px 0; }
+  .header .flyout-link:first-of-type { padding-top: 0; }
 
   .header .flyout-back {
     display: flex; align-items: center; gap: 10px; width: 100%;
