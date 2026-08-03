@@ -1,6 +1,11 @@
-/* vertical-scroll-carousel — scroll-activated media stack.
-   Mobile: plain stacked list (media above copy, no sticky/JS required).
-   >=900px: two-column rows; media column sticks while its copy scrolls by. */
+/* vertical-scroll-carousel — a click-driven "vertical tabs" story with shared
+   media. Matches erp.intuit.com "Automate the routine…" carousel:
+   - a static (non-pinned) row: tab list on the left, one media panel on the right
+   - every tab's heading AND body are visible at once
+   - clicking a heading activates it (heading goes solid, others dimmed) and the
+     single rounded media panel swaps to that tab's media
+   - no border/shadow on the media
+   Mobile: same content stacked (each item's copy, media panel below). */
 
 .vertical-scroll-carousel {
   display: flex;
@@ -8,37 +13,61 @@
   gap: 32px;
 }
 
+.vertical-scroll-carousel .vsc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
 .vertical-scroll-carousel .vsc-item {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-}
-
-.vertical-scroll-carousel .vsc-copy {
-  padding: 4px 0;
+  gap: 8px;
 }
 
 .vertical-scroll-carousel .vsc-heading {
-  font-size: var(--heading-font-size-s);
-  font-weight: 400;
-  color: var(--text-soft);
-  margin: 0 0 12px;
+  /* button reset — the heading is a clickable tab control */
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--heading-font-size-l, 28px);
+  font-weight: 500;
+  line-height: 1.3;
+  color: #5d686f;
   transition: color 0.2s ease;
+}
+
+.vertical-scroll-carousel .vsc-heading:hover {
+  color: var(--heading);
+}
+
+.vertical-scroll-carousel .vsc-heading:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 4px;
+  border-radius: 2px;
 }
 
 .vertical-scroll-carousel .vsc-body {
   font-size: var(--body-font-size-m);
-  line-height: 1.6;
-  color: var(--text-muted);
+  line-height: 1.5;
+  color: #000;
   max-width: 34em;
   margin: 0;
 }
 
+/* active state — the selected tab's heading goes solid */
+.vertical-scroll-carousel .vsc-item.is-active .vsc-heading {
+  color: var(--heading);
+}
+
 .vertical-scroll-carousel .vsc-media {
-  border-radius: var(--radius-card);
+  border-radius: 16px;
   overflow: hidden;
-  border: 1px solid var(--line);
-  background: var(--light-color);
 }
 
 .vertical-scroll-carousel .vsc-media img,
@@ -46,49 +75,61 @@
   display: block;
   width: 100%;
   height: auto;
-}
-
-/* active state — highlights the item currently in focus on scroll */
-.vertical-scroll-carousel .vsc-item.is-active .vsc-heading {
-  color: var(--heading);
-}
-
-.vertical-scroll-carousel .vsc-item.is-active .vsc-media {
-  border-color: var(--primary);
-  box-shadow: 0 12px 32px rgb(0 0 0 / 10%);
+  border-radius: inherit;
 }
 
 @media (min-width: 900px) {
-  .vertical-scroll-carousel .vsc-item {
-    flex-direction: row;
-    align-items: flex-start;
-    gap: 60px;
-    min-height: 90vh;
-    padding: 40px 0;
+  /* static two-column row: tabs left, shared media right, vertically centered */
+  .vertical-scroll-carousel {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: clamp(48px, 8vw, 120px);
+    align-items: center;
   }
 
-  .vertical-scroll-carousel .vsc-copy {
-    flex: 1 1 40%;
-    align-self: center;
+  /* single shared media panel, swapping content as tabs change */
+  .vertical-scroll-carousel .vsc-stage {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    width: 100%;
+    max-width: 600px;
+    justify-self: end;
   }
 
-  .vertical-scroll-carousel .vsc-media {
-    flex: 1 1 55%;
-    position: sticky;
-    top: calc(var(--nav-height, 96px) + 40px);
-    opacity: 0.55;
-    transform: scale(0.97);
-    transition: opacity 0.3s ease, transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  .vertical-scroll-carousel .vsc-stage .vsc-media {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transform: scale(0.98);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    pointer-events: none;
   }
 
-  .vertical-scroll-carousel .vsc-item.is-active .vsc-media {
+  .vertical-scroll-carousel .vsc-stage .vsc-media.is-active {
     opacity: 1;
     transform: scale(1);
+    pointer-events: auto;
+  }
+
+  .vertical-scroll-carousel .vsc-stage .vsc-media img,
+  .vertical-scroll-carousel .vsc-stage .vsc-media video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
 }
 
-@media (min-width: 1200px) {
-  .vertical-scroll-carousel .vsc-heading {
-    font-size: var(--heading-font-size-m);
+@media (max-width: 899px) {
+  /* stacked: show each media inline under the list (no absolute stacking) */
+  .vertical-scroll-carousel .vsc-stage {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .vertical-scroll-carousel .vsc-stage .vsc-media img,
+  .vertical-scroll-carousel .vsc-stage .vsc-media video {
+    width: 100%;
+    height: auto;
   }
 }
