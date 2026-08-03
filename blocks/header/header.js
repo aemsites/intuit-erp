@@ -20,6 +20,7 @@
 import { getMetadata } from '../../scripts/aem.js';
 import { openScheduleModal } from '../../scripts/schedule-modal.js';
 import { loadFragment } from '../fragment/fragment.js';
+import { enhanceSecondaryNavSearch } from '../blog-search/search-utils.js';
 import {
   LOGO_INTUIT,
   LOGO_TURBOTAX_ICON,
@@ -401,6 +402,11 @@ export default async function decorate(block) {
   }
 
   wireFlyouts(block);
+
+  // Resource Center search (issue #60): adds the expand-on-click search widget
+  // to the secondary "Resource center" nav (issue #59) when it's present. No-op
+  // otherwise — dormant on main until that nav lands, absent off /blog after.
+  enhanceSecondaryNavSearch(block);
 
   // mobile menu toggle — locks body scroll and morphs the hamburger into an
   // "X" while the full-screen drawer is open (see .header.nav-open .nav-main

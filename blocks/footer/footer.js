@@ -16,6 +16,7 @@ import {
   FOOTER_LOGO_QUICKBOOKS,
 } from './brand-logos.js';
 import { LOGO_MAILCHIMP_ICON, LOGO_MAILCHIMP_WORD } from '../header/brand-logos.js';
+import { wireFooterSearch } from '../blog-search/search-utils.js';
 
 // Locale dropdown — rendered twice: a `country-mobile` row that stacks under
 // the menu columns (accordion-style) and a `country-desktop` chip inside the
@@ -211,4 +212,7 @@ export default async function decorate(block) {
   block.innerHTML = (frag && frag.includes('ies-footer')) ? frag : CHROME;
   wireAccordions(block);
   wireCountry(block);
+  // Resource Center search (issue #60): the "Search this site" input submits
+  // to /blog/search on Enter.
+  wireFooterSearch(block);
 }
