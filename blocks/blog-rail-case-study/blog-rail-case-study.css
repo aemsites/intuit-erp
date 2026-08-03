@@ -1,0 +1,139 @@
+/* ── mobile default: 3-col grid ──────────────────────────────────────── */
+.blog-rail-case-study {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.blog-rail-case-study .blog-rail-case-study-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  text-decoration: none;
+  color: var(--text-color);
+}
+
+.blog-rail-case-study .blog-rail-case-study-card.is-hidden {
+  display: none;
+}
+
+.blog-rail-case-study .blog-rail-case-study-card:hover .blog-rail-case-study-title {
+  text-decoration: underline;
+}
+
+.blog-rail-case-study .blog-rail-case-study-card img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 8px 8px 0 0;
+}
+
+.blog-rail-case-study .blog-rail-case-study-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.blog-rail-case-study .blog-rail-case-study-label {
+  font-size: var(--body-font-size-xxs);
+  color: var(--text-color);
+}
+
+.blog-rail-case-study .blog-rail-case-study-title {
+  font-size: var(--body-font-size-s);
+  font-weight: 700;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.blog-rail-case-study .blog-rail-case-study-date {
+  font-size: var(--body-font-size-xxs);
+  color: var(--text-muted);
+}
+
+.blog-rail-case-study .blog-rail-case-study-load-more {
+  grid-column: 1 / -1;
+  display: block;
+  margin: 8px auto 0;
+  padding: 12px 40px;
+  background: transparent;
+  border: 2px solid var(--ink-teal, var(--primary));
+  border-radius: var(--radius, 8px);
+  color: var(--ink-teal, var(--primary));
+  font-size: var(--body-font-size-s);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.blog-rail-case-study .blog-rail-case-study-load-more:hover {
+  background: var(--ink-teal, var(--primary));
+  color: #fff;
+}
+
+/* ── small mobile (≤ 480px): single column, image/content side by side ─ */
+@media (max-width: 480px) {
+  .blog-rail-case-study {
+    grid-template-columns: 1fr;
+  }
+
+  .blog-rail-case-study .blog-rail-case-study-card {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .blog-rail-case-study .blog-rail-case-study-card img {
+    flex-shrink: 0;
+    width: 166px;
+    height: 188px;
+    aspect-ratio: unset;
+    border-radius: 8px;
+  }
+}
+
+/* ── desktop (≥ 900px): compact thumbnail list ───────────────────────── */
+@media (min-width: 900px) {
+  .blog-rail-case-study {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .blog-rail-case-study .blog-rail-case-study-card {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .blog-rail-case-study .blog-rail-case-study-card.is-hidden {
+    display: flex;
+  }
+
+  .blog-rail-case-study .blog-rail-case-study-card img {
+    flex-shrink: 0;
+    width: 80px;
+    height: 80px;
+    aspect-ratio: 1;
+    border-radius: 8px;
+  }
+
+  .blog-rail-case-study .blog-rail-case-study-label,
+  .blog-rail-case-study .blog-rail-case-study-date {
+    display: none;
+  }
+
+  .blog-rail-case-study .blog-rail-case-study-title {
+    -webkit-line-clamp: 4;
+    line-clamp: 4;
+  }
+
+  .blog-rail-case-study .blog-rail-case-study-load-more {
+    display: none;
+  }
+}
