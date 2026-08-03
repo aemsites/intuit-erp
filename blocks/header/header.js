@@ -38,21 +38,21 @@ import {
 // see issue #59) so both navs list the exact same categories/links from one
 // source instead of two copies drifting apart.
 const INSIGHTS_LEARNING_LINKS = [
-  { text: 'Thought leadership', href: 'https://erp.intuit.com/blog/thought-leadership/' },
+  { text: 'Thought leadership', href: '/blog/thought-leadership', internal: true },
   { text: 'Trends & research', href: '/blog/research', internal: true },
   { text: 'Compare ERPs', href: '/compare', internal: true },
 ];
 const INDUSTRY_KNOWLEDGE_LINKS = [
-  { text: 'Construction', href: 'https://erp.intuit.com/blog/construction/' },
-  { text: 'Professional services', href: 'https://erp.intuit.com/blog/professional-services/' },
-  { text: 'Manufacturing', href: 'https://erp.intuit.com/blog/manufacturing/' },
-  { text: 'Non-profit', href: 'https://erp.intuit.com/blog/non-profit/' },
-  { text: 'Retail', href: 'https://erp.intuit.com/blog/retail/' },
-  { text: 'Food service', href: 'https://erp.intuit.com/blog/food-service/' },
+  { text: 'Construction', href: '/blog/construction', internal: true },
+  { text: 'Professional services', href: '/blog/professional-services', internal: true },
+  { text: 'Manufacturing', href: '/blog/manufacturing', internal: true },
+  { text: 'Non-profit', href: '/blog/non-profit', internal: true },
+  { text: 'Retail', href: '/blog/retail', internal: true },
+  { text: 'Food service', href: '/blog/food-service', internal: true },
 ];
 const CUSTOMER_STORIES_LINKS = [
   { text: 'Case studies', href: '/blog/case-study', internal: true },
-  { text: 'Testimonials', href: 'https://erp.intuit.com/blog/videos/customer-testimonials/' },
+  { text: 'Testimonials', href: '/blog/videos/customer-testimonials', internal: true },
 ];
 const EVENTS_WEBINARS_LINKS = [
   { text: 'Upcoming events', href: '/events', internal: true },
@@ -60,15 +60,15 @@ const EVENTS_WEBINARS_LINKS = [
 ];
 const PRODUCT_RESOURCES_LINKS = [
   { text: 'Product demos', href: 'https://ieswebinars.intuit.com/hub/productdemo' },
-  { text: 'New features & releases', href: 'https://erp.intuit.com/blog/product-update/' },
+  { text: 'New features & releases', href: '/blog/product-update', internal: true },
 ];
 
 // Fallback nav model, used only when the authorable nav-menu block (see
 // blocks/nav-menu/nav-menu.js) isn't available. `menu` entries open a flyout
 // panel; `link` entries navigate directly. Links marked `internal: true`
-// resolve to pages that already live on this site; the rest fall back to the
-// live erp.intuit.com pages so the whole nav is clickable while the
-// migration is in flight.
+// resolve to pages on this site and navigate in the same tab; the few
+// remaining absolute links (ieswebinars.intuit.com) are external partner
+// destinations that open in a new tab.
 const NAV = [
   {
     type: 'menu',
@@ -88,7 +88,7 @@ const NAV = [
         heading: 'Streamlined tools',
         links: [
           { text: 'Overview', href: '/workforce-automation', internal: true },
-          { text: 'HR & payroll', href: 'https://erp.intuit.com/human-capital-management/' },
+          { text: 'HR & payroll', href: '/human-capital-management', internal: true },
           { text: 'Payments & bill pay', href: '/automation-tools/payments-bill-pay', internal: true },
         ],
       },
@@ -127,7 +127,7 @@ const NAV = [
       {
         heading: 'Resource center',
         links: [
-          { text: 'Overview', href: 'https://erp.intuit.com/blog/' },
+          { text: 'Overview', href: '/blog', internal: true },
         ],
       },
       { heading: 'Insights & learning', links: INSIGHTS_LEARNING_LINKS },
@@ -144,7 +144,7 @@ const NAV = [
       {
         links: [
           { text: 'How-to migrate', href: '/migration', internal: true },
-          { text: 'Account management', href: 'https://erp.intuit.com/account-management/' },
+          { text: 'Account management', href: '/account-management', internal: true },
         ],
       },
     ],
