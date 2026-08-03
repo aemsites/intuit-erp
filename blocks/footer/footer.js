@@ -135,9 +135,9 @@ const CHROME = `
         </div>
         <div class="legal-right">
           <div class="legal-links">
-            <a href="https://www.intuit.com/legal/">Legal</a> |
-            <a href="https://www.intuit.com/privacy/">Privacy</a> |
-            <a href="https://security.intuit.com">Security</a> |
+            <a href="https://www.intuit.com/legal/">Legal</a><span class="legal-sep">|</span>
+            <a href="https://www.intuit.com/privacy/">Privacy</a><span class="legal-sep">|</span>
+            <a href="https://security.intuit.com">Security</a><span class="legal-sep">|</span>
             <a href="https://www.intuit.com/compliance/">Compliance</a>
           </div>
           <a class="truste" href="https://privacy.trustarc.com/privacy-seal/validation?rid=ab182efc-5237-493d-8952-9295f7f3800b" target="_blank" rel="noopener">

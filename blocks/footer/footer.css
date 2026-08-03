@@ -4,12 +4,12 @@ footer .footer { background: #fff; }
 footer .footer .container { max-width: var(--container); margin: 0 auto; padding: 0 40px; }
 
 .footer .ies-footer { color: var(--text); font-size: 14px; background: #f4f5f8; }
-.footer .ftr-main { border-top: 1px solid var(--line); padding: 56px 0 0; }
+.footer .ftr-main { padding: 56px 0 0; }
 .footer .footer-cols { display: grid; grid-template-columns: repeat(4, 1fr); gap: 32px; }
 .footer .footer-cols h4 { font-size: 16px; font-weight: 700; color: var(--text); margin: 0 0 18px; }
 .footer .footer-cols ul { list-style: none; margin: 0; padding: 0; }
-.footer .footer-cols li { margin-bottom: 12px; }
-.footer .footer-cols a { color: var(--text-muted); }
+.footer .footer-cols li { margin-bottom: 16px; }
+.footer .footer-cols a { color: var(--text-muted); font-size: 16px; line-height: 1.5; }
 .footer .footer-cols a:hover { color: var(--primary); text-decoration: underline; }
 
 /* accordion toggle — on desktop it just renders as the plain column heading;
@@ -27,11 +27,12 @@ footer .footer .container { max-width: var(--container); margin: 0 auto; padding
 .footer .footer-search { margin-top: 40px; }
 .footer .footer-search input { width: 300px; max-width: 100%; height: 40px; border: 1px solid var(--line); border-radius: 4px; padding: 0 14px; font-size: 14px; font-family: inherit; color: var(--text); }
 
-.footer .footer-sitemap { display: flex; align-items: center; gap: 24px; padding: 22px 0; margin-top: 34px; border-top: 1px solid var(--line); }
+.footer .footer-sitemap { display: flex; align-items: center; gap: 24px; padding: 22px 0; margin-top: 34px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
 .footer .footer-sitemap a { color: var(--text-muted); }
 .footer .footer-sitemap .social { margin-left: auto; display: flex; align-items: center; gap: 20px; }
 .footer .footer-sitemap .social a { color: var(--text-muted); display: inline-flex; }
 .footer .footer-sitemap .social a:hover { color: var(--primary); }
+.footer .footer-sitemap .social svg { width: 21px; height: 21px; }
 
 /* country selector — a desktop chip inside the sitemap row, plus a mobile
    accordion-style row rendered under the columns (hidden here, shown < 900px) */
@@ -46,10 +47,10 @@ footer .footer .container { max-width: var(--container); margin: 0 auto; padding
 .footer .country-menu .flag { font-size: 16px; line-height: 1; }
 
 .footer .ftr-legal { padding: 40px 0 48px; }
-.footer .legal-grid { display: grid; grid-template-columns: 220px 1fr 220px; gap: 40px; align-items: start; }
+.footer .legal-grid { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 40px; align-items: start; }
 .footer .legal-left ul { list-style: none; margin: 0; padding: 0; }
-.footer .legal-left li { margin-bottom: 12px; }
-.footer .legal-left a { color: var(--text-muted); }
+.footer .legal-left li { margin-bottom: 0; }
+.footer .legal-left a { display: block; color: var(--text-muted); line-height: 1.8; }
 
 /* logo sizing matches erp.intuit.com's real gwp-footer assets (Intuit
    164x37, TurboTax 90x19, Credit Karma 115x19, QuickBooks 107x20); Mailchimp
@@ -62,11 +63,12 @@ footer .footer .container { max-width: var(--container); margin: 0 auto; padding
 .footer .ftr-brand svg { height: 19px; width: auto; }
 .footer .ftr-brand-mailchimp svg:first-child { height: 20px; width: auto; margin-right: 4.5px; }
 .footer .ftr-brand-mailchimp svg:last-child { height: 12.5px; width: auto; }
-.footer .footer-copy { color: var(--text); font-size: 12px; line-height: 1.6; margin: 0 0 12px; max-width: none; }
+.footer .footer-copy { color: var(--text); font-size: 14px; line-height: 1.43; margin: 0 0 14px; max-width: none; }
 .footer .footer-copy a { color: inherit; text-decoration: underline; }
 .footer .footer-copy-btn { background: none; border: none; padding: 0; font: inherit; color: inherit; text-decoration: underline; cursor: pointer; }
-.footer .legal-right .legal-links { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; }
+.footer .legal-right .legal-links { font-size: 14px; color: var(--text-muted); margin-bottom: 20px; white-space: nowrap; }
 .footer .legal-right .legal-links a { color: var(--text-muted); }
+.footer .legal-right .legal-links .legal-sep { margin: 0 4px; }
 .footer .truste { display: inline-block; line-height: 0; }
 .footer .truste img { width: 142px; height: 45px; }
 
@@ -89,9 +91,12 @@ footer .footer .container { max-width: var(--container); margin: 0 auto; padding
   .footer .footer-col .caret { display: inline-block; color: var(--text-muted); }
 
   /* collapsed rows stay on the ambient gray band; the revealed list switches
-     to white, matching source's FooterMenuSection_menuList treatment */
-  .footer .footer-col ul { display: none; background: #fff; margin: 0 -20px; padding: 12px 20px 18px; }
+     to white, matching source's FooterMenuSection_menuList treatment. Each
+     link is its own 60px row (same rhythm as the .col-toggle header above it) */
+  .footer .footer-col ul { display: none; background: #fff; margin: 0 -20px; padding: 0; }
   .footer .footer-col.open ul { display: block; }
+  .footer .footer-col li { display: flex; align-items: center; min-height: 60px; margin-bottom: 0; padding: 0 34px; }
+  .footer .footer-col li a { font-size: 16px; }
 
   /* country selector row (mobile copy) */
   .footer .country-desktop { display: none; }
@@ -118,16 +123,19 @@ footer .footer .container { max-width: var(--container); margin: 0 auto; padding
     grid-template-areas:
       "logo   brand"
       "nav    copy"
-      "truste truste"
-      "links  links";
+      "links  links"
+      "truste truste";
     gap: 24px 28px;
   }
   .footer .legal-grid .ftr-logo { grid-area: logo; margin: 0; align-self: center; }
-  .footer .legal-grid .brand-logos { grid-area: brand; margin: 0; }
-  .footer .legal-grid .legal-nav { grid-area: nav; margin: 0; }
+  .footer .legal-grid .brand-logos { grid-area: brand; margin: 0; flex-direction: column; align-items: flex-start; gap: 27px; }
+  .footer .legal-grid .legal-nav { grid-area: nav; margin: 0; display: flex; flex-wrap: wrap; padding: 0; }
+  .footer .legal-grid .legal-nav a { display: inline; line-height: 1.8; }
+  .footer .legal-grid .legal-nav li:not(:first-child)::before { content: "|"; margin: 0 6px; color: var(--text-muted); }
   .footer .legal-grid .legal-copy { grid-area: copy; }
   .footer .legal-grid .truste { grid-area: truste; }
   .footer .legal-grid .legal-links { grid-area: links; margin: 0; }
+  .footer .legal-right .legal-links .legal-sep { margin: 0 6px; }
 }
 
 @media (width <= 599px) {
@@ -139,8 +147,8 @@ footer .footer .container { max-width: var(--container); margin: 0 auto; padding
       "brand"
       "nav"
       "copy"
-      "truste"
-      "links";
+      "links"
+      "truste";
     row-gap: 20px;
   }
 }
