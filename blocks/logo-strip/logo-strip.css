@@ -1,13 +1,18 @@
 /* logo-strip — customer logos on a dark band, infinite scrolling marquee (index).
    Lifted from erp.intuit.com's #ies-slider marquee treatment. */
-.section.logo-strip-container { background: #00203f; overflow: hidden; }
-.logo-strip { padding: 22px 0; }
+.section.logo-strip-container { background: #00254A; overflow: hidden; }
+
+main > .section > div.logo-strip-wrapper {
+  padding: 0;
+}
+
+.logo-strip {padding: 20px 0;}
 
 .logo-strip .logostrip-viewport { overflow: hidden; width: 100%; }
 .logo-strip .logostrip-track { display: flex; flex-wrap: nowrap; align-items: center; width: max-content; }
 .logo-strip .logostrip-set { display: flex; flex-wrap: nowrap; align-items: center; gap: 30px; flex: 0 0 auto; padding-right: 30px; }
 
-.logo-strip img { height: 26px; width: auto; opacity: 0.9; filter: brightness(0) invert(1); flex: 0 0 auto; }
+.logo-strip img { height: 40px;width: auto;opacity: 0.9;filter: brightness(0) invert(1);flex: 0 0 auto;}
 
 .logo-strip.is-ready .logostrip-track {
   animation-name: logostrip-scroll;
@@ -26,6 +31,8 @@
   .logo-strip .logostrip-viewport { overflow-x: auto; }
 }
 
-@media (width <= 768px) {
-  .logo-strip .logostrip-set { gap: 22px; padding-right: 22px; }
+@media (width < 768px) {
+  .logo-strip { padding: 20px 0; }
+  .logo-strip .logostrip-set { gap: 22px; }
+  .logo-strip .logostrip-set img{ padding-right: 24px; height: 32px;}
 }
