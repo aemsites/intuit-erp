@@ -27,6 +27,7 @@
   --light-color: #f7f8f3;      /* sand */
   --tofu: #f3f2ef;
   --sky: #dbedee;
+  --agave: #c2f5ff;            /* in-article callout fill */
   --wintermint: #eff4f9;
   --blog-hero-bg: var(--wintermint);   /* blog article hero band */
   --dark-color: #6b6c72;
