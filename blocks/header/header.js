@@ -176,6 +176,15 @@ const CTA_CHEVRON_SVG = `<svg viewBox="0 0 6 10" width="6" height="10" focusable
 // falls back to NAV_MAIN_FALLBACK. Mobile-only — see header.css — matching
 // erp.intuit.com's own mobile menu, which puts a "Schedule a call" CTA and
 // the cross-sell brand strip inside the opened drawer, after the nav links.
+// Each brand link renders as its own full-width filled button/bar (icon +
+// name + trailing chevron) — matching erp.intuit.com's own mobile drawer
+// exactly (confirmed live: .S01MegaNav-brand-button, 48px bars, 16px gap) —
+// not the small inline icon+wordmark row used in .ies-topstrip (issue #78).
+// Intuit's own bar uses the brand-blue fill (#236cff, the same blue as the
+// Intuit logomark itself) with the logo inverted to white via CSS filter;
+// the other four use the shared navy fill with a plain lowercase brand-name
+// label, since source renders those as plain text there, not their full
+// wordmark lockups.
 function mobileExtraHTML() {
   return `
     <div class="nav-mobile-extra">
@@ -183,13 +192,13 @@ function mobileExtraHTML() {
         <span class="nav-cta-text">Schedule a call</span>
         <span class="nav-cta-icon" aria-hidden="true">${CTA_CHEVRON_SVG}</span>
       </button>
-      <div class="nav-mobile-brands">
-        <a href="https://www.intuit.com/" class="bs-logo bs-logo-intuit" aria-label="Intuit">${LOGO_INTUIT}</a>
-        <a href="https://turbotax.intuit.com/" class="bs-logo bs-logo-turbotax" target="_blank" rel="noopener" aria-label="TurboTax">${LOGO_TURBOTAX_ICON}${LOGO_TURBOTAX_WORD}</a>
-        <a href="https://www.creditkarma.com/" class="bs-logo bs-logo-creditkarma" target="_blank" rel="noopener" aria-label="Credit Karma">${LOGO_CREDITKARMA_ICON}${LOGO_CREDITKARMA_WORD}</a>
-        <a href="https://quickbooks.intuit.com/" class="bs-logo bs-logo-quickbooks" target="_blank" rel="noopener" aria-label="QuickBooks">${LOGO_QUICKBOOKS_ICON}${LOGO_QUICKBOOKS_WORD}</a>
-        <a href="https://mailchimp.com/" class="bs-logo bs-logo-mailchimp" target="_blank" rel="noopener" aria-label="Mailchimp">${LOGO_MAILCHIMP_ICON}${LOGO_MAILCHIMP_WORD}</a>
-      </div>
+      <ul class="nav-mobile-brands">
+        <li><a href="https://www.intuit.com/" class="mobile-brand-btn mobile-brand-intuit" aria-label="Intuit">${LOGO_INTUIT}<span class="mobile-brand-chevron" aria-hidden="true">${CTA_CHEVRON_SVG}</span></a></li>
+        <li><a href="https://turbotax.intuit.com/" class="mobile-brand-btn" target="_blank" rel="noopener">${LOGO_TURBOTAX_ICON}<span>turbotax</span><span class="mobile-brand-chevron" aria-hidden="true">${CTA_CHEVRON_SVG}</span></a></li>
+        <li><a href="https://www.creditkarma.com/" class="mobile-brand-btn" target="_blank" rel="noopener">${LOGO_CREDITKARMA_ICON}<span>creditkarma</span><span class="mobile-brand-chevron" aria-hidden="true">${CTA_CHEVRON_SVG}</span></a></li>
+        <li><a href="https://quickbooks.intuit.com/" class="mobile-brand-btn" target="_blank" rel="noopener">${LOGO_QUICKBOOKS_ICON}<span>quickbooks</span><span class="mobile-brand-chevron" aria-hidden="true">${CTA_CHEVRON_SVG}</span></a></li>
+        <li><a href="https://mailchimp.com/" class="mobile-brand-btn" target="_blank" rel="noopener">${LOGO_MAILCHIMP_ICON}<span>mailchimp</span><span class="mobile-brand-chevron" aria-hidden="true">${CTA_CHEVRON_SVG}</span></a></li>
+      </ul>
     </div>`;
 }
 
@@ -219,10 +228,13 @@ function navItemHTML(entry, idx, idPrefix = 'flyout') {
           ${c.heading ? `<p class="flyout-heading">${c.heading}</p>` : ''}
           ${c.links.map(linkHTML).join('')}
         </div>`).join('');
+  // flyout-title is mobile-only (see header.css) — the drill-down panel's own
+  // page-title heading repeating the trigger's label, since that trigger
+  // itself has slid off-screen by the time the panel is showing (issue #78).
   return `
       <div class="nav-item">
         <button type="button" aria-expanded="false" aria-controls="${id}">${entry.label}<i class="caret"></i></button>
-        <div class="flyout" id="${id}" aria-hidden="true">${FLYOUT_BACK_HTML}<div class="flyout-inner">${cols}</div></div>
+        <div class="flyout" id="${id}" aria-hidden="true">${FLYOUT_BACK_HTML}<h2 class="flyout-title">${entry.label}</h2><div class="flyout-inner">${cols}</div></div>
       </div>`;
 }
 
@@ -244,13 +256,15 @@ function secondaryNavHTML() {
   if (!isResourceCenterPath()) return '';
   const items = SECONDARY_NAV_ITEMS.map((e, i) => navItemHTML(e, i, 'secondary-flyout')).join('');
   return `
-<nav class="ies-secondary-nav" aria-label="Resource center">
-  <div class="container">
-    <a class="secondary-nav-brand" href="/blog">Resource center</a>
-    <button type="button" class="secondary-nav-toggle" aria-expanded="false" aria-controls="secondary-nav-items" aria-label="Toggle Resource center menu"><i class="caret"></i></button>
-    <div class="nav-main secondary-nav-items" id="secondary-nav-items">${items}</div>
-  </div>
-</nav>`;
+<div class="ies-secondary-nav-spacer">
+  <nav class="ies-secondary-nav" aria-label="Resource center">
+    <div class="container">
+      <a class="secondary-nav-brand" href="/blog">Resource center</a>
+      <button type="button" class="secondary-nav-toggle" aria-expanded="false" aria-controls="secondary-nav-items" aria-label="Toggle Resource center menu"><i class="caret"></i></button>
+      <div class="nav-main secondary-nav-items" id="secondary-nav-items">${items}</div>
+    </div>
+  </nav>
+</div>`;
 }
 
 // Cyan events bar under the nav — off by default, per-page opt-in via the
@@ -284,16 +298,18 @@ function chromeHTML(navMainHTML, eventsHTML, secondaryNavHtml) {
     <a href="https://mailchimp.com/" class="bs-logo bs-logo-mailchimp" target="_blank" rel="noopener" aria-label="Mailchimp">${LOGO_MAILCHIMP_ICON}${LOGO_MAILCHIMP_WORD}</a>
   </div>
 </div>
-<div class="ies-nav" id="iesNav">
-  <div class="container">
-    <a class="nav-logo" href="/" aria-label="Intuit Enterprise Suite">${LOGO_IES}</a>
-    ${navMainHTML}
-    <div class="nav-right">
-      <button type="button" class="btn btn-primary nav-cta">
-        <span class="nav-cta-text">Schedule a call</span>
-        <span class="nav-cta-icon" aria-hidden="true">${CTA_CHEVRON_SVG}</span>
-      </button>
-      <button class="nav-toggle" aria-label="Menu"><span></span><span></span><span></span></button>
+<div class="ies-nav-spacer">
+  <div class="ies-nav" id="iesNav">
+    <div class="container">
+      <a class="nav-logo" href="/" aria-label="Intuit Enterprise Suite">${LOGO_IES}</a>
+      ${navMainHTML}
+      <div class="nav-right">
+        <button type="button" class="btn btn-primary nav-cta">
+          <span class="nav-cta-text">Schedule a call</span>
+          <span class="nav-cta-icon" aria-hidden="true">${CTA_CHEVRON_SVG}</span>
+        </button>
+        <button class="nav-toggle" aria-label="Menu"><span></span><span></span><span></span></button>
+      </div>
     </div>
   </div>
 </div>
@@ -380,24 +396,36 @@ export default async function decorate(block) {
   block.closest('header')?.classList.toggle('has-secondary-nav', !!secondaryHTML);
   block.querySelector('.ies-nav .nav-main')?.insertAdjacentHTML('beforeend', mobileExtraHTML());
 
-  // sticky-nav scroll-morph. Reading window.scrollY forces a synchronous
-  // layout if styles were just invalidated (e.g. the innerHTML write above),
-  // so the read is rAF-deferred rather than run inline — this also throttles
-  // it to once per frame instead of once per scroll event.
-  // block also gets a "pinned" class at the same threshold: erp.intuit.com
-  // only keeps the slim nav row stuck on scroll — the brand strip above it
-  // and the events bar below it scroll away — but <header> is one single
-  // sticky box (see the position:sticky comment on `header` in header.css),
-  // so hiding those two rows via CSS once pinned is what makes the box's
-  // rendered (and thus stuck) height shrink down to just the nav row,
-  // instead of the whole 3-row stack staying pinned together (issue #78).
+  // Sticky nav, matching erp.intuit.com's own scroll behavior exactly
+  // (confirmed live: its nav row is position:fixed with a `top` inline style
+  // computed as max(0, topstripHeight - scrollY) on every scroll tick — not a
+  // CSS transition or class toggle, hence the smooth 1:1 slide as the brand
+  // strip scrolls away underneath it, rather than an abrupt snap. .ies-nav
+  // itself is position:fixed in header.css; .ies-nav-spacer reserves its
+  // height in flow so nothing jumps. .ies-topstrip and .ies-events are plain,
+  // non-sticky flow content — they simply scroll away like any other page
+  // content (issue #78).
+  // On /blog/* pages (has-secondary-nav) it's the secondary Resource Center
+  // nav that becomes the fixed band instead at desktop widths, sliding up to
+  // cover the combined height of the topstrip + primary nav — matching the
+  // documented intent that those two rows scroll away above it, not the
+  // primary nav (see the has-secondary-nav rules in header.css).
+  const topstrip = block.querySelector('.ies-topstrip');
   const nav = block.querySelector('#iesNav, .ies-nav');
+  const fixedSecondaryNav = block.querySelector('.ies-secondary-nav');
+  const desktopMedia = window.matchMedia('(min-width: 1300px)');
   if (nav) {
     let scrollTicking = false;
     const onScroll = () => {
-      const pinned = window.scrollY > 36;
-      nav.classList.toggle('scrolled', pinned);
-      block.classList.toggle('pinned', pinned);
+      const topstripH = topstrip ? topstrip.offsetHeight : 0;
+      const y = window.scrollY;
+      if (fixedSecondaryNav && desktopMedia.matches) {
+        fixedSecondaryNav.style.top = `${Math.max(0, (topstripH + nav.offsetHeight) - y)}px`;
+      } else {
+        const offset = Math.max(0, topstripH - y);
+        nav.style.top = `${offset}px`;
+        nav.classList.toggle('scrolled', offset === 0 && y > 0);
+      }
       scrollTicking = false;
     };
     const requestScrollTick = () => {
@@ -408,6 +436,7 @@ export default async function decorate(block) {
     };
     requestScrollTick();
     window.addEventListener('scroll', requestScrollTick, { passive: true });
+    window.addEventListener('resize', requestScrollTick, { passive: true });
   }
 
   wireFlyouts(block);
