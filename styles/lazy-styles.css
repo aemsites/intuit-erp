@@ -1,1 +1,48 @@
 /* add global styles that can be loaded post LCP here */
+
+/* "Schedule a call" modal (scripts/schedule-modal.js) — shared across any CTA
+   on any page (nav CTA in blocks/header, hero CTA in blocks/hero, ...).
+   Content comes from content/fragments/schedule-call.html (DA fragment).
+   Not needed for first paint (only shown on click), so it lives here instead
+   of styles.css. */
+.schedule-modal-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgb(0 33 61 / 55%);
+  display: flex; align-items: center; justify-content: center; padding: 24px;
+  opacity: 0; visibility: hidden; transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+.schedule-modal-overlay.is-open { opacity: 1; visibility: visible; }
+
+.schedule-modal {
+  position: relative; background: #fff; border-radius: var(--radius-card);
+  width: 100%; max-width: 640px; max-height: 90vh; overflow-y: auto;
+  padding: 44px; box-shadow: 0 30px 80px rgb(0 0 0 / 30%);
+  transform: translateY(12px); transition: transform 0.2s ease;
+}
+.schedule-modal-overlay.is-open .schedule-modal { transform: translateY(0); }
+
+.schedule-modal-close {
+  position: absolute; top: 16px; right: 16px; width: 32px; height: 32px; border-radius: 50%;
+  border: 0; background: var(--sky); color: var(--navy); font-size: 20px; line-height: 1;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.schedule-modal-close:hover { background: var(--line); }
+.schedule-modal-loading { text-align: center; color: var(--text-muted); padding: 40px 0; }
+.schedule-modal-body .section.form-container { padding: 0; background: transparent; }
+
+/* .form.boxed matches blocks/form/form.css's ".form.boxed .lead-fields" in
+   specificity (3 classes each) — belt-and-braces since this file also loads
+   after form.css (loadLazy decorates blocks before appending this stylesheet),
+   so it would win a tie on load order alone too. Match ".form.boxed"
+   explicitly so it wins on specificity regardless. */
+.schedule-modal-body .form.boxed .lead-fields,
+.schedule-modal-body .form .lead-fields {
+  flex-flow: column nowrap; align-items: stretch; gap: 14px; margin-top: 24px;
+}
+.schedule-modal-body .form.boxed .ff, .schedule-modal-body .form .ff { flex: 1 1 auto; min-width: 0; }
+.schedule-modal-body .form .form-submit { width: 100%; }
+body.modal-open { overflow: hidden; }
+
+@media (width <= 768px) {
+  .schedule-modal { padding: 28px 20px; }
+}
