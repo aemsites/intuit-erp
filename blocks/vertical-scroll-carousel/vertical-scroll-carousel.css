@@ -1,44 +1,40 @@
-/* vertical-scroll-carousel — scroll-activated media stack.
-   Mobile: plain stacked list (media above copy, no sticky/JS required).
-   >=900px: two-column rows; media column sticks while its copy scrolls by. */
+/* vertical-scroll-carousel — a click-driven "vertical accordion" story with a
+   shared media panel. Matches erp.intuit.com "Automate the routine…":
+   - desktop: tab list on the left, one square media panel on the right
+   - only the active item's body is expanded; the active card gets a hairline
+     border plus a 6px blue bar on its leading edge
+   - mobile: every item is expanded and its media is interleaved directly below
+     its copy (no card chrome, no accordion) */
 
 .vertical-scroll-carousel {
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 16px;
+}
+
+/* mobile: list and stage are transparent to layout so items and media become
+   siblings, letting `order` interleave them: item, its media, item, … */
+.vertical-scroll-carousel .vsc-list,
+.vertical-scroll-carousel .vsc-stage {
+  display: contents;
 }
 
 .vertical-scroll-carousel .vsc-item {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-}
-
-.vertical-scroll-carousel .vsc-copy {
-  padding: 4px 0;
-}
-
-.vertical-scroll-carousel .vsc-heading {
-  font-size: var(--heading-font-size-s);
-  font-weight: 400;
-  color: var(--text-soft);
-  margin: 0 0 12px;
-  transition: color 0.2s ease;
-}
-
-.vertical-scroll-carousel .vsc-body {
-  font-size: var(--body-font-size-m);
-  line-height: 1.6;
-  color: var(--text-muted);
-  max-width: 34em;
-  margin: 0;
+  gap: 12px;
+  order: calc(var(--vsc-i) * 2);
 }
 
 .vertical-scroll-carousel .vsc-media {
-  border-radius: var(--radius-card);
+  order: calc(var(--vsc-i) * 2 + 1);
+  margin: 24px 0 44px;
+  border-radius: 16px;
   overflow: hidden;
-  border: 1px solid var(--line);
-  background: var(--light-color);
+}
+
+.vertical-scroll-carousel .vsc-stage .vsc-media:last-child {
+  margin-bottom: 0;
 }
 
 .vertical-scroll-carousel .vsc-media img,
@@ -46,49 +42,140 @@
   display: block;
   width: 100%;
   height: auto;
+  aspect-ratio: 1;
+  object-fit: contain;
+  border-radius: inherit;
 }
 
-/* active state — highlights the item currently in focus on scroll */
-.vertical-scroll-carousel .vsc-item.is-active .vsc-heading {
-  color: var(--heading);
+.vertical-scroll-carousel .vsc-heading {
+  /* button reset — the heading is a clickable tab control */
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: #000;
+  transition: color 0.3s ease-in-out;
 }
 
-.vertical-scroll-carousel .vsc-item.is-active .vsc-media {
-  border-color: var(--primary);
-  box-shadow: 0 12px 32px rgb(0 0 0 / 10%);
+.vertical-scroll-carousel .vsc-heading:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+
+.vertical-scroll-carousel .vsc-body {
+  font-size: var(--body-font-size-m);
+  line-height: 1.5;
+  color: #000;
+  margin: 0;
+}
+
+.vertical-scroll-carousel .vsc-body > :first-child {
+  margin-top: 0;
+}
+
+.vertical-scroll-carousel .vsc-body > :last-child {
+  margin-bottom: 0;
 }
 
 @media (min-width: 900px) {
+  /* static two-column row: accordion left, shared media right, both centered */
+  .vertical-scroll-carousel {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 clamp(64px, 13vw, 175px);
+    align-items: center;
+  }
+
+  .vertical-scroll-carousel .vsc-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* card chrome is desktop-only: the active item reads as a selected card */
   .vertical-scroll-carousel .vsc-item {
-    flex-direction: row;
-    align-items: flex-start;
-    gap: 60px;
-    min-height: 90vh;
-    padding: 40px 0;
+    position: relative;
+    gap: 8px;
+    padding: 24px 32px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: border-color 0.3s ease-in-out;
   }
 
-  .vertical-scroll-carousel .vsc-copy {
-    flex: 1 1 40%;
-    align-self: center;
+  .vertical-scroll-carousel .vsc-item.is-active {
+    border-color: #727e85;
   }
 
-  .vertical-scroll-carousel .vsc-media {
-    flex: 1 1 55%;
-    position: sticky;
-    top: calc(var(--nav-height, 96px) + 40px);
-    opacity: 0.55;
-    transform: scale(0.97);
-    transition: opacity 0.3s ease, transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  /* leading accent bar — offset by 1px so it covers the card's own border */
+  .vertical-scroll-carousel .vsc-item.is-active::before {
+    content: '';
+    position: absolute;
+    inset: -1px auto -1px -1px;
+    width: 6px;
+    background: #236cff;
+    border-radius: 4px 0 0 4px;
   }
 
-  .vertical-scroll-carousel .vsc-item.is-active .vsc-media {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@media (min-width: 1200px) {
   .vertical-scroll-carousel .vsc-heading {
-    font-size: var(--heading-font-size-m);
+    font-size: 28px;
+    color: #5d686f;
+  }
+
+  .vertical-scroll-carousel .vsc-item:hover .vsc-heading,
+  .vertical-scroll-carousel .vsc-item.is-active .vsc-heading {
+    color: #000;
+  }
+
+  /* accordion: only the active item's body is expanded */
+  .vertical-scroll-carousel .vsc-body {
+    max-height: 0;
+    opacity: 0;
+    visibility: hidden;
+    overflow: hidden;
+    transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out, visibility 0.3s;
+  }
+
+  .vertical-scroll-carousel .vsc-item.is-active .vsc-body {
+    max-height: 40rem;
+    opacity: 1;
+    visibility: visible;
+  }
+
+  /* single shared media panel, cross-fading as tabs change */
+  .vertical-scroll-carousel .vsc-stage {
+    display: block;
+    position: relative;
+    aspect-ratio: 1;
+    width: 100%;
+    max-width: 668px;
+    justify-self: end;
+  }
+
+  .vertical-scroll-carousel .vsc-stage .vsc-media {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    pointer-events: none;
+  }
+
+  .vertical-scroll-carousel .vsc-stage .vsc-media.is-active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .vertical-scroll-carousel .vsc-stage .vsc-media img,
+  .vertical-scroll-carousel .vsc-stage .vsc-media video {
+    height: 100%;
   }
 }
