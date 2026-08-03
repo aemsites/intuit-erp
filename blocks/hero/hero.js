@@ -93,6 +93,10 @@ function enhanceDashboardAnimation(media, picture) {
 
 export default async function decorate(block) {
   const isForm = block.classList.contains('form');
+  // .centered is a single-column hero (ai-agents): the media cell is a small
+  // product lockup that belongs ABOVE the headline as a logo/eyebrow, not in a
+  // right-hand media column.
+  const isCentered = block.classList.contains('centered');
   const rows = [...block.children];
 
   const copy = document.createElement('div');
@@ -135,13 +139,33 @@ export default async function decorate(block) {
     }
   });
 
+  // A direct .mp4 link is an inline hero animation, not a CTA — upstream plays
+  // it muted-and-looping below the copy with a pause control, rather than
+  // linking out to the file. Pulled out before the CTA pass so it doesn't get
+  // buttonized. (YouTube/Vimeo links stay CTAs; those open a player.)
+  let videoSrc = null;
+  ctaParas.forEach((p) => {
+    const a = [...p.querySelectorAll('a')].find((x) => /\.mp4(?:$|\?)/i.test(x.getAttribute('href') || ''));
+    if (!a) return;
+    videoSrc = a.getAttribute('href');
+    a.remove();
+    // Drop the host paragraph once its link is gone. An empty <p> still carries
+    // the global paragraph margins, which showed up as ~17px of dead space below
+    // the CTA row and pushed the video's offset out.
+    if (!p.textContent.trim() && !p.querySelector('a, img, picture')) p.remove();
+  });
+  // Keep only paragraphs that still hold a link. Deliberately NOT `isConnected`:
+  // `copy` is still a detached subtree at this point, so every node in it would
+  // read as disconnected and all CTAs would be dropped.
+  const ctas = ctaParas.filter((p) => p.querySelector('a'));
+
   // Buttonize CTAs ourselves so it works whether or not the global decorator
   // fired (two links in one <p> is not buttonized by vanilla EDS). <strong> =>
   // primary, <em> => secondary; collect all CTAs into one .hero-actions row.
-  if (ctaParas.length) {
+  if (ctas.length) {
     const actions = document.createElement('p');
     actions.className = 'button-wrapper hero-actions';
-    ctaParas.forEach((p) => {
+    ctas.forEach((p) => {
       p.querySelectorAll('a').forEach((a) => {
         const wrap = a.closest('strong, em') || a.querySelector('strong, em');
         const variant = wrap && wrap.tagName === 'EM' ? 'secondary' : 'primary';
@@ -155,8 +179,8 @@ export default async function decorate(block) {
         actions.append(a);
       });
     });
-    ctaParas[0].replaceWith(actions);
-    ctaParas.slice(1).forEach((p) => p.remove());
+    ctas[0].replaceWith(actions);
+    ctas.slice(1).forEach((p) => p.remove());
   }
 
   copy.querySelectorAll('a[href="#schedule"]').forEach((a) => {
@@ -172,6 +196,12 @@ export default async function decorate(block) {
 
   if (isForm) {
     grid.append(await leadCard(formFragment));
+  } else if (mediaEl && isCentered) {
+    // logo lockup pinned above the headline instead of a media column
+    const lockup = document.createElement('div');
+    lockup.className = 'hero-lockup';
+    lockup.append(mediaEl);
+    copy.prepend(lockup);
   } else if (mediaEl) {
     const media = document.createElement('div');
     media.className = 'hero-media';
@@ -181,4 +211,40 @@ export default async function decorate(block) {
   }
 
   block.replaceChildren(grid);
+
+  // Inline looping animation below the copy (see videoSrc above). Muted +
+  // playsinline so mobile browsers allow autoplay, and paused up-front when the
+  // reader prefers reduced motion — the pause button then reads "Play" so the
+  // animation is still reachable.
+  if (videoSrc) {
+    const figure = document.createElement('div');
+    figure.className = 'hero-video';
+
+    const video = document.createElement('video');
+    video.src = videoSrc;
+    video.loop = true;
+    video.muted = true;
+    video.playsInline = true;
+    video.setAttribute('aria-label', 'AI agents in your corner video');
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    video.autoplay = !reduceMotion;
+
+    const toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.className = 'hero-video-toggle';
+    const syncToggle = () => {
+      const label = video.paused ? 'Play' : 'Pause';
+      toggle.setAttribute('aria-label', `${label} AI agents in your corner video`);
+      toggle.dataset.state = video.paused ? 'paused' : 'playing';
+    };
+    toggle.addEventListener('click', () => {
+      if (video.paused) video.play(); else video.pause();
+    });
+    video.addEventListener('play', syncToggle);
+    video.addEventListener('pause', syncToggle);
+    syncToggle();
+
+    figure.append(video, toggle);
+    block.append(figure);
+  }
 }

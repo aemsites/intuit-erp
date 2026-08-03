@@ -180,3 +180,108 @@
   .hero.form .hero-grid { grid-template-columns: 1fr; }
   .hero .hero-form { justify-self: stretch; padding: 24px 20px; }
 }
+
+/* ---- .centered — single centred column with a gradient headline and an
+   inline looping animation below (ai-agents). The other pages' heroes are a
+   left-aligned two-column split, hence a variant rather than a default. ---- */
+.hero.centered .hero-grid {
+  grid-template-columns: 1fr;
+  justify-items: center;
+  padding-top: 120px;
+  padding-bottom: 0;
+}
+
+.hero.centered .hero-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+/* product lockup above the headline ("✳ Intuit Intelligence") */
+.hero.centered .hero-lockup { margin-bottom: 15px; }
+
+.hero.centered .hero-lockup img {
+  display: block;
+  width: auto;
+  height: 30px;
+}
+
+/* The headline is a blue → cyan → green gradient clipped to the glyphs.
+   `color: transparent` is what reveals the background, so the gradient IS the
+   text colour — if the background fails to paint the text would vanish, hence
+   the paint-order-safe fallback colour above it. */
+.hero.centered .hero-copy h1 {
+  max-width: 930px;
+  margin: 0;
+  padding: 0 40px;
+  color: #fff;
+  font-size: 72px;
+  line-height: 1.4;
+  background: linear-gradient(89deg, #236cff -10.76%, #23deff 29.73%, #53fb79 95.86%);
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Vertical rhythm comes from this element's own padding rather than margins on
+   the neighbours, matching upstream — it sets the h1→lede and lede→buttons gaps
+   in one place (16px above, 40px below). */
+.hero.centered .hero-copy .hero-lede {
+  max-width: 744px;
+  margin: 0;
+  padding: 16px 40px 40px;
+  color: #fff;
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.hero.centered .hero-actions { justify-content: center; }
+
+/* upstream's hero buttons are taller with slightly tighter side padding */
+.hero.centered .hero-actions a.button {
+  min-height: 52px;
+  padding: 0 28px;
+  line-height: 24px;
+}
+
+/* inline looping animation, inside the navy band below the copy */
+.hero.centered .hero-video {
+  position: relative;
+  max-width: 1120px;
+  margin: 80px auto 0;
+  text-align: center;
+}
+
+.hero.centered .hero-video video {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 16px;
+}
+
+.hero.centered .hero-video-toggle {
+  position: absolute;
+  right: 20px;
+  bottom: 20px;
+  width: 38px;
+  height: 38px;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 45%);
+  color: #fff;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.hero.centered .hero-video-toggle:hover { background: rgb(0 0 0 / 65%); }
+
+/* ▮▮ while playing, ▶ once paused */
+.hero.centered .hero-video-toggle::before { content: '\275A\275A'; }
+.hero.centered .hero-video-toggle[data-state="paused"]::before { content: '\25B6'; }
+
+@media (width <= 900px) {
+  .hero.centered .hero-copy h1 { font-size: 40px; }
+  .hero.centered .hero-video { margin-top: 32px; }
+  .hero.centered .hero-video video { border-radius: 10px; }
+}
