@@ -57,6 +57,46 @@
 .media-text.sky .media-copy .media-body { font-size: 17px; color: var(--text); max-width: 26em; margin-bottom: 18px; }
 .media-text.sky .media-copy p a { color: var(--primary); text-decoration: underline; font-size: 15px; }
 
+/* ---- .agave (ai-agents "From questions to clarity") — pale-blue band, larger
+   heading, black copy. The image sits in a plain white card upstream rather
+   than the default rounded-with-drop-shadow treatment. ---- */
+.section.media-text-container:has(.media-text.agave) { background: var(--agave-band); }
+
+.media-text.agave .media-copy h2,
+.media-text.agave .media-copy h3 {
+  font-size: 40px;
+  line-height: 52px;
+  color: #000;
+  margin: 0 0 20px;
+}
+
+.media-text.agave .media-copy .media-body {
+  font-size: 16px;
+  line-height: 24px;
+  color: #000;
+  max-width: 30em;
+}
+
+.media-text.agave .media-visual img {
+  border-radius: 16px;
+  box-shadow: none;
+}
+
+/* The CTA is a block-level pill, so it needs breathing room from the copy above
+   and from any trailing legal line below (which otherwise butts straight up
+   against it — the shared `.button-wrapper` only sets a top margin). */
+.media-text.agave .media-copy .button-wrapper { margin: 24px 0 0; }
+
+/* A trailing paragraph AFTER the CTA is a legal/disclaimer line, not body copy:
+   small, muted, and set apart. Matched positionally because it carries no
+   distinguishing class from the authored table. */
+.media-text.agave .media-copy .button-wrapper + .media-body {
+  margin-top: 20px;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--text-muted);
+}
+
 /* ---- .cards (index "A migration path") ----
    Replica of the source RwCard "fusion" theme: a pale wintermint card, no card
    shadow, with the visual pinned to the card bottom. Card insets and the
@@ -171,6 +211,10 @@
   .media-text.sky .media-row,
   .media-text.power .power-grid { grid-template-columns: 1fr; gap: 28px; }
   .media-text.sky .media-copy h2 { font-size: 30px; }
+
+  /* agave keeps a larger heading than the shared 26px, stepping 40 -> 34px */
+  .media-text.agave .media-copy h2,
+  .media-text.agave .media-copy h3 { font-size: 34px; line-height: 44.2px; }
 
   /* stacked cards tighten to 30px side insets, 16px radius, and the source
      bumps the heading back up to 34px once each card has the full width */
