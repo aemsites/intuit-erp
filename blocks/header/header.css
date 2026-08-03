@@ -7,8 +7,8 @@
    correctly inside this stacking context. */
 header { height: auto; min-height: 92px; position: sticky; top: 0; z-index: 50; }
 header .header.has-events-bar { min-height: 146px; }
-header .header.has-secondary-nav { min-height: 140px; }
-header .header.has-secondary-nav.has-events-bar { min-height: 194px; }
+header .header.has-secondary-nav { min-height: 172px; }
+header .header.has-secondary-nav.has-events-bar { min-height: 226px; }
 header .header { background: #fff; }
 header .header .container { max-width: var(--container); margin: 0 auto; padding: 0 40px; }
 
@@ -127,14 +127,18 @@ body.nav-scroll-lock { overflow: hidden; }
   .header .nav-main button:not(.flyout-back):focus-visible::after, .header .nav-main .nav-link:focus-visible::after,
   .header .nav-item.open button:not(.flyout-back)::after { transform: scaleX(1); }
 
-  /* On /blog/* pages it's the secondary Resource Center nav that sticks on
-     scroll, not the primary one (confirmed against erp.intuit.com) — the
-     primary topstrip + nav row scroll away normally instead. position:sticky
-     otherwise lives on <header> itself (see the base rule at the top of this
-     file); overriding it back to static here only when a secondary nav is
-     present hands stickiness to this bar instead. */
-  header.has-secondary-nav { position: static; }
-  .header .ies-secondary-nav { position: sticky; top: 0; z-index: 51; }
+  /* On /blog/* pages it's the secondary Resource Center nav that stays stuck
+     to the top on scroll, with the primary topstrip + nav row scrolling away
+     above it (confirmed against erp.intuit.com). <header> itself is already
+     position:sticky (base rule at top of file); making the secondary nav
+     *independently* sticky can't achieve this — its containing block is the
+     content-height .header box, so it can't stay stuck past that. Instead,
+     keep <header> sticky but pull its sticky offset up by the primary rows'
+     height so those rows scroll out of view and the secondary nav lands flush
+     at the top: topstrip (30px + 1px border) + nav (60px + borders) = 93px,
+     which is exactly the secondary nav's offsetTop within the header. */
+  header.has-secondary-nav { top: -93px; }
+  .header .ies-secondary-nav { z-index: 51; }
 }
 .header .nav-right { margin-left: auto; display: flex; align-items: center; gap: 22px; }
 
@@ -184,6 +188,34 @@ body.nav-scroll-lock { overflow: hidden; }
 .header .ies-secondary-nav .nav-main { margin-left: auto; gap: 20px; }
 .header .secondary-nav-toggle { display: none; }
 .header .secondary-nav-toggle .caret { width: 7px; height: 7px; border-right: 1.5px solid currentcolor; border-bottom: 1.5px solid currentcolor; transition: transform 0.2s ease; }
+
+/* Desktop-only sizing/typography for the secondary nav, tuned to match
+   erp.intuit.com's own Resource Center bar (measured against the live site):
+   an 80px-tall row, a large 24px/700 "Resource center" title, and 600-weight
+   item labels. This block sits AFTER the base .ies-secondary-nav rules above
+   (which double as the mobile values) so it overrides them at equal
+   specificity via source order, while the >=1300 gate keeps the <=1299
+   mobile accordion untouched. */
+@media (min-width: 1300px) {
+  .header .ies-secondary-nav .container { height: 80px; }
+  .header .secondary-nav-brand { font-size: 24px; font-weight: 700; }
+  .header .ies-secondary-nav .nav-main button:not(.flyout-back) { font-weight: 600; }
+
+  /* Unlike the primary nav's intentional full-width mega-panel, the secondary
+     nav's flyout is a compact dropdown anchored under its own trigger (source
+     measures ~275px wide, left edge aligned to the item). position:relative on
+     the item re-anchors .flyout (the base rule sets it static at >=1300), and
+     left:0/right:auto + width:max-content undoes the base full-width
+     left:0;right:0 so it hugs the trigger instead of spanning the row. */
+  .header .ies-secondary-nav .nav-item { position: relative; }
+
+  .header .ies-secondary-nav .flyout {
+    left: 0; right: auto; width: max-content; min-width: 240px;
+    padding-block: 16px; border-bottom: 0;
+    box-shadow: 0 12px 24px rgb(0 0 0 / 8%);
+  }
+  .header .ies-secondary-nav .flyout-inner { max-width: none; margin: 0; padding: 0 24px; }
+}
 
 @media (width <= 768px) {
   .schedule-modal { padding: 28px 20px; }
