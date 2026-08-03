@@ -20,17 +20,23 @@ function waitForImages(imgs) {
 
 function measure(block, viewport, track, setA, setB) {
   const originalItems = [...setA.children].filter((el) => !el.classList.contains('clone'));
+  // All geometry reads happen up front, before any DOM writes below — reading
+  // setA's width again after each append (as a while-loop condition) would
+  // force a synchronous layout recalc on every single iteration (forced
+  // reflow); computing the clone count once from a single read avoids that.
   const viewportWidth = viewport.getBoundingClientRect().width;
   const widestLogo = originalItems.reduce(
     (max, el) => Math.max(max, el.getBoundingClientRect().width),
     0,
   );
+  const originalSetWidth = setA.getBoundingClientRect().width;
   const target = viewportWidth + widestLogo;
 
-  let guard = 0;
-  while (setA.getBoundingClientRect().width < target && guard < 20) {
-    originalItems.forEach((el) => setA.append(el.cloneNode(true)));
-    guard += 1;
+  if (originalSetWidth > 0) {
+    const setsNeeded = Math.min(20, Math.ceil(target / originalSetWidth));
+    for (let i = 1; i < setsNeeded; i += 1) {
+      originalItems.forEach((el) => setA.append(el.cloneNode(true)));
+    }
   }
 
   const distance = setB.offsetLeft - setA.offsetLeft;
