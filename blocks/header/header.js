@@ -384,11 +384,20 @@ export default async function decorate(block) {
   // layout if styles were just invalidated (e.g. the innerHTML write above),
   // so the read is rAF-deferred rather than run inline — this also throttles
   // it to once per frame instead of once per scroll event.
+  // block also gets a "pinned" class at the same threshold: erp.intuit.com
+  // only keeps the slim nav row stuck on scroll — the brand strip above it
+  // and the events bar below it scroll away — but <header> is one single
+  // sticky box (see the position:sticky comment on `header` in header.css),
+  // so hiding those two rows via CSS once pinned is what makes the box's
+  // rendered (and thus stuck) height shrink down to just the nav row,
+  // instead of the whole 3-row stack staying pinned together (issue #78).
   const nav = block.querySelector('#iesNav, .ies-nav');
   if (nav) {
     let scrollTicking = false;
     const onScroll = () => {
-      nav.classList.toggle('scrolled', window.scrollY > 36);
+      const pinned = window.scrollY > 36;
+      nav.classList.toggle('scrolled', pinned);
+      block.classList.toggle('pinned', pinned);
       scrollTicking = false;
     };
     const requestScrollTick = () => {

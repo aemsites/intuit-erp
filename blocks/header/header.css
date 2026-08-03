@@ -36,9 +36,19 @@ body.nav-scroll-lock { overflow: hidden; }
 .header .bs-logo-quickbooks svg:last-child { height: 13.5px; width: auto; margin-bottom: -2px; }
 .header .bs-logo-mailchimp svg:last-child { height: 12.5px; width: auto; margin-bottom: -2px; }
 
-/* sticky nav — position:sticky has moved to the <header> element; see header rule above */
+/* sticky nav — position:sticky has moved to the <header> element; see header rule above.
+   On scroll, only this row should stay pinned — matching erp.intuit.com, where the brand
+   strip and events bar scroll away and only the slim nav row remains fixed. Since <header>
+   is one single sticky box, that's done by collapsing the other two rows (see .pinned
+   below in header.js's scroll listener) rather than un-stickying nav itself, so the box's
+   stuck height shrinks down to just this row instead of the whole 3-row stack staying put
+   (issue #78). Not scoped to has-secondary-nav pages — those already get the equivalent
+   effect from the header.has-secondary-nav { top: -93px } rule below. */
 .header .ies-nav { background: #fff; }
 .header .ies-nav.scrolled { box-shadow: 0 1px 0 rgb(0 0 0 / 6%); border-bottom: 2px solid var(--navy); }
+
+.header.pinned:not(.has-secondary-nav) .ies-topstrip,
+.header.pinned:not(.has-secondary-nav) .ies-events { display: none; }
 .header .ies-nav .container { position: relative; display: flex; align-items: center; height: 60px; gap: 30px; }
 .header .nav-logo { display: flex; align-items: center; }
 
@@ -58,10 +68,15 @@ body.nav-scroll-lock { overflow: hidden; }
    `button:not(.flyout-back)` — .flyout-back is also a <button> nested
    inside .nav-main (via .flyout), so the plain descendant selector was
    matching it too, clobbering its own padding/gap/font-weight and giving it
-   an unwanted underline. */
-.header .nav-main button:not(.flyout-back), .header .nav-main > a, .header .nav-main .nav-link { position: relative; background: none; border: 0; padding: 2px 0; font-size: 16px; font-weight: 400; color: var(--heading); display: inline-flex; align-items: center; gap: 6px; font-family: inherit; cursor: pointer; text-decoration: none; }
+   an unwanted underline. .nav-cta (the "Schedule a call" CTA appended into
+   .nav-main on mobile — see .nav-mobile-extra in header.js) is excluded the
+   same way: this reset selector's extra class+:not() specificity otherwise
+   beat the dedicated .header .nav-cta rule further below despite coming
+   first in the file, stripping its navy fill/border down to plain text
+   (issue #78). */
+.header .nav-main button:not(.flyout-back, .nav-cta), .header .nav-main > a, .header .nav-main .nav-link { position: relative; background: none; border: 0; padding: 2px 0; font-size: 16px; font-weight: 400; color: var(--heading); display: inline-flex; align-items: center; gap: 6px; font-family: inherit; cursor: pointer; text-decoration: none; }
 
-.header .nav-main button:not(.flyout-back)::after, .header .nav-main > a::after, .header .nav-main .nav-link::after {
+.header .nav-main button:not(.flyout-back, .nav-cta)::after, .header .nav-main > a::after, .header .nav-main .nav-link::after {
   content: ''; position: absolute; left: 0; bottom: 0; height: 1px; width: 100%; background: currentcolor;
   transform: scaleX(0); transform-origin: left;
   transition: transform 0.85s cubic-bezier(0.02, 0.05, 0.01, 0.99);
@@ -105,7 +120,12 @@ body.nav-scroll-lock { overflow: hidden; }
    6-column flyout (Resources) still fits on one row without wrapping its
    last column; see issue #64. */
 .header .flyout-col { min-width: 200px; }
-.header .flyout-heading { margin: 0 0 8px; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
+
+/* Sentence case, dark 600-weight text — matching erp.intuit.com's own column
+   heading exactly (16px/600/black, no uppercase or letter-spacing; confirmed
+   via computed styles on its "Financial management" flyout heading). Not a
+   small-caps "eyebrow" label like .flyout-desc/.secondary-nav-brand elsewhere. */
+.header .flyout-heading { margin: 0 0 10px; font-size: 16px; font-weight: 600; color: var(--heading); }
 .header .flyout-link { display: block; padding: 10px 0; }
 .header .flyout-label { display: flex; align-items: flex-start; gap: 8px; font-size: 15px; font-weight: 600; color: var(--heading); line-height: 1.25; }
 .header .flyout-desc { display: block; font-size: 13px; color: var(--text-muted); margin-top: 2px; }
@@ -315,10 +335,13 @@ body.nav-scroll-lock { overflow: hidden; }
      below), so its icon needs to point right, not down, and sit inside a
      circular button, per the source. Redefined as an empty circle with the
      arrow mark moved onto ::before so the circle's own border and the
-     chevron's border-drawn shape don't have to fight over the same box. */
+     chevron's border-drawn shape don't have to fight over the same box.
+     Border color is the source's own light blue-tinted outline (confirmed via
+     its computed style: rgba(4 88 121 / 30%)), not the neutral --line gray
+     used elsewhere for plain dividers/borders (issue #78). */
   .header .nav-item > button:not(.flyout-back) .caret {
     position: relative; width: 28px; height: 28px; box-sizing: border-box;
-    border: 1px solid var(--line); border-radius: 50%;
+    border: 1px solid rgb(4 88 121 / 30%); border-radius: 50%;
     transform: none; margin-top: 0;
   }
 
