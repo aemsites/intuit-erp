@@ -73,7 +73,13 @@ body.nav-scroll-lock { overflow: hidden; }
    timing/easing now match erp.intuit.com's standard "slow" easing over
    0.3s (was a quick linear-ish 0.15s ease), and its rendered size (~7px) is
    a touch smaller than our previous 8px. */
-.header .nav-main .caret { width: 7px; height: 7px; border-right: 1.5px solid currentcolor; border-bottom: 1.5px solid currentcolor; transform: rotate(45deg); margin-top: -2px; transition: transform 0.3s cubic-bezier(0.35, 0, 0.5, 1); }
+
+/* margin-top optically centers the caret against the label: the glyph is
+   drawn from just the bottom+right borders of a rotated square, so its "ink"
+   sits in the lower half of the box and looks low even when the box is
+   flex-centered — a negative top margin lifts it back onto the text's optical
+   midline (the open/up state below mirrors this the other way). */
+.header .nav-main .caret { width: 7px; height: 7px; border-right: 1.5px solid currentcolor; border-bottom: 1.5px solid currentcolor; transform: rotate(45deg); margin-top: -4px; transition: transform 0.3s cubic-bezier(0.35, 0, 0.5, 1); }
 .header .nav-item.open .caret { transform: rotate(-135deg); margin-top: 2px; }
 
 /* Full-bleed mega-panel, matching erp.intuit.com's own dropdown: the panel
