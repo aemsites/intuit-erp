@@ -1,5 +1,24 @@
-import { describe, it, expect } from 'vitest';
+import {
+  describe, it, expect, beforeEach,
+} from 'vitest';
 import decorate, { activate } from '../blocks/vertical-scroll-carousel/vertical-scroll-carousel.js';
+
+/**
+ * The block reads matchMedia('(min-width: 900px)') to decide whether the media
+ * share one stage (desktop, only the active video plays) or render inline per
+ * item (mobile, all play). jsdom has no matchMedia, so fake a width.
+ */
+function setViewport(width) {
+  window.matchMedia = (query) => {
+    const min = /width\s*:\s*(\d+)px/.exec(query);
+    return {
+      matches: min ? width >= Number(min[1]) : false,
+      media: query,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    };
+  };
+}
 
 function make() {
   const block = document.createElement('div');
@@ -11,6 +30,8 @@ function make() {
 }
 
 describe('vertical-scroll-carousel', () => {
+  beforeEach(() => setViewport(1440));
+
   it('renders one .vsc-item per row inside a tablist', () => {
     const block = make();
     decorate(block);
@@ -28,13 +49,37 @@ describe('vertical-scroll-carousel', () => {
       expect(h.getAttribute('role')).toBe('tab');
     });
   });
-  it('keeps every item body visible (not collapsed)', () => {
+  it('renders every item body (CSS collapses the inactive ones)', () => {
     const block = make();
     decorate(block);
     const bodies = [...block.querySelectorAll('.vsc-body')];
     expect(bodies.length).toBe(2);
     expect(bodies[0].textContent).toBe('Body one.');
     expect(bodies[1].textContent).toBe('Body two.');
+  });
+  it('exposes the accordion state via aria-expanded on each heading', () => {
+    const block = make();
+    decorate(block);
+    const headings = [...block.querySelectorAll('.vsc-heading')];
+    expect(headings.map((h) => h.getAttribute('aria-expanded'))).toEqual(['true', 'false']);
+    headings[1].click();
+    expect(headings.map((h) => h.getAttribute('aria-expanded'))).toEqual(['false', 'true']);
+  });
+  it('pairs each item with its media via --vsc-i so mobile CSS can interleave', () => {
+    const block = make();
+    decorate(block);
+    const items = [...block.querySelectorAll('.vsc-item')];
+    const medias = [...block.querySelectorAll('.vsc-media')];
+    expect(items.map((i) => i.style.getPropertyValue('--vsc-i'))).toEqual(['0', '1']);
+    expect(medias.map((m) => m.style.getPropertyValue('--vsc-i'))).toEqual(['0', '1']);
+  });
+  it('clicking anywhere on the card activates it, not just the heading', () => {
+    const block = make();
+    decorate(block);
+    const items = [...block.querySelectorAll('.vsc-item')];
+    items[1].querySelector('.vsc-body').click();
+    expect(items[1].classList.contains('is-active')).toBe(true);
+    expect(items[0].classList.contains('is-active')).toBe(false);
   });
   it('renders a single shared .vsc-stage with one .vsc-media per row', () => {
     const block = make();

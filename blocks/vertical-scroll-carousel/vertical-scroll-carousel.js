@@ -2,11 +2,14 @@
  * vertical-scroll-carousel — a click-driven "vertical tabs" story, matching
  * erp.intuit.com "Automate the routine…" (also construction; pricing "Why IES").
  *
- * A compact list of tabs sits on the left; a single shared media panel sits on
- * the right. Every tab's heading AND body are visible at once. Clicking a tab
- * marks it active — its heading goes solid (inactive ones are dimmed) — and the
- * shared media panel swaps/cross-fades to that tab's media. There is no scroll
- * animation or pinning: the original is a static, click-operated tab set.
+ * A compact accordion sits on the left; a single shared media panel sits on the
+ * right. Only the active item's body is expanded — its heading goes solid
+ * (inactive ones are dimmed) and its card gets a border plus a blue leading bar
+ * — and the shared media panel cross-fades to that item's media. There is no
+ * scroll animation or pinning: the original is a static, click-operated tab set.
+ *
+ * Below 900px the accordion and shared stage both collapse: every body is
+ * expanded and each item's media renders inline beneath its own copy.
  *
  * Content model: each ROW = one item — cell0 = media (`<img>`/video link),
  * cell1 = heading, cell2 = body.
@@ -14,7 +17,7 @@
  * Structure built: `.vsc-list` column of `.vsc-item` tabs (left) and ONE
  * `.vsc-stage` (right) holding every item's `.vsc-media`, absolutely stacked.
  * Each tab's heading is a `<button role="tab">`; the active tab AND its media
- * get `.is-active`.
+ * get `.is-active`. Both carry `--vsc-i` so mobile CSS can interleave them.
  *
  * `activate(list, index)` is a small pure helper — it only toggles `.is-active`
  * — so it is directly unit-testable. `decorate()` wires a click handler per tab
@@ -109,11 +112,14 @@ export default function decorate(block) {
     const [mediaCell, headingCell, bodyCell] = [...row.children];
 
     const { item, heading } = buildTab(headingCell, bodyCell, index);
+    // --vsc-i lets CSS interleave each item with its own media on mobile
+    item.style.setProperty('--vsc-i', index);
     list.append(item);
     items.push(item);
     headings.push(heading);
 
     const media = buildMedia(mediaCell);
+    media.style.setProperty('--vsc-i', index);
     stage.append(media);
     medias.push(media);
   });
@@ -125,19 +131,22 @@ export default function decorate(block) {
 
   if (!items.length) return;
 
-  // set the active tab: highlight its copy, swap the shared media, and play only
-  // the active video (others paused to save CPU/bandwidth).
+  // below 900px every media is on screen at once, so all videos keep playing;
+  // above it they share one stage and only the visible one should run.
+  const sharedStage = window.matchMedia('(min-width: 900px)');
+
   const setActive = (index) => {
     activate(items, index);
     activate(medias, index);
     headings.forEach((heading, i) => {
       heading.setAttribute('aria-selected', i === index ? 'true' : 'false');
+      heading.setAttribute('aria-expanded', i === index ? 'true' : 'false');
     });
     medias.forEach((media, i) => {
       const video = media.querySelector('video');
       if (!video) return;
       try {
-        if (i === index) {
+        if (i === index || !sharedStage.matches) {
           const played = video.play();
           if (played && typeof played.catch === 'function') played.catch(() => {});
         } else {
@@ -149,8 +158,15 @@ export default function decorate(block) {
     });
   };
 
-  headings.forEach((heading, index) => {
-    heading.addEventListener('click', () => setActive(index));
+  // the whole card is the hit target on desktop; the heading button keeps it
+  // keyboard-operable and clicks on it bubble up to here
+  items.forEach((item, index) => {
+    item.addEventListener('click', () => setActive(index));
+  });
+
+  sharedStage.addEventListener('change', () => {
+    const current = items.findIndex((item) => item.classList.contains('is-active'));
+    setActive(current < 0 ? 0 : current);
   });
 
   // first tab active by default
