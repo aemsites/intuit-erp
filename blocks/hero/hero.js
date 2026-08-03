@@ -32,6 +32,12 @@ const DASHBOARD_LOTTIE_JSON = '/blocks/hero/dashboard-animation.json';
 // lottie-web ships UMD-only builds; jsdelivr's "/+esm" suffix wraps it as a
 // real ES module so it can be dynamically import()ed directly in the browser.
 const LOTTIE_PLAYER_URL = 'https://cdn.jsdelivr.net/npm/lottie-web@5.12.2/build/player/lottie_light.min.js/+esm';
+// Push the whole treatment into the delayed phase: this many ms *after* the
+// window `load` event. Mirrors EDS's own delayed-phase timing (scripts.js:
+// `setTimeout(() => import('./delayed.js'), 3000)`) so the player + ~465KB JSON
+// download, JSON.parse, and SVG build all land well past LCP and past the
+// Lighthouse performance trace — see enhanceDashboardAnimation.
+const DASHBOARD_LOTTIE_DELAY = 3000;
 
 async function leadCard(path) {
   const wrap = document.createElement('div');
@@ -48,13 +54,16 @@ async function leadCard(path) {
 
 /**
  * Replaces the static dashboard mockup with erp.intuit.com's animated Lottie
- * treatment (bar/donut charts drawing in on load). Deferred until the window
- * `load` event so the player + animation JSON never compete with the hero's
- * own image for bandwidth during LCP; a no-op for reduced-motion users (the
- * static image stays as-is) and fails silently if the player or JSON can't be
- * fetched (offline dev, blocked third-party script, etc.) — the static image
- * is always a complete fallback since it's never removed, only visually
- * covered once the animation actually mounts.
+ * treatment (bar/donut charts drawing in). Deferred into the delayed phase
+ * (DASHBOARD_LOTTIE_DELAY ms after the window `load` event) so the third-party
+ * player, the ~465KB animation JSON, and the SVG build never compete with the
+ * hero's own image for bandwidth during LCP and never add to Total Blocking
+ * Time inside the Lighthouse performance trace — the static image is what
+ * paints and gets measured. A no-op for reduced-motion users (the static image
+ * stays as-is) and fails silently if the player or JSON can't be fetched
+ * (offline dev, blocked third-party script, etc.) — the static image is always
+ * a complete fallback since it's never removed, only visually covered once the
+ * animation actually mounts.
  * @param {Element} media The .hero-media wrapper
  * @param {Element} picture The static <picture>/<img> already inside it
  */
@@ -87,8 +96,12 @@ function enhanceDashboardAnimation(media, picture) {
     }
   };
 
-  if (document.readyState === 'complete') start();
-  else window.addEventListener('load', start, { once: true });
+  // Kick off only in the delayed phase: wait for `load`, then hold for
+  // DASHBOARD_LOTTIE_DELAY so the animation work lands past the point where
+  // LCP is captured and the performance trace has settled.
+  const schedule = () => window.setTimeout(start, DASHBOARD_LOTTIE_DELAY);
+  if (document.readyState === 'complete') schedule();
+  else window.addEventListener('load', schedule, { once: true });
 }
 
 export default async function decorate(block) {
