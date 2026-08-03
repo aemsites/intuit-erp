@@ -423,7 +423,12 @@ body.nav-scroll-lock { overflow: hidden; }
      flex-wrap so the expanded item list (flex-basis:100% below) drops onto
      its own full-width row underneath the brand+toggle row and the container
      can grow to fit it, instead of clipping to a fixed-height row. */
-  .header .ies-secondary-nav .container { height: auto; min-height: 52px; flex-wrap: wrap; }
+
+  /* cursor:pointer signals the whole top bar toggles the accordion (wired in
+     header.js), not just the caret; the expanded item list resets to default
+     so its links/text don't inherit it. */
+  .header .ies-secondary-nav .container { height: auto; min-height: 52px; flex-wrap: wrap; cursor: pointer; }
+  .header .ies-secondary-nav .secondary-nav-items { cursor: default; }
 
   .header .secondary-nav-toggle {
     display: inline-flex; align-items: center; justify-content: center;

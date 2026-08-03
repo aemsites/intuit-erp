@@ -416,13 +416,24 @@ export default async function decorate(block) {
     });
   }
 
-  // Secondary (Resource Center) nav's own mobile accordion toggle — separate
-  // from the primary hamburger above, so opening one never opens the other
-  // (see the .ies-secondary-nav rules in header.css).
+  // Secondary (Resource Center) nav accordion — mobile only, separate from the
+  // primary hamburger above so opening one never opens the other (see the
+  // .ies-secondary-nav rules in header.css). On mobile the WHOLE top bar
+  // toggles it (brand text, caret, and the gap between), not just the caret: a
+  // single click handler on the nav catches clicks anywhere except inside the
+  // expanded item list (.secondary-nav-items, whose own links/flyouts must
+  // still work), and preventDefault stops the brand link (href="/blog") from
+  // navigating away on tap. On desktop (>=1300, where the caret toggle is
+  // display:none) the media guard bails out immediately, so the brand stays a
+  // normal link to the blog home and the item flyouts behave as usual.
   const secondaryNav = block.querySelector('.ies-secondary-nav');
   const secondaryToggle = block.querySelector('.secondary-nav-toggle');
   if (secondaryNav && secondaryToggle) {
-    secondaryToggle.addEventListener('click', () => {
+    const mobileAccordion = window.matchMedia('(max-width: 1299px)');
+    secondaryNav.addEventListener('click', (e) => {
+      if (!mobileAccordion.matches) return;
+      if (e.target.closest('.secondary-nav-items')) return;
+      e.preventDefault();
       const open = secondaryNav.classList.toggle('open');
       secondaryToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
     });
