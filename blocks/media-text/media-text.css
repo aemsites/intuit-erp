@@ -57,21 +57,99 @@
 .media-text.sky .media-copy .media-body { font-size: 17px; color: var(--text); max-width: 26em; margin-bottom: 18px; }
 .media-text.sky .media-copy p a { color: var(--primary); text-decoration: underline; font-size: 15px; }
 
-/* ---- .cards (index "A migration path") ---- */
+/* ---- .cards (index "A migration path") ----
+   Replica of the source RwCard "fusion" theme: a pale wintermint card, no card
+   shadow, with the visual pinned to the card bottom. Card insets and the
+   heading scale step 30px/34px (mobile) -> 40px/28px (tablet) -> 60px/34px
+   (>=1024), matching the source's own breakpoints. The source has no carousel
+   interactions at this instance — it stacks vertically on mobile with no
+   dots, arrows, or scrolling — so a plain grid is behaviourally identical. */
 .section.media-text-container:has(.media-text.cards) { background: #fff; padding: var(--section-y) 0; }
-.media-text.cards .mig-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; }
-.media-text.cards .mig-card { background: var(--sand); border-radius: var(--radius-card); padding: 36px; }
-.media-text.cards .mig-card .media-eyebrow { margin-bottom: 14px; }
-.media-text.cards .mig-card h3 { font-size: 26px; font-weight: 400; color: var(--heading); margin: 0 0 12px; }
-.media-text.cards .mig-card .media-body { font-size: 15px; color: var(--text-muted); margin: 0 0 26px; line-height: 1.5; }
-.media-text.cards .mig-visual { background: #fff; border-radius: 10px; padding: 22px; box-shadow: 0 2px 12px rgb(0 0 0 / 6%); }
-.media-text.cards .mig-visual img { width: 100%; border-radius: 8px; }
-.media-text.cards .mig-visual .mig-visual-head { font-weight: 600; margin: 0 0 16px; color: var(--heading); }
+
+/* the source's section heading is a bigger, darker display size than the shared
+   media-text head, and steps 34 -> 40 -> 48px */
+.media-text-container:has(.media-text.cards) .default-content-wrapper h2 {
+  font-size: 34px; line-height: 1.4; color: var(--text-color); margin: 0 0 56px;
+}
+
+/* the grid is capped so cards don't outrun the source's 555px max card width */
+.media-text.cards .mig-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+  max-width: 1160px; margin: 0 auto;
+}
+
+.media-text.cards .mig-card {
+  display: flex; flex-direction: column;
+  background: var(--wintermint);
+  border-radius: 20px;
+}
+
+.media-text.cards .mig-card .media-eyebrow {
+  font-size: 16px; line-height: 1.4; font-weight: 400;
+  letter-spacing: 1px; text-transform: none; color: #000;
+  margin: 0 0 20px;
+}
+
+.media-text.cards .mig-card h3 {
+  font-size: 28px; line-height: 36px; font-weight: 400;
+  letter-spacing: -0.84px; color: #000;
+  margin: 0 0 16px;
+}
+
+.media-text.cards .mig-card .media-body {
+  font-size: 16px; line-height: 24px; color: #000;
+  margin: 0 0 40px; max-width: none;
+}
+
+/* the visual is last in the card and pinned to the bottom, so cards of
+   differing copy length still line their images up */
+.media-text.cards .mig-visual { margin-top: auto; }
+
+.media-text.cards .mig-visual img {
+  width: 100%; display: block; border-radius: 8px;
+  box-shadow: 0 3px 27px 7px rgb(124 188 255 / 25%);
+}
+
+/* the authored step list stands in for the source's baked-in graphic, so it
+   gets the white inner panel the graphic has */
+.media-text.cards .mig-visual:has(.mig-steps) {
+  background: #fff; border-radius: 8px; padding: 28px 32px;
+  box-shadow: 0 3px 27px 7px rgb(124 188 255 / 25%);
+}
+
+.media-text.cards .mig-visual .mig-visual-head {
+  font-size: 22px; line-height: 1.3; font-weight: 600;
+  margin: 0 0 20px; color: var(--heading);
+}
+
 .media-text.cards .mig-steps { list-style: none; margin: 0; padding: 0; }
-.media-text.cards .mig-steps li { font-size: 14px; color: var(--text-muted); padding: 9px 0; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 10px; }
-.media-text.cards .mig-steps li:last-child { border-bottom: 0; }
-.media-text.cards .mig-steps li.done { color: var(--green); }
-.media-text.cards .mig-steps .tick { width: 18px; height: 18px; border-radius: 50%; background: var(--green); color: #fff; font-size: 11px; display: inline-flex; align-items: center; justify-content: center; }
+
+/* connector rail behind the step bullets, matching the source graphic */
+.media-text.cards .mig-steps li {
+  position: relative;
+  font-size: 16px; line-height: 1.4; color: var(--heading);
+  padding: 10px 0; display: flex; align-items: center; gap: 14px;
+}
+
+.media-text.cards .mig-steps li:not(:last-child)::before {
+  content: ""; position: absolute; left: 11px; top: 50%; bottom: -10px;
+  width: 2px; background: #e3e5e8;
+}
+
+/* unfinished steps are hollow rings; the completed one is a filled green tick.
+   Both sit above the connector rail so it reads as passing behind them. */
+.media-text.cards .mig-steps li:not(.done)::after {
+  content: ""; width: 24px; height: 24px; flex-shrink: 0; order: -1;
+  border: 2px solid #e3e5e8; border-radius: 50%; background: #fff;
+  position: relative; z-index: 1;
+}
+
+.media-text.cards .mig-steps .tick {
+  width: 24px; height: 24px; flex-shrink: 0;
+  border-radius: 50%; background: var(--green); color: #fff;
+  font-size: 13px; display: inline-flex; align-items: center; justify-content: center;
+  position: relative; z-index: 1;
+}
 
 /* ---- .power (erp-solutions "Powering complex …") ---- */
 .media-text.power .power-grid { display: grid; grid-template-columns: 1fr 1.15fr; gap: 56px; align-items: center; }
@@ -93,4 +171,32 @@
   .media-text.sky .media-row,
   .media-text.power .power-grid { grid-template-columns: 1fr; gap: 28px; }
   .media-text.sky .media-copy h2 { font-size: 30px; }
+
+  /* stacked cards tighten to 30px side insets, 16px radius, and the source
+     bumps the heading back up to 34px once each card has the full width */
+  .media-text.cards .mig-card { padding: 40px 30px; border-radius: 16px; }
+
+  .media-text.cards .mig-card h3 {
+    font-size: 34px; line-height: 44.2px; letter-spacing: -1.02px;
+  }
+}
+
+/* tablet keeps the 28px base heading but relaxes the card insets to 40px */
+@media (width >= 769px) {
+  .media-text.cards .mig-card { padding: 40px; }
+}
+
+/* desktop: the source reaches its full card scale — 60px insets, 34px heading
+   with tighter tracking — and the section heading steps to 40px */
+@media (width >= 1024px) {
+  .media-text-container:has(.media-text.cards) .default-content-wrapper h2 { font-size: 40px; }
+  .media-text.cards .mig-card { padding: 60px; }
+
+  .media-text.cards .mig-card h3 {
+    font-size: 34px; line-height: 44.2px; letter-spacing: -1.44px;
+  }
+}
+
+@media (width >= 1200px) {
+  .media-text-container:has(.media-text.cards) .default-content-wrapper h2 { font-size: 48px; }
 }
