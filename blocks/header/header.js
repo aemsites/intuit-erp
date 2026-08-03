@@ -276,13 +276,13 @@ function secondaryNavHTML() {
 function eventsBarHTML() {
   const enabled = ['true', 'yes'].includes(getMetadata('events-bar').trim().toLowerCase());
   if (!enabled) return '';
-  const text = getMetadata('events-bar-text') || 'Check out upcoming events and learn more about Intuit Enterprise Suite.';
+  const text = getMetadata('events-bar-text') || 'Check out';
   const href = getMetadata('events-bar-link') || '/events';
-  const cta = getMetadata('events-bar-cta') || 'Learn more';
+  const cta = getMetadata('events-bar-cta') || 'upcoming events and Intuit Enterprise Suite updates';
   return `
 <div class="ies-events">
   <div class="container">
-    ${text} <a href="${href}">${cta}</a>
+    ${text} <a href="${href}">${cta}</a>.
   </div>
 </div>`;
 }
