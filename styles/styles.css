@@ -27,7 +27,8 @@
   --light-color: #f7f8f3;      /* sand */
   --tofu: #f3f2ef;
   --sky: #dbedee;
-  --blog-hero-bg: #eff4f9;      /* wintermint — blog article hero band */
+  --wintermint: #eff4f9;
+  --blog-hero-bg: var(--wintermint);   /* blog article hero band */
   --dark-color: #6b6c72;
   --text-color: #21262a;
   --heading-color: #11181c;
