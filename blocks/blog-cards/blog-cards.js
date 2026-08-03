@@ -8,16 +8,24 @@
  * Authoring: each `:scope > div` row is a `key | value` config cell, parsed
  * with the shared readBlockConfig() convention (see scripts/aem.js):
  *   source    query-index path (default /blog/query-index.json)
- *   category  only include entries whose `category` matches (optional)
- *   author    only include entries whose `author` matches (optional)
+ *   category  include entries whose `category` matches — one value or a
+ *             comma-separated list, e.g. "erp, financials" (optional)
+ *   author    include entries whose `author` matches — one value or a
+ *             comma-separated list (optional)
+ *   template  include entries whose `template` matches — one value or a
+ *             comma-separated list, e.g. "Case Study" or "Research". Lets one
+ *             blog index stand in for the old per-collection feeds: prefer
+ *             `template: Case Study` over `source: /blog/case-study/…` (optional)
  *   limit     max number of cards to show (optional)
  *   variant   "grid" (default) or "carousel"
  *   exclude   for recommended grids — "current" (or any non-path value)
  *             excludes window.location.pathname; a value starting with "/"
  *             is used as a literal path to exclude instead
  *
- * category/author may both be provided; entries must match every filter
- * given (AND, not OR). Results are always sorted newest-first.
+ * Within category (or author) the listed values are OR'd; across the two fields
+ * they are AND'd. Listing/index pages (blog home, category, search) are always
+ * dropped via their `template` metadata, never by URL shape. Results are always
+ * sorted newest-first.
  *
  * .carousel variant: rather than reimplement slide/dot/arrow mechanics,
  * this delegates to Task 4's blocks/carousel/carousel.js — cards are wrapped
@@ -35,17 +43,67 @@ import { loadIndex, formatDate } from '../../scripts/content-index.js';
 const DEFAULT_SOURCE = '/blog/query-index.json';
 
 /**
+ * The `template` values that mark a feed row as a listing/index page rather than
+ * a piece of content: the blog home, the per-category pages, the search page,
+ * and author pages. Article/case-study pages carry a content template instead
+ * ("Blog Article", "Case Study", …). Compared case-insensitively — `template`
+ * is the EDS-native page classifier (see decorateTemplateAndTheme in
+ * scripts/aem.js, which slugifies it onto the <body> class).
+ */
+const LISTING_TEMPLATES = new Set(['blog home', 'category', 'search', 'author']);
+
+/**
+ * True for the blog home and the per-category/section/search listing pages,
+ * which must never render as cards. The signal is page metadata (`template`,
+ * surfaced into the feed by the `blog` index in helix-query.yaml) — not the URL
+ * shape — so a page's classification travels with its content, and re-homing an
+ * article to a different path depth can't silently turn a listing into a card
+ * (or vice versa).
+ * @param {object} entry one query-index row
+ * @returns {boolean}
+ */
+function isListingPage(entry) {
+  return LISTING_TEMPLATES.has((entry.template || '').trim().toLowerCase());
+}
+
+/**
+ * Normalises a filter value that authors may supply as a single token or a
+ * comma-separated list ("erp" or "erp, financials, hr") into a trimmed array.
+ * Already-array values (from JS callers) pass through. Empty in → empty out.
+ * @param {string|string[]|undefined} value
+ * @returns {string[]}
+ */
+function toList(value) {
+  if (Array.isArray(value)) return value.map((v) => `${v}`.trim()).filter(Boolean);
+  if (typeof value === 'string') return value.split(',').map((s) => s.trim()).filter(Boolean);
+  return [];
+}
+
+/**
  * Pure filter/sort/limit over query-index entries. No network, no DOM.
+ * Listing pages (blog home, category/section roots) are always excluded — they
+ * are navigation, never cards — regardless of the category/author filters.
+ *
+ * `category`, `author` and `template` each accept a single value or a
+ * comma-separated list; an entry matches when its value is any of the requested
+ * ones (OR within a field, AND across fields). `template` is matched
+ * case-insensitively. Results are always newest-first.
  * @param {Array<object>} entries raw query-index `.data` rows
- * @param {{category?: string, author?: string, limit?: number, excludePath?: string}} opts
+ * @param {object} opts category/author/template (string|string[]), limit, excludePath
  * @returns {Array<object>} matching entries, newest date first
  */
 export function filterEntries(entries, {
-  category, author, limit, excludePath,
+  category, author, template, limit, excludePath,
 } = {}) {
-  let out = entries.filter((entry) => entry.title);
-  if (category) out = out.filter((entry) => entry.category === category);
-  if (author) out = out.filter((entry) => entry.author === author);
+  const categories = toList(category);
+  const authors = toList(author);
+  const templates = toList(template).map((t) => t.toLowerCase());
+  let out = entries.filter((entry) => entry.title && !isListingPage(entry));
+  if (categories.length) out = out.filter((entry) => categories.includes(entry.category));
+  if (authors.length) out = out.filter((entry) => authors.includes(entry.author));
+  if (templates.length) {
+    out = out.filter((entry) => templates.includes((entry.template || '').trim().toLowerCase()));
+  }
   if (excludePath) out = out.filter((entry) => entry.path !== excludePath);
   out = [...out].sort((a, b) => new Date(b.date) - new Date(a.date));
   if (limit > 0) out = out.slice(0, limit);
@@ -177,6 +235,7 @@ export default async function decorate(block) {
   const filtered = filterEntries(entries, {
     category: config.category || undefined,
     author: config.author || undefined,
+    template: config.template || undefined,
     limit,
     excludePath,
   });

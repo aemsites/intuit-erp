@@ -1,8 +1,10 @@
 /**
- * resource-cards — auto-populated grid of research guides/whitepapers,
- * driven entirely by /blog/research/query-index.json (see helix-query.yaml).
- * Authoring a new page under /blog/research/ and publishing it is enough to
- * make it appear here — no block config, no authored rows.
+ * resource-cards — auto-populated grid of research guides/whitepapers, driven
+ * by the shared /blog/query-index.json (see helix-query.yaml), filtered to rows
+ * whose `template` is "Research". Authoring a new page under /blog/research/ and
+ * publishing it is enough to make it appear here — no block config, no authored
+ * rows. (The feed is the single blog index, not a per-collection one; the
+ * content type is identified by page metadata via `template`.)
  *
  * Unlike case-study-cards, every card is the same size (the live
  * erp.intuit.com research grid has no "featured" treatment).
@@ -16,7 +18,8 @@
 import { createOptimizedPicture } from '../../scripts/aem.js';
 import { loadIndex, formatDate } from '../../scripts/content-index.js';
 
-const INDEX_PATH = '/blog/research/query-index.json';
+const INDEX_PATH = '/blog/query-index.json';
+const TEMPLATE = 'research';
 const PAGE_SIZE = 6;
 
 function cardHTML(item) {
@@ -43,6 +46,7 @@ export default async function decorate(block) {
   block.textContent = '';
 
   const items = [...await loadIndex(INDEX_PATH)]
+    .filter((item) => (item.template || '').trim().toLowerCase() === TEMPLATE)
     .filter((item) => item.path !== window.location.pathname)
     .sort((a, b) => new Date(b.date) - new Date(a.date));
 
