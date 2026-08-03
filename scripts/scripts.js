@@ -10,6 +10,7 @@ import {
   loadSections,
   loadCSS,
   buildBlock,
+  getMetadata,
 } from './aem.js';
 import { runExperimentation, runExperimentationLazy } from './experiment-loader.js';
 // Vendored via git subtree at plugins/martech (see its README), not an
@@ -235,6 +236,16 @@ async function loadEager(doc) {
   redirectConstructionQToLlmAppCtx();
   document.documentElement.lang = 'en';
   decorateTemplateAndTheme();
+
+  // The cyan events bar (blocks/header/header.js) is part of the header, which
+  // only renders in the lazy phase — so without an eager height hint the bar
+  // pops in later and shoves the page down (CLS). Mirror the per-page opt-in
+  // (events-bar metadata) onto <body> now, in the eager phase, so styles.css
+  // can reserve the taller header height up front. Keep the truthy test in sync
+  // with eventsBarHTML() in header.js.
+  if (['true', 'yes'].includes((getMetadata('events-bar') || '').trim().toLowerCase())) {
+    document.body.classList.add('has-events-bar');
+  }
 
   // Adobe Web SDK (aem-martech). Kept INERT until a real AEP datastream id is
   // set (MARTECH_ENABLED). When enabled, initMartech kicks off the datastream
