@@ -6,7 +6,7 @@ footer .footer .container { max-width: var(--container); margin: 0 auto; padding
 .footer .ies-footer { color: var(--text); font-size: 14px; background: #f4f5f8; }
 .footer .ftr-main { padding: 56px 0 0; }
 .footer .footer-cols { display: grid; grid-template-columns: repeat(4, 1fr); gap: 32px; }
-.footer .footer-cols h4 { font-size: 16px; font-weight: 700; color: var(--text); margin: 0 0 18px; }
+.footer .footer-cols h2 { font-size: 16px; font-weight: 700; color: var(--text); margin: 0 0 18px; }
 .footer .footer-cols ul { list-style: none; margin: 0; padding: 0; }
 .footer .footer-cols li { margin-bottom: 16px; }
 .footer .footer-cols a { color: var(--text-muted); font-size: 16px; line-height: 1.5; }
@@ -64,6 +64,9 @@ footer .footer .container { max-width: var(--container); margin: 0 auto; padding
 .footer .ftr-brand-mailchimp svg:first-child { height: 20px; width: auto; margin-right: 4.5px; }
 .footer .ftr-brand-mailchimp svg:last-child { height: 12.5px; width: auto; }
 .footer .footer-copy { color: var(--text); font-size: 14px; line-height: 1.43; margin: 0 0 14px; max-width: none; }
+
+/* underlined, not just color, so links inline in this small/low-contrast body
+   copy stay distinguishable for low-vision/color-blind readers (WCAG 1.4.1) */
 .footer .footer-copy a { color: inherit; text-decoration: underline; }
 .footer .footer-copy-btn { background: none; border: none; padding: 0; font: inherit; color: inherit; text-decoration: underline; cursor: pointer; }
 .footer .legal-right .legal-links { font-size: 14px; color: var(--text-muted); margin-bottom: 20px; white-space: nowrap; }
@@ -86,7 +89,7 @@ footer .footer .container { max-width: var(--container); margin: 0 auto; padding
   /* link columns → accordions */
   .footer .footer-cols { display: block; grid-template-columns: none; gap: 0; border-top: 1px solid var(--line); }
   .footer .footer-col { border-bottom: 1px solid var(--line); }
-  .footer .footer-col h4 { margin: 0; }
+  .footer .footer-col h2 { margin: 0; }
   .footer .footer-col .col-toggle { display: flex; justify-content: space-between; align-items: center; width: 100%; min-height: 60px; cursor: pointer; }
   .footer .footer-col .caret { display: inline-block; color: var(--text-muted); }
 

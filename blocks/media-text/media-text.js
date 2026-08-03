@@ -5,10 +5,15 @@
  * Each block ROW = one unit. Cell 1 = text (eyebrow p / heading / body / cta),
  * cell 2 = media (<img> or arbitrary markup). Cell 2 may be omitted (text-only).
  *
+ * A single row can also be flipped without a variant by authoring the media
+ * cell before the text cell; that cue is ignored when .reverse is present so
+ * the two don't compound (see the rowReverse comment below).
+ *
  * Variants:
  *   (default)  text left, media right; multiple rows alternate media right→left
  *   .reverse   first row media LEFT (then alternates); also used for single media-left rows
  *   .sky       sky band skin (pricing "Switch now and save")
+ *   .agave     pale-blue band skin (ai-agents "From questions to clarity")
  *   .center    text-only, centered single column (pricing "Built for the way")
  *   .cards     2-up cards, media below text (index "migration path")
  *   .power     feature-list + media (erp-solutions "Powering complex …")
@@ -124,7 +129,16 @@ export default function decorate(block) {
     const textCell = cells.find((c) => c !== mediaCell) || cells[0];
     const rowEl = document.createElement('div');
     rowEl.className = 'media-row';
-    const rowReverse = hasReverse ? (i % 2 === 0) : (i % 2 === 1);
+    // Media-left is expressed two ways, and they must not compound:
+    //  - the `.reverse` variant, which alternates sides down a multi-row block
+    //  - authoring the media cell BEFORE the text cell in a single row
+    // The authored-order cue is only consulted when `.reverse` is absent,
+    // otherwise a row that is both (/events) would flip twice and land back on
+    // the right.
+    const mediaAuthoredFirst = !!mediaCell && cells.indexOf(mediaCell) < cells.indexOf(textCell);
+    const rowReverse = hasReverse
+      ? (i % 2 === 0)
+      : (mediaAuthoredFirst || i % 2 === 1);
     if (rowReverse) rowEl.classList.add('row-reverse');
     rowEl.append(buildCopy(textCell));
     if (mediaCell) {

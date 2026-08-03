@@ -40,7 +40,7 @@ const CHROME = `
     <div class="container">
       <div class="footer-cols">
         <div class="footer-col">
-          <h4><button type="button" class="col-toggle" aria-expanded="false">Company<i class="caret" aria-hidden="true"></i></button></h4>
+          <h2><button type="button" class="col-toggle" aria-expanded="false">Company<i class="caret" aria-hidden="true"></i></button></h2>
           <ul>
             <li><a href="https://www.intuit.com/company/">About Intuit</a></li>
             <li><a href="https://investors.intuit.com">Investor Relations</a></li>
@@ -50,7 +50,7 @@ const CHROME = `
           </ul>
         </div>
         <div class="footer-col">
-          <h4><button type="button" class="col-toggle" aria-expanded="false">For Individuals<i class="caret" aria-hidden="true"></i></button></h4>
+          <h2><button type="button" class="col-toggle" aria-expanded="false">For Individuals<i class="caret" aria-hidden="true"></i></button></h2>
           <ul>
             <li><a href="https://turbotax.intuit.com/">TurboTax</a></li>
             <li><a href="https://turbotax.intuit.com/personal-taxes/online/live/full-service/">TurboTax Live</a></li>
@@ -63,7 +63,7 @@ const CHROME = `
           </ul>
         </div>
         <div class="footer-col">
-          <h4><button type="button" class="col-toggle" aria-expanded="false">For Small Business<i class="caret" aria-hidden="true"></i></button></h4>
+          <h2><button type="button" class="col-toggle" aria-expanded="false">For Small Business<i class="caret" aria-hidden="true"></i></button></h2>
           <ul>
             <li><a href="https://quickbooks.intuit.com/">QuickBooks</a></li>
             <li><a href="https://quickbooks.intuit.com/accounting/">Accounting Software</a></li>
@@ -80,7 +80,7 @@ const CHROME = `
           </ul>
         </div>
         <div class="footer-col">
-          <h4><button type="button" class="col-toggle" aria-expanded="false">For Accountants<i class="caret" aria-hidden="true"></i></button></h4>
+          <h2><button type="button" class="col-toggle" aria-expanded="false">For Accountants<i class="caret" aria-hidden="true"></i></button></h2>
           <ul>
             <li><a href="https://accountants.intuit.com/">Intuit Accountant Suite</a></li>
             <li><a href="https://accountants.intuit.com/tax/lacerte/">Lacerte Tax</a></li>
