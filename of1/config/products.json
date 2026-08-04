@@ -9,18 +9,25 @@
       "https://main--intuit-erp--aemsites.aem.page/media/b45522c9-bento-default-intercompany-transactions-featur.png",
       "https://main--intuit-erp--aemsites.aem.page/media/ceefe2ab-ies-multi-entity-management-screen-icom-202409.png",
       "https://main--intuit-erp--aemsites.aem.page/media/fdabb4ee-consolidated-view-dashboard-product-ies-us-435x244.png",
-      "https://main--intuit-erp--aemsites.aem.page/media/3dc90872-laptop-dashboard-photo-ies-us-555x416-2x.jpg"
+      "https://main--intuit-erp--aemsites.aem.page/media/3dc90872-laptop-dashboard-photo-ies-us-555x416-2x.jpg",
+      "https://main--intuit-erp--aemsites.aem.page/accounting/multi-entity/media_1c442b3a446f49146b5b2ff47f67dfd4860326fd1.avif",
+      "https://main--intuit-erp--aemsites.aem.page/accounting/multi-entity/media_1cbcf5c9dd94c6d72eefedf84e6e2550728b1fcc4.jpg",
+      "https://main--intuit-erp--aemsites.aem.page/accounting/multi-entity/media_1108ec4c7194c1d4b26b87afb13e62c316653f901.png"
     ],
-    "url": "https://erp.intuit.com/erp-solutions/",
-    "description": "Manage users, entities, locations, and subsidiaries from a single sign-in. Create intercompany transactions with automatic eliminations and stay focused with consolidated reports across your business.",
+    "url": "https://main--intuit-erp--aemsites.aem.page/accounting/multi-entity",
+    "description": "Consolidate every entity into one real-time view — manage users, entities, locations, and subsidiaries from a single sign-in, create intercompany transactions with automatic eliminations, and stay focused with consolidated reports across your entire business. Hierarchies map to legal, tax, and operational structures. Currently supports US entities.",
     "features": [
       "Single sign-in across all entities",
       "Automatic intercompany eliminations",
-      "Consolidated multi-entity reports"
+      "Consolidated multi-entity reports",
+      "Shared chart of accounts and elimination settings",
+      "Granular permission controls by company",
+      "Audit-ready with secure access controls"
     ],
     "highlights": [
       "260+ entities managed on one platform (Diocese of Brooklyn)",
-      "2-hour migration consolidating all 8 entities (HFMM Legacy Group)"
+      "2-hour migration consolidating all 8 entities (HFMM Legacy Group)",
+      "90% faster intercompany reconciliation (Lallier Construction)"
     ],
     "persona": "multi-entity-finance-leader",
     "useCase": "consolidated-reporting",
@@ -32,7 +39,10 @@
       "subsidiaries",
       "multiple entities",
       "entity management",
-      "single source of truth"
+      "single source of truth",
+      "intercompany transactions",
+      "close process",
+      "multi-company accounting"
     ]
   },
   {
@@ -42,19 +52,27 @@
     "price": "",
     "currency": "USD",
     "images": [
-      "https://main--intuit-erp--aemsites.aem.page/media/149e7127-bento-default-finance-ai-feature-ies-664x350-2.png",
-      "https://main--intuit-erp--aemsites.aem.page/media/cbead55b-ies-finance-agent-screen-icom-20250730-488x471.png",
-      "https://main--intuit-erp--aemsites.aem.page/media/4d950361-web-product-ies-us-profibility-dashboard-with-ai-2.png"
+      "https://main--intuit-erp--aemsites.aem.page/ai-agents/media_194b6d6a4434cc05defad399a7a867dc6e9d8936b.jpg",
+      "https://main--intuit-erp--aemsites.aem.page/ai-agents/media_1f7c66d95cde99c7509f36597852ef04b76793258.jpg",
+      "https://main--intuit-erp--aemsites.aem.page/ai-agents/media_16bb0bfacaf5b4f4f2dc2db60d01218887f80b04a.jpg",
+      "https://main--intuit-erp--aemsites.aem.page/ai-agents/media_1d4732a7123ebcb7765731521b010a5c07ef46291.avif",
+      "https://main--intuit-erp--aemsites.aem.page/ai-agents/media_1512da43bdb75966abc9565eb6b169b4027ebf783.avif",
+      "https://main--intuit-erp--aemsites.aem.page/ai-agents/media_1daf4f1bfba275e4c54941aeb992398df2675b57a.avif"
     ],
-    "url": "https://erp.intuit.com/ai-agents/",
-    "description": "Automate manual bookkeeping tasks like updating transactions, combining data, and reviewing for inconsistencies with the Accounting Agent, plus get a faster month-end close with accuracy you can count on. The Finance Agent steers clear of costly mistakes with monthly financial summaries, budget insights, and performance monitoring.",
+    "url": "https://main--intuit-erp--aemsites.aem.page/ai-agents",
+    "description": "Five purpose-built AI agents handle the tasks that slow finance teams down: Accounting AI reconciles accounts nearly 3x faster by comparing PDF statements to account data and flagging anomalies; Finance AI delivers board-ready management reports and real-time dashboards; Payroll AI proactively collects time and flags inconsistencies; Project Management AI reduces manual setup work by 69%; and Intuit Intelligence Chat answers business questions instantly across all your data.",
     "features": [
-      "Accounting Agent automates bookkeeping tasks",
-      "Finance Agent delivers monthly summaries + budget insights",
-      "AI cleans and standardizes financial data during migration"
+      "Accounting Agent: 3x faster reconciliation with anomaly detection",
+      "Finance Agent: board-ready reports with narrative analysis",
+      "Payroll Agent: proactive time collection and inconsistency flagging",
+      "Project Management AI: 69% reduction in manual setup work",
+      "Intuit Intelligence Chat: instant answers to business questions",
+      "AI-powered bank feeds with 77% more accurate category predictions"
     ],
     "highlights": [
       "66% faster month-end close (Lango)",
+      "6 hours saved monthly per customer using Intuit AI",
+      "74% of customers say Intuit AI gives a better picture of financial health",
       "20 hours per week saved on manual reporting (Sylvia Brafman Mental Health Center)"
     ],
     "persona": "quickbooks-upgrader",
@@ -64,10 +82,14 @@
       "automation",
       "accounting agent",
       "finance agent",
+      "payroll agent",
       "month-end close",
       "budget insights",
       "automate bookkeeping",
-      "financial planning"
+      "financial planning",
+      "reconciliation",
+      "anomaly detection",
+      "AI finance"
     ]
   },
   {
@@ -81,15 +103,19 @@
       "https://main--intuit-erp--aemsites.aem.page/media/a814eea7-ies-custom-role-screen-icom-20250731-320x339.p.png",
       "https://main--intuit-erp--aemsites.aem.page/media/600a48db-invoice-automated-workflow-feature-ies-us-668x668-.png"
     ],
-    "url": "https://erp.intuit.com/erp-solutions/",
-    "description": "Assign users to standard user roles or create custom roles with permissions you control, ensuring each team member sees only what they need. Role-based permissions, parallel approvals, and transaction approval history build governance into your workflow so your audit trail is complete.",
+    "url": "https://main--intuit-erp--aemsites.aem.page/erp-solutions",
+    "description": "Assign users to standard roles or create custom roles with permissions you control — ensuring each team member sees only what they need. Role-based permissions, parallel approvals, and complete transaction approval history build governance into your daily workflow. Every entry is tracked, every action is auditable, and you're ready for GAAP, SOC1, and HIPAA requirements.",
     "features": [
-      "Custom roles and permissions",
+      "Custom roles and permissions by user and entity",
       "Parallel approval workflows",
-      "Complete transaction approval history"
+      "Complete transaction approval history",
+      "GAAP, SOC1, and HIPAA compliance capabilities",
+      "Cloud-based risk management",
+      "Secure access controls across entities"
     ],
     "highlights": [
-      "Every entry tracked, every action auditable"
+      "Every entry tracked, every action auditable",
+      "Enterprise-grade controls without legacy ERP complexity"
     ],
     "persona": "nonprofit-professional-services",
     "useCase": "audit-ready-governance",
@@ -101,7 +127,11 @@
       "approval workflow",
       "governance",
       "compliance",
-      "audit trail"
+      "audit trail",
+      "GAAP",
+      "SOC1",
+      "HIPAA",
+      "role-based access"
     ]
   },
   {
@@ -115,14 +145,18 @@
       "https://main--intuit-erp--aemsites.aem.page/media/a375547f-quickbooks-desktop-enterprise-dashboard-produc.png",
       "https://main--intuit-erp--aemsites.aem.page/media/e2b97e54-construction-person-hardhat-smiling-photo-icom.png"
     ],
-    "url": "https://erp.intuit.com/migration/",
-    "description": "Whether migrating from QuickBooks Online, QuickBooks Desktop, or a non-Intuit solution, a dedicated Professional Services team scopes the work, migrates your data, and a Customer Success Manager runs guided onboarding so you go live in days, not months.",
+    "url": "https://main--intuit-erp--aemsites.aem.page/migration",
+    "description": "Whether migrating from QuickBooks Online, QuickBooks Desktop, or a non-Intuit solution, a dedicated implementation consultant scopes the work, AI standardizes your chart of accounts and aligns entities, and a Customer Success Manager guides onboarding so you go live in days — not months. Migration from QuickBooks Desktop is fully included (valued at $9,000). Most QB Desktop migrations complete within 72 hours.",
     "features": [
       "Your Chart of Accounts, classes, and vendor lists come with you",
       "AI cleans and standardizes your data before go-live",
-      "Dedicated Customer Success Manager for onboarding"
+      "Dedicated Customer Success Manager for onboarding",
+      "Zero-downtime upgrade from QuickBooks Online",
+      "QB Desktop migration included — valued at $9,000",
+      "Choose clean slate, lists and balances, or full conversion"
     ],
     "highlights": [
+      "Most QB Desktop migrations complete within 72 hours",
       "Many customers reach first value in as few as 14 days",
       "2-hour migration consolidating all 8 entities (HFMM Legacy Group)"
     ],
@@ -135,7 +169,11 @@
       "data migration",
       "onboarding",
       "go-live",
-      "QuickBooks Desktop Enterprise"
+      "QuickBooks Desktop Enterprise",
+      "QuickBooks Online upgrade",
+      "ERP implementation",
+      "switch from NetSuite",
+      "switch from Sage"
     ]
   },
   {
@@ -148,15 +186,19 @@
       "https://main--intuit-erp--aemsites.aem.page/media/b8f7aaaa-web-product-ies-us-integration-hub-2x.png",
       "https://main--intuit-erp--aemsites.aem.page/media/f253f6c6-web-photo-ies-us-business-owner-benefits-2x.jpg"
     ],
-    "url": "https://erp.intuit.com/pricing/",
-    "description": "The platform includes native workforce and money management solutions, so there's no need for additional systems. Connect seamlessly to an open ecosystem of best-in-class applications, including payroll, payments, and 850+ specialized apps.",
+    "url": "https://main--intuit-erp--aemsites.aem.page/pricing",
+    "description": "The platform includes native workforce and money management solutions — payroll, payments, bill pay, and people management — so there's no need for additional systems. Connect to an open ecosystem of 850+ specialized apps. Pricing is custom-bundled per business; ProAdvisors get up to 60% off list price with ProAdvisor preferred pricing.",
     "features": [
       "Native payroll, payments, and people management",
       "Connects to 850+ specialized apps",
-      "Custom product bundle and agreement per business"
+      "Custom product bundle and agreement per business",
+      "Lending access — unique to IES vs. competitors",
+      "Dedicated Customer Success Manager included in base subscription",
+      "299% projected ROI over three years (Forrester TEI, Feb 2025)"
     ],
     "highlights": [
-      "Up to 60% off list price with ProAdvisor preferred pricing"
+      "Up to 60% off list price with ProAdvisor preferred pricing",
+      "299% projected ROI, 64% projected cost savings on technology fees (Forrester TEI)"
     ],
     "persona": "proadvisor-accountant",
     "useCase": "ecosystem-integration",
@@ -168,7 +210,372 @@
       "ecosystem",
       "apps",
       "connect",
-      "open platform"
+      "open platform",
+      "ProAdvisor pricing",
+      "ROI",
+      "pricing",
+      "850 integrations"
+    ]
+  },
+  {
+    "id": "construction-erp",
+    "name": "Construction ERP",
+    "category": "Industry Solutions",
+    "price": "",
+    "currency": "USD",
+    "images": [
+      "https://main--intuit-erp--aemsites.aem.page/construction/media_1741c1656620e8147a7f782019c0b8057ceca1f85.jpg",
+      "https://main--intuit-erp--aemsites.aem.page/construction/media_1c24fa38d85f9b1ec26b1c99b6fed8e06bb7ac722.jpg",
+      "https://main--intuit-erp--aemsites.aem.page/construction/media_1c66a702a0982da213e892cefe491da47177a708b.avif",
+      "https://main--intuit-erp--aemsites.aem.page/construction/media_18c098833a5bc06aa2059d0d9ad58f65133e1d768.avif",
+      "https://main--intuit-erp--aemsites.aem.page/construction/media_1aa5d3439b2225d001cb1d4545be9729a6fd3f386.avif",
+      "https://main--intuit-erp--aemsites.aem.page/construction/media_16ebe5f261c4db32fea021fcd9eab828a1285a0ec.avif",
+      "https://main--intuit-erp--aemsites.aem.page/construction/media_1d4732a7123ebcb7765731521b010a5c07ef46291.avif",
+      "https://main--intuit-erp--aemsites.aem.page/construction/media_1e0874ee778a12df52691e15f042f81af2e93be18.avif"
+    ],
+    "url": "https://main--intuit-erp--aemsites.aem.page/construction",
+    "description": "A connected financial workflow platform built for construction businesses — managing estimating, job costing, WIP reporting, budgets, and AIA-style billing in one place. AI-powered unit cost recommendations and five-year performance baselines help project leaders make real-time decisions without legacy ERP complexity. Integrates natively with Procore, Buildertrend, ServiceTitan, and JobTread.",
+    "features": [
+      "Real-time WIP reports with budget vs. actuals monitoring",
+      "AIA-style invoicing with automated scope change capture",
+      "AI-powered unit cost recommendations and project setup",
+      "Multi-dimensional reporting (up to 20 dimensions)",
+      "Cross-portfolio project visibility dashboards",
+      "Five-year performance baseline for forecasting",
+      "Native integrations with Procore, Buildertrend, ServiceTitan, JobTread"
+    ],
+    "highlights": [
+      "90% faster intercompany reconciliation (Lallier Construction)",
+      "Fiscal year-end closed 3 months faster than previous years (Elton R Construction)",
+      "72% of construction firms report excessive time on data management from disconnected systems"
+    ],
+    "persona": "construction-field-services-controller",
+    "useCase": "construction-project-accounting",
+    "keywords": [
+      "construction ERP",
+      "job costing",
+      "WIP reporting",
+      "construction accounting",
+      "AIA invoicing",
+      "project accounting",
+      "bid-to-close",
+      "construction software",
+      "field services",
+      "specialty contractor",
+      "Procore integration",
+      "subcontractor management"
+    ]
+  },
+  {
+    "id": "professional-services-erp",
+    "name": "Professional Services ERP",
+    "category": "Industry Solutions",
+    "price": "",
+    "currency": "USD",
+    "images": [
+      "https://main--intuit-erp--aemsites.aem.page/professional-services/media_1f2755dd14e71e133af00be91f0f56919730561e8.avif",
+      "https://main--intuit-erp--aemsites.aem.page/professional-services/media_1d2392080fb2dc361c305ade6aa4fb2e91c42c951.avif",
+      "https://main--intuit-erp--aemsites.aem.page/professional-services/media_1dd111f4efcfa40ec9d2b5c4a24cef687c68cc569.avif",
+      "https://main--intuit-erp--aemsites.aem.page/professional-services/media_13aa905be20936b14d31808976561104e9fa86c57.avif",
+      "https://main--intuit-erp--aemsites.aem.page/professional-services/media_130a3aa5a7bb99f0647e3d7cab679337378f72c62.avif",
+      "https://main--intuit-erp--aemsites.aem.page/professional-services/media_101777ace6d0cdab97625477d2403ae55852b82c2.avif"
+    ],
+    "url": "https://main--intuit-erp--aemsites.aem.page/professional-services",
+    "description": "Intuit Enterprise Suite is built for professional services firms — engineering, consulting, legal, IT, and accounting — that need project profitability visibility, automated revenue recognition, and multi-entity management in one platform. Project Management AI automates estimates and profitability targets, syncs projects with payroll, and determines true hourly employee cost rates including pay, benefits, taxes, and overhead.",
+    "features": [
+      "Project Management AI: automated estimates and profitability targets",
+      "Long-term contract revenue recognition",
+      "Real-time job costing and profitability monitoring",
+      "15+ industry-tailored reports and KPIs",
+      "5-year performance data for forecasting",
+      "Multi-entity management with consolidated reporting",
+      "Connects 850+ apps including HR and CRM systems"
+    ],
+    "highlights": [
+      "66% faster month-end close (Lango)",
+      "Immediate cost savings from multi-entity journal entry functionality (FEFA Financial)"
+    ],
+    "persona": "nonprofit-professional-services",
+    "useCase": "professional-services-management",
+    "keywords": [
+      "professional services ERP",
+      "consulting firm ERP",
+      "project profitability",
+      "revenue recognition",
+      "legal services software",
+      "engineering firm accounting",
+      "IT services ERP",
+      "time and billing",
+      "project-based billing",
+      "contract management",
+      "services firm accounting"
+    ]
+  },
+  {
+    "id": "financial-services-erp",
+    "name": "Financial Services ERP",
+    "category": "Industry Solutions",
+    "price": "",
+    "currency": "USD",
+    "images": [
+      "https://main--intuit-erp--aemsites.aem.page/financial-services/media_12ff1568369137758140d3e09ee79c8d7c99d842c.png",
+      "https://main--intuit-erp--aemsites.aem.page/financial-services/media_11c1a27a092a6268fe76a3559561863cfd58a9788.avif",
+      "https://main--intuit-erp--aemsites.aem.page/financial-services/media_1d2863959d3ddb280283d72bbd61c84ed2fa78e3f.avif",
+      "https://main--intuit-erp--aemsites.aem.page/financial-services/media_12ef5e7cac628819130dfe66f44190c8cf657f273.avif",
+      "https://main--intuit-erp--aemsites.aem.page/financial-services/media_1e08a2f7d0f43e095922709979288a90bea5a9beb.avif",
+      "https://main--intuit-erp--aemsites.aem.page/financial-services/media_128d9b541f7671a6f841aef79a3ae1eb441b55ed3.avif"
+    ],
+    "url": "https://main--intuit-erp--aemsites.aem.page/financial-services",
+    "description": "Built for investment firms, family offices, and financial services organizations managing multiple funds, entities, or portfolios. AI-powered anomaly detection highlights trends in real time, 13-week cash flow forecasts predict funding needs, 3-way forecasting integrates P&L, balance sheet, and cash flow statements, and customizable investor-ready reports support up to 20 dimensions.",
+    "features": [
+      "AI-powered anomaly detection and KPI scorecards",
+      "13-week cash flow forecasts with AI predictions",
+      "3-way forecasting: P&L, balance sheet, and cash flow",
+      "Customizable investor-ready reports (up to 20 dimensions)",
+      "Automated intercompany transactions and allocations",
+      "High-volume batch-job processing",
+      "Unified system connecting finances, payroll, payments, and workforce"
+    ],
+    "highlights": [
+      "74% of customers say Intuit AI gives a better picture of financial health",
+      "\"Gives me peace of mind and the data to make the right decisions\" — Josh Daneshforooz, Lango"
+    ],
+    "persona": "multi-entity-finance-leader",
+    "useCase": "financial-planning-analysis",
+    "keywords": [
+      "financial services ERP",
+      "investment firm accounting",
+      "fund accounting",
+      "family office software",
+      "FP&A",
+      "financial planning and analysis",
+      "board reporting",
+      "investor reporting",
+      "KPI dashboard",
+      "cash flow forecasting",
+      "3-way forecast"
+    ]
+  },
+  {
+    "id": "business-intelligence-reporting",
+    "name": "Business Intelligence & Reporting",
+    "category": "Analytics & Reporting",
+    "price": "",
+    "currency": "USD",
+    "images": [
+      "https://main--intuit-erp--aemsites.aem.page/accounting/business-intelligence-reports/media_1c024cedcda64c959234e94de4ae35d64acf0d969.avif",
+      "https://main--intuit-erp--aemsites.aem.page/accounting/business-intelligence-reports/media_100b6127824c921a4a2652ad74f1aa8526eda4b76.png",
+      "https://main--intuit-erp--aemsites.aem.page/accounting/business-intelligence-reports/media_1849d6cc928a3b549d300b7aec7a03b2bd418e57b.png",
+      "https://main--intuit-erp--aemsites.aem.page/media/b45522c9-bento-default-intercompany-transactions-featur.png"
+    ],
+    "url": "https://main--intuit-erp--aemsites.aem.page/accounting/business-intelligence-reports",
+    "description": "Real-time consolidated dashboards with 100+ built-in KPIs, AI-powered summaries that surface trends and performance shifts, and a custom drag-and-drop dashboard builder. Management reports combine financial data, charts, executive summaries, and written narrative analysis. Spreadsheet Sync enables bulk dimension updates without manual re-entry.",
+    "features": [
+      "100+ built-in KPIs with real-time data",
+      "AI-powered summaries identifying trends and performance shifts",
+      "Custom drag-and-drop dashboard builder",
+      "Management reports with narrative analysis",
+      "Customizable styling: banded rows, variance arrows, grid lines",
+      "Spreadsheet Sync for bulk dimension updates",
+      "Third-party CRM and workforce app integration"
+    ],
+    "highlights": [
+      "Continuous accuracy, clarity, and control through AI-driven insights",
+      "Multi-format report generation ready for sharing with stakeholders"
+    ],
+    "persona": "multi-entity-finance-leader",
+    "useCase": "business-intelligence",
+    "keywords": [
+      "business intelligence",
+      "BI reports",
+      "KPI dashboard",
+      "custom reports",
+      "management reporting",
+      "financial dashboards",
+      "real-time analytics",
+      "executive reporting",
+      "AI summaries",
+      "data visualization",
+      "reporting software"
+    ]
+  },
+  {
+    "id": "business-forecasting-fpa",
+    "name": "Business Forecasting & FP&A",
+    "category": "Analytics & Reporting",
+    "price": "",
+    "currency": "USD",
+    "images": [
+      "https://main--intuit-erp--aemsites.aem.page/accounting/business-forecasting/media_1acd0f89ed75f07d77f3630ccdd2c2019e35a234c.avif",
+      "https://main--intuit-erp--aemsites.aem.page/accounting/business-forecasting/media_115a846802560e45ab4a1dc5250e1cfb5176a2b30.avif",
+      "https://main--intuit-erp--aemsites.aem.page/accounting/business-forecasting/media_168ecf73699436f392f1102a30f2426936e6519d7.avif",
+      "https://main--intuit-erp--aemsites.aem.page/accounting/business-forecasting/media_1ee9d6c8b9f8c6f2dad3ee0317014240582c4ee28.avif"
+    ],
+    "url": "https://main--intuit-erp--aemsites.aem.page/accounting/business-forecasting",
+    "description": "Forecast from every dimension — dimensional P&L projections let you analyze projected revenue and expenses across any custom dimension, while AI-generated cash flow forecasts anticipate funding needs with greater accuracy and lead time. Real-time reporting tracks where the business is headed; five-year performance baselines keep strategy grounded in historical data.",
+    "features": [
+      "Dimensional P&L forecasting across custom dimensions",
+      "AI-generated cash flow forecasts with trend analysis",
+      "5-year performance baseline for strategic planning",
+      "Real-time budget vs. actuals tracking",
+      "Scenario modeling for growth planning",
+      "Integrated with multi-entity consolidation"
+    ],
+    "highlights": [
+      "Know where your business is headed — not just where it's been",
+      "AI forecasts anticipate funding needs with greater accuracy and lead time"
+    ],
+    "persona": "multi-entity-finance-leader",
+    "useCase": "financial-planning-analysis",
+    "keywords": [
+      "business forecasting",
+      "FP&A",
+      "financial planning",
+      "cash flow forecast",
+      "dimensional forecasting",
+      "budgeting software",
+      "scenario planning",
+      "revenue forecasting",
+      "AI forecasting",
+      "predictive analytics",
+      "financial modeling"
+    ]
+  },
+  {
+    "id": "payments-bill-pay",
+    "name": "Payments & Bill Pay Automation",
+    "category": "Cash Flow & Payments",
+    "price": "",
+    "currency": "USD",
+    "images": [
+      "https://main--intuit-erp--aemsites.aem.page/automation-tools/payments-bill-pay/media_1f20c58b098b2bf394e93aad8dfeca882a6182c8e.avif",
+      "https://main--intuit-erp--aemsites.aem.page/automation-tools/payments-bill-pay/media_1d34f6a26b3f4a4f29a511914c53ec6c43dd98ce0.png",
+      "https://main--intuit-erp--aemsites.aem.page/automation-tools/payments-bill-pay/media_1faa0fcb6055cfa127ba624c58ead161774c6fe0e.png",
+      "https://main--intuit-erp--aemsites.aem.page/automation-tools/payments-bill-pay/media_117d6cf8cb983409e9b7fae453ddcd4f36124f7a9.png",
+      "https://main--intuit-erp--aemsites.aem.page/automation-tools/payments-bill-pay/media_1fd1bcf48f74508458d3ab1635008c75d7f545284.png"
+    ],
+    "url": "https://main--intuit-erp--aemsites.aem.page/automation-tools/payments-bill-pay",
+    "description": "Automate accounts receivable and payable end-to-end — Payments AI pre-drafts invoices, auto-generates recurring invoices, and analyzes customer payment behaviors to optimize collections. Rules-based AP routing auto-approves and matches transactions to bills. Real-time cash position monitoring and AI-driven cash flow trend analysis help you anticipate funding needs before they become problems. Customers receive payments 4x faster.",
+    "features": [
+      "Payments AI: pre-draft invoices and auto-generate recurring billing",
+      "AI transaction matching: bills to payments",
+      "Rules-based AP approval routing",
+      "Real-time cash position monitoring",
+      "AI-driven cash flow trend analysis",
+      "Payment scheduling up to 90 days in advance",
+      "Auto-fill estimates from email content"
+    ],
+    "highlights": [
+      "Customers receive payments 4x faster",
+      "Anticipate funding needs before they become problems",
+      "Eliminate manual invoice reminders and AP routing"
+    ],
+    "persona": "quickbooks-upgrader",
+    "useCase": "ecosystem-integration",
+    "keywords": [
+      "accounts receivable automation",
+      "accounts payable automation",
+      "AR automation",
+      "AP automation",
+      "invoice automation",
+      "bill pay",
+      "cash flow management",
+      "payment processing",
+      "collections",
+      "automated invoicing",
+      "payments software"
+    ]
+  },
+  {
+    "id": "workforce-elite",
+    "name": "Workforce Elite (HCM)",
+    "category": "Workforce & HR",
+    "price": "",
+    "currency": "USD",
+    "images": [
+      "https://main--intuit-erp--aemsites.aem.page/human-capital-management/media_1083a7a3c94b76869d459d6a23c1fc7c58c851fe1.avif",
+      "https://main--intuit-erp--aemsites.aem.page/human-capital-management/media_1e8a7cd25112bcb23062848074fe815c99bfc2055.webp",
+      "https://main--intuit-erp--aemsites.aem.page/human-capital-management/media_19b3c0f78030b446f785393d9e6c020b96e36f347.webp",
+      "https://main--intuit-erp--aemsites.aem.page/human-capital-management/media_1ce42eed6aa3e6e8e59a82597957143db83e3d9a4.webp",
+      "https://main--intuit-erp--aemsites.aem.page/human-capital-management/media_18cb43c843c75725b0a1f97417ba33072cfce386b.webp",
+      "https://main--intuit-erp--aemsites.aem.page/human-capital-management/media_162564b55b7c3cd44ccd67abf3825bf41820dcea8.png"
+    ],
+    "url": "https://main--intuit-erp--aemsites.aem.page/human-capital-management",
+    "description": "Workforce Elite unifies payroll, time, and HR in one platform — multi-entity payroll hub, real-time labor cost tracking by entity and project, AI-assisted recruiting and onboarding, and digital compliance tracking across states. Single entry for new hires syncs automatically across all entities. Tax Penalty Protection up to $25,000 per year. Available as an add-on to Intuit Enterprise Suite.",
+    "features": [
+      "Multi-entity payroll overview from a single interface",
+      "Real-time labor cost tracking by entity, project, and P&L",
+      "AI-assisted job posting and applicant tracking",
+      "Employee lifecycle management from hire to offboard",
+      "Multi-state tax compliance and digital documentation",
+      "Tax Penalty Protection up to $25,000/year",
+      "Employee self-service portal and mobile app"
+    ],
+    "highlights": [
+      "Single entry for new hires — automatically synced across all entities",
+      "Payroll tax amendments processable in as few as 7 days",
+      "\"Compliance used to mean chasing paper notices. Now everything is digital, documented, and done\" (Mathnasium)"
+    ],
+    "persona": "proadvisor-accountant",
+    "useCase": "workforce-management",
+    "keywords": [
+      "payroll software",
+      "HR software",
+      "HCM",
+      "human capital management",
+      "workforce management",
+      "payroll and HR",
+      "multi-entity payroll",
+      "employee management",
+      "time tracking",
+      "HR automation",
+      "Workforce Elite"
+    ]
+  },
+  {
+    "id": "accountant-proadvisor",
+    "name": "Accountant & ProAdvisor Tools",
+    "category": "Accountant & Partner",
+    "price": "",
+    "currency": "USD",
+    "images": [
+      "https://main--intuit-erp--aemsites.aem.page/accountant/media_1c92d865fa192e081cac7de02f91fde4fb255bca8.png",
+      "https://main--intuit-erp--aemsites.aem.page/accountant/media_1cdd3236ff61f214ea8eba2fe0cf0d41b0eaf5a94.webp",
+      "https://main--intuit-erp--aemsites.aem.page/accountant/media_1bbc630ad07204b8651ecf60402c14fb495a7b0a6.jpg",
+      "https://main--intuit-erp--aemsites.aem.page/accountant/media_114cc618745a6685ec13ca05d4c90a5823983d16c.avif",
+      "https://main--intuit-erp--aemsites.aem.page/accountant/media_13bc83812f297d6cf475863a13869bf8851bf3aca.avif",
+      "https://main--intuit-erp--aemsites.aem.page/accountant/media_1695cd3d398e4b2eb049953abf74b645d701586bd.webp"
+    ],
+    "url": "https://main--intuit-erp--aemsites.aem.page/accountant",
+    "description": "Purpose-built tools for accounting firms and ProAdvisors managing complex clients. AI Agents and advanced automation streamline journal entries, reconciliations, and reporting — up to 95% time savings on journal entries and 70% on reconciliations. ProAdvisors earn 30% referral bonuses on first-year subscription fees and receive up to 60% preferred pricing for clients. Ideal for clients with $5M+ revenue, multiple US entities, and industry-specific reporting needs.",
+    "features": [
+      "Up to 95% time savings on journal entries",
+      "Up to 70% time savings on reconciliations",
+      "30% referral bonus on first-year subscription fees",
+      "Up to 60% off list price with ProAdvisor preferred pricing",
+      "Multi-dimensional reporting with 100+ industry-specific KPIs",
+      "Seamless migration with familiar QuickBooks Online interface",
+      "Dedicated customer success team for client onboarding"
+    ],
+    "highlights": [
+      "Up to 20,196 hours reallocated to advisory work annually",
+      "Potential for $4.0 million incremental revenue over three years",
+      "\"Familiar, powerful, easy to use, and affordable\" — Brian Sergio, Tranex Consulting"
+    ],
+    "persona": "proadvisor-accountant",
+    "useCase": "erp-migration",
+    "keywords": [
+      "ProAdvisor",
+      "accountant tools",
+      "accounting firm ERP",
+      "client management",
+      "ProAdvisor pricing",
+      "referral bonus",
+      "CPA tools",
+      "accounting software for accountants",
+      "bookkeeper tools",
+      "advisory services",
+      "client migration"
     ]
   }
 ]

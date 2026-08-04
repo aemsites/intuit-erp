@@ -9,64 +9,134 @@
   {
     "id": "is-ies-an-erp",
     "question": "Is Intuit Enterprise Suite an ERP?",
-    "answer": "Yes, Intuit Enterprise Suite is an AI-native ERP designed for growing companies. It offers a unified platform that goes beyond basic accounting, is simple and scalable, and integrates AI to provide automated experiences and intelligent business insights - consolidating finances, payroll, payments, workforce, and marketing into one connected platform, with robust multi-entity management for businesses with multiple entities or subsidiaries.",
+    "answer": "Yes, Intuit Enterprise Suite is an AI-native ERP designed for growing companies. It offers a unified platform that goes beyond basic accounting — simple and scalable, with AI providing automated experiences and intelligent business insights. It consolidates finances, payroll, payments, workforce, and marketing into one connected platform, with robust multi-entity management for businesses with multiple entities or subsidiaries.",
     "relatedProducts": ["multi-entity-consolidation", "ai-finance-agents"],
+    "category": "general"
+  },
+  {
+    "id": "roi-and-performance",
+    "question": "What ROI can I expect from Intuit Enterprise Suite?",
+    "answer": "A Forrester Total Economic Impact study commissioned by Intuit (February 2025) based on composite customer scenarios projects 299% ROI over three years, 64% technology cost savings, and $596,000 in total projected benefits. Individual results include: 50% reduction in month-end close (Cornerstone Development), 66% faster close (Lango), 25% reduction in accounting errors (Tampa Bay EDC), and 90% of customers fully set up within 30 days.",
+    "relatedProducts": ["ai-finance-agents", "multi-entity-consolidation"],
     "category": "general"
   },
   {
     "id": "company-size-fit",
     "question": "What size company is Intuit Enterprise Suite built for?",
-    "answer": "Intuit Enterprise Suite is built for businesses with growing financial complexity - especially those managing multiple entities, locations, or projects. If your team has outgrown QuickBooks Online but isn't ready for the cost and complexity of a traditional ERP, Intuit Enterprise Suite is designed for how your business is structured today - and how it will scale tomorrow.",
+    "answer": "Intuit Enterprise Suite is built for businesses with growing financial complexity — especially those managing multiple entities, locations, or projects with $5M+ in annual revenue. If your team has outgrown QuickBooks Online but isn't ready for the cost and complexity of a traditional ERP, Intuit Enterprise Suite is designed for how your business is structured today and how it will scale tomorrow.",
     "relatedProducts": ["multi-entity-consolidation"],
     "category": "fit"
   },
   {
     "id": "qbd-cloud-version",
-    "question": "Is this a cloud based version of QuickBooks Desktop Enterprise?",
-    "answer": "No. Intuit Enterprise Suite is a new category of software distinct from our QuickBooks Online and Desktop products. Think of it as the next evolution for businesses that have outgrown basic accounting and need a solution to scale operations.",
+    "question": "Is this a cloud-based version of QuickBooks Desktop Enterprise?",
+    "answer": "No. Intuit Enterprise Suite is a new category of software distinct from QuickBooks Online and Desktop products. Think of it as the next evolution for businesses that have outgrown basic accounting and need a solution to scale operations — with native multi-entity management, AI agents, and enterprise-grade controls that don't exist in any QuickBooks product.",
     "relatedProducts": ["quickbooks-legacy-migration"],
     "category": "fit"
   },
   {
     "id": "best-fit-companies",
-    "question": "What types of companies is IES best suited for?",
-    "answer": "Intuit Enterprise Suite is ideal for multi-entity organizations that need a unified, consolidated view; project-based businesses including construction and specialty trades; product-based businesses such as manufacturing, wholesale, and distribution; and companies with dedicated finance teams that require audit-ready controls, advanced reporting, and AI-powered automation.",
-    "relatedProducts": ["multi-entity-consolidation", "audit-ready-controls"],
+    "question": "What types of companies is Intuit Enterprise Suite best suited for?",
+    "answer": "Intuit Enterprise Suite is ideal for: multi-entity organizations needing a unified consolidated view; construction and field services businesses needing real-time WIP reporting and job costing; professional services firms managing projects, contracts, and revenue recognition; financial services firms requiring FP&A, fund accounting, and board-ready reporting; nonprofits managing affiliated entities, grants, and compliance; and manufacturing, wholesale, and franchise organizations. A dedicated finance team or controller is typical.",
+    "relatedProducts": ["multi-entity-consolidation", "audit-ready-controls", "construction-erp", "professional-services-erp", "financial-services-erp"],
     "category": "fit"
+  },
+  {
+    "id": "which-industries-does-ies-serve",
+    "question": "Which industries does Intuit Enterprise Suite serve?",
+    "answer": "Intuit Enterprise Suite has purpose-built solutions for construction (WIP, AIA invoicing, job costing), professional services (revenue recognition, project profitability), financial services (FP&A, fund accounting, investor reporting), nonprofits (grant tracking, multi-entity reporting), field services, manufacturing, wholesale and distribution, franchises (multi-location consolidation), retail, and food service. Each includes industry-specific KPIs, workflows, and reports.",
+    "relatedProducts": ["construction-erp", "professional-services-erp", "financial-services-erp"],
+    "category": "fit"
+  },
+  {
+    "id": "how-does-ies-compare-competitors",
+    "question": "How does Intuit Enterprise Suite compare to NetSuite or Sage Intacct?",
+    "answer": "Intuit Enterprise Suite typically implements in less than 2 months versus 6 months for NetSuite or 4 months for Sage Intacct. It's also the only platform in this category that includes a dedicated Customer Success Manager in the base subscription (competitors charge add-on fees), built-in bill pay and payment processing (no external partner required), direct lending access, and enhanced reporting and forecasting at no extra cost.",
+    "relatedProducts": ["quickbooks-legacy-migration", "connected-ecosystem"],
+    "category": "fit"
+  },
+  {
+    "id": "is-ies-available-outside-us",
+    "question": "Is Intuit Enterprise Suite available outside the US?",
+    "answer": "Multi-entity management currently supports US entities only. If you have international entities or subsidiaries, contact Intuit to discuss your specific setup and available options.",
+    "relatedProducts": ["multi-entity-consolidation"],
+    "category": "fit"
+  },
+  {
+    "id": "what-ai-agents-are-included",
+    "question": "What AI agents are included in Intuit Enterprise Suite?",
+    "answer": "Intuit Enterprise Suite includes five AI agents: the Accounting Agent, which reconciles accounts nearly 3x faster by comparing PDF statements to account data and flagging anomalies; the Finance Agent, which generates board-ready management reports with narrative analysis; the Payroll Agent, which proactively collects employee time and attendance data and flags inconsistencies; the Project Management AI, which reduces manual project setup by 69% and suggests profitability targets based on historical data; and Intuit Intelligence Chat, which provides instant answers to business questions across your data.",
+    "relatedProducts": ["ai-finance-agents"],
+    "category": "features"
+  },
+  {
+    "id": "what-reporting-is-included",
+    "question": "What reporting and analytics capabilities are included?",
+    "answer": "Intuit Enterprise Suite includes 100+ built-in KPIs, real-time consolidated dashboards, AI-powered management reports with narrative analysis, a custom drag-and-drop dashboard builder, and multi-dimensional reporting with up to 20 dimensions. The Finance Agent generates board-ready reports automatically. Business forecasting tools provide dimensional P&L projections, AI-driven 13-week cash flow forecasts, and 5-year performance baselines. Spreadsheet Sync enables bulk updates without re-entry.",
+    "relatedProducts": ["business-intelligence-reporting", "business-forecasting-fpa", "ai-finance-agents"],
+    "category": "features"
+  },
+  {
+    "id": "construction-key-features",
+    "question": "What does Intuit Enterprise Suite offer for construction companies?",
+    "answer": "Intuit Enterprise Suite for construction includes real-time WIP (Work-in-Progress) reports with budget vs. actuals monitoring, AIA-style invoicing with automated scope change capture, AI-powered unit cost recommendations based on historical data and peer benchmarks, multi-dimensional reporting across up to 20 dimensions, cross-portfolio project visibility dashboards, and five-year performance baseline forecasting. It integrates natively with Procore, Buildertrend, ServiceTitan, and JobTread.",
+    "relatedProducts": ["construction-erp", "ai-finance-agents"],
+    "category": "features"
+  },
+  {
+    "id": "what-is-workforce-elite",
+    "question": "What is Workforce Elite and does it come with Intuit Enterprise Suite?",
+    "answer": "Workforce Elite is Intuit's unified human capital management (HCM) solution that combines payroll, time tracking, and HR in one platform. It is available as an add-on to Intuit Enterprise Suite. It includes multi-entity payroll oversight, real-time labor cost tracking by project and P&L, AI-assisted recruiting and onboarding, multi-state tax compliance, and Tax Penalty Protection up to $25,000 per year. A single employee entry automatically syncs across all entities.",
+    "relatedProducts": ["workforce-elite", "connected-ecosystem"],
+    "category": "features"
   },
   {
     "id": "support-availability",
     "question": "Is support available?",
-    "answer": "Yes, comprehensive support is a cornerstone of Intuit Enterprise Suite. Core product support is available Monday through Friday, 6 AM - 6 PM PT (excluding Saturday and Sunday). A dedicated Customer Success Manager is also assigned to your account and available during onboarding to answer questions and keep your business running.",
+    "answer": "Yes, comprehensive support is a cornerstone of Intuit Enterprise Suite. Core product support is available Monday through Friday, 5 AM–6 PM PT. A dedicated Customer Success Manager is assigned to your account from day one — included in the base subscription at no extra cost — and is available during onboarding to answer questions and keep your business running.",
     "relatedProducts": [],
     "category": "support"
   },
   {
     "id": "training-available",
-    "question": "Is there training on IES available?",
-    "answer": "Yes. While the platform is designed for ease of use, comprehensive training ensures your team hits the ground running, with a dedicated customer success manager guiding initial setup and a variety of tailored training plans from self-paced modules to live expert sessions.",
+    "question": "Is there training on Intuit Enterprise Suite available?",
+    "answer": "Yes. While the platform is designed for ease of use — with 90% of customers fully set up within 30 days — comprehensive training ensures your team hits the ground running. A dedicated Customer Success Manager guides initial setup, and training plans range from self-paced modules to live expert sessions. Industry-specific onboarding resources are also available.",
     "relatedProducts": ["quickbooks-legacy-migration"],
     "category": "support"
   },
   {
     "id": "migration-ease",
     "question": "How easy is it to migrate to Intuit Enterprise Suite?",
-    "answer": "Whether you're migrating from QuickBooks Online, QuickBooks Desktop, or a non-Intuit solution, Intuit is there to make the transition smooth, accurate, and effective.",
+    "answer": "Migration is guided by a dedicated implementation consultant who scopes the work, maps transferable data, and handles the entire process. AI standardizes your chart of accounts and aligns entities before go-live. Migration from QuickBooks Desktop is fully included (valued at $9,000), with most migrations completing within 72 hours. QuickBooks Online upgrades are zero-downtime with data ready immediately upon login. Non-Intuit migrations are handled by Professional Services on a custom timeline.",
     "relatedProducts": ["quickbooks-legacy-migration"],
     "category": "migration"
   },
   {
     "id": "upgrading-from-qbo",
-    "question": "Upgrading from QuickBooks Online - what happens to my data?",
-    "answer": "If you are upgrading from QuickBooks Online, your data is automatically migrated to Intuit Enterprise Suite and no additional work is needed. The Professional Services team will assist if you'd like to customize the migration, and your Customer Success Manager will schedule onboarding calls to make sure your team is set up for success.",
+    "question": "Upgrading from QuickBooks Online — what happens to my data?",
+    "answer": "If you are upgrading from QuickBooks Online, your data is automatically migrated to Intuit Enterprise Suite with zero downtime and no additional work required. The interface remains familiar, so your team relearns very little while gaining multi-entity capabilities, advanced reporting, and automation features. Your Customer Success Manager schedules onboarding calls to ensure your team is set up for success.",
     "relatedProducts": ["quickbooks-legacy-migration"],
     "category": "migration"
   },
   {
     "id": "switching-from-qbd-or-other",
-    "question": "Switching from QuickBooks Desktop or a non-Intuit solution - how does migration work?",
-    "answer": "The Professional Services team helps migrate your data to Intuit Enterprise Suite and configure it based on your needs, plus provides employee training resources. Your Account Manager arranges a scoping meeting with the Data Migration team, who provide an estimate; once approved, the team completes the migration and your Customer Success Manager begins onboarding, including help with third-party app integrations, workflows, and reports.",
+    "question": "Switching from QuickBooks Desktop or a non-Intuit solution — how does migration work?",
+    "answer": "The Professional Services team migrates your data and configures Intuit Enterprise Suite based on your needs, plus provides employee training resources. Your Account Manager arranges a scoping meeting with the Data Migration team; once approved, the team completes the migration and your Customer Success Manager begins onboarding — including help with third-party app integrations, workflows, and reports. QB Desktop migrations are included at no cost (valued at $9,000); non-Intuit migrations are priced based on scope.",
     "relatedProducts": ["quickbooks-legacy-migration", "connected-ecosystem"],
     "category": "migration"
+  },
+  {
+    "id": "how-does-pricing-work",
+    "question": "How does Intuit Enterprise Suite pricing work?",
+    "answer": "Intuit Enterprise Suite pricing is custom-bundled to reflect your business, user count, and preferred Intuit solutions — there are no fixed public tiers. A Forrester TEI study (February 2025) projects 299% ROI and 64% technology cost savings over three years. ProAdvisors receive up to 60% off list price through ProAdvisor preferred pricing, which persists throughout the contract term and does not apply to per-user charges, add-ons, or payroll.",
+    "relatedProducts": ["connected-ecosystem", "accountant-proadvisor"],
+    "category": "pricing"
+  },
+  {
+    "id": "proadvisor-benefits",
+    "question": "What benefits do ProAdvisors and accountants get?",
+    "answer": "ProAdvisors earn a 30% referral bonus on first-year subscription fees for referred clients, plus up to 60% off list price through ProAdvisor preferred pricing. They also gain access to tools that provide up to 95% time savings on journal entries and 70% on reconciliations, multi-dimensional reporting with industry-specific KPIs, and dedicated migration and onboarding support for each client. A free consultation is available to explore client fit.",
+    "relatedProducts": ["accountant-proadvisor", "connected-ecosystem"],
+    "category": "pricing"
   }
 ]

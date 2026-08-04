@@ -2,7 +2,7 @@
   {
     "id": "multi-entity-finance-leader",
     "name": "Multi-Entity Finance Leader",
-    "description": "CFO or controller running finance for a company with multiple entities, subsidiaries, or locations who needs one consolidated view instead of stitching together spreadsheets.",
+    "description": "CFO or controller running finance for a company with multiple entities, subsidiaries, or locations who needs one consolidated view instead of stitching together spreadsheets. Often in financial services, nonprofit, or complex mid-market organizations.",
     "keywords": [
       "multi-entity",
       "consolidation",
@@ -11,16 +11,24 @@
       "consolidated reporting",
       "multiple entities",
       "close process",
-      "entity management"
+      "entity management",
+      "board reporting",
+      "investor reporting",
+      "FP&A"
     ],
     "priorities": [
       "consolidated reporting across entities",
       "automatic intercompany eliminations",
-      "a single source of truth"
+      "a single source of truth",
+      "board-ready financial reports",
+      "AI-driven forecasting and cash flow visibility"
     ],
     "recommendedProducts": [
       "multi-entity-consolidation",
-      "audit-ready-controls"
+      "audit-ready-controls",
+      "business-intelligence-reporting",
+      "business-forecasting-fpa",
+      "financial-services-erp"
     ],
     "intentProfile": {
       "explore": 0.3,
@@ -34,7 +42,7 @@
   {
     "id": "quickbooks-upgrader",
     "name": "QuickBooks Upgrader",
-    "description": "Finance lead who has outgrown QuickBooks Online or Desktop and is evaluating an ERP step-up, wanting a fast, low-disruption migration rather than a rebuild.",
+    "description": "Finance lead who has outgrown QuickBooks Online or Desktop and is evaluating an ERP step-up, wanting a fast, low-disruption migration rather than a rebuild. Often in services, construction, or growing SMBs.",
     "keywords": [
       "quickbooks",
       "outgrown quickbooks",
@@ -43,16 +51,21 @@
       "quickbooks desktop enterprise",
       "migration",
       "go live",
-      "step up from quickbooks"
+      "step up from quickbooks",
+      "automate bookkeeping",
+      "month-end close"
     ],
     "priorities": [
       "fast, guided migration",
       "keep existing Chart of Accounts and lists",
-      "avoid disruptive legacy ERP implementations"
+      "avoid disruptive legacy ERP implementations",
+      "AI automation to reduce manual work",
+      "faster month-end close"
     ],
     "recommendedProducts": [
       "quickbooks-legacy-migration",
-      "ai-finance-agents"
+      "ai-finance-agents",
+      "payments-bill-pay"
     ],
     "intentProfile": {
       "explore": 0.4,
@@ -66,7 +79,7 @@
   {
     "id": "construction-field-services-controller",
     "name": "Construction & Field Services Controller",
-    "description": "Controller at a project-based construction, field-services, or trades business (the site's most common named customer segment) weighing Intuit Enterprise Suite against other mid-market ERPs.",
+    "description": "Controller at a project-based construction, field-services, or trades business weighing Intuit Enterprise Suite against other mid-market ERPs. Needs real-time job costing, WIP visibility, and AIA billing without months of implementation.",
     "keywords": [
       "construction",
       "field services",
@@ -75,14 +88,20 @@
       "trades business",
       "specialty contractor",
       "month-end close",
-      "compare erp"
+      "compare erp",
+      "WIP report",
+      "AIA billing",
+      "Procore"
     ],
     "priorities": [
       "faster month-end close",
       "project-based accounting across jobs",
+      "real-time WIP visibility",
+      "native integrations with construction tools",
       "proof from similar construction customers"
     ],
     "recommendedProducts": [
+      "construction-erp",
       "multi-entity-consolidation",
       "ai-finance-agents"
     ],
@@ -98,7 +117,7 @@
   {
     "id": "proadvisor-accountant",
     "name": "Accountant / ProAdvisor",
-    "description": "Accounting firm or ProAdvisor helping clients evaluate and migrate to Intuit Enterprise Suite, motivated by preferred pricing and hands-on migration support.",
+    "description": "Accounting firm or ProAdvisor helping clients evaluate and migrate to Intuit Enterprise Suite, motivated by preferred pricing, referral bonuses, and hands-on migration support. Manages complex multi-entity clients across industries.",
     "keywords": [
       "proadvisor",
       "accountant",
@@ -106,16 +125,23 @@
       "client migration",
       "professional services",
       "preferred pricing",
-      "im an accountant"
+      "im an accountant",
+      "referral bonus",
+      "CPA",
+      "advisory services"
     ],
     "priorities": [
-      "ProAdvisor preferred pricing",
+      "ProAdvisor preferred pricing (up to 60% off)",
+      "30% referral bonus on first-year subscription",
       "professional services support for client migrations",
+      "tools that save time on journal entries and reconciliations",
       "an open ecosystem of apps clients already use"
     ],
     "recommendedProducts": [
+      "accountant-proadvisor",
       "connected-ecosystem",
-      "quickbooks-legacy-migration"
+      "quickbooks-legacy-migration",
+      "workforce-elite"
     ],
     "intentProfile": {
       "explore": 0.2,
@@ -129,7 +155,7 @@
   {
     "id": "nonprofit-professional-services",
     "name": "Nonprofit & Professional Services Finance Director",
-    "description": "Finance director at a nonprofit or professional-services organization managing multiple locations, grants, or programs, prioritizing governance, compliance, and audit-readiness over deal pricing.",
+    "description": "Finance director at a nonprofit or professional-services organization managing multiple locations, grants, programs, or project-based contracts. Prioritizes governance, compliance, and audit-readiness.",
     "keywords": [
       "nonprofit",
       "professional services",
@@ -138,16 +164,23 @@
       "grants",
       "multi-location",
       "governance",
-      "controls"
+      "controls",
+      "revenue recognition",
+      "project billing",
+      "HIPAA",
+      "SOC1"
     ],
     "priorities": [
       "audit-ready controls and complete approval history",
       "consolidated reporting across programs or locations",
-      "role-based permissions for oversight"
+      "role-based permissions for oversight",
+      "project profitability and revenue recognition",
+      "GAAP, SOC1, and HIPAA compliance"
     ],
     "recommendedProducts": [
       "audit-ready-controls",
-      "multi-entity-consolidation"
+      "multi-entity-consolidation",
+      "professional-services-erp"
     ],
     "intentProfile": {
       "explore": 0.3,

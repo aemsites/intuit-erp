@@ -5,7 +5,7 @@
       "Choosing an ERP for a growing mid-market business",
       "Multi-entity consolidation and intercompany automation",
       "Audit readiness, controls, and real-time financial visibility",
-      "Migrating to Intuit Enterprise Suite"
+      "Migrating to Intuit Enterprise Suite from QuickBooks or legacy ERP"
     ]
   },
   {
@@ -15,6 +15,105 @@
       "Upgrading from QuickBooks to a mid-market ERP",
       "Using AI to accelerate the financial close",
       "Multi-entity and project-based financial visibility for professional services"
+    ]
+  },
+  {
+    "url": "/construction",
+    "questions": [
+      "Best ERP for construction and specialty contracting",
+      "Real-time job costing and WIP reporting for construction",
+      "AIA billing and project profitability tracking",
+      "Integrating construction operations with financial management"
+    ]
+  },
+  {
+    "url": "/financial-services",
+    "questions": [
+      "ERP for investment firms, family offices, and financial services companies",
+      "FP&A, board reporting, and investor-ready financial reports",
+      "Cash flow forecasting and 3-way financial statements",
+      "Multi-entity management for financial services organizations"
+    ]
+  },
+  {
+    "url": "/accounting/multi-entity",
+    "questions": [
+      "Managing multiple entities and subsidiaries from one platform",
+      "Automatic intercompany eliminations and consolidated reporting",
+      "Audit-ready controls for multi-entity organizations",
+      "Single sign-in management across companies and locations"
+    ]
+  },
+  {
+    "url": "/accounting/business-intelligence-reports",
+    "questions": [
+      "Custom dashboards and KPI reporting for finance teams",
+      "AI-powered management reports with narrative analysis",
+      "Real-time financial analytics and multi-dimensional reporting",
+      "Business intelligence tools for growing mid-market companies"
+    ]
+  },
+  {
+    "url": "/accounting/business-forecasting",
+    "questions": [
+      "Dimensional forecasting and financial planning tools",
+      "AI-driven cash flow forecasting and scenario planning",
+      "FP&A tools for mid-market ERP platforms",
+      "5-year performance baselines and revenue projections"
+    ]
+  },
+  {
+    "url": "/ai-agents",
+    "questions": [
+      "AI agents for accounting, finance, and payroll automation",
+      "Automating the month-end close with AI",
+      "Reconciliation automation and anomaly detection",
+      "Project management AI for professional services and construction"
+    ]
+  },
+  {
+    "url": "/human-capital-management",
+    "questions": [
+      "Unified payroll and HR software for growing businesses",
+      "Multi-entity payroll management and labor cost tracking",
+      "Workforce Elite HCM features and pricing",
+      "HR compliance and employee self-service across multiple entities"
+    ]
+  },
+  {
+    "url": "/automation-tools/payments-bill-pay",
+    "questions": [
+      "Automating accounts receivable and accounts payable",
+      "AI-powered invoice automation and payment processing",
+      "Cash flow management and real-time cash position monitoring",
+      "Reducing days sales outstanding and collecting faster"
+    ]
+  },
+  {
+    "url": "/accountant",
+    "questions": [
+      "ProAdvisor tools and preferred pricing for accounting firms",
+      "Time savings on journal entries and reconciliations",
+      "Managing complex multi-entity clients as an accountant",
+      "Referral bonuses and partner benefits for ProAdvisors"
+    ]
+  },
+  {
+    "url": "/migration",
+    "questions": [
+      "Migrating from QuickBooks Desktop to an ERP",
+      "How long does ERP migration take",
+      "What data transfers during migration to Intuit Enterprise Suite",
+      "Zero-downtime upgrade from QuickBooks Online"
+    ]
+  },
+  {
+    "url": "/compare",
+    "questions": [
+      "Intuit Enterprise Suite vs NetSuite comparison",
+      "Intuit Enterprise Suite vs Sage Intacct comparison",
+      "Implementation timeline and cost comparison for mid-market ERPs",
+      "What makes Intuit Enterprise Suite different from competitors"
     ]
   }
 ]
