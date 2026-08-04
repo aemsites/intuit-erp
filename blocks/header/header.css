@@ -178,7 +178,7 @@ body.nav-scroll-lock { overflow: hidden; }
      takes over the fixed-with-a-spacer treatment instead, sliding up to
      cover the topstrip+primary-nav height exactly the same way the primary
      nav does elsewhere — see header.js's scroll listener. */
-  .header.has-secondary-nav .ies-nav { position: static; }
+  .header.has-secondary-nav .ies-nav { position: relative; }
   .header.has-secondary-nav .ies-nav-spacer { height: auto; }
   .header.has-secondary-nav .ies-secondary-nav-spacer { height: 80px; }
   .header.has-secondary-nav .ies-secondary-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 51; }
