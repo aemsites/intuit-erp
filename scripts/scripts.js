@@ -28,8 +28,14 @@ import { isVideoLink } from '../blocks/video/video.js';
 // the live demo. Datastream confirmed valid against the sapphiredemo1 org
 // (developersandbox1) — verified live in Adobe Assurance (events, identity
 // stitch, and RTCDP segment resolution all working).
-const AEP_DATASTREAM_ID = 'a114467b-290b-4429-9d7e-56bc5b5786fa';
-const AEP_ORG_ID = '87020D54659BEED90A495E68@AdobeOrg';
+//Sites Internal ORG
+//const AEP_DATASTREAM_ID = 'a114467b-290b-4429-9d7e-56bc5b5786fa';
+//const AEP_ORG_ID = '87020D54659BEED90A495E68@AdobeOrg';
+
+//AGS1664 org
+const AEP_DATASTREAM_ID = '12798734-d968-4ad7-929b-2328be6e84c0';
+const AEP_ORG_ID = 'AEAD3B6162EA4C650A495C99@AdobeOrg';
+
 // Experience Workspace previews the page from a *.preview.da.live domain —
 // martech (Alloy) loading there can interfere with that preview, so it's
 // disabled regardless of datastream config on that host.
