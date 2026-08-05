@@ -30,6 +30,6 @@
 		"BU_NAME": "SBSEG",
 		"COUNTRY_CODE": "US",
 		// Ask the origin to enable push invalidation (set to "disabled" to skip).
-		"PUSH_INVALIDATION": "enabled",
-	},
+		"PUSH_INVALIDATION": "enabled"
+	}
 }
