@@ -207,9 +207,10 @@ function htmlResponse(body, origin, fragmentHeaders) {
  * strip `age` / `x-robots-tag`.
  * @param {Response} response
  * @param {string} savedSearch
+ * @param {Env} env
  * @returns {Response}
  */
-function finalize(response, savedSearch) {
+function finalize(response, savedSearch, env) {
   const resp = new Response(response.body, response);
   if (resp.status === 301 && savedSearch) {
     const location = resp.headers.get('location');
@@ -222,6 +223,17 @@ function finalize(response, savedSearch) {
   }
   resp.headers.delete('age');
   resp.headers.delete('x-robots-tag');
+
+  // We may only let a CDN cache our output when we can purge it on publish —
+  // i.e. when push invalidation is wired up. Until then, force `no-store` so
+  // every request re-fetches the origin and a publish (or a freshly-authored
+  // pzn slot) shows up immediately, instead of serving a stale edge-cached copy
+  // we have no way to invalidate. Remove this alongside re-enabling
+  // PUSH_INVALIDATION once real purge is set up.
+  if (env.PUSH_INVALIDATION === 'disabled') {
+    resp.headers.set('cache-control', 'no-store');
+    resp.headers.set('cdn-cache-control', 'no-store');
+  }
   return resp;
 }
 
@@ -314,7 +326,7 @@ export default {
         cf: { cacheEverything: true },
       });
       if (fallback.ok) response = fallback;
-      return finalize(response, savedSearch);
+      return finalize(response, savedSearch, env);
     }
 
     // 8. Personalization. Two independent transforms run on an ok HTML GET
@@ -345,6 +357,6 @@ export default {
       }
     }
 
-    return finalize(response, savedSearch);
+    return finalize(response, savedSearch, env);
   },
 };

@@ -69,6 +69,15 @@ describe('intuit-edge personalization proxy', () => {
     expect(await res.text()).toBe(PAGE_HTML);
   });
 
+  it('forces no-store while push invalidation is disabled', async () => {
+    // env.PUSH_INVALIDATION is "disabled" in wrangler.jsonc, so the worker must
+    // not let a CDN cache output it cannot purge on publish.
+    mockOrigin({ data: [] });
+    const res = await run('/not-personalized');
+    expect(res.headers.get('cache-control')).toBe('no-store');
+    expect(res.headers.get('cdn-cache-control')).toBe('no-store');
+  });
+
   it('replaces a block targeted by slot id (fidelity=block, action=replace)', async () => {
     mockOrigin({
       data: [{
