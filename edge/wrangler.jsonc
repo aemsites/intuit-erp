@@ -1,0 +1,35 @@
+{
+	"name": "intuit-edge",
+	"main": "src/index.js",
+	"account_id": "ac7ee4615628005dc5ba0a22f0aae2a6",
+	"compatibility_date": "2026-08-05",
+	"observability": {
+		"enabled": true
+	},
+	"vars": {
+		// aem.live origin the worker proxies pages from.
+		"ORIGIN_BASE_URL": "https://main--intuit-erp--aemsites.aem.live",
+		// Personalization map (mock pzn service). Swappable: point this at the
+		// real Intuit pzn service when available.
+		"PZN_MAP_URL": "https://main--intuit-erp--aemsites.aem.live/pzn/map.json",
+		// Entry source: "map" (map.json, default), "ixp" (IXP Assignment API), or
+		// "mock" (the IXP mock resolved in-process). A ?pzn= query param overrides
+		// this per request.
+		"PZN_SOURCE": "map",
+		// IXP Assignment API. Points at this worker's own /us/v2/assignment route
+		// (the in-worker mock) by default; swap for the real host + a real key
+		// (via `wrangler secret`) once available. The key here is the mock's dev
+		// key and is not a real secret.
+		"IXP_ASSIGNMENT_URL": "http://127.0.0.1:8787/us/v2/assignment",
+		"IXP_API_KEY": "dev-ixp-key",
+		// IXP Assignment mock (served at /v2/assignment). Expected apikey value +
+		// the defaults applied when the query omits application/businessUnit/
+		// country. These sit inside the spec's cache-scope allow lists.
+		"MOCK_API_KEY": "dev-ixp-key",
+		"EDGE_SVC_APP_NAME": "SBGM",
+		"BU_NAME": "SBSEG",
+		"COUNTRY_CODE": "US",
+		// Ask the origin to enable push invalidation (set to "disabled" to skip).
+		"PUSH_INVALIDATION": "enabled",
+	},
+}
