@@ -292,11 +292,15 @@ export default {
     else resolveEntry = resolvePznEntry(env, url.pathname);
 
     // Fetch the origin page, resolve the pzn entry, and resolve any template
-    // fill data — all in parallel. CF does not cache HTML by default;
-    // cacheEverything overrides that. Non-enrolled paths resolve to null with no
-    // network call, so template fill is free for pages that don't use it.
+    // fill data — all in parallel. The origin HTML is fetched fresh (`cacheTtl: 0`)
+    // so a publish on aem.live shows up immediately; without a working push-
+    // invalidation purge to this worker's cache, `cacheEverything` would serve a
+    // page stale by up to its `max-age` (and hide freshly-authored pzn slots).
+    // Revisit once push invalidation is wired up (see README caching note).
+    // Non-enrolled paths resolve to null with no network call, so template fill
+    // is free for pages that don't use it.
     const [originResponse, entry, templateData] = await Promise.all([
-      fetch(originRequest, { cf: { cacheEverything: true } }),
+      fetch(originRequest, { cf: { cacheTtl: 0 } }),
       resolveEntry.catch(() => null),
       resolveTemplateData(env, url.pathname).catch(() => null),
     ]);
