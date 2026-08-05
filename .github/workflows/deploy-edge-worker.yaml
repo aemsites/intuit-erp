@@ -35,4 +35,4 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ac7ee4615628005dc5ba0a22f0aae2a6
           workingDirectory: edge
-          wranglerVersion: "3.101.0"
+          wranglerVersion: "3.114.17"
