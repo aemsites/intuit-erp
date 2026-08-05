@@ -284,8 +284,14 @@ export default {
     const headers = new Headers(request.headers);
     for (const name of HOP_BY_HOP_HEADERS) headers.delete(name);
     headers.set('x-forwarded-host', request.headers.get('host') || url.host);
-    headers.set('x-byo-cdn-type', 'cloudflare');
-    if (env.PUSH_INVALIDATION !== 'disabled') headers.set('x-push-invalidation', 'enabled');
+    // BYO-CDN signaling only when we actually cache (push invalidation on).
+    // While it is off we bypass caching entirely, so don't advertise as a CDN:
+    // that stops the origin from tailoring cache-control/surrogate headers we
+    // would not use anyway.
+    if (env.PUSH_INVALIDATION !== 'disabled') {
+      headers.set('x-byo-cdn-type', 'cloudflare');
+      headers.set('x-push-invalidation', 'enabled');
+    }
     if (env.ORIGIN_AUTHENTICATION) headers.set('authorization', `token ${env.ORIGIN_AUTHENTICATION}`);
 
     // Origin caching: we may only use Cloudflare's cache when we can purge it on

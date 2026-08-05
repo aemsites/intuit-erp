@@ -122,11 +122,12 @@ export function fillTokens(markup, data) {
  * propagation), or null on any failure so the caller passes the page through
  * untouched.
  *
- * Request headers mirror the main origin fetch: `x-byo-cdn-type` /
- * `x-push-invalidation` ask the origin to emit its surrogate/cache-tag headers,
- * and `accept-encoding: identity` avoids compressed-body edge cases since we read
- * the body as text. The fragment is fetched fresh (`cacheTtl: 0`) so its cache
- * tags are always current.
+ * Request headers mirror the main origin fetch: the BYO-CDN pair
+ * (`x-byo-cdn-type` / `x-push-invalidation`) is sent only when push invalidation
+ * is enabled, so the origin emits its surrogate/cache-tag headers only when we
+ * actually cache. `accept-encoding: identity` avoids compressed-body edge cases
+ * since we read the body as text. The fragment is fetched fresh (`cacheTtl: 0`)
+ * so its cache tags are always current.
  * @param {Env} env
  * @param {PznEntry} entry
  * @returns {Promise<OfferResult | null>}
@@ -142,9 +143,11 @@ export async function resolveOfferMarkup(env, entry) {
 
   const headers = {
     'accept-encoding': 'identity',
-    'x-byo-cdn-type': 'cloudflare',
   };
-  if (env.PUSH_INVALIDATION !== 'disabled') headers['x-push-invalidation'] = 'enabled';
+  if (env.PUSH_INVALIDATION !== 'disabled') {
+    headers['x-byo-cdn-type'] = 'cloudflare';
+    headers['x-push-invalidation'] = 'enabled';
+  }
 
   try {
     const res = await fetch(fragmentUrl, {
