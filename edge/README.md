@@ -23,8 +23,10 @@ On each request the worker:
    [`adobe/aem-cloudflare-prod-worker`](https://github.com/adobe/aem-cloudflare-prod-worker).
 3. Fetches the origin (aem.live) response for the requested path.
 4. Resolves the personalization **entry** for that path (see sources below).
-5. For a `.json` request the origin **404s**, falls back to the mhast
-   html-to-json worker (`mhast-html-to-json.adobeaem.workers.dev/aemsites/intuit-erp`).
+5. For a `.json` request the origin **404s**, falls back to a JSON source: the
+   da-sc structured-content worker for paths under a `STRUCTURED_CONTENT_PATHS`
+   prefix (e.g. `/events/`), otherwise the mhast html-to-json worker
+   (`mhast-html-to-json.adobeaem.workers.dev/aemsites/intuit-erp`).
 6. **No entry** → returns the origin response **untouched** (byte-identical
    passthrough).
 7. **Entry** → fetches the referenced **offer fragment**, injects it into the DOM,
@@ -116,6 +118,10 @@ Set in [`wrangler.jsonc`](wrangler.jsonc) `vars` (all swappable, no real secrets
   in-worker IXP mock served at `/v2/assignment`.
 - `PUSH_INVALIDATION` — set to `disabled` to skip the `x-push-invalidation` origin
   header. Defaults to enabled.
+- `STRUCTURED_CONTENT_PATHS` — path prefixes whose `.json` (when the origin 404s)
+  is served from the da-sc structured-content source instead of mhast. An array
+  (`["/events/"]`), a JSON string, or a comma-separated string; empty ⇒ everything
+  uses mhast.
 - `ORIGIN_AUTHENTICATION` — optional; when set, sent as `authorization: token …`
   to the origin. Keep it as a Wrangler **secret**, not in `vars`.
 

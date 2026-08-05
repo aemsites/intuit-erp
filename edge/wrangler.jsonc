@@ -30,6 +30,9 @@
 		"BU_NAME": "SBSEG",
 		"COUNTRY_CODE": "US",
 		// Ask the origin to enable push invalidation (set to "disabled" to skip).
-		"PUSH_INVALIDATION": "enabled"
+		"PUSH_INVALIDATION": "enabled",
+		// Path prefixes whose `.json` (when the origin 404s) is served from the
+		// da-sc structured-content source instead of mhast html-to-json.
+		"STRUCTURED_CONTENT_PATHS": ["/events/"]
 	}
 }

@@ -43,6 +43,12 @@ import { createCacheKeys, mergeCacheKeys, applyCacheKeys } from './cache-keys.js
 const HTML2JSON_BASE = 'https://mhast-html-to-json.adobeaem.workers.dev/aemsites/intuit-erp';
 /** Query params forwarded to mhast, and also preserved on `.json` origin calls. */
 const HTML2JSON_QUERY_PARAMS = new Set(['head', 'preview', 'compact']);
+/**
+ * Structured-content JSON source (da-sc). `.json` paths that 404 at the origin
+ * and match a `STRUCTURED_CONTENT_PATHS` prefix are served from here instead of
+ * the mhast fallback — the content is authored in DA, not published to aem.live.
+ */
+const STRUCTURED_CONTENT_BASE = 'https://da-sc.adobeaem.workers.dev/live/aemsites/intuit-erp';
 /** Query params kept on a media origin subrequest. */
 const MEDIA_PARAMS = new Set(['format', 'height', 'optimize', 'width']);
 /** Query params kept on a `.json` origin subrequest (sheet knobs + json renders). */
@@ -113,12 +119,46 @@ function sanitizeOriginSearch(url, extension) {
   url.searchParams.sort();
 }
 
-/** Builds the mhast html-to-json URL for a `.json` path (drops the extension). */
-function buildHtml2JsonUrl(url) {
+/**
+ * Path prefixes whose `.json` is served by the structured-content (da-sc) source.
+ * Read from the `STRUCTURED_CONTENT_PATHS` env var, accepting an array
+ * (`["/events/"]`), a JSON string, or a comma-separated string. Empty when unset.
+ * @param {Env} env
+ * @returns {string[]}
+ */
+function structuredContentPaths(env) {
+  const raw = env.STRUCTURED_CONTENT_PATHS;
+  if (Array.isArray(raw)) return raw;
+  if (typeof raw === 'string' && raw.trim()) {
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+    } catch {
+      // not JSON — fall through to comma-separated parsing
+    }
+    return raw.split(',').map((s) => s.trim()).filter(Boolean);
+  }
+  return [];
+}
+
+/**
+ * Builds the JSON-fallback URL for a `.json` path that the origin 404'd. Paths
+ * under a `STRUCTURED_CONTENT_PATHS` prefix go to the da-sc structured-content
+ * source; everything else goes to the mhast html-to-json worker.
+ * @param {URL} url
+ * @param {Env} env
+ * @returns {URL}
+ */
+function buildJsonFallbackUrl(url, env) {
   // Drop the `.json` extension, then normalize the EDS folder index document to
   // its folder path — `/index` is served at `/`, `/foo/index` at `/foo/` — so
   // `/index.json` resolves to the homepage rather than a non-existent `/index`.
   const pagePath = url.pathname.replace(/\.json$/, '').replace(/\/index$/, '/');
+
+  if (structuredContentPaths(env).some((prefix) => pagePath.startsWith(prefix))) {
+    return new URL(`${STRUCTURED_CONTENT_BASE}${pagePath}`);
+  }
+
   const target = new URL(`${HTML2JSON_BASE}${pagePath}`);
   for (const [key, value] of url.searchParams.entries()) {
     if (HTML2JSON_QUERY_PARAMS.has(key)) target.searchParams.append(key, value);
@@ -251,9 +291,9 @@ export default {
 
     let response = originResponse;
 
-    // 7. `.json` 404 → mhast html-to-json fallback.
+    // 7. `.json` 404 → JSON fallback: da-sc for structured-content paths, else mhast.
     if (request.method === 'GET' && url.pathname.endsWith('.json') && response.status === 404) {
-      const fallback = await fetch(buildHtml2JsonUrl(url).toString(), {
+      const fallback = await fetch(buildJsonFallbackUrl(url, env).toString(), {
         headers: { accept: 'application/json' },
         cf: { cacheEverything: true },
       });

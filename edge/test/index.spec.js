@@ -204,6 +204,50 @@ describe('aem.live proxy behaviors', () => {
     expect(seen.some((u) => u.includes('mhast-html-to-json'))).toBe(false);
   });
 
+  it('routes a .json 404 under a STRUCTURED_CONTENT_PATHS prefix to da-sc (not mhast)', async () => {
+    const seen = [];
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+      const reqUrl = typeof input === 'string' ? input : input.url;
+      seen.push(reqUrl);
+      if (reqUrl.includes('da-sc.adobeaem.workers.dev')) {
+        return new Response(JSON.stringify({ metadata: {} }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+      return new Response('not found', { status: 404 }); // origin 404
+    });
+    const res = await run('/events/intuit-connect-2026.json');
+    expect(res.status).toBe(200);
+    expect(seen).toContain('https://da-sc.adobeaem.workers.dev/live/aemsites/intuit-erp/events/intuit-connect-2026');
+    expect(seen.some((u) => u.includes('mhast-html-to-json'))).toBe(false);
+  });
+
+  it('does not use da-sc when an events .json is served by the origin (query-index)', async () => {
+    const seen = [];
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+      const reqUrl = typeof input === 'string' ? input : input.url;
+      seen.push(reqUrl);
+      return new Response(JSON.stringify({ data: [] }), { status: 200, headers: { 'content-type': 'application/json' } });
+    });
+    const res = await run('/events/query-index.json');
+    expect(res.status).toBe(200);
+    expect(seen.some((u) => u.includes('da-sc'))).toBe(false);
+  });
+
+  it('a non-structured .json 404 still falls back to mhast (not da-sc)', async () => {
+    const seen = [];
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+      const reqUrl = typeof input === 'string' ? input : input.url;
+      seen.push(reqUrl);
+      if (reqUrl.includes('mhast-html-to-json')) {
+        return new Response(JSON.stringify({ data: [] }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+      return new Response('not found', { status: 404 });
+    });
+    const res = await run('/blog/article.json');
+    expect(res.status).toBe(200);
+    expect(seen.some((u) => u.includes('da-sc'))).toBe(false);
+    expect(seen.some((u) => u.includes('mhast-html-to-json'))).toBe(true);
+  });
+
   it('merges the offer fragment cache keys into the personalized response', async () => {
     vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
       const reqUrl = typeof input === 'string' ? input : input.url;
