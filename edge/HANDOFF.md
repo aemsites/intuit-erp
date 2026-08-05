@@ -11,9 +11,11 @@ Full details in [README.md](README.md). Deep-dives:
   `x-forwarded-host` / `x-byo-cdn-type` / `x-push-invalidation` headers,
   `cacheEverything`, and 301/304/`age`/`x-robots-tag` response cleanup. Mirrors
   `adobe/aem-cloudflare-prod-worker` so a real domain can be pointed at it later.
-- **`.json` 404 fallback** — a `.json` path the origin 404s falls back to
+- **`.json` 404 fallback** — a `.json` path the origin 404s falls back to a JSON
+  source: the **da-sc** structured-content worker for paths under a
+  `STRUCTURED_CONTENT_PATHS` prefix (configurable, e.g. `["/events/"]`), otherwise
   `mhast-html-to-json.adobeaem.workers.dev/aemsites/intuit-erp` (forwards
-  `head`/`preview`/`compact`). No path exclusions.
+  `head`/`preview`/`compact`). `/index.json` normalizes to the folder path.
 - **Personalization** — resolves an entry from `map` / `ixp` / `mock`
   (`PZN_SOURCE`, or `?pzn=` per request), fetches the offer fragment, injects it,
   and merges the fragment's cache keys into the response.
