@@ -31,6 +31,11 @@
  * @property {string} location Slot id to target in the page markup, e.g. "slot-1".
  * @property {PznAction} action What to do at the slot.
  * @property {PznFidelity} fidelity Granularity of the target element.
+ * @property {Record<string, string>} [data] Optional values to fill into the offer
+ *   markup's `{{token}}` placeholders (json2html-lite). A present key wins; an absent
+ *   key falls back to the token's `|default`. Lets the personalization *data* (e.g. an
+ *   IXP assignment payload) render into an authored template, rather than only
+ *   selecting which fragment to inject.
  */
 
 /**
