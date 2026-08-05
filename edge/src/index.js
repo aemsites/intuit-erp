@@ -288,11 +288,21 @@ export default {
     if (env.PUSH_INVALIDATION !== 'disabled') headers.set('x-push-invalidation', 'enabled');
     if (env.ORIGIN_AUTHENTICATION) headers.set('authorization', `token ${env.ORIGIN_AUTHENTICATION}`);
 
+    // Origin caching: we may only use Cloudflare's cache when we can purge it on
+    // publish — i.e. once push invalidation is wired up. Until then bypass it
+    // with `cache: 'no-store'`. A `workers.dev` deployment has no zone to purge,
+    // and `cf.cacheTtl: 0` is not enough: it still serves an entry already stored
+    // by an earlier `cacheEverything` fetch, so a publish (or a freshly-authored
+    // pzn slot) stays hidden behind stale HTML. `no-store` makes the runtime skip
+    // the cache read and write entirely. Revisit alongside PUSH_INVALIDATION.
+    const bypassOriginCache = env.PUSH_INVALIDATION === 'disabled';
+
     const originRequest = new Request(originUrl, {
       method: request.method,
       headers,
       body: request.body,
       redirect: 'manual',
+      ...(bypassOriginCache ? { cache: 'no-store' } : {}),
     });
 
     // Resolve the personalization entry from the selected source. All resolvers
@@ -304,15 +314,12 @@ export default {
     else resolveEntry = resolvePznEntry(env, url.pathname);
 
     // Fetch the origin page, resolve the pzn entry, and resolve any template
-    // fill data — all in parallel. The origin HTML is fetched fresh (`cacheTtl: 0`)
-    // so a publish on aem.live shows up immediately; without a working push-
-    // invalidation purge to this worker's cache, `cacheEverything` would serve a
-    // page stale by up to its `max-age` (and hide freshly-authored pzn slots).
-    // Revisit once push invalidation is wired up (see README caching note).
+    // fill data — all in parallel. `bypassOriginCache` chooses fresh (no-store,
+    // set on the request above) vs. cached (`cacheEverything`) origin reads.
     // Non-enrolled paths resolve to null with no network call, so template fill
     // is free for pages that don't use it.
     const [originResponse, entry, templateData] = await Promise.all([
-      fetch(originRequest, { cf: { cacheTtl: 0 } }),
+      fetch(originRequest, bypassOriginCache ? undefined : { cf: { cacheEverything: true } }),
       resolveEntry.catch(() => null),
       resolveTemplateData(env, url.pathname).catch(() => null),
     ]);
