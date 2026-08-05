@@ -115,7 +115,10 @@ function sanitizeOriginSearch(url, extension) {
 
 /** Builds the mhast html-to-json URL for a `.json` path (drops the extension). */
 function buildHtml2JsonUrl(url) {
-  const pagePath = url.pathname.replace(/\.json$/, '');
+  // Drop the `.json` extension, then normalize the EDS folder index document to
+  // its folder path — `/index` is served at `/`, `/foo/index` at `/foo/` — so
+  // `/index.json` resolves to the homepage rather than a non-existent `/index`.
+  const pagePath = url.pathname.replace(/\.json$/, '').replace(/\/index$/, '/');
   const target = new URL(`${HTML2JSON_BASE}${pagePath}`);
   for (const [key, value] of url.searchParams.entries()) {
     if (HTML2JSON_QUERY_PARAMS.has(key)) target.searchParams.append(key, value);

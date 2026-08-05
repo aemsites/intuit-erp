@@ -173,6 +173,25 @@ describe('aem.live proxy behaviors', () => {
     expect(seen.some((u) => u.includes('mhast-html-to-json.adobeaem.workers.dev/aemsites/intuit-erp/missing/page'))).toBe(true);
   });
 
+  it('normalizes /index.json to the folder path when falling back (EDS index doc)', async () => {
+    const seen = [];
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+      const reqUrl = typeof input === 'string' ? input : input.url;
+      seen.push(reqUrl);
+      if (reqUrl.includes('mhast-html-to-json')) {
+        return new Response(JSON.stringify({ data: [] }), { status: 200, headers: { 'content-type': 'application/json' } });
+      }
+      return new Response('not found', { status: 404 });
+    });
+    await run('/index.json');
+    await run('/blog/index.json');
+    // /index.json -> the homepage path "/", /blog/index.json -> "/blog/"
+    expect(seen).toContain('https://mhast-html-to-json.adobeaem.workers.dev/aemsites/intuit-erp/');
+    expect(seen).toContain('https://mhast-html-to-json.adobeaem.workers.dev/aemsites/intuit-erp/blog/');
+    // never requests the non-existent /index page
+    expect(seen.some((u) => u.endsWith('/aemsites/intuit-erp/index'))).toBe(false);
+  });
+
   it('does not fall back to mhast when the .json origin request succeeds', async () => {
     const seen = [];
     vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
