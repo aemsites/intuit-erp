@@ -26,12 +26,20 @@
  *                       `IXP_ASSIGNMENT_URL` may point at this worker's own
  *                       `/us/v2/assignment` route.
  *   - "mock"          — the IXP mock, resolved in-process (ixp/mock-source.js).
+ *
+ * A second, independent transform runs alongside fragment injection: template
+ * fill (template.js). Some pages are authored with literal ALL-CAPS placeholder
+ * tokens (TITLE, BODY, ...) and a sibling data sheet; the worker fills those
+ * tokens from the sheet, enriched with per-visitor signals (visitor.js), so the
+ * page's own markup renders live, personalized data.
  */
 
 import { applyPersonalization } from './personalize.js';
 import { resolveOfferMarkup, resolvePznEntry } from './pzn.js';
 import { resolveIxpEntry } from './ixp/resolve.js';
 import { resolveMockEntry } from './ixp/mock-source.js';
+import { resolveTemplateData, fillPlaceholders } from './template.js';
+import { deriveVisitorTokens } from './visitor.js';
 import { handleAssignment } from './mock/ixp-assignment.js';
 import { createCacheKeys, mergeCacheKeys, applyCacheKeys } from './cache-keys.js';
 
@@ -132,7 +140,8 @@ function buildHtml2JsonUrl(url) {
  * also invalidates this page.
  * @param {string} body
  * @param {Response} origin
- * @param {Headers} fragmentHeaders
+ * @param {Headers | null} [fragmentHeaders] Fragment response headers whose cache
+ *   keys are merged in; null/omitted for a template-only fill (no fragment).
  * @returns {Response}
  */
 function htmlResponse(body, origin, fragmentHeaders) {
@@ -142,7 +151,7 @@ function htmlResponse(body, origin, fragmentHeaders) {
   headers.delete('content-encoding');
 
   const cacheKeys = createCacheKeys(origin.headers);
-  mergeCacheKeys(cacheKeys, fragmentHeaders);
+  if (fragmentHeaders) mergeCacheKeys(cacheKeys, fragmentHeaders);
   applyCacheKeys(headers, cacheKeys);
 
   return new Response(body, {
@@ -242,11 +251,14 @@ export default {
     else if (source === 'ixp') resolveEntry = resolveIxpEntry(env, request);
     else resolveEntry = resolvePznEntry(env, url.pathname);
 
-    // Fetch the origin page and resolve the entry in parallel. CF does not cache
-    // HTML by default; cacheEverything overrides that.
-    const [originResponse, entry] = await Promise.all([
+    // Fetch the origin page, resolve the pzn entry, and resolve any template
+    // fill data — all in parallel. CF does not cache HTML by default;
+    // cacheEverything overrides that. Non-enrolled paths resolve to null with no
+    // network call, so template fill is free for pages that don't use it.
+    const [originResponse, entry, templateData] = await Promise.all([
       fetch(originRequest, { cf: { cacheEverything: true } }),
       resolveEntry.catch(() => null),
+      resolveTemplateData(env, url.pathname).catch(() => null),
     ]);
 
     let response = originResponse;
@@ -261,16 +273,30 @@ export default {
       return finalize(response, savedSearch);
     }
 
-    // 8. Personalization. Passthrough unless a matched entry, a GET, an ok HTML
-    //    response, and a fetchable offer are all present.
-    if (entry && request.method === 'GET') {
+    // 8. Personalization. Two independent transforms run on an ok HTML GET
+    //    response: fragment injection for a matched pzn entry, and template fill
+    //    for a page authored as a template. Passthrough (body unread) unless at
+    //    least one applies.
+    if (request.method === 'GET') {
       const contentType = response.headers.get('content-type') || '';
       if (response.ok && contentType.includes('text/html')) {
-        const offer = await resolveOfferMarkup(env, entry);
-        if (offer) {
-          const originalHtml = await response.text();
-          const personalized = applyPersonalization(originalHtml, offer.markup, entry);
-          response = htmlResponse(personalized, response, offer.headers);
+        const offer = entry ? await resolveOfferMarkup(env, entry) : null;
+        if (offer || templateData) {
+          let html = await response.text();
+
+          // (1) Fragment injection: swap/insert an offer at the entry's slot.
+          if (offer && entry) html = applyPersonalization(html, offer.markup, entry);
+
+          // (2) Template fill: the page itself is the template — replace its
+          // ALL-CAPS placeholder tokens from the data sheet, enriched with
+          // per-visitor signals (geo/lang/greeting). The sheet wins collisions.
+          if (templateData) {
+            html = fillPlaceholders(html, { ...deriveVisitorTokens(request), ...templateData });
+          }
+
+          // Only a fragment carries cache keys to merge; a template-only fill
+          // has none, so pass null.
+          response = htmlResponse(html, response, offer ? offer.headers : null);
         }
       }
     }

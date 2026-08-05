@@ -83,7 +83,7 @@ describe('IXP assignment mock - contract', () => {
   it('label regex may match multiple experiments', async () => {
     const res = call(`?ivid=${REAL_IVID}&label=ERP-HERO-`);
     const ids = (await bodyOf(res)).assignments.map((a) => a.experimentId).sort();
-    expect(ids).toEqual([39001, 39002, 39003]);
+    expect(ids).toEqual([39001, 39002, 39003, 39005]);
   });
 
   it('page-level treatment carries a payload with sourceUrl/variationUrl', async () => {

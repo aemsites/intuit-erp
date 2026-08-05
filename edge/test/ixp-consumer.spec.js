@@ -3,6 +3,7 @@ import {
   describe, it, expect, vi, afterEach,
 } from 'vitest';
 import worker from '../src/index.js';
+import { fillTokens } from '../src/pzn.js';
 import { assignmentToPznEntry } from '../src/ixp/resolve.js';
 import { resolveRoute } from '../src/ixp/routes.js';
 import { bucketPercent } from '../src/mock/ixp-fixtures.js';
@@ -54,6 +55,21 @@ describe('assignmentToPznEntry', () => {
       action: 'replace',
       fidelity: 'block',
     });
+  });
+
+  it('parses a REPLACE_WEB_CONTENT payload into entry.data (scalars only, stringified)', () => {
+    const entry = assignmentToPznEntry(
+      assignment({
+        experimentType: 'REPLACE_WEB_CONTENT',
+        assetLocation: '/fragments/pzn/welcome',
+        payload: JSON.stringify({
+          headline: 'Hello', count: 3, flag: true, nested: { x: 1 },
+        }),
+      }),
+      ROUTE,
+      '/x',
+    );
+    expect(entry?.data).toEqual({ headline: 'Hello', count: '3', flag: 'true' });
   });
 
   it('returns null for the control arm (baseline)', () => {
@@ -307,5 +323,53 @@ describe('?pzn=mock in-process source (no key required)', () => {
     expect(q.has('ivid')).toBe(false);
     expect(q.has('experimentId')).toBe(false);
     expect(q.has('keep')).toBe(false); // HTML requests forward no query params
+  });
+});
+
+// --- data-fill: the response payload fills the fragment template's tokens ----
+
+describe('fillTokens', () => {
+  it('fills a present value (HTML-escaped), uses the default when absent, else empty', () => {
+    const tpl = '<h2>{{headline|Default headline}}</h2><p>{{tagline}}</p><a>{{cta|Get started}}</a>';
+    const out = fillTokens(tpl, { headline: 'Hi <b>Acme</b>', cta: 'Resume' });
+    expect(out).toContain('<h2>Hi &lt;b&gt;Acme&lt;/b&gt;</h2>'); // value wins, escaped
+    expect(out).toContain('<a>Resume</a>'); // value wins over the default
+    expect(out).toContain('<p></p>'); // no value and no default -> empty
+  });
+
+  it('renders authored defaults unchanged when there is no data', () => {
+    expect(fillTokens('<h2>{{headline|Automate the routine}}</h2>', undefined))
+      .toBe('<h2>Automate the routine</h2>');
+  });
+
+  it('leaves token-free markup untouched', () => {
+    expect(fillTokens(OFFER_HTML, { headline: 'x' })).toBe(OFFER_HTML);
+  });
+});
+
+describe('?experimentId=39005 data-driven offer (payload fills the template)', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  const TEMPLATE = `<div>
+  <div class="offer"><h2>{{headline|Default headline}}</h2><p>{{tagline}}</p><a class="button">{{cta|Get started}}</a></div>
+</div>`;
+
+  /** Serves the token template for the fragment, the page otherwise. */
+  function mockTemplateOrigin() {
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+      const reqUrl = typeof input === 'string' ? input : input.url;
+      if (reqUrl.includes('/fragments/pzn/')) return new Response(TEMPLATE, { status: 200, headers: htmlHeaders });
+      return new Response(PAGE_HTML, { status: 200, headers: htmlHeaders });
+    });
+  }
+
+  it('fills the template with the assignment payload data (defaults for omitted fields)', async () => {
+    mockTemplateOrigin();
+    const html = await (await runWith(env, '/drafts/suresh/pzn?pzn=mock&experimentId=39005&ivid=demo-visitor-1')).text();
+    expect(html).toContain('Welcome back, Acme Co.'); // headline from payload
+    expect(html).toContain('Resume your setup'); // cta from payload
+    expect(html).toContain('<p></p>'); // tagline: no payload value, no default
+    expect(html).not.toContain('{{'); // every token resolved
+    expect(html).not.toContain('OLD BLOCK'); // block was replaced
   });
 });

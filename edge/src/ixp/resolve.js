@@ -54,6 +54,25 @@ function parsePayload(payload) {
 }
 
 /**
+ * Flattens an assignment payload's scalar fields into string data for template
+ * token fill (see `PznEntry.data`). Non-scalar fields are ignored; returns
+ * undefined when there is nothing usable.
+ * @param {string} payload
+ * @returns {Record<string, string> | undefined}
+ */
+function payloadData(payload) {
+  const parsed = parsePayload(payload);
+  if (!parsed) return undefined;
+  const data = {};
+  for (const [key, value] of Object.entries(parsed)) {
+    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+      data[key] = String(value);
+    }
+  }
+  return Object.keys(data).length > 0 ? data : undefined;
+}
+
+/**
  * Maps a single IXP assignment onto a `PznEntry`, or null when it should not
  * change the page (control arm, missing target, or an unhandled type).
  * @param {IxpAssignment} assignment
@@ -77,7 +96,9 @@ export function assignmentToPznEntry(assignment, route, path) {
     }
     case 'REPLACE_WEB_CONTENT':
     case 'MAB_WEB_CONTENT': {
-      // Block-level: inject the referenced content at the route's slot.
+      // Block-level: inject the referenced content at the route's slot. The
+      // payload (if any) carries data values that fill the fragment template's
+      // {{token}} placeholders — the assignment's data renders into the offer.
       if (!assignment.assetLocation) return null;
       return {
         path,
@@ -85,6 +106,7 @@ export function assignmentToPznEntry(assignment, route, path) {
         location: route.location,
         action: 'replace',
         fidelity: route.fidelity,
+        data: payloadData(assignment.payload),
       };
     }
     default:

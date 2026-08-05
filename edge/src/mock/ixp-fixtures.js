@@ -140,6 +140,29 @@ export const FIXTURES = {
     }),
   },
 
+  // --- data-driven block: payload carries data, not just a content ref -----
+  // Same REPLACE_WEB_CONTENT path as 39002, but the payload holds *data* the
+  // renderer fills into the fragment template's {{token}} placeholders — so the
+  // assignment's data visibly renders into an authored template (defaults show
+  // for any field the payload omits). No split ⇒ every bucketed ivid gets it.
+  39005: {
+    label: 'ERP-HERO-DATA',
+    assignment: assignment({
+      experimentId: 39005,
+      experimentType: 'REPLACE_WEB_CONTENT',
+      experimentKey: 'IXP1_39005',
+      label: 'ERP-HERO-DATA',
+      id: 50005,
+      treatmentKey: 'IXP1_T_50005',
+      assetLocation: '/fragments/pzn/welcome',
+      payload: JSON.stringify({
+        headline: 'Welcome back, Acme Co.',
+        cta: 'Resume your setup',
+        badge: '30% off',
+      }),
+    }),
+  },
+
   // --- non-IVID-typed experiment → graceful SDK error (200 + empty) --------
   39004: {
     label: 'ERP-BADTYPE',
