@@ -4,7 +4,7 @@
     "ivid": "ivid-ent-ridgeline-001",
     "marketingProfile": {
       "resonate": { "segments": null, "attributes": null },
-      "aep": { "segments": null },
+      "aep": { "segments": ["9e7083eb-756e-4e5d-96c7-0f96cc851fb0", "708bd5c6-773f-49ed-a450-383f0c157339"] },
       "neustar": {
         "segments": null,
         "attributes": [
@@ -40,7 +40,7 @@
     "ivid": "ivid-ent-northwind-002",
     "marketingProfile": {
       "resonate": { "segments": null, "attributes": null },
-      "aep": { "segments": null },
+      "aep": { "segments": ["234df199-3e8b-41f2-bd73-d57dda6a3f5f"] },
       "neustar": {
         "segments": null,
         "attributes": [
@@ -76,7 +76,7 @@
     "ivid": "ivid-ent-brightpath-003",
     "marketingProfile": {
       "resonate": { "segments": null, "attributes": null },
-      "aep": { "segments": null },
+      "aep": { "segments": ["49da1475-59b1-4dba-b42e-c5d933a8297b", "708bd5c6-773f-49ed-a450-383f0c157339"] },
       "neustar": {
         "segments": null,
         "attributes": [
