@@ -4,3 +4,4 @@ plugins/experimentation
 plugins/martech
 vitest.config.js
 test
+edge

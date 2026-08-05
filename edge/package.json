@@ -1,0 +1,21 @@
+{
+	"name": "intuit-edge",
+	"version": "0.0.0",
+	"private": true,
+	"scripts": {
+		"deploy": "wrangler deploy",
+		"dev": "wrangler dev",
+		"start": "wrangler dev",
+		"test": "vitest",
+		"lint": "eslint src test"
+	},
+	"devDependencies": {
+		"@babel/eslint-parser": "7.29.7",
+		"@cloudflare/vitest-pool-workers": "^0.12.4",
+		"eslint": "8.57.1",
+		"eslint-config-airbnb-base": "15.0.0",
+		"eslint-plugin-import": "2.32.0",
+		"vitest": "~3.2.0",
+		"wrangler": "^3.101.0"
+	}
+}

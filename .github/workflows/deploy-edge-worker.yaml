@@ -1,0 +1,38 @@
+name: Deploy Edge Worker
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'edge/**'
+  pull_request:
+    paths:
+      - 'edge/**'
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: edge
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+
+  deploy:
+    needs: verify
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ac7ee4615628005dc5ba0a22f0aae2a6
+          workingDirectory: edge
+          wranglerVersion: "3.101.0"
