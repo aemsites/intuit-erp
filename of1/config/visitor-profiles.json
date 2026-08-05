@@ -1,0 +1,110 @@
+{
+  "enterprise-construction": {
+    "entityId": "ent-ridgeline-001",
+    "ivid": "ivid-ent-ridgeline-001",
+    "marketingProfile": {
+      "resonate": { "segments": null, "attributes": null },
+      "aep": { "segments": null },
+      "neustar": {
+        "segments": null,
+        "attributes": [
+          { "attributeName": "est_hh_income", "attributeValue": "250000+" },
+          { "attributeName": "occupation_group", "attributeValue": "Executive/C-Suite" },
+          { "attributeName": "education", "attributeValue": "Graduate Degree" },
+          { "attributeName": "homeowner_renter", "attributeValue": "Homeowner" },
+          { "attributeName": "marital_status", "attributeValue": "Married" }
+        ]
+      },
+      "zoominfo": {
+        "attributes": [
+          { "attributeName": "zi_c_industry_primary", "attributeValue": "Construction" },
+          { "attributeName": "zi_c_sub_industry_primary", "attributeValue": "Commercial Construction" },
+          { "attributeName": "zi_c_employees", "attributeValue": "5000" },
+          { "attributeName": "zi_c_employee_range", "attributeValue": "5000-10000" },
+          { "attributeName": "zi_c_revenue_range", "attributeValue": "$500M-$1B" },
+          { "attributeName": "zi_c_employee_growth_1yr", "attributeValue": "12" },
+          { "attributeName": "zi_c_tech_sophistication", "attributeValue": "H" },
+          { "attributeName": "zi_c_marketing_sophistication", "attributeValue": "H" },
+          { "attributeName": "zi_c_is_b2b", "attributeValue": "1" },
+          { "attributeName": "zi_c_is_b2c", "attributeValue": "0" }
+        ]
+      }
+    },
+    "input": { "newVisitor": true, "org": "SBSEG", "scope": "QBO", "purpose": "MKTG", "visitorRegion": "US", "pageUrl": "https://main--intuit-erp--aemsites.aem.page/construction" },
+    "requestedAttributes": [{ "vendor": "zoominfo", "attributes": ["zi_c_industry_primary", "zi_c_employees", "zi_c_revenue_range"] }],
+    "consent": true,
+    "neustarLookupSource": "NO_LOOKUP"
+  },
+  "midmarket-fintech": {
+    "entityId": "ent-northwind-002",
+    "ivid": "ivid-ent-northwind-002",
+    "marketingProfile": {
+      "resonate": { "segments": null, "attributes": null },
+      "aep": { "segments": null },
+      "neustar": {
+        "segments": null,
+        "attributes": [
+          { "attributeName": "est_hh_income", "attributeValue": "150000-199999" },
+          { "attributeName": "occupation_group", "attributeValue": "Finance/Accounting" },
+          { "attributeName": "education", "attributeValue": "Bachelor's Degree" },
+          { "attributeName": "homeowner_renter", "attributeValue": "Homeowner" },
+          { "attributeName": "marital_status", "attributeValue": "Married" }
+        ]
+      },
+      "zoominfo": {
+        "attributes": [
+          { "attributeName": "zi_c_industry_primary", "attributeValue": "Financial Services" },
+          { "attributeName": "zi_c_sub_industry_primary", "attributeValue": "Investment Management" },
+          { "attributeName": "zi_c_employees", "attributeValue": "900" },
+          { "attributeName": "zi_c_employee_range", "attributeValue": "500-1000" },
+          { "attributeName": "zi_c_revenue_range", "attributeValue": "$100M-$250M" },
+          { "attributeName": "zi_c_employee_growth_1yr", "attributeValue": "24" },
+          { "attributeName": "zi_c_tech_sophistication", "attributeValue": "H" },
+          { "attributeName": "zi_c_marketing_sophistication", "attributeValue": "M" },
+          { "attributeName": "zi_c_is_b2b", "attributeValue": "1" },
+          { "attributeName": "zi_c_is_b2c", "attributeValue": "0" }
+        ]
+      }
+    },
+    "input": { "newVisitor": true, "org": "SBSEG", "scope": "QBO", "purpose": "MKTG", "visitorRegion": "US", "pageUrl": "https://main--intuit-erp--aemsites.aem.page/financial-services" },
+    "requestedAttributes": [{ "vendor": "zoominfo", "attributes": ["zi_c_industry_primary", "zi_c_employees", "zi_c_revenue_range"] }],
+    "consent": true,
+    "neustarLookupSource": "NO_LOOKUP"
+  },
+  "smb-quickbooks": {
+    "entityId": "ent-brightpath-003",
+    "ivid": "ivid-ent-brightpath-003",
+    "marketingProfile": {
+      "resonate": { "segments": null, "attributes": null },
+      "aep": { "segments": null },
+      "neustar": {
+        "segments": null,
+        "attributes": [
+          { "attributeName": "est_hh_income", "attributeValue": "100000-149999" },
+          { "attributeName": "occupation_group", "attributeValue": "Professional/Technical" },
+          { "attributeName": "education", "attributeValue": "Bachelor's Degree" },
+          { "attributeName": "homeowner_renter", "attributeValue": "Renter" },
+          { "attributeName": "marital_status", "attributeValue": "Single" }
+        ]
+      },
+      "zoominfo": {
+        "attributes": [
+          { "attributeName": "zi_c_industry_primary", "attributeValue": "Professional Services" },
+          { "attributeName": "zi_c_sub_industry_primary", "attributeValue": "Management Consulting" },
+          { "attributeName": "zi_c_employees", "attributeValue": "80" },
+          { "attributeName": "zi_c_employee_range", "attributeValue": "51-100" },
+          { "attributeName": "zi_c_revenue_range", "attributeValue": "$1M-$5M" },
+          { "attributeName": "zi_c_employee_growth_1yr", "attributeValue": "8" },
+          { "attributeName": "zi_c_tech_sophistication", "attributeValue": "L" },
+          { "attributeName": "zi_c_marketing_sophistication", "attributeValue": "M" },
+          { "attributeName": "zi_c_is_b2b", "attributeValue": "1" },
+          { "attributeName": "zi_c_is_b2c", "attributeValue": "0" }
+        ]
+      }
+    },
+    "input": { "newVisitor": true, "org": "SBSEG", "scope": "QBO", "purpose": "MKTG", "visitorRegion": "US", "pageUrl": "https://main--intuit-erp--aemsites.aem.page/professional-services" },
+    "requestedAttributes": [{ "vendor": "zoominfo", "attributes": ["zi_c_industry_primary", "zi_c_employees", "zi_c_revenue_range"] }],
+    "consent": true,
+    "neustarLookupSource": "NO_LOOKUP"
+  }
+}
