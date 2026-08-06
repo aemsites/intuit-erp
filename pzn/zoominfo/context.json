@@ -1,0 +1,33 @@
+{
+  "_comment": "MOCK ZoomInfo/3P visitor context for the Decision Engine (de) demo. Shape mirrors the real 'AEM - Service Integration' payload (marketingProfile.zoominfo.attributes[]); all values are SYNTHETIC (no customer data). The worker reads zi_c_industry_primary to drive which batch variant is served. Swap ZOOMINFO_URL for the real service later.",
+  "entityId": "mock-entity-0001",
+  "ivid": "4da9a4fd-a731-46e5-8a55-24485bfec474",
+  "marketingProfile": {
+    "resonate": { "segments": null, "attributes": null },
+    "aep": { "segments": null },
+    "neustar": { "segments": null, "attributes": [] },
+    "zoominfo": {
+      "attributes": [
+        { "attributeName": "zi_c_company_name", "attributeValue": "Blue Harbor Hospitality Group" },
+        { "attributeName": "zi_c_industry_primary", "attributeValue": "Hospitality" },
+        { "attributeName": "zi_c_sub_industry_primary", "attributeValue": "Hotels & Resorts" },
+        { "attributeName": "zi_c_industries", "attributeValue": "Hospitality" },
+        { "attributeName": "zi_c_employee_range", "attributeValue": "51-100" },
+        { "attributeName": "zi_c_employees", "attributeValue": "72" },
+        { "attributeName": "zi_c_revenue_range", "attributeValue": "$5M-$10M" },
+        { "attributeName": "zi_c_tier_grade", "attributeValue": "A" },
+        { "attributeName": "zi_c_is_b2b", "attributeValue": "1" },
+        { "attributeName": "zi_c_is_b2c", "attributeValue": "1" }
+      ]
+    }
+  },
+  "input": {
+    "newVisitor": true,
+    "org": "SBSEG",
+    "scope": "QBO",
+    "purpose": "MKTG",
+    "visitorRegion": "US"
+  },
+  "consent": true,
+  "neustarLookupSource": "NO_LOOKUP"
+}

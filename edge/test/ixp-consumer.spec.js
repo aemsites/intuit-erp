@@ -373,3 +373,53 @@ describe('?experimentId=39005 data-driven offer (payload fills the template)', (
     expect(html).not.toContain('OLD BLOCK'); // block was replaced
   });
 });
+
+// --- use case 1: experiment page → whole-<main> swap to the treatment page ---
+
+const EXPERIMENT_HTML = `<!DOCTYPE html><html><head><title>t</title></head><body>
+<main>
+  <div><div class="hero"><div>CONTROL PAGE</div></div></div>
+</main>
+</body></html>`;
+
+/** The treatment page's `.plain.html` (main content) the redirect swaps in. */
+const TREATMENT_MAIN = `<div><div class="hero"><div>TREATMENT PAGE</div></div></div>
+<div><div class="slot-1"><div>slot one</div></div></div>`;
+
+/** Serves the treatment page's `.plain.html`; the experiment page otherwise. */
+function mockExperiment() {
+  vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+    const reqUrl = typeof input === 'string' ? input : input.url;
+    if (reqUrl.includes('/drafts/pzn/treatment.plain.html')) {
+      return new Response(TREATMENT_MAIN, { status: 200, headers: htmlHeaders });
+    }
+    return new Response(EXPERIMENT_HTML, { status: 200, headers: htmlHeaders });
+  });
+}
+
+/** An ivid that lands in the requested arm of the given experiment (split 50/50). */
+function ividForExp(experimentId, wantTreatment) {
+  for (let i = 0; i < 500; i += 1) {
+    const id = `exp-visitor-${i}`;
+    if ((bucketPercent(id, experimentId) < 50) === wantTreatment) return id;
+  }
+  throw new Error('no ivid found for arm');
+}
+
+describe('experiment page (39010): whole-page A/B swap', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('treatment arm swaps the whole <main> for the treatment page', async () => {
+    mockExperiment();
+    const html = await (await runWith(env, `/drafts/pzn/experiment?pzn=mock&ivid=${ividForExp(39010, true)}`)).text();
+    expect(html).toContain('TREATMENT PAGE');
+    expect(html).not.toContain('CONTROL PAGE');
+  });
+
+  it('control arm shows the baseline experiment page', async () => {
+    mockExperiment();
+    const html = await (await runWith(env, `/drafts/pzn/experiment?pzn=mock&ivid=${ividForExp(39010, false)}`)).text();
+    expect(html).toBe(EXPERIMENT_HTML);
+    expect(html).not.toContain('TREATMENT PAGE');
+  });
+});

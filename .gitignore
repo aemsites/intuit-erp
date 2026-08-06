@@ -28,3 +28,6 @@ stardust/
 .hlx/.da-token.json
 
 content
+.idea
+.wrangler
+*.html

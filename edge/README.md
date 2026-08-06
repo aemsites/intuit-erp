@@ -38,9 +38,9 @@ offer applies to a path; the worker only renders what the entry resolves.
 
 ## Personalization sources
 
-The entry comes from one of three interchangeable resolvers, chosen by
-`PZN_SOURCE` (or a `?pzn=map|ixp|mock` per-request override, so one deployment can
-show every flow on the same URL):
+The entry comes from one of four interchangeable resolvers, chosen by
+`PZN_SOURCE` (or a `?pzn=map|ixp|mock|de` per-request override, so one deployment
+can show every flow on the same URL):
 
 - **`map`** (default) — the `map.json` sheet (`PZN_MAP_URL`), a mock that proxies
   Intuit's real pzn service.
@@ -50,8 +50,12 @@ show every flow on the same URL):
   URL + key for the real host when available.
 - **`mock`** — the IXP mock resolved **in-process** (no network hop, no key). The
   "no key required" demo path.
+- **`de`** — Intuit's **Decision Engine "Batch"** flow: a ZoomInfo/3P context
+  lookup (`ZOOMINFO_URL`) then a batch decision (`DECISION_ENGINE_BATCH_URL`) that
+  personalizes **each slot** on the page (yields one entry per slot). See
+  [docs/decision-engine.md](docs/decision-engine.md).
 
-All three resolve the same internal entry, so the render path is identical.
+All of them resolve the same internal entry(ies), so the render path is identical.
 Worker-internal params (`pzn`, `ivid`, `experimentId`, `label`) are read from the
 request and then stripped before the origin subrequest.
 

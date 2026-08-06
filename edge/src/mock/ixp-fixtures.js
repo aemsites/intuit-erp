@@ -126,6 +126,26 @@ export const FIXTURES = {
     }),
   },
 
+  // --- use case 1: experiment page → whole-page swap to the treatment ------
+  // A REDIRECT split 50/50: the treatment arm swaps the whole <main> of the
+  // control page (/drafts/pzn/experiment) for the treatment page
+  // (/drafts/pzn/treatment); the control arm shows the baseline. Stable per
+  // ivid, so `?ivid=` demos both arms on the one experiment URL.
+  39010: {
+    label: 'ERP-EXPERIMENT-PAGE',
+    treatmentSplit: 50,
+    assignment: assignment({
+      experimentId: 39010,
+      experimentType: 'REDIRECT',
+      experimentKey: 'IXP1_39010',
+      label: 'ERP-EXPERIMENT-PAGE',
+      id: 50010,
+      treatmentKey: 'IXP1_T_50010',
+      // page-level decision: source path → variation (treatment) path
+      payload: JSON.stringify({ sourceUrl: '/drafts/pzn/experiment', variationUrl: '/drafts/pzn/treatment' }),
+    }),
+  },
+
   // --- explicit control arm → passthrough (baseline) -----------------------
   39003: {
     label: 'ERP-HERO-CONTROL',

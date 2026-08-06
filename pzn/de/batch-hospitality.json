@@ -1,0 +1,45 @@
+{
+  "_comment": "MOCK Decision Engine Batch response for industry=Hospitality. Shape mirrors the real 'AEM - Service Integration' Batch response (keyed by <experience>_<placement>_<locale>, each with data.recommendations[].copyData.contentId + status). SYNTHETIC data. For the mock, contentId is an EDS fragment path the worker fetches + injects. Both slots personalize for this industry.",
+  "ttcom_CGTTCOMMContentTTLCTY255044_en_US": {
+    "data": {
+      "recommendations": [
+        {
+          "id": "mock-hosp-slot1",
+          "score": 10.0,
+          "copyData": {
+            "template": "content",
+            "contentId": "/fragments/pzn/slot1-hospitality"
+          },
+          "uiPattern": "content",
+          "status": "Published",
+          "placement": "CGTTCOMMContentTTLCTY255044",
+          "accessPoint": "CGTTCOMMContentTTLCTY255044"
+        }
+      ]
+    },
+    "placement": "CGTTCOMMContentTTLCTY255044",
+    "experience": "ttcom",
+    "status": 200
+  },
+  "ttcom_CGTTCOMMContentTTLCTY255044Modal_en_US": {
+    "data": {
+      "recommendations": [
+        {
+          "id": "mock-hosp-slot2",
+          "score": 10.0,
+          "copyData": {
+            "template": "content",
+            "contentId": "/fragments/pzn/slot2-hospitality"
+          },
+          "uiPattern": "content",
+          "status": "Published",
+          "placement": "CGTTCOMMContentTTLCTY255044Modal",
+          "accessPoint": "CGTTCOMMContentTTLCTY255044Modal"
+        }
+      ]
+    },
+    "placement": "CGTTCOMMContentTTLCTY255044Modal",
+    "experience": "ttcom",
+    "status": 200
+  }
+}

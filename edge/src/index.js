@@ -19,13 +19,16 @@
  * The worker does no decisioning of its own; it renders whatever the map/service
  * resolves for a path. See pzn.js for the swappable map + offer sources.
  *
- * Three interchangeable resolvers produce the same `PznEntry`, chosen by
- * `PZN_SOURCE` (or a `?pzn=map|ixp|mock` per-request override):
+ * Interchangeable resolvers produce the same `PznEntry` (or an array of them),
+ * chosen by `PZN_SOURCE` (or a `?pzn=map|ixp|mock|de` per-request override):
  *   - "map" (default) — the map.json sheet (pzn.js).
  *   - "ixp"           — Intuit's IXP Assignment API over HTTP (ixp/resolve.js);
  *                       `IXP_ASSIGNMENT_URL` may point at this worker's own
  *                       `/us/v2/assignment` route.
  *   - "mock"          — the IXP mock, resolved in-process (ixp/mock-source.js).
+ *   - "de"            — Intuit's Decision Engine "Batch" flow (de/resolve.js):
+ *                       ZoomInfo context → a batch decision → one entry per
+ *                       personalized slot. Yields a `PznEntry[]`.
  *
  * A second, independent transform runs alongside fragment injection: template
  * fill (template.js). Some pages are authored with literal ALL-CAPS placeholder
@@ -38,6 +41,7 @@ import { applyPersonalization } from './personalize.js';
 import { resolveOfferMarkup, resolvePznEntry } from './pzn.js';
 import { resolveIxpEntry } from './ixp/resolve.js';
 import { resolveMockEntry } from './ixp/mock-source.js';
+import { resolveDeEntries } from './de/resolve.js';
 import { resolveTemplateData, fillPlaceholders } from './template.js';
 import { deriveVisitorTokens } from './visitor.js';
 import { handleAssignment } from './mock/ixp-assignment.js';
@@ -98,10 +102,11 @@ function isRUMRequest(url) {
 /** Personalization source: a `?pzn=` override, else the configured default. */
 function resolveSource(url, env) {
   const override = url.searchParams.get('pzn');
-  if (override === 'ixp' || override === 'map' || override === 'mock') return override;
+  if (override === 'ixp' || override === 'map' || override === 'mock' || override === 'de') return override;
   const configured = String(env.PZN_SOURCE);
   if (configured === 'ixp') return 'ixp';
   if (configured === 'mock') return 'mock';
+  if (configured === 'de') return 'de';
   return 'map';
 }
 
@@ -180,18 +185,18 @@ function buildJsonFallbackUrl(url, env) {
  * also invalidates this page.
  * @param {string} body
  * @param {Response} origin
- * @param {Headers | null} [fragmentHeaders] Fragment response headers whose cache
- *   keys are merged in; null/omitted for a template-only fill (no fragment).
+ * @param {Headers[]} [fragmentHeaders] Fragment response headers (one per injected
+ *   offer) whose cache keys are merged in; empty/omitted for a template-only fill.
  * @returns {Response}
  */
-function htmlResponse(body, origin, fragmentHeaders) {
+function htmlResponse(body, origin, fragmentHeaders = []) {
   const headers = new Headers(origin.headers);
   // Body length changed and it is now identity-encoded (we read .text()).
   headers.delete('content-length');
   headers.delete('content-encoding');
 
   const cacheKeys = createCacheKeys(origin.headers);
-  if (fragmentHeaders) mergeCacheKeys(cacheKeys, fragmentHeaders);
+  for (const fh of fragmentHeaders) mergeCacheKeys(cacheKeys, fh);
   applyCacheKeys(headers, cacheKeys);
 
   return new Response(body, {
@@ -311,12 +316,15 @@ export default {
       ...(bypassOriginCache ? { cache: 'no-store' } : {}),
     });
 
-    // Resolve the personalization entry from the selected source. All resolvers
-    // yield the same `PznEntry` shape (or null → passthrough).
-    /** @type {Promise<PznEntry | null>} */
+    // Resolve the personalization entry(ies) from the selected source. The
+    // single-entry sources yield a `PznEntry | null`; the `de` (Decision Engine)
+    // source yields a `PznEntry[]` (one per personalized slot). All are
+    // normalized to an array below, so the render path is shared.
+    /** @type {Promise<PznEntry | PznEntry[] | null>} */
     let resolveEntry;
     if (source === 'mock') resolveEntry = resolveMockEntry(request);
     else if (source === 'ixp') resolveEntry = resolveIxpEntry(env, request);
+    else if (source === 'de') resolveEntry = resolveDeEntries(env, request);
     else resolveEntry = resolvePznEntry(env, url.pathname);
 
     // Fetch the origin page, resolve the pzn entry, and resolve any template
@@ -324,11 +332,18 @@ export default {
     // set on the request above) vs. cached (`cacheEverything`) origin reads.
     // Non-enrolled paths resolve to null with no network call, so template fill
     // is free for pages that don't use it.
-    const [originResponse, entry, templateData] = await Promise.all([
+    const [originResponse, resolved, templateData] = await Promise.all([
       fetch(originRequest, bypassOriginCache ? undefined : { cf: { cacheEverything: true } }),
       resolveEntry.catch(() => null),
       resolveTemplateData(env, url.pathname).catch(() => null),
     ]);
+
+    // Normalize to an array of entries (0..n slots): `de` already yields an
+    // array; the single-entry sources yield one entry or null.
+    /** @type {PznEntry[]} */
+    let entries = [];
+    if (Array.isArray(resolved)) entries = resolved;
+    else if (resolved) entries = [resolved];
 
     let response = originResponse;
 
@@ -349,12 +364,20 @@ export default {
     if (request.method === 'GET') {
       const contentType = response.headers.get('content-type') || '';
       if (response.ok && contentType.includes('text/html')) {
-        const offer = entry ? await resolveOfferMarkup(env, entry) : null;
-        if (offer || templateData) {
+        // Resolve each entry's offer markup (one per slot for `de`; 0..1 for the
+        // other sources). Entries whose offer fails to resolve are skipped.
+        const offers = await Promise.all(
+          entries.map(async (e) => ({ entry: e, offer: await resolveOfferMarkup(env, e) })),
+        );
+        const applicable = offers.filter((o) => o.offer);
+
+        if (applicable.length > 0 || templateData) {
           let html = await response.text();
 
-          // (1) Fragment injection: swap/insert an offer at the entry's slot.
-          if (offer && entry) html = applyPersonalization(html, offer.markup, entry);
+          // (1) Fragment injection: apply each resolved offer at its own slot.
+          for (const { entry, offer } of applicable) {
+            html = applyPersonalization(html, offer.markup, entry);
+          }
 
           // (2) Template fill: the page itself is the template — replace its
           // ALL-CAPS placeholder tokens from the data sheet, enriched with
@@ -363,9 +386,9 @@ export default {
             html = fillPlaceholders(html, { ...deriveVisitorTokens(request), ...templateData });
           }
 
-          // Only a fragment carries cache keys to merge; a template-only fill
-          // has none, so pass null.
-          response = htmlResponse(html, response, offer ? offer.headers : null);
+          // Merge every injected fragment's cache keys so CDN invalidation of any
+          // fragment invalidates this page; a template-only fill contributes none.
+          response = htmlResponse(html, response, applicable.map((o) => o.offer.headers));
         }
       }
     }
