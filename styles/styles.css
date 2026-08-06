@@ -525,6 +525,7 @@ main .section { padding: 0; }
 /* replica: colored section bands sit flush — no inter-section margin */
 main > .section { margin: 0; }
 main .section:empty { display: none; }
+.da-form-wrapper { display: none; }
 
 /* narrow container variant (prototype .container-narrow = 1180px) */
 main .section.narrow > div { max-width: 1180px; }
