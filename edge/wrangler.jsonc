@@ -12,9 +12,9 @@
 		// Personalization map (mock pzn service). Swappable: point this at the
 		// real Intuit pzn service when available.
 		"PZN_MAP_URL": "https://main--intuit-erp--aemsites.aem.live/pzn/map.json",
-		// Entry source: "map" (map.json, default), "ixp" (IXP Assignment API), or
-		// "mock" (the IXP mock resolved in-process). A ?pzn= query param overrides
-		// this per request.
+		// Entry source: "map" (map.json, default), "ixp" (IXP Assignment API),
+		// "mock" (the IXP mock resolved in-process), or "de" (the Decision Engine
+		// batch personalization flow). A ?pzn= query param overrides this per request.
 		"PZN_SOURCE": "map",
 		// IXP Assignment API. Points at this worker's own /us/v2/assignment route
 		// (the in-worker mock) by default; swap for the real host + a real key
@@ -29,6 +29,13 @@
 		"EDGE_SVC_APP_NAME": "SBGM",
 		"BU_NAME": "SBSEG",
 		"COUNTRY_CODE": "US",
+		// Decision Engine flow (PZN_SOURCE=de / ?pzn=de). Mocked as static JSON on
+		// the EDS origin (synthetic data). ZOOMINFO_URL returns the visitor context
+		// (industry); DECISION_ENGINE_BATCH_URL is the base dir the batch client
+		// reads `batch-<industry>.json` (fallback `batch-default.json`) from. Swap
+		// both for the real services later; nothing else in the worker changes.
+		"ZOOMINFO_URL": "https://main--intuit-erp--aemsites.aem.live/pzn/zoominfo/context.json",
+		"DECISION_ENGINE_BATCH_URL": "https://main--intuit-erp--aemsites.aem.live/pzn/de",
 		// Ask the origin to enable push invalidation (set to "disabled" to skip).
 		"PUSH_INVALIDATION": "disabled",
 		// Path prefixes whose `.json` (when the origin 404s) is served from the
