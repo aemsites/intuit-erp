@@ -48,8 +48,8 @@ import { getMetadata, toClassName, loadCSS } from '../../scripts/aem.js';
  */
 function tocHeadings(main) {
   return [...main.querySelectorAll('h2')].filter((h) => !h.closest(
-    '.blog-cards,.highlight,.testimonial,.stat-band,.cta-band,.media-text,.download-form',
-  ) && !(h.parentElement && h.parentElement.querySelector('.blog-cards')));
+    '.blog-cards,.case-study-cards,.highlight,.testimonial,.stat-band,.cta-band,.media-text,.download-form',
+  ) && !(h.parentElement && h.parentElement.querySelector('.blog-cards,.case-study-cards')));
 }
 
 /**
@@ -465,19 +465,41 @@ export function buildBlogTemplate(main) {
   const railP = document.createElement('p');
   railP.append(railLink);
   rail.append(railP);
-  main.append(rail);
+  // Appendix sections are full-width blocks (blog-cards, case-study-cards, etc.)
+  // that follow the article body. Collect them in DOM order, insert the rail
+  // before the first one so mobile flow reads: content → rail → appendices.
+  const APPENDIX_BLOCKS = ['.blog-cards', '.case-study-cards'];
+  const appendixSections = sections.filter(
+    (s) => APPENDIX_BLOCKS.some((sel) => s.querySelector(`:scope > ${sel}`)),
+  );
+  if (appendixSections.length) appendixSections[0].before(rail);
+  else main.append(rail);
 
-  // 4. desktop sticky rails should unstick at the end of the article body,
-  //    not overlap trailing appendix sections (e.g. "Recommended for you")
-  //    or the footer — set an explicit grid-row-end on both rails so their
-  //    sticky containing block is exactly the article body's height. Falls
-  //    back to the stylesheet's generous `span` default when it can't be
-  //    computed (no TOC headings to anchor on).
-  const rowEnd = tocRailRowEnd(sections, headings);
+  const contentSectionCount = sections.length - appendixSections.length;
+
+  // 4. desktop sticky rails must unstick exactly at the end of the article body —
+  //    before any appendix sections (blog-cards, case-study-cards, etc.).
+  //    When appendix sections are known, rowEnd = contentSectionCount + 1 (the
+  //    first appendix row), which is more precise than tocRailRowEnd (which only
+  //    looks at the last TOC heading and may stop short of trailing prose sections
+  //    that have no H2). Falls back to tocRailRowEnd when no appendix is found.
+  const rowEnd = appendixSections.length > 0
+    ? contentSectionCount + 1
+    : tocRailRowEnd(sections, headings);
   if (rowEnd) {
     if (tocWrap) tocWrap.style.gridRow = `2 / ${rowEnd}`;
     rail.style.gridRow = `2 / ${rowEnd}`;
   }
+
+  // Place appendix sections after all article body content. Each gets
+  // grid-column: 1/-1 (full width) and an explicit grid-row so they land
+  // sequentially below the rails rather than auto-placing into early rows.
+  // Hero is row 1, body sections fill rows 2..contentSectionCount,
+  // appendices start at contentSectionCount + 1.
+  appendixSections.forEach((s, i) => {
+    s.style.gridColumn = '1 / -1';
+    s.style.gridRow = `${contentSectionCount + 1 + i}`;
+  });
 
   // 5. share widget — a single element relocated between the hero (mobile)
   //    and the top of the TOC rail (desktop) as the viewport crosses 900px.
