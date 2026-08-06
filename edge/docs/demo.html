@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Edge Personalization &amp; Experimentation — Demo</title>
+<style>
+  :root{
+    --ink:#0d1b2a; --muted:#5b6b7b; --line:#e4e9ef; --bg:#f6f8fb;
+    --brand:#0077c5; --brand-dark:#055a94; --a:#2a9d5c; --b:#7b52ab;
+    --card:#ffffff; --shadow:0 1px 2px rgba(13,27,42,.06),0 8px 24px rgba(13,27,42,.06);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .wrap{max-width:960px;margin:0 auto;padding:40px 22px 72px;}
+  header h1{font-size:30px;margin:0 0 6px;letter-spacing:-.02em;}
+  header p.lede{color:var(--muted);font-size:17px;margin:0 0 8px;max-width:70ch;}
+  .pill{display:inline-block;font-size:12px;font-weight:600;padding:3px 10px;border-radius:999px;
+    background:#eaf4fc;color:var(--brand-dark);border:1px solid #cfe6f8;}
+  .visitors{display:flex;gap:12px;flex-wrap:wrap;margin:18px 0 4px;}
+  .visitor{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;box-shadow:var(--shadow);flex:1;min-width:260px;}
+  .visitor b{display:block;font-size:13px;color:var(--muted);font-weight:600;margin-bottom:2px;}
+  .visitor code{font-size:13px;color:var(--ink);word-break:break-all;}
+  section.flow{margin-top:38px;}
+  .flow-head{display:flex;align-items:baseline;gap:10px;margin-bottom:6px;}
+  .flow-head .n{width:28px;height:28px;flex:none;border-radius:50%;background:var(--brand);color:#fff;
+    font-weight:700;font-size:15px;display:grid;place-items:center;}
+  .flow-head h2{font-size:21px;margin:0;letter-spacing:-.01em;}
+  .flow-sub{color:var(--muted);margin:2px 0 18px 38px;max-width:74ch;}
+  .cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  @media(max-width:680px){.cards{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px 16px;
+    box-shadow:var(--shadow);display:flex;flex-direction:column;}
+  .tag{align-self:flex-start;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+    padding:3px 9px;border-radius:6px;margin-bottom:10px;}
+  .tag.before{background:#eef1f4;color:#65727f;}
+  .tag.a{background:#e7f6ee;color:var(--a);}
+  .tag.b{background:#f1eaf8;color:var(--b);}
+  .tag.after{background:#eaf4fc;color:var(--brand-dark);}
+  .card h3{margin:0 0 6px;font-size:17px;}
+  .card p{margin:0 0 14px;color:var(--muted);font-size:14.5px;}
+  .card p .see{color:var(--ink);font-weight:600;}
+  .btn{margin-top:auto;display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    text-decoration:none;background:var(--brand);color:#fff;font-weight:600;font-size:15px;
+    padding:11px 14px;border-radius:10px;transition:background .15s;}
+  .btn:hover{background:var(--brand-dark);}
+  .btn.ghost{background:#fff;color:var(--brand-dark);border:1px solid #cfe6f8;}
+  .btn.ghost:hover{background:#f2f9fe;}
+  .say{margin:16px 0 0 38px;padding:12px 16px;border-left:3px solid var(--brand);background:#fff;
+    border-radius:0 10px 10px 0;color:var(--ink);font-size:14.5px;box-shadow:var(--shadow);}
+  .say b{color:var(--brand-dark);}
+  .underhood{margin-top:20px;background:#fff;border:1px dashed var(--line);border-radius:12px;padding:14px 16px;}
+  .underhood b{font-size:13px;color:var(--muted);}
+  .underhood a{color:var(--brand-dark);font-size:14px;}
+  footer{margin-top:46px;padding-top:20px;border-top:1px solid var(--line);color:var(--muted);font-size:13.5px;}
+  footer code{background:#eef1f4;padding:1px 6px;border-radius:5px;}
+  .kbd{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <span class="pill">Live demo · Edge Delivery Services</span>
+    <h1 style="margin-top:12px;">Server‑side Experimentation &amp; Personalization</h1>
+    <p class="lede">Every decision below is made <b>at the edge, before the page reaches the browser</b> —
+    no redirects, no client‑side flicker, works with JavaScript disabled. Each button opens the exact page
+    to show. Open two side‑by‑side to compare.</p>
+    <div class="visitors">
+      <div class="visitor">
+        <b>Visitor A — “Blue Harbor Hospitality Group”</b>
+        <code>ivid = 4da9a4fd-a731-46e5-8a55-24485bfec474</code>
+      </div>
+      <div class="visitor">
+        <b>Visitor B — a different visitor</b>
+        <code>ivid = demo-control</code>
+      </div>
+    </div>
+  </header>
+
+  <!-- FLOW 1 -->
+  <section class="flow">
+    <div class="flow-head"><div class="n">1</div><h2>Experimentation (A/B) — one URL, two experiences</h2></div>
+    <p class="flow-sub">The experiment platform assigns each visitor an arm; the edge worker renders the assigned
+    <b>page experience</b> server‑side. Same URL — the visitor’s ID decides what they get, and it stays stable on reload.</p>
+
+    <div class="cards">
+      <div class="card">
+        <span class="tag a">Control · Option A</span>
+        <h3>Visitor B → control page</h3>
+        <p><span class="see">You’ll see:</span> “The control experience (option A).”</p>
+        <a class="btn" target="_blank" rel="noopener"
+           href="https://intuit-edge.aem-poc-lab.workers.dev/drafts/pzn/experiment?pzn=mock&ivid=demo-control">Open control experience →</a>
+      </div>
+      <div class="card">
+        <span class="tag b">Treatment · Option B</span>
+        <h3>Visitor A → treatment page</h3>
+        <p><span class="see">You’ll see:</span> the <b>same URL</b> serve a different page — “The treatment experience (option B)” with two content slots.</p>
+        <a class="btn" target="_blank" rel="noopener"
+           href="https://intuit-edge.aem-poc-lab.workers.dev/drafts/pzn/experiment?pzn=mock&ivid=4da9a4fd-a731-46e5-8a55-24485bfec474">Open treatment experience →</a>
+      </div>
+    </div>
+
+    <div class="say"><b>Talking point:</b> One URL. The experiment assigns each visitor an arm; the worker renders it
+    server‑side. Reload — the arm never flips for a given visitor. Use <span class="kbd">View&nbsp;Source</span> to show the
+    right variant is already in the HTML: no redirect, no flash of the wrong content.</div>
+  </section>
+
+  <!-- FLOW 2 -->
+  <section class="flow">
+    <div class="flow-head"><div class="n">2</div><h2>Personalization — the right content in each slot</h2></div>
+    <p class="flow-sub">On a page with content slots, the worker looks up the visitor’s <b>industry</b> (ZoomInfo) and asks
+    the Decision Engine what belongs in each slot. The page arrives already personalized.</p>
+
+    <div class="cards">
+      <div class="card">
+        <span class="tag before">Before · as authored</span>
+        <h3>Baseline page</h3>
+        <p><span class="see">You’ll see:</span> generic slots — “Why teams choose…” and “Everything in one view.”</p>
+        <a class="btn ghost" target="_blank" rel="noopener"
+           href="https://intuit-edge.aem-poc-lab.workers.dev/drafts/pzn/treatment">Open baseline page →</a>
+      </div>
+      <div class="card">
+        <span class="tag after">After · personalized</span>
+        <h3>Personalized for Visitor A (Hospitality)</h3>
+        <p><span class="see">You’ll see:</span> both slots become hospitality‑specific — “Run every property from one place” and “Seasonal staffing, handled.”</p>
+        <a class="btn" target="_blank" rel="noopener"
+           href="https://intuit-edge.aem-poc-lab.workers.dev/drafts/pzn/treatment?pzn=de&ivid=4da9a4fd-a731-46e5-8a55-24485bfec474">Open personalized page →</a>
+      </div>
+    </div>
+
+    <div class="say"><b>Talking point:</b> The worker gets the visitor’s industry from ZoomInfo, asks the Decision Engine
+    what to place in each slot for that industry, and injects it at the edge. A hospitality company sees hospitality
+    messaging; when there’s no recommendation for a slot, it’s left exactly as authored.</div>
+
+    <div class="underhood">
+      <b>Show the decision data (optional):</b><br>
+      1 · Visitor context (industry = Hospitality) →
+      <a target="_blank" rel="noopener" href="https://main--intuit-erp--aemsites.aem.live/pzn/zoominfo/context.json">ZoomInfo response</a><br>
+      2 · Decision Engine choices per slot →
+      <a target="_blank" rel="noopener" href="https://main--intuit-erp--aemsites.aem.live/pzn/de/batch-hospitality.json">Batch decision response</a>
+    </div>
+  </section>
+
+  <footer>
+    <p><b>What’s real vs. mocked.</b> The edge worker, the pages/fragments, the DOM rewriting and the A/B bucketing are
+    all real. The three external calls — experiment assignment (IXP), visitor context (ZoomInfo) and the Decision Engine —
+    are mocked with Intuit’s exact payload shapes and synthetic data. Pointing them at the real services is a config
+    change, not a rewrite.</p>
+    <p><b>Tips.</b> Keep the <code>?ivid=…</code> exactly as in the links — it drives both the A/B arm and the industry
+    lookup. Flow&nbsp;1 uses <code>?pzn=mock</code>; Flow&nbsp;2 uses <code>?pzn=de</code>. Opening a page with no parameters
+    shows it untouched — a good “before” shot.</p>
+    <p style="margin-top:14px;color:#93a1ae;">Worker: <code>intuit-edge.aem-poc-lab.workers.dev</code> · Site: <code>main--intuit-erp--aemsites.aem.live</code></p>
+  </footer>
+
+</div>
+</body>
+</html>
