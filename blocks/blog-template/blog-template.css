@@ -394,9 +394,9 @@
      row 2 (JS sets `grid-row: 2 / 3`), and a full-width item with no explicit
      row auto-places into that same row 2, landing underneath both rails and
      overlapping them. Row 3 puts it cleanly below. */
-  .blog-article > .blog-cards-container {
+  .blog-article > .blog-cards-container,
+  .blog-article > .case-study-cards-container {
     grid-column: 1 / -1;
-    grid-row: 3;
   }
 
   /* hero pinned to row 1 (full width) — it must have an explicit row, not
@@ -660,7 +660,7 @@
    `.section.testimonial-container:has(.testimonial:not(.video, .card))`
    and score (0,4,0), which would beat this selector without it. It also
    reads correctly — only sections that actually hold blocks carry a band. */
-main.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail):has(.block) {
+main.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail, .case-study-cards-container):has(.block) {
   background: #fff;
   padding: 0;
 }

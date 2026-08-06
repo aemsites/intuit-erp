@@ -1,150 +1,123 @@
 /**
- * case-study-cards — auto-populated grid of case studies, driven by the shared
- * /blog/query-index.json (see helix-query.yaml), filtered to rows whose
- * `template` is "Case Study". Authoring a new page under /blog/case-study/ and
- * publishing it is enough to make it appear here — no block config, no authored
- * rows. (The feed is the single blog index, not a per-collection one; the
- * content type is identified by page metadata via `template`.)
+ * Case Study Cards
+ * Fetches from a query-index JSON endpoint and renders a card grid with an
+ * optional heading + "See all" CTA button in the block header.
  *
- * Variants:
- *   (default, index page)  all case studies, newest first; first 2 rendered
- *                          as larger "featured" cards, rest in a 3-col grid,
- *                          batched behind a "Load More" button. A row of
- *                          Industry filter pills (one per distinct value
- *                          present in the index, lightweight stand-in for
- *                          erp.intuit.com's "Resource Center" nav's
- *                          Industries menu — not a full rebuild of it)
- *                          filters this client-side; no page reload/index
- *                          re-fetch on click.
- *   .recommended           fixed set of 3, excludes the current page (used
- *                          on case-study detail pages).
- *   .latest                fixed set of 4 newest, uniform card size (no
- *                          featured treatment), plus a "View all case
- *                          studies" link below the grid — used as a compact
- *                          teaser section (e.g. on the homepage), not the
- *                          full paginated index.
- * CSS: blocks/case-study-cards/case-study-cards.css
+ * Authored config (key | value rows):
+ *   heading  | Hear from our customers        (optional)
+ *   link     | <a href="/blog/case-study">See all</a>  (optional)
+ *   index    | /blog/case-study/query-index.json       (optional)
+ *   limit    | 3                                       (optional, defaults to 5)
  */
-import { createOptimizedPicture } from '../../scripts/aem.js';
-import { loadIndex, formatDate } from '../../scripts/content-index.js';
 
-const INDEX_PATH = '/blog/query-index.json';
-const TEMPLATE = 'case study';
-const PAGE_SIZE = 6;
+import { readBlockConfig } from '../../scripts/aem.js';
 
-// "PROFESSIONAL SERVICES" -> "Professional services", for pill labels —
-// the underlying Industry metadata stays uppercase (matches this site's
-// existing eyebrow/badge convention), this is display-only.
-function toSentenceCase(value) {
-  return value.charAt(0) + value.slice(1).toLowerCase();
+const DEFAULT_INDEX = '/blog/case-study/query-index.json';
+const DEFAULT_LIMIT = 5;
+
+function parseDate(str) {
+  const d = new Date(str);
+  return Number.isNaN(d.getTime()) ? 0 : d.getTime();
 }
 
-function cardHTML(item, featured) {
+function buildCard({
+  path, title, image, date,
+}) {
   const card = document.createElement('a');
-  card.className = featured ? 'case-study-card featured' : 'case-study-card';
-  card.href = item.path;
-  const picWrap = document.createElement('div');
-  picWrap.className = 'case-study-card-image';
-  if (item.image) {
-    picWrap.append(createOptimizedPicture(item.image, item.title, false, [{ width: featured ? '750' : '400' }]));
+  card.className = 'case-study-card';
+  card.href = path;
+
+  const imageWrap = document.createElement('div');
+  imageWrap.className = 'case-study-card-image';
+  if (image) {
+    const src = new URL(image, window.location.origin);
+    src.searchParams.set('width', '600');
+    src.searchParams.set('format', 'webp');
+    src.searchParams.set('optimize', 'medium');
+    const img = document.createElement('img');
+    img.src = src.toString();
+    img.alt = title;
+    img.loading = 'lazy';
+    imageWrap.append(img);
   }
+
   const body = document.createElement('div');
   body.className = 'case-study-card-body';
-  body.innerHTML = `
-    <p class="eyebrow">Case study</p>
-    <h3>${item.title}</h3>
-    <p class="case-study-card-date">${formatDate(item.date)}</p>`;
-  card.append(picWrap, body);
+
+  const eyebrow = document.createElement('p');
+  eyebrow.className = 'case-study-card-eyebrow';
+  eyebrow.textContent = 'Case Study';
+  body.append(eyebrow);
+
+  const titleEl = document.createElement('h3');
+  titleEl.className = 'case-study-card-title';
+  titleEl.textContent = title;
+  body.append(titleEl);
+
+  if (date) {
+    const dateEl = document.createElement('p');
+    dateEl.className = 'case-study-card-date';
+    dateEl.textContent = date;
+    body.append(dateEl);
+  }
+
+  card.append(imageWrap, body);
   return card;
 }
 
 export default async function decorate(block) {
-  const recommended = block.classList.contains('recommended');
-  const latest = block.classList.contains('latest');
+  // Extract the authored link element before readBlockConfig drops the DOM
+  const linkEl = block.querySelector(':scope > div > div:last-child a');
+  const linkHref = linkEl?.href;
+  const linkText = linkEl?.textContent?.trim() || 'See all';
+
+  const config = readBlockConfig(block);
+  const indexUrl = config.index || DEFAULT_INDEX;
+  const limit = parseInt(config.limit, 10) || DEFAULT_LIMIT;
   block.textContent = '';
 
-  const allItems = [...await loadIndex(INDEX_PATH)]
-    .filter((item) => (item.template || '').trim().toLowerCase() === TEMPLATE)
-    .filter((item) => item.path !== window.location.pathname)
-    .sort((a, b) => new Date(b.date) - new Date(a.date));
+  // Header row — heading + optional CTA button
+  if (config.heading || linkHref) {
+    const header = document.createElement('div');
+    header.className = 'case-study-cards-header';
 
-  if (recommended) {
-    const grid = document.createElement('div');
-    grid.className = 'case-study-grid';
-    block.append(grid);
-    allItems.slice(0, 3).forEach((item) => grid.append(cardHTML(item, false)));
+    if (config.heading) {
+      const h2 = document.createElement('h2');
+      h2.className = 'case-study-cards-heading';
+      h2.textContent = config.heading;
+      header.append(h2);
+    }
+
+    if (linkHref) {
+      const btn = document.createElement('a');
+      btn.className = 'case-study-cards-cta';
+      btn.href = linkHref;
+      btn.textContent = linkText;
+      header.append(btn);
+    }
+
+    block.append(header);
+  }
+
+  let data;
+  try {
+    const resp = await fetch(indexUrl);
+    if (!resp.ok) throw new Error(resp.status);
+    ({ data } = await resp.json());
+  } catch {
+    block.remove();
     return;
   }
 
-  if (latest) {
-    const grid = document.createElement('div');
-    grid.className = 'case-study-grid';
-    allItems.slice(0, 4).forEach((item) => grid.append(cardHTML(item, false)));
-    const viewAll = document.createElement('p');
-    viewAll.className = 'case-study-view-all';
-    viewAll.innerHTML = '<a class="button secondary" href="/blog/case-study">View all case studies</a>';
-    block.append(grid, viewAll);
-    return;
-  }
+  const items = (data || [])
+    .filter((entry) => entry.image && entry.title && entry.path)
+    .sort((a, b) => parseDate(b.date) - parseDate(a.date))
+    .slice(0, limit);
 
-  const industries = [...new Set(allItems.map((item) => item.industry).filter(Boolean))].sort();
-  let activeIndustry = 'All';
+  if (!items.length) { block.remove(); return; }
 
   const grid = document.createElement('div');
-  grid.className = 'case-study-grid';
-
-  const loadMoreWrap = document.createElement('div');
-  loadMoreWrap.className = 'case-study-load-more';
-  const loadMoreBtn = document.createElement('button');
-  loadMoreBtn.type = 'button';
-  loadMoreBtn.className = 'button secondary';
-  loadMoreBtn.textContent = 'Load More';
-  loadMoreWrap.append(loadMoreBtn);
-
-  let shown = 0;
-  let filteredItems = allItems;
-  const renderNext = () => {
-    filteredItems.slice(shown, shown + PAGE_SIZE).forEach((item, i) => {
-      grid.append(cardHTML(item, shown === 0 && i < 2));
-    });
-    shown += PAGE_SIZE;
-    // hide the wrapper, not the button: button.button's specificity beats
-    // the UA [hidden] rule, so a hidden button would still render visible
-    loadMoreWrap.hidden = shown >= filteredItems.length;
-  };
-  const renderGrid = () => {
-    grid.textContent = '';
-    shown = 0;
-    filteredItems = activeIndustry === 'All'
-      ? allItems
-      : allItems.filter((item) => item.industry === activeIndustry);
-    renderNext();
-  };
-  loadMoreBtn.addEventListener('click', renderNext);
-
-  if (industries.length > 1) {
-    const filterBar = document.createElement('div');
-    filterBar.className = 'case-study-filter';
-    const makePill = (value, label) => {
-      const pill = document.createElement('button');
-      pill.type = 'button';
-      pill.className = 'case-study-filter-pill';
-      pill.textContent = label;
-      pill.setAttribute('aria-pressed', value === activeIndustry ? 'true' : 'false');
-      pill.addEventListener('click', () => {
-        activeIndustry = value;
-        [...filterBar.children].forEach((p) => p.setAttribute('aria-pressed', p === pill ? 'true' : 'false'));
-        renderGrid();
-      });
-      return pill;
-    };
-    filterBar.append(makePill('All', 'All'));
-    industries.forEach((industry) => {
-      filterBar.append(makePill(industry, toSentenceCase(industry)));
-    });
-    block.append(filterBar);
-  }
-
-  block.append(grid, loadMoreWrap);
-  renderGrid();
+  grid.className = 'case-study-cards-grid';
+  items.forEach((entry) => grid.append(buildCard(entry)));
+  block.append(grid);
 }

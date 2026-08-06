@@ -28,6 +28,7 @@
   --tofu: #f3f2ef;
   --sky: #dbedee;
   --agave: #c2f5ff;            /* in-article callout fill */
+  --teal-band: #eaf6f7;        /* section teal band background */
   --agave-band: #d6e8f8;       /* media-text .agave band fill */
   --rail-promo: #81f2fe;       /* blog right-rail promo card fill */
   --toc-bar-bg: #f0f4f6;       /* blog TOC bar / rail card fill */
@@ -509,6 +510,12 @@ main > .section:first-of-type {
 main .section.light,
 main .section.highlight {
   background-color: var(--light-color);
+  margin: 0;
+  padding: 40px 0;
+}
+
+main .section.teal-band {
+  background-color: var(--teal-band);
   margin: 0;
   padding: 40px 0;
 }
