@@ -12,7 +12,12 @@
           { "attributeName": "occupation_group", "attributeValue": "Executive/C-Suite" },
           { "attributeName": "education", "attributeValue": "Graduate Degree" },
           { "attributeName": "homeowner_renter", "attributeValue": "Homeowner" },
-          { "attributeName": "marital_status", "attributeValue": "Married" }
+          { "attributeName": "marital_status", "attributeValue": "Married" },
+          { "attributeName": "age_range", "attributeValue": "45-54" },
+          { "attributeName": "presence_of_children", "attributeValue": "Yes" },
+          { "attributeName": "length_of_residence", "attributeValue": "10+ years" },
+          { "attributeName": "home_market_value", "attributeValue": "$750000-$1M" },
+          { "attributeName": "net_worth", "attributeValue": "$1M-$5M" }
         ]
       },
       "zoominfo": {
@@ -48,7 +53,12 @@
           { "attributeName": "occupation_group", "attributeValue": "Finance/Accounting" },
           { "attributeName": "education", "attributeValue": "Bachelor's Degree" },
           { "attributeName": "homeowner_renter", "attributeValue": "Homeowner" },
-          { "attributeName": "marital_status", "attributeValue": "Married" }
+          { "attributeName": "marital_status", "attributeValue": "Married" },
+          { "attributeName": "age_range", "attributeValue": "35-44" },
+          { "attributeName": "presence_of_children", "attributeValue": "Yes" },
+          { "attributeName": "length_of_residence", "attributeValue": "5-9 years" },
+          { "attributeName": "home_market_value", "attributeValue": "$400000-$600000" },
+          { "attributeName": "net_worth", "attributeValue": "$500K-$1M" }
         ]
       },
       "zoominfo": {
@@ -84,7 +94,12 @@
           { "attributeName": "occupation_group", "attributeValue": "Professional/Technical" },
           { "attributeName": "education", "attributeValue": "Bachelor's Degree" },
           { "attributeName": "homeowner_renter", "attributeValue": "Renter" },
-          { "attributeName": "marital_status", "attributeValue": "Single" }
+          { "attributeName": "marital_status", "attributeValue": "Single" },
+          { "attributeName": "age_range", "attributeValue": "25-34" },
+          { "attributeName": "presence_of_children", "attributeValue": "No" },
+          { "attributeName": "length_of_residence", "attributeValue": "1-3 years" },
+          { "attributeName": "home_market_value", "attributeValue": "Renter" },
+          { "attributeName": "net_worth", "attributeValue": "$100K-$250K" }
         ]
       },
       "zoominfo": {
