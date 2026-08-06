@@ -1,0 +1,40 @@
+{
+  "v": 1,
+  "endpoints": [
+    {
+      "name": "visitorProfile",
+      "description": "Intuit marketing enrichment for this visitor: household demographics + firmographic signals (Service Integration Payload).",
+      "url": "https://intuit-api-emulator.franklin-prod.workers.dev/api/visitor-enrichment",
+      "method": "POST",
+      "timeoutMs": 400,
+      "inputs": [
+        {
+          "name": "accountId",
+          "from": "account.accountId",
+          "required": true,
+          "description": "Intuit visitor account id (from the of1_profile cookie)"
+        }
+      ],
+      "output": {
+        "description": "Distilled visitor enrichment (household + firmographic).",
+        "fields": {
+          "householdIncome": "Estimated household income band",
+          "occupationGroup": "Occupation group",
+          "education": "Education level",
+          "homeownerRenter": "Homeowner vs. renter",
+          "maritalStatus": "Marital status",
+          "industry": "Primary company industry",
+          "subIndustry": "Company sub-industry",
+          "employees": "Company employee count",
+          "employeeRange": "Company employee-count band",
+          "revenueRange": "Company revenue band",
+          "employeeGrowth1yr": "1-year company employee growth (%)",
+          "techSophistication": "Company technology sophistication",
+          "marketingSophistication": "Company marketing sophistication",
+          "isB2b": "Company sells B2B (1/0)",
+          "isB2c": "Company sells B2C (1/0)"
+        }
+      }
+    }
+  ]
+}
