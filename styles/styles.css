@@ -549,6 +549,44 @@ body.category main > .section:first-of-type p { font-size: 17px; color: var(--te
    first section the same top breathing room below the nav as category pages */
 body.search main > .section:first-of-type { padding-top: 5rem; }
 
+/* events listing lead band (erp.intuit.com/events): a centred white heading on a
+   dark gradient. The page authors its intro as plain default content rather than
+   a hero block, so it is reached structurally via `main:has(.event-cards)`.
+   This MUST stay in eager CSS — it is above the fold, and living in the lazily
+   loaded blocks/event-cards/event-cards.css shifted the band 96px -> 328px after
+   first paint (0.28 CLS). */
+main:has(.event-cards) > .section:first-of-type {
+  background: var(--navy);
+  background-image: linear-gradient(135deg, #041839 0%, #041f53 45%, #03339c 100%);
+  color: #fff;
+  padding: 96px 0 80px;
+}
+
+main:has(.event-cards) > .section:first-of-type .default-content-wrapper {
+  max-width: 1000px; margin: 0 auto; text-align: center;
+}
+
+main:has(.event-cards) > .section:first-of-type h1 {
+  font-size: 48px; line-height: 1.27; font-weight: 500; color: #fff; margin: 0 0 20px;
+}
+
+main:has(.event-cards) > .section:first-of-type p {
+  font-size: 20px; line-height: 1.4; color: #fff; margin: 0;
+}
+
+/* upstream runs one step: 48px until the 1200px container is reached, 60px above */
+@media (width >= 1200px) {
+  main:has(.event-cards) > .section:first-of-type h1 { font-size: 60px; }
+}
+
+@media (width <= 900px) {
+  main:has(.event-cards) > .section:first-of-type { padding: 64px 0 56px; }
+}
+
+@media (width <= 600px) {
+  main:has(.event-cards) > .section:first-of-type h1 { font-size: 36px; }
+}
+
 /* eyebrow utility */
 .eyebrow { font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
 

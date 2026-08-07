@@ -108,6 +108,9 @@ indices:
   events:
     include:
       - /events/*
+    exclude:
+      # the listing page itself matches /events/* and would index as an empty row
+      - /events
     target: /events/query-index.json
     properties:
       title:
