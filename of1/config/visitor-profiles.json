@@ -12,7 +12,13 @@
           { "attributeName": "occupation_group", "attributeValue": "Executive/C-Suite" },
           { "attributeName": "education", "attributeValue": "Graduate Degree" },
           { "attributeName": "homeowner_renter", "attributeValue": "Homeowner" },
-          { "attributeName": "marital_status", "attributeValue": "Married" }
+          { "attributeName": "marital_status", "attributeValue": "Married" },
+          { "attributeName": "gender", "attributeValue": "M" },
+          { "attributeName": "occupation", "attributeValue": "Chief Financial Officer" },
+          { "attributeName": "person_type", "attributeValue": "Head of Household" },
+          { "attributeName": "length_of_residence", "attributeValue": "11" },
+          { "attributeName": "avg_hh_size", "attributeValue": "4" },
+          { "attributeName": "median_family_household_income", "attributeValue": "225000" }
         ]
       },
       "zoominfo": {
@@ -48,7 +54,13 @@
           { "attributeName": "occupation_group", "attributeValue": "Finance/Accounting" },
           { "attributeName": "education", "attributeValue": "Bachelor's Degree" },
           { "attributeName": "homeowner_renter", "attributeValue": "Homeowner" },
-          { "attributeName": "marital_status", "attributeValue": "Married" }
+          { "attributeName": "marital_status", "attributeValue": "Married" },
+          { "attributeName": "gender", "attributeValue": "F" },
+          { "attributeName": "occupation", "attributeValue": "VP Finance" },
+          { "attributeName": "person_type", "attributeValue": "Head of Household" },
+          { "attributeName": "length_of_residence", "attributeValue": "6" },
+          { "attributeName": "avg_hh_size", "attributeValue": "3" },
+          { "attributeName": "median_family_household_income", "attributeValue": "165000" }
         ]
       },
       "zoominfo": {
@@ -84,7 +96,13 @@
           { "attributeName": "occupation_group", "attributeValue": "Professional/Technical" },
           { "attributeName": "education", "attributeValue": "Bachelor's Degree" },
           { "attributeName": "homeowner_renter", "attributeValue": "Renter" },
-          { "attributeName": "marital_status", "attributeValue": "Single" }
+          { "attributeName": "marital_status", "attributeValue": "Single" },
+          { "attributeName": "gender", "attributeValue": "F" },
+          { "attributeName": "occupation", "attributeValue": "Managing Consultant" },
+          { "attributeName": "person_type", "attributeValue": "Individual" },
+          { "attributeName": "length_of_residence", "attributeValue": "2" },
+          { "attributeName": "avg_hh_size", "attributeValue": "1" },
+          { "attributeName": "median_family_household_income", "attributeValue": "115000" }
         ]
       },
       "zoominfo": {
