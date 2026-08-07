@@ -1,28 +1,6 @@
-/* event-cards — auto-populated grid, sourced from /events/query-index.json */
-
-/* Lead band. The events listing authors its intro as plain default content (no
-   hero block), so scope off `main:has(.event-cards)` to reach the first section
-   of the events page only — matching erp.intuit.com's centred white heading on
-   a dark gradient band. */
-main:has(.event-cards) > .section:first-of-type {
-  background: var(--navy);
-  background-image: linear-gradient(135deg, #041839 0%, #041f53 45%, #03339c 100%);
-  color: #fff;
-  padding: 96px 0 80px;
-}
-
-main:has(.event-cards) > .section:first-of-type .default-content-wrapper {
-  max-width: 1000px; margin: 0 auto; text-align: center;
-}
-
-/* upstream runs one step: 48px until the 1200px container is reached, 60px above */
-main:has(.event-cards) > .section:first-of-type h1 {
-  font-size: 48px; line-height: 1.27; font-weight: 500; color: #fff; margin: 0 0 20px;
-}
-
-main:has(.event-cards) > .section:first-of-type p {
-  font-size: 20px; line-height: 1.4; color: #fff; margin: 0;
-}
+/* event-cards — auto-populated grid, sourced from /events/query-index.json
+   NOTE: the page's lead band is above the fold, so it lives in styles/styles.css
+   (eager) — styling it from this lazily-loaded file caused a 0.28 CLS. */
 
 /* the Upcoming bucket sits on a pale blue band with a large centred heading;
    On-demand is the same heading on plain white (matches erp.intuit.com) */
@@ -42,10 +20,8 @@ main:has(.event-cards) > .section:first-of-type p {
   text-align: center; margin: 0 0 20px;
 }
 
-/* both the lead heading and the bucket headings step up together on wide
-   viewports, matching upstream's single 60px tier */
+/* matches the lead heading's single 60px tier (see styles.css) */
 @media (width >= 1200px) {
-  main:has(.event-cards) > .section:first-of-type h1,
   .event-cards-container .default-content-wrapper h2 { font-size: 60px; }
 }
 
@@ -74,7 +50,6 @@ main:has(.event-cards) > .section:first-of-type p {
 .event-card-body .button { margin-top: auto; min-height: 52px; }
 
 @media (width <= 900px) {
-  main:has(.event-cards) > .section:first-of-type { padding: 64px 0 56px; }
   .event-grid { grid-template-columns: repeat(2, 1fr); }
   .event-card { grid-column: span 2; }
   .event-card-body { padding: 40px 20px; }
@@ -83,7 +58,6 @@ main:has(.event-cards) > .section:first-of-type p {
 /* 48px would wrap "On-demand" awkwardly on a narrow phone, so this is the one
    step-down upstream does not have */
 @media (width <= 600px) {
-  main:has(.event-cards) > .section:first-of-type h1,
   .event-cards-container .default-content-wrapper h2 { font-size: 36px; }
   .event-grid { grid-template-columns: 1fr; }
   .event-card { grid-column: span 1; }
