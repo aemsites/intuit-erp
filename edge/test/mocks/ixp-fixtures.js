@@ -1,14 +1,14 @@
 /**
- * Fixture catalog for the IXP Assignment mock.
+ * Fixture catalog for the IXP Assignment mock (test-only scaffolding).
  *
  * Each fixture is an experiment the mock "knows about". A real assignment is
  * produced by combining a fixture with request context (ivid bucketing + cache
  * scope). The fixtures illustrate the four cases the edge worker cares about:
  *
- *   - page-level redirect   (payload → variationUrl)  → whole-page replace
- *   - block-level content   (assetLocation)           → block/section replace
- *   - control arm           (control: true)           → passthrough (baseline)
- *   - none / unbucketed     (empty assignments)        → passthrough
+ *   - page-level redirect   (variation.html key)        → whole-page replace
+ *   - block-level content   (assetLocation)             → block/section replace
+ *   - control arm           (control: true)             → passthrough (baseline)
+ *   - none / unbucketed     (empty assignments)         → passthrough
  *
  * `15972` is reproduced verbatim from the shared spec capture so mock responses
  * can be diffed against the PDF. The `39xxx` fixtures are added to exercise the
@@ -100,8 +100,8 @@ export const FIXTURES = {
       label: 'ERP-HERO-REDIRECT',
       id: 50001,
       treatmentKey: 'IXP1_T_50001',
-      // page-level decision: source path → variation path
-      payload: JSON.stringify({ sourceUrl: '/drafts/suresh/pzn', variationUrl: '/drafts/suresh/pzn-variant' }),
+      // page-level decision: the variation path IXP redirects the visitor to.
+      payload: JSON.stringify({ 'intuit.com.integration.variation.html': '/drafts/suresh/pzn-variant' }),
     }),
   },
 
@@ -120,8 +120,7 @@ export const FIXTURES = {
       treatmentKey: 'IXP1_T_50002',
       // Block-level decision: the content ref the renderer fetches + injects.
       // In the real API this is an S3/content key; here it points at an
-      // authored EDS fragment so the POC renders end-to-end (same offer the
-      // map.json demo uses).
+      // authored EDS fragment so the POC renders end-to-end.
       assetLocation: '/fragments/pzn/automation',
     }),
   },
@@ -141,8 +140,8 @@ export const FIXTURES = {
       label: 'ERP-EXPERIMENT-PAGE',
       id: 50010,
       treatmentKey: 'IXP1_T_50010',
-      // page-level decision: source path → variation (treatment) path
-      payload: JSON.stringify({ sourceUrl: '/drafts/pzn/experiment', variationUrl: '/drafts/pzn/treatment' }),
+      // page-level decision: the variation (treatment) path IXP redirects to.
+      payload: JSON.stringify({ 'intuit.com.integration.variation.html': '/drafts/pzn/treatment' }),
     }),
   },
 

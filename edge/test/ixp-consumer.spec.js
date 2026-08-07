@@ -6,18 +6,26 @@ import worker from '../src/index.js';
 import { fillTokens } from '../src/pzn.js';
 import { assignmentToPznEntry } from '../src/ixp/resolve.js';
 import { resolveRoute } from '../src/ixp/routes.js';
-import { bucketPercent } from '../src/mock/ixp-fixtures.js';
 
 const IncomingRequest = Request;
 
 const ORIGIN = env.ORIGIN_BASE_URL;
-const IXP_URL = 'http://127.0.0.1:8787/us/v2/assignment';
-const ROUTE = { experimentId: 39002, location: 'slot-1', fidelity: 'block' };
+// The worker talks to the real IXP host (from wrangler.jsonc); fetch is spied, so
+// no request leaves the test — the mock just matches this prefix.
+const IXP_URL = env.IXP_ASSIGNMENT_URL;
+// The route the experiment page is enrolled in (src/ixp/routes.js).
+const ROUTE = { experimentId: 15972, location: 'slot-1', fidelity: 'block' };
 
-/** Builds an assignment with only the consumed fields set. */
+/** The path enrolled in the real IXP experiment. */
+const ENROLLED = '/drafts/pzn/experiment';
+
+/** The redirect payload key the real IXP API carries the variation path under. */
+const VARIATION_KEY = 'intuit.com.integration.variation.html';
+
+/** Builds an assignment with only the fields the consumer reads set. */
 function assignment(partial) {
   return {
-    experimentId: 39002,
+    experimentId: 15972,
     experimentType: 'REPLACE_WEB_CONTENT',
     label: '',
     payload: '',
@@ -28,11 +36,11 @@ function assignment(partial) {
 }
 
 describe('assignmentToPznEntry', () => {
-  it('maps REDIRECT + payload.variationUrl to a page-level replace', () => {
+  it('maps REDIRECT + the variation.html key to a page-level replace', () => {
     const entry = assignmentToPznEntry(
       assignment({
         experimentType: 'REDIRECT',
-        payload: JSON.stringify({ sourceUrl: '/x', variationUrl: '/x-variant' }),
+        payload: JSON.stringify({ [VARIATION_KEY]: '/x-variant' }),
       }),
       ROUTE,
       '/x',
@@ -82,9 +90,9 @@ describe('assignmentToPznEntry', () => {
     expect(entry).toBeNull();
   });
 
-  it('returns null for REDIRECT without a variationUrl', () => {
+  it('returns null for REDIRECT without the variation key', () => {
     const entry = assignmentToPznEntry(
-      assignment({ experimentType: 'REDIRECT', payload: JSON.stringify({ sourceUrl: '/x' }) }),
+      assignment({ experimentType: 'REDIRECT', payload: JSON.stringify({ other: '/x' }) }),
       ROUTE,
       '/x',
     );
@@ -98,12 +106,12 @@ describe('assignmentToPznEntry', () => {
 });
 
 describe('resolveRoute', () => {
-  it('resolves an enrolled path', () => {
-    expect(resolveRoute('/drafts/suresh/pzn')).toEqual({ experimentId: 39002, location: 'slot-1', fidelity: 'block' });
+  it('resolves the enrolled experiment path', () => {
+    expect(resolveRoute(ENROLLED)).toEqual({ experimentId: 15972, location: 'slot-1', fidelity: 'block' });
   });
 
   it('normalizes a trailing slash', () => {
-    expect(resolveRoute('/drafts/suresh/pzn/')).not.toBeNull();
+    expect(resolveRoute(`${ENROLLED}/`)).not.toBeNull();
   });
 
   it('returns null for an unenrolled path', () => {
@@ -128,15 +136,13 @@ const OFFER_HTML = `<div>
 const htmlHeaders = { 'content-type': 'text/html; charset=utf-8' };
 const jsonHeaders = { 'content-type': 'application/json' };
 
-const IXP_ENV = {
-  ...env, PZN_SOURCE: 'ixp', IXP_ASSIGNMENT_URL: IXP_URL, IXP_API_KEY: 'dev-ixp-key',
-};
+const IXP_ENV = { ...env, PZN_SOURCE: 'ixp', IXP_API_KEY: 'dev-ixp-key' };
 
 /**
  * Routes mocked fetches: the IXP endpoint returns `ixpBody`, the offer fragment
- * returns `offer`, anything else returns the origin page.
+ * returns `offer` (null → 404), anything else returns the origin page.
  */
-function mockIxp(ixpBody, offer = OFFER_HTML) {
+function mockIxp(ixpBody, offer = OFFER_HTML, page = PAGE_HTML) {
   return vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
     const reqUrl = typeof input === 'string' ? input : input.url;
     if (reqUrl.startsWith(IXP_URL)) {
@@ -147,7 +153,7 @@ function mockIxp(ixpBody, offer = OFFER_HTML) {
         ? new Response('not found', { status: 404 })
         : new Response(offer, { status: 200, headers: htmlHeaders });
     }
-    return new Response(PAGE_HTML, { status: 200, headers: htmlHeaders });
+    return new Response(page, { status: 200, headers: htmlHeaders });
   });
 }
 
@@ -174,20 +180,20 @@ describe('worker in ixp mode', () => {
 
   it('injects the offer when an assignment resolves (ivid via query)', async () => {
     mockIxp(okBody);
-    const html = await (await run('/drafts/suresh/pzn?ivid=abc')).text();
+    const html = await (await run(`${ENROLLED}?ivid=abc`)).text();
     expect(html).not.toContain('OLD BLOCK');
     expect(html).toContain('NEW OFFER');
   });
 
   it('reads the ivid from a cookie', async () => {
     mockIxp(okBody);
-    const html = await (await run('/drafts/suresh/pzn', { cookie: 'foo=1; ivid=abc' })).text();
+    const html = await (await run(ENROLLED, { cookie: 'foo=1; ivid=abc' })).text();
     expect(html).toContain('NEW OFFER');
   });
 
   it('passes through when there is no ivid', async () => {
     mockIxp(okBody);
-    const html = await (await run('/drafts/suresh/pzn')).text();
+    const html = await (await run(ENROLLED)).text();
     expect(html).toBe(PAGE_HTML);
   });
 
@@ -199,13 +205,13 @@ describe('worker in ixp mode', () => {
 
   it('passes through when the assignment is the control arm', async () => {
     mockIxp({ ivid: 'abc', transactionId: 't', assignments: [assignment({ control: true })] });
-    const html = await (await run('/drafts/suresh/pzn?ivid=abc')).text();
+    const html = await (await run(`${ENROLLED}?ivid=abc`)).text();
     expect(html).toBe(PAGE_HTML);
   });
 
   it('passes through when IXP returns no assignments', async () => {
     mockIxp({ ivid: 'abc', transactionId: 't', assignments: [] });
-    const html = await (await run('/drafts/suresh/pzn?ivid=abc')).text();
+    const html = await (await run(`${ENROLLED}?ivid=abc`)).text();
     expect(html).toBe(PAGE_HTML);
   });
 });
@@ -219,27 +225,22 @@ describe('?pzn= source override', () => {
     assignments: [assignment({ experimentType: 'REPLACE_WEB_CONTENT', assetLocation: '/fragments/pzn/automation' })],
   };
 
-  it('?pzn=ixp forces the IXP flow even when the default is map', async () => {
-    mockIxp(okBody); // env default (from wrangler.jsonc) is PZN_SOURCE=map
-    const html = await (await runWith(env, '/drafts/suresh/pzn?pzn=ixp&ivid=abc')).text();
+  it('?pzn=ixp forces the IXP flow even when the default is de', async () => {
+    mockIxp(okBody); // env default (from wrangler.jsonc) is PZN_SOURCE=de
+    const html = await (await runWith(env, `${ENROLLED}?pzn=ixp&ivid=abc`)).text();
     expect(html).toContain('NEW OFFER');
   });
 
-  it('?pzn=map forces the map flow (and never calls IXP) even when the default is ixp', async () => {
+  it('?pzn=de forces the DE flow (and never calls IXP) even when the default is ixp', async () => {
+    // The experiment page has no DE route, so ?pzn=de resolves to [] (passthrough)
+    // without ever touching the IXP endpoint — proving the override switched source.
     vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
       const reqUrl = typeof input === 'string' ? input : input.url;
-      if (reqUrl.startsWith(IXP_URL)) throw new Error('IXP must not be called in map mode');
-      if (reqUrl === env.PZN_MAP_URL) {
-        const row = {
-          path: '/drafts/suresh/pzn', fragment: '/fragments/pzn/automation', location: 'slot-1', action: 'replace', fidelity: 'block',
-        };
-        return new Response(JSON.stringify({ data: [row] }), { status: 200, headers: jsonHeaders });
-      }
-      if (reqUrl.includes('/fragments/pzn/')) return new Response(OFFER_HTML, { status: 200, headers: htmlHeaders });
+      if (reqUrl.startsWith(IXP_URL)) throw new Error('IXP must not be called in de mode');
       return new Response(PAGE_HTML, { status: 200, headers: htmlHeaders });
     });
-    const html = await (await runWith(IXP_ENV, '/drafts/suresh/pzn?pzn=map')).text();
-    expect(html).toContain('NEW OFFER');
+    const html = await (await runWith(IXP_ENV, `${ENROLLED}?pzn=de&ivid=abc`)).text();
+    expect(html).toBe(PAGE_HTML);
   });
 
   it('strips all query params from the origin request for an HTML page (identity not leaked)', async () => {
@@ -253,7 +254,7 @@ describe('?pzn= source override', () => {
       if (reqUrl.includes('/fragments/pzn/')) return new Response(OFFER_HTML, { status: 200, headers: htmlHeaders });
       return new Response(PAGE_HTML, { status: 200, headers: htmlHeaders });
     });
-    await runWith(env, '/drafts/suresh/pzn?pzn=ixp&ivid=secret-visitor&keep=1');
+    await runWith(env, `${ENROLLED}?pzn=ixp&ivid=secret-visitor&keep=1`);
     const originCall = seen.find((u) => u.startsWith(ORIGIN) && !u.includes('/fragments/'));
     expect(originCall).toBeDefined();
     const originQuery = new URL(originCall).searchParams;
@@ -264,69 +265,7 @@ describe('?pzn= source override', () => {
   });
 });
 
-// --- in-process mock source (?pzn=mock): the "no key required" demo path -----
-
-/** Mocks fetch for the origin page + offer fragment only (no IXP endpoint). */
-function mockOrigin(offer = OFFER_HTML) {
-  const seen = [];
-  vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
-    const reqUrl = typeof input === 'string' ? input : input.url;
-    seen.push(reqUrl);
-    if (reqUrl.includes('/fragments/pzn/')) return new Response(offer, { status: 200, headers: htmlHeaders });
-    return new Response(PAGE_HTML, { status: 200, headers: htmlHeaders });
-  });
-  return seen;
-}
-
-/** Finds an ivid that lands in the requested arm of experiment 39002 (split 50/50). */
-function ividForArm(wantTreatment) {
-  for (let i = 0; i < 500; i += 1) {
-    const id = `mock-visitor-${i}`;
-    if ((bucketPercent(id, 39002) < 50) === wantTreatment) return id;
-  }
-  throw new Error('no ivid found for arm');
-}
-
-describe('?pzn=mock in-process source (no key required)', () => {
-  afterEach(() => vi.restoreAllMocks());
-
-  it('resolves the treatment arm in-process and injects the offer (no network call)', async () => {
-    const seen = mockOrigin();
-    const html = await (await runWith(env, `/drafts/suresh/pzn?pzn=mock&ivid=${ividForArm(true)}`)).text();
-    expect(html).toContain('NEW OFFER');
-    expect(html).not.toContain('OLD BLOCK');
-    // The assignment is resolved in-process, so no request ever hits an IXP endpoint.
-    expect(seen.some((u) => u.includes('/v2/assignment'))).toBe(false);
-  });
-
-  it('shows the baseline for the control arm', async () => {
-    mockOrigin();
-    const html = await (await runWith(env, `/drafts/suresh/pzn?pzn=mock&ivid=${ividForArm(false)}`)).text();
-    expect(html).toBe(PAGE_HTML);
-  });
-
-  it('?experimentId= overrides which experiment the mock resolves', async () => {
-    // 39003 is a control fixture -> passthrough. A treatment-arm ivid would show
-    // the offer under the route's default 39002, so baseline here proves the override.
-    mockOrigin();
-    const html = await (await runWith(env, `/drafts/suresh/pzn?pzn=mock&experimentId=39003&ivid=${ividForArm(true)}`)).text();
-    expect(html).toBe(PAGE_HTML);
-  });
-
-  it('strips demo params (pzn, ivid, experimentId) from the origin request', async () => {
-    const seen = mockOrigin();
-    await runWith(env, `/drafts/suresh/pzn?pzn=mock&ivid=${ividForArm(true)}&experimentId=39002&keep=1`);
-    const originCall = seen.find((u) => u.startsWith(ORIGIN) && !u.includes('/fragments/'));
-    expect(originCall).toBeDefined();
-    const q = new URL(originCall).searchParams;
-    expect(q.has('pzn')).toBe(false);
-    expect(q.has('ivid')).toBe(false);
-    expect(q.has('experimentId')).toBe(false);
-    expect(q.has('keep')).toBe(false); // HTML requests forward no query params
-  });
-});
-
-// --- data-fill: the response payload fills the fragment template's tokens ----
+// --- data-fill: the assignment payload fills the fragment template's tokens --
 
 describe('fillTokens', () => {
   it('fills a present value (HTML-escaped), uses the default when absent, else empty', () => {
@@ -347,25 +286,30 @@ describe('fillTokens', () => {
   });
 });
 
-describe('?experimentId=39005 data-driven offer (payload fills the template)', () => {
+describe('data-driven offer (assignment payload fills the template)', () => {
   afterEach(() => vi.restoreAllMocks());
 
   const TEMPLATE = `<div>
   <div class="offer"><h2>{{headline|Default headline}}</h2><p>{{tagline}}</p><a class="button">{{cta|Get started}}</a></div>
 </div>`;
 
-  /** Serves the token template for the fragment, the page otherwise. */
-  function mockTemplateOrigin() {
-    vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
-      const reqUrl = typeof input === 'string' ? input : input.url;
-      if (reqUrl.includes('/fragments/pzn/')) return new Response(TEMPLATE, { status: 200, headers: htmlHeaders });
-      return new Response(PAGE_HTML, { status: 200, headers: htmlHeaders });
-    });
-  }
+  const dataBody = {
+    ivid: 'abc',
+    transactionId: 't',
+    assignments: [assignment({
+      experimentType: 'REPLACE_WEB_CONTENT',
+      assetLocation: '/fragments/pzn/welcome',
+      payload: JSON.stringify({
+        headline: 'Welcome back, Acme Co.',
+        cta: 'Resume your setup',
+        badge: '30% off',
+      }),
+    })],
+  };
 
   it('fills the template with the assignment payload data (defaults for omitted fields)', async () => {
-    mockTemplateOrigin();
-    const html = await (await runWith(env, '/drafts/suresh/pzn?pzn=mock&experimentId=39005&ivid=demo-visitor-1')).text();
+    mockIxp(dataBody, TEMPLATE);
+    const html = await (await run(`${ENROLLED}?ivid=abc`)).text();
     expect(html).toContain('Welcome back, Acme Co.'); // headline from payload
     expect(html).toContain('Resume your setup'); // cta from payload
     expect(html).toContain('<p></p>'); // tagline: no payload value, no default
@@ -386,10 +330,17 @@ const EXPERIMENT_HTML = `<!DOCTYPE html><html><head><title>t</title></head><body
 const TREATMENT_MAIN = `<div><div class="hero"><div>TREATMENT PAGE</div></div></div>
 <div><div class="slot-1"><div>slot one</div></div></div>`;
 
-/** Serves the treatment page's `.plain.html`; the experiment page otherwise. */
-function mockExperiment() {
-  vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+/**
+ * Routes fetches for the whole-page swap: the IXP endpoint returns `ixpBody`,
+ * the treatment page's `.plain.html` returns the treatment main, the experiment
+ * page returns the baseline.
+ */
+function mockExperiment(ixpBody) {
+  return vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
     const reqUrl = typeof input === 'string' ? input : input.url;
+    if (reqUrl.startsWith(IXP_URL)) {
+      return new Response(JSON.stringify(ixpBody), { status: 200, headers: jsonHeaders });
+    }
     if (reqUrl.includes('/drafts/pzn/treatment.plain.html')) {
       return new Response(TREATMENT_MAIN, { status: 200, headers: htmlHeaders });
     }
@@ -397,28 +348,28 @@ function mockExperiment() {
   });
 }
 
-/** An ivid that lands in the requested arm of the given experiment (split 50/50). */
-function ividForExp(experimentId, wantTreatment) {
-  for (let i = 0; i < 500; i += 1) {
-    const id = `exp-visitor-${i}`;
-    if ((bucketPercent(id, experimentId) < 50) === wantTreatment) return id;
-  }
-  throw new Error('no ivid found for arm');
-}
-
-describe('experiment page (39010): whole-page A/B swap', () => {
+describe('experiment page: whole-page A/B swap (REDIRECT)', () => {
   afterEach(() => vi.restoreAllMocks());
 
+  const redirectBody = {
+    ivid: 'abc',
+    transactionId: 't',
+    assignments: [assignment({
+      experimentType: 'REDIRECT',
+      payload: JSON.stringify({ [VARIATION_KEY]: '/drafts/pzn/treatment' }),
+    })],
+  };
+
   it('treatment arm swaps the whole <main> for the treatment page', async () => {
-    mockExperiment();
-    const html = await (await runWith(env, `/drafts/pzn/experiment?pzn=mock&ivid=${ividForExp(39010, true)}`)).text();
+    mockExperiment(redirectBody);
+    const html = await (await run(`${ENROLLED}?ivid=abc`)).text();
     expect(html).toContain('TREATMENT PAGE');
     expect(html).not.toContain('CONTROL PAGE');
   });
 
   it('control arm shows the baseline experiment page', async () => {
-    mockExperiment();
-    const html = await (await runWith(env, `/drafts/pzn/experiment?pzn=mock&ivid=${ividForExp(39010, false)}`)).text();
+    mockExperiment({ ivid: 'abc', transactionId: 't', assignments: [assignment({ control: true })] });
+    const html = await (await run(`${ENROLLED}?ivid=abc`)).text();
     expect(html).toBe(EXPERIMENT_HTML);
     expect(html).not.toContain('TREATMENT PAGE');
   });

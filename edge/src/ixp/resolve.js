@@ -6,7 +6,7 @@
  * The mapping is 1:1 with the actions the worker already performs:
  *
  *   control / empty / unmapped   → null            → passthrough (baseline)
- *   REDIRECT + payload.variationUrl → page-level replace   (fragment = variation path)
+ *   REDIRECT + variation.html key → page-level replace   (fragment = variation path)
  *   REPLACE_WEB_CONTENT + assetLocation → block/section replace (fragment = content ref)
  *
  * The worker still does NO decisioning: IXP decides the arm; this only renders it.
@@ -24,18 +24,17 @@ import { resolveRoute } from './routes.js';
  */
 
 /**
- * The visitor id. Read from the `ivid` cookie; a `?ivid=` query param overrides
- * it for demo / QA. Null when absent ⇒ nothing to personalize (passthrough).
+ * The visitor id — the lever the whole flow turns on. Read from the `ivid`
+ * cookie first (the Chrome-editable value IXP issues); a `?ivid=` query param is
+ * a demo / QA fallback only. Null when absent ⇒ nothing to personalize.
  * @param {Request} request
  * @returns {string | null}
  */
 function readIvid(request) {
-  const url = new URL(request.url);
-  const fromQuery = url.searchParams.get('ivid');
-  if (fromQuery) return fromQuery;
   const cookie = request.headers.get('cookie') || '';
   const m = cookie.match(/(?:^|;\s*)ivid=([^;]+)/);
-  return m ? decodeURIComponent(m[1]) : null;
+  if (m) return decodeURIComponent(m[1]);
+  return new URL(request.url).searchParams.get('ivid') || null;
 }
 
 /**
@@ -87,8 +86,10 @@ export function assignmentToPznEntry(assignment, route, path) {
   switch (assignment.experimentType) {
     case 'REDIRECT':
     case 'MAB_REDIRECT': {
-      // Page-level: swap the whole <main> for the variation page's content.
-      const variationUrl = parsePayload(assignment.payload)?.variationUrl;
+      // Page-level: swap the whole <main> for the variation page's content. The
+      // real IXP payload carries the variation path under this key.
+      const payload = parsePayload(assignment.payload);
+      const variationUrl = payload?.['intuit.com.integration.variation.html'];
       if (typeof variationUrl !== 'string' || !variationUrl) return null;
       return {
         path, fragment: variationUrl, location: route.location, action: 'replace', fidelity: 'page',
@@ -117,8 +118,8 @@ export function assignmentToPznEntry(assignment, route, path) {
 
 /**
  * Fetches the assignments for a route's experiment. The transport is injected so
- * the routing + mapping logic below is shared between the real HTTP client
- * (`resolveIxpEntry`) and the in-process mock (`ixp/mock-source.js`).
+ * the routing + mapping logic below can be exercised in tests against a stub
+ * without a live IXP host; `resolveIxpEntry` wires in the real HTTP client.
  * @typedef {(params: { ivid: string, experimentId?: number, label?: string }) => Promise<IxpAssignmentResponse | null>} AssignmentFetcher
  */
 

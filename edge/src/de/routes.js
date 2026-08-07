@@ -16,7 +16,7 @@
  * @typedef {Object} DeSlot
  * @property {string} location Slot id to target in the page (e.g. `slot-1`).
  * @property {string} placement Decision Engine placement/accessPoint for the slot.
- * @property {string} experience Decision Engine experience (e.g. `ttcom`).
+ * @property {string} experience Decision Engine experience (e.g. `marketing`).
  */
 
 /**
@@ -29,13 +29,12 @@
  * @type {Record<string, DeRoute>}
  */
 export const DE_ROUTES = {
-  // Use case 2: the treatment page (option B) has two personalizable slots. Each
-  // maps to a Decision Engine placement; the batch response picks the content
-  // (a fragment) for each, varied by the visitor's industry (from ZoomInfo).
+  // Use case 2: the treatment page has one personalizable slot mapped to the
+  // pzn service's `SBSEGQBMContentAemPznIxpTest` placement (experience
+  // `marketing`). The batch response picks the fragment for the slot per visitor.
   '/drafts/pzn/treatment': {
     slots: [
-      { location: 'slot-1', placement: 'CGTTCOMMContentTTLCTY255044', experience: 'ttcom' },
-      { location: 'slot-2', placement: 'CGTTCOMMContentTTLCTY255044Modal', experience: 'ttcom' },
+      { location: 'slot-1', placement: 'SBSEGQBMContentAemPznIxpTest', experience: 'marketing' },
     ],
   },
 };
