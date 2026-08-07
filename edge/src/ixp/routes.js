@@ -30,11 +30,13 @@
  * @type {Record<string, IxpRoute>}
  */
 export const IXP_ROUTES = {
-  // Use case 1 (experimentation / A-B): the experiment page is enrolled in the
-  // real IXP test experiment `15972`. A REDIRECT treatment swaps the whole
-  // <main> for the variation page; a REPLACE_WEB_CONTENT treatment fills the
-  // `slot-1` block. The arm is chosen by IXP off the visitor's `ivid` cookie.
-  '/drafts/pzn/experiment': { experimentId: 15972, location: 'slot-1', fidelity: 'block' },
+  // Use case 1 (experimentation / A-B): the experiment page. Queried by `label`,
+  // not `experimentId` — a by-id lookup of the enrolled experiment returns only
+  // the DEFAULT/control assignment, whereas the label resolves the populated
+  // (treatment) assignment IXP hands out per visitor. A REDIRECT treatment swaps
+  // the whole <main> for the variation page; a REPLACE_WEB_CONTENT treatment
+  // fills the `slot-1` block. The arm is chosen by IXP off the visitor's `ivid`.
+  '/drafts/pzn/experiment': { label: '081008a2-f507-429a-a408-1d10a7fb4810', location: 'slot-1', fidelity: 'block' },
 };
 
 /**

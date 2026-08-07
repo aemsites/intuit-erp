@@ -15,7 +15,7 @@
 		// IXP Assignment API host (PZN_SOURCE=ixp / ?pzn=ixp). The key it
 		// authenticates with is the `IXP_API_KEY` Wrangler secret (never in
 		// vars/committed) — set it with `wrangler secret put IXP_API_KEY`.
-		"IXP_ASSIGNMENT_URL": "https://experimentation-preview.us.api.intuit.com/us/v2/assignment",
+		"IXP_ASSIGNMENT_URL": "https://experimentation.us.api.intuit.com/us/v2/assignment",
 		// Decision Engine flow (PZN_SOURCE=de / ?pzn=de). The batch client POSTs the
 		// page's slots + visitor attributes here and renders the returned per-slot
 		// recommendation (`copyData.pznblock` fragment). The API key it authenticates
