@@ -100,6 +100,88 @@
   scroll-snap-align: start;
 }
 
+/* ---- .carousel photo cards: uniform image box + hover interaction, ported
+   from erp.intuit.com's M05ArticleCard. Authored assets have inconsistent
+   natural aspect ratios (e.g. 900x506 vs 396x396), which made rows look
+   vertically jagged; a fixed square box with object-fit:cover keeps every
+   card's image (and therefore its heading) aligned across the row. The hover
+   treatment (clip-path inset, content nudge, background scrim) mirrors the
+   source's timing/easing exactly. Scoped to .carousel so the .boxed (oa) white
+   cards keep their own chrome. ---- */
+.cards.carousel {
+  --custom-ease: cubic-bezier(0.6, 0, 0.25, 1);
+  --transition-duration: 600ms;
+}
+
+.cards.carousel .cards-card-image img {
+  aspect-ratio: 1 / 1;
+  height: auto;
+  object-fit: cover;
+  border-radius: 2px;
+}
+
+/* keep card content painting above the hover scrim (::before, z-index 0) */
+.cards.carousel .cards-card-image, .cards.carousel .cards-card-body {
+  position: relative;
+  z-index: 1;
+}
+
+/* image clips inward from top/left/right on hover (bottom edge stays put),
+   revealing the scrim behind it */
+.cards.carousel .cards-card-image {
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+  transition: clip-path var(--transition-duration) var(--custom-ease);
+}
+
+.cards.carousel .cards-track > div:hover .cards-card-image,
+.cards.carousel .cards-track > div:focus-within .cards-card-image {
+  clip-path: polygon(16px 16px, calc(100% - 16px) 16px, calc(100% - 16px) 100%, 16px 100%);
+}
+
+/* text content nudges right on hover */
+.cards.carousel .cards-card-body {
+  transition: padding var(--transition-duration) var(--custom-ease);
+}
+
+.cards.carousel .cards-track > div:hover .cards-card-body,
+.cards.carousel .cards-track > div:focus-within .cards-card-body {
+  padding-left: 16px;
+}
+
+/* background scrim (border + soft shadow) that fades in behind the card */
+.cards.carousel .cards-track > div { position: relative; }
+
+.cards.carousel .cards-track > div::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  inset: -8px -8px -22px;
+  border: 1px solid rgb(0 37 74 / 20%);
+  border-radius: 2px;
+  box-shadow: 0 4px 16px rgb(35 108 255 / 16%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-duration) var(--custom-ease);
+}
+
+.cards.carousel .cards-track > div:hover::before,
+.cards.carousel .cards-track > div:focus-within::before { opacity: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .cards.carousel .cards-card-image,
+  .cards.carousel .cards-card-body,
+  .cards.carousel .cards-track > div::before { transition: none; }
+
+  /* keep the static scrim affordance, drop the movement */
+  .cards.carousel .cards-track > div:hover .cards-card-image,
+  .cards.carousel .cards-track > div:focus-within .cards-card-image {
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+  }
+
+  .cards.carousel .cards-track > div:hover .cards-card-body,
+  .cards.carousel .cards-track > div:focus-within .cards-card-body { padding-left: 0; }
+}
+
 /* .carousel — plain photo + text directly on the section background; the
    .dark instance (professional-services) needs white text since there's no
    card chrome behind it (.accent, e.g. events, keeps the normal dark text). */
@@ -151,4 +233,52 @@
 
 @media (width <= 768px) {
   .cards.carousel .cards-track > div, .cards.boxed .cards-track > div { flex-basis: 260px; }
+}
+
+/* ---- custom "camera-focus" cursor (erp.intuit.com CustomCursor): a floating
+   ring with two chevrons flanking a center dot that follows the pointer while
+   it's over the carousel. Element is created + positioned by cards.js and only
+   activates for fine pointers (mouse/trackpad); touch keeps the native UX. ---- */
+.cards-focus-cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  color: #21262a;
+  background: rgb(255 255 255 / 70%);
+  border: 1px solid rgb(0 37 74 / 20%);
+  box-shadow: 0 12px 40px -18px rgb(35 108 255 / 15%);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.12s linear, visibility 0.12s linear;
+}
+
+.cards-focus-cursor.is-enabled { opacity: 1; visibility: visible; }
+
+.cards-focus-cursor .cards-cursor-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentcolor;
+  margin: 0 18px;
+  transition: margin 0.2s ease-out;
+}
+
+/* chevrons squeeze toward the dot on press, echoing a shutter */
+.cards-focus-cursor.is-mouse-down .cards-cursor-dot { margin: 0 10px; }
+
+.cards-focus-cursor .cards-cursor-chevron { width: 6px; height: 10px; }
+
+.cards.carousel .cards-viewport.cards-cursor-active,
+.cards.carousel .cards-viewport.cards-cursor-active * { cursor: none; }
+
+@media (pointer: coarse), (prefers-reduced-motion: reduce) {
+  .cards-focus-cursor .cards-cursor-dot { transition: none; }
 }

@@ -100,6 +100,71 @@ function enhanceScroll(block) {
   update();
 }
 
+// Shared singleton — one floating cursor element for every carousel on the page.
+let focusCursorEl;
+
+function getFocusCursor() {
+  if (focusCursorEl) return focusCursorEl;
+  const el = document.createElement('div');
+  el.className = 'cards-focus-cursor';
+  el.setAttribute('aria-hidden', 'true');
+  const chevron = (side, points) => `<svg class="cards-cursor-chevron cards-cursor-chevron-${side}" viewBox="0 0 6 10" aria-hidden="true"><polyline points="${points}" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  el.innerHTML = `${chevron('left', '4.5,1 1,5 4.5,9')}<span class="cards-cursor-dot"></span>${chevron('right', '1.5,1 5,5 1.5,9')}`;
+  document.body.append(el);
+  focusCursorEl = el;
+  return el;
+}
+
+/**
+ * Adds the erp.intuit.com "camera-focus" cursor over a carousel viewport. The
+ * ring follows the pointer while it's inside the viewport, hiding the native
+ * cursor. Fine pointers only — touch devices keep the default experience.
+ * @param {Element} block The .cards.carousel block (post-enhanceScroll)
+ */
+function attachFocusCursor(block) {
+  const viewport = block.querySelector('.cards-viewport');
+  if (!viewport) return;
+  if (!window.matchMedia || !window.matchMedia('(pointer: fine)').matches) return;
+
+  let raf = 0;
+  let x = 0;
+  let y = 0;
+  const render = () => {
+    raf = 0;
+    // center the 96px ring on the pointer
+    getFocusCursor().style.transform = `translate(${x - 48}px, ${y - 48}px)`;
+  };
+  const isMouse = (e) => !e.pointerType || e.pointerType === 'mouse';
+
+  viewport.addEventListener('pointermove', (e) => {
+    if (!isMouse(e)) return;
+    x = e.clientX;
+    y = e.clientY;
+    if (!raf) raf = window.requestAnimationFrame(render);
+  }, { passive: true });
+
+  viewport.addEventListener('pointerenter', (e) => {
+    if (!isMouse(e)) return;
+    x = e.clientX;
+    y = e.clientY;
+    render();
+    getFocusCursor().classList.add('is-enabled');
+    viewport.classList.add('cards-cursor-active');
+  });
+
+  viewport.addEventListener('pointerleave', () => {
+    if (focusCursorEl) focusCursorEl.classList.remove('is-enabled');
+    viewport.classList.remove('cards-cursor-active');
+  });
+
+  viewport.addEventListener('pointerdown', (e) => {
+    if (isMouse(e) && focusCursorEl) focusCursorEl.classList.add('is-mouse-down');
+  });
+  window.addEventListener('pointerup', () => {
+    if (focusCursorEl) focusCursorEl.classList.remove('is-mouse-down');
+  });
+}
+
 export default function decorate(block) {
   [...block.children].forEach((row) => {
     [...row.children].forEach((cell) => {
@@ -116,5 +181,9 @@ export default function decorate(block) {
 
   if (SCROLL_SHAPE_CLASSES.some((c) => block.classList.contains(c))) {
     enhanceScroll(block);
+  }
+
+  if (block.classList.contains('carousel')) {
+    attachFocusCursor(block);
   }
 }
