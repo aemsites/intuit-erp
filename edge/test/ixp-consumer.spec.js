@@ -3,7 +3,6 @@ import {
   describe, it, expect, vi, afterEach,
 } from 'vitest';
 import worker from '../src/index.js';
-import { fillTokens } from '../src/pzn.js';
 import { assignmentToPznEntry } from '../src/ixp/resolve.js';
 import { resolveRoute } from '../src/ixp/routes.js';
 
@@ -63,21 +62,6 @@ describe('assignmentToPznEntry', () => {
       action: 'replace',
       fidelity: 'block',
     });
-  });
-
-  it('parses a REPLACE_WEB_CONTENT payload into entry.data (scalars only, stringified)', () => {
-    const entry = assignmentToPznEntry(
-      assignment({
-        experimentType: 'REPLACE_WEB_CONTENT',
-        assetLocation: '/fragments/pzn/welcome',
-        payload: JSON.stringify({
-          headline: 'Hello', count: 3, flag: true, nested: { x: 1 },
-        }),
-      }),
-      ROUTE,
-      '/x',
-    );
-    expect(entry?.data).toEqual({ headline: 'Hello', count: '3', flag: 'true' });
   });
 
   it('returns null for the control arm (baseline)', () => {
@@ -226,8 +210,10 @@ describe('?pzn= source override', () => {
   };
 
   it('?pzn=ixp forces the IXP flow even when the default is de', async () => {
-    mockIxp(okBody); // env default (from wrangler.jsonc) is PZN_SOURCE=de
-    const html = await (await runWith(env, `${ENROLLED}?pzn=ixp&ivid=abc`)).text();
+    mockIxp(okBody);
+    // Keep the wrangler default (PZN_SOURCE=de); add the IXP key (a secret, so
+    // absent from the base env) the client now requires before it fires.
+    const html = await (await runWith({ ...env, IXP_API_KEY: 'dev-ixp-key' }, `${ENROLLED}?pzn=ixp&ivid=abc`)).text();
     expect(html).toContain('NEW OFFER');
   });
 
@@ -262,59 +248,6 @@ describe('?pzn= source override', () => {
     expect(originQuery.has('pzn')).toBe(false); // demo toggle stripped
     expect(originQuery.has('keep')).toBe(false); // HTML requests forward no query params
     expect(originCall).not.toContain('secret-visitor');
-  });
-});
-
-// --- data-fill: the assignment payload fills the fragment template's tokens --
-
-describe('fillTokens', () => {
-  it('fills a present value (HTML-escaped), uses the default when absent, else empty', () => {
-    const tpl = '<h2>{{headline|Default headline}}</h2><p>{{tagline}}</p><a>{{cta|Get started}}</a>';
-    const out = fillTokens(tpl, { headline: 'Hi <b>Acme</b>', cta: 'Resume' });
-    expect(out).toContain('<h2>Hi &lt;b&gt;Acme&lt;/b&gt;</h2>'); // value wins, escaped
-    expect(out).toContain('<a>Resume</a>'); // value wins over the default
-    expect(out).toContain('<p></p>'); // no value and no default -> empty
-  });
-
-  it('renders authored defaults unchanged when there is no data', () => {
-    expect(fillTokens('<h2>{{headline|Automate the routine}}</h2>', undefined))
-      .toBe('<h2>Automate the routine</h2>');
-  });
-
-  it('leaves token-free markup untouched', () => {
-    expect(fillTokens(OFFER_HTML, { headline: 'x' })).toBe(OFFER_HTML);
-  });
-});
-
-describe('data-driven offer (assignment payload fills the template)', () => {
-  afterEach(() => vi.restoreAllMocks());
-
-  const TEMPLATE = `<div>
-  <div class="offer"><h2>{{headline|Default headline}}</h2><p>{{tagline}}</p><a class="button">{{cta|Get started}}</a></div>
-</div>`;
-
-  const dataBody = {
-    ivid: 'abc',
-    transactionId: 't',
-    assignments: [assignment({
-      experimentType: 'REPLACE_WEB_CONTENT',
-      assetLocation: '/fragments/pzn/welcome',
-      payload: JSON.stringify({
-        headline: 'Welcome back, Acme Co.',
-        cta: 'Resume your setup',
-        badge: '30% off',
-      }),
-    })],
-  };
-
-  it('fills the template with the assignment payload data (defaults for omitted fields)', async () => {
-    mockIxp(dataBody, TEMPLATE);
-    const html = await (await run(`${ENROLLED}?ivid=abc`)).text();
-    expect(html).toContain('Welcome back, Acme Co.'); // headline from payload
-    expect(html).toContain('Resume your setup'); // cta from payload
-    expect(html).toContain('<p></p>'); // tagline: no payload value, no default
-    expect(html).not.toContain('{{'); // every token resolved
-    expect(html).not.toContain('OLD BLOCK'); // block was replaced
   });
 });
 

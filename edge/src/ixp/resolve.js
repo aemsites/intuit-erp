@@ -24,17 +24,18 @@ import { resolveRoute } from './routes.js';
  */
 
 /**
- * The visitor id — the lever the whole flow turns on. Read from the `ivid`
- * cookie first (the Chrome-editable value IXP issues); a `?ivid=` query param is
- * a demo / QA fallback only. Null when absent ⇒ nothing to personalize.
+ * The visitor id — the lever the whole flow turns on. In production it comes
+ * from the `ivid` cookie IXP issues; a `?ivid=` query param overrides that
+ * cookie for demo / QA. Null when absent ⇒ nothing to personalize.
  * @param {Request} request
  * @returns {string | null}
  */
 function readIvid(request) {
+  const fromQuery = new URL(request.url).searchParams.get('ivid');
+  if (fromQuery) return fromQuery;
   const cookie = request.headers.get('cookie') || '';
   const m = cookie.match(/(?:^|;\s*)ivid=([^;]+)/);
-  if (m) return decodeURIComponent(m[1]);
-  return new URL(request.url).searchParams.get('ivid') || null;
+  return m ? decodeURIComponent(m[1]) : null;
 }
 
 /**
@@ -50,25 +51,6 @@ function parsePayload(payload) {
   } catch {
     return null;
   }
-}
-
-/**
- * Flattens an assignment payload's scalar fields into string data for template
- * token fill (see `PznEntry.data`). Non-scalar fields are ignored; returns
- * undefined when there is nothing usable.
- * @param {string} payload
- * @returns {Record<string, string> | undefined}
- */
-function payloadData(payload) {
-  const parsed = parsePayload(payload);
-  if (!parsed) return undefined;
-  const data = {};
-  for (const [key, value] of Object.entries(parsed)) {
-    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
-      data[key] = String(value);
-    }
-  }
-  return Object.keys(data).length > 0 ? data : undefined;
 }
 
 /**
@@ -97,9 +79,7 @@ export function assignmentToPznEntry(assignment, route, path) {
     }
     case 'REPLACE_WEB_CONTENT':
     case 'MAB_WEB_CONTENT': {
-      // Block-level: inject the referenced content at the route's slot. The
-      // payload (if any) carries data values that fill the fragment template's
-      // {{token}} placeholders — the assignment's data renders into the offer.
+      // Block-level: inject the referenced content at the route's slot.
       if (!assignment.assetLocation) return null;
       return {
         path,
@@ -107,7 +87,6 @@ export function assignmentToPznEntry(assignment, route, path) {
         location: route.location,
         action: 'replace',
         fidelity: route.fidelity,
-        data: payloadData(assignment.payload),
       };
     }
     default:

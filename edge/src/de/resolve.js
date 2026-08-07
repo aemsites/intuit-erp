@@ -28,18 +28,19 @@ import { deriveVisitorTokens } from '../visitor.js';
  */
 
 /**
- * The visitor id, which is the lever the whole flow turns on. Read from the
- * `ivid` cookie first (the Chrome-editable value the pzn service issues); a
- * `?ivid=` query param is a demo / QA fallback only. Null when absent ⇒ nothing
- * to personalize (passthrough).
+ * The visitor id, which is the lever the whole flow turns on. In production it
+ * comes from the `ivid` cookie the pzn service issues; a `?ivid=` query param
+ * overrides that cookie for demo / QA. Null when absent ⇒ nothing to personalize
+ * (passthrough).
  * @param {Request} request
  * @returns {string | null}
  */
 function readIvid(request) {
+  const fromQuery = new URL(request.url).searchParams.get('ivid');
+  if (fromQuery) return fromQuery;
   const cookie = request.headers.get('cookie') || '';
   const m = cookie.match(/(?:^|;\s*)ivid=([^;]+)/);
-  if (m) return decodeURIComponent(m[1]);
-  return new URL(request.url).searchParams.get('ivid') || null;
+  return m ? decodeURIComponent(m[1]) : null;
 }
 
 /**
@@ -68,8 +69,8 @@ function buildAttributes(request, ivid, permalink) {
   if (v.country) attributes.country_code = v.country;
   if (v.region) attributes.region_code = v.region;
   const { latitude, longitude } = request.cf || {};
-  if (latitude) attributes.latitude = String(latitude);
-  if (longitude) attributes.longitude = String(longitude);
+  if (latitude != null && latitude !== '') attributes.latitude = String(latitude);
+  if (longitude != null && longitude !== '') attributes.longitude = String(longitude);
   const ip = request.headers.get('cf-connecting-ip');
   if (ip) attributes.ipAddress = ip;
   return attributes;

@@ -72,6 +72,10 @@ function authHeader(apiKey) {
  * @returns {Promise<IxpAssignmentResponse | null>}
  */
 export async function fetchAssignment(env, params) {
+  // Without a host + key the request is unauthenticated (would 4xx); skip it and
+  // pass the page through, mirroring the batch client's guard.
+  if (!env.IXP_ASSIGNMENT_URL || !env.IXP_API_KEY) return null;
+
   const url = new URL(env.IXP_ASSIGNMENT_URL);
   url.searchParams.set('ivid', params.ivid);
   if (params.experimentId !== undefined) url.searchParams.set('experimentId', String(params.experimentId));

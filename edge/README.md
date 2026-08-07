@@ -74,7 +74,6 @@ Every entry has these fields:
 | `location` | **slot id** to target in the page                    | `slot-1`                     |
 | `action`   | `replace` \| `above` \| `below`                      | `replace`                    |
 | `fidelity` | `block` \| `section` \| `page`                       | `block`                      |
-| `data`     | optional `{{token}}` values filled into the fragment | `{ headline: "…" }`          |
 
 ## Action × fidelity
 
@@ -97,10 +96,12 @@ The origin EDS markup is **undecorated**: sections are bare `<div>` children of
 against a block/section that has **any** of: a `class` token equal to the slot id
 (`<div class="slot-1">`), `id="slot-1"`, or `data-slot="slot-1"`.
 
-The simplest way for an author to create a slot in EDS is to add a **block named
-after the slot** (e.g. a block "Slot 1" → renders as `<div class="slot-1">`).
-Matching is generic, so you can also point `location` at an **existing** block
-(e.g. `hero`) for an instant demo with no authoring.
+The simplest way for an author to mark a slot in EDS is to add the slot id as a
+**class on an existing block** — append it to the block's title, e.g.
+`Hero (slot-1)` renders as `<div class="hero slot-1">`. For a **section-level**
+slot, add the slot id as a **Style** in the section's metadata, which renders as
+a class on the section `<div>`. Either way no new block or content is needed —
+you are just tagging what is already there.
 
 ## Offers / fragments
 

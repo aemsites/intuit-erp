@@ -6,10 +6,10 @@
  * module resolves the *offer* itself — the actual content to inject.
  *
  * Today offers are authored EDS fragments under `/fragments/pzn/` fetched as
- * `.plain.html`, with the entry's `data` filled into any `{{token}}`
- * placeholders. If Intuit later sends offers as JSON, render them to fragment
- * markup with json2html (https://www.aem.live/developer/json2html) at the seam
- * marked below. The worker does NO decisioning — it renders what it is given.
+ * `.plain.html` and injected verbatim. If Intuit later sends offers as JSON,
+ * render them to fragment markup with json2html
+ * (https://www.aem.live/developer/json2html) at the seam marked below. The
+ * worker does NO decisioning — it renders what it is given.
  */
 
 /**
@@ -25,7 +25,7 @@
  */
 
 /**
- * Escapes a value for safe insertion into HTML (offer data is service-supplied).
+ * Escapes a value for safe insertion into HTML (service-supplied values).
  * @param {string} value
  * @returns {string}
  */
@@ -38,37 +38,12 @@ export function escapeHtml(value) {
     .replace(/'/g, '&#39;');
 }
 
-/** A `{{key}}` or `{{key|default}}` placeholder in an offer template. */
-const TOKEN_RE = /\{\{\s*([\w.-]+)\s*(?:\|([^}]*))?\}\}/g;
-
 /**
- * Fills `{{token}}` / `{{token|default}}` placeholders in offer markup from the
- * entry's `data`. A present value wins (HTML-escaped, since it comes from the
- * pzn service); otherwise the author's `|default` is used; otherwise empty.
+ * Resolves the offer markup to inject for an entry.
  *
- * This is the json2html seam in its lightest form: the personalization *data*
- * renders into an authored template. Markup with no tokens is returned unchanged,
- * so existing (token-free) fragments are unaffected.
- * @param {string} markup
- * @param {Record<string, string>} [data]
- * @returns {string}
- */
-export function fillTokens(markup, data) {
-  return markup.replace(TOKEN_RE, (_full, key, def) => {
-    const value = data?.[key];
-    if (value !== undefined) return escapeHtml(String(value));
-    return def ?? '';
-  });
-}
-
-/**
- * Resolves the offer markup to inject for a map entry.
- *
- * Currently: fetch the referenced EDS fragment as `.plain.html`, then fill its
- * `{{token}}` placeholders from the entry's `data` (an IXP assignment payload, or
- * a `data` object on a map row). No data / no tokens → the markup is unchanged.
- * Seam: if the map/service ever hands us a JSON offer instead of a fragment ref,
- * branch here and render it via json2html before returning the markup.
+ * Currently: fetch the referenced EDS fragment as `.plain.html` and inject it
+ * verbatim. Seam: if the service ever hands us a JSON offer instead of a fragment
+ * ref, branch here and render it via json2html before returning the markup.
  *
  * Returns the markup plus the fragment response headers (for cache-key
  * propagation), or null on any failure so the caller passes the page through
@@ -108,9 +83,8 @@ export async function resolveOfferMarkup(env, entry) {
     });
     const ct = res.headers.get('content-type') || '';
     if (!res.ok || !ct.includes('text/html')) return null;
-    // JSON2HTML seam: the fetched fragment is a template; fill its `{{token}}`
-    // placeholders from the offer's `data`. No data / no tokens → unchanged.
-    return { markup: fillTokens(await res.text(), entry.data), headers: res.headers };
+    // JSON2HTML seam: if offers ever arrive as JSON, render them to markup here.
+    return { markup: await res.text(), headers: res.headers };
   } catch {
     return null;
   }
