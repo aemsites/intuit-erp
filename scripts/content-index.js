@@ -16,7 +16,10 @@ export function loadIndex(path) {
 }
 
 export function formatDate(value) {
-  const date = new Date(value);
+  // a bare YYYY-MM-DD parses as UTC midnight, which renders as the previous day
+  // in any negative-offset timezone — pin it to local midnight instead
+  const local = /^\d{4}-\d{2}-\d{2}$/.test(value) ? `${value}T00:00:00` : value;
+  const date = new Date(local);
   if (Number.isNaN(date.getTime())) return value || '';
   return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 }
