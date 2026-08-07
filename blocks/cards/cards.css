@@ -106,6 +106,14 @@
 .cards.boxed .cards-viewport::-webkit-scrollbar { display: none; width: 0; height: 0; }
 
 .cards.carousel .cards-track, .cards.boxed .cards-track { display: flex; gap: 32px; }
+
+/* The hover scrim (::before below) overhangs each card by 8px top / 22px
+   bottom and casts a shadow ~20px past that. The viewport's overflow-y is
+   forced to `auto` by its overflow-x:auto, so without room it would clip that
+   overhang and add a phantom vertical scrollbar. Pad the track vertically so
+   the scrim renders fully inside the scroll area, mirroring the source
+   card-list's own vertical padding. */
+.cards.carousel .cards-track { padding: 8px 0 44px; }
 .cards.boxed .cards-track { justify-content: center; }
 
 .cards.carousel .cards-track > div, .cards.boxed .cards-track > div {
@@ -223,6 +231,11 @@
   margin-top: 32px;
 }
 .cards.carousel .cards-controls[hidden], .cards.boxed .cards-controls[hidden] { display: none; }
+
+/* carousel adds 44px of in-viewport track padding below the cards (for the
+   hover scrim); trim the controls' own top margin so the total cards→controls
+   gap stays close to the source's ~64px rather than stacking to 76px. */
+.cards.carousel .cards-controls { margin-top: 20px; }
 
 .cards .cards-counter { flex: 0 0 auto; margin: 0; font-size: 14px; color: var(--text-muted); white-space: nowrap; }
 .cards.dark .cards-counter { color: rgb(255 255 255 / 70%); }
