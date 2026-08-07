@@ -69,6 +69,21 @@
    one place." band. */
 .cards-container:has(.cards.boxed) .default-content-wrapper { text-align: center; }
 
+/* Bottom breathing room below the carousel controls, matching the source C05
+   section's padding-bottom (--spacing-xxxlarge on desktop). Without it the
+   progress bar/nav row butts straight up against the following section. Dark
+   carousels already get this from the .cards.dark section padding above, so
+   this only targets the accent/default (white-section) carousels. */
+.section.cards-container:has(.cards.carousel):not(:has(.cards.dark)) {
+  padding-bottom: 60px;
+}
+
+@media (width >= 900px) {
+  .section.cards-container:has(.cards.carousel):not(:has(.cards.dark)) {
+    padding-bottom: 120px;
+  }
+}
+
 @media (width <= 768px) {
   .cards.dark:not(.carousel, .boxed), .cards.accent:not(.carousel, .boxed) { grid-template-columns: 1fr; }
 }
