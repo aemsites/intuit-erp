@@ -13,9 +13,9 @@ const ORIGIN = env.ORIGIN_BASE_URL;
 // no request leaves the test — the mock just matches this prefix.
 const IXP_URL = env.IXP_ASSIGNMENT_URL;
 // The route the experiment page is enrolled in (src/ixp/routes.js) — queried by
-// label, since a by-id lookup returns only the DEFAULT/control assignment.
-const LABEL = '081008a2-f507-429a-a408-1d10a7fb4810';
-const ROUTE = { label: LABEL, location: 'slot-1', fidelity: 'block' };
+// experimentId (the dedicated redirect experiment for this page).
+const EXPERIMENT_ID = 385944;
+const ROUTE = { experimentId: EXPERIMENT_ID, location: 'slot-1', fidelity: 'block' };
 
 /** The path enrolled in the real IXP experiment. */
 const ENROLLED = '/drafts/pzn/experiment';
@@ -26,7 +26,7 @@ const VARIATION_KEY = 'intuit.com.integration.variation.html';
 /** Builds an assignment with only the fields the consumer reads set. */
 function assignment(partial) {
   return {
-    experimentId: 385625,
+    experimentId: EXPERIMENT_ID,
     experimentType: 'REPLACE_WEB_CONTENT',
     label: '',
     payload: '',
@@ -93,7 +93,7 @@ describe('assignmentToPznEntry', () => {
 
 describe('resolveRoute', () => {
   it('resolves the enrolled experiment path', () => {
-    expect(resolveRoute(ENROLLED)).toEqual({ label: LABEL, location: 'slot-1', fidelity: 'block' });
+    expect(resolveRoute(ENROLLED)).toEqual({ experimentId: EXPERIMENT_ID, location: 'slot-1', fidelity: 'block' });
   });
 
   it('normalizes a trailing slash', () => {
@@ -201,7 +201,7 @@ describe('worker in ixp mode', () => {
     expect(html).toBe(PAGE_HTML);
   });
 
-  it('queries IXP by label, not experimentId (a by-id lookup returns only control)', async () => {
+  it('queries IXP by experimentId (the route\'s dedicated redirect experiment)', async () => {
     const spy = mockIxp(okBody);
     await run(`${ENROLLED}?ivid=abc`);
     const ixpCall = spy.mock.calls
@@ -209,8 +209,8 @@ describe('worker in ixp mode', () => {
       .find((u) => u.startsWith(IXP_URL));
     expect(ixpCall).toBeDefined();
     const params = new URL(ixpCall).searchParams;
-    expect(params.get('label')).toBe(LABEL);
-    expect(params.has('experimentId')).toBe(false);
+    expect(params.get('experimentId')).toBe(String(EXPERIMENT_ID));
+    expect(params.has('label')).toBe(false);
   });
 });
 
