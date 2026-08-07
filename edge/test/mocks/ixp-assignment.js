@@ -1,17 +1,17 @@
 /**
- * Mock of Intuit's IXP Assignment API — `GET /us/v2/assignment`.
+ * Mock of Intuit's IXP Assignment API — `GET /us/v2/assignment` (test-only).
  *
  * Reproduces the contract from the shared spec ("AEM - Service Integration
- * Payloads") so the edge worker can be built and tested against the real shape
- * *without* an API key (real calls need one, and they fire assignment/exposure
- * tracking — see the spec's Constraints). Swap the mock's URL for the real host
- * (`experimentation[-preview].us.api.intuit.com`) once the IXP team shares a key.
+ * Payloads") so the edge worker's IXP consumer can be exercised against the real
+ * response shape *without* an API key — real calls need one and fire
+ * assignment/exposure tracking (see the spec's Constraints), and the preview host
+ * currently 403s for us. This is pure test scaffolding: it is not wired into the
+ * worker. `ixp-consumer.spec.js` stands it up as a stub origin and points
+ * `IXP_ASSIGNMENT_URL` at it; the worker itself only ever talks to the real host.
  *
  * This module is the pure contract: `(request, env) -> Response`. The fixture
- * catalog (which experiments exist and what they hand out) lives in
- * `ixp-fixtures.js`. In the consolidated worker it is served both from the
- * `/v2/assignment` route (`src/index.js`) and, in-process, by
- * `src/ixp/mock-source.js`.
+ * catalog (which experiments exist and what they hand out) lives alongside it in
+ * `ixp-fixtures.js`.
  */
 
 import {
@@ -39,7 +39,7 @@ import {
  * @property {number} id Treatment id.
  * @property {string} treatmentKey
  * @property {string} [treatmentName]
- * @property {string} payload JSON string. Page-level decision: `{ sourceUrl, variationUrl }`.
+ * @property {string} payload JSON string. Page-level: `{ "intuit.com.integration.variation.html": <path> }`.
  * @property {string | null} assetLocation Block-level decision: an S3/content key the renderer fetches + injects.
  * @property {boolean} control True when this is the control arm (→ the worker should show the baseline).
  * @property {boolean} isAPIIL
@@ -58,7 +58,7 @@ import {
  */
 
 /**
- * Env bindings for the mock (see `wrangler.jsonc`).
+ * Env bindings for the mock (supplied by the tests, not `wrangler.jsonc`).
  * @typedef {Object} IxpMockEnv
  * @property {string} MOCK_API_KEY Expected value of `intuit_apikey=` in the Authorization header.
  * @property {string} EDGE_SVC_APP_NAME Default `application` when the query omits it.

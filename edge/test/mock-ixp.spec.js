@@ -1,10 +1,6 @@
-import { env, createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
 import { describe, it, expect } from 'vitest';
-import worker from '../src/index.js';
-import { handleAssignment } from '../src/mock/ixp-assignment.js';
-import { bucketPercent } from '../src/mock/ixp-fixtures.js';
-
-const IncomingRequest = Request;
+import { handleAssignment } from './mocks/ixp-assignment.js';
+import { bucketPercent } from './mocks/ixp-fixtures.js';
 
 const ENV = {
   MOCK_API_KEY: 'test-key',
@@ -14,8 +10,6 @@ const ENV = {
 };
 
 const AUTH = 'Intuit_APIKey intuit_apikey=test-key, intuit_apikey_version=1.0';
-// The consolidated worker uses the wrangler.jsonc MOCK_API_KEY (dev-ixp-key).
-const DEV_AUTH = 'Intuit_APIKey intuit_apikey=dev-ixp-key, intuit_apikey_version=1.0';
 const REAL_IVID = 'd3878e74-ba78-4e1d-afea-3be26957721a';
 
 /** Calls the handler directly with a constructed request. */
@@ -86,14 +80,13 @@ describe('IXP assignment mock - contract', () => {
     expect(ids).toEqual([39001, 39002, 39003, 39005]);
   });
 
-  it('page-level treatment carries a payload with sourceUrl/variationUrl', async () => {
+  it('page-level treatment carries the variation path under the redirect key', async () => {
     const res = call(`?ivid=${REAL_IVID}&experimentId=39001`);
     const a = (await bodyOf(res)).assignments[0];
     expect(a.experimentType).toBe('REDIRECT');
     expect(a.assetLocation).toBeNull();
     expect(JSON.parse(a.payload)).toEqual({
-      sourceUrl: '/drafts/suresh/pzn',
-      variationUrl: '/drafts/suresh/pzn-variant',
+      'intuit.com.integration.variation.html': '/drafts/suresh/pzn-variant',
     });
   });
 
@@ -168,32 +161,5 @@ describe('IXP assignment mock - A/B arm split (treatmentSplit)', () => {
     // The consumer keys off `control`; treatment fields remain for either arm.
     const a = (await bodyOf(call('?ivid=visitor-1a&experimentId=39002'))).assignments[0];
     expect(a.assetLocation).toBe('/fragments/pzn/automation');
-  });
-});
-
-describe('IXP assignment mock - served from the consolidated worker route', () => {
-  async function route(path, { auth = DEV_AUTH } = {}) {
-    const headers = auth ? { Authorization: auth } : {};
-    const req = new IncomingRequest(`https://worker.example.com${path}`, { method: 'GET', headers });
-    const ctx = createExecutionContext();
-    const res = await worker.fetch(req, env, ctx);
-    await waitOnExecutionContext(ctx);
-    return res;
-  }
-
-  it('serves the /us/v2/assignment route', async () => {
-    const res = await route(`/us/v2/assignment?ivid=${REAL_IVID}&experimentId=15972`);
-    expect(res.status).toBe(200);
-    expect((await res.json()).assignments).toHaveLength(1);
-  });
-
-  it('also serves the bare /v2/assignment route', async () => {
-    const res = await route(`/v2/assignment?ivid=${REAL_IVID}&experimentId=15972`);
-    expect(res.status).toBe(200);
-  });
-
-  it('enforces the mock auth on the route (500 Invalid Key)', async () => {
-    const res = await route(`/us/v2/assignment?ivid=${REAL_IVID}&experimentId=15972`, { auth: null });
-    expect(res.status).toBe(500);
   });
 });

@@ -3,32 +3,27 @@
  *
  * The worker is a full aem.live production proxy (so a real domain can point at
  * it) with personalization layered on top. On each request:
- *   1. Serve the in-worker IXP Assignment mock at `/v2/assignment` (so the `ixp`
- *      HTTP flow can self-call it — no second worker).
- *   2. Apply the standard aem.live proxy contract (port redirect, RUM guard,
+ *   1. Apply the standard aem.live proxy contract (port redirect, RUM guard,
  *      query-param sanitization, CDN headers, response cleanup) — mirrors
  *      adobe/aem-cloudflare-prod-worker.
- *   3. Fetch the origin page and resolve the personalization entry in parallel.
- *   4. For a `.json` request the origin 404s, fall back to the mhast
+ *   2. Fetch the origin page and resolve the personalization entry in parallel.
+ *   3. For a `.json` request the origin 404s, fall back to the mhast
  *      html-to-json worker.
- *   5. No map match  -> return the origin response untouched (byte-identical).
- *   6. Map match      -> fetch the referenced offer fragment, inject it into the
- *                        DOM, and merge the fragment's cache keys into the
+ *   4. No personalized entry -> return the origin response untouched (byte-identical).
+ *   5. Entry resolved        -> fetch the referenced offer fragment, inject it into
+ *                        the DOM, and merge the fragment's cache keys into the
  *                        response (so fragment invalidation invalidates the page).
  *
- * The worker does no decisioning of its own; it renders whatever the map/service
- * resolves for a path. See pzn.js for the swappable map + offer sources.
+ * The worker does no decisioning of its own; it renders whatever Intuit's
+ * service resolves for a path. See pzn.js for the shared offer-rendering tail.
  *
  * Interchangeable resolvers produce the same `PznEntry` (or an array of them),
- * chosen by `PZN_SOURCE` (or a `?pzn=map|ixp|mock|de` per-request override):
- *   - "map" (default) — the map.json sheet (pzn.js).
- *   - "ixp"           — Intuit's IXP Assignment API over HTTP (ixp/resolve.js);
- *                       `IXP_ASSIGNMENT_URL` may point at this worker's own
- *                       `/us/v2/assignment` route.
- *   - "mock"          — the IXP mock, resolved in-process (ixp/mock-source.js).
- *   - "de"            — Intuit's Decision Engine "Batch" flow (de/resolve.js):
- *                       ZoomInfo context → a batch decision → one entry per
- *                       personalized slot. Yields a `PznEntry[]`.
+ * chosen by `PZN_SOURCE` (or a `?pzn=de|ixp` per-request override):
+ *   - "de" (default) — Intuit's Decision Engine "Batch" flow (de/resolve.js): a
+ *                       batch decision per visitor → one entry per personalized
+ *                       slot. Yields a `PznEntry[]`.
+ *   - "ixp"          — Intuit's IXP Assignment API over HTTP (ixp/resolve.js),
+ *                       for whole-page / block A-B experiments.
  *
  * A second, independent transform runs alongside fragment injection: template
  * fill (template.js). Some pages are authored with literal ALL-CAPS placeholder
@@ -38,13 +33,11 @@
  */
 
 import { applyPersonalization } from './personalize.js';
-import { resolveOfferMarkup, resolvePznEntry } from './pzn.js';
+import { resolveOfferMarkup } from './pzn.js';
 import { resolveIxpEntry } from './ixp/resolve.js';
-import { resolveMockEntry } from './ixp/mock-source.js';
 import { resolveDeEntries } from './de/resolve.js';
 import { resolveTemplateData, fillPlaceholders } from './template.js';
 import { deriveVisitorTokens } from './visitor.js';
-import { handleAssignment } from './mock/ixp-assignment.js';
 import { createCacheKeys, mergeCacheKeys, applyCacheKeys } from './cache-keys.js';
 
 /**
@@ -102,12 +95,8 @@ function isRUMRequest(url) {
 /** Personalization source: a `?pzn=` override, else the configured default. */
 function resolveSource(url, env) {
   const override = url.searchParams.get('pzn');
-  if (override === 'ixp' || override === 'map' || override === 'mock' || override === 'de') return override;
-  const configured = String(env.PZN_SOURCE);
-  if (configured === 'ixp') return 'ixp';
-  if (configured === 'mock') return 'mock';
-  if (configured === 'de') return 'de';
-  return 'map';
+  if (override === 'ixp' || override === 'de') return override;
+  return String(env.PZN_SOURCE) === 'ixp' ? 'ixp' : 'de';
 }
 
 /**
@@ -246,15 +235,9 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
-    // 1. In-worker IXP Assignment mock. `IXP_ASSIGNMENT_URL` can point here so
-    //    the `ixp` HTTP flow self-calls it — no separate mock worker.
-    if (request.method === 'GET' && /\/v2\/assignment$/.test(url.pathname)) {
-      return handleAssignment(request, env);
-    }
-
-    // 2. Port redirect (prod only). Cloudflare exposes a few ports besides 443;
+    // 1. Port redirect (prod only). Cloudflare exposes a few ports besides 443;
     //    normalize to the default. Skipped on localhost so `wrangler dev` (which
-    //    always has a port) and the worker's self-call keep working.
+    //    always has a port) keeps working.
     if (url.port && url.hostname !== 'localhost' && url.hostname !== '127.0.0.1') {
       const redirectTo = new URL(request.url);
       redirectTo.port = '';
@@ -264,12 +247,12 @@ export default {
       });
     }
 
-    // 3. RUM/optel: only GET/POST/OPTIONS.
+    // 2. RUM/optel: only GET/POST/OPTIONS.
     if (isRUMRequest(url) && !['GET', 'POST', 'OPTIONS'].includes(request.method)) {
       return new Response('Method Not Allowed', { status: 405 });
     }
 
-    // 4. Validate the configured origin before proxying to it.
+    // 3. Validate the configured origin before proxying to it.
     const originBase = new URL(env.ORIGIN_BASE_URL);
     if (!/^https:\/\/main--.*--.*\.(?:aem|hlx)\.live/.test(originBase.origin)) {
       return new Response('Invalid ORIGIN_BASE_URL', { status: 500 });
@@ -279,13 +262,13 @@ export default {
     // demo params are stripped for the origin subrequest.
     const source = resolveSource(url, env);
 
-    // 5. Sanitize the origin subrequest URL (strips demo params, sorts).
+    // 4. Sanitize the origin subrequest URL (strips demo params, sorts).
     const extension = getExtension(url.pathname);
     const savedSearch = url.search;
     sanitizeOriginSearch(url, extension);
     const originUrl = new URL(`${url.pathname}${url.search}`, originBase).toString();
 
-    // 6. Build the origin request with the aem.live proxy headers.
+    // 5. Build the origin request with the aem.live proxy headers.
     const headers = new Headers(request.headers);
     for (const name of HOP_BY_HOP_HEADERS) headers.delete(name);
     headers.set('x-forwarded-host', request.headers.get('host') || url.host);
@@ -317,15 +300,13 @@ export default {
     });
 
     // Resolve the personalization entry(ies) from the selected source. The
-    // single-entry sources yield a `PznEntry | null`; the `de` (Decision Engine)
-    // source yields a `PznEntry[]` (one per personalized slot). All are
-    // normalized to an array below, so the render path is shared.
+    // `ixp` source yields a `PznEntry | null`; the `de` (Decision Engine) source
+    // yields a `PznEntry[]` (one per personalized slot). Both are normalized to
+    // an array below, so the render path is shared.
     /** @type {Promise<PznEntry | PznEntry[] | null>} */
     let resolveEntry;
-    if (source === 'mock') resolveEntry = resolveMockEntry(request);
-    else if (source === 'ixp') resolveEntry = resolveIxpEntry(env, request);
-    else if (source === 'de') resolveEntry = resolveDeEntries(env, request);
-    else resolveEntry = resolvePznEntry(env, url.pathname);
+    if (source === 'ixp') resolveEntry = resolveIxpEntry(env, request);
+    else resolveEntry = resolveDeEntries(env, request);
 
     // Fetch the origin page, resolve the pzn entry, and resolve any template
     // fill data — all in parallel. `bypassOriginCache` chooses fresh (no-store,
@@ -347,7 +328,7 @@ export default {
 
     let response = originResponse;
 
-    // 7. `.json` 404 → JSON fallback: da-sc for structured-content paths, else mhast.
+    // 6. `.json` 404 → JSON fallback: da-sc for structured-content paths, else mhast.
     if (request.method === 'GET' && url.pathname.endsWith('.json') && response.status === 404) {
       const fallback = await fetch(buildJsonFallbackUrl(url, env).toString(), {
         headers: { accept: 'application/json' },
@@ -357,7 +338,7 @@ export default {
       return finalize(response, savedSearch, env);
     }
 
-    // 8. Personalization. Two independent transforms run on an ok HTML GET
+    // 7. Personalization. Two independent transforms run on an ok HTML GET
     //    response: fragment injection for a matched pzn entry, and template fill
     //    for a page authored as a template. Passthrough (body unread) unless at
     //    least one applies.

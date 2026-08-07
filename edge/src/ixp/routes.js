@@ -30,15 +30,13 @@
  * @type {Record<string, IxpRoute>}
  */
 export const IXP_ROUTES = {
-  // Mirrors the map.json demo: the ERP hero page's personalizable slot is
-  // `slot-1`, driven by experiment 39002 (a REPLACE_WEB_CONTENT block treatment).
-  '/drafts/suresh/pzn': { experimentId: 39002, location: 'slot-1', fidelity: 'block' },
-
-  // Use case 1 (experimentation / A-B): the control page (option A). Experiment
-  // 39010 is a REDIRECT split 50/50 — the treatment arm swaps the whole <main>
-  // for the treatment page (option B), the control arm shows this page as-is.
-  // Page-level, so `location` is unused; `?ivid=` toggles the arm (stable hash).
-  '/drafts/pzn/experiment': { experimentId: 39010, location: 'slot-1', fidelity: 'page' },
+  // Use case 1 (experimentation / A-B): the experiment page. Queried by `label`,
+  // not `experimentId` — a by-id lookup of the enrolled experiment returns only
+  // the DEFAULT/control assignment, whereas the label resolves the populated
+  // (treatment) assignment IXP hands out per visitor. A REDIRECT treatment swaps
+  // the whole <main> for the variation page; a REPLACE_WEB_CONTENT treatment
+  // fills the `slot-1` block. The arm is chosen by IXP off the visitor's `ivid`.
+  '/drafts/pzn/experiment': { label: '081008a2-f507-429a-a408-1d10a7fb4810', location: 'slot-1', fidelity: 'block' },
 };
 
 /**

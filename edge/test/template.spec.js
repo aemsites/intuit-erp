@@ -9,7 +9,6 @@ import { deriveVisitorTokens } from '../src/visitor.js';
 const IncomingRequest = Request;
 
 const ORIGIN = env.ORIGIN_BASE_URL;
-const MAP_URL = env.PZN_MAP_URL;
 const SHEET_URL = `${ORIGIN}/drafts/pzn/api.json`;
 
 /** The authored automation page: ALL-CAPS placeholders in head + body. */
@@ -36,13 +35,10 @@ const SHEET = {
 const htmlHeaders = { 'content-type': 'text/html; charset=utf-8' };
 const jsonHeaders = { 'content-type': 'application/json' };
 
-/** Routes mocked fetches: empty pzn map, the sheet, else the origin page. */
+/** Routes mocked fetches: the data sheet, else the origin page. */
 function mockOrigin(sheet = SHEET, page = AUTOMATION_HTML, sheetOk = true) {
   return vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
     const reqUrl = typeof input === 'string' ? input : input.url;
-    if (reqUrl === MAP_URL) {
-      return new Response(JSON.stringify({ data: [] }), { headers: jsonHeaders });
-    }
     if (reqUrl === SHEET_URL) {
       return sheetOk
         ? new Response(JSON.stringify(sheet), { status: 200, headers: jsonHeaders })

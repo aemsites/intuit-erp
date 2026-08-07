@@ -6,7 +6,7 @@
  * The mapping is 1:1 with the actions the worker already performs:
  *
  *   control / empty / unmapped   → null            → passthrough (baseline)
- *   REDIRECT + payload.variationUrl → page-level replace   (fragment = variation path)
+ *   REDIRECT + variation.html key → page-level replace   (fragment = variation path)
  *   REPLACE_WEB_CONTENT + assetLocation → block/section replace (fragment = content ref)
  *
  * The worker still does NO decisioning: IXP decides the arm; this only renders it.
@@ -24,14 +24,14 @@ import { resolveRoute } from './routes.js';
  */
 
 /**
- * The visitor id. Read from the `ivid` cookie; a `?ivid=` query param overrides
- * it for demo / QA. Null when absent ⇒ nothing to personalize (passthrough).
+ * The visitor id — the lever the whole flow turns on. In production it comes
+ * from the `ivid` cookie IXP issues; a `?ivid=` query param overrides that
+ * cookie for demo / QA. Null when absent ⇒ nothing to personalize.
  * @param {Request} request
  * @returns {string | null}
  */
 function readIvid(request) {
-  const url = new URL(request.url);
-  const fromQuery = url.searchParams.get('ivid');
+  const fromQuery = new URL(request.url).searchParams.get('ivid');
   if (fromQuery) return fromQuery;
   const cookie = request.headers.get('cookie') || '';
   const m = cookie.match(/(?:^|;\s*)ivid=([^;]+)/);
@@ -54,25 +54,6 @@ function parsePayload(payload) {
 }
 
 /**
- * Flattens an assignment payload's scalar fields into string data for template
- * token fill (see `PznEntry.data`). Non-scalar fields are ignored; returns
- * undefined when there is nothing usable.
- * @param {string} payload
- * @returns {Record<string, string> | undefined}
- */
-function payloadData(payload) {
-  const parsed = parsePayload(payload);
-  if (!parsed) return undefined;
-  const data = {};
-  for (const [key, value] of Object.entries(parsed)) {
-    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
-      data[key] = String(value);
-    }
-  }
-  return Object.keys(data).length > 0 ? data : undefined;
-}
-
-/**
  * Maps a single IXP assignment onto a `PznEntry`, or null when it should not
  * change the page (control arm, missing target, or an unhandled type).
  * @param {IxpAssignment} assignment
@@ -87,8 +68,10 @@ export function assignmentToPznEntry(assignment, route, path) {
   switch (assignment.experimentType) {
     case 'REDIRECT':
     case 'MAB_REDIRECT': {
-      // Page-level: swap the whole <main> for the variation page's content.
-      const variationUrl = parsePayload(assignment.payload)?.variationUrl;
+      // Page-level: swap the whole <main> for the variation page's content. The
+      // real IXP payload carries the variation path under this key.
+      const payload = parsePayload(assignment.payload);
+      const variationUrl = payload?.['intuit.com.integration.variation.html'];
       if (typeof variationUrl !== 'string' || !variationUrl) return null;
       return {
         path, fragment: variationUrl, location: route.location, action: 'replace', fidelity: 'page',
@@ -96,9 +79,7 @@ export function assignmentToPznEntry(assignment, route, path) {
     }
     case 'REPLACE_WEB_CONTENT':
     case 'MAB_WEB_CONTENT': {
-      // Block-level: inject the referenced content at the route's slot. The
-      // payload (if any) carries data values that fill the fragment template's
-      // {{token}} placeholders — the assignment's data renders into the offer.
+      // Block-level: inject the referenced content at the route's slot.
       if (!assignment.assetLocation) return null;
       return {
         path,
@@ -106,7 +87,6 @@ export function assignmentToPznEntry(assignment, route, path) {
         location: route.location,
         action: 'replace',
         fidelity: route.fidelity,
-        data: payloadData(assignment.payload),
       };
     }
     default:
@@ -117,8 +97,8 @@ export function assignmentToPznEntry(assignment, route, path) {
 
 /**
  * Fetches the assignments for a route's experiment. The transport is injected so
- * the routing + mapping logic below is shared between the real HTTP client
- * (`resolveIxpEntry`) and the in-process mock (`ixp/mock-source.js`).
+ * the routing + mapping logic below can be exercised in tests against a stub
+ * without a live IXP host; `resolveIxpEntry` wires in the real HTTP client.
  * @typedef {(params: { ivid: string, experimentId?: number, label?: string }) => Promise<IxpAssignmentResponse | null>} AssignmentFetcher
  */
 
