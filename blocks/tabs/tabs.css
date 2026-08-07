@@ -95,8 +95,13 @@
 /* media half clips its image so it can be parked fully off to one side and
    slide back in. The inner wrapper is full-width and carries the horizontal
    slide; the image inside it scales 1.06 -> 1 as the panel becomes active,
-   matching the source's directional image reveal. */
-.tabs .tab-media { overflow: hidden; }
+   matching the source's directional image reveal.
+   clip-path (not overflow:hidden) does the clipping so it stays purely visual:
+   overflow:hidden would clip the image vertically too AND drop its height from
+   the panel-height sync, collapsing the media box and cropping the image top
+   and bottom. clip-path leaves the image in flow at its natural height (so it
+   sits centred with the source's vertical padding) and only masks the slide. */
+.tabs .tab-media { clip-path: inset(0); }
 
 .tabs .tab-media-inner {
   width: 100%; display: flex; align-items: center; justify-content: center;
