@@ -42,7 +42,7 @@
   border: 0;
   border-radius: 50%;
   background: var(--tts-dark);
-  box-shadow: 0 6px 24px rgb(0 0 0 / 20%);
+  box-shadow: 0 6px 24px 0 rgb(196 196 196 / 80%);
   color: #fff;
   cursor: pointer;
 }
@@ -76,7 +76,7 @@
   left: 0;
   box-sizing: border-box;
   max-height: 85vh;
-  padding: 20px;
+  padding: 20px 20px 32px;
   overflow-y: auto;
   border: 0;
   border-radius: 12px 12px 0 0;
@@ -161,12 +161,19 @@
   text-align: center;
   text-decoration: none;
   cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .talk-to-sales .tts-btn-secondary {
   border: 2px solid var(--tts-dark);
   background: transparent;
   color: var(--tts-dark);
+}
+
+.talk-to-sales .tts-btn-secondary:hover,
+.talk-to-sales .tts-btn-secondary:focus-visible {
+  background: #09222a;
+  color: #fff;
 }
 
 .talk-to-sales .tts-btn-primary {
@@ -229,7 +236,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    color: var(--tts-green);
+    color: var(--tts-blue);
   }
 
   .talk-to-sales .tts-ico-phone,
@@ -241,7 +248,7 @@
   .talk-to-sales .tts-pipe {
     width: 1px;
     height: 33px;
-    background: var(--tts-grey);
+    background: var(--tts-blue);
   }
 
   .talk-to-sales .tts-bubble-label {
@@ -272,10 +279,12 @@
 
   .talk-to-sales.tts-default .tts-panel {
     width: min(625px, 92vw);
+    min-height: 310px;
   }
 
   .talk-to-sales.tts-blog .tts-panel {
     width: min(340px, 92vw);
+    min-height: 410px;
   }
 
   .talk-to-sales .tts-close {
@@ -284,7 +293,7 @@
   }
 
   .talk-to-sales .tts-headline {
-    margin: 0 0 20px;
+    margin: 20px 0;
     font-size: 28px;
     font-weight: 700;
     line-height: 36px;
