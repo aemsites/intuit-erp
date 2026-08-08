@@ -317,6 +317,13 @@ async function loadLazy(doc) {
 
   loadFooter(doc.querySelector('footer'));
 
+  // Persistent bottom-right sales widget ("Contact us" / "Talk to sales"),
+  // present on every page. Loaded here (lazy phase) so it never touches LCP.
+  loadCSS(`${window.hlx.codeBasePath}/blocks/talk-to-sales/talk-to-sales.css`);
+  import('../blocks/talk-to-sales/talk-to-sales.js')
+    .then(({ default: initTalkToSales }) => initTalkToSales())
+    .catch(() => { /* non-fatal — widget is non-critical chrome */ });
+
   if (MARTECH_ENABLED) {
     try { await martechLazy(); } catch (e) { /* non-fatal */ }
     // Demo posture: auto-grant collection consent (martech inits consent
