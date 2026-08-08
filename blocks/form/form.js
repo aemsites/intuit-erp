@@ -122,6 +122,23 @@ export function buildIdentityXdm(fields) {
   };
 }
 
+// Provider-aware submit tracking. `window.utag` only ever exists when scripts/scripts.js chose
+// the Tealium provider AND that instance is enabled (real prod hosts only — see
+// plugins/tealium-martech/src/index.js `resolveEnvironment`); every current host still runs the
+// default Adobe path below, unchanged.
+export function trackFormSubmit(fields) {
+  if (window.utag?.link) {
+    window.utag.link({
+      tealium_event: 'form_submit',
+      ...fields,
+      ivid: window.utag_data?.ivid,
+    });
+    return;
+  }
+  // Default (Adobe) path — fires the identity event (fail-open, never blocks the confirmation).
+  sendEvent({ xdm: buildIdentityXdm(fields) }).catch(() => {});
+}
+
 export default function decorate(block) {
   // Config rows (if any) are read here, before the block's children are
   // wholly replaced below — they never reach the fixed-field rendering,
@@ -189,9 +206,9 @@ export default function decorate(block) {
       note.textContent = 'Please enter a valid business email.';
       return;
     }
-    // Fire the identity event (fail-open — never block the confirmation).
+    // Fire the identity/tracking event (fail-open — never block the confirmation).
     try {
-      sendEvent({ xdm: buildIdentityXdm(fields) }).catch(() => {});
+      trackFormSubmit(fields);
     } catch (e) { /* non-fatal */ }
     note.textContent = 'Thanks — we’ll be in touch shortly.';
     btn.disabled = true;
