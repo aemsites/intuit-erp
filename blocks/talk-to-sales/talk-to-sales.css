@@ -1,0 +1,308 @@
+/*
+ * talk-to-sales — persistent bottom-right sales widget (ported from
+ * erp.intuit.com). Mobile-first: dark ball/pill trigger + full-width bottom
+ * sheet; desktop (min-width 600px): white circular bubble + anchored card.
+ * Two variants share this sheet — .tts--default ("Contact us") and
+ * .tts--blog ("Talk to sales"). JS: blocks/talk-to-sales/talk-to-sales.js
+ */
+
+.talk-to-sales {
+  --tts-green: #0a8543;
+  --tts-blue: #236cff;
+  --tts-dark: #0d333f;
+  --tts-grey: #c4c4c4;
+  --tts-border: #d4d7dc;
+
+  position: fixed;
+  right: 12px;
+  bottom: 12px;
+  z-index: 1000;
+  font-family: var(--body-font-family, "AvenirNext forINTUIT", helvetica, arial, sans-serif);
+}
+
+.talk-to-sales button {
+  margin: 0;
+  font-family: inherit;
+}
+
+/* breakpoint visibility helpers */
+.talk-to-sales .tts-desktop,
+.talk-to-sales .tts-desktop-only {
+  display: none;
+}
+
+/* ---------- mobile trigger: dark ball (default) / pill (blog) ---------- */
+.talk-to-sales .tts-ball {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--tts-dark);
+  box-shadow: 0 6px 24px rgb(0 0 0 / 20%);
+  color: #fff;
+  cursor: pointer;
+}
+
+.talk-to-sales .tts-ball-pill {
+  width: auto;
+  height: 48px;
+  gap: 8px;
+  padding: 0 20px;
+  border-radius: 9999px;
+}
+
+.talk-to-sales .tts-ball-label {
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.talk-to-sales .tts-ico-ball {
+  width: 24px;
+  height: 24px;
+}
+
+/* ---------- panel (mobile bottom sheet) ---------- */
+.talk-to-sales .tts-panel {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  box-sizing: border-box;
+  max-height: 85vh;
+  padding: 20px;
+  overflow-y: auto;
+  border: 0;
+  border-radius: 12px 12px 0 0;
+  background: #fff;
+  box-shadow: 0 -8px 20px rgb(0 0 0 / 10%);
+  color: #000;
+}
+
+.talk-to-sales .tts-panel[hidden] {
+  display: none;
+}
+
+.talk-to-sales .tts-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: inline-flex;
+  padding: 4px;
+  border: 0;
+  background: none;
+  color: var(--tts-grey);
+  line-height: 0;
+  cursor: pointer;
+}
+
+.talk-to-sales .tts-panel-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.talk-to-sales .tts-headline {
+  margin: 24px 0 20px;
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 44px;
+}
+
+.talk-to-sales .tts-headline-default {
+  color: var(--tts-green);
+}
+
+.talk-to-sales .tts-headline-blog {
+  color: var(--tts-blue);
+}
+
+.talk-to-sales .tts-subhead {
+  margin: 0 0 20px;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 28px;
+  color: #000;
+}
+
+.talk-to-sales .tts-hours {
+  margin: 0;
+  font-size: 16px;
+  line-height: 22px;
+  color: #000;
+}
+
+.talk-to-sales .tts-support-label {
+  margin: 0;
+  padding: 40px 0 20px;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 28px;
+  color: #000;
+}
+
+/* CTA buttons */
+.talk-to-sales .tts-btn {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 52px;
+  padding: 0 20px;
+  border-radius: 4px;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.talk-to-sales .tts-btn-secondary {
+  border: 2px solid var(--tts-dark);
+  background: transparent;
+  color: var(--tts-dark);
+}
+
+.talk-to-sales .tts-btn-primary {
+  border: 0;
+  background: var(--tts-green);
+  color: #fff;
+}
+
+/* mobile: CTAs stretch full width */
+.talk-to-sales .tts-call {
+  align-self: stretch;
+  margin: 0 0 12px;
+}
+
+.talk-to-sales .tts-schedule,
+.talk-to-sales .tts-support {
+  align-self: stretch;
+}
+
+/* open state hides the trigger */
+.talk-to-sales.tts-open .tts-ball {
+  display: none;
+}
+
+/* ============================ desktop ============================ */
+@media (min-width: 600px) {
+  .talk-to-sales {
+    right: 40px;
+    bottom: 20px;
+    z-index: 1500;
+  }
+
+  /* swap breakpoint visibility */
+  .talk-to-sales .tts-mobile,
+  .talk-to-sales .tts-mobile-only {
+    display: none;
+  }
+
+  .talk-to-sales .tts-desktop-only {
+    display: block;
+  }
+
+  /* desktop trigger: white circle with phone | chat icons + label */
+  .talk-to-sales .tts-bubble {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 128px;
+    height: 128px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 6px 24px rgb(0 0 0 / 20%);
+    cursor: pointer;
+  }
+
+  .talk-to-sales .tts-bubble-icons {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--tts-green);
+  }
+
+  .talk-to-sales .tts-ico-phone,
+  .talk-to-sales .tts-ico-chat {
+    width: 21px;
+    height: 21px;
+  }
+
+  .talk-to-sales .tts-pipe {
+    width: 1px;
+    height: 33px;
+    background: var(--tts-grey);
+  }
+
+  .talk-to-sales .tts-bubble-label {
+    padding-top: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 16px;
+    color: #000;
+  }
+
+  .talk-to-sales.tts-open .tts-bubble {
+    display: none;
+  }
+
+  /* desktop panel: card anchored to the bubble corner */
+  .talk-to-sales .tts-panel {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: auto;
+    max-height: none;
+    padding: 40px;
+    overflow: visible;
+    border: 1px solid var(--tts-border);
+    border-radius: 12px;
+    box-shadow: 0 6px 24px rgb(0 0 0 / 20%);
+  }
+
+  .talk-to-sales.tts-default .tts-panel {
+    width: min(625px, 92vw);
+  }
+
+  .talk-to-sales.tts-blog .tts-panel {
+    width: min(340px, 92vw);
+  }
+
+  .talk-to-sales .tts-close {
+    top: 20px;
+    right: 20px;
+  }
+
+  .talk-to-sales .tts-headline {
+    margin: 0 0 20px;
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 36px;
+  }
+
+  .talk-to-sales .tts-subhead {
+    margin: 0;
+    font-size: 20px;
+    line-height: 28px;
+  }
+
+  /* desktop CTAs size to content (left-aligned) */
+  .talk-to-sales .tts-btn {
+    height: 48px;
+  }
+
+  .talk-to-sales .tts-schedule,
+  .talk-to-sales .tts-support {
+    align-self: flex-start;
+  }
+}
