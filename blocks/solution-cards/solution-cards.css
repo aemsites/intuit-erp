@@ -41,19 +41,18 @@
 
 /* upstream sizes these per card */
 .solution-cards .sol-card:nth-child(2) .sol-title { font-size: 40px; line-height: 52px; }
-.solution-cards .sol-lead { font-size: 16px; font-weight: 400; line-height: 30px; color: #000; margin: 0; }
+.solution-cards .sol-lead { font-size: 20px; font-weight: 400; line-height: 30px; color: #000; margin: 0; }
 .solution-cards .sol-bullets { list-style: disc; margin: 0; padding-left: 40px; }
 .solution-cards .sol-bullets li { font-size: 16px; color: #000; line-height: 30px; margin-bottom: 0; }
 
-/* the 64px is a floor, not the gap: .sol-shot's `auto` grows past it */
-.solution-cards .sol-card .button-wrapper { align-self: flex-start; margin: 40px 0 64px; }
+/* `auto` above pushes the CTA to the same offset in both cards despite unequal
+   copy length, which is what keeps the two CTAs (and the shots under them) level */
+.solution-cards .sol-card .button-wrapper { align-self: flex-start; margin: auto 0 64px; }
 
 /* scoped rather than raising the global .button height */
 .solution-cards .sol-card .button-wrapper .button { height: 52px; }
 
-/* `auto` keeps both cards' shots level despite unequal copy length; the card's
-   own bottom padding supplies the 60px below */
-.solution-cards .sol-shot { margin-top: auto; border-radius: 8px; overflow: hidden; }
+.solution-cards .sol-shot { border-radius: 8px; overflow: hidden; }
 .solution-cards .sol-shot img { width: 100%; display: block; }
 
 /* tablet: still two-up, but the row widens to a near-full-width gutter */
@@ -73,6 +72,9 @@
   .solution-cards .sol-title { font-size: 34px; }
   .solution-cards .sol-lead { line-height: 24px; }
   .solution-cards .sol-bullets li { line-height: 24px; }
+  .solution-cards .sol-shot { width: 100%; }
 
-  .solution-cards .sol-shot { width: 100%; margin-bottom: 10px; }
+  /* stacked cards size to their own copy, so there is no slack for `auto` to
+     distribute and the CTA needs its normal top margin back */
+  .solution-cards .sol-card .button-wrapper { margin-top: 40px; margin-bottom: 44px; }
 }
