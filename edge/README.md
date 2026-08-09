@@ -53,8 +53,10 @@ on the same URL):
   [docs/ixp-integration.md](docs/ixp-integration.md).
 
 Both resolve the same internal entry(ies), so the render path is identical.
-Worker-internal params (`pzn`, `ivid`, `experimentId`, `label`) are read from the
-request and then stripped before the origin subrequest.
+Worker-internal params (`pzn`, `ivid`, `experimentId`, `label`, `locale`) are read
+from the request and then stripped before the origin subrequest. `?locale=` forces
+the DE locale (the batch response is keyed by locale) — handy when the browser's
+`Accept-Language` (e.g. `en-GB`) has no configured offer; `?locale=en-US` shows it.
 
 > **Status.** The Decision Engine batch endpoint is live and works with a key.
 > Intuit's IXP endpoint currently returns **403** (key access not yet granted), so
