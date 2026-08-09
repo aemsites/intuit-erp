@@ -301,10 +301,65 @@ export function buildVideoSection(rows) {
   return section;
 }
 
+/**
+ * Variant .video-split (professional-services) — copy left, video right on a
+ * tinted band, rather than .video's full-width frame with the copy overlaid.
+ * Cells: 1. poster <img> + attribution  2. video URL  3. heading  4. body copy
+ */
+function buildVideoSplit(cells) {
+  const [posterCell, urlCell, headingCell, copyCell] = cells;
+
+  const grid = document.createElement('div');
+  grid.className = 'split-grid';
+
+  const copy = document.createElement('div');
+  copy.className = 'split-copy';
+  if (headingCell) {
+    const h = headingCell.querySelector('h1, h2, h3, h4');
+    const heading = document.createElement('h2');
+    heading.className = 'split-title';
+    heading.textContent = (h || headingCell).textContent.trim();
+    copy.append(heading);
+  }
+  if (copyCell && copyCell.textContent.trim()) {
+    const body = document.createElement('p');
+    body.className = 'split-body';
+    body.textContent = copyCell.textContent.trim();
+    copy.append(body);
+  }
+
+  const media = document.createElement('div');
+  media.className = 'split-media';
+  const poster = pic(posterCell);
+  if (poster) media.append(poster);
+
+  const href = urlCell ? (urlCell.querySelector('a')?.getAttribute('href') || urlCell.textContent.trim()) : '';
+  const youtubeId = ytId(href);
+  if (youtubeId) {
+    const play = document.createElement('button');
+    play.className = 'split-play';
+    play.type = 'button';
+    play.setAttribute('aria-label', 'Play full video');
+    play.textContent = '▶';
+    play.addEventListener('click', () => openVideoModal(youtubeId));
+    media.append(play);
+  }
+
+  grid.append(copy, media);
+  return grid;
+}
+
 export default function decorate(block) {
   if (block.classList.contains('card')) {
     const figures = [...block.querySelectorAll(':scope > div')].map(buildCard);
     block.replaceChildren(...figures);
+    return;
+  }
+
+  if (block.classList.contains('video-split')) {
+    const row = block.querySelector(':scope > div');
+    if (!row) return;
+    block.replaceChildren(buildVideoSplit([...row.children]));
     return;
   }
 
