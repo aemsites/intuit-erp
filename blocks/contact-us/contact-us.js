@@ -1,5 +1,5 @@
 /**
- * talk-to-sales — the persistent bottom-right sales widget from erp.intuit.com,
+ * contact-us — the persistent bottom-right sales widget from erp.intuit.com,
  * ported to EDS. Injected once into <body> during the lazy phase (see
  * scripts/scripts.js), so it never touches the LCP path.
  *
@@ -12,7 +12,7 @@
  * Each variant has a distinct desktop (white circle → card) and mobile
  * (dark ball/pill → bottom sheet) design; the split is handled in CSS at 600px.
  * The blog "Schedule a call" CTA reuses the shared schedule-call modal.
- * CSS: styles/lazy-styles.css (.talk-to-sales rules).
+ * CSS: blocks/contact-us/contact-us.css.
  */
 // eslint-disable-next-line import/no-cycle
 import { openScheduleModal } from '../../scripts/schedule-modal.js';
@@ -75,19 +75,19 @@ function isBlogVariant() {
 /** Desktop trigger: white circle with phone | chat icons + label. */
 function desktopBubble(label, phoneIcon, chatIcon) {
   return `
-    <button type="button" class="tts-bubble tts-desktop" aria-label="${label}">
-      <span class="tts-bubble-icons">
-        ${withClass(phoneIcon, 'tts-ico tts-ico-phone')}<span class="tts-pipe" aria-hidden="true"></span>${withClass(chatIcon, 'tts-ico tts-ico-chat')}
+    <button type="button" class="cu-bubble cu-desktop" aria-label="${label}">
+      <span class="cu-bubble-icons">
+        ${withClass(phoneIcon, 'cu-ico cu-ico-phone')}<span class="cu-pipe" aria-hidden="true"></span>${withClass(chatIcon, 'cu-ico cu-ico-chat')}
       </span>
-      <span class="tts-bubble-label">${label}</span>
+      <span class="cu-bubble-label">${label}</span>
     </button>`;
 }
 
 /** Mobile trigger: dark ball (default) or dark pill (blog). */
 function mobileBubble(label, blog, ballIcon) {
   return `
-    <button type="button" class="tts-ball tts-mobile${blog ? ' tts-ball-pill' : ''}" aria-label="${label}">
-      ${withClass(ballIcon, 'tts-ico tts-ico-ball')}${blog ? `<span class="tts-ball-label">${label}</span>` : ''}
+    <button type="button" class="cu-ball cu-mobile${blog ? ' cu-ball-pill' : ''}" aria-label="${label}">
+      ${withClass(ballIcon, 'cu-ico cu-ico-ball')}${blog ? `<span class="cu-ball-label">${label}</span>` : ''}
     </button>`;
 }
 
@@ -95,50 +95,50 @@ function mobileBubble(label, blog, ballIcon) {
 function panelBody(blog, contact) {
   if (blog) {
     return `
-      <div class="tts-headline tts-headline-blog">How can we help?</div>
-      <div class="tts-subhead tts-mobile-only">Talk to sales</div>
-      <button type="button" class="tts-btn tts-btn-secondary tts-schedule">Schedule a call</button>
-      <div class="tts-support-label">Get product support</div>
-      <a class="tts-btn tts-btn-secondary tts-support" href="${contact.supportUrl}">Visit support page</a>`;
+      <div class="cu-headline cu-headline-blog">How can we help?</div>
+      <div class="cu-subhead cu-mobile-only">Talk to sales</div>
+      <button type="button" class="cu-btn cu-btn-secondary cu-schedule">Schedule a call</button>
+      <div class="cu-support-label">Get product support</div>
+      <a class="cu-btn cu-btn-secondary cu-support" href="${contact.supportUrl}">Visit support page</a>`;
   }
   return `
-    <div class="tts-headline tts-headline-default">Questions about Intuit Enterprise Suite?</div>
-    <div class="tts-subhead tts-desktop-only">Call us ${contact.phone}</div>
-    <a class="tts-btn tts-btn-primary tts-call tts-mobile-only" href="tel:${contact.phone}">Call us ${contact.phone}</a>
-    <p class="tts-hours">${contact.hours}</p>`;
+    <div class="cu-headline cu-headline-default">Questions about Intuit Enterprise Suite?</div>
+    <div class="cu-subhead cu-desktop-only">Call us ${contact.phone}</div>
+    <a class="cu-btn cu-btn-primary cu-call cu-mobile-only" href="tel:${contact.phone}">Call us ${contact.phone}</a>
+    <p class="cu-hours">${contact.hours}</p>`;
 }
 
 /**
  * Builds, wires and appends the widget. Idempotent — a second call is a no-op.
  */
-export default async function initTalkToSales() {
-  if (document.getElementById('talk-to-sales')) return;
+export default async function initContactUs() {
+  if (document.getElementById('contact-us')) return;
 
   const blog = isBlogVariant();
   const label = blog ? 'Talk to sales' : 'Contact us';
 
   const [phoneIcon, chatIcon, ballIcon, closeIcon, contact] = await Promise.all([
-    loadIcon('tts-phone'),
-    loadIcon('tts-chat'),
-    loadIcon('tts-chat-ball'),
-    loadIcon('tts-close'),
+    loadIcon('cu-phone'),
+    loadIcon('cu-chat'),
+    loadIcon('cu-chat-ball'),
+    loadIcon('cu-close'),
     loadContactInfo(),
   ]);
 
   const root = document.createElement('div');
-  root.id = 'talk-to-sales';
-  root.className = `talk-to-sales tts-${blog ? 'blog' : 'default'}`;
+  root.id = 'contact-us';
+  root.className = `contact-us cu-${blog ? 'blog' : 'default'}`;
   root.innerHTML = `
     ${desktopBubble(label, phoneIcon, chatIcon)}
     ${mobileBubble(label, blog, ballIcon)}
-    <div class="tts-panel" role="dialog" aria-label="${label}" aria-modal="false" hidden>
-      <button type="button" class="tts-close" aria-label="Close">${closeIcon}</button>
-      <div class="tts-panel-body">${panelBody(blog, contact)}</div>
+    <div class="cu-panel" role="dialog" aria-label="${label}" aria-modal="false" hidden>
+      <button type="button" class="cu-close" aria-label="Close">${closeIcon}</button>
+      <div class="cu-panel-body">${panelBody(blog, contact)}</div>
     </div>`;
 
-  const panel = root.querySelector('.tts-panel');
-  const closeBtn = root.querySelector('.tts-close');
-  const triggers = root.querySelectorAll('.tts-bubble, .tts-ball');
+  const panel = root.querySelector('.cu-panel');
+  const closeBtn = root.querySelector('.cu-close');
+  const triggers = root.querySelectorAll('.cu-bubble, .cu-ball');
   let lastTrigger = null;
 
   function onKeydown(e) {
@@ -153,7 +153,7 @@ export default async function initTalkToSales() {
 
   function open(trigger) {
     lastTrigger = trigger || triggers[0];
-    root.classList.add('tts-open');
+    root.classList.add('cu-open');
     panel.hidden = false;
     closeBtn.focus();
     document.addEventListener('keydown', onKeydown);
@@ -161,7 +161,7 @@ export default async function initTalkToSales() {
   }
 
   function close() {
-    root.classList.remove('tts-open');
+    root.classList.remove('cu-open');
     panel.hidden = true;
     document.removeEventListener('keydown', onKeydown);
     document.removeEventListener('click', onOutside, true);
@@ -173,7 +173,7 @@ export default async function initTalkToSales() {
 
   // Blog "Schedule a call" reuses the shared modal; close the widget first so
   // the two overlays don't stack.
-  const schedule = root.querySelector('.tts-schedule');
+  const schedule = root.querySelector('.cu-schedule');
   if (schedule) {
     schedule.addEventListener('click', () => {
       close();
