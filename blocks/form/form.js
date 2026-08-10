@@ -123,9 +123,9 @@ export function buildIdentityXdm(fields) {
 }
 
 // Provider-aware submit tracking. `window.utag` only ever exists when scripts/scripts.js chose
-// the Tealium provider AND that instance is enabled (real prod hosts only — see
-// plugins/tealium-martech/src/index.js `resolveEnvironment`); every current host still runs the
-// default Adobe path below, unchanged.
+// the Tealium provider (the default) AND that instance is enabled — i.e. the hostname resolves
+// to a utag environment (see plugins/tealium-martech/src/index.js `resolveEnvironment`). The
+// Adobe path below only runs when the opt-in `?martech=adobe` override is used, unchanged.
 export function trackFormSubmit(fields) {
   if (window.utag?.link) {
     window.utag.link({

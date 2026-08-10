@@ -2,37 +2,34 @@
  * Tealium iQ client-side loader.
  *
  * SAFETY: real Tealium (utag.js) — and the live ad pixels/analytics tags it can fire — must
- * NEVER load on a non-prod host. `resolveEnvironment` is the single gate that decides whether
- * (and which) utag environment loads; it returns `null` (inert) on every host except the
- * configured `prodHosts`, and the optional `?martech-debug` override can only ever select
- * `debugEnvironment` (never `'prod'`) on a non-prod host. See `resolveEnvironment` below.
+ * NEVER load the prod environment off the real prod hostname. `resolveEnvironment` is the single
+ * gate that maps the current `window.location.hostname` to a utag environment or `null` (inert);
+ * first match wins:
  *
- * Consumed from `scripts/scripts.js` (eager/lazy/delayed phases) behind the `MARTECH_PROVIDER`
- * gate — the existing Adobe path remains the default on every current host (localhost,
- * *.aem.page, *.aem.live, *.preview.da.live); this loader only activates on the real prod
- * hostnames, which are not live yet, so today it stays dormant everywhere.
+ *   erp.intuit.com                              -> 'prod'
+ *   *--intuit-erp--aemsites.aem.live            -> 'qa'
+ *   *--intuit-erp--aemsites.aem.page            -> 'dev'
+ *   localhost, 127.0.0.1                        -> 'dev'
+ *   anything else (e.g. *.preview.da.live)      -> null (inert)
+ *
+ * Only `erp.intuit.com` can ever resolve to `'prod'` — there is no override/config path that can
+ * escalate a non-prod host to `'prod'`.
+ *
+ * Consumed from `scripts/scripts.js` (eager/lazy/delayed phases) — Tealium is that file's default
+ * provider; the legacy Adobe/aem-martech path is opt-in only via `?martech=adobe`. Whichever
+ * provider scripts.js selects, this loader still self-gates via `resolveEnvironment`: on an inert
+ * host `enabled` is `false` and every method below is a no-op.
  *
  * CSP: the page enforces Trusted Types + `strict-dynamic`, so utag.js is only ever injected via
  * `document.createElement('script')` (see `loadUtag`) — never `innerHTML`/`document.write`.
  */
 
-// The real production hostnames — single source of truth, also imported directly by
-// scripts/scripts.js for the MARTECH_PROVIDER gate so the list is never duplicated.
-export const TEALIUM_PROD_HOSTS = ['erp.intuit.com', 'aem.erp.intuit.com'];
-
 /**
- * Default configuration for the loader.
+ * Default configuration for the loader. The utag environment is NOT part of this config — it is
+ * always derived from the hostname by `resolveEnvironment`.
  * @typedef {Object} TealiumConfig
  * @property {String} account The Tealium account name.
  * @property {String} profile The Tealium profile name.
- * @property {String} environment The utag environment to load on a configured prod host
- *                                 (defaults to 'prod').
- * @property {String[]} prodHosts The real production hostnames. Tealium only ever loads on one
- *                                 of these; every other host stays inert.
- * @property {String} [debugEnvironment] The utag environment to load on a NON-prod host when
- *                                        `?martech-debug` is present in the URL (defaults to
- *                                        'qa'). NEVER set this to 'prod' — `resolveEnvironment`
- *                                        refuses to honor it even if it were.
  * @property {Boolean} consent Whether to push OneTrust consent into Tealium via
  *                              `utag.gdpr.setPreferencesValues` once utag.js has loaded
  *                              (defaults to true).
@@ -41,11 +38,6 @@ export const TEALIUM_PROD_HOSTS = ['erp.intuit.com', 'aem.erp.intuit.com'];
 export const DEFAULT_CONFIG = {
   account: 'intuit',
   profile: 'ies-erp',
-  environment: 'prod',
-  prodHosts: TEALIUM_PROD_HOSTS,
-  // Used ONLY with ?martech-debug on a non-prod host (see `resolveEnvironment`).
-  // NEVER 'prod'.
-  debugEnvironment: 'qa',
   consent: true,
   data: {},
 };
@@ -57,32 +49,28 @@ export const DEFAULT_CONFIG = {
 let config = { ...DEFAULT_CONFIG };
 
 /**
- * Checks whether the current page is served from one of the configured production hostnames.
- * @param {TealiumConfig} cfg the config to use
- * @returns {Boolean} true iff `window.location.hostname` is one of `cfg.prodHosts`
+ * Resolves which Tealium (utag) environment, if any, applies to the current hostname. First
+ * match wins.
+ * SAFETY: only `erp.intuit.com` may ever resolve to `'prod'`; every other host resolves to
+ * `'qa'`, `'dev'`, or `null` (inert) — there is no config/query-string override that can
+ * escalate a non-prod host to `'prod'`.
+ * @returns {String|null} 'prod' | 'qa' | 'dev', or `null` to stay completely inert
  */
-export function isProdHost(cfg) {
-  return (cfg.prodHosts || []).includes(window.location.hostname);
+export function resolveEnvironment() {
+  const { hostname } = window.location;
+  if (hostname === 'erp.intuit.com') return 'prod';
+  if (hostname.endsWith('--intuit-erp--aemsites.aem.live')) return 'qa';
+  if (hostname.endsWith('--intuit-erp--aemsites.aem.page')) return 'dev';
+  if (hostname === 'localhost' || hostname === '127.0.0.1') return 'dev';
+  return null;
 }
 
 /**
- * Resolves which Tealium (utag) environment, if any, should load on the current host.
- * SAFETY: this must NEVER resolve to `cfg.environment` (prod) unless `isProdHost(cfg)` is true,
- * and the `?martech-debug` escape hatch must NEVER be able to select the prod environment off a
- * prod host either — even if `debugEnvironment` were misconfigured to `'prod'`.
- * @param {TealiumConfig} cfg the config to use
- * @returns {String|null} the utag environment to load, or `null` to stay completely inert
+ * Convenience check, trivially derived from `resolveEnvironment`.
+ * @returns {Boolean} true iff the current hostname resolves to the prod environment
  */
-export function resolveEnvironment(cfg) {
-  if (isProdHost(cfg)) {
-    return cfg.environment;
-  }
-  const params = new URLSearchParams(window.location.search);
-  if (params.has('martech-debug') && cfg.debugEnvironment) {
-    // Defense in depth: never let the debug override load real prod tealium off a prod host.
-    return cfg.debugEnvironment === 'prod' ? null : cfg.debugEnvironment;
-  }
-  return null;
+export function isProdHost() {
+  return resolveEnvironment() === 'prod';
 }
 
 /**
@@ -176,7 +164,7 @@ export function mapConsentToTealium(optanon) {
 /**
  * Loads the Tealium utag.js library for the given environment via a plain script tag (CSP:
  * Trusted Types + strict-dynamic — never innerHTML/document.write).
- * @param {String} env the utag environment to load ('prod', 'qa', ...)
+ * @param {String} env the utag environment to load ('prod', 'qa', 'dev')
  * @returns {Promise<void>} resolves once the script has loaded, rejects on load failure
  */
 export function loadUtag(env) {
@@ -211,9 +199,13 @@ function seedUdo() {
   }
 }
 
+// utag environments that should run Tealium's own verbose console/debug mode (`utagdb`). Only
+// 'dev' is verbose; 'qa' and 'prod' both stay silent, like a real production deploy.
+const DEBUG_ENVIRONMENTS = ['dev'];
+
 /**
- * Tealium iQ client-side loader. Inert everywhere except the configured `prodHosts` (or a
- * non-prod host with the `?martech-debug` override) — see `resolveEnvironment`.
+ * Tealium iQ client-side loader. Inert on every hostname `resolveEnvironment` doesn't recognize
+ * (e.g. *.preview.da.live) — see `resolveEnvironment`.
  */
 export default class TealiumMartech {
   /**
@@ -225,9 +217,13 @@ export default class TealiumMartech {
     // already does this before any script runs; this just layers in the instance's own data).
     window.utag_data = { ...(window.utag_data || {}), ...config.data };
     seedUdo();
-    window.utag_cfg_ovrd = { ...(window.utag_cfg_ovrd || {}), noview: true };
-    this.env = resolveEnvironment(config);
+    this.env = resolveEnvironment();
     this.enabled = this.env !== null;
+    window.utag_cfg_ovrd = { ...(window.utag_cfg_ovrd || {}), noview: true };
+    if (DEBUG_ENVIRONMENTS.includes(this.env)) {
+      // Tealium's own verbose console logging — dev only, set before utag.js loads in lazy().
+      window.utag_cfg_ovrd.utagdb = true;
+    }
   }
 
   /**

@@ -13,9 +13,9 @@ document.head.appendChild(otScript);
 // Required global callback by OneTrust SDK
 window.OptanonWrapper = window.OptanonWrapper || (() => {});
 
-// Tealium's own "delayed" signal. A no-op on the (default, on every current host) Adobe
-// provider path, where getTealium() returns undefined, and on a disabled Tealium instance
-// (any non-prod host without the ?martech-debug override) — see TealiumMartech#delayed.
+// Tealium's own "delayed" signal. A no-op on the opt-in Adobe provider path (`?martech=adobe`),
+// where getTealium() returns undefined, and on a disabled Tealium instance (any hostname
+// resolveEnvironment doesn't recognize) — see TealiumMartech#delayed.
 const tealium = getTealium();
 if (tealium?.enabled) {
   tealium.delayed();

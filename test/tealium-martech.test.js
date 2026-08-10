@@ -2,8 +2,6 @@ import {
   describe, it, expect, vi, beforeEach, afterEach,
 } from 'vitest';
 import TealiumMartech, {
-  DEFAULT_CONFIG,
-  TEALIUM_PROD_HOSTS,
   isProdHost,
   resolveEnvironment,
   readOptanonConsent,
@@ -18,7 +16,15 @@ const OPTANON_COOKIE_VALUE = 'isGpcEnabled=0&datestamp=Fri+Aug+07+2026+12%3A00%3
   + '(Coordinated+Universal+Time)&version=202401.1.0&isIABGlobal=false&hosts=&landingPath='
   + 'NotLandingPage&groups=1%3A1%2C2%3A0%2C3%3A1%2C4%3A0&AwaitingReconsent=false';
 
-function stubLocation({ hostname = 'localhost', search = '' } = {}) {
+// Canonical hostnames for each resolved environment under the per-host model (see
+// plugins/tealium-martech/src/index.js `resolveEnvironment`).
+const PROD_HOST = 'erp.intuit.com';
+const QA_HOST = 'main--intuit-erp--aemsites.aem.live';
+const DEV_HOST_PAGE = 'main--intuit-erp--aemsites.aem.page';
+const DEV_HOST_LOCALHOST = 'localhost';
+const INERT_HOST = 'something.preview.da.live';
+
+function stubLocation({ hostname = INERT_HOST, search = '' } = {}) {
   vi.stubGlobal('location', { hostname, search });
 }
 
@@ -47,68 +53,79 @@ afterEach(() => {
 });
 
 describe('resolveEnvironment / isProdHost', () => {
-  it('resolves the configured prod environment on a configured prod host', () => {
-    stubLocation({ hostname: 'erp.intuit.com' });
-    expect(isProdHost(DEFAULT_CONFIG)).toBe(true);
-    expect(resolveEnvironment(DEFAULT_CONFIG)).toBe('prod');
+  it('resolves "prod" on the real prod hostname', () => {
+    stubLocation({ hostname: PROD_HOST });
+    expect(resolveEnvironment()).toBe('prod');
+    expect(isProdHost()).toBe(true);
   });
 
-  it('resolves the configured prod environment on the other configured prod host', () => {
-    stubLocation({ hostname: 'aem.erp.intuit.com' });
-    expect(isProdHost(DEFAULT_CONFIG)).toBe(true);
-    expect(resolveEnvironment(DEFAULT_CONFIG)).toBe('prod');
+  it('resolves "qa" on the aem.live host', () => {
+    stubLocation({ hostname: QA_HOST });
+    expect(resolveEnvironment()).toBe('qa');
+    expect(isProdHost()).toBe(false);
   });
 
-  it('stays inert on localhost with no debug flag', () => {
-    stubLocation({ hostname: 'localhost', search: '' });
-    expect(isProdHost(DEFAULT_CONFIG)).toBe(false);
-    expect(resolveEnvironment(DEFAULT_CONFIG)).toBeNull();
+  it('resolves "qa" on the aem.live host regardless of the leading branch name', () => {
+    stubLocation({ hostname: 'feature-xyz--intuit-erp--aemsites.aem.live' });
+    expect(resolveEnvironment()).toBe('qa');
   });
 
-  it('stays inert on an *.aem.page preview host with no debug flag', () => {
-    stubLocation({ hostname: 'main--site--org.aem.page', search: '' });
-    expect(resolveEnvironment(DEFAULT_CONFIG)).toBeNull();
+  it('resolves "dev" on the aem.page host', () => {
+    stubLocation({ hostname: DEV_HOST_PAGE });
+    expect(resolveEnvironment()).toBe('dev');
+    expect(isProdHost()).toBe(false);
   });
 
-  it('stays inert on an *.aem.live host with no debug flag', () => {
-    stubLocation({ hostname: 'main--site--org.aem.live', search: '' });
-    expect(resolveEnvironment(DEFAULT_CONFIG)).toBeNull();
+  it('resolves "dev" on localhost', () => {
+    stubLocation({ hostname: DEV_HOST_LOCALHOST });
+    expect(resolveEnvironment()).toBe('dev');
   });
 
-  it('resolves debugEnvironment ("qa") on a non-prod host when ?martech-debug is present', () => {
-    stubLocation({ hostname: 'main--site--org.aem.page', search: '?martech-debug' });
-    expect(resolveEnvironment(DEFAULT_CONFIG)).toBe('qa');
+  it('resolves "dev" on 127.0.0.1', () => {
+    stubLocation({ hostname: '127.0.0.1' });
+    expect(resolveEnvironment()).toBe('dev');
   });
 
-  it('ignores ?martech-debug on a prod host and still resolves the prod environment', () => {
-    stubLocation({ hostname: 'erp.intuit.com', search: '?martech-debug' });
-    expect(resolveEnvironment(DEFAULT_CONFIG)).toBe('prod');
+  it('stays inert (null) on a *.preview.da.live host', () => {
+    stubLocation({ hostname: INERT_HOST });
+    expect(resolveEnvironment()).toBeNull();
+    expect(isProdHost()).toBe(false);
   });
 
-  it('NEVER resolves to "prod" off a prod host, even if debugEnvironment is misconfigured', () => {
-    stubLocation({ hostname: 'main--site--org.aem.page', search: '?martech-debug' });
-    const misconfigured = { ...DEFAULT_CONFIG, debugEnvironment: 'prod' };
-    expect(resolveEnvironment(misconfigured)).not.toBe('prod');
-    expect(resolveEnvironment(misconfigured)).toBeNull();
+  it('stays inert (null) on a random/unknown host', () => {
+    stubLocation({ hostname: 'www.example.com' });
+    expect(resolveEnvironment()).toBeNull();
   });
 
-  it('stays inert on a non-prod host when debug flag is present but debugEnvironment is unset', () => {
-    stubLocation({ hostname: 'localhost', search: '?martech-debug' });
-    const noDebugEnv = { ...DEFAULT_CONFIG, debugEnvironment: undefined };
-    expect(resolveEnvironment(noDebugEnv)).toBeNull();
+  it('does not resolve qa/dev for a lookalike host where the suffix is not at the very end', () => {
+    // Guards the `endsWith` checks against ever being loosened to a substring/`includes` match.
+    stubLocation({ hostname: `${QA_HOST}.evil.com` });
+    expect(resolveEnvironment()).toBeNull();
+    stubLocation({ hostname: `${DEV_HOST_PAGE}.evil.com` });
+    expect(resolveEnvironment()).toBeNull();
   });
-});
 
-describe('TEALIUM_PROD_HOSTS', () => {
-  it('is the single source of truth backing DEFAULT_CONFIG.prodHosts (no duplicate list)', () => {
-    expect(TEALIUM_PROD_HOSTS).toEqual(['erp.intuit.com', 'aem.erp.intuit.com']);
-    expect(DEFAULT_CONFIG.prodHosts).toBe(TEALIUM_PROD_HOSTS);
+  it('NEVER resolves "prod" for any host other than the exact erp.intuit.com hostname', () => {
+    [
+      QA_HOST,
+      DEV_HOST_PAGE,
+      DEV_HOST_LOCALHOST,
+      '127.0.0.1',
+      INERT_HOST,
+      'www.example.com',
+      // Lookalike hostnames — must NOT match via a loose/substring comparison.
+      'erp.intuit.com.evil.com',
+      'notreallyerp.intuit.com',
+    ].forEach((hostname) => {
+      stubLocation({ hostname });
+      expect(resolveEnvironment()).not.toBe('prod');
+    });
   });
 });
 
 describe('TealiumMartech constructor', () => {
   it('seeds window.utag_data with config.data and merges with any pre-existing data', () => {
-    stubLocation({ hostname: 'localhost' });
+    stubLocation({ hostname: INERT_HOST });
     window.utag_data = { existing: 'value' };
     // eslint-disable-next-line no-new
     new TealiumMartech({ data: { foo: 'bar' } });
@@ -118,8 +135,8 @@ describe('TealiumMartech constructor', () => {
     expect(window.utag_data.foo).toBe('bar');
   });
 
-  it('forces window.utag_cfg_ovrd.noview to true', () => {
-    stubLocation({ hostname: 'localhost' });
+  it('forces window.utag_cfg_ovrd.noview to true regardless of the resolved env', () => {
+    stubLocation({ hostname: PROD_HOST });
     window.utag_cfg_ovrd = { noview: false, other: 1 };
     // eslint-disable-next-line no-new
     new TealiumMartech();
@@ -127,18 +144,56 @@ describe('TealiumMartech constructor', () => {
     expect(window.utag_cfg_ovrd.other).toBe(1);
   });
 
-  it('sets enabled=true and env="prod" on a configured prod host', () => {
-    stubLocation({ hostname: 'aem.erp.intuit.com' });
+  it('sets enabled=true and env="prod" on the real prod hostname', () => {
+    stubLocation({ hostname: PROD_HOST });
     const tealium = new TealiumMartech();
     expect(tealium.enabled).toBe(true);
     expect(tealium.env).toBe('prod');
   });
 
-  it('sets enabled=false and env=null on a non-prod host with no debug flag', () => {
-    stubLocation({ hostname: 'localhost' });
+  it('sets enabled=false and env=null on a hostname resolveEnvironment does not recognize', () => {
+    stubLocation({ hostname: INERT_HOST });
     const tealium = new TealiumMartech();
     expect(tealium.enabled).toBe(false);
     expect(tealium.env).toBeNull();
+  });
+});
+
+describe('utag_cfg_ovrd.utagdb (Tealium debug console) by resolved environment', () => {
+  it('sets utagdb=true for the dev environment (aem.page host)', () => {
+    stubLocation({ hostname: DEV_HOST_PAGE });
+    // eslint-disable-next-line no-new
+    new TealiumMartech();
+    expect(window.utag_cfg_ovrd.utagdb).toBe(true);
+  });
+
+  it('sets utagdb=true for the dev environment (localhost)', () => {
+    stubLocation({ hostname: DEV_HOST_LOCALHOST });
+    // eslint-disable-next-line no-new
+    new TealiumMartech();
+    expect(window.utag_cfg_ovrd.utagdb).toBe(true);
+  });
+
+  it('does not set utagdb for the qa environment', () => {
+    stubLocation({ hostname: QA_HOST });
+    // eslint-disable-next-line no-new
+    new TealiumMartech();
+    expect(window.utag_cfg_ovrd.utagdb).toBeFalsy();
+  });
+
+  it('does not set utagdb for the prod environment', () => {
+    stubLocation({ hostname: PROD_HOST });
+    // eslint-disable-next-line no-new
+    new TealiumMartech();
+    expect(window.utag_cfg_ovrd.utagdb).toBeFalsy();
+  });
+
+  it('does not set utagdb on an inert host (still sets noview though)', () => {
+    stubLocation({ hostname: INERT_HOST });
+    // eslint-disable-next-line no-new
+    new TealiumMartech();
+    expect(window.utag_cfg_ovrd.utagdb).toBeFalsy();
+    expect(window.utag_cfg_ovrd.noview).toBe(true);
   });
 });
 
@@ -192,7 +247,7 @@ describe('readAkamaiGeo', () => {
 
 describe('UDO seed (window.utag_data.consent_req / .user_geo)', () => {
   it('defaults consent_req to false and leaves user_geo unset with no AKES_GEO cookie', () => {
-    stubLocation({ hostname: 'localhost' });
+    stubLocation({ hostname: INERT_HOST });
     // eslint-disable-next-line no-new
     new TealiumMartech();
     expect(window.utag_data.consent_req).toBe(false);
@@ -200,7 +255,7 @@ describe('UDO seed (window.utag_data.consent_req / .user_geo)', () => {
   });
 
   it('sets user_geo from the AKES_GEO cookie when present', () => {
-    stubLocation({ hostname: 'localhost' });
+    stubLocation({ hostname: INERT_HOST });
     document.cookie = 'AKES_GEO=US_CA';
     // eslint-disable-next-line no-new
     new TealiumMartech();
@@ -209,22 +264,22 @@ describe('UDO seed (window.utag_data.consent_req / .user_geo)', () => {
   });
 
   it('lets an explicit config.data.consent_req override the default', () => {
-    stubLocation({ hostname: 'localhost' });
+    stubLocation({ hostname: INERT_HOST });
     // eslint-disable-next-line no-new
     new TealiumMartech({ data: { consent_req: true } });
     expect(window.utag_data.consent_req).toBe(true);
   });
 
   it('lets an explicit config.data.user_geo win over the AKES_GEO cookie', () => {
-    stubLocation({ hostname: 'localhost' });
+    stubLocation({ hostname: INERT_HOST });
     document.cookie = 'AKES_GEO=US_CA';
     // eslint-disable-next-line no-new
     new TealiumMartech({ data: { user_geo: 'CA_ON' } });
     expect(window.utag_data.user_geo).toBe('CA_ON');
   });
 
-  it('seeds on a disabled (non-prod, no-debug) instance too — UDO parity does not depend on enabled', () => {
-    stubLocation({ hostname: 'localhost' });
+  it('seeds UDO on a disabled instance too — UDO parity does not depend on being enabled', () => {
+    stubLocation({ hostname: INERT_HOST });
     const tealium = new TealiumMartech();
     expect(tealium.enabled).toBe(false);
     expect(window.utag_data.consent_req).toBe(false);
@@ -264,9 +319,9 @@ describe('mapConsentToTealium', () => {
   });
 });
 
-describe('disabled instance (non-prod host, no debug) — eager/lazy/delayed are no-ops', () => {
+describe('disabled instance (hostname resolveEnvironment does not recognize) — eager/lazy/delayed are no-ops', () => {
   it('does not append any tiqcdn script tag and does not throw across the full lifecycle', async () => {
-    stubLocation({ hostname: 'main--site--org.aem.page', search: '' });
+    stubLocation({ hostname: INERT_HOST, search: '' });
     const createElementSpy = vi.spyOn(document, 'createElement');
     const tealium = new TealiumMartech();
     expect(tealium.enabled).toBe(false);
@@ -280,7 +335,7 @@ describe('disabled instance (non-prod host, no debug) — eager/lazy/delayed are
   });
 
   it('leaves this.consent undefined and never calls window.utag (which does not exist)', async () => {
-    stubLocation({ hostname: 'localhost', search: '' });
+    stubLocation({ hostname: INERT_HOST, search: '' });
     document.cookie = `OptanonConsent=${OPTANON_COOKIE_VALUE}`;
     const tealium = new TealiumMartech();
 
@@ -294,12 +349,16 @@ describe('disabled instance (non-prod host, no debug) — eager/lazy/delayed are
   });
 });
 
-describe('enabled instance on a prod host — lazy() loads utag.js and fires the initial view', () => {
-  it('eager() does no network, then lazy() appends utag.js and calls window.utag.view once loaded', async () => {
-    stubLocation({ hostname: 'erp.intuit.com' });
+describe("enabled instance — lazy() loads the resolved env's utag.js and fires the initial view", () => {
+  it.each([
+    ['prod', PROD_HOST],
+    ['qa', QA_HOST],
+    ['dev', DEV_HOST_PAGE],
+  ])('env "%s" (host %s): eager() does no network; lazy() appends the right URL and calls utag.view', async (env, hostname) => {
+    stubLocation({ hostname });
     const tealium = new TealiumMartech();
     expect(tealium.enabled).toBe(true);
-    expect(tealium.env).toBe('prod');
+    expect(tealium.env).toBe(env);
 
     tealium.eager();
     // eager() must never touch the network, even when enabled.
@@ -317,7 +376,7 @@ describe('enabled instance on a prod host — lazy() loads utag.js and fires the
     // scripts on its own, so resolve it ourselves to simulate a successful utag.js load.
     const script = document.head.querySelector('script[src*="tiqcdn"]');
     expect(script).toBeTruthy();
-    expect(script.src).toBe('https://tags.tiqcdn.com/utag/intuit/ies-erp/prod/utag.js');
+    expect(script.src).toBe(`https://tags.tiqcdn.com/utag/intuit/ies-erp/${env}/utag.js`);
     expect(script.async).toBe(true);
     script.dispatchEvent(new Event('load'));
     await lazyPromise;
@@ -327,7 +386,7 @@ describe('enabled instance on a prod host — lazy() loads utag.js and fires the
   });
 
   it('propagates a loadUtag failure (network/blocked) as a rejected lazy() promise', async () => {
-    stubLocation({ hostname: 'erp.intuit.com' });
+    stubLocation({ hostname: PROD_HOST });
     const tealium = new TealiumMartech();
 
     const lazyPromise = tealium.lazy();
