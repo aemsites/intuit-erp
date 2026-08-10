@@ -26,6 +26,10 @@
 		"PUSH_INVALIDATION": "disabled",
 		// Path prefixes whose `.json` (when the origin 404s) is served from the
 		// da-sc structured-content source instead of mhast html-to-json.
-		"STRUCTURED_CONTENT_PATHS": ["/events/"]
+		"STRUCTURED_CONTENT_PATHS": ["/events/"],
+		// EDGE_AUTH_SECRET (Wrangler secret, optional) gates the /api/* endpoints:
+		// when set, requests must carry a matching `x-edge-auth` header (injected by
+		// Akamai on the /api/* route). Unset ⇒ the check is skipped. Set it with
+		// `wrangler secret put EDGE_AUTH_SECRET`.
 	}
 }
