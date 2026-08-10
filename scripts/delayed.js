@@ -6,3 +6,15 @@ otScript.setAttribute('charset', 'UTF-8');
 document.head.appendChild(otScript);
 // Required global callback by OneTrust SDK
 window.OptanonWrapper = window.OptanonWrapper || (() => {});
+
+// Tealium tag manager — loaded AFTER OneTrust so Tealium's Consent Mode
+// v2 handlers can read consent state on their first fire. Tealium is
+// Intuit ERP's tag stack orchestrator (FB Pixel, Google Ads, GA4, Bing
+// UET, LinkedIn Insight, Reddit Pixel, Amazon Ad Tag, EventStream — all
+// nine marketing pixels fire via Tealium; see scripts/tealium.js for
+// the full list and rationale). Delayed-phase import keeps LHS impact
+// at zero.
+import('./tealium.js').then(({ loadTealium }) => loadTealium()).catch((e) => {
+  // eslint-disable-next-line no-console
+  console.error('[delayed] Tealium loader failed:', e);
+});
