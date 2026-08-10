@@ -110,7 +110,12 @@ export default async function decorate(block) {
   // product lockup that belongs ABOVE the headline as a logo/eyebrow, not in a
   // right-hand media column.
   const isCentered = block.classList.contains('centered');
+  const isGradient = block.classList.contains('gradient');
   const rows = [...block.children];
+
+  if (isGradient) {
+    block.closest('.section').classList.add('gradient');
+  }
 
   const copy = document.createElement('div');
   copy.className = 'hero-copy';
