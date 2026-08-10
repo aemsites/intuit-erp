@@ -143,7 +143,16 @@ deploy**: never in `wrangler.jsonc`, the repo, or the pipeline, and they
 |-------------------------|--------------------|----------------------------------------------------------------|
 | `PZN_API_KEY`           | `PZN_SOURCE=de`    | batch client returns `null` → page passes through un-personalized |
 | `IXP_API_KEY`           | `PZN_SOURCE=ixp`   | assignment request is unauthenticated → no assignment          |
-| `ORIGIN_AUTHENTICATION` | optional           | when set, sent as `authorization: token …` to the origin       |
+| `ORIGIN_AUTHENTICATION` | origin has [site auth](https://www.aem.live/docs/authentication-setup-site) enabled | every origin subrequest (page, offer fragment, template sheet) is unauthenticated → the origin returns 401 and the worker serves the error / passes through un-personalized |
+
+> 🔒 **`ORIGIN_AUTHENTICATION` is the aem.live site token.** When the origin site
+> has authentication enabled, the worker must send it as `authorization: token
+> <token>` on **every** subrequest it makes back to the origin — the proxied page
+> ([`src/index.js`](src/index.js)), personalization offer fragments
+> ([`src/pzn.js`](src/pzn.js)), and template data sheets
+> ([`src/template.js`](src/template.js)). Set it once and every origin call is
+> authenticated. (The `.json`-fallback helper workers — mhast / da-sc — are
+> separate origins and are not covered by this token.)
 
 > ⚠️ **A missing key does not fail the deploy or throw at runtime.** The guard in
 > [`src/de/batch-client.js`](src/de/batch-client.js) returns `null`, so the flow
@@ -165,6 +174,7 @@ git-ignored `.dev.vars` file in `edge/`:
 ```
 PZN_API_KEY=…
 IXP_API_KEY=…
+ORIGIN_AUTHENTICATION=hlx_…   # aem.live site token, if the origin has site auth on
 ```
 
 > 🔐 The prod PZN key was circulated in a shared PDF / Slack — **rotate it** and

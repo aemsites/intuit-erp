@@ -119,6 +119,33 @@ describe('intuit-edge personalization proxy', () => {
     expect(html).toContain('class="hero"');
   });
 
+  it('sends the site-auth token to the origin page and the offer fragment', async () => {
+    const spy = mockDe(batchResponse('fragments/pzn/automation'));
+    const authEnv = { ...DE_ENV, ORIGIN_AUTHENTICATION: 'hlx_site_token' };
+    const request = new IncomingRequest('https://worker.example.com/drafts/pzn/treatment?ivid=abc');
+    const ctx = createExecutionContext();
+    await worker.fetch(request, authEnv, ctx);
+    await waitOnExecutionContext(ctx);
+
+    // authorization header, whether fetch was called with a Request (input) or
+    // a url string + init ({ headers }).
+    const authOf = ([input, init]) => {
+      if (typeof input !== 'string') return input.headers.get('authorization');
+      const h = new Headers(init?.headers || {});
+      return h.get('authorization');
+    };
+    const originCall = spy.mock.calls.find(([i]) => {
+      const u = typeof i === 'string' ? i : i.url;
+      return u.startsWith(env.ORIGIN_BASE_URL) && !u.includes('/fragments/pzn/');
+    });
+    const fragmentCall = spy.mock.calls.find(([i]) => {
+      const u = typeof i === 'string' ? i : i.url;
+      return u.includes('/fragments/pzn/');
+    });
+    expect(authOf(originCall)).toBe('token hlx_site_token');
+    expect(authOf(fragmentCall)).toBe('token hlx_site_token');
+  });
+
   it('passes through untouched when the offer fragment cannot be fetched', async () => {
     mockDe(batchResponse('fragments/pzn/missing'), PAGE_HTML, null);
     const html = await (await run('/drafts/pzn/treatment?ivid=abc')).text();
