@@ -71,46 +71,156 @@
 .carousel .carousel-prev:disabled,
 .carousel .carousel-next:disabled { opacity: 0.4; cursor: not-allowed; }
 
-/* ---- .testimonial — dark band, quote + photo/video card ---- */
+/* ---- .testimonial — portrait beside a pull-quote ----
+
+   Two treatments, chosen by whether the slides carry a title (`.has-title`,
+   set in the JS) rather than by an authored variant, because upstream drives
+   both off the same signal: no title is a bare quote where the portrait runs
+   flush to the card edge at 40px, a title turns the quote into supporting copy
+   at 20px and insets the portrait so the title leads. Theme is the only real
+   choice left, so `.pale` is the only variant.  */
 .carousel.testimonial {
-  background: var(--navy);
-  border-radius: var(--radius-card);
-  padding: 56px 32px;
+  --testi-card: var(--navy);
+  --testi-text: var(--background-color);
+
+  max-width: 1360px;
 }
+
+.carousel.testimonial.pale {
+  --testi-card: #eaf6f7;
+  --testi-text: #000;
+}
+
+.carousel.testimonial .carousel-viewport { border-radius: 10px; }
 
 .carousel.testimonial .carousel-slide {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  background: var(--testi-card);
+  color: var(--testi-text);
 }
 
-.carousel.testimonial .carousel-slide > div {
+/* stacked, the title leads and the portrait follows it inset — the reverse of
+   the untitled treatment, where the portrait runs flush across the card top */
+.carousel.testimonial.has-title .carousel-slide { flex-direction: column-reverse; }
+
+.carousel.testimonial .testi-media { flex: none; }
+
+.carousel.testimonial.has-title .testi-media { padding: 0 30px 60px; }
+
+.carousel.testimonial .testi-media img {
+  display: block;
   width: 100%;
-  max-width: 760px;
+  height: 100%;
+  object-fit: cover;
+}
+
+.carousel.testimonial.has-title .testi-media img { border-radius: var(--radius-card); }
+
+.carousel.testimonial .testi-body {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 24px;
+  justify-content: center;
+  padding: 40px 38px 60px;
   text-align: center;
-  color: var(--background-color);
-  border: 1px solid rgb(255 255 255 / 20%);
-  border-radius: var(--radius-card);
-  padding: 40px 32px;
 }
 
-.carousel.testimonial .carousel-slide img { border-radius: 50%; width: 88px; height: 88px; object-fit: cover; }
+.carousel.testimonial .testi-title { margin: 0 0 20px; font-size: 28px; line-height: 39.2px; }
 
-.carousel.testimonial .carousel-slide p { margin: 0; font-size: 20px; line-height: 1.5; }
+.carousel.testimonial .testi-quote { margin: 0; font-size: 28px; line-height: 39.2px; }
 
-.carousel.testimonial .carousel-slide a.button { border-color: var(--background-color); color: var(--background-color); }
+.carousel.testimonial.has-title .testi-quote { font-size: 16px; line-height: 22.4px; }
 
-.carousel.testimonial .carousel-dot { background: rgb(255 255 255 / 30%); }
-.carousel.testimonial .carousel-dot.is-active { background: var(--background-color); }
+.carousel.testimonial .testi-attr { margin: 16px 0 0; font-size: 16px; line-height: 22.4px; }
+
+.carousel.testimonial .testi-cta { margin-top: 20px; }
+
+.carousel.testimonial .testi-cta-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 20px;
+  border: 2px solid currentcolor;
+  border-radius: var(--radius);
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 24px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.carousel.testimonial .testi-cta-button svg { flex: none; }
+
+.carousel.testimonial .testi-cta-button:hover { background: rgb(255 255 255 / 12%); }
+
+.carousel.testimonial.pale .testi-cta-button:hover { background: rgb(0 0 0 / 6%); }
+
+/* controls sit outside the card, right-aligned as [dots][prev][next] — see the
+   .feature note on why the arrows are re-ordered here and not in the JS */
+.carousel.testimonial .carousel-controls { gap: 30px; justify-content: center; margin-top: 40px; }
+
+.carousel.testimonial .carousel-dots { order: 1; gap: 20px; }
+.carousel.testimonial .carousel-prev { order: 2; }
+.carousel.testimonial .carousel-next { order: 3; }
+
+/* The controls sit outside the card, so they take their colour from the page
+   background rather than from the card — black dots and ink-teal arrows, which
+   is what upstream uses wherever this carousel sits on a light section. */
+.carousel.testimonial .carousel-dot {
+  width: 12px; height: 12px; background: rgb(0 0 0 / 25%);
+}
+
+.carousel.testimonial .carousel-dot.is-active { background: rgb(0 0 0 / 75%); transform: none; }
 
 .carousel.testimonial .carousel-prev,
-.carousel.testimonial .carousel-next { background: rgb(255 255 255 / 15%); }
+.carousel.testimonial .carousel-next {
+  width: 60px; height: 60px; font-size: 24px; background: var(--ink-teal); color: #fff;
+}
 
 .carousel.testimonial .carousel-prev:hover:not(:disabled),
-.carousel.testimonial .carousel-next:hover:not(:disabled) { background: rgb(255 255 255 / 28%); }
+.carousel.testimonial .carousel-next:hover:not(:disabled) { background: #09222a; }
+
+.carousel.testimonial .carousel-prev:disabled,
+.carousel.testimonial .carousel-next:disabled { background: var(--ink-teal); opacity: 0.3; }
+
+@media (width >= 900px) {
+  /* side by side, portrait first for both treatments — the stacked
+     column-reverse above only applies while the card is one column */
+  .carousel.testimonial .carousel-slide,
+  .carousel.testimonial.has-title .carousel-slide { flex-direction: row; align-items: center; }
+
+  /* portrait takes 35% and runs the full card height, as upstream does */
+  .carousel.testimonial .testi-media { flex: 0 0 35%; align-self: stretch; }
+
+  .carousel.testimonial .testi-body {
+    flex: 1 1 auto;
+    padding: 80px;
+    text-align: left;
+  }
+
+  .carousel.testimonial .testi-quote { font-size: 40px; line-height: 56px; }
+
+  /* a title reflows the copy: it takes the 40px size, the quote drops to
+     supporting copy, and the portrait insets with rounded corners */
+  .carousel.testimonial.has-title .testi-title { font-size: 40px; line-height: 56px; }
+
+  .carousel.testimonial.has-title .testi-quote { font-size: 20px; line-height: 28px; }
+
+  .carousel.testimonial.has-title .testi-attr { font-size: 20px; line-height: 28px; }
+
+  .carousel.testimonial.has-title .testi-media {
+    flex: 0 0 44%;
+    align-self: center;
+    padding: 80px 0 80px 80px;
+  }
+
+  .carousel.testimonial .carousel-controls { justify-content: flex-end; }
+}
 
 /* ---- .cards — customer story / article cards, multi-per-view ---- */
 .carousel.cards { --carousel-cards-per-view: 1; }
