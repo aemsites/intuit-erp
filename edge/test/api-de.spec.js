@@ -23,7 +23,9 @@ function batchResponse(placement, pznblock) {
 function mockBatch(response) {
   return vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
     const url = typeof input === 'string' ? input : input.url;
-    if (url === BATCH_URL) return new Response(JSON.stringify(response), { status: 200, headers: jsonHeaders });
+    if (url === BATCH_URL) {
+      return new Response(JSON.stringify(response), { status: 200, headers: jsonHeaders });
+    }
     throw new Error(`unexpected fetch: ${url}`);
   });
 }
@@ -44,7 +46,12 @@ describe('handleDe', () => {
     const res = await handleDe(deReq({ slots: [{ placement: 'mktgplacement' }], path: '/p' }, { cookie: 'ivid=abc' }), DE_ENV);
     expect(res.headers.get('content-type')).toContain('application/json');
     expect(await res.json()).toEqual([
-      { placement: 'mktgplacement', action: 'replace', fidelity: 'block', fragment: 'fragments/pzn/hospitality' },
+      {
+        placement: 'mktgplacement',
+        action: 'replace',
+        fidelity: 'block',
+        fragment: 'fragments/pzn/hospitality',
+      },
     ]);
   });
 
