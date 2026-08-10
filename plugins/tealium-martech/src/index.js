@@ -30,15 +30,11 @@
  * @typedef {Object} TealiumConfig
  * @property {String} account The Tealium account name.
  * @property {String} profile The Tealium profile name.
- * @property {Boolean} consent Whether to push OneTrust consent into Tealium via
- *                              `utag.gdpr.setPreferencesValues` once utag.js has loaded
- *                              (defaults to true).
  * @property {Object} data Extra data used to seed `window.utag_data` (defaults to {}).
  */
 export const DEFAULT_CONFIG = {
   account: 'intuit',
   profile: 'ies-erp',
-  consent: true,
   data: {},
 };
 
@@ -231,7 +227,6 @@ export default class TealiumMartech {
    */
   eager() {
     if (!this.enabled) return;
-    this.consent = readOptanonConsent();
     const ivid = readIvid();
     if (ivid) {
       window.utag_data.ivid = ivid;
@@ -239,23 +234,26 @@ export default class TealiumMartech {
   }
 
   /**
-   * Lazy-phase logic: loads utag.js, applies consent, fires the initial view, and keeps consent
-   * in sync with later OneTrust preference changes.
+   * Lazy-phase logic: loads utag.js and fires the initial page view.
+   *
+   * Consent gating is intentionally NOT driven from here — it is delegated to the Tealium
+   * profile's own OneTrust integration (the model the live site uses), which reads the
+   * `OptanonConsent` cookie natively. Driving `utag.gdpr.setPreferencesValues` from the client at
+   * load caused an infinite `processQueue` ↔ `setPreferencesValues` recursion inside utag.js:
+   * `await loadUtag` resolves on the script's `onload`, which is *before* utag finishes its async
+   * `INIT`, so the call was enqueued and then replayed into itself. If a client-side consent push
+   * is ever required (see the deferred consent slice), it MUST run only after utag is fully
+   * initialized — not right after `onload` — and must not re-enter on OneTrust events.
+   * `readOptanonConsent` / `mapConsentToTealium` remain as ready-made, side-effect-free helpers
+   * for that future profile-wiring.
    * @returns {Promise<void>} resolves once utag.js has loaded (or immediately, if disabled)
    */
   async lazy() {
     if (!this.enabled) return;
     await loadUtag(this.env);
-    if (config.consent) {
-      this.updateUserConsent(this.consent);
-    }
     if (window.utag?.view) {
       window.utag.view(window.utag_data);
     }
-    window.addEventListener('OneTrustGroupsUpdated', () => {
-      this.consent = readOptanonConsent();
-      this.updateUserConsent(this.consent);
-    });
   }
 
   /**
@@ -264,15 +262,6 @@ export default class TealiumMartech {
   delayed() {
     if (!this.enabled || !window.utag?.link) return;
     window.utag.link({ tealium_event: 'delayed_ready' });
-  }
-
-  /**
-   * Pushes the given OptanonConsent groups map to Tealium's consent manager.
-   * @param {Object<String, Boolean>|null} optanon the parsed OptanonConsent groups
-   */
-  updateUserConsent(optanon) {
-    if (!this.enabled || !window.utag?.gdpr?.setPreferencesValues) return;
-    window.utag.gdpr.setPreferencesValues(mapConsentToTealium(optanon));
   }
 
   /**

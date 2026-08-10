@@ -334,17 +334,15 @@ describe('disabled instance (hostname resolveEnvironment does not recognize) —
     expect(createElementSpy).not.toHaveBeenCalledWith('script');
   });
 
-  it('leaves this.consent undefined and never calls window.utag (which does not exist)', async () => {
+  it('never touches window.utag across the lifecycle (which does not exist on an inert host)', async () => {
     stubLocation({ hostname: INERT_HOST, search: '' });
     document.cookie = `OptanonConsent=${OPTANON_COOKIE_VALUE}`;
     const tealium = new TealiumMartech();
 
     tealium.eager();
-    // Even though a real consent cookie is present, a disabled instance must not read it —
-    // reading it would be pointless work on a host that will never load utag.js.
-    expect(tealium.consent).toBeUndefined();
-
     await tealium.lazy();
+    tealium.delayed();
+    // A real consent cookie is present, but a disabled instance loads no utag and drives nothing.
     expect(window.utag).toBeUndefined();
   });
 });
@@ -383,6 +381,11 @@ describe("enabled instance — lazy() loads the resolved env's utag.js and fires
 
     expect(window.utag.view).toHaveBeenCalledTimes(1);
     expect(window.utag.view).toHaveBeenCalledWith(window.utag_data);
+    // Regression: lazy() must NOT drive utag.gdpr at load. Calling setPreferencesValues before
+    // utag finishes its async INIT triggered an infinite processQueue <-> setPreferencesValues
+    // recursion inside utag.js. Consent is delegated to the Tealium profile's OneTrust
+    // integration, so the client never calls it here.
+    expect(window.utag.gdpr.setPreferencesValues).not.toHaveBeenCalled();
   });
 
   it('propagates a loadUtag failure (network/blocked) as a rejected lazy() promise', async () => {
