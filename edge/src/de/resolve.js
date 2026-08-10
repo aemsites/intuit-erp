@@ -21,27 +21,12 @@
 import { resolveDeRoute } from './routes.js';
 import { fetchBatch } from './batch-client.js';
 import { deriveVisitorTokens } from '../visitor.js';
+import { readIvid } from '../ivid.js';
 
 /**
  * @typedef {import('../personalize.js').PznEntry} PznEntry
  * @typedef {import('./routes.js').DeSlot} DeSlot
  */
-
-/**
- * The visitor id, which is the lever the whole flow turns on. In production it
- * comes from the `ivid` cookie the pzn service issues; a `?ivid=` query param
- * overrides that cookie for demo / QA. Null when absent ⇒ nothing to personalize
- * (passthrough).
- * @param {Request} request
- * @returns {string | null}
- */
-function readIvid(request) {
-  const fromQuery = new URL(request.url).searchParams.get('ivid');
-  if (fromQuery) return fromQuery;
-  const cookie = request.headers.get('cookie') || '';
-  const m = cookie.match(/(?:^|;\s*)ivid=([^;]+)/);
-  return m ? decodeURIComponent(m[1]) : null;
-}
 
 /**
  * Builds the shared `attributes` object the batch request carries: the ivid, the

@@ -14,6 +14,7 @@
 
 import { fetchAssignment } from './client.js';
 import { resolveRoute } from './routes.js';
+import { readIvid } from '../ivid.js';
 
 /**
  * @typedef {import('../personalize.js').PznEntry} PznEntry
@@ -22,21 +23,6 @@ import { resolveRoute } from './routes.js';
  * @typedef {import('./client.js').IxpClientEnv} IxpClientEnv
  * @typedef {import('./routes.js').IxpRoute} IxpRoute
  */
-
-/**
- * The visitor id — the lever the whole flow turns on. In production it comes
- * from the `ivid` cookie IXP issues; a `?ivid=` query param overrides that
- * cookie for demo / QA. Null when absent ⇒ nothing to personalize.
- * @param {Request} request
- * @returns {string | null}
- */
-function readIvid(request) {
-  const fromQuery = new URL(request.url).searchParams.get('ivid');
-  if (fromQuery) return fromQuery;
-  const cookie = request.headers.get('cookie') || '';
-  const m = cookie.match(/(?:^|;\s*)ivid=([^;]+)/);
-  return m ? decodeURIComponent(m[1]) : null;
-}
 
 /**
  * Parses the assignment payload JSON, or null if absent/malformed.
