@@ -6,7 +6,9 @@
  *   2. <h1> headline           (the page's single <h1>)
  *   3. lede paragraph          (optional)
  *   4. CTAs paragraph          (optional — <em><a> secondary, <strong><a> primary)
- *   5. media <img>             (optional; omitted on the .hero.form variant)
+ *   5. media <img>             (optional; on .hero.form this renders as an
+ *                               inline badge in the copy column instead of
+ *                               the media column, which the lead card occupies)
  *
  * Variant .hero.form (pricing) loads the shared "Let's connect" fragment
  * (content/fragments/schedule-call.html) into a card on the right instead of
@@ -214,6 +216,10 @@ export default async function decorate(block) {
 
   if (isForm) {
     grid.append(await leadCard(formFragment));
+    // .form has no media column (the lead card takes its place) — an
+    // authored image (e.g. an accolade badge) still needs a home, so it
+    // renders inline in the copy column instead of being dropped.
+    if (mediaEl) copy.append(mediaEl);
   } else if (mediaEl && isCentered) {
     // logo lockup pinned above the headline instead of a media column
     const lockup = document.createElement('div');

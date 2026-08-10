@@ -53,6 +53,19 @@
 
 .hero .hero-actions { display: flex; gap: 16px; flex-wrap: wrap; margin: 0; }
 
+/* an image that ends up in the copy column — either the .form variant's media
+   row (the lead card takes the media column) or an image an author mixed into
+   a text cell (e.g. an accolade badge next to the CTAs) — renders as a small
+   inline badge instead of at native resolution. */
+.hero .hero-copy > picture,
+.hero .hero-copy > img {
+  display: block;
+  max-width: 200px;
+  margin-top: 16px;
+}
+
+.hero .hero-copy > picture img { display: block; width: 100%; height: auto; border-radius: 8px; }
+
 .hero .hero-media { position: relative; isolation: isolate; }
 
 /* max-height caps the band's overall height for square/portrait photos
