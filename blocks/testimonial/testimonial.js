@@ -315,10 +315,13 @@ function buildVideoSplit(cells) {
   const copy = document.createElement('div');
   copy.className = 'split-copy';
   if (headingCell) {
-    const h = headingCell.querySelector('h1, h2, h3, h4');
+    // the cell may hold an authored heading element, or just its text
+    const authoredHeading = headingCell.querySelector('h1, h2, h3, h4');
     const heading = document.createElement('h2');
     heading.className = 'split-title';
-    heading.textContent = (h || headingCell).textContent.trim();
+    heading.textContent = authoredHeading
+      ? authoredHeading.textContent.trim()
+      : headingCell.textContent.trim();
     copy.append(heading);
   }
   if (copyCell && copyCell.textContent.trim()) {
@@ -333,8 +336,14 @@ function buildVideoSplit(cells) {
   const poster = pic(posterCell);
   if (poster) media.append(poster);
 
-  const href = urlCell ? (urlCell.querySelector('a')?.getAttribute('href') || urlCell.textContent.trim()) : '';
-  const youtubeId = ytId(href);
+  const authored = urlCell ? (urlCell.querySelector('a')?.getAttribute('href') || urlCell.textContent.trim()) : '';
+  // a bare id is authorable directly, as in .video; anything else ytId can't read
+  // is a misconfiguration — say so rather than render a poster that can't be played
+  const youtubeId = ytId(authored) || (/^[\w-]{6,}$/.test(authored) ? authored : '');
+  if (authored && !youtubeId) {
+    // eslint-disable-next-line no-console
+    console.warn('testimonial.video-split: not a YouTube URL or id, no play button:', authored);
+  }
   if (youtubeId) {
     const play = document.createElement('button');
     play.className = 'split-play';

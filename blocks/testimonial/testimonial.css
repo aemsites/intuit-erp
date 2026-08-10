@@ -113,6 +113,7 @@
 }
 .testimonial.video-split .split-body { font-size: 16px; line-height: 24px; color: #000; margin: 0; }
 
+.testimonial.video-split .split-copy { max-width: 30em; }
 .testimonial.video-split .split-media { position: relative; }
 .testimonial.video-split .split-media img { width: 100%; height: auto; display: block; border-radius: 4px; }
 
