@@ -3,7 +3,7 @@ import {
   describe, it, expect, vi, afterEach,
 } from 'vitest';
 import worker from '../src/index.js';
-import { resolveDeEntries } from '../src/de/resolve.js';
+import { resolveDeEntries, entryForSlot } from '../src/de/resolve.js';
 import { resolveDeRoute } from '../src/de/routes.js';
 import { buildBatchRequest } from '../src/de/batch-client.js';
 
@@ -239,5 +239,19 @@ describe('worker in de mode (?pzn=de)', () => {
     mockDeWorker(batchResponse('fragments/pzn/slot1-hospitality'));
     const html = await (await runDe('/drafts/pzn/treatment?pzn=de')).text();
     expect(html).toBe(TREATMENT_HTML);
+  });
+});
+
+describe('entryForSlot (case-insensitive placement match)', () => {
+  it('matches when the response placement differs only in case', () => {
+    const response = {
+      k: { placement: 'SBSEGQBMContentAemPznIxpTest', status: 200 },
+    };
+    const hit = entryForSlot(response, { placement: 'sbsegqbmcontentaempznixptest' });
+    expect(hit).toEqual({ placement: 'SBSEGQBMContentAemPznIxpTest', status: 200 });
+  });
+
+  it('returns null when no placement matches', () => {
+    expect(entryForSlot({ k: { placement: 'other' } }, { placement: 'nope' })).toBeNull();
   });
 });

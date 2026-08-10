@@ -39,7 +39,7 @@ import { readIvid } from '../ivid.js';
  * @param {string} permalink The page path being personalized.
  * @returns {Record<string, unknown>}
  */
-function buildAttributes(request, ivid, permalink) {
+export function buildAttributes(request, ivid, permalink) {
   const v = deriveVisitorTokens(request);
   const ua = request.headers.get('user-agent') || '';
   const deviceType = /Mobi|Android|iPhone|iPad/i.test(ua) ? 'Mobile' : 'Desktop';
@@ -69,9 +69,12 @@ function buildAttributes(request, ivid, permalink) {
  * @param {DeSlot} slot
  * @returns {any | null}
  */
-function entryForSlot(response, slot) {
+export function entryForSlot(response, slot) {
+  const want = String(slot.placement).toLowerCase();
   for (const value of Object.values(response)) {
-    if (value && value.placement === slot.placement) return value;
+    if (value && typeof value.placement === 'string' && value.placement.toLowerCase() === want) {
+      return value;
+    }
   }
   return null;
 }
@@ -85,7 +88,7 @@ function entryForSlot(response, slot) {
  * @param {string} path
  * @returns {PznEntry | null}
  */
-function slotEntryToPznEntry(responseEntry, slot, path) {
+export function slotEntryToPznEntry(responseEntry, slot, path) {
   if (!responseEntry || responseEntry.status !== 200) return null;
   // The pzn service nests recommendations under `data.recommendations.
   // recommendation[]`, and the fragment to inject is `copyData.pznblock`
