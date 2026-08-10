@@ -39,7 +39,10 @@ export function isAllowedOrigin(request) {
   const host = originHost(request);
   if (host === requestHost(request)) return true; // Same-origin
 
-  // At this point, the origin header is present. Check if it's allowlisted.
+  // Reject present-but-empty/unparseable origins (host would be null)
+  if (!host) return false;
+
+  // At this point, the origin header is present and parsed. Check if it's allowlisted.
   return ALLOWED_SUFFIXES.some((s) => host === s.slice(1) || host.endsWith(s));
 }
 

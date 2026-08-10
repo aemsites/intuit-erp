@@ -26,6 +26,12 @@ describe('isAllowedOrigin', () => {
   it('rejects unparseable/garbage origin', () => {
     expect(isAllowedOrigin(req('not a url'))).toBe(false);
   });
+  it('rejects empty-string origin (malformed header)', () => {
+    const r = new Request('https://aem-erp.intuit.com/api/de', {
+      headers: { origin: '' },
+    });
+    expect(isAllowedOrigin(r)).toBe(false);
+  });
 });
 
 describe('corsHeaders', () => {
@@ -39,6 +45,12 @@ describe('corsHeaders', () => {
   });
   it('emits nothing for the literal null origin (sandboxed iframe bypass)', () => {
     expect(corsHeaders(req('null'))).toEqual({});
+  });
+  it('emits nothing for empty-string origin (malformed header)', () => {
+    const r = new Request('https://aem-erp.intuit.com/api/de', {
+      headers: { origin: '' },
+    });
+    expect(corsHeaders(r)).toEqual({});
   });
 });
 
@@ -65,5 +77,13 @@ describe('guard', () => {
     const env = { EDGE_AUTH_SECRET: '' };
     expect(guard(req('https://aem-erp.intuit.com'), env).ok).toBe(false);
     expect(guard(req('https://aem-erp.intuit.com', { 'x-edge-auth': '' }), env).ok).toBe(true);
+  });
+  it('403s empty-string origin (malformed header)', () => {
+    const r = new Request('https://aem-erp.intuit.com/api/de', {
+      headers: { origin: '' },
+    });
+    const g = guard(r, {});
+    expect(g.ok).toBe(false);
+    expect(g.response.status).toBe(403);
   });
 });
