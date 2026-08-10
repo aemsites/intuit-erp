@@ -85,7 +85,6 @@ export async function resolveOfferMarkup(env, entry) {
       cf: { cacheEverything: false, cacheTtl: 0 },
     });
     const ct = res.headers.get('content-type') || '';
-    console.log('[DBG pzn.offer]', 'url', fragmentUrl, 'status', res.status, 'ct', ct, 'hasAuth', !!env.ORIGIN_AUTHENTICATION); // [DEBUG-SITEAUTH]
     if (!res.ok || !ct.includes('text/html')) return null;
     // JSON2HTML seam: if offers ever arrive as JSON, render them to markup here.
     return { markup: await res.text(), headers: res.headers };

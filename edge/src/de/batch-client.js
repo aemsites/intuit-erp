@@ -79,15 +79,11 @@ export async function fetchBatch(env, { slots, attributes }) {
       // Personalization decisions are per-visitor; never share at the edge.
       cf: { cacheTtl: 0 },
     });
-    const ct = res.headers.get('content-type') || '';
-    // [DEBUG-SITEAUTH] temporary — remove after diagnosis
-    const dbgBody = await res.clone().text().catch(() => '');
-    console.log('[DBG de.fetchBatch]', 'status', res.status, 'ok', res.ok, 'ct', ct, 'body', dbgBody.slice(0, 400));
     if (!res.ok) return null;
+    const ct = res.headers.get('content-type') || '';
     if (!ct.includes('json')) return null;
     return await res.json();
-  } catch (e) {
-    console.log('[DBG de.fetchBatch] THREW', e && e.message); // [DEBUG-SITEAUTH]
+  } catch {
     return null;
   }
 }
