@@ -134,6 +134,7 @@ export async function resolveDeEntries(env, request) {
   if (!ivid) return [];
 
   const attributes = buildAttributes(request, ivid, path);
+  console.log('[DBG de.resolve]', 'path', path, 'ivid', ivid, 'attrs', JSON.stringify(attributes)); // [DEBUG-SITEAUTH]
 
   const response = await fetchBatch(env, { slots: route.slots, attributes });
   if (!response) return [];
@@ -143,5 +144,6 @@ export async function resolveDeEntries(env, request) {
     const entry = slotEntryToPznEntry(entryForSlot(response, slot), slot, path);
     if (entry) entries.push(entry);
   }
+  console.log('[DBG de.resolve] entries', entries.length, entries.map((e) => e.fragment)); // [DEBUG-SITEAUTH]
   return entries;
 }
