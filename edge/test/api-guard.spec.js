@@ -20,6 +20,12 @@ describe('isAllowedOrigin', () => {
   it('rejects a foreign origin', () => {
     expect(isAllowedOrigin(req('https://evil.example.com'))).toBe(false);
   });
+  it('rejects the literal null origin (sandboxed iframe bypass)', () => {
+    expect(isAllowedOrigin(req('null'))).toBe(false);
+  });
+  it('rejects unparseable/garbage origin', () => {
+    expect(isAllowedOrigin(req('not a url'))).toBe(false);
+  });
 });
 
 describe('corsHeaders', () => {
@@ -30,6 +36,9 @@ describe('corsHeaders', () => {
   });
   it('emits nothing for same-origin', () => {
     expect(corsHeaders(req('https://aem-erp.intuit.com'))).toEqual({});
+  });
+  it('emits nothing for the literal null origin (sandboxed iframe bypass)', () => {
+    expect(corsHeaders(req('null'))).toEqual({});
   });
 });
 
@@ -46,5 +55,15 @@ describe('guard', () => {
     const env = { EDGE_AUTH_SECRET: 's3cret' };
     expect(guard(req('https://aem-erp.intuit.com'), env).ok).toBe(false);
     expect(guard(req('https://aem-erp.intuit.com', { 'x-edge-auth': 's3cret' }), env).ok).toBe(true);
+  });
+  it('403s the literal null origin (sandboxed iframe bypass)', () => {
+    const g = guard(req('null'), {});
+    expect(g.ok).toBe(false);
+    expect(g.response.status).toBe(403);
+  });
+  it('still requires x-edge-auth when EDGE_AUTH_SECRET is set to empty string', () => {
+    const env = { EDGE_AUTH_SECRET: '' };
+    expect(guard(req('https://aem-erp.intuit.com'), env).ok).toBe(false);
+    expect(guard(req('https://aem-erp.intuit.com', { 'x-edge-auth': '' }), env).ok).toBe(true);
   });
 });
