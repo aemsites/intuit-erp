@@ -91,15 +91,11 @@ export async function fetchAssignment(env, params) {
       // Assignments are per-visitor; do not share across the edge cache.
       cf: { cacheTtl: 0 },
     });
-    const ct = res.headers.get('content-type') || '';
-    // [DEBUG-SITEAUTH] temporary — remove after diagnosis
-    const dbgBody = await res.clone().text().catch(() => '');
-    console.log('[DBG ixp.client]', 'url', url.toString(), 'status', res.status, 'ct', ct, 'body', dbgBody.slice(0, 500));
     if (!res.ok) return null; // 4xx/5xx (auth/validation) ⇒ no personalization
+    const ct = res.headers.get('content-type') || '';
     if (!ct.includes('application/json')) return null;
     return await res.json();
-  } catch (e) {
-    console.log('[DBG ixp.client] THREW', e && e.message); // [DEBUG-SITEAUTH]
+  } catch {
     return null;
   }
 }
