@@ -58,7 +58,14 @@ export async function resolveTemplateData(env, path) {
   const sheetUrl = new URL(source, env.ORIGIN_BASE_URL).toString();
   try {
     // Not cached at the edge yet — same open caching question as the pzn map.
-    const res = await fetch(sheetUrl, { cf: { cacheTtl: 0 } });
+    // Site authentication: the data sheet lives on the protected origin too, so
+    // carry the same site token index.js sends on the page request.
+    const res = await fetch(sheetUrl, {
+      headers: env.ORIGIN_AUTHENTICATION
+        ? { authorization: `token ${env.ORIGIN_AUTHENTICATION}` }
+        : {},
+      cf: { cacheTtl: 0 },
+    });
     if (!res.ok) return null;
     const json = await res.json();
     const row = Array.isArray(json?.data) ? json.data[0] : undefined;

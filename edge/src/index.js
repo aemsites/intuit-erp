@@ -280,6 +280,10 @@ export default {
       headers.set('x-byo-cdn-type', 'cloudflare');
       headers.set('x-push-invalidation', 'enabled');
     }
+    // Site authentication: carry the origin token when aem.live is protected
+    // (https://www.aem.live/docs/authentication-setup-site). Sent on every
+    // origin subrequest — here, plus the pzn.js offer fragment and template.js
+    // data sheet — so all origin reads authenticate.
     if (env.ORIGIN_AUTHENTICATION) headers.set('authorization', `token ${env.ORIGIN_AUTHENTICATION}`);
 
     // Origin caching: we may only use Cloudflare's cache when we can purge it on

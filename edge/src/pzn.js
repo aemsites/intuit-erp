@@ -70,6 +70,9 @@ export async function resolveOfferMarkup(env, entry) {
 
   const headers = {
     'accept-encoding': 'identity',
+    // Site authentication: the fragment lives on the protected origin too, so
+    // carry the same site token index.js sends on the page request.
+    ...(env.ORIGIN_AUTHENTICATION ? { authorization: `token ${env.ORIGIN_AUTHENTICATION}` } : {}),
   };
   if (env.PUSH_INVALIDATION !== 'disabled') {
     headers['x-byo-cdn-type'] = 'cloudflare';

@@ -91,6 +91,18 @@ describe('template-fill personalization', () => {
     expect(fetchedSheet).toBe(false);
   });
 
+  it('sends the site-auth token on the data-sheet fetch', async () => {
+    const spy = mockOrigin();
+    const request = new IncomingRequest('https://worker.example.com/drafts/pzn/automation');
+    const ctx = createExecutionContext();
+    await worker.fetch(request, { ...env, ORIGIN_AUTHENTICATION: 'hlx_site_token' }, ctx);
+    await waitOnExecutionContext(ctx);
+    const sheetCall = spy.mock.calls
+      .find(([i]) => (typeof i === 'string' ? i : i.url) === SHEET_URL);
+    const auth = new Headers(sheetCall?.[1]?.headers || {}).get('authorization');
+    expect(auth).toBe('token hlx_site_token');
+  });
+
   it('passes the page through untouched when the sheet cannot be fetched', async () => {
     mockOrigin(SHEET, AUTOMATION_HTML, false);
     const html = await (await run('/drafts/pzn/automation')).text();
