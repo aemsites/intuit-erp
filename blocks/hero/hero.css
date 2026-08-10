@@ -52,7 +52,6 @@
 }
 
 .hero .hero-actions { display: flex; gap: 16px; flex-wrap: wrap; margin: 0; }
-
 .hero .hero-media { position: relative; isolation: isolate; }
 
 /* max-height caps the band's overall height for square/portrait photos
@@ -135,6 +134,7 @@
 /* ---- .hero.form (pricing) — lead card on the right, content from the
    shared schedule-call fragment (content/fragments/schedule-call.html) ---- */
 .hero.form .hero-grid {grid-template-columns: 1fr 550px;gap: 60px;min-height: 560px;}
+.hero.form .hero-grid:has(.hero-copy > h1:only-child) { align-items: center; }
 .hero.form .hero-copy h1 { font-size: 52px; max-width: 7em; margin-bottom: 0; }
 
 .hero .hero-form {
