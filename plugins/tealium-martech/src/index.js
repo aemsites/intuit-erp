@@ -20,13 +20,6 @@
  * provider scripts.js selects, this loader still self-gates via `resolveEnvironment`: on an inert
  * host `enabled` is `false` and every method below is a no-op.
  *
- * Load order in `lazy()`: OneTrust (`loadOneTrust`) loads and is given a chance to settle real
- * consent (`settleConsent`) BEFORE utag.js (`loadUtag`) loads. This mitigates a Tealium
- * consent-init recursion in the ies-erp profile: its consent extension recurses when
- * `utag.gdpr.queue` is non-empty at the moment consent flips to granted. Settling consent first
- * means utag.js's own consent extension initializes against an already-known state instead of a
- * later "flip". See `lazy()` for more.
- *
  * CSP: the page enforces Trusted Types + `strict-dynamic`, so utag.js is only ever injected via
  * `document.createElement('script')` (see `loadUtag`) — never `innerHTML`/`document.write`.
  */
@@ -165,55 +158,6 @@ export function mapConsentToTealium(optanon) {
 }
 
 /**
- * Injects Intuit's OneTrust cookie-consent SDK. Idempotent — if the stub script is already
- * present (from an earlier call), this resolves immediately without appending a second one.
- * Fail-open: resolves whether the script loads successfully or not, so a blocked/slow OneTrust
- * load never blocks utag.js from loading behind it (see `lazy()`).
- * @returns {Promise<void>} resolves once the script has loaded, errored, or was already present
- */
-export function loadOneTrust() {
-  return new Promise((resolve) => {
-    if (document.getElementById('onetrust-stub')) {
-      resolve();
-      return;
-    }
-    // Required global callback by the OneTrust SDK.
-    window.OptanonWrapper = window.OptanonWrapper || (() => {});
-    const s = document.createElement('script');
-    s.id = 'onetrust-stub';
-    s.src = 'https://privacy-cdn.a.intuit.com/stable/scripttemplates/otSDKStub.js';
-    s.setAttribute('data-domain-script', '74130b76-29e2-4d72-ab52-09f9ed5818fb');
-    s.setAttribute('charset', 'UTF-8');
-    s.async = true;
-    s.onload = () => resolve();
-    s.onerror = () => resolve();
-    document.head.appendChild(s);
-  });
-}
-
-/**
- * Waits for OneTrust to settle real consent — i.e. for the `OptanonConsent` cookie to become
- * readable — polling every ~100ms. Fail-open: always resolves, even if OneTrust never settles
- * (blocked by an ad/privacy blocker, slow network, ...), after `timeoutMs`.
- * @param {Number} [timeoutMs=2000] the max time to wait for the cookie before giving up
- * @returns {Promise<void>} resolves once consent has settled, or after `timeoutMs`, whichever
- *                          comes first
- */
-export function settleConsent(timeoutMs = 2000) {
-  return new Promise((resolve) => {
-    const start = Date.now();
-    const poll = () => {
-      if (readOptanonConsent() !== null || Date.now() - start >= timeoutMs) {
-        resolve();
-        return;
-      }
-      setTimeout(poll, 100);
-    };
-    poll();
-  });
-}
-
-/**
  * Loads the Tealium utag.js library for the given environment via a plain script tag (CSP:
  * Trusted Types + strict-dynamic — never innerHTML/document.write).
  * @param {String} env the utag environment to load ('prod', 'qa', 'dev')
@@ -290,15 +234,7 @@ export default class TealiumMartech {
   }
 
   /**
-   * Lazy-phase logic: loads OneTrust, gives its consent cookie a chance to settle, THEN loads
-   * utag.js, and fires the initial page view.
-   *
-   * OneTrust loads (and consent is given a chance to settle) before utag.js so Tealium's own
-   * consent extension initializes against an already-known consent state instead of an empty
-   * `utag.gdpr.queue` that later flips to granted — the ies-erp profile's consent extension
-   * recurses when that queue is non-empty at the moment consent flips to granted. `settleConsent`
-   * is fail-open (2s cap by default), so a slow/blocked OneTrust load never blocks utag.js
-   * indefinitely.
+   * Lazy-phase logic: loads utag.js and fires the initial page view.
    *
    * Consent gating is intentionally NOT driven from here — it is delegated to the Tealium
    * profile's own OneTrust integration (the model the live site uses), which reads the
@@ -314,8 +250,6 @@ export default class TealiumMartech {
    */
   async lazy() {
     if (!this.enabled) return;
-    await loadOneTrust();
-    await settleConsent();
     await loadUtag(this.env);
     if (window.utag?.view) {
       window.utag.view(window.utag_data);

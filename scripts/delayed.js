@@ -4,11 +4,14 @@
 // eslint-disable-next-line import/no-cycle
 import { getTealium } from './scripts.js';
 
-// OneTrust now loads earlier, in the lazy phase, via TealiumMartech#lazy's loadOneTrust() — it
-// must settle BEFORE utag.js loads there, to avoid a Tealium consent-extension recursion (see
-// plugins/tealium-martech/src/index.js). loadOneTrust() is idempotent (#onetrust-stub id guard),
-// so moving the load earlier does not create a second load; it just means there's nothing left
-// to load here.
+// Load OneTrust cookie-consent SDK (Intuit's account)
+const otScript = document.createElement('script');
+otScript.src = 'https://cdn.cookielaw.org/scripttemplates/otSDKStub.js';
+otScript.setAttribute('data-domain-script', '74130b76-29e2-4d72-ab52-09f9ed5818fb');
+otScript.setAttribute('charset', 'UTF-8');
+document.head.appendChild(otScript);
+// Required global callback by OneTrust SDK
+window.OptanonWrapper = window.OptanonWrapper || (() => {});
 
 // Tealium's own "delayed" signal. A no-op on the opt-in Adobe provider path (`?martech=adobe`),
 // where getTealium() returns undefined, and on a disabled Tealium instance (any hostname
