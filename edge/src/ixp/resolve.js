@@ -121,12 +121,14 @@ export async function resolveEntryWith(request, fetchAssignments) {
   const res = await fetchAssignments({
     ivid, experimentId: route.experimentId, label: route.label,
   });
+  console.log('[DBG ixp.resolve]', 'path', path, 'route', JSON.stringify(route), 'assignments', res ? res.assignments.length : 'null'); // [DEBUG-SITEAUTH]
   if (!res || res.assignments.length === 0) return null;
 
   // A label route may resolve several experiments; apply the first that maps to
   // an actual change (a single slot can only show one treatment).
   for (const assignment of res.assignments) {
     const entry = assignmentToPznEntry(assignment, route, path);
+    console.log('[DBG ixp.resolve] assignment', JSON.stringify(assignment).slice(0, 400), '=> entry', JSON.stringify(entry)); // [DEBUG-SITEAUTH]
     if (entry) return entry;
   }
   return null;
