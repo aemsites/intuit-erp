@@ -39,6 +39,7 @@ import { resolveDeEntries } from './de/resolve.js';
 import { resolveTemplateData, fillPlaceholders } from './template.js';
 import { deriveVisitorTokens } from './visitor.js';
 import { createCacheKeys, mergeCacheKeys, applyCacheKeys } from './cache-keys.js';
+import { handleApi } from './api/router.js';
 
 /**
  * @typedef {import('./personalize.js').PznEntry} PznEntry
@@ -234,6 +235,10 @@ function finalize(response, savedSearch, env) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+
+    // /api/* — client-facing personalization/experiment endpoints. Additive to
+    // the SSR proxy below; handled before any proxy logic.
+    if (url.pathname.startsWith('/api/')) return handleApi(request, env);
 
     // 1. Port redirect (prod only). Cloudflare exposes a few ports besides 443;
     //    normalize to the default. Skipped on localhost so `wrangler dev` (which

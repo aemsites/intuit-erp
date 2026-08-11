@@ -3,7 +3,7 @@ import {
   describe, it, expect, vi, afterEach,
 } from 'vitest';
 import worker from '../src/index.js';
-import { resolveDeEntries } from '../src/de/resolve.js';
+import { resolveDeEntries, entryForSlot } from '../src/de/resolve.js';
 import { resolveDeRoute } from '../src/de/routes.js';
 import { buildBatchRequest } from '../src/de/batch-client.js';
 
@@ -150,6 +150,18 @@ describe('resolveDeEntries', () => {
     });
   });
 
+  it('lets a ?locale= query param override the Accept-Language locale', async () => {
+    const cap = {};
+    mockBatch(batchResponse('fragments/pzn/slot1-hospitality'), cap);
+    await resolveDeEntries(
+      DE_ENV,
+      deRequest('/drafts/pzn/treatment?ivid=abc&locale=en-US', {
+        headers: { 'accept-language': 'en-GB' },
+      }),
+    );
+    expect(JSON.parse(cap.init.body).attributes.locale).toBe('en-US');
+  });
+
   it('leaves the slot as authored on a non-200 status', async () => {
     mockBatch(batchResponse(null, 204));
     expect(await resolveDeEntries(DE_ENV, deRequest('/drafts/pzn/treatment?ivid=abc'))).toEqual([]);
@@ -239,5 +251,19 @@ describe('worker in de mode (?pzn=de)', () => {
     mockDeWorker(batchResponse('fragments/pzn/slot1-hospitality'));
     const html = await (await runDe('/drafts/pzn/treatment?pzn=de')).text();
     expect(html).toBe(TREATMENT_HTML);
+  });
+});
+
+describe('entryForSlot (case-insensitive placement match)', () => {
+  it('matches when the response placement differs only in case', () => {
+    const response = {
+      k: { placement: 'SBSEGQBMContentAemPznIxpTest', status: 200 },
+    };
+    const hit = entryForSlot(response, { placement: 'sbsegqbmcontentaempznixptest' });
+    expect(hit).toEqual({ placement: 'SBSEGQBMContentAemPznIxpTest', status: 200 });
+  });
+
+  it('returns null when no placement matches', () => {
+    expect(entryForSlot({ k: { placement: 'other' } }, { placement: 'nope' })).toBeNull();
   });
 });

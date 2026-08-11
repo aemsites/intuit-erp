@@ -21,6 +21,7 @@
 import { resolveDeRoute } from './routes.js';
 import { fetchBatch } from './batch-client.js';
 import { deriveVisitorTokens } from '../visitor.js';
+import { readIvid } from '../ivid.js';
 
 /**
  * @typedef {import('../personalize.js').PznEntry} PznEntry
@@ -28,41 +29,30 @@ import { deriveVisitorTokens } from '../visitor.js';
  */
 
 /**
- * The visitor id, which is the lever the whole flow turns on. In production it
- * comes from the `ivid` cookie the pzn service issues; a `?ivid=` query param
- * overrides that cookie for demo / QA. Null when absent ⇒ nothing to personalize
- * (passthrough).
- * @param {Request} request
- * @returns {string | null}
- */
-function readIvid(request) {
-  const fromQuery = new URL(request.url).searchParams.get('ivid');
-  if (fromQuery) return fromQuery;
-  const cookie = request.headers.get('cookie') || '';
-  const m = cookie.match(/(?:^|;\s*)ivid=([^;]+)/);
-  return m ? decodeURIComponent(m[1]) : null;
-}
-
-/**
  * Builds the shared `attributes` object the batch request carries: the ivid, the
  * page permalink, and the per-visitor signals the edge can derive (locale,
  * device type, geo, client IP). Mirrors the pzn service's `attributes` contract;
  * client-only fields (screen resolution) and marketing ids (casId, priorityCode)
  * are not derivable at the edge and are omitted.
+ *
+ * The locale normally comes from the visitor's `Accept-Language`; a `?locale=`
+ * query param overrides it (demo / QA — the batch response is keyed by locale, so
+ * this forces a specific offer variant regardless of the browser's language).
  * @param {Request} request
  * @param {string} ivid
  * @param {string} permalink The page path being personalized.
  * @returns {Record<string, unknown>}
  */
-function buildAttributes(request, ivid, permalink) {
+export function buildAttributes(request, ivid, permalink) {
   const v = deriveVisitorTokens(request);
   const ua = request.headers.get('user-agent') || '';
   const deviceType = /Mobi|Android|iPhone|iPad/i.test(ua) ? 'Mobile' : 'Desktop';
+  const localeOverride = new URL(request.url).searchParams.get('locale');
 
   const attributes = {
     ivid,
     permalink,
-    locale: v.lang || 'en-US',
+    locale: localeOverride || v.lang || 'en-US',
     deviceType,
     newVisitor: true,
   };
@@ -84,9 +74,12 @@ function buildAttributes(request, ivid, permalink) {
  * @param {DeSlot} slot
  * @returns {any | null}
  */
-function entryForSlot(response, slot) {
+export function entryForSlot(response, slot) {
+  const want = String(slot.placement).toLowerCase();
   for (const value of Object.values(response)) {
-    if (value && value.placement === slot.placement) return value;
+    if (value && typeof value.placement === 'string' && value.placement.toLowerCase() === want) {
+      return value;
+    }
   }
   return null;
 }
@@ -100,7 +93,7 @@ function entryForSlot(response, slot) {
  * @param {string} path
  * @returns {PznEntry | null}
  */
-function slotEntryToPznEntry(responseEntry, slot, path) {
+export function slotEntryToPznEntry(responseEntry, slot, path) {
   if (!responseEntry || responseEntry.status !== 200) return null;
   // The pzn service nests recommendations under `data.recommendations.
   // recommendation[]`, and the fragment to inject is `copyData.pznblock`
