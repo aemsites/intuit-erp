@@ -164,6 +164,19 @@
   object-fit: cover;
 }
 
+/* Side by side, the card is as tall as its COPY and the portrait crops to fit
+   — upstream stretches the image well past its intrinsic ratio. An in-flow
+   <img> would instead contribute its own height and cap the card there, so it
+   is taken out of flow and the column height comes from the copy alone. */
+@media (width >= 1024px) {
+  .carousel.testimonial:not(.has-title) .testi-media { position: relative; }
+
+  .carousel.testimonial:not(.has-title) .testi-media img {
+    position: absolute;
+    inset: 0;
+  }
+}
+
 /* the flush portrait only rounds the corners it shares with the card */
 .carousel.testimonial .testi-media img { border-radius: 10px 10px 0 0; }
 
@@ -186,6 +199,10 @@
   margin: 0; font-size: var(--testi-quote); line-height: var(--testi-quote-lh);
 }
 
+/* without a title the quote is the display element and carries a leading
+   space of its own — upstream sets it as a margin above the pull-quote */
+.carousel.testimonial:not(.has-title) .testi-quote { margin-top: 28px; }
+
 .carousel.testimonial.has-title .testi-quote {
   font-size: var(--testi-attr); line-height: var(--testi-attr-lh);
 }
@@ -193,6 +210,13 @@
 .carousel.testimonial .testi-attr {
   margin: 16px 0 0; font-size: var(--testi-attr); line-height: var(--testi-attr-lh);
 }
+
+/* the untitled treatment breathes wider between quote, attribution and CTA —
+   upstream gets this from margins collapsing inside its heading wrapper, which
+   a flex column doesn't do, so the values are set explicitly */
+.carousel.testimonial:not(.has-title) .testi-attr { margin-top: 28px; }
+
+.carousel.testimonial:not(.has-title) .testi-cta { margin-top: 36px; }
 
 .carousel.testimonial.has-title .testi-attr { margin-top: 20px; }
 
@@ -218,6 +242,10 @@
   white-space: nowrap;
   cursor: pointer;
 }
+
+/* the untitled treatment's link CTA is the taller of the two upstream
+   (52px/28px vs the titled video button's 48px/20px) */
+.carousel.testimonial:not(.has-title) .testi-cta-button { min-height: 52px; padding: 0 28px; }
 
 .carousel.testimonial .testi-cta-button svg { flex: none; }
 
@@ -329,6 +357,16 @@
     padding: 80px;
     text-align: left;
   }
+
+  /* the untitled copy opens to an even 40px rhythm on desktop, which is what
+     makes the card taller than the portrait's intrinsic height */
+  .carousel.testimonial:not(.has-title) .testi-quote { margin-top: 40px; }
+
+  .carousel.testimonial:not(.has-title) .testi-attr { margin-top: 40px; }
+
+  .carousel.testimonial:not(.has-title) .testi-cta { margin-top: 40px; }
+
+  .carousel.testimonial.has-title .testi-cta { margin-top: 60px; }
 
   .carousel.testimonial .testi-cta { justify-content: flex-start; }
 
