@@ -14,6 +14,7 @@ export function fragmentPath(ref) {
 /**
  * Calls a /api/<source> endpoint. Returns the parsed JSON, or null on any
  * non-ok / timeout / parse failure (fail-open — the caller shows the baseline).
+ * Forwards ?ivid= QA override from page URL into the request for testing.
  * @param {string} source e.g. 'de' or 'ixp?experimentId=1'
  * @param {{ method?: string, body?: unknown, timeoutMs?: number, signal?: AbortSignal }} [opts]
  *   When `signal` is provided it is used directly for the fetch and no internal
@@ -36,7 +37,12 @@ export async function fetchDecision(source, opts = {}) {
     timer = setTimeout(() => controller.abort(), timeoutMs);
   }
   try {
-    const res = await fetch(`${apiBase()}/${source}`, {
+    let requestUrl = `${apiBase()}/${source}`;
+    const pageIvid = new URLSearchParams(window.location.search).get('ivid');
+    if (pageIvid) {
+      requestUrl += `${requestUrl.includes('?') ? '&' : '?'}ivid=${encodeURIComponent(pageIvid)}`;
+    }
+    const res = await fetch(requestUrl, {
       method,
       credentials: 'include',
       headers: body ? { 'content-type': 'application/json' } : undefined,

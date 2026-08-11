@@ -33,6 +33,11 @@ describe('fragmentPath', () => {
 });
 
 describe('fetchDecision', () => {
+  afterEach(() => {
+    // Reset page URL to default to avoid test leakage
+    window.history.replaceState({}, '', '/');
+  });
+
   it('POSTs JSON and returns the parsed body', async () => {
     const spy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(JSON.stringify([{ placement: 'p', fragment: 'f' }]), { status: 200, headers: { 'content-type': 'application/json' } }),
@@ -44,6 +49,37 @@ describe('fetchDecision', () => {
     expect(init.method).toBe('POST');
     expect(init.credentials).toBe('include');
     expect(JSON.parse(init.body)).toEqual({ slots: [{ placement: 'p' }] });
+  });
+
+  it('appends ?ivid= from page URL when present', async () => {
+    window.history.replaceState({}, '', '/page?ivid=qa123');
+    const spy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({}), { status: 200, headers: { 'content-type': 'application/json' } }),
+    );
+    await fetchDecision('de', { method: 'POST', body: {} });
+    const [url] = spy.mock.calls[0];
+    expect(url).toContain('?ivid=qa123');
+  });
+
+  it('appends &ivid= when source already has query parameters', async () => {
+    window.history.replaceState({}, '', '/page?ivid=qa123');
+    const spy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({}), { status: 200, headers: { 'content-type': 'application/json' } }),
+    );
+    await fetchDecision('ixp?experimentId=385944&fidelity=page', { method: 'POST', body: {} });
+    const [url] = spy.mock.calls[0];
+    expect(url).toContain('experimentId=385944');
+    expect(url).toContain('fidelity=page');
+    expect(url).toContain('&ivid=qa123');
+  });
+
+  it('uses exactly /api/de when no ?ivid= in page URL', async () => {
+    const spy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({}), { status: 200, headers: { 'content-type': 'application/json' } }),
+    );
+    await fetchDecision('de', { method: 'POST', body: {} });
+    const [url] = spy.mock.calls[0];
+    expect(url).toBe('/api/de');
   });
 
   it('returns null on a non-ok response', async () => {
