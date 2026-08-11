@@ -40,6 +40,22 @@ export async function fetchDecision(source, opts = {}) {
 }
 
 /**
+ * Resolves to the promise's value, or undefined if it doesn't settle within ms
+ * (fail-open). Used to bound an entire phase (e.g. runExperiment/
+ * runPersonalization) even when something inside it — such as loadFragment,
+ * which cannot be given an abort signal — might hang indefinitely.
+ * @param {Promise<any>} promise
+ * @param {number} ms
+ * @returns {Promise<any | undefined>}
+ */
+export function withTimeout(promise, ms) {
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => resolve(undefined), ms);
+    promise.then(resolve, () => resolve(undefined)).finally(() => clearTimeout(timer));
+  });
+}
+
+/**
  * Loads a fragment and injects it into a target element (replacing its children).
  * @param {Element} targetEl
  * @param {string} ref fragment reference (bare or root-absolute)

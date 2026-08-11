@@ -64,4 +64,18 @@ describe('runPersonalization', () => {
     await runPersonalization(main('<div class="pzn-alpha"></div>'));
     expect(applyFragment).not.toHaveBeenCalled();
   });
+
+  it('applies a decision to every slot sharing the same placement class', async () => {
+    const m = main('<div class="pzn-alpha"></div><div class="pzn-alpha"></div>');
+    fetchDecision.mockResolvedValue([
+      { placement: 'alpha', action: 'replace', fidelity: 'block', fragment: 'fragments/pzn/a' },
+    ]);
+    await runPersonalization(m);
+
+    const alphaSlots = m.querySelectorAll('.pzn-alpha');
+    expect(alphaSlots).toHaveLength(2);
+    expect(applyFragment).toHaveBeenCalledTimes(2);
+    expect(applyFragment).toHaveBeenCalledWith(alphaSlots[0], 'fragments/pzn/a');
+    expect(applyFragment).toHaveBeenCalledWith(alphaSlots[1], 'fragments/pzn/a');
+  });
 });

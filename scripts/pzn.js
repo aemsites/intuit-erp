@@ -49,10 +49,15 @@ export async function runPersonalization(root = document.querySelector('main')) 
   });
   if (!Array.isArray(decisions) || decisions.length === 0) return;
 
-  await Promise.all(decisions.map(async (d) => {
+  const applications = [];
+  decisions.forEach((d) => {
     if (!d || !d.fragment) return;
     const key = String(d.placement || '').toLowerCase();
-    const slot = slots.find((s) => s.placement.toLowerCase() === key);
-    if (slot) await applyFragment(slot.el, d.fragment);
-  }));
+    // Apply to every slot sharing this placement class, not just the first —
+    // authors may place the same `pzn-<placement>` slot more than once on a page.
+    slots
+      .filter((s) => s.placement.toLowerCase() === key)
+      .forEach((slot) => applications.push(applyFragment(slot.el, d.fragment)));
+  });
+  await Promise.all(applications);
 }

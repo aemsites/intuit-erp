@@ -2,7 +2,7 @@ import {
   describe, it, expect, vi, afterEach,
 } from 'vitest';
 import {
-  apiBase, fragmentPath, fetchDecision, applyFragment,
+  apiBase, fragmentPath, fetchDecision, applyFragment, withTimeout,
 } from '../scripts/personalization/decision.js';
 
 afterEach(() => {
@@ -75,5 +75,27 @@ describe('applyFragment', () => {
     const target = document.createElement('div');
     const ok = await applyFragment(target, 'x', { loadFragment: vi.fn().mockResolvedValue(null) });
     expect(ok).toBe(false);
+  });
+});
+
+describe('withTimeout', () => {
+  it('resolves to the value when the promise settles first', async () => {
+    await expect(withTimeout(Promise.resolve('ok'), 1000)).resolves.toBe('ok');
+  });
+
+  it('resolves to undefined when the promise never settles within ms', async () => {
+    vi.useFakeTimers();
+    try {
+      const never = new Promise(() => {});
+      const pending = withTimeout(never, 1000);
+      await vi.advanceTimersByTimeAsync(1000);
+      await expect(pending).resolves.toBeUndefined();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('resolves to undefined (never rejects) when the promise rejects', async () => {
+    await expect(withTimeout(Promise.reject(new Error('boom')), 1000)).resolves.toBeUndefined();
   });
 });

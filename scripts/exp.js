@@ -23,6 +23,12 @@ export function isExperimentEnabled() {
 /**
  * Replaces <main>'s content with the variation page's plain.html (raw, so the
  * caller's decorateMain decorates it). Returns true when swapped.
+ *
+ * Bounded by its own ~1s AbortController timeout (mirrors fetchDecision) —
+ * fail-open: on abort/non-ok/throw the baseline <main> is left intact. This
+ * matters because a swap that completes LATE (after decoration has already
+ * run) would clobber decorated content with raw HTML, so a hung connection
+ * must be abandoned rather than allowed to resolve whenever it likes.
  * @param {Document} doc
  * @param {string} variationPath
  * @returns {Promise<boolean>}
@@ -31,13 +37,17 @@ async function swapMain(doc, variationPath) {
   const main = doc.querySelector('main');
   if (!main) return false;
   const path = variationPath.startsWith('/') ? variationPath : `/${variationPath}`;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 1000);
   try {
-    const resp = await fetch(`${path}.plain.html`);
+    const resp = await fetch(`${path}.plain.html`, { signal: controller.signal });
     if (!resp.ok) return false;
     main.innerHTML = await resp.text();
     return true;
   } catch {
     return false;
+  } finally {
+    clearTimeout(timer);
   }
 }
 
@@ -50,6 +60,10 @@ export async function runExperiment(doc = document) {
   if (!isExperimentEnabled()) return;
   const experimentId = getMetadata('experiment-id');
   const label = getMetadata('experiment-label');
+  // Bare `experiment` metadata (with no id/label) belongs to the separate Adobe
+  // experimentation plugin — there is nothing for IXP to resolve, so skip the
+  // /api/ixp round-trip entirely rather than firing it with no id/label.
+  if (!experimentId && !label) return;
   const params = new URLSearchParams();
   if (experimentId) params.set('experimentId', experimentId);
   if (label) params.set('label', label);
@@ -57,5 +71,8 @@ export async function runExperiment(doc = document) {
 
   const decision = await fetchDecision(`ixp?${params.toString()}`);
   if (!decision || decision.control || !decision.fragment) return;
+  // 'page' fidelity is used for whole-page REDIRECT experiments only — the IXP
+  // handler stamps this fidelity when the decision is a full-page swap (as
+  // opposed to a block/section-level personalization decision).
   if (decision.fidelity === 'page') await swapMain(doc, decision.fragment);
 }

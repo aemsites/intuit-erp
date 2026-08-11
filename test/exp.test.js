@@ -47,7 +47,10 @@ describe('runExperiment', () => {
     const [source] = fetchDecision.mock.calls[0];
     expect(source).toContain('ixp?');
     expect(source).toContain('experimentId=385944');
-    expect(globalThis.fetch).toHaveBeenCalledWith('/drafts/pzn/csr-variation.plain.html');
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      '/drafts/pzn/csr-variation.plain.html',
+      expect.objectContaining({ signal: expect.anything() }),
+    );
     expect(document.querySelector('main').innerHTML).toContain('VARIATION');
     expect(document.querySelector('main').innerHTML).not.toContain('BASE');
   });
@@ -63,5 +66,36 @@ describe('runExperiment', () => {
     fetchDecision.mockResolvedValue({ control: true });
     await runExperiment(document);
     expect(document.querySelector('main').innerHTML).toContain('BASE');
+  });
+
+  it('is a no-op (no fetchDecision call) when only bare experiment metadata is present', async () => {
+    setMeta('experiment', 'true');
+    await runExperiment(document);
+    expect(fetchDecision).not.toHaveBeenCalled();
+    expect(document.querySelector('main').innerHTML).toContain('BASE');
+  });
+
+  it('bounds the variation fetch with a timeout so a hanging connection cannot block reveal', async () => {
+    vi.useFakeTimers();
+    try {
+      setMeta('experiment-id', '385944');
+      fetchDecision.mockResolvedValue({ fidelity: 'page', fragment: '/drafts/pzn/csr-variation' });
+      // Simulates a connection that is accepted but never completes: the promise
+      // only settles if aborted (mirrors real fetch+AbortSignal behavior).
+      vi.spyOn(globalThis, 'fetch').mockImplementation((url, init) => new Promise((resolve, reject) => {
+        if (init && init.signal) {
+          init.signal.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')));
+        }
+      }));
+
+      const pending = runExperiment(document);
+      await vi.advanceTimersByTimeAsync(1100);
+      await pending;
+
+      expect(document.querySelector('main').innerHTML).toContain('BASE');
+      expect(document.querySelector('main').innerHTML).not.toContain('VARIATION');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

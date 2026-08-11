@@ -17,6 +17,7 @@ import { runExperimentation, runExperimentationLazy } from './experiment-loader.
 import { runExperiment } from './exp.js';
 // eslint-disable-next-line import/no-cycle
 import { runPersonalization } from './pzn.js';
+import { withTimeout } from './personalization/decision.js';
 // Vendored via git subtree at plugins/martech (see its README), not an
 // installed npm package, so this necessarily crosses a package.json boundary.
 import {
@@ -281,8 +282,9 @@ async function loadEager(doc) {
   await runExperimentation(doc, experimentationConfig);
   // Intuit IXP whole-page experiment: may swap <main> for a variation page before
   // decoration (distinct from the AEM plugin above). Cheap no-op when the page has
-  // no experiment metadata.
-  await runExperiment(doc);
+  // no experiment metadata. Wrapped in an overall phase guard so that even if
+  // something inside hangs unexpectedly, reveal is never blocked (fail-open).
+  await withTimeout(runExperiment(doc), 1500);
   const main = doc.querySelector('main');
   if (main) {
     // Blog article pages need buildBlogTemplate during eager decoration; import
@@ -294,8 +296,9 @@ async function loadEager(doc) {
     decorateMain(main);
     // Block/section personalization: batch-resolve every `pzn-` slot (incl. any in
     // a swapped-in variation) and inject fragments before reveal. Cheap no-op when
-    // the page has no `pzn-` slots.
-    await runPersonalization(main);
+    // the page has no `pzn-` slots. Same phase guard as above — loadFragment (used
+    // internally) cannot be given an abort signal, so this is the backstop.
+    await withTimeout(runPersonalization(main), 1500);
     document.body.classList.add('appear');
     await Promise.all([
       martechLoadedPromise ? martechLoadedPromise.then(martechEager) : Promise.resolve(),
