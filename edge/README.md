@@ -180,6 +180,17 @@ ORIGIN_AUTHENTICATION=hlx_…   # aem.live site token, if the origin has site au
 > 🔐 The prod PZN key was circulated in a shared PDF / Slack — **rotate it** and
 > set the secret to the new value rather than the leaked one.
 
+### Client-facing API (`/api/*`)
+
+`/api/de` (POST) and `/api/ixp` (GET) are the client-driven personalization /
+experiment endpoints used by `scripts/pzn.js` and `scripts/exp.js`. They reuse the
+Decision Engine / IXP clients, read the `ivid` (cookie or `?ivid=` override, never
+minted), and return a normalized decision (`{ placement, action, fidelity,
+fragment }` for DE; `{ action, fidelity, fragment }` or `{ control: true }` for
+IXP). Guarded by an origin allowlist (`*.intuit.com`, `*.aem.live`, `*.aem.page` +
+same-origin) and, when `EDGE_AUTH_SECRET` is set, an Akamai-injected `x-edge-auth`
+header.
+
 ## Develop, lint & test
 
 ```bash
