@@ -20,8 +20,21 @@
  * provider scripts.js selects, this loader still self-gates via `resolveEnvironment`: on an inert
  * host `enabled` is `false` and every method below is a no-op.
  *
- * CSP: the page enforces Trusted Types + `strict-dynamic`, so utag.js is only ever injected via
- * `document.createElement('script')` (see `loadUtag`) — never `innerHTML`/`document.write`.
+ * CONSENT: on the real erp.intuit.com prod page, a full OneTrust consent stack loads and settles
+ * BEFORE utag.js, so a consistent `OptanonConsent` cookie already exists by the time Tealium's own
+ * OneTrust integration reads it at utag INIT. This loader used to load only utag.js, so
+ * `OptanonConsent` was never set, consent state was inconsistent, and the `ies-erp` profile's
+ * consent extension recursed infinitely at INIT (see `lazy()`'s doc comment for the recursion
+ * writeup). The fix replicates Intuit's prod consent stack — the OneTrust stub, Intuit's own
+ * consent-wrapper, and gdpr-util (see `loadConsentStack`) — and loads it to settlement (see
+ * `settleConsent`) BEFORE utag.js (see `lazy()`), so the same consistent `OptanonConsent` the
+ * profile expects is already in place at INIT. This works around a profile-side bug (the
+ * recursion itself lives in the `ies-erp` profile's consent extension, which this loader cannot
+ * change) by establishing consistent consent first; it does not call any `utag.gdpr.*` API.
+ *
+ * CSP: the page enforces Trusted Types + `strict-dynamic`, so utag.js and the consent stack are
+ * only ever injected via `document.createElement('script')` (see `loadUtag`, `loadScriptOnce`) —
+ * never `innerHTML`/`document.write`.
  */
 
 /**
@@ -174,6 +187,106 @@ export function loadUtag(env) {
   });
 }
 
+/**
+ * Resolves the Intuit consent-stack CDN host for the given utag environment. Mirrors the same
+ * prod/non-prod split as `resolveEnvironment`/utag itself: only the real `'prod'` env is pointed
+ * at Intuit's production privacy CDN; both `'qa'` and `'dev'` are pointed at the e2e (pre-prod)
+ * privacy CDN.
+ * @param {String} env the utag environment ('prod', 'qa', 'dev')
+ * @returns {String} the consent-stack CDN hostname
+ */
+export function consentCdnHost(env) {
+  return env === 'prod' ? 'privacy-cdn.a.intuit.com' : 'privacy-cdn.e2e.a.intuit.com';
+}
+
+/**
+ * Idempotent, fail-open script loader. If an element with the given `id` already exists, resolves
+ * immediately without touching the DOM (so calling this repeatedly for the same script is safe).
+ * Otherwise injects a new `<script>` via `document.createElement` (CSP: Trusted Types +
+ * strict-dynamic — never innerHTML/document.write) and resolves on either `load` or `error`: a
+ * failed/blocked script (ad blocker, network hiccup, CDN outage) must never hang or block whatever
+ * is awaiting it — see `loadConsentStack`, which relies on this to keep the consent stack from
+ * ever blocking utag.js.
+ * @param {Object} opts
+ * @param {String} opts.id the element id to dedupe on
+ * @param {String} opts.src the script src URL
+ * @param {Object<String, String>} [opts.attrs] extra attributes to set via `setAttribute`
+ * @returns {Promise<void>} always resolves, never rejects
+ */
+export function loadScriptOnce({ id, src, attrs = {} }) {
+  return new Promise((resolve) => {
+    if (document.getElementById(id)) {
+      resolve();
+      return;
+    }
+    const script = document.createElement('script');
+    script.id = id;
+    script.src = src;
+    script.async = true;
+    Object.entries(attrs).forEach(([key, value]) => {
+      script.setAttribute(key, value);
+    });
+    script.onload = () => resolve();
+    script.onerror = () => resolve();
+    document.head.appendChild(script);
+  });
+}
+
+/**
+ * Loads Intuit's prod consent stack — the OneTrust stub, Intuit's own consent-wrapper, and
+ * gdpr-util, in that order — ahead of utag.js (see the file-header CONSENT note for why). Each
+ * script is awaited before the next is requested, mirroring the sequential load order of the real
+ * erp.intuit.com page; `loadScriptOnce` makes every step idempotent and fail-open, so a blocked or
+ * slow consent script never wedges the sequence.
+ * @param {String} env the utag environment ('prod', 'qa', 'dev'), used to pick the per-env CDN
+ * @returns {Promise<void>} resolves once all three scripts have settled (loaded or failed)
+ */
+export async function loadConsentStack(env) {
+  // Required global callback by the OneTrust SDK — pre-declared so the stub never calls into an
+  // undefined global regardless of exactly when it finishes loading.
+  window.OptanonWrapper = window.OptanonWrapper || (() => {});
+  const cdnHost = consentCdnHost(env);
+
+  await loadScriptOnce({
+    id: 'onetrust-stub',
+    src: `https://${cdnHost}/stable/scripttemplates/otSDKStub.js`,
+    // The e2e domain-script id is assumed identical to prod's (`74130b76…`) — confirm with Intuit
+    // if OneTrust does not initialize on e2e.
+    attrs: { 'data-domain-script': '74130b76-29e2-4d72-ab52-09f9ed5818fb', charset: 'UTF-8' },
+  });
+  await loadScriptOnce({
+    id: 'intuit-consent-wrapper',
+    src: `https://${cdnHost}/stable/consent-wrapper/cookies-consent-wrapper.min.js`,
+  });
+  await loadScriptOnce({
+    id: 'intuit-gdpr-util',
+    // Env-independent — Intuit serves gdpr-util from a single CDN regardless of environment.
+    src: 'https://uxfabric.intuitcdn.net/gdpr-util/2.11.0/gdprUtilBundle.js',
+  });
+}
+
+/**
+ * Waits for a consistent `OptanonConsent` cookie to exist (as parsed by `readOptanonConsent`),
+ * polling roughly every 100ms, or until `timeoutMs` elapses — whichever comes first. Fail-open:
+ * always resolves (never rejects), so a slow, blocked, or misconfigured consent stack never
+ * permanently blocks utag.js from loading.
+ * @param {Number} [timeoutMs=3000] the maximum time to wait, in milliseconds
+ * @returns {Promise<void>}
+ */
+export function settleConsent(timeoutMs = 3000) {
+  return new Promise((resolve) => {
+    const start = Date.now();
+    const poll = () => {
+      if (readOptanonConsent() !== null || Date.now() - start >= timeoutMs) {
+        resolve();
+        return;
+      }
+      setTimeout(poll, 100);
+    };
+    poll();
+  });
+}
+
 // TODO(geo): confirm the definitive user_geo source on EDS (Akamai edge cookie/header) before
 // go-live.
 /**
@@ -234,22 +347,32 @@ export default class TealiumMartech {
   }
 
   /**
-   * Lazy-phase logic: loads utag.js and fires the initial page view.
+   * Lazy-phase logic: replicates Intuit's prod consent stack, waits for consent to settle (or
+   * fail-open time out), then loads utag.js and fires the initial page view.
    *
-   * Consent gating is intentionally NOT driven from here — it is delegated to the Tealium
-   * profile's own OneTrust integration (the model the live site uses), which reads the
-   * `OptanonConsent` cookie natively. Driving `utag.gdpr.setPreferencesValues` from the client at
-   * load caused an infinite `processQueue` ↔ `setPreferencesValues` recursion inside utag.js:
-   * `await loadUtag` resolves on the script's `onload`, which is *before* utag finishes its async
-   * `INIT`, so the call was enqueued and then replayed into itself. If a client-side consent push
-   * is ever required (see the deferred consent slice), it MUST run only after utag is fully
-   * initialized — not right after `onload` — and must not re-enter on OneTrust events.
-   * `readOptanonConsent` / `mapConsentToTealium` remain as ready-made, side-effect-free helpers
-   * for that future profile-wiring.
-   * @returns {Promise<void>} resolves once utag.js has loaded (or immediately, if disabled)
+   * Consent gating is intentionally NOT driven by us calling `utag.gdpr.setPreferencesValues` —
+   * it is delegated to the Tealium profile's own OneTrust integration (the model the live site
+   * uses), which reads the `OptanonConsent` cookie natively. Driving `setPreferencesValues` from
+   * the client at load caused an infinite `processQueue` ↔ `setPreferencesValues` recursion inside
+   * utag.js: `await loadUtag` resolves on the script's `onload`, which is *before* utag finishes
+   * its async `INIT`, so the call was enqueued and then replayed into itself. That recursion is a
+   * bug in the `ies-erp` profile's consent extension, not something fixable from here — but the
+   * extension assumes a consistent `OptanonConsent` cookie already exists by INIT, which the real
+   * erp.intuit.com prod page guarantees via its own consent stack. This loader used to skip
+   * straight to utag.js, so `OptanonConsent` was never set and that assumption broke, triggering
+   * the recursion regardless of whether we ever called `setPreferencesValues` ourselves. The fix:
+   * load Intuit's consent stack (`loadConsentStack`) and wait for it to settle (`settleConsent`)
+   * BEFORE loading utag.js, so the same consistent `OptanonConsent` the profile expects is already
+   * in place at INIT. We still never call any `utag.gdpr.*` API — `readOptanonConsent` /
+   * `mapConsentToTealium` remain as ready-made, side-effect-free helpers for any future
+   * profile-wiring, unused by this loader today.
+   * @returns {Promise<void>} resolves once the consent stack has settled and utag.js has loaded
+   *                           (or immediately, if disabled)
    */
   async lazy() {
     if (!this.enabled) return;
+    await loadConsentStack(this.env);
+    await settleConsent();
     await loadUtag(this.env);
     if (window.utag?.view) {
       window.utag.view(window.utag_data);

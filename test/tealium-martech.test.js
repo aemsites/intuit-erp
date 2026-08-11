@@ -8,6 +8,9 @@ import TealiumMartech, {
   readIvid,
   readAkamaiGeo,
   mapConsentToTealium,
+  consentCdnHost,
+  loadConsentStack,
+  settleConsent,
 } from '../plugins/tealium-martech/src/index.js';
 
 // A realistic (URL-encoded) OneTrust OptanonConsent cookie value: group 1 (strictly necessary)
@@ -33,6 +36,15 @@ function clearCookies() {
     const name = c.split('=')[0].trim();
     if (name) document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
   });
+}
+
+// Flushes the microtask queue via a real macrotask boundary (jsdom's setTimeout), so chained
+// `await`s inside the loader (loadScriptOnce -> loadConsentStack -> settleConsent -> loadUtag)
+// have a chance to run before the next assertion, without hand-counting microtask hops. Real
+// timers only — tests that need fake timers (e.g. for settleConsent's timeout) use their own
+// advanceTimersByTimeAsync calls instead of this helper.
+function settle() {
+  return new Promise((resolve) => { setTimeout(resolve, 0); });
 }
 
 beforeEach(() => {
@@ -120,6 +132,20 @@ describe('resolveEnvironment / isProdHost', () => {
       stubLocation({ hostname });
       expect(resolveEnvironment()).not.toBe('prod');
     });
+  });
+});
+
+describe('consentCdnHost', () => {
+  it('resolves the prod privacy CDN for env "prod"', () => {
+    expect(consentCdnHost('prod')).toBe('privacy-cdn.a.intuit.com');
+  });
+
+  it('resolves the e2e privacy CDN for env "qa"', () => {
+    expect(consentCdnHost('qa')).toBe('privacy-cdn.e2e.a.intuit.com');
+  });
+
+  it('resolves the e2e privacy CDN for env "dev"', () => {
+    expect(consentCdnHost('dev')).toBe('privacy-cdn.e2e.a.intuit.com');
   });
 });
 
@@ -215,6 +241,31 @@ describe('readOptanonConsent', () => {
   it('returns null when the cookie has no parseable groups field', () => {
     document.cookie = 'OptanonConsent=isGpcEnabled=0&datestamp=Fri+Aug+07+2026';
     expect(readOptanonConsent()).toBeNull();
+  });
+});
+
+describe('settleConsent', () => {
+  it('resolves as soon as a parseable OptanonConsent cookie is present, without waiting', async () => {
+    document.cookie = `OptanonConsent=${OPTANON_COOKIE_VALUE}`;
+    await expect(settleConsent(3000)).resolves.toBeUndefined();
+  });
+
+  it('fails open and resolves once timeoutMs elapses when consent never settles', async () => {
+    vi.useFakeTimers();
+    try {
+      let settled = false;
+      settleConsent(300).then(() => { settled = true; });
+
+      // Not yet at the timeout: still polling, never resolved.
+      await vi.advanceTimersByTimeAsync(200);
+      expect(settled).toBe(false);
+
+      // Past the timeout: fail-open resolution fires even with no OptanonConsent cookie ever set.
+      await vi.advanceTimersByTimeAsync(200);
+      expect(settled).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
 
@@ -319,6 +370,73 @@ describe('mapConsentToTealium', () => {
   });
 });
 
+describe('loadConsentStack', () => {
+  it.each([
+    ['prod', 'privacy-cdn.a.intuit.com'],
+    ['qa', 'privacy-cdn.e2e.a.intuit.com'],
+    ['dev', 'privacy-cdn.e2e.a.intuit.com'],
+  ])('env "%s": appends the 3 consent scripts, in order (otSDKStub -> wrapper -> gdpr-util), from CDN host %s', async (env, cdnHost) => {
+    const promise = loadConsentStack(env);
+
+    // 1. OneTrust stub loads first; nothing else exists yet.
+    const stub = document.getElementById('onetrust-stub');
+    expect(stub).toBeTruthy();
+    expect(stub.src).toBe(`https://${cdnHost}/stable/scripttemplates/otSDKStub.js`);
+    expect(stub.getAttribute('data-domain-script')).toBe('74130b76-29e2-4d72-ab52-09f9ed5818fb');
+    expect(stub.getAttribute('charset')).toBe('UTF-8');
+    expect(stub.async).toBe(true);
+    expect(document.getElementById('intuit-consent-wrapper')).toBeNull();
+    expect(document.getElementById('intuit-gdpr-util')).toBeNull();
+    stub.dispatchEvent(new Event('load'));
+
+    // 2. Intuit's consent-wrapper loads next, only once the stub has resolved.
+    await settle();
+    const wrapper = document.getElementById('intuit-consent-wrapper');
+    expect(wrapper).toBeTruthy();
+    expect(wrapper.src).toBe(`https://${cdnHost}/stable/consent-wrapper/cookies-consent-wrapper.min.js`);
+    expect(document.getElementById('intuit-gdpr-util')).toBeNull();
+    wrapper.dispatchEvent(new Event('load'));
+
+    // 3. gdpr-util loads last, only once the wrapper has resolved. Env-independent URL.
+    await settle();
+    const gdprUtil = document.getElementById('intuit-gdpr-util');
+    expect(gdprUtil).toBeTruthy();
+    expect(gdprUtil.src).toBe('https://uxfabric.intuitcdn.net/gdpr-util/2.11.0/gdprUtilBundle.js');
+    gdprUtil.dispatchEvent(new Event('load'));
+
+    await promise;
+    expect(document.head.querySelectorAll('script').length).toBe(3);
+    expect(window.OptanonWrapper).toBeTypeOf('function');
+  });
+
+  it('is idempotent — a second call appends nothing new', async () => {
+    const first = loadConsentStack('prod');
+    document.getElementById('onetrust-stub').dispatchEvent(new Event('load'));
+    await settle();
+    document.getElementById('intuit-consent-wrapper').dispatchEvent(new Event('load'));
+    await settle();
+    document.getElementById('intuit-gdpr-util').dispatchEvent(new Event('load'));
+    await first;
+    expect(document.head.querySelectorAll('script').length).toBe(3);
+
+    // Every id already exists, so the second call resolves via loadScriptOnce's fast path for
+    // all three scripts — no new elements appended, no load/error events to dispatch.
+    await loadConsentStack('prod');
+    expect(document.head.querySelectorAll('script').length).toBe(3);
+  });
+
+  it('resolves fail-open (never rejects) when a consent script errors out (e.g. ad-blocked)', async () => {
+    const promise = loadConsentStack('prod');
+    document.getElementById('onetrust-stub').dispatchEvent(new Event('error'));
+    await settle();
+    document.getElementById('intuit-consent-wrapper').dispatchEvent(new Event('error'));
+    await settle();
+    document.getElementById('intuit-gdpr-util').dispatchEvent(new Event('error'));
+
+    await expect(promise).resolves.toBeUndefined();
+  });
+});
+
 describe('disabled instance (hostname resolveEnvironment does not recognize) — eager/lazy/delayed are no-ops', () => {
   it('does not append any tiqcdn script tag and does not throw across the full lifecycle', async () => {
     stubLocation({ hostname: INERT_HOST, search: '' });
@@ -347,20 +465,25 @@ describe('disabled instance (hostname resolveEnvironment does not recognize) —
   });
 });
 
-describe("enabled instance — lazy() loads the resolved env's utag.js and fires the initial view", () => {
+describe("enabled instance — lazy() loads the consent stack, settles consent, then loads the resolved env's utag.js and fires the initial view", () => {
   it.each([
-    ['prod', PROD_HOST],
-    ['qa', QA_HOST],
-    ['dev', DEV_HOST_PAGE],
-  ])('env "%s" (host %s): eager() does no network; lazy() appends the right URL and calls utag.view', async (env, hostname) => {
+    ['prod', PROD_HOST, 'privacy-cdn.a.intuit.com'],
+    ['qa', QA_HOST, 'privacy-cdn.e2e.a.intuit.com'],
+    ['dev', DEV_HOST_PAGE, 'privacy-cdn.e2e.a.intuit.com'],
+  ])('env "%s" (host %s): eager() does no network; lazy() loads the consent stack (CDN %s) before utag.js and calls utag.view', async (env, hostname, cdnHost) => {
     stubLocation({ hostname });
+    // A pre-existing OptanonConsent cookie lets settleConsent() resolve as soon as it's invoked
+    // (its first, synchronous check), so this test doesn't need to advance any timers — the
+    // timeout/fail-open path of settleConsent itself is covered by the dedicated `settleConsent`
+    // tests above.
+    document.cookie = `OptanonConsent=${OPTANON_COOKIE_VALUE}`;
     const tealium = new TealiumMartech();
     expect(tealium.enabled).toBe(true);
     expect(tealium.env).toBe(env);
 
     tealium.eager();
     // eager() must never touch the network, even when enabled.
-    expect(document.querySelectorAll('script[src*="tiqcdn"]').length).toBe(0);
+    expect(document.querySelectorAll('script').length).toBe(0);
 
     // Stub the utag global that loadUtag's injected script would normally define once it runs.
     window.utag = {
@@ -370,12 +493,38 @@ describe("enabled instance — lazy() loads the resolved env's utag.js and fires
     };
 
     const lazyPromise = tealium.lazy();
-    // loadUtag appended the script synchronously; jsdom never fires load/error for external
-    // scripts on its own, so resolve it ourselves to simulate a successful utag.js load.
+
+    // 1. OneTrust stub loads first — before anything else, including utag.js.
+    const stub = document.getElementById('onetrust-stub');
+    expect(stub).toBeTruthy();
+    expect(stub.src).toBe(`https://${cdnHost}/stable/scripttemplates/otSDKStub.js`);
+    expect(document.querySelectorAll('script[src*="tiqcdn"]').length).toBe(0);
+    stub.dispatchEvent(new Event('load'));
+
+    // 2. Intuit consent-wrapper loads next.
+    await settle();
+    const wrapper = document.getElementById('intuit-consent-wrapper');
+    expect(wrapper).toBeTruthy();
+    expect(wrapper.src).toBe(`https://${cdnHost}/stable/consent-wrapper/cookies-consent-wrapper.min.js`);
+    expect(document.querySelectorAll('script[src*="tiqcdn"]').length).toBe(0);
+    wrapper.dispatchEvent(new Event('load'));
+
+    // 3. Intuit gdpr-util loads last of the consent stack.
+    await settle();
+    const gdprUtil = document.getElementById('intuit-gdpr-util');
+    expect(gdprUtil).toBeTruthy();
+    expect(gdprUtil.src).toBe('https://uxfabric.intuitcdn.net/gdpr-util/2.11.0/gdprUtilBundle.js');
+    expect(document.querySelectorAll('script[src*="tiqcdn"]').length).toBe(0);
+    gdprUtil.dispatchEvent(new Event('load'));
+
+    // 4. Only once the consent stack has resolved AND consent has settled does utag.js load.
+    await settle();
     const script = document.head.querySelector('script[src*="tiqcdn"]');
     expect(script).toBeTruthy();
     expect(script.src).toBe(`https://tags.tiqcdn.com/utag/intuit/ies-erp/${env}/utag.js`);
     expect(script.async).toBe(true);
+    // jsdom never fires load/error for external scripts on its own, so resolve it ourselves to
+    // simulate a successful utag.js load.
     script.dispatchEvent(new Event('load'));
     await lazyPromise;
 
@@ -384,15 +533,23 @@ describe("enabled instance — lazy() loads the resolved env's utag.js and fires
     // Regression: lazy() must NOT drive utag.gdpr at load. Calling setPreferencesValues before
     // utag finishes its async INIT triggered an infinite processQueue <-> setPreferencesValues
     // recursion inside utag.js. Consent is delegated to the Tealium profile's OneTrust
-    // integration, so the client never calls it here.
+    // integration (bootstrapped by the consent stack above), so the client never calls it here.
     expect(window.utag.gdpr.setPreferencesValues).not.toHaveBeenCalled();
   });
 
-  it('propagates a loadUtag failure (network/blocked) as a rejected lazy() promise', async () => {
+  it('propagates a loadUtag failure (network/blocked) as a rejected lazy() promise, once the consent stack has settled', async () => {
     stubLocation({ hostname: PROD_HOST });
+    document.cookie = `OptanonConsent=${OPTANON_COOKIE_VALUE}`;
     const tealium = new TealiumMartech();
 
     const lazyPromise = tealium.lazy();
+    document.getElementById('onetrust-stub').dispatchEvent(new Event('load'));
+    await settle();
+    document.getElementById('intuit-consent-wrapper').dispatchEvent(new Event('load'));
+    await settle();
+    document.getElementById('intuit-gdpr-util').dispatchEvent(new Event('load'));
+    await settle();
+
     const script = document.head.querySelector('script[src*="tiqcdn"]');
     expect(script).toBeTruthy();
     script.dispatchEvent(new Event('error'));
