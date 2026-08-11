@@ -2,9 +2,10 @@ import {
   describe, it, expect, vi, afterEach, beforeEach,
 } from 'vitest';
 
-vi.mock('../scripts/personalization/decision.js', () => ({
-  fetchDecision: vi.fn(),
-}));
+vi.mock('../scripts/personalization/decision.js', async () => {
+  const actual = await vi.importActual('../scripts/personalization/decision.js');
+  return { fetchDecision: vi.fn(), fragmentPath: actual.fragmentPath };
+});
 
 // eslint-disable-next-line import/first
 import { isExperimentEnabled, runExperiment } from '../scripts/exp.js';
@@ -53,6 +54,26 @@ describe('runExperiment', () => {
     );
     expect(document.querySelector('main').innerHTML).toContain('VARIATION');
     expect(document.querySelector('main').innerHTML).not.toContain('BASE');
+  });
+
+  it('fetches the same-origin pathname (not a doubled URL) when the variation fragment is an absolute URL', async () => {
+    setMeta('experiment-id', '385944');
+    fetchDecision.mockResolvedValue({
+      action: 'replace',
+      fidelity: 'page',
+      fragment: 'https://main--intuit-erp--aemsites.aem.live/fragments/pzn/financial-services',
+    });
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response('<div>VARIATION</div>', { status: 200, headers: { 'content-type': 'text/html' } }),
+    );
+
+    await runExperiment(document);
+
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      '/fragments/pzn/financial-services.plain.html',
+      expect.objectContaining({ signal: expect.anything() }),
+    );
+    expect(document.querySelector('main').innerHTML).toContain('VARIATION');
   });
 
   it('is a no-op when not enabled', async () => {

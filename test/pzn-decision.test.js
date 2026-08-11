@@ -30,6 +30,14 @@ describe('fragmentPath', () => {
   it('returns null for an empty ref', () => {
     expect(fragmentPath('')).toBeNull();
   });
+  it('reduces an absolute URL to its same-origin pathname', () => {
+    expect(fragmentPath('https://main--intuit-erp--aemsites.aem.live/fragments/pzn/financial-services'))
+      .toBe('/fragments/pzn/financial-services');
+  });
+  it('reduces an absolute URL with a query/hash to just the pathname', () => {
+    expect(fragmentPath('https://main--intuit-erp--aemsites.aem.live/fragments/pzn/financial-services?a=1#top'))
+      .toBe('/fragments/pzn/financial-services');
+  });
 });
 
 describe('fetchDecision', () => {

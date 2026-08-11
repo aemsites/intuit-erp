@@ -5,9 +5,23 @@ export function apiBase() {
   return (getMetadata('pzn-api-base') || '/api').replace(/\/+$/, '');
 }
 
-/** Normalizes a fragment ref to a root-absolute path; null for empty. */
+/**
+ * Normalizes a fragment ref to a root-absolute, same-origin path; null for empty.
+ * An absolute URL (any origin) is reduced to its pathname — this avoids a
+ * cross-origin `.plain.html` fetch (aem.live sends no CORS headers for it) and
+ * the "/https://…" double-URL bug that results from naively prefixing a `/`
+ * onto a ref that is already a full URL. The referenced content must exist on
+ * the current origin.
+ */
 export function fragmentPath(ref) {
   if (!ref) return null;
+  if (/^https?:\/\//i.test(ref)) {
+    try {
+      return new URL(ref).pathname;
+    } catch {
+      return null;
+    }
+  }
   return ref.startsWith('/') ? ref : `/${ref}`;
 }
 

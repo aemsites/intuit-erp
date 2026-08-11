@@ -13,7 +13,7 @@
 
 import { getMetadata } from './aem.js';
 // eslint-disable-next-line import/no-cycle
-import { fetchDecision } from './personalization/decision.js';
+import { fetchDecision, fragmentPath } from './personalization/decision.js';
 
 /** True when the page opts into an IXP experiment. */
 export function isExperimentEnabled() {
@@ -38,7 +38,8 @@ export function isExperimentEnabled() {
 async function swapMain(doc, variationPath, signal) {
   const main = doc.querySelector('main');
   if (!main) return false;
-  const path = variationPath.startsWith('/') ? variationPath : `/${variationPath}`;
+  const path = fragmentPath(variationPath);
+  if (!path) return false;
   try {
     const resp = await fetch(`${path}.plain.html`, { signal });
     if (!resp.ok) return false;
