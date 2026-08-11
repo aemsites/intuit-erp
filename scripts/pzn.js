@@ -7,6 +7,7 @@
  * the returned fragment. All slots on the page are resolved in one batch call.
  */
 
+// eslint-disable-next-line import/no-cycle
 import { fetchDecision, applyFragment } from './personalization/decision.js';
 
 const PZN_CLASS_RE = /^pzn-(.+)$/;

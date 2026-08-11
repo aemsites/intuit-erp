@@ -12,6 +12,7 @@
  */
 
 import { getMetadata } from './aem.js';
+// eslint-disable-next-line import/no-cycle
 import { fetchDecision } from './personalization/decision.js';
 
 /** True when the page opts into an IXP experiment. */
