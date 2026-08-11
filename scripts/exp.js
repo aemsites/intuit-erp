@@ -1,40 +1,14 @@
-/**
- * Client-side whole-page experimentation (Intuit IXP).
- *
- * Triggered by page metadata (`experiment` / `experiment-id` / `experiment-label`).
- * Runs first in the eager phase — before decorateMain — so that on a page-level
- * (REDIRECT) decision it can swap <main>'s raw content for the variation page, and
- * the normal decoration pipeline then decorates the variation. The variation may
- * itself contain `pzn-` blocks, which pzn.js personalizes afterward.
- *
- * Distinct from scripts/experiment-loader.js (the Adobe AEM experimentation plugin
- * — audiences/campaigns); they coexist and do not interact.
- */
-
 import { getMetadata } from './aem.js';
 // eslint-disable-next-line import/no-cycle
 import { fetchDecision, fragmentPath } from './personalization/decision.js';
 
-/** True when the page opts into an IXP experiment. */
 export function isExperimentEnabled() {
   return !!(getMetadata('experiment') || getMetadata('experiment-id') || getMetadata('experiment-label'));
 }
 
-/**
- * Replaces <main>'s content with the variation page's plain.html (raw, so the
- * caller's decorateMain decorates it). Returns true when swapped.
- *
- * Bound by the caller's `signal` (a single shared deadline covering the
- * decision fetch AND this swap — see runExperiment) — fail-open: on
- * abort/non-ok/throw the baseline <main> is left intact. This matters because
- * a swap that completes LATE (after decoration has already run) would
- * clobber decorated content with raw HTML, so a hung connection must be
- * abandoned rather than allowed to resolve whenever it likes.
- * @param {Document} doc
- * @param {string} variationPath
- * @param {AbortSignal} signal
- * @returns {Promise<boolean>}
- */
+// Replaces <main>'s raw content with the variation page's plain.html so the
+// caller's decorateMain decorates it. Bound by the caller's shared signal:
+// fail-open, so a late/aborted swap can't clobber already-decorated content.
 async function swapMain(doc, variationPath, signal) {
   const main = doc.querySelector('main');
   if (!main) return false;
@@ -50,37 +24,24 @@ async function swapMain(doc, variationPath, signal) {
   }
 }
 
-/**
- * Resolves and applies a whole-page experiment, if the page opts in.
- * @param {Document} [doc=document]
- * @returns {Promise<void>}
- */
 export async function runExperiment(doc = document) {
   if (!isExperimentEnabled()) return;
   const experimentId = getMetadata('experiment-id');
   const label = getMetadata('experiment-label');
-  // Bare `experiment` metadata (with no id/label) belongs to the separate Adobe
-  // experimentation plugin — there is nothing for IXP to resolve, so skip the
-  // /api/ixp round-trip entirely rather than firing it with no id/label.
+  // Bare `experiment` is the Adobe plugin's — nothing for IXP to resolve.
   if (!experimentId && !label) return;
   const params = new URLSearchParams();
   if (experimentId) params.set('experimentId', experimentId);
   if (label) params.set('label', label);
   params.set('fidelity', 'page');
 
-  // ONE shared deadline for the whole decision+swap chain (not two independent
-  // 1000ms budgets that could sum past the outer withTimeout guard in
-  // scripts.js): if fetchDecision is slow, swapMain inherits whatever's left
-  // of the 1400ms rather than getting a fresh timeout, so a late swap can
-  // never sneak in and clobber content that decorateMain already ran on.
+  // One shared deadline across fetchDecision + swapMain, so a slow decision
+  // can't hand the swap a fresh budget and let it land after decoration.
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 1400);
   try {
     const decision = await fetchDecision(`ixp?${params.toString()}`, { signal: controller.signal });
     if (!decision || decision.control || !decision.fragment) return;
-    // 'page' fidelity is used for whole-page REDIRECT experiments only — the IXP
-    // handler stamps this fidelity when the decision is a full-page swap (as
-    // opposed to a block/section-level personalization decision).
     if (decision.fidelity === 'page') await swapMain(doc, decision.fragment, controller.signal);
   } finally {
     clearTimeout(timer);

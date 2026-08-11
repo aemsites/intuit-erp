@@ -13,10 +13,8 @@ import {
   getMetadata,
 } from './aem.js';
 import { runExperimentation, runExperimentationLazy } from './experiment-loader.js';
-// Intuit client-side experimentation (exp.js) and personalization (pzn.js) are
-// NOT imported statically — they are dynamically imported in loadEager only when
-// the page warrants them (experiment metadata / a `pzn-` slot), so pages without
-// personalization never pull them onto the eager critical path.
+// exp.js / pzn.js are dynamically imported in loadEager only when the page
+// warrants them, so pages without personalization never load them.
 // Vendored via git subtree at plugins/martech (see its README), not an
 // installed npm package, so this necessarily crosses a package.json boundary.
 import {
@@ -279,13 +277,8 @@ async function loadEager(doc) {
   }
 
   await runExperimentation(doc, experimentationConfig);
-  // Intuit IXP whole-page experiment: may swap <main> for a variation page before
-  // decoration (distinct from the AEM plugin above). Only loaded when the page opts
-  // in via experiment metadata (`experiment-id` / `experiment-label`) — bare
-  // `experiment` belongs to the AEM plugin above and exp.js does nothing with it,
-  // so gate on the IXP-specific keys and pages without them never pull exp.js in.
-  // Wrapped in an overall phase guard so that even if something inside hangs
-  // unexpectedly, reveal is never blocked (fail-open).
+  // Intuit IXP whole-page experiment: swaps <main> before decoration. Metadata-
+  // gated (loaded only when enrolled) and phase-bounded so it never blocks reveal.
   if (getMetadata('experiment-id') || getMetadata('experiment-label')) {
     const [{ runExperiment }, { withTimeout }] = await Promise.all([
       import('./exp.js'),
@@ -302,11 +295,8 @@ async function loadEager(doc) {
       ({ buildBlogTemplate } = await import('../blocks/blog-template/blog-template.js'));
     }
     decorateMain(main);
-    // Block/section personalization: batch-resolve every `pzn-` slot (incl. any in
-    // a swapped-in variation) and inject fragments before reveal. Only loaded when
-    // the (decorated) page actually has a `pzn-` slot — pages without one never pull
-    // pzn.js onto the eager critical path. Same phase guard as above — loadFragment
-    // (used internally) cannot be given an abort signal, so this is the backstop.
+    // Block/section personalization: inject fragments into `pzn-` slots before
+    // reveal. Loaded only when a slot is present, and phase-bounded (fail-open).
     if (main.querySelector('[class*="pzn-"]')) {
       const [{ runPersonalization }, { withTimeout }] = await Promise.all([
         import('./pzn.js'),
