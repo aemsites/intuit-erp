@@ -295,14 +295,17 @@ async function loadEager(doc) {
       ({ buildBlogTemplate } = await import('../blocks/blog-template/blog-template.js'));
     }
     decorateMain(main);
-    // Block/section personalization: inject fragments into `pzn-` slots before
-    // reveal. Loaded only when a slot is present, and phase-bounded (fail-open).
-    if (main.querySelector('[class*="pzn-"]')) {
-      const [{ runPersonalization }, { withTimeout }] = await Promise.all([
-        import('./pzn.js'),
-        import('./personalization/decision.js'),
-      ]);
-      await withTimeout(runPersonalization(main), 1500);
+    // Block/section personalization (`pzn-` slots) and experimentation (`exp-`
+    // markers): inject fragments before reveal. Each module loads only when its
+    // marker is present; both run concurrently under one phase guard (fail-open).
+    const hasPzn = main.querySelector('[class*="pzn-"]');
+    const hasExp = main.querySelector('[class*="exp-"]');
+    if (hasPzn || hasExp) {
+      const { withTimeout } = await import('./personalization/decision.js');
+      const tasks = [];
+      if (hasPzn) tasks.push(import('./pzn.js').then(({ runPersonalization }) => runPersonalization(main)));
+      if (hasExp) tasks.push(import('./exp.js').then(({ runBlockExperiments }) => runBlockExperiments(main)));
+      await withTimeout(Promise.all(tasks), 1500);
     }
     document.body.classList.add('appear');
     await Promise.all([

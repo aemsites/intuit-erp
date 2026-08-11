@@ -4,13 +4,19 @@ import {
 
 vi.mock('../scripts/personalization/decision.js', async () => {
   const actual = await vi.importActual('../scripts/personalization/decision.js');
-  return { fetchDecision: vi.fn(), fragmentPath: actual.fragmentPath };
+  return {
+    fetchDecision: vi.fn(),
+    fragmentPath: actual.fragmentPath,
+    applyFragment: vi.fn().mockResolvedValue(true),
+  };
 });
 
 // eslint-disable-next-line import/first
-import { isExperimentEnabled, runExperiment } from '../scripts/exp.js';
+import {
+  isExperimentEnabled, runExperiment, collectExperiments, runBlockExperiments,
+} from '../scripts/exp.js';
 // eslint-disable-next-line import/first
-import { fetchDecision } from '../scripts/personalization/decision.js';
+import { fetchDecision, applyFragment } from '../scripts/personalization/decision.js';
 
 beforeEach(() => {
   document.head.innerHTML = '';
@@ -96,6 +102,14 @@ describe('runExperiment', () => {
     expect(document.querySelector('main').innerHTML).toContain('BASE');
   });
 
+  it('does not touch the page for a block/section (exp-) decision', async () => {
+    setMeta('experiment-id', '385944');
+    fetchDecision.mockResolvedValue({ action: 'replace', fidelity: 'block', fragment: '/x' });
+    await runExperiment(document);
+    // fidelity !== 'page' → runExperiment (the whole-page path) leaves <main> alone
+    expect(document.querySelector('main').innerHTML).toContain('BASE');
+  });
+
   it('bounds the whole decision+swap chain with ONE shared deadline, so a hanging swap never clobbers the page late', async () => {
     vi.useFakeTimers();
     try {
@@ -119,5 +133,78 @@ describe('runExperiment', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe('collectExperiments', () => {
+  function main(html) {
+    const m = document.createElement('main');
+    m.innerHTML = html;
+    return m;
+  }
+
+  it('finds exp-<experiment> elements and extracts the token', () => {
+    const m = main('<div class="exp-hero-test block"><p>base</p></div><div class="hero"></div>');
+    const experiments = collectExperiments(m);
+    expect(experiments).toHaveLength(1);
+    expect(experiments[0].id).toBe('hero-test');
+    expect(experiments[0].el.classList.contains('exp-hero-test')).toBe(true);
+  });
+
+  it('returns [] when there are no exp- markers', () => {
+    expect(collectExperiments(main('<div class="hero"></div>'))).toEqual([]);
+  });
+});
+
+describe('runBlockExperiments', () => {
+  function main(html) {
+    const m = document.createElement('main');
+    m.innerHTML = html;
+    return m;
+  }
+
+  it('queries by label (non-numeric token) at block fidelity and applies the variation', async () => {
+    const m = main('<div class="exp-hero-test block"></div>');
+    fetchDecision.mockResolvedValue({ action: 'replace', fidelity: 'block', fragment: '/fragments/exp/a' });
+    await runBlockExperiments(m);
+
+    const [source] = fetchDecision.mock.calls[0];
+    expect(source).toContain('ixp?');
+    expect(source).toContain('label=hero-test');
+    expect(source).toContain('fidelity=block');
+    expect(applyFragment).toHaveBeenCalledWith(m.querySelector('.exp-hero-test'), '/fragments/exp/a');
+  });
+
+  it('queries by experimentId when the token is numeric', async () => {
+    const m = main('<div class="exp-385944 block"></div>');
+    fetchDecision.mockResolvedValue({ action: 'replace', fidelity: 'block', fragment: '/fragments/exp/a' });
+    await runBlockExperiments(m);
+    expect(fetchDecision.mock.calls[0][0]).toContain('experimentId=385944');
+  });
+
+  it('sends section fidelity when the marked element is a section', async () => {
+    const m = main('<div class="section exp-band"></div>');
+    fetchDecision.mockResolvedValue({ action: 'replace', fidelity: 'section', fragment: '/fragments/exp/a' });
+    await runBlockExperiments(m);
+    expect(fetchDecision.mock.calls[0][0]).toContain('fidelity=section');
+  });
+
+  it('leaves the baseline on a control decision', async () => {
+    const m = main('<div class="exp-hero-test block"></div>');
+    fetchDecision.mockResolvedValue({ control: true });
+    await runBlockExperiments(m);
+    expect(applyFragment).not.toHaveBeenCalled();
+  });
+
+  it('ignores a page-fidelity decision (that belongs to runExperiment)', async () => {
+    const m = main('<div class="exp-hero-test block"></div>');
+    fetchDecision.mockResolvedValue({ action: 'replace', fidelity: 'page', fragment: '/variation' });
+    await runBlockExperiments(m);
+    expect(applyFragment).not.toHaveBeenCalled();
+  });
+
+  it('does nothing (no api call) when there are no exp- markers', async () => {
+    await runBlockExperiments(main('<div class="hero"></div>'));
+    expect(fetchDecision).not.toHaveBeenCalled();
   });
 });
