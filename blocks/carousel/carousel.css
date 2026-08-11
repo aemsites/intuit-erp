@@ -76,12 +76,24 @@
    Two treatments, chosen by whether the slides carry a title (`.has-title`,
    set in the JS) rather than by an authored variant, because upstream drives
    both off the same signal: no title is a bare quote where the portrait runs
-   flush to the card edge at 40px, a title turns the quote into supporting copy
-   at 20px and insets the portrait so the title leads. Theme is the only real
-   choice left, so `.pale` is the only variant.  */
+   flush to the card edge, a title turns the quote into supporting copy and
+   insets the portrait so the title leads.
+
+   `.pale` is a theme but carries its own type scale — upstream builds it from
+   different tokens (heading2/heading6 rather than headline02/body02), so its
+   quote holds 40px a breakpoint longer and its attribution runs smaller.
+
+   Sizes are set through --testi-* so each breakpoint declares the ramp once
+   instead of re-listing every selector per treatment. Line heights are the
+   measured pixel values, not ratios, since upstream's differ per token at the
+   same font size (40/56 default vs 40/48 pale).  */
 .carousel.testimonial {
   --testi-card: var(--navy);
   --testi-text: var(--background-color);
+  --testi-quote: 28px;
+  --testi-quote-lh: 39.2px;
+  --testi-attr: 16px;
+  --testi-attr-lh: 22.4px;
 
   max-width: 1360px;
 }
@@ -89,6 +101,9 @@
 .carousel.testimonial.pale {
   --testi-card: #eaf6f7;
   --testi-text: #000;
+  --testi-quote-lh: 36.4px;
+  --testi-attr: 12px;
+  --testi-attr-lh: 18px;
 }
 
 .carousel.testimonial .carousel-viewport { border-radius: 10px; }
@@ -115,6 +130,9 @@
   object-fit: cover;
 }
 
+/* the flush portrait only rounds the corners it shares with the card */
+.carousel.testimonial .testi-media img { border-radius: 10px 10px 0 0; }
+
 .carousel.testimonial.has-title .testi-media img { border-radius: var(--radius-card); }
 
 .carousel.testimonial .testi-body {
@@ -125,15 +143,27 @@
   text-align: center;
 }
 
-.carousel.testimonial .testi-title { margin: 0 0 20px; font-size: 28px; line-height: 39.2px; }
+.carousel.testimonial .testi-title {
+  margin: 0 0 20px; font-size: var(--testi-quote); line-height: var(--testi-quote-lh);
+}
 
-.carousel.testimonial .testi-quote { margin: 0; font-size: 28px; line-height: 39.2px; }
+/* with a title present the quote steps down to the attribution's scale */
+.carousel.testimonial .testi-quote {
+  margin: 0; font-size: var(--testi-quote); line-height: var(--testi-quote-lh);
+}
 
-.carousel.testimonial.has-title .testi-quote { font-size: 16px; line-height: 22.4px; }
+.carousel.testimonial.has-title .testi-quote {
+  font-size: var(--testi-attr); line-height: var(--testi-attr-lh);
+}
 
-.carousel.testimonial .testi-attr { margin: 16px 0 0; font-size: 16px; line-height: 22.4px; }
+.carousel.testimonial .testi-attr {
+  margin: 16px 0 0; font-size: var(--testi-attr); line-height: var(--testi-attr-lh);
+}
 
-.carousel.testimonial .testi-cta { margin-top: 20px; }
+.carousel.testimonial.has-title .testi-attr { margin-top: 20px; }
+
+/* the row shrinks to the button so it never stretches to the column width */
+.carousel.testimonial .testi-cta { display: flex; justify-content: center; margin-top: 20px; }
 
 .carousel.testimonial .testi-cta-button {
   display: inline-flex;
@@ -151,6 +181,7 @@
   font-weight: 600;
   line-height: 24px;
   text-decoration: none;
+  white-space: nowrap;
   cursor: pointer;
 }
 
@@ -188,14 +219,41 @@
 .carousel.testimonial .carousel-prev:disabled,
 .carousel.testimonial .carousel-next:disabled { background: var(--ink-teal); opacity: 0.3; }
 
-@media (width >= 900px) {
+@media (width >= 600px) {
+  .carousel.testimonial .testi-body { padding: 60px 30px; }
+
+  .carousel.testimonial.has-title .testi-media { padding: 0 30px 60px; }
+
+  /* pale holds its larger attribution from tablet up; the others are already
+     at 16px and stay there for the whole ramp */
+  .carousel.testimonial.pale { --testi-attr: 14px; --testi-attr-lh: 21px; }
+}
+
+/* 1024, not the project's usual 900 — upstream keeps this card stacked through
+   the whole tablet range and only goes side-by-side at 1024 */
+@media (width >= 1024px) {
   /* side by side, portrait first for both treatments — the stacked
      column-reverse above only applies while the card is one column */
   .carousel.testimonial .carousel-slide,
   .carousel.testimonial.has-title .carousel-slide { flex-direction: row; align-items: center; }
 
-  /* portrait takes 35% and runs the full card height, as upstream does */
-  .carousel.testimonial .testi-media { flex: 0 0 35%; align-self: stretch; }
+  .carousel.testimonial { --testi-quote: 34px; --testi-quote-lh: 47.6px; }
+
+  /* pale skips the 34px step and stays at its display size */
+  .carousel.testimonial.pale { --testi-quote: 40px; --testi-quote-lh: 48px; }
+
+  /* portrait takes a third and runs the full card height, as upstream does.
+     min-width:0 because a flex item's automatic minimum is its content size —
+     a wide portrait would otherwise push the column past its basis */
+  .carousel.testimonial .testi-media {
+    flex: 0 0 33.33%;
+    min-width: 0;
+    align-self: stretch;
+  }
+
+  .carousel.testimonial .testi-media img { border-radius: 0; }
+
+  .carousel.testimonial .carousel-viewport { border-radius: 16px; }
 
   .carousel.testimonial .testi-body {
     flex: 1 1 auto;
@@ -203,23 +261,30 @@
     text-align: left;
   }
 
-  .carousel.testimonial .testi-quote { font-size: 40px; line-height: 56px; }
+  .carousel.testimonial .testi-cta { justify-content: flex-start; }
 
-  /* a title reflows the copy: it takes the 40px size, the quote drops to
-     supporting copy, and the portrait insets with rounded corners */
-  .carousel.testimonial.has-title .testi-title { font-size: 40px; line-height: 56px; }
+  /* the titled treatment insets its portrait, so the card itself is square and
+     the rounding lives on the image */
+  .carousel.testimonial.has-title .carousel-viewport { border-radius: 0; }
 
-  .carousel.testimonial.has-title .testi-quote { font-size: 20px; line-height: 28px; }
-
-  .carousel.testimonial.has-title .testi-attr { font-size: 20px; line-height: 28px; }
-
+  /* border-box so the 80px inset counts inside the 50% rather than widening
+     the column past it */
   .carousel.testimonial.has-title .testi-media {
-    flex: 0 0 44%;
+    box-sizing: border-box;
+    flex: 0 0 50%;
+    min-width: 0;
     align-self: center;
     padding: 80px 0 80px 80px;
   }
 
   .carousel.testimonial .carousel-controls { justify-content: flex-end; }
+}
+
+@media (width >= 1200px) {
+  .carousel.testimonial { --testi-quote: 40px; --testi-quote-lh: 56px; }
+
+  /* only at the widest tier does the titled quote reach 20px */
+  .carousel.testimonial.has-title { --testi-attr: 20px; --testi-attr-lh: 28px; }
 }
 
 /* ---- .cards — customer story / article cards, multi-per-view ---- */

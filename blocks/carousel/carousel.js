@@ -165,6 +165,13 @@ function normalizeTestimonial(slide) {
     const a = document.createElement('p');
     a.className = 'testi-attr';
     a.append(...attr.childNodes);
+    // authored as a bold name over a line break (`**Name**<br>Company`), which
+    // renders as one run of unspaced text at this size — upstream sets it as a
+    // single comma-separated line, so flatten it rather than ask every page to
+    // be re-authored
+    a.querySelectorAll('br').forEach((br) => br.replaceWith(', '));
+    a.querySelectorAll('strong, b').forEach((s) => s.replaceWith(...s.childNodes));
+    a.textContent = a.textContent.replace(/\s*,\s*/g, ', ').replace(/,\s*$/, '').trim();
     body.append(a);
   }
 

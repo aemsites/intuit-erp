@@ -101,6 +101,22 @@ describe('carousel.testimonial normalizer', () => {
     expect(slide.querySelector('.testi-media').children.length).toBe(0);
   });
 
+  it('flattens a bold-name-over-break attribution into one comma-separated line', () => {
+    const block = make(ONE_CELL_NO_TITLE);
+    decorate(block);
+    const attr = block.querySelector('.testi-attr');
+    expect(attr.textContent).toBe('Sharon Ourian, Ourian Investments');
+    expect(attr.querySelector('br')).toBeNull();
+    expect(attr.querySelector('strong')).toBeNull();
+  });
+
+  it('leaves an already-comma-separated attribution unchanged', () => {
+    const block = make(FOUR_CELL);
+    decorate(block);
+    expect(block.querySelector('.testi-attr').textContent)
+      .toBe('Blake Rohm, Director of Finance, Lallier');
+  });
+
   it('keeps a multi-paragraph quote together and treats only the last block as attribution', () => {
     const block = make(`<div><div>
       <p>First half of the quote.</p>
