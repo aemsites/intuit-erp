@@ -150,6 +150,18 @@ describe('resolveDeEntries', () => {
     });
   });
 
+  it('lets a ?locale= query param override the Accept-Language locale', async () => {
+    const cap = {};
+    mockBatch(batchResponse('fragments/pzn/slot1-hospitality'), cap);
+    await resolveDeEntries(
+      DE_ENV,
+      deRequest('/drafts/pzn/treatment?ivid=abc&locale=en-US', {
+        headers: { 'accept-language': 'en-GB' },
+      }),
+    );
+    expect(JSON.parse(cap.init.body).attributes.locale).toBe('en-US');
+  });
+
   it('leaves the slot as authored on a non-200 status', async () => {
     mockBatch(batchResponse(null, 204));
     expect(await resolveDeEntries(DE_ENV, deRequest('/drafts/pzn/treatment?ivid=abc'))).toEqual([]);

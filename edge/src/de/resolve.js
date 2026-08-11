@@ -34,6 +34,10 @@ import { readIvid } from '../ivid.js';
  * device type, geo, client IP). Mirrors the pzn service's `attributes` contract;
  * client-only fields (screen resolution) and marketing ids (casId, priorityCode)
  * are not derivable at the edge and are omitted.
+ *
+ * The locale normally comes from the visitor's `Accept-Language`; a `?locale=`
+ * query param overrides it (demo / QA — the batch response is keyed by locale, so
+ * this forces a specific offer variant regardless of the browser's language).
  * @param {Request} request
  * @param {string} ivid
  * @param {string} permalink The page path being personalized.
@@ -43,11 +47,12 @@ export function buildAttributes(request, ivid, permalink) {
   const v = deriveVisitorTokens(request);
   const ua = request.headers.get('user-agent') || '';
   const deviceType = /Mobi|Android|iPhone|iPad/i.test(ua) ? 'Mobile' : 'Desktop';
+  const localeOverride = new URL(request.url).searchParams.get('locale');
 
   const attributes = {
     ivid,
     permalink,
-    locale: v.lang || 'en-US',
+    locale: localeOverride || v.lang || 'en-US',
     deviceType,
     newVisitor: true,
   };
