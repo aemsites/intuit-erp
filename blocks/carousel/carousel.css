@@ -106,7 +106,41 @@
   --testi-attr-lh: 18px;
 }
 
+/* The titled treatment sits in a full-bleed navy band, and the card is a
+   LIGHTER navy so it reads as a panel against it. Painting the band from the
+   section (rather than asking authors for Section Metadata) follows the
+   `.cards.dark` precedent in cards.css. */
+.section.carousel-container:has(.carousel.testimonial.has-title) {
+  background: var(--navy);
+  padding: var(--section-y) 0;
+}
+
+.section.carousel-container:has(.carousel.testimonial.has-title) .default-content-wrapper h2 {
+  margin: 0 0 40px;
+  color: #fff;
+  font-size: 34px;
+  line-height: 47.6px;
+  font-weight: 400;
+  text-align: center;
+}
+
+.carousel.testimonial.has-title { --testi-card: #1a3b5c; }
+
+/* The 6px conic-gradient ring around the titled card. A gradient can't be a
+   border-color, so the ring is a transparent border filled by a border-box
+   background layer, with a solid padding-box layer over it for the card. The
+   viewport's overflow then clips slides at the padding box, so the slide
+   waiting off-screen to the right can never cover the ring. */
 .carousel.testimonial .carousel-viewport { border-radius: 10px; }
+
+.carousel.testimonial.has-title .carousel-viewport {
+  border: 6px solid transparent;
+  border-radius: 24px;
+  background:
+    linear-gradient(var(--testi-card), var(--testi-card)) padding-box,
+    conic-gradient(from 180deg, #38e8f6 0%, #d1dee9 15%, #eff4f9 35%, #81f2fe 50%,
+      #00d0e0 65%, #236cff 85%, #38e8f6 100%) border-box;
+}
 
 .carousel.testimonial .carousel-slide {
   display: flex;
@@ -199,25 +233,54 @@
 .carousel.testimonial .carousel-prev { order: 2; }
 .carousel.testimonial .carousel-next { order: 3; }
 
-/* The controls sit outside the card, so they take their colour from the page
-   background rather than from the card — black dots and ink-teal arrows, which
-   is what upstream uses wherever this carousel sits on a light section. */
-.carousel.testimonial .carousel-dot {
-  width: 12px; height: 12px; background: rgb(0 0 0 / 25%);
+/* The controls sit outside the card, so they take their colour from the SECTION
+   behind them, not the card: black-on-white for the untitled treatment's white
+   section, white-on-navy for the titled treatment's band (upstream's
+   `whiteControls`), where the arrows also split into a grey back and a white
+   forward rather than sharing one fill. */
+.carousel.testimonial {
+  --testi-dot: 0 0 0;
+  --testi-arrow-bg: var(--ink-teal);
+  --testi-arrow-bg-hover: #09222a;
+  --testi-arrow-fg: #fff;
 }
 
-.carousel.testimonial .carousel-dot.is-active { background: rgb(0 0 0 / 75%); transform: none; }
+.carousel.testimonial.has-title {
+  --testi-dot: 255 255 255;
+  --testi-arrow-bg: #5d686f;
+  --testi-arrow-bg-hover: #4a5359;
+}
+
+.carousel.testimonial .carousel-dot {
+  width: 12px;
+  height: 12px;
+  background: rgb(var(--testi-dot) / 25%);
+}
+
+.carousel.testimonial .carousel-dot.is-active {
+  background: rgb(var(--testi-dot) / 75%);
+  transform: none;
+}
 
 .carousel.testimonial .carousel-prev,
 .carousel.testimonial .carousel-next {
-  width: 60px; height: 60px; font-size: 24px; background: var(--ink-teal); color: #fff;
+  width: 60px;
+  height: 60px;
+  font-size: 24px;
+  background: var(--testi-arrow-bg);
+  color: var(--testi-arrow-fg);
 }
 
+/* forward is the emphasised action on the band: white fill, navy chevron */
+.carousel.testimonial.has-title .carousel-next { background: #fff; color: var(--navy); }
+
 .carousel.testimonial .carousel-prev:hover:not(:disabled),
-.carousel.testimonial .carousel-next:hover:not(:disabled) { background: #09222a; }
+.carousel.testimonial .carousel-next:hover:not(:disabled) { background: var(--testi-arrow-bg-hover); }
+
+.carousel.testimonial.has-title .carousel-next:hover:not(:disabled) { background: #e8eaec; }
 
 .carousel.testimonial .carousel-prev:disabled,
-.carousel.testimonial .carousel-next:disabled { background: var(--ink-teal); opacity: 0.3; }
+.carousel.testimonial .carousel-next:disabled { background: var(--testi-arrow-bg); opacity: 0.3; }
 
 @media (width >= 600px) {
   .carousel.testimonial .testi-body { padding: 60px 30px; }
@@ -255,6 +318,12 @@
 
   .carousel.testimonial .carousel-viewport { border-radius: 16px; }
 
+  .section.carousel-container:has(.carousel.testimonial.has-title) .default-content-wrapper h2 {
+    margin-bottom: 80px;
+    font-size: 48px;
+    line-height: 67.2px;
+  }
+
   .carousel.testimonial .testi-body {
     flex: 1 1 auto;
     padding: 80px;
@@ -262,10 +331,6 @@
   }
 
   .carousel.testimonial .testi-cta { justify-content: flex-start; }
-
-  /* the titled treatment insets its portrait, so the card itself is square and
-     the rounding lives on the image */
-  .carousel.testimonial.has-title .carousel-viewport { border-radius: 0; }
 
   /* border-box so the 80px inset counts inside the 50% rather than widening
      the column past it */
