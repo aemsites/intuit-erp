@@ -15,27 +15,40 @@ export function fragmentPath(ref) {
  * Calls a /api/<source> endpoint. Returns the parsed JSON, or null on any
  * non-ok / timeout / parse failure (fail-open — the caller shows the baseline).
  * @param {string} source e.g. 'de' or 'ixp?experimentId=1'
- * @param {{ method?: string, body?: unknown, timeoutMs?: number }} [opts]
+ * @param {{ method?: string, body?: unknown, timeoutMs?: number, signal?: AbortSignal }} [opts]
+ *   When `signal` is provided it is used directly for the fetch and no internal
+ *   AbortController/timeout is created — the caller owns the deadline (e.g.
+ *   runExperiment shares one controller across fetchDecision + swapMain so a
+ *   slow decision can't leave a follow-on fetch its own fresh timeout budget).
+ *   When omitted, behavior is unchanged: an internal AbortController aborts
+ *   after `timeoutMs` (default 1000).
  * @returns {Promise<any | null>}
  */
 export async function fetchDecision(source, opts = {}) {
-  const { method = 'GET', body, timeoutMs = 1000 } = opts;
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const {
+    method = 'GET', body, timeoutMs = 1000, signal: externalSignal,
+  } = opts;
+  let signal = externalSignal;
+  let timer;
+  if (!signal) {
+    const controller = new AbortController();
+    signal = controller.signal;
+    timer = setTimeout(() => controller.abort(), timeoutMs);
+  }
   try {
     const res = await fetch(`${apiBase()}/${source}`, {
       method,
       credentials: 'include',
       headers: body ? { 'content-type': 'application/json' } : undefined,
       body: body ? JSON.stringify(body) : undefined,
-      signal: controller.signal,
+      signal,
     });
     if (!res.ok) return null;
     return await res.json();
   } catch {
     return null;
   } finally {
-    clearTimeout(timer);
+    if (timer) clearTimeout(timer);
   }
 }
 

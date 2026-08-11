@@ -75,21 +75,22 @@ describe('runExperiment', () => {
     expect(document.querySelector('main').innerHTML).toContain('BASE');
   });
 
-  it('bounds the variation fetch with a timeout so a hanging connection cannot block reveal', async () => {
+  it('bounds the whole decision+swap chain with ONE shared deadline, so a hanging swap never clobbers the page late', async () => {
     vi.useFakeTimers();
     try {
       setMeta('experiment-id', '385944');
-      fetchDecision.mockResolvedValue({ fidelity: 'page', fragment: '/drafts/pzn/csr-variation' });
-      // Simulates a connection that is accepted but never completes: the promise
-      // only settles if aborted (mirrors real fetch+AbortSignal behavior).
-      vi.spyOn(globalThis, 'fetch').mockImplementation((url, init) => new Promise((resolve, reject) => {
-        if (init && init.signal) {
-          init.signal.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')));
+      fetchDecision.mockResolvedValue({ action: 'replace', fidelity: 'page', fragment: '/drafts/pzn/csr-variation' });
+      // Simulates a connection that is accepted but never completes on its own:
+      // the promise only settles if the shared controller's signal fires 'abort'
+      // (mirrors real fetch+AbortSignal behavior).
+      vi.spyOn(globalThis, 'fetch').mockImplementation((url, options) => new Promise((resolve, reject) => {
+        if (options && options.signal) {
+          options.signal.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')));
         }
       }));
 
       const pending = runExperiment(document);
-      await vi.advanceTimersByTimeAsync(1100);
+      await vi.advanceTimersByTimeAsync(1400);
       await pending;
 
       expect(document.querySelector('main').innerHTML).toContain('BASE');

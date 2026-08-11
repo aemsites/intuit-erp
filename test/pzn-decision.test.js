@@ -55,6 +55,19 @@ describe('fetchDecision', () => {
     vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('aborted'));
     expect(await fetchDecision('ixp')).toBeNull();
   });
+
+  it('honors an external signal instead of creating its own internal timeout', async () => {
+    const controller = new AbortController();
+    vi.spyOn(globalThis, 'fetch').mockImplementation((url, init) => new Promise((resolve, reject) => {
+      init.signal.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')));
+    }));
+
+    const pending = fetchDecision('ixp', { signal: controller.signal });
+    controller.abort();
+    // Resolves promptly from the caller's own abort — no internal AbortController/
+    // timer is involved, so this never depends on waiting out a default timeoutMs.
+    await expect(pending).resolves.toBeNull();
+  });
 });
 
 describe('applyFragment', () => {
