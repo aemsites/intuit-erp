@@ -18,28 +18,49 @@
   margin: 0 0 24px;
 }
 
+/* The source presents the in-article video on a full-width light-grey band
+   (#f4f5f8) with generous vertical padding. Scoped to .video-container so only
+   the section-level video gets the band; a video used elsewhere is unaffected.
+   The band padding + heading margin own the vertical rhythm, so the .video
+   block's own 2rem margins are reset here. Uses `main .section.video-container`
+   because `main .section { padding: 0 }` in styles.css beats a single class. */
+main .section.video-container {
+  background: #f4f5f8;
+  padding: 56px 0;
+}
+
 .video-container .video {
   max-width: 738px;
-  margin-inline: auto;
+  margin: 0 auto;
 }
 
 @media (width >= 900px) {
+  main .section.video-container {
+    padding: 100px 0;
+  }
+
   .video-container .default-content-wrapper h2 {
     font-size: 40px;
     line-height: 52px;
     text-align: center;
     max-width: 900px;
-    margin: 0 auto 32px;
+
+    /* 40px below the heading matches the source gap to the thumbnail. */
+    margin: 0 auto 40px;
   }
 }
 
+/* Poster + play button match the source (erp.intuit.com) exactly: 8px radius,
+   16:9 cover thumbnail, a solid white circular play button with a soft drop
+   shadow and a dark-teal triangle. The source applies NO hover scale/opacity
+   change — hover only shows the pointer cursor — so we deliberately omit one. */
 .video .video-preview {
   position: relative;
   aspect-ratio: 16 / 9;
-  border-radius: var(--radius-card, 12px);
+  border-radius: 8px;
   overflow: hidden;
   cursor: pointer;
-  background: var(--navy, #05071b);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 20%);
 }
 
 .video .video-preview img {
@@ -52,12 +73,13 @@
 .video .video-play {
   position: absolute;
   inset: 0;
-  width: 72px;
-  height: 72px;
+  width: 64px;
+  height: 64px;
   margin: auto;
   border-radius: 50%;
-  background: rgb(255 255 255 / 90%);
-  transition: transform 0.15s ease, background 0.15s ease;
+  background: #fff;
+  box-shadow: 0 4px 30px rgb(0 0 0 / 15%);
+  transition: transform 0.333s cubic-bezier(0.35, 0, 0.5, 1);
 }
 
 .video .video-play::after {
@@ -68,20 +90,27 @@
   height: 0;
   margin: auto;
   border-style: solid;
-  border-width: 13px 0 13px 21px;
-  border-color: transparent transparent transparent var(--navy, #05071b);
-  transform: translateX(3px);
+  border-width: 14px 0 14px 22px;
+  border-color: transparent transparent transparent #0d333f;
+  transform: translateX(2px);
 }
 
-.video .video-preview:hover .video-play,
-.video .video-preview:focus-visible .video-play {
-  background: #fff;
-  transform: scale(1.06);
-}
-
+/* keyboard focus only — mouse hover matches the source (no visual change) */
 .video .video-preview:focus-visible {
   outline: 2px solid var(--link-color, #2ca01c);
   outline-offset: 3px;
+}
+
+@media (width >= 900px) {
+  .video .video-play {
+    width: 100px;
+    height: 100px;
+  }
+
+  .video .video-play::after {
+    border-width: 22px 0 22px 34px;
+    transform: translateX(4px);
+  }
 }
 
 /* lightbox modal */
