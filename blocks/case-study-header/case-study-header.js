@@ -12,8 +12,8 @@
  *                          authored with a second (logo) cell still work.
  *                          This is also the page's lead image, since the
  *                          Helix pipeline auto-derives og:image from the
- *                          first image on the page — the case-study-cards
- *                          block uses that as the card thumbnail.
+ *                          first image on the page — blog-cards uses that
+ *                          as the card thumbnail.
  *
  * Also builds a share-icon row (JS-generated, LinkedIn/X share intents +
  * copy-link) and a boxed table of contents (inline in the article, right
