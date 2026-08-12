@@ -1,21 +1,20 @@
 /* eslint-disable no-use-before-define */
-// The panel is event-driven: render → chip → popup → mode → save → render is a
+// The panel is event-driven: render → Tag → popup → mode → save → render is a
 // deliberate mutual-recursion cycle, so definitions cannot be strictly ordered.
 // eslint-disable-next-line import/no-unresolved, import/extensions
 import DA_SDK from 'https://da.live/nx/utils/sdk.js';
 import {
   parseExperience,
-  setBlockTag,
-  clearBlockTag,
   setSectionTag,
   clearSectionTag,
   setPageExperiment,
   clearPageExperiment,
-  slugify,
   buildFormData,
 } from './experience.js';
+import pickFragment from './picker.js';
 
 const DA_ADMIN = 'https://admin.da.live';
+const MAX_VARIANTS = 5;
 
 /** Author-facing labels per mode. */
 const MODE_LABEL = { exp: 'Experimentation', pzn: 'Personalization' };
@@ -27,7 +26,6 @@ function el(tag, opts = {}, children = []) {
   if (opts.text != null) node.textContent = opts.text;
   if (opts.attrs) Object.entries(opts.attrs).forEach(([k, v]) => node.setAttribute(k, v));
   if (opts.onclick) node.addEventListener('click', opts.onclick);
-  if (opts.oninput) node.addEventListener('input', opts.oninput);
   children.forEach((c) => node.appendChild(c));
   return node;
 }
@@ -79,158 +77,221 @@ async function save(newHtml) {
   }
 }
 
-/* -------------------------------------------------------------- mutation glue */
+/* --------------------------------------------------------------- variant list */
 
-/** Apply a set for the given target + mode + id(s). */
-function applySet(target, mode, values) {
-  if (target.kind === 'page') {
-    return setPageExperiment(state.source, values);
-  }
-  if (target.kind === 'section') {
-    return setSectionTag(state.source, target.sectionIndex, mode, values.id);
-  }
-  return setBlockTag(state.source, target.sectionIndex, target.blockIndex, mode, values.id);
+/**
+ * Editable list of up to MAX_VARIANTS paths. `onAdd` returns a Promise<path|null>
+ * (the fragment picker for sections, a manual prompt for pages).
+ */
+function variantList(initial, onAdd) {
+  const values = Array.isArray(initial) ? [...initial] : [];
+  const wrap = el('div', { class: 'pzn-variants' });
+
+  const rerender = () => {
+    wrap.replaceChildren();
+    values.forEach((path, i) => {
+      wrap.appendChild(el('div', { class: 'pzn-variant-row' }, [
+        el('span', { class: 'pzn-variant-path', text: path }),
+        el('button', {
+          class: 'pzn-variant-remove',
+          text: '✕',
+          attrs: { 'aria-label': `Remove ${path}` },
+          onclick: () => { values.splice(i, 1); rerender(); },
+        }),
+      ]));
+    });
+    const atMax = values.length >= MAX_VARIANTS;
+    const addBtn = el('button', {
+      class: 'pzn-add-variant',
+      text: atMax ? `Max ${MAX_VARIANTS} variants` : '+ Add variant',
+      onclick: async () => {
+        if (values.length >= MAX_VARIANTS) return;
+        const path = await onAdd();
+        if (path && !values.includes(path)) { values.push(path); rerender(); }
+      },
+    });
+    addBtn.disabled = atMax;
+    wrap.appendChild(addBtn);
+  };
+
+  rerender();
+  return { element: wrap, get: () => [...values] };
 }
 
-/** Apply a clear for the given target + mode. */
-function applyClear(target, mode) {
-  if (target.kind === 'page') return clearPageExperiment(state.source);
-  if (target.kind === 'section') return clearSectionTag(state.source, target.sectionIndex, mode);
-  return clearBlockTag(state.source, target.sectionIndex, target.blockIndex, mode);
+/* ----------------------------------------------------------------- popup body */
+
+/**
+ * Inline required-field error tied to an input. Returns the message element plus
+ * a `show()`; the message clears (and the input un-highlights) as soon as the
+ * author edits the field.
+ */
+function fieldError(input) {
+  const element = el('div', { class: 'pzn-error-msg', attrs: { role: 'alert' } });
+  const clear = () => {
+    element.textContent = '';
+    input.classList.remove('is-invalid');
+  };
+  input.addEventListener('input', clear);
+  return {
+    element,
+    show: (msg) => {
+      element.textContent = msg;
+      input.classList.add('is-invalid');
+      input.focus();
+    },
+  };
 }
 
-/* --------------------------------------------------------------------- popup */
+/** Section form for a chosen mode: id + scope + variants. */
+function sectionForm(target, mode) {
+  const cur = mode === 'pzn'
+    ? { id: target.pzn, block: target.pznBlock, variants: target.pznVariants }
+    : { id: target.exp, block: target.expBlock, variants: target.expVariants };
+
+  const idInput = el('input', {
+    class: 'pzn-input',
+    attrs: { type: 'text', placeholder: `${MODE_LABEL[mode]} ID`, value: cur.id || '' },
+  });
+  const err = fieldError(idInput);
+
+  const scope = el('select', { class: 'pzn-select' }, [
+    el('option', { text: 'Whole section', attrs: { value: '' } }),
+  ]);
+  target.blocks.forEach((b) => {
+    const opt = el('option', { text: b.name, attrs: { value: b.name } });
+    if (b.name === cur.block) opt.selected = true;
+    scope.appendChild(opt);
+  });
+
+  const variants = variantList(
+    cur.variants,
+    () => pickFragment(state.sdk, { placeholder: '/fragments/pzn/…' }),
+  );
+
+  const saveBtn = el('button', {
+    class: 'pzn-save',
+    text: 'Save',
+    onclick: () => {
+      const id = idInput.value.trim();
+      if (!id) { err.show(`${MODE_LABEL[mode]} ID is required`); return; }
+      save(setSectionTag(state.source, target.sectionIndex, mode, {
+        id, block: scope.value, variants: variants.get(),
+      }));
+    },
+  });
+
+  return el('div', { class: 'pzn-form' }, [
+    el('label', { class: 'pzn-field-label', text: `${MODE_LABEL[mode]} ID` }),
+    idInput,
+    err.element,
+    el('label', { class: 'pzn-field-label', text: 'Scope' }),
+    scope,
+    el('label', { class: 'pzn-field-label', text: `Variants — fragments (max ${MAX_VARIANTS})` }),
+    variants.element,
+    saveBtn,
+  ]);
+}
+
+/** Page form: experiment id + label + page variants. */
+function pageForm(target) {
+  const idInput = el('input', {
+    class: 'pzn-input',
+    attrs: { type: 'text', placeholder: 'Experiment ID', value: target.experimentId || '' },
+  });
+  const err = fieldError(idInput);
+  const labelInput = el('input', {
+    class: 'pzn-input',
+    attrs: { type: 'text', placeholder: 'Experiment label (optional)', value: target.experimentLabel || '' },
+  });
+  const variants = variantList(
+    target.experimentVariants,
+    () => pickFragment(state.sdk, { placeholder: '/fragments/experiments/…' }),
+  );
+
+  const saveBtn = el('button', {
+    class: 'pzn-save',
+    text: 'Save',
+    onclick: () => {
+      const id = idInput.value.trim();
+      if (!id) { err.show('Experiment ID is required'); return; }
+      save(setPageExperiment(state.source, {
+        id, label: labelInput.value.trim(), variants: variants.get(),
+      }));
+    },
+  });
+
+  return el('div', { class: 'pzn-form' }, [
+    el('label', { class: 'pzn-field-label', text: 'Experiment ID' }),
+    idInput,
+    err.element,
+    el('label', { class: 'pzn-field-label', text: 'Experiment label (optional)' }),
+    labelInput,
+    el('label', { class: 'pzn-field-label', text: `Variants — fragments (max ${MAX_VARIANTS})` }),
+    variants.element,
+    saveBtn,
+  ]);
+}
+
+/* ---------------------------------------------------------------------- popup */
 
 function closePopup() {
   const existing = state.root.querySelector('.pzn-popup');
   if (existing) existing.remove();
 }
 
-/** Form body for a chosen mode. Page-exp gets id + label; others get id + preview. */
-function modeForm(target, mode) {
-  const wrap = el('div', { class: 'pzn-form' });
-
-  if (target.kind === 'page') {
-    const idInput = el('input', {
-      class: 'pzn-input',
-      attrs: { type: 'text', placeholder: 'Experiment ID', value: target.experimentId || '' },
-    });
-    const labelInput = el('input', {
-      class: 'pzn-input',
-      attrs: { type: 'text', placeholder: 'Experiment label (optional)', value: target.experimentLabel || '' },
-    });
-    wrap.append(
-      el('label', { class: 'pzn-field-label', text: 'Experiment ID' }),
-      idInput,
-      el('label', { class: 'pzn-field-label', text: 'Experiment label (optional)' }),
-      labelInput,
-      el('button', {
-        class: 'pzn-save',
-        text: 'Save',
-        onclick: () => {
-          const id = idInput.value.trim();
-          if (!id) { idInput.focus(); return; }
-          save(applySet(target, mode, { id, label: labelInput.value.trim() }));
-        },
-      }),
-    );
-    return wrap;
-  }
-
-  // section / block: single id → `<mode>-<slug>` token
-  const current = mode === 'exp' ? target.exp : target.pzn;
-  const currentId = current ? current.replace(new RegExp(`^${mode}-`), '') : '';
-  const preview = el('div', { class: 'pzn-preview', text: current || `${mode}-…` });
-  const idInput = el('input', {
-    class: 'pzn-input',
-    attrs: { type: 'text', placeholder: `${MODE_LABEL[mode]} ID`, value: currentId },
-    oninput: (e) => {
-      const slug = slugify(e.target.value);
-      preview.textContent = slug ? `${mode}-${slug}` : `${mode}-…`;
-    },
-  });
-  wrap.append(
-    el('label', { class: 'pzn-field-label', text: `${MODE_LABEL[mode]} ID` }),
-    idInput,
-    el('div', { class: 'pzn-preview-row' }, [
-      el('span', { class: 'pzn-preview-caption', text: 'Class token:' }),
-      preview,
-    ]),
-    el('button', {
-      class: 'pzn-save',
-      text: 'Save',
-      onclick: () => {
-        const id = idInput.value.trim();
-        if (!slugify(id)) { idInput.focus(); return; }
-        save(applySet(target, mode, { id }));
-      },
-    }),
-  );
-  return wrap;
-}
-
-/** Current-tag rows with per-mode Clear buttons. */
-function currentTags(target) {
-  const modes = target.kind === 'page' ? ['exp'] : ['exp', 'pzn'];
-  const set = modes
-    .map((mode) => ({ mode, value: target.kind === 'page' ? pageTag(target) : target[mode] }))
-    .filter((t) => t.value);
-  if (set.length === 0) return null;
-
-  const list = el('div', { class: 'pzn-current' });
-  set.forEach(({ mode, value }) => {
-    list.appendChild(el('div', { class: 'pzn-current-row' }, [
-      el('span', { class: `pzn-tag pzn-tag-${mode}`, text: value }),
+/** Current-tag rows with per-mode Clear. Returns null when nothing is set. */
+function sectionCurrent(target) {
+  const rows = [];
+  ['exp', 'pzn'].forEach((mode) => {
+    const id = target[mode];
+    if (!id) return;
+    rows.push(el('div', { class: 'pzn-current-row' }, [
+      el('span', { class: `pzn-tag pzn-tag-${mode}`, text: tagSummary(mode, target) }),
       el('button', {
         class: 'pzn-clear',
         text: 'Clear',
-        onclick: () => save(applyClear(target, mode)),
+        onclick: () => save(clearSectionTag(state.source, target.sectionIndex, mode)),
       }),
     ]));
   });
-  return list;
+  if (rows.length === 0) return null;
+  return el('div', { class: 'pzn-current' }, rows);
 }
 
-/** The page's experiment display value (id, plus label in parens). */
-function pageTag(target) {
-  if (!target.experimentId) return '';
-  return target.experimentLabel
-    ? `${target.experimentId} (${target.experimentLabel})`
-    : target.experimentId;
-}
-
-/** Popup: current tags, a mode selector, and the chosen mode's form. */
-function openPopup(target) {
+/**
+ * Section popup: current tags, a mode selector, and both mode forms. Both forms
+ * are mounted once and toggled (not rebuilt), so unsaved edits in one tab survive
+ * switching to the other. Opens on `initialMode`.
+ */
+function openSectionPopup(target, initialMode = 'exp') {
   closePopup();
-  const modes = target.kind === 'page' ? ['exp'] : ['exp', 'pzn'];
-
-  const body = el('div', { class: 'pzn-popup-body' });
+  const forms = { exp: sectionForm(target, 'exp'), pzn: sectionForm(target, 'pzn') };
+  const body = el('div', { class: 'pzn-popup-body' }, [forms.exp, forms.pzn]);
   const selector = el('div', { class: 'pzn-mode-select' });
 
   const showMode = (mode) => {
     Array.from(selector.children).forEach((btn) => {
       btn.classList.toggle('is-active', btn.dataset.mode === mode);
     });
-    const old = body.querySelector('.pzn-form');
-    if (old) old.remove();
-    body.appendChild(modeForm(target, mode));
+    // Inline display beats the stylesheet's `.pzn-form { display: flex }`.
+    forms.exp.style.display = mode === 'exp' ? '' : 'none';
+    forms.pzn.style.display = mode === 'pzn' ? '' : 'none';
   };
 
-  modes.forEach((mode) => {
-    const btn = el('button', {
+  ['exp', 'pzn'].forEach((mode) => {
+    selector.appendChild(el('button', {
       class: 'pzn-mode-btn',
       text: MODE_LABEL[mode],
       attrs: { 'data-mode': mode },
       onclick: () => showMode(mode),
-    });
-    selector.appendChild(btn);
+    }));
   });
 
   const popup = el('div', { class: 'pzn-popup' }, [
     el('div', { class: 'pzn-popup-title', text: target.label }),
   ]);
-  const tags = currentTags(target);
-  if (tags) popup.appendChild(tags);
+  const current = sectionCurrent(target);
+  if (current) popup.appendChild(current);
   popup.append(
     el('div', { class: 'pzn-popup-label', text: 'Add / edit tag' }),
     selector,
@@ -240,22 +301,73 @@ function openPopup(target) {
     ]),
   );
   state.root.appendChild(popup);
-  showMode(modes[0]);
+  showMode(initialMode === 'pzn' ? 'pzn' : 'exp');
 }
 
-/* -------------------------------------------------------------------- render */
+/** Page popup: experimentation only. */
+function openPagePopup(target) {
+  closePopup();
+  const popup = el('div', { class: 'pzn-popup' }, [
+    el('div', { class: 'pzn-popup-title', text: 'Page — Experimentation' }),
+  ]);
+  if (target.experimentId) {
+    popup.appendChild(el('div', { class: 'pzn-current' }, [
+      el('div', { class: 'pzn-current-row' }, [
+        el('span', { class: 'pzn-tag pzn-tag-exp', text: pageSummary(target) }),
+        el('button', {
+          class: 'pzn-clear',
+          text: 'Clear',
+          onclick: () => save(clearPageExperiment(state.source)),
+        }),
+      ]),
+    ]));
+  }
+  popup.append(
+    pageForm(target),
+    el('div', { class: 'pzn-popup-footer' }, [
+      el('button', { class: 'pzn-close', text: 'Close', onclick: closePopup }),
+    ]),
+  );
+  state.root.appendChild(popup);
+}
 
-/** A tag chip: faint/dashed when unset, solid when set. */
-function chip(mode, value) {
-  return el('span', {
-    class: `pzn-chip pzn-chip-${mode}${value ? ' is-set' : ''}`,
-    text: value || `${mode}: none`,
+/* --------------------------------------------------------------------- render */
+
+/** One-line summary of a section's tag for a mode. */
+function tagSummary(mode, section) {
+  const id = section[mode];
+  if (!id) return '';
+  const block = mode === 'pzn' ? section.pznBlock : section.expBlock;
+  const variants = mode === 'pzn' ? section.pznVariants : section.expVariants;
+  let text = `${mode}: ${id}`;
+  text += block ? ` · block: ${block}` : ' · whole section';
+  if (variants.length) text += ` · ${variants.length} variant${variants.length > 1 ? 's' : ''}`;
+  return text;
+}
+
+/** One-line summary of the page experiment. */
+function pageSummary(page) {
+  if (!page.experimentId) return '';
+  let text = `exp: ${page.experimentId}`;
+  if (page.experimentLabel) text += ` (${page.experimentLabel})`;
+  if (page.experimentVariants.length) {
+    text += ` · ${page.experimentVariants.length} variant${page.experimentVariants.length > 1 ? 's' : ''}`;
+  }
+  return text;
+}
+
+/** A clickable state chip that opens the popup on this mode's tab. */
+function chip(mode, text, onclick) {
+  return el('button', {
+    class: `pzn-chip pzn-chip-${mode}${text ? ' is-set' : ''}`,
+    text: text || `${mode}: none`,
+    attrs: { title: text ? 'Edit' : 'Add' },
+    onclick,
   });
 }
 
-/** The "Tag" action button that opens the popup for a target. */
-function tagButton(target) {
-  return el('button', { class: 'pzn-tag-btn', text: 'Tag', onclick: () => openPopup(target) });
+function tagButton(onclick) {
+  return el('button', { class: 'pzn-tag-btn', text: 'Tag', onclick });
 }
 
 /** Rebuild the whole panel from current state. */
@@ -267,18 +379,12 @@ function render() {
   state.root.appendChild(statusEl);
 
   // page-level experimentation
-  const pageTarget = {
-    kind: 'page',
-    label: 'Page',
-    experimentId: page.experimentId,
-    experimentLabel: page.experimentLabel,
-  };
   state.root.appendChild(el('div', { class: 'pzn-section pzn-page' }, [
     el('div', { class: 'pzn-section-head' }, [
       el('span', { class: 'pzn-section-title', text: 'Page' }),
-      tagButton(pageTarget),
+      tagButton(() => openPagePopup(page)),
     ]),
-    el('div', { class: 'pzn-chips' }, [chip('exp', pageTag(pageTarget))]),
+    el('div', { class: 'pzn-chips' }, [chip('exp', pageSummary(page), () => openPagePopup(page))]),
   ]));
 
   const targetable = sections.filter((s) => !s.hasPageMeta);
@@ -288,37 +394,22 @@ function render() {
   }
 
   targetable.forEach((section) => {
-    const sectionTarget = {
-      kind: 'section', sectionIndex: section.index, label: `Section ${section.index + 1}`, exp: section.exp, pzn: section.pzn,
-    };
+    const target = { ...section, label: `Section ${section.index + 1}`, sectionIndex: section.index };
     const head = el('div', { class: 'pzn-section-head' }, [
       el('span', { class: 'pzn-section-title', text: `Section ${section.index + 1}` }),
-      tagButton(sectionTarget),
+      tagButton(() => openSectionPopup(target)),
     ]);
-    const sectionChips = el('div', { class: 'pzn-chips' }, [
-      chip('exp', section.exp),
-      chip('pzn', section.pzn),
+    const chips = el('div', { class: 'pzn-chips' }, [
+      chip('exp', tagSummary('exp', section), () => openSectionPopup(target, 'exp')),
+      chip('pzn', tagSummary('pzn', section), () => openSectionPopup(target, 'pzn')),
     ]);
+    const blockNote = section.blocks.length
+      ? el('div', { class: 'pzn-block-note', text: `Blocks: ${section.blocks.map((b) => b.name).join(', ')}` })
+      : null;
 
-    const blockRows = section.blocks.map((block) => {
-      const blockTarget = {
-        kind: 'block',
-        sectionIndex: section.index,
-        blockIndex: block.index,
-        label: block.name,
-        exp: block.exp,
-        pzn: block.pzn,
-      };
-      return el('div', { class: 'pzn-block-row' }, [
-        el('div', { class: 'pzn-block-head' }, [
-          el('span', { class: 'pzn-block-name', text: block.name }),
-          tagButton(blockTarget),
-        ]),
-        el('div', { class: 'pzn-chips' }, [chip('exp', block.exp), chip('pzn', block.pzn)]),
-      ]);
-    });
-
-    state.root.appendChild(el('div', { class: 'pzn-section' }, [head, sectionChips, ...blockRows]));
+    const card = el('div', { class: 'pzn-section' }, [head, chips]);
+    if (blockNote) card.appendChild(blockNote);
+    state.root.appendChild(card);
   });
 }
 
