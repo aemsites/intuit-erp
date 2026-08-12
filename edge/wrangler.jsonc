@@ -14,24 +14,18 @@
 		"PZN_SOURCE": "de",
 		// IXP Assignment API host (PZN_SOURCE=ixp / ?pzn=ixp). The key it
 		// authenticates with is the `IXP_API_KEY` Wrangler secret (never in
-		// vars/committed) — set it with `wrangler secret put IXP_API_KEY`.
+		// vars/committed) — already set on the deployed worker.
 		"IXP_ASSIGNMENT_URL": "https://experimentation.us.api.intuit.com/us/v2/assignment",
-		// IXP mock: when "enabled", /api/audiences resolves the sticky arm from the
-		// in-worker mock (src/ixp/mock.js) instead of the real host — so the IXP
-		// redirect A/B demo runs without the (currently 403) key. Swap to the real
-		// service by removing this and setting the IXP_API_KEY secret.
-		"IXP_MOCK": "enabled",
-		// Decision Engine flow (PZN_SOURCE=de / ?pzn=de). The batch client POSTs the
-		// page's slots + visitor attributes here and renders the returned per-slot
-		// recommendation (`copyData.pznblock` fragment). The API key it authenticates
-		// with is the `PZN_API_KEY` Wrangler secret (never in vars/committed) — set it
-		// with `wrangler secret put PZN_API_KEY`.
+		// Decision Engine "Batch" endpoint. The batch client POSTs the page's slots +
+		// visitor attributes here and renders the returned per-slot recommendation
+		// (`copyData.pznblock` fragment). The API key is the `PZN_API_KEY` Wrangler
+		// secret (never in vars/committed) — already set on the deployed worker.
 		"DECISION_ENGINE_BATCH_URL": "https://personalization.api.intuit.com/public/v1/batch",
-		// DE mock: when "enabled", /api/pzn-manifest.json resolves the per-visitor
-		// offer from the in-worker mock (src/de/mock.js) instead of the real Batch
-		// endpoint — so the DE slot demo runs without the (rotation-pending) key.
-		// Swap to the real service by removing this and setting the PZN_API_KEY secret.
-		"DE_MOCK": "enabled",
+		// In-worker mocks (src/de/mock.js, src/ixp/mock.js) are a LOCAL-DEV opt-in:
+		// set DE_MOCK=enabled / IXP_MOCK=enabled in a git-ignored `.dev.vars` to run
+		// /api/pzn-manifest.json and /api/audiences off the mocks without keys. They
+		// are intentionally NOT set here — the real Intuit services are the default,
+		// and the deployed worker already carries the PZN_API_KEY / IXP_API_KEY secrets.
 		// Ask the origin to enable push invalidation (set to "disabled" to skip).
 		"PUSH_INVALIDATION": "disabled",
 		// Path prefixes whose `.json` (when the origin 404s) is served from the
