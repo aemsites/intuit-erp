@@ -13,7 +13,7 @@ import {
   getMetadata,
 } from './aem.js';
 import { runExperimentation, runExperimentationLazy } from './experiment-loader.js';
-import { remote, remoteAudience } from './pzn-audiences.js';
+import { remote, remoteAudience, registerCatalogAudiences } from './pzn-audiences.js';
 // Vendored via git subtree at plugins/martech (see its README), not an
 // installed npm package, so this necessarily crosses a package.json boundary.
 import {
@@ -281,6 +281,12 @@ async function loadEager(doc) {
     }
   }
 
+  // Preview only: register the engine's full audience catalog so the AEM Sidekick
+  // simulation panel can populate its switcher (the generic `remote` handler can't
+  // enumerate the engine's segments/treatments). No-op in production.
+  if (!experimentationConfig.isProd()) {
+    await registerCatalogAudiences(experimentationConfig);
+  }
   await runExperimentation(doc, experimentationConfig);
   const main = doc.querySelector('main');
   if (main) {

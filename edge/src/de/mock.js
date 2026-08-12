@@ -13,7 +13,7 @@
 
 // Demo firmographic segments → offer fragment. The fragments live under the local
 // html-folder for the POC; the real DE returns its own `fragments/pzn/...` paths.
-const SEGMENTS = ['hospitality', 'construction', 'retail'];
+export const SEGMENTS = ['hospitality', 'construction', 'retail'];
 
 /** Deterministic bucket in [0, mod) for a string (FNV-1a). Stable per visitor. */
 function bucket(str, mod) {

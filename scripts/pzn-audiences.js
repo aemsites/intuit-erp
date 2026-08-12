@@ -79,3 +79,43 @@ export function remoteAudience(token) {
  * @returns {boolean}
  */
 export const remote = () => true;
+
+const CATALOG_ENDPOINT = '/api/audiences/catalog';
+
+/**
+ * Preview aid: fetches the engine's audience catalog and registers each entry as a
+ * remote audience on the experimentation config, so the AEM Sidekick simulation
+ * panel can populate its switcher (the generic `remote` handler can't enumerate
+ * the engine's segments/treatments). Metadata only (no ivid), non-blocking — any
+ * failure/timeout leaves the statically-configured audiences untouched. Call
+ * before the plugin's `loadEager`, and only in preview (production has no need for
+ * the full catalog).
+ * @param {{ audiences: Record<string, Function> }} config The config to extend in place.
+ * @returns {Promise<void>}
+ */
+export async function registerCatalogAudiences(config) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  try {
+    const resp = await fetch(CATALOG_ENDPOINT, {
+      signal: controller.signal,
+      credentials: 'same-origin',
+      headers: { accept: 'application/json' },
+    });
+    if (!resp.ok) {
+      return;
+    }
+    const data = await resp.json();
+    const names = Array.isArray(data.audiences) ? data.audiences : [];
+    names.forEach((name) => {
+      const key = String(name);
+      if (key && !config.audiences[key]) {
+        config.audiences[key] = remoteAudience(key);
+      }
+    });
+  } catch {
+    // preview aid — never break the page
+  } finally {
+    clearTimeout(timer);
+  }
+}
