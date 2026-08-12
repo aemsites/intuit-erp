@@ -3,13 +3,13 @@
  * #wp-custom-section click-to-expand cards.
  * Section head (h2) authored as default content before the block.
  *
- * Rows: one row per card, cells in order:
- *   1. preview image
- *   2. expanded image (optional — falls back to the preview image if omitted)
- *   3. tag/label text (e.g. "CLOSE MANAGEMENT")
- *   4. title text
- *   5. expanded body paragraph
- *   6. CTA link, e.g. <a href="/accounting">Find out more</a>
+ * Rows: one row per card, 2 cells:
+ *   1. media — one image, or two (first = card face, second = revealed on
+ *      expand; a single image is used for both)
+ *   2. content — flowing: an optional bold-only line as the tag/eyebrow
+ *      (e.g. "CLOSE MANAGEMENT"), a heading as the title, body paragraph(s),
+ *      and an optional trailing link-only line as the CTA
+ *      (e.g. <a href="/accounting">Find out more</a>)
  *
  * Cards are paired two-per-row (1&2, 3&4, ...); clicking a card expands it to
  * fill the row and shrinks its row-partner to a title-only sliver, closing
@@ -17,19 +17,50 @@
  * toggling the card.
  * CSS: blocks/feature-grid/feature-grid.css
  */
+function parseContent(cell) {
+  let title = null;
+  let tagText = '';
+  let ctaLink = null;
+  const bodyParagraphs = [];
+
+  [...cell.children].forEach((node) => {
+    if (/^H[1-6]$/.test(node.tagName)) {
+      if (!title) title = node;
+      return;
+    }
+    if (node.tagName !== 'P') return;
+    const text = node.textContent.trim();
+    if (!text) return;
+    const only = node.children.length === 1 ? node.children[0] : null;
+    if (only?.tagName === 'A' && text === only.textContent.trim()) {
+      ctaLink = only;
+      return;
+    }
+    if (!title && !tagText && only?.tagName === 'EM' && text === only.textContent.trim()) {
+      tagText = text;
+      return;
+    }
+    bodyParagraphs.push(node);
+  });
+
+  return {
+    title, tagText, bodyParagraphs, ctaLink,
+  };
+}
+
 function buildCard(row) {
-  const cells = [...row.children];
-  const picCells = cells.filter((c) => c.querySelector('picture, img'));
-  const previewPic = picCells[0]?.querySelector('picture, img');
-  const expandedPic = (picCells[1] || picCells[0])?.querySelector('picture, img');
-  const ctaCell = cells.find((c) => c.querySelector('a'));
-  const ctaLink = ctaCell?.querySelector('a');
-  const textCells = cells.filter(
-    (c) => c !== ctaCell && !picCells.includes(c) && c.textContent.trim(),
-  );
-  const [tagCell, titleCell, bodyCell] = textCells;
-  const tagText = tagCell ? tagCell.textContent.trim() : '';
-  const titleText = titleCell ? titleCell.textContent.trim() : '';
+  const [mediaCell, contentCell] = [...row.children];
+  const pics = mediaCell
+    ? [...mediaCell.querySelectorAll('img')].map((img) => img.closest('picture') || img)
+    : [];
+  const previewPic = pics[0];
+  const expandedPic = pics[1] || pics[0];
+  const {
+    title: titleEl, tagText, bodyParagraphs, ctaLink,
+  } = contentCell ? parseContent(contentCell) : {
+    title: null, tagText: '', bodyParagraphs: [], ctaLink: null,
+  };
+  const titleText = titleEl ? titleEl.textContent.trim() : '';
 
   const card = document.createElement('div');
   card.className = 'feature-card';
@@ -107,12 +138,12 @@ function buildCard(row) {
     title2.textContent = titleText;
     expandedText.append(title2);
   }
-  if (bodyCell) {
+  bodyParagraphs.forEach((p) => {
     const body = document.createElement('p');
     body.className = 'feature-body-text';
-    body.textContent = bodyCell.textContent.trim();
+    body.innerHTML = p.innerHTML;
     expandedText.append(body);
-  }
+  });
   if (ctaLink) {
     const cta = document.createElement('a');
     cta.className = 'feature-cta';
