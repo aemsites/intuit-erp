@@ -95,7 +95,11 @@
   --testi-attr: 16px;
   --testi-attr-lh: 22.4px;
 
-  max-width: 1360px;
+  /* The section wrapper caps its CONTENT box at --container and adds its 40px
+     gutters outside that, so the track it offers is 1360 at wide viewports
+     where upstream's card is 1300. Subtract the gutters here to match; below
+     ~1400 the wrapper is already narrower and this has no effect. */
+  max-width: calc(var(--container) - 80px);
 }
 
 .carousel.testimonial.pale {
@@ -104,6 +108,10 @@
   --testi-quote-lh: 36.4px;
   --testi-attr: 12px;
   --testi-attr-lh: 18px;
+
+  /* pale runs wider than the other treatments — upstream lets it fill the
+     container instead of insetting by the section gutters, capping at 1358 */
+  max-width: 1358px;
 }
 
 /* The titled treatment sits in a full-bleed navy band, and the card is a
@@ -199,9 +207,10 @@
   margin: 0; font-size: var(--testi-quote); line-height: var(--testi-quote-lh);
 }
 
-/* without a title the quote is the display element and carries a leading
-   space of its own — upstream sets it as a margin above the pull-quote */
-.carousel.testimonial:not(.has-title) .testi-quote { margin-top: 28px; }
+/* Without a title the quote is the display element and carries a leading space
+   of its own. `.pale` is the exception — upstream gives its quote no margin at
+   all, relying on the column's own spacing. */
+.carousel.testimonial:not(.has-title, .pale) .testi-quote { margin-top: 28px; }
 
 .carousel.testimonial.has-title .testi-quote {
   font-size: var(--testi-attr); line-height: var(--testi-attr-lh);
@@ -333,11 +342,13 @@
   /* pale skips the 34px step and stays at its display size */
   .carousel.testimonial.pale { --testi-quote: 40px; --testi-quote-lh: 48px; }
 
-  /* portrait takes a third and runs the full card height, as upstream does.
-     min-width:0 because a flex item's automatic minimum is its content size —
-     a wide portrait would otherwise push the column past its basis */
+  /* Portrait/copy split is a 40:60 GROW ratio, not a fixed basis — upstream
+     lets it drift with width (35% at 1440 down to 33.5% at 1064), so growing
+     from a zero basis reproduces it at every size. min-width:0 because a flex
+     item's automatic minimum is its content size, which a wide portrait would
+     otherwise use to push the column past its share. */
   .carousel.testimonial .testi-media {
-    flex: 0 0 33.33%;
+    flex: 40 1 0;
     min-width: 0;
     align-self: stretch;
   }
@@ -353,14 +364,15 @@
   }
 
   .carousel.testimonial .testi-body {
-    flex: 1 1 auto;
+    flex: 60 1 0;
+    min-width: 0;
     padding: 80px;
     text-align: left;
   }
 
   /* the untitled copy opens to an even 40px rhythm on desktop, which is what
      makes the card taller than the portrait's intrinsic height */
-  .carousel.testimonial:not(.has-title) .testi-quote { margin-top: 40px; }
+  .carousel.testimonial:not(.has-title, .pale) .testi-quote { margin-top: 40px; }
 
   .carousel.testimonial:not(.has-title) .testi-attr { margin-top: 40px; }
 
@@ -379,6 +391,10 @@
     align-self: center;
     padding: 80px 0 80px 80px;
   }
+
+  /* the inset portrait is a fixed 440px tall upstream at every desktop width,
+     cropping rather than scaling, so it sets the card's floor height */
+  .carousel.testimonial.has-title .testi-media img { height: 440px; }
 
   .carousel.testimonial .carousel-controls { justify-content: flex-end; }
 }
