@@ -178,4 +178,16 @@
   .vertical-scroll-carousel .vsc-stage .vsc-media video {
     height: 100%;
   }
+
+  /* .reverse — opt-in mirror of the desktop layout: shared media on the left,
+     copy on the right (matches the source's -reverse content row). Only affects
+     the ≥900px two-column grid; the stacked mobile layout is untouched. */
+  .vertical-scroll-carousel.reverse .vsc-stage {
+    grid-column: 1;
+    justify-self: start;
+  }
+
+  .vertical-scroll-carousel.reverse .vsc-list {
+    grid-column: 2;
+  }
 }
