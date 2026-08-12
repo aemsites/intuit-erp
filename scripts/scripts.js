@@ -13,6 +13,7 @@ import {
   getMetadata,
 } from './aem.js';
 import { runExperimentation, runExperimentationLazy } from './experiment-loader.js';
+import { remote, remoteAudience } from './pzn-audiences.js';
 // Vendored via git subtree at plugins/martech (see its README), not an
 // installed npm package, so this necessarily crosses a package.json boundary.
 import {
@@ -48,6 +49,12 @@ const experimentationConfig = {
   audiences: {
     mobile: () => window.innerWidth < 600,
     desktop: () => window.innerWidth >= 600,
+    // Intuit "remote" audiences resolved through the edge worker (see
+    // pzn-audiences.js). `remote` gates Decision Engine slot personalization (the
+    // per-visitor offer is carried by /api/pzn-manifest.json); `ixptreatment`
+    // reflects the sticky IXP assignment from /api/audiences.
+    remote,
+    ixptreatment: remoteAudience('ixptreatment'),
   },
 };
 
