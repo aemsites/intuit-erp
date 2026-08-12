@@ -1,12 +1,20 @@
 /**
- * hero — dark gradient lead band (all 5 pages).
+ * hero — dark gradient lead band.
  *
- * Authoring rows (each row = one cell):
- *   1. eyebrow text            (optional — short kicker, e.g. "THE AI-NATIVE ERP")
- *   2. <h1> headline           (the page's single <h1>)
- *   3. lede paragraph          (optional)
- *   4. CTAs paragraph          (optional — <em><a> secondary, <strong><a> primary)
- *   5. media <img>             (optional; omitted on the .hero.form variant)
+ * Authoring: one flowing cell/row of copy — an optional short eyebrow
+ * paragraph, the page's <h1>, an optional lede paragraph, and an optional
+ * CTAs paragraph (<em><a> secondary, <strong><a> primary) — in that reading
+ * order. Eyebrow vs. lede is told apart by position relative to the <h1>,
+ * not by which row/cell it's in, so all of this can be one cell (as authored
+ * on e.g. /beta) or split across several rows (as authored on most
+ * pages) — either works identically.
+ *
+ * An optional image can go anywhere in that same flow — its own row, or
+ * mixed into a text cell alongside other copy (e.g. an accolade/"powered by"
+ * badge next to the CTAs, as on /accountant and /contact). Whichever image
+ * is found becomes the media element; on .hero.form (no media column — the
+ * lead card takes its place) it renders inline in the copy column instead,
+ * at whatever size the authored image is.
  *
  * Variant .hero.form (pricing) loads the shared "Let's connect" fragment
  * (content/fragments/schedule-call.html) into a card on the right instead of
@@ -110,11 +118,15 @@ export default async function decorate(block) {
   // product lockup that belongs ABOVE the headline as a logo/eyebrow, not in a
   // right-hand media column.
   const isCentered = block.classList.contains('centered');
+  const isGradient = block.classList.contains('gradient');
   const rows = [...block.children];
+
+  if (isGradient) {
+    block.closest('.section').classList.add('gradient');
+  }
 
   const copy = document.createElement('div');
   copy.className = 'hero-copy';
-  let mediaEl = null;
   let formFragment = DEFAULT_FORM_FRAGMENT;
 
   rows.forEach((row) => {
@@ -131,13 +143,17 @@ export default async function decorate(block) {
       formFragment = cellText;
       return;
     }
-    const pic = cell.querySelector('picture, img');
-    if (pic && cell.textContent.trim() === '') {
-      mediaEl = cell.querySelector('picture') || pic;
-      return;
-    }
     [...cell.childNodes].forEach((n) => copy.append(n));
   });
+
+  const rawMedia = copy.querySelector('picture, img');
+  let mediaEl = null;
+  if (rawMedia) {
+    mediaEl = rawMedia.closest('picture') || rawMedia;
+    const host = mediaEl.parentElement;
+    mediaEl.remove();
+    if (host !== copy && !host.textContent.trim() && !host.querySelector('img, picture')) host.remove();
+  }
 
   // classify copy children
   const heading = copy.querySelector('h1, h2, h3');
@@ -209,6 +225,7 @@ export default async function decorate(block) {
 
   if (isForm) {
     grid.append(await leadCard(formFragment));
+    if (mediaEl) copy.append(mediaEl);
   } else if (mediaEl && isCentered) {
     // logo lockup pinned above the headline instead of a media column
     const lockup = document.createElement('div');

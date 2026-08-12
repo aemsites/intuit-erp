@@ -1,37 +1,15 @@
-/* blog-cards — dynamic card grid/carousel sourced from a blog query-index
-   JSON feed (see blocks/blog-cards/blog-cards.js).
-
-   Styling replicates the source Intuit "threegrids / small" content card
-   (erp.intuit.com/qbmds-components/.../qrc-content-card{,-grid}.css):
-   borderless, rounded, white body, category → title → date, scale-on-hover.
-   The source's breakpoints are 768px / 1200px / 1360px rather than this
-   project's usual 600/900/1200, so they are used verbatim here — the card
-   is a like-for-like replica and its type/media steps are what make it read
-   as the same component:
-     ≤767px       horizontal card — 166px image on the left, body on the right
-     768–1199px   3-up grid, 121px image, 20px title
-     1200px+      248px image
-     1360px+      28px title, 16px category (the source's full desktop card)
-
-   Text elements are selected as `.blog-cards .blog-card .blog-card-body
-   .blog-card-x` (specificity 0,4,0) so they outrank the generic type
-   selectors in blocks/carousel/carousel.css — `.carousel.cards
-   .carousel-slide h3/p` (0,3,1) — which the .carousel variant pulls in on
-   demand and would otherwise reset the type scale set below. */
+.blog-cards {
+  margin: 2rem 0;
+}
 
 .blog-cards .blog-cards-grid {
   display: grid;
   grid-template-columns: 1fr;
-
-  /* row 20px / column 12px — the source's card margin-bottom + its
-     `calc(--spacing-small - --spacing-xxsmall)` column gap */
   gap: 20px 12px;
   max-width: 1440px;
   margin: 0 auto;
 }
 
-/* The card's own `overflow: hidden` + radius is what rounds the image and the
-   white body, so neither needs its own corner rounding. */
 .blog-cards .blog-card {
   display: flex;
   background: var(--background-color);
@@ -40,6 +18,11 @@
   text-decoration: none;
   color: inherit;
   transition: all 0.3s ease-in-out;
+  padding: 1rem 0;
+
+  @media (min-width: 768px) {
+    padding: 0;
+  }
 }
 
 .blog-cards .blog-card:hover {
@@ -50,9 +33,6 @@
 
 .blog-cards .blog-card-image {
   position: relative;
-
-  /* the source sizes the media box in fixed px per breakpoint rather than by
-     aspect ratio, so cards in a row line up regardless of source image ratio */
   flex: 0 0 166px;
   height: 188px;
   background: var(--light-color);
@@ -74,9 +54,6 @@
   overflow: hidden;
 }
 
-/* Category, title and date all flow from the top of the body — the source
-   leaves the date directly below the title (cards in a row are equal height,
-   but their dates are not bottom-aligned to each other). */
 .blog-cards .blog-card .blog-card-body .blog-card-category {
   margin: 0;
   font-size: 12px;
@@ -87,8 +64,6 @@
   overflow-wrap: break-word;
 }
 
-/* the source adds this breathing room only on the narrowest phones, where the
-   body is a short column beside the image */
 @media (max-width: 480px) {
   .blog-cards .blog-card .blog-card-body .blog-card-category { padding-top: 8px; }
 }
@@ -117,19 +92,72 @@
   color: var(--text-muted);
 }
 
-/* ---- 768px+: the vertical 3-up card ---- */
-@media (min-width: 768px) {
-  .blog-cards .blog-cards-grid { grid-template-columns: repeat(3, 1fr); }
+/* ---- variant=paginated ---- */
+.blog-cards .blog-cards-load-more {
+  display: flex;
+  justify-content: center;
+  margin-top: 40px;
+}
 
-  .blog-cards .blog-card { flex-direction: column; }
+.blog-cards .blog-cards-load-more[hidden] { display: none; }
+
+/* ---- filter pills ---- */
+.blog-cards .blog-cards-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 28px;
+}
+
+.blog-cards .blog-cards-filter-pill {
+  padding: 8px 18px;
+  border-radius: 999px;
+  border: 1.5px solid var(--line);
+  background: #fff;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.blog-cards .blog-cards-filter-pill:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.blog-cards .blog-cards-filter-pill[aria-pressed="true"] {
+  background: var(--navy);
+  border-color: var(--navy);
+  color: #fff;
+}
+
+/* ---- featured: first 2 cards render larger, same shape as regular cards ---- */
+@media (max-width: 767px) {
+  .blog-cards .blog-card.featured .blog-card-image { flex-basis: 45%; }
+}
+
+.blog-cards .blog-card.featured .blog-card-body .blog-card-title {
+  font-size: 24px;
+  line-height: 1.3;
+}
+
+/* ---- 768px+: the vertical 3-up card (6-col grid so featured can span 3/6 = 2-up) ---- */
+@media (min-width: 768px) {
+  .blog-cards .blog-cards-grid { grid-template-columns: repeat(6, 1fr); }
+
+  .blog-cards .blog-card { flex-direction: column; grid-column: span 2; }
+  .blog-cards .blog-card.featured { grid-column: span 3; }
 
   .blog-cards .blog-card-image {
     flex: 0 0 auto;
     height: 121px;
   }
 
+  .blog-cards .blog-card.featured .blog-card-image { height: 200px; }
+
   .blog-cards .blog-card-body {
-    /* fills the rest of the card so the white body reaches its bottom edge */
     flex: 1;
     padding: 20px;
   }
@@ -150,12 +178,10 @@
 
 @media (min-width: 1200px) {
   .blog-cards .blog-card-image { height: 248px; }
+  .blog-cards .blog-card.featured .blog-card-image { height: 320px; }
 }
 
-/* The source's own stylesheet only applies its `small` card type scale from
-   1360px up, so between 1200px and 1359px its title silently falls back to
-   16px/400 — an unintended gap in that file. The 20px/700 tablet step above
-   carries through that band here instead of replicating the fallback. */
+/* carries the tablet type scale through 1200-1359px */
 @media (min-width: 1360px) {
   .blog-cards .blog-card .blog-card-body .blog-card-category { font-size: 16px; }
 
@@ -166,12 +192,7 @@
   }
 }
 
-/* ---- carousel-variant override ----
-   Everything else is covered by the 0,4,0 selectors above, but the image is
-   `.blog-cards .blog-card .blog-card-image img` (0,3,1) — an exact
-   specificity tie with carousel.css's `.carousel.cards .carousel-slide img`,
-   which wins on load order (carousel.css arrives later, on demand). One more
-   class restores the absolute fill the layout above relies on. */
+/* one more class than carousel.css's tied-specificity image rule */
 .blog-cards .carousel-slide .blog-card .blog-card-image img {
   height: 100%;
 }

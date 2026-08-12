@@ -1,33 +1,64 @@
-/* event-cards — auto-populated grid, sourced from /events/query-index.json */
-.event-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 28px; }
+/* event-cards — auto-populated grid, sourced from /events/query-index.json
+   NOTE: the page's lead band is above the fold, so it lives in styles/styles.css
+   (eager) — styling it from this lazily-loaded file caused a 0.28 CLS. */
+
+/* the Upcoming bucket sits on a pale blue band with a large centred heading;
+   On-demand is the same heading on plain white (matches erp.intuit.com) */
+.section.event-cards-container { padding: var(--section-y) 0; }
+.section.event-cards-container:has(.event-cards.upcoming) { background: #eff4f9; }
+
+/* the original insets the card row from the section's own gutter — three cards
+   plus their gaps span 1153px rather than the full container width */
+.event-cards-container .event-cards-wrapper {
+  box-sizing: content-box;
+  max-width: 1153px;
+  margin: 0 auto;
+}
+
+.event-cards-container .default-content-wrapper h2 {
+  font-size: 48px; line-height: 1.27; font-weight: 500; color: #000;
+  text-align: center; margin: 0 0 20px;
+}
+
+/* matches the lead heading's single 60px tier (see styles.css) */
+@media (width >= 1200px) {
+  .event-cards-container .default-content-wrapper h2 { font-size: 60px; }
+}
+
+/* --event-gap is shared by the static grid, the carousel track, and the track's
+   per-card flex-basis — they must agree or a page won't align to the viewport */
+.event-cards { --event-gap: 18px; }
+.event-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: var(--event-gap); }
 
 .event-card {
   grid-column: span 2; display: flex; flex-direction: column; background: #fff;
-  border-radius: var(--radius-card); overflow: hidden; box-shadow: 0 2px 12px rgb(0 0 0 / 6%);
+  border-radius: 8px; overflow: hidden; box-shadow: 0 6px 24px rgb(0 0 0 / 20%);
 }
 
-.event-card-image { position: relative; padding-top: 62.5%; background: var(--sand); }
+.event-card-image { position: relative; padding-top: 57.9%; background: var(--sand); }
 .event-card-image picture, .event-card-image img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
 
-.event-card-badge {
-  position: absolute; top: 14px; left: 14px; padding: 5px 12px; border-radius: 999px;
-  background: #fff; color: var(--primary); font-size: 12px; font-weight: 700;
-  letter-spacing: 0.03em; text-transform: uppercase;
-}
+.event-card-body { display: flex; flex-direction: column; align-items: flex-start; gap: 20px; padding: 40px; flex: 1; }
+.event-card-type { margin: 0; font-size: var(--body-font-size-m); line-height: 1.5; color: #000; }
+.event-card-body h3 { margin: 0; font-size: 20px; line-height: 1.4; font-weight: 600; color: #000; }
+.event-card-description { margin: 0; font-size: var(--body-font-size-m); line-height: 1.5; color: #000; }
+.event-card-detail { margin: 0 0 4px; font-size: var(--body-font-size-m); line-height: 1.5; color: #000; }
+.event-card-detail:last-child { margin-bottom: 0; }
 
-.event-card-body { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 20px 22px 24px; flex: 1; }
-.event-card-body h3 { margin: 0; font-size: 20px; line-height: 1.3; font-weight: 600; color: var(--heading); }
-.event-card-meta { margin: 0; font-size: 13px; font-weight: 600; color: var(--primary); }
-.event-card-description { margin: 0; font-size: 15px; line-height: 1.5; color: var(--text-muted); }
-.event-card-speakers { margin: 0; font-size: 13px; color: var(--text-muted); }
-.event-card-body .button { margin-top: auto; padding-top: 4px; }
+/* auto drops the CTA to the card's baseline so CTAs line up across a row; the
+   body's gap guarantees breathing room when the copy is long enough to fill it */
+.event-card-body .button { margin-top: auto; min-height: 52px; }
 
 @media (width <= 900px) {
   .event-grid { grid-template-columns: repeat(2, 1fr); }
   .event-card { grid-column: span 2; }
+  .event-card-body { padding: 40px 20px; }
 }
 
+/* 48px would wrap "On-demand" awkwardly on a narrow phone, so this is the one
+   step-down upstream does not have */
 @media (width <= 600px) {
+  .event-cards-container .default-content-wrapper h2 { font-size: 36px; }
   .event-grid { grid-template-columns: 1fr; }
   .event-card { grid-column: span 1; }
 }
@@ -38,32 +69,51 @@
 
 .event-cards .events-track.event-grid {
   display: flex;
-  gap: 28px;
+  gap: var(--event-gap);
   transition: transform 0.4s ease;
 }
 
 .event-cards .events-track.event-grid .event-card {
-  flex: 0 0 calc((100% - (var(--cards-per-view) - 1) * 28px) / var(--cards-per-view));
+  flex: 0 0 calc((100% - (var(--cards-per-view) - 1) * var(--event-gap)) / var(--cards-per-view));
   min-width: 0;
 }
 
-.event-cards .events-controls { display: flex; align-items: center; justify-content: center; gap: 24px; margin-top: 28px; }
-.event-cards .events-dots { display: flex; gap: 20px; align-items: center; }
-
-.event-cards .events-dots .dot {
-  width: 12px; height: 12px; border-radius: 50%; background: #cbd1d6; border: none; padding: 0;
-  cursor: pointer; position: relative; transition: background-color 0.3s ease, transform 0.3s ease;
+/* controls sit at the trailing edge of the card row, dots then arrows (upstream).
+   flex-wrap is the phone guard: a one-card-per-view bucket has as many dots as
+   events, which would otherwise push the arrows past the viewport edge. */
+.event-cards .events-controls {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end;
+  gap: 30px; margin-top: 24px;
 }
 
-/* expand the hit area to a 24×24px minimum touch target without growing the visible dot */
-.event-cards .events-dots .dot::after { content: ""; position: absolute; inset: -6px; }
-.event-cards .events-dots .dot.active { background: var(--navy); transform: scale(1.1); }
-.event-cards .events-nav { display: flex; gap: 12px; }
+.event-cards .events-dots { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center; }
+
+/* upstream distinguishes state by opacity on one ink colour, not by hue */
+.event-cards .events-dots .dot {
+  width: 12px; height: 12px; border-radius: 50%; border: none; padding: 0;
+  background: var(--ink-teal, #0d333f); opacity: 0.25;
+  cursor: pointer; position: relative; transition: opacity 0.3s ease;
+}
+
+/* expand the hit area to upstream's 20×20px touch target without growing the visible dot */
+.event-cards .events-dots .dot::after { content: ""; position: absolute; inset: -4px; }
+.event-cards .events-dots .dot.active { opacity: 0.75; }
+.event-cards .events-nav { display: flex; gap: 40px; }
 
 .event-cards .events-arrow {
-  width: 40px; height: 40px; border-radius: 50%; border: none; background: var(--navy); color: #fff;
-  display: flex; align-items: center; justify-content: center; font-size: 18px; line-height: 1; cursor: pointer;
+  width: 60px; height: 60px; border-radius: 50%; border: none;
+  background: var(--ink-teal, #0d333f); color: #fff;
+  display: flex; align-items: center; justify-content: center; font-size: 24px; line-height: 1; cursor: pointer;
 }
 .event-cards .events-arrow:disabled { background: #859299; opacity: 0.6; cursor: not-allowed; }
 
-@media (width <= 900px) { .event-cards { --cards-per-view: 1; } }
+/* Must follow the base control rules above — same specificity, so source order
+   decides. Upstream centres the controls below 900px and hides the arrows,
+   relying on swipe; this block has no touch handler, so the arrows stay as the
+   only reliable way to page, shrunk to a 44px minimum touch target. */
+@media (width <= 900px) {
+  .event-cards { --cards-per-view: 1; }
+  .event-cards .events-controls { justify-content: center; gap: 20px; }
+  .event-cards .events-nav { gap: 20px; }
+  .event-cards .events-arrow { width: 44px; height: 44px; font-size: 20px; }
+}

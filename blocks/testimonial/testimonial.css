@@ -94,7 +94,37 @@
 .video-modal-close:hover { background: rgb(255 255 255 / 28%); }
 
 /* ---- default (compare cyan band) ---- */
-.section.testimonial-container:has(.testimonial:not(.video, .card)) { background: var(--sky); padding: var(--section-y) 0; }
+.section.testimonial-container:has(.testimonial:not(.video, .video-split, .card)) { background: var(--sky); padding: var(--section-y) 0; }
+
+/* ---- .video-split (professional-services): copy left, video right ---- */
+.section.testimonial-container:has(.testimonial.video-split) {
+  background: var(--wintermint); padding: var(--section-y) 0;
+}
+
+.testimonial.video-split .split-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 0 clamp(40px, 6vw, 110px);
+  align-items: center; max-width: 1160px; margin: 0 auto;
+}
+
+/* regular weight: upstream's h2 computes 700 but the <strong> inside it renders
+   at 400, so the visible heading is not bold */
+.testimonial.video-split .split-title {
+  font-size: 40px; line-height: 52px; font-weight: 400; color: #000; margin: 0 0 32px;
+}
+.testimonial.video-split .split-body { font-size: 16px; line-height: 24px; color: #000; margin: 0; }
+
+.testimonial.video-split .split-copy { max-width: 30em; }
+.testimonial.video-split .split-media { position: relative; }
+.testimonial.video-split .split-media img { width: 100%; height: auto; display: block; border-radius: 4px; }
+
+.testimonial.video-split .split-play {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: 100px; height: 100px; border-radius: 50%; border: 0;
+  background: rgb(255 255 255 / 92%); color: var(--navy);
+  font-size: 30px; line-height: 1; cursor: pointer;
+}
+.testimonial.video-split .split-play:hover { background: #fff; }
+.testimonial.video-split .split-play:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
 
 /* ---- .card section background ---- */
 .section.testimonial-container:has(.testimonial.card) { background: var(--background-color); padding: var(--section-y) 0; }
@@ -124,6 +154,10 @@
   .testimonial:not(.video) .cmp-testi-grid { grid-template-columns: 1fr; gap: 28px; }
   .testimonial .cmp-testi-media { order: -1; }
   .testimonial .cmp-quote { font-size: 20px; }
+
+  .testimonial.video-split .split-grid { grid-template-columns: 1fr; gap: 28px; }
+  .testimonial.video-split .split-title { font-size: 28px; line-height: 1.25; margin: 0 0 20px; }
+  .testimonial.video-split .split-play { width: 64px; height: 64px; font-size: 22px; }
 }
 
 /* ---- .card (photo + quote row) ---- */

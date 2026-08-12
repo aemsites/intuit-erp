@@ -41,6 +41,12 @@ function buildPanel(contentCell, index) {
 
   const media = document.createElement('div');
   media.className = 'tab-media';
+  // The picture lives inside a full-width inner wrapper so it can be parked
+  // fully off to one side (translateX) and slide back in — .tab-media itself
+  // clips it (overflow:hidden). See setPanelStates() in decorate().
+  const mediaInner = document.createElement('div');
+  mediaInner.className = 'tab-media-inner';
+  media.append(mediaInner);
   const copy = document.createElement('div');
   copy.className = 'tab-copy';
 
@@ -52,7 +58,7 @@ function buildPanel(contentCell, index) {
   nodes.forEach((el, i) => {
     const pic = el.matches('picture, img') ? el : el.querySelector('picture, img');
     if (pic) {
-      media.append(pic.closest('picture') || pic);
+      mediaInner.append(pic.closest('picture') || pic);
       return;
     }
     if (el === headingEl) {
@@ -144,9 +150,21 @@ export default function decorate(block) {
       b.classList.toggle('active', i === idx);
       b.setAttribute('aria-selected', i === idx ? 'true' : 'false');
     });
-    panels.forEach((p, i) => p.classList.toggle('is-active', i === idx));
+    // Park each panel's media relative to the newly-selected tab: panels to the
+    // left of it sit left (is-before), panels to the right sit right (is-after).
+    // Because parking is by *relative* position, the incoming panel always
+    // enters from the side matching the direction of travel (and the outgoing
+    // one leaves the opposite way) — the directional slide the source uses.
+    panels.forEach((p, i) => {
+      p.classList.toggle('is-active', i === idx);
+      p.classList.toggle('is-before', i < idx);
+      p.classList.toggle('is-after', i > idx);
+    });
     tabButtons[idx].scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
   };
+  // Initial parking (tab 0 active → every other panel waits off to the right)
+  // without the smooth scrollIntoView that select() would trigger on load.
+  panels.forEach((p, i) => p.classList.toggle('is-after', i > 0));
 
   prevBtn.addEventListener('click', () => select(Math.max(0, activeIndex() - 1)));
   nextBtn.addEventListener('click', () => select(Math.min(tabButtons.length - 1, activeIndex() + 1)));

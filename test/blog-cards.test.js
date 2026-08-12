@@ -1,15 +1,17 @@
 import { describe, it, expect } from 'vitest';
-import { filterEntries, cardEl, categoryLabel } from '../blocks/blog-cards/blog-cards.js';
+import {
+  filterEntries, cardEl, categoryLabel, distinctValues,
+} from '../blocks/blog-cards/blog-cards.js';
 
 const data = [
   {
-    path: '/blog/financials/a', title: 'A', category: 'financials', date: '2026-02-01', author: 'abigail-sims', image: '/a.jpg', description: 'da',
+    path: '/blog/financials/a', title: 'A', category: 'financials', date: '2026-02-01', author: 'abigail-sims', image: '/a.jpg', description: 'da', tags: 'automation, ai',
   },
   {
-    path: '/blog/erp/b', title: 'B', category: 'erp', date: '2026-03-01', author: 'bob-wang', image: '/b.jpg', description: 'db',
+    path: '/blog/erp/b', title: 'B', category: 'erp', date: '2026-03-01', author: 'bob-wang', image: '/b.jpg', description: 'db', tags: 'automation',
   },
   {
-    path: '/blog/financials/c', title: 'C', category: 'financials', date: '2026-01-01', author: 'abigail-sims', image: '/c.jpg', description: 'dc',
+    path: '/blog/financials/c', title: 'C', category: 'financials', date: '2026-01-01', author: 'abigail-sims', image: '/c.jpg', description: 'dc', tags: 'multi-entity',
   },
 ];
 
@@ -62,6 +64,26 @@ describe('filterEntries', () => {
     const out = filterEntries(data, { category: ['financials', 'erp'], limit: 2 });
     expect(out.map((e) => e.title)).toEqual(['B', 'A']);
   });
+  it('filters by tags, matching any of the entry\'s own comma-separated tags', () => {
+    const out = filterEntries(data, { tags: 'automation' });
+    expect(out.map((e) => e.title)).toEqual(['B', 'A']);
+  });
+  it('accepts multiple requested tags (OR)', () => {
+    const out = filterEntries(data, { tags: 'ai, multi-entity' });
+    expect(out.map((e) => e.title)).toEqual(['A', 'C']);
+  });
+  it('matches tags case-insensitively (real feed data uses ["Automation"], not ["automation"])', () => {
+    const mixed = [
+      { path: '/blog/operations/x', title: 'X', date: '2026-01-01', tags: ['Automation'] },
+    ];
+    expect(filterEntries(mixed, { tags: 'automation' }).map((e) => e.title)).toEqual(['X']);
+  });
+  it('matches tags across hyphen vs. space — tags are phrases, not slugs', () => {
+    const mixed = [
+      { path: '/blog/financials/y', title: 'Y', date: '2026-01-01', tags: ['Funding and ownership'] },
+    ];
+    expect(filterEntries(mixed, { tags: 'funding-and-ownership' }).map((e) => e.title)).toEqual(['Y']);
+  });
   it('filters by template (case-insensitively) — one blog index for every collection', () => {
     const mixed = [
       { path: '/blog/erp/b', title: 'Article', template: 'Blog Article', date: '2026-03-01' },
@@ -96,7 +118,9 @@ describe('cardEl', () => {
     const el = cardEl(data[0]);
     expect(el.tagName).toBe('A');
     expect(el.getAttribute('href')).toBe('/blog/financials/a');
-    expect(el.querySelector('img').getAttribute('src')).toBe('/a.jpg');
+    const img = el.querySelector('img');
+    expect(img.getAttribute('src')).toContain('/a.jpg');
+    expect(img.getAttribute('src')).toContain('width=400');
     expect(el.textContent).toContain('A');
   });
   it('renders category, title and date in the source card\'s order', () => {
@@ -107,5 +131,24 @@ describe('cardEl', () => {
   it('omits the category for an entry with no category to show', () => {
     const el = cardEl({ path: '/blog/erp', title: 'Listing' });
     expect(el.querySelector('.blog-card-category')).toBeNull();
+  });
+  it('is not featured by default (no featured class, smaller image request)', () => {
+    const el = cardEl(data[0]);
+    expect(el.className).not.toContain('featured');
+    expect(el.querySelector('img').getAttribute('src')).toContain('width=400');
+  });
+  it('renders a featured card with the featured class and a larger image request', () => {
+    const el = cardEl(data[0], true);
+    expect(el.classList.contains('featured')).toBe(true);
+    expect(el.querySelector('img').getAttribute('src')).toContain('width=750');
+  });
+});
+
+describe('distinctValues', () => {
+  it('returns sorted, deduped, non-empty values for a field', () => {
+    expect(distinctValues(data, 'category')).toEqual(['erp', 'financials']);
+  });
+  it('returns an empty array when no entry has the field', () => {
+    expect(distinctValues(data, 'industry')).toEqual([]);
   });
 });

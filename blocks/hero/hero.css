@@ -4,6 +4,10 @@
   background: var(--navy);
   color: #fff;
   overflow: hidden;
+
+  &.gradient {
+    background: conic-gradient(from 103deg at 28.36% 120.78%, #04193C 115.9615deg, #041F53 204.2308deg, #03339C 267.2082deg, #0F44AC 273.7572deg, #2B66D0 289.9528deg, #3875E0 324.4898deg, #BB95CD 329.7278deg, #DEBCB3 334.1040deg, #041839 359.1429deg);
+  }
 }
 
 .hero .hero-grid {
@@ -19,8 +23,8 @@
    .eyebrow class's bold), white, 12px/16px */
 .hero .hero-copy .hero-eyebrow {
   color: #fff;
-  font-weight: 400;
-  font-size: 12px;
+  font-weight: 600;
+  font-size: 16px;
   line-height: 16px;
   letter-spacing: normal;
   margin-bottom: 16px;
@@ -35,6 +39,10 @@
   color: #fff;
 }
 
+.hero .hero-copy .button {
+  margin-bottom: 1rem;
+}
+
 .hero .hero-copy .hero-lede {
   font-size: 20px;
   line-height: 1.4;
@@ -44,7 +52,6 @@
 }
 
 .hero .hero-actions { display: flex; gap: 16px; flex-wrap: wrap; margin: 0; }
-
 .hero .hero-media { position: relative; isolation: isolate; }
 
 /* max-height caps the band's overall height for square/portrait photos
@@ -126,7 +133,8 @@
 
 /* ---- .hero.form (pricing) — lead card on the right, content from the
    shared schedule-call fragment (content/fragments/schedule-call.html) ---- */
-.hero.form .hero-grid { grid-template-columns: 1fr 470px; gap: 60px; min-height: 560px; }
+.hero.form .hero-grid {grid-template-columns: 1fr 550px;gap: 60px;min-height: 560px;}
+.hero.form .hero-grid:has(.hero-copy > h1:only-child) { align-items: center; }
 .hero.form .hero-copy h1 { font-size: 52px; max-width: 7em; margin-bottom: 0; }
 
 .hero .hero-form {

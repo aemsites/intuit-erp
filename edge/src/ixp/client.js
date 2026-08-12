@@ -2,10 +2,10 @@
  * Client for Intuit's IXP Assignment API — `GET .../v2/assignment`.
  *
  * This is the edge worker's view of the *real* service. It is deliberately
- * decoupled from the mock (`src/mock/*`): both independently model the same wire
- * contract. Point `IXP_ASSIGNMENT_URL` at the mock for local dev / demos, then at
- * `experimentation[-preview].us.api.intuit.com` once a key is available — nothing
- * else in the worker changes.
+ * decoupled from the test mock (`test/mocks/*`): both independently model the
+ * same wire contract. `IXP_ASSIGNMENT_URL` points at
+ * `experimentation[-preview].us.api.intuit.com`; the `IXP_API_KEY` it
+ * authenticates with is a `wrangler secret` (never in vars/committed).
  *
  * Only the fields the consumer actually reads are documented here (the full field
  * reference lives in the spec / the mock). The API answers graceful cases with
@@ -24,7 +24,7 @@
  * @property {number} experimentId
  * @property {IxpExperimentType} experimentType
  * @property {string} label
- * @property {string} payload JSON string. Page-level decision: `{ sourceUrl, variationUrl }`.
+ * @property {string} payload JSON string. Page-level decision: `{ "intuit.com.integration.variation.html": <path> }`.
  * @property {string | null} assetLocation Block-level decision: a content ref the renderer fetches + injects.
  * @property {boolean} control True on the control arm ⇒ the worker shows the baseline (passthrough).
  */
@@ -72,6 +72,10 @@ function authHeader(apiKey) {
  * @returns {Promise<IxpAssignmentResponse | null>}
  */
 export async function fetchAssignment(env, params) {
+  // Without a host + key the request is unauthenticated (would 4xx); skip it and
+  // pass the page through, mirroring the batch client's guard.
+  if (!env.IXP_ASSIGNMENT_URL || !env.IXP_API_KEY) return null;
+
   const url = new URL(env.IXP_ASSIGNMENT_URL);
   url.searchParams.set('ivid', params.ivid);
   if (params.experimentId !== undefined) url.searchParams.set('experimentId', String(params.experimentId));

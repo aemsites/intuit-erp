@@ -1,20 +1,15 @@
 /**
- * Personalization source resolution.
+ * Offer rendering — the shared tail of every personalization flow.
  *
- * Two concerns, both deliberately swappable:
+ * The flows (Decision Engine `de/*`, IXP `ixp/*`, template fill) each decide
+ * *which* offer applies to a request and hand this module a `PznEntry`. This
+ * module resolves the *offer* itself — the actual content to inject.
  *
- *  1. The *map* — which offer applies to a path. Today this is a mock JSON sheet
- *     (`PZN_MAP_URL`) that proxies Intuit's real pzn service. When the real
- *     service arrives, only `fetchMap` changes (e.g. POST the path + audience
- *     signals, or swap in a service binding). Nothing else in the worker cares.
- *
- *  2. The *offer* — the actual content to inject. Today offers are authored EDS
- *     fragments under `/fragments/pzn/` and fetched as `.plain.html`. If Intuit
- *     later sends offers as JSON, render them to fragment markup with json2html
- *     (https://www.aem.live/developer/json2html) at the seam marked below.
- *
- * The worker does NO decisioning — it renders whatever the map resolves for a
- * path. Intuit's service (and RTCDP) decide which offer applies.
+ * Today offers are authored EDS fragments under `/fragments/pzn/` fetched as
+ * `.plain.html` and injected verbatim. If Intuit later sends offers as JSON,
+ * render them to fragment markup with json2html
+ * (https://www.aem.live/developer/json2html) at the seam marked below. The
+ * worker does NO decisioning — it renders what it is given.
  */
 
 /**
@@ -30,50 +25,7 @@
  */
 
 /**
- * Normalizes a path for comparison (drops a trailing slash except at root).
- * @param {string} path
- * @returns {string}
- */
-function normalizePath(path) {
-  return path.length > 1 && path.endsWith('/') ? path.slice(0, -1) : path;
-}
-
-/**
- * Fetches the personalization map. Swap this for the real pzn service call.
- * Returns [] on any failure so the caller falls back to an untouched passthrough.
- * @param {Env} env
- * @returns {Promise<PznEntry[]>}
- */
-async function fetchMap(env) {
-  try {
-    const res = await fetch(env.PZN_MAP_URL, {
-      // The map is intentionally not cached at the edge yet — caching is an
-      // open design question (see README). Revisit once the real pzn service
-      // and its cache semantics are known.
-      cf: { cacheTtl: 0 },
-    });
-    if (!res.ok) return [];
-    const json = await res.json();
-    return Array.isArray(json?.data) ? json.data : [];
-  } catch {
-    return [];
-  }
-}
-
-/**
- * Resolves the map entry for a path, or null if the path is not personalized.
- * @param {Env} env
- * @param {string} path
- * @returns {Promise<PznEntry | null>}
- */
-export async function resolvePznEntry(env, path) {
-  const entries = await fetchMap(env);
-  const target = normalizePath(path);
-  return entries.find((e) => normalizePath(e.path) === target) ?? null;
-}
-
-/**
- * Escapes a value for safe insertion into HTML (offer data is service-supplied).
+ * Escapes a value for safe insertion into HTML (service-supplied values).
  * @param {string} value
  * @returns {string}
  */
@@ -86,37 +38,12 @@ export function escapeHtml(value) {
     .replace(/'/g, '&#39;');
 }
 
-/** A `{{key}}` or `{{key|default}}` placeholder in an offer template. */
-const TOKEN_RE = /\{\{\s*([\w.-]+)\s*(?:\|([^}]*))?\}\}/g;
-
 /**
- * Fills `{{token}}` / `{{token|default}}` placeholders in offer markup from the
- * entry's `data`. A present value wins (HTML-escaped, since it comes from the
- * pzn service); otherwise the author's `|default` is used; otherwise empty.
+ * Resolves the offer markup to inject for an entry.
  *
- * This is the json2html seam in its lightest form: the personalization *data*
- * renders into an authored template. Markup with no tokens is returned unchanged,
- * so existing (token-free) fragments are unaffected.
- * @param {string} markup
- * @param {Record<string, string>} [data]
- * @returns {string}
- */
-export function fillTokens(markup, data) {
-  return markup.replace(TOKEN_RE, (_full, key, def) => {
-    const value = data?.[key];
-    if (value !== undefined) return escapeHtml(String(value));
-    return def ?? '';
-  });
-}
-
-/**
- * Resolves the offer markup to inject for a map entry.
- *
- * Currently: fetch the referenced EDS fragment as `.plain.html`, then fill its
- * `{{token}}` placeholders from the entry's `data` (an IXP assignment payload, or
- * a `data` object on a map row). No data / no tokens → the markup is unchanged.
- * Seam: if the map/service ever hands us a JSON offer instead of a fragment ref,
- * branch here and render it via json2html before returning the markup.
+ * Currently: fetch the referenced EDS fragment as `.plain.html` and inject it
+ * verbatim. Seam: if the service ever hands us a JSON offer instead of a fragment
+ * ref, branch here and render it via json2html before returning the markup.
  *
  * Returns the markup plus the fragment response headers (for cache-key
  * propagation), or null on any failure so the caller passes the page through
@@ -143,6 +70,9 @@ export async function resolveOfferMarkup(env, entry) {
 
   const headers = {
     'accept-encoding': 'identity',
+    // Site authentication: the fragment lives on the protected origin too, so
+    // carry the same site token index.js sends on the page request.
+    ...(env.ORIGIN_AUTHENTICATION ? { authorization: `token ${env.ORIGIN_AUTHENTICATION}` } : {}),
   };
   if (env.PUSH_INVALIDATION !== 'disabled') {
     headers['x-byo-cdn-type'] = 'cloudflare';
@@ -156,9 +86,8 @@ export async function resolveOfferMarkup(env, entry) {
     });
     const ct = res.headers.get('content-type') || '';
     if (!res.ok || !ct.includes('text/html')) return null;
-    // JSON2HTML seam: the fetched fragment is a template; fill its `{{token}}`
-    // placeholders from the offer's `data`. No data / no tokens → unchanged.
-    return { markup: fillTokens(await res.text(), entry.data), headers: res.headers };
+    // JSON2HTML seam: if offers ever arrive as JSON, render them to markup here.
+    return { markup: await res.text(), headers: res.headers };
   } catch {
     return null;
   }

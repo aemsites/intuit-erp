@@ -1,0 +1,317 @@
+/*
+ * contact-us — persistent bottom-right sales widget (ported from
+ * erp.intuit.com). Mobile-first: dark ball/pill trigger + full-width bottom
+ * sheet; desktop (min-width 600px): white circular bubble + anchored card.
+ * Two variants share this sheet — .cu-default ("Contact us") and
+ * .cu-blog ("Talk to sales"). JS: blocks/contact-us/contact-us.js
+ */
+
+.contact-us {
+  --cu-green: #0a8543;
+  --cu-blue: #236cff;
+  --cu-dark: #0d333f;
+  --cu-grey: #c4c4c4;
+  --cu-border: #d4d7dc;
+
+  position: fixed;
+  right: 12px;
+  bottom: 12px;
+  z-index: 1000;
+  font-family: var(--body-font-family, "AvenirNext forINTUIT", helvetica, arial, sans-serif);
+}
+
+.contact-us button {
+  margin: 0;
+  font-family: inherit;
+}
+
+/* breakpoint visibility helpers */
+.contact-us .cu-desktop,
+.contact-us .cu-desktop-only {
+  display: none;
+}
+
+/* ---------- mobile trigger: dark ball (default) / pill (blog) ---------- */
+.contact-us .cu-ball {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--cu-dark);
+  box-shadow: 0 6px 24px 0 rgb(196 196 196 / 80%);
+  color: #fff;
+  cursor: pointer;
+}
+
+.contact-us .cu-ball-pill {
+  width: auto;
+  height: 48px;
+  gap: 8px;
+  padding: 0 20px;
+  border-radius: 9999px;
+}
+
+.contact-us .cu-ball-label {
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.contact-us .cu-ico-ball {
+  width: 24px;
+  height: 24px;
+}
+
+/* ---------- panel (mobile bottom sheet) ---------- */
+.contact-us .cu-panel {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  box-sizing: border-box;
+  max-height: 85vh;
+  padding: 20px 20px 32px;
+  overflow-y: auto;
+  border: 0;
+  border-radius: 12px 12px 0 0;
+  background: #fff;
+  box-shadow: 0 -8px 20px rgb(0 0 0 / 10%);
+  color: #000;
+}
+
+.contact-us .cu-panel[hidden] {
+  display: none;
+}
+
+.contact-us .cu-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: inline-flex;
+  padding: 4px;
+  border: 0;
+  background: none;
+  color: var(--cu-grey);
+  line-height: 0;
+  cursor: pointer;
+}
+
+.contact-us .cu-panel-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.contact-us .cu-headline {
+  margin: 24px 0 20px;
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 44px;
+}
+
+.contact-us .cu-headline-default {
+  color: var(--cu-green);
+}
+
+.contact-us .cu-headline-blog {
+  color: var(--cu-blue);
+}
+
+.contact-us .cu-subhead {
+  margin: 0 0 20px;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 28px;
+  color: #000;
+}
+
+.contact-us .cu-hours {
+  margin: 0;
+  font-size: 16px;
+  line-height: 22px;
+  color: #000;
+}
+
+.contact-us .cu-support-label {
+  margin: 0;
+  padding: 40px 0 20px;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 28px;
+  color: #000;
+}
+
+/* CTA buttons */
+.contact-us .cu-btn {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 52px;
+  padding: 0 20px;
+  border-radius: 4px;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.contact-us .cu-btn-secondary {
+  border: 2px solid var(--cu-dark);
+  background: transparent;
+  color: var(--cu-dark);
+}
+
+.contact-us .cu-btn-secondary:hover,
+.contact-us .cu-btn-secondary:focus-visible {
+  background: #09222a;
+  color: #fff;
+}
+
+.contact-us .cu-btn-primary {
+  border: 0;
+  background: var(--cu-green);
+  color: #fff;
+}
+
+/* mobile: CTAs stretch full width */
+.contact-us .cu-call {
+  align-self: stretch;
+  margin: 0 0 12px;
+}
+
+.contact-us .cu-schedule,
+.contact-us .cu-support {
+  align-self: stretch;
+}
+
+/* open state hides the trigger */
+.contact-us.cu-open .cu-ball {
+  display: none;
+}
+
+/* ============================ desktop ============================ */
+@media (min-width: 600px) {
+  .contact-us {
+    right: 40px;
+    bottom: 20px;
+    z-index: 1500;
+  }
+
+  /* swap breakpoint visibility */
+  .contact-us .cu-mobile,
+  .contact-us .cu-mobile-only {
+    display: none;
+  }
+
+  .contact-us .cu-desktop-only {
+    display: block;
+  }
+
+  /* desktop trigger: white circle with phone | chat icons + label */
+  .contact-us .cu-bubble {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 128px;
+    height: 128px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 6px 24px rgb(0 0 0 / 20%);
+    cursor: pointer;
+  }
+
+  .contact-us .cu-bubble-icons {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--cu-blue);
+  }
+
+  .contact-us .cu-ico-phone,
+  .contact-us .cu-ico-chat {
+    width: 21px;
+    height: 21px;
+  }
+
+  .contact-us .cu-pipe {
+    width: 1px;
+    height: 33px;
+    background: var(--cu-blue);
+  }
+
+  .contact-us .cu-bubble-label {
+    padding-top: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 16px;
+    color: #000;
+  }
+
+  .contact-us.cu-open .cu-bubble {
+    display: none;
+  }
+
+  /* desktop panel: card anchored to the bubble corner */
+  .contact-us .cu-panel {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: auto;
+    max-height: none;
+    padding: 40px;
+    overflow: visible;
+    border: 1px solid var(--cu-border);
+    border-radius: 12px;
+    box-shadow: 0 6px 24px rgb(0 0 0 / 20%);
+  }
+
+  .contact-us.cu-default .cu-panel {
+    width: min(625px, 92vw);
+    min-height: 310px;
+  }
+
+  .contact-us.cu-blog .cu-panel {
+    width: min(340px, 92vw);
+    min-height: 410px;
+  }
+
+  .contact-us .cu-close {
+    top: 20px;
+    right: 20px;
+  }
+
+  .contact-us .cu-headline {
+    margin: 20px 0;
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 36px;
+  }
+
+  .contact-us .cu-subhead {
+    margin: 0;
+    font-size: 20px;
+    line-height: 28px;
+  }
+
+  /* desktop CTAs size to content (left-aligned) */
+  .contact-us .cu-btn {
+    height: 48px;
+  }
+
+  .contact-us .cu-schedule,
+  .contact-us .cu-support {
+    align-self: flex-start;
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "v": 1,
+  "endpoints": [
+    {
+      "name": "visitorProfile",
+      "description": "Intuit marketing enrichment for this visitor: household demographics + firmographic signals (Service Integration Payload).",
+      "url": "https://intuit-api-emulator.franklin-prod.workers.dev/api/visitor-enrichment",
+      "method": "POST",
+      "timeoutMs": 400,
+      "inputs": [
+        {
+          "name": "accountId",
+          "from": "account.accountId",
+          "required": true,
+          "description": "Intuit visitor account id (from the of1_profile cookie)"
+        }
+      ],
+      "output": {
+        "description": "Raw Intuit Service Integration Payload (org SBSEG / scope QBO / purpose MKTG). Nested envelope: marketingProfile.{neustar,zoominfo}.attributes[] are {attributeName, attributeValue} pairs; marketingProfile.aep.segments are RTCDP audience UUIDs. The field guide below explains the meaningful attributeName values.",
+        "fields": {
+          "est_hh_income": "neustar: estimated household income band",
+          "occupation": "neustar: occupation",
+          "occupation_group": "neustar: occupation group",
+          "education": "neustar: education level",
+          "homeowner_renter": "neustar: homeowner vs. renter",
+          "marital_status": "neustar: marital status",
+          "gender": "neustar: gender",
+          "person_type": "neustar: household person type",
+          "length_of_residence": "neustar: length of residence at current address (years)",
+          "avg_hh_size": "neustar: average household size",
+          "median_family_household_income": "neustar: median family household income",
+          "zi_c_industry_primary": "zoominfo: primary company industry",
+          "zi_c_sub_industry_primary": "zoominfo: company sub-industry",
+          "zi_c_employees": "zoominfo: company employee count",
+          "zi_c_employee_range": "zoominfo: company employee-count band",
+          "zi_c_revenue_range": "zoominfo: company revenue band",
+          "zi_c_employee_growth_1yr": "zoominfo: 1-year company employee growth (%)",
+          "zi_c_tech_sophistication": "zoominfo: company technology sophistication",
+          "zi_c_marketing_sophistication": "zoominfo: company marketing sophistication",
+          "zi_c_is_b2b": "zoominfo: company sells B2B (1/0)",
+          "zi_c_is_b2c": "zoominfo: company sells B2C (1/0)",
+          "marketingProfile.aep.segments": "RTCDP/AJO audience segment UUIDs the visitor belongs to (buying-group role, IES Trial, etc.); resolve names via of1/config/audiences.json"
+        }
+      }
+    }
+  ]
+}

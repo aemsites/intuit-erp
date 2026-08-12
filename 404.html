@@ -11,6 +11,17 @@
   <script nonce="aem" type="text/javascript">
     window.isErrorPage = true;
     window.errorCode = '404';
+    // Trailing-slash recovery: EDS serves /page and /page/ as different
+    // resources and does not redirect between them, so /page/ 404s. When this
+    // error page loads for a path with a trailing slash, redirect to the
+    // canonical slash-free path (preserving query + hash) before anything
+    // paints. replace() keeps the bad URL out of history.
+    (function redirectTrailingSlash() {
+      const { pathname, search, hash } = window.location;
+      if (pathname.length > 1 && pathname.endsWith('/')) {
+        window.location.replace(pathname.replace(/\/+$/, '') + search + hash);
+      }
+    }());
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta property="og:title" content="Page not found">
