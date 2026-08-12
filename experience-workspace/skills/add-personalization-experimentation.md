@@ -1,6 +1,6 @@
 ---
 name: add-personalization-experimentation
-description: Tag a page, section, or block for Personalization (pzn) or Experimentation (exp) by writing the right rows into the DA source — page-level experiment metadata, or Section Metadata keys that the aem.live pipeline turns into data-pzn / data-exp attributes on the section. Also attaches up to 5 content variants (fragments or pages). Use when an author or agent wants to mark an area of a page as personalized or experiment-targeted, without the DA panel.
+description: Tag a page, section, or block for Personalization (pzn) or Experimentation (exp) by writing the right rows into the DA source — page-level experiment metadata, or Section Metadata keys that the aem.live pipeline turns into data-pzn / data-exp attributes on the section. Also attaches up to 5 content variants (fragments). Use when an author or agent wants to mark an area of a page as personalized or experiment-targeted, without the DA panel.
 version: 2
 status: approved
 ---
@@ -54,7 +54,8 @@ Up to **5** per tag, stored as one comma-separated cell (splits on comma or newl
 `aem.page`/`hlx.page` URLs to a pathname):
 
 - **Block/section (`pzn`/`exp`)** → **fragment** paths under `/fragments/pzn/…`.
-- **Page-level experimentation** → **page** paths.
+- **Page-level experimentation** → **fragment** paths under `/fragments/experiments/…` (the whole-page
+  variant authored as a fragment). Both are picked from the same DA fragment picker.
 
 Write variant references as **plain text** (not DA links) so the pipeline's data-attribute value stays clean
 and body `/fragments/` autoblocking is never triggered.
@@ -97,7 +98,7 @@ All authored as nested `<div>`s (never literal `<table>`), inside `<main>`.
     <div><div>Title</div><div>My Page</div></div>
     <div><div>experiment-id</div><div>385944</div></div>
     <div><div>experiment-label</div><div>Homepage hero test</div></div>
-    <div><div>experiment-variants</div><div>/drafts/pzn/variant-a, /drafts/pzn/variant-b</div></div>
+    <div><div>experiment-variants</div><div>/fragments/experiments/variant-a, /fragments/experiments/variant-b</div></div>
   </div>
 </div>
 ```

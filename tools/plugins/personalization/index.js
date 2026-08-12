@@ -11,7 +11,7 @@ import {
   clearPageExperiment,
   buildFormData,
 } from './experience.js';
-import { pickFragment, promptPath } from './picker.js';
+import pickFragment from './picker.js';
 
 const DA_ADMIN = 'https://admin.da.live';
 const MAX_VARIANTS = 5;
@@ -163,7 +163,10 @@ function sectionForm(target, mode) {
     scope.appendChild(opt);
   });
 
-  const variants = variantList(cur.variants, () => pickFragment(state.sdk));
+  const variants = variantList(
+    cur.variants,
+    () => pickFragment(state.sdk, { placeholder: '/fragments/pzn/…' }),
+  );
 
   const saveBtn = el('button', {
     class: 'pzn-save',
@@ -202,7 +205,7 @@ function pageForm(target) {
   });
   const variants = variantList(
     target.experimentVariants,
-    () => promptPath({ label: 'Add a page variant', placeholder: '/path/to/variant-page' }),
+    () => pickFragment(state.sdk, { placeholder: '/fragments/experiments/…' }),
   );
 
   const saveBtn = el('button', {
@@ -223,7 +226,7 @@ function pageForm(target) {
     err.element,
     el('label', { class: 'pzn-field-label', text: 'Experiment label (optional)' }),
     labelInput,
-    el('label', { class: 'pzn-field-label', text: `Variants — pages (max ${MAX_VARIANTS})` }),
+    el('label', { class: 'pzn-field-label', text: `Variants — fragments (max ${MAX_VARIANTS})` }),
     variants.element,
     saveBtn,
   ]);
@@ -255,19 +258,24 @@ function sectionCurrent(target) {
   return el('div', { class: 'pzn-current' }, rows);
 }
 
-/** Section popup: current tags, a mode selector, and the chosen mode's form. */
-function openSectionPopup(target) {
+/**
+ * Section popup: current tags, a mode selector, and both mode forms. Both forms
+ * are mounted once and toggled (not rebuilt), so unsaved edits in one tab survive
+ * switching to the other. Opens on `initialMode`.
+ */
+function openSectionPopup(target, initialMode = 'exp') {
   closePopup();
-  const body = el('div', { class: 'pzn-popup-body' });
+  const forms = { exp: sectionForm(target, 'exp'), pzn: sectionForm(target, 'pzn') };
+  const body = el('div', { class: 'pzn-popup-body' }, [forms.exp, forms.pzn]);
   const selector = el('div', { class: 'pzn-mode-select' });
 
   const showMode = (mode) => {
     Array.from(selector.children).forEach((btn) => {
       btn.classList.toggle('is-active', btn.dataset.mode === mode);
     });
-    const old = body.querySelector('.pzn-form');
-    if (old) old.remove();
-    body.appendChild(sectionForm(target, mode));
+    // Inline display beats the stylesheet's `.pzn-form { display: flex }`.
+    forms.exp.style.display = mode === 'exp' ? '' : 'none';
+    forms.pzn.style.display = mode === 'pzn' ? '' : 'none';
   };
 
   ['exp', 'pzn'].forEach((mode) => {
@@ -293,7 +301,7 @@ function openSectionPopup(target) {
     ]),
   );
   state.root.appendChild(popup);
-  showMode('exp');
+  showMode(initialMode === 'pzn' ? 'pzn' : 'exp');
 }
 
 /** Page popup: experimentation only. */
@@ -348,11 +356,13 @@ function pageSummary(page) {
   return text;
 }
 
-/** A read-only state chip. */
-function chip(mode, text) {
-  return el('span', {
+/** A clickable state chip that opens the popup on this mode's tab. */
+function chip(mode, text, onclick) {
+  return el('button', {
     class: `pzn-chip pzn-chip-${mode}${text ? ' is-set' : ''}`,
     text: text || `${mode}: none`,
+    attrs: { title: text ? 'Edit' : 'Add' },
+    onclick,
   });
 }
 
@@ -374,7 +384,7 @@ function render() {
       el('span', { class: 'pzn-section-title', text: 'Page' }),
       tagButton(() => openPagePopup(page)),
     ]),
-    el('div', { class: 'pzn-chips' }, [chip('exp', pageSummary(page))]),
+    el('div', { class: 'pzn-chips' }, [chip('exp', pageSummary(page), () => openPagePopup(page))]),
   ]));
 
   const targetable = sections.filter((s) => !s.hasPageMeta);
@@ -390,8 +400,8 @@ function render() {
       tagButton(() => openSectionPopup(target)),
     ]);
     const chips = el('div', { class: 'pzn-chips' }, [
-      chip('exp', tagSummary('exp', section)),
-      chip('pzn', tagSummary('pzn', section)),
+      chip('exp', tagSummary('exp', section), () => openSectionPopup(target, 'exp')),
+      chip('pzn', tagSummary('pzn', section), () => openSectionPopup(target, 'pzn')),
     ]);
     const blockNote = section.blocks.length
       ? el('div', { class: 'pzn-block-note', text: `Blocks: ${section.blocks.map((b) => b.name).join(', ')}` })

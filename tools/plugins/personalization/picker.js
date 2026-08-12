@@ -43,9 +43,10 @@ function extractPath(details) {
  * Open the picker modal. Resolves to a fragment path (from the embedded picker
  * or the manual input) or `null` if cancelled.
  * @param {{ context: object, token: string }} sdk
+ * @param {{ placeholder?: string }} [opts] manual-input placeholder hint
  * @returns {Promise<string|null>}
  */
-export function pickFragment({ context, token } = {}) {
+export default function pickFragment({ context, token } = {}, { placeholder = '/fragments/…' } = {}) {
   return new Promise((resolve) => {
     let settled = false;
     let channel = null;
@@ -91,7 +92,7 @@ export function pickFragment({ context, token } = {}) {
     // Manual fallback
     const manualInput = el('input', {
       class: 'pzn-input',
-      attrs: { type: 'text', placeholder: '/fragments/pzn/…' },
+      attrs: { type: 'text', placeholder },
     });
     const useManual = () => {
       const path = toPath(manualInput.value);
@@ -120,51 +121,5 @@ export function pickFragment({ context, token } = {}) {
     overlay.addEventListener('click', (e) => { if (e.target === overlay) finish(null); });
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
-  });
-}
-
-/**
- * A minimal modal that asks for a single path (used for page-level variants,
- * which are pages — the fragments picker only browses `/fragments`). Resolves to
- * a pathname or `null` if cancelled.
- * @returns {Promise<string|null>}
- */
-export function promptPath({ label = 'Add a page variant', placeholder = '/path/to/page' } = {}) {
-  return new Promise((resolve) => {
-    let settled = false;
-    const overlay = el('div', { class: 'pzn-modal-overlay' });
-    const finish = (path) => {
-      if (settled) return;
-      settled = true;
-      overlay.remove();
-      resolve(path || null);
-    };
-
-    const input = el('input', { class: 'pzn-input', attrs: { type: 'text', placeholder } });
-    const submit = () => {
-      const path = toPath(input.value);
-      if (path) finish(path);
-      else input.focus();
-    };
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') { e.preventDefault(); submit(); }
-    });
-
-    const modal = el('div', { class: 'pzn-modal pzn-modal-sm' }, [
-      el('div', { class: 'pzn-modal-head' }, [
-        el('span', { class: 'pzn-modal-title', text: label }),
-        el('button', { class: 'pzn-close', text: 'Cancel', onclick: () => finish(null) }),
-      ]),
-      el('div', { class: 'pzn-modal-manual' }, [
-        el('div', { class: 'pzn-manual-row' }, [
-          input,
-          el('button', { class: 'pzn-save', text: 'Add', onclick: submit }),
-        ]),
-      ]),
-    ]);
-    overlay.addEventListener('click', (e) => { if (e.target === overlay) finish(null); });
-    overlay.appendChild(modal);
-    document.body.appendChild(overlay);
-    setTimeout(() => input.focus(), 0);
   });
 }

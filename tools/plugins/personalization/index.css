@@ -123,13 +123,25 @@ body {
 }
 
 .pzn-chip {
+  font: inherit;
   font-size: 11px;
+  text-align: left;
   padding: 2px 10px;
   border-radius: 999px;
   border: 1px dashed var(--pzn-border);
   color: var(--pzn-muted);
   background: transparent;
+  cursor: pointer;
   overflow-wrap: anywhere;
+}
+
+.pzn-chip:hover {
+  border-color: var(--pzn-accent);
+  color: var(--pzn-fg);
+}
+
+.pzn-chip.is-set:hover {
+  filter: brightness(1.08);
 }
 
 .pzn-chip-exp.is-set {
