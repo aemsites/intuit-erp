@@ -21,31 +21,12 @@
  * the media image.
  * A CTA linking to "#schedule" (index page) opens the shared "Schedule a
  * call" modal (scripts/schedule-modal.js) instead of navigating.
- * On the homepage (path "/" or "/index") the media image is enhanced with
- * erp.intuit.com's animated dashboard Lottie (blocks/hero/dashboard-animation.json)
- * once the page finishes loading; see enhanceDashboardAnimation.
  * CSS: blocks/hero/hero.css
  */
 import { openScheduleModal } from '../../scripts/schedule-modal.js';
 import { loadFragment } from '../fragment/fragment.js';
 
 const DEFAULT_FORM_FRAGMENT = '/fragments/schedule-call';
-
-// Homepage-only: erp.intuit.com's hero dashboard mockup is a Lottie animation
-// (bar/donut charts drawing in on load), not a static screenshot — see #51.
-// Self-hosted copy of erp.intuit.com's own dashboard-animation Lottie JSON
-// (fetched from their public, CORS-open oidam asset host).
-const DASHBOARD_LOTTIE_PATHS = ['/', '/index'];
-const DASHBOARD_LOTTIE_JSON = '/blocks/hero/dashboard-animation.json';
-// lottie-web ships UMD-only builds; jsdelivr's "/+esm" suffix wraps it as a
-// real ES module so it can be dynamically import()ed directly in the browser.
-const LOTTIE_PLAYER_URL = 'https://cdn.jsdelivr.net/npm/lottie-web@5.12.2/build/player/lottie_light.min.js/+esm';
-// Push the whole treatment into the delayed phase: this many ms *after* the
-// window `load` event. Mirrors EDS's own delayed-phase timing (scripts.js:
-// `setTimeout(() => import('./delayed.js'), 3000)`) so the player + ~465KB JSON
-// download, JSON.parse, and SVG build all land well past LCP and past the
-// Lighthouse performance trace — see enhanceDashboardAnimation.
-const DASHBOARD_LOTTIE_DELAY = 3000;
 
 async function leadCard(path) {
   const wrap = document.createElement('div');
@@ -58,58 +39,6 @@ async function leadCard(path) {
     wrap.querySelector('.hero-form-loading').textContent = 'Sorry, something went wrong loading this form. Please try again.';
   }
   return wrap;
-}
-
-/**
- * Replaces the static dashboard mockup with erp.intuit.com's animated Lottie
- * treatment (bar/donut charts drawing in). Deferred into the delayed phase
- * (DASHBOARD_LOTTIE_DELAY ms after the window `load` event) so the third-party
- * player, the ~465KB animation JSON, and the SVG build never compete with the
- * hero's own image for bandwidth during LCP and never add to Total Blocking
- * Time inside the Lighthouse performance trace — the static image is what
- * paints and gets measured. A no-op for reduced-motion users (the static image
- * stays as-is) and fails silently if the player or JSON can't be fetched
- * (offline dev, blocked third-party script, etc.) — the static image is always
- * a complete fallback since it's never removed, only visually covered once the
- * animation actually mounts.
- * @param {Element} media The .hero-media wrapper
- * @param {Element} picture The static <picture>/<img> already inside it
- */
-function enhanceDashboardAnimation(media, picture) {
-  if (!DASHBOARD_LOTTIE_PATHS.includes(window.location.pathname)) return;
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-  const start = async () => {
-    try {
-      const [{ default: lottie }, res] = await Promise.all([
-        import(/* webpackIgnore: true */ LOTTIE_PLAYER_URL),
-        fetch(`${window.hlx.codeBasePath}${DASHBOARD_LOTTIE_JSON}`),
-      ]);
-      if (!res.ok) return;
-      const animationData = await res.json();
-      const holder = document.createElement('div');
-      holder.className = 'hero-dashboard-lottie';
-      holder.setAttribute('aria-hidden', 'true');
-      media.append(holder);
-      lottie.loadAnimation({
-        container: holder,
-        renderer: 'svg',
-        loop: false,
-        autoplay: true,
-        animationData,
-      });
-      picture.classList.add('hero-dashboard-fallback');
-    } catch {
-      // static image stays visible — nothing to clean up
-    }
-  };
-
-  // Kick off only in the delayed phase: wait for `load`, then hold for
-  // DASHBOARD_LOTTIE_DELAY so the animation work lands past the point where
-  // LCP is captured and the performance trace has settled.
-  const schedule = () => window.setTimeout(start, DASHBOARD_LOTTIE_DELAY);
-  if (document.readyState === 'complete') schedule();
-  else window.addEventListener('load', schedule, { once: true });
 }
 
 export default async function decorate(block) {
@@ -237,7 +166,6 @@ export default async function decorate(block) {
     media.className = 'hero-media';
     media.append(mediaEl);
     grid.append(media);
-    enhanceDashboardAnimation(media, mediaEl);
   }
 
   block.replaceChildren(grid);
