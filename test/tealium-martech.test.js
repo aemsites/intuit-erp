@@ -22,9 +22,11 @@ const OPTANON_COOKIE_VALUE = 'isGpcEnabled=0&datestamp=Fri+Aug+07+2026+12%3A00%3
 // Canonical hostnames for each resolved environment under the per-host model (see
 // plugins/tealium-martech/src/index.js `resolveEnvironment`).
 const PROD_HOST = 'erp.intuit.com';
-const QA_HOST = 'main--intuit-erp--aemsites.aem.live';
-const DEV_HOST_PAGE = 'main--intuit-erp--aemsites.aem.page';
+const STAGE_HOST = 'stage.erp.intuit.com';
 const DEV_HOST_LOCALHOST = 'localhost';
+// The AEM preview hosts are now INERT (not intuit.com origins → consent CDN unreachable).
+const AEM_LIVE_HOST = 'main--intuit-erp--aemsites.aem.live';
+const AEM_PAGE_HOST = 'main--intuit-erp--aemsites.aem.page';
 const INERT_HOST = 'something.preview.da.live';
 
 function stubLocation({ hostname = INERT_HOST, search = '' } = {}) {
@@ -71,19 +73,8 @@ describe('resolveEnvironment / isProdHost', () => {
     expect(isProdHost()).toBe(true);
   });
 
-  it('resolves "qa" on the aem.live host', () => {
-    stubLocation({ hostname: QA_HOST });
-    expect(resolveEnvironment()).toBe('qa');
-    expect(isProdHost()).toBe(false);
-  });
-
-  it('resolves "qa" on the aem.live host regardless of the leading branch name', () => {
-    stubLocation({ hostname: 'feature-xyz--intuit-erp--aemsites.aem.live' });
-    expect(resolveEnvironment()).toBe('qa');
-  });
-
-  it('resolves "dev" on the aem.page host', () => {
-    stubLocation({ hostname: DEV_HOST_PAGE });
+  it('resolves "dev" on the Intuit staging host (stage.erp.intuit.com)', () => {
+    stubLocation({ hostname: STAGE_HOST });
     expect(resolveEnvironment()).toBe('dev');
     expect(isProdHost()).toBe(false);
   });
@@ -98,6 +89,17 @@ describe('resolveEnvironment / isProdHost', () => {
     expect(resolveEnvironment()).toBe('dev');
   });
 
+  it('stays inert (null) on the AEM preview hosts (aem.page / aem.live — not intuit.com origins)', () => {
+    stubLocation({ hostname: AEM_PAGE_HOST });
+    expect(resolveEnvironment()).toBeNull();
+    stubLocation({ hostname: AEM_LIVE_HOST });
+    expect(resolveEnvironment()).toBeNull();
+    // ...regardless of the leading branch name.
+    stubLocation({ hostname: 'feature-xyz--intuit-erp--aemsites.aem.page' });
+    expect(resolveEnvironment()).toBeNull();
+    expect(isProdHost()).toBe(false);
+  });
+
   it('stays inert (null) on a *.preview.da.live host', () => {
     stubLocation({ hostname: INERT_HOST });
     expect(resolveEnvironment()).toBeNull();
@@ -109,24 +111,26 @@ describe('resolveEnvironment / isProdHost', () => {
     expect(resolveEnvironment()).toBeNull();
   });
 
-  it('does not resolve qa/dev for a lookalike host where the suffix is not at the very end', () => {
-    // Guards the `endsWith` checks against ever being loosened to a substring/`includes` match.
-    stubLocation({ hostname: `${QA_HOST}.evil.com` });
-    expect(resolveEnvironment()).toBeNull();
-    stubLocation({ hostname: `${DEV_HOST_PAGE}.evil.com` });
-    expect(resolveEnvironment()).toBeNull();
+  it('uses EXACT matching — lookalike hosts resolve to null, never prod/dev', () => {
+    // Guards the `===` checks against ever being loosened to a suffix/substring match.
+    ['erp.intuit.com.evil.com', 'stage.erp.intuit.com.evil.com', 'notreallyerp.intuit.com', 'xstage.erp.intuit.com'].forEach((hostname) => {
+      stubLocation({ hostname });
+      expect(resolveEnvironment()).toBeNull();
+    });
   });
 
   it('NEVER resolves "prod" for any host other than the exact erp.intuit.com hostname', () => {
     [
-      QA_HOST,
-      DEV_HOST_PAGE,
+      STAGE_HOST,
       DEV_HOST_LOCALHOST,
       '127.0.0.1',
+      AEM_PAGE_HOST,
+      AEM_LIVE_HOST,
       INERT_HOST,
       'www.example.com',
       // Lookalike hostnames — must NOT match via a loose/substring comparison.
       'erp.intuit.com.evil.com',
+      'stage.erp.intuit.com.evil.com',
       'notreallyerp.intuit.com',
     ].forEach((hostname) => {
       stubLocation({ hostname });
@@ -186,8 +190,8 @@ describe('TealiumMartech constructor', () => {
 });
 
 describe('utag_cfg_ovrd.utagdb (Tealium debug console) by resolved environment', () => {
-  it('sets utagdb=true for the dev environment (aem.page host)', () => {
-    stubLocation({ hostname: DEV_HOST_PAGE });
+  it('sets utagdb=true for the dev environment (stage.erp.intuit.com host)', () => {
+    stubLocation({ hostname: STAGE_HOST });
     // eslint-disable-next-line no-new
     new TealiumMartech();
     expect(window.utag_cfg_ovrd.utagdb).toBe(true);
@@ -200,8 +204,8 @@ describe('utag_cfg_ovrd.utagdb (Tealium debug console) by resolved environment',
     expect(window.utag_cfg_ovrd.utagdb).toBe(true);
   });
 
-  it('does not set utagdb for the qa environment', () => {
-    stubLocation({ hostname: QA_HOST });
+  it('does not set utagdb on the now-inert AEM preview host (aem.page)', () => {
+    stubLocation({ hostname: AEM_PAGE_HOST });
     // eslint-disable-next-line no-new
     new TealiumMartech();
     expect(window.utag_cfg_ovrd.utagdb).toBeFalsy();
@@ -468,8 +472,7 @@ describe('disabled instance (hostname resolveEnvironment does not recognize) —
 describe("enabled instance — lazy() loads the consent stack, settles consent, then loads the resolved env's utag.js and fires the initial view", () => {
   it.each([
     ['prod', PROD_HOST, 'privacy-cdn.a.intuit.com'],
-    ['qa', QA_HOST, 'privacy-cdn.e2e.a.intuit.com'],
-    ['dev', DEV_HOST_PAGE, 'privacy-cdn.e2e.a.intuit.com'],
+    ['dev', STAGE_HOST, 'privacy-cdn.e2e.a.intuit.com'],
   ])('env "%s" (host %s): eager() does no network; lazy() loads the consent stack (CDN %s) before utag.js and calls utag.view', async (env, hostname, cdnHost) => {
     stubLocation({ hostname });
     // A pre-existing OptanonConsent cookie lets settleConsent() resolve as soon as it's invoked

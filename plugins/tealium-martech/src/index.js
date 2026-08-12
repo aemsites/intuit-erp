@@ -7,13 +7,17 @@
  * first match wins:
  *
  *   erp.intuit.com                              -> 'prod'
- *   *--intuit-erp--aemsites.aem.live            -> 'qa'
- *   *--intuit-erp--aemsites.aem.page            -> 'dev'
+ *   stage.erp.intuit.com                        -> 'dev'   (Intuit staging; see CONSENT note)
  *   localhost, 127.0.0.1                        -> 'dev'
- *   anything else (e.g. *.preview.da.live)      -> null (inert)
+ *   anything else (incl. the *.aem.page / *.aem.live previews) -> null (inert)
  *
  * Only `erp.intuit.com` can ever resolve to `'prod'` — there is no override/config path that can
- * escalate a non-prod host to `'prod'`.
+ * escalate a non-prod host to `'prod'`. The AEM preview hosts
+ * (`*--intuit-erp--aemsites.aem.page` / `.aem.live`) are intentionally INERT: they are not
+ * `intuit.com` origins, so Intuit's OneTrust consent CDN (`privacy-cdn*.a.intuit.com`)
+ * CloudFront-blocks them, consent can never settle, and the `ies-erp` profile's consent
+ * extension would recurse. Non-prod martech therefore runs on `stage.erp.intuit.com` (an
+ * `intuit.com` origin where the consent stack IS reachable).
  *
  * Consumed from `scripts/scripts.js` (eager/lazy/delayed phases) — Tealium is that file's default
  * provider; the legacy Adobe/aem-martech path is opt-in only via `?martech=adobe`. Whichever
@@ -59,17 +63,17 @@ let config = { ...DEFAULT_CONFIG };
 
 /**
  * Resolves which Tealium (utag) environment, if any, applies to the current hostname. First
- * match wins.
+ * match wins; matching is EXACT (no suffix matching), so lookalike hostnames such as
+ * `erp.intuit.com.evil.com` or `stage.erp.intuit.com.evil.com` resolve to `null`.
  * SAFETY: only `erp.intuit.com` may ever resolve to `'prod'`; every other host resolves to
- * `'qa'`, `'dev'`, or `null` (inert) — there is no config/query-string override that can
- * escalate a non-prod host to `'prod'`.
- * @returns {String|null} 'prod' | 'qa' | 'dev', or `null` to stay completely inert
+ * `'dev'` or `null` (inert) — there is no config/query-string override that can escalate a
+ * non-prod host to `'prod'`.
+ * @returns {String|null} 'prod' | 'dev', or `null` to stay completely inert
  */
 export function resolveEnvironment() {
   const { hostname } = window.location;
   if (hostname === 'erp.intuit.com') return 'prod';
-  if (hostname.endsWith('--intuit-erp--aemsites.aem.live')) return 'qa';
-  if (hostname.endsWith('--intuit-erp--aemsites.aem.page')) return 'dev';
+  if (hostname === 'stage.erp.intuit.com') return 'dev';
   if (hostname === 'localhost' || hostname === '127.0.0.1') return 'dev';
   return null;
 }
