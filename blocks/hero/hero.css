@@ -6,6 +6,56 @@
   overflow: hidden;
 }
 
+/* Light hero variant — opt-in per section via Section Metadata "Style: hero-light".
+   Matches the erp.intuit.com source hero on pages that use a light-beige band with
+   dark text (e.g. /account-management). Only applies when the section carries the
+   .hero-light class, so the navy default on every other hero page is unaffected. */
+.section.hero-container.hero-light {
+  background: var(--tofu); /* #f3f2ef — source beige */
+  color: var(--text, #11181c);
+}
+
+.section.hero-container.hero-light .hero-copy .hero-eyebrow,
+.section.hero-container.hero-light .hero-copy h1,
+.section.hero-container.hero-light .hero-copy .hero-lede {
+  color: var(--text, #11181c);
+}
+
+.section.hero-container.hero-light .hero-copy h1 {
+  font-weight: 700; /* source uses bold dark heading */
+}
+
+/* Buttons on the light hero: the default hero buttons are styled for the dark
+   band (white-fill primary at hero.css and white-outline secondary in
+   styles.css). On the light variant, revert to the base button treatment
+   (dark-fill primary, dark-outline secondary) so they match the source's
+   light-hero CTAs — navy/solid primary, dark-outline secondary. */
+.section.hero-container.hero-light a.button.primary {
+  background: var(--navy);
+  border-color: var(--navy);
+  color: #fff;
+}
+
+.section.hero-container.hero-light a.button.primary:hover,
+.section.hero-container.hero-light a.button.primary:focus-visible {
+  background: var(--navy-hover);
+  border-color: var(--navy-hover);
+  color: #fff;
+}
+
+.section.hero-container.hero-light a.button.secondary {
+  background: transparent;
+  border-color: var(--ink-teal);
+  color: var(--ink-teal);
+}
+
+.section.hero-container.hero-light a.button.secondary:hover,
+.section.hero-container.hero-light a.button.secondary:focus-visible {
+  background: var(--ink-teal);
+  border-color: var(--ink-teal);
+  color: #fff;
+}
+
 .hero .hero-grid {
   display: grid;
   grid-template-columns: 1.05fr 1fr;
