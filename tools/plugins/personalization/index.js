@@ -1,26 +1,24 @@
 /* eslint-disable no-use-before-define */
-// The panel is event-driven: render → chip → popup → assign → save → render is a
+// The panel is event-driven: render → chip → popup → mode → save → render is a
 // deliberate mutual-recursion cycle, so definitions cannot be strictly ordered.
 // eslint-disable-next-line import/no-unresolved, import/extensions
 import DA_SDK from 'https://da.live/nx/utils/sdk.js';
 import {
-  parseSlots,
-  setBlockSlot,
-  clearBlockSlot,
-  setSectionSlot,
-  clearSectionSlot,
-  collectPageSlots,
+  parseExperience,
+  setBlockTag,
+  clearBlockTag,
+  setSectionTag,
+  clearSectionTag,
+  setPageExperiment,
+  clearPageExperiment,
+  slugify,
   buildFormData,
-} from './slots.js';
+} from './experience.js';
 
 const DA_ADMIN = 'https://admin.da.live';
 
-/** Placement sentence derived from a map row's action + fidelity. */
-const PLACEMENT_VERB = {
-  replace: 'replaces this',
-  above: 'is inserted above this',
-  below: 'is inserted below this',
-};
+/** Author-facing labels per mode. */
+const MODE_LABEL = { exp: 'Experimentation', pzn: 'Personalization' };
 
 /** Minimal element builder. */
 function el(tag, opts = {}, children = []) {
@@ -29,6 +27,7 @@ function el(tag, opts = {}, children = []) {
   if (opts.text != null) node.textContent = opts.text;
   if (opts.attrs) Object.entries(opts.attrs).forEach(([k, v]) => node.setAttribute(k, v));
   if (opts.onclick) node.addEventListener('click', opts.onclick);
+  if (opts.oninput) node.addEventListener('input', opts.oninput);
   children.forEach((c) => node.appendChild(c));
   return node;
 }
@@ -36,7 +35,6 @@ function el(tag, opts = {}, children = []) {
 const state = {
   sdk: null, // { context, token }
   source: '', // stored page source HTML
-  mapRows: [], // rows from the (mock) pzn map.json
   root: null, // panel container
 };
 
@@ -55,36 +53,16 @@ async function fetchSource() {
   return res.text();
 }
 
-/** GET the mock pzn map. Non-fatal: any failure yields []. */
-async function fetchMap() {
-  const { org, repo } = state.sdk.context;
-  const url = `https://main--${repo}--${org}.aem.live/pzn/map.json`;
-  try {
-    const res = await fetch(url);
-    if (!res.ok) return [];
-    const json = await res.json();
-    return Array.isArray(json.data) ? json.data : [];
-  } catch {
-    return [];
-  }
-}
-
-/** The map row for a slot id, or null. */
-function mapRowFor(slot) {
-  return state.mapRows.find((r) => r.location === slot) || null;
-}
-
-/** Slot ids the author may assign: union of map locations + slots on the page. */
-function assignableSlots() {
-  const fromMap = state.mapRows.map((r) => r.location).filter(Boolean);
-  const fromPage = collectPageSlots(state.source);
-  return Array.from(new Set([...fromMap, ...fromPage]))
-    .filter((s) => /^slot-[a-z0-9-]+$/.test(s))
-    .sort();
+let statusEl = null;
+function setStatus(text, kind) {
+  if (!statusEl) return;
+  statusEl.textContent = text;
+  statusEl.className = `pzn-status pzn-status-${kind || ''}`;
 }
 
 /** PUT the whole updated source back, then refresh from the server. */
 async function save(newHtml) {
+  closePopup();
   setStatus('Saving…', 'pending');
   try {
     const res = await fetch(sourceUrl(), {
@@ -101,122 +79,246 @@ async function save(newHtml) {
   }
 }
 
-/** Apply a slot to a target (section or block), then save. */
-function assign(target, slotId) {
-  const next = target.kind === 'section'
-    ? setSectionSlot(state.source, target.sectionIndex, slotId)
-    : setBlockSlot(state.source, target.sectionIndex, target.blockIndex, slotId);
-  closePopup();
-  save(next);
+/* -------------------------------------------------------------- mutation glue */
+
+/** Apply a set for the given target + mode + id(s). */
+function applySet(target, mode, values) {
+  if (target.kind === 'page') {
+    return setPageExperiment(state.source, values);
+  }
+  if (target.kind === 'section') {
+    return setSectionTag(state.source, target.sectionIndex, mode, values.id);
+  }
+  return setBlockTag(state.source, target.sectionIndex, target.blockIndex, mode, values.id);
 }
 
-/** Clear a target's slot, then save. */
-function clear(target) {
-  const next = target.kind === 'section'
-    ? clearSectionSlot(state.source, target.sectionIndex)
-    : clearBlockSlot(state.source, target.sectionIndex, target.blockIndex);
-  closePopup();
-  save(next);
+/** Apply a clear for the given target + mode. */
+function applyClear(target, mode) {
+  if (target.kind === 'page') return clearPageExperiment(state.source);
+  if (target.kind === 'section') return clearSectionTag(state.source, target.sectionIndex, mode);
+  return clearBlockTag(state.source, target.sectionIndex, target.blockIndex, mode);
 }
 
-/** Human-readable placement line from a map row. */
-function placementLine(row) {
-  const verb = PLACEMENT_VERB[row.action] || 'targets this';
-  return `Fragment ${verb} ${row.fidelity} (${row.fidelity})`;
-}
+/* --------------------------------------------------------------------- popup */
 
 function closePopup() {
   const existing = state.root.querySelector('.pzn-popup');
   if (existing) existing.remove();
 }
 
-/** Detail popup for a chip: map info for the current slot + assign buttons + Clear. */
-function openPopup(target, label) {
-  closePopup();
-  const row = target.slot ? mapRowFor(target.slot) : null;
+/** Form body for a chosen mode. Page-exp gets id + label; others get id + preview. */
+function modeForm(target, mode) {
+  const wrap = el('div', { class: 'pzn-form' });
 
-  const detail = el('div', { class: 'pzn-popup-detail' });
-  if (target.slot && row) {
-    detail.appendChild(el('div', { class: 'pzn-kv', text: `Page: ${row.path}` }));
-    detail.appendChild(el('div', { class: 'pzn-kv', text: `Fragment: ${row.fragment}` }));
-    detail.appendChild(el('div', { class: 'pzn-kv', text: placementLine(row) }));
-  } else {
-    detail.appendChild(el('div', { class: 'pzn-muted', text: 'No mapping found for this slot.' }));
+  if (target.kind === 'page') {
+    const idInput = el('input', {
+      class: 'pzn-input',
+      attrs: { type: 'text', placeholder: 'Experiment ID', value: target.experimentId || '' },
+    });
+    const labelInput = el('input', {
+      class: 'pzn-input',
+      attrs: { type: 'text', placeholder: 'Experiment label (optional)', value: target.experimentLabel || '' },
+    });
+    wrap.append(
+      el('label', { class: 'pzn-field-label', text: 'Experiment ID' }),
+      idInput,
+      el('label', { class: 'pzn-field-label', text: 'Experiment label (optional)' }),
+      labelInput,
+      el('button', {
+        class: 'pzn-save',
+        text: 'Save',
+        onclick: () => {
+          const id = idInput.value.trim();
+          if (!id) { idInput.focus(); return; }
+          save(applySet(target, mode, { id, label: labelInput.value.trim() }));
+        },
+      }),
+    );
+    return wrap;
   }
 
-  const buttons = el('div', { class: 'pzn-popup-buttons' });
-  assignableSlots().forEach((slotId) => {
-    buttons.appendChild(el('button', {
-      class: `pzn-slot-btn${slotId === target.slot ? ' is-current' : ''}`,
-      text: slotId,
-      onclick: () => assign(target, slotId),
-    }));
+  // section / block: single id → `<mode>-<slug>` token
+  const current = mode === 'exp' ? target.exp : target.pzn;
+  const currentId = current ? current.replace(new RegExp(`^${mode}-`), '') : '';
+  const preview = el('div', { class: 'pzn-preview', text: current || `${mode}-…` });
+  const idInput = el('input', {
+    class: 'pzn-input',
+    attrs: { type: 'text', placeholder: `${MODE_LABEL[mode]} ID`, value: currentId },
+    oninput: (e) => {
+      const slug = slugify(e.target.value);
+      preview.textContent = slug ? `${mode}-${slug}` : `${mode}-…`;
+    },
+  });
+  wrap.append(
+    el('label', { class: 'pzn-field-label', text: `${MODE_LABEL[mode]} ID` }),
+    idInput,
+    el('div', { class: 'pzn-preview-row' }, [
+      el('span', { class: 'pzn-preview-caption', text: 'Class token:' }),
+      preview,
+    ]),
+    el('button', {
+      class: 'pzn-save',
+      text: 'Save',
+      onclick: () => {
+        const id = idInput.value.trim();
+        if (!slugify(id)) { idInput.focus(); return; }
+        save(applySet(target, mode, { id }));
+      },
+    }),
+  );
+  return wrap;
+}
+
+/** Current-tag rows with per-mode Clear buttons. */
+function currentTags(target) {
+  const modes = target.kind === 'page' ? ['exp'] : ['exp', 'pzn'];
+  const set = modes
+    .map((mode) => ({ mode, value: target.kind === 'page' ? pageTag(target) : target[mode] }))
+    .filter((t) => t.value);
+  if (set.length === 0) return null;
+
+  const list = el('div', { class: 'pzn-current' });
+  set.forEach(({ mode, value }) => {
+    list.appendChild(el('div', { class: 'pzn-current-row' }, [
+      el('span', { class: `pzn-tag pzn-tag-${mode}`, text: value }),
+      el('button', {
+        class: 'pzn-clear',
+        text: 'Clear',
+        onclick: () => save(applyClear(target, mode)),
+      }),
+    ]));
+  });
+  return list;
+}
+
+/** The page's experiment display value (id, plus label in parens). */
+function pageTag(target) {
+  if (!target.experimentId) return '';
+  return target.experimentLabel
+    ? `${target.experimentId} (${target.experimentLabel})`
+    : target.experimentId;
+}
+
+/** Popup: current tags, a mode selector, and the chosen mode's form. */
+function openPopup(target) {
+  closePopup();
+  const modes = target.kind === 'page' ? ['exp'] : ['exp', 'pzn'];
+
+  const body = el('div', { class: 'pzn-popup-body' });
+  const selector = el('div', { class: 'pzn-mode-select' });
+
+  const showMode = (mode) => {
+    Array.from(selector.children).forEach((btn) => {
+      btn.classList.toggle('is-active', btn.dataset.mode === mode);
+    });
+    const old = body.querySelector('.pzn-form');
+    if (old) old.remove();
+    body.appendChild(modeForm(target, mode));
+  };
+
+  modes.forEach((mode) => {
+    const btn = el('button', {
+      class: 'pzn-mode-btn',
+      text: MODE_LABEL[mode],
+      attrs: { 'data-mode': mode },
+      onclick: () => showMode(mode),
+    });
+    selector.appendChild(btn);
   });
 
-  const clearBtn = el('button', { class: 'pzn-clear', text: 'Clear', onclick: () => clear(target) });
-  clearBtn.disabled = !target.slot;
-  const footer = el('div', { class: 'pzn-popup-footer' }, [
-    clearBtn,
-    el('button', { class: 'pzn-close', text: 'Close', onclick: closePopup }),
+  const popup = el('div', { class: 'pzn-popup' }, [
+    el('div', { class: 'pzn-popup-title', text: target.label }),
   ]);
-
-  state.root.appendChild(el('div', { class: 'pzn-popup' }, [
-    el('div', { class: 'pzn-popup-title', text: label }),
-    detail,
-    el('div', { class: 'pzn-popup-label', text: 'Assign slot' }),
-    buttons,
-    footer,
-  ]));
+  const tags = currentTags(target);
+  if (tags) popup.appendChild(tags);
+  popup.append(
+    el('div', { class: 'pzn-popup-label', text: 'Add / edit tag' }),
+    selector,
+    body,
+    el('div', { class: 'pzn-popup-footer' }, [
+      el('button', { class: 'pzn-close', text: 'Close', onclick: closePopup }),
+    ]),
+  );
+  state.root.appendChild(popup);
+  showMode(modes[0]);
 }
 
-/** A slot chip. Faint/outlined "none" when unset; solid when set. */
-function chip(target, label) {
-  return el('button', {
-    class: `pzn-chip${target.slot ? ' is-set' : ''}`,
-    text: target.slot || 'none',
-    attrs: { 'aria-label': `${label}: ${target.slot || 'no slot'}` },
-    onclick: () => openPopup(target, label),
+/* -------------------------------------------------------------------- render */
+
+/** A tag chip: faint/dashed when unset, solid when set. */
+function chip(mode, value) {
+  return el('span', {
+    class: `pzn-chip pzn-chip-${mode}${value ? ' is-set' : ''}`,
+    text: value || `${mode}: none`,
   });
 }
 
-let statusEl = null;
-function setStatus(text, kind) {
-  if (!statusEl) return;
-  statusEl.textContent = text;
-  statusEl.className = `pzn-status pzn-status-${kind}`;
+/** The "Tag" action button that opens the popup for a target. */
+function tagButton(target) {
+  return el('button', { class: 'pzn-tag-btn', text: 'Tag', onclick: () => openPopup(target) });
 }
 
 /** Rebuild the whole panel from current state. */
 function render() {
-  const { sections } = parseSlots(state.source);
+  const { page, sections } = parseExperience(state.source);
   state.root.replaceChildren();
 
   statusEl = el('div', { class: 'pzn-status' });
   state.root.appendChild(statusEl);
 
-  if (sections.length === 0) {
+  // page-level experimentation
+  const pageTarget = {
+    kind: 'page',
+    label: 'Page',
+    experimentId: page.experimentId,
+    experimentLabel: page.experimentLabel,
+  };
+  state.root.appendChild(el('div', { class: 'pzn-section pzn-page' }, [
+    el('div', { class: 'pzn-section-head' }, [
+      el('span', { class: 'pzn-section-title', text: 'Page' }),
+      tagButton(pageTarget),
+    ]),
+    el('div', { class: 'pzn-chips' }, [chip('exp', pageTag(pageTarget))]),
+  ]));
+
+  const targetable = sections.filter((s) => !s.hasPageMeta);
+  if (targetable.length === 0) {
     state.root.appendChild(el('div', { class: 'pzn-muted', text: 'No sections found on this page.' }));
     return;
   }
 
-  sections.forEach((section) => {
-    const sectionTarget = { kind: 'section', sectionIndex: section.index, slot: section.sectionSlot };
-    const header = el('div', { class: 'pzn-section-head' }, [
+  targetable.forEach((section) => {
+    const sectionTarget = {
+      kind: 'section', sectionIndex: section.index, label: `Section ${section.index + 1}`, exp: section.exp, pzn: section.pzn,
+    };
+    const head = el('div', { class: 'pzn-section-head' }, [
       el('span', { class: 'pzn-section-title', text: `Section ${section.index + 1}` }),
-      chip(sectionTarget, `Section ${section.index + 1}`),
+      tagButton(sectionTarget),
+    ]);
+    const sectionChips = el('div', { class: 'pzn-chips' }, [
+      chip('exp', section.exp),
+      chip('pzn', section.pzn),
     ]);
 
-    const blocks = section.blocks.map((block) => {
+    const blockRows = section.blocks.map((block) => {
       const blockTarget = {
-        kind: 'block', sectionIndex: section.index, blockIndex: block.index, slot: block.slot,
+        kind: 'block',
+        sectionIndex: section.index,
+        blockIndex: block.index,
+        label: block.name,
+        exp: block.exp,
+        pzn: block.pzn,
       };
       return el('div', { class: 'pzn-block-row' }, [
-        el('span', { class: 'pzn-block-name', text: block.name }),
-        chip(blockTarget, block.name),
+        el('div', { class: 'pzn-block-head' }, [
+          el('span', { class: 'pzn-block-name', text: block.name }),
+          tagButton(blockTarget),
+        ]),
+        el('div', { class: 'pzn-chips' }, [chip('exp', block.exp), chip('pzn', block.pzn)]),
       ]);
     });
 
-    state.root.appendChild(el('div', { class: 'pzn-section' }, [header, ...blocks]));
+    state.root.appendChild(el('div', { class: 'pzn-section' }, [head, sectionChips, ...blockRows]));
   });
 }
 
@@ -225,7 +327,7 @@ async function init() {
   try {
     const { context, token } = await DA_SDK;
     state.sdk = { context, token };
-    [state.source, state.mapRows] = await Promise.all([fetchSource(), fetchMap()]);
+    state.source = await fetchSource();
     render();
   } catch (err) {
     state.root.replaceChildren(
