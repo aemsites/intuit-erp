@@ -21,10 +21,6 @@
   color: var(--text, #11181c);
 }
 
-.section.hero-container.hero-light .hero-copy h1 {
-  font-weight: 700; /* source uses bold dark heading */
-}
-
 /* Buttons on the light hero: the default hero buttons are styled for the dark
    band (white-fill primary at hero.css and white-outline secondary in
    styles.css). On the light variant, revert to the base button treatment
