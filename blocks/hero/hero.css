@@ -4,10 +4,56 @@
   background: var(--navy);
   color: #fff;
   overflow: hidden;
+}
 
-  &.gradient {
-    background: conic-gradient(from 103deg at 28.36% 120.78%, #04193C 115.9615deg, #041F53 204.2308deg, #03339C 267.2082deg, #0F44AC 273.7572deg, #2B66D0 289.9528deg, #3875E0 324.4898deg, #BB95CD 329.7278deg, #DEBCB3 334.1040deg, #041839 359.1429deg);
-  }
+/* Light hero variant — opt-in per section via Section Metadata "Style: hero-light".
+   Matches the erp.intuit.com source hero on pages that use a light-beige band with
+   dark text (e.g. /account-management). Only applies when the section carries the
+   .hero-light class, so the navy default on every other hero page is unaffected. */
+.section.hero-container.hero-light {
+  background: var(--tofu); /* #f3f2ef — source beige */
+  color: var(--text, #11181c);
+}
+
+.section.hero-container.hero-light .hero-copy .hero-eyebrow,
+.section.hero-container.hero-light .hero-copy h1,
+.section.hero-container.hero-light .hero-copy .hero-lede {
+  color: var(--text, #11181c);
+}
+
+.section.hero-container.hero-light .hero-copy h1 {
+  font-weight: 700; /* source uses bold dark heading */
+}
+
+/* Buttons on the light hero: the default hero buttons are styled for the dark
+   band (white-fill primary at hero.css and white-outline secondary in
+   styles.css). On the light variant, revert to the base button treatment
+   (dark-fill primary, dark-outline secondary) so they match the source's
+   light-hero CTAs — navy/solid primary, dark-outline secondary. */
+.section.hero-container.hero-light a.button.primary {
+  background: var(--navy);
+  border-color: var(--navy);
+  color: #fff;
+}
+
+.section.hero-container.hero-light a.button.primary:hover,
+.section.hero-container.hero-light a.button.primary:focus-visible {
+  background: var(--navy-hover);
+  border-color: var(--navy-hover);
+  color: #fff;
+}
+
+.section.hero-container.hero-light a.button.secondary {
+  background: transparent;
+  border-color: var(--ink-teal);
+  color: var(--ink-teal);
+}
+
+.section.hero-container.hero-light a.button.secondary:hover,
+.section.hero-container.hero-light a.button.secondary:focus-visible {
+  background: var(--ink-teal);
+  border-color: var(--ink-teal);
+  color: #fff;
 }
 
 .hero .hero-grid {
@@ -23,8 +69,8 @@
    .eyebrow class's bold), white, 12px/16px */
 .hero .hero-copy .hero-eyebrow {
   color: #fff;
-  font-weight: 600;
-  font-size: 16px;
+  font-weight: 400;
+  font-size: 12px;
   line-height: 16px;
   letter-spacing: normal;
   margin-bottom: 16px;
@@ -39,10 +85,6 @@
   color: #fff;
 }
 
-.hero .hero-copy .button {
-  margin-bottom: 1rem;
-}
-
 .hero .hero-copy .hero-lede {
   font-size: 20px;
   line-height: 1.4;
@@ -52,6 +94,7 @@
 }
 
 .hero .hero-actions { display: flex; gap: 16px; flex-wrap: wrap; margin: 0; }
+
 .hero .hero-media { position: relative; isolation: isolate; }
 
 /* max-height caps the band's overall height for square/portrait photos
@@ -133,8 +176,7 @@
 
 /* ---- .hero.form (pricing) — lead card on the right, content from the
    shared schedule-call fragment (content/fragments/schedule-call.html) ---- */
-.hero.form .hero-grid {grid-template-columns: 1fr 550px;gap: 60px;min-height: 560px;}
-.hero.form .hero-grid:has(.hero-copy > h1:only-child) { align-items: center; }
+.hero.form .hero-grid { grid-template-columns: 1fr 470px; gap: 60px; min-height: 560px; }
 .hero.form .hero-copy h1 { font-size: 52px; max-width: 7em; margin-bottom: 0; }
 
 .hero .hero-form {
