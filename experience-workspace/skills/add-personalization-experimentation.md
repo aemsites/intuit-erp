@@ -20,8 +20,22 @@ page-level personalization.
 | **Section** | an `exp-<id>` token in the section's **Section Metadata** `Style` row | a `pzn-<id>` token in the `Style` row |
 | **Block**   | an `exp-<id>` class on the block `<div>` | a `pzn-<id>` class on the block `<div>` |
 
-`<id>` is free-form text the author chooses. For **section and block** tags it is **slugified** into a
-valid CSS class token; the page-level metadata **value is kept verbatim**.
+## Where the `<id>` comes from — two separate source systems
+
+The `<id>` is **not** free-form — it is an identifier you pull from the upstream system that owns each
+mode. Get the right value from the source before tagging:
+
+- **`exp-<id>` (Experimentation)** → use the **experiment id** configured in the **experimentation
+  source** (the experimentation system where the experiment/test is set up). Tie the tag to that
+  experiment by using its id — do not invent one.
+- **`pzn-<id>` (Personalization)** → use the **placement id** from the **personalization source** (the
+  personalization/decision system that defines the placement). Tag the section/block with the placement
+  id that identifies where its personalized content is served — do not invent one.
+
+These are two different systems; the id you enter is only meaningful when it matches the identifier in
+that system. For **section and block** tags the id is **slugified** into a valid CSS class token (see
+below); the page-level `experiment-id` metadata **value is kept verbatim** (also the experiment id from
+the experimentation source).
 
 ## The id → token rule (section & block)
 
@@ -32,7 +46,7 @@ Slugify the author's text, then prefix with the mode:
 - trim leading/trailing `-`
 - final token = `exp-<slug>` or `pzn-<slug>`
 
-Examples: `Hero Test 1` → `exp-hero-test-1`; `SMB / Retail` → `pzn-smb-retail`.
+Examples: experiment id `385944` → `exp-385944`; placement id `SBSEG-QBM-Retail` → `pzn-sbseg-qbm-retail`.
 If the slug is empty (input was blank or all symbols), do **not** write a token.
 
 A page may carry both an `exp-` and a `pzn-` tag on the same section/block (one of each mode), but never
@@ -57,7 +71,8 @@ the last section of `<main>`. Keep any existing rows (Title, Description, …) i
 </div>
 ```
 
-`experiment-label` is optional — omit the row when there's no label.
+`experiment-id` is the experiment id from the experimentation source (e.g. `385944`).
+`experiment-label` is optional — a human-readable name for that experiment; omit the row when there's none.
 
 ### Section-level → Section Metadata `Style` token
 
@@ -70,7 +85,7 @@ Append the token to the section's `section-metadata` `Style` row, preserving any
     <div><div>…</div></div>
   </div>
   <div class="section-metadata">
-    <div><div>Style</div><div>dark, exp-q1-promo, pzn-smb</div></div>
+    <div><div>Style</div><div>dark, exp-385944, pzn-sbseg-qbm-retail</div></div>
   </div>
 </div>
 ```
@@ -81,7 +96,7 @@ Add the token as an extra class on the block's outer `<div>` (the first class is
 tokens are additional classes alongside any variant classes).
 
 ```html
-<div class="hero exp-hero-test">
+<div class="hero exp-385944">
   <div><div>…</div></div>
 </div>
 ```
