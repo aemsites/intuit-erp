@@ -120,6 +120,28 @@ function variantList(initial, onAdd) {
 
 /* ----------------------------------------------------------------- popup body */
 
+/**
+ * Inline required-field error tied to an input. Returns the message element plus
+ * a `show()`; the message clears (and the input un-highlights) as soon as the
+ * author edits the field.
+ */
+function fieldError(input) {
+  const element = el('div', { class: 'pzn-error-msg', attrs: { role: 'alert' } });
+  const clear = () => {
+    element.textContent = '';
+    input.classList.remove('is-invalid');
+  };
+  input.addEventListener('input', clear);
+  return {
+    element,
+    show: (msg) => {
+      element.textContent = msg;
+      input.classList.add('is-invalid');
+      input.focus();
+    },
+  };
+}
+
 /** Section form for a chosen mode: id + scope + variants. */
 function sectionForm(target, mode) {
   const cur = mode === 'pzn'
@@ -130,6 +152,7 @@ function sectionForm(target, mode) {
     class: 'pzn-input',
     attrs: { type: 'text', placeholder: `${MODE_LABEL[mode]} ID`, value: cur.id || '' },
   });
+  const err = fieldError(idInput);
 
   const scope = el('select', { class: 'pzn-select' }, [
     el('option', { text: 'Whole section', attrs: { value: '' } }),
@@ -147,7 +170,7 @@ function sectionForm(target, mode) {
     text: 'Save',
     onclick: () => {
       const id = idInput.value.trim();
-      if (!id) { idInput.focus(); return; }
+      if (!id) { err.show(`${MODE_LABEL[mode]} ID is required`); return; }
       save(setSectionTag(state.source, target.sectionIndex, mode, {
         id, block: scope.value, variants: variants.get(),
       }));
@@ -157,6 +180,7 @@ function sectionForm(target, mode) {
   return el('div', { class: 'pzn-form' }, [
     el('label', { class: 'pzn-field-label', text: `${MODE_LABEL[mode]} ID` }),
     idInput,
+    err.element,
     el('label', { class: 'pzn-field-label', text: 'Scope' }),
     scope,
     el('label', { class: 'pzn-field-label', text: `Variants — fragments (max ${MAX_VARIANTS})` }),
@@ -171,6 +195,7 @@ function pageForm(target) {
     class: 'pzn-input',
     attrs: { type: 'text', placeholder: 'Experiment ID', value: target.experimentId || '' },
   });
+  const err = fieldError(idInput);
   const labelInput = el('input', {
     class: 'pzn-input',
     attrs: { type: 'text', placeholder: 'Experiment label (optional)', value: target.experimentLabel || '' },
@@ -185,7 +210,7 @@ function pageForm(target) {
     text: 'Save',
     onclick: () => {
       const id = idInput.value.trim();
-      if (!id) { idInput.focus(); return; }
+      if (!id) { err.show('Experiment ID is required'); return; }
       save(setPageExperiment(state.source, {
         id, label: labelInput.value.trim(), variants: variants.get(),
       }));
@@ -195,6 +220,7 @@ function pageForm(target) {
   return el('div', { class: 'pzn-form' }, [
     el('label', { class: 'pzn-field-label', text: 'Experiment ID' }),
     idInput,
+    err.element,
     el('label', { class: 'pzn-field-label', text: 'Experiment label (optional)' }),
     labelInput,
     el('label', { class: 'pzn-field-label', text: `Variants — pages (max ${MAX_VARIANTS})` }),

@@ -254,6 +254,20 @@ body {
   border-color: var(--pzn-accent);
 }
 
+.pzn-input.is-invalid {
+  border-color: var(--pzn-error);
+}
+
+.pzn-error-msg {
+  min-height: 0;
+  font-size: 11px;
+  color: var(--pzn-error);
+}
+
+.pzn-error-msg:empty {
+  display: none;
+}
+
 .pzn-select {
   font: inherit;
   font-size: 13px;
@@ -372,17 +386,25 @@ body {
 .pzn-modal {
   display: flex;
   flex-direction: column;
-  width: min(680px, 100%);
-  height: min(80vh, 640px);
+  gap: 10px;
+  width: min(440px, 100%);
+  max-height: 90vh;
+  overflow: auto;
+  padding-bottom: 12px;
   border-radius: 10px;
-  overflow: hidden;
   background: var(--pzn-bg);
   border: 1px solid var(--pzn-border);
   box-shadow: 0 12px 32px rgb(0 0 0 / 35%);
 }
 
-.pzn-modal-sm {
-  height: auto;
+/* large centered modal that embeds the fragment picker iframe */
+.pzn-modal-lg {
+  gap: 0;
+  width: clamp(320px, 75vw, 1200px);
+  height: 80vh;
+  max-height: 90vh;
+  overflow: hidden;
+  padding-bottom: 0;
 }
 
 .pzn-modal-head {
@@ -401,6 +423,7 @@ body {
 .pzn-picker-frame {
   flex: 1;
   width: 100%;
+  min-height: 0;
   border: 0;
 }
 
@@ -410,6 +433,10 @@ body {
   gap: 6px;
   padding: 10px 12px;
   border-top: 1px solid var(--pzn-border);
+}
+
+.pzn-modal-sm .pzn-modal-manual {
+  border-top: 0;
 }
 
 .pzn-manual-row {

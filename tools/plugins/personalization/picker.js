@@ -1,6 +1,7 @@
 /**
- * Variant picker — a modal that reuses the adobe-rnd DA "fragments" plugin to
- * pick a fragment, with a manual paste-path fallback.
+ * Variant picker — reuses the adobe-rnd DA "fragments" plugin to pick a
+ * fragment, embedded in a large centered modal, with a manual paste-path
+ * fallback for when the handshake fails.
  *
  * The fragments plugin is a DA library built on the DA SDK: it expects a host to
  * complete a handshake (a `postMessage` carrying `{ ready, context, token }` and
@@ -84,9 +85,7 @@ export function pickFragment({ context, token } = {}) {
           PICKER_ORIGIN,
           [channel.port2],
         );
-      } catch {
-        // handshake failed — the manual input below still works
-      }
+      } catch { /* handshake failed — the manual input below still works */ }
     });
 
     // Manual fallback
@@ -103,7 +102,7 @@ export function pickFragment({ context, token } = {}) {
       if (e.key === 'Enter') { e.preventDefault(); useManual(); }
     });
 
-    const modal = el('div', { class: 'pzn-modal' }, [
+    const modal = el('div', { class: 'pzn-modal pzn-modal-lg' }, [
       el('div', { class: 'pzn-modal-head' }, [
         el('span', { class: 'pzn-modal-title', text: 'Select a fragment' }),
         el('button', { class: 'pzn-close', text: 'Cancel', onclick: () => finish(null) }),
@@ -118,9 +117,7 @@ export function pickFragment({ context, token } = {}) {
       ]),
     ]);
 
-    overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) finish(null);
-    });
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) finish(null); });
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
   });
