@@ -11,6 +11,8 @@ import {
   loadCSS,
   buildBlock,
   getMetadata,
+  readBlockConfig,
+  toClassName,
 } from './aem.js';
 import { runExperimentation, runExperimentationLazy } from './experiment-loader.js';
 // Vendored via git subtree at plugins/martech (see its README), not an
@@ -216,6 +218,35 @@ function decorateButtons(main) {
 }
 
 /**
+ * Applies section-level style variants from "Section Metadata" blocks.
+ *
+ * This project uses a trimmed decorateSections() (in aem.js, which must not be
+ * modified) that does not read Section Metadata into style classes like the
+ * stock boilerplate does. This re-adds that behaviour generically: any section
+ * whose Section Metadata has a "Style" key gets those values applied as classes
+ * on the section element. It is a no-op for sections without Section Metadata,
+ * so existing pages are unaffected.
+ * @param {Element} main The main element
+ */
+function decorateSectionStyles(main) {
+  main.querySelectorAll('.section .section-metadata').forEach((meta) => {
+    const section = meta.closest('.section');
+    if (!section) return;
+    const config = readBlockConfig(meta);
+    if (config.style) {
+      config.style.split(',')
+        .map((s) => toClassName(s.trim()))
+        .filter((s) => !!s)
+        .forEach((s) => section.classList.add(s));
+    }
+    // remove the metadata block (and its wrapper) so it is neither rendered nor
+    // picked up by decorateBlocks() as a loadable block.
+    const wrapper = meta.closest('.section-metadata-wrapper');
+    (wrapper || meta).remove();
+  });
+}
+
+/**
  * Decorates the main element.
  * @param {Element} main The main element
  */
@@ -224,6 +255,7 @@ export function decorateMain(main) {
   decorateIcons(main);
   buildAutoBlocks(main);
   decorateSections(main);
+  decorateSectionStyles(main);
   decorateBlocks(main);
   decorateButtons(main);
 }
@@ -316,13 +348,6 @@ async function loadLazy(doc) {
   if (hash && element) element.scrollIntoView();
 
   loadFooter(doc.querySelector('footer'));
-
-  // Persistent bottom-right sales widget ("Contact us" / "Talk to sales"),
-  // present on every page. Loaded here (lazy phase) so it never touches LCP.
-  loadCSS(`${window.hlx.codeBasePath}/blocks/contact-us/contact-us.css`);
-  import('../blocks/contact-us/contact-us.js')
-    .then(({ default: initContactUs }) => initContactUs())
-    .catch(() => { /* non-fatal — widget is non-critical chrome */ });
 
   if (MARTECH_ENABLED) {
     try { await martechLazy(); } catch (e) { /* non-fatal */ }
