@@ -56,3 +56,31 @@ function normalizePath(path) {
 export function resolveDeRoute(path) {
   return DE_ROUTES[normalizePath(path)] ?? null;
 }
+
+/**
+ * Client-flow DE routes: pages whose slots are personalized **client-side** via
+ * the `/api/pzn-manifest.json` Audience Manifest (the aem-experimentation plugin
+ * applies the offer). Kept separate from the server-side `DE_ROUTES` so the SSR
+ * proxy passes these pages through untouched — the client, not the worker, injects
+ * the offer, so there is no double injection.
+ * @type {Record<string, DeRoute>}
+ */
+export const DE_CLIENT_ROUTES = {
+  // The client-side POC demo page. Its `slot-1` block is personalized by the
+  // Decision Engine and applied by aem-experimentation via the manifest endpoint.
+  '/drafts/pzn-demo': {
+    slots: [
+      { location: 'slot-1', placement: 'SBSEGQBMContentAemPznIxpTest', experience: 'marketing' },
+    ],
+  },
+};
+
+/**
+ * Resolves the client-flow DE route for a path, or null if it has no client-side
+ * personalized slots.
+ * @param {string} path
+ * @returns {DeRoute | null}
+ */
+export function resolveDeClientRoute(path) {
+  return DE_CLIENT_ROUTES[normalizePath(path)] ?? null;
+}

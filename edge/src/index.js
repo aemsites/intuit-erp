@@ -40,6 +40,7 @@ import { resolveTemplateData, fillPlaceholders } from './template.js';
 import { deriveVisitorTokens } from './visitor.js';
 import { createCacheKeys, mergeCacheKeys, applyCacheKeys } from './cache-keys.js';
 import { handleApi } from './api/router.js';
+import { resolveVisitorIvid } from './ivid.js';
 
 /**
  * @typedef {import('./personalize.js').PznEntry} PznEntry
@@ -257,9 +258,14 @@ export default {
       return new Response('Method Not Allowed', { status: 405 });
     }
 
-    // 3. Validate the configured origin before proxying to it.
+    // 3. Validate the configured origin before proxying to it. Accept an EDS host
+    //    on aem.live (prod) or aem.page (branch preview), or a localhost origin for
+    //    local `aem up` development — so the demo can run against this branch's code
+    //    + local drafts, not only published prod content.
     const originBase = new URL(env.ORIGIN_BASE_URL);
-    if (!/^https:\/\/main--.*--.*\.(?:aem|hlx)\.live/.test(originBase.origin)) {
+    const isEdsHost = /^https:\/\/.+--.+--.+\.(?:aem|hlx)\.(?:live|page)$/.test(originBase.origin);
+    const isLocalHost = /^https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?$/.test(originBase.origin);
+    if (!isEdsHost && !isLocalHost) {
       return new Response('Invalid ORIGIN_BASE_URL', { status: 500 });
     }
 
@@ -383,6 +389,15 @@ export default {
       }
     }
 
-    return finalize(response, savedSearch, env);
+    const finalized = finalize(response, savedSearch, env);
+    // POC: issue/persist the visitor `ivid` cookie on HTML page loads — the real
+    // Intuit edge issues this cookie; minting it here gives the client
+    // personalization endpoints (`/api/*`) a stable visitor id with no external
+    // dependency. Honors `?ivid=` for demo/QA (pins + persists a specific arm).
+    if (request.method === 'GET' && (finalized.headers.get('content-type') || '').includes('text/html')) {
+      const { setCookie } = resolveVisitorIvid(request);
+      if (setCookie) finalized.headers.append('set-cookie', setCookie);
+    }
+    return finalized;
   },
 };

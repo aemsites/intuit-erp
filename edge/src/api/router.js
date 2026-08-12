@@ -6,6 +6,8 @@
 import { guard } from './guard.js';
 import { handleDe } from './de.js';
 import { handleIxp } from './ixp.js';
+import { handleManifest } from './manifest.js';
+import { handleAudiences } from './audiences.js';
 
 export async function handleApi(request, env) {
   const { pathname } = new URL(request.url);
@@ -22,6 +24,10 @@ export async function handleApi(request, env) {
     res = await handleDe(request, env);
   } else if (pathname === '/api/ixp' && request.method === 'GET') {
     res = await handleIxp(request, env);
+  } else if (pathname === '/api/pzn-manifest.json' && request.method === 'GET') {
+    res = await handleManifest(request, env);
+  } else if (pathname === '/api/audiences' && request.method === 'GET') {
+    res = await handleAudiences(request, env);
   } else {
     res = new Response('Not found', { status: 404 });
   }

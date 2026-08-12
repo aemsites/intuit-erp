@@ -35,6 +35,10 @@ export const IXP_ROUTES = {
   // <main> for the variation page; a REPLACE_WEB_CONTENT treatment fills the
   // `slot-1` block. The arm is chosen by IXP off the visitor's `ivid`.
   '/drafts/pzn/experiment': { experimentId: 385944, location: 'slot-1', fidelity: 'block' },
+  // Client-flow POC: the IXP page-level redirect A/B demo. `/api/audiences`
+  // resolves the sticky arm for experiment 39100 (the in-worker mock until the
+  // real key lands); aem-experimentation redirects control → treatment page.
+  '/drafts/pzn-demo/experiment': { experimentId: 39100, location: 'main', fidelity: 'page' },
 };
 
 /**

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { readIvid } from '../src/ivid.js';
+import { readIvid, resolveVisitorIvid } from '../src/ivid.js';
 
 const req = (url, init) => new Request(url, init);
 
@@ -14,5 +14,26 @@ describe('readIvid', () => {
 
   it('returns null when neither is present', () => {
     expect(readIvid(req('https://x.com/p'))).toBeNull();
+  });
+});
+
+describe('resolveVisitorIvid', () => {
+  it('mints a new ivid + Set-Cookie when none is present', () => {
+    const { ivid, setCookie } = resolveVisitorIvid(req('https://x.com/p'));
+    expect(ivid).toMatch(/^[0-9a-f-]{36}$/);
+    expect(setCookie).toContain(`ivid=${ivid}`);
+    expect(setCookie).toContain('Path=/');
+  });
+
+  it('reuses an existing cookie without re-setting it', () => {
+    const { ivid, setCookie } = resolveVisitorIvid(req('https://x.com/p', { headers: { cookie: 'ivid=c456' } }));
+    expect(ivid).toBe('c456');
+    expect(setCookie).toBeNull();
+  });
+
+  it('honors ?ivid= and persists it as a cookie (override)', () => {
+    const { ivid, setCookie } = resolveVisitorIvid(req('https://x.com/p?ivid=q123', { headers: { cookie: 'ivid=c456' } }));
+    expect(ivid).toBe('q123');
+    expect(setCookie).toContain('ivid=q123');
   });
 });
