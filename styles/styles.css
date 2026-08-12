@@ -598,6 +598,35 @@ main:has(.event-cards) > .section:first-of-type p {
    own width, so this only touches default-content-wrapper. */
 body.case-study main .default-content-wrapper { max-width: 46em; margin: 0 auto; }
 
+/* author bio page hero (Template: "Author" metadata -> body.author): the
+   photo/name/bio is plain default content (no dedicated block), authored as
+   h1 -> photo paragraph -> bio paragraph. Center it and mask the photo into
+   a circular avatar to match the original; `order: -1` moves the photo above
+   the h1 visually without requiring every author page to be re-authored. */
+body.author main .default-content-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 46em;
+  margin: 0 auto;
+  text-align: center;
+}
+
+body.author main .default-content-wrapper p:has(picture) {
+  order: -1;
+  width: 160px;
+  margin: 0 0 24px;
+}
+
+body.author main .default-content-wrapper p:has(picture) img {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+body.author main .default-content-wrapper p:not(:has(picture)) { max-width: 34em; }
+
 /* pull-quote (case-study article body prose) */
 blockquote {
   position: relative; margin: 48px 0; padding: 0 0 0 44px;
