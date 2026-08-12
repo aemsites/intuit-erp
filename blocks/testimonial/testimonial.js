@@ -98,19 +98,19 @@ function ytId(url) {
  * Builds one video story frame from a row's positional cells:
  *   [poster img, eyebrow, quote, attribution (may hold a link),
  *    youtube (url or id), mp4 link (optional), logo img (optional)]
- * When an mp4 cell is present the frame shows that clip inline (muted loop)
- * as the background; otherwise an authored youtube shows the poster photo as
- * a static background, and the bare default falls back to the Rhodes clip.
- * The centered play button opens the full video (youtube) in a modal.
+ * When an mp4 cell is present the frame shows that clip's poster frame as a
+ * static background (the clip itself never autoplays — only fetched/played
+ * once the reader opens the full video); otherwise an authored youtube shows
+ * the poster photo as a static background, and the bare default falls back
+ * to the Rhodes poster. The centered play button opens the full video
+ * (youtube) in a modal.
  * @param {Element[]} cells the row's cells
- * @param {{caption?:boolean, autoplay?:boolean}} [opts] when caption is false
- *   the in-frame caption is omitted (the switcher renders a shared caption bar
- *   instead); autoplay (default true) gates the muted bg loop — the switcher
- *   only autoplays the initially-active story, not every hidden one
+ * @param {{caption?:boolean}} [opts] when caption is false the in-frame
+ *   caption is omitted (the switcher renders a shared caption bar instead)
  * @returns {HTMLDivElement} the `.video-frame`
  */
 export function buildVideoFrame(cells, opts = {}) {
-  const { caption = true, autoplay = true } = opts;
+  const { caption = true } = opts;
   const [posterCell, eyebrowCell, quoteCell, attrCell, youtubeCell, mp4Cell, logoCell] = cells;
   const authoredYoutube = youtubeCell ? youtubeCell.textContent.trim() : '';
   const youtubeId = ytId(authoredYoutube) || authoredYoutube || STORY_YOUTUBE_ID;
@@ -128,8 +128,10 @@ export function buildVideoFrame(cells, opts = {}) {
     if (posterImg) bg.poster = posterImg.currentSrc || posterImg.src;
     bg.muted = true;
     bg.loop = true;
-    bg.autoplay = autoplay;
     bg.playsInline = true;
+    // never autoplay, and don't even prefetch — the poster attribute above
+    // is what actually renders until (if ever) something calls .play()
+    bg.preload = 'none';
     bg.setAttribute('aria-hidden', 'true');
   } else if (authoredYoutube) {
     // no cutdown mp4 for this story — show the poster photo as a static
@@ -144,8 +146,8 @@ export function buildVideoFrame(cells, opts = {}) {
     if (posterImg) bg.poster = posterImg.currentSrc || posterImg.src;
     bg.muted = true;
     bg.loop = true;
-    bg.autoplay = autoplay;
     bg.playsInline = true;
+    bg.preload = 'none';
     bg.setAttribute('aria-hidden', 'true');
   }
 
@@ -173,10 +175,6 @@ export function buildVideoFrame(cells, opts = {}) {
     parts.push(cap);
   }
   frame.append(...parts);
-  if (bg.tagName === 'VIDEO' && autoplay) {
-    // autoplay may be blocked or unimplemented (jsdom) — swallow either way
-    try { const p = bg.play(); if (p && p.catch) p.catch(() => {}); } catch { /* noop */ }
-  }
   return frame;
 }
 
@@ -250,9 +248,7 @@ export function buildVideoSection(rows) {
 
   const stories = rows.map((r) => [...r.children]);
   const frames = stories.map((cells, i) => {
-    // only the initially-active story autoplays — the rest sit as posters
-    // until switched to, so we're never running several muted loops at once
-    const f = buildVideoFrame(cells, { caption: false, autoplay: i === 0 });
+    const f = buildVideoFrame(cells, { caption: false });
     f.id = `video-story-${i}`;
     f.classList.toggle('is-active', i === 0);
     return f;
@@ -278,17 +274,7 @@ export function buildVideoSection(rows) {
       t.setAttribute('aria-selected', i === idx ? 'true' : 'false');
       t.tabIndex = i === idx ? 0 : -1;
     });
-    frames.forEach((f, i) => {
-      f.classList.toggle('is-active', i === idx);
-      const vid = f.querySelector('video.video-bg');
-      if (!vid) return;
-      if (i === idx) {
-        // autoplay may be blocked — swallow either way
-        try { const p = vid.play(); if (p && p.catch) p.catch(() => {}); } catch { /* noop */ }
-      } else {
-        vid.pause();
-      }
-    });
+    frames.forEach((f, i) => f.classList.toggle('is-active', i === idx));
     fillCaption(bar, data[idx]);
   }
   thumbsWrap.addEventListener('click', (e) => {
