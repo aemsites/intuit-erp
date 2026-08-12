@@ -103,12 +103,14 @@ function ytId(url) {
  * a static background, and the bare default falls back to the Rhodes clip.
  * The centered play button opens the full video (youtube) in a modal.
  * @param {Element[]} cells the row's cells
- * @param {{caption?:boolean}} [opts] when caption is false the in-frame
- *   caption is omitted (the switcher renders a shared caption bar instead)
+ * @param {{caption?:boolean, autoplay?:boolean}} [opts] when caption is false
+ *   the in-frame caption is omitted (the switcher renders a shared caption bar
+ *   instead); autoplay (default true) gates the muted bg loop — the switcher
+ *   only autoplays the initially-active story, not every hidden one
  * @returns {HTMLDivElement} the `.video-frame`
  */
 export function buildVideoFrame(cells, opts = {}) {
-  const { caption = true } = opts;
+  const { caption = true, autoplay = true } = opts;
   const [posterCell, eyebrowCell, quoteCell, attrCell, youtubeCell, mp4Cell, logoCell] = cells;
   const authoredYoutube = youtubeCell ? youtubeCell.textContent.trim() : '';
   const youtubeId = ytId(authoredYoutube) || authoredYoutube || STORY_YOUTUBE_ID;
@@ -126,7 +128,7 @@ export function buildVideoFrame(cells, opts = {}) {
     if (posterImg) bg.poster = posterImg.currentSrc || posterImg.src;
     bg.muted = true;
     bg.loop = true;
-    bg.autoplay = true;
+    bg.autoplay = autoplay;
     bg.playsInline = true;
     bg.setAttribute('aria-hidden', 'true');
   } else if (authoredYoutube) {
@@ -142,7 +144,7 @@ export function buildVideoFrame(cells, opts = {}) {
     if (posterImg) bg.poster = posterImg.currentSrc || posterImg.src;
     bg.muted = true;
     bg.loop = true;
-    bg.autoplay = true;
+    bg.autoplay = autoplay;
     bg.playsInline = true;
     bg.setAttribute('aria-hidden', 'true');
   }
@@ -171,7 +173,7 @@ export function buildVideoFrame(cells, opts = {}) {
     parts.push(cap);
   }
   frame.append(...parts);
-  if (bg.tagName === 'VIDEO') {
+  if (bg.tagName === 'VIDEO' && autoplay) {
     // autoplay may be blocked or unimplemented (jsdom) — swallow either way
     try { const p = bg.play(); if (p && p.catch) p.catch(() => {}); } catch { /* noop */ }
   }
@@ -248,7 +250,9 @@ export function buildVideoSection(rows) {
 
   const stories = rows.map((r) => [...r.children]);
   const frames = stories.map((cells, i) => {
-    const f = buildVideoFrame(cells, { caption: false });
+    // only the initially-active story autoplays — the rest sit as posters
+    // until switched to, so we're never running several muted loops at once
+    const f = buildVideoFrame(cells, { caption: false, autoplay: i === 0 });
     f.id = `video-story-${i}`;
     f.classList.toggle('is-active', i === 0);
     return f;
@@ -274,7 +278,17 @@ export function buildVideoSection(rows) {
       t.setAttribute('aria-selected', i === idx ? 'true' : 'false');
       t.tabIndex = i === idx ? 0 : -1;
     });
-    frames.forEach((f, i) => f.classList.toggle('is-active', i === idx));
+    frames.forEach((f, i) => {
+      f.classList.toggle('is-active', i === idx);
+      const vid = f.querySelector('video.video-bg');
+      if (!vid) return;
+      if (i === idx) {
+        // autoplay may be blocked — swallow either way
+        try { const p = vid.play(); if (p && p.catch) p.catch(() => {}); } catch { /* noop */ }
+      } else {
+        vid.pause();
+      }
+    });
     fillCaption(bar, data[idx]);
   }
   thumbsWrap.addEventListener('click', (e) => {
