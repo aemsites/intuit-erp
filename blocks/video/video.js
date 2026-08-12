@@ -15,11 +15,28 @@
  * CSS: blocks/video/video.css
  */
 
+import { createOptimizedPicture } from '../../scripts/aem.js';
 import { videoInfo, isVideoLink, posterFor } from './video-info.js';
 
 // re-exported so the unit tests (and any external importer) keep resolving the
 // pure helpers from this block, while decorate() below uses videoInfo/posterFor.
 export { videoInfo, isVideoLink, posterFor };
+
+/**
+ * Builds an EDS-optimized poster <picture> (webp + width-matched srcset) served
+ * by the site's media pipeline — posters are local `media_*` assets in
+ * production. No width/height needed: `.video-preview` reserves the box via its
+ * `aspect-ratio: 16/9` (see video.css), so there is no layout shift and the img
+ * just fills that box with `object-fit: cover`. Mirrors cards.js.
+ * @param {string} src poster image URL (a `./media_*` asset)
+ * @param {string} alt
+ * @returns {HTMLElement} the <picture> element
+ */
+function buildPoster(src, alt) {
+  const picture = createOptimizedPicture(src, alt, false, [{ width: '750' }]);
+  picture.querySelector('img').setAttribute('decoding', 'async');
+  return picture;
+}
 
 /**
  * Opens the video in a dismissible lightbox modal (autoplay iframe).
@@ -69,13 +86,7 @@ export default function decorate(block) {
   preview.setAttribute('tabindex', '0');
   preview.setAttribute('aria-label', alt ? `Play video: ${alt}` : 'Play video');
 
-  if (poster) {
-    const img = document.createElement('img');
-    img.src = poster;
-    img.alt = alt;
-    img.loading = 'lazy';
-    preview.append(img);
-  }
+  if (poster) preview.append(buildPoster(poster, alt));
   const play = document.createElement('span');
   play.className = 'video-play';
   play.setAttribute('aria-hidden', 'true');

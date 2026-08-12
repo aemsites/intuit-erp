@@ -5,8 +5,6 @@
  * block) still styles the lightbox. Tokens reused from styles/styles.css.
  */
 
-.video { margin: 2rem 0; }
-
 /* section-owned layout (video as an in-article/section block): the source
    centers a constrained ~738px thumbnail and centers the section heading at
    desktop. Scoped to .video-container so a video used elsewhere is unaffected. */
@@ -79,7 +77,6 @@ main .section.video-container {
   border-radius: 50%;
   background: #fff;
   box-shadow: 0 4px 30px rgb(0 0 0 / 15%);
-  transition: transform 0.333s cubic-bezier(0.35, 0, 0.5, 1);
 }
 
 .video .video-play::after {
