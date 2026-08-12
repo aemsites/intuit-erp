@@ -1,0 +1,147 @@
+{
+  "page": "/blog/hr/recruitment-and-retention",
+  "mode": "page",
+  "viewport": "1280x900 (headless default)",
+  "migratedUrl": "http://localhost:3000/content/blog/hr/recruitment-and-retention",
+  "sourceUrl": "https://erp.intuit.com/blog/hr/recruitment-and-retention/",
+  "method": "CDP browser render both sides (SPA-safe); region fingerprint; scoring.md weights",
+  "similarity": 46.2,
+  "contentFidelityPct": 64.9,
+  "global": {
+    "sourceFont": "AvenirNext forINTUIT",
+    "migratedFont": "AvenirNext forINTUIT",
+    "match": true
+  },
+  "hero": {
+    "sourceBg": "rgb(239, 244, 249)",
+    "migratedBg": "rgba(0, 0, 0, 0)",
+    "sourceH1": {
+      "fontSize": "40px",
+      "fontWeight": "700",
+      "lineHeight": "52px",
+      "color": "rgb(33, 38, 42)"
+    },
+    "migratedH1": null,
+    "bgMatch": false
+  },
+  "content": {
+    "sourceHeadings": 37,
+    "migratedHeadings": 26,
+    "missingOnMigrated": [
+      "Recruitment and retention: How to fill roles and reduce turnover",
+      "Download",
+      "Forrester TEI Study: Intuit Enterprise Suite delivers 299% ROI",
+      "Customer stories",
+      "Case study: Fire & Ice transforms multi-entity challenges with Intuit Enterprise",
+      "How FEFA Financial scaled up with Intuit Enterprise Suite (No ERP migration needed)",
+      "Four Points RV Resorts review: Why they chose Intuit Enterprise Suite over NetSuite",
+      "Migrating to Intuit Enterprise Suite took 2 hours (with zero disruption) for this aspiring $50M revenue business",
+      "Humble House Foods case study: How they improved visibility & simplicity using Intuit Enterprise Suite",
+      "More on human resources",
+      "What is human capital management (HCM)?",
+      "Learning management system: Diffrent types of LMS & their benefits",
+      "Related"
+    ],
+    "migratedFormError": null
+  },
+  "diffs": [
+    {
+      "cat": "styling",
+      "prop": "hero background-color",
+      "original": "rgb(239, 244, 249)",
+      "migrated": "rgba(0, 0, 0, 0)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Recruitment and retention: How to fill roles and reduce turnover",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Download",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Forrester TEI Study: Intuit Enterprise Suite delivers 299% ROI",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Customer stories",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Case study: Fire & Ice transforms multi-entity challenges with Intuit Enterprise",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "How FEFA Financial scaled up with Intuit Enterprise Suite (No ERP migration needed)",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Four Points RV Resorts review: Why they chose Intuit Enterprise Suite over NetSuite",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Migrating to Intuit Enterprise Suite took 2 hours (with zero disruption) for this aspiring $50M revenue business",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Humble House Foods case study: How they improved visibility & simplicity using Intuit Enterprise Suite",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "More on human resources",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "What is human capital management (HCM)?",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Learning management system: Diffrent types of LMS & their benefits",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Related",
+      "migrated": "(absent)",
+      "severity": "high"
+    }
+  ]
+}

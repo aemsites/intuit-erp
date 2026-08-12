@@ -1,0 +1,203 @@
+{
+  "page": "/blog/pricing/job-order-costing",
+  "mode": "page",
+  "viewport": "1280x900 (headless default)",
+  "migratedUrl": "http://localhost:3000/content/blog/pricing/job-order-costing",
+  "sourceUrl": "https://erp.intuit.com/blog/pricing/job-order-costing/",
+  "method": "CDP browser render both sides (SPA-safe); region fingerprint; scoring.md weights",
+  "similarity": 40.5,
+  "contentFidelityPct": 59.2,
+  "global": {
+    "sourceFont": "AvenirNext forINTUIT",
+    "migratedFont": "AvenirNext forINTUIT",
+    "match": true
+  },
+  "hero": {
+    "sourceBg": "rgb(239, 244, 249)",
+    "migratedBg": "rgba(0, 0, 0, 0)",
+    "sourceH1": {
+      "fontSize": "40px",
+      "fontWeight": "700",
+      "lineHeight": "52px",
+      "color": "rgb(33, 38, 42)"
+    },
+    "migratedH1": null,
+    "bgMatch": false
+  },
+  "content": {
+    "sourceHeadings": 49,
+    "migratedHeadings": 34,
+    "missingOnMigrated": [
+      "A custom furniture company discovers its intricate hand-crafted tables are priced too low to cover hidden overhead costs like workshop utilities, tool depreciation, and admin expenses. By recalculating and factoring these costs into their pricing, the company raises rates for high-labor items and boosts overall profit margins.",
+      "A catering business uses historical data to accurately estimate costs for food, staff, transportation, and venue-specific requirements. This detailed approach enables them to present clients with quotes that are both competitive and reflective of actual costs, reducing the risk of undercharging and unexpected expenses mid-project.",
+      "Below, we outline some common challenges and provide practical solutions to help businesses streamline their job costing process and avoid larger financial headaches.",
+      "Solution: Use time-tracking software to log hours in real time and ensure hourly rates reflect benefits, taxes, and overtime. This minimizes discrepancies and provides a clearer picture of labor expenses, allowing for more accurate pricing and cost management.",
+      "Solution: Base allocations on historical data and adjust cost drivers periodically to reflect actual usage patterns. Regularly review and update cost drivers, such as labor hours or machine usage, to ensure overhead is allocated correctly and job profitability is accurately measured.",
+      "Solution: Use cloud-based platforms for real-time updates, reducing data collection delays and errors. With instant access to updated job cost information, managers can make quicker, data-driven decisions and avoid compounding errors over time.",
+      "Solution: Implement software designed to handle multi-job environments with features like automated reporting and cost comparisons. By having a centralized platform that tracks multiple jobs simultaneously, you can help ensure more accurate reporting and smoother project management, avoiding costly errors from misallocated resources.",
+      "Download",
+      "Business growth guide: Proven strategies to scale your business",
+      "Customer stories",
+      "How FEFA Financial scaled up with Intuit Enterprise Suite (No ERP migration needed)",
+      "Case study: Fire & Ice transforms multi-entity challenges with Intuit Enterprise",
+      "Four Points RV Resorts review: Why they chose Intuit Enterprise Suite over NetSuite",
+      "Migrating to Intuit Enterprise Suite took 2 hours (with zero disruption) for this aspiring $50M revenue business",
+      "Humble House Foods case study: How they improved visibility & simplicity using Intuit Enterprise Suite",
+      "More product updates",
+      "Psychological pricing: Using odd-even & charm pricing to increase sales",
+      "Intuit Enterprise Suite 2025 update: AI agents & automation enhancements",
+      "What’s new in Intuit Enterprise Suite November 2025: The AI-native ERP that adapts with your business",
+      "Related"
+    ],
+    "migratedFormError": null
+  },
+  "diffs": [
+    {
+      "cat": "styling",
+      "prop": "hero background-color",
+      "original": "rgb(239, 244, 249)",
+      "migrated": "rgba(0, 0, 0, 0)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "A custom furniture company discovers its intricate hand-crafted tables are priced too low to cover hidden overhead costs like workshop utilities, tool depreciation, and admin expenses. By recalculating and factoring these costs into their pricing, the company raises rates for high-labor items and boosts overall profit margins.",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "A catering business uses historical data to accurately estimate costs for food, staff, transportation, and venue-specific requirements. This detailed approach enables them to present clients with quotes that are both competitive and reflective of actual costs, reducing the risk of undercharging and unexpected expenses mid-project.",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Below, we outline some common challenges and provide practical solutions to help businesses streamline their job costing process and avoid larger financial headaches.",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Solution: Use time-tracking software to log hours in real time and ensure hourly rates reflect benefits, taxes, and overtime. This minimizes discrepancies and provides a clearer picture of labor expenses, allowing for more accurate pricing and cost management.",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Solution: Base allocations on historical data and adjust cost drivers periodically to reflect actual usage patterns. Regularly review and update cost drivers, such as labor hours or machine usage, to ensure overhead is allocated correctly and job profitability is accurately measured.",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Solution: Use cloud-based platforms for real-time updates, reducing data collection delays and errors. With instant access to updated job cost information, managers can make quicker, data-driven decisions and avoid compounding errors over time.",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Solution: Implement software designed to handle multi-job environments with features like automated reporting and cost comparisons. By having a centralized platform that tracks multiple jobs simultaneously, you can help ensure more accurate reporting and smoother project management, avoiding costly errors from misallocated resources.",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Download",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Business growth guide: Proven strategies to scale your business",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Customer stories",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "How FEFA Financial scaled up with Intuit Enterprise Suite (No ERP migration needed)",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Case study: Fire & Ice transforms multi-entity challenges with Intuit Enterprise",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Four Points RV Resorts review: Why they chose Intuit Enterprise Suite over NetSuite",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Migrating to Intuit Enterprise Suite took 2 hours (with zero disruption) for this aspiring $50M revenue business",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Humble House Foods case study: How they improved visibility & simplicity using Intuit Enterprise Suite",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "More product updates",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Psychological pricing: Using odd-even & charm pricing to increase sales",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Intuit Enterprise Suite 2025 update: AI agents & automation enhancements",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "What’s new in Intuit Enterprise Suite November 2025: The AI-native ERP that adapts with your business",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Related",
+      "migrated": "(absent)",
+      "severity": "high"
+    }
+  ]
+}

@@ -1,0 +1,101 @@
+{
+  "page": "/automation-tools/payments-bill-pay",
+  "mode": "page",
+  "viewport": "1280x900 (headless default)",
+  "migratedUrl": "http://localhost:3000/content/automation-tools/payments-bill-pay",
+  "sourceUrl": "https://erp.intuit.com/automation-tools/payments-bill-pay/",
+  "method": "CDP browser render both sides (SPA-safe); region fingerprint; scoring.md weights",
+  "similarity": 5.6,
+  "contentFidelityPct": 55.6,
+  "global": {
+    "sourceFont": "AvenirNext forINTUIT",
+    "migratedFont": "AvenirNext forINTUIT",
+    "match": true
+  },
+  "hero": {
+    "sourceBg": "rgb(243, 242, 239)",
+    "migratedBg": "rgb(0, 37, 74)",
+    "sourceH1": {
+      "fontSize": "40px",
+      "fontWeight": "700",
+      "lineHeight": "52px",
+      "color": "rgb(0, 0, 0)"
+    },
+    "migratedH1": {
+      "fontSize": "48px",
+      "fontWeight": "400",
+      "lineHeight": "60px",
+      "color": "rgb(255, 255, 255)"
+    },
+    "bgMatch": false
+  },
+  "content": {
+    "sourceHeadings": 9,
+    "migratedHeadings": 5,
+    "missingOnMigrated": [
+      "Save time on reconciliation“We have shaved down a significant amount of time because what the suite allows us to do is instead of having to sign in/out, sign in/out...I go into one place and I do everything that I need to do in that one place. Then, at the end of the month [our head bookkeeper] can do the reconciliation in the space of three to four days.”Gene Marks, Bookkeeper, Financial Services (Investment Company)",
+      "Identify risks faster with real‑time profitability data “Real-time visibility into the profitability of all of our sales channels [with Intuit Enterprise Suite] allows us to track and attack problems before they arise.” Marsha Morales, CFO at Humble House",
+      "Reduce administrative overhead to drive growth “Automation of tasks through the Intuit Enterprise Suite will reduce administrative overhead allowing us to take on more clients without increasing headcount which will drive greater profitability for the firm.”Teresa Hendrickson, Sr. Onboarding Consulting Manager at Hogan Taylor Industry Customizations",
+      "Let’s connect"
+    ],
+    "migratedFormError": null
+  },
+  "diffs": [
+    {
+      "cat": "styling",
+      "prop": "hero background-color",
+      "original": "rgb(243, 242, 239)",
+      "migrated": "rgb(0, 37, 74)",
+      "severity": "high"
+    },
+    {
+      "cat": "styling",
+      "prop": "h1 color",
+      "original": "rgb(0, 0, 0)",
+      "migrated": "rgb(255, 255, 255)",
+      "severity": "high"
+    },
+    {
+      "cat": "styling",
+      "prop": "h1 font-weight",
+      "original": "700",
+      "migrated": "400",
+      "severity": "medium"
+    },
+    {
+      "cat": "styling",
+      "prop": "h1 font-size",
+      "original": "40px",
+      "migrated": "48px",
+      "severity": "low"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Save time on reconciliation“We have shaved down a significant amount of time because what the suite allows us to do is instead of having to sign in/out, sign in/out...I go into one place and I do everything that I need to do in that one place. Then, at the end of the month [our head bookkeeper] can do the reconciliation in the space of three to four days.”Gene Marks, Bookkeeper, Financial Services (Investment Company)",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Identify risks faster with real‑time profitability data “Real-time visibility into the profitability of all of our sales channels [with Intuit Enterprise Suite] allows us to track and attack problems before they arise.” Marsha Morales, CFO at Humble House",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Reduce administrative overhead to drive growth “Automation of tasks through the Intuit Enterprise Suite will reduce administrative overhead allowing us to take on more clients without increasing headcount which will drive greater profitability for the firm.”Teresa Hendrickson, Sr. Onboarding Consulting Manager at Hogan Taylor Industry Customizations",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Let’s connect",
+      "migrated": "(absent)",
+      "severity": "high"
+    }
+  ]
+}

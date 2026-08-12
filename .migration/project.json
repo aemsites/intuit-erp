@@ -1,0 +1,16 @@
+{
+  "type": "da",
+  "sites": {
+    "intuit-erp": {
+      "type": "da",
+      "previewOrg": "aemsites",
+      "previewSite": "intuit-erp",
+      "liveOrg": "aemsites",
+      "liveSite": "intuit-erp",
+      "contentSource": "https://content.da.live/aemsites/intuit-erp/",
+      "daOrg": "aemsites",
+      "daSite": "intuit-erp",
+      "libraryUrl": "https://main--sta-boilerplate--aemdemos.aem.page/tools/sidekick/library.json"
+    }
+  }
+}

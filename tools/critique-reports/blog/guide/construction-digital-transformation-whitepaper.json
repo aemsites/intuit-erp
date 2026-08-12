@@ -1,0 +1,51 @@
+{
+  "page": "/blog/guide/construction-digital-transformation-whitepaper",
+  "mode": "page",
+  "viewport": "1280x900 (headless default)",
+  "migratedUrl": "http://localhost:3000/content/blog/guide/construction-digital-transformation-whitepaper",
+  "sourceUrl": "https://erp.intuit.com/blog/guide/construction-digital-transformation-whitepaper/",
+  "method": "CDP browser render both sides (SPA-safe); region fingerprint; scoring.md weights",
+  "similarity": 67,
+  "contentFidelityPct": 85.7,
+  "global": {
+    "sourceFont": "AvenirNext forINTUIT",
+    "migratedFont": "AvenirNext forINTUIT",
+    "match": true
+  },
+  "hero": {
+    "sourceBg": "rgb(239, 244, 249)",
+    "migratedBg": "rgba(0, 0, 0, 0)",
+    "sourceH1": {
+      "fontSize": "40px",
+      "fontWeight": "700",
+      "lineHeight": "52px",
+      "color": "rgb(33, 38, 42)"
+    },
+    "migratedH1": null,
+    "bgMatch": false
+  },
+  "content": {
+    "sourceHeadings": 7,
+    "migratedHeadings": 10,
+    "missingOnMigrated": [
+      "The essential evolution: Why technology is the only answer to construction's toughest challenges"
+    ],
+    "migratedFormError": null
+  },
+  "diffs": [
+    {
+      "cat": "styling",
+      "prop": "hero background-color",
+      "original": "rgb(239, 244, 249)",
+      "migrated": "rgba(0, 0, 0, 0)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "The essential evolution: Why technology is the only answer to construction's toughest challenges",
+      "migrated": "(absent)",
+      "severity": "high"
+    }
+  ]
+}

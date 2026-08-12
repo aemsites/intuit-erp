@@ -1,0 +1,33 @@
+{
+  "page": "/blog/guide/ai-workplace-whitepaper",
+  "sourceUrl": "https://erp.intuit.com/blog/guide/ai-workplace-whitepaper/",
+  "migratedUrl": "http://localhost:3000/content/blog/guide/ai-workplace-whitepaper",
+  "source": {
+    "rendered": false,
+    "note": "source empty/blocked"
+  },
+  "migrated": {
+    "ok": true,
+    "blocked": false,
+    "bodyFont": "AvenirNext forINTUIT",
+    "h1": null,
+    "h1Text": null,
+    "hero": {
+      "bg": "rgba(0, 0, 0, 0)"
+    },
+    "headings": [
+      "Access an AI-native ERP that scales with you",
+      "Download the full white paper",
+      "The path forward: 5 strategic considerations for tech buyers",
+      "The need: Enterprise-grade power with AI-native adaptability",
+      "The solution: An ERP that delivers multi-entity mastery, agentic AI, and industry-ready depth without implementation friction",
+      "Future-proof your business with a connected, adaptive, AI-native ERP system."
+    ],
+    "headingCount": 6,
+    "images": 9,
+    "paragraphs": 28,
+    "bodyTextLen": 3894,
+    "formError": null
+  },
+  "deferred": "source-unavailable"
+}

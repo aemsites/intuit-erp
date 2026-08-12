@@ -1,0 +1,147 @@
+{
+  "page": "/blog/product-update/intuit-enterprise-suite-february-2026-release-notes",
+  "mode": "page",
+  "viewport": "1280x900 (headless default)",
+  "migratedUrl": "http://localhost:3000/content/blog/product-update/intuit-enterprise-suite-february-2026-release-notes",
+  "sourceUrl": "https://erp.intuit.com/blog/product-update/intuit-enterprise-suite-february-2026-release-notes/",
+  "method": "CDP browser render both sides (SPA-safe); region fingerprint; scoring.md weights",
+  "similarity": 24.8,
+  "contentFidelityPct": 43.5,
+  "global": {
+    "sourceFont": "AvenirNext forINTUIT",
+    "migratedFont": "AvenirNext forINTUIT",
+    "match": true
+  },
+  "hero": {
+    "sourceBg": "rgb(239, 244, 249)",
+    "migratedBg": "rgba(0, 0, 0, 0)",
+    "sourceH1": {
+      "fontSize": "40px",
+      "fontWeight": "700",
+      "lineHeight": "52px",
+      "color": "rgb(33, 38, 42)"
+    },
+    "migratedH1": null,
+    "bgMatch": false
+  },
+  "content": {
+    "sourceHeadings": 23,
+    "migratedHeadings": 11,
+    "missingOnMigrated": [
+      "New construction edition and new features in Intuit Enterprise Suite, the AI-native ERP that adapts with your business",
+      "Download",
+      "Forrester TEI Study: Intuit Enterprise Suite delivers 299% ROI",
+      "Customer stories",
+      "How FEFA Financial scaled up with Intuit Enterprise Suite (No ERP migration needed)",
+      "Case study: Fire & Ice transforms multi-entity challenges with Intuit Enterprise",
+      "Four Points RV Resorts review: Why they chose Intuit Enterprise Suite over NetSuite",
+      "Migrating to Intuit Enterprise Suite took 2 hours (with zero disruption) for this aspiring $50M revenue business",
+      "Humble House Foods case study: How they improved visibility & simplicity using Intuit Enterprise Suite",
+      "More product updates",
+      "What’s new in Intuit Enterprise Suite spring 2025",
+      "Intuit Enterprise Suite 2025 update: AI agents & automation enhancements",
+      "What’s new in Intuit Enterprise Suite November 2025: The AI-native ERP that adapts with your business"
+    ],
+    "migratedFormError": null
+  },
+  "diffs": [
+    {
+      "cat": "styling",
+      "prop": "hero background-color",
+      "original": "rgb(239, 244, 249)",
+      "migrated": "rgba(0, 0, 0, 0)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "New construction edition and new features in Intuit Enterprise Suite, the AI-native ERP that adapts with your business",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Download",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Forrester TEI Study: Intuit Enterprise Suite delivers 299% ROI",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Customer stories",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "How FEFA Financial scaled up with Intuit Enterprise Suite (No ERP migration needed)",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Case study: Fire & Ice transforms multi-entity challenges with Intuit Enterprise",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Four Points RV Resorts review: Why they chose Intuit Enterprise Suite over NetSuite",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Migrating to Intuit Enterprise Suite took 2 hours (with zero disruption) for this aspiring $50M revenue business",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Humble House Foods case study: How they improved visibility & simplicity using Intuit Enterprise Suite",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "More product updates",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "What’s new in Intuit Enterprise Suite spring 2025",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Intuit Enterprise Suite 2025 update: AI agents & automation enhancements",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "What’s new in Intuit Enterprise Suite November 2025: The AI-native ERP that adapts with your business",
+      "migrated": "(absent)",
+      "severity": "high"
+    }
+  ]
+}

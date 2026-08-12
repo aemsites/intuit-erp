@@ -1,0 +1,117 @@
+{
+  "page": "/accounting/business-intelligence-reports",
+  "mode": "page",
+  "viewport": "1280x900 (headless default)",
+  "migratedUrl": "http://localhost:3000/content/accounting/business-intelligence-reports",
+  "sourceUrl": "https://erp.intuit.com/accounting/business-intelligence-reports/",
+  "method": "CDP browser render both sides (SPA-safe); region fingerprint; scoring.md weights",
+  "similarity": 0,
+  "contentFidelityPct": 40,
+  "global": {
+    "sourceFont": "AvenirNext forINTUIT",
+    "migratedFont": "AvenirNext forINTUIT",
+    "match": true
+  },
+  "hero": {
+    "sourceBg": "rgb(243, 242, 239)",
+    "migratedBg": "rgb(0, 37, 74)",
+    "sourceH1": {
+      "fontSize": "40px",
+      "fontWeight": "700",
+      "lineHeight": "52px",
+      "color": "rgb(0, 0, 0)"
+    },
+    "migratedH1": {
+      "fontSize": "48px",
+      "fontWeight": "400",
+      "lineHeight": "60px",
+      "color": "rgb(255, 255, 255)"
+    },
+    "bgMatch": false
+  },
+  "content": {
+    "sourceHeadings": 10,
+    "migratedHeadings": 4,
+    "missingOnMigrated": [
+      "Consolidated and empoweredElaine Savell, controller of Give Services, shares how Intuit Enterprise Suite fosters a spirit of empowerment and collaboration among staff—across multiple businesses and states.",
+      "Let business intelligence spotlight what matters most “[The dashboards] having all of that data available and bringing intelligence to it to help point our eyes to things that we could be missing—this is the game changer.”Ed Sutton, CFO, MDR Realty",
+      "The bird’s-eye view you need “When you're running so many different businesses and you have so much going on you really need a bird's-eye view. You need like a 30-second view every month. They're coming up with all these interesting AI features that's going to inform the business owner about the various entities.”Sharon Ourian, Principal, Ourian Investments",
+      "Spend less time compiling, and more time analyzing “We spent much more time before on the compilation [of budget-to-actuals], and nowhere near the amount of time on the review and analysis. But now the compilation is done for us, so we have all that time to review and analyze the data. It definitely has made us more value-add.”Chris Harris, Brightline Painting",
+      "Integrate seamlessly. Report confidently.",
+      "Let’s connect"
+    ],
+    "migratedFormError": null
+  },
+  "diffs": [
+    {
+      "cat": "styling",
+      "prop": "hero background-color",
+      "original": "rgb(243, 242, 239)",
+      "migrated": "rgb(0, 37, 74)",
+      "severity": "high"
+    },
+    {
+      "cat": "styling",
+      "prop": "h1 color",
+      "original": "rgb(0, 0, 0)",
+      "migrated": "rgb(255, 255, 255)",
+      "severity": "high"
+    },
+    {
+      "cat": "styling",
+      "prop": "h1 font-weight",
+      "original": "700",
+      "migrated": "400",
+      "severity": "medium"
+    },
+    {
+      "cat": "styling",
+      "prop": "h1 font-size",
+      "original": "40px",
+      "migrated": "48px",
+      "severity": "low"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Consolidated and empoweredElaine Savell, controller of Give Services, shares how Intuit Enterprise Suite fosters a spirit of empowerment and collaboration among staff—across multiple businesses and states.",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Let business intelligence spotlight what matters most “[The dashboards] having all of that data available and bringing intelligence to it to help point our eyes to things that we could be missing—this is the game changer.”Ed Sutton, CFO, MDR Realty",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "The bird’s-eye view you need “When you're running so many different businesses and you have so much going on you really need a bird's-eye view. You need like a 30-second view every month. They're coming up with all these interesting AI features that's going to inform the business owner about the various entities.”Sharon Ourian, Principal, Ourian Investments",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Spend less time compiling, and more time analyzing “We spent much more time before on the compilation [of budget-to-actuals], and nowhere near the amount of time on the review and analysis. But now the compilation is done for us, so we have all that time to review and analyze the data. It definitely has made us more value-add.”Chris Harris, Brightline Painting",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Integrate seamlessly. Report confidently.",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Let’s connect",
+      "migrated": "(absent)",
+      "severity": "high"
+    }
+  ]
+}

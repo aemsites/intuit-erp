@@ -1,0 +1,163 @@
+{
+  "page": "/blog/financials/erp-data-analysis",
+  "mode": "page",
+  "viewport": "1280x900 (headless default)",
+  "migratedUrl": "http://localhost:3000/content/blog/financials/erp-data-analysis",
+  "sourceUrl": "https://erp.intuit.com/blog/financials/erp-data-analysis/",
+  "method": "CDP browser render both sides (SPA-safe); region fingerprint; scoring.md weights",
+  "similarity": 32.9,
+  "contentFidelityPct": 51.6,
+  "global": {
+    "sourceFont": "AvenirNext forINTUIT",
+    "migratedFont": "AvenirNext forINTUIT",
+    "match": true
+  },
+  "hero": {
+    "sourceBg": "rgb(239, 244, 249)",
+    "migratedBg": "rgba(0, 0, 0, 0)",
+    "sourceH1": {
+      "fontSize": "40px",
+      "fontWeight": "700",
+      "lineHeight": "52px",
+      "color": "rgb(33, 38, 42)"
+    },
+    "migratedH1": null,
+    "bgMatch": false
+  },
+  "content": {
+    "sourceHeadings": 31,
+    "migratedHeadings": 18,
+    "missingOnMigrated": [
+      "ERP data analysis explained: Data-based decision-making",
+      "Key takeaways:",
+      "Keep growing with a more powerful suite",
+      "Turn faster closes into faster decisions",
+      "Download",
+      "Forrester TEI Study: Intuit Enterprise Suite delivers 299% ROI",
+      "Customer stories",
+      "How FEFA Financial is growing with Intuit Enterprise Suite—without migrating to an ERP",
+      "How this mission-driven, employee-owned company created efficiencies with Intuit Enterprise Suite",
+      "Why this camping business chose Intuit Enterprise Suite over NetSuite",
+      "Migrating to Intuit Enterprise Suite took 2 hours (with zero disruption) for this aspiring $50M revenue business",
+      "Humble House Foods case study: How they improved visibility & simplicity using Intuit Enterprise Suite",
+      "More on financials",
+      "Cash management solution: Features, benefits & best practices",
+      "Financial planning & analysis (FP&A): From data organization to strategic resource planning"
+    ],
+    "migratedFormError": null
+  },
+  "diffs": [
+    {
+      "cat": "styling",
+      "prop": "hero background-color",
+      "original": "rgb(239, 244, 249)",
+      "migrated": "rgba(0, 0, 0, 0)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "ERP data analysis explained: Data-based decision-making",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Key takeaways:",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Keep growing with a more powerful suite",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Turn faster closes into faster decisions",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Download",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Forrester TEI Study: Intuit Enterprise Suite delivers 299% ROI",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Customer stories",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "How FEFA Financial is growing with Intuit Enterprise Suite—without migrating to an ERP",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "How this mission-driven, employee-owned company created efficiencies with Intuit Enterprise Suite",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Why this camping business chose Intuit Enterprise Suite over NetSuite",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Migrating to Intuit Enterprise Suite took 2 hours (with zero disruption) for this aspiring $50M revenue business",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Humble House Foods case study: How they improved visibility & simplicity using Intuit Enterprise Suite",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "More on financials",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Cash management solution: Features, benefits & best practices",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Financial planning & analysis (FP&A): From data organization to strategic resource planning",
+      "migrated": "(absent)",
+      "severity": "high"
+    }
+  ]
+}

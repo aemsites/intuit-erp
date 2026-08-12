@@ -1,0 +1,28 @@
+{
+  "page": "/accountant/free-consultation/ies/coffee",
+  "sourceUrl": "https://erp.intuit.com/accountant/free-consultation/ies/coffee/",
+  "migratedUrl": "http://localhost:3000/content/accountant/free-consultation/ies/coffee",
+  "source": {
+    "rendered": false,
+    "note": "source empty/blocked"
+  },
+  "migrated": {
+    "ok": true,
+    "blocked": false,
+    "bodyFont": "AvenirNext forINTUIT",
+    "h1": null,
+    "h1Text": null,
+    "hero": {
+      "bg": "rgba(0, 0, 0, 0)"
+    },
+    "headings": [
+      "Let’s talk over a cup of coffee"
+    ],
+    "headingCount": 1,
+    "images": 4,
+    "paragraphs": 19,
+    "bodyTextLen": 2549,
+    "formError": null
+  },
+  "deferred": "source-unavailable"
+}

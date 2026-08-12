@@ -1,0 +1,51 @@
+{
+  "page": "/blog/guide/data-analytics",
+  "mode": "page",
+  "viewport": "1280x900 (headless default)",
+  "migratedUrl": "http://localhost:3000/content/blog/guide/data-analytics",
+  "sourceUrl": "https://erp.intuit.com/blog/guide/data-analytics/",
+  "method": "CDP browser render both sides (SPA-safe); region fingerprint; scoring.md weights",
+  "similarity": 67,
+  "contentFidelityPct": 85.7,
+  "global": {
+    "sourceFont": "AvenirNext forINTUIT",
+    "migratedFont": "AvenirNext forINTUIT",
+    "match": true
+  },
+  "hero": {
+    "sourceBg": "rgb(219, 237, 238)",
+    "migratedBg": "rgba(0, 0, 0, 0)",
+    "sourceH1": {
+      "fontSize": "48px",
+      "fontWeight": "700",
+      "lineHeight": "60px",
+      "color": "rgb(0, 0, 0)"
+    },
+    "migratedH1": null,
+    "bgMatch": false
+  },
+  "content": {
+    "sourceHeadings": 7,
+    "migratedHeadings": 6,
+    "missingOnMigrated": [
+      "Data analytics: How AI-driven ERP data analytics reveal blind spots & align resources for growth"
+    ],
+    "migratedFormError": null
+  },
+  "diffs": [
+    {
+      "cat": "styling",
+      "prop": "hero background-color",
+      "original": "rgb(219, 237, 238)",
+      "migrated": "rgba(0, 0, 0, 0)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Data analytics: How AI-driven ERP data analytics reveal blind spots & align resources for growth",
+      "migrated": "(absent)",
+      "severity": "high"
+    }
+  ]
+}

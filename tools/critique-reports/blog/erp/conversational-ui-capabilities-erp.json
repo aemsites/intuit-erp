@@ -1,0 +1,51 @@
+{
+  "page": "/blog/erp/conversational-ui-capabilities-erp",
+  "sourceUrl": "https://erp.intuit.com/blog/erp/conversational-ui-capabilities-erp/",
+  "migratedUrl": "http://localhost:3000/content/blog/erp/conversational-ui-capabilities-erp",
+  "source": {
+    "rendered": false,
+    "note": "source empty/blocked"
+  },
+  "migrated": {
+    "ok": true,
+    "blocked": false,
+    "bodyFont": "AvenirNext forINTUIT",
+    "h1": null,
+    "h1Text": null,
+    "hero": {
+      "bg": "rgba(0, 0, 0, 0)"
+    },
+    "headings": [
+      "Introducing Intuit Enterprise Suite",
+      "What is conversational UI in ERP?",
+      "The building blocks of conversational UI",
+      "1. Natural Language Processing (NLP)",
+      "2. Intent recognition and fulfillment",
+      "3. Dialogue management",
+      "4. Integration and data retrieval",
+      "The use cases of conversational UI in your ERP",
+      "Voice commands",
+      "Chatbots and virtual assistants",
+      "Proactive alerts and notifications",
+      "Multimodal interaction",
+      "Keep growing with a more powerful suite",
+      "Benefits of adopting conversational UI in ERP",
+      "Increased user efficiency and productivity",
+      "Improved data accuracy",
+      "Faster decision-making",
+      "Enhanced user training and adoption",
+      "What's next for conversational UI in ERP?",
+      "Advanced personalization",
+      "Deeper integration with IoT and external data",
+      "Broader language and cultural support",
+      "Boost productivity and enhance profitability",
+      "Recommended for you"
+    ],
+    "headingCount": 24,
+    "images": 10,
+    "paragraphs": 75,
+    "bodyTextLen": 13951,
+    "formError": null
+  },
+  "deferred": "source-unavailable"
+}

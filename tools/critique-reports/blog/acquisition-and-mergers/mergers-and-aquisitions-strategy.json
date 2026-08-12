@@ -1,0 +1,139 @@
+{
+  "page": "/blog/acquisition-and-mergers/mergers-and-aquisitions-strategy",
+  "mode": "page",
+  "viewport": "1280x900 (headless default)",
+  "migratedUrl": "http://localhost:3000/content/blog/acquisition-and-mergers/mergers-and-aquisitions-strategy",
+  "sourceUrl": "https://erp.intuit.com/blog/acquisition-and-mergers/mergers-and-aquisitions-strategy/",
+  "method": "CDP browser render both sides (SPA-safe); region fingerprint; scoring.md weights",
+  "similarity": 43.8,
+  "contentFidelityPct": 62.5,
+  "global": {
+    "sourceFont": "AvenirNext forINTUIT",
+    "migratedFont": "AvenirNext forINTUIT",
+    "match": true
+  },
+  "hero": {
+    "sourceBg": "rgb(239, 244, 249)",
+    "migratedBg": "rgba(0, 0, 0, 0)",
+    "sourceH1": {
+      "fontSize": "40px",
+      "fontWeight": "700",
+      "lineHeight": "52px",
+      "color": "rgb(33, 38, 42)"
+    },
+    "migratedH1": null,
+    "bgMatch": false
+  },
+  "content": {
+    "sourceHeadings": 32,
+    "migratedHeadings": 22,
+    "missingOnMigrated": [
+      "M&A: How to build a winning mergers & acquisitions strategy",
+      "Download",
+      "Business growth guide: Proven strategies to scale your business",
+      "Customer stories",
+      "How FEFA Financial scaled up with Intuit Enterprise Suite (No ERP migration needed)",
+      "Case study: Fire & Ice transforms multi-entity challenges with Intuit Enterprise",
+      "Four Points RV Resorts review: Why they chose Intuit Enterprise Suite over NetSuite",
+      "Humble House Foods case study: How they improved visibility & simplicity using Intuit Enterprise Suite",
+      "More on acquisitions & mergers",
+      "Venture capital funding: What is VC funding, how to choose investors & negotiate equity",
+      "Horizontal integration: Definition, pros & cons, vertical vs. horizontal integration comparison",
+      "Related"
+    ],
+    "migratedFormError": null
+  },
+  "diffs": [
+    {
+      "cat": "styling",
+      "prop": "hero background-color",
+      "original": "rgb(239, 244, 249)",
+      "migrated": "rgba(0, 0, 0, 0)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "M&A: How to build a winning mergers & acquisitions strategy",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Download",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Business growth guide: Proven strategies to scale your business",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Customer stories",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "How FEFA Financial scaled up with Intuit Enterprise Suite (No ERP migration needed)",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Case study: Fire & Ice transforms multi-entity challenges with Intuit Enterprise",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Four Points RV Resorts review: Why they chose Intuit Enterprise Suite over NetSuite",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Humble House Foods case study: How they improved visibility & simplicity using Intuit Enterprise Suite",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "More on acquisitions & mergers",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Venture capital funding: What is VC funding, how to choose investors & negotiate equity",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Horizontal integration: Definition, pros & cons, vertical vs. horizontal integration comparison",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Related",
+      "migrated": "(absent)",
+      "severity": "high"
+    }
+  ]
+}

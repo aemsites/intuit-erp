@@ -1,0 +1,36 @@
+{
+  "page": "/events/modernizing-manufacturing-workflows",
+  "sourceUrl": "https://erp.intuit.com/events/modernizing-manufacturing-workflows/",
+  "migratedUrl": "http://localhost:3000/content/events/modernizing-manufacturing-workflows",
+  "source": {
+    "rendered": false,
+    "note": "source empty/blocked"
+  },
+  "migrated": {
+    "ok": true,
+    "blocked": false,
+    "bodyFont": "AvenirNext forINTUIT",
+    "h1": null,
+    "h1Text": null,
+    "hero": {
+      "bg": "rgba(0, 0, 0, 0)"
+    },
+    "headings": [
+      "title",
+      "x-schema-name",
+      "type",
+      "status",
+      "description",
+      "speakers",
+      "image",
+      "ctaLabel",
+      "ctaUrl"
+    ],
+    "headingCount": 9,
+    "images": 4,
+    "paragraphs": 24,
+    "bodyTextLen": 1741,
+    "formError": null
+  },
+  "deferred": "source-unavailable"
+}

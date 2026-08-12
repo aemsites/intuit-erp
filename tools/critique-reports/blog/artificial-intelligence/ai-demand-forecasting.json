@@ -1,0 +1,131 @@
+{
+  "page": "/blog/artificial-intelligence/ai-demand-forecasting",
+  "mode": "page",
+  "viewport": "1280x900 (headless default)",
+  "migratedUrl": "http://localhost:3000/content/blog/artificial-intelligence/ai-demand-forecasting",
+  "sourceUrl": "https://erp.intuit.com/blog/artificial-intelligence/ai-demand-forecasting/",
+  "method": "CDP browser render both sides (SPA-safe); region fingerprint; scoring.md weights",
+  "similarity": 48,
+  "contentFidelityPct": 66.7,
+  "global": {
+    "sourceFont": "AvenirNext forINTUIT",
+    "migratedFont": "AvenirNext forINTUIT",
+    "match": true
+  },
+  "hero": {
+    "sourceBg": "rgb(239, 244, 249)",
+    "migratedBg": "rgba(0, 0, 0, 0)",
+    "sourceH1": {
+      "fontSize": "40px",
+      "fontWeight": "700",
+      "lineHeight": "52px",
+      "color": "rgb(33, 38, 42)"
+    },
+    "migratedH1": null,
+    "bgMatch": false
+  },
+  "content": {
+    "sourceHeadings": 33,
+    "migratedHeadings": 23,
+    "missingOnMigrated": [
+      "Download",
+      "Data analytics: How AI-driven ERP data analytics reveal blind spots & align resources for growth",
+      "Customer stories",
+      "How FEFA Financial is growing with Intuit Enterprise Suite—without migrating to an ERP",
+      "How this mission-driven, employee-owned company created efficiencies with Intuit Enterprise Suite",
+      "Why this camping business chose Intuit Enterprise Suite over NetSuite",
+      "Migrating to Intuit Enterprise Suite took 2 hours (with zero disruption) for this aspiring $50M revenue business",
+      "Humble House Foods case study: How they improved visibility & simplicity using Intuit Enterprise Suite",
+      "More on artificial intelligence",
+      "AI in ERP: The future of intelligent business operations",
+      "Conversational UI in ERP: Benefits, tips, and examples"
+    ],
+    "migratedFormError": null
+  },
+  "diffs": [
+    {
+      "cat": "styling",
+      "prop": "hero background-color",
+      "original": "rgb(239, 244, 249)",
+      "migrated": "rgba(0, 0, 0, 0)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Download",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Data analytics: How AI-driven ERP data analytics reveal blind spots & align resources for growth",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Customer stories",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "How FEFA Financial is growing with Intuit Enterprise Suite—without migrating to an ERP",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "How this mission-driven, employee-owned company created efficiencies with Intuit Enterprise Suite",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Why this camping business chose Intuit Enterprise Suite over NetSuite",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Migrating to Intuit Enterprise Suite took 2 hours (with zero disruption) for this aspiring $50M revenue business",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Humble House Foods case study: How they improved visibility & simplicity using Intuit Enterprise Suite",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "More on artificial intelligence",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "AI in ERP: The future of intelligent business operations",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Conversational UI in ERP: Benefits, tips, and examples",
+      "migrated": "(absent)",
+      "severity": "high"
+    }
+  ]
+}

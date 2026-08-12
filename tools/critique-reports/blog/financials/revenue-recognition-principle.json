@@ -1,0 +1,48 @@
+{
+  "page": "/blog/financials/revenue-recognition-principle",
+  "sourceUrl": "https://erp.intuit.com/blog/financials/revenue-recognition-principle/",
+  "migratedUrl": "http://localhost:3000/content/blog/financials/revenue-recognition-principle",
+  "source": {
+    "rendered": false,
+    "note": "source empty/blocked"
+  },
+  "migrated": {
+    "ok": true,
+    "blocked": false,
+    "bodyFont": "AvenirNext forINTUIT",
+    "h1": null,
+    "h1Text": null,
+    "hero": {
+      "bg": "rgba(0, 0, 0, 0)"
+    },
+    "headings": [
+      "Understanding the revenue recognition principle",
+      "Revenue recognition accounting considerations",
+      "Accrual accounting basics",
+      "Matching principle relationship",
+      "Recognition timing",
+      "Industry considerations",
+      "GAAP vs. IFRS requirements",
+      "Generally accepted accounting principles (GAAP)",
+      "International financial reporting standards (IFRS)",
+      "ASC 606: The 5-step revenue recognition model",
+      "1. Identify customer contract",
+      "2. Identify performance obligations",
+      "3. Determine transaction price",
+      "4. Allocate transaction price",
+      "5. Recognize revenue",
+      "Introducing Intuit Enterprise Suite",
+      "Examples of revenue recognition",
+      "Best practices for applying revenue recognition rules",
+      "Boost productivity and enhance profitability",
+      "Revenue recognition principle FAQ",
+      "Recommended for you"
+    ],
+    "headingCount": 21,
+    "images": 9,
+    "paragraphs": 67,
+    "bodyTextLen": 14394,
+    "formError": null
+  },
+  "deferred": "source-unavailable"
+}

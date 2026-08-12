@@ -1,0 +1,29 @@
+{
+  "page": "/blog/guide/unlocking-business-growth",
+  "sourceUrl": "https://erp.intuit.com/blog/guide/unlocking-business-growth/",
+  "migratedUrl": "http://localhost:3000/content/blog/guide/unlocking-business-growth",
+  "source": {
+    "rendered": false,
+    "note": "source empty/blocked"
+  },
+  "migrated": {
+    "ok": true,
+    "blocked": false,
+    "bodyFont": "AvenirNext forINTUIT",
+    "h1": null,
+    "h1Text": null,
+    "hero": {
+      "bg": "rgba(0, 0, 0, 0)"
+    },
+    "headings": [
+      "Download Scaling Up: Unlocking and managing business growth — a free guide for growing businesses.",
+      "Your guide to unlocking and managing business growth"
+    ],
+    "headingCount": 2,
+    "images": 4,
+    "paragraphs": 19,
+    "bodyTextLen": 2314,
+    "formError": null
+  },
+  "deferred": "source-unavailable"
+}

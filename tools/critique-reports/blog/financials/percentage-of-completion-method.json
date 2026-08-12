@@ -1,0 +1,44 @@
+{
+  "page": "/blog/financials/percentage-of-completion-method",
+  "sourceUrl": "https://erp.intuit.com/blog/financials/percentage-of-completion-method/",
+  "migratedUrl": "http://localhost:3000/content/blog/financials/percentage-of-completion-method",
+  "source": {
+    "rendered": false,
+    "note": "source empty/blocked"
+  },
+  "migrated": {
+    "ok": true,
+    "blocked": false,
+    "bodyFont": "AvenirNext forINTUIT",
+    "h1": null,
+    "h1Text": null,
+    "hero": {
+      "bg": "rgba(0, 0, 0, 0)"
+    },
+    "headings": [
+      "Why the percentage method is important",
+      "The percentage of completion method adjustment",
+      "Percentage of completion vs. completed contract method",
+      "Introducing Intuit Enterprise Suite",
+      "Percentage of completion calculation methods",
+      "Cost-to-cost method",
+      "Efforts-expended method",
+      "Units-of-delivery method",
+      "Keep growing with a more powerful suite",
+      "Percentage of completion method examples",
+      "Which companies should use the percentage of completion method?",
+      "IRS requirements",
+      "Common challenges with the percentage of completion method (and how to address them)",
+      "Inaccurate billing",
+      "Change orders",
+      "Navigate midsize and enterprise business challenges and opportunities",
+      "Recommended for you"
+    ],
+    "headingCount": 17,
+    "images": 12,
+    "paragraphs": 61,
+    "bodyTextLen": 15738,
+    "formError": null
+  },
+  "deferred": "source-unavailable"
+}

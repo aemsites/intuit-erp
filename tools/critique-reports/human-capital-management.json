@@ -1,0 +1,118 @@
+{
+  "page": "/human-capital-management",
+  "mode": "page",
+  "viewport": "1280x900 (headless default)",
+  "migratedUrl": "http://localhost:3000/content/human-capital-management",
+  "sourceUrl": "https://erp.intuit.com/human-capital-management/",
+  "method": "CDP browser render both sides (SPA-safe); region fingerprint; scoring.md weights",
+  "similarity": 29.2,
+  "contentFidelityPct": 66.7,
+  "global": {
+    "sourceFont": "AvenirNext forINTUIT",
+    "migratedFont": "AvenirNext forINTUIT",
+    "match": true
+  },
+  "hero": {
+    "sourceBg": "rgba(0, 0, 0, 0)",
+    "migratedBg": "rgb(0, 37, 74)",
+    "sourceH1": {
+      "fontSize": "40px",
+      "fontWeight": "700",
+      "lineHeight": "52px",
+      "color": "rgb(255, 255, 255)"
+    },
+    "migratedH1": {
+      "fontSize": "48px",
+      "fontWeight": "400",
+      "lineHeight": "60px",
+      "color": "rgb(255, 255, 255)"
+    },
+    "bgMatch": false
+  },
+  "content": {
+    "sourceHeadings": 21,
+    "migratedHeadings": 14,
+    "missingOnMigrated": [
+      "\"Everything flows directly into payroll—no more approving, syncing, or jumping between systems.\"",
+      "Emily, Accountant, Manufacturing company",
+      "\"Compliance used to mean chasing down signed paper notices, storing emails, and manually tracking mandatory training. Now everything is digital, documented, and done.\"",
+      "Kobad, Franchise Owner, Mathnasium",
+      "\"Before, I had to enter every new employee into three or four separate systems, and I'd almost always forget one. Now it's a single entry and I'm done—it's saved me from constantly having to go back and fix missed records.\"",
+      "Monica, Head of HR",
+      "ASSESS YOUR FIT"
+    ],
+    "migratedFormError": null
+  },
+  "diffs": [
+    {
+      "cat": "styling",
+      "prop": "hero background-color",
+      "original": "rgba(0, 0, 0, 0)",
+      "migrated": "rgb(0, 37, 74)",
+      "severity": "high"
+    },
+    {
+      "cat": "styling",
+      "prop": "h1 font-weight",
+      "original": "700",
+      "migrated": "400",
+      "severity": "medium"
+    },
+    {
+      "cat": "styling",
+      "prop": "h1 font-size",
+      "original": "40px",
+      "migrated": "48px",
+      "severity": "low"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "\"Everything flows directly into payroll—no more approving, syncing, or jumping between systems.\"",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Emily, Accountant, Manufacturing company",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "\"Compliance used to mean chasing down signed paper notices, storing emails, and manually tracking mandatory training. Now everything is digital, documented, and done.\"",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Kobad, Franchise Owner, Mathnasium",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "\"Before, I had to enter every new employee into three or four separate systems, and I'd almost always forget one. Now it's a single entry and I'm done—it's saved me from constantly having to go back and fix missed records.\"",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Monica, Head of HR",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "ASSESS YOUR FIT",
+      "migrated": "(absent)",
+      "severity": "high"
+    }
+  ]
+}

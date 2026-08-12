@@ -1,0 +1,133 @@
+{
+  "page": "/accountant",
+  "mode": "page",
+  "viewport": "1280x900 (headless default)",
+  "migratedUrl": "http://localhost:3000/content/accountant",
+  "sourceUrl": "https://erp.intuit.com/accountant/",
+  "method": "CDP browser render both sides (SPA-safe); region fingerprint; scoring.md weights",
+  "similarity": 16.7,
+  "contentFidelityPct": 69.2,
+  "global": {
+    "sourceFont": "AvenirNext forINTUIT",
+    "migratedFont": "AvenirNext forINTUIT",
+    "match": true
+  },
+  "hero": {
+    "sourceBg": "rgba(0, 0, 0, 0)",
+    "migratedBg": "rgb(0, 37, 74)",
+    "sourceH1": {
+      "fontSize": "16px",
+      "fontWeight": "700",
+      "lineHeight": "normal",
+      "color": "rgb(255, 255, 255)"
+    },
+    "migratedH1": {
+      "fontSize": "52px",
+      "fontWeight": "400",
+      "lineHeight": "65px",
+      "color": "rgb(255, 255, 255)"
+    },
+    "bgMatch": false
+  },
+  "content": {
+    "sourceHeadings": 26,
+    "migratedHeadings": 18,
+    "missingOnMigrated": [
+      "Single source of truth",
+      "Comprehensive client reporting",
+      "Reduced manual workload",
+      "Support for seamless migration",
+      "“Now [Intuit has] a solution that is more in that mid-market and helps you to grow with something your whole life.”Patrick Ball, Director of Technology Advisory Operations, Aprio",
+      "“With Intuit Enterprise Suite the functionality is getting better, and the ability to serve clients with much more complex needs is getting better.”Alicia Eastvold, Department Leader, Client Technology Solutions YPTC",
+      "“With Intuit Enterprise Suite we get to focus on high level work...We can do value add work.”Jeff Wilson, Principal and CEO, W2 Group",
+      "“Migrating to Intuit Enterprise Suite is a much faster process because all your data is already in the core system. You don’t have to hire teams of people...”Director, technology advisory, accounting"
+    ],
+    "migratedFormError": "Sorry, something went wrong loading this form. Please try again."
+  },
+  "diffs": [
+    {
+      "cat": "styling",
+      "prop": "hero background-color",
+      "original": "rgba(0, 0, 0, 0)",
+      "migrated": "rgb(0, 37, 74)",
+      "severity": "high"
+    },
+    {
+      "cat": "styling",
+      "prop": "h1 font-weight",
+      "original": "700",
+      "migrated": "400",
+      "severity": "medium"
+    },
+    {
+      "cat": "styling",
+      "prop": "h1 font-size",
+      "original": "16px",
+      "migrated": "52px",
+      "severity": "low"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Single source of truth",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Comprehensive client reporting",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Reduced manual workload",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Support for seamless migration",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "“Now [Intuit has] a solution that is more in that mid-market and helps you to grow with something your whole life.”Patrick Ball, Director of Technology Advisory Operations, Aprio",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "“With Intuit Enterprise Suite the functionality is getting better, and the ability to serve clients with much more complex needs is getting better.”Alicia Eastvold, Department Leader, Client Technology Solutions YPTC",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "“With Intuit Enterprise Suite we get to focus on high level work...We can do value add work.”Jeff Wilson, Principal and CEO, W2 Group",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "“Migrating to Intuit Enterprise Suite is a much faster process because all your data is already in the core system. You don’t have to hire teams of people...”Director, technology advisory, accounting",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "form failed to load",
+      "original": "working form",
+      "migrated": "Sorry, something went wrong loading this form. Please try again.",
+      "severity": "high"
+    }
+  ]
+}

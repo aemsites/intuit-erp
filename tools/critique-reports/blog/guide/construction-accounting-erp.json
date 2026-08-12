@@ -1,0 +1,59 @@
+{
+  "page": "/blog/guide/construction-accounting-erp",
+  "mode": "page",
+  "viewport": "1280x900 (headless default)",
+  "migratedUrl": "http://localhost:3000/content/blog/guide/construction-accounting-erp",
+  "sourceUrl": "https://erp.intuit.com/blog/guide/construction-accounting-erp/",
+  "method": "CDP browser render both sides (SPA-safe); region fingerprint; scoring.md weights",
+  "similarity": 52.7,
+  "contentFidelityPct": 71.4,
+  "global": {
+    "sourceFont": "AvenirNext forINTUIT",
+    "migratedFont": "AvenirNext forINTUIT",
+    "match": true
+  },
+  "hero": {
+    "sourceBg": "rgb(219, 237, 238)",
+    "migratedBg": "rgba(0, 0, 0, 0)",
+    "sourceH1": {
+      "fontSize": "48px",
+      "fontWeight": "700",
+      "lineHeight": "60px",
+      "color": "rgb(0, 0, 0)"
+    },
+    "migratedH1": null,
+    "bgMatch": false
+  },
+  "content": {
+    "sourceHeadings": 7,
+    "migratedHeadings": 5,
+    "missingOnMigrated": [
+      "Construction accounting: Using an ERP to solve manual job costing & data",
+      "Building Smarter: How data and technology can drive increased profitability in construction"
+    ],
+    "migratedFormError": null
+  },
+  "diffs": [
+    {
+      "cat": "styling",
+      "prop": "hero background-color",
+      "original": "rgb(219, 237, 238)",
+      "migrated": "rgba(0, 0, 0, 0)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Construction accounting: Using an ERP to solve manual job costing & data",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Building Smarter: How data and technology can drive increased profitability in construction",
+      "migrated": "(absent)",
+      "severity": "high"
+    }
+  ]
+}

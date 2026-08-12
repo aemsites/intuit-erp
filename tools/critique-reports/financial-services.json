@@ -1,0 +1,165 @@
+{
+  "page": "/financial-services",
+  "mode": "page",
+  "viewport": "1280x900 (headless default)",
+  "migratedUrl": "http://localhost:3000/content/financial-services",
+  "sourceUrl": "https://erp.intuit.com/financial-services/",
+  "method": "CDP browser render both sides (SPA-safe); region fingerprint; scoring.md weights",
+  "similarity": 0,
+  "contentFidelityPct": 47.8,
+  "global": {
+    "sourceFont": "AvenirNext forINTUIT",
+    "migratedFont": "AvenirNext forINTUIT",
+    "match": true
+  },
+  "hero": {
+    "sourceBg": "rgb(243, 242, 239)",
+    "migratedBg": "rgb(0, 37, 74)",
+    "sourceH1": {
+      "fontSize": "40px",
+      "fontWeight": "700",
+      "lineHeight": "52px",
+      "color": "rgb(0, 0, 0)"
+    },
+    "migratedH1": {
+      "fontSize": "48px",
+      "fontWeight": "400",
+      "lineHeight": "60px",
+      "color": "rgb(255, 255, 255)"
+    },
+    "bgMatch": false
+  },
+  "content": {
+    "sourceHeadings": 23,
+    "migratedHeadings": 11,
+    "missingOnMigrated": [
+      "Grow your multi-entity portfolio",
+      "Make profitable decisions, confidently",
+      "Level up forecasting and planning",
+      "Streamline business processes at scale",
+      "Save time and money on one scalable platform",
+      "Seamlessly migrate your data",
+      "Let’s connect",
+      "How can I manage and monitor my business across all companies and their respective projects?",
+      "How do I leverage the data provided in Intuit Enterprise Suite to improve decision-making?",
+      "Can Intuit Enterprise Suite help me forecast future financial needs and performance?",
+      "Do I still need third-party apps with Intuit Enterprise Suite?",
+      "What is the process for migrating to Intuit Enterprise Suite?"
+    ],
+    "migratedFormError": null
+  },
+  "diffs": [
+    {
+      "cat": "styling",
+      "prop": "hero background-color",
+      "original": "rgb(243, 242, 239)",
+      "migrated": "rgb(0, 37, 74)",
+      "severity": "high"
+    },
+    {
+      "cat": "styling",
+      "prop": "h1 color",
+      "original": "rgb(0, 0, 0)",
+      "migrated": "rgb(255, 255, 255)",
+      "severity": "high"
+    },
+    {
+      "cat": "styling",
+      "prop": "h1 font-weight",
+      "original": "700",
+      "migrated": "400",
+      "severity": "medium"
+    },
+    {
+      "cat": "styling",
+      "prop": "h1 font-size",
+      "original": "40px",
+      "migrated": "48px",
+      "severity": "low"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Grow your multi-entity portfolio",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Make profitable decisions, confidently",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Level up forecasting and planning",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Streamline business processes at scale",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Save time and money on one scalable platform",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Seamlessly migrate your data",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Let’s connect",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "How can I manage and monitor my business across all companies and their respective projects?",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "How do I leverage the data provided in Intuit Enterprise Suite to improve decision-making?",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Can Intuit Enterprise Suite help me forecast future financial needs and performance?",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Do I still need third-party apps with Intuit Enterprise Suite?",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "What is the process for migrating to Intuit Enterprise Suite?",
+      "migrated": "(absent)",
+      "severity": "high"
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "page": "/blog/construction/risk-management-in-construction",
+  "sourceUrl": "https://erp.intuit.com/blog/construction/risk-management-in-construction/",
+  "migratedUrl": "http://localhost:3000/content/blog/construction/risk-management-in-construction",
+  "source": {
+    "rendered": false,
+    "note": "source empty/blocked"
+  },
+  "migrated": {
+    "ok": true,
+    "blocked": false,
+    "bodyFont": "AvenirNext forINTUIT",
+    "h1": null,
+    "h1Text": null,
+    "hero": {
+      "bg": "rgba(0, 0, 0, 0)"
+    },
+    "headings": [
+      "Types of risks in construction projects",
+      "Financial risks",
+      "Safety risks",
+      "Legal and contractual risks",
+      "Environmental risks",
+      "Other risks",
+      "How to perform a construction risk assessment",
+      "1. Identify risks",
+      "2. Analyze the likelihood of the risks",
+      "3. Evaluate the potential impact of the risks",
+      "4. Prioritize risks based on severity",
+      "5. Document the risk assessment findings",
+      "Introducing Intuit Enterprise Suite",
+      "How to develop a construction risk management plan",
+      "1. Define risk response strategies",
+      "2. Define clear roles and responsibilities",
+      "3. Develop a contingency plan",
+      "4. Establish clear channels of communication",
+      "5. Integrate risk into project plans",
+      "6. Document and refine the plan",
+      "Unlock growth for your complex business",
+      "Why risk management in construction projects is important",
+      "Boost productivity and enhance profitability",
+      "Recommended for you"
+    ],
+    "headingCount": 24,
+    "images": 9,
+    "paragraphs": 81,
+    "bodyTextLen": 18181,
+    "formError": null
+  },
+  "deferred": "source-unavailable"
+}

@@ -1,0 +1,42 @@
+{
+  "page": "/blog/hr/financial-controller",
+  "sourceUrl": "https://erp.intuit.com/blog/hr/financial-controller/",
+  "migratedUrl": "http://localhost:3000/content/blog/hr/financial-controller",
+  "source": {
+    "rendered": false,
+    "note": "source empty/blocked"
+  },
+  "migrated": {
+    "ok": true,
+    "blocked": false,
+    "bodyFont": "AvenirNext forINTUIT",
+    "h1": null,
+    "h1Text": null,
+    "hero": {
+      "bg": "rgba(0, 0, 0, 0)"
+    },
+    "headings": [
+      "What is a controller in finance?",
+      "Core financial controller responsibilities",
+      "Financial management and reporting",
+      "Operational oversight",
+      "Compliance and control",
+      "Introducing Intuit Enterprise Suite",
+      "Financial controller vs. CFO: Key differences",
+      "When does your business need a financial controller?",
+      "Increased business complexity",
+      "Growth indicators",
+      "Other common signs",
+      "Best practices and strategies for success",
+      "Keep growing with a more powerful suite",
+      "Boost productivity and enhance profitability",
+      "Recommended for you"
+    ],
+    "headingCount": 15,
+    "images": 8,
+    "paragraphs": 43,
+    "bodyTextLen": 9308,
+    "formError": null
+  },
+  "deferred": "source-unavailable"
+}

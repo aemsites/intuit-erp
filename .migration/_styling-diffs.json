@@ -1,0 +1,25 @@
+{
+  "totalProps": 115,
+  "blocks": {
+    "hero": {
+      "propsCompared": 31,
+      "diffs": []
+    },
+    "tabs": {
+      "propsCompared": 24,
+      "diffs": []
+    },
+    "media-text": {
+      "propsCompared": 30,
+      "diffs": []
+    },
+    "fragment": {
+      "propsCompared": 24,
+      "diffs": []
+    },
+    "disclosure": {
+      "propsCompared": 6,
+      "diffs": []
+    }
+  }
+}

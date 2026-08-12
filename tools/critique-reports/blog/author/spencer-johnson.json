@@ -1,0 +1,28 @@
+{
+  "page": "/blog/author/spencer-johnson",
+  "sourceUrl": "https://erp.intuit.com/blog/author/spencer-johnson/",
+  "migratedUrl": "http://localhost:3000/content/blog/author/spencer-johnson",
+  "source": {
+    "rendered": false,
+    "note": "source empty/blocked"
+  },
+  "migrated": {
+    "ok": true,
+    "blocked": false,
+    "bodyFont": "AvenirNext forINTUIT",
+    "h1": null,
+    "h1Text": null,
+    "hero": {
+      "bg": "rgba(0, 0, 0, 0)"
+    },
+    "headings": [
+      "Articles by Spencer Johnson"
+    ],
+    "headingCount": 1,
+    "images": 4,
+    "paragraphs": 15,
+    "bodyTextLen": 1227,
+    "formError": null
+  },
+  "deferred": "source-unavailable"
+}

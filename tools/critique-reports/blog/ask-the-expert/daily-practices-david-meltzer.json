@@ -1,0 +1,34 @@
+{
+  "page": "/blog/ask-the-expert/daily-practices-david-meltzer",
+  "sourceUrl": "https://erp.intuit.com/blog/ask-the-expert/daily-practices-david-meltzer/",
+  "migratedUrl": "http://localhost:3000/content/blog/ask-the-expert/daily-practices-david-meltzer",
+  "source": {
+    "rendered": false,
+    "note": "source empty/blocked"
+  },
+  "migrated": {
+    "ok": true,
+    "blocked": false,
+    "bodyFont": "AvenirNext forINTUIT",
+    "h1": null,
+    "h1Text": null,
+    "hero": {
+      "bg": "rgba(0, 0, 0, 0)"
+    },
+    "headings": [
+      "Know your what",
+      "Know your who",
+      "Know your how",
+      "Know your now",
+      "Introducing Intuit Enterprise Suite",
+      "Apply your why",
+      "Recommended for you"
+    ],
+    "headingCount": 7,
+    "images": 6,
+    "paragraphs": 52,
+    "bodyTextLen": 10842,
+    "formError": null
+  },
+  "deferred": "source-unavailable"
+}

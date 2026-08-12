@@ -1,0 +1,28 @@
+{
+  "page": "/blog/author/marshall-hargrave",
+  "sourceUrl": "https://erp.intuit.com/blog/author/marshall-hargrave/",
+  "migratedUrl": "http://localhost:3000/content/blog/author/marshall-hargrave",
+  "source": {
+    "rendered": false,
+    "note": "source empty/blocked"
+  },
+  "migrated": {
+    "ok": true,
+    "blocked": false,
+    "bodyFont": "AvenirNext forINTUIT",
+    "h1": null,
+    "h1Text": null,
+    "hero": {
+      "bg": "rgba(0, 0, 0, 0)"
+    },
+    "headings": [
+      "Articles by Marshall Hargrave"
+    ],
+    "headingCount": 1,
+    "images": 4,
+    "paragraphs": 15,
+    "bodyTextLen": 1229,
+    "formError": null
+  },
+  "deferred": "source-unavailable"
+}

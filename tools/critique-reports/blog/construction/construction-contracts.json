@@ -1,0 +1,63 @@
+{
+  "page": "/blog/construction/construction-contracts",
+  "sourceUrl": "https://erp.intuit.com/blog/construction/construction-contracts/",
+  "migratedUrl": "http://localhost:3000/content/blog/construction/construction-contracts",
+  "source": {
+    "rendered": false,
+    "note": "source empty/blocked"
+  },
+  "migrated": {
+    "ok": true,
+    "blocked": false,
+    "bodyFont": "AvenirNext forINTUIT",
+    "h1": null,
+    "h1Text": null,
+    "hero": {
+      "bg": "rgba(0, 0, 0, 0)"
+    },
+    "headings": [
+      "Key takeaways",
+      "Unlock growth for your complex business",
+      "What is a construction contract?",
+      "Key construction contract terms to know",
+      "Key construction contract types",
+      "1. Cost-plus",
+      "2. Design-build",
+      "3. Guaranteed maximum price",
+      "4. Incentive construction",
+      "5. Integrated project delivery contract",
+      "6. Lump-sum contract",
+      "7. Time and materials contract",
+      "8. Unit price contract",
+      "Introducing Intuit Enterprise Suite",
+      "9 essential construction contract elements",
+      "1. The agreement",
+      "2. General conditions",
+      "3. Special conditions",
+      "4. Scope of work",
+      "5. Construction drawings",
+      "6. Specifications",
+      "7. The schedule",
+      "8. Schedule of values",
+      "9. Bill of quantities",
+      "Best practices for managing contracts in construction",
+      "Create a clear document hierarchy",
+      "Adopt a comprehensive document management system",
+      "Keep documents current and comprehensive",
+      "Implement defined change order processes",
+      "After signing, reference the contract docs",
+      "Legal concerns that can impact construction contracts",
+      "The rule of construction",
+      "Invalid construction contracts",
+      "Navigate midsize and complex business challenges and opportunities",
+      "Grow with enterprise-level time, HR, and benefits in one place",
+      "Recommended for you"
+    ],
+    "headingCount": 36,
+    "images": 9,
+    "paragraphs": 83,
+    "bodyTextLen": 19225,
+    "formError": null
+  },
+  "deferred": "source-unavailable"
+}

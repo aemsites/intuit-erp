@@ -1,0 +1,28 @@
+{
+  "page": "/blog/author/michael-kern",
+  "sourceUrl": "https://erp.intuit.com/blog/author/michael-kern/",
+  "migratedUrl": "http://localhost:3000/content/blog/author/michael-kern",
+  "source": {
+    "rendered": false,
+    "note": "source empty/blocked"
+  },
+  "migrated": {
+    "ok": true,
+    "blocked": false,
+    "bodyFont": "AvenirNext forINTUIT",
+    "h1": null,
+    "h1Text": null,
+    "hero": {
+      "bg": "rgba(0, 0, 0, 0)"
+    },
+    "headings": [
+      "Articles by Michael Kern"
+    ],
+    "headingCount": 1,
+    "images": 4,
+    "paragraphs": 15,
+    "bodyTextLen": 1224,
+    "formError": null
+  },
+  "deferred": "source-unavailable"
+}

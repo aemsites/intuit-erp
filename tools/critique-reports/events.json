@@ -1,0 +1,61 @@
+{
+  "page": "/events",
+  "mode": "page",
+  "viewport": "1280x900 (headless default)",
+  "migratedUrl": "http://localhost:3000/content/events",
+  "sourceUrl": "https://erp.intuit.com/events/",
+  "method": "CDP browser render both sides (SPA-safe); region fingerprint; scoring.md weights",
+  "similarity": 62.5,
+  "contentFidelityPct": 100,
+  "global": {
+    "sourceFont": "AvenirNext forINTUIT",
+    "migratedFont": "AvenirNext forINTUIT",
+    "match": true
+  },
+  "hero": {
+    "sourceBg": "rgba(0, 0, 0, 0)",
+    "migratedBg": "rgb(0, 37, 74)",
+    "sourceH1": {
+      "fontSize": "16px",
+      "fontWeight": "700",
+      "lineHeight": "normal",
+      "color": "rgb(255, 255, 255)"
+    },
+    "migratedH1": {
+      "fontSize": "48px",
+      "fontWeight": "500",
+      "lineHeight": "60.96px",
+      "color": "rgb(255, 255, 255)"
+    },
+    "bgMatch": false
+  },
+  "content": {
+    "sourceHeadings": 16,
+    "migratedHeadings": 29,
+    "missingOnMigrated": [],
+    "migratedFormError": null
+  },
+  "diffs": [
+    {
+      "cat": "styling",
+      "prop": "hero background-color",
+      "original": "rgba(0, 0, 0, 0)",
+      "migrated": "rgb(0, 37, 74)",
+      "severity": "high"
+    },
+    {
+      "cat": "styling",
+      "prop": "h1 font-weight",
+      "original": "700",
+      "migrated": "500",
+      "severity": "medium"
+    },
+    {
+      "cat": "styling",
+      "prop": "h1 font-size",
+      "original": "16px",
+      "migrated": "48px",
+      "severity": "low"
+    }
+  ]
+}

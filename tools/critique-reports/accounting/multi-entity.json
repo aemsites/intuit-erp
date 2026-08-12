@@ -1,0 +1,189 @@
+{
+  "page": "/accounting/multi-entity",
+  "mode": "page",
+  "viewport": "1280x900 (headless default)",
+  "migratedUrl": "http://localhost:3000/content/accounting/multi-entity",
+  "sourceUrl": "https://erp.intuit.com/accounting/multi-entity/",
+  "method": "CDP browser render both sides (SPA-safe); region fingerprint; scoring.md weights",
+  "similarity": 0,
+  "contentFidelityPct": 28.6,
+  "global": {
+    "sourceFont": "AvenirNext forINTUIT",
+    "migratedFont": "AvenirNext forINTUIT",
+    "match": true
+  },
+  "hero": {
+    "sourceBg": "rgb(243, 242, 239)",
+    "migratedBg": "rgb(0, 37, 74)",
+    "sourceH1": {
+      "fontSize": "40px",
+      "fontWeight": "700",
+      "lineHeight": "52px",
+      "color": "rgb(0, 0, 0)"
+    },
+    "migratedH1": {
+      "fontSize": "48px",
+      "fontWeight": "400",
+      "lineHeight": "60px",
+      "color": "rgb(255, 255, 255)"
+    },
+    "bgMatch": false
+  },
+  "content": {
+    "sourceHeadings": 21,
+    "migratedHeadings": 5,
+    "missingOnMigrated": [
+      "Keep every entity accurate and in sync",
+      "Scale multi-entity operations",
+      "How finance leaders use Intuit Enterprise Suite to command multi-entity operations",
+      "“Now [Intuit has] a solution that is more in that mid-market and helps you to grow with something your whole life.”",
+      "Patrick Ball, Director of Tech. Advisory Ops, CPA at Aprio",
+      "“We’re able to get a lot of the functionality we were looking for in an ERP system without the implementation, cost, and without having to change providers.” Caleb McDaniels, CFO Rhodes Companies",
+      "“Intuit Enterprise Suite allows us to capture all of the activities and people in a very complex business. It allows us to manage them all in one place.”Jason Corby, Founder & CFO, HFMM Legacy Group",
+      "“The automation of tasks...will reduce administrative overhead allowing us to take on more clients without increasing headcount which will drive greater profitability for the firm.”Teresa Hendrickson, Sr. Onboarding Consulting Manager, Hogan Taylor Industry Customizations",
+      "“I would highly recommend it to anyone that has multi-entities, just for the fact that it makes it so much easier to consolidate financials.” Brandon Webster, CPA, CGMA at PULSEROLLER",
+      "Get the most out of Intuit Enterprise Suite",
+      "Events",
+      "Let’s connect",
+      "Can you support entities outside the US?",
+      "Can I still keep all of my data and users separate across companies?",
+      "What data can I share? Can I share user access across companies?"
+    ],
+    "migratedFormError": null
+  },
+  "diffs": [
+    {
+      "cat": "styling",
+      "prop": "hero background-color",
+      "original": "rgb(243, 242, 239)",
+      "migrated": "rgb(0, 37, 74)",
+      "severity": "high"
+    },
+    {
+      "cat": "styling",
+      "prop": "h1 color",
+      "original": "rgb(0, 0, 0)",
+      "migrated": "rgb(255, 255, 255)",
+      "severity": "high"
+    },
+    {
+      "cat": "styling",
+      "prop": "h1 font-weight",
+      "original": "700",
+      "migrated": "400",
+      "severity": "medium"
+    },
+    {
+      "cat": "styling",
+      "prop": "h1 font-size",
+      "original": "40px",
+      "migrated": "48px",
+      "severity": "low"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Keep every entity accurate and in sync",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Scale multi-entity operations",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "How finance leaders use Intuit Enterprise Suite to command multi-entity operations",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "“Now [Intuit has] a solution that is more in that mid-market and helps you to grow with something your whole life.”",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Patrick Ball, Director of Tech. Advisory Ops, CPA at Aprio",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "“We’re able to get a lot of the functionality we were looking for in an ERP system without the implementation, cost, and without having to change providers.” Caleb McDaniels, CFO Rhodes Companies",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "“Intuit Enterprise Suite allows us to capture all of the activities and people in a very complex business. It allows us to manage them all in one place.”Jason Corby, Founder & CFO, HFMM Legacy Group",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "“The automation of tasks...will reduce administrative overhead allowing us to take on more clients without increasing headcount which will drive greater profitability for the firm.”Teresa Hendrickson, Sr. Onboarding Consulting Manager, Hogan Taylor Industry Customizations",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "“I would highly recommend it to anyone that has multi-entities, just for the fact that it makes it so much easier to consolidate financials.” Brandon Webster, CPA, CGMA at PULSEROLLER",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Get the most out of Intuit Enterprise Suite",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Events",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Let’s connect",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Can you support entities outside the US?",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Can I still keep all of my data and users separate across companies?",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "What data can I share? Can I share user access across companies?",
+      "migrated": "(absent)",
+      "severity": "high"
+    }
+  ]
+}

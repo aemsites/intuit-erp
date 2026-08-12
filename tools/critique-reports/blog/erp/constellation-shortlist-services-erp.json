@@ -1,0 +1,51 @@
+{
+  "page": "/blog/erp/constellation-shortlist-services-erp",
+  "mode": "page",
+  "viewport": "1280x900 (headless default)",
+  "migratedUrl": "http://localhost:3000/content/blog/erp/constellation-shortlist-services-erp",
+  "sourceUrl": "https://erp.intuit.com/blog/erp/constellation-shortlist-services-erp/",
+  "method": "CDP browser render both sides (SPA-safe); region fingerprint; scoring.md weights",
+  "similarity": 31.3,
+  "contentFidelityPct": 50,
+  "global": {
+    "sourceFont": "AvenirNext forINTUIT",
+    "migratedFont": "AvenirNext forINTUIT",
+    "match": true
+  },
+  "hero": {
+    "sourceBg": "rgb(239, 244, 249)",
+    "migratedBg": "rgba(0, 0, 0, 0)",
+    "sourceH1": {
+      "fontSize": "40px",
+      "fontWeight": "700",
+      "lineHeight": "52px",
+      "color": "rgb(33, 38, 42)"
+    },
+    "migratedH1": null,
+    "bgMatch": false
+  },
+  "content": {
+    "sourceHeadings": 2,
+    "migratedHeadings": 1,
+    "missingOnMigrated": [
+      "Intuit Enterprise Suite named to Constellation ShortList for services-centric cloud ERP"
+    ],
+    "migratedFormError": null
+  },
+  "diffs": [
+    {
+      "cat": "styling",
+      "prop": "hero background-color",
+      "original": "rgb(239, 244, 249)",
+      "migrated": "rgba(0, 0, 0, 0)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Intuit Enterprise Suite named to Constellation ShortList for services-centric cloud ERP",
+      "migrated": "(absent)",
+      "severity": "high"
+    }
+  ]
+}

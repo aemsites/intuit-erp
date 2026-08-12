@@ -1,0 +1,28 @@
+{
+  "page": "/blog/author/loni-klara",
+  "sourceUrl": "https://erp.intuit.com/blog/author/loni-klara/",
+  "migratedUrl": "http://localhost:3000/content/blog/author/loni-klara",
+  "source": {
+    "rendered": false,
+    "note": "source empty/blocked"
+  },
+  "migrated": {
+    "ok": true,
+    "blocked": false,
+    "bodyFont": "AvenirNext forINTUIT",
+    "h1": null,
+    "h1Text": null,
+    "hero": {
+      "bg": "rgba(0, 0, 0, 0)"
+    },
+    "headings": [
+      "Articles by Loni Klara"
+    ],
+    "headingCount": 1,
+    "images": 4,
+    "paragraphs": 15,
+    "bodyTextLen": 1222,
+    "formError": null
+  },
+  "deferred": "source-unavailable"
+}

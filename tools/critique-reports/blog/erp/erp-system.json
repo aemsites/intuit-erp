@@ -1,0 +1,41 @@
+{
+  "page": "/blog/erp/erp-system",
+  "sourceUrl": "https://erp.intuit.com/blog/erp/erp-system/",
+  "migratedUrl": "http://localhost:3000/content/blog/erp/erp-system",
+  "source": {
+    "rendered": false,
+    "note": "source empty/blocked"
+  },
+  "migrated": {
+    "ok": true,
+    "blocked": false,
+    "bodyFont": "AvenirNext forINTUIT",
+    "h1": null,
+    "h1Text": null,
+    "hero": {
+      "bg": "rgba(0, 0, 0, 0)"
+    },
+    "headings": [
+      "Introducing Intuit Enterprise Suite",
+      "The essential pillars of a modern multi-entity ERP evaluation",
+      "1. Automated intercompany eliminations",
+      "2. Real-time consolidated reporting",
+      "3. Standardized governance and internal control frameworks",
+      "4. Native integration of payroll, payments, and time tracking",
+      "5. Implementation velocity",
+      "Grow with enterprise-level time, HR, and benefits in one place",
+      "How does implementation debt impact long-term financial scalability?",
+      "Why is AI a critical asset in the modern finance suite?",
+      "When is it time to move away from spreadsheets?",
+      "Keep growing with a more powerful suite",
+      "From evaluation to operating baseline",
+      "Recommended for you"
+    ],
+    "headingCount": 14,
+    "images": 9,
+    "paragraphs": 70,
+    "bodyTextLen": 15711,
+    "formError": null
+  },
+  "deferred": "source-unavailable"
+}

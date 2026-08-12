@@ -1,0 +1,58 @@
+{
+  "page": "/blog/erp/erp-modernization",
+  "sourceUrl": "https://erp.intuit.com/blog/erp/erp-modernization/",
+  "migratedUrl": "http://localhost:3000/content/blog/erp/erp-modernization",
+  "source": {
+    "rendered": false,
+    "note": "source empty/blocked"
+  },
+  "migrated": {
+    "ok": true,
+    "blocked": false,
+    "bodyFont": "AvenirNext forINTUIT",
+    "h1": null,
+    "h1Text": null,
+    "hero": {
+      "bg": "rgba(0, 0, 0, 0)"
+    },
+    "headings": [
+      "Key takeaways",
+      "Understanding ERP modernization",
+      "Signs you need to transform your ERP",
+      "When to upgrade",
+      "When to modernize",
+      "Benefits of ERP system modernization",
+      "Increased efficiency",
+      "Enhanced data accuracy and visibility",
+      "Better user experience",
+      "Scalability and flexibility",
+      "Competitive advantage",
+      "Keep growing with a more powerful suite",
+      "6 key steps in the ERP modernization process",
+      "1. Assess and plan",
+      "2. Choose the right ERP solution",
+      "3. Create a data migration strategy",
+      "4. Optimize the process",
+      "5. Complete change management and training",
+      "6. Test and go live",
+      "ERP modernization strategies",
+      "Use the lift-and-shift strategy",
+      "Take the phased approach",
+      "Go fully cloud-based",
+      "Choose a hybrid ERP solution",
+      "Challenges of ERP modernization (and solutions)",
+      "High costs",
+      "Data mitigation risks",
+      "Employee resistance",
+      "Integration issues",
+      "Boost productivity and enhance profitability",
+      "Recommended for you"
+    ],
+    "headingCount": 31,
+    "images": 8,
+    "paragraphs": 93,
+    "bodyTextLen": 23026,
+    "formError": null
+  },
+  "deferred": "source-unavailable"
+}

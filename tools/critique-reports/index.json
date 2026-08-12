@@ -1,0 +1,55 @@
+{
+  "page": "/index",
+  "sourceUrl": "https://erp.intuit.com/index/",
+  "migratedUrl": "http://localhost:3000/content/index",
+  "source": {
+    "rendered": false,
+    "note": "source empty/blocked"
+  },
+  "migrated": {
+    "ok": true,
+    "blocked": false,
+    "bodyFont": "AvenirNext forINTUIT",
+    "h1": {
+      "fontSize": "48px",
+      "fontWeight": "400",
+      "lineHeight": "60px",
+      "color": "rgb(255, 255, 255)"
+    },
+    "h1Text": "Enterprise-grade finance built to scale",
+    "hero": {
+      "bg": "rgb(0, 37, 74)"
+    },
+    "headings": [
+      "Enterprise-grade finance built to scale",
+      "Outcomes built on 40+ years of Intuit expertise",
+      "From rearview reporting to real-time decisions",
+      "Close in days, not months",
+      "Hundreds of entities, one consolidated view",
+      "Automate the work, scale with a lean team",
+      "Every entry tracked, every action auditable",
+      "What changes when the system finally works",
+      "The workflows your industry actually runs on",
+      "Protect profit from bid to close",
+      "Run the finances, lead the mission",
+      "Full visibility, from dispatch to close",
+      "Know your true cost of goods",
+      "Consolidate every location",
+      "Adjust revenue as contracts change",
+      "Close the books, brief the board",
+      "A migration path with no surprises",
+      "Set a go-live date. Actually hit it.",
+      "Enterprise power without starting over",
+      "15 minutes to verify the fit",
+      "Let's connect",
+      "Frequently asked questions",
+      "Important pricing details and product information"
+    ],
+    "headingCount": 23,
+    "images": 55,
+    "paragraphs": 98,
+    "bodyTextLen": 9587,
+    "formError": null
+  },
+  "deferred": "source-unavailable"
+}

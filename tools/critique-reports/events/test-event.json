@@ -1,0 +1,26 @@
+{
+  "page": "/events/test-event",
+  "sourceUrl": "https://erp.intuit.com/events/test-event/",
+  "migratedUrl": "http://localhost:3000/content/events/test-event",
+  "source": {
+    "rendered": false,
+    "note": "source empty/blocked"
+  },
+  "migrated": {
+    "ok": true,
+    "blocked": false,
+    "bodyFont": "AvenirNext forINTUIT",
+    "h1": null,
+    "h1Text": null,
+    "hero": {
+      "bg": "rgba(0, 0, 0, 0)"
+    },
+    "headings": [],
+    "headingCount": 0,
+    "images": 4,
+    "paragraphs": 14,
+    "bodyTextLen": 1178,
+    "formError": null
+  },
+  "deferred": "source-unavailable"
+}

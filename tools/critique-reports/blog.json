@@ -1,0 +1,71 @@
+{
+  "page": "/blog",
+  "mode": "page",
+  "viewport": "1280x900 (headless default)",
+  "migratedUrl": "http://localhost:3000/content/blog",
+  "sourceUrl": "https://erp.intuit.com/blog/",
+  "method": "CDP browser render both sides (SPA-safe); region fingerprint; scoring.md weights",
+  "similarity": 50,
+  "contentFidelityPct": 50,
+  "global": {
+    "sourceFont": "AvenirNext forINTUIT",
+    "migratedFont": "AvenirNext forINTUIT",
+    "match": true
+  },
+  "hero": {
+    "sourceBg": "rgba(0, 0, 0, 0)",
+    "migratedBg": "rgba(0, 0, 0, 0)",
+    "sourceH1": null,
+    "migratedH1": null,
+    "bgMatch": true
+  },
+  "content": {
+    "sourceHeadings": 10,
+    "migratedHeadings": 6,
+    "missingOnMigrated": [
+      "Resources for enterprise businesses",
+      "Insights and trends",
+      "Thought leadership",
+      "Fuel business growth",
+      "Industries"
+    ],
+    "migratedFormError": null
+  },
+  "diffs": [
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Resources for enterprise businesses",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Insights and trends",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Thought leadership",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Fuel business growth",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Industries",
+      "migrated": "(absent)",
+      "severity": "high"
+    }
+  ]
+}

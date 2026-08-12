@@ -1,0 +1,40 @@
+{
+  "page": "/account-management",
+  "sourceUrl": "https://erp.intuit.com/account-management/",
+  "migratedUrl": "http://localhost:3000/content/account-management",
+  "source": {
+    "rendered": false,
+    "note": "source empty/blocked"
+  },
+  "migrated": {
+    "ok": true,
+    "blocked": false,
+    "bodyFont": "AvenirNext forINTUIT",
+    "h1": {
+      "fontSize": "48px",
+      "fontWeight": "400",
+      "lineHeight": "60px",
+      "color": "rgb(255, 255, 255)"
+    },
+    "h1Text": "Grow with dedicated partnership included in your suite",
+    "hero": {
+      "bg": "rgb(0, 37, 74)"
+    },
+    "headings": [
+      "Grow with dedicated partnership included in your suite",
+      "Account management",
+      "Get the support you need from day one",
+      "We’ll migrate your data for you, from any software",
+      "Identify opportunities to grow your business",
+      "Learn about the latest new features",
+      "Stay up and running with faster support",
+      "Get answers whenever you need them"
+    ],
+    "headingCount": 8,
+    "images": 11,
+    "paragraphs": 45,
+    "bodyTextLen": 2825,
+    "formError": null
+  },
+  "deferred": "source-unavailable"
+}

@@ -1,0 +1,49 @@
+{
+  "page": "/blog/financials/cash-flow-forecast",
+  "sourceUrl": "https://erp.intuit.com/blog/financials/cash-flow-forecast/",
+  "migratedUrl": "http://localhost:3000/content/blog/financials/cash-flow-forecast",
+  "source": {
+    "rendered": false,
+    "note": "source empty/blocked"
+  },
+  "migrated": {
+    "ok": true,
+    "blocked": false,
+    "bodyFont": "AvenirNext forINTUIT",
+    "h1": null,
+    "h1Text": null,
+    "hero": {
+      "bg": "rgba(0, 0, 0, 0)"
+    },
+    "headings": [
+      "Key takeaways",
+      "Introducing Intuit Enterprise Suite",
+      "What is a cash flow forecast?",
+      "How it works",
+      "Why is cash flow forecasting important?",
+      "Risk mitigation and liquidity assurance",
+      "Strategic decision-making",
+      "Unlock growth for your complex business",
+      "4 types of cash flow forecasts",
+      "The 13-week rolling forecast",
+      "Monthly forecast",
+      "Annual forecast",
+      "Scenario planning",
+      "How to forecast cash flow in 5 steps with Intuit Enterprise Suite",
+      "Step 1: Automate data integration",
+      "Step 2: Segment operational details",
+      "Step 3: Project cash inflows",
+      "Step 4: Project cash outflows",
+      "Step 5: Model risk and scenario test",
+      "Keep growing with a more powerful suite",
+      "Boost productivity and enhance profitability",
+      "Recommended for you"
+    ],
+    "headingCount": 22,
+    "images": 11,
+    "paragraphs": 100,
+    "bodyTextLen": 21907,
+    "formError": null
+  },
+  "deferred": "source-unavailable"
+}

@@ -1,0 +1,50 @@
+{
+  "page": "/blog/financials/multi-entity-challenges",
+  "sourceUrl": "https://erp.intuit.com/blog/financials/multi-entity-challenges/",
+  "migratedUrl": "http://localhost:3000/content/blog/financials/multi-entity-challenges",
+  "source": {
+    "rendered": false,
+    "note": "source empty/blocked"
+  },
+  "migrated": {
+    "ok": true,
+    "blocked": false,
+    "bodyFont": "AvenirNext forINTUIT",
+    "h1": null,
+    "h1Text": null,
+    "hero": {
+      "bg": "rgba(0, 0, 0, 0)"
+    },
+    "headings": [
+      "Unlock growth for your complex business",
+      "Understanding where multi-entity financial complexity begins",
+      "Common multi-entity challenges finance leaders encounter as organizations scale",
+      "Financial consolidation complexity",
+      "Intercompany transaction management",
+      "Compliance and regulatory strain",
+      "Fragmented financial visibility",
+      "Cash management and liquidity coordination",
+      "Technology fragmentation",
+      "Introducing Intuit Enterprise Suite",
+      "Why unmanaged multi-entity complexity creates enterprise risk",
+      "Reporting risk",
+      "Audit and compliance exposure",
+      "Strategic decision risk",
+      "The finance leader’s framework for solving multi-entity challenges",
+      "Centralized chart of accounts",
+      "Automated intercompany eliminations",
+      "Real-time consolidated dashboards",
+      "Role-based controls and audit trails",
+      "How AI surfaces multi-entity risk before it compounds",
+      "Keep growing with a more powerful suite",
+      "Boost productivity and drive enterprise performance",
+      "Recommended for you"
+    ],
+    "headingCount": 23,
+    "images": 10,
+    "paragraphs": 90,
+    "bodyTextLen": 21347,
+    "formError": null
+  },
+  "deferred": "source-unavailable"
+}

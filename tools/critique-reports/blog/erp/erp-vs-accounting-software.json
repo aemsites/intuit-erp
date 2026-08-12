@@ -1,0 +1,48 @@
+{
+  "page": "/blog/erp/erp-vs-accounting-software",
+  "sourceUrl": "https://erp.intuit.com/blog/erp/erp-vs-accounting-software/",
+  "migratedUrl": "http://localhost:3000/content/blog/erp/erp-vs-accounting-software",
+  "source": {
+    "rendered": false,
+    "note": "source empty/blocked"
+  },
+  "migrated": {
+    "ok": true,
+    "blocked": false,
+    "bodyFont": "AvenirNext forINTUIT",
+    "h1": null,
+    "h1Text": null,
+    "hero": {
+      "bg": "rgba(0, 0, 0, 0)"
+    },
+    "headings": [
+      "What are ERP systems?",
+      "Unlock growth for your complex business",
+      "What is accounting software?",
+      "Types of accounting software",
+      "ERP vs. accounting software: Key differences",
+      "Scope and integration",
+      "Scalability and customization",
+      "Industry-specific solutions",
+      "Compliance and reporting",
+      "Intuit Enterprise Suite customers are saying",
+      "Real-time data and analytics",
+      "Customer relationship management (CRM)",
+      "Total cost of ownership (TCO)",
+      "Keep growing with a more powerful suite",
+      "Choosing between ERP and accounting software",
+      "Hybrid approach: When to use both ERP and accounting software",
+      "Introducing Intuit Enterprise Suite",
+      "When to choose ERP over accounting software",
+      "Boost productivity and enhance profitability",
+      "ERP vs. accounting software FAQ",
+      "Recommended for you"
+    ],
+    "headingCount": 21,
+    "images": 11,
+    "paragraphs": 57,
+    "bodyTextLen": 14131,
+    "formError": null
+  },
+  "deferred": "source-unavailable"
+}

@@ -1,0 +1,33 @@
+{
+  "page": "/ibs",
+  "sourceUrl": "https://erp.intuit.com/ibs/",
+  "migratedUrl": "http://localhost:3000/content/ibs",
+  "source": {
+    "rendered": false,
+    "note": "source empty/blocked"
+  },
+  "migrated": {
+    "ok": true,
+    "blocked": false,
+    "bodyFont": "AvenirNext forINTUIT",
+    "h1": {
+      "fontSize": "48px",
+      "fontWeight": "400",
+      "lineHeight": "60px",
+      "color": "rgb(255, 255, 255)"
+    },
+    "h1Text": "Intuit Enterprise Suite",
+    "hero": {
+      "bg": "rgb(0, 37, 74)"
+    },
+    "headings": [
+      "Intuit Enterprise Suite"
+    ],
+    "headingCount": 1,
+    "images": 5,
+    "paragraphs": 20,
+    "bodyTextLen": 1361,
+    "formError": null
+  },
+  "deferred": "source-unavailable"
+}

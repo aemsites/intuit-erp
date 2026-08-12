@@ -1,0 +1,38 @@
+{
+  "page": "/events/humble-house-foods-webinar",
+  "sourceUrl": "https://erp.intuit.com/events/humble-house-foods-webinar/",
+  "migratedUrl": "http://localhost:3000/content/events/humble-house-foods-webinar",
+  "source": {
+    "rendered": false,
+    "note": "source empty/blocked"
+  },
+  "migrated": {
+    "ok": true,
+    "blocked": false,
+    "bodyFont": "AvenirNext forINTUIT",
+    "h1": null,
+    "h1Text": null,
+    "hero": {
+      "bg": "rgba(0, 0, 0, 0)"
+    },
+    "headings": [
+      "title",
+      "x-schema-name",
+      "type",
+      "status",
+      "description",
+      "date",
+      "time",
+      "speakers",
+      "image",
+      "ctaLabel",
+      "ctaUrl"
+    ],
+    "headingCount": 11,
+    "images": 4,
+    "paragraphs": 26,
+    "bodyTextLen": 1880,
+    "formError": null
+  },
+  "deferred": "source-unavailable"
+}

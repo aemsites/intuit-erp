@@ -1,0 +1,59 @@
+{
+  "page": "/blog/guide/construction-digital-transformation-survey",
+  "mode": "page",
+  "viewport": "1280x900 (headless default)",
+  "migratedUrl": "http://localhost:3000/content/blog/guide/construction-digital-transformation-survey",
+  "sourceUrl": "https://erp.intuit.com/blog/guide/construction-digital-transformation-survey/",
+  "method": "CDP browser render both sides (SPA-safe); region fingerprint; scoring.md weights",
+  "similarity": 59.1,
+  "contentFidelityPct": 77.8,
+  "global": {
+    "sourceFont": "AvenirNext forINTUIT",
+    "migratedFont": "AvenirNext forINTUIT",
+    "match": true
+  },
+  "hero": {
+    "sourceBg": "rgb(255, 255, 255)",
+    "migratedBg": "rgba(0, 0, 0, 0)",
+    "sourceH1": {
+      "fontSize": "24px",
+      "fontWeight": "700",
+      "lineHeight": "32px",
+      "color": "rgb(57, 58, 61)"
+    },
+    "migratedH1": null,
+    "bgMatch": false
+  },
+  "content": {
+    "sourceHeadings": 9,
+    "migratedHeadings": 10,
+    "missingOnMigrated": [
+      "Construction technology trends report: What are the opportunities of AI in construction?",
+      "The connected build: How the tech revolution is reshaping construction"
+    ],
+    "migratedFormError": null
+  },
+  "diffs": [
+    {
+      "cat": "styling",
+      "prop": "hero background-color",
+      "original": "rgb(255, 255, 255)",
+      "migrated": "rgba(0, 0, 0, 0)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Construction technology trends report: What are the opportunities of AI in construction?",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "The connected build: How the tech revolution is reshaping construction",
+      "migrated": "(absent)",
+      "severity": "high"
+    }
+  ]
+}

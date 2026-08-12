@@ -1,0 +1,39 @@
+{
+  "page": "/blog/ask-the-expert",
+  "mode": "page",
+  "viewport": "1280x900 (headless default)",
+  "migratedUrl": "http://localhost:3000/content/blog/ask-the-expert",
+  "sourceUrl": "https://erp.intuit.com/blog/ask-the-expert/",
+  "method": "CDP browser render both sides (SPA-safe); region fingerprint; scoring.md weights",
+  "similarity": 0,
+  "contentFidelityPct": 0,
+  "global": {
+    "sourceFont": "AvenirNext forINTUIT",
+    "migratedFont": "AvenirNext forINTUIT",
+    "match": true
+  },
+  "hero": {
+    "sourceBg": "rgba(0, 0, 0, 0)",
+    "migratedBg": "rgba(0, 0, 0, 0)",
+    "sourceH1": null,
+    "migratedH1": null,
+    "bgMatch": true
+  },
+  "content": {
+    "sourceHeadings": 1,
+    "migratedHeadings": 0,
+    "missingOnMigrated": [
+      "Ask the Expert thought leadership"
+    ],
+    "migratedFormError": null
+  },
+  "diffs": [
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Ask the Expert thought leadership",
+      "migrated": "(absent)",
+      "severity": "high"
+    }
+  ]
+}

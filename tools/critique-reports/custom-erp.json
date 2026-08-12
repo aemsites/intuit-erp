@@ -1,0 +1,37 @@
+{
+  "page": "/custom-erp",
+  "sourceUrl": "https://erp.intuit.com/custom-erp/",
+  "migratedUrl": "http://localhost:3000/content/custom-erp",
+  "source": {
+    "rendered": false,
+    "note": "source empty/blocked"
+  },
+  "migrated": {
+    "ok": true,
+    "blocked": false,
+    "bodyFont": "AvenirNext forINTUIT",
+    "h1": {
+      "fontSize": "48px",
+      "fontWeight": "400",
+      "lineHeight": "60px",
+      "color": "rgb(255, 255, 255)"
+    },
+    "h1Text": "Built for the way your industry actually works",
+    "hero": {
+      "bg": "rgb(0, 37, 74)"
+    },
+    "headings": [
+      "Built for the way your industry actually works",
+      "More than accounting. A platform that works like your business.",
+      "Automate industry-proven workflows",
+      "Connect the tools your industry already runs on",
+      "Lead with the KPIs that actually matter to your business"
+    ],
+    "headingCount": 5,
+    "images": 8,
+    "paragraphs": 26,
+    "bodyTextLen": 2500,
+    "formError": null
+  },
+  "deferred": "source-unavailable"
+}

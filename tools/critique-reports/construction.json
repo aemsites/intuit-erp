@@ -1,0 +1,182 @@
+{
+  "page": "/construction",
+  "mode": "page",
+  "viewport": "1280x900 (headless default)",
+  "migratedUrl": "http://localhost:3000/content/construction",
+  "sourceUrl": "https://erp.intuit.com/construction/",
+  "method": "CDP browser render both sides (SPA-safe); region fingerprint; scoring.md weights",
+  "similarity": 8.9,
+  "contentFidelityPct": 46.4,
+  "global": {
+    "sourceFont": "AvenirNext forINTUIT",
+    "migratedFont": "AvenirNext forINTUIT",
+    "match": true
+  },
+  "hero": {
+    "sourceBg": "rgba(0, 0, 0, 0)",
+    "migratedBg": "rgb(0, 37, 74)",
+    "sourceH1": {
+      "fontSize": "16px",
+      "fontWeight": "700",
+      "lineHeight": "24px",
+      "color": "rgb(255, 255, 255)"
+    },
+    "migratedH1": {
+      "fontSize": "48px",
+      "fontWeight": "400",
+      "lineHeight": "60px",
+      "color": "rgb(255, 255, 255)"
+    },
+    "bgMatch": false
+  },
+  "content": {
+    "sourceHeadings": 28,
+    "migratedHeadings": 14,
+    "missingOnMigrated": [
+      "and many more",
+      "“With the old systems before Intuit Enterprise Suite, I’d easily be spending 10-20 hours a week just ensuring that the data was correct.” Blake Rohm, Director of Finance, Lallier Construction",
+      "\"Intuit Enterprise Suite for construction finally connects how construction companies do business as well as manage money.\" Scott Franchini, Partner, RedHammer Construction Accounting Management",
+      "“Intuit Enterprise Suite allows us to capture all of the activities and people in a very complex business. It allows us to manage them all in one place.” Jason Corby, Founder & CFO, HFMM Legacy Group",
+      "“Intuit brings a whole shelf of assets and tools that Houzz could not get under one roof anywhere else.” Andie Nelson, Accounting Integration Expert, Houzz",
+      "“It takes much less interaction into getting that coded against a project and a cost code. So it saved my team a significant amount of time.” Billy Jones, CFO, Southern Brothers Construction",
+      "Increase project costing accuracy in your construction business with Intuit Enterprise Suite",
+      "Construction job costing: How to use it to improve profitability",
+      "On-the-job training construction: Training topics + examples",
+      "Construction contract: Types, components, and best practices",
+      "Project-based accounting: How it works + examples",
+      "Percentage of completion method: A comprehensive guide",
+      "ERP data analysis: Your guide to data-based decision-making",
+      "What is multidimensional accounting? How to use it + why you need it",
+      "Let’s connect"
+    ],
+    "migratedFormError": null
+  },
+  "diffs": [
+    {
+      "cat": "styling",
+      "prop": "hero background-color",
+      "original": "rgba(0, 0, 0, 0)",
+      "migrated": "rgb(0, 37, 74)",
+      "severity": "high"
+    },
+    {
+      "cat": "styling",
+      "prop": "h1 font-weight",
+      "original": "700",
+      "migrated": "400",
+      "severity": "medium"
+    },
+    {
+      "cat": "styling",
+      "prop": "h1 font-size",
+      "original": "16px",
+      "migrated": "48px",
+      "severity": "low"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "and many more",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "“With the old systems before Intuit Enterprise Suite, I’d easily be spending 10-20 hours a week just ensuring that the data was correct.” Blake Rohm, Director of Finance, Lallier Construction",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "\"Intuit Enterprise Suite for construction finally connects how construction companies do business as well as manage money.\" Scott Franchini, Partner, RedHammer Construction Accounting Management",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "“Intuit Enterprise Suite allows us to capture all of the activities and people in a very complex business. It allows us to manage them all in one place.” Jason Corby, Founder & CFO, HFMM Legacy Group",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "“Intuit brings a whole shelf of assets and tools that Houzz could not get under one roof anywhere else.” Andie Nelson, Accounting Integration Expert, Houzz",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "“It takes much less interaction into getting that coded against a project and a cost code. So it saved my team a significant amount of time.” Billy Jones, CFO, Southern Brothers Construction",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Increase project costing accuracy in your construction business with Intuit Enterprise Suite",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Construction job costing: How to use it to improve profitability",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "On-the-job training construction: Training topics + examples",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Construction contract: Types, components, and best practices",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Project-based accounting: How it works + examples",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Percentage of completion method: A comprehensive guide",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "ERP data analysis: Your guide to data-based decision-making",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "What is multidimensional accounting? How to use it + why you need it",
+      "migrated": "(absent)",
+      "severity": "high"
+    },
+    {
+      "cat": "content",
+      "prop": "missing heading/section",
+      "original": "Let’s connect",
+      "migrated": "(absent)",
+      "severity": "high"
+    }
+  ]
+}

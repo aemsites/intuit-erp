@@ -1,0 +1,26 @@
+{
+  "totalReports": 311,
+  "scored": 258,
+  "sourceBlocked": 53,
+  "contentFidelity": {
+    "average": 46.5,
+    "atLeast90": 17,
+    "between70and90": 21,
+    "below70": 220
+  },
+  "systemicFindings": {
+    "heroColorInversion": {
+      "count": 212,
+      "note": "source light-beige hero vs migrated navy hero"
+    },
+    "brokenLeadForm": {
+      "count": 3,
+      "pages": [
+        "/accountant",
+        "/contact",
+        "/pricing"
+      ]
+    },
+    "fontFamilyMatch": "238/258 scored pages match AvenirNext forINTUIT"
+  }
+}
