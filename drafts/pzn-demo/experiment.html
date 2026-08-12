@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PZN Demo — IXP A/B (control)</title>
+  <!-- aem-experimentation: page-level audience → redirect. When the `ixptreatment`
+       remote audience resolves (worker → IXP, mocked), redirect to the treatment page. -->
+  <meta name="audience-ixptreatment" content="/drafts/pzn-demo/experiment-b">
+  <meta name="audience-resolution" content="redirect">
+  <link rel="stylesheet" href="/styles/styles.css">
+  <script src="/scripts/aem.js" type="module"></script>
+  <script src="/scripts/scripts.js" type="module"></script>
+</head>
+<body>
+<header></header>
+<main>
+  <div>
+    <h1>Control experience</h1>
+    <p>You are seeing the <strong>control</strong> arm of the IXP A/B test. Visitors bucketed into the treatment are redirected by aem-experimentation to the treatment page — the assignment is sticky per <code>ivid</code>, decided by Intuit's IXP (mocked at the edge for this POC).</p>
+    <p>Change the <code>?ivid=</code> query to land in different arms.</p>
+  </div>
+</main>
+<footer></footer>
+</body>
+</html>
