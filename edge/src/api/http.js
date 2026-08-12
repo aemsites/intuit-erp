@@ -6,13 +6,18 @@ export function json(data, init = {}) {
   });
 }
 
-/** Pathname of the request's Referer header, or null. */
-export function refererPath(request) {
+/** The request's Referer as a URL, or null. */
+export function refererUrl(request) {
   const ref = request.headers.get('referer');
   if (!ref) return null;
   try {
-    return new URL(ref).pathname;
+    return new URL(ref);
   } catch {
     return null;
   }
+}
+
+/** Pathname of the request's Referer header, or null. */
+export function refererPath(request) {
+  return refererUrl(request)?.pathname ?? null;
 }

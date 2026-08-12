@@ -108,4 +108,21 @@ describe('handleManifest', () => {
     expect(body.data[0].url).toMatch(/^\/drafts\/pzn-demo\/offer-/);
     expect(spy).not.toHaveBeenCalled();
   });
+
+  it('honors a forced segment for the Sidekick preview (?audience= via Referer, no DE call)', async () => {
+    const spy = vi.spyOn(globalThis, 'fetch');
+    const res = await handleManifest(
+      manifestReq({ referer: `https://aem-erp.intuit.com${PAGE}?audience=construction` }),
+      DE_ENV,
+    );
+    expect(await res.json()).toEqual({
+      data: [{
+        page: PAGE,
+        audience: 'construction',
+        selector: '.slot-1',
+        url: '/drafts/pzn-demo/offer-construction',
+      }],
+    });
+    expect(spy).not.toHaveBeenCalled(); // forced preview doesn't hit DE, needs no ivid
+  });
 });

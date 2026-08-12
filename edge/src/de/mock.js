@@ -15,6 +15,11 @@
 // html-folder for the POC; the real DE returns its own `fragments/pzn/...` paths.
 export const SEGMENTS = ['hospitality', 'construction', 'retail'];
 
+/** The offer fragment path for a firmographic segment (POC: local html-folder). */
+export function offerForSegment(segment) {
+  return `drafts/pzn-demo/offer-${segment}`;
+}
+
 /** Deterministic bucket in [0, mod) for a string (FNV-1a). Stable per visitor. */
 function bucket(str, mod) {
   let h = 0x811c9dc5;
@@ -41,7 +46,7 @@ export function mockBatch({ slots, attributes }) {
     response[`${slot.experience}_${slot.placement}_${locale}`] = {
       data: {
         recommendations: {
-          recommendation: [{ copyData: { template: 'content', pznblock: `drafts/pzn-demo/offer-${segment}` } }],
+          recommendation: [{ copyData: { template: 'content', pznblock: offerForSegment(segment) } }],
         },
       },
       placement: slot.placement,

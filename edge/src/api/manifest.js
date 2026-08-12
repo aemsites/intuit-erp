@@ -16,23 +16,40 @@
  */
 
 import { fetchBatch } from '../de/batch-client.js';
-import { mockBatch } from '../de/mock.js';
+import { mockBatch, SEGMENTS, offerForSegment } from '../de/mock.js';
 import { buildAttributes, entryForSlot, slotEntryToPznEntry } from '../de/resolve.js';
 import { resolveDeClientRoute } from '../de/routes.js';
 import { readIvid } from '../ivid.js';
-import { json, refererPath } from './http.js';
+import { json, refererUrl } from './http.js';
 
 const NO_STORE = { 'cache-control': 'no-store' };
 const emptyManifest = () => json({ data: [] }, { headers: NO_STORE });
 
 export async function handleManifest(request, env) {
   const url = new URL(request.url);
+  const ref = refererUrl(request);
   // The plugin fetches the manifest path with no query (it uses `url.pathname`),
   // so the page comes from the Referer; `?path=` is a QA/testing override.
-  const page = url.searchParams.get('path') || refererPath(request) || '/';
+  const page = url.searchParams.get('path') || ref?.pathname || '/';
 
   const route = resolveDeClientRoute(page);
   if (!route) return emptyManifest();
+
+  // Preview round-trip: when the AEM Sidekick panel forces a known segment, the
+  // page URL carries `?audience=<segment>`. The plugin strips the manifest query,
+  // so read it from the Referer — and return THAT segment's offer, enumerated as
+  // that audience, so the forced variant renders instead of the per-visitor
+  // decision. (`?audience=` on the manifest request itself is honored too, for QA.)
+  const forced = url.searchParams.get('audience') || ref?.searchParams.get('audience');
+  if (forced && SEGMENTS.includes(forced)) {
+    const data = route.slots.map((slot) => ({
+      page,
+      audience: forced,
+      selector: `.${slot.location}`,
+      url: `/${offerForSegment(forced)}`,
+    }));
+    return json({ data }, { headers: NO_STORE });
+  }
 
   const ivid = readIvid(request);
   if (!ivid) return emptyManifest();
