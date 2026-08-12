@@ -7,6 +7,32 @@
 
 .video { margin: 2rem 0; }
 
+/* section-owned layout (video as an in-article/section block): the source
+   centers a constrained ~738px thumbnail and centers the section heading at
+   desktop. Scoped to .video-container so a video used elsewhere is unaffected. */
+.video-container .default-content-wrapper h2 {
+  font-size: 30px;
+  line-height: 1.13;
+  font-weight: 500;
+  text-align: left;
+  margin: 0 0 24px;
+}
+
+.video-container .video {
+  max-width: 738px;
+  margin-inline: auto;
+}
+
+@media (width >= 900px) {
+  .video-container .default-content-wrapper h2 {
+    font-size: 40px;
+    line-height: 52px;
+    text-align: center;
+    max-width: 900px;
+    margin: 0 auto 32px;
+  }
+}
+
 .video .video-preview {
   position: relative;
   aspect-ratio: 16 / 9;

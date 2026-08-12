@@ -113,8 +113,28 @@ function buildWidgetAutoBlocks(main) {
 }
 
 /**
+ * True when `el` is an authored poster-only node — a bare <picture>/<img>, or a
+ * <p> that wraps only a <picture>/<img> with no other text/links. Used to pair a
+ * standalone poster with an adjacent video link (see buildVideoAutoBlocks).
+ * @param {Element|null} el
+ * @returns {boolean}
+ */
+function isPosterOnly(el) {
+  if (!el) return false;
+  if (el.tagName === 'PICTURE' || el.tagName === 'IMG') return true;
+  return el.tagName === 'P'
+    && !!el.querySelector('picture, img')
+    && !el.querySelector('a')
+    && el.textContent.trim() === '';
+}
+
+/**
  * Turns a section-level paragraph that is only a link to a video host
- * (YouTube/Vimeo), optionally wrapping a poster <img>, into a `video` block.
+ * (YouTube/Vimeo) into a `video` block. The poster image may be authored inside
+ * the link paragraph, or as a standalone <picture>/<img> in the immediately
+ * preceding sibling — in the latter case it is absorbed into the block so the
+ * video block owns a single poster (with play button) instead of leaving the
+ * image orphaned and the block falling back to the provider thumbnail.
  * Skips inline prose links and links already inside a block cell (e.g.
  * testimonial.video), so only standalone thumbnail-links are upgraded.
  * @param {Element} main The container element
@@ -128,7 +148,17 @@ function buildVideoAutoBlocks(main) {
     if (p.querySelectorAll('a').length !== 1) return;
     // the link must be the whole paragraph (image poster has no text)
     if (p.textContent.replace(a.textContent, '').trim()) return;
-    p.replaceWith(buildBlock('video', { elems: [a.cloneNode(true)] }));
+    // absorb a standalone poster authored in the preceding sibling, if any, so
+    // the block renders one thumbnail + play button rather than an orphaned
+    // image above a provider-thumbnail video block.
+    const elems = [];
+    const poster = p.previousElementSibling;
+    if (!p.querySelector('img') && isPosterOnly(poster)) {
+      elems.push(poster.tagName === 'P' ? poster.querySelector('picture, img') : poster);
+      poster.remove();
+    }
+    elems.push(a.cloneNode(true));
+    p.replaceWith(buildBlock('video', { elems }));
   });
 }
 
