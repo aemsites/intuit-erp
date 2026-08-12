@@ -1003,11 +1003,17 @@ function parseAudienceManifest(entries) {
   ))
     .map(aggregateEntries('audience', ['audience', 'url']))
     .map((e) => {
-      const audiences = e.audience;
+      // Normalize to arrays: aggregateEntries leaves a single audience/url per
+      // selector as a scalar (only multi-value selectors become arrays), so a
+      // single-audience manifest row (e.g. one `remote` offer per slot) would
+      // break `.forEach`. `[].concat` handles both scalar and array.
+      // NOTE: local patch to vendored adobe/aem-experimentation — upstream this.
+      const audiences = [].concat(e.audience);
+      const urls = [].concat(e.url);
       delete e.audience;
       e.audiences = {};
       audiences.forEach((a, i) => {
-        e.audiences[toClassName(a)] = e.url[i];
+        e.audiences[toClassName(a)] = urls[i];
       });
       delete e.url;
       return e;
