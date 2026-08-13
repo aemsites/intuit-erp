@@ -32,3 +32,4 @@ content
 .idea
 .wrangler
 *.html
+!tools/**/*.html

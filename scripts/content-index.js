@@ -1,7 +1,7 @@
 /**
  * content-index — shared query-index fetch/cache + date formatting for the
- * auto-listing card blocks (case-study-cards, resource-cards). Each index
- * path is fetched once and reused across every block instance on the page.
+ * auto-listing card blocks (blog-cards, event-cards). Each index path is
+ * fetched once and reused across every block instance on the page.
  */
 const cache = new Map();
 
