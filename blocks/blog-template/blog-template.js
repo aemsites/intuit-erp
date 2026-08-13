@@ -393,12 +393,14 @@ function wireToc(tocWrap, nav, headings, mq) {
  * @param {Element} main the page's <main>
  */
 export function buildBlogTemplate(main) {
-  // Three migrated case studies have a `case-study-header` block hand-authored
-  // in section 1 (its own centred banner, share row and inline TOC). Layering
-  // the hero band and rails on top of that would decorate the page twice, so
-  // leave those documents exactly as they render today. They don't match
-  // upstream either, but that's a content fix (issue #424): drop the block from
-  // the document and the page picks up the band here automatically.
+  // Three case studies author a `case-study-header` block in section 1 (its own
+  // centred banner, share row and inline TOC). Those are net-new pages with no
+  // erp.intuit.com counterpart — aprio, sparq-partners and
+  // steves-construction-company all 404 upstream — so that block is the
+  // intended treatment for new case studies, not a migration artifact to undo.
+  // Bail out so the page isn't decorated twice (the hero band would wrap the
+  // banner); the migrated case studies, which have a bare H1 + hero image, fall
+  // through and get the band that upstream uses.
   if (main.querySelector('.case-study-header')) return;
 
   main.classList.add('blog-article');
