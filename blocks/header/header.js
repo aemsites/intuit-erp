@@ -282,7 +282,7 @@ function eventsBarHTML() {
   return `
 <div class="ies-events">
   <div class="container">
-    ${text} <a href="${href}">${cta}</a>.
+    ${text} <a href="${href}">${cta}</a>
   </div>
 </div>`;
 }
