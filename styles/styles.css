@@ -546,6 +546,34 @@ body.category main > .section:first-of-type .default-content-wrapper {
 body.category main > .section:first-of-type h1 { font-size: 40px; font-weight: 600; margin: 0 0 16px; }
 body.category main > .section:first-of-type p { font-size: 17px; color: var(--text-muted); }
 
+/* blog hub home (body.blog-home) — the slot-1 intro uses the same centred 40px
+   hero title as category listings; the listing sections below use a smaller
+   34px heading (matching prod, was the global 38px); and "Explore by topic"
+   renders as a topic-link nav rather than a raw bulleted list. */
+body.blog-home main > .section.slot-1 .default-content-wrapper {
+  max-width: 46em; margin: 0 auto; text-align: center;
+}
+body.blog-home main > .section.slot-1 h2 { font-size: 40px; font-weight: 600; margin: 0 0 16px; }
+body.blog-home main > .section.slot-1 p { font-size: 17px; color: var(--text-muted); }
+
+body.blog-home main > .section:not(.slot-1) h2 { font-size: 34px; }
+
+/* "Explore by topic": the authored <ul> becomes a wrap of rounded topic links */
+body.blog-home main > .section .default-content-wrapper ul {
+  list-style: none; margin: 24px 0 0; padding: 0;
+  display: flex; flex-wrap: wrap; gap: 12px;
+}
+body.blog-home main > .section .default-content-wrapper ul li { margin: 0; }
+body.blog-home main > .section .default-content-wrapper ul a {
+  display: inline-block; padding: 8px 20px; font-size: 16px; line-height: 1.4;
+  color: var(--heading); text-decoration: none;
+  border: 1px solid var(--line); border-radius: 999px;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+body.blog-home main > .section .default-content-wrapper ul a:hover {
+  background: var(--blog-hero-bg); border-color: var(--navy);
+}
+
 /* search results page (Template: "Search" metadata -> body.search): give the
    first section the same top breathing room below the nav as category pages */
 body.search main > .section:first-of-type { padding-top: 5rem; }
