@@ -4,6 +4,65 @@
   background: var(--navy);
   color: #fff;
   overflow: hidden;
+
+  &.gradient {
+    background: conic-gradient(from 103deg at 28.36% 120.78%, #04193C 115.9615deg, #041F53 204.2308deg, #03339C 267.2082deg, #0F44AC 273.7572deg, #2B66D0 289.9528deg, #3875E0 324.4898deg, #BB95CD 329.7278deg, #DEBCB3 334.1040deg, #041839 359.1429deg);
+  }
+}
+
+/* Light section treatment for a hero band — opt-in per section via Section
+   Metadata "Style: light". `light` is the project's generic, block-agnostic
+   section-style token (see the base `.section.light` rule in styles.css); the
+   rules below refine that token for a hero section so it matches the
+   erp.intuit.com source hero on pages that use a light-beige band with dark text
+   (e.g. /account-management). They are scoped to `.hero-container` because they
+   only undo the hero's own dark-band defaults (white text, on-dark buttons) —
+   the navy default on every other hero page is unaffected. */
+.section.hero-container.light {
+  background: var(--tofu); /* #f3f2ef — source beige */
+  color: var(--text, #11181c);
+
+  /* the generic `.section.light` rule adds 40px block padding; the hero band
+     supplies its own vertical rhythm via .hero-grid, so keep the section flush
+     like the navy hero. */
+  padding: 0;
+}
+
+.section.hero-container.light .hero-copy .hero-eyebrow,
+.section.hero-container.light .hero-copy h1,
+.section.hero-container.light .hero-copy .hero-lede {
+  color: var(--text, #11181c);
+}
+
+/* Buttons on the light hero: the default hero buttons are styled for the dark
+   band (white-fill primary at hero.css and white-outline secondary in
+   styles.css). On the light section, revert to the base button treatment
+   (dark-fill primary, dark-outline secondary) so they match the source's
+   light-hero CTAs — navy/solid primary, dark-outline secondary. */
+.section.hero-container.light a.button.primary {
+  background: var(--navy);
+  border-color: var(--navy);
+  color: #fff;
+}
+
+.section.hero-container.light a.button.primary:hover,
+.section.hero-container.light a.button.primary:focus-visible {
+  background: var(--navy-hover);
+  border-color: var(--navy-hover);
+  color: #fff;
+}
+
+.section.hero-container.light a.button.secondary {
+  background: transparent;
+  border-color: var(--ink-teal);
+  color: var(--ink-teal);
+}
+
+.section.hero-container.light a.button.secondary:hover,
+.section.hero-container.light a.button.secondary:focus-visible {
+  background: var(--ink-teal);
+  border-color: var(--ink-teal);
+  color: #fff;
 }
 
 .hero .hero-grid {
@@ -126,7 +185,8 @@
 
 /* ---- .hero.form (pricing) — lead card on the right, content from the
    shared schedule-call fragment (content/fragments/schedule-call.html) ---- */
-.hero.form .hero-grid { grid-template-columns: 1fr 470px; gap: 60px; min-height: 560px; }
+.hero.form .hero-grid { grid-template-columns: 1fr 550px; gap: 60px; min-height: 560px; }
+.hero.form .hero-grid:has(.hero-copy > h1:only-child) { align-items: center; }
 .hero.form .hero-copy h1 { font-size: 52px; max-width: 7em; margin-bottom: 0; }
 
 .hero .hero-form {

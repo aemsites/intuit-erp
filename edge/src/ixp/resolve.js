@@ -1,42 +1,36 @@
 /**
- * IXP-backed entry resolution — the swap-in alternative to the map.json flow.
+ * IXP assignment → decision mapping.
  *
- * Produces the worker's existing `PznEntry` from an IXP assignment, so the rest
- * of the render path (`resolveOfferMarkup` + `applyPersonalization`) is unchanged.
- * The mapping is 1:1 with the actions the worker already performs:
+ * The `/api/ixp` handler fetches the assignments and supplies the granularity;
+ * this pure helper maps a single IXP assignment onto a normalized decision:
  *
- *   control / empty / unmapped   → null            → passthrough (baseline)
- *   REDIRECT + payload.variationUrl → page-level replace   (fragment = variation path)
+ *   control / empty / unmapped   → null            → baseline (control)
+ *   REDIRECT + variation.html key → page-level replace   (fragment = variation path)
  *   REPLACE_WEB_CONTENT + assetLocation → block/section replace (fragment = content ref)
  *
- * The worker still does NO decisioning: IXP decides the arm; this only renders it.
+ * The worker does NO decisioning: IXP decides the arm; this only reads it.
  */
 
-import { fetchAssignment } from './client.js';
-import { resolveRoute } from './routes.js';
-
 /**
- * @typedef {import('../personalize.js').PznEntry} PznEntry
  * @typedef {import('./client.js').IxpAssignment} IxpAssignment
- * @typedef {import('./client.js').IxpAssignmentResponse} IxpAssignmentResponse
- * @typedef {import('./client.js').IxpClientEnv} IxpClientEnv
- * @typedef {import('./routes.js').IxpRoute} IxpRoute
  */
 
 /**
- * The visitor id. Read from the `ivid` cookie; a `?ivid=` query param overrides
- * it for demo / QA. Null when absent ⇒ nothing to personalize (passthrough).
- * @param {Request} request
- * @returns {string | null}
+ * A normalized personalization/experiment decision.
+ * @typedef {Object} PznEntry
+ * @property {string} path Page path the decision applies to.
+ * @property {string} fragment Fragment reference (variation path or content ref).
+ * @property {string} location Slot id a block/section treatment targets.
+ * @property {'replace'} action Operation at the target.
+ * @property {'block' | 'section' | 'page'} fidelity Granularity of the target.
  */
-function readIvid(request) {
-  const url = new URL(request.url);
-  const fromQuery = url.searchParams.get('ivid');
-  if (fromQuery) return fromQuery;
-  const cookie = request.headers.get('cookie') || '';
-  const m = cookie.match(/(?:^|;\s*)ivid=([^;]+)/);
-  return m ? decodeURIComponent(m[1]) : null;
-}
+
+/**
+ * The granularity context the handler supplies for a decision.
+ * @typedef {Object} IxpRoute
+ * @property {string} location Slot id a block/section treatment targets (unused for page-level).
+ * @property {'block' | 'section' | 'page'} fidelity Default granularity for a block-level treatment.
+ */
 
 /**
  * Parses the assignment payload JSON, or null if absent/malformed.
@@ -54,25 +48,6 @@ function parsePayload(payload) {
 }
 
 /**
- * Flattens an assignment payload's scalar fields into string data for template
- * token fill (see `PznEntry.data`). Non-scalar fields are ignored; returns
- * undefined when there is nothing usable.
- * @param {string} payload
- * @returns {Record<string, string> | undefined}
- */
-function payloadData(payload) {
-  const parsed = parsePayload(payload);
-  if (!parsed) return undefined;
-  const data = {};
-  for (const [key, value] of Object.entries(parsed)) {
-    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
-      data[key] = String(value);
-    }
-  }
-  return Object.keys(data).length > 0 ? data : undefined;
-}
-
-/**
  * Maps a single IXP assignment onto a `PznEntry`, or null when it should not
  * change the page (control arm, missing target, or an unhandled type).
  * @param {IxpAssignment} assignment
@@ -87,8 +62,10 @@ export function assignmentToPznEntry(assignment, route, path) {
   switch (assignment.experimentType) {
     case 'REDIRECT':
     case 'MAB_REDIRECT': {
-      // Page-level: swap the whole <main> for the variation page's content.
-      const variationUrl = parsePayload(assignment.payload)?.variationUrl;
+      // Page-level: swap the whole <main> for the variation page's content. The
+      // real IXP payload carries the variation path under this key.
+      const payload = parsePayload(assignment.payload);
+      const variationUrl = payload?.['intuit.com.integration.variation.html'];
       if (typeof variationUrl !== 'string' || !variationUrl) return null;
       return {
         path, fragment: variationUrl, location: route.location, action: 'replace', fidelity: 'page',
@@ -96,9 +73,7 @@ export function assignmentToPznEntry(assignment, route, path) {
     }
     case 'REPLACE_WEB_CONTENT':
     case 'MAB_WEB_CONTENT': {
-      // Block-level: inject the referenced content at the route's slot. The
-      // payload (if any) carries data values that fill the fragment template's
-      // {{token}} placeholders — the assignment's data renders into the offer.
+      // Block-level: inject the referenced content at the route's slot.
       if (!assignment.assetLocation) return null;
       return {
         path,
@@ -106,59 +81,10 @@ export function assignmentToPznEntry(assignment, route, path) {
         location: route.location,
         action: 'replace',
         fidelity: route.fidelity,
-        data: payloadData(assignment.payload),
       };
     }
     default:
       // DEFAULT / unknown ⇒ no treatment.
       return null;
   }
-}
-
-/**
- * Fetches the assignments for a route's experiment. The transport is injected so
- * the routing + mapping logic below is shared between the real HTTP client
- * (`resolveIxpEntry`) and the in-process mock (`ixp/mock-source.js`).
- * @typedef {(params: { ivid: string, experimentId?: number, label?: string }) => Promise<IxpAssignmentResponse | null>} AssignmentFetcher
- */
-
-/**
- * Resolves a `PznEntry` for a request from IXP assignments, or null (passthrough)
- * when the path is not enrolled, there is no ivid, or no assignment maps to a
- * change. Transport-agnostic — see `AssignmentFetcher`.
- * @param {Request} request
- * @param {AssignmentFetcher} fetchAssignments
- * @returns {Promise<PznEntry | null>}
- */
-export async function resolveEntryWith(request, fetchAssignments) {
-  const path = new URL(request.url).pathname;
-  const route = resolveRoute(path);
-  if (!route) return null;
-
-  const ivid = readIvid(request);
-  if (!ivid) return null;
-
-  const res = await fetchAssignments({
-    ivid, experimentId: route.experimentId, label: route.label,
-  });
-  if (!res || res.assignments.length === 0) return null;
-
-  // A label route may resolve several experiments; apply the first that maps to
-  // an actual change (a single slot can only show one treatment).
-  for (const assignment of res.assignments) {
-    const entry = assignmentToPznEntry(assignment, route, path);
-    if (entry) return entry;
-  }
-  return null;
-}
-
-/**
- * Resolves a `PznEntry` via the real IXP Assignment API over HTTP, or null
- * (passthrough). Thin wrapper over `resolveEntryWith` with the network transport.
- * @param {IxpClientEnv} env
- * @param {Request} request
- * @returns {Promise<PznEntry | null>}
- */
-export function resolveIxpEntry(env, request) {
-  return resolveEntryWith(request, (params) => fetchAssignment(env, params));
 }

@@ -5,6 +5,7 @@
  * fragment block's loadFragment() helper, so the form is editable in DA
  * without a code change. Built once, fetched once, reused across opens.
  */
+// eslint-disable-next-line import/no-cycle
 import { loadFragment } from '../blocks/fragment/fragment.js';
 import { loadSections } from './aem.js';
 
@@ -77,4 +78,13 @@ export async function openScheduleModal() {
   } else {
     body.textContent = 'Sorry, something went wrong loading this form. Please try again.';
   }
+}
+
+export function bindScheduleLinks(container) {
+  container.querySelectorAll('a[href="#schedule"]').forEach((a) => {
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      openScheduleModal();
+    });
+  });
 }

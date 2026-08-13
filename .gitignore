@@ -19,6 +19,7 @@ qa-probe.mjs
 content/
 tasks/
 docs/superpowers/
+drafts/
 # local-only working folders (kept on disk, not tracked)
 stardust/
 .impeccable/
@@ -31,3 +32,4 @@ content
 .idea
 .wrangler
 *.html
+!tools/**/*.html

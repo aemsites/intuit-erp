@@ -191,6 +191,93 @@
   position: relative; z-index: 1;
 }
 
+/* ---- .compare (erp-solutions "Move to a modern ERP" / solution-cards) ----
+   Narrower than the page container and tapers with it; vw because % would
+   resolve against the already-guttered wrapper. */
+.section.media-text-container:has(.media-text.compare) { background: #fff; padding: 0 0 var(--section-y); }
+
+.media-text-container:has(.media-text.compare) .default-content-wrapper > p:first-of-type {
+  text-align: center; margin: 0 0 16px; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted);
+}
+
+.media-text-container:has(.media-text.compare) .default-content-wrapper h2 {
+  font-size: 38px; line-height: 1.15; font-weight: 400; color: var(--heading);
+  text-align: center; margin: 0 0 20px;
+}
+
+.media-text-container:has(.media-text.compare) .default-content-wrapper > p:last-of-type {
+  max-width: 40em; margin: 0 auto 52px; text-align: center; font-size: 16px;
+  line-height: 1.55; color: var(--text-muted); text-transform: none; letter-spacing: 0; font-weight: 400;
+}
+
+.media-text.compare .compare-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+  width: min(100%, 83.8vw); max-width: 1134px; margin: 0 auto;
+}
+.media-text.compare .compare-card { border-radius: 20px; padding: 60px; display: flex; flex-direction: column; }
+.media-text.compare .compare-blue { background: #d6e8f8; }
+.media-text.compare .compare-sand { background: #f4f4ef; }
+
+/* plain small text, not the bold letter-spaced global .eyebrow; explicit
+   line-height because the inherited 1.6 made the box 2px too tall */
+.media-text.compare .compare-card .media-eyebrow {
+  font-size: 12px; line-height: 16px; font-weight: 400; letter-spacing: normal;
+  text-transform: none; color: #000; margin: 0 0 52px;
+}
+
+/* the negative tracking is load-bearing: at `normal` the second title wraps */
+.media-text.compare .compare-card h3 {
+  font-size: 48px; line-height: 1.3; font-weight: 400; letter-spacing: -0.03em;
+  color: #000; margin: 0 0 16px;
+}
+
+/* upstream sizes the sand (second) card's title smaller */
+.media-text.compare .compare-sand h3 { font-size: 40px; line-height: 52px; }
+.media-text.compare .compare-card .media-body { font-size: 20px; font-weight: 400; line-height: 30px; color: #000; margin: 0 0 24px; max-width: none; }
+.media-text.compare .compare-card ul { list-style: disc; margin: 0; padding-left: 40px; }
+.media-text.compare .compare-card ul li { font-size: 20px; color: #000; line-height: 30px; margin-bottom: 0; }
+
+/* 40px above; `auto` on top of that keeps both cards' CTAs (and the visuals
+   under them) level despite unequal copy length */
+.media-text.compare .compare-card .button-wrapper { align-self: flex-start; margin: auto 0 64px; padding-top: 40px; }
+
+/* scoped rather than raising the global .button height */
+.media-text.compare .compare-card .button-wrapper .button { height: 52px; }
+
+.media-text.compare .compare-visual { border-radius: 8px; overflow: hidden; }
+.media-text.compare .compare-visual img { width: 100%; display: block; }
+
+/* tablet: still two-up, but the row widens to a near-full-width gutter */
+@media (width <= 1023px) {
+  .media-text.compare .compare-grid { width: auto; max-width: none; }
+  .media-text.compare .compare-card { padding: 40px; }
+
+  .media-text.compare .compare-card h3,
+  .media-text.compare .compare-sand h3 { font-size: 28px; line-height: 1.3; }
+  .media-text.compare .compare-visual { width: calc(100% - 40px); }
+
+  /* body copy steps down with the narrower card */
+  .media-text.compare .compare-card .media-body,
+  .media-text.compare .compare-card ul li { font-size: 16px; line-height: 24px; }
+}
+
+/* 745px, not 768: upstream is still two-up at 768 */
+@media (width <= 745px) {
+  .media-text-container:has(.media-text.compare) .default-content-wrapper h2 { font-size: 28px; }
+  .media-text.compare .compare-grid { grid-template-columns: 1fr; }
+  .media-text.compare .compare-card { padding: 30px; border-radius: 16px; }
+  .media-text.compare .compare-card .media-eyebrow { margin-bottom: 42px; }
+
+  .media-text.compare .compare-card h3,
+  .media-text.compare .compare-sand h3 { font-size: 34px; }
+  .media-text.compare .compare-visual { width: 100%; }
+
+  /* stacked cards size to their own copy, so there is no slack for `auto` to
+     distribute and the CTA needs its normal top margin back */
+  .media-text.compare .compare-card .button-wrapper { margin-top: 40px; margin-bottom: 44px; }
+}
+
 /* ---- .power (erp-solutions "Powering complex …") ---- */
 .media-text.power .power-grid { display: grid; grid-template-columns: 1fr 1.15fr; gap: 56px; align-items: center; }
 .media-text.power .power-list { display: flex; flex-direction: column; gap: 26px; }

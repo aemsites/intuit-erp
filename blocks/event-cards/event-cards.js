@@ -9,6 +9,10 @@
  *   .upcoming    events with status "upcoming", soonest first
  *   .on-demand   events with status "on-demand", newest first
  *
+ * date/time/location/speakers are all optional and rendered as labelled rows
+ * only when authored, so an evergreen webinar and a dated conference can share
+ * the same grid.
+ *
  * When a bucket has more events than fit in one row, the grid becomes a
  * one-row-per-page carousel (arrows + dots), same mechanics as
  * blocks/stat-band's carousel — paged by whole rows via a single
@@ -113,6 +117,16 @@ function buildCarousel(block, track) {
   requestAnimationFrame(applyTransform);
 }
 
+/** One "Label: value" detail row, matching the original's bold-label layout. */
+function detailRow(label, value) {
+  const p = document.createElement('p');
+  p.className = 'event-card-detail';
+  const strong = document.createElement('strong');
+  strong.textContent = label;
+  p.append(strong, `: ${value}`);
+  return p;
+}
+
 function cardHTML(item) {
   const card = document.createElement('div');
   card.className = 'event-card';
@@ -120,35 +134,54 @@ function cardHTML(item) {
   const picWrap = document.createElement('div');
   picWrap.className = 'event-card-image';
   if (item.image) {
-    picWrap.append(createOptimizedPicture(item.image, item.title, false, [{ width: '400' }]));
-  }
-  if (item.type) {
-    const badge = document.createElement('span');
-    badge.className = 'event-card-badge';
-    badge.textContent = item.type;
-    picWrap.append(badge);
+    picWrap.append(createOptimizedPicture(item.image, item.title, false, [{ width: '750' }]));
   }
 
   const body = document.createElement('div');
   body.className = 'event-card-body';
 
-  const meta = [item.date && formatDate(item.date), item.time, item.location]
-    .filter(Boolean)
-    .join(' · ');
+  if (item.type) {
+    const eyebrow = document.createElement('p');
+    eyebrow.className = 'event-card-type';
+    eyebrow.textContent = item.type;
+    body.append(eyebrow);
+  }
 
-  body.innerHTML = `
-    <h3>${item.title}</h3>
-    ${meta ? `<p class="event-card-meta">${meta}</p>` : ''}
-    ${item.description ? `<p class="event-card-description">${item.description}</p>` : ''}
-    ${item.speakers ? `<p class="event-card-speakers">${item.speakers}</p>` : ''}`;
+  const title = document.createElement('h3');
+  title.textContent = item.title;
+  body.append(title);
+
+  if (item.description) {
+    const desc = document.createElement('p');
+    desc.className = 'event-card-description';
+    desc.textContent = item.description;
+    body.append(desc);
+  }
+
+  // only the fields this event actually authored, in the original's order
+  const details = [
+    ['Date', item.date && formatDate(item.date)],
+    ['Time', item.time],
+    ['Location', item.location],
+    ['Speaker', item.speakers],
+  ].filter(([, value]) => value && String(value).trim());
+
+  if (details.length) {
+    const wrap = document.createElement('div');
+    wrap.className = 'event-card-details';
+    details.forEach(([label, value]) => wrap.append(detailRow(label, value)));
+    body.append(wrap);
+  }
 
   if (item.ctaUrl && item.ctaLabel) {
     const cta = document.createElement('a');
     cta.className = 'button secondary';
     cta.href = item.ctaUrl;
     cta.textContent = item.ctaLabel;
-    if (/^https?:\/\//.test(item.ctaUrl)) cta.target = '_blank';
-    if (cta.target === '_blank') cta.rel = 'noopener';
+    if (/^https?:\/\//.test(item.ctaUrl)) {
+      cta.target = '_blank';
+      cta.rel = 'noopener';
+    }
     body.append(cta);
   }
 
@@ -161,7 +194,10 @@ export default async function decorate(block) {
   const status = wantsOnDemand ? 'on-demand' : 'upcoming';
   block.textContent = '';
 
+  // an untitled row is not a real event (e.g. the /events listing page, which
+  // the index glob picks up) — a status default would otherwise show it as blank
   const items = [...await loadIndex(INDEX_PATH)]
+    .filter((item) => item.title && item.title.trim())
     .filter((item) => (item.status || 'upcoming').trim() === status)
     .sort((a, b) => (wantsOnDemand
       ? new Date(b.date) - new Date(a.date)

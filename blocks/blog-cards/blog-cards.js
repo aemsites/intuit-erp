@@ -1,111 +1,73 @@
 /**
- * blog-cards — dynamic card grid/carousel driven by a blog query-index JSON
- * feed (see Task 10's /blog/query-index.json and helix-query.yaml). Serves
- * the 33 category + 24 author blog listing pages, plus fixed-size
- * "recommended" grids on post detail pages — one reusable block, configured
- * per instance via authored key/value rows instead of one block per bucket.
- *
- * Authoring: each `:scope > div` row is a `key | value` config cell, parsed
- * with the shared readBlockConfig() convention (see scripts/aem.js):
+ * blog-cards — card grid/carousel/pagination driven by a query-index feed.
+ * Configured via key/value rows (readBlockConfig):
  *   source    query-index path (default /blog/query-index.json)
- *   category  include entries whose `category` matches — one value or a
- *             comma-separated list, e.g. "erp, financials" (optional)
- *   author    include entries whose `author` matches — one value or a
- *             comma-separated list (optional)
- *   template  include entries whose `template` matches — one value or a
- *             comma-separated list, e.g. "Case Study" or "Research". Lets one
- *             blog index stand in for the old per-collection feeds: prefer
- *             `template: Case Study` over `source: /blog/case-study/…` (optional)
- *   limit     max number of cards to show (optional)
- *   variant   "grid" (default) or "carousel"
- *   exclude   for recommended grids — "current" (or any non-path value)
- *             excludes window.location.pathname; a value starting with "/"
- *             is used as a literal path to exclude instead
+ *   category  match value(s), comma-separated, OR'd
+ *   author    match value(s), comma-separated, OR'd
+ *   tags      match value(s), comma-separated, OR'd against the entry's own
+ *             comma-separated tags — for cross-category groupings (e.g. an
+ *             "automation" tag spanning construction/operations/accounting)
+ *   template  match value(s), comma-separated, e.g. "Case Study"
+ *   limit     max cards; for variant=paginated, page size (default 6)
+ *   variant   grid (default) | carousel | paginated
+ *   exclude   "current" excludes this page, or a literal path
+ *   filter    field name (e.g. "industry") to build client-side pills from
  *
- * Within category (or author) the listed values are OR'd; across the two fields
- * they are AND'd. Listing/index pages (blog home, category, search) are always
- * dropped via their `template` metadata, never by URL shape. Results are always
- * sorted newest-first.
+ * `featured` block class: first 2 cards render bigger, re-evaluated against
+ * whatever's currently active (full set or the selected pill).
  *
- * .carousel variant: rather than reimplement slide/dot/arrow mechanics,
- * this delegates to Task 4's blocks/carousel/carousel.js — cards are wrapped
- * in the raw `<div>` slides that block expects, its `.cards` look is reused,
- * and its stylesheet is loaded on demand (this block's own CSS file is the
- * one auto-loaded for "blog-cards", so carousel.css never arrives unless
- * asked for). Same on-demand-import pattern as blocks/download-form.js
- * reusing blocks/form/form.js.
+ * Listing pages (blog home/category/search/author) are dropped via
+ * `template`, never by URL shape. Results are always newest-first.
+ * .carousel delegates to blocks/carousel/carousel.js, CSS loaded on demand.
  *
  * CSS: blocks/blog-cards/blog-cards.css
  */
-import { readBlockConfig, loadCSS } from '../../scripts/aem.js';
+import { readBlockConfig, loadCSS, createOptimizedPicture } from '../../scripts/aem.js';
 import { loadIndex, formatDate } from '../../scripts/content-index.js';
 
 const DEFAULT_SOURCE = '/blog/query-index.json';
+const DEFAULT_PAGE_SIZE = 6;
 
-/**
- * The `template` values that mark a feed row as a listing/index page rather than
- * a piece of content: the blog home, the per-category pages, the search page,
- * and author pages. Article/case-study pages carry a content template instead
- * ("Blog Article", "Case Study", …). Compared case-insensitively — `template`
- * is the EDS-native page classifier (see decorateTemplateAndTheme in
- * scripts/aem.js, which slugifies it onto the <body> class).
- */
+// Non-content template values — always excluded, regardless of filters.
 const LISTING_TEMPLATES = new Set(['blog home', 'category', 'search', 'author']);
 
-/**
- * True for the blog home and the per-category/section/search listing pages,
- * which must never render as cards. The signal is page metadata (`template`,
- * surfaced into the feed by the `blog` index in helix-query.yaml) — not the URL
- * shape — so a page's classification travels with its content, and re-homing an
- * article to a different path depth can't silently turn a listing into a card
- * (or vice versa).
- * @param {object} entry one query-index row
- * @returns {boolean}
- */
 function isListingPage(entry) {
   return LISTING_TEMPLATES.has((entry.template || '').trim().toLowerCase());
 }
 
-/**
- * Normalises a filter value that authors may supply as a single token or a
- * comma-separated list ("erp" or "erp, financials, hr") into a trimmed array.
- * Already-array values (from JS callers) pass through. Empty in → empty out.
- * @param {string|string[]|undefined} value
- * @returns {string[]}
- */
+// "a, b, c" or ["a", "b"] -> ["a", "b", "c"]; anything else -> []
 function toList(value) {
   if (Array.isArray(value)) return value.map((v) => `${v}`.trim()).filter(Boolean);
   if (typeof value === 'string') return value.split(',').map((s) => s.trim()).filter(Boolean);
   return [];
 }
 
+function normalizeTag(value) {
+  return value.toLowerCase().replace(/-/g, ' ').trim();
+}
+
 /**
- * Pure filter/sort/limit over query-index entries. No network, no DOM.
- * Listing pages (blog home, category/section roots) are always excluded — they
- * are navigation, never cards — regardless of the category/author filters.
- *
- * `category`, `author` and `template` each accept a single value or a
- * comma-separated list; an entry matches when its value is any of the requested
- * ones (OR within a field, AND across fields). `template` is matched
- * case-insensitively. Results are always newest-first.
- * @param {Array<object>} entries raw query-index `.data` rows
- * @param {object} opts category/author/template (string|string[]), limit, excludePath
- * @returns {Array<object>} matching entries, newest date first
+ * Pure filter/sort/limit over query-index entries. category/author/tags/
+ * template are OR'd within a field, AND'd across fields, matched
+ * case-insensitively for tags and template (tags also ignore hyphen vs.
+ * space). Always drops listing pages, sorts newest-first.
  */
 export function filterEntries(entries, {
-  category, author, template, limit, excludePath,
+  category, author, tags, template, limit, excludePath,
 } = {}) {
   const categories = toList(category);
   const authors = toList(author);
+  const requestedTags = toList(tags).map(normalizeTag);
   const templates = toList(template).map((t) => t.toLowerCase());
   let out = entries.filter((entry) => entry.title && !isListingPage(entry));
   if (categories.length) {
-    // an entry may carry several comma-separated categories; it matches when any
-    // of them is requested (e.g. a "case-study, food-service" case study shows
-    // on the food-service category page).
     out = out.filter((entry) => toList(entry.category).some((c) => categories.includes(c)));
   }
   if (authors.length) out = out.filter((entry) => authors.includes(entry.author));
+  if (requestedTags.length) {
+    out = out.filter((entry) => toList(entry.tags)
+      .some((t) => requestedTags.includes(normalizeTag(t))));
+  }
   if (templates.length) {
     out = out.filter((entry) => templates.includes((entry.template || '').trim().toLowerCase()));
   }
@@ -115,50 +77,26 @@ export function filterEntries(entries, {
   return out;
 }
 
-/**
- * The card's eyebrow label. Prefers the entry's own `category`, falling back to
- * the category segment of `/blog/<category>/<slug>` paths — the per-collection
- * indices (e.g. /blog/case-study/query-index.json) carry no `category` column,
- * but the source site still shows an eyebrow on those cards ("CASE STUDY").
- *
- * Display-only: hyphens become spaces so slugs like "product-update" read as
- * "PRODUCT UPDATE" once CSS uppercases them (same treatment, and reason, as
- * buildEyebrow in blocks/blog-template/blog-template.js). The underlying
- * category value is untouched, so filterEntries' matching is unaffected.
- * @param {object} entry one query-index row
- * @returns {string} label, or '' when the entry has no category to show
- */
+// Eyebrow label: entry's own category, else the /blog/<category>/<slug> path segment.
 export function categoryLabel(entry) {
   const segments = (entry.path || '').split('/').filter(Boolean);
-  // /blog/<category>/<slug> — anything shallower (a listing page) has no category
   const fromPath = segments.length > 2 ? segments[1] : '';
-  // an entry may carry several comma-separated categories; show the primary
-  // (first) one so multi-category cards read as one clean label.
   const primary = toList(entry.category)[0] || fromPath;
   return (primary || '').replace(/-/g, ' ');
 }
 
-/**
- * Pure DOM builder for one card. Mirrors the source's threegrids "small" card:
- * image, then a body of category (uppercase) → title → date. No description or
- * author. Feed values are untrusted, so every field is written via
- * textContent/attribute assignment — never innerHTML.
- * @param {object} entry one query-index row (path, title, date, image, category, ...)
- * @returns {HTMLAnchorElement} `<a class="blog-card">`
- */
-export function cardEl(entry) {
+// Card: image, category, title, date. Untrusted feed data — no innerHTML.
+export function cardEl(entry, featured = false) {
   const card = document.createElement('a');
-  card.className = 'blog-card';
+  card.className = featured ? 'blog-card featured' : 'blog-card';
   card.href = entry.path || '#';
 
   const imageWrap = document.createElement('div');
   imageWrap.className = 'blog-card-image';
   if (entry.image) {
-    const img = document.createElement('img');
-    img.src = entry.image;
-    img.alt = entry.title || '';
-    img.loading = 'lazy';
-    imageWrap.append(img);
+    imageWrap.append(createOptimizedPicture(entry.image, entry.title || '', false, [
+      { width: featured ? '750' : '400' },
+    ]));
   }
 
   const body = document.createElement('div');
@@ -201,12 +139,14 @@ function resolveExcludePath(value) {
   return value.startsWith('/') ? value : window.location.pathname;
 }
 
-/**
- * Wraps cards in the raw slide markup blocks/carousel/carousel.js expects
- * (each direct child `<div>` becomes one `.carousel-slide`), loads that
- * block's stylesheet on demand, and hands off interactivity to its decorate().
- */
-async function renderCarousel(block, cards) {
+// Sorted, deduped, non-empty values of `field` across entries.
+export function distinctValues(entries, field) {
+  return [...new Set(entries.map((entry) => entry[field]).filter(Boolean))].sort();
+}
+
+// Wraps cards as carousel slides; loads carousel.js/css on demand.
+async function renderCarousel(container, cards) {
+  container.textContent = '';
   loadCSS(`${window.hlx.codeBasePath}/blocks/carousel/carousel.css`);
   const { default: carouselDecorate } = await import('../carousel/carousel.js');
 
@@ -217,22 +157,85 @@ async function renderCarousel(block, cards) {
     slide.append(card);
     wrapper.append(slide);
   });
-  block.append(wrapper);
+  container.append(wrapper);
   carouselDecorate(wrapper);
 }
 
-function renderGrid(block, cards) {
+function renderGrid(container, cards) {
+  container.textContent = '';
   const grid = document.createElement('div');
   grid.className = 'blog-cards-grid';
   grid.append(...cards);
-  block.append(grid);
+  container.append(grid);
+}
+
+// Grid + "Load More", revealing pageSize pre-built cards per click.
+function renderPaginatedGrid(container, cards, pageSize) {
+  container.textContent = '';
+  const grid = document.createElement('div');
+  grid.className = 'blog-cards-grid';
+
+  const loadMoreWrap = document.createElement('div');
+  loadMoreWrap.className = 'blog-cards-load-more';
+  const loadMoreBtn = document.createElement('button');
+  loadMoreBtn.type = 'button';
+  loadMoreBtn.className = 'button secondary';
+  loadMoreBtn.textContent = 'Load More';
+  loadMoreWrap.append(loadMoreBtn);
+
+  let shown = 0;
+  const renderNext = () => {
+    cards.slice(shown, shown + pageSize).forEach((card) => grid.append(card));
+    shown += pageSize;
+    loadMoreWrap.hidden = shown >= cards.length;
+  };
+  loadMoreBtn.addEventListener('click', renderNext);
+
+  container.append(grid, loadMoreWrap);
+  renderNext();
+}
+
+// "product-update" -> "Product Update" — display only, matching doesn't change.
+function pillLabel(value) {
+  return value.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+// "All" + one pill per distinct value; click re-renders client-side, no re-fetch.
+function buildPillBar(entries, field, onChange) {
+  const values = distinctValues(entries, field);
+  if (values.length < 2) return null;
+
+  const bar = document.createElement('div');
+  bar.className = 'blog-cards-filter';
+  let active = 'All';
+
+  const makePill = (value, label) => {
+    const pill = document.createElement('button');
+    pill.type = 'button';
+    pill.className = 'blog-cards-filter-pill';
+    pill.textContent = label;
+    pill.setAttribute('aria-pressed', value === active ? 'true' : 'false');
+    pill.addEventListener('click', () => {
+      active = value;
+      [...bar.children].forEach((p) => p.setAttribute('aria-pressed', p === pill ? 'true' : 'false'));
+      onChange(value === 'All' ? entries : entries.filter((entry) => entry[field] === value));
+    });
+    return pill;
+  };
+
+  bar.append(makePill('All', 'All'));
+  values.forEach((value) => bar.append(makePill(value, pillLabel(value))));
+  return bar;
 }
 
 /**
+ * loads and decorates the block
  * @param {Element} block The block element
  */
 export default async function decorate(block) {
   const config = readBlockConfig(block);
+  const isPaginated = config.variant === 'paginated';
+  const isFeatured = block.classList.contains('featured');
   block.textContent = '';
 
   const source = config.source || DEFAULT_SOURCE;
@@ -240,11 +243,13 @@ export default async function decorate(block) {
   const excludePath = resolveExcludePath(config.exclude);
 
   const entries = await loadIndex(source);
+  // paginated: keep the full matching set, limit becomes page size below
   const filtered = filterEntries(entries, {
     category: config.category || undefined,
     author: config.author || undefined,
+    tags: config.tags || undefined,
     template: config.template || undefined,
-    limit,
+    limit: isPaginated ? undefined : limit,
     excludePath,
   });
 
@@ -253,11 +258,25 @@ export default async function decorate(block) {
     return;
   }
 
-  const cards = filtered.map((entry) => cardEl(entry));
+  const contentArea = document.createElement('div');
+  contentArea.className = 'blog-cards-content';
 
-  if (config.variant === 'carousel') {
-    await renderCarousel(block, cards);
-  } else {
-    renderGrid(block, cards);
+  const renderEntries = (activeEntries) => {
+    const cards = activeEntries.map((entry, i) => cardEl(entry, isFeatured && i < 2));
+    if (config.variant === 'carousel') {
+      renderCarousel(contentArea, cards);
+    } else if (isPaginated) {
+      renderPaginatedGrid(contentArea, cards, limit || DEFAULT_PAGE_SIZE);
+    } else {
+      renderGrid(contentArea, cards);
+    }
+  };
+
+  if (config.filter) {
+    const pillBar = buildPillBar(filtered, config.filter, renderEntries);
+    if (pillBar) block.append(pillBar);
   }
+
+  block.append(contentArea);
+  renderEntries(filtered);
 }

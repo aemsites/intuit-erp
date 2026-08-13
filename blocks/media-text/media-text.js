@@ -17,8 +17,11 @@
  *   .center    text-only, centered single column (pricing "Built for the way")
  *   .cards     2-up cards, media below text (index "migration path")
  *   .power     feature-list + media (erp-solutions "Powering complex …")
+ *   .compare   2-up alternating-skin comparison cards, media pinned to the
+ *              card bottom (erp-solutions "Move to a modern ERP" / solution-cards)
  * CSS: blocks/media-text/media-text.css
  */
+import { bindScheduleLinks } from '../../scripts/schedule-modal.js';
 
 function buildCopy(textCell) {
   const copy = document.createElement('div');
@@ -42,6 +45,7 @@ function buildCopy(textCell) {
 export default function decorate(block) {
   const hasReverse = block.classList.contains('reverse');
   const isCards = block.classList.contains('cards');
+  const isCompare = block.classList.contains('compare');
   const isPower = block.classList.contains('power');
   const isCenter = block.classList.contains('center');
   const rows = [...block.children];
@@ -50,6 +54,28 @@ export default function decorate(block) {
     const copy = buildCopy(rows[0] && rows[0].firstElementChild);
     copy.classList.add('media-center');
     block.replaceChildren(copy);
+    return;
+  }
+
+  if (isCompare) {
+    const grid = document.createElement('div');
+    grid.className = 'compare-grid';
+    rows.forEach((row, i) => {
+      const cells = [...row.children];
+      const card = document.createElement('article');
+      card.className = `compare-card ${i % 2 === 0 ? 'compare-blue' : 'compare-sand'}`;
+      const copy = buildCopy(cells[0]);
+      [...copy.children].forEach((el) => card.append(el));
+      if (cells[1]) {
+        const vis = document.createElement('div');
+        vis.className = 'compare-visual';
+        [...cells[1].childNodes].forEach((n) => vis.append(n));
+        card.append(vis);
+      }
+      grid.append(card);
+    });
+    bindScheduleLinks(grid);
+    block.replaceChildren(grid);
     return;
   }
 

@@ -4,31 +4,30 @@
  * The real Batch endpoint takes one POST covering every personalizable slot on
  * the page — `batchItems: [{ placement, experience, numberOfRecommendations,
  * recommendationMetadata }]` plus a shared `attributes` object (ivid, locale,
- * geo, device, industry, …) — and returns a per-placement recommendation whose
- * `copyData.contentId` references the content to render.
+ * permalink, geo, device, …) — and returns a per-placement recommendation whose
+ * `copyData.pznblock` references the fragment to render.
  *
- * Here the endpoint is a **mock**: a static JSON file on the EDS origin. We still
- * build the faithful request body (so it is ready to POST at the real service
- * and is visible in logs), then fetch the mock **response** as static JSON,
- * selecting the variant by the visitor's industry so the demo shows
- * industry-driven personalization. `DECISION_ENGINE_BATCH_URL` is the base dir;
- * the client appends `/batch-<industry-slug>.json`, falling back to
- * `/batch-default.json`. Any failure returns null (→ passthrough).
+ * This POSTs to the real service (`DECISION_ENGINE_BATCH_URL`,
+ * `https://personalization.api.intuit.com/public/v1/batch`) with Intuit's API-key
+ * auth. Decisions are per-visitor, so the response is never edge-cached
+ * (`cf.cacheTtl: 0`) — changes made on Intuit's side show up at the next page
+ * view. Any failure (transport, non-2xx, non-JSON) returns null → passthrough.
  */
 
 /**
- * @typedef {import('./routes.js').DeSlot} DeSlot
+ * @typedef {import('./resolve.js').DeSlot} DeSlot
  */
 
-/** Lowercase, hyphenated slug for an industry name (`Hospitality` → `hospitality`). */
-function slugify(value) {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-}
+/**
+ * Env bindings the client needs (see `wrangler.jsonc`).
+ * @typedef {Object} DeClientEnv
+ * @property {string} DECISION_ENGINE_BATCH_URL Full URL of the Batch endpoint.
+ * @property {string} PZN_API_KEY Personalization API key (a Wrangler secret).
+ */
 
 /**
  * Builds the faithful Batch request body for the page's slots + visitor context.
- * Kept pure and exported so it can be logged and unit-tested, and POSTed as-is
- * to the real endpoint later.
+ * Kept pure and exported so it can be logged and unit-tested.
  * @param {DeSlot[]} slots
  * @param {Record<string, unknown>} attributes
  * @returns {{ batchItems: object[], attributes: Record<string, unknown> }}
@@ -46,20 +45,39 @@ export function buildBatchRequest(slots, attributes) {
 }
 
 /**
- * Fetches and parses one batch-response variant, or null if it is missing /
- * not JSON / errors. The `requestHeader` carries the intended batch request so a
- * body-aware mock or proxy can branch on it (harmless for a plain static file).
- * @param {string} variantUrl
- * @param {string} requestHeader
+ * Builds the required `Authorization` header value for Intuit's APIs.
+ * @param {string} apiKey
+ * @returns {string}
+ */
+function authHeader(apiKey) {
+  return `Intuit_APIKey intuit_apikey=${apiKey}, intuit_apikey_version=1.0`;
+}
+
+/**
+ * POSTs the batch decision for the page's slots to the real Decision Engine and
+ * returns the parsed response, or null on any transport / non-2xx / non-JSON
+ * failure (the caller then passes the page through untouched).
+ * @param {DeClientEnv} env
+ * @param {{ slots: DeSlot[], attributes: Record<string, unknown> }} opts
  * @returns {Promise<Record<string, any> | null>}
  */
-async function fetchVariant(variantUrl, requestHeader) {
+export async function fetchBatch(env, { slots, attributes }) {
+  if (!env.DECISION_ENGINE_BATCH_URL || !env.PZN_API_KEY) return null;
+
+  const body = JSON.stringify(buildBatchRequest(slots, attributes));
+
   try {
-    const res = await fetch(variantUrl, {
-      method: 'GET',
-      // Personalization decisions are per-visitor; do not share at the edge.
+    const res = await fetch(env.DECISION_ENGINE_BATCH_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: authHeader(env.PZN_API_KEY),
+        'content-type': 'application/json',
+        // Per-request transaction id the pzn service correlates in its logs.
+        intuit_tid: `rp-${crypto.randomUUID()}`,
+      },
+      body,
+      // Personalization decisions are per-visitor; never share at the edge.
       cf: { cacheTtl: 0 },
-      headers: { 'content-type': 'application/json', 'x-de-batch-request': requestHeader },
     });
     if (!res.ok) return null;
     const ct = res.headers.get('content-type') || '';
@@ -68,28 +86,4 @@ async function fetchVariant(variantUrl, requestHeader) {
   } catch {
     return null;
   }
-}
-
-/**
- * Fetches the batch decision for the page's slots. Builds the request body
- * (for the real POST / logging), then reads the mock static response for the
- * visitor's industry variant, falling back to the default variant.
- * @param {{ DECISION_ENGINE_BATCH_URL?: string }} env
- * @param {{ slots: DeSlot[], attributes: Record<string, unknown>, industry?: string }} opts
- * @returns {Promise<Record<string, any> | null>}
- */
-export async function fetchBatch(env, { slots, attributes, industry }) {
-  if (!env.DECISION_ENGINE_BATCH_URL) return null;
-
-  // The faithful request the real service would receive (logged for the demo;
-  // the static mock ignores the body and is keyed by industry in the URL).
-  const requestHeader = JSON.stringify(buildBatchRequest(slots, attributes));
-  const base = env.DECISION_ENGINE_BATCH_URL.replace(/\/+$/, '');
-
-  // Prefer the industry-specific variant; fall back to the default.
-  const industryResult = industry
-    ? await fetchVariant(`${base}/batch-${slugify(industry)}.json`, requestHeader)
-    : null;
-  if (industryResult) return industryResult;
-  return fetchVariant(`${base}/batch-default.json`, requestHeader);
 }
