@@ -9,11 +9,17 @@ const PZN_ENV = { ...env, PZN_API_KEY: 'test-pzn-key' };
 const jsonHeaders = { 'content-type': 'application/json' };
 
 // Batch response keyed <experience>_<placement>_<locale>; placement echoed in the entry.
-// Mirrors the real shape: data.recommendations is an array on status 200.
-function batchResponse(placement, contentId) {
+// Mirrors the real shape: recommendations nest under `.recommendation[]` on status 200.
+function batchResponse(placement, pznblock) {
   return {
     [`marketing_${placement}_en_US`]: {
-      data: { recommendations: [{ id: 'rec-1', copyData: { contentId }, accessPoint: placement }] },
+      data: {
+        recommendations: {
+          recommendation: [{
+            id: 'rec-1', copyData: { pznblock, contentId: '1223344' }, accessPoint: placement,
+          }],
+        },
+      },
       placement,
       experience: 'marketing',
       status: 200,
