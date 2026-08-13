@@ -85,6 +85,16 @@
   margin-bottom: 0;
 }
 
+/* single-item feature: vertical breathing room so the lone-item block isn't
+   flush against neighbouring sections (main .section has no default padding).
+   Applies at all widths — the source frames the feature at ~60px on mobile,
+   bumped to 120px on desktop below. The card-chrome resets + 40px heading stay
+   desktop-only: on mobile the base .vsc-item already has no border/padding and
+   the smaller stacked heading. */
+.vertical-scroll-carousel:has(.vsc-list .vsc-item:only-child) {
+  padding-block: 60px;
+}
+
 @media (min-width: 900px) {
   /* static two-column row: accordion left, shared media right, both centered */
   .vertical-scroll-carousel {
