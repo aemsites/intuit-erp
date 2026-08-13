@@ -178,7 +178,13 @@
 
 @media (min-width: 1200px) {
   .blog-cards .blog-card-image { height: 248px; }
-  .blog-cards .blog-card.featured .blog-card-image { height: 320px; }
+
+  /* featured lead cards track a 16:9 ratio (matches production ~672x376),
+     instead of the previous fixed 320px which rendered ~2.1:1 (letterboxed) */
+  .blog-cards .blog-card.featured .blog-card-image {
+    height: auto;
+    aspect-ratio: 16 / 9;
+  }
 }
 
 /* carries the tablet type scale through 1200-1359px */
