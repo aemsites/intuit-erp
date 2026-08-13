@@ -29,7 +29,7 @@ import { sendOf1Signal, readAlloySegmentIds } from './of1-rtcdp-signal.js';
 // are NOT pulled onto the eager critical path here. buildBlogTemplate is
 // dynamically imported in loadEager for blog pages only (see below); the full
 // video block loads lazily when a video is actually decorated.
-import { isBlogPage } from '../blocks/blog-template/blog-detect.js';
+import { isBlogPage, pageTemplate } from '../blocks/blog-template/blog-detect.js';
 import { isVideoLink } from '../blocks/video/video-info.js';
 
 // Adobe Web SDK / AEP datastream. The datastream id is public (not a secret)
@@ -377,8 +377,23 @@ async function loadEager(doc) {
     // Blog article pages need buildBlogTemplate during eager decoration; import
     // it here — only for those pages — so buildAutoBlocks can call it
     // synchronously while every other page skips the ~21KB module entirely.
+    //
+    // The article layout (main.blog-article's 3-col grid and the 2-col hero
+    // band) lives in blog-template.css, which buildBlogTemplate fetches with a
+    // non-blocking loadCSS. Nothing waits for that, so a cold/slow stylesheet
+    // let the hero paint in the unstyled single-column flow and then reflow into
+    // the band — ~0.4 CLS on desktop. Awaiting it here, before decorateMain,
+    // means the band is already styled the first time it paints. Case studies
+    // don't use this stylesheet (they get case-study-header, whose CSS the
+    // normal block loader already awaits inside loadSection below).
     if (isBlogPage()) {
-      ({ buildBlogTemplate } = await import('../blocks/blog-template/blog-template.js'));
+      const [mod] = await Promise.all([
+        import('../blocks/blog-template/blog-template.js'),
+        pageTemplate() === 'case study' ? Promise.resolve() : loadCSS(
+          `${window.hlx.codeBasePath}/blocks/blog-template/blog-template.css`,
+        ).catch(() => {}),
+      ]);
+      ({ buildBlogTemplate } = mod);
     }
     decorateMain(main);
     // Personalize/experiment the first (LCP) section before reveal so the visitor
