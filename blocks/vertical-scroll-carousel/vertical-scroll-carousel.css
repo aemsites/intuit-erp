@@ -190,4 +190,26 @@
   .vertical-scroll-carousel.reverse .vsc-list {
     grid-column: 2;
   }
+
+  /* single-item carousel: the source renders a lone item as a media-text
+     feature, not an accordion tab — drop the card border, leading accent bar,
+     and interactive padding, and show the heading at the source's large, bold
+     scale. Multi-item carousels keep the accordion treatment. */
+  .vertical-scroll-carousel .vsc-list .vsc-item:only-child {
+    padding: 0;
+    border: 0;
+    cursor: default;
+  }
+
+  .vertical-scroll-carousel .vsc-list .vsc-item:only-child.is-active::before {
+    display: none;
+  }
+
+  .vertical-scroll-carousel .vsc-list .vsc-item:only-child .vsc-heading {
+    font-size: 40px;
+    line-height: 1.3;
+    font-weight: 500;
+    color: #000;
+    cursor: default;
+  }
 }
