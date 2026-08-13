@@ -603,6 +603,13 @@
     padding: 40px;
   }
 
+  /* no hero image authored (e.g. /blog/guide/webinars-on-demand): collapse to a
+     single column so the copy uses the full band instead of leaving the media
+     column as dead space beside it. */
+  .blog-article .blog-hero > .default-content-wrapper:not(:has(.blog-hero-image)) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .blog-article .blog-hero .blog-byline-tag,
   .blog-article .blog-hero h1,
   .blog-article .blog-hero .blog-byline-meta {

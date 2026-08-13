@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import {
   buildToc, buildByline, buildEyebrow, buildBylineMeta,
   buildShare, relocateShare, tocRailRowEnd, isBlogPage,
+  buildCaseStudyHeader,
 } from '../blocks/blog-template/blog-template.js';
 
 describe('buildToc', () => {
@@ -199,6 +200,15 @@ describe('isBlogPage', () => {
     expect(isBlogPage()).toBe(true);
   });
 
+  it('is true for the other article templates — Case Study, Guide, Research', () => {
+    setPage('/blog/case-study/fire-and-ice-intuit-enterprise-suite-review', 'Case Study');
+    expect(isBlogPage()).toBe(true);
+    setPage('/blog/guide/construction-accounting-erp', 'Guide');
+    expect(isBlogPage()).toBe(true);
+    setPage('/blog/research/business-solutions-survey-2024', 'Research');
+    expect(isBlogPage()).toBe(true);
+  });
+
   it('is false for a Category listing page', () => {
     setPage('/blog/acquisition-and-mergers', 'Category');
     expect(isBlogPage()).toBe(false);
@@ -206,6 +216,14 @@ describe('isBlogPage', () => {
 
   it('is false for an Author listing page', () => {
     setPage('/blog/author/gene-marks', 'Author');
+    expect(isBlogPage()).toBe(false);
+  });
+
+  it('is false for the Search page and for an unknown template', () => {
+    setPage('/blog/search', 'Search');
+    expect(isBlogPage()).toBe(false);
+    // an unrecognised template must not fall through to the path-shape guess
+    setPage('/blog/case-study/some-slug', 'Landing Page');
     expect(isBlogPage()).toBe(false);
   });
 
@@ -221,5 +239,75 @@ describe('isBlogPage', () => {
     expect(isBlogPage()).toBe(false); // single-segment category
     setPage('/blog/author/gene-marks', null);
     expect(isBlogPage()).toBe(false); // author listing
+  });
+});
+
+describe('buildCaseStudyHeader', () => {
+  const setMeta = (meta) => {
+    document.head.innerHTML = Object.entries(meta)
+      .map(([k, v]) => `<meta name="${k}" content="${v}">`).join('');
+  };
+  const mainWith = (html) => {
+    const main = document.createElement('main');
+    main.innerHTML = html;
+    return main;
+  };
+
+  it('builds the block from the H1, the hero image and the page metadata', () => {
+    setMeta({ template: 'Case Study', category: 'case-study', author: 'Bryan Bui' });
+    document.head.innerHTML += '<meta name="date" content="July 16, 2026">';
+    const main = mainWith('<div><h1>Sparq Partners scales $100M+</h1><p><picture><img src="hero.jpg"></picture></p></div>');
+    const block = buildCaseStudyHeader(main);
+
+    expect(block.classList.contains('case-study-header')).toBe(true);
+    const rows = [...block.children];
+    expect(rows.length).toBe(4);
+    expect(rows[0].textContent).toBe('case study');
+    expect(rows[1].querySelector('h1').textContent).toBe('Sparq Partners scales $100M+');
+    expect(rows[2].textContent).toBe('By Bryan Bui · Published July 16, 2026');
+    expect(rows[3].querySelector('picture img')).toBeTruthy();
+    // the block leads the section, and the emptied image paragraph is gone
+    expect(main.querySelector(':scope > div').firstElementChild).toBe(block);
+    expect(main.querySelectorAll('p:empty').length).toBe(0);
+  });
+
+  it('leaves the page alone when a case-study-header is already authored', () => {
+    setMeta({ template: 'Case Study', category: 'case-study' });
+    const main = mainWith('<div><div class="case-study-header"><div><div>Case study</div></div></div></div>');
+    const before = main.innerHTML;
+    expect(buildCaseStudyHeader(main)).toBeNull();
+    expect(main.innerHTML).toBe(before);
+  });
+
+  it('omits the byline row when there is no author or date metadata', () => {
+    setMeta({ template: 'Case Study', category: 'case-study' });
+    const main = mainWith('<div><h1>Headline</h1><p><picture><img src="hero.jpg"></picture></p></div>');
+    const rows = [...buildCaseStudyHeader(main).children];
+    expect(rows.length).toBe(3);
+    expect(rows.map((r) => r.textContent)).toEqual(['case study', 'Headline', '']);
+  });
+
+  it('builds without a media row when no hero image is authored', () => {
+    setMeta({ template: 'Case Study', category: 'case-study', author: 'Bryan Bui' });
+    const main = mainWith('<div><h1>Headline</h1></div>');
+    const rows = [...buildCaseStudyHeader(main).children];
+    expect(rows.length).toBe(3);
+    expect(rows[2].textContent).toBe('By Bryan Bui');
+  });
+
+  it('leaves other section-1 content (e.g. a lede) in place below the block', () => {
+    setMeta({ template: 'Case Study', category: 'case-study' });
+    const main = mainWith('<div><h1>Headline</h1><p>A lede paragraph.</p><p><picture><img src="hero.jpg"></picture></p></div>');
+    const block = buildCaseStudyHeader(main);
+    const section = main.querySelector(':scope > div');
+    expect(section.children.length).toBe(2);
+    expect(section.firstElementChild).toBe(block);
+    expect(section.lastElementChild.textContent).toBe('A lede paragraph.');
+  });
+
+  it('returns null when there is no H1 to build a header around', () => {
+    setMeta({ template: 'Case Study', category: 'case-study' });
+    const main = mainWith('<div><p>Just prose.</p></div>');
+    expect(buildCaseStudyHeader(main)).toBeNull();
   });
 });

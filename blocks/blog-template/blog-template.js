@@ -1,8 +1,13 @@
 /**
  * blog-template — auto-block for /blog/* article pages (case study / research /
  * standard post). Authors write only the Title + hero image (section 1) and the
- * prose (section 2+). This block, invoked from scripts.js's buildAutoBlocks BEFORE
- * the fragment-link collection runs, renders everything else from page metadata:
+ * prose (section 2+). Which templates land here is decided by isBlogPage
+ * (./blog-detect.js); of those, `Case Study` takes the centred banner path (see
+ * buildCaseStudyHeader) and `Blog Article` / `Guide` / `Research` take the
+ * article path described below.
+ *
+ * Invoked from scripts.js's buildAutoBlocks BEFORE the fragment-link collection
+ * runs, it renders everything the author didn't write from page metadata:
  *
  *   - a `.blog-hero` band in section 1: tag eyebrow before the H1, a byline meta
  *     (author link / published + updated dates) after it, hero image last —
@@ -37,7 +42,10 @@
  *
  * CSS: blocks/blog-template/blog-template.css
  */
-import { getMetadata, toClassName, loadCSS } from '../../scripts/aem.js';
+import {
+  getMetadata, toClassName, loadCSS, buildBlock,
+} from '../../scripts/aem.js';
+import { pageTemplate } from './blog-detect.js';
 
 /**
  * Selects the article's main H2 sections only — excludes headings nested
@@ -289,6 +297,67 @@ export function relocateShare(share, placeMobile, placeDesktop, mq) {
 export { isBlogPage } from './blog-detect.js';
 
 /**
+ * Case-study pages (`template: Case Study`) use the centred banner from the
+ * `case-study-header` block — eyebrow, headline, byline, share icons, one wide
+ * photo, and an inline boxed TOC — not the two-column `.blog-hero` band and
+ * sticky rails the other article templates get.
+ *
+ * Three of the migrated case studies have that block hand-authored in their
+ * document; the other 17 only carry the same bare H1 + hero image as any other
+ * article, and so rendered with no header at all. This synthesizes the block
+ * from section 1 plus page metadata, matching how the hand-authored ones are
+ * built (see blocks/case-study-header/case-study-header.js for the row
+ * contract). Returns without touching anything when the block is already
+ * authored, so those three pages are left exactly as they are.
+ *
+ * Only the H1 and the hero image are consumed. Anything else in section 1 (a
+ * lede paragraph, say) stays put below the block rather than being folded into
+ * it, where case-study-header's own paragraph classifier would restyle it as a
+ * second byline line.
+ * @param {Element} main the page's <main>
+ * @returns {Element|null} the inserted block, or null if there was nothing to
+ *   build from (block already authored, no section, or no H1)
+ */
+export function buildCaseStudyHeader(main) {
+  if (main.querySelector('.case-study-header')) return null;
+
+  const firstSection = main.querySelector(':scope > div');
+  const h1 = firstSection?.querySelector('h1');
+  if (!h1) return null;
+
+  // eyebrow: the category slug ("case-study" -> "case study"; CSS uppercases it)
+  const category = (getMetadata('category') || '').split(',')[0].trim();
+  const eyebrow = document.createElement('p');
+  eyebrow.textContent = (category || 'case study').replace(/-/g, ' ');
+
+  // byline: "By {author} · Published {date}", omitting either half when the
+  // metadata is missing, to match the hand-authored pages' wording.
+  const author = getMetadata('author');
+  const date = getMetadata('date');
+  const byline = document.createElement('p');
+  byline.textContent = [author && `By ${author}`, date && `Published ${date}`]
+    .filter(Boolean).join(' · ');
+
+  const rows = [[eyebrow], [h1], ...(byline.textContent ? [[byline]] : [])];
+
+  // the banner photo, lifted out of the paragraph the author wrapped it in
+  const img = firstSection.querySelector('picture, img');
+  if (img) {
+    const media = img.closest('picture') || img;
+    const host = media.parentElement;
+    media.remove();
+    if (host !== firstSection && !host.textContent.trim() && !host.querySelector('img, picture')) {
+      host.remove();
+    }
+    rows.push([media]);
+  }
+
+  const block = buildBlock('case-study-header', rows);
+  firstSection.prepend(block);
+  return block;
+}
+
+/**
  * Wires up the TOC's interactive behavior once it's in the document:
  *  - click the toggle button to collapse/expand (mobile panel / desktop rail
  *    ↔ vertical tab — the actual visual states are CSS, driven off the
@@ -383,10 +452,21 @@ function wireToc(tocWrap, nav, headings, mq) {
 
 /**
  * Auto-block orchestrator. Called from scripts.js buildAutoBlocks() when
- * isBlogPage() is true, BEFORE the fragment-link collection runs.
+ * isBlogPage() is true, BEFORE the fragment-link collection runs. Splits on
+ * the page's template: `Case Study` takes the case-study-header banner path,
+ * every other article template (`Blog Article`, `Guide`, `Research`) takes the
+ * hero band + TOC + rails path.
  * @param {Element} main the page's <main>
  */
 export function buildBlogTemplate(main) {
+  // Case studies get the centred case-study-header banner (which brings its own
+  // inline TOC and share row) instead of the hero band, sticky rails and
+  // 3-col grid below — see buildCaseStudyHeader.
+  if (pageTemplate() === 'case study') {
+    buildCaseStudyHeader(main);
+    return;
+  }
+
   main.classList.add('blog-article');
 
   // 0. load this autoblock's stylesheet — it is invoked directly (not via the

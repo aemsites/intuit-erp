@@ -7,15 +7,37 @@
 import { getMetadata } from '../../scripts/aem.js';
 
 /**
- * True on a blog *article* page (drives the TOC/right-rail template build).
+ * The `template` metadata values under /blog/ that are article pages, i.e. an
+ * H1 + hero image authored in section 1 with prose below, and so get the
+ * blog-template treatment. `case study` renders the centred case-study-header
+ * banner rather than the two-column `.blog-hero` band, but is the same kind of
+ * page (see buildBlogTemplate).
+ *
+ * The listing templates — `category`, `author`, `search` — are deliberately
+ * absent: they own their own layout and must not be decorated as articles.
+ */
+export const ARTICLE_TEMPLATES = ['blog article', 'case study', 'guide', 'research'];
+
+/**
+ * The page's `template` metadata, lower-cased and trimmed so it can be compared
+ * against ARTICLE_TEMPLATES. Empty string when the page carries no template.
+ * @returns {string}
+ */
+export function pageTemplate() {
+  return getMetadata('template').trim().toLowerCase();
+}
+
+/**
+ * True on a blog *article* page (drives the hero/TOC/right-rail template build).
  * @returns {boolean}
  */
-// eslint-disable-next-line import/prefer-default-export
 export function isBlogPage() {
   const path = window.location.pathname;
   if (!path.startsWith('/blog/')) return false;
-  const template = getMetadata('template').trim().toLowerCase();
-  if (template) return template === 'blog article';
+  const template = pageTemplate();
+  // An explicitly authored template always decides — including one we don't
+  // recognise, which must not then be guessed at from the path shape.
+  if (template) return ARTICLE_TEMPLATES.includes(template);
   // fallback (no template metadata): /blog/<category>/<slug>, not /blog/author/*
   const segments = path.replace(/\/+$/, '').slice('/blog/'.length).split('/').filter(Boolean);
   return segments.length >= 2 && segments[0] !== 'author';
