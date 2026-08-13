@@ -1,7 +1,7 @@
 /**
  * Decision Engine batch-response mapping helpers.
  *
- * The `/api/de` handler supplies the page's slots and visitor context; these
+ * The `/api/pzn` handler supplies the page's slots and visitor context; these
  * pure helpers build the batch request's shared `attributes` object and map each
  * batch response entry onto a normalized decision. The worker does NO decisioning
  * — the Decision Engine decides, this only shapes the request and reads the reply.
@@ -21,7 +21,7 @@ import { deriveVisitorTokens } from '../visitor.js';
 
 /**
  * A personalizable slot on the page.
- * @typedef {Object} DeSlot
+ * @typedef {Object} PznSlot
  * @property {string} location Slot id to target in the page (e.g. `slot-1`).
  * @property {string} placement Decision Engine placement/accessPoint for the slot.
  * @property {string} experience Decision Engine experience (e.g. `marketing`).
@@ -70,7 +70,7 @@ export function buildAttributes(request, ivid, permalink) {
  * is keyed by `<experience>_<placement>_<locale>`; we match on the entry's own
  * `placement` field rather than reconstructing the key.
  * @param {Record<string, any>} response
- * @param {DeSlot} slot
+ * @param {PznSlot} slot
  * @returns {any | null}
  */
 export function entryForSlot(response, slot) {
@@ -88,7 +88,7 @@ export function entryForSlot(response, slot) {
  * slot should stay as authored (no personalized recommendation / non-200 status
  * / missing fragment).
  * @param {any} responseEntry
- * @param {DeSlot} slot
+ * @param {PznSlot} slot
  * @param {string} path
  * @returns {PznEntry | null}
  */

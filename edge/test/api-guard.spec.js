@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { isAllowedOrigin, corsHeaders, guard } from '../src/api/guard.js';
 
-const req = (origin, extra = {}) => new Request('https://aem-erp.intuit.com/api/de', {
+const req = (origin, extra = {}) => new Request('https://aem-erp.intuit.com/api/pzn', {
   headers: { ...(origin ? { origin } : {}), ...extra },
 });
 
@@ -27,7 +27,7 @@ describe('isAllowedOrigin', () => {
     expect(isAllowedOrigin(req('not a url'))).toBe(false);
   });
   it('rejects empty-string origin (malformed header)', () => {
-    const r = new Request('https://aem-erp.intuit.com/api/de', {
+    const r = new Request('https://aem-erp.intuit.com/api/pzn', {
       headers: { origin: '' },
     });
     expect(isAllowedOrigin(r)).toBe(false);
@@ -47,7 +47,7 @@ describe('corsHeaders', () => {
     expect(corsHeaders(req('null'))).toEqual({});
   });
   it('emits nothing for empty-string origin (malformed header)', () => {
-    const r = new Request('https://aem-erp.intuit.com/api/de', {
+    const r = new Request('https://aem-erp.intuit.com/api/pzn', {
       headers: { origin: '' },
     });
     expect(corsHeaders(r)).toEqual({});
@@ -79,7 +79,7 @@ describe('guard', () => {
     expect(guard(req('https://aem-erp.intuit.com', { 'x-edge-auth': '' }), env).ok).toBe(true);
   });
   it('403s empty-string origin (malformed header)', () => {
-    const r = new Request('https://aem-erp.intuit.com/api/de', {
+    const r = new Request('https://aem-erp.intuit.com/api/pzn', {
       headers: { origin: '' },
     });
     const g = guard(r, {});

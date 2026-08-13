@@ -50,10 +50,10 @@ describe('fetchDecision', () => {
     const spy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(JSON.stringify([{ placement: 'p', fragment: 'f' }]), { status: 200, headers: { 'content-type': 'application/json' } }),
     );
-    const out = await fetchDecision('de', { method: 'POST', body: { slots: [{ placement: 'p' }] } });
+    const out = await fetchDecision('pzn', { method: 'POST', body: { slots: [{ placement: 'p' }] } });
     expect(out).toEqual([{ placement: 'p', fragment: 'f' }]);
     const [url, init] = spy.mock.calls[0];
-    expect(url).toBe('/api/de');
+    expect(url).toBe('/api/pzn');
     expect(init.method).toBe('POST');
     expect(init.credentials).toBe('include');
     expect(JSON.parse(init.body)).toEqual({ slots: [{ placement: 'p' }] });
@@ -64,7 +64,7 @@ describe('fetchDecision', () => {
     const spy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(JSON.stringify({}), { status: 200, headers: { 'content-type': 'application/json' } }),
     );
-    await fetchDecision('de', { method: 'POST', body: {} });
+    await fetchDecision('pzn', { method: 'POST', body: {} });
     const [url] = spy.mock.calls[0];
     expect(url).toContain('?ivid=qa123');
   });
@@ -81,18 +81,18 @@ describe('fetchDecision', () => {
     expect(url).toContain('&ivid=qa123');
   });
 
-  it('uses exactly /api/de when no ?ivid= in page URL', async () => {
+  it('uses exactly /api/pzn when no ?ivid= in page URL', async () => {
     const spy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(JSON.stringify({}), { status: 200, headers: { 'content-type': 'application/json' } }),
     );
-    await fetchDecision('de', { method: 'POST', body: {} });
+    await fetchDecision('pzn', { method: 'POST', body: {} });
     const [url] = spy.mock.calls[0];
-    expect(url).toBe('/api/de');
+    expect(url).toBe('/api/pzn');
   });
 
   it('returns null on a non-ok response', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('no', { status: 500 }));
-    expect(await fetchDecision('de')).toBeNull();
+    expect(await fetchDecision('pzn')).toBeNull();
   });
 
   it('returns null when the request throws/aborts', async () => {

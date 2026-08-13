@@ -7,7 +7,7 @@
  * permalink, geo, device, …) — and returns a per-placement recommendation whose
  * `copyData.pznblock` references the fragment to render.
  *
- * This POSTs to the real service (`DECISION_ENGINE_BATCH_URL`,
+ * This POSTs to the real service (`PERSONALIZATION_BATCH_URL`,
  * `https://personalization.api.intuit.com/public/v1/batch`) with Intuit's API-key
  * auth. Decisions are per-visitor, so the response is never edge-cached
  * (`cf.cacheTtl: 0`) — changes made on Intuit's side show up at the next page
@@ -15,20 +15,20 @@
  */
 
 /**
- * @typedef {import('./resolve.js').DeSlot} DeSlot
+ * @typedef {import('./resolve.js').PznSlot} PznSlot
  */
 
 /**
  * Env bindings the client needs (see `wrangler.jsonc`).
- * @typedef {Object} DeClientEnv
- * @property {string} DECISION_ENGINE_BATCH_URL Full URL of the Batch endpoint.
+ * @typedef {Object} PznClientEnv
+ * @property {string} PERSONALIZATION_BATCH_URL Full URL of the Batch endpoint.
  * @property {string} PZN_API_KEY Personalization API key (a Wrangler secret).
  */
 
 /**
  * Builds the faithful Batch request body for the page's slots + visitor context.
  * Kept pure and exported so it can be logged and unit-tested.
- * @param {DeSlot[]} slots
+ * @param {PznSlot[]} slots
  * @param {Record<string, unknown>} attributes
  * @returns {{ batchItems: object[], attributes: Record<string, unknown> }}
  */
@@ -57,17 +57,17 @@ function authHeader(apiKey) {
  * POSTs the batch decision for the page's slots to the real Decision Engine and
  * returns the parsed response, or null on any transport / non-2xx / non-JSON
  * failure (the caller then passes the page through untouched).
- * @param {DeClientEnv} env
- * @param {{ slots: DeSlot[], attributes: Record<string, unknown> }} opts
+ * @param {PznClientEnv} env
+ * @param {{ slots: PznSlot[], attributes: Record<string, unknown> }} opts
  * @returns {Promise<Record<string, any> | null>}
  */
 export async function fetchBatch(env, { slots, attributes }) {
-  if (!env.DECISION_ENGINE_BATCH_URL || !env.PZN_API_KEY) return null;
+  if (!env.PERSONALIZATION_BATCH_URL || !env.PZN_API_KEY) return null;
 
   const body = JSON.stringify(buildBatchRequest(slots, attributes));
 
   try {
-    const res = await fetch(env.DECISION_ENGINE_BATCH_URL, {
+    const res = await fetch(env.PERSONALIZATION_BATCH_URL, {
       method: 'POST',
       headers: {
         Authorization: authHeader(env.PZN_API_KEY),

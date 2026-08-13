@@ -27,7 +27,7 @@ export async function runPersonalization(root = document.querySelector('main'), 
   if (slots.length === 0) return;
 
   const placements = [...new Set(slots.map((s) => s.placement))];
-  const decisions = await fetchDecision('de', {
+  const decisions = await fetchDecision('pzn', {
     method: 'POST',
     body: {
       slots: placements.map((placement) => ({ placement })),

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { buildBatchRequest } from '../src/de/batch-client.js';
-import { buildAttributes, entryForSlot, slotEntryToPznEntry } from '../src/de/resolve.js';
+import { buildBatchRequest } from '../src/pzn/batch-client.js';
+import { buildAttributes, entryForSlot, slotEntryToPznEntry } from '../src/pzn/resolve.js';
 
 const PLACEMENT = 'SBSEGQBMContentAemPznIxpTest';
 const EXPERIENCE = 'marketing';

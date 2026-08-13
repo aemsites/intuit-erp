@@ -62,7 +62,7 @@ describe('collectSlots', () => {
 });
 
 describe('runPersonalization', () => {
-  it('batches all placements into one /api/de call and applies each decision', async () => {
+  it('batches all placements into one /api/pzn call and applies each decision', async () => {
     const m = main('<div data-pzn="alpha"></div><div data-pzn="beta"></div>');
     fetchDecision.mockResolvedValue([
       { placement: 'ALPHA', action: 'replace', fidelity: 'block', fragment: 'fragments/pzn/a' },
@@ -71,7 +71,7 @@ describe('runPersonalization', () => {
 
     expect(fetchDecision).toHaveBeenCalledTimes(1);
     const [source, opts] = fetchDecision.mock.calls[0];
-    expect(source).toBe('de');
+    expect(source).toBe('pzn');
     expect(opts.method).toBe('POST');
     expect(opts.body.slots).toEqual([{ placement: 'alpha' }, { placement: 'beta' }]);
 

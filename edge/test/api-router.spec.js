@@ -5,7 +5,7 @@ import {
 import { handleApi } from '../src/api/router.js';
 
 const jsonHeaders = { 'content-type': 'application/json' };
-const BATCH_URL = env.DECISION_ENGINE_BATCH_URL;
+const BATCH_URL = env.PERSONALIZATION_BATCH_URL;
 const API_ENV = { ...env, PZN_API_KEY: 'k' };
 
 afterEach(() => vi.restoreAllMocks());
@@ -16,7 +16,7 @@ function req(path, init = {}) {
 
 describe('handleApi', () => {
   it('answers an OPTIONS preflight from an allowed cross-origin with CORS 204', async () => {
-    const res = await handleApi(req('/api/de', {
+    const res = await handleApi(req('/api/pzn', {
       method: 'OPTIONS',
       headers: { origin: 'https://branch--intuit-erp--aemsites.aem.page' },
     }), API_ENV);
@@ -28,7 +28,7 @@ describe('handleApi', () => {
 
   it('403s a foreign origin', async () => {
     const res = await handleApi(
-      req('/api/de', {
+      req('/api/pzn', {
         method: 'POST',
         headers: { origin: 'https://evil.example.com' },
       }),
@@ -42,7 +42,7 @@ describe('handleApi', () => {
     expect(res.status).toBe(404);
   });
 
-  it('routes POST /api/de through to a decision', async () => {
+  it('routes POST /api/pzn through to a decision', async () => {
     vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
       const url = typeof input === 'string' ? input : input.url;
       if (url === BATCH_URL) {
@@ -65,7 +65,7 @@ describe('handleApi', () => {
       throw new Error(`unexpected fetch: ${url}`);
     });
     const res = await handleApi(
-      req('/api/de', {
+      req('/api/pzn', {
         method: 'POST',
         headers: { 'content-type': 'application/json', cookie: 'ivid=abc' },
         body: JSON.stringify({ slots: [{ placement: 'p' }] }),
