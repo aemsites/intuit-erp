@@ -397,8 +397,8 @@ export function buildBlogTemplate(main) {
   // in section 1 (its own centred banner, share row and inline TOC). Layering
   // the hero band and rails on top of that would decorate the page twice, so
   // leave those documents exactly as they render today. They don't match
-  // upstream either — that's a content fix (drop the block from the document),
-  // tracked separately.
+  // upstream either, but that's a content fix (issue #424): drop the block from
+  // the document and the page picks up the band here automatically.
   if (main.querySelector('.case-study-header')) return;
 
   main.classList.add('blog-article');
