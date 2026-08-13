@@ -1,6 +1,10 @@
 import { getMetadata } from './aem.js';
 // eslint-disable-next-line import/no-cycle
 import { fetchDecision, fragmentPath, applyFragment } from './personalization/decision.js';
+import {
+  isRedirect, isReplace, ixpContentPath, ixpRecord,
+} from './personalization/ixp-response.js';
+import { recordIxp } from './personalization/analytics.js';
 
 export function isExperimentEnabled() {
   return !!(getMetadata('experiment') || getMetadata('experiment-id') || getMetadata('experiment-label'));
@@ -33,16 +37,24 @@ export async function runExperiment(doc = document) {
   const params = new URLSearchParams();
   if (experimentId) params.set('experimentId', experimentId);
   if (label) params.set('label', label);
-  params.set('fidelity', 'page');
 
   // One shared deadline across fetchDecision + swapMain, so a slow decision
   // can't hand the swap a fresh budget and let it land after decoration.
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 1400);
   try {
-    const decision = await fetchDecision(`ixp?${params.toString()}`, { signal: controller.signal });
-    if (!decision || decision.control || !decision.fragment) return;
-    if (decision.fidelity === 'page') await swapMain(doc, decision.fragment, controller.signal);
+    // The worker returns the raw assignment response verbatim; page fidelity is
+    // ours (this is the page-level entry point), so we act only on redirect arms.
+    const res = await fetchDecision(`ixp?${params.toString()}`, { signal: controller.signal });
+    const assignment = res?.assignments?.[0];
+    if (!assignment) return;
+    // Primary work (LCP path): swap the page first for a redirect treatment.
+    if (isRedirect(assignment)) {
+      const path = ixpContentPath(assignment);
+      if (path) await swapMain(doc, path, controller.signal);
+    }
+    // Analytics trails the swap (control arms count too) — idle-deferred.
+    recordIxp([ixpRecord(assignment, window.location.pathname)]);
   } finally {
     clearTimeout(timer);
   }
@@ -76,10 +88,17 @@ export async function runBlockExperiments(root = document.querySelector('main'),
   if (!root) return;
   const experiments = collectExperiments(root, skip);
   if (experiments.length === 0) return;
-  await Promise.all(experiments.map(async ({ el, id, fidelity }) => {
+  await Promise.all(experiments.map(async ({ el, id }) => {
     const key = /^\d+$/.test(id) ? `experimentId=${encodeURIComponent(id)}` : `label=${encodeURIComponent(id)}`;
-    const decision = await fetchDecision(`ixp?${key}&fidelity=${fidelity}`);
-    if (!decision || decision.control || !decision.fragment || decision.fidelity === 'page') return;
-    await applyFragment(el, decision.fragment);
+    const res = await fetchDecision(`ixp?${key}`);
+    const assignment = res?.assignments?.[0];
+    if (!assignment) return;
+    // Primary work: inject the block/section content first for a replace treatment.
+    if (isReplace(assignment)) {
+      const path = ixpContentPath(assignment);
+      if (path) await applyFragment(el, path);
+    }
+    // Analytics trails the swap (control arms count too) — idle-deferred.
+    recordIxp([ixpRecord(assignment, window.location.pathname)]);
   }));
 }

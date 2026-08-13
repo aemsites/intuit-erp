@@ -1,23 +1,14 @@
 /**
- * Decision Engine batch-response mapping helpers.
+ * Decision Engine batch-request helpers.
  *
- * The `/api/pzn` handler supplies the page's slots and visitor context; these
- * pure helpers build the batch request's shared `attributes` object and map each
- * batch response entry onto a normalized decision. The worker does NO decisioning
- * — the Decision Engine decides, this only shapes the request and reads the reply.
+ * The `/api/pzn` handler supplies the page's slots and visitor context; this pure
+ * helper builds the batch request's shared `attributes` object. The worker does NO
+ * response decisioning — it enriches + forwards the request and passes the raw
+ * batch response back to the front-end, which reads each slot's recommendation
+ * (fragment + metadata) itself.
  */
 
 import { deriveVisitorTokens } from '../visitor.js';
-
-/**
- * A normalized personalization decision for one slot.
- * @typedef {Object} PznEntry
- * @property {string} path Page path the offer applies to.
- * @property {string} fragment Offer fragment reference (e.g. `fragments/pzn/slot1`).
- * @property {string} location Slot id to target in the page.
- * @property {'replace'} action Operation at the slot.
- * @property {'block'} fidelity Granularity of the target element.
- */
 
 /**
  * A personalizable slot on the page.
@@ -63,48 +54,4 @@ export function buildAttributes(request, ivid, permalink) {
   const ip = request.headers.get('cf-connecting-ip');
   if (ip) attributes.ipAddress = ip;
   return attributes;
-}
-
-/**
- * Finds the batch response entry for a slot's placement, or null. The response
- * is keyed by `<experience>_<placement>_<locale>`; we match on the entry's own
- * `placement` field rather than reconstructing the key.
- * @param {Record<string, any>} response
- * @param {PznSlot} slot
- * @returns {any | null}
- */
-export function entryForSlot(response, slot) {
-  const want = String(slot.placement).toLowerCase();
-  for (const value of Object.values(response)) {
-    if (value && typeof value.placement === 'string' && value.placement.toLowerCase() === want) {
-      return value;
-    }
-  }
-  return null;
-}
-
-/**
- * Maps one batch response entry onto a `PznEntry` for a slot, or null when the
- * slot should stay as authored (no personalized recommendation / non-200 status
- * / missing fragment).
- * @param {any} responseEntry
- * @param {PznSlot} slot
- * @param {string} path
- * @returns {PznEntry | null}
- */
-export function slotEntryToPznEntry(responseEntry, slot, path) {
-  if (!responseEntry || responseEntry.status !== 200) return null;
-  // The pzn service nests recommendations under `data.recommendations.
-  // recommendation[]`, and the fragment to inject is `copyData.pznblock`
-  // (a fragment path, e.g. `fragments/pzn/slot1-hospitality`).
-  const rec = responseEntry.data?.recommendations?.recommendation?.[0];
-  const fragment = rec?.copyData?.pznblock;
-  if (typeof fragment !== 'string' || !fragment) return null;
-  return {
-    path,
-    fragment,
-    location: slot.location,
-    action: 'replace',
-    fidelity: 'block',
-  };
 }
