@@ -4,6 +4,10 @@
   background: var(--navy);
   color: #fff;
   overflow: hidden;
+
+  &.gradient {
+    background: conic-gradient(from 103deg at 28.36% 120.78%, #04193C 115.9615deg, #041F53 204.2308deg, #03339C 267.2082deg, #0F44AC 273.7572deg, #2B66D0 289.9528deg, #3875E0 324.4898deg, #BB95CD 329.7278deg, #DEBCB3 334.1040deg, #041839 359.1429deg);
+  }
 }
 
 /* Light hero variant — opt-in per section via Section Metadata "Style: hero-light".
@@ -172,7 +176,8 @@
 
 /* ---- .hero.form (pricing) — lead card on the right, content from the
    shared schedule-call fragment (content/fragments/schedule-call.html) ---- */
-.hero.form .hero-grid { grid-template-columns: 1fr 470px; gap: 60px; min-height: 560px; }
+.hero.form .hero-grid { grid-template-columns: 1fr 550px; gap: 60px; min-height: 560px; }
+.hero.form .hero-grid:has(.hero-copy > h1:only-child) { align-items: center; }
 .hero.form .hero-copy h1 { font-size: 52px; max-width: 7em; margin-bottom: 0; }
 
 .hero .hero-form {
