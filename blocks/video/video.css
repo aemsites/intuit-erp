@@ -58,6 +58,7 @@ main .section.video-container {
   border-radius: 8px;
   overflow: hidden;
   cursor: pointer;
+  background: var(--navy);
   box-shadow: 0 2px 8px rgb(0 0 0 / 20%);
 }
 
