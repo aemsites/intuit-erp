@@ -1,6 +1,8 @@
 // eslint-disable-next-line import/no-cycle
 import { fetchDecision, applyFragment } from './personalization/decision.js';
-import { entryForSlot, recommendationOf, pznRecord } from './personalization/pzn-response.js';
+import {
+  entryForSlot, recommendationOf, pznRecord, pznFragment,
+} from './personalization/pzn-response.js';
 import { recordPzn } from './personalization/analytics.js';
 
 // Sections tagged `data-pzn` within `root` (root itself may match), minus `skip`.
@@ -50,7 +52,7 @@ export async function runPersonalization(root = document.querySelector('main'), 
     if (!rec) return;
     const record = pznRecord(rec);
     if (record) records.push(record);
-    const fragment = rec.copyData?.contentId;
+    const fragment = pznFragment(rec);
     if (!fragment) return;
     const key = placement.toLowerCase();
     // Apply to every slot sharing this placement, not just the first.

@@ -45,7 +45,13 @@ describe('handleApi', () => {
   it('routes POST /api/pzn through and passes the raw batch response back', async () => {
     const batch = {
       marketing_p_en_US: {
-        data: { recommendations: [{ id: 'rec-1', copyData: { contentId: 'c1mX51ufI' }, accessPoint: 'p' }] },
+        data: {
+          recommendations: {
+            recommendation: [{
+              id: 'rec-1', copyData: { pznblock: 'fragments/pzn/x', contentId: '1223344' }, accessPoint: 'p',
+            }],
+          },
+        },
         placement: 'p',
         experience: 'marketing',
         status: 200,

@@ -34,11 +34,18 @@ function main(html) {
 }
 
 // A raw batch response entry keyed <experience>_<placement>_<locale>. `placement`
-// is echoed (case may differ from the slot); data.recommendations is an array.
-function batch(placement, contentId, extra = {}) {
+// is echoed (case may differ from the slot); recommendations nest under
+// `.recommendation[]` and the EDS fragment path is copyData.pznblock (real shape).
+function batch(placement, pznblock, extra = {}) {
   return {
     [`ttcom_${placement}_en_US`]: {
-      data: { recommendations: [{ id: `rec-${placement}`, accessPoint: placement, copyData: { contentId }, ...extra }] },
+      data: {
+        recommendations: {
+          recommendation: [{
+            id: `rec-${placement}`, accessPoint: placement, copyData: { pznblock, contentId: '1223344' }, ...extra,
+          }],
+        },
+      },
       placement,
       experience: 'ttcom',
       status: 200,
@@ -107,7 +114,7 @@ describe('runPersonalization', () => {
 
   it('publishes the pzn analytics record onto window.appVars', async () => {
     const m = main('<div data-pzn="alpha"></div>');
-    fetchDecision.mockResolvedValue(batch('ALPHA', 'c1mX51ufI'));
+    fetchDecision.mockResolvedValue(batch('ALPHA', '/fragments/pzn/a'));
     await runPersonalization(m);
 
     const records = JSON.parse(window.appVars.pznRecDetailsArr);
@@ -116,8 +123,8 @@ describe('runPersonalization', () => {
       personalization_id: 'rec-ALPHA',
       personalization_action: 'im',
       personalization_workflow: 'marketing',
-      content_id: 'c1mX51ufI',
-      externalContentIdentifier: 'c1mX51ufI',
+      content_id: '1223344',
+      externalContentIdentifier: '1223344',
     })]);
     expect(window.appVars.pznPageRecDetailsArr).toBe('[]');
   });
