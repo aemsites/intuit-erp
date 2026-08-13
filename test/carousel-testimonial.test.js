@@ -1,9 +1,11 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import {
+  describe, it, expect, beforeEach, vi,
+} from 'vitest';
 import decorate from '../blocks/carousel/carousel.js';
 
 // the three shapes authors have actually produced for this block
 const FOUR_CELL = `<div>
-  <div><picture><img src="a.jpg" alt="Blake"></picture></div>
+  <div><picture><source srcset="a.webp" type="image/webp"><img src="a.jpg" alt="Blake"></picture></div>
   <div>“Quote text”</div>
   <div>Blake Rohm, Director of Finance, Lallier</div>
   <div><a href="https://www.youtube.com/watch?v=Wk8JSGDOvx8">Watch video</a></div>
@@ -67,15 +69,55 @@ describe('carousel.testimonial normalizer', () => {
     expect(block.classList.contains('has-title')).toBe(false);
   });
 
-  it('turns a video CTA into a button that opens a modal, not a link', () => {
+  it('turns a video CTA into a button that opens a modal, not a link', async () => {
     const block = make(FOUR_CELL);
     decorate(block);
     const btn = block.querySelector('.testi-cta-button');
     expect(btn.tagName).toBe('BUTTON');
     btn.click();
+    // the lightbox is imported on click and awaits its own stylesheet
+    await vi.waitFor(() => expect(document.querySelector('.video-modal-overlay iframe')).not.toBeNull());
     const iframe = document.querySelector('.video-modal-overlay iframe');
     expect(iframe.src).toContain('youtube.com/embed/Wk8JSGDOvx8');
-    document.querySelector('.video-modal-overlay').remove();
+    expect(iframe.title).toBe('Watch video');
+    // dismiss through the close button, not by removing the node: the module
+    // tracks whether a lightbox is open and only the real path clears it
+    document.querySelector('.video-modal-close').click();
+  });
+
+  it('opens only one lightbox however many times the CTA is clicked', async () => {
+    const block = make(FOUR_CELL);
+    decorate(block);
+    const btn = block.querySelector('.testi-cta-button');
+    btn.click();
+    btn.click();
+    await vi.waitFor(() => expect(document.querySelector('.video-modal-overlay')).not.toBeNull());
+    expect(document.querySelectorAll('.video-modal-overlay').length).toBe(1);
+    document.querySelector('.video-modal-close').click();
+  });
+
+  it('keeps the picture element so its source variants survive', () => {
+    const block = make(FOUR_CELL);
+    decorate(block);
+    const mediaEl = block.querySelector('.testi-media');
+    expect(mediaEl.firstElementChild.tagName).toBe('PICTURE');
+    expect(mediaEl.querySelectorAll('source').length).toBe(1);
+  });
+
+  it('flags has-title per slide so a mixed carousel keeps each slide honest', () => {
+    const block = make(ONE_CELL_TITLED + ONE_CELL_NO_TITLE);
+    decorate(block);
+    const slides = block.querySelectorAll('.carousel-slide');
+    expect(slides[0].classList.contains('has-title')).toBe(true);
+    expect(slides[1].classList.contains('has-title')).toBe(false);
+  });
+
+  it('treats the sole text part of a titled slide as attribution, not quote', () => {
+    const block = make('<div><div><h3>Title</h3><p>Jane Doe, Acme</p></div></div>');
+    decorate(block);
+    const slide = block.querySelector('.carousel-slide');
+    expect(slide.querySelector('.testi-attr').textContent).toBe('Jane Doe, Acme');
+    expect(slide.querySelector('.testi-quote')).toBeNull();
   });
 
   it('keeps the <picture> wrapper (and its <source> variants) for the four-cell shape', () => {

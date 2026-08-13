@@ -15,18 +15,34 @@
  * CSS: blocks/video/video.css
  */
 
+import { loadCSS } from '../../scripts/aem.js';
 import { videoInfo, isVideoLink, posterFor } from './video-info.js';
 
 // re-exported so the unit tests (and any external importer) keep resolving the
 // pure helpers from this block, while decorate() below uses videoInfo/posterFor.
 export { videoInfo, isVideoLink, posterFor };
 
+// guards openVideoModal against stacking overlays across concurrent callers
+let modalOpen = false;
+
 /**
  * Opens the video in a dismissible lightbox modal (autoplay iframe).
+ *
+ * Exported because other blocks (carousel.testimonial's video CTA) open the
+ * same lightbox — sharing it keeps the dismiss and a11y behaviour in one place.
  * @param {string} embedUrl provider embed URL
  * @param {string} [title] accessible iframe title
  */
-function openVideoModal(embedUrl, title) {
+export function openVideoModal(embedUrl, title) {
+  // one at a time — a double-click would otherwise stack overlays, and closing
+  // the visible one would leave the others' iframes and listeners alive
+  if (modalOpen) return;
+  modalOpen = true;
+  // requested, never awaited: blocking the player on a stylesheet would mean a
+  // slow or 404'd CSS file stops the video opening at all. Callers
+  // warm it at decorate time instead (see carousel.testimonial's video CTA).
+  loadCSS(`${window.hlx.codeBasePath}/blocks/video/video.css`);
+
   const overlay = document.createElement('div');
   overlay.className = 'video-modal-overlay';
   overlay.innerHTML = `
@@ -39,6 +55,7 @@ function openVideoModal(embedUrl, title) {
 
   function close() {
     overlay.remove();
+    modalOpen = false;
     // eslint-disable-next-line no-use-before-define
     document.removeEventListener('keydown', onKey);
   }
