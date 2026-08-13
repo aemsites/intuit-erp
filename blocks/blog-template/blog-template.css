@@ -17,7 +17,7 @@
 .blog-article .blog-hero .blog-byline-tag {
   margin: 0 0 12px;
   color: var(--text-muted);
-  font-size: var(--body-font-size-xxs);
+  font-size: var(--body-font-size-m);
   font-weight: 500;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -620,7 +620,7 @@
   }
 
   .blog-article > .blog-hero > .default-content-wrapper > .blog-byline-tag {
-    font-size: var(--body-font-size-xxs);
+    font-size: var(--body-font-size-m);
   }
 
   .blog-article > .blog-hero > .default-content-wrapper > .blog-byline-meta {
