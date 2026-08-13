@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { buildBatchRequest } from '../src/pzn/batch-client.js';
-import { buildAttributes, entryForSlot, slotEntryToPznEntry } from '../src/pzn/resolve.js';
+import { buildAttributes } from '../src/pzn/resolve.js';
 
 const PLACEMENT = 'SBSEGQBMContentAemPznIxpTest';
 const EXPERIENCE = 'marketing';
@@ -66,52 +66,5 @@ describe('buildAttributes', () => {
       '/x',
     );
     expect(attrs.ipAddress).toBe('203.0.113.7');
-  });
-});
-
-describe('entryForSlot (case-insensitive placement match)', () => {
-  it('matches when the response placement differs only in case', () => {
-    const response = { k: { placement: PLACEMENT, status: 200 } };
-    const hit = entryForSlot(response, { placement: PLACEMENT.toLowerCase() });
-    expect(hit).toEqual({ placement: PLACEMENT, status: 200 });
-  });
-
-  it('returns null when no placement matches', () => {
-    expect(entryForSlot({ k: { placement: 'other' } }, { placement: 'nope' })).toBeNull();
-  });
-});
-
-describe('slotEntryToPznEntry', () => {
-  const slot = { location: 'slot-1', placement: PLACEMENT, experience: EXPERIENCE };
-
-  function responseEntry(pznblock, status = 200) {
-    return {
-      placement: PLACEMENT,
-      status,
-      data: { recommendations: { recommendation: [{ copyData: { pznblock } }] } },
-    };
-  }
-
-  it('maps a 200 recommendation to a block-replace entry', () => {
-    const entry = slotEntryToPznEntry(responseEntry('fragments/pzn/slot1-hospitality'), slot, '/drafts/pzn/treatment');
-    expect(entry).toEqual({
-      path: '/drafts/pzn/treatment',
-      fragment: 'fragments/pzn/slot1-hospitality',
-      location: 'slot-1',
-      action: 'replace',
-      fidelity: 'block',
-    });
-  });
-
-  it('returns null on a non-200 status', () => {
-    expect(slotEntryToPznEntry(responseEntry('x', 204), slot, '/x')).toBeNull();
-  });
-
-  it('returns null when the fragment (pznblock) is missing', () => {
-    expect(slotEntryToPznEntry(responseEntry(undefined), slot, '/x')).toBeNull();
-  });
-
-  it('returns null for a null response entry', () => {
-    expect(slotEntryToPznEntry(null, slot, '/x')).toBeNull();
   });
 });

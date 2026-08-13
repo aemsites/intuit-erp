@@ -42,25 +42,19 @@ describe('handleApi', () => {
     expect(res.status).toBe(404);
   });
 
-  it('routes POST /api/pzn through to a decision', async () => {
+  it('routes POST /api/pzn through and passes the raw batch response back', async () => {
+    const batch = {
+      marketing_p_en_US: {
+        data: { recommendations: [{ id: 'rec-1', copyData: { contentId: 'c1mX51ufI' }, accessPoint: 'p' }] },
+        placement: 'p',
+        experience: 'marketing',
+        status: 200,
+      },
+    };
     vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
       const url = typeof input === 'string' ? input : input.url;
       if (url === BATCH_URL) {
-        return new Response(
-          JSON.stringify({
-            marketing_p_en_US: {
-              data: {
-                recommendations: {
-                  recommendation: [{ copyData: { pznblock: 'fragments/pzn/x' } }],
-                },
-              },
-              placement: 'p',
-              experience: 'marketing',
-              status: 200,
-            },
-          }),
-          { status: 200, headers: jsonHeaders },
-        );
+        return new Response(JSON.stringify(batch), { status: 200, headers: jsonHeaders });
       }
       throw new Error(`unexpected fetch: ${url}`);
     });
@@ -73,6 +67,6 @@ describe('handleApi', () => {
       API_ENV,
     );
     expect(res.status).toBe(200);
-    expect((await res.json())[0].fragment).toBe('fragments/pzn/x');
+    expect(await res.json()).toEqual(batch);
   });
 });
