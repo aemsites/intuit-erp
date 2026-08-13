@@ -551,13 +551,13 @@ body.category main > .section:first-of-type p { font-size: 17px; color: var(--te
    34px heading (matching prod, was the global 38px); and "Explore by topic"
    renders as a topic-link nav rather than a raw bulleted list. */
 body.blog-home main > .section.slot-1 .default-content-wrapper { text-align: center; }
-body.blog-home main > .section.slot-1 h2 { font-size: 40px; font-weight: 700; margin: 0 0 16px; }
+body.blog-home main > .section.slot-1 h2 { font-size: 40px; font-weight: 700; color: #000; margin: 0 0 16px; }
 
 body.blog-home main > .section.slot-1 p {
-  font-size: 16px; line-height: 1.5; color: var(--text); max-width: 46em; margin-inline: auto;
+  font-size: 16px; line-height: 1.5; color: #000; max-width: 46em; margin-inline: auto;
 }
 
-body.blog-home main > .section:not(.slot-1) h2 { font-size: 34px; }
+body.blog-home main > .section:not(.slot-1) h2 { font-size: 34px; font-weight: 700; color: #000; }
 
 /* "Explore by topic": the authored <ul> becomes a wrap of rounded topic links */
 body.blog-home main > .section .default-content-wrapper ul {
