@@ -176,12 +176,15 @@ describe('TealiumMartech constructor', () => {
     expect(window.utag_data.foo).toBe('bar');
   });
 
-  it('forces window.utag_cfg_ovrd.noview to true regardless of the resolved env', () => {
+  it('does NOT force utag_cfg_ovrd.noview — prod parity: utag fires its own consent-gated view', () => {
     stubLocation({ hostname: PROD_HOST });
     window.utag_cfg_ovrd = { noview: false, other: 1 };
     // eslint-disable-next-line no-new
     new TealiumMartech();
-    expect(window.utag_cfg_ovrd.noview).toBe(true);
+    // erp.intuit.com sets no `noview` override. Forcing it suppressed utag's own view, which is why
+    // the loader then fired a manual view — the call that seeded the profile consent extension's
+    // infinite processQueue <-> setPreferencesValues recursion. Leave utag's own view alone.
+    expect(window.utag_cfg_ovrd.noview).toBe(false);
     expect(window.utag_cfg_ovrd.other).toBe(1);
   });
 
@@ -222,19 +225,21 @@ describe('utag_cfg_ovrd.utagdb (Tealium debug console) by resolved environment',
     expect(window.utag_cfg_ovrd.utagdb).toBe(true);
   });
 
-  it('does not set utagdb for the prod environment', () => {
+  it('does not set utagdb for the prod environment (and adds no utag_cfg_ovrd overrides at all)', () => {
     stubLocation({ hostname: PROD_HOST });
     // eslint-disable-next-line no-new
     new TealiumMartech();
-    expect(window.utag_cfg_ovrd.utagdb).toBeFalsy();
+    // Prod parity: erp.intuit.com sets no utag_cfg_ovrd; we add none either (no utagdb, no noview).
+    expect(window.utag_cfg_ovrd?.utagdb).toBeFalsy();
+    expect(window.utag_cfg_ovrd?.noview).toBeFalsy();
   });
 
-  it('does not set utagdb on an inert host (still sets noview though)', () => {
+  it('does not set utagdb (or noview) on an inert host', () => {
     stubLocation({ hostname: INERT_HOST });
     // eslint-disable-next-line no-new
     new TealiumMartech();
-    expect(window.utag_cfg_ovrd.utagdb).toBeFalsy();
-    expect(window.utag_cfg_ovrd.noview).toBe(true);
+    expect(window.utag_cfg_ovrd?.utagdb).toBeFalsy();
+    expect(window.utag_cfg_ovrd?.noview).toBeFalsy();
   });
 });
 
@@ -509,11 +514,11 @@ describe('disabled instance (hostname resolveEnvironment does not recognize) —
   });
 });
 
-describe("enabled instance — lazy() loads the consent stack, settles consent, then loads the resolved env's utag.js and fires the initial view", () => {
+describe("enabled instance — lazy() loads the consent stack, settles consent, then loads the resolved env's utag.js (utag fires its own view; we do not)", () => {
   it.each([
     ['prod', PROD_HOST, 'privacy-cdn.a.intuit.com'],
     ['dev', STAGE_HOST, 'privacy-cdn.e2e.a.intuit.com'],
-  ])('env "%s" (host %s): eager() does no network; lazy() loads the consent stack (CDN %s) before utag.js and calls utag.view', async (env, hostname, cdnHost) => {
+  ])('env "%s" (host %s): eager() does no network; lazy() loads the consent stack (CDN %s) before utag.js and does NOT call utag.view (prod parity)', async (env, hostname, cdnHost) => {
     stubLocation({ hostname });
     // A pre-existing OptanonConsent cookie lets settleConsent() resolve as soon as it's invoked
     // (its first, synchronous check), so this test doesn't need to advance any timers — the
@@ -571,12 +576,13 @@ describe("enabled instance — lazy() loads the consent stack, settles consent, 
     script.dispatchEvent(new Event('load'));
     await lazyPromise;
 
-    expect(window.utag.view).toHaveBeenCalledTimes(1);
-    expect(window.utag.view).toHaveBeenCalledWith(window.utag_data);
-    // Regression: lazy() must NOT drive utag.gdpr at load. Calling setPreferencesValues before
-    // utag finishes its async INIT triggered an infinite processQueue <-> setPreferencesValues
-    // recursion inside utag.js. Consent is delegated to the Tealium profile's OneTrust
-    // integration (bootstrapped by the consent stack above), so the client never calls it here.
+    // Prod parity / recursion regression: erp.intuit.com sets no `noview` and never calls
+    // utag.view() itself — utag fires its own initial view at loader.END. We must NOT fire it here.
+    // A manual view dispatched while consent is still unresolved (utag.gdpr.getConsentState() === 0)
+    // is enqueued, and the ies-erp profile consent extension then recurses infinitely
+    // (processQueue <-> setPreferencesValues, stack overflow).
+    expect(window.utag.view).not.toHaveBeenCalled();
+    // Same recursion class: we also never drive utag.gdpr.* at load.
     expect(window.utag.gdpr.setPreferencesValues).not.toHaveBeenCalled();
   });
 

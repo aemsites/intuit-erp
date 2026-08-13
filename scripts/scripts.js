@@ -57,8 +57,8 @@ const MARTECH_ENABLED = !AEP_DATASTREAM_ID.startsWith('REPLACE_')
 //             /scripts/martech/ (for testing without Intuit's VPN-gated consent CDN)
 //   (absent / any other value) -> Tealium, loading from the vendor CDNs (the default)
 // Tealium still self-gates via TealiumMartech's `resolveEnvironment`
-// (plugins/tealium-martech/src/index.js): only erp.intuit.com -> 'prod', stage.erp.intuit.com and
-// localhost -> 'dev', and every other host (incl. the aem.live/aem.page previews) stays inert.
+// (plugins/tealium-martech/src/index.js): only erp.intuit.com -> 'prod'; stage.erp.intuit.com, the
+// aem.page/aem.live previews, and localhost -> 'dev'; every other host stays inert.
 const MARTECH_PARAM = new URLSearchParams(window.location.search).get('martech');
 const MARTECH_PROVIDER = { off: 'off', adobe: 'adobe' }[MARTECH_PARAM] || 'tealium';
 // `?martech=local`: load utag.js + the consent stack from /scripts/martech/ instead of the CDNs.
