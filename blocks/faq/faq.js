@@ -2,8 +2,8 @@
  * faq — accordion of question/answer pairs (index, compare, erp-solutions).
  * Section head (h2) authored as default content.
  * One row per Q/A: cell 1 = question, cell 2 = answer (may contain rich HTML).
- * First item opens by default; the rest collapsed — except inside a blog
- * article, where all items start collapsed (matching the source). Multiple
+ * All items open by default — except inside a blog article or the .cmp
+ * variant, where all items start collapsed (matching the source). Multiple
  * items may be open at once, and re-clicking an open item collapses it.
  * Variant .faq.cmp = light band.
  * Open/close is animated in CSS (height via grid-template-rows + opacity fade,
@@ -18,14 +18,15 @@ export default function decorate(block) {
   const rows = [...block.children];
   const list = document.createElement('div');
   list.className = 'faq-list';
-  // In-article FAQs start fully collapsed upstream; on marketing pages the
-  // first item is pre-opened to show the pattern is expandable.
+  // In-article FAQs and the .cmp (compare page) variant start fully collapsed
+  // upstream; on other marketing pages every item is expanded on load,
+  // matching the original site.
   const inArticle = !!block.closest('main.blog-article');
+  const open = !inArticle && !block.classList.contains('cmp');
 
   rows.forEach((row, i) => {
     const cells = [...row.children];
     if (!cells.length) return;
-    const open = !inArticle && i === 0;
 
     const item = document.createElement('div');
     item.className = 'faq-item';
