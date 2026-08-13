@@ -175,15 +175,27 @@ export function mapConsentToTealium(optanon) {
 }
 
 /**
+ * Base path for the local vendor copies used by `?martech=local` (see `scripts/martech/*.js`) — a
+ * self-contained martech stack (utag.js + the OneTrust consent scripts) for testing without
+ * Intuit's VPN-gated consent CDN. Respects the EDS code base path so it also resolves on previews.
+ * @returns {String} the base path, no trailing slash
+ */
+function localMartechBase() {
+  return `${(window.hlx && window.hlx.codeBasePath) || ''}/scripts/martech`;
+}
+
+/**
  * Loads the Tealium utag.js library for the given environment via a plain script tag (CSP:
  * Trusted Types + strict-dynamic — never innerHTML/document.write).
  * @param {String} env the utag environment to load ('prod', 'qa', 'dev')
  * @returns {Promise<void>} resolves once the script has loaded, rejects on load failure
  */
-export function loadUtag(env) {
+export function loadUtag(env, local = false) {
   return new Promise((resolve, reject) => {
     const script = document.createElement('script');
-    script.src = `https://tags.tiqcdn.com/utag/${config.account}/${config.profile}/${env}/utag.js`;
+    script.src = local
+      ? `${localMartechBase()}/utag.js`
+      : `https://tags.tiqcdn.com/utag/${config.account}/${config.profile}/${env}/utag.js`;
     script.async = true;
     script.onload = () => resolve();
     script.onerror = () => reject(new Error(`Could not load Tealium utag.js (env: ${env})`));
@@ -245,27 +257,36 @@ export function loadScriptOnce({ id, src, attrs = {} }) {
  * @param {String} env the utag environment ('prod', 'qa', 'dev'), used to pick the per-env CDN
  * @returns {Promise<void>} resolves once all three scripts have settled (loaded or failed)
  */
-export async function loadConsentStack(env) {
+export async function loadConsentStack(env, local = false) {
   // Required global callback by the OneTrust SDK — pre-declared so the stub never calls into an
   // undefined global regardless of exactly when it finishes loading.
   window.OptanonWrapper = window.OptanonWrapper || (() => {});
-  const cdnHost = consentCdnHost(env);
+  // `?martech=local` serves all three scripts same-origin from /scripts/martech/ (Intuit's real
+  // consent CDN is VPN-gated, so it 403s off-VPN); otherwise use the per-env vendor CDNs.
+  const base = local ? localMartechBase() : null;
+  const cdnHost = local ? null : consentCdnHost(env);
 
   await loadScriptOnce({
     id: 'onetrust-stub',
-    src: `https://${cdnHost}/stable/scripttemplates/otSDKStub.js`,
+    src: local
+      ? `${base}/otSDKStub.js`
+      : `https://${cdnHost}/stable/scripttemplates/otSDKStub.js`,
     // The e2e domain-script id is assumed identical to prod's (`74130b76…`) — confirm with Intuit
     // if OneTrust does not initialize on e2e.
     attrs: { 'data-domain-script': '74130b76-29e2-4d72-ab52-09f9ed5818fb', charset: 'UTF-8' },
   });
   await loadScriptOnce({
     id: 'intuit-consent-wrapper',
-    src: `https://${cdnHost}/stable/consent-wrapper/cookies-consent-wrapper.min.js`,
+    src: local
+      ? `${base}/cookies-consent-wrapper.min.js`
+      : `https://${cdnHost}/stable/consent-wrapper/cookies-consent-wrapper.min.js`,
   });
   await loadScriptOnce({
     id: 'intuit-gdpr-util',
     // Env-independent — Intuit serves gdpr-util from a single CDN regardless of environment.
-    src: 'https://uxfabric.intuitcdn.net/gdpr-util/2.11.0/gdprUtilBundle.js',
+    src: local
+      ? `${base}/gdprUtilBundle.js`
+      : 'https://uxfabric.intuitcdn.net/gdpr-util/2.11.0/gdprUtilBundle.js',
   });
 }
 
@@ -326,6 +347,9 @@ export default class TealiumMartech {
    */
   constructor(cfg = {}) {
     config = { ...DEFAULT_CONFIG, ...cfg };
+    // When true (set from `?martech=local` in scripts.js), lazy() loads utag.js + the consent
+    // stack from the local copies in /scripts/martech/ instead of the vendor CDNs.
+    this.local = !!cfg.local;
     // Pre-declare the data layer / config override globals as early as possible (head.html
     // already does this before any script runs; this just layers in the instance's own data).
     window.utag_data = { ...(window.utag_data || {}), ...config.data };
@@ -375,9 +399,9 @@ export default class TealiumMartech {
    */
   async lazy() {
     if (!this.enabled) return;
-    await loadConsentStack(this.env);
+    await loadConsentStack(this.env, this.local);
     await settleConsent();
-    await loadUtag(this.env);
+    await loadUtag(this.env, this.local);
     if (window.utag?.view) {
       window.utag.view(window.utag_data);
     }

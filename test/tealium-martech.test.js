@@ -9,6 +9,7 @@ import TealiumMartech, {
   readAkamaiGeo,
   mapConsentToTealium,
   consentCdnHost,
+  loadUtag,
   loadConsentStack,
   settleConsent,
 } from '../plugins/tealium-martech/src/index.js';
@@ -371,6 +372,34 @@ describe('mapConsentToTealium', () => {
     const prefs = mapConsentToTealium(null);
     expect(Object.values(prefs).every((v) => v === '0')).toBe(true);
     expect(mapConsentToTealium(undefined)).toEqual(prefs);
+  });
+});
+
+describe('local mode (?martech=local) source paths', () => {
+  it('loadUtag(env, true) loads utag.js from /scripts/martech/, not the Tealium CDN', async () => {
+    const p = loadUtag('dev', true);
+    const s = document.head.querySelector('script[src*="utag.js"]');
+    expect(s.src).toContain('/scripts/martech/utag.js');
+    expect(s.src).not.toContain('tiqcdn');
+    s.dispatchEvent(new Event('load'));
+    await p;
+  });
+
+  it('loadConsentStack(env, true) loads the 3 consent scripts from /scripts/martech/', async () => {
+    const promise = loadConsentStack('dev', true);
+    const stub = document.getElementById('onetrust-stub');
+    expect(stub.src).toContain('/scripts/martech/otSDKStub.js');
+    expect(stub.src).not.toContain('privacy-cdn');
+    stub.dispatchEvent(new Event('load'));
+    await settle();
+    const wrapper = document.getElementById('intuit-consent-wrapper');
+    expect(wrapper.src).toContain('/scripts/martech/cookies-consent-wrapper.min.js');
+    wrapper.dispatchEvent(new Event('load'));
+    await settle();
+    const gdprUtil = document.getElementById('intuit-gdpr-util');
+    expect(gdprUtil.src).toContain('/scripts/martech/gdprUtilBundle.js');
+    gdprUtil.dispatchEvent(new Event('load'));
+    await promise;
   });
 });
 

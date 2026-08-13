@@ -45,14 +45,19 @@ const AEP_ORG_ID = '87020D54659BEED90A495E68@AdobeOrg';
 const MARTECH_ENABLED = !AEP_DATASTREAM_ID.startsWith('REPLACE_')
   && !window.location.hostname.endsWith('.preview.da.live');
 
-// Provider gate: Tealium is now the default provider on every host. It self-gates via
-// TealiumMartech's own `resolveEnvironment` (plugins/tealium-martech/src/index.js) — only
-// erp.intuit.com resolves to the real 'prod' utag environment; the aem.live/aem.page/localhost
-// hosts resolve to 'qa'/'dev', and anything else (e.g. *.preview.da.live) stays fully inert. The
-// legacy Adobe/aem-martech path is opt-in only, via `?martech=adobe`.
-const MARTECH_PROVIDER = new URLSearchParams(window.location.search).get('martech') === 'adobe'
-  ? 'adobe'
-  : 'tealium';
+// Provider gate via the `?martech=` query param:
+//   off    -> disable ALL martech (no Tealium, no Adobe — fully inert)
+//   adobe  -> legacy Adobe/aem-martech path (opt-in)
+//   local  -> Tealium, loading utag.js + the OneTrust consent stack from local copies in
+//             /scripts/martech/ (for testing without Intuit's VPN-gated consent CDN)
+//   (absent / any other value) -> Tealium, loading from the vendor CDNs (the default)
+// Tealium still self-gates via TealiumMartech's `resolveEnvironment`
+// (plugins/tealium-martech/src/index.js): only erp.intuit.com -> 'prod', stage.erp.intuit.com and
+// localhost -> 'dev', and every other host (incl. the aem.live/aem.page previews) stays inert.
+const MARTECH_PARAM = new URLSearchParams(window.location.search).get('martech');
+const MARTECH_PROVIDER = { off: 'off', adobe: 'adobe' }[MARTECH_PARAM] || 'tealium';
+// `?martech=local`: load utag.js + the consent stack from /scripts/martech/ instead of the CDNs.
+const MARTECH_LOCAL = MARTECH_PARAM === 'local';
 
 // Set in loadEager when MARTECH_PROVIDER === 'tealium' (the default); stays undefined on the
 // opt-in Adobe path. Exposed via getTealium() so scripts/delayed.js can call `.delayed()`
@@ -303,7 +308,7 @@ async function loadEager(doc) {
   } else if (MARTECH_PROVIDER === 'tealium') {
     // Real Tealium (env 'prod'/'qa'/'dev') only ever loads once TealiumMartech#resolveEnvironment
     // recognizes the hostname; every other host stays inert — eager() itself does no network work.
-    tealium = new TealiumMartech();
+    tealium = new TealiumMartech({ local: MARTECH_LOCAL });
     tealium.eager();
   }
 
