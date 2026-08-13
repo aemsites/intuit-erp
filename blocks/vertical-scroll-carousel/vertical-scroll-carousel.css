@@ -184,11 +184,13 @@
      the ≥900px two-column grid; the stacked mobile layout is untouched. */
   .vertical-scroll-carousel.reverse .vsc-stage {
     grid-column: 1;
+    grid-row: 1;
     justify-self: start;
   }
 
   .vertical-scroll-carousel.reverse .vsc-list {
     grid-column: 2;
+    grid-row: 1;
   }
 
   /* single-item carousel: the source renders a lone item as a media-text
