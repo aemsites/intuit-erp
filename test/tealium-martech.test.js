@@ -514,11 +514,11 @@ describe('disabled instance (hostname resolveEnvironment does not recognize) —
   });
 });
 
-describe("enabled instance — lazy() loads the consent stack, settles consent, then loads the resolved env's utag.js (utag fires its own view; we do not)", () => {
+describe("enabled instance — lazy() loads the consent stack, settles consent, loads utag.js, then fires the CONSENT-GATED initial view", () => {
   it.each([
     ['prod', PROD_HOST, 'privacy-cdn.a.intuit.com'],
     ['dev', STAGE_HOST, 'privacy-cdn.e2e.a.intuit.com'],
-  ])('env "%s" (host %s): eager() does no network; lazy() loads the consent stack (CDN %s) before utag.js and does NOT call utag.view (prod parity)', async (env, hostname, cdnHost) => {
+  ])('env "%s" (host %s): eager() does no network; lazy() loads the consent stack (CDN %s) before utag.js, then fires the initial view once consent is resolved', async (env, hostname, cdnHost) => {
     stubLocation({ hostname });
     // A pre-existing OptanonConsent cookie lets settleConsent() resolve as soon as it's invoked
     // (its first, synchronous check), so this test doesn't need to advance any timers — the
@@ -534,10 +534,12 @@ describe("enabled instance — lazy() loads the consent stack, settles consent, 
     expect(document.querySelectorAll('script').length).toBe(0);
 
     // Stub the utag global that loadUtag's injected script would normally define once it runs.
+    // getConsentState() !== 0 here → consent already RESOLVED, so the consent-gated initial view
+    // (whenConsentResolved) fires immediately and utag sends it directly (never enqueued).
     window.utag = {
       view: vi.fn(),
       link: vi.fn(),
-      gdpr: { setPreferencesValues: vi.fn() },
+      gdpr: { setPreferencesValues: vi.fn(), getConsentState: vi.fn(() => 1) },
     };
 
     const lazyPromise = tealium.lazy();
@@ -576,14 +578,31 @@ describe("enabled instance — lazy() loads the consent stack, settles consent, 
     script.dispatchEvent(new Event('load'));
     await lazyPromise;
 
-    // Prod parity / recursion regression: erp.intuit.com sets no `noview` and never calls
-    // utag.view() itself — utag fires its own initial view at loader.END. We must NOT fire it here.
-    // A manual view dispatched while consent is still unresolved (utag.gdpr.getConsentState() === 0)
-    // is enqueued, and the ies-erp profile consent extension then recurses infinitely
-    // (processQueue <-> setPreferencesValues, stack overflow).
-    expect(window.utag.view).not.toHaveBeenCalled();
-    // Same recursion class: we also never drive utag.gdpr.* at load.
+    // head.html sets `noview:true` (suppressing utag's own auto-view), so the loader fires the
+    // initial view — but only via whenConsentResolved. Consent is resolved here, so it fires now.
+    expect(window.utag.view).toHaveBeenCalledWith(window.utag_data);
+    // We never drive utag.gdpr.* at load (same recursion class).
     expect(window.utag.gdpr.setPreferencesValues).not.toHaveBeenCalled();
+  });
+
+  it('withholds the initial view while Tealium consent is unresolved (getConsentState()===0) — the loop guard', async () => {
+    stubLocation({ hostname: PROD_HOST });
+    document.cookie = `OptanonConsent=${OPTANON_COOKIE_VALUE}`;
+    const tealium = new TealiumMartech();
+    // Consent UNRESOLVED: firing utag.view/link now would enqueue onto utag.gdpr.queue, and the
+    // ies-erp profile consent extension would recurse over it (processQueue <-> setPreferencesValues
+    // — the reported infinite loop). whenConsentResolved must hold the view back, not enqueue it.
+    window.utag = { view: vi.fn(), link: vi.fn(), gdpr: { getConsentState: vi.fn(() => 0) } };
+    const lazyPromise = tealium.lazy();
+    document.getElementById('onetrust-stub').dispatchEvent(new Event('load'));
+    await settle();
+    document.getElementById('intuit-consent-wrapper').dispatchEvent(new Event('load'));
+    await settle();
+    document.getElementById('intuit-gdpr-util').dispatchEvent(new Event('load'));
+    await settle();
+    document.head.querySelector('script[src*="tiqcdn"]').dispatchEvent(new Event('load'));
+    await lazyPromise;
+    expect(window.utag.view).not.toHaveBeenCalled();
   });
 
   it('propagates a loadUtag failure (network/blocked) as a rejected lazy() promise, once the consent stack has settled', async () => {
