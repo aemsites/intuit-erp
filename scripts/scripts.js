@@ -408,7 +408,14 @@ async function loadEager(doc) {
  * @param {Element} doc The container element
  */
 async function loadLazy(doc) {
-  loadHeader(doc.querySelector('header'));
+  // Gated/conversion pages (e.g. /webinar-* form landings) opt out of the global
+  // header and footer via page metadata (`header: false` / `footer: false`),
+  // matching production which serves them chrome-less. Default is to load both.
+  const chromeDisabled = (name) => ['false', 'no', 'off']
+    .includes((getMetadata(name) || '').trim().toLowerCase());
+  const headerEl = doc.querySelector('header');
+  if (headerEl && chromeDisabled('header')) headerEl.remove();
+  else loadHeader(headerEl);
 
   const main = doc.querySelector('main');
   // Below-the-fold personalization/experimentation: run the sections after the
@@ -421,7 +428,9 @@ async function loadLazy(doc) {
   const element = hash ? doc.getElementById(hash.substring(1)) : false;
   if (hash && element) element.scrollIntoView();
 
-  loadFooter(doc.querySelector('footer'));
+  const footerEl = doc.querySelector('footer');
+  if (footerEl && chromeDisabled('footer')) footerEl.remove();
+  else loadFooter(footerEl);
 
   // Persistent bottom-right sales widget ("Contact us" / "Talk to sales"),
   // present on every page. Loaded here (lazy phase) so it never touches LCP.
