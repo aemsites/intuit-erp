@@ -71,46 +71,349 @@
 .carousel .carousel-prev:disabled,
 .carousel .carousel-next:disabled { opacity: 0.4; cursor: not-allowed; }
 
-/* ---- .testimonial — dark band, quote + photo/video card ---- */
+/* ---- .testimonial — portrait beside a pull-quote ----
+
+   Two treatments, chosen by whether the slides carry a title (`.has-title`,
+   set in the JS) rather than by an authored variant, because upstream drives
+   both off the same signal: no title is a bare quote where the portrait runs
+   flush to the card edge, a title turns the quote into supporting copy and
+   insets the portrait so the title leads.
+
+   `.pale` is a theme but carries its own type scale — upstream builds it from
+   different tokens (heading2/heading6 rather than headline02/body02), so its
+   quote holds 40px a breakpoint longer and its attribution runs smaller.
+
+   Sizes are set through --testi-* so each breakpoint declares the ramp once
+   instead of re-listing every selector per treatment. Line heights are the
+   measured pixel values, not ratios, since upstream's differ per token at the
+   same font size (40/56 default vs 40/48 pale).  */
 .carousel.testimonial {
+  --testi-card: var(--navy);
+  --testi-text: var(--background-color);
+  --testi-quote: 28px;
+  --testi-quote-lh: 39.2px;
+  --testi-attr: 16px;
+  --testi-attr-lh: 22.4px;
+
+  /* The section wrapper caps its CONTENT box at --container and adds its 40px
+     gutters outside that, so the track it offers is 1360 at wide viewports
+     where upstream's card is 1300. Subtract the gutters here to match; below
+     ~1400 the wrapper is already narrower and this has no effect. */
+  max-width: calc(var(--container) - 80px);
+}
+
+.carousel.testimonial.pale {
+  --testi-card: #eaf6f7;
+  --testi-text: #000;
+  --testi-quote-lh: 36.4px;
+  --testi-attr: 12px;
+  --testi-attr-lh: 18px;
+
+  /* pale runs wider than the other treatments — upstream lets it fill the
+     container instead of insetting by the section gutters, capping at 1358 */
+  max-width: 1358px;
+}
+
+/* The titled treatment sits in a full-bleed navy band, and the card is a
+   LIGHTER navy so it reads as a panel against it. Painting the band from the
+   section (rather than asking authors for Section Metadata) follows the
+   `.cards.dark` precedent in cards.css. */
+.section.carousel-container:has(.carousel.testimonial.has-title:not(.pale)) {
   background: var(--navy);
-  border-radius: var(--radius-card);
-  padding: 56px 32px;
+  padding: var(--section-y) 0;
+}
+
+.section.carousel-container:has(.carousel.testimonial.has-title:not(.pale)) .default-content-wrapper h2 {
+  margin: 0 0 40px;
+  color: #fff;
+  font-size: 34px;
+  line-height: 47.6px;
+  font-weight: 400;
+  text-align: center;
+}
+
+/* :not(.pale) so a `Testimonial, Pale` block that also carries titles keeps its
+   light card and dark text rather than getting this navy under black text */
+.carousel.testimonial.has-title:not(.pale) { --testi-card: #1a3b5c; }
+
+/* .pale and .has-title are independently toggleable, and nothing stops a
+   future titled slide from being authored on a pale-themed page. Without
+   this, has-title's navy --testi-card would win here (same specificity,
+   declared later) while pale's black --testi-text stayed, leaving unreadable
+   contrast — so pin pale's own colours whenever the two combine. */
+.carousel.testimonial.has-title.pale { --testi-card: #eaf6f7; --testi-text: #000; }
+
+/* The 6px conic-gradient ring around the titled card. A gradient can't be a
+   border-color, so the ring is a transparent border filled by a border-box
+   background layer, with a solid padding-box layer over it for the card. The
+   viewport's overflow then clips slides at the padding box, so the slide
+   waiting off-screen to the right can never cover the ring. */
+.carousel.testimonial .carousel-viewport { border-radius: 10px; }
+
+.carousel.testimonial.has-title:not(.pale) .carousel-viewport {
+  border: 6px solid transparent;
+  border-radius: 24px;
+  background:
+    linear-gradient(var(--testi-card), var(--testi-card)) padding-box,
+    conic-gradient(from 180deg, #38e8f6 0%, #d1dee9 15%, #eff4f9 35%, #81f2fe 50%,
+      #00d0e0 65%, #236cff 85%, #38e8f6 100%) border-box;
 }
 
 .carousel.testimonial .carousel-slide {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  background: var(--testi-card);
+  color: var(--testi-text);
 }
 
-.carousel.testimonial .carousel-slide > div {
+/* stacked, the title leads and the portrait follows it inset — the reverse of
+   the untitled treatment, where the portrait runs flush across the card top */
+.carousel.testimonial .carousel-slide.has-title { flex-direction: column-reverse; }
+
+.carousel.testimonial .testi-media { flex: none; }
+
+.carousel.testimonial .carousel-slide.has-title .testi-media { padding: 0 30px 60px; }
+
+.carousel.testimonial .testi-media img {
+  display: block;
   width: 100%;
-  max-width: 760px;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Side by side, the card is as tall as its COPY and the portrait crops to fit
+   — upstream stretches the image well past its intrinsic ratio. An in-flow
+   <img> would instead contribute its own height and cap the card there, so it
+   is taken out of flow and the column height comes from the copy alone. */
+@media (width >= 1024px) {
+  .carousel.testimonial .carousel-slide:not(.has-title) .testi-media { position: relative; }
+
+  .carousel.testimonial .carousel-slide:not(.has-title) .testi-media img {
+    position: absolute;
+    inset: 0;
+  }
+}
+
+/* the flush portrait only rounds the corners it shares with the card */
+.carousel.testimonial .testi-media img { border-radius: 10px 10px 0 0; }
+
+.carousel.testimonial .carousel-slide.has-title .testi-media img { border-radius: var(--radius-card); }
+
+.carousel.testimonial .testi-body {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 24px;
+  justify-content: center;
+  padding: 40px 38px 60px;
   text-align: center;
-  color: var(--background-color);
-  border: 1px solid rgb(255 255 255 / 20%);
-  border-radius: var(--radius-card);
-  padding: 40px 32px;
 }
 
-.carousel.testimonial .carousel-slide img { border-radius: 50%; width: 88px; height: 88px; object-fit: cover; }
+.carousel.testimonial .testi-title {
+  margin: 0 0 20px; font-size: var(--testi-quote); line-height: var(--testi-quote-lh);
+}
 
-.carousel.testimonial .carousel-slide p { margin: 0; font-size: 20px; line-height: 1.5; }
+/* with a title present the quote steps down to the attribution's scale */
+.carousel.testimonial .testi-quote {
+  margin: 0; font-size: var(--testi-quote); line-height: var(--testi-quote-lh);
+}
 
-.carousel.testimonial .carousel-slide a.button { border-color: var(--background-color); color: var(--background-color); }
+/* Without a title the quote is the display element and carries a leading space
+   of its own. `.pale` is the exception — upstream gives its quote no margin at
+   all, relying on the column's own spacing. */
+.carousel.testimonial:not(.pale) .carousel-slide:not(.has-title) .testi-quote { margin-top: 28px; }
 
-.carousel.testimonial .carousel-dot { background: rgb(255 255 255 / 30%); }
-.carousel.testimonial .carousel-dot.is-active { background: var(--background-color); }
+.carousel.testimonial .carousel-slide.has-title .testi-quote {
+  font-size: var(--testi-attr); line-height: var(--testi-attr-lh);
+}
+
+.carousel.testimonial .testi-attr {
+  margin: 16px 0 0; font-size: var(--testi-attr); line-height: var(--testi-attr-lh);
+}
+
+/* the untitled treatment breathes wider between quote, attribution and CTA —
+   upstream gets this from margins collapsing inside its heading wrapper, which
+   a flex column doesn't do, so the values are set explicitly */
+.carousel.testimonial .carousel-slide:not(.has-title) .testi-attr { margin-top: 28px; }
+
+.carousel.testimonial .carousel-slide:not(.has-title) .testi-cta { margin-top: 36px; }
+
+.carousel.testimonial .carousel-slide.has-title .testi-attr { margin-top: 20px; }
+
+/* the row shrinks to the button so it never stretches to the column width */
+.carousel.testimonial .testi-cta { display: flex; justify-content: center; margin-top: 20px; }
+
+.carousel.testimonial .testi-cta-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 20px;
+  border: 2px solid currentcolor;
+  border-radius: var(--radius);
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 24px;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+/* the untitled treatment's link CTA is the taller of the two upstream
+   (52px/28px vs the titled video button's 48px/20px) */
+.carousel.testimonial .carousel-slide:not(.has-title) .testi-cta-button { min-height: 52px; padding: 0 28px; }
+
+.carousel.testimonial .testi-cta-button svg { flex: none; }
+
+.carousel.testimonial .testi-cta-button:hover { background: rgb(255 255 255 / 12%); }
+
+.carousel.testimonial.pale .testi-cta-button:hover { background: rgb(0 0 0 / 6%); }
+
+/* controls sit outside the card, right-aligned as [dots][prev][next] — see the
+   .feature note on why the arrows are re-ordered here and not in the JS */
+.carousel.testimonial .carousel-controls { gap: 30px; justify-content: center; margin-top: 40px; }
+
+.carousel.testimonial .carousel-dots { order: 1; gap: 20px; }
+.carousel.testimonial .carousel-prev { order: 2; }
+.carousel.testimonial .carousel-next { order: 3; }
+
+/* The controls sit outside the card, so they take their colour from the SECTION
+   behind them, not the card: black-on-white for the untitled treatment's white
+   section, white-on-navy for the titled treatment's band (upstream's
+   `whiteControls`), where the arrows also split into a grey back and a white
+   forward rather than sharing one fill. */
+.carousel.testimonial {
+  --testi-dot: 0 0 0;
+  --testi-arrow-bg: var(--ink-teal);
+  --testi-arrow-bg-hover: #09222a;
+  --testi-arrow-fg: #fff;
+}
+
+.carousel.testimonial.has-title:not(.pale) {
+  --testi-dot: 255 255 255;
+  --testi-arrow-bg: #5d686f;
+  --testi-arrow-bg-hover: #4a5359;
+}
+
+.carousel.testimonial .carousel-dot {
+  width: 12px;
+  height: 12px;
+  background: rgb(var(--testi-dot) / 25%);
+}
+
+.carousel.testimonial .carousel-dot.is-active {
+  background: rgb(var(--testi-dot) / 75%);
+  transform: none;
+}
 
 .carousel.testimonial .carousel-prev,
-.carousel.testimonial .carousel-next { background: rgb(255 255 255 / 15%); }
+.carousel.testimonial .carousel-next {
+  width: 60px;
+  height: 60px;
+  font-size: 24px;
+  background: var(--testi-arrow-bg);
+  color: var(--testi-arrow-fg);
+}
+
+/* forward is the emphasised action on the band: white fill, navy chevron */
+.carousel.testimonial.has-title:not(.pale) .carousel-next { background: #fff; color: var(--navy); }
 
 .carousel.testimonial .carousel-prev:hover:not(:disabled),
-.carousel.testimonial .carousel-next:hover:not(:disabled) { background: rgb(255 255 255 / 28%); }
+.carousel.testimonial .carousel-next:hover:not(:disabled) { background: var(--testi-arrow-bg-hover); }
+
+.carousel.testimonial.has-title:not(.pale) .carousel-next:hover:not(:disabled) { background: #e8eaec; }
+
+.carousel.testimonial .carousel-prev:disabled,
+.carousel.testimonial .carousel-next:disabled { background: var(--testi-arrow-bg); opacity: 0.3; }
+
+@media (width >= 600px) {
+  .carousel.testimonial .testi-body { padding: 60px 30px; }
+
+  .carousel.testimonial .carousel-slide.has-title .testi-media { padding: 0 30px 60px; }
+
+  /* pale holds its larger attribution from tablet up; the others are already
+     at 16px and stay there for the whole ramp */
+  .carousel.testimonial.pale { --testi-attr: 14px; --testi-attr-lh: 21px; }
+}
+
+/* 1024, not the project's usual 900 — upstream keeps this card stacked through
+   the whole tablet range and only goes side-by-side at 1024 */
+@media (width >= 1024px) {
+  /* side by side, portrait first for both treatments — the stacked
+     column-reverse above only applies while the card is one column */
+  .carousel.testimonial .carousel-slide,
+  .carousel.testimonial .carousel-slide.has-title { flex-direction: row; align-items: center; }
+
+  .carousel.testimonial { --testi-quote: 34px; --testi-quote-lh: 47.6px; }
+
+  /* pale skips the 34px step and stays at its display size */
+  .carousel.testimonial.pale { --testi-quote: 40px; --testi-quote-lh: 48px; }
+
+  /* Portrait/copy split is a 40:60 GROW ratio, not a fixed basis — upstream
+     lets it drift with width (35% at 1440 down to 33.5% at 1064), so growing
+     from a zero basis reproduces it at every size. min-width:0 because a flex
+     item's automatic minimum is its content size, which a wide portrait would
+     otherwise use to push the column past its share. */
+  .carousel.testimonial .testi-media {
+    flex: 40 1 0;
+    min-width: 0;
+    align-self: stretch;
+  }
+
+  .carousel.testimonial .testi-media img { border-radius: 0; }
+
+  .carousel.testimonial .carousel-viewport { border-radius: 16px; }
+
+  .section.carousel-container:has(.carousel.testimonial.has-title:not(.pale)) .default-content-wrapper h2 {
+    margin-bottom: 80px;
+    font-size: 48px;
+    line-height: 67.2px;
+  }
+
+  .carousel.testimonial .testi-body {
+    flex: 60 1 0;
+    min-width: 0;
+    padding: 80px;
+    text-align: left;
+  }
+
+  /* the untitled copy opens to an even 40px rhythm on desktop, which is what
+     makes the card taller than the portrait's intrinsic height */
+  .carousel.testimonial:not(.pale) .carousel-slide:not(.has-title) .testi-quote { margin-top: 40px; }
+
+  .carousel.testimonial .carousel-slide:not(.has-title) .testi-attr { margin-top: 40px; }
+
+  .carousel.testimonial .carousel-slide:not(.has-title) .testi-cta { margin-top: 40px; }
+
+  .carousel.testimonial .carousel-slide.has-title .testi-cta { margin-top: 60px; }
+
+  .carousel.testimonial .testi-cta { justify-content: flex-start; }
+
+  /* border-box so the 80px inset counts inside the 50% rather than widening
+     the column past it */
+  .carousel.testimonial .carousel-slide.has-title .testi-media {
+    box-sizing: border-box;
+    flex: 0 0 50%;
+    min-width: 0;
+    align-self: center;
+    padding: 80px 0 80px 80px;
+  }
+
+  /* the inset portrait is a fixed 440px tall upstream at every desktop width,
+     cropping rather than scaling, so it sets the card's floor height */
+  .carousel.testimonial .carousel-slide.has-title .testi-media img { height: 440px; }
+
+  .carousel.testimonial .carousel-controls { justify-content: flex-end; }
+}
+
+@media (width >= 1200px) {
+  .carousel.testimonial { --testi-quote: 40px; --testi-quote-lh: 56px; }
+
+  /* only at the widest tier does the titled quote reach 20px */
+  .carousel.testimonial.has-title { --testi-attr: 20px; --testi-attr-lh: 28px; }
+}
 
 /* ---- .cards — customer story / article cards, multi-per-view ---- */
 .carousel.cards { --carousel-cards-per-view: 1; }

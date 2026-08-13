@@ -1,27 +1,35 @@
 /**
- * IXP-backed entry resolution — the swap-in alternative to the map.json flow.
+ * IXP assignment → decision mapping.
  *
- * Produces the worker's existing `PznEntry` from an IXP assignment, so the rest
- * of the render path (`resolveOfferMarkup` + `applyPersonalization`) is unchanged.
- * The mapping is 1:1 with the actions the worker already performs:
+ * The `/api/ixp` handler fetches the assignments and supplies the granularity;
+ * this pure helper maps a single IXP assignment onto a normalized decision:
  *
- *   control / empty / unmapped   → null            → passthrough (baseline)
+ *   control / empty / unmapped   → null            → baseline (control)
  *   REDIRECT + variation.html key → page-level replace   (fragment = variation path)
  *   REPLACE_WEB_CONTENT + assetLocation → block/section replace (fragment = content ref)
  *
- * The worker still does NO decisioning: IXP decides the arm; this only renders it.
+ * The worker does NO decisioning: IXP decides the arm; this only reads it.
  */
 
-import { fetchAssignment } from './client.js';
-import { resolveRoute } from './routes.js';
-import { readIvid } from '../ivid.js';
+/**
+ * @typedef {import('./client.js').IxpAssignment} IxpAssignment
+ */
 
 /**
- * @typedef {import('../personalize.js').PznEntry} PznEntry
- * @typedef {import('./client.js').IxpAssignment} IxpAssignment
- * @typedef {import('./client.js').IxpAssignmentResponse} IxpAssignmentResponse
- * @typedef {import('./client.js').IxpClientEnv} IxpClientEnv
- * @typedef {import('./routes.js').IxpRoute} IxpRoute
+ * A normalized personalization/experiment decision.
+ * @typedef {Object} PznEntry
+ * @property {string} path Page path the decision applies to.
+ * @property {string} fragment Fragment reference (variation path or content ref).
+ * @property {string} location Slot id a block/section treatment targets.
+ * @property {'replace'} action Operation at the target.
+ * @property {'block' | 'section' | 'page'} fidelity Granularity of the target.
+ */
+
+/**
+ * The granularity context the handler supplies for a decision.
+ * @typedef {Object} IxpRoute
+ * @property {string} location Slot id a block/section treatment targets (unused for page-level).
+ * @property {'block' | 'section' | 'page'} fidelity Default granularity for a block-level treatment.
  */
 
 /**
@@ -79,52 +87,4 @@ export function assignmentToPznEntry(assignment, route, path) {
       // DEFAULT / unknown ⇒ no treatment.
       return null;
   }
-}
-
-/**
- * Fetches the assignments for a route's experiment. The transport is injected so
- * the routing + mapping logic below can be exercised in tests against a stub
- * without a live IXP host; `resolveIxpEntry` wires in the real HTTP client.
- * @typedef {(params: { ivid: string, experimentId?: number, label?: string }) => Promise<IxpAssignmentResponse | null>} AssignmentFetcher
- */
-
-/**
- * Resolves a `PznEntry` for a request from IXP assignments, or null (passthrough)
- * when the path is not enrolled, there is no ivid, or no assignment maps to a
- * change. Transport-agnostic — see `AssignmentFetcher`.
- * @param {Request} request
- * @param {AssignmentFetcher} fetchAssignments
- * @returns {Promise<PznEntry | null>}
- */
-export async function resolveEntryWith(request, fetchAssignments) {
-  const path = new URL(request.url).pathname;
-  const route = resolveRoute(path);
-  if (!route) return null;
-
-  const ivid = readIvid(request);
-  if (!ivid) return null;
-
-  const res = await fetchAssignments({
-    ivid, experimentId: route.experimentId, label: route.label,
-  });
-  if (!res || res.assignments.length === 0) return null;
-
-  // A label route may resolve several experiments; apply the first that maps to
-  // an actual change (a single slot can only show one treatment).
-  for (const assignment of res.assignments) {
-    const entry = assignmentToPznEntry(assignment, route, path);
-    if (entry) return entry;
-  }
-  return null;
-}
-
-/**
- * Resolves a `PznEntry` via the real IXP Assignment API over HTTP, or null
- * (passthrough). Thin wrapper over `resolveEntryWith` with the network transport.
- * @param {IxpClientEnv} env
- * @param {Request} request
- * @returns {Promise<PznEntry | null>}
- */
-export function resolveIxpEntry(env, request) {
-  return resolveEntryWith(request, (params) => fetchAssignment(env, params));
 }

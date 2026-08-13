@@ -591,18 +591,10 @@ main:has(.event-cards) > .section:first-of-type p {
 /* eyebrow utility */
 .eyebrow { font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
 
-/* case-study article body (Template: "Case Study" metadata -> body.case-study):
-   narrow the plain prose sections (h2/p/blockquote, no block) to article width.
-   Blocks (case-study-header, stat-band.glance, testimonial, case-study-cards,
-   cta-band) get their own wrapper class from decorateBlock() and manage their
-   own width, so this only touches default-content-wrapper. */
-body.case-study main .default-content-wrapper { max-width: 46em; margin: 0 auto; }
+body.case-study main .default-content-wrapper,
+body.case-study main .stat-band { max-width: 46em; margin: 0 auto; }
+body.case-study main .stat-band { margin-top: 1rem; }
 
-/* author bio page hero (Template: "Author" metadata -> body.author): the
-   photo/name/bio is plain default content (no dedicated block), authored as
-   h1 -> photo paragraph -> bio paragraph. Center it and mask the photo into
-   a circular avatar to match the original; `order: -1` moves the photo above
-   the h1 visually without requiring every author page to be re-authored. */
 body.author main .default-content-wrapper {
   display: flex;
   flex-direction: column;
