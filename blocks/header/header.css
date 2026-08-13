@@ -275,6 +275,7 @@ body.nav-scroll-lock { overflow: hidden; }
 .header .ies-events.ies-events-dark { background: var(--navy); color: #fff; }
 .header .ies-events.ies-events-dark .container { font-size: 16px; line-height: 24px; }
 .header .ies-events.ies-events-dark a { color: #fff; }
+
 /* accent phrase (events-bar-highlight) — source renders "construction edition"
    in cyan/600 on the navy bar */
 .header .ies-events.ies-events-dark .ies-events-hl { color: #07c4d9; font-weight: 600; }
