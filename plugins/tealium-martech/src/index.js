@@ -7,17 +7,20 @@
  * first match wins:
  *
  *   erp.intuit.com                              -> 'prod'
- *   stage.erp.intuit.com                        -> 'dev'   (Intuit staging; see CONSENT note)
+ *   stage.erp.intuit.com                        -> 'dev'   (Intuit staging; consent CDN reachable)
+ *   *--intuit-erp--aemsites.aem.live            -> 'dev'
+ *   *--intuit-erp--aemsites.aem.page            -> 'dev'
  *   localhost, 127.0.0.1                        -> 'dev'
- *   anything else (incl. the *.aem.page / *.aem.live previews) -> null (inert)
+ *   anything else (e.g. *.preview.da.live)      -> null (inert)
  *
  * Only `erp.intuit.com` can ever resolve to `'prod'` — there is no override/config path that can
- * escalate a non-prod host to `'prod'`. The AEM preview hosts
- * (`*--intuit-erp--aemsites.aem.page` / `.aem.live`) are intentionally INERT: they are not
- * `intuit.com` origins, so Intuit's OneTrust consent CDN (`privacy-cdn*.a.intuit.com`)
- * CloudFront-blocks them, consent can never settle, and the `ies-erp` profile's consent
- * extension would recurse. Non-prod martech therefore runs on `stage.erp.intuit.com` (an
- * `intuit.com` origin where the consent stack IS reachable).
+ * escalate a non-prod host to `'prod'`. CONSENT CAVEAT: the AEM preview hosts
+ * (`*--intuit-erp--aemsites.aem.page` / `.aem.live`) and `localhost` are NOT `intuit.com`
+ * origins, so Intuit's OneTrust consent CDN (`privacy-cdn*.a.intuit.com`) CloudFront-blocks them
+ * and the default (CDN) consent stack can't settle there — the profile's consent extension would
+ * recurse. On those hosts use `?martech=local` (local consent copies from `/scripts/martech/`, see
+ * scripts.js) or `?martech=off`. Only `stage.erp.intuit.com` and prod can run the CDN consent
+ * stack directly.
  *
  * Consumed from `scripts/scripts.js` (eager/lazy/delayed phases) — Tealium is that file's default
  * provider; the legacy Adobe/aem-martech path is opt-in only via `?martech=adobe`. Whichever
@@ -63,8 +66,11 @@ let config = { ...DEFAULT_CONFIG };
 
 /**
  * Resolves which Tealium (utag) environment, if any, applies to the current hostname. First
- * match wins; matching is EXACT (no suffix matching), so lookalike hostnames such as
- * `erp.intuit.com.evil.com` or `stage.erp.intuit.com.evil.com` resolve to `null`.
+ * match wins. `erp.intuit.com`, `stage.erp.intuit.com`, `localhost` and `127.0.0.1` match
+ * exactly; the AEM preview hosts match by the `--intuit-erp--aemsites.aem.{live,page}` suffix
+ * (any branch prefix). Lookalikes — `erp.intuit.com.evil.com`,
+ * `x--intuit-erp--aemsites.aem.live.evil.com` — resolve to `null`, since the exact checks and the
+ * suffix-must-be-at-the-end (`endsWith`) check both reject a trailing `.evil.com`.
  * SAFETY: only `erp.intuit.com` may ever resolve to `'prod'`; every other host resolves to
  * `'dev'` or `null` (inert) — there is no config/query-string override that can escalate a
  * non-prod host to `'prod'`.
@@ -74,6 +80,8 @@ export function resolveEnvironment() {
   const { hostname } = window.location;
   if (hostname === 'erp.intuit.com') return 'prod';
   if (hostname === 'stage.erp.intuit.com') return 'dev';
+  if (hostname.endsWith('--intuit-erp--aemsites.aem.live')) return 'dev';
+  if (hostname.endsWith('--intuit-erp--aemsites.aem.page')) return 'dev';
   if (hostname === 'localhost' || hostname === '127.0.0.1') return 'dev';
   return null;
 }

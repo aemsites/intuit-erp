@@ -90,14 +90,16 @@ describe('resolveEnvironment / isProdHost', () => {
     expect(resolveEnvironment()).toBe('dev');
   });
 
-  it('stays inert (null) on the AEM preview hosts (aem.page / aem.live — not intuit.com origins)', () => {
+  it('resolves "dev" on the AEM preview hosts (aem.page / aem.live, any branch prefix)', () => {
     stubLocation({ hostname: AEM_PAGE_HOST });
-    expect(resolveEnvironment()).toBeNull();
+    expect(resolveEnvironment()).toBe('dev');
     stubLocation({ hostname: AEM_LIVE_HOST });
-    expect(resolveEnvironment()).toBeNull();
+    expect(resolveEnvironment()).toBe('dev');
     // ...regardless of the leading branch name.
     stubLocation({ hostname: 'feature-xyz--intuit-erp--aemsites.aem.page' });
-    expect(resolveEnvironment()).toBeNull();
+    expect(resolveEnvironment()).toBe('dev');
+    stubLocation({ hostname: 'feature-xyz--intuit-erp--aemsites.aem.live' });
+    expect(resolveEnvironment()).toBe('dev');
     expect(isProdHost()).toBe(false);
   });
 
@@ -112,9 +114,17 @@ describe('resolveEnvironment / isProdHost', () => {
     expect(resolveEnvironment()).toBeNull();
   });
 
-  it('uses EXACT matching — lookalike hosts resolve to null, never prod/dev', () => {
-    // Guards the `===` checks against ever being loosened to a suffix/substring match.
-    ['erp.intuit.com.evil.com', 'stage.erp.intuit.com.evil.com', 'notreallyerp.intuit.com', 'xstage.erp.intuit.com'].forEach((hostname) => {
+  it('rejects lookalike hosts with trailing junk — never prod/dev', () => {
+    // The exact (`===`) checks guard against substring matching; the aem-preview `endsWith` checks
+    // guard against a suffix appearing anywhere but the very end. A trailing `.evil.com` defeats both.
+    [
+      'erp.intuit.com.evil.com',
+      'stage.erp.intuit.com.evil.com',
+      'notreallyerp.intuit.com',
+      'xstage.erp.intuit.com',
+      'x--intuit-erp--aemsites.aem.live.evil.com',
+      'x--intuit-erp--aemsites.aem.page.evil.com',
+    ].forEach((hostname) => {
       stubLocation({ hostname });
       expect(resolveEnvironment()).toBeNull();
     });
@@ -205,11 +215,11 @@ describe('utag_cfg_ovrd.utagdb (Tealium debug console) by resolved environment',
     expect(window.utag_cfg_ovrd.utagdb).toBe(true);
   });
 
-  it('does not set utagdb on the now-inert AEM preview host (aem.page)', () => {
+  it('sets utagdb=true for the dev environment (aem.page preview host)', () => {
     stubLocation({ hostname: AEM_PAGE_HOST });
     // eslint-disable-next-line no-new
     new TealiumMartech();
-    expect(window.utag_cfg_ovrd.utagdb).toBeFalsy();
+    expect(window.utag_cfg_ovrd.utagdb).toBe(true);
   });
 
   it('does not set utagdb for the prod environment', () => {
