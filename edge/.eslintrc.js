@@ -34,7 +34,6 @@ module.exports = {
     'import/prefer-default-export': 'off', // worker modules are grouped by concern, not default-exported
     'linebreak-style': ['error', 'unix'], // enforce unix linebreaks
     'no-param-reassign': [2, { props: false }], // allow modifying properties of param
-    'no-bitwise': 'off', // the fixture bucketing hash uses bitwise ops intentionally
     'no-restricted-syntax': ['error', 'ForInStatement', 'LabeledStatement', 'WithStatement'], // allow for..of
     'max-len': ['error', {
       code: 100,
