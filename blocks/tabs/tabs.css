@@ -163,16 +163,21 @@
 }
 .tabs ul.tab-body li { line-height: 1.4; }
 
+/* intro paragraph above the widget — centred at all widths (source), 20px on desktop */
+.tabs-container .default-content-wrapper p {
+  text-align: center;
+}
+
 @media (width >= 900px) {
   /* desktop heading: centred, larger */
   .tabs-container .default-content-wrapper h2 {
     font-size: 40px; line-height: 52px; font-weight: 500; text-align: center; margin: 0 0 40px;
   }
 
-  /* intro paragraph above the widget — centred, 20px on desktop (source).
+  /* intro paragraph above the widget — 20px on desktop (source).
      Width varies per page, so centre within the section rather than cap width. */
   .tabs-container .default-content-wrapper p {
-    font-size: 20px; line-height: 28px; text-align: center;
+    font-size: 20px; line-height: 28px;
   }
 
   /* all tabs fit — hide the carousel arrows, equal-width tabs, no scroll */
