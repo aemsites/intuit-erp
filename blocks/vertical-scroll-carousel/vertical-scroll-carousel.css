@@ -214,4 +214,12 @@
     color: #000;
     cursor: default;
   }
+
+  /* the source frames a single-item feature with generous vertical padding
+     (erp.intuit.com feature-section: padding 120px 155px) rather than letting
+     it sit flush against the neighbouring carousel. Mirror that breathing room
+     so the spacing between this block and the one above/below matches. */
+  .vertical-scroll-carousel:has(.vsc-list .vsc-item:only-child) {
+    padding-block: 120px;
+  }
 }
