@@ -1,5 +1,5 @@
 /**
- * POST /api/de — client-driven Decision Engine batch personalization.
+ * POST /api/pzn — client-driven Decision Engine batch personalization.
  *
  * Body: { slots: [{ placement, experience? }], path? }. The client supplies the
  * slots (placement comes from a lowercased `pzn-<placement>` class); the worker
@@ -9,12 +9,12 @@
  * Unpersonalized slots are omitted. Empty array on no slots / no ivid / failure.
  */
 
-import { fetchBatch } from '../de/batch-client.js';
-import { slotEntryToPznEntry, buildAttributes, entryForSlot } from '../de/resolve.js';
+import { fetchBatch } from '../pzn/batch-client.js';
+import { slotEntryToPznEntry, buildAttributes, entryForSlot } from '../pzn/resolve.js';
 import { readIvid } from '../ivid.js';
 import { json, refererPath } from './http.js';
 
-export async function handleDe(request, env) {
+export async function handlePzn(request, env) {
   let payload;
   try {
     payload = await request.json();

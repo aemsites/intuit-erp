@@ -4,7 +4,7 @@
  */
 
 import { guard } from './guard.js';
-import { handleDe } from './de.js';
+import { handlePzn } from './pzn.js';
 import { handleIxp } from './ixp.js';
 
 export async function handleApi(request, env) {
@@ -18,8 +18,8 @@ export async function handleApi(request, env) {
   if (!g.ok) return g.response;
 
   let res;
-  if (pathname === '/api/de' && request.method === 'POST') {
-    res = await handleDe(request, env);
+  if (pathname === '/api/pzn' && request.method === 'POST') {
+    res = await handlePzn(request, env);
   } else if (pathname === '/api/ixp' && request.method === 'GET') {
     res = await handleIxp(request, env);
   } else {
