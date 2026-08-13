@@ -279,8 +279,12 @@ function eventsBarHTML() {
   const text = getMetadata('events-bar-text') || 'Check out';
   const href = getMetadata('events-bar-link') || '/events';
   const cta = getMetadata('events-bar-cta') || 'upcoming events and Intuit Enterprise Suite updates';
+  // Optional per-page colour variant. Default is the cyan bar; "dark" gives the
+  // navy/white treatment (e.g. /construction's open-beta banner on the source).
+  const variant = (getMetadata('events-bar-variant') || '').trim().toLowerCase();
+  const variantClass = variant === 'dark' ? ' ies-events-dark' : '';
   return `
-<div class="ies-events">
+<div class="ies-events${variantClass}">
   <div class="container">
     ${text} <a href="${href}">${cta}</a>.
   </div>
