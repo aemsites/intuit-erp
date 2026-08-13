@@ -351,6 +351,36 @@ function seedUdo() {
 const DEBUG_ENVIRONMENTS = ['dev'];
 
 /**
+ * Runs `fn` (a utag tracked call — view/link) ONLY once Tealium consent has resolved
+ * (`utag.gdpr.getConsentState() !== 0`), polling until it does or `timeoutMs` elapses.
+ *
+ * THE one invariant this loader must hold: never hand utag a tracked call while consent is `0`.
+ * `utag.view`/`utag.link` called with `getConsentState() === 0` enqueue the event onto
+ * `utag.gdpr.queue`, and the `ies-erp` profile's consent extension then recurses over that queue
+ * (`processQueue` ↔ `setPreferencesValues`, stack overflow — see `lazy()`). This applies to EVERY
+ * tracked call, not just the initial view: the delayed-phase `delayed_ready` link hit exactly this.
+ * Consent can legitimately stay `0` for a while (or forever) on a non-`intuit.com` host where the
+ * consent CDN is CloudFront-blocked and no `?martech=local` copies settle it — in which case the
+ * call is dropped after the timeout: no tracking, but no loop.
+ * @param {Function} fn the tracked call to run once consent is resolved
+ * @param {Number} [timeoutMs=8000] max time to wait for consent before dropping the call
+ */
+function whenConsentResolved(fn, timeoutMs = 8000) {
+  const gdpr = window.utag && window.utag.gdpr;
+  if (!gdpr || typeof gdpr.getConsentState !== 'function') return;
+  if (gdpr.getConsentState() !== 0) { fn(); return; }
+  const start = Date.now();
+  const id = window.setInterval(() => {
+    if (gdpr.getConsentState() !== 0) {
+      window.clearInterval(id);
+      fn();
+    } else if (Date.now() - start >= timeoutMs) {
+      window.clearInterval(id); // fail-open: consent never resolved — drop the call, never loop
+    }
+  }, 200);
+}
+
+/**
  * Tealium iQ client-side loader. Inert on every hostname `resolveEnvironment` doesn't recognize
  * (e.g. *.preview.da.live) — see `resolveEnvironment`.
  */
@@ -422,10 +452,13 @@ export default class TealiumMartech {
     await loadConsentStack(this.env, this.local);
     await settleConsent();
     await loadUtag(this.env, this.local);
-    // Prod parity: we deliberately do NOT call utag.view() here. With no `noview` override (see the
-    // constructor), utag fires its own initial view at loader.END and consent-gates it via its own
-    // queue — exactly like erp.intuit.com. Firing a view here while getConsentState()===0 is what
-    // seeded the profile consent extension's infinite processQueue<->setPreferencesValues loop.
+    // Fire the initial page view — but ONLY once consent has resolved. `head.html` sets
+    // `utag_cfg_ovrd.noview=true` (suppressing utag's OWN auto-view, which carries the identical
+    // loop risk), so firing the view is ours to do; `whenConsentResolved` guarantees it never
+    // enqueues into a `getConsentState()===0` state (the profile consent-extension recursion).
+    if (window.utag?.view) {
+      whenConsentResolved(() => window.utag.view(window.utag_data));
+    }
   }
 
   /**
@@ -433,7 +466,9 @@ export default class TealiumMartech {
    */
   delayed() {
     if (!this.enabled || !window.utag?.link) return;
-    window.utag.link({ tealium_event: 'delayed_ready' });
+    // Consent-gated: firing this link while getConsentState()===0 enqueues it and triggers the
+    // profile consent-extension recursion (this was the delayed-phase regression).
+    whenConsentResolved(() => window.utag.link({ tealium_event: 'delayed_ready' }));
   }
 
   /**
@@ -442,7 +477,7 @@ export default class TealiumMartech {
    */
   trackView(d) {
     if (!this.enabled || !window.utag?.view) return;
-    window.utag.view({ ...window.utag_data, ...d });
+    whenConsentResolved(() => window.utag.view({ ...window.utag_data, ...d }));
   }
 
   /**
@@ -451,6 +486,6 @@ export default class TealiumMartech {
    */
   trackEvent(d) {
     if (!this.enabled || !window.utag?.link) return;
-    window.utag.link({ ...d });
+    whenConsentResolved(() => window.utag.link({ ...d }));
   }
 }
