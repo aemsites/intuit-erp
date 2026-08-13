@@ -42,6 +42,7 @@
  * CSS: blocks/blog-template/blog-template.css
  */
 import { getMetadata, toClassName, loadCSS } from '../../scripts/aem.js';
+import { hasAuthoredCaseStudyHeader } from './blog-detect.js';
 
 /**
  * Selects the article's main H2 sections only — excludes headings nested
@@ -401,7 +402,7 @@ export function buildBlogTemplate(main) {
   // Bail out so the page isn't decorated twice (the hero band would wrap the
   // banner); the migrated case studies, which have a bare H1 + hero image, fall
   // through and get the band that upstream uses.
-  if (main.querySelector('.case-study-header')) return;
+  if (hasAuthoredCaseStudyHeader(main)) return;
 
   main.classList.add('blog-article');
 

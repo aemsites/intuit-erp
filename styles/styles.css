@@ -591,14 +591,17 @@ main:has(.event-cards) > .section:first-of-type p {
 /* eyebrow utility */
 .eyebrow { font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
 
-/* Case studies whose document hand-authors a `case-study-header` block get that
-   block's centred 46em measure for the rest of the page too. Scoped off
-   main.blog-article deliberately: every other case study takes the standard
-   article layout (hero band + rails, see blocks/blog-template), where a blanket
-   46em clamp would squeeze the full-width hero band down to a narrow column. */
-body.case-study main:not(.blog-article) .default-content-wrapper,
-body.case-study main:not(.blog-article) .stat-band { max-width: 46em; margin: 0 auto; }
-body.case-study main:not(.blog-article) .stat-band { margin-top: 1rem; }
+/* Case studies whose document authors a `case-study-header` block get that
+   block's centred 46em measure for the rest of the page too. Gated on the block
+   being present rather than on `main:not(.blog-article)`: the migrated case
+   studies take the standard article layout (hero band + rails, see
+   blocks/blog-template), where a blanket 46em clamp squeezes the full-width hero
+   band into a narrow column. Keying off the authored block states that condition
+   directly, so it cannot drift from the JS guard that reads the same thing
+   (hasAuthoredCaseStudyHeader) or mis-fire if that JS throws. */
+body.case-study main:has(.case-study-header) .default-content-wrapper,
+body.case-study main:has(.case-study-header) .stat-band { max-width: 46em; margin: 0 auto; }
+body.case-study main:has(.case-study-header) .stat-band { margin-top: 1rem; }
 
 body.author main .default-content-wrapper {
   display: flex;

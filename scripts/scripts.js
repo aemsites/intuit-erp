@@ -29,7 +29,7 @@ import { sendOf1Signal, readAlloySegmentIds } from './of1-rtcdp-signal.js';
 // are NOT pulled onto the eager critical path here. buildBlogTemplate is
 // dynamically imported in loadEager for blog pages only (see below); the full
 // video block loads lazily when a video is actually decorated.
-import { isBlogPage } from '../blocks/blog-template/blog-detect.js';
+import { isBlogPage, hasAuthoredCaseStudyHeader } from '../blocks/blog-template/blog-detect.js';
 import { isVideoLink } from '../blocks/video/video-info.js';
 
 // Adobe Web SDK / AEP datastream. The datastream id is public (not a secret)
@@ -171,6 +171,10 @@ function buildVideoAutoBlocks(main) {
 // ~21KB blog-template module never loads on other pages. Stays undefined
 // elsewhere, which also serves as the "is this a blog page" gate below.
 let buildBlogTemplate;
+
+// Longest the eager phase will hold the (hidden) page waiting for
+// blog-template.css before giving up and painting unstyled — see loadEager.
+const BLOG_TEMPLATE_CSS_TIMEOUT = 2000;
 
 /**
  * Builds all synthetic blocks in a container element.
@@ -384,11 +388,26 @@ async function loadEager(doc) {
     // let the hero paint in the unstyled single-column flow and then reflow into
     // the band — ~0.4 CLS on desktop. Awaiting it here, before decorateMain,
     // means the band is already styled the first time it paints.
-    if (isBlogPage()) {
+    //
+    // The wait is capped, and that cap is not optional: `body` is
+    // `display: none` until `appear` is added a few lines below (styles.css),
+    // and loadCSS only settles on the link's `load`/`error` events — a request
+    // that stalls without erroring (flaky CDN, captive portal) fires neither, so
+    // an uncapped await would leave the page blank indefinitely. Past the cap,
+    // painting unstyled and reflowing is strictly better than never painting.
+    //
+    // The three case studies that author their own header use neither the module
+    // nor the stylesheet (buildBlogTemplate returns immediately for them), so
+    // they're excluded here rather than paying for both on the LCP path and
+    // throwing the result away.
+    if (isBlogPage() && !hasAuthoredCaseStudyHeader(main)) {
       const [mod] = await Promise.all([
         import('../blocks/blog-template/blog-template.js'),
-        loadCSS(`${window.hlx.codeBasePath}/blocks/blog-template/blog-template.css`)
-          .catch(() => {}),
+        Promise.race([
+          loadCSS(`${window.hlx.codeBasePath}/blocks/blog-template/blog-template.css`)
+            .catch(() => {}),
+          new Promise((resolve) => { window.setTimeout(resolve, BLOG_TEMPLATE_CSS_TIMEOUT); }),
+        ]),
       ]);
       ({ buildBlogTemplate } = mod);
     }

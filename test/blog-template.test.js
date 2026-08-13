@@ -1,7 +1,10 @@
-import { describe, it, expect, vi } from 'vitest';
+import {
+  describe, it, expect, vi, afterEach,
+} from 'vitest';
 import {
   buildToc, buildByline, buildEyebrow, buildBylineMeta,
   buildShare, relocateShare, tocRailRowEnd, isBlogPage,
+  buildBlogTemplate,
 } from '../blocks/blog-template/blog-template.js';
 
 describe('buildToc', () => {
@@ -221,10 +224,13 @@ describe('isBlogPage', () => {
     expect(isBlogPage()).toBe(false);
   });
 
-  it('is false for the Search page and for an unknown template', () => {
-    setPage('/blog/search', 'Search');
+  it('is false for a Search or unknown template even on an article-shaped path', () => {
+    // deliberately article-shaped paths (>=2 segments, not /author/*) so the
+    // template value is what decides — a single-segment path like /blog/search
+    // would return false via the path fallback whatever the template said, and
+    // would keep passing if `search` were ever added to the article list.
+    setPage('/blog/search/results', 'Search');
     expect(isBlogPage()).toBe(false);
-    // an unrecognised template must not fall through to the path-shape guess
     setPage('/blog/case-study/some-slug', 'Landing Page');
     expect(isBlogPage()).toBe(false);
   });
@@ -241,5 +247,55 @@ describe('isBlogPage', () => {
     expect(isBlogPage()).toBe(false); // single-segment category
     setPage('/blog/author/gene-marks', null);
     expect(isBlogPage()).toBe(false); // author listing
+  });
+});
+
+describe('buildBlogTemplate', () => {
+  const mainWith = (html) => {
+    const main = document.createElement('main');
+    main.innerHTML = html;
+    document.body.append(main);
+    return main;
+  };
+
+  afterEach(() => {
+    document.querySelectorAll('main').forEach((m) => m.remove());
+    document.head.innerHTML = '';
+    delete window.hlx;
+    delete window.matchMedia;
+  });
+
+  it('leaves a page that authors a case-study-header completely undecorated', () => {
+    // The three net-new case studies render their own centred banner. Decorating
+    // them as well would double up, so nothing here may run — in particular the
+    // `blog-article` class, which is what tells the article CSS to take over.
+    const main = mainWith('<div><div class="case-study-header"><div><div>Case study</div></div></div></div>');
+    const before = main.innerHTML;
+
+    buildBlogTemplate(main);
+
+    expect(main.classList.contains('blog-article')).toBe(false);
+    expect(main.querySelector('.blog-hero')).toBeNull();
+    expect(main.querySelector('.blog-toc-rail')).toBeNull();
+    expect(main.querySelector('.blog-rail')).toBeNull();
+    expect(main.innerHTML).toBe(before);
+  });
+
+  it('decorates an ordinary article — the guard above is what makes the difference', () => {
+    window.hlx = { codeBasePath: '' };
+    window.matchMedia = () => ({ matches: false, addEventListener: () => {} });
+    const main = mainWith(`
+      <div><h1>Headline</h1><p><picture><img src="hero.jpg"></picture></p></div>
+      <div><h2>One</h2><p>a</p></div>
+      <div><h2>Two</h2><p>b</p></div>
+    `);
+
+    buildBlogTemplate(main);
+
+    expect(main.classList.contains('blog-article')).toBe(true);
+    expect(main.querySelector('.blog-hero')).toBeTruthy();
+    expect(main.querySelector('.blog-toc-rail')).toBeTruthy();
+    // right-rail fragment link, which the fragment autoblock then picks up
+    expect(main.querySelector('.blog-rail a').getAttribute('href')).toBe('/fragments/right-rail');
   });
 });

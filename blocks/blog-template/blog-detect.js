@@ -21,15 +21,23 @@ import { getMetadata } from '../../scripts/aem.js';
  *    byline) over a full-width body, not this article layout. Adding it here
  *    would be worse than leaving it plain; tracked in issue #423.
  */
-export const ARTICLE_TEMPLATES = ['blog article', 'case study', 'research'];
+const ARTICLE_TEMPLATES = ['blog article', 'case study', 'research'];
 
 /**
- * The page's `template` metadata, lower-cased and trimmed so it can be compared
- * against ARTICLE_TEMPLATES. Empty string when the page carries no template.
- * @returns {string}
+ * True when the document authors its own `case-study-header` block at the top of
+ * the page. The three net-new case studies do (aprio, sparq-partners,
+ * steves-construction-company); they own their header, so the whole
+ * blog-template treatment is skipped for them — including the module import and
+ * stylesheet fetch in loadEager, neither of which they would use.
+ *
+ * Scoped to the first section on purpose: a `case-study-header` authored further
+ * down a page must not silently strip that page's hero band, TOC and rails.
+ * Called before decorateSections runs, so section 1 is `main > div:first-child`.
+ * @param {Element} main the page's <main>
+ * @returns {boolean}
  */
-export function pageTemplate() {
-  return getMetadata('template').trim().toLowerCase();
+export function hasAuthoredCaseStudyHeader(main) {
+  return !!main.querySelector(':scope > div:first-child .case-study-header');
 }
 
 /**
@@ -39,7 +47,7 @@ export function pageTemplate() {
 export function isBlogPage() {
   const path = window.location.pathname;
   if (!path.startsWith('/blog/')) return false;
-  const template = pageTemplate();
+  const template = getMetadata('template').trim().toLowerCase();
   // An explicitly authored template always decides — including one we don't
   // recognise, which must not then be guessed at from the path shape.
   if (template) return ARTICLE_TEMPLATES.includes(template);
