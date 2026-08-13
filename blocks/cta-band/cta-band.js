@@ -1,4 +1,4 @@
-import { openScheduleModal } from '../../scripts/schedule-modal.js';
+import { bindScheduleLinks } from '../../scripts/schedule-modal.js';
 
 function text(el) {
   return el ? el.textContent.trim() : '';
@@ -68,12 +68,7 @@ function buildCard(row) {
     bodyParas.forEach((p) => body.append(p));
   }
 
-  card.querySelectorAll('a[href="#schedule"]').forEach((a) => {
-    a.addEventListener('click', (e) => {
-      e.preventDefault();
-      openScheduleModal();
-    });
-  });
+  bindScheduleLinks(card);
 
   return card;
 }
