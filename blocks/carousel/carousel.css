@@ -134,6 +134,13 @@
 
 .carousel.testimonial.has-title { --testi-card: #1a3b5c; }
 
+/* .pale and .has-title are independently toggleable, and nothing stops a
+   future titled slide from being authored on a pale-themed page. Without
+   this, has-title's navy --testi-card would win here (same specificity,
+   declared later) while pale's black --testi-text stayed, leaving unreadable
+   contrast — so pin pale's own colours whenever the two combine. */
+.carousel.testimonial.has-title.pale { --testi-card: #eaf6f7; --testi-text: #000; }
+
 /* The 6px conic-gradient ring around the titled card. A gradient can't be a
    border-color, so the ring is a transparent border filled by a border-box
    background layer, with a solid padding-box layer over it for the card. The

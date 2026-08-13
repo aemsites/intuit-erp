@@ -78,6 +78,18 @@ describe('carousel.testimonial normalizer', () => {
     document.querySelector('.video-modal-overlay').remove();
   });
 
+  it('keeps the <picture> wrapper (and its <source> variants) for the four-cell shape', () => {
+    const block = make(`<div>
+      <div><picture><source srcset="a.webp" type="image/webp"><img src="a.jpg" alt="Blake"></picture></div>
+      <div>“Quote text”</div>
+      <div>Blake Rohm, Director of Finance, Lallier</div>
+    </div>`);
+    decorate(block);
+    const mediaEl = block.querySelector('.testi-media > *');
+    expect(mediaEl.tagName).toBe('PICTURE');
+    expect(mediaEl.querySelector('source')).not.toBeNull();
+  });
+
   it('keeps a non-video CTA as a plain link', () => {
     const block = make(`<div>
       <div><picture><img src="a.jpg" alt="x"></picture></div>

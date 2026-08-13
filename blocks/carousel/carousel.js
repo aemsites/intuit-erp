@@ -74,6 +74,8 @@ function splitFeatureQuote(slide) {
  * @param {string} title accessible iframe title
  */
 function openVideoModal(embedUrl, title) {
+  // guard against a double-click or two different CTAs stacking overlays
+  if (document.querySelector('.video-modal-overlay')) return;
   loadCSS(`${window.hlx.codeBasePath}/blocks/video/video.css`);
   const overlay = document.createElement('div');
   overlay.className = 'video-modal-overlay';
@@ -81,7 +83,7 @@ function openVideoModal(embedUrl, title) {
   frame.className = 'video-modal-frame';
   const iframe = document.createElement('iframe');
   iframe.src = embedUrl;
-  iframe.title = title;
+  iframe.title = title || 'Video';
   iframe.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
   iframe.allowFullscreen = true;
   frame.append(iframe);
@@ -170,7 +172,6 @@ function normalizeTestimonial(slide) {
     // single comma-separated line, so flatten it rather than ask every page to
     // be re-authored
     a.querySelectorAll('br').forEach((br) => br.replaceWith(', '));
-    a.querySelectorAll('strong, b').forEach((s) => s.replaceWith(...s.childNodes));
     a.textContent = a.textContent.replace(/\s*,\s*/g, ', ').replace(/,\s*$/, '').trim();
     body.append(a);
   }
@@ -182,7 +183,10 @@ function normalizeTestimonial(slide) {
     const info = videoInfo(link.getAttribute('href'));
     if (info) {
       // a video CTA plays in place rather than navigating off the page, which
-      // is what upstream does and what every authored link here points at
+      // is what upstream does and what every authored link here points at.
+      // Preload the modal's styles now so the first click doesn't paint an
+      // unstyled overlay while video.css is still fetching.
+      loadCSS(`${window.hlx.codeBasePath}/blocks/video/video.css`);
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'testi-cta-button';
@@ -201,7 +205,10 @@ function normalizeTestimonial(slide) {
 
   const mediaWrap = document.createElement('div');
   mediaWrap.className = 'testi-media';
-  if (media) mediaWrap.append(media.querySelector('picture, img') || media);
+  // media is either the picture/img itself (four-cell shape) or a wrapper
+  // around it (single-cell shapes) — querying inside an already-matched
+  // picture would return its bare <img> and drop its <source> variants
+  if (media) mediaWrap.append(media.matches('picture, img') ? media : (media.querySelector('picture, img') || media));
 
   slide.replaceChildren(mediaWrap, body);
   return !!title;
