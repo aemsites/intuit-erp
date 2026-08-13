@@ -119,19 +119,10 @@ export default async function decorate(block) {
   // right-hand media column.
   const isCentered = block.classList.contains('centered');
   const isGradient = block.classList.contains('gradient');
-  // `light` is a section-level treatment (light-beige band, dark text — see
-  // hero.css). Authors can also reach it generically via Section Metadata
-  // "Style: light"; when it's authored as a hero block variant instead, promote
-  // it onto the section here so the section-scoped CSS applies either way —
-  // exactly as `gradient` is handled just below.
-  const isLight = block.classList.contains('light');
   const rows = [...block.children];
 
   if (isGradient) {
     block.closest('.section').classList.add('gradient');
-  }
-  if (isLight) {
-    block.closest('.section').classList.add('light');
   }
 
   const copy = document.createElement('div');
