@@ -398,12 +398,13 @@ describe('local mode (?martech=local) source paths', () => {
   it('loadConsentStack(env, true) loads the 3 consent scripts from /scripts/martech/', async () => {
     const promise = loadConsentStack('dev', true);
     const stub = document.getElementById('onetrust-stub');
-    expect(stub.src).toContain('/scripts/martech/otSDKStub.js');
+    // Mirrors the CDN layout so otSDKStub resolves its config to stable/consent/<id>/<id>.json.
+    expect(stub.src).toContain('/scripts/martech/stable/scripttemplates/otSDKStub.js');
     expect(stub.src).not.toContain('privacy-cdn');
     stub.dispatchEvent(new Event('load'));
     await settle();
     const wrapper = document.getElementById('intuit-consent-wrapper');
-    expect(wrapper.src).toContain('/scripts/martech/cookies-consent-wrapper.min.js');
+    expect(wrapper.src).toContain('/scripts/martech/stable/consent-wrapper/cookies-consent-wrapper.min.js');
     wrapper.dispatchEvent(new Event('load'));
     await settle();
     const gdprUtil = document.getElementById('intuit-gdpr-util');

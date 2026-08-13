@@ -269,15 +269,18 @@ export async function loadConsentStack(env, local = false) {
   // Required global callback by the OneTrust SDK — pre-declared so the stub never calls into an
   // undefined global regardless of exactly when it finishes loading.
   window.OptanonWrapper = window.OptanonWrapper || (() => {});
-  // `?martech=local` serves all three scripts same-origin from /scripts/martech/ (Intuit's real
-  // consent CDN is VPN-gated, so it 403s off-VPN); otherwise use the per-env vendor CDNs.
+  // `?martech=local` serves the scripts same-origin from /scripts/martech/ (Intuit's real consent
+  // CDN is VPN-gated, so it 403s off-VPN). The OneTrust files MIRROR the CDN layout
+  // (stable/scripttemplates/otSDKStub.js, stable/consent-wrapper/…, stable/consent/<id>/<id>.json)
+  // on purpose: otSDKStub derives its config URL by splitting its own src on `scripttemplates/`, so
+  // so the stub must live under stable/scripttemplates/ for the config to resolve correctly.
   const base = local ? localMartechBase() : null;
   const cdnHost = local ? null : consentCdnHost(env);
 
   await loadScriptOnce({
     id: 'onetrust-stub',
     src: local
-      ? `${base}/otSDKStub.js`
+      ? `${base}/stable/scripttemplates/otSDKStub.js`
       : `https://${cdnHost}/stable/scripttemplates/otSDKStub.js`,
     // The e2e domain-script id is assumed identical to prod's (`74130b76…`) — confirm with Intuit
     // if OneTrust does not initialize on e2e.
@@ -286,7 +289,7 @@ export async function loadConsentStack(env, local = false) {
   await loadScriptOnce({
     id: 'intuit-consent-wrapper',
     src: local
-      ? `${base}/cookies-consent-wrapper.min.js`
+      ? `${base}/stable/consent-wrapper/cookies-consent-wrapper.min.js`
       : `https://${cdnHost}/stable/consent-wrapper/cookies-consent-wrapper.min.js`,
   });
   await loadScriptOnce({
