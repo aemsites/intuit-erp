@@ -606,14 +606,14 @@ body.author main .default-content-wrapper {
 
 body.author main .default-content-wrapper p:has(picture) {
   order: -1;
-  width: 160px;
+  width: 140px;
   margin: 0 0 24px;
 }
 
 body.author main .default-content-wrapper p:has(picture) img {
-  width: 160px;
-  height: 160px;
-  border-radius: 50%;
+  width: 140px;
+  height: 140px;
+  border-radius: 0;
   object-fit: cover;
 }
 
