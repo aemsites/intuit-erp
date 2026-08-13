@@ -273,12 +273,17 @@ body.nav-scroll-lock { overflow: hidden; }
    source's construction open-beta banner (#00254a === --navy, 16px text). Opt-in,
    so the default cyan bar (e.g. the homepage) is unaffected. */
 .header .ies-events.ies-events-dark { background: var(--navy); color: #fff; }
-.header .ies-events.ies-events-dark .container { font-size: 16px; line-height: 24px; }
 .header .ies-events.ies-events-dark a { color: #fff; }
 
 /* accent phrase (events-bar-highlight) — source renders "construction edition"
    in cyan/600 on the navy bar */
 .header .ies-events.ies-events-dark .ies-events-hl { color: #07c4d9; font-weight: 600; }
+
+/* source bar is 16px on desktop; below the hamburger breakpoint the bar keeps
+   the compact base size so the longer copy doesn't wrap to several lines */
+@media (min-width: 1300px) {
+  .header .ies-events.ies-events-dark .container { font-size: 16px; line-height: 24px; }
+}
 
 /* Matches erp.intuit.com: its 6-item nav + CTA also switches to the hamburger
    well above the general 768px content breakpoint (it stays collapsed through
