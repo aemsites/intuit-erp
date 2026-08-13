@@ -3,7 +3,7 @@
  * /blog/search. Reads the `search-term` query param, searches the Resource
  * Center articles in /blog/query-index.json, and lists matches as
  * thumbnail + title + date rows, 6 at a time behind a "Load More" button that
- * disappears at the end of the list (same batching as resource-cards).
+ * disappears at the end of the list.
  *
  * The page carries its own editable search field (the large underlined input,
  * matching erp.intuit.com's search page) — submitting it re-runs the search

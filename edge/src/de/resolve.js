@@ -1,47 +1,31 @@
 /**
- * Decision Engine entry resolution (use case 2: personalization).
+ * Decision Engine batch-response mapping helpers.
  *
- * Produces the worker's existing `PznEntry[]` — one per personalized slot — from
- * a single Decision Engine batch decision, so the rest of the render path
- * (`resolveOfferMarkup` + `applyPersonalization`) is unchanged. The flow, per
- * the pzn service's Batch endpoint:
- *
- *   1. resolve the page's slots        (de/routes.js)
- *   2. read the ivid                   (cookie / ?ivid= fallback)
- *   3. build the shared attributes      (visitor.js + ivid/locale/device/geo)
- *   4. batch call → per-slot recommendation (de/batch-client.js)
- *   5. map each status:200 slot → a block-replace PznEntry (fragment = pznblock)
- *
- * A slot with a non-200 status (no personalized recommendation) is left as
- * authored. Every failure degrades to an empty array (passthrough) —
- * personalization never breaks the page. The worker does NO decisioning; the
- * Decision Engine decides, this only renders it.
+ * The `/api/de` handler supplies the page's slots and visitor context; these
+ * pure helpers build the batch request's shared `attributes` object and map each
+ * batch response entry onto a normalized decision. The worker does NO decisioning
+ * — the Decision Engine decides, this only shapes the request and reads the reply.
  */
 
-import { resolveDeRoute } from './routes.js';
-import { fetchBatch } from './batch-client.js';
 import { deriveVisitorTokens } from '../visitor.js';
 
 /**
- * @typedef {import('../personalize.js').PznEntry} PznEntry
- * @typedef {import('./routes.js').DeSlot} DeSlot
+ * A normalized personalization decision for one slot.
+ * @typedef {Object} PznEntry
+ * @property {string} path Page path the offer applies to.
+ * @property {string} fragment Offer fragment reference (e.g. `fragments/pzn/slot1`).
+ * @property {string} location Slot id to target in the page.
+ * @property {'replace'} action Operation at the slot.
+ * @property {'block'} fidelity Granularity of the target element.
  */
 
 /**
- * The visitor id, which is the lever the whole flow turns on. In production it
- * comes from the `ivid` cookie the pzn service issues; a `?ivid=` query param
- * overrides that cookie for demo / QA. Null when absent ⇒ nothing to personalize
- * (passthrough).
- * @param {Request} request
- * @returns {string | null}
+ * A personalizable slot on the page.
+ * @typedef {Object} DeSlot
+ * @property {string} location Slot id to target in the page (e.g. `slot-1`).
+ * @property {string} placement Decision Engine placement/accessPoint for the slot.
+ * @property {string} experience Decision Engine experience (e.g. `marketing`).
  */
-function readIvid(request) {
-  const fromQuery = new URL(request.url).searchParams.get('ivid');
-  if (fromQuery) return fromQuery;
-  const cookie = request.headers.get('cookie') || '';
-  const m = cookie.match(/(?:^|;\s*)ivid=([^;]+)/);
-  return m ? decodeURIComponent(m[1]) : null;
-}
 
 /**
  * Builds the shared `attributes` object the batch request carries: the ivid, the
@@ -49,20 +33,25 @@ function readIvid(request) {
  * device type, geo, client IP). Mirrors the pzn service's `attributes` contract;
  * client-only fields (screen resolution) and marketing ids (casId, priorityCode)
  * are not derivable at the edge and are omitted.
+ *
+ * The locale normally comes from the visitor's `Accept-Language`; a `?locale=`
+ * query param overrides it (demo / QA — the batch response is keyed by locale, so
+ * this forces a specific offer variant regardless of the browser's language).
  * @param {Request} request
  * @param {string} ivid
  * @param {string} permalink The page path being personalized.
  * @returns {Record<string, unknown>}
  */
-function buildAttributes(request, ivid, permalink) {
+export function buildAttributes(request, ivid, permalink) {
   const v = deriveVisitorTokens(request);
   const ua = request.headers.get('user-agent') || '';
   const deviceType = /Mobi|Android|iPhone|iPad/i.test(ua) ? 'Mobile' : 'Desktop';
+  const localeOverride = new URL(request.url).searchParams.get('locale');
 
   const attributes = {
     ivid,
     permalink,
-    locale: v.lang || 'en-US',
+    locale: localeOverride || v.lang || 'en-US',
     deviceType,
     newVisitor: true,
   };
@@ -84,9 +73,12 @@ function buildAttributes(request, ivid, permalink) {
  * @param {DeSlot} slot
  * @returns {any | null}
  */
-function entryForSlot(response, slot) {
+export function entryForSlot(response, slot) {
+  const want = String(slot.placement).toLowerCase();
   for (const value of Object.values(response)) {
-    if (value && value.placement === slot.placement) return value;
+    if (value && typeof value.placement === 'string' && value.placement.toLowerCase() === want) {
+      return value;
+    }
   }
   return null;
 }
@@ -100,7 +92,7 @@ function entryForSlot(response, slot) {
  * @param {string} path
  * @returns {PznEntry | null}
  */
-function slotEntryToPznEntry(responseEntry, slot, path) {
+export function slotEntryToPznEntry(responseEntry, slot, path) {
   if (!responseEntry || responseEntry.status !== 200) return null;
   // The pzn service nests recommendations under `data.recommendations.
   // recommendation[]`, and the fragment to inject is `copyData.pznblock`
@@ -115,33 +107,4 @@ function slotEntryToPznEntry(responseEntry, slot, path) {
     action: 'replace',
     fidelity: 'block',
   };
-}
-
-/**
- * Resolves the personalized slot entries for a request via the Decision Engine
- * batch flow, or an empty array (passthrough) when the path is not enrolled,
- * there is no ivid, or nothing personalizes. Every failure → `[]`.
- * @param {import('./batch-client.js').DeClientEnv} env
- * @param {Request} request
- * @returns {Promise<PznEntry[]>}
- */
-export async function resolveDeEntries(env, request) {
-  const path = new URL(request.url).pathname;
-  const route = resolveDeRoute(path);
-  if (!route) return [];
-
-  const ivid = readIvid(request);
-  if (!ivid) return [];
-
-  const attributes = buildAttributes(request, ivid, path);
-
-  const response = await fetchBatch(env, { slots: route.slots, attributes });
-  if (!response) return [];
-
-  const entries = [];
-  for (const slot of route.slots) {
-    const entry = slotEntryToPznEntry(entryForSlot(response, slot), slot, path);
-    if (entry) entries.push(entry);
-  }
-  return entries;
 }

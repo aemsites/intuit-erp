@@ -525,6 +525,7 @@ main .section { padding: 0; }
 /* replica: colored section bands sit flush — no inter-section margin */
 main > .section { margin: 0; }
 main .section:empty { display: none; }
+.da-form-wrapper { display: none; }
 
 /* narrow container variant (prototype .container-narrow = 1180px) */
 main .section.narrow > div { max-width: 1180px; }
@@ -590,12 +591,33 @@ main:has(.event-cards) > .section:first-of-type p {
 /* eyebrow utility */
 .eyebrow { font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
 
-/* case-study article body (Template: "Case Study" metadata -> body.case-study):
-   narrow the plain prose sections (h2/p/blockquote, no block) to article width.
-   Blocks (case-study-header, stat-band.glance, testimonial, case-study-cards,
-   cta-band) get their own wrapper class from decorateBlock() and manage their
-   own width, so this only touches default-content-wrapper. */
-body.case-study main .default-content-wrapper { max-width: 46em; margin: 0 auto; }
+body.case-study main .default-content-wrapper,
+body.case-study main .stat-band { max-width: 46em; margin: 0 auto; }
+body.case-study main .stat-band { margin-top: 1rem; }
+
+body.author main .default-content-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 46em;
+  margin: 0 auto;
+  text-align: center;
+}
+
+body.author main .default-content-wrapper p:has(picture) {
+  order: -1;
+  width: 160px;
+  margin: 0 0 24px;
+}
+
+body.author main .default-content-wrapper p:has(picture) img {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+body.author main .default-content-wrapper p:not(:has(picture)) { max-width: 34em; }
 
 /* pull-quote (case-study article body prose) */
 blockquote {

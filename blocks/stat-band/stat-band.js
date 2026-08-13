@@ -3,30 +3,66 @@
  * case-study "Results at a glance" callout).
  *
  * Section head (h2/h3) is authored as default content before the block.
- * Block rows = one row per stat:
- *   default (index): number / description / company / segment — paged carousel
- *   .stat-band.dark (pricing "Data-backed performance"): number / description — static grid
- *   .stat-band.plain (research guide stat trios): number / description —
- *     the same static grid as .dark, but light bordered boxes on the page
- *     background instead of a navy band.
- *   .stat-band.glance (case study "Results at a glance"): number / description —
- *     rendered as a plain bulleted sentence per row ("{number} {description}"),
- *     matching erp.intuit.com's results box, not a number/caption grid.
+ * Block rows = one row per stat, one flowing cell:
+ *   a bold-only line for the number (e.g. "50%"), then description
+ *   paragraph(s), then optionally a second bold-only line for the company
+ *   name and an italic-only line for the segment tag (e.g. "CONSTRUCTION") —
+ *   each field is detected by its own formatting, not by position, so
+ *   company/segment can be omitted entirely with no effect on the rest.
+ * default (index): number/description + attribution — paged carousel
+ * .stat-band.dark (pricing "Data-backed performance"): number/description +
+ *   optional attribution — static grid
+ * .stat-band.plain (research guide stat trios): number/description —
+ *   the same static grid as .dark, but light bordered boxes on the page
+ *   background instead of a navy band.
+ * .stat-band.glance (case study "Results at a glance"): number/description —
+ *   rendered as a plain bulleted sentence per row ("{number} {description}"),
+ *   matching erp.intuit.com's results box, not a number/caption grid.
  * An optional trailing paragraph (foot/disclaimer) is authored as default content.
  * CSS: blocks/stat-band/stat-band.css
  */
-
-function txt(cell) { return cell ? cell.textContent.trim() : ''; }
 
 const ARROW_SVG = {
   prev: '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>',
   next: '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/></svg>',
 };
 
-// `glance` and `plain` present each row as one sentence rather than a
-// number-over-caption pair, so join the cells into a single string.
-function statSentence(cells) {
-  return [txt(cells[0]), txt(cells[1])].filter(Boolean).join(' ');
+function parseStatRow(cell) {
+  let numberText = '';
+  let companyText = '';
+  let segmentText = '';
+  const descParagraphs = [];
+  if (cell) {
+    [...cell.children].forEach((node) => {
+      if (node.tagName !== 'P') return;
+      const text = node.textContent.trim();
+      if (!text) return;
+      const only = node.children.length === 1 ? node.children[0] : null;
+      if (only?.tagName === 'STRONG' && text === only.textContent.trim()) {
+        if (!numberText) { numberText = text; return; }
+        if (!companyText) { companyText = text; return; }
+      }
+      if (!segmentText && only?.tagName === 'EM' && text === only.textContent.trim()) {
+        segmentText = text;
+        return;
+      }
+      descParagraphs.push(node);
+    });
+  }
+  return {
+    numberText, descParagraphs, companyText, segmentText,
+  };
+}
+
+function statText(row) {
+  const [cell] = [...row.children];
+  const {
+    numberText, descParagraphs, companyText, segmentText,
+  } = parseStatRow(cell);
+  const parts = [
+    numberText, ...descParagraphs.map((p) => p.textContent.trim()), companyText, segmentText,
+  ];
+  return parts.filter(Boolean).join(' ');
 }
 
 function cardsPerView() {
@@ -146,10 +182,9 @@ export default function decorate(block) {
     const list = document.createElement('ul');
     list.className = 'glance-list';
     rows.forEach((row) => {
-      const cells = [...row.children];
-      if (!cells.length) return;
+      if (!row.children.length) return;
       const li = document.createElement('li');
-      li.textContent = statSentence(cells);
+      li.textContent = statText(row);
       list.append(li);
     });
     block.replaceChildren(list);
@@ -160,11 +195,10 @@ export default function decorate(block) {
     const box = document.createElement('div');
     box.className = 'stats-box';
     rows.forEach((row) => {
-      const cells = [...row.children];
-      if (!cells.length) return;
+      if (!row.children.length) return;
       const line = document.createElement('p');
       line.className = 'stat-line';
-      line.textContent = statSentence(cells);
+      line.textContent = statText(row);
       box.append(line);
     });
     block.replaceChildren(box);
@@ -176,8 +210,12 @@ export default function decorate(block) {
   track.className = staticGrid ? 'stats-grid' : 'stats-track';
 
   rows.forEach((row) => {
-    const cells = [...row.children];
-    if (!cells.length) return;
+    const [cell] = [...row.children];
+    if (!cell) return;
+    const {
+      numberText, descParagraphs, companyText, segmentText,
+    } = parseStatRow(cell);
+
     const stat = document.createElement('div');
     stat.className = 'stat';
     // number+desc and company+segment are grouped so the card's flex gap falls
@@ -186,28 +224,28 @@ export default function decorate(block) {
     head.className = 'stat-head';
     const num = document.createElement('div');
     num.className = 'stat-num';
-    num.textContent = txt(cells[0]);
+    num.textContent = numberText;
     head.append(num);
-    if (cells[1]) {
+    descParagraphs.forEach((p) => {
       const desc = document.createElement('p');
       desc.className = 'stat-desc';
-      desc.innerHTML = cells[1].innerHTML;
+      desc.innerHTML = p.innerHTML;
       head.append(desc);
-    }
+    });
     stat.append(head);
 
     const footer = document.createElement('div');
     footer.className = 'stat-foot';
-    if (cells[2] && txt(cells[2])) {
+    if (companyText) {
       const co = document.createElement('p');
       co.className = 'stat-co';
-      co.textContent = txt(cells[2]);
+      co.textContent = companyText;
       footer.append(co);
     }
-    if (cells[3] && txt(cells[3])) {
+    if (segmentText) {
       const seg = document.createElement('p');
       seg.className = 'stat-seg';
-      seg.textContent = txt(cells[3]);
+      seg.textContent = segmentText;
       footer.append(seg);
     }
     if (footer.children.length) stat.append(footer);

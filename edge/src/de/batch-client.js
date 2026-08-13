@@ -15,7 +15,7 @@
  */
 
 /**
- * @typedef {import('./routes.js').DeSlot} DeSlot
+ * @typedef {import('./resolve.js').DeSlot} DeSlot
  */
 
 /**
