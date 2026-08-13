@@ -143,15 +143,31 @@ describe('collectExperiments', () => {
     return m;
   }
 
-  it('finds exp-<experiment> elements and extracts the token', () => {
-    const m = main('<div class="exp-hero-test block"><p>base</p></div><div class="hero"></div>');
+  it('finds data-exp sections and reads the id verbatim; section fidelity by default', () => {
+    const m = main('<div data-exp="Homepage_Hero"><p>base</p></div><div class="hero"></div>');
     const experiments = collectExperiments(m);
     expect(experiments).toHaveLength(1);
-    expect(experiments[0].id).toBe('hero-test');
-    expect(experiments[0].el.classList.contains('exp-hero-test')).toBe(true);
+    expect(experiments[0].id).toBe('Homepage_Hero');
+    expect(experiments[0].fidelity).toBe('section');
+    expect(experiments[0].el).toBe(m.querySelector('[data-exp]'));
   });
 
-  it('returns [] when there are no exp- markers', () => {
+  it('scopes to the named block (block fidelity) when data-exp-block is set', () => {
+    const m = main('<div data-exp="385944" data-exp-block="cards"><div class="cards" data-block-name="cards"></div></div>');
+    const experiments = collectExperiments(m);
+    expect(experiments).toHaveLength(1);
+    expect(experiments[0].fidelity).toBe('block');
+    expect(experiments[0].el).toBe(m.querySelector('[data-block-name="cards"]'));
+  });
+
+  it('matches the root section itself and honors { skip }', () => {
+    const m = main('<div data-exp="a"></div><div data-exp="b"></div>');
+    const first = m.querySelector('[data-exp]');
+    expect(collectExperiments(first).map((e) => e.id)).toEqual(['a']);
+    expect(collectExperiments(m, first).map((e) => e.id)).toEqual(['b']);
+  });
+
+  it('returns [] when there are no data-exp sections', () => {
     expect(collectExperiments(main('<div class="hero"></div>'))).toEqual([]);
   });
 });
@@ -163,47 +179,43 @@ describe('runBlockExperiments', () => {
     return m;
   }
 
-  it('queries by label (non-numeric token) at block fidelity and applies the variation', async () => {
-    const m = main('<div class="exp-hero-test block"></div>');
-    fetchDecision.mockResolvedValue({ action: 'replace', fidelity: 'block', fragment: '/fragments/exp/a' });
+  it('queries by label (non-numeric id) at section fidelity and applies the variation', async () => {
+    const m = main('<div data-exp="Homepage_Hero"></div>');
+    fetchDecision.mockResolvedValue({ action: 'replace', fidelity: 'section', fragment: '/fragments/exp/a' });
     await runBlockExperiments(m);
 
     const [source] = fetchDecision.mock.calls[0];
     expect(source).toContain('ixp?');
-    expect(source).toContain('label=hero-test');
-    expect(source).toContain('fidelity=block');
-    expect(applyFragment).toHaveBeenCalledWith(m.querySelector('.exp-hero-test'), '/fragments/exp/a');
+    expect(source).toContain('label=Homepage_Hero');
+    expect(source).toContain('fidelity=section');
+    expect(applyFragment).toHaveBeenCalledWith(m.querySelector('[data-exp]'), '/fragments/exp/a');
   });
 
-  it('queries by experimentId when the token is numeric', async () => {
-    const m = main('<div class="exp-385944 block"></div>');
+  it('queries by experimentId (numeric id) at block fidelity for a block-scoped tag', async () => {
+    const m = main('<div data-exp="385944" data-exp-block="cards"><div class="cards" data-block-name="cards"></div></div>');
     fetchDecision.mockResolvedValue({ action: 'replace', fidelity: 'block', fragment: '/fragments/exp/a' });
     await runBlockExperiments(m);
-    expect(fetchDecision.mock.calls[0][0]).toContain('experimentId=385944');
-  });
-
-  it('sends section fidelity when the marked element is a section', async () => {
-    const m = main('<div class="section exp-band"></div>');
-    fetchDecision.mockResolvedValue({ action: 'replace', fidelity: 'section', fragment: '/fragments/exp/a' });
-    await runBlockExperiments(m);
-    expect(fetchDecision.mock.calls[0][0]).toContain('fidelity=section');
+    const [source] = fetchDecision.mock.calls[0];
+    expect(source).toContain('experimentId=385944');
+    expect(source).toContain('fidelity=block');
+    expect(applyFragment).toHaveBeenCalledWith(m.querySelector('[data-block-name="cards"]'), '/fragments/exp/a');
   });
 
   it('leaves the baseline on a control decision', async () => {
-    const m = main('<div class="exp-hero-test block"></div>');
+    const m = main('<div data-exp="Homepage_Hero"></div>');
     fetchDecision.mockResolvedValue({ control: true });
     await runBlockExperiments(m);
     expect(applyFragment).not.toHaveBeenCalled();
   });
 
   it('ignores a page-fidelity decision (that belongs to runExperiment)', async () => {
-    const m = main('<div class="exp-hero-test block"></div>');
+    const m = main('<div data-exp="Homepage_Hero"></div>');
     fetchDecision.mockResolvedValue({ action: 'replace', fidelity: 'page', fragment: '/variation' });
     await runBlockExperiments(m);
     expect(applyFragment).not.toHaveBeenCalled();
   });
 
-  it('does nothing (no api call) when there are no exp- markers', async () => {
+  it('does nothing (no api call) when there are no data-exp sections', async () => {
     await runBlockExperiments(main('<div class="hero"></div>'));
     expect(fetchDecision).not.toHaveBeenCalled();
   });

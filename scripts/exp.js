@@ -48,30 +48,36 @@ export async function runExperiment(doc = document) {
   }
 }
 
-const EXP_CLASS_RE = /^exp-(.+)$/;
+// Sections tagged `data-exp` within `root` (root itself may match), minus `skip`.
+// The experiment id is the verbatim `data-exp` value; a `data-exp-block` scopes
+// the target to the block whose `data-block-name` matches (first) at block
+// fidelity, otherwise the whole section at section fidelity.
+export function collectExperiments(root, skip) {
+  const sections = [];
+  if (root.matches?.('[data-exp]') && root !== skip) sections.push(root);
+  root.querySelectorAll('[data-exp]').forEach((s) => { if (s !== skip) sections.push(s); });
 
-// Every element under `root` carrying an `exp-<experiment>` class — a block/
-// section experiment, distinct from the page-level, metadata-driven one above.
-export function collectExperiments(root) {
   const experiments = [];
-  root.querySelectorAll('[class]').forEach((el) => {
-    const matched = Array.from(el.classList).find((cls) => EXP_CLASS_RE.test(cls));
-    if (matched) experiments.push({ el, id: EXP_CLASS_RE.exec(matched)[1] });
+  sections.forEach((section) => {
+    const id = section.dataset.exp;
+    if (!id) return;
+    const block = section.dataset.expBlock;
+    const el = block ? section.querySelector(`[data-block-name="${block}"]`) : section;
+    if (el) experiments.push({ el, id, fidelity: block ? 'block' : 'section' });
   });
   return experiments;
 }
 
-// Resolves each block/section experiment and replaces its marked element with the
-// assigned variation. A numeric token is an experimentId, otherwise a label; the
-// element being a section (vs a block) sets the fidelity. Control/empty decisions
-// leave the baseline; a page-fidelity decision belongs to runExperiment, not here.
-export async function runBlockExperiments(root = document.querySelector('main')) {
+// Resolves each block/section experiment and replaces its target with the
+// assigned variation. A numeric id is an experimentId, otherwise a label.
+// Control/empty decisions leave the baseline; a page-fidelity decision belongs to
+// runExperiment, not here.
+export async function runBlockExperiments(root = document.querySelector('main'), { skip } = {}) {
   if (!root) return;
-  const experiments = collectExperiments(root);
+  const experiments = collectExperiments(root, skip);
   if (experiments.length === 0) return;
-  await Promise.all(experiments.map(async ({ el, id }) => {
+  await Promise.all(experiments.map(async ({ el, id, fidelity }) => {
     const key = /^\d+$/.test(id) ? `experimentId=${encodeURIComponent(id)}` : `label=${encodeURIComponent(id)}`;
-    const fidelity = el.classList.contains('section') ? 'section' : 'block';
     const decision = await fetchDecision(`ixp?${key}&fidelity=${fidelity}`);
     if (!decision || decision.control || !decision.fragment || decision.fidelity === 'page') return;
     await applyFragment(el, decision.fragment);

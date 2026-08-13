@@ -1,27 +1,36 @@
 // eslint-disable-next-line import/no-cycle
 import { fetchDecision, applyFragment } from './personalization/decision.js';
 
-const PZN_CLASS_RE = /^pzn-(.+)$/;
+// Sections tagged `data-pzn` within `root` (root itself may match), minus `skip`.
+// The placement id is the verbatim `data-pzn` value; a `data-pzn-block` scopes the
+// target to the block in that section whose `data-block-name` matches (first),
+// otherwise the whole section is the target.
+export function collectSlots(root, skip) {
+  const sections = [];
+  if (root.matches?.('[data-pzn]') && root !== skip) sections.push(root);
+  root.querySelectorAll('[data-pzn]').forEach((s) => { if (s !== skip) sections.push(s); });
 
-// Every element under `root` carrying a `pzn-<placement>` class.
-export function collectSlots(root) {
   const slots = [];
-  root.querySelectorAll('[class]').forEach((el) => {
-    const matched = Array.from(el.classList).find((cls) => PZN_CLASS_RE.test(cls));
-    if (matched) slots.push({ el, placement: PZN_CLASS_RE.exec(matched)[1] });
+  sections.forEach((section) => {
+    const placement = section.dataset.pzn;
+    if (!placement) return;
+    const block = section.dataset.pznBlock;
+    const el = block ? section.querySelector(`[data-block-name="${block}"]`) : section;
+    if (el) slots.push({ el, placement });
   });
   return slots;
 }
 
-export async function runPersonalization(root = document.querySelector('main')) {
+export async function runPersonalization(root = document.querySelector('main'), { skip } = {}) {
   if (!root) return;
-  const slots = collectSlots(root);
+  const slots = collectSlots(root, skip);
   if (slots.length === 0) return;
 
+  const placements = [...new Set(slots.map((s) => s.placement))];
   const decisions = await fetchDecision('de', {
     method: 'POST',
     body: {
-      slots: slots.map((s) => ({ placement: s.placement })),
+      slots: placements.map((placement) => ({ placement })),
       path: window.location.pathname,
     },
   });
