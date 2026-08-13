@@ -603,9 +603,9 @@
     padding: 40px;
   }
 
-  /* no hero image authored (e.g. /blog/guide/webinars-on-demand): collapse to a
-     single column so the copy uses the full band instead of leaving the media
-     column as dead space beside it. */
+  /* no hero image authored (e.g. /blog/ask-the-expert/intuit-enterprise-suite-gene-marks):
+     collapse to a single column so the copy uses the full band instead of
+     leaving the media column as dead space beside it. */
   .blog-article .blog-hero > .default-content-wrapper:not(:has(.blog-hero-image)) {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -667,10 +667,22 @@
    `.section.testimonial-container:has(.testimonial:not(.video, .card))`
    and score (0,4,0), which would beat this selector without it. It also
    reads correctly — only sections that actually hold blocks carry a band. */
-main.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail):has(.block) {
+main.blog-article > .section:not(
+    .blog-hero, .blog-toc-rail, .blog-rail, .download-form-container
+  ):has(.block) {
   background: #fff;
   padding: 0;
 }
+
+/* download-form is the exception above: its band is not decorative. The block
+   paints white copy (`.download-copy` and its <h2>/<strong>) on a navy section
+   background, so neutralising the band to #fff renders the whole left column
+   white-on-white and invisible. Research articles carry one
+   (/blog/research/intuit-enterprise-suite-cost-savings-forrester-tei), so the
+   band has to survive; it just spans the prose column rather than the viewport.
+   Same applies to any other block whose section band carries the contrast
+   (.highlight.dark, .cards.dark, .logo-strip) if one is ever authored into an
+   article — none is today. */
 
 /* Same collision, different property: blocks style their section's *heading*
    copy (`.{block}-container .default-content-wrapper > p`) as a centered,

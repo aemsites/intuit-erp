@@ -7,16 +7,21 @@
 import { getMetadata } from '../../scripts/aem.js';
 
 /**
- * The `template` metadata values under /blog/ that are article pages, i.e. an
- * H1 + hero image authored in section 1 with prose below, and so get the
- * blog-template treatment. `case study` renders the centred case-study-header
- * banner rather than the two-column `.blog-hero` band, but is the same kind of
- * page (see buildBlogTemplate).
+ * The `template` metadata values under /blog/ that are article pages — an H1 +
+ * hero image authored in section 1 with prose below — and so get the identical
+ * blog-template treatment: the `.blog-hero` band, the TOC rail and the right
+ * rail. Verified against erp.intuit.com, which renders a case study
+ * (/blog/case-study/fire-and-ice-intuit-enterprise-suite-review) with exactly
+ * the same band + rails as a standard blog article.
  *
- * The listing templates — `category`, `author`, `search` — are deliberately
- * absent: they own their own layout and must not be decorated as articles.
+ * Deliberately absent:
+ *  - `category`, `author`, `search` — listing pages; they own their own layout.
+ *  - `guide` — a gated-asset landing page. Upstream gives it a different hero
+ *    (image left on a mint band, headline + lede + CTA right, no eyebrow and no
+ *    byline) over a full-width body, not this article layout. Tracked
+ *    separately; adding it here would be worse than leaving it plain.
  */
-export const ARTICLE_TEMPLATES = ['blog article', 'case study', 'guide', 'research'];
+export const ARTICLE_TEMPLATES = ['blog article', 'case study', 'research'];
 
 /**
  * The page's `template` metadata, lower-cased and trimmed so it can be compared
