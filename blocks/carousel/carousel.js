@@ -68,7 +68,6 @@ function splitFeatureQuote(slide) {
 }
 
 /**
-<<<<<<< Updated upstream
  * Opens a video in a dismissible lightbox, reusing the `.video-modal-*` markup
  * and styles that blocks/video owns.
  * @param {string} embedUrl provider embed URL
@@ -111,8 +110,6 @@ function openVideoModal(embedUrl, title) {
 }
 
 /**
-=======
->>>>>>> Stashed changes
  * Rewrites one `.testimonial` slide into `.testi-media` + `.testi-body`.
  *
  * Authors have produced three different shapes for this block — four cells
@@ -157,11 +154,9 @@ function normalizeTestimonial(slide) {
     body.append(t);
   }
 
-  // The attribution is always last; anything before it belongs to the quote,
-  // which may run to more than one paragraph. With a title present the sole
-  // remaining part is the attribution rather than the quote — a titled slide
-  // carrying only a name would otherwise render it at the display size.
-  const attr = (text.length > 1 || (title && text.length === 1)) ? text.pop() : null;
+  // the attribution is always last; anything before it belongs to the quote,
+  // which may run to more than one paragraph
+  const attr = text.length > 1 ? text.pop() : null;
   text.forEach((p) => {
     const q = document.createElement('p');
     q.className = 'testi-quote';
@@ -199,16 +194,7 @@ function normalizeTestimonial(slide) {
       const label = document.createElement('span');
       label.textContent = link.textContent.trim();
       btn.append(label);
-      // The lightbox lives in blocks/video, so its stylesheet is warmed here
-      // rather than on click — otherwise the first open on a page with no
-      // `video` block paints an unstyled full-bleed overlay for a frame. The
-      // module itself is imported on click so the player stays off pages that
-      // never open it.
-      loadCSS(`${window.hlx.codeBasePath}/blocks/video/video.css`);
-      btn.addEventListener('click', async () => {
-        const { openVideoModal } = await import('../video/video.js');
-        openVideoModal(info.embedUrl, label.textContent);
-      });
+      btn.addEventListener('click', () => openVideoModal(info.embedUrl, link.textContent.trim()));
       wrap.append(btn);
     } else {
       link.classList.add('testi-cta-button');
@@ -219,24 +205,12 @@ function normalizeTestimonial(slide) {
 
   const mediaWrap = document.createElement('div');
   mediaWrap.className = 'testi-media';
-<<<<<<< Updated upstream
   // media is either the picture/img itself (four-cell shape) or a wrapper
   // around it (single-cell shapes) — querying inside an already-matched
   // picture would return its bare <img> and drop its <source> variants
   if (media) mediaWrap.append(media.matches('picture, img') ? media : (media.querySelector('picture, img') || media));
-=======
-  // the <picture> itself when the part IS one, else the one it wraps — matching
-  // only descendants would strip the <source> set and lose webp/avif delivery
-  if (media) {
-    mediaWrap.append(media.matches('picture, img') ? media : (media.querySelector('picture, img') || media));
-  }
->>>>>>> Stashed changes
 
   slide.replaceChildren(mediaWrap, body);
-  // flagged on the slide as well as the block: the band and ring are
-  // block-level (a carousel can't have half a band), but the copy scale and
-  // image treatment are per-slide, so a mixed carousel keeps each slide honest
-  if (title) slide.classList.add('has-title');
   return !!title;
 }
 
