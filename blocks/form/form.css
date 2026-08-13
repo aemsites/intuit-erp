@@ -93,6 +93,29 @@
 .form.card .ff input:focus { outline: 2px solid var(--primary); outline-offset: -1px; border-color: var(--primary); }
 .form.card .form-submit { height: 48px; }
 
+/* ---- standalone form-landing pages (the whole page is a single form-container,
+   e.g. /accountant/free-consultation/ies) — production renders a centered,
+   narrow, single-column form rather than the wide multi-column row. Scoped with
+   :only-child so multi-section pages like /compare are unaffected. ---- */
+main:has(> .section.form-container:only-child) .form.block {
+  max-width: 690px;
+  margin-inline: auto;
+}
+
+main:has(> .section.form-container:only-child) .form .lead-fields {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 16px;
+  max-width: 420px;
+  margin-inline: auto;
+}
+
+main:has(> .section.form-container:only-child) .form .ff,
+main:has(> .section.form-container:only-child) .form .form-submit {
+  width: 100%;
+  flex: 0 0 auto;
+}
+
 @media (width <= 768px) {
   .form-container .default-content-wrapper h2 { font-size: 28px; }
   .form .lead-fields { flex-direction: column; align-items: stretch; gap: 14px; }
