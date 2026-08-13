@@ -28,7 +28,8 @@ export default function decorate(block) {
       col.append(eb);
     }
     if (cells[2]) {
-      const h = document.createElement('h3');
+      // production marks these column titles up as <h2>; match that level.
+      const h = document.createElement('h2');
       h.className = 'cmp-col-title';
       h.innerHTML = cells[2].innerHTML;
       col.append(h);
