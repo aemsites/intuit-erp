@@ -12,27 +12,6 @@ import { buildBlock } from '../../scripts/aem.js';
 import { isVideoLink } from '../video/video-info.js';
 
 /**
- * True for an <img> that decorateIcons() produced from an `:icon-name:` token.
- * decorateIcons runs before buildAutoBlocks (see decorateMain), so by the time
- * this runs an inline icon is already a real <img> and would otherwise pass for
- * a hero photo — a 16px SVG stretched across half the card, and missing from the
- * sentence it was authored in.
- * @param {Element} img
- * @returns {boolean}
- */
-const isIcon = (img) => !!(img.closest('span.icon') || img.hasAttribute('data-icon-name'));
-
-/**
- * The hero photo in `section`, ignoring icons — null when there is none.
- * @param {Element} section
- * @returns {Element|null}
- */
-function heroImage(section) {
-  return [...section.querySelectorAll('picture, img')]
-    .find((el) => !isIcon(el.tagName === 'PICTURE' ? el.querySelector('img') || el : el)) || null;
-}
-
-/**
  * True when `node` must be left in the section rather than absorbed into the
  * hero, because something downstream still needs to find it where it is:
  *  - a DIV is an authored block. decorateBlocks() only looks at
@@ -56,17 +35,23 @@ function belongsToSection(node) {
 
 /**
  * Wraps section 1's headline, lede, CTA and hero photo in a `guide-hero` block.
- * Callers are expected to have checked isGuidePage() already. No-op unless
- * section 1 has both an <h1> and a hero photo — guides with no photo get no card
- * upstream, just a centred headline, which styles.css handles from the section
- * left in place.
+ * Callers are expected to have checked isGuidePage() already; all this needs is an
+ * <h1> to build a header around.
+ *
+ * The hero photo is optional on purpose. Upstream renders an imageless guide as a
+ * plain centred headline with no band (/blog/guide/webinars-on-demand), and that
+ * is the block's `no-media` variant rather than a rule somewhere global: building
+ * the block either way is what lets ALL of this template's styling live in
+ * guide-hero.css, instead of leaking the imageless case into styles.css — which
+ * every page on the site downloads — just because the block would otherwise be
+ * absent there.
  * @param {Element} main the page's <main>
  * @returns {Element|null} the inserted block, or null when nothing was built
  */
 export default function buildGuideHeroAutoBlock(main) {
   const firstSection = main.querySelector(':scope > div');
   if (!firstSection || firstSection.querySelector('.guide-hero')) return null;
-  if (!firstSection.querySelector('h1') || !heroImage(firstSection)) return null;
+  if (!firstSection.querySelector('h1')) return null;
 
   const elems = [...firstSection.children].filter((node) => !belongsToSection(node));
   if (!elems.length) return null;

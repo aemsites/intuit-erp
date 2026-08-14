@@ -76,6 +76,21 @@ describe('guide-hero decorate', () => {
     expect(block.querySelector('.guide-hero-copy h1')).toBeTruthy();
     expect(block.querySelector('.guide-hero-media')).toBeNull();
     expect([...block.children].map((c) => c.className)).toEqual(['guide-hero-copy']);
+    // the variant class the CSS keys on for the plain centred headline
+    expect(block.classList.contains('no-media')).toBe(true);
+  });
+
+  it('does not mistake a decorateIcons icon for the hero photo', () => {
+    // decorateIcons runs before buildAutoBlocks, so an authored `:icon-check:` is
+    // already an <img> by the time this decorates — it must neither be hoisted
+    // into the media half nor suppress the no-media variant
+    const block = blockWith('<h1>H</h1><p>Lede <span class="icon icon-check"><img data-icon-name="check" src="/icons/check.svg"></span> more.</p>');
+    decorate(block);
+    expect(block.classList.contains('no-media')).toBe(true);
+    expect(block.querySelector('.guide-hero-media')).toBeNull();
+    // and the icon stays in the sentence where it was authored
+    expect(block.querySelector('.guide-hero-copy p .icon img')).toBeTruthy();
+    expect(block.querySelector('.guide-hero-copy p').textContent).toContain('more.');
   });
 
   it('keeps the link when the hero photo is wrapped in one, and drops the emptied paragraph', () => {
@@ -106,21 +121,18 @@ describe('buildGuideHeroAutoBlock', () => {
     expect(block.querySelector('picture img')).toBeTruthy();
   });
 
-  it('does nothing without an h1, or without a hero photo', () => {
+  it('does nothing without an h1 to build a header around', () => {
     const noH1 = mainWith('<div><p>Lede.</p><p><picture><img src="hero.jpg"></picture></p></div>');
     expect(buildGuideHeroAutoBlock(noH1)).toBeNull();
-    // no photo: upstream shows no card here, just a centred headline (styles.css)
-    const noImg = mainWith('<div><h1>Headline</h1><p>Lede.</p></div>');
-    expect(buildGuideHeroAutoBlock(noImg)).toBeNull();
   });
 
-  it('does not mistake a decorateIcons icon for the hero photo', () => {
-    // decorateIcons runs before buildAutoBlocks, so an authored `:icon-check:` is
-    // already an <img> by now — it must not pass for a hero photo
-    const main = mainWith('<div><h1>Headline</h1><p>Lede <span class="icon icon-check"><img data-icon-name="check" src="/icons/check.svg"></span> more.</p></div>');
-    expect(buildGuideHeroAutoBlock(main)).toBeNull();
-    // and the icon stays in the sentence where it was authored
-    expect(main.querySelector('p .icon img')).toBeTruthy();
+  it('still builds the block when there is no photo — that is the no-media variant', () => {
+    // building it either way is what keeps the imageless treatment inside the
+    // block's own CSS instead of in the global stylesheet
+    const main = mainWith('<div><h1>Headline</h1><p>Lede.</p></div>');
+    const block = buildGuideHeroAutoBlock(main);
+    expect(block).toBeTruthy();
+    expect(block.querySelector('h1')).toBeTruthy();
   });
 
   it('leaves authored blocks in the section — nesting them would break decorateBlocks', () => {

@@ -25,11 +25,27 @@
  * .button.primary and this block's CSS styles either as the upstream ghost
  * button).
  *
- * The autoblock only builds this block when a photo is present, but a
- * hand-authored one may have none, in which case no media half is inserted at
- * all — an empty one would render as a blank half-card.
+ * A hero photo is optional. Without one the block takes its `no-media` variant —
+ * no media half is inserted (an empty one renders as a blank half-card) and the
+ * CSS drops the band for the plain centred headline upstream shows on
+ * /blog/guide/webinars-on-demand.
  * CSS: blocks/guide-hero/guide-hero.css
  */
+
+/**
+ * True for an <img> that decorateIcons() produced from an `:icon-name:` token.
+ * decorateIcons runs before buildAutoBlocks (see decorateMain), so an inline icon
+ * is already a real <img> by the time this block decorates. Left unchecked it
+ * would pass for the hero photo — a 16px SVG stretched across half the card, and
+ * missing from the sentence it was authored in — and would suppress the plain
+ * variant on a guide that has no real photo at all.
+ * @param {Element} el a <picture> or <img>
+ * @returns {boolean}
+ */
+function isIcon(el) {
+  const img = el.tagName === 'PICTURE' ? el.querySelector('img') || el : el;
+  return !!(img.closest('span.icon') || img.hasAttribute('data-icon-name'));
+}
 
 /**
  * loads and decorates the block
@@ -45,7 +61,7 @@ export default function decorate(block) {
 
   const media = document.createElement('div');
   media.className = 'guide-hero-media';
-  const found = copy.querySelector('picture, img');
+  const found = [...copy.querySelectorAll('picture, img')].find((el) => !isIcon(el));
   if (found) {
     // Lift the whole link when the photo is wrapped in one — a linked hero image
     // is a reasonable authoring choice on a gated-asset page, and taking only the
@@ -67,5 +83,12 @@ export default function decorate(block) {
   // loading="eager" on the photo is left to aem.js: waitForFirstImage() sets it
   // on section 1's first <img> — which, after this split, is this one — and
   // loadSection awaits it as the callback right after loading this block.
-  block.replaceChildren(...(media.children.length ? [media, copy] : [copy]));
+  if (media.children.length) {
+    block.replaceChildren(media, copy);
+  } else {
+    // marked here rather than sniffed with :has() in CSS, because decorate() is
+    // what decides — one source of truth for which of the two variants this is
+    block.classList.add('no-media');
+    block.replaceChildren(copy);
+  }
 }

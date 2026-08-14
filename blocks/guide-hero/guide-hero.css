@@ -15,15 +15,17 @@
    than padding inside it. Upstream insets the card 20px on mobile and lets it
    span the container on desktop, so the gutter goes to 0 at the breakpoint below.
 
-   Scoped to `> .guide-hero-wrapper`, not `> div`: decorateBlock puts
+   Scoped two ways. `> .guide-hero-wrapper`, not `> div`: decorateBlock puts
    `guide-hero-container` on whichever section holds the block, and a section can
-   hold sibling wrappers (default content, other blocks). Those must keep the
-   page gutter, or prose in the same section renders flush to the viewport. */
-.section.guide-hero-container > .guide-hero-wrapper {
+   hold sibling wrappers (default content, other blocks) that must keep the page
+   gutter, or prose in the same section renders flush to the viewport. And
+   `:has(.guide-hero:not(.no-media))`, because the plain variant is not a card —
+   it keeps the ordinary page gutter (see the no-media rules at the end). */
+.section.guide-hero-container:has(.guide-hero:not(.no-media)) > .guide-hero-wrapper {
   padding: 0 20px;
 }
 
-.section.guide-hero-container {
+.section.guide-hero-container:has(.guide-hero:not(.no-media)) {
   padding: 40px 0 var(--section-y);
 }
 
@@ -125,7 +127,7 @@
 }
 
 @media (min-width: 900px) {
-  .section.guide-hero-container > div {
+  .section.guide-hero-container:has(.guide-hero:not(.no-media)) > .guide-hero-wrapper {
     padding: 0;
   }
 
@@ -163,4 +165,43 @@
   .guide-hero .guide-hero-copy a.button {
     width: auto;
   }
+}
+
+/* ============================================================
+   no-media — a guide that authors no hero photo. Upstream drops the band
+   entirely and shows a plain centred 40px headline
+   (/blog/guide/webinars-on-demand), so this variant is the whole treatment for
+   those pages. It lives here, in the block's own stylesheet, because the
+   autoblock builds the block whether or not there is a photo — the alternative
+   was a template rule in styles.css, which every page on the site downloads.
+   ============================================================ */
+.section.guide-hero-container:has(.guide-hero.no-media) {
+  padding-top: 5rem;
+}
+
+.guide-hero.no-media {
+  /* block, not the 2-col grid the card variant switches to at 900px — a single
+     child would otherwise be stranded in the left half */
+  display: block;
+  border-radius: 0;
+  background: none;
+}
+
+.guide-hero.no-media .guide-hero-copy {
+  padding: 0;
+  text-align: center;
+}
+
+.guide-hero.no-media .guide-hero-copy h1,
+.guide-hero.no-media .guide-hero-copy p {
+  /* the card variant clamps its measure to the copy column (10em/24em); the plain
+     variant is full width, as upstream renders it */
+  max-width: none;
+}
+
+.guide-hero.no-media .guide-hero-copy h1 {
+  margin: 0 0 16px;
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1.3;
 }
