@@ -1,0 +1,131 @@
+/*
+ * guide-hero — mint lead card for /blog/guide/* landing pages.
+ *
+ * Every number here is measured off erp.intuit.com at 1440 and 390
+ * (/blog/guide/construction-accounting-erp, /blog/guide/data-analytics — both
+ * identical): card inset in the container with an 8px radius on #dbedee
+ * (= --sky), the photo filling exactly half the card width as a square flush to
+ * its edges, and the copy in the other half — 48px/60px headline, 16px/24px
+ * lede, outlined navy CTA. Mobile stacks the photo (full card width, still
+ * square) above the copy and keeps the headline at 48px, as upstream does.
+ */
+
+/* The card IS the section wrapper, so the photo can sit flush against its edge —
+   which means replacing the wrapper's own 40px gutter (styles.css) rather than
+   padding inside it. Upstream insets the card 20px on mobile and lets it span
+   the container on desktop, so the gutter goes to 0 at the breakpoint below. */
+.section.guide-hero-container > div {
+  padding: 0 20px;
+}
+
+.section.guide-hero-container {
+  padding: 40px 0 var(--section-y);
+}
+
+.guide-hero {
+  border-radius: 8px;
+  background: var(--sky);
+  overflow: hidden;
+}
+
+/* square, flush to the card edges at both breakpoints */
+.guide-hero .guide-hero-media {
+  position: relative;
+  aspect-ratio: 1;
+}
+
+.guide-hero .guide-hero-media picture,
+.guide-hero .guide-hero-media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.guide-hero .guide-hero-copy {
+  padding: 32px;
+}
+
+.guide-hero .guide-hero-copy h1 {
+  margin: 0 0 20px;
+  color: var(--heading);
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 60px;
+}
+
+.guide-hero .guide-hero-copy p {
+  margin: 0 0 20px;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+/* Upstream shows one ghost CTA regardless of which emphasis the author used, so
+   both button variants get the same treatment below — the same declarations as
+   the guide download CTA already in the repo (blocks/cta-band/cta-band.css,
+   .cta-band.simple).
+
+   `display: flex` overrides the global `p.button-wrapper { display: inline-flex }`
+   (styles.css): inline-flex shrinks the wrapper to the button, which leaves the
+   mobile CTA unable to stretch to the copy width the way upstream's does. */
+.guide-hero .guide-hero-copy .button-wrapper {
+  display: flex;
+  margin: 24px 0 0;
+}
+
+.guide-hero .guide-hero-copy a.button {
+  /* full width on mobile, natural width from the breakpoint up — as upstream */
+  width: 100%;
+  height: 52px;
+  border: 2px solid var(--navy);
+  border-radius: 4px;
+  background: none;
+  padding: 0 28px;
+  color: var(--navy);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.guide-hero .guide-hero-copy a.button:hover,
+.guide-hero .guide-hero-copy a.button:focus-visible {
+  background: var(--navy);
+  color: #fff;
+}
+
+@media (min-width: 900px) {
+  .section.guide-hero-container > div {
+    padding: 0;
+  }
+
+  .guide-hero {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+  }
+
+  .guide-hero .guide-hero-media {
+    grid-column: 1;
+  }
+
+  /* Percentages, not px: upstream sets the copy ~135px clear of the photo in a
+     680px column (~20%), and a fixed 135px would strand the text in a ~240px
+     ribbon at the 900px breakpoint. Resolves against the column, so the ratio
+     holds at every width. */
+  .guide-hero .guide-hero-copy {
+    grid-column: 2;
+    padding: 40px 8% 40px 20%;
+  }
+
+  /* wraps the headline at roughly upstream's 486px measure */
+  .guide-hero .guide-hero-copy h1 {
+    max-width: 10em;
+  }
+
+  .guide-hero .guide-hero-copy p {
+    max-width: 24em;
+  }
+
+  .guide-hero .guide-hero-copy a.button {
+    width: auto;
+  }
+}

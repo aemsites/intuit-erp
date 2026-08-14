@@ -546,6 +546,26 @@ body.category main > .section:first-of-type .default-content-wrapper {
 body.category main > .section:first-of-type h1 { font-size: 40px; font-weight: 600; margin: 0 0 16px; }
 body.category main > .section:first-of-type p { font-size: 17px; color: var(--text-muted); }
 
+/* Guide landing pages (Template: "Guide" metadata -> body.guide) with no hero
+   image. Those WITH one are wrapped in a `guide-hero` mint card by
+   buildGuideHeroAutoBlock; upstream gives the imageless ones no band at all,
+   just a centred headline on white (e.g. /blog/guide/webinars-on-demand), so
+   this styles what the autoblock deliberately left as default content. */
+body.guide main > .section:first-of-type:not(:has(.guide-hero)) {
+  padding-top: 5rem;
+}
+
+body.guide main > .section:first-of-type:not(:has(.guide-hero)) .default-content-wrapper {
+  text-align: center;
+}
+
+body.guide main > .section:first-of-type:not(:has(.guide-hero)) h1 {
+  margin: 0 0 16px;
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
 /* search results page (Template: "Search" metadata -> body.search): give the
    first section the same top breathing room below the nav as category pages */
 body.search main > .section:first-of-type { padding-top: 5rem; }

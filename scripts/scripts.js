@@ -173,6 +173,31 @@ function buildVideoAutoBlocks(main) {
 let buildBlogTemplate;
 
 /**
+ * Wraps section 1 of a `template: Guide` page in a `guide-hero` block.
+ *
+ * /blog/guide/* pages are gated-asset landing pages, and upstream gives them a
+ * mint lead card (photo left, copy right) rather than the blog-article hero band
+ * — see blocks/guide-hero. Authors write plain default content there (headline,
+ * optional lede, optional CTA link, hero image), so the block is synthesized
+ * here instead of being authored, and the normal block pipeline decorates it:
+ * `loadSection` awaits its CSS before revealing section 1, so the card is
+ * already styled the first time it paints.
+ *
+ * Requires both an <h1> and a hero image. Guides with no image get no card
+ * upstream at all, just a centred headline, which styles.css handles — so
+ * leaving section 1 as default content is the correct outcome there.
+ * @param {Element} main The container element
+ */
+function buildGuideHeroAutoBlock(main) {
+  if (getMetadata('template').trim().toLowerCase() !== 'guide') return;
+  const firstSection = main.querySelector(':scope > div');
+  if (!firstSection || firstSection.querySelector('.guide-hero')) return;
+  if (!firstSection.querySelector('h1') || !firstSection.querySelector('picture, img')) return;
+  const block = buildBlock('guide-hero', { elems: [...firstSection.children] });
+  firstSection.prepend(block);
+}
+
+/**
  * Builds all synthetic blocks in a container element.
  * @param {Element} main The container element
  */
@@ -186,6 +211,10 @@ function buildAutoBlocks(main) {
     // from re-injecting a right-rail link into every loaded fragment (which
     // buildAutoBlocks would then re-load — an infinite loop).
     if (buildBlogTemplate && main.isConnected) buildBlogTemplate(main);
+    // Guide landing pages get their own lead card instead. Same isConnected
+    // guard: loaded fragments are decorated through here too, and their first
+    // section must not be mistaken for the page's hero.
+    if (main.isConnected) buildGuideHeroAutoBlock(main);
     // auto load `*/fragments/*` references
     const fragments = [...main.querySelectorAll('a[href*="/fragments/"]')].filter((f) => !f.closest('.fragment'));
     if (fragments.length > 0) {
