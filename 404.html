@@ -29,43 +29,8 @@
   <meta property="og:description" content="The page you're looking for cannot be found">
   <script nonce="aem" src="/scripts/scripts.js" type="module"></script>
   <script nonce="aem" type="module">
-    window.addEventListener('load', () => {
-      if (document.referrer) {
-        const { origin, pathname } = new URL(document.referrer);
-        if (origin === window.location.origin) {
-          const backBtn = document.createElement('a');
-          backBtn.classList.add('error-go-back');
-          backBtn.href = pathname;
-          backBtn.textContent = 'Go back';
-          backBtn.title = 'Go back';
-          const btnContainer = document.querySelector('.error-button-container');
-          btnContainer.append(backBtn);
-        }
-      }
-    });
-  </script>
-  <script nonce="aem" type="module">
     import { sampleRUM } from '/scripts/aem.js';
     sampleRUM('404', { source: document.referrer });
-  </script>
-  <script nonce="aem" type="module">
-    import {
-      LOGO_TURBOTAX_ICON,
-      LOGO_CREDITKARMA_ICON,
-      LOGO_QUICKBOOKS_ICON,
-      LOGO_MAILCHIMP_ICON,
-    } from '/blocks/header/brand-logos.js';
-
-    const icons = {
-      turbotax: LOGO_TURBOTAX_ICON,
-      creditkarma: LOGO_CREDITKARMA_ICON,
-      quickbooks: LOGO_QUICKBOOKS_ICON,
-      mailchimp: LOGO_MAILCHIMP_ICON,
-    };
-
-    document.querySelectorAll('.error-promo-icon[data-icon]').forEach((el) => {
-      el.innerHTML = icons[el.dataset.icon] || '';
-    });
   </script>
   <link rel="stylesheet" href="/styles/styles.css">
   <style>
@@ -76,7 +41,7 @@
       padding: 48px 20px;
     }
 
-    main.error .error-content {
+    main.error .section {
       width: 100%;
       max-width: 1000px;
       margin: 0 auto;
@@ -111,42 +76,24 @@
       margin: 0;
     }
 
-    main.error .error-button-container {
-      display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
-      gap: 16px;
-      margin: 40px 0 0;
+    main.error .button-wrapper {
+      display: inline-block;
+      margin: 40px 8px 0;
     }
 
-    main.error .error-button-container a {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
+    main.error .button-wrapper .button {
       min-width: 200px;
-      padding: 14px 28px;
       border-radius: 4px;
-      font-size: 16px;
-      font-weight: 600;
-      line-height: 1.25;
-      text-decoration: none;
     }
 
-    main.error .error-button-home {
-      background-color: var(--primary);
-      color: #fff;
-    }
-
-    main.error .error-button-contact {
+    main.error .button.secondary {
       background-color: #d4d7dc;
-      color: var(--text-color);
+      border-color: #d4d7dc;
     }
 
     main.error .error-go-back {
-      background-color: transparent;
       color: var(--link-color);
       text-decoration: underline;
-      min-width: 0;
     }
 
     main.error .error-learn-more {
@@ -211,47 +158,7 @@
 
 <body>
   <header></header>
-  <main class="error">
-    <div class="section error-content">
-      <h1 class="error-sr-heading">404 - Page Not Found</h1>
-      <p class="error-headline">We apologize for the inconvenience.</p>
-      <p class="error-subhead">Sorry, but it turns out we can't find that page.</p>
-      <p class="error-button-container">
-        <a href="/" class="error-button-home">Back to Homepage</a>
-        <a href="https://www.intuit.com/company/contact" class="error-button-contact">Contact Us</a>
-      </p>
-      <p class="error-learn-more">
-        <a href="https://www.intuit.com/company/">Learn more about Intuit</a>
-        or discover your path to prosperity by exploring our products.
-      </p>
-      <ul class="error-promo-list">
-        <li>
-          <a href="https://myturbotax.intuit.com/">
-            <span class="error-promo-icon" data-icon="turbotax"></span>
-            TurboTax
-          </a>
-        </li>
-        <li>
-          <a href="https://www.creditkarma.com/">
-            <span class="error-promo-icon" data-icon="creditkarma"></span>
-            Credit Karma
-          </a>
-        </li>
-        <li>
-          <a href="https://quickbooks.intuit.com/">
-            <span class="error-promo-icon" data-icon="quickbooks"></span>
-            QuickBooks
-          </a>
-        </li>
-        <li>
-          <a href="https://mailchimp.com/">
-            <span class="error-promo-icon" data-icon="mailchimp"></span>
-            Mailchimp
-          </a>
-        </li>
-      </ul>
-    </div>
-  </main>
+  <main class="error"></main>
   <footer></footer>
 </body>
 
