@@ -701,18 +701,12 @@ body.nav-scroll-lock { overflow: hidden; }
 }
 .header .ies-secondary-nav .rc-search.rc-search-open .rc-search-form { display: flex; }
 
-/* Below the desktop breakpoint the search stops being a collapse-on-click
-   magnifier tacked onto the end of the bar. Instead it becomes a persistent
-   full-width field that sits at the TOP of the open Resource Center accordion,
-   above the category list — matching erp.intuit.com's mobile Resource Center
-   menu. (header.js suppresses the desktop expand/collapse toggle at this width,
-   so the field is always shown while the accordion is open.) */
+/* Mobile: rather than a collapse-on-click magnifier at the end of the bar, the
+   search is a persistent full-width field at the TOP of the open Resource
+   Center accordion (ordered before the category list), matching erp.intuit.com. */
 @media (width <= 1299px) {
-  /* Collapsed accordion: no search — it belongs inside the open dropdown. */
   .header .ies-secondary-nav .rc-search { display: none; }
 
-  /* Open accordion: the field takes its own full-width row, ordered before the
-     category list; the brand + caret head row stay put at the default order. */
   .header .ies-secondary-nav.open .rc-search {
     display: flex; order: 1; flex-basis: 100%; margin: 0;
     align-items: center; gap: 8px;
@@ -720,10 +714,6 @@ body.nav-scroll-lock { overflow: hidden; }
     background: none; border-radius: 0; height: auto;
   }
   .header .ies-secondary-nav.open .secondary-nav-items { order: 2; }
-
-  /* The form is always visible now (not gated behind rc-search-open); the
-     leading magnifier lives in the toggle to its left and the input fills the
-     row. A persistent field needs no collapse "×". */
   .header .ies-secondary-nav.open .rc-search-form { display: flex; flex: 1; }
   .header .ies-secondary-nav .rc-search-toggle { width: 24px; height: 24px; flex: none; }
   .header .ies-secondary-nav .rc-search-clear { display: none; }
