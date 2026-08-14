@@ -701,9 +701,31 @@ body.nav-scroll-lock { overflow: hidden; }
 }
 .header .ies-secondary-nav .rc-search.rc-search-open .rc-search-form { display: flex; }
 
-/* Below the desktop breakpoint the brand keeps its row and the field drops to
-   a full-width row under it (smaller type so the placeholder fits). */
+/* Below the desktop breakpoint the search stops being a collapse-on-click
+   magnifier tacked onto the end of the bar. Instead it becomes a persistent
+   full-width field that sits at the TOP of the open Resource Center accordion,
+   above the category list — matching erp.intuit.com's mobile Resource Center
+   menu. (header.js suppresses the desktop expand/collapse toggle at this width,
+   so the field is always shown while the accordion is open.) */
 @media (width <= 1299px) {
-  .header .ies-secondary-nav.rc-search-active .rc-search { margin-left: 0; flex-basis: 100%; }
+  /* Collapsed accordion: no search — it belongs inside the open dropdown. */
+  .header .ies-secondary-nav .rc-search { display: none; }
+
+  /* Open accordion: the field takes its own full-width row, ordered before the
+     category list; the brand + caret head row stay put at the default order. */
+  .header .ies-secondary-nav.open .rc-search {
+    display: flex; order: 1; flex-basis: 100%; margin: 0;
+    align-items: center; gap: 8px;
+    padding: 10px 20px; border-top: 1px solid var(--line);
+    background: none; border-radius: 0; height: auto;
+  }
+  .header .ies-secondary-nav.open .secondary-nav-items { order: 2; }
+
+  /* The form is always visible now (not gated behind rc-search-open); the
+     leading magnifier lives in the toggle to its left and the input fills the
+     row. A persistent field needs no collapse "×". */
+  .header .ies-secondary-nav.open .rc-search-form { display: flex; flex: 1; }
+  .header .ies-secondary-nav .rc-search-toggle { width: 24px; height: 24px; flex: none; }
+  .header .ies-secondary-nav .rc-search-clear { display: none; }
   .header .ies-secondary-nav .rc-search-input { font-size: 16px; }
 }
