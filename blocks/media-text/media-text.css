@@ -50,9 +50,10 @@
 .media-text.dark .media-copy strong { color: #fff; }
 .media-text.dark .media-copy a { color: #fff; text-decoration: underline; }
 
-/* ---- .cyan (pricing "Switch now and save") — pale-cyan closing CTA band, inset
-   further than the shared 40px gutter with an uneven 464/580 split ---- */
-.section.media-text-container:has(.media-text.cyan) { background: var(--cyan-band); padding: 120px 0; }
+/* ---- .cyan (pricing "Switch now and save") — pale closing CTA band, inset
+   further than the shared 40px gutter with an uneven 464/580 split. The band
+   fill steps from pale ice to pale cyan at 1200px, as upstream does ---- */
+.section.media-text-container:has(.media-text.cyan) { background: var(--ice-band); padding: 120px 0; }
 .media-text.cyan .media-row { padding: 0; grid-template-columns: 464fr 580fr; gap: 24px; }
 
 /* upper bound keeps this off the stacked <=768px layout, which uses the full gutter */
@@ -65,6 +66,7 @@
 }
 
 @media (width >= 1200px) {
+  .section.media-text-container:has(.media-text.cyan) { background: var(--cyan-band); }
   .media-text.cyan .media-row { padding-inline: 100px; }
 }
 

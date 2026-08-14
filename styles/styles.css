@@ -29,7 +29,8 @@
   --sky: #dbedee;
   --agave: #c2f5ff;            /* in-article callout fill */
   --agave-band: #d6e8f8;       /* media-text .agave band fill */
-  --cyan-band: #c2f5ff;        /* media-text .cyan band fill */
+  --cyan-band: #c2f5ff;        /* media-text .cyan band fill, >=1200px */
+  --ice-band: #eaf6f7;         /* media-text .cyan band fill, below 1200px */
   --rail-promo: #81f2fe;       /* blog right-rail promo card fill */
   --toc-bar-bg: #f0f4f6;       /* blog TOC bar / rail card fill */
   --toc-bar-text: #282828;
