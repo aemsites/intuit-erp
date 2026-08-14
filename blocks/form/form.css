@@ -19,7 +19,7 @@
    edge-to-edge and squish on wide sections. Scoped away from .boxed/.sky/
    .hero/.card so those already-live variants keep their existing width and
    are provably unaffected by this change. */
-.form:not(.boxed, .sky, .hero, .card) .lead-fields { max-width: 960px; margin: 40px auto 0; }
+.form:not(.sky, .hero, .card) .lead-fields { max-width: 960px; margin: 40px auto 0; }
 
 .form .ff { flex: 1; min-width: 0; text-align: left; display: flex; flex-direction: column; }
 .form .ff span { display: none; }
@@ -96,13 +96,16 @@
 /* ---- standalone form-landing pages (the whole page is a single form-container,
    e.g. /accountant/free-consultation/ies) — production renders a centered,
    narrow, single-column form rather than the wide multi-column row. Scoped with
-   :only-child so multi-section pages like /compare are unaffected. ---- */
-main:has(> .section.form-container:only-child) .form.block {
+   :only-child so multi-section pages like /compare are unaffected, and with
+   :not(.sky, .hero, .card) so those fixed-layout variants keep their own chrome
+   even if authored as the sole section. (.boxed is intentionally NOT excluded —
+   the target landing /accountant/free-consultation/ies uses the .boxed variant.) ---- */
+main:has(> .section.form-container:only-child) .form.block:not(.sky, .hero, .card) {
   max-width: 690px;
   margin-inline: auto;
 }
 
-main:has(> .section.form-container:only-child) .form .lead-fields {
+main:has(> .section.form-container:only-child) .form:not(.sky, .hero, .card) .lead-fields {
   flex-direction: column;
   align-items: stretch;
   gap: 16px;
@@ -110,8 +113,8 @@ main:has(> .section.form-container:only-child) .form .lead-fields {
   margin-inline: auto;
 }
 
-main:has(> .section.form-container:only-child) .form .ff,
-main:has(> .section.form-container:only-child) .form .form-submit {
+main:has(> .section.form-container:only-child) .form:not(.sky, .hero, .card) .ff,
+main:has(> .section.form-container:only-child) .form:not(.sky, .hero, .card) .form-submit {
   width: 100%;
   flex: 0 0 auto;
 }
