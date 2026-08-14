@@ -128,6 +128,11 @@ export function buildIdentityXdm(fields) {
 // Adobe path below only runs when the opt-in `?martech=adobe` override is used, unchanged.
 export function trackFormSubmit(fields) {
   if (window.utag?.link) {
+    // Consent-gate, like the loader's whenConsentResolved: a link fired while getConsentState()===0
+    // enqueues and can re-trigger the ies-erp processQueue<->setPreferencesValues recursion. A
+    // one-shot check is enough at submit time — on prod consent is long resolved; on a stuck-at-0
+    // host it drops rather than loops.
+    if (window.utag.gdpr?.getConsentState?.() === 0) return;
     window.utag.link({
       tealium_event: 'form_submit',
       ...fields,

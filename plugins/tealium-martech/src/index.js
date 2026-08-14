@@ -27,19 +27,13 @@
  * provider scripts.js selects, this loader still self-gates via `resolveEnvironment`: on an inert
  * host `enabled` is `false` and every method below is a no-op.
  *
- * CONSENT / PROD PARITY: `erp.intuit.com` sets no `utag_cfg_ovrd`, never calls `utag.view()`, and
- * loads a full OneTrust consent stack BEFORE utag.js — then lets utag fire (and consent-gate) its
- * own initial view. We mirror that exactly: no `noview` override (see constructor), no manual view
- * (see `lazy()`), and `loadConsentStack` ahead of utag.js. An earlier version set `noview:true` and
- * fired `utag.view()` itself right after `loadUtag`; when that view was dispatched while utag's
- * consent was still unresolved (`utag.gdpr.getConsentState() === 0`), it was enqueued and the
- * `ies-erp` profile's consent extension recursed infinitely at INIT
- * (`processQueue <-> setPreferencesValues`; see `lazy()`'s doc comment). The recursion is a
- * profile-side fragility this loader cannot change; we avoid triggering it by not injecting a view
- * into an unresolved-consent state — i.e. by not overriding utag's own view. This loader calls no
- * `utag.gdpr.*` API. (`loadConsentStack`/`settleConsent` keep prod's consent-before-utag ordering;
- * note the local `?martech=local` OneTrust copies do not by themselves settle Tealium consent —
- * utag's own opt-out default resolves it at INIT for the US audience.)
+ * CONSENT: the `ies-erp` profile's consent extension recurses infinitely
+ * (`processQueue` <-> `setPreferencesValues`, stack overflow) if utag is handed a tracked call
+ * while consent is unresolved (`getConsentState() === 0`). We avoid it three ways: load the
+ * OneTrust consent stack before utag.js (`loadConsentStack`/`settleConsent`); `head.html` sets
+ * `noview:true` to suppress utag's own auto-view; and every tracked call goes through
+ * `whenConsentResolved`. This loader drives no `utag.gdpr.*` API (`readOptanonConsent`/
+ * `mapConsentToTealium` are unused helpers kept for future profile wiring).
  *
  * CSP: the page enforces Trusted Types + `strict-dynamic`, so utag.js and the consent stack are
  * only ever injected via `document.createElement('script')` (see `loadUtag`, `loadScriptOnce`) —
@@ -346,22 +340,15 @@ function seedUdo() {
   }
 }
 
-// utag environments that should run Tealium's own verbose console/debug mode (`utagdb`). Only
-// 'dev' is verbose; 'qa' and 'prod' both stay silent, like a real production deploy.
+// utag environments that run Tealium's verbose console (`utagdb`). Dev only; prod stays silent.
 const DEBUG_ENVIRONMENTS = ['dev'];
 
 /**
- * Runs `fn` (a utag tracked call — view/link) ONLY once Tealium consent has resolved
- * (`utag.gdpr.getConsentState() !== 0`), polling until it does or `timeoutMs` elapses.
- *
- * THE one invariant this loader must hold: never hand utag a tracked call while consent is `0`.
- * `utag.view`/`utag.link` called with `getConsentState() === 0` enqueue the event onto
- * `utag.gdpr.queue`, and the `ies-erp` profile's consent extension then recurses over that queue
- * (`processQueue` ↔ `setPreferencesValues`, stack overflow — see `lazy()`). This applies to EVERY
- * tracked call, not just the initial view: the delayed-phase `delayed_ready` link hit exactly this.
- * Consent can legitimately stay `0` for a while (or forever) on a non-`intuit.com` host where the
- * consent CDN is CloudFront-blocked and no `?martech=local` copies settle it — in which case the
- * call is dropped after the timeout: no tracking, but no loop.
+ * Runs `fn` (a utag view/link) only once Tealium consent has resolved (`getConsentState() !== 0`),
+ * polling until it does or `timeoutMs` elapses. The invariant: never hand utag a tracked call while
+ * consent is `0` — that enqueues it and the `ies-erp` consent extension recurses over the queue
+ * (`processQueue` <-> `setPreferencesValues`). Fail-open: if consent never resolves (e.g. a host
+ * where the consent CDN is blocked), the call is dropped, never looped.
  * @param {Function} fn the tracked call to run once consent is resolved
  * @param {Number} [timeoutMs=8000] max time to wait for consent before dropping the call
  */
@@ -399,12 +386,9 @@ export default class TealiumMartech {
     seedUdo();
     this.env = resolveEnvironment();
     this.enabled = this.env !== null;
-    // Prod parity: erp.intuit.com sets NO `utag_cfg_ovrd` — in particular it does NOT set
-    // `noview`, so utag fires (and consent-gates/queues/replays) its OWN initial view. We used to
-    // set `noview:true` and fire `utag.view()` ourselves in lazy(); that manual view, dispatched
-    // while `utag.gdpr.getConsentState()===0`, is what seeded the `ies-erp` consent extension's
-    // processQueue<->setPreferencesValues recursion. We now leave utag's view alone and only layer
-    // in Tealium's verbose logging on dev.
+    // head.html sets `utag_cfg_ovrd.noview=true` to suppress utag's own auto-view (firing before
+    // consent resolves would seed the ies-erp recursion); lazy() fires the view itself, gated by
+    // whenConsentResolved. Here we only add Tealium's verbose logging on dev.
     if (DEBUG_ENVIRONMENTS.includes(this.env)) {
       // Tealium's own verbose console logging — dev only, set before utag.js loads in lazy().
       window.utag_cfg_ovrd = { ...(window.utag_cfg_ovrd || {}), utagdb: true };
@@ -423,39 +407,19 @@ export default class TealiumMartech {
   }
 
   /**
-   * Lazy-phase logic: replicates Intuit's prod consent stack, waits for consent to settle (or
-   * fail-open time out), then loads utag.js. It does NOT fire the page view — utag fires its own.
-   *
-   * PROD PARITY / RECURSION FIX. `erp.intuit.com` sets no `utag_cfg_ovrd` and never calls
-   * `utag.view()` itself: it just loads the OneTrust consent stack ahead of utag.js and lets utag
-   * fire (and consent-gate) its own initial view. We mirror that. An earlier version of this loader
-   * instead set `noview:true` (suppressing utag's own view) and called `utag.view(utag_data)` here,
-   * right after `loadUtag` — which resolves on the script's `onload`, i.e. while utag's consent may
-   * still be unresolved (`utag.gdpr.getConsentState() === 0`, e.g. first visit / EEA geo before the
-   * banner is actioned, or any load where the local `?martech=local` consent copies never establish
-   * a `CONSENTMGR`/`ccpa`/`cpra` cookie). A tracked call made while consent is `0` is pushed onto
-   * `utag.gdpr.queue`; the `ies-erp` profile's consent extension then runs
-   * `setConsentPrefs -> setPreferencesValues -> processQueue`, which re-runs the extension over the
-   * queued event (`utag.handler.RE(..., "blr")`) BEFORE clearing the queue — an unbounded
-   * `processQueue <-> setPreferencesValues` recursion (stack overflow / frozen tab). Prod dodges it
-   * because consent is resolved before the view, so nothing is ever queued. The recursion itself is
-   * a profile-side fragility we can't fix from here; we avoid triggering it by not injecting a view
-   * into an unresolved-consent state — i.e. by not overriding utag's own view at all.
-   *
-   * `readOptanonConsent` / `mapConsentToTealium` remain as ready-made, side-effect-free helpers for
-   * any future profile-wiring; this loader calls no `utag.gdpr.*` API.
+   * Lazy-phase: load Intuit's OneTrust consent stack, wait for it to settle (fail-open), load
+   * utag.js, then fire the initial page view via `whenConsentResolved` — never while consent is
+   * unresolved (that seeds the ies-erp recursion; see the CONSENT note in the file header).
+   * `head.html`'s `noview:true` suppresses utag's own auto-view, so the initial view is ours.
    * @returns {Promise<void>} resolves once the consent stack has settled and utag.js has loaded
-   *                           (or immediately, if disabled)
    */
   async lazy() {
     if (!this.enabled) return;
     await loadConsentStack(this.env, this.local);
     await settleConsent();
     await loadUtag(this.env, this.local);
-    // Fire the initial page view — but ONLY once consent has resolved. `head.html` sets
-    // `utag_cfg_ovrd.noview=true` (suppressing utag's OWN auto-view, which carries the identical
-    // loop risk), so firing the view is ours to do; `whenConsentResolved` guarantees it never
-    // enqueues into a `getConsentState()===0` state (the profile consent-extension recursion).
+    // Initial page view, consent-gated (see whenConsentResolved) — since head.html's noview
+    // suppresses utag's own auto-view, this is ours to fire, and only once consent resolves.
     if (window.utag?.view) {
       whenConsentResolved(() => window.utag.view(window.utag_data));
     }

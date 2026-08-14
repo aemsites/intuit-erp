@@ -125,6 +125,18 @@ describe('trackFormSubmit (provider-aware)', () => {
     expect(sendEvent).not.toHaveBeenCalled();
   });
 
+  it('withholds the Tealium form_submit link while consent is unresolved (getConsentState()===0)', () => {
+    window.utag = { link: vi.fn(), gdpr: { getConsentState: () => 0 } };
+    window.utag_data = { ivid: 'visitor-123' };
+
+    trackFormSubmit(fields);
+
+    // Firing while consent is 0 would enqueue the link and risk the ies-erp processQueue recursion.
+    expect(window.utag.link).not.toHaveBeenCalled();
+    // On the Tealium provider we drop rather than fall back to the Adobe path.
+    expect(sendEvent).not.toHaveBeenCalled();
+  });
+
   it('falls back to the Adobe sendEvent identity call when window.utag is absent', () => {
     trackFormSubmit(fields);
 
