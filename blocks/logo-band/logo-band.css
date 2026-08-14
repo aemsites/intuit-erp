@@ -1,0 +1,110 @@
+/* logo-band — default: static responsive grid of partner/integration logos. */
+.logo-band .logoband-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  align-items: center;
+}
+
+.logo-band .logoband-list li {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background-color: var(--light-color);
+  min-height: 120px;
+}
+
+.logo-band .logoband-list li picture {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.logo-band .logoband-list li picture img,
+.logo-band .logoband-list li img {
+  max-width: 100%;
+  max-height: 60px;
+  object-fit: contain;
+  filter: grayscale(100%);
+  transition: filter 0.3s ease;
+}
+
+.logo-band .logoband-list li a {
+  color: var(--link-color);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: var(--body-font-size-xs);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo-band .logoband-list li a:hover {
+  color: var(--link-hover-color);
+}
+
+.logo-band .logoband-list li:hover picture img,
+.logo-band .logoband-list li:hover img {
+  filter: grayscale(0%);
+}
+
+@media (min-width: 600px) {
+  .logo-band .logoband-list {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 900px) {
+  .logo-band .logoband-list {
+    grid-template-columns: repeat(6, 1fr);
+    gap: 16px;
+  }
+
+  .logo-band .logoband-list li {
+    padding: 16px;
+    min-height: 100px;
+  }
+
+  .logo-band .logoband-list li picture img,
+  .logo-band .logoband-list li img {
+    max-height: 48px;
+  }
+}
+
+/* logo-band.marquee — dark band, infinite scrolling logos.
+   Lifted from erp.intuit.com's #ies-slider marquee treatment. */
+.section.logo-band-container:has(.logo-band.marquee) { background: #00203f; overflow: hidden; }
+.logo-band.marquee { padding: 22px 0; }
+
+.logo-band.marquee .logoband-viewport { overflow: hidden; width: 100%; }
+.logo-band.marquee .logoband-track { display: flex; flex-wrap: nowrap; align-items: center; width: max-content; }
+.logo-band.marquee .logoband-set { display: flex; flex-wrap: nowrap; align-items: center; gap: 30px; flex: 0 0 auto; padding-right: 30px; }
+
+.logo-band.marquee img { height: 26px; width: auto; opacity: 0.9; filter: brightness(0) invert(1); flex: 0 0 auto; }
+
+.logo-band.marquee.is-ready .logoband-track {
+  animation-name: logoband-scroll;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform;
+}
+
+@keyframes logoband-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(var(--logoband-distance, -50%)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .logo-band.marquee.is-ready .logoband-track { animation: none; transform: none; }
+  .logo-band.marquee .logoband-viewport { overflow-x: auto; }
+}
+
+@media (width <= 768px) {
+  .logo-band.marquee .logoband-set { gap: 22px; padding-right: 22px; }
+}

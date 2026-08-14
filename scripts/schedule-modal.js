@@ -79,3 +79,12 @@ export async function openScheduleModal() {
     body.textContent = 'Sorry, something went wrong loading this form. Please try again.';
   }
 }
+
+export function bindScheduleLinks(container) {
+  container.querySelectorAll('a[href="#schedule"]').forEach((a) => {
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      openScheduleModal();
+    });
+  });
+}

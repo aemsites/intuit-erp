@@ -26,7 +26,7 @@
  * once the page finishes loading; see enhanceDashboardAnimation.
  * CSS: blocks/hero/hero.css
  */
-import { openScheduleModal } from '../../scripts/schedule-modal.js';
+import { bindScheduleLinks } from '../../scripts/schedule-modal.js';
 import { loadFragment } from '../fragment/fragment.js';
 
 const DEFAULT_FORM_FRAGMENT = '/fragments/schedule-call';
@@ -212,12 +212,7 @@ export default async function decorate(block) {
     ctas.slice(1).forEach((p) => p.remove());
   }
 
-  copy.querySelectorAll('a[href="#schedule"]').forEach((a) => {
-    a.addEventListener('click', (e) => {
-      e.preventDefault();
-      openScheduleModal();
-    });
-  });
+  bindScheduleLinks(copy);
 
   const grid = document.createElement('div');
   grid.className = 'hero-grid';

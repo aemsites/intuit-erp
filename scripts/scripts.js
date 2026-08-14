@@ -11,8 +11,13 @@ import {
   loadCSS,
   buildBlock,
   getMetadata,
+  readBlockConfig,
+  toClassName,
 } from './aem.js';
 import { runExperimentation, runExperimentationLazy } from './experiment-loader.js';
+// exp.js / pzn.js are dynamically imported (via runExperienceLayer) only when a
+// `data-pzn` / `data-exp` section is present, so pages without personalization
+// never load them.
 // Vendored via git subtree at plugins/martech (see its README), not an
 // installed npm package, so this necessarily crosses a package.json boundary.
 import {
@@ -113,8 +118,28 @@ function buildWidgetAutoBlocks(main) {
 }
 
 /**
+ * True when `el` is an authored poster-only node — a bare <picture>/<img>, or a
+ * <p> that wraps only a <picture>/<img> with no other text/links. Used to pair a
+ * standalone poster with an adjacent video link (see buildVideoAutoBlocks).
+ * @param {Element|null} el
+ * @returns {boolean}
+ */
+function isPosterOnly(el) {
+  if (!el) return false;
+  if (el.tagName === 'PICTURE' || el.tagName === 'IMG') return true;
+  return el.tagName === 'P'
+    && !!el.querySelector('picture, img')
+    && !el.querySelector('a')
+    && el.textContent.trim() === '';
+}
+
+/**
  * Turns a section-level paragraph that is only a link to a video host
- * (YouTube/Vimeo), optionally wrapping a poster <img>, into a `video` block.
+ * (YouTube/Vimeo) into a `video` block. The poster image may be authored inside
+ * the link paragraph, or as a standalone <picture>/<img> in the immediately
+ * preceding sibling — in the latter case it is absorbed into the block so the
+ * video block owns a single poster (with play button) instead of leaving the
+ * image orphaned and the block falling back to the provider thumbnail.
  * Skips inline prose links and links already inside a block cell (e.g.
  * testimonial.video), so only standalone thumbnail-links are upgraded.
  * @param {Element} main The container element
@@ -128,7 +153,17 @@ function buildVideoAutoBlocks(main) {
     if (p.querySelectorAll('a').length !== 1) return;
     // the link must be the whole paragraph (image poster has no text)
     if (p.textContent.replace(a.textContent, '').trim()) return;
-    p.replaceWith(buildBlock('video', { elems: [a.cloneNode(true)] }));
+    // absorb a standalone poster authored in the preceding sibling, if any, so
+    // the block renders one thumbnail + play button rather than an orphaned
+    // image above a provider-thumbnail video block.
+    const elems = [];
+    const poster = p.previousElementSibling;
+    if (!p.querySelector('img') && isPosterOnly(poster)) {
+      elems.push(poster.tagName === 'P' ? poster.querySelector('picture, img') : poster);
+      poster.remove();
+    }
+    elems.push(a.cloneNode(true));
+    p.replaceWith(buildBlock('video', { elems }));
   });
 }
 
@@ -216,6 +251,35 @@ function decorateButtons(main) {
 }
 
 /**
+ * Applies section-level style variants from "Section Metadata" blocks.
+ *
+ * This project uses a trimmed decorateSections() (in aem.js, which must not be
+ * modified) that does not read Section Metadata into style classes like the
+ * stock boilerplate does. This re-adds that behaviour generically: any section
+ * whose Section Metadata has a "Style" key gets those values applied as classes
+ * on the section element. It is a no-op for sections without Section Metadata,
+ * so existing pages are unaffected.
+ * @param {Element} main The main element
+ */
+function decorateSectionStyles(main) {
+  main.querySelectorAll('.section .section-metadata').forEach((meta) => {
+    const section = meta.closest('.section');
+    if (!section) return;
+    const config = readBlockConfig(meta);
+    if (config.style) {
+      config.style.split(',')
+        .map((s) => toClassName(s.trim()))
+        .filter((s) => !!s)
+        .forEach((s) => section.classList.add(s));
+    }
+    // remove the metadata block (and its wrapper) so it is neither rendered nor
+    // picked up by decorateBlocks() as a loadable block.
+    const wrapper = meta.closest('.section-metadata-wrapper');
+    (wrapper || meta).remove();
+  });
+}
+
+/**
  * Decorates the main element.
  * @param {Element} main The main element
  */
@@ -224,6 +288,7 @@ export function decorateMain(main) {
   decorateIcons(main);
   buildAutoBlocks(main);
   decorateSections(main);
+  decorateSectionStyles(main);
   decorateBlocks(main);
   decorateButtons(main);
 }
@@ -240,6 +305,29 @@ function redirectConstructionQToLlmAppCtx() {
   params.delete('q');
   params.set('llm_app_ctx', q);
   window.location.replace(`${window.location.pathname}?${params.toString()}${window.location.hash}`);
+}
+
+/**
+ * Personalization (`data-pzn`) + experimentation (`data-exp`) for a DOM scope.
+ * Loads pzn.js / exp.js only when the corresponding marker is present in `root`
+ * (which may itself carry the attribute), runs both concurrently under one
+ * fail-open guard, and skips the `skip` section (used to run the first/LCP
+ * section eagerly and the rest lazily without double-processing).
+ * @param {Element} root
+ * @param {{ skip?: Element }} [opts]
+ */
+async function runExperienceLayer(root, { skip } = {}) {
+  if (!root) return;
+  const has = (attr) => (root.matches?.(`[${attr}]`) && root !== skip)
+    || [...root.querySelectorAll(`[${attr}]`)].some((el) => el !== skip);
+  const hasPzn = has('data-pzn');
+  const hasExp = has('data-exp');
+  if (!hasPzn && !hasExp) return;
+  const { withTimeout } = await import('./personalization/decision.js');
+  const tasks = [];
+  if (hasPzn) tasks.push(import('./pzn.js').then(({ runPersonalization }) => runPersonalization(root, { skip })));
+  if (hasExp) tasks.push(import('./exp.js').then(({ runBlockExperiments }) => runBlockExperiments(root, { skip })));
+  await withTimeout(Promise.all(tasks), 1500);
 }
 
 async function loadEager(doc) {
@@ -275,6 +363,15 @@ async function loadEager(doc) {
   }
 
   await runExperimentation(doc, experimentationConfig);
+  // Intuit IXP whole-page experiment: swaps <main> before decoration. Metadata-
+  // gated (loaded only when enrolled) and phase-bounded so it never blocks reveal.
+  if (getMetadata('experiment-id') || getMetadata('experiment-label')) {
+    const [{ runExperiment }, { withTimeout }] = await Promise.all([
+      import('./exp.js'),
+      import('./personalization/decision.js'),
+    ]);
+    await withTimeout(runExperiment(doc), 1500);
+  }
   const main = doc.querySelector('main');
   if (main) {
     // Blog article pages need buildBlogTemplate during eager decoration; import
@@ -284,6 +381,11 @@ async function loadEager(doc) {
       ({ buildBlogTemplate } = await import('../blocks/blog-template/blog-template.js'));
     }
     decorateMain(main);
+    // Personalize/experiment the first (LCP) section before reveal so the visitor
+    // sees final content with no flash. Sections below the fold are handled in
+    // loadLazy (post-LCP) so their pzn/exp swaps never block LCP.
+    const firstSection = main.querySelector('.section');
+    if (firstSection) await runExperienceLayer(firstSection);
     document.body.classList.add('appear');
     await Promise.all([
       martechLoadedPromise ? martechLoadedPromise.then(martechEager) : Promise.resolve(),
@@ -309,6 +411,10 @@ async function loadLazy(doc) {
   loadHeader(doc.querySelector('header'));
 
   const main = doc.querySelector('main');
+  // Below-the-fold personalization/experimentation: run the sections after the
+  // first (the LCP one, already handled eagerly) now that LCP has painted. Not
+  // awaited — these swaps must never block reveal or the lazy pipeline.
+  if (main) runExperienceLayer(main, { skip: main.querySelector('.section') }).catch(() => {});
   await loadSections(main);
 
   const { hash } = window.location;

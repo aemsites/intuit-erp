@@ -9,13 +9,21 @@
  * embeds, etc.) survives untouched.
  *
  * Variants:
- *   .testimonial   dark band, quote + photo/video ("Trusted by firms")
+ *   .testimonial   quote + portrait card ("Trusted by firms"); see
+ *                  normalizeTestimonial below
  *   .cards         customer-story/article cards (index/events/construction
  *                  card sliders)
  * CSS: blocks/carousel/carousel.css
  */
 
+import { loadCSS } from '../../scripts/aem.js';
+import { videoInfo } from '../video/video-info.js';
+
 const SWIPE_THRESHOLD = 40; // px — minimum horizontal drag to change slides
+
+const HEADINGS = 'h1, h2, h3, h4, h5, h6';
+
+const PLAY_ICON = '<svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true" focusable="false"><circle cx="10" cy="10" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 6.5l5 3.5-5 3.5z" fill="currentColor"/></svg>';
 
 function buildArrow(direction, label, glyph) {
   const btn = document.createElement('button');
@@ -59,11 +67,160 @@ function splitFeatureQuote(slide) {
   p.after(cite);
 }
 
+/**
+ * Opens a video in a dismissible lightbox, reusing the `.video-modal-*` markup
+ * and styles that blocks/video owns.
+ * @param {string} embedUrl provider embed URL
+ * @param {string} title accessible iframe title
+ */
+function openVideoModal(embedUrl, title) {
+  // guard against a double-click or two different CTAs stacking overlays
+  if (document.querySelector('.video-modal-overlay')) return;
+  loadCSS(`${window.hlx.codeBasePath}/blocks/video/video.css`);
+  const overlay = document.createElement('div');
+  overlay.className = 'video-modal-overlay';
+  const frame = document.createElement('div');
+  frame.className = 'video-modal-frame';
+  const iframe = document.createElement('iframe');
+  iframe.src = embedUrl;
+  iframe.title = title || 'Video';
+  iframe.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+  iframe.allowFullscreen = true;
+  frame.append(iframe);
+  const close = document.createElement('button');
+  close.type = 'button';
+  close.className = 'video-modal-close';
+  close.setAttribute('aria-label', 'Close video');
+  close.textContent = '×';
+  const modal = document.createElement('div');
+  modal.className = 'video-modal';
+  modal.append(close, frame);
+  overlay.append(modal);
+
+  function dismiss() {
+    overlay.remove();
+    // eslint-disable-next-line no-use-before-define
+    document.removeEventListener('keydown', onKey);
+  }
+  function onKey(e) { if (e.key === 'Escape') dismiss(); }
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) dismiss(); });
+  close.addEventListener('click', dismiss);
+  document.addEventListener('keydown', onKey);
+  document.body.append(overlay);
+}
+
+/**
+ * Rewrites one `.testimonial` slide into `.testi-media` + `.testi-body`.
+ *
+ * Authors have produced three different shapes for this block — four cells
+ * (`image | quote | attribution | link`), and two single-cell variants that
+ * differ in whether they open with a heading. Rather than branch per shape,
+ * every block-level part is collected in document order and classified by what
+ * it holds, so all three read into the same model: the part with a picture is
+ * the media, a heading is the title, a part with a link is the CTA, and the
+ * remaining text is the quote followed by the attribution.
+ *
+ * A title is not decoration — upstream keys the whole treatment off it (no
+ * title means a 40px quote against a flush image, a title means a 20px quote
+ * beside an inset one), so it is surfaced as `.has-title` on the block.
+ * @param {Element} slide a `.carousel-slide`
+ * @returns {boolean} true when the slide has a title
+ */
+function normalizeTestimonial(slide) {
+  const parts = [...slide.children].flatMap((cell) => {
+    const kids = [...cell.children];
+    return kids.length ? kids : [cell];
+  });
+
+  const media = parts.find((p) => p.matches('picture, img') || p.querySelector('picture, img'));
+  const title = parts.find((p) => p !== media && p.matches(HEADINGS));
+  // a link is only a CTA when it is the whole part — an inline link inside the
+  // quote or attribution stays where it was authored
+  const ctaPart = parts.find((p) => {
+    if (p === media || p === title) return false;
+    const a = p.matches('a[href]') ? p : p.querySelector('a[href]');
+    return a && p.textContent.trim() === a.textContent.trim();
+  });
+  const text = parts.filter((p) => p !== media && p !== title && p !== ctaPart
+    && p.textContent.trim());
+
+  const body = document.createElement('div');
+  body.className = 'testi-body';
+
+  if (title) {
+    const t = document.createElement('p');
+    t.className = 'testi-title';
+    t.append(...title.childNodes);
+    body.append(t);
+  }
+
+  // the attribution is always last; anything before it belongs to the quote,
+  // which may run to more than one paragraph
+  const attr = text.length > 1 ? text.pop() : null;
+  text.forEach((p) => {
+    const q = document.createElement('p');
+    q.className = 'testi-quote';
+    q.append(...p.childNodes);
+    body.append(q);
+  });
+  if (attr) {
+    const a = document.createElement('p');
+    a.className = 'testi-attr';
+    a.append(...attr.childNodes);
+    // authored as a bold name over a line break (`**Name**<br>Company`), which
+    // renders as one run of unspaced text at this size — upstream sets it as a
+    // single comma-separated line, so flatten it rather than ask every page to
+    // be re-authored
+    a.querySelectorAll('br').forEach((br) => br.replaceWith(', '));
+    a.textContent = a.textContent.replace(/\s*,\s*/g, ', ').replace(/,\s*$/, '').trim();
+    body.append(a);
+  }
+
+  const link = ctaPart && (ctaPart.matches('a[href]') ? ctaPart : ctaPart.querySelector('a[href]'));
+  if (link) {
+    const wrap = document.createElement('div');
+    wrap.className = 'testi-cta';
+    const info = videoInfo(link.getAttribute('href'));
+    if (info) {
+      // a video CTA plays in place rather than navigating off the page, which
+      // is what upstream does and what every authored link here points at.
+      // Preload the modal's styles now so the first click doesn't paint an
+      // unstyled overlay while video.css is still fetching.
+      loadCSS(`${window.hlx.codeBasePath}/blocks/video/video.css`);
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'testi-cta-button';
+      btn.innerHTML = PLAY_ICON;
+      const label = document.createElement('span');
+      label.textContent = link.textContent.trim();
+      btn.append(label);
+      btn.addEventListener('click', () => openVideoModal(info.embedUrl, link.textContent.trim()));
+      wrap.append(btn);
+    } else {
+      link.classList.add('testi-cta-button');
+      wrap.append(link);
+    }
+    body.append(wrap);
+  }
+
+  const mediaWrap = document.createElement('div');
+  mediaWrap.className = 'testi-media';
+  // media is either the picture/img itself (four-cell shape) or a wrapper
+  // around it (single-cell shapes) — querying inside an already-matched
+  // picture would return its bare <img> and drop its <source> variants
+  if (media) mediaWrap.append(media.matches('picture, img') ? media : (media.querySelector('picture, img') || media));
+
+  slide.replaceChildren(mediaWrap, body);
+  return !!title;
+}
+
 export default function decorate(block) {
   const slides = [...block.querySelectorAll(':scope > div')];
   if (!slides.length) return;
 
   const isFeature = block.classList.contains('feature');
+  const isTestimonial = block.classList.contains('testimonial');
+  let hasTitle = false;
 
   slides.forEach((slide, i) => {
     slide.className = 'carousel-slide';
@@ -71,7 +228,10 @@ export default function decorate(block) {
     slide.setAttribute('aria-roledescription', 'slide');
     slide.setAttribute('aria-label', `Slide ${i + 1} of ${slides.length}`);
     if (isFeature) splitFeatureQuote(slide);
+    if (isTestimonial && normalizeTestimonial(slide)) hasTitle = true;
   });
+
+  if (hasTitle) block.classList.add('has-title');
 
   const track = document.createElement('div');
   track.className = 'carousel-track';
