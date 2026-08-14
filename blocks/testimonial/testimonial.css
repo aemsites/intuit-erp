@@ -116,6 +116,7 @@
 .testimonial.video-split .split-copy { max-width: 30em; }
 .testimonial.video-split .split-media { position: relative; }
 .testimonial.video-split .split-media img { width: 100%; height: auto; display: block; border-radius: 4px; }
+.testimonial.video-split .split-caption { margin: 12px 0 0; font-size: 14px; line-height: 1.4; color: var(--text-muted); }
 
 .testimonial.video-split .split-play {
   position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
@@ -134,17 +135,18 @@
   max-width: 1120px; margin: 0 auto;
 }
 
-/* decorative quote mark rendered as a CSS glyph (was a failing <img src="about:error">) */
-.testimonial .cmp-quote-card::before {
-  content: "\201C";
-  display: block;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 72px;
-  line-height: 0.8;
-  color: var(--heading);
-  margin-bottom: 12px;
+/* No decorative quote-mark glyph: every real instance already punctuates its
+   own quote text (“…”), so a second CSS-rendered mark on top of that is just
+   redundant — that redundancy was invisible before only because the old
+   authored image was broken (src="about:error"). This also resets the global
+   `blockquote` pull-quote rule (styles.css) that the block's own <blockquote>
+   otherwise inherits unscoped — its own quote-mark, padding, and margin were
+   bleeding through here too, just masked by the same broken image. */
+.testimonial .cmp-quote {
+  position: static; margin: 0 0 22px; padding: 0;
+  font-size: 24px; line-height: 1.4; font-weight: 400; color: var(--heading);
 }
-.testimonial .cmp-quote { margin: 0 0 22px; font-size: 24px; line-height: 1.4; font-weight: 400; color: var(--heading); }
+.testimonial .cmp-quote::before { content: none; }
 .testimonial .cmp-quote-name { font-size: 15px; font-weight: 700; color: var(--heading); margin: 0; }
 .testimonial .cmp-quote-role { font-size: 14px; color: var(--text-muted); margin: 0; }
 .testimonial .cmp-testi-media img { width: 100%; border-radius: 12px; }
@@ -186,9 +188,13 @@
   width: 88px; height: 88px; border-radius: 50%; object-fit: cover; margin-bottom: 20px;
 }
 
+/* resets the global `blockquote` pull-quote rule (styles.css) — its quote-mark,
+   padding, and margin otherwise bleed through this unscoped <blockquote> too */
 .testimonial .testimonial-card blockquote {
-  margin: 0 0 20px; font-size: 18px; line-height: 1.5; font-weight: 400; color: var(--heading);
+  position: static; margin: 0 0 20px; padding: 0;
+  font-size: 18px; line-height: 1.5; font-weight: 400; color: var(--heading);
 }
+.testimonial .testimonial-card blockquote::before { content: none; }
 
 .testimonial .testimonial-card figcaption { margin: 0; }
 .testimonial .testimonial-card .testimonial-name { font-size: 15px; font-weight: 700; color: var(--heading); margin: 0; }
