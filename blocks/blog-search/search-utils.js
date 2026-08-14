@@ -128,7 +128,16 @@ export function enhanceSecondaryNavSearch(root) {
     toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
     if (open) input.focus();
   };
-  toggle.addEventListener('click', () => setOpen(!widget.classList.contains('rc-search-open')));
+  // Below the desktop breakpoint the field is a persistent part of the open
+  // Resource Center accordion (see header.css), not an expand-on-click control —
+  // so tapping the magnifier there just focuses the input instead of toggling
+  // the desktop expand/collapse (which would hide the category list).
+  const isMobileAccordion = () => typeof window.matchMedia === 'function'
+    && window.matchMedia('(max-width: 1299px)').matches;
+  toggle.addEventListener('click', () => {
+    if (isMobileAccordion()) { input.focus(); return; }
+    setOpen(!widget.classList.contains('rc-search-open'));
+  });
   // × collapses the expanded search (and clears it), returning focus to the icon.
   clear.addEventListener('click', () => { input.value = ''; setOpen(false); toggle.focus(); });
   form.addEventListener('submit', (e) => {
