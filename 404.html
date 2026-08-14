@@ -9,8 +9,6 @@
   >
   <title>404 - Page Not Found | Intuit Enterprise Suite</title>
   <script nonce="aem" type="text/javascript">
-    window.isErrorPage = true;
-    window.errorCode = '404';
     // Trailing-slash recovery: EDS serves /page and /page/ as different
     // resources and does not redirect between them, so /page/ 404s. When this
     // error page loads for a path with a trailing slash, redirect to the
@@ -39,7 +37,13 @@
 
 <body>
   <header></header>
-  <main class="error"></main>
+  <main class="error">
+    <div class="section">
+      <div class="fragment">
+        <a href="/fragments/404">/fragments/404</a>
+      </div>
+    </div>
+  </main>
   <footer></footer>
 </body>
 

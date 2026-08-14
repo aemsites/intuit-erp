@@ -9,19 +9,7 @@ main.error .section {
   text-align: center;
 }
 
-main.error .error-sr-heading {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-  border: 0;
-}
-
-main.error .error-headline {
+main.error h2 {
   font-size: 28px;
   font-weight: 700;
   line-height: 1.3;
@@ -29,7 +17,7 @@ main.error .error-headline {
   margin: 0 0 16px;
 }
 
-main.error .error-subhead {
+main.error h2 + p {
   font-size: 20px;
   font-weight: 500;
   line-height: 1.4;
@@ -52,25 +40,20 @@ main.error .button.secondary {
   border-color: #d4d7dc;
 }
 
-main.error .error-go-back {
-  color: var(--link-color);
-  text-decoration: underline;
-}
-
-main.error .error-learn-more {
+main.error p:has(+ ul) {
   font-style: italic;
   font-size: 16px;
   line-height: 1.5;
   margin: 40px 0 0;
 }
 
-main.error .error-learn-more a {
+main.error p:has(+ ul) a {
   font-style: italic;
   font-size: 20px;
   line-height: 1.4;
 }
 
-main.error .error-promo-list {
+main.error ul {
   list-style: none;
   display: grid;
   grid-template-columns: 1fr;
@@ -80,7 +63,7 @@ main.error .error-promo-list {
   text-align: left;
 }
 
-main.error .error-promo-list li {
+main.error ul li {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -89,25 +72,25 @@ main.error .error-promo-list li {
   border-radius: 4px;
 }
 
-main.error .error-promo-list a {
+main.error ul a {
   font-size: 16px;
   font-weight: 600;
   color: var(--link-color);
   text-decoration: none;
 }
 
-main.error .error-promo-list .icon {
+main.error ul .icon {
   display: flex;
   flex-shrink: 0;
 }
 
-main.error .error-promo-list .icon img {
+main.error ul .icon img {
   width: 24px;
   height: 24px;
 }
 
 @media (min-width: 900px) {
-  main.error .error-promo-list {
+  main.error ul {
     grid-template-columns: repeat(4, 1fr);
   }
 }

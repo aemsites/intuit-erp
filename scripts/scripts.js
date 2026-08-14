@@ -294,71 +294,6 @@ export function decorateMain(main) {
 }
 
 /**
- * Renders the 404 page from authored content at /fragments/404 (per
- * https://www.aem.live/docs/error-pages), so marketing can edit the error
- * copy/links without a code change. loadFragment() already fully decorates
- * and reveals its content on an isolated <main>, so we adopt its children as
- * our page's <main> content directly rather than running decorateMain/
- * loadSection again — doing both would re-scan the fragment's own already-
- * decorated .section div as if it were a block and try to load a
- * nonexistent blocks/section/section.js.
- * The cross-promo links' brand icons use the standard `:iconname:` authoring
- * convention (resolved by decorateIcons, already run inside loadFragment's
- * decorateMain call) against /icons/, so authors add/reorder/relabel them
- * freely with no code-side matching step that could silently miss one.
- * @param {Element} main The main element
- */
-async function loadErrorPage(main) {
-  // eslint-disable-next-line import/no-cycle
-  const { loadFragment } = await import('../blocks/fragment/fragment.js');
-  const fragment = await loadFragment('/fragments/404');
-  if (!fragment) return;
-  main.replaceChildren(...fragment.children);
-
-  // Hidden (0×0, but present for SEO/a11y) heading — mirrors production's own
-  // DOM, which has an equivalent off-screen <h1> ahead of the visible copy.
-  const srHeading = document.createElement('h1');
-  srHeading.className = 'error-sr-heading';
-  srHeading.textContent = '404 - Page Not Found';
-  main.prepend(srHeading);
-
-  const headline = main.querySelector('h2');
-  if (headline) {
-    headline.classList.add('error-headline');
-    const subhead = headline.nextElementSibling;
-    if (subhead?.tagName === 'P') subhead.classList.add('error-subhead');
-  }
-
-  const promoList = main.querySelector('ul');
-  if (promoList) {
-    promoList.classList.add('error-promo-list');
-    const learnMore = promoList.previousElementSibling;
-    if (learnMore?.tagName === 'P') learnMore.classList.add('error-learn-more');
-  }
-
-  // Same-origin referrer? Offer a "Go back" link next to the CTA buttons.
-  if (document.referrer) {
-    try {
-      const { origin, pathname } = new URL(document.referrer);
-      const lastButton = [...main.querySelectorAll('.button-wrapper')].pop();
-      if (origin === window.location.origin && lastButton) {
-        const goBack = document.createElement('p');
-        goBack.className = 'button-wrapper';
-        const link = document.createElement('a');
-        link.className = 'error-go-back';
-        link.href = pathname;
-        link.title = 'Go back';
-        link.textContent = 'Go back';
-        goBack.append(link);
-        lastButton.after(goBack);
-      }
-    } catch {
-      // malformed referrer — skip the "Go back" link
-    }
-  }
-}
-
-/**
  * Loads everything needed to get to LCP.
  * @param {Element} doc The container element
  */
@@ -445,25 +380,17 @@ async function loadEager(doc) {
     if (isBlogPage()) {
       ({ buildBlogTemplate } = await import('../blocks/blog-template/blog-template.js'));
     }
-    if (window.isErrorPage) {
-      // loadErrorPage() fully decorates and reveals its content on an isolated
-      // <main> (see its doc comment) — running decorateMain/loadSection again
-      // on top of that would re-decorate already-decorated content.
-      await loadErrorPage(main);
-      document.body.classList.add('appear');
-    } else {
-      decorateMain(main);
-      // Personalize/experiment the first (LCP) section before reveal so the visitor
-      // sees final content with no flash. Sections below the fold are handled in
-      // loadLazy (post-LCP) so their pzn/exp swaps never block LCP.
-      const firstSection = main.querySelector('.section');
-      if (firstSection) await runExperienceLayer(firstSection);
-      document.body.classList.add('appear');
-      await Promise.all([
-        martechLoadedPromise ? martechLoadedPromise.then(martechEager) : Promise.resolve(),
-        loadSection(main.querySelector('.section'), waitForFirstImage),
-      ]);
-    }
+    decorateMain(main);
+    // Personalize/experiment the first (LCP) section before reveal so the visitor
+    // sees final content with no flash. Sections below the fold are handled in
+    // loadLazy (post-LCP) so their pzn/exp swaps never block LCP.
+    const firstSection = main.querySelector('.section');
+    if (firstSection) await runExperienceLayer(firstSection);
+    document.body.classList.add('appear');
+    await Promise.all([
+      martechLoadedPromise ? martechLoadedPromise.then(martechEager) : Promise.resolve(),
+      loadSection(main.querySelector('.section'), waitForFirstImage),
+    ]);
   }
 
   try {
