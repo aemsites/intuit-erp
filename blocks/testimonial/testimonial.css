@@ -133,7 +133,17 @@
   display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center;
   max-width: 1120px; margin: 0 auto;
 }
-.testimonial .cmp-quote-mark { width: 52px; height: auto; margin-bottom: 20px; }
+
+/* decorative quote mark rendered as a CSS glyph (was a failing <img src="about:error">) */
+.testimonial .cmp-quote-card::before {
+  content: "\201C";
+  display: block;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 72px;
+  line-height: 0.8;
+  color: var(--heading);
+  margin-bottom: 12px;
+}
 .testimonial .cmp-quote { margin: 0 0 22px; font-size: 24px; line-height: 1.4; font-weight: 400; color: var(--heading); }
 .testimonial .cmp-quote-name { font-size: 15px; font-weight: 700; color: var(--heading); margin: 0; }
 .testimonial .cmp-quote-role { font-size: 14px; color: var(--text-muted); margin: 0; }

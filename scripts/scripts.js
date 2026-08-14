@@ -216,37 +216,59 @@ function buildAutoBlocks(main) {
  * @param {HTMLElement} main The main container element
  */
 function decorateButtons(main) {
-  main.querySelectorAll('p a[href]').forEach((a) => {
-    a.title = a.title || a.textContent;
-    const p = a.closest('p');
-    const text = a.textContent.trim();
+  main.querySelectorAll('p').forEach((p) => {
+    // Decide per-paragraph up front (before any mutation): a paragraph may hold a
+    // single CTA (whose text must equal the paragraph's) OR multiple formatted CTA
+    // links sharing one line (e.g. primary <strong><a> + secondary <em><a>). In the
+    // multi-link case we buttonize each link and skip the whole-paragraph text guard.
+    const formatted = [...p.querySelectorAll(':scope strong > a[href], :scope em > a[href]')];
+    // Only treat as a multi-CTA paragraph when the paragraph's ENTIRE visible text
+    // is just the formatted link texts (plus whitespace/separators) — i.e. a row of
+    // CTAs, not prose that happens to bold/italic-link two words. This mirrors the
+    // single-CTA "sole content" guard so buttonization stays scoped to real CTAs.
+    const ctaOnly = formatted.length > 1 && (() => {
+      let rest = p.textContent;
+      formatted.forEach((a) => { rest = rest.replace(a.textContent, ''); });
+      return rest.replace(/[\s|·•,/–-]+/g, '') === '';
+    })();
+    const multi = ctaOnly;
+    const links = multi ? formatted : [...p.querySelectorAll(':scope a[href]')];
 
-    // quick structural checks
-    if (a.querySelector('img') || p.textContent.trim() !== text) return;
+    links.forEach((a) => {
+      a.title = a.title || a.textContent;
+      const text = a.textContent.trim();
 
-    // skip URL display links
-    try {
-      if (new URL(a.href).href === new URL(text, window.location).href) return;
-    } catch { /* continue */ }
+      // skip links that wrap an image
+      if (a.querySelector('img')) return;
 
-    // require authored formatting for buttonization
-    const strong = a.closest('strong');
-    const em = a.closest('em');
-    if (!strong && !em) return;
+      // require authored formatting for buttonization
+      const strong = a.closest('strong');
+      const em = a.closest('em');
+      if (!strong && !em) return;
 
-    p.className = 'button-wrapper';
-    a.className = 'button';
-    if (strong && em) { // high-impact call-to-action
-      a.classList.add('accent');
-      const outer = strong.contains(em) ? strong : em;
-      outer.replaceWith(a);
-    } else if (strong) {
-      a.classList.add('primary');
-      strong.replaceWith(a);
-    } else {
-      a.classList.add('secondary');
-      em.replaceWith(a);
-    }
+      // single-CTA paragraphs must be the sole content
+      if (!multi && p.textContent.trim() !== text) return;
+
+      // skip URL display links
+      try {
+        if (new URL(a.href).href === new URL(text, window.location).href) return;
+      } catch { /* continue */ }
+
+      if (multi) p.classList.add('button-wrapper', 'buttons-multi');
+      else p.className = 'button-wrapper';
+      a.className = 'button';
+      if (strong && em) { // high-impact call-to-action
+        a.classList.add('accent');
+        const outer = strong.contains(em) ? strong : em;
+        outer.replaceWith(a);
+      } else if (strong) {
+        a.classList.add('primary');
+        strong.replaceWith(a);
+      } else {
+        a.classList.add('secondary');
+        em.replaceWith(a);
+      }
+    });
   });
 }
 

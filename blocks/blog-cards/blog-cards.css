@@ -133,9 +133,17 @@
   color: #fff;
 }
 
-/* ---- featured: first 2 cards render larger, same shape as regular cards ---- */
+/* ---- featured: on mobile, production renders these as full-width stacked cards
+   with a ~16:9 landscape image (regular cards stay the compact side-image row). ---- */
 @media (max-width: 767px) {
-  .blog-cards .blog-card.featured .blog-card-image { flex-basis: 45%; }
+  .blog-cards .blog-card.featured { flex-direction: column; }
+
+  .blog-cards .blog-card.featured .blog-card-image {
+    flex: 0 0 auto;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+  }
 }
 
 .blog-cards .blog-card.featured .blog-card-body .blog-card-title {
@@ -178,7 +186,13 @@
 
 @media (min-width: 1200px) {
   .blog-cards .blog-card-image { height: 248px; }
-  .blog-cards .blog-card.featured .blog-card-image { height: 320px; }
+
+  /* featured lead cards track a 16:9 ratio (matches production ~672x376),
+     instead of the previous fixed 320px which rendered ~2.1:1 (letterboxed) */
+  .blog-cards .blog-card.featured .blog-card-image {
+    height: auto;
+    aspect-ratio: 16 / 9;
+  }
 
   /* topic/category listing pages (body.category) use a taller ~1.18 crop to match
      production (445x376); the blog hub (body.blog-home) stays 16:9 (445x248). */

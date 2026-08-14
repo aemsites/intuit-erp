@@ -1,6 +1,6 @@
 # intuit-edge
 
-A thin Cloudflare Worker exposing two client-facing endpoints — `POST /api/de`
+A thin Cloudflare Worker exposing two client-facing endpoints — `POST /api/pzn`
 and `GET /api/ixp` — that proxy Intuit's **Decision Engine** (personalization) and
 **IXP Assignment** (experimentation) services. Vanilla JavaScript, no build step,
 a single deployable worker (`intuit-edge`).
@@ -20,7 +20,7 @@ failure mode degrades to "no personalization" so the client shows the baseline.
 
 ```
 browser (scripts/pzn.js, scripts/exp.js)
-   │  POST /api/de           GET /api/ixp
+   │  POST /api/pzn           GET /api/ixp
    ▼
 Akamai ──/api/*──▶ intuit-edge worker ──▶ Decision Engine / IXP Assignment API
    │
@@ -29,7 +29,7 @@ Akamai ──/api/*──▶ intuit-edge worker ──▶ Decision Engine / IXP 
 
 ## Endpoints
 
-### `POST /api/de` — Decision Engine batch personalization
+### `POST /api/pzn` — Decision Engine batch personalization
 
 Batch-personalizes a page's slots. The client collects each `pzn-<placement>`
 slot on the page and sends the placements; the worker attaches the key, derives
@@ -91,13 +91,13 @@ src/
   index.js            entry: routes /api/* to the router; everything else 404s
   api/
     router.js         guard → CORS preflight → dispatch → CORS merge
-    de.js             POST /api/de handler
+    pzn.js            POST /api/pzn handler
     ixp.js            GET  /api/ixp handler
     guard.js          origin allowlist + EDGE_AUTH_SECRET gate + CORS
     http.js           json() + refererPath() helpers
   ivid.js             reads the ivid (cookie / ?ivid= override)
   visitor.js          per-visitor signals derived at the edge (geo, lang, device)
-  de/
+  pzn/
     batch-client.js   Decision Engine "Batch" HTTP client (Intuit_APIKey auth)
     resolve.js        attributes builder + batch-response → decision mapping
   ixp/
@@ -109,7 +109,7 @@ src/
 
 Set in [`wrangler.jsonc`](wrangler.jsonc) `vars` (config only — **no secrets**):
 
-- `DECISION_ENGINE_BATCH_URL` — Intuit Decision Engine "Batch" endpoint (`/api/de`).
+- `PERSONALIZATION_BATCH_URL` — Intuit Personalization "Batch" endpoint (`/api/pzn`).
 - `IXP_ASSIGNMENT_URL` — Intuit IXP Assignment API host (`/api/ixp`).
 
 ### Secrets
@@ -121,7 +121,7 @@ rotate).
 
 | secret            | used by    | without it                                                        |
 |-------------------|------------|-------------------------------------------------------------------|
-| `PZN_API_KEY`     | `/api/de`  | batch client returns `null` → empty decision array (no personalization) |
+| `PZN_API_KEY`     | `/api/pzn`  | batch client returns `null` → empty decision array (no personalization) |
 | `IXP_API_KEY`     | `/api/ixp` | assignment request is unauthenticated → control (baseline)        |
 | `EDGE_AUTH_SECRET`| the guard  | the `x-edge-auth` shared-secret check is **skipped** (allowlist only) |
 
@@ -150,7 +150,7 @@ IXP_API_KEY=…
 ```bash
 npm install
 npm run lint      # eslint (airbnb-base)
-npm test          # vitest (guard, router, /api/de, /api/ixp, mapping helpers, ivid)
+npm test          # vitest (guard, router, /api/pzn, /api/ixp, mapping helpers, ivid)
 npm run dev       # wrangler dev on http://127.0.0.1:8787
 ```
 
@@ -158,7 +158,7 @@ Exercise the endpoints locally (needs the keys in `.dev.vars`):
 
 ```bash
 # personalization decision for a slot
-curl -s 'http://127.0.0.1:8787/api/de?ivid=demo-visitor-2' \
+curl -s 'http://127.0.0.1:8787/api/pzn?ivid=demo-visitor-2' \
   -H 'content-type: application/json' \
   -d '{"slots":[{"placement":"SBSEGQBMContentAemPznIxpTest"}],"path":"/drafts/pzn/treatment"}'
 
