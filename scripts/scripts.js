@@ -400,16 +400,38 @@ async function loadEager(doc) {
     // nor the stylesheet (buildBlogTemplate returns immediately for them), so
     // they're excluded here rather than paying for both on the LCP path and
     // throwing the result away.
+    //
+    // Both awaits sit inside a try for the same reason the CSS wait is capped:
+    // a rejected `import()` (one transient network blip is enough) would
+    // propagate out of loadEager — loadPage doesn't catch it — so `appear` is
+    // never added and the page stays blank permanently, with only a RUM ping to
+    // show for it. Swallowing it leaves buildBlogTemplate unset, buildAutoBlocks
+    // no-ops, and the article renders as plain default content instead.
+    //
+    // The cap is hand-rolled rather than reusing withTimeout
+    // (scripts/personalization/decision.js, used twice above): that helper has
+    // to be fetched with a dynamic import first, and a fetch that stalls while
+    // acquiring the timeout mechanism re-opens the very hole the timeout closes.
+    // The timer is cleared when the race settles, so nothing outlives it.
     if (isBlogPage() && !hasAuthoredCaseStudyHeader(main)) {
-      const [mod] = await Promise.all([
-        import('../blocks/blog-template/blog-template.js'),
-        Promise.race([
-          loadCSS(`${window.hlx.codeBasePath}/blocks/blog-template/blog-template.css`)
-            .catch(() => {}),
-          new Promise((resolve) => { window.setTimeout(resolve, BLOG_TEMPLATE_CSS_TIMEOUT); }),
-        ]),
-      ]);
-      ({ buildBlogTemplate } = mod);
+      let cssTimer;
+      try {
+        const [mod] = await Promise.all([
+          import('../blocks/blog-template/blog-template.js'),
+          Promise.race([
+            loadCSS(`${window.hlx.codeBasePath}/blocks/blog-template/blog-template.css`)
+              .catch(() => {}),
+            new Promise((resolve) => {
+              cssTimer = window.setTimeout(resolve, BLOG_TEMPLATE_CSS_TIMEOUT);
+            }),
+          ]),
+        ]);
+        ({ buildBlogTemplate } = mod);
+      } catch (e) {
+        // non-fatal: render the article unstyled rather than not at all
+      } finally {
+        window.clearTimeout(cssTimer);
+      }
     }
     decorateMain(main);
     // Personalize/experiment the first (LCP) section before reveal so the visitor

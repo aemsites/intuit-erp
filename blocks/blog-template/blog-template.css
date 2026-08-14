@@ -409,7 +409,17 @@
      ever occupied row 2. They don't — rowEnd grows with the article — so on any
      article with more than one prose section after the intro, row 3 was still
      inside the rails' span and the appendix rendered *mid-article*, on top of
-     the TOC rail, with the rest of the body below it. */
+     the TOC rail, with the rest of the body below it.
+
+     The `span 999` fallback shape (article with <2 TOC headings, so no inline
+     rowEnd) is exercised by three real pages — /blog/ask-the-expert/intuit-
+     enterprise-suite-gene-marks, /blog/erp/ai-native-erp-idc-info-snapshot and
+     /blog/erp/constellation-shortlist-services-erp — all of which end in this
+     appendix. It lands after the rails there because the ~999 spanned rows the
+     appendix has to clear are empty AND this grid has no `row-gap`, so they
+     collapse to zero height. Do not add `row-gap` to `.blog-article`: 999 empty
+     rows would each take the gap and push the appendix off the page. Use
+     margins on the sections instead (which is what they already do). */
   .blog-article > .blog-cards-container {
     grid-column: 1 / -1;
   }

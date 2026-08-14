@@ -305,4 +305,67 @@ describe('buildBlogTemplate', () => {
     // right-rail fragment link, which the fragment autoblock then picks up
     expect(main.querySelector('.blog-rail a').getAttribute('href')).toBe('/fragments/right-rail');
   });
+
+  it('still decorates when a case-study-header is authored below section 1', () => {
+    // The early return is scoped to section 1 so a header further down a page
+    // can't silently strip that page's hero band and rails. The 46em clamp in
+    // styles.css is scoped the same way (`main:has(> div:first-child
+    // .case-study-header)`) — if either side loses that scope the two disagree,
+    // and a full-width hero band gets clamped to a narrow column.
+    window.hlx = { codeBasePath: '' };
+    window.matchMedia = () => ({ matches: false, addEventListener: () => {} });
+    const main = mainWith(`
+      <div><h1>Headline</h1><p><picture><img src="hero.jpg"></picture></p></div>
+      <div><div class="case-study-header"><div><div>Case study</div></div></div></div>
+      <div><h2>One</h2><p>a</p></div>
+      <div><h2>Two</h2><p>b</p></div>
+    `);
+
+    buildBlogTemplate(main);
+
+    expect(main.classList.contains('blog-article')).toBe(true);
+    expect(main.querySelector('.blog-hero')).toBeTruthy();
+  });
+
+  it('leaves both rails without an inline grid-row when there is no TOC', () => {
+    // <2 TOC-eligible headings means tocRailRowEnd can't anchor, so no inline
+    // `grid-row` is set and the rails fall back to the stylesheet's
+    // `grid-row: 2 / span 999`. The full-width cards appendix has no explicit
+    // row either, so it auto-places after that span — which only lands
+    // correctly because the ~999 spanned rows are empty and `.blog-article`
+    // has no `row-gap`. Three live pages render this shape (see the comment on
+    // `.blog-article > .blog-cards-container` in blog-template.css), so pin the
+    // contract here: no TOC rail, and no inline row on the right rail.
+    window.hlx = { codeBasePath: '' };
+    window.matchMedia = () => ({ matches: false, addEventListener: () => {} });
+    const main = mainWith(`
+      <div><h1>Headline</h1><p><picture><img src="hero.jpg"></picture></p></div>
+      <div><p>intro prose, no headings</p></div>
+      <div><h2>Recommended for you</h2><div class="blog-cards"></div></div>
+    `);
+
+    buildBlogTemplate(main);
+
+    expect(main.classList.contains('blog-article')).toBe(true);
+    expect(main.querySelector('.blog-toc-rail')).toBeNull();
+    expect(main.querySelector('.blog-rail').style.gridRow).toBe('');
+  });
+
+  it('bounds both rails to the last TOC section when there is a TOC', () => {
+    window.hlx = { codeBasePath: '' };
+    window.matchMedia = () => ({ matches: false, addEventListener: () => {} });
+    const main = mainWith(`
+      <div><h1>Headline</h1><p><picture><img src="hero.jpg"></picture></p></div>
+      <div><h2>One</h2><p>a</p></div>
+      <div><h2>Two</h2><p>b</p></div>
+      <div><h2>Recommended for you</h2><div class="blog-cards"></div></div>
+    `);
+
+    buildBlogTemplate(main);
+
+    // hero = row 1, so the last TOC section (index 2) ends at line 4 — the
+    // appendix then auto-places at row 4, after the rails rather than inside them
+    expect(main.querySelector('.blog-toc-rail').style.gridRow).toBe('2 / 4');
+    expect(main.querySelector('.blog-rail').style.gridRow).toBe('2 / 4');
+  });
 });

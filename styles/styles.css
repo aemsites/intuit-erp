@@ -598,10 +598,17 @@ main:has(.event-cards) > .section:first-of-type p {
    blocks/blog-template), where a blanket 46em clamp squeezes the full-width hero
    band into a narrow column. Keying off the authored block states that condition
    directly, so it cannot drift from the JS guard that reads the same thing
-   (hasAuthoredCaseStudyHeader) or mis-fire if that JS throws. */
-body.case-study main:has(.case-study-header) .default-content-wrapper,
-body.case-study main:has(.case-study-header) .stat-band { max-width: 46em; margin: 0 auto; }
-body.case-study main:has(.case-study-header) .stat-band { margin-top: 1rem; }
+   (hasAuthoredCaseStudyHeader) or mis-fire if that JS throws.
+
+   Scoped to the FIRST section, exactly as hasAuthoredCaseStudyHeader is
+   (blocks/blog-template/blog-detect.js). An unscoped `main:has(.case-study-header)`
+   would drift from it the moment a page authors that block further down: the JS
+   would still build the full-width `.blog-hero` band while this rule clamped
+   every wrapper to 46em, squeezing the band — the bug this rule was rewritten to
+   avoid, arriving from the other side. */
+body.case-study main:has(> div:first-child .case-study-header) .default-content-wrapper,
+body.case-study main:has(> div:first-child .case-study-header) .stat-band { max-width: 46em; margin: 0 auto; }
+body.case-study main:has(> div:first-child .case-study-header) .stat-band { margin-top: 1rem; }
 
 body.author main .default-content-wrapper {
   display: flex;
