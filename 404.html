@@ -128,10 +128,6 @@
       border-radius: 4px;
     }
 
-    main.error .error-promo-list li p {
-      margin: 0;
-    }
-
     main.error .error-promo-list a {
       font-size: 16px;
       font-weight: 600;
@@ -139,11 +135,14 @@
       text-decoration: none;
     }
 
-    main.error .error-promo-icon {
+    main.error .error-promo-list .icon {
+      display: flex;
+      flex-shrink: 0;
+    }
+
+    main.error .error-promo-list .icon img {
       width: 24px;
       height: 24px;
-      flex-shrink: 0;
-      display: block;
     }
 
     @media (min-width: 900px) {
