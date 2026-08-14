@@ -17,6 +17,9 @@ import { resetAnalytics } from '../scripts/personalization/analytics.js';
 beforeEach(() => {
   resetAnalytics();
   delete window.appVars;
+  // restoreMocks wipes the factory's mockResolvedValue before each test; re-arm the
+  // applied-successfully default so applyFragment resolves like production.
+  applyFragment.mockResolvedValue(true);
   // Run the idle-deferred analytics flush synchronously for deterministic asserts.
   window.requestIdleCallback = (cb) => { cb(); return 0; };
 });
@@ -165,5 +168,69 @@ describe('runPersonalization', () => {
     fetchDecision.mockResolvedValue({});
     await runPersonalization(m, { skip: first });
     expect(fetchDecision.mock.calls[0][1].body.slots).toEqual([{ placement: 'beta' }]);
+  });
+
+  // The block-level click channel: the applied slot carries the offer identity as the
+  // data-* attributes the SBSEG click tracker walks ancestors for.
+  describe('click-channel stamping', () => {
+    it('stamps data-pzn-placement and data-pzn-id (from the response, not the config) on the applied slot', async () => {
+      const m = main('<div data-pzn="alpha"></div>');
+      // Slot config is `alpha`; the response echoes `ALPHA` — the stamp uses the
+      // response value, matching the analytics record's personalization_placement.
+      fetchDecision.mockResolvedValue(batch('ALPHA', '/fragments/pzn/a'));
+      await runPersonalization(m);
+      const el = m.querySelector('[data-pzn="alpha"]');
+      expect(el.getAttribute('data-pzn-placement')).toBe('ALPHA');
+      expect(el.getAttribute('data-pzn-id')).toBe('rec-ALPHA');
+    });
+
+    it('stamps the experiment identity when the offer carries one', async () => {
+      const m = main('<div data-pzn="alpha"></div>');
+      fetchDecision.mockResolvedValue(batch('alpha', '/fragments/pzn/a', {
+        experimentId: 385944, experimentVersion: 7, treatmentId: 39927,
+      }));
+      await runPersonalization(m);
+      const el = m.querySelector('[data-pzn="alpha"]');
+      expect(el.getAttribute('data-experiment-id')).toBe('385944');
+      expect(el.getAttribute('data-experiment-version')).toBe('7');
+      expect(el.getAttribute('data-treatment-id')).toBe('39927');
+    });
+
+    it('omits the experiment attributes when the offer has none', async () => {
+      const m = main('<div data-pzn="alpha"></div>');
+      fetchDecision.mockResolvedValue(batch('alpha', '/fragments/pzn/a'));
+      await runPersonalization(m);
+      const el = m.querySelector('[data-pzn="alpha"]');
+      expect(el.hasAttribute('data-experiment-id')).toBe(false);
+      expect(el.hasAttribute('data-experiment-version')).toBe(false);
+      expect(el.hasAttribute('data-treatment-id')).toBe(false);
+    });
+
+    it('stamps the named block, not the section, for a block-scoped slot', async () => {
+      const m = main('<div data-pzn="alpha" data-pzn-block="cards"><div class="cards" data-block-name="cards"></div></div>');
+      fetchDecision.mockResolvedValue(batch('alpha', '/fragments/pzn/a'));
+      await runPersonalization(m);
+      const block = m.querySelector('[data-block-name="cards"]');
+      expect(block.getAttribute('data-pzn-placement')).toBe('alpha');
+      expect(block.getAttribute('data-pzn-id')).toBe('rec-alpha');
+      expect(m.querySelector('[data-pzn]').hasAttribute('data-pzn-placement')).toBe(false);
+    });
+
+    it('stamps every slot sharing the placement', async () => {
+      const m = main('<div data-pzn="alpha"></div><div data-pzn="alpha"></div>');
+      fetchDecision.mockResolvedValue(batch('alpha', '/fragments/pzn/a'));
+      await runPersonalization(m);
+      const els = [...m.querySelectorAll('[data-pzn="alpha"]')];
+      expect(els).toHaveLength(2);
+      els.forEach((el) => expect(el.getAttribute('data-pzn-id')).toBe('rec-alpha'));
+    });
+
+    it('does not stamp when the swap does not land (applyFragment returns false)', async () => {
+      const m = main('<div data-pzn="alpha"></div>');
+      fetchDecision.mockResolvedValue(batch('alpha', '/fragments/pzn/a'));
+      applyFragment.mockResolvedValueOnce(false);
+      await runPersonalization(m);
+      expect(m.querySelector('[data-pzn="alpha"]').hasAttribute('data-pzn-placement')).toBe(false);
+    });
   });
 });

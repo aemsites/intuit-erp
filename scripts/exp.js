@@ -5,6 +5,7 @@ import {
   isRedirect, isReplace, ixpContentPath, ixpRecord,
 } from './personalization/ixp-response.js';
 import { recordIxp } from './personalization/analytics.js';
+import { stampExperiment } from './personalization/stamp.js';
 
 export function isExperimentEnabled() {
   return !!(getMetadata('experiment') || getMetadata('experiment-id') || getMetadata('experiment-label'));
@@ -48,13 +49,17 @@ export async function runExperiment(doc = document) {
     const res = await fetchDecision(`ixp?${params.toString()}`, { signal: controller.signal });
     const assignment = res?.assignments?.[0];
     if (!assignment) return;
+    const record = ixpRecord(assignment, window.location.pathname);
     // Primary work (LCP path): swap the page first for a redirect treatment.
     if (isRedirect(assignment)) {
       const path = ixpContentPath(assignment);
-      if (path) await swapMain(doc, path, controller.signal);
+      // Stamp <main> once the variation lands (stamp.js) for click attribution.
+      if (path && await swapMain(doc, path, controller.signal)) {
+        stampExperiment(doc.querySelector('main'), record);
+      }
     }
     // Analytics trails the swap (control arms count too) — idle-deferred.
-    recordIxp([ixpRecord(assignment, window.location.pathname)]);
+    recordIxp([record]);
   } finally {
     clearTimeout(timer);
   }
@@ -93,12 +98,16 @@ export async function runBlockExperiments(root = document.querySelector('main'),
     const res = await fetchDecision(`ixp?${key}`);
     const assignment = res?.assignments?.[0];
     if (!assignment) return;
+    const record = ixpRecord(assignment, window.location.pathname);
     // Primary work: inject the block/section content first for a replace treatment.
     if (isReplace(assignment)) {
       const path = ixpContentPath(assignment);
-      if (path) await applyFragment(el, path);
+      // Stamp the target once the variation lands (stamp.js) for click attribution.
+      if (path && await applyFragment(el, path)) {
+        stampExperiment(el, record);
+      }
     }
     // Analytics trails the swap (control arms count too) — idle-deferred.
-    recordIxp([ixpRecord(assignment, window.location.pathname)]);
+    recordIxp([record]);
   }));
 }

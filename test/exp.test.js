@@ -47,6 +47,9 @@ beforeEach(() => {
   document.body.innerHTML = '<main><div class="hero">BASE</div></main>';
   resetAnalytics();
   delete window.appVars;
+  // restoreMocks wipes the factory's mockResolvedValue before each test; re-arm the
+  // applied-successfully default so applyFragment resolves like production.
+  applyFragment.mockResolvedValue(true);
   window.requestIdleCallback = (cb) => { cb(); return 0; };
 });
 afterEach(() => {
@@ -179,6 +182,38 @@ describe('runExperiment', () => {
       vi.useRealTimers();
     }
   });
+
+  // The block-level click channel: the swapped <main> carries the experiment identity
+  // as the data-* attributes the SBSEG click tracker walks ancestors for.
+  it('stamps the experiment identity on <main> after a redirect swap', async () => {
+    setMeta('experiment-id', '385944');
+    fetchDecision.mockResolvedValue({ assignments: [redirectTo('/drafts/pzn/csr-variation')] });
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response('<div class="hero">VARIATION</div>', { status: 200, headers: { 'content-type': 'text/html' } }),
+    );
+
+    await runExperiment(document);
+
+    const mainEl = document.querySelector('main');
+    expect(mainEl.getAttribute('data-experiment-id')).toBe('385944');
+    expect(mainEl.getAttribute('data-experiment-version')).toBe('7');
+    expect(mainEl.getAttribute('data-treatment-id')).toBe('39927');
+  });
+
+  it('does not stamp <main> on a control arm (no swap)', async () => {
+    setMeta('experiment-id', '385944');
+    fetchDecision.mockResolvedValue({ assignments: [assignment({ control: true })] });
+    await runExperiment(document);
+    expect(document.querySelector('main').hasAttribute('data-experiment-id')).toBe(false);
+  });
+
+  it('does not stamp <main> when the swap does not land', async () => {
+    setMeta('experiment-id', '385944');
+    fetchDecision.mockResolvedValue({ assignments: [redirectTo('/drafts/pzn/csr-variation')] });
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('', { status: 404 }));
+    await runExperiment(document);
+    expect(document.querySelector('main').hasAttribute('data-experiment-id')).toBe(false);
+  });
 });
 
 describe('collectExperiments', () => {
@@ -263,5 +298,41 @@ describe('runBlockExperiments', () => {
   it('does nothing (no api call) when there are no data-exp sections', async () => {
     await runBlockExperiments(main('<div class="hero"></div>'));
     expect(fetchDecision).not.toHaveBeenCalled();
+  });
+
+  // The block-level click channel: the injected target carries the experiment identity.
+  it('stamps the experiment identity on the target after a replace', async () => {
+    const m = main('<div data-exp="Homepage_Hero"></div>');
+    fetchDecision.mockResolvedValue({ assignments: [replaceWith('/fragments/exp/a')] });
+    await runBlockExperiments(m);
+    const el = m.querySelector('[data-exp]');
+    expect(el.getAttribute('data-experiment-id')).toBe('385944');
+    expect(el.getAttribute('data-experiment-version')).toBe('7');
+    expect(el.getAttribute('data-treatment-id')).toBe('39927');
+  });
+
+  it('stamps the named block, not the section, for a block-scoped experiment', async () => {
+    const m = main('<div data-exp="385944" data-exp-block="cards"><div class="cards" data-block-name="cards"></div></div>');
+    fetchDecision.mockResolvedValue({ assignments: [replaceWith('/fragments/exp/a')] });
+    await runBlockExperiments(m);
+    const block = m.querySelector('[data-block-name="cards"]');
+    expect(block.getAttribute('data-experiment-id')).toBe('385944');
+    expect(block.getAttribute('data-treatment-id')).toBe('39927');
+    expect(m.querySelector('[data-exp]').hasAttribute('data-experiment-id')).toBe(false);
+  });
+
+  it('does not stamp on a control arm (no injection)', async () => {
+    const m = main('<div data-exp="Homepage_Hero"></div>');
+    fetchDecision.mockResolvedValue({ assignments: [assignment({ control: true })] });
+    await runBlockExperiments(m);
+    expect(m.querySelector('[data-exp]').hasAttribute('data-experiment-id')).toBe(false);
+  });
+
+  it('does not stamp when the injection does not land (applyFragment returns false)', async () => {
+    const m = main('<div data-exp="Homepage_Hero"></div>');
+    fetchDecision.mockResolvedValue({ assignments: [replaceWith('/fragments/exp/a')] });
+    applyFragment.mockResolvedValueOnce(false);
+    await runBlockExperiments(m);
+    expect(m.querySelector('[data-exp]').hasAttribute('data-experiment-id')).toBe(false);
   });
 });
