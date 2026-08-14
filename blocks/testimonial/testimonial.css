@@ -133,6 +133,7 @@
   display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center;
   max-width: 1120px; margin: 0 auto;
 }
+
 /* decorative quote mark rendered as a CSS glyph (was a failing <img src="about:error">) */
 .testimonial .cmp-quote-card::before {
   content: "\201C";

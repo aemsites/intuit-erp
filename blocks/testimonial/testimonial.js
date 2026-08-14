@@ -383,7 +383,9 @@ export default function decorate(block) {
   if (!row) return;
   const cells = [...row.children];
 
-  const [markCell, quoteCell, nameCell, roleCell, mediaCell] = cells;
+  // markCell (cells[0]) intentionally unused: the decorative quote mark is now a
+  // CSS glyph (.cmp-quote-card::before) instead of an authored image.
+  const [, quoteCell, nameCell, roleCell, mediaCell] = cells;
   const grid = document.createElement('div');
   grid.className = 'cmp-testi-grid';
   const card = document.createElement('div');
