@@ -222,7 +222,16 @@ function decorateButtons(main) {
     // links sharing one line (e.g. primary <strong><a> + secondary <em><a>). In the
     // multi-link case we buttonize each link and skip the whole-paragraph text guard.
     const formatted = [...p.querySelectorAll(':scope strong > a[href], :scope em > a[href]')];
-    const multi = formatted.length > 1;
+    // Only treat as a multi-CTA paragraph when the paragraph's ENTIRE visible text
+    // is just the formatted link texts (plus whitespace/separators) — i.e. a row of
+    // CTAs, not prose that happens to bold/italic-link two words. This mirrors the
+    // single-CTA "sole content" guard so buttonization stays scoped to real CTAs.
+    const ctaOnly = formatted.length > 1 && (() => {
+      let rest = p.textContent;
+      formatted.forEach((a) => { rest = rest.replace(a.textContent, ''); });
+      return rest.replace(/[\s|·•,/–-]+/g, '') === '';
+    })();
+    const multi = ctaOnly;
     const links = multi ? formatted : [...p.querySelectorAll(':scope a[href]')];
 
     links.forEach((a) => {
