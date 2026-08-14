@@ -120,15 +120,19 @@
     }
 
     main.error .error-promo-list li {
-      background-color: #f7f7f7;
-      border-radius: 4px;
-    }
-
-    main.error .error-promo-list a {
       display: flex;
       align-items: center;
       gap: 10px;
       padding: 12px 16px;
+      background-color: #f7f7f7;
+      border-radius: 4px;
+    }
+
+    main.error .error-promo-list li p {
+      margin: 0;
+    }
+
+    main.error .error-promo-list a {
       font-size: 16px;
       font-weight: 600;
       color: var(--link-color);
@@ -139,11 +143,6 @@
       width: 24px;
       height: 24px;
       flex-shrink: 0;
-    }
-
-    main.error .error-promo-icon svg {
-      width: 100%;
-      height: 100%;
       display: block;
     }
 

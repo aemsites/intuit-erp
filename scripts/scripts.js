@@ -302,16 +302,14 @@ export function decorateMain(main) {
  * loadSection again — doing both would re-scan the fragment's own already-
  * decorated .section div as if it were a block and try to load a
  * nonexistent blocks/section/section.js.
- * Brand icons for the product cross-promo links are matched by link text and
- * injected here, reusing the same SVGs the header already uses.
+ * The cross-promo links' brand icons are plain authored <img>s in the
+ * fragment (not code-injected), so authors can add/reorder/relabel them
+ * freely without a matching step silently failing to find an icon.
  * @param {Element} main The main element
  */
 async function loadErrorPage(main) {
   // eslint-disable-next-line import/no-cycle
-  const [{ loadFragment }, brandLogos] = await Promise.all([
-    import('../blocks/fragment/fragment.js'),
-    import('../blocks/header/brand-logos.js'),
-  ]);
+  const { loadFragment } = await import('../blocks/fragment/fragment.js');
   const fragment = await loadFragment('/fragments/404');
   if (!fragment) return;
   main.replaceChildren(...fragment.children);
@@ -335,21 +333,7 @@ async function loadErrorPage(main) {
     promoList.classList.add('error-promo-list');
     const learnMore = promoList.previousElementSibling;
     if (learnMore?.tagName === 'P') learnMore.classList.add('error-learn-more');
-    const icons = {
-      turbotax: brandLogos.LOGO_TURBOTAX_ICON,
-      creditkarma: brandLogos.LOGO_CREDITKARMA_ICON,
-      quickbooks: brandLogos.LOGO_QUICKBOOKS_ICON,
-      mailchimp: brandLogos.LOGO_MAILCHIMP_ICON,
-    };
-    promoList.querySelectorAll('a[href]').forEach((a) => {
-      const key = a.textContent.trim().toLowerCase().replace(/\s+/g, '');
-      if (icons[key]) {
-        const icon = document.createElement('span');
-        icon.className = 'error-promo-icon';
-        icon.innerHTML = icons[key];
-        a.prepend(icon);
-      }
-    });
+    promoList.querySelectorAll('img').forEach((img) => img.classList.add('error-promo-icon'));
   }
 
   // Same-origin referrer? Offer a "Go back" link next to the CTA buttons.
