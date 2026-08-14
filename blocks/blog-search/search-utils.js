@@ -128,10 +128,8 @@ export function enhanceSecondaryNavSearch(root) {
     toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
     if (open) input.focus();
   };
-  // Below the desktop breakpoint the field is a persistent part of the open
-  // Resource Center accordion (see header.css), not an expand-on-click control —
-  // so tapping the magnifier there just focuses the input instead of toggling
-  // the desktop expand/collapse (which would hide the category list).
+  // On mobile the field is always shown in the open accordion (see header.css),
+  // so the magnifier just focuses it rather than toggling expand/collapse.
   const isMobileAccordion = () => typeof window.matchMedia === 'function'
     && window.matchMedia('(max-width: 1299px)').matches;
   toggle.addEventListener('click', () => {
