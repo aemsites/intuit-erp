@@ -1,0 +1,51 @@
+{
+  "_source": "erp.intuit.com homepage — normalized runtime capture (names/types/counts only, no values). appVars is absent on prod (app_vars_enabled off); the data-pzn-* attribute set and mktg_datalayer key set are the reference. Re-capture deliberately with --refresh when prod's data layer changes.",
+  "scenario": "us-optout",
+  "capturedAt": "2026-08-14T00:00:00.000Z",
+  "pages": {
+    "homepage": {
+      "status": "OK",
+      "url": "https://erp.intuit.com/",
+      "appVars": {
+        "present": false
+      },
+      "pznBlocks": {
+        "count": 3,
+        "attrNames": [
+          "data-pzn-access-point",
+          "data-pzn-action",
+          "data-pzn-content_id",
+          "data-pzn-id",
+          "data-pzn-offer-id",
+          "data-pzn-placement",
+          "data-pzn-workflow"
+        ]
+      },
+      "mktgDatalayer": {
+        "present": true,
+        "keys": [
+          "browser_height",
+          "browser_width",
+          "campaign",
+          "dclid",
+          "gclid",
+          "ivid",
+          "org",
+          "page_cas_id",
+          "path",
+          "pseudonym_id",
+          "purpose",
+          "query_string",
+          "referrer",
+          "referrer_domain",
+          "scope",
+          "scope_area",
+          "screen",
+          "url",
+          "url_clean",
+          "url_host_name"
+        ]
+      }
+    }
+  }
+}

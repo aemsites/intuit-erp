@@ -399,6 +399,14 @@ async function loadEager(doc) {
     document.body.classList.add('has-events-bar');
   }
 
+  // Seed window.appVars before martech so the tracker finds it; analytics.js fills the arrays.
+  const appVars = window.appVars || (window.appVars = {});
+  const casId = getMetadata('cas-id') || getMetadata('page-cas-id');
+  appVars.externalContentIdentifier = casId || appVars.externalContentIdentifier || '';
+  appVars.pznRecDetailsArr = appVars.pznRecDetailsArr || [];
+  appVars.pznPageRecDetailsArr = appVars.pznPageRecDetailsArr || [];
+  appVars.ixpDetailsArr = appVars.ixpDetailsArr || [];
+
   // Adobe Web SDK (aem-martech). Kept INERT until a real AEP datastream id is
   // set (MARTECH_ENABLED). When enabled, initMartech kicks off the datastream
   // call that will surface RTCDP/AJO propositions; martechEager applies any

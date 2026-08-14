@@ -117,7 +117,8 @@ describe('runPersonalization', () => {
     fetchDecision.mockResolvedValue(batch('ALPHA', '/fragments/pzn/a'));
     await runPersonalization(m);
 
-    const records = JSON.parse(window.appVars.pznRecDetailsArr);
+    const records = window.appVars.pznRecDetailsArr;
+    expect(Array.isArray(records)).toBe(true);
     expect(records).toEqual([expect.objectContaining({
       personalization_placement: 'ALPHA',
       personalization_id: 'rec-ALPHA',
@@ -126,7 +127,7 @@ describe('runPersonalization', () => {
       content_id: '1223344',
       externalContentIdentifier: '1223344',
     })]);
-    expect(window.appVars.pznPageRecDetailsArr).toBe('[]');
+    expect(window.appVars.pznPageRecDetailsArr).toEqual([]);
   });
 
   it('applies a block-scoped decision to the named block, not the section', async () => {
