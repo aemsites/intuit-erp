@@ -13,7 +13,9 @@
  * Optional leading config rows (Marketo / ChiliPiper, authored before the
  * fixed fields, parsed by `parseFormConfig`): `formId`, `munchkin`,
  * `chiliPiperSubDomain`, `chiliPiperRouter`, `header`, `subheader`,
- * `disclaimer`. These are stamped as `data-mkto-form-id` / `data-mkto-munchkin`
+ * `disclaimer`, `cta`. `cta` sets the submit button label (default
+ * "Schedule a call"). The Marketo/ChiliPiper keys are stamped as
+ * `data-mkto-form-id` / `data-mkto-munchkin`
  * / `data-cp-subdomain` / `data-cp-router` on the rendered form element and
  * used to render an optional header/subheader/disclaimer. Live Marketo Forms2 + ChiliPiper
  * submission are DEFERRED — see `loadMarketoForm()` below — so no network
@@ -47,7 +49,13 @@ const CONFIG_KEYS = [
   'header',
   'subheader',
   'disclaimer',
+  'cta',
 ];
+
+// Submit button label when a form doesn't author its own `cta`. Most forms are
+// the shared "Let's connect" schedule-call form, where this is the right label;
+// demo forms author `cta` (e.g. "Schedule now") to match production.
+const DEFAULT_CTA = 'Schedule a call';
 
 // Parses the optional leading config rows into a plain object. Missing keys
 // are `undefined` (not omitted) so callers can destructure without guards.
@@ -69,6 +77,7 @@ export function parseFormConfig(block) {
     header: found.header,
     subheader: found.subheader,
     disclaimer: found.disclaimer,
+    cta: found.cta,
   };
 }
 
@@ -165,7 +174,7 @@ export default function decorate(block) {
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.className = 'form-submit';
-  btn.textContent = 'Schedule a call';
+  btn.textContent = config.cta || DEFAULT_CTA;
   form.append(btn);
   children.push(form);
 
