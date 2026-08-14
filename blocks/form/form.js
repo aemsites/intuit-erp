@@ -122,6 +122,28 @@ export function buildIdentityXdm(fields) {
   };
 }
 
+// Provider-aware submit tracking. `window.utag` only ever exists when scripts/scripts.js chose
+// the Tealium provider (the default) AND that instance is enabled — i.e. the hostname resolves
+// to a utag environment (see plugins/tealium-martech/src/index.js `resolveEnvironment`). The
+// Adobe path below only runs when the opt-in `?martech=adobe` override is used, unchanged.
+export function trackFormSubmit(fields) {
+  if (window.utag?.link) {
+    // Consent-gate, like the loader's whenConsentResolved: a link fired while getConsentState()===0
+    // enqueues and can re-trigger the ies-erp processQueue<->setPreferencesValues recursion. A
+    // one-shot check is enough at submit time — on prod consent is long resolved; on a stuck-at-0
+    // host it drops rather than loops.
+    if (window.utag.gdpr?.getConsentState?.() === 0) return;
+    window.utag.link({
+      tealium_event: 'form_submit',
+      ...fields,
+      ivid: window.utag_data?.ivid,
+    });
+    return;
+  }
+  // Default (Adobe) path — fires the identity event (fail-open, never blocks the confirmation).
+  sendEvent({ xdm: buildIdentityXdm(fields) }).catch(() => {});
+}
+
 export default function decorate(block) {
   // Config rows (if any) are read here, before the block's children are
   // wholly replaced below — they never reach the fixed-field rendering,
@@ -189,9 +211,9 @@ export default function decorate(block) {
       note.textContent = 'Please enter a valid business email.';
       return;
     }
-    // Fire the identity event (fail-open — never block the confirmation).
+    // Fire the identity/tracking event (fail-open — never block the confirmation).
     try {
-      sendEvent({ xdm: buildIdentityXdm(fields) }).catch(() => {});
+      trackFormSubmit(fields);
     } catch (e) { /* non-fatal */ }
     note.textContent = 'Thanks — we’ll be in touch shortly.';
     btn.disabled = true;

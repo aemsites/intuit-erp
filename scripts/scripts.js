@@ -24,6 +24,10 @@ import {
   initMartech, martechEager, martechLazy, updateUserConsent, sendEvent,
   // eslint-disable-next-line import/no-relative-packages
 } from '../plugins/martech/src/index.js';
+// Not a vendored subtree (unlike plugins/martech above) — project-owned code, but the relative
+// import still crosses into plugins/ so the disable comment mirrors the existing martech import.
+// eslint-disable-next-line import/no-relative-packages
+import TealiumMartech from '../plugins/tealium-martech/src/index.js';
 import { sendOf1Signal, readAlloySegmentIds } from './of1-rtcdp-signal.js';
 // Cheap predicates only — the heavy blog-template / video blocks they belong to
 // are NOT pulled onto the eager critical path here. buildBlogTemplate is
@@ -45,6 +49,34 @@ const AEP_ORG_ID = '87020D54659BEED90A495E68@AdobeOrg';
 // disabled regardless of datastream config on that host.
 const MARTECH_ENABLED = !AEP_DATASTREAM_ID.startsWith('REPLACE_')
   && !window.location.hostname.endsWith('.preview.da.live');
+
+// Provider gate via the `?martech=` query param:
+//   off    -> disable ALL martech (no Tealium, no Adobe — fully inert)
+//   adobe  -> legacy Adobe/aem-martech path (opt-in)
+//   local  -> Tealium, loading utag.js + the OneTrust consent stack from local copies in
+//             /scripts/martech/ (for testing without Intuit's VPN-gated consent CDN)
+//   (absent / any other value) -> Tealium, loading from the vendor CDNs (the default)
+// Tealium still self-gates via TealiumMartech's `resolveEnvironment`
+// (plugins/tealium-martech/src/index.js): only erp.intuit.com -> 'prod'; stage.erp.intuit.com, the
+// aem.page/aem.live previews, and localhost -> 'dev'; every other host stays inert.
+const MARTECH_PARAM = new URLSearchParams(window.location.search).get('martech');
+const MARTECH_PROVIDER = { off: 'off', adobe: 'adobe' }[MARTECH_PARAM] || 'tealium';
+// `?martech=local`: load utag.js + the consent stack from /scripts/martech/ instead of the CDNs.
+const MARTECH_LOCAL = MARTECH_PARAM === 'local';
+
+// Set in loadEager when MARTECH_PROVIDER === 'tealium' (the default); stays undefined on the
+// opt-in Adobe path. Exposed via getTealium() so scripts/delayed.js can call `.delayed()`
+// without importing the class itself.
+let tealium;
+
+/**
+ * Returns the active `TealiumMartech` instance, or `undefined` when the opt-in Adobe provider
+ * (`?martech=adobe`) is active instead.
+ * @returns {TealiumMartech|undefined} the active Tealium loader instance, if any
+ */
+export function getTealium() {
+  return tealium;
+}
 
 // no custom prod domain configured yet — treat only the .aem.live CDN as
 // prod (no pill overlay); .aem.page previews and localhost stay in debug mode.
@@ -372,8 +404,9 @@ async function loadEager(doc) {
   // call that will surface RTCDP/AJO propositions; martechEager applies any
   // personalization decisions before content reveal (flicker-free). Guarded so
   // a missing/placeholder datastream never initializes Alloy or hides the body.
+  // Only runs on the opt-in Adobe provider path (`?martech=adobe`).
   let martechLoadedPromise = null;
-  if (MARTECH_ENABLED) {
+  if (MARTECH_PROVIDER === 'adobe' && MARTECH_ENABLED) {
     try {
       martechLoadedPromise = initMartech(
         { datastreamId: AEP_DATASTREAM_ID, orgId: AEP_ORG_ID },
@@ -382,6 +415,11 @@ async function loadEager(doc) {
     } catch (e) {
       martechLoadedPromise = null;
     }
+  } else if (MARTECH_PROVIDER === 'tealium') {
+    // Real Tealium (env 'prod'/'qa'/'dev') only ever loads once TealiumMartech#resolveEnvironment
+    // recognizes the hostname; every other host stays inert — eager() itself does no network work.
+    tealium = new TealiumMartech({ local: MARTECH_LOCAL });
+    tealium.eager();
   }
 
   await runExperimentation(doc, experimentationConfig);
@@ -452,7 +490,7 @@ async function loadLazy(doc) {
     .then(({ default: initContactUs }) => initContactUs())
     .catch(() => { /* non-fatal — widget is non-critical chrome */ });
 
-  if (MARTECH_ENABLED) {
+  if (MARTECH_PROVIDER === 'adobe' && MARTECH_ENABLED) {
     try { await martechLazy(); } catch (e) { /* non-fatal */ }
     // Demo posture: auto-grant collection consent (martech inits consent
     // 'pending', which would otherwise drop sendEvent). Then push the OF1
@@ -466,6 +504,10 @@ async function loadLazy(doc) {
         window.postMessage({ type: 'OF1_AUDIENCE_SEGMENTS', domain: window.location.hostname, ids }, '*');
       }
     }).catch(() => {});
+  } else if (MARTECH_PROVIDER === 'tealium') {
+    // Loads utag.js for the resolved env (no-op on an inert host) and applies consent. Fail-open,
+    // like the Adobe branch above — never block the page.
+    try { await tealium.lazy(); } catch (e) { /* non-fatal */ }
   }
 
   await runExperimentationLazy(doc, experimentationConfig);
