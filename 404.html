@@ -30,6 +30,42 @@
     import { sampleRUM } from '/scripts/aem.js';
     sampleRUM('404', { source: document.referrer });
   </script>
+  <script nonce="aem" type="module">
+    // Same-origin referrer? Offer a "Go back" link next to the fragment's
+    // own CTA buttons. The fragment (and its buttons) load asynchronously
+    // via the standard block pipeline, so wait for it with a MutationObserver
+    // rather than assuming it's ready by any fixed point (e.g. window.load).
+    let backHref;
+    try {
+      const { origin, pathname } = new URL(document.referrer);
+      if (origin === window.location.origin) backHref = pathname;
+    } catch {
+      // malformed referrer — skip the "Go back" link
+    }
+    if (backHref) {
+      const addBackLink = (fragment) => {
+        const lastWrapper = [...fragment.querySelectorAll('.button-wrapper')].pop();
+        if (!lastWrapper) return false;
+        const wrapper = document.createElement('p');
+        wrapper.className = 'button-wrapper';
+        const link = document.createElement('a');
+        link.className = 'button secondary';
+        link.href = backHref;
+        link.title = 'Go back';
+        link.textContent = 'Go back';
+        wrapper.append(link);
+        lastWrapper.after(wrapper);
+        return true;
+      };
+      window.addEventListener('load', () => {
+        const fragment = document.querySelector('main.error .fragment');
+        if (!fragment || addBackLink(fragment)) return;
+        new MutationObserver((mutations, observer) => {
+          if (addBackLink(fragment)) observer.disconnect();
+        }).observe(fragment, { childList: true, subtree: true });
+      });
+    }
+  </script>
   <link rel="stylesheet" href="/styles/styles.css">
   <link rel="stylesheet" href="/styles/error.css">
   <link rel="stylesheet" href="/styles/lazy-styles.css">

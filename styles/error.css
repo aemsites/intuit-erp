@@ -36,8 +36,8 @@ main.error .button-wrapper .button {
 }
 
 main.error .button.secondary {
-  background-color: #d4d7dc;
-  border-color: #d4d7dc;
+  background-color: var(--line);
+  border-color: var(--line);
 }
 
 main.error p:has(+ ul) {
