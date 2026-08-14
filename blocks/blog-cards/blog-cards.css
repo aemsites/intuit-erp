@@ -193,6 +193,10 @@
     height: auto;
     aspect-ratio: 16 / 9;
   }
+
+  /* topic/category listing pages (body.category) use a taller ~1.18 crop to match
+     production (445x376); the blog hub (body.blog-home) stays 16:9 (445x248). */
+  body.category .blog-cards .blog-card:not(.featured) .blog-card-image { height: 376px; }
 }
 
 /* carries the tablet type scale through 1200-1359px */
