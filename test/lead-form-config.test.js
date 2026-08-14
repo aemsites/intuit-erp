@@ -16,7 +16,8 @@ function make() {
     <div><div>formId</div><div>1058</div></div>
     <div><div>chiliPiperSubDomain</div><div>intuitsales</div></div>
     <div><div>chiliPiperRouter</div><div>mid-us-webform-managed-ies</div></div>
-    <div><div>header</div><div>Let’s connect</div></div>`;
+    <div><div>header</div><div>Let’s connect</div></div>
+    <div><div>cta</div><div>Schedule now</div></div>`;
   return block;
 }
 
@@ -27,6 +28,7 @@ describe('parseFormConfig', () => {
     expect(cfg.chiliPiperSubDomain).toBe('intuitsales');
     expect(cfg.chiliPiperRouter).toBe('mid-us-webform-managed-ies');
     expect(cfg.header).toBe('Let’s connect');
+    expect(cfg.cta).toBe('Schedule now');
   });
 });
 
@@ -41,7 +43,8 @@ describe('decorate — config rows', () => {
       <div><div>chiliPiperRouter</div><div>mid-us-webform-managed-ies</div></div>
       <div><div>header</div><div>Let’s connect</div></div>
       <div><div>subheader</div><div>Talk to a specialist today.</div></div>
-      <div><div>disclaimer</div><div>See the privacy statement for details.</div></div>`;
+      <div><div>disclaimer</div><div>See the privacy statement for details.</div></div>
+      <div><div>cta</div><div>Schedule now</div></div>`;
     return block;
   }
 
@@ -62,5 +65,19 @@ describe('decorate — config rows', () => {
     expect(block.querySelectorAll('input')).toHaveLength(5);
     expect(block.querySelector('input[type="email"]')).not.toBeNull();
     expect(block.querySelector('.form-submit')).not.toBeNull();
+  });
+
+  it('uses the authored `cta` as the submit button label', () => {
+    const block = makeFullConfigBlock();
+    decorate(block);
+    expect(block.querySelector('.form-submit').textContent).toBe('Schedule now');
+  });
+
+  it('defaults the submit label to "Schedule a call" when no `cta` is authored', () => {
+    const block = document.createElement('div');
+    block.className = 'form block';
+    block.innerHTML = '<div><div>header</div><div>Let’s connect</div></div>';
+    decorate(block);
+    expect(block.querySelector('.form-submit').textContent).toBe('Schedule a call');
   });
 });
