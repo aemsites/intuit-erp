@@ -82,6 +82,13 @@ describe('buildEyebrow', () => {
     expect(el.className).toBe('blog-byline-tag');
     expect(el.textContent).toBe('case study');
   });
+
+  it('links the tag to its category listing', () => {
+    const el = buildEyebrow('case-study');
+    const link = el.querySelector('a');
+    expect(link.getAttribute('href')).toBe('/blog/case-study/');
+    expect(link.textContent).toBe('case study');
+  });
 });
 
 describe('buildBylineMeta', () => {

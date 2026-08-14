@@ -1,5 +1,5 @@
 import {
-  describe, it, expect, vi, afterEach,
+  describe, it, expect, vi, beforeEach, afterEach,
 } from 'vitest';
 
 vi.mock('../scripts/personalization/decision.js', () => ({
@@ -11,13 +11,46 @@ vi.mock('../scripts/personalization/decision.js', () => ({
 import { collectSlots, runPersonalization } from '../scripts/pzn.js';
 // eslint-disable-next-line import/first
 import { fetchDecision, applyFragment } from '../scripts/personalization/decision.js';
+// eslint-disable-next-line import/first
+import { resetAnalytics } from '../scripts/personalization/analytics.js';
 
-afterEach(() => vi.clearAllMocks());
+beforeEach(() => {
+  resetAnalytics();
+  delete window.appVars;
+  // Run the idle-deferred analytics flush synchronously for deterministic asserts.
+  window.requestIdleCallback = (cb) => { cb(); return 0; };
+});
+afterEach(() => {
+  vi.clearAllMocks();
+  delete window.requestIdleCallback;
+  resetAnalytics();
+  delete window.appVars;
+});
 
 function main(html) {
   const m = document.createElement('main');
   m.innerHTML = html;
   return m;
+}
+
+// A raw batch response entry keyed <experience>_<placement>_<locale>. `placement`
+// is echoed (case may differ from the slot); recommendations nest under
+// `.recommendation[]` and the EDS fragment path is copyData.pznblock (real shape).
+function batch(placement, pznblock, extra = {}) {
+  return {
+    [`ttcom_${placement}_en_US`]: {
+      data: {
+        recommendations: {
+          recommendation: [{
+            id: `rec-${placement}`, accessPoint: placement, copyData: { pznblock, contentId: '1223344' }, ...extra,
+          }],
+        },
+      },
+      placement,
+      experience: 'ttcom',
+      status: 200,
+    },
+  };
 }
 
 describe('collectSlots', () => {
@@ -62,41 +95,51 @@ describe('collectSlots', () => {
 });
 
 describe('runPersonalization', () => {
-  it('batches all placements into one /api/de call and applies each decision', async () => {
+  it('batches all placements into one /api/pzn call and swaps each matched slot', async () => {
     const m = main('<div data-pzn="alpha"></div><div data-pzn="beta"></div>');
-    fetchDecision.mockResolvedValue([
-      { placement: 'ALPHA', action: 'replace', fidelity: 'block', fragment: 'fragments/pzn/a' },
-    ]);
+    // Response echoes ALPHA (upper), slot is alpha → matched case-insensitively.
+    fetchDecision.mockResolvedValue(batch('ALPHA', '/fragments/pzn/a'));
     await runPersonalization(m);
 
     expect(fetchDecision).toHaveBeenCalledTimes(1);
     const [source, opts] = fetchDecision.mock.calls[0];
-    expect(source).toBe('de');
+    expect(source).toBe('pzn');
     expect(opts.method).toBe('POST');
     expect(opts.body.slots).toEqual([{ placement: 'alpha' }, { placement: 'beta' }]);
 
-    // matched case-insensitively (decision ALPHA -> section alpha)
     expect(applyFragment).toHaveBeenCalledTimes(1);
     expect(applyFragment.mock.calls[0][0]).toBe(m.querySelector('[data-pzn="alpha"]'));
-    expect(applyFragment.mock.calls[0][1]).toBe('fragments/pzn/a');
+    expect(applyFragment.mock.calls[0][1]).toBe('/fragments/pzn/a');
+  });
+
+  it('publishes the pzn analytics record onto window.appVars', async () => {
+    const m = main('<div data-pzn="alpha"></div>');
+    fetchDecision.mockResolvedValue(batch('ALPHA', '/fragments/pzn/a'));
+    await runPersonalization(m);
+
+    const records = JSON.parse(window.appVars.pznRecDetailsArr);
+    expect(records).toEqual([expect.objectContaining({
+      personalization_placement: 'ALPHA',
+      personalization_id: 'rec-ALPHA',
+      personalization_action: 'im',
+      personalization_workflow: 'marketing',
+      content_id: '1223344',
+      externalContentIdentifier: '1223344',
+    })]);
+    expect(window.appVars.pznPageRecDetailsArr).toBe('[]');
   });
 
   it('applies a block-scoped decision to the named block, not the section', async () => {
     const m = main('<div data-pzn="alpha" data-pzn-block="cards"><div class="cards" data-block-name="cards"></div></div>');
-    fetchDecision.mockResolvedValue([
-      { placement: 'alpha', action: 'replace', fidelity: 'block', fragment: 'fragments/pzn/a' },
-    ]);
+    fetchDecision.mockResolvedValue(batch('alpha', '/fragments/pzn/a'));
     await runPersonalization(m);
-    expect(applyFragment).toHaveBeenCalledWith(m.querySelector('[data-block-name="cards"]'), 'fragments/pzn/a');
+    expect(applyFragment).toHaveBeenCalledWith(m.querySelector('[data-block-name="cards"]'), '/fragments/pzn/a');
   });
 
   it('applies a decision to every section sharing the same placement', async () => {
     const m = main('<div data-pzn="alpha"></div><div data-pzn="alpha"></div>');
-    fetchDecision.mockResolvedValue([
-      { placement: 'alpha', action: 'replace', fidelity: 'block', fragment: 'fragments/pzn/a' },
-    ]);
+    fetchDecision.mockResolvedValue(batch('alpha', '/fragments/pzn/a'));
     await runPersonalization(m);
-    // one deduped placement in the batch, applied to both sections
     expect(fetchDecision.mock.calls[0][1].body.slots).toEqual([{ placement: 'alpha' }]);
     expect(applyFragment).toHaveBeenCalledTimes(2);
   });
@@ -110,12 +153,16 @@ describe('runPersonalization', () => {
     fetchDecision.mockResolvedValue(null);
     await runPersonalization(main('<div data-pzn="alpha"></div>'));
     expect(applyFragment).not.toHaveBeenCalled();
+
+    fetchDecision.mockResolvedValue({});
+    await runPersonalization(main('<div data-pzn="alpha"></div>'));
+    expect(applyFragment).not.toHaveBeenCalled();
   });
 
   it('honors { skip } to exclude a section', async () => {
     const m = main('<div data-pzn="alpha"></div><div data-pzn="beta"></div>');
     const first = m.querySelector('[data-pzn]');
-    fetchDecision.mockResolvedValue([]);
+    fetchDecision.mockResolvedValue({});
     await runPersonalization(m, { skip: first });
     expect(fetchDecision.mock.calls[0][1].body.slots).toEqual([{ placement: 'beta' }]);
   });

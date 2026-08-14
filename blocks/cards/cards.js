@@ -1,11 +1,18 @@
 /**
- * cards — generic card grid, with two additional shape variants:
+ * cards — generic card grid, with shape variants:
  *   .carousel   plain photo cards in a single scrolling row (events,
  *               financial-services, professional-services)
  *   .boxed      white rounded card (photo + text) in a single scrolling row,
  *               centered when it doesn't fill the row (oa)
- * Both scroll variants combine with the .accent/.dark tone classes (section
+ *   .icons      small (56px) icon + optional eyebrow + heading + body,
+ *               unboxed, fixed 3-up (account-management, compare,
+ *               human-capital-management, migration, oa "One view...")
+ * .carousel/.boxed combine with the .accent/.dark tone classes (section
  * background) independently — see cards.css.
+ *
+ * The body cell is flowing text: an italic-only paragraph anywhere in it
+ * becomes the eyebrow, an authored heading tag becomes the card title,
+ * everything else stays as body copy untouched.
  *
  * Used by OF1-generated content (blocks/of1), which emits plain `.cards > div`
  * rows rather than authoring this block directly. The default (grid) shape is
@@ -166,15 +173,25 @@ function attachFocusCursor(block) {
 }
 
 export default function decorate(block) {
+  const isIcons = block.classList.contains('icons');
+
   [...block.children].forEach((row) => {
     [...row.children].forEach((cell) => {
       const img = cell.querySelector('picture > img');
       if (img && cell.children.length === 1) {
         cell.classList.add('cards-card-image');
         const picture = img.closest('picture');
-        picture.replaceWith(createOptimizedPicture(img.src, img.alt, false, [{ width: '750' }]));
+        const width = isIcons ? '150' : '750';
+        picture.replaceWith(createOptimizedPicture(img.src, img.alt, false, [{ width }]));
       } else {
         cell.classList.add('cards-card-body');
+        cell.querySelectorAll('p').forEach((p) => {
+          const only = p.children.length === 1 ? p.children[0] : null;
+          if (only?.tagName === 'EM' && p.textContent.trim() === only.textContent.trim()) {
+            p.classList.add('eyebrow', 'cards-eyebrow');
+            only.replaceWith(...only.childNodes);
+          }
+        });
       }
     });
   });

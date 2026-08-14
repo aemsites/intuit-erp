@@ -11,12 +11,12 @@
 		// with is the `IXP_API_KEY` Wrangler secret (never in vars/committed) — set it
 		// with `wrangler secret put IXP_API_KEY`.
 		"IXP_ASSIGNMENT_URL": "https://experimentation.us.api.intuit.com/us/v2/assignment",
-		// Decision Engine "Batch" endpoint, called by POST /api/de. The batch client
+		// Personalization "Batch" endpoint, called by POST /api/pzn. The batch client
 		// POSTs the page's slots + visitor attributes here and returns the per-slot
 		// recommendation (`copyData.pznblock` fragment). The API key it authenticates
 		// with is the `PZN_API_KEY` Wrangler secret (never in vars/committed) — set it
 		// with `wrangler secret put PZN_API_KEY`.
-		"DECISION_ENGINE_BATCH_URL": "https://personalization.api.intuit.com/public/v1/batch",
+		"PERSONALIZATION_BATCH_URL": "https://personalization.api.intuit.com/public/v1/batch",
 		// EDGE_AUTH_SECRET (Wrangler secret, optional) gates the /api/* endpoints:
 		// when set, requests must carry a matching `x-edge-auth` header (injected by
 		// Akamai on the /api/* route). Unset ⇒ the check is skipped. Set it with

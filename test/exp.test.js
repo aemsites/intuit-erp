@@ -17,12 +17,44 @@ import {
 } from '../scripts/exp.js';
 // eslint-disable-next-line import/first
 import { fetchDecision, applyFragment } from '../scripts/personalization/decision.js';
+// eslint-disable-next-line import/first
+import { resetAnalytics } from '../scripts/personalization/analytics.js';
+
+const VARIATION_KEY = 'intuit.com.integration.variation.html';
+
+// A raw IXP assignment (only the fields the consumer reads).
+function assignment(partial) {
+  return {
+    experimentId: 385944,
+    experimentVersion: 7,
+    id: 39927,
+    experimentType: 'REDIRECT',
+    payload: '',
+    assetLocation: null,
+    control: false,
+    ...partial,
+  };
+}
+
+const redirectTo = (path) => assignment({
+  experimentType: 'REDIRECT',
+  payload: JSON.stringify({ [VARIATION_KEY]: path }),
+});
+const replaceWith = (path) => assignment({ experimentType: 'REPLACE_WEB_CONTENT', assetLocation: path });
 
 beforeEach(() => {
   document.head.innerHTML = '';
   document.body.innerHTML = '<main><div class="hero">BASE</div></main>';
+  resetAnalytics();
+  delete window.appVars;
+  window.requestIdleCallback = (cb) => { cb(); return 0; };
 });
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => {
+  vi.restoreAllMocks();
+  delete window.requestIdleCallback;
+  resetAnalytics();
+  delete window.appVars;
+});
 
 function setMeta(name, content) {
   const m = document.createElement('meta');
@@ -42,9 +74,9 @@ describe('isExperimentEnabled', () => {
 });
 
 describe('runExperiment', () => {
-  it('swaps <main> with the variation plain.html on a page decision', async () => {
+  it('swaps <main> with the variation plain.html on a redirect assignment', async () => {
     setMeta('experiment-id', '385944');
-    fetchDecision.mockResolvedValue({ action: 'replace', fidelity: 'page', fragment: '/drafts/pzn/csr-variation' });
+    fetchDecision.mockResolvedValue({ assignments: [redirectTo('/drafts/pzn/csr-variation')] });
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response('<div class="hero">VARIATION</div>', { status: 200, headers: { 'content-type': 'text/html' } }),
     );
@@ -54,20 +86,28 @@ describe('runExperiment', () => {
     const [source] = fetchDecision.mock.calls[0];
     expect(source).toContain('ixp?');
     expect(source).toContain('experimentId=385944');
+    expect(source).not.toContain('fidelity=');
     expect(globalThis.fetch).toHaveBeenCalledWith(
       '/drafts/pzn/csr-variation.plain.html',
       expect.objectContaining({ signal: expect.anything() }),
     );
     expect(document.querySelector('main').innerHTML).toContain('VARIATION');
     expect(document.querySelector('main').innerHTML).not.toContain('BASE');
+
+    // Analytics record published (treatment ⇒ has a replacement path).
+    expect(JSON.parse(window.appVars.ixpDetailsArr)).toEqual([{
+      experiment_id: 385944,
+      experiment_version: 7,
+      experiment_treatment: 39927,
+      original_content_id: window.location.pathname,
+      replacement_content_id: '/drafts/pzn/csr-variation',
+    }]);
   });
 
-  it('fetches the same-origin pathname (not a doubled URL) when the variation fragment is an absolute URL', async () => {
+  it('fetches the same-origin pathname (not a doubled URL) when the variation is an absolute URL', async () => {
     setMeta('experiment-id', '385944');
     fetchDecision.mockResolvedValue({
-      action: 'replace',
-      fidelity: 'page',
-      fragment: 'https://main--intuit-erp--aemsites.aem.live/fragments/pzn/financial-services',
+      assignments: [redirectTo('https://main--intuit-erp--aemsites.aem.live/fragments/pzn/financial-services')],
     });
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response('<div>VARIATION</div>', { status: 200, headers: { 'content-type': 'text/html' } }),
@@ -88,11 +128,17 @@ describe('runExperiment', () => {
     expect(document.querySelector('main').innerHTML).toContain('BASE');
   });
 
-  it('leaves the baseline on a control decision', async () => {
+  it('leaves the baseline on a control arm but still records the exposure (no replacement)', async () => {
     setMeta('experiment-id', '385944');
-    fetchDecision.mockResolvedValue({ control: true });
+    fetchDecision.mockResolvedValue({ assignments: [assignment({ control: true })] });
     await runExperiment(document);
     expect(document.querySelector('main').innerHTML).toContain('BASE');
+    expect(JSON.parse(window.appVars.ixpDetailsArr)).toEqual([{
+      experiment_id: 385944,
+      experiment_version: 7,
+      experiment_treatment: 39927,
+      original_content_id: window.location.pathname,
+    }]);
   });
 
   it('is a no-op (no fetchDecision call) when only bare experiment metadata is present', async () => {
@@ -102,11 +148,11 @@ describe('runExperiment', () => {
     expect(document.querySelector('main').innerHTML).toContain('BASE');
   });
 
-  it('does not touch the page for a block/section (exp-) decision', async () => {
+  it('does not touch the page for a replace (block/section) assignment', async () => {
     setMeta('experiment-id', '385944');
-    fetchDecision.mockResolvedValue({ action: 'replace', fidelity: 'block', fragment: '/x' });
+    fetchDecision.mockResolvedValue({ assignments: [replaceWith('/x')] });
     await runExperiment(document);
-    // fidelity !== 'page' → runExperiment (the whole-page path) leaves <main> alone
+    // Not a redirect ⇒ the whole-page path leaves <main> alone.
     expect(document.querySelector('main').innerHTML).toContain('BASE');
   });
 
@@ -114,10 +160,9 @@ describe('runExperiment', () => {
     vi.useFakeTimers();
     try {
       setMeta('experiment-id', '385944');
-      fetchDecision.mockResolvedValue({ action: 'replace', fidelity: 'page', fragment: '/drafts/pzn/csr-variation' });
-      // Simulates a connection that is accepted but never completes on its own:
-      // the promise only settles if the shared controller's signal fires 'abort'
-      // (mirrors real fetch+AbortSignal behavior).
+      fetchDecision.mockResolvedValue({ assignments: [redirectTo('/drafts/pzn/csr-variation')] });
+      // A connection that never completes on its own; only the shared signal's
+      // 'abort' settles it (mirrors real fetch + AbortSignal behavior).
       vi.spyOn(globalThis, 'fetch').mockImplementation((url, options) => new Promise((resolve, reject) => {
         if (options && options.signal) {
           options.signal.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')));
@@ -179,38 +224,38 @@ describe('runBlockExperiments', () => {
     return m;
   }
 
-  it('queries by label (non-numeric id) at section fidelity and applies the variation', async () => {
+  it('queries by label (non-numeric id) and applies a replace variation', async () => {
     const m = main('<div data-exp="Homepage_Hero"></div>');
-    fetchDecision.mockResolvedValue({ action: 'replace', fidelity: 'section', fragment: '/fragments/exp/a' });
+    fetchDecision.mockResolvedValue({ assignments: [replaceWith('/fragments/exp/a')] });
     await runBlockExperiments(m);
 
     const [source] = fetchDecision.mock.calls[0];
     expect(source).toContain('ixp?');
     expect(source).toContain('label=Homepage_Hero');
-    expect(source).toContain('fidelity=section');
+    expect(source).not.toContain('fidelity=');
     expect(applyFragment).toHaveBeenCalledWith(m.querySelector('[data-exp]'), '/fragments/exp/a');
+    expect(JSON.parse(window.appVars.ixpDetailsArr)).toHaveLength(1);
   });
 
-  it('queries by experimentId (numeric id) at block fidelity for a block-scoped tag', async () => {
+  it('queries by experimentId (numeric id) for a block-scoped tag', async () => {
     const m = main('<div data-exp="385944" data-exp-block="cards"><div class="cards" data-block-name="cards"></div></div>');
-    fetchDecision.mockResolvedValue({ action: 'replace', fidelity: 'block', fragment: '/fragments/exp/a' });
+    fetchDecision.mockResolvedValue({ assignments: [replaceWith('/fragments/exp/a')] });
     await runBlockExperiments(m);
     const [source] = fetchDecision.mock.calls[0];
     expect(source).toContain('experimentId=385944');
-    expect(source).toContain('fidelity=block');
     expect(applyFragment).toHaveBeenCalledWith(m.querySelector('[data-block-name="cards"]'), '/fragments/exp/a');
   });
 
-  it('leaves the baseline on a control decision', async () => {
+  it('leaves the baseline on a control arm', async () => {
     const m = main('<div data-exp="Homepage_Hero"></div>');
-    fetchDecision.mockResolvedValue({ control: true });
+    fetchDecision.mockResolvedValue({ assignments: [assignment({ control: true })] });
     await runBlockExperiments(m);
     expect(applyFragment).not.toHaveBeenCalled();
   });
 
-  it('ignores a page-fidelity decision (that belongs to runExperiment)', async () => {
+  it('ignores a redirect (page-level) assignment (that belongs to runExperiment)', async () => {
     const m = main('<div data-exp="Homepage_Hero"></div>');
-    fetchDecision.mockResolvedValue({ action: 'replace', fidelity: 'page', fragment: '/variation' });
+    fetchDecision.mockResolvedValue({ assignments: [redirectTo('/variation')] });
     await runBlockExperiments(m);
     expect(applyFragment).not.toHaveBeenCalled();
   });

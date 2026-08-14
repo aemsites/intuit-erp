@@ -137,7 +137,11 @@ export function buildEyebrow(tag) {
   eyebrow.className = 'blog-byline-tag';
   // display-only: slugs like "case-study" read as "case study" (CSS uppercases);
   // the underlying category value is unchanged so blog-cards filters still match.
-  eyebrow.textContent = tag.replace(/-/g, ' ');
+  // Link the eyebrow to the category listing to match production (e.g. /blog/erp/).
+  const link = document.createElement('a');
+  link.href = `/blog/${toClassName(tag)}/`;
+  link.textContent = tag.replace(/-/g, ' ');
+  eyebrow.append(link);
   return eyebrow;
 }
 
