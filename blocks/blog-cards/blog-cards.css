@@ -133,9 +133,17 @@
   color: #fff;
 }
 
-/* ---- featured: first 2 cards render larger, same shape as regular cards ---- */
+/* ---- featured: on mobile, production renders these as full-width stacked cards
+   with a ~16:9 landscape image (regular cards stay the compact side-image row). ---- */
 @media (max-width: 767px) {
-  .blog-cards .blog-card.featured .blog-card-image { flex-basis: 45%; }
+  .blog-cards .blog-card.featured { flex-direction: column; }
+
+  .blog-cards .blog-card.featured .blog-card-image {
+    flex: 0 0 auto;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+  }
 }
 
 .blog-cards .blog-card.featured .blog-card-body .blog-card-title {
