@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import decorate from '../blocks/guide-hero/guide-hero.js';
 import buildGuideHeroAutoBlock from '../blocks/guide-hero/guide-hero-autoblock.js';
+import { isGuidePage } from '../blocks/guide-hero/guide-detect.js';
 
 // Mirrors what buildGuideHeroAutoBlock (scripts.js) hands over: one row, one
 // cell, holding section 1's authored flow verbatim.
@@ -98,34 +99,26 @@ describe('buildGuideHeroAutoBlock', () => {
 
   it('promotes section 1 on a Guide page', () => {
     const main = mainWith(SECTION);
-    const block = buildGuideHeroAutoBlock(main, 'guide');
+    const block = buildGuideHeroAutoBlock(main);
     expect(block.classList.contains('guide-hero')).toBe(true);
     expect(main.querySelector(':scope > div').firstElementChild).toBe(block);
     expect(block.querySelector('h1')).toBeTruthy();
     expect(block.querySelector('picture img')).toBeTruthy();
   });
 
-  it('does nothing on any other template', () => {
-    ['blog article', 'case study', 'research', 'category', ''].forEach((template) => {
-      const main = mainWith(SECTION);
-      expect(buildGuideHeroAutoBlock(main, template)).toBeNull();
-      expect(main.querySelector('.guide-hero')).toBeNull();
-    });
-  });
-
   it('does nothing without an h1, or without a hero photo', () => {
     const noH1 = mainWith('<div><p>Lede.</p><p><picture><img src="hero.jpg"></picture></p></div>');
-    expect(buildGuideHeroAutoBlock(noH1, 'guide')).toBeNull();
+    expect(buildGuideHeroAutoBlock(noH1)).toBeNull();
     // no photo: upstream shows no card here, just a centred headline (styles.css)
     const noImg = mainWith('<div><h1>Headline</h1><p>Lede.</p></div>');
-    expect(buildGuideHeroAutoBlock(noImg, 'guide')).toBeNull();
+    expect(buildGuideHeroAutoBlock(noImg)).toBeNull();
   });
 
   it('does not mistake a decorateIcons icon for the hero photo', () => {
     // decorateIcons runs before buildAutoBlocks, so an authored `:icon-check:` is
     // already an <img> by now — it must not pass for a hero photo
     const main = mainWith('<div><h1>Headline</h1><p>Lede <span class="icon icon-check"><img data-icon-name="check" src="/icons/check.svg"></span> more.</p></div>');
-    expect(buildGuideHeroAutoBlock(main, 'guide')).toBeNull();
+    expect(buildGuideHeroAutoBlock(main)).toBeNull();
     // and the icon stays in the sentence where it was authored
     expect(main.querySelector('p .icon img')).toBeTruthy();
   });
@@ -136,7 +129,7 @@ describe('buildGuideHeroAutoBlock', () => {
       <p><picture><img src="hero.jpg"></picture></p>
       <div class="download-form"><div><div>Get it</div></div></div>
     </div>`);
-    const block = buildGuideHeroAutoBlock(main, 'guide');
+    const block = buildGuideHeroAutoBlock(main);
     const section = main.querySelector(':scope > div');
     // the form is still a direct child of the section, where decorateBlocks looks
     expect(section.querySelector(':scope > .download-form')).toBeTruthy();
@@ -150,7 +143,7 @@ describe('buildGuideHeroAutoBlock', () => {
       <p><a href="https://www.youtube.com/watch?v=abc123">Watch</a></p>
       <p><picture><img src="hero.jpg"></picture></p>
     </div>`);
-    const block = buildGuideHeroAutoBlock(main, 'guide');
+    const block = buildGuideHeroAutoBlock(main);
     const section = main.querySelector(':scope > div');
     expect(section.querySelector(':scope > p > a[href*="youtube"]')).toBeTruthy();
     expect(block.querySelector('a[href*="youtube"]')).toBeNull();
@@ -158,8 +151,34 @@ describe('buildGuideHeroAutoBlock', () => {
 
   it('is idempotent', () => {
     const main = mainWith(SECTION);
-    buildGuideHeroAutoBlock(main, 'guide');
-    expect(buildGuideHeroAutoBlock(main, 'guide')).toBeNull();
+    buildGuideHeroAutoBlock(main);
+    expect(buildGuideHeroAutoBlock(main)).toBeNull();
     expect(main.querySelectorAll('.guide-hero').length).toBe(1);
+  });
+});
+
+describe('isGuidePage', () => {
+  const setPage = (path, template) => {
+    window.history.pushState({}, '', path);
+    document.head.innerHTML = template ? `<meta name="template" content="${template}">` : '';
+  };
+
+  it('is true for a Guide page under /blog/guide/', () => {
+    setPage('/blog/guide/construction-accounting-erp', 'Guide');
+    expect(isGuidePage()).toBe(true);
+  });
+
+  it('is false for every other template on a guide-shaped path', () => {
+    ['Blog Article', 'Case Study', 'Research', 'Category', 'Author', ''].forEach((template) => {
+      setPage('/blog/guide/construction-accounting-erp', template);
+      expect(isGuidePage()).toBe(false);
+    });
+  });
+
+  it('is false off the /blog/guide/ path, even with the Guide template', () => {
+    ['/blog/acquisition-and-mergers/what-is-enterprise-value', '/blog/guide', '/accounting', '/'].forEach((path) => {
+      setPage(path, 'Guide');
+      expect(isGuidePage()).toBe(false);
+    });
   });
 });

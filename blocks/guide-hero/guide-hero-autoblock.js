@@ -1,8 +1,9 @@
 /**
- * buildGuideHeroAutoBlock — promotes section 1 of a `template: Guide` page into a
- * `guide-hero` block. Split out of scripts.js so the gate is unit-testable
- * (blog-detect.js does the same for isBlogPage) and so scripts.js's eager path
- * stays a one-line call.
+ * buildGuideHeroAutoBlock — promotes section 1 of a Guide landing page into a
+ * `guide-hero` block. Split out of scripts.js so it is unit-testable, and so the
+ * module is only fetched for the pages that use it: loadEager imports it behind
+ * isGuidePage() (./guide-detect.js), which is therefore the template/path gate —
+ * this function only decides whether section 1 has the right SHAPE.
  *
  * See blocks/guide-hero/guide-hero.js for what the block does with the content
  * and why Guide pages get their own card rather than the blog-article band.
@@ -55,15 +56,14 @@ function belongsToSection(node) {
 
 /**
  * Wraps section 1's headline, lede, CTA and hero photo in a `guide-hero` block.
- * No-op unless the page is `template: Guide` and section 1 has both an <h1> and
- * a hero photo — guides with no photo get no card upstream, just a centred
- * headline, which styles.css handles from the section left in place.
+ * Callers are expected to have checked isGuidePage() already. No-op unless
+ * section 1 has both an <h1> and a hero photo — guides with no photo get no card
+ * upstream, just a centred headline, which styles.css handles from the section
+ * left in place.
  * @param {Element} main the page's <main>
- * @param {string} template the page's `template` metadata, already normalised
  * @returns {Element|null} the inserted block, or null when nothing was built
  */
-export default function buildGuideHeroAutoBlock(main, template) {
-  if (template !== 'guide') return null;
+export default function buildGuideHeroAutoBlock(main) {
   const firstSection = main.querySelector(':scope > div');
   if (!firstSection || firstSection.querySelector('.guide-hero')) return null;
   if (!firstSection.querySelector('h1') || !heroImage(firstSection)) return null;

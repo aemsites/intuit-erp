@@ -31,9 +31,7 @@ import { sendOf1Signal, readAlloySegmentIds } from './of1-rtcdp-signal.js';
 // video block loads lazily when a video is actually decorated.
 import { isBlogPage } from '../blocks/blog-template/blog-detect.js';
 import { isVideoLink } from '../blocks/video/video-info.js';
-// Guide landing pages promote section 1 into a `guide-hero` card; the gate lives
-// beside the block so it can be unit-tested (see that module).
-import buildGuideHeroAutoBlock from '../blocks/guide-hero/guide-hero-autoblock.js';
+import { isGuidePage } from '../blocks/guide-hero/guide-detect.js';
 
 // Adobe Web SDK / AEP datastream. The datastream id is public (not a secret)
 // and safe in client source. While the id starts with "REPLACE_", martech is
@@ -175,6 +173,11 @@ function buildVideoAutoBlocks(main) {
 // elsewhere, which also serves as the "is this a blog page" gate below.
 let buildBlogTemplate;
 
+// Same treatment for the Guide landing-page card: imported in loadEager only for
+// /blog/guide/* pages, so the other ~325 pages in the sitemap never fetch or
+// parse it. Undefined elsewhere, which is the gate in buildAutoBlocks.
+let buildGuideHeroAutoBlock;
+
 /**
  * Builds all synthetic blocks in a container element.
  * @param {Element} main The container element
@@ -189,12 +192,12 @@ function buildAutoBlocks(main) {
     // from re-injecting a right-rail link into every loaded fragment (which
     // buildAutoBlocks would then re-load — an infinite loop).
     if (buildBlogTemplate && main.isConnected) buildBlogTemplate(main);
-    // Guide landing pages get their own lead card instead. Same isConnected
-    // guard: loaded fragments are decorated through here too, and their first
-    // section must not be mistaken for the page's hero.
-    if (main.isConnected) {
-      buildGuideHeroAutoBlock(main, getMetadata('template').trim().toLowerCase());
-    }
+    // Guide landing pages get their own lead card instead. The isConnected guard
+    // matters as much here as above: loadFragment decorates a DETACHED main, and
+    // getMetadata reads the HOST page's head — so on a Guide page every loaded
+    // fragment would otherwise have its own first section wrapped in a second
+    // card (verified: 2 `.guide-hero` blocks, the fragment's heading inside one).
+    if (buildGuideHeroAutoBlock && main.isConnected) buildGuideHeroAutoBlock(main);
     // auto load `*/fragments/*` references
     const fragments = [...main.querySelectorAll('a[href*="/fragments/"]')].filter((f) => !f.closest('.fragment'));
     if (fragments.length > 0) {
@@ -388,6 +391,13 @@ async function loadEager(doc) {
     // synchronously while every other page skips the ~21KB module entirely.
     if (isBlogPage()) {
       ({ buildBlogTemplate } = await import('../blocks/blog-template/blog-template.js'));
+    }
+    // Guide landing pages: same shape, so the module is fetched only for the 9
+    // pages that use it. Path-gated as well as template-gated — every Guide page
+    // lives under /blog/guide/, and isBlogPage() sets the same precedent of
+    // requiring both.
+    if (isGuidePage()) {
+      ({ default: buildGuideHeroAutoBlock } = await import('../blocks/guide-hero/guide-hero-autoblock.js'));
     }
     decorateMain(main);
     // Personalize/experiment the first (LCP) section before reveal so the visitor
