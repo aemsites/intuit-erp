@@ -10,7 +10,7 @@
  * and calls Intuit's Decision Engine and IXP backends. It does NO decisioning of
  * its own and does NOT proxy or transform page HTML.
  *
- *   POST /api/de  — batch Decision Engine personalization for a page's slots.
+ *   POST /api/pzn — batch Decision Engine personalization for a page's slots.
  *   GET  /api/ixp — IXP experiment assignment for a page.
  *
  * Everything else 404s. See `src/api/` for the handlers and `README.md`.
