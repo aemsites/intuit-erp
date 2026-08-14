@@ -5,10 +5,14 @@
  * (/blog/guide/construction-accounting-erp, /blog/guide/data-analytics — both
  * identical): card inset in the container with an 8px radius on #dbedee
  * (= --sky), the photo filling exactly half the card width as a square flush to
- * its edges, and the copy in the other half — 48px/60px headline, 16px/24px
- * lede, outlined navy CTA. Mobile stacks the photo (full card width, still
- * square) above the copy and keeps the headline at 48px, as upstream does.
- */
+ * its edges, and the copy in the other half — 34px/44px 700 headline, 20px/28px
+ * 500 lede, outlined navy CTA at 16px/600. Mobile stacks the photo (full card
+ * width, still square) above the copy; the type scale does NOT change between
+ * breakpoints upstream, so it is declared once here.
+ *
+ * Read those values off the element that actually paints the text, not the
+ * <h1>/<p> around it: upstream nests a `span.ql-font-heading03` inside the h1
+ * and the wrapper reports 48px/700/60px while the span renders 34px/44px. */
 
 /* The card fills its own wrapper, so the photo can sit flush against the card's
    edge — which means replacing that wrapper's 40px gutter (styles.css) rather
@@ -75,15 +79,16 @@
 .guide-hero .guide-hero-copy h1 {
   margin: 0 0 20px;
   color: var(--heading);
-  font-size: 48px;
+  font-size: 34px;
   font-weight: 700;
-  line-height: 60px;
+  line-height: 44px;
 }
 
 .guide-hero .guide-hero-copy p {
   margin: 0 0 20px;
-  font-size: 16px;
-  line-height: 24px;
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 28px;
 }
 
 /* Upstream shows one ghost CTA regardless of which emphasis the author used, so
@@ -153,13 +158,13 @@
     padding: 40px 8% 40px 20%;
   }
 
-  /* wraps the headline at roughly upstream's 486px measure */
+  /* upstream's measures: 485px headline, 360px lede, in em of their own size */
   .guide-hero .guide-hero-copy h1 {
-    max-width: 10em;
+    max-width: 14em;
   }
 
   .guide-hero .guide-hero-copy p {
-    max-width: 24em;
+    max-width: 18em;
   }
 
   .guide-hero .guide-hero-copy a.button {
@@ -200,8 +205,7 @@
 }
 
 .guide-hero.no-media .guide-hero-copy h1 {
+  /* size/weight/line-height are the shared scale above — upstream renders the
+     imageless headline at the same 34px/44px, only centred and full width */
   margin: 0 0 16px;
-  font-size: 40px;
-  font-weight: 700;
-  line-height: 1.3;
 }
