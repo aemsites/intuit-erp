@@ -19,9 +19,15 @@
  * All this decorate() does is split the authored flow into a media half and a
  * copy half so CSS has two boxes to place. Media comes first in the DOM because
  * that is also the mobile order (photo above the copy), so the stacked layout
- * needs no reordering. CTA buttonizing is left to the global decorateButtons
- * (an <em>- or <strong>-wrapped link becomes .button.secondary / .button.primary
- * and this block's CSS styles either as the upstream ghost button).
+ * needs no reordering, and it makes the photo section 1's first <img> so aem.js
+ * eager-loads it as the LCP candidate. CTA buttonizing is left to the global
+ * decorateButtons (an <em>- or <strong>-wrapped link becomes .button.secondary /
+ * .button.primary and this block's CSS styles either as the upstream ghost
+ * button).
+ *
+ * The autoblock only builds this block when a photo is present, but a
+ * hand-authored one may have none, in which case no media half is inserted at
+ * all — an empty one would render as a blank half-card.
  * CSS: blocks/guide-hero/guide-hero.css
  */
 
@@ -41,24 +47,25 @@ export default function decorate(block) {
   media.className = 'guide-hero-media';
   const found = copy.querySelector('picture, img');
   if (found) {
-    const el = found.closest('picture') || found;
-    const host = el.parentElement;
+    // Lift the whole link when the photo is wrapped in one — a linked hero image
+    // is a reasonable authoring choice on a gated-asset page, and taking only the
+    // <picture> would silently drop the href.
+    const el = found.closest('a') || found.closest('picture') || found;
+    let host = el.parentElement;
     el.remove();
-    // drop the paragraph the author wrapped the image in, now that it is empty —
-    // an empty <p> still carries the global paragraph margin.
-    if (host !== copy && !host.textContent.trim() && !host.querySelector('img, picture')) {
+    // Then discard every ancestor the move emptied, not just the immediate one:
+    // an emptied <p> still carries the global paragraph margin, and with a linked
+    // image the emptied node is the <a>'s parent, one level further up.
+    while (host && host !== copy && !host.textContent.trim() && !host.querySelector('img, picture')) {
+      const parent = host.parentElement;
       host.remove();
+      host = parent;
     }
     media.append(el);
   }
 
-  // The hero photo is the LCP element on these pages, so let it load eagerly —
-  // the pipeline marks authored images lazy by default, which delays the paint.
-  const img = media.querySelector('img');
-  if (img) {
-    img.setAttribute('loading', 'eager');
-    img.removeAttribute('fetchpriority');
-  }
-
-  block.replaceChildren(media, copy);
+  // loading="eager" on the photo is left to aem.js: waitForFirstImage() sets it
+  // on section 1's first <img> — which, after this split, is this one — and
+  // loadSection awaits it as the callback right after loading this block.
+  block.replaceChildren(...(media.children.length ? [media, copy] : [copy]));
 }

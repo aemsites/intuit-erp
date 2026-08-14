@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import decorate from '../blocks/guide-hero/guide-hero.js';
+import buildGuideHeroAutoBlock from '../blocks/guide-hero/guide-hero-autoblock.js';
 
 // Mirrors what buildGuideHeroAutoBlock (scripts.js) hands over: one row, one
 // cell, holding section 1's authored flow verbatim.
@@ -47,10 +48,13 @@ describe('guide-hero decorate', () => {
     expect(block.querySelector('.guide-hero-copy p').textContent).toBe('Lede copy.');
   });
 
-  it('loads the hero image eagerly — it is the LCP element on these pages', () => {
-    const block = blockWith('<h1>Headline</h1><p><picture><img src="hero.jpg" loading="lazy"></picture></p>');
+  it('puts the photo ahead of the copy, so it is the section\'s first img', () => {
+    // aem.js's waitForFirstImage() eager-loads section 1's first <img> as the LCP
+    // candidate, so the ordering is what gets the hero photo that treatment —
+    // this block deliberately does not set loading itself.
+    const block = blockWith('<h1>Headline</h1><p>Lede.</p><p><picture><img src="hero.jpg"></picture></p>');
     decorate(block);
-    expect(block.querySelector('.guide-hero-media img').getAttribute('loading')).toBe('eager');
+    expect(block.querySelector('img').closest('div').className).toBe('guide-hero-media');
   });
 
   it('carries an authored CTA into the copy column', () => {
@@ -63,12 +67,99 @@ describe('guide-hero decorate', () => {
     expect(cta.textContent).toBe('Get the free white paper');
   });
 
-  it('still builds a copy half when no image is present', () => {
-    // the autoblock will not create the block in this case, but the block must
-    // not throw if it is ever authored by hand
+  it('inserts no media half at all when there is no image', () => {
+    // the autoblock will not create the block in this case, but a hand-authored
+    // one must not render an empty square taking half the card
     const block = blockWith('<h1>Headline only</h1>');
     decorate(block);
     expect(block.querySelector('.guide-hero-copy h1')).toBeTruthy();
-    expect(block.querySelector('.guide-hero-media').children.length).toBe(0);
+    expect(block.querySelector('.guide-hero-media')).toBeNull();
+    expect([...block.children].map((c) => c.className)).toEqual(['guide-hero-copy']);
+  });
+
+  it('keeps the link when the hero photo is wrapped in one, and drops the emptied paragraph', () => {
+    const block = blockWith('<h1>H</h1><p><a href="/gated"><picture><img src="hero.jpg"></picture></a></p>');
+    decorate(block);
+    const link = block.querySelector('.guide-hero-media a[href="/gated"]');
+    expect(link).toBeTruthy();
+    expect(link.querySelector('picture img')).toBeTruthy();
+    // the <p> that held the link is gone, not left behind carrying its margin
+    expect(block.querySelectorAll('.guide-hero-copy p').length).toBe(0);
+  });
+});
+
+describe('buildGuideHeroAutoBlock', () => {
+  const mainWith = (html) => {
+    const main = document.createElement('main');
+    main.innerHTML = html;
+    return main;
+  };
+  const SECTION = '<div><h1>Headline</h1><p>Lede.</p><p><picture><img src="hero.jpg"></picture></p></div>';
+
+  it('promotes section 1 on a Guide page', () => {
+    const main = mainWith(SECTION);
+    const block = buildGuideHeroAutoBlock(main, 'guide');
+    expect(block.classList.contains('guide-hero')).toBe(true);
+    expect(main.querySelector(':scope > div').firstElementChild).toBe(block);
+    expect(block.querySelector('h1')).toBeTruthy();
+    expect(block.querySelector('picture img')).toBeTruthy();
+  });
+
+  it('does nothing on any other template', () => {
+    ['blog article', 'case study', 'research', 'category', ''].forEach((template) => {
+      const main = mainWith(SECTION);
+      expect(buildGuideHeroAutoBlock(main, template)).toBeNull();
+      expect(main.querySelector('.guide-hero')).toBeNull();
+    });
+  });
+
+  it('does nothing without an h1, or without a hero photo', () => {
+    const noH1 = mainWith('<div><p>Lede.</p><p><picture><img src="hero.jpg"></picture></p></div>');
+    expect(buildGuideHeroAutoBlock(noH1, 'guide')).toBeNull();
+    // no photo: upstream shows no card here, just a centred headline (styles.css)
+    const noImg = mainWith('<div><h1>Headline</h1><p>Lede.</p></div>');
+    expect(buildGuideHeroAutoBlock(noImg, 'guide')).toBeNull();
+  });
+
+  it('does not mistake a decorateIcons icon for the hero photo', () => {
+    // decorateIcons runs before buildAutoBlocks, so an authored `:icon-check:` is
+    // already an <img> by now — it must not pass for a hero photo
+    const main = mainWith('<div><h1>Headline</h1><p>Lede <span class="icon icon-check"><img data-icon-name="check" src="/icons/check.svg"></span> more.</p></div>');
+    expect(buildGuideHeroAutoBlock(main, 'guide')).toBeNull();
+    // and the icon stays in the sentence where it was authored
+    expect(main.querySelector('p .icon img')).toBeTruthy();
+  });
+
+  it('leaves authored blocks in the section — nesting them would break decorateBlocks', () => {
+    const main = mainWith(`<div>
+      <h1>Headline</h1>
+      <p><picture><img src="hero.jpg"></picture></p>
+      <div class="download-form"><div><div>Get it</div></div></div>
+    </div>`);
+    const block = buildGuideHeroAutoBlock(main, 'guide');
+    const section = main.querySelector(':scope > div');
+    // the form is still a direct child of the section, where decorateBlocks looks
+    expect(section.querySelector(':scope > .download-form')).toBeTruthy();
+    expect(block.querySelector('.download-form')).toBeNull();
+    expect(block.querySelector('h1')).toBeTruthy();
+  });
+
+  it('leaves a lone video link for buildVideoAutoBlocks', () => {
+    const main = mainWith(`<div>
+      <h1>Headline</h1>
+      <p><a href="https://www.youtube.com/watch?v=abc123">Watch</a></p>
+      <p><picture><img src="hero.jpg"></picture></p>
+    </div>`);
+    const block = buildGuideHeroAutoBlock(main, 'guide');
+    const section = main.querySelector(':scope > div');
+    expect(section.querySelector(':scope > p > a[href*="youtube"]')).toBeTruthy();
+    expect(block.querySelector('a[href*="youtube"]')).toBeNull();
+  });
+
+  it('is idempotent', () => {
+    const main = mainWith(SECTION);
+    buildGuideHeroAutoBlock(main, 'guide');
+    expect(buildGuideHeroAutoBlock(main, 'guide')).toBeNull();
+    expect(main.querySelectorAll('.guide-hero').length).toBe(1);
   });
 });

@@ -10,11 +10,16 @@
  * square) above the copy and keeps the headline at 48px, as upstream does.
  */
 
-/* The card IS the section wrapper, so the photo can sit flush against its edge —
-   which means replacing the wrapper's own 40px gutter (styles.css) rather than
-   padding inside it. Upstream insets the card 20px on mobile and lets it span
-   the container on desktop, so the gutter goes to 0 at the breakpoint below. */
-.section.guide-hero-container > div {
+/* The card fills its own wrapper, so the photo can sit flush against the card's
+   edge — which means replacing that wrapper's 40px gutter (styles.css) rather
+   than padding inside it. Upstream insets the card 20px on mobile and lets it
+   span the container on desktop, so the gutter goes to 0 at the breakpoint below.
+
+   Scoped to `> .guide-hero-wrapper`, not `> div`: decorateBlock puts
+   `guide-hero-container` on whichever section holds the block, and a section can
+   hold sibling wrappers (default content, other blocks). Those must keep the
+   page gutter, or prose in the same section renders flush to the viewport. */
+.section.guide-hero-container > .guide-hero-wrapper {
   padding: 0 20px;
 }
 
@@ -28,15 +33,34 @@
   overflow: hidden;
 }
 
-/* square, flush to the card edges at both breakpoints */
+/* The photo's box is a square FLOOR that can grow, never a fixed square: the
+   ::before contributes a square's worth of height (its width is the box's, so
+   aspect-ratio 1 makes it as tall as the column is wide), which is exactly
+   upstream's card height, and `align-self: stretch` on desktop lets the box grow
+   past it when the copy is the taller side. The photo itself is taken out of flow
+   so it fills whatever that box ends up being.
+
+   Two simpler shapes were tried and are wrong: a plain `aspect-ratio: 1` photo
+   centres and leaves ~150px of bare mint above and below at 900-1024px, and
+   stretching that square makes aspect-ratio derive its WIDTH from the stretched
+   height, overflowing the column by 140px. `aspect-ratio` on the card itself is
+   also wrong — on a grid container it is a clamp, so the copy overflows instead
+   of growing the card. */
 .guide-hero .guide-hero-media {
   position: relative;
+}
+
+.guide-hero .guide-hero-media::before {
+  display: block;
   aspect-ratio: 1;
+  content: "";
 }
 
 .guide-hero .guide-hero-media picture,
 .guide-hero .guide-hero-media img {
+  position: absolute;
   display: block;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -61,9 +85,10 @@
 }
 
 /* Upstream shows one ghost CTA regardless of which emphasis the author used, so
-   both button variants get the same treatment below — the same declarations as
-   the guide download CTA already in the repo (blocks/cta-band/cta-band.css,
-   .cta-band.simple).
+   both button variants get the same treatment below. Same ghost treatment as the
+   guide download CTA lower on these pages (blocks/cta-band/cta-band.css,
+   .cta-band.simple) — but deliberately 52px tall where that one is 48px, which
+   is the difference upstream renders between the two.
 
    `display: flex` overrides the global `p.button-wrapper { display: inline-flex }`
    (styles.css): inline-flex shrinks the wrapper to the button, which leaves the
@@ -76,11 +101,18 @@
 .guide-hero .guide-hero-copy a.button {
   /* full width on mobile, natural width from the breakpoint up — as upstream */
   width: 100%;
-  height: 52px;
+
+  /* The global a.button rule is nowrap + ellipsis, which truncates a realistic
+     gated-asset label ("Download the free construction accounting guide") at
+     every width. Wrap instead, and let the height grow from the 52px upstream
+     uses for a single line. */
+  min-height: 52px;
+  padding: 14px 28px;
+  white-space: normal;
+  text-align: center;
   border: 2px solid var(--navy);
   border-radius: 4px;
   background: none;
-  padding: 0 28px;
   color: var(--navy);
   font-size: 16px;
   font-weight: 600;
@@ -103,8 +135,11 @@
     align-items: center;
   }
 
+  /* stretch, so the photo stays flush top and bottom when the copy is taller
+     than the square floor above */
   .guide-hero .guide-hero-media {
     grid-column: 1;
+    align-self: stretch;
   }
 
   /* Percentages, not px: upstream sets the copy ~135px clear of the photo in a
