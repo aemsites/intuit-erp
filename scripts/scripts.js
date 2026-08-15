@@ -33,7 +33,7 @@ import { sendOf1Signal, readAlloySegmentIds } from './of1-rtcdp-signal.js';
 // are NOT pulled onto the eager critical path here. buildBlogTemplate is
 // dynamically imported in loadEager for blog pages only (see below); the full
 // video block loads lazily when a video is actually decorated.
-import { isBlogPage } from '../blocks/blog-template/blog-detect.js';
+import { isBlogPage, isCaseStudyPage } from '../blocks/blog-template/blog-detect.js';
 import { isVideoLink } from '../blocks/video/video-info.js';
 
 // Adobe Web SDK / AEP datastream. The datastream id is public (not a secret)
@@ -204,6 +204,11 @@ function buildVideoAutoBlocks(main) {
 // elsewhere, which also serves as the "is this a blog page" gate below.
 let buildBlogTemplate;
 
+// Populated in loadEager (via dynamic import) only on case-study pages, so the
+// case-study-header module loads only where needed. Also serves as the gate in
+// buildAutoBlocks below.
+let buildCaseStudyHeader;
+
 /**
  * Builds all synthetic blocks in a container element.
  * @param {Element} main The container element
@@ -218,6 +223,11 @@ function buildAutoBlocks(main) {
     // from re-injecting a right-rail link into every loaded fragment (which
     // buildAutoBlocks would then re-load — an infinite loop).
     if (buildBlogTemplate && main.isConnected) buildBlogTemplate(main);
+    // Case-study autoblock — synthesize the case-study-header (eyebrow + byline +
+    // banner) from metadata when it isn't hand-authored, so migrated case studies
+    // show their author. isConnected guard mirrors buildBlogTemplate (skip the
+    // detached fragment main).
+    if (buildCaseStudyHeader && main.isConnected) buildCaseStudyHeader(main);
     // auto load `*/fragments/*` references
     const fragments = [...main.querySelectorAll('a[href*="/fragments/"]')].filter((f) => !f.closest('.fragment'));
     if (fragments.length > 0) {
@@ -439,6 +449,8 @@ async function loadEager(doc) {
     // synchronously while every other page skips the ~21KB module entirely.
     if (isBlogPage()) {
       ({ buildBlogTemplate } = await import('../blocks/blog-template/blog-template.js'));
+    } else if (isCaseStudyPage()) {
+      ({ buildCaseStudyHeader } = await import('../blocks/case-study-header/case-study-header.js'));
     }
     decorateMain(main);
     // Personalize/experiment the first (LCP) section before reveal so the visitor
