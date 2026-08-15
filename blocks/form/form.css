@@ -6,10 +6,14 @@
 
 .section.form-container { background: #fff; padding: 20px 0 var(--section-y); text-align: center; }
 .form-container .default-content-wrapper { text-align: center; }
-.form-container .default-content-wrapper h2 { font-size: 38px; line-height: 1.1; font-weight: 400; color: var(--heading); margin: 0 0 16px; }
-.form-container .default-content-wrapper p { font-size: 16px; color: var(--text); max-width: 44em; margin: 0 auto 12px; line-height: 1.55; }
+
+/* Heading + copy above a standalone form (webinar pages) mirror erp.intuit.com:
+   bold 40px title, uniform 16px centered paragraphs. The hero-card and modal
+   override these (blocks/hero, smaller card heading) so this only affects the
+   standalone form-landing layout. */
+.form-container .default-content-wrapper h2 { font-size: 40px; line-height: 1.3; font-weight: 700; color: var(--heading); margin: 0 0 20px; }
+.form-container .default-content-wrapper p { font-size: 16px; color: var(--heading); max-width: 44em; margin: 0 auto 12px; line-height: 1.3; text-align: center; }
 .form-container .default-content-wrapper p a { color: var(--primary); text-decoration: underline; }
-.form-container .default-content-wrapper:last-of-type p { font-size: 12px; color: var(--text-muted); }
 
 /* config-authored copy around the form (see parseFormConfig in form.js) */
 .form .form-header { font-size: 24px; line-height: 1.2; font-weight: 400; color: var(--heading); margin: 0 0 8px; }
@@ -17,53 +21,89 @@
 .form .form-disclaimer { font-size: 12px; color: var(--text-muted); margin: 16px 0 0; line-height: 1.5; }
 
 /* ---- Marketo form (.mktoForm) — Marketo sets inline widths, so full-width
-   layout needs !important. Keep overrides minimal; inherit the site's font. */
-.form { max-width: 640px; margin: 0 auto; text-align: left; }
-.form .mktoForm { width: 100% !important; font-family: inherit !important; }
-.form .mktoForm .mktoOffset, .form .mktoForm .mktoGutter { display: none !important; }
-.form .mktoForm .mktoFormRow, .form .mktoForm .mktoFieldWrap { width: 100% !important; }
-.form .mktoForm .mktoFormCol { width: 100% !important; margin-bottom: 12px !important; min-height: 0 !important; }
-.form .mktoForm .mktoLabel { width: auto !important; font-size: 13px !important; color: var(--text-muted) !important; margin-bottom: 6px !important; }
+   layout needs !important. Keep overrides minimal; inherit the site's font.
+   Scoped `:not(.hero)` so these never touch the hero block (class "hero form"),
+   which embeds a form via blocks/hero and owns its own layout. */
+.form:not(.hero) { text-align: left; }
+.form:not(.hero) .mktoForm { width: 100% !important; font-family: inherit !important; }
+.form:not(.hero) .mktoForm .mktoOffset, .form:not(.hero) .mktoForm .mktoGutter { display: none !important; }
+.form:not(.hero) .mktoForm .mktoFormRow, .form:not(.hero) .mktoForm .mktoFieldWrap { width: 100% !important; }
+.form:not(.hero) .mktoForm .mktoFormCol { width: 100% !important; min-height: 0 !important; }
 
-.form .mktoForm input.mktoField,
-.form .mktoForm select.mktoField,
-.form .mktoForm textarea.mktoField {
-  width: 100% !important; height: 46px; box-sizing: border-box;
-  border: 1px solid var(--line); border-radius: var(--radius);
-  padding: 0 14px; font-size: 15px; font-family: inherit; color: var(--text); background: #fff;
+/* Hide Marketo's hidden tracking-field rows, and space the visible field rows
+   (single-column Marketo forms have no .mktoFormCol, so spacing lives on the row). */
+.form:not(.hero) .mktoForm > .mktoFormRow:not(:has(input:not([type="hidden"]), select, textarea)) { display: none !important; }
+.form:not(.hero) .mktoForm > .mktoFormRow { margin-bottom: 16px; }
+
+/* Match erp.intuit.com: hide field labels, rely on Marketo's placeholders.
+   Visually hidden (not display:none) so screen readers still announce them. */
+.form:not(.hero) .mktoForm .mktoLabel {
+  position: absolute !important; width: 1px !important; height: 1px !important;
+  padding: 0 !important; margin: -1px !important; overflow: hidden !important;
+  clip-path: inset(50%) !important; white-space: nowrap !important; border: 0 !important;
 }
-.form .mktoForm textarea.mktoField { height: auto; padding: 12px 14px; }
 
-.form .mktoForm input.mktoField:focus,
-.form .mktoForm select.mktoField:focus,
-.form .mktoForm textarea.mktoField:focus { outline: 2px solid var(--primary); outline-offset: -1px; border-color: var(--primary); }
+/* Fields mirror erp.intuit.com: filled light-gray, bottom rule only, top-rounded. */
+.form:not(.hero) .mktoForm input.mktoField,
+.form:not(.hero) .mktoForm select.mktoField,
+.form:not(.hero) .mktoForm textarea.mktoField {
+  width: 100% !important; height: 49px; box-sizing: border-box;
+  background: #f4f5f8 !important;
+  border: 0 !important; border-bottom: 1px solid var(--dark-color) !important;
+  border-radius: 4px 4px 0 0 !important;
+  padding: 0 14px; font-size: 16px; font-family: inherit; color: var(--text);
+}
+.form:not(.hero) .mktoForm textarea.mktoField { height: auto; padding: 12px 14px; }
 
-.form .mktoForm .mktoButtonRow { width: 100%; margin-top: 8px; }
-.form .mktoForm .mktoButtonWrap { margin-left: 0 !important; }
+.form:not(.hero) .mktoForm input.mktoField:focus,
+.form:not(.hero) .mktoForm select.mktoField:focus,
+.form:not(.hero) .mktoForm textarea.mktoField:focus { outline: none !important; border-bottom: 2px solid var(--primary) !important; }
 
-.form .mktoForm .mktoButton {
-  height: 48px; padding: 0 30px !important; border: 0 !important; border-radius: var(--radius) !important;
+.form:not(.hero) .mktoForm .mktoButtonRow { width: 100%; margin-top: 8px; }
+.form:not(.hero) .mktoForm .mktoButtonWrap { margin-left: 0 !important; }
+
+.form:not(.hero) .mktoForm .mktoButton {
+  height: 49px; padding: 0 30px !important; border: 0 !important; border-radius: var(--radius) !important;
   background: var(--navy) !important; color: var(--background-color) !important;
   font-size: 16px !important; font-weight: 600 !important; cursor: pointer;
 }
-.form .mktoForm .mktoButton:hover { background: var(--navy-hover) !important; }
-.form .mktoForm .mktoError { color: #d2192a; font-size: 12px; }
+.form:not(.hero) .mktoForm .mktoButton:hover { background: var(--navy-hover) !important; }
+.form:not(.hero) .mktoForm .mktoError { color: #d2192a; font-size: 12px; }
+
+/* In the hero card and modal the form is stacked, so the button spans full width. */
+.hero-form .mktoForm .mktoButtonRow, .modal .mktoForm .mktoButtonRow,
+.hero-form .mktoForm .mktoButtonWrap, .modal .mktoForm .mktoButtonWrap { width: 100% !important; }
+.hero-form .mktoForm .mktoButtonRow, .modal .mktoForm .mktoButtonRow { margin-top: 12px; }
+.hero-form .mktoForm .mktoButton, .modal .mktoForm .mktoButton { width: 100% !important; justify-content: center; }
+
+/* Space the disclaimer/reCAPTCHA copy (rendered below the form) from the button. */
+.hero-form .form-wrapper + .default-content-wrapper,
+.modal .form-wrapper + .default-content-wrapper { margin-top: 20px; }
+
+/* Desktop: a standalone form (e.g. webinar registration) lays its fields out in
+   one row, matching erp.intuit.com. The hero-embedded card, modal, and download
+   variants stay stacked (reset below). */
+@media (width >= 900px) {
+  .form:not(.hero) .mktoForm { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 16px; }
+  .form:not(.hero) .mktoForm > .mktoFormRow { flex: 1 1 140px; width: auto !important; margin-bottom: 0; }
+  .form:not(.hero) .mktoForm > .mktoButtonRow { flex: 0 0 auto; width: auto; margin: 0; }
+
+  /* Card/modal/download forms stay stacked (not a single flex row). */
+  .hero-form .mktoForm,
+  .modal .mktoForm,
+  .form.download .mktoForm { display: block !important; }
+
+  .hero-form .mktoForm > .mktoFormRow,
+  .modal .mktoForm > .mktoFormRow,
+  .form.download .mktoForm > .mktoFormRow { width: 100% !important; margin-bottom: 16px !important; }
+}
+
+/* ---- .info — bright-blue submit button (e.g. pricing) instead of the navy default ---- */
+.form.info .mktoForm .mktoButton { background: var(--info) !important; }
+.form.info .mktoForm .mktoButton:hover { background: var(--blue-bright) !important; }
 
 /* ---- .sky — sky band ---- */
 .section.form-container:has(.form.sky) { background: #eaf3fb; padding: var(--section-y) 0; }
-
-/* ---- .hero — embedded in a dark hero band; make copy/labels read on dark ---- */
-.section.form-container:has(.form.hero) { background: var(--navy); padding: var(--section-y) 0; }
-
-.section.form-container:has(.form.hero) .default-content-wrapper h2,
-.form.hero .form-header { color: var(--background-color); }
-
-.section.form-container:has(.form.hero) .default-content-wrapper p,
-.form.hero .form-subheader,
-.form.hero .form-disclaimer { color: var(--background-color); opacity: 0.7; }
-.form.hero .mktoForm .mktoLabel { color: var(--background-color) !important; }
-.form.hero .mktoForm .mktoButton { background: var(--background-color) !important; color: var(--navy) !important; }
-.form.hero .mktoForm .mktoButton:hover { background: var(--light-color) !important; }
 
 /* ---- .card — white overlay card ---- */
 .section.form-container:has(.form.card) { background: transparent; padding: 0; }

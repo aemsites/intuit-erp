@@ -6,7 +6,11 @@
   overflow: hidden;
 
   &.gradient {
-    background: conic-gradient(from 103deg at 28.36% 120.78%, #04193C 115.9615deg, #041F53 204.2308deg, #03339C 267.2082deg, #0F44AC 273.7572deg, #2B66D0 289.9528deg, #3875E0 324.4898deg, #BB95CD 329.7278deg, #DEBCB3 334.1040deg, #041839 359.1429deg);
+    /* bottom fade to the section navy so the band blends into the next section
+       instead of a hard cut-off, layered over the diagonal brand gradient */
+    background:
+      linear-gradient(to bottom, rgb(4 24 57 / 0%) 62%, #041839 100%),
+      conic-gradient(from 103deg at 28.36% 120.78%, #04193C 115.9615deg, #041F53 204.2308deg, #03339C 267.2082deg, #0F44AC 273.7572deg, #2B66D0 289.9528deg, #3875E0 324.4898deg, #BB95CD 329.7278deg, #DEBCB3 334.1040deg, #041839 359.1429deg);
   }
 }
 
@@ -185,12 +189,19 @@
 
 /* ---- .hero.form (pricing) — lead card on the right, content from the
    shared schedule-call fragment (content/fragments/schedule-call.html) ---- */
-.hero.form .hero-grid { grid-template-columns: 1fr 550px; gap: 60px; min-height: 560px; }
+.hero.form .hero-grid { grid-template-columns: repeat(2, minmax(0, 550px)); justify-content: center; gap: 120px; min-height: 560px; max-width: 86.25rem; margin-inline: auto; }
 .hero.form .hero-grid:has(.hero-copy > h1:only-child) { align-items: center; }
 .hero.form .hero-copy h1 { font-size: 52px; max-width: 7em; margin-bottom: 0; }
 
+/* Badge/lockup that follows the CTA in the form-hero copy (e.g. accountant's
+   "Top New Products" badge): space it from the button; cap the accountant
+   badge (.gradient) so it matches erp.intuit.com rather than its full asset size. */
+.hero.form .hero-copy .button-wrapper + img,
+.hero.form .hero-copy .button-wrapper + picture { display: block; margin-top: 32px; }
+.hero.form.gradient .hero-copy img { max-width: 190px; height: auto; }
+
 .hero .hero-form {
-  justify-self: end; width: 100%; background: #fff; border-radius: 12px;
+  box-sizing: border-box; justify-self: end; width: 100%; background: #fff; border-radius: 12px;
   padding: 34px 34px 30px; box-shadow: 0 24px 60px rgb(0 0 0 / 28%); color: var(--text);
 }
 .hero .hero-form-loading { text-align: center; color: var(--text-muted); font-size: 14px; padding: 20px 0; }
@@ -199,16 +210,20 @@
    specificity (3 classes each); match ".form.boxed" explicitly so this wins
    regardless of block-CSS load order (see schedule-modal for the same fix). */
 .hero .hero-form .section.form-container { padding: 0; background: transparent; }
+
+/* Fragment-driven cards (contact/pricing, .form.boxed) center their copy;
+   the .form.card variant (accountant) left-aligns (see below). */
 .hero .hero-form .default-content-wrapper h2 { font-size: 26px; font-weight: 500; color: var(--heading); text-align: center; margin: 0 0 8px; }
 .hero .hero-form .default-content-wrapper p { font-size: 14px; color: var(--text-muted); text-align: center; line-height: 1.45; margin: 0 0 12px; }
+.hero .hero-form .form.boxed .form-disclaimer { text-align: center; }
 .hero .hero-form .default-content-wrapper p a { color: var(--primary); font-weight: 600; }
 
 /* a .form.card fragment (accountant "Request a detailed demo") supplies its own
    card chrome; strip it inside the hero-form so we don't get a card-in-a-card. */
 .hero .hero-form .form.card { background: transparent; border: 0; box-shadow: none; max-width: none; margin: 0; padding: 0; }
-.hero .hero-form .form .form-header { text-align: center; font-size: 26px; font-weight: 500; color: var(--heading); margin: 0 0 8px; }
-.hero .hero-form .form .form-subheader { text-align: center; font-size: 14px; color: var(--text-muted); line-height: 1.45; margin: 0 0 12px; }
-.hero .hero-form .form .form-disclaimer { text-align: center; font-size: 12px; color: var(--text-muted); }
+.hero .hero-form .form .form-header { text-align: left; font-size: 26px; font-weight: 500; color: var(--heading); margin: 0 0 8px; }
+.hero .hero-form .form .form-subheader { text-align: left; font-size: 14px; color: var(--text-muted); line-height: 1.45; margin: 0 0 12px; }
+.hero .hero-form .form .form-disclaimer { text-align: left; font-size: 12px; color: var(--text-muted); }
 
 .hero .hero-form .form.boxed .lead-fields,
 .hero .hero-form .form.card .lead-fields,

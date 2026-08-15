@@ -34,6 +34,9 @@ beforeEach(() => {
   };
   window.MktoForms2 = {
     loadForm: vi.fn((host, munchkin, formId, cb) => {
+      // simulate Marketo rendering its button row into the form element
+      const el = document.getElementById(`mktoForm_${formId}`);
+      if (el) el.innerHTML = '<div class="mktoButtonRow"><button class="mktoButton" type="submit">Schedule a call</button></div>';
       cb({
         onSuccess: (fn) => { onSuccessFn = fn; },
         getValues: () => ({ Email: 'controller@brightpathco.com', FirstName: 'Dana', Company: 'Bright Path' }),
@@ -66,12 +69,27 @@ describe('parseFormConfig', () => {
 });
 
 describe('decorate — live Marketo form', () => {
-  it('renders a Marketo form element with the authored form id', async () => {
-    const block = make([['formId', '1058'], ['header', 'Let’s connect'], ['disclaimer', 'Privacy.']]);
+  it('renders a Marketo form element with the authored form id and header', async () => {
+    const block = make([['formId', '1058'], ['header', 'Let’s connect']]);
     await decorate(block);
     expect(block.querySelector('form#mktoForm_1058')).not.toBeNull();
     expect(block.querySelector('.form-header').textContent).toBe('Let’s connect');
-    expect(block.querySelector('.form-disclaimer').textContent).toBe('Privacy.');
+  });
+
+  it('injects the disclaimer (with markup) above the Marketo submit button', async () => {
+    const block = make([['formId', '1058'], ['disclaimer', 'See our <a href="/privacy">Privacy Statement</a>.']]);
+    document.body.append(block); // Marketo's loadForm mock resolves the form via the document
+    await decorate(block);
+    await flush();
+    const form = block.querySelector('form#mktoForm_1058');
+    const disc = form.querySelector('.form-disclaimer');
+    const btnRow = form.querySelector('.mktoButtonRow');
+    expect(disc).not.toBeNull();
+    expect(disc.querySelector('a')).not.toBeNull(); // link preserved
+    // disclaimer comes before the button row
+    // eslint-disable-next-line no-bitwise
+    expect(disc.compareDocumentPosition(btnRow) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    block.remove();
   });
 
   it('renders nothing when no form id is authored', async () => {

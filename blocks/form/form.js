@@ -45,7 +45,9 @@ export function parseFormConfig(block) {
     const [keyCell, valueCell] = row.children;
     const key = keyCell?.textContent.trim();
     if (key && CONFIG_KEYS.includes(key)) {
-      found[key] = valueCell ? valueCell.textContent.trim() : undefined;
+      // disclaimer keeps inline markup (e.g. the Privacy Statement link); others are plain text
+      if (!valueCell) found[key] = undefined;
+      else found[key] = key === 'disclaimer' ? valueCell.innerHTML.trim() : valueCell.textContent.trim();
     }
   });
   return {
@@ -127,6 +129,15 @@ async function embedMarketoForm(formEl, cfg, config) {
   const forms2Src = cfg['marketo.forms2Src'] || `${host}/js/forms2/js/forms2.min.js`;
   await loadScript(forms2Src);
   window.MktoForms2.loadForm(host, munchkin, config.formId, (form) => {
+    // Place the disclaimer between the fields and Marketo's submit button
+    // (matches erp.intuit.com), preserving its Privacy Statement link.
+    const btnRow = formEl.querySelector('.mktoButtonRow');
+    if (config.disclaimer && btnRow) {
+      const el = document.createElement('div');
+      el.className = 'form-disclaimer';
+      el.innerHTML = config.disclaimer;
+      btnRow.parentNode.insertBefore(el, btnRow);
+    }
     form.onSuccess((vals) => {
       try { trackFormSubmit(marketoValuesToLead(vals)); } catch (e) { /* non-fatal */ }
       chiliPiperHandoff(cfg, config.chiliPiperRouter, form);
@@ -164,12 +175,6 @@ export default async function decorate(block) {
   const form = document.createElement('form');
   form.id = `mktoForm_${config.formId}`;
   children.push(form);
-  if (config.disclaimer) {
-    const el = document.createElement('p');
-    el.className = 'form-disclaimer';
-    el.textContent = config.disclaimer;
-    children.push(el);
-  }
   block.replaceChildren(...children);
 
   const cfg = await siteConfig();
