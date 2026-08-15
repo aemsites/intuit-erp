@@ -196,6 +196,23 @@ export default function decorate(block) {
     });
   });
 
+  // .icons: production lays the icon inline with the eyebrow label (icon left,
+  // label right) and drops the title/body below that row. Group the icon +
+  // eyebrow into a header row so CSS can render them side by side; the title
+  // and body stay in .cards-card-body untouched.
+  if (isIcons) {
+    [...block.children].forEach((card) => {
+      const icon = card.querySelector(':scope > .cards-card-image');
+      const eyebrow = card.querySelector(':scope > .cards-card-body > .cards-eyebrow');
+      if (!icon) return;
+      const head = document.createElement('div');
+      head.className = 'cards-card-head';
+      head.append(icon);
+      if (eyebrow) head.append(eyebrow);
+      card.prepend(head);
+    });
+  }
+
   if (SCROLL_SHAPE_CLASSES.some((c) => block.classList.contains(c))) {
     enhanceScroll(block);
   }
