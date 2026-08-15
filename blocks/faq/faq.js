@@ -15,7 +15,7 @@
  * this block owns the .faq-item/.faq-question/.faq-answer shape, so it builds that node itself
  * rather than leaving another module to guess at the shape from the outside.
  */
-import { registerJsonLd, buildFaqEntity } from '../../scripts/structured-data.js';
+import { registerFaqPage, buildFaqEntity } from '../../scripts/structured-data.js';
 
 const CHEVRON = '<path d="M3.5 6L8 10.5L12.5 6" fill="none" stroke="currentColor" '
   + 'stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>';
@@ -80,7 +80,8 @@ export default function decorate(block) {
 
   block.replaceChildren(list);
 
-  if (faqEntities.length) {
-    registerJsonLd({ '@type': 'FAQPage', mainEntity: faqEntities });
-  }
+  // Keyed by this block instance: aem.js's per-block loading guard means decorate() won't rerun
+  // on the same element, but the key still keeps each distinct .faq block's contribution separate
+  // (rather than one replacing another) if a page ever has more than one.
+  registerFaqPage(faqEntities, block);
 }

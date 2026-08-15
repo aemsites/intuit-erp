@@ -26,6 +26,7 @@ function el(tag, html) {
 // The module holds its registered-nodes list at module scope (by design — one page load, one
 // graph). Reset the module between tests so each test starts with an empty graph.
 let registerJsonLd;
+let registerFaqPage;
 let buildFaqEntity;
 let registerBreadcrumb;
 
@@ -33,7 +34,9 @@ beforeEach(async () => {
   document.head.querySelectorAll('script[type="application/ld+json"], link[rel="canonical"]')
     .forEach((n) => n.remove());
   vi.resetModules();
-  ({ registerJsonLd, buildFaqEntity, registerBreadcrumb } = await import('../scripts/structured-data.js'));
+  ({
+    registerJsonLd, registerFaqPage, buildFaqEntity, registerBreadcrumb,
+  } = await import('../scripts/structured-data.js'));
 });
 
 describe('registerJsonLd', () => {
@@ -46,6 +49,31 @@ describe('registerJsonLd', () => {
 
     const { '@graph': graph } = getGraph();
     expect(graph.map((n) => n['@type'])).toEqual(['BreadcrumbList', 'FAQPage']);
+  });
+
+  it('replaces a prior registration under the same key instead of duplicating it', () => {
+    const key = {};
+    registerJsonLd({ '@type': 'FAQPage', mainEntity: ['stale'] }, key);
+    registerJsonLd({ '@type': 'FAQPage', mainEntity: ['fresh'] }, key);
+
+    const { '@graph': graph } = getGraph();
+    expect(graph).toHaveLength(1);
+    expect(graph[0].mainEntity).toEqual(['fresh']);
+  });
+
+  it('keeps separate keys as independent nodes', () => {
+    registerJsonLd({ '@type': 'FAQPage', mainEntity: ['a'] }, 'key-a');
+    registerJsonLd({ '@type': 'FAQPage', mainEntity: ['b'] }, 'key-b');
+
+    const { '@graph': graph } = getGraph();
+    expect(graph).toHaveLength(2);
+  });
+});
+
+describe('registerFaqPage', () => {
+  it('registers nothing when there are no entities', () => {
+    registerFaqPage([], 'key');
+    expect(document.head.querySelector('script[type="application/ld+json"]')).toBeNull();
   });
 });
 
@@ -114,6 +142,42 @@ describe('registerBreadcrumb', () => {
       name: 'Netsuite Competitor and QuickBooks and Sage Accounting Alternative: Intuit Enterprise Suite (IES)',
       item: 'https://main--intuit-erp--aemsites.aem.live/compare/',
     });
+  });
+
+  it('inserts a category crumb for a nested blog article URL (/blog/<category>/<slug>/)', () => {
+    setPage({
+      pathname: '/blog/case-study/aprio-intuit-enterprise-suite/',
+      title: 'Aprio serves a 45+ entity client with Intuit Enterprise Suite | Intuit Enterprise Suite',
+      canonical: 'https://main--intuit-erp--aemsites.aem.live/blog/case-study/aprio-intuit-enterprise-suite/',
+    });
+
+    registerBreadcrumb();
+    const { '@graph': graph } = getGraph();
+    const [breadcrumb] = graph;
+
+    expect(breadcrumb.itemListElement).toHaveLength(4);
+    expect(breadcrumb.itemListElement[2]).toMatchObject({
+      position: 3,
+      name: 'Case Study',
+      item: 'https://main--intuit-erp--aemsites.aem.live/blog/case-study/',
+    });
+    expect(breadcrumb.itemListElement[3]).toMatchObject({
+      position: 4,
+      name: 'Aprio serves a 45+ entity client with Intuit Enterprise Suite | Intuit Enterprise Suite',
+    });
+  });
+
+  it('does not add a category crumb for the flat /blog/ index itself', () => {
+    setPage({
+      pathname: '/blog/',
+      title: 'Blog | Intuit Enterprise Suite',
+      canonical: 'https://main--intuit-erp--aemsites.aem.live/blog/',
+    });
+
+    registerBreadcrumb();
+    const { '@graph': graph } = getGraph();
+
+    expect(graph[0].itemListElement).toHaveLength(3);
   });
 
   it('falls back to window.location when no canonical link is present', () => {

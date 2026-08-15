@@ -19,8 +19,9 @@
  * to that; it never duplicates it.
  */
 
-const nodes = [];
+const nodes = new Map();
 let script;
+let autoKeySeq = 0;
 
 function render() {
   if (!script) {
@@ -28,16 +29,32 @@ function render() {
     script.type = 'application/ld+json';
     document.head.append(script);
   }
-  script.textContent = JSON.stringify({ '@context': 'https://schema.org', '@graph': nodes });
+  script.textContent = JSON.stringify({ '@context': 'https://schema.org', '@graph': [...nodes.values()] });
 }
 
 /**
- * Adds a schema.org node to the page's JSON-LD graph and re-renders immediately.
+ * Adds a schema.org node to the page's JSON-LD graph and re-renders immediately. Pass a stable
+ * `key` for a source that may register more than once in one page life (e.g. the of1 SDK
+ * re-rendering a section) so a later call replaces its own prior contribution instead of piling
+ * up a duplicate/stale node; omit it for a one-shot registration.
  * @param {object} node
+ * @param {*} [key]
  */
-export function registerJsonLd(node) {
-  nodes.push(node);
+export function registerJsonLd(node, key = Symbol(`jsonld-${autoKeySeq += 1}`)) {
+  nodes.set(key, node);
   render();
+}
+
+/**
+ * Registers a FAQPage node from schema.org Question entities, keyed so a block instance that
+ * re-registers (e.g. of1 re-rendering) replaces rather than duplicates its own contribution.
+ * No-op when entities is empty.
+ * @param {Array<object>} entities
+ * @param {*} key
+ */
+export function registerFaqPage(entities, key) {
+  if (!entities.length) return;
+  registerJsonLd({ '@type': 'FAQPage', mainEntity: entities }, key);
 }
 
 // Block-level tags whose boundaries must become word breaks when flattening rich HTML to plain
@@ -80,9 +97,29 @@ export function buildFaqEntity(questionEl, answerEl) {
 const SITE_NAME = 'Intuit Enterprise Suite';
 
 /**
- * Registers this page's BreadcrumbList: Home -> this site (SITE_NAME) -> current page (using
- * <title>, the one page-specific label every page reliably has). The homepage has no
- * page-specific crumb, matching the two-level breadcrumb used across the source site.
+ * A blog article's URL is genuinely nested (/blog/<category>/<slug>/ — see
+ * blocks/blog-template/blog-detect.js), unlike every other page on this site, which is flat. A
+ * flat Home -> Site -> Article breadcrumb would understate that hierarchy for exactly the pages
+ * with the deepest real structure, so blog articles get one extra crumb for the category.
+ * @param {URL} url
+ * @returns {object|null} a ListItem for the category, or null on a non-blog-article URL
+ */
+function blogCategoryCrumb(url) {
+  const segments = url.pathname.replace(/^\/|\/$/g, '').split('/');
+  if (segments[0] !== 'blog' || segments.length < 3) return null;
+  const [, category] = segments;
+  return {
+    '@type': 'ListItem',
+    name: category.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+    item: `${url.origin}/blog/${category}/`,
+  };
+}
+
+/**
+ * Registers this page's BreadcrumbList: Home -> this site (SITE_NAME) -> [blog category, if a
+ * blog article] -> current page (using <title>, the one page-specific label every page reliably
+ * has). The homepage has no page-specific crumb, matching the two-level breadcrumb used across
+ * the source site.
  */
 export function registerBreadcrumb() {
   const canonicalHref = document.querySelector('link[rel="canonical"]')?.href
@@ -98,18 +135,21 @@ export function registerBreadcrumb() {
       '@type': 'ListItem', position: 2, name: SITE_NAME, item: `${url.origin}/`,
     },
   ];
+
   if (!isHome) {
+    const category = blogCategoryCrumb(url);
+    if (category) itemListElement.push(category);
     itemListElement.push({
       '@type': 'ListItem',
-      position: 3,
       name: document.title.trim(),
       item: canonicalHref,
     });
   }
+  itemListElement.forEach((item, i) => { item.position = i + 1; });
 
   registerJsonLd({
     '@type': 'BreadcrumbList',
     '@id': `${canonicalHref}#breadcrumb`,
     itemListElement,
-  });
+  }, 'breadcrumb');
 }
