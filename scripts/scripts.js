@@ -173,8 +173,61 @@ function buildVideoAutoBlocks(main) {
 let buildBlogTemplate;
 
 // Longest the eager phase will hold the (hidden) page waiting for
-// blog-template.css before giving up and painting unstyled — see loadEager.
+// blog-template.css before giving up and painting unstyled — see
+// resolveBlogTemplate.
 const BLOG_TEMPLATE_CSS_TIMEOUT = 2000;
+
+/**
+ * Resolves the blog autoblock's builder for a blog article page, or `undefined`
+ * for every other page — which is also what makes buildAutoBlocks skip it.
+ * Keeps the ~21KB module (and its stylesheet) off every non-blog page.
+ *
+ * Loads the stylesheet alongside the module, rather than leaving it to the
+ * autoblock's own non-blocking loadCSS, because the article layout lives there:
+ * with nothing awaiting it, a slow response let the hero paint in the unstyled
+ * single-column flow and then reflow into the band (measured at 0.33 CLS on
+ * desktop, on plain `Blog Article` pages too).
+ *
+ * Fail-open in both directions, and that part isn't optional — `body` is
+ * `display: none` until loadEager adds `appear`:
+ *  - the CSS wait is capped, since loadCSS settles only on the link's
+ *    `load`/`error` events and a request that stalls without erroring fires
+ *    neither. Past the cap, painting unstyled beats never painting.
+ *  - a rejected `import()` is swallowed, or it would propagate out of loadEager
+ *    (loadPage doesn't catch it), `appear` would never be added, and the page
+ *    would stay blank permanently.
+ *
+ * The cap is hand-rolled rather than reusing withTimeout
+ * (scripts/personalization/decision.js): that helper has to be fetched with a
+ * dynamic import first, and a fetch that stalls while acquiring the timeout
+ * mechanism re-opens the very hole the cap closes.
+ * @param {Element} main the page's <main>, before decoration
+ * @returns {Promise<Function|undefined>} buildBlogTemplate, or undefined
+ */
+async function resolveBlogTemplate(main) {
+  // Pages that author their own case-study-header own their header, so they use
+  // neither the module nor the stylesheet — skip both instead of fetching them
+  // onto the LCP path and throwing the result away.
+  if (!isBlogPage() || hasAuthoredCaseStudyHeader(main)) return undefined;
+  let cssTimer;
+  try {
+    const [mod] = await Promise.all([
+      import('../blocks/blog-template/blog-template.js'),
+      Promise.race([
+        loadCSS(`${window.hlx.codeBasePath}/blocks/blog-template/blog-template.css`)
+          .catch(() => {}),
+        new Promise((resolve) => {
+          cssTimer = window.setTimeout(resolve, BLOG_TEMPLATE_CSS_TIMEOUT);
+        }),
+      ]),
+    ]);
+    return mod.buildBlogTemplate;
+  } catch (e) {
+    return undefined; // render the article unstyled rather than not at all
+  } finally {
+    window.clearTimeout(cssTimer);
+  }
+}
 
 /**
  * Builds all synthetic blocks in a container element.
@@ -378,61 +431,7 @@ async function loadEager(doc) {
   }
   const main = doc.querySelector('main');
   if (main) {
-    // Blog article pages need buildBlogTemplate during eager decoration; import
-    // it here — only for those pages — so buildAutoBlocks can call it
-    // synchronously while every other page skips the ~21KB module entirely.
-    //
-    // The article layout (main.blog-article's 3-col grid and the 2-col hero
-    // band) lives in blog-template.css, which buildBlogTemplate fetches with a
-    // non-blocking loadCSS. Nothing waits for that, so a cold/slow stylesheet
-    // let the hero paint in the unstyled single-column flow and then reflow into
-    // the band — ~0.4 CLS on desktop. Awaiting it here, before decorateMain,
-    // means the band is already styled the first time it paints.
-    //
-    // The wait is capped, and that cap is not optional: `body` is
-    // `display: none` until `appear` is added a few lines below (styles.css),
-    // and loadCSS only settles on the link's `load`/`error` events — a request
-    // that stalls without erroring (flaky CDN, captive portal) fires neither, so
-    // an uncapped await would leave the page blank indefinitely. Past the cap,
-    // painting unstyled and reflowing is strictly better than never painting.
-    //
-    // The three case studies that author their own header use neither the module
-    // nor the stylesheet (buildBlogTemplate returns immediately for them), so
-    // they're excluded here rather than paying for both on the LCP path and
-    // throwing the result away.
-    //
-    // Both awaits sit inside a try for the same reason the CSS wait is capped:
-    // a rejected `import()` (one transient network blip is enough) would
-    // propagate out of loadEager — loadPage doesn't catch it — so `appear` is
-    // never added and the page stays blank permanently, with only a RUM ping to
-    // show for it. Swallowing it leaves buildBlogTemplate unset, buildAutoBlocks
-    // no-ops, and the article renders as plain default content instead.
-    //
-    // The cap is hand-rolled rather than reusing withTimeout
-    // (scripts/personalization/decision.js, used twice above): that helper has
-    // to be fetched with a dynamic import first, and a fetch that stalls while
-    // acquiring the timeout mechanism re-opens the very hole the timeout closes.
-    // The timer is cleared when the race settles, so nothing outlives it.
-    if (isBlogPage() && !hasAuthoredCaseStudyHeader(main)) {
-      let cssTimer;
-      try {
-        const [mod] = await Promise.all([
-          import('../blocks/blog-template/blog-template.js'),
-          Promise.race([
-            loadCSS(`${window.hlx.codeBasePath}/blocks/blog-template/blog-template.css`)
-              .catch(() => {}),
-            new Promise((resolve) => {
-              cssTimer = window.setTimeout(resolve, BLOG_TEMPLATE_CSS_TIMEOUT);
-            }),
-          ]),
-        ]);
-        ({ buildBlogTemplate } = mod);
-      } catch (e) {
-        // non-fatal: render the article unstyled rather than not at all
-      } finally {
-        window.clearTimeout(cssTimer);
-      }
-    }
+    buildBlogTemplate = await resolveBlogTemplate(main);
     decorateMain(main);
     // Personalize/experiment the first (LCP) section before reveal so the visitor
     // sees final content with no flash. Sections below the fold are handled in

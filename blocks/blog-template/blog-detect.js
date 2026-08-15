@@ -25,10 +25,15 @@ const ARTICLE_TEMPLATES = ['blog article', 'case study', 'research'];
 
 /**
  * True when the document authors its own `case-study-header` block at the top of
- * the page. The three net-new case studies do (aprio, sparq-partners,
- * steves-construction-company); they own their header, so the whole
- * blog-template treatment is skipped for them — including the module import and
- * stylesheet fetch in loadEager, neither of which they would use.
+ * the page. Three case studies do (aprio-intuit-enterprise-suite,
+ * sparq-partners, steves-construction-company); they own their header, so the
+ * whole blog-template treatment is skipped for them — including the module
+ * import and stylesheet fetch in loadEager, neither of which they would use.
+ *
+ * Note that only steves-construction-company is net-new; on the other two the
+ * authored block is a content discrepancy against erp.intuit.com, which renders
+ * them with this template's article band. See the longer note in
+ * blog-template.js — the fix there is to the documents, not to this predicate.
  *
  * Scoped to the first section on purpose: a `case-study-header` authored further
  * down a page must not silently strip that page's hero band, TOC and rails.

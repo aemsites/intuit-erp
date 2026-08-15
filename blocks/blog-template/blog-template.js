@@ -399,13 +399,24 @@ function wireToc(tocWrap, nav, headings, mq) {
  */
 export function buildBlogTemplate(main) {
   // Three case studies author a `case-study-header` block in section 1 (its own
-  // centred banner, share row and inline TOC). Those are net-new pages with no
-  // erp.intuit.com counterpart — aprio, sparq-partners and
-  // steves-construction-company all 404 upstream — so that block is the
-  // intended treatment for new case studies, not a migration artifact to undo.
-  // Bail out so the page isn't decorated twice (the hero band would wrap the
-  // banner); the migrated case studies, which have a bare H1 + hero image, fall
-  // through and get the band that upstream uses.
+  // centred banner, share row and inline TOC). Bail out so those pages aren't
+  // decorated twice — the hero band would wrap the banner. The migrated case
+  // studies, which have a bare H1 + hero image, fall through and get the band
+  // that upstream uses.
+  //
+  // Only ONE of the three is genuinely net-new (steves-construction-company; no
+  // erp.intuit.com counterpart under any slug). The other two —
+  // aprio-intuit-enterprise-suite and sparq-partners — ARE migrated pages whose
+  // upstream counterparts render this article band, so the authored block is a
+  // content discrepancy on those two, tracked separately; it is not this
+  // function's job to override an authored block to paper over it. Overriding
+  // would also strip the header from the one page that legitimately owns it.
+  // (The validation report files all three under `newPages`, which is why they
+  // were previously believed net-new — but that run mapped against the migrated
+  // sitemap with `sourceSite: null`, and erp.intuit.com's own sitemap.xml omits
+  // aprio and sparq even though both are live and linked from
+  // /blog/case-study/. Verified with a real browser: both return HTTP 200 with
+  // the eyebrow + headline-left + image-right band.)
   if (hasAuthoredCaseStudyHeader(main)) return;
 
   main.classList.add('blog-article');

@@ -2,6 +2,27 @@
 .section.case-study-header-container { padding: 56px 0 40px; }
 .case-study-header-inner { max-width: 46em; margin: 0 auto 40px; }
 
+/* The rest of the document follows this block's 46em measure (shared with
+   .case-study-header-inner, .case-study-banner and .case-study-toc below) so the
+   page reads as one centred column instead of the banner sitting on a narrower
+   measure than the prose under it.
+
+   These two selectors reach outside the block's own subtree, which the usual
+   "scope every selector to the block" rule can't express — the elements being
+   clamped are the document's other sections, not the block's children. Gating on
+   `:has()` is the closest equivalent: the rule only applies where the block is
+   actually authored, and it lives here, with the measure it continues, rather
+   than in styles.css, which is global.
+
+   The `> div:first-child` scope is load-bearing and mirrors
+   hasAuthoredCaseStudyHeader (blocks/blog-template/blog-detect.js) exactly.
+   Unscoped, this would drift from that predicate the moment a page authors the
+   block below section 1: blog-template would build its full-width `.blog-hero`
+   band and this rule would clamp it to a narrow column. */
+main:has(> div:first-child .case-study-header) .default-content-wrapper,
+main:has(> div:first-child .case-study-header) .stat-band { max-width: 46em; margin: 0 auto; }
+main:has(> div:first-child .case-study-header) .stat-band { margin-top: 1rem; }
+
 .case-study-copy .case-study-eyebrow {
   font-size: 16px; font-weight: 600; letter-spacing: normal; text-transform: uppercase;
   color: var(--heading); margin: 0 0 4px;
