@@ -10,7 +10,13 @@
  * matching the source's ~0.24s height / opacity transition), driven by the
  * button's [aria-expanded] state rather than native <details>.
  * CSS: blocks/faq/faq.css
+ *
+ * Also registers a FAQPage JSON-LD node for its Q&A pairs (see scripts/structured-data.js) —
+ * this block owns the .faq-item/.faq-question/.faq-answer shape, so it builds that node itself
+ * rather than leaving another module to guess at the shape from the outside.
  */
+import { registerJsonLd, buildFaqEntity } from '../../scripts/structured-data.js';
+
 const CHEVRON = '<path d="M3.5 6L8 10.5L12.5 6" fill="none" stroke="currentColor" '
   + 'stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>';
 
@@ -23,6 +29,7 @@ export default function decorate(block) {
   // matching the original site.
   const inArticle = !!block.closest('main.blog-article');
   const open = !inArticle && !block.classList.contains('cmp');
+  const faqEntities = [];
 
   rows.forEach((row, i) => {
     const cells = [...row.children];
@@ -59,6 +66,9 @@ export default function decorate(block) {
     if (cells[1]) answer.innerHTML = cells[1].innerHTML;
     panel.append(answer);
 
+    const entity = buildFaqEntity(label, answer);
+    if (entity) faqEntities.push(entity);
+
     button.addEventListener('click', () => {
       const isOpen = button.getAttribute('aria-expanded') === 'true';
       button.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
@@ -69,4 +79,8 @@ export default function decorate(block) {
   });
 
   block.replaceChildren(list);
+
+  if (faqEntities.length) {
+    registerJsonLd({ '@type': 'FAQPage', mainEntity: faqEntities });
+  }
 }

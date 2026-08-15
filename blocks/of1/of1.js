@@ -1,17 +1,34 @@
 import { decorateMain } from '../../scripts/scripts.js';
 import { loadSections, readBlockConfig } from '../../scripts/aem.js';
+import { registerJsonLd, buildFaqEntity } from '../../scripts/structured-data.js';
 
 const DEFAULT_WORKER_URL = 'https://of1-gen-web-service.franklin-prod.workers.dev';
+
+/**
+ * Registers a FAQPage node for any of1-deep-dive-faq-explainer content in a decorated section
+ * (templates/of1-deep-dive-faq-explainer.html: details.of1-faqx-faq-item > summary /
+ * .of1-faqx-faq-answer) — a no-op for every other of1 template, which has no such markup.
+ * @param {Element} root
+ */
+function registerFaqEntities(root) {
+  const faqEntities = [...root.querySelectorAll('.of1-faqx-faq-item')]
+    .map((item) => buildFaqEntity(item.querySelector('summary'), item.querySelector('.of1-faqx-faq-answer')))
+    .filter(Boolean);
+  if (faqEntities.length) {
+    registerJsonLd({ '@type': 'FAQPage', mainEntity: faqEntities });
+  }
+}
 
 /**
  * Legacy EDS decoration hook — passed to the SDK for non-template-routed
  * section events that need block decoration.
  */
-async function decorateAndLoad(sectionHtml) {
+export async function decorateAndLoad(sectionHtml) {
   const tempMain = document.createElement('main');
   tempMain.innerHTML = `<div>${sectionHtml}</div>`;
   decorateMain(tempMain);
   await loadSections(tempMain);
+  registerFaqEntities(tempMain);
   return Array.from(tempMain.querySelectorAll(':scope > div'));
 }
 
