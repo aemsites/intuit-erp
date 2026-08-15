@@ -160,7 +160,9 @@ function parseVideoContent(cell) {
         youtubeRaw = href;
         return;
       }
-      if (!youtubeRaw && !node.querySelector('a') && /youtube|youtu\.be/i.test(text)) {
+      // a bare YouTube URL, or just its bare id, authored as its own line
+      if (!youtubeRaw && !node.querySelector('a')
+        && (/youtube|youtu\.be/i.test(text) || /^[\w-]{6,}$/.test(text))) {
         youtubeRaw = text;
         return;
       }
