@@ -529,6 +529,24 @@ main .section:empty { display: none; }
 
 /* narrow container variant (prototype .container-narrow = 1180px) */
 main .section.narrow > div { max-width: 1180px; }
+main .section.center > div { text-align: center; }
+
+/* section backgrounds */
+main > .section[data-background] {
+  padding: 2rem 0;
+}
+
+main > .section[data-background="sky"] { background-color: var(--sky); }
+main > .section[data-background="agave"] { background-color: var(--agave); }
+main > .section[data-background="sand"] { background-color: var(--light-color); }
+main > .section[data-background="tofu"] { background-color: var(--tofu); }
+
+/* contained sections */
+main > .section.contained {
+  margin: 2rem auto;
+  max-width: 1400px;
+  border-radius: 6px;
+}
 
 /* case-studies index intro (Template: "Case Studies Index" metadata -> body.case-studies-index) */
 body.case-studies-index main > .section:first-of-type .default-content-wrapper {
