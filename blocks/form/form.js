@@ -1,65 +1,44 @@
 /**
- * form — "Let's connect" static lead form (accounting, compare, erp-solutions).
- * Heading / subtext / accountant link / consent are authored as default content
- * (a trailing default-content paragraph becomes the reCAPTCHA note). The block
- * renders the fixed 5-field form. CSP-safe: no inline handlers — the submit
- * handler is attached in JS. On submit with a valid business email it fires an
- * identity sendEvent (Act 2 RTCDP stitch), then shows a confirmation.
+ * form — live lead-capture form: a Marketo Forms2 embed (fields rendered by
+ * Marketo) followed by a ChiliPiper router handoff on success. Also owns the
+ * shared "Schedule a call" modal (openScheduleModal/bindScheduleLinks) and the
+ * ChiliPiper-only demo booking (bookDemo).
  *
- * Variants: (default) underline inputs (accounting) · .boxed labelled boxes
- * (compare) · .sky sky band + hidden labels (erp-solutions) · .hero embedded
- * in a dark hero band · .card white overlay card (accountant).
+ * Per-page config rows (author): formId, chiliPiperRouter, downloadUrl,
+ * successUrl, header, subheader, disclaimer. Site-wide values (munchkin,
+ * chilipiper subdomain, script URLs) come from /site-config.json via
+ * getSiteConfig() — never authored per page, never hardcoded.
  *
- * Optional leading config rows (Marketo / ChiliPiper, authored before the
- * fixed fields, parsed by `parseFormConfig`): `formId`, `munchkin`,
- * `chiliPiperSubDomain`, `chiliPiperRouter`, `header`, `subheader`,
- * `disclaimer`, `cta`. `cta` sets the submit button label (default
- * "Schedule a call"). The Marketo/ChiliPiper keys are stamped as
- * `data-mkto-form-id` / `data-mkto-munchkin`
- * / `data-cp-subdomain` / `data-cp-router` on the rendered form element and
- * used to render an optional header/subheader/disclaimer. Live Marketo Forms2 + ChiliPiper
- * submission are DEFERRED — see `loadMarketoForm()` below — so no network
- * calls are made for these yet; the fixed 5-field form + identity sendEvent
- * remain the only working submission path.
  * CSS: blocks/form/form.css
  */
+import { loadScript } from '../../scripts/aem.js';
 // Vendored via git subtree at plugins/martech (see its README), not an
 // installed npm package, so this necessarily crosses a package.json boundary.
 // eslint-disable-next-line import/no-relative-packages
 import { sendEvent } from '../../plugins/martech/src/index.js';
 import { OF1_SIGNAL } from '../../scripts/of1-rtcdp-signal.js';
 
-const FIELDS = [
-  ['First name*', 'text', 'firstName'],
-  ['Last name*', 'text', 'lastName'],
-  ['Business name*', 'text', 'businessName'],
-  ['Business email*', 'email', 'email'],
-  ['Business phone*', 'tel', 'phone'],
-];
-
-// Known keys for the optional leading config rows (Marketo/ChiliPiper). Any
-// `:scope > div` row whose first cell matches one of these exactly is
-// consumed as config; everything else is left alone (the fixed fields below
-// don't read block content at all, so there's no ambiguity to resolve).
 const CONFIG_KEYS = [
   'formId',
-  'munchkin',
-  'chiliPiperSubDomain',
   'chiliPiperRouter',
+  'downloadUrl',
+  'successUrl',
   'header',
   'subheader',
   'disclaimer',
-  'cta',
 ];
 
-// Submit button label when a form doesn't author its own `cta`. Most forms are
-// the shared "Let's connect" schedule-call form, where this is the right label;
-// demo forms author `cta` (e.g. "Schedule now") to match production.
-const DEFAULT_CTA = 'Schedule a call';
+const CHILIPIPER_SRC_DEFAULT = '//js.chilipiper.com/marketing.js';
+const SCHEDULE_FRAGMENT = '/fragments/schedule-call';
 
-// Parses the optional leading config rows into a plain object. Missing keys
-// are `undefined` (not omitted) so callers can destructure without guards.
-// Pure — reads the block's current DOM, no mutation, no network.
+// getSiteConfig lives in scripts.js; import it dynamically so this block (which
+// scripts.js's graph pulls in for the schedule modal) doesn't form a static cycle.
+async function siteConfig() {
+  // eslint-disable-next-line import/no-cycle
+  const { getSiteConfig } = await import('../../scripts/scripts.js');
+  return getSiteConfig();
+}
+
 export function parseFormConfig(block) {
   const found = {};
   [...block.querySelectorAll(':scope > div')].forEach((row) => {
@@ -71,43 +50,12 @@ export function parseFormConfig(block) {
   });
   return {
     formId: found.formId,
-    munchkin: found.munchkin,
-    chiliPiperSubDomain: found.chiliPiperSubDomain,
     chiliPiperRouter: found.chiliPiperRouter,
+    downloadUrl: found.downloadUrl,
+    successUrl: found.successUrl,
     header: found.header,
     subheader: found.subheader,
     disclaimer: found.disclaimer,
-    cta: found.cta,
-  };
-}
-
-// DEFERRED — Marketo Forms2 + ChiliPiper submission. Intentionally defined
-// but NOT invoked anywhere yet: this pass only authors/parses config and
-// stamps data attributes (see `decorate`). Wiring live submission means
-// loading the Marketo Forms2 script (CSP allowance required), rendering the
-// real Marketo form against `data-mkto-form-id`/`data-mkto-munchkin`, and on
-// its success handing off to ChiliPiper via `data-cp-subdomain`/
-// `data-cp-router` instead of Marketo's default "thank you" redirect. Until
-// that follow-up lands, the fixed 5-field form + identity sendEvent above
-// remain the only working submission path.
-// @param {HTMLElement} formEl element carrying the data-mkto-*/data-cp-* attrs
-// @returns {object|null} the resolved config, or null when no Marketo config
-//   was authored — never triggers a network call either way (see TODOs).
-export function loadMarketoForm(formEl) {
-  const {
-    mktoFormId, mktoMunchkin, cpSubdomain, cpRouter,
-  } = formEl.dataset;
-  if (!mktoFormId || !mktoMunchkin) return null; // nothing authored — nothing to load
-  // TODO(marketo): load `//<mktoMunchkin>.mktoweb.com/js/forms2/js/forms2.min.js`,
-  //   then `MktoForms2.loadForm('//<mktoMunchkin>.mktoweb.com', mktoMunchkin, mktoFormId, ...)`.
-  // TODO(chilipiper): on the Marketo form's onSuccess, call
-  //   `ChiliPiper.submit(cpSubdomain, cpRouter, { ... })` instead of following
-  //   the default Marketo redirect, when `cpSubdomain`/`cpRouter` are present.
-  return {
-    formId: mktoFormId,
-    munchkin: mktoMunchkin,
-    chiliPiperSubDomain: cpSubdomain,
-    chiliPiperRouter: cpRouter,
   };
 }
 
@@ -149,84 +97,116 @@ export function trackFormSubmit(fields) {
     });
     return;
   }
-  // Default (Adobe) path — fires the identity event (fail-open, never blocks the confirmation).
   sendEvent({ xdm: buildIdentityXdm(fields) }).catch(() => {});
 }
 
-export default function decorate(block) {
-  // Config rows (if any) are read here, before the block's children are
-  // wholly replaced below — they never reach the fixed-field rendering,
-  // so there's no risk of a config row being mistaken for a field.
-  const config = parseFormConfig(block);
+// Marketo field names → the lower-cased lead shape trackFormSubmit expects, so
+// the same analytics events fire on a live submit as on the former mock.
+function marketoValuesToLead(vals = {}) {
+  return {
+    email: vals.Email || '',
+    firstName: vals.FirstName || '',
+    lastName: vals.LastName || '',
+    businessName: vals.Company || '',
+    phone: vals.Phone || '',
+  };
+}
 
-  // Stamp Marketo/ChiliPiper config as data attributes on the block itself
-  // (the block IS "the form" — CSS/JS already scope off its `.form` class).
-  // Only set when authored; `loadMarketoForm` (deferred, unused today) reads
-  // these later once live submission is wired up.
-  if (config.formId) block.dataset.mktoFormId = config.formId;
-  if (config.munchkin) block.dataset.mktoMunchkin = config.munchkin;
-  if (config.chiliPiperSubDomain) block.dataset.cpSubdomain = config.chiliPiperSubDomain;
-  if (config.chiliPiperRouter) block.dataset.cpRouter = config.chiliPiperRouter;
+async function chiliPiperHandoff(cfg, router, form) {
+  const subdomain = cfg['chilipiper.subdomain'];
+  if (!router || !subdomain) return false;
+  await loadScript(cfg['chilipiper.src'] || CHILIPIPER_SRC_DEFAULT);
+  window.ChiliPiper?.submit(subdomain, router, { map: true, lead: form.getValues() });
+  return true;
+}
+
+async function embedMarketoForm(formEl, cfg, config) {
+  const munchkin = cfg['marketo.munchkin'];
+  if (!munchkin) return;
+  const host = `//${munchkin.toLowerCase()}.mktoweb.com`;
+  const forms2Src = cfg['marketo.forms2Src'] || `${host}/js/forms2/js/forms2.min.js`;
+  await loadScript(forms2Src);
+  window.MktoForms2.loadForm(host, munchkin, config.formId, (form) => {
+    form.onSuccess((vals) => {
+      try { trackFormSubmit(marketoValuesToLead(vals)); } catch (e) { /* non-fatal */ }
+      chiliPiperHandoff(cfg, config.chiliPiperRouter, form);
+      if (config.downloadUrl) window.open(config.downloadUrl, '_blank', 'noopener');
+      else if (config.successUrl && !config.chiliPiperRouter) {
+        window.location.href = config.successUrl;
+      }
+      // Suppress Marketo's default redirect — ChiliPiper / download / successUrl takes over.
+      return false;
+    });
+  });
+}
+
+export default async function decorate(block) {
+  const config = parseFormConfig(block);
+  if (!config.formId) {
+    block.replaceChildren();
+    return;
+  }
+  if (config.downloadUrl) block.classList.add('download');
 
   const children = [];
-
   if (config.header) {
-    const header = document.createElement('h3');
-    header.className = 'form-header';
-    header.textContent = config.header;
-    children.push(header);
+    const el = document.createElement('h3');
+    el.className = 'form-header';
+    el.textContent = config.header;
+    children.push(el);
   }
   if (config.subheader) {
-    const subheader = document.createElement('p');
-    subheader.className = 'form-subheader';
-    subheader.textContent = config.subheader;
-    children.push(subheader);
+    const el = document.createElement('p');
+    el.className = 'form-subheader';
+    el.textContent = config.subheader;
+    children.push(el);
   }
-
-  const form = document.createElement('div');
-  form.className = 'lead-fields';
-  const inputs = {};
-  FIELDS.forEach(([label, type, key]) => {
-    const l = document.createElement('label');
-    l.className = 'ff';
-    l.innerHTML = `<span>${label}</span><input type="${type}" placeholder="${label}" aria-label="${label.replace('*', '')}">`;
-    inputs[key] = l.querySelector('input');
-    form.append(l);
-  });
-  const btn = document.createElement('button');
-  btn.type = 'button';
-  btn.className = 'form-submit';
-  btn.textContent = config.cta || DEFAULT_CTA;
-  form.append(btn);
+  const form = document.createElement('form');
+  form.id = `mktoForm_${config.formId}`;
   children.push(form);
-
-  const note = document.createElement('p');
-  note.className = 'form-note';
-  note.setAttribute('aria-live', 'polite');
-  children.push(note);
-
   if (config.disclaimer) {
-    const disclaimer = document.createElement('p');
-    disclaimer.className = 'form-disclaimer';
-    disclaimer.textContent = config.disclaimer;
-    children.push(disclaimer);
+    const el = document.createElement('p');
+    el.className = 'form-disclaimer';
+    el.textContent = config.disclaimer;
+    children.push(el);
   }
-
-  btn.addEventListener('click', () => {
-    const fields = Object.fromEntries(
-      Object.entries(inputs).map(([k, el]) => [k, el.value.trim()]),
-    );
-    if (!isValidBusinessEmail(fields.email)) {
-      note.textContent = 'Please enter a valid business email.';
-      return;
-    }
-    // Fire the identity/tracking event (fail-open — never block the confirmation).
-    try {
-      trackFormSubmit(fields);
-    } catch (e) { /* non-fatal */ }
-    note.textContent = 'Thanks — we’ll be in touch shortly.';
-    btn.disabled = true;
-  });
-
   block.replaceChildren(...children);
+
+  const cfg = await siteConfig();
+  const observer = new IntersectionObserver((entries) => {
+    if (entries.some((e) => e.isIntersecting)) {
+      observer.disconnect();
+      embedMarketoForm(form, cfg, config);
+    }
+  });
+  observer.observe(block);
+}
+
+// Shared "Schedule a call" modal — hosts the schedule-call fragment (which
+// authors its own form block) in the reusable modal block.
+export async function openScheduleModal() {
+  // eslint-disable-next-line import/no-cycle
+  const { openModal } = await import('../modal/modal.js');
+  return openModal(SCHEDULE_FRAGMENT);
+}
+
+// Any anchor whose href ends with #schedule opens the modal instead of
+// navigating — covers both `#schedule` and stray absolute URLs ending in it.
+export function bindScheduleLinks(container) {
+  container.querySelectorAll('a[href$="#schedule"]').forEach((a) => {
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      openScheduleModal();
+    });
+  });
+}
+
+// Book-a-demo: ChiliPiper scheduler directly (no Marketo form). Router is the
+// only per-page value; subdomain/script come from /site-config.json.
+export async function bookDemo(router) {
+  const cfg = await siteConfig();
+  const subdomain = cfg['chilipiper.subdomain'];
+  if (!router || !subdomain) return;
+  await loadScript(cfg['chilipiper.src'] || CHILIPIPER_SRC_DEFAULT);
+  window.ChiliPiper?.scheduling(subdomain, router, { title: document.title });
 }

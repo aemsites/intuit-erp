@@ -1,83 +1,121 @@
 import {
-  describe, it, expect, vi,
+  describe, it, expect, vi, beforeEach,
 } from 'vitest';
+// eslint-disable-next-line import/no-relative-packages
+import { sendEvent } from '../plugins/martech/src/index.js';
 import decorate, { parseFormConfig } from '../blocks/form/form.js';
 
-// decorate() imports sendEvent (martech) at module scope; mock it the same
-// way test/form-identity.test.js does so decorate() runs cleanly here too.
 vi.mock('../plugins/martech/src/index.js', () => ({
   sendEvent: vi.fn(() => Promise.resolve()),
 }));
+vi.mock('../scripts/aem.js', () => ({
+  loadScript: vi.fn(() => Promise.resolve()),
+}));
+vi.mock('../scripts/scripts.js', () => ({
+  getSiteConfig: vi.fn(() => Promise.resolve({
+    'marketo.munchkin': '743-RZM-619',
+    'chilipiper.subdomain': 'intuitsales',
+  })),
+}));
 
-function make() {
+const flush = () => new Promise((r) => { setTimeout(r, 0); });
+
+let onSuccessFn;
+beforeEach(() => {
+  onSuccessFn = null;
+  sendEvent.mockClear();
+  delete window.utag;
+  global.IntersectionObserver = class {
+    constructor(cb) { this.cb = cb; }
+
+    observe() { this.cb([{ isIntersecting: true }]); }
+
+    disconnect() {}
+  };
+  window.MktoForms2 = {
+    loadForm: vi.fn((host, munchkin, formId, cb) => {
+      cb({
+        onSuccess: (fn) => { onSuccessFn = fn; },
+        getValues: () => ({ Email: 'controller@brightpathco.com', FirstName: 'Dana', Company: 'Bright Path' }),
+      });
+    }),
+  };
+  window.ChiliPiper = { submit: vi.fn(), scheduling: vi.fn() };
+});
+
+function make(rows) {
   const block = document.createElement('div');
   block.className = 'form block';
-  block.innerHTML = `
-    <div><div>formId</div><div>1058</div></div>
-    <div><div>chiliPiperSubDomain</div><div>intuitsales</div></div>
-    <div><div>chiliPiperRouter</div><div>mid-us-webform-managed-ies</div></div>
-    <div><div>header</div><div>Let’s connect</div></div>
-    <div><div>cta</div><div>Schedule now</div></div>`;
+  block.innerHTML = rows.map(([k, v]) => `<div><div>${k}</div><div>${v}</div></div>`).join('');
   return block;
 }
 
 describe('parseFormConfig', () => {
-  it('extracts marketo + chilipiper config from the config rows', () => {
-    const cfg = parseFormConfig(make());
+  it('extracts the per-page config rows', () => {
+    const cfg = parseFormConfig(make([
+      ['formId', '1058'],
+      ['chiliPiperRouter', 'mid-us-webform-managed-ies'],
+      ['header', 'Let’s connect'],
+      ['downloadUrl', '/assets/report.pdf'],
+    ]));
     expect(cfg.formId).toBe('1058');
-    expect(cfg.chiliPiperSubDomain).toBe('intuitsales');
     expect(cfg.chiliPiperRouter).toBe('mid-us-webform-managed-ies');
     expect(cfg.header).toBe('Let’s connect');
-    expect(cfg.cta).toBe('Schedule now');
+    expect(cfg.downloadUrl).toBe('/assets/report.pdf');
   });
 });
 
-describe('decorate — config rows', () => {
-  function makeFullConfigBlock() {
-    const block = document.createElement('div');
-    block.className = 'form block';
-    block.innerHTML = `
-      <div><div>formId</div><div>1058</div></div>
-      <div><div>munchkin</div><div>713-XYZ-001</div></div>
-      <div><div>chiliPiperSubDomain</div><div>intuitsales</div></div>
-      <div><div>chiliPiperRouter</div><div>mid-us-webform-managed-ies</div></div>
-      <div><div>header</div><div>Let’s connect</div></div>
-      <div><div>subheader</div><div>Talk to a specialist today.</div></div>
-      <div><div>disclaimer</div><div>See the privacy statement for details.</div></div>
-      <div><div>cta</div><div>Schedule now</div></div>`;
-    return block;
-  }
-
-  it('stamps data attributes, renders header/subheader/disclaimer, and keeps the fixed fields', () => {
-    const block = makeFullConfigBlock();
-    decorate(block);
-
-    expect(block.dataset.mktoFormId).toBe('1058');
-    expect(block.dataset.mktoMunchkin).toBe('713-XYZ-001');
-    expect(block.dataset.cpSubdomain).toBe('intuitsales');
-    expect(block.dataset.cpRouter).toBe('mid-us-webform-managed-ies');
-
+describe('decorate — live Marketo form', () => {
+  it('renders a Marketo form element with the authored form id', async () => {
+    const block = make([['formId', '1058'], ['header', 'Let’s connect'], ['disclaimer', 'Privacy.']]);
+    await decorate(block);
+    expect(block.querySelector('form#mktoForm_1058')).not.toBeNull();
     expect(block.querySelector('.form-header').textContent).toBe('Let’s connect');
-    expect(block.querySelector('.form-subheader').textContent).toBe('Talk to a specialist today.');
-    expect(block.querySelector('.form-disclaimer').textContent).toBe('See the privacy statement for details.');
-
-    // Fixed 5-field form must still render regardless of config rows.
-    expect(block.querySelectorAll('input')).toHaveLength(5);
-    expect(block.querySelector('input[type="email"]')).not.toBeNull();
-    expect(block.querySelector('.form-submit')).not.toBeNull();
+    expect(block.querySelector('.form-disclaimer').textContent).toBe('Privacy.');
   });
 
-  it('uses the authored `cta` as the submit button label', () => {
-    const block = makeFullConfigBlock();
-    decorate(block);
-    expect(block.querySelector('.form-submit').textContent).toBe('Schedule now');
+  it('renders nothing when no form id is authored', async () => {
+    const block = make([['header', 'Let’s connect']]);
+    await decorate(block);
+    expect(block.querySelector('form')).toBeNull();
+    expect(block.children).toHaveLength(0);
   });
 
-  it('defaults the submit label to "Schedule a call" when no `cta` is authored', () => {
-    const block = document.createElement('div');
-    block.className = 'form block';
-    block.innerHTML = '<div><div>header</div><div>Let’s connect</div></div>';
-    decorate(block);
-    expect(block.querySelector('.form-submit').textContent).toBe('Schedule a call');
+  it('adds the download variant when a downloadUrl is authored', async () => {
+    const block = make([['formId', '1058'], ['downloadUrl', '/assets/report.pdf']]);
+    await decorate(block);
+    expect(block.classList.contains('download')).toBe(true);
+  });
+
+  it('embeds the Marketo form once the block scrolls into view', async () => {
+    const block = make([['formId', '1058']]);
+    await decorate(block);
+    await flush();
+    expect(window.MktoForms2.loadForm).toHaveBeenCalledWith(
+      '//743-rzm-619.mktoweb.com',
+      '743-RZM-619',
+      '1058',
+      expect.any(Function),
+    );
+  });
+
+  it('hands off to ChiliPiper and tracks on Marketo success', async () => {
+    const block = make([['formId', '1058'], ['chiliPiperRouter', 'mid-us-webform-managed-ies']]);
+    await decorate(block);
+    await flush();
+    expect(onSuccessFn).toBeTypeOf('function');
+
+    const result = onSuccessFn({ Email: 'controller@brightpathco.com', FirstName: 'Dana', Company: 'Bright Path' });
+    expect(result).toBe(false); // suppress Marketo's default redirect
+    await flush();
+
+    expect(window.ChiliPiper.submit).toHaveBeenCalledWith(
+      'intuitsales',
+      'mid-us-webform-managed-ies',
+      expect.objectContaining({ map: true }),
+    );
+    // analytics preserved: with no Tealium, the Adobe identity event fires with mapped values
+    expect(sendEvent).toHaveBeenCalledTimes(1);
+    expect(sendEvent.mock.calls[0][0].xdm.identityMap.Email[0].id).toBe('controller@brightpathco.com');
   });
 });
