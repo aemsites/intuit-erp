@@ -352,12 +352,16 @@
   padding: var(--section-y) 0;
 }
 
-.testimonial:not(.video):has(img) .cmp-testi-grid {
+.testimonial:not(.video) .cmp-testi-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
   gap: 48px;
   align-items: center;
+  max-width: var(--container);
   margin: 0px auto;
+}
+
+.testimonial:not(.video):has(img) .cmp-testi-grid {
+  grid-template-columns: 1fr 1fr;
 }
 
 .testimonial .cmp-quote {

@@ -24,26 +24,36 @@
 
   /* colors — lifted from erp.intuit.com */
   --background-color: #fff;
-  --light-color: #f7f8f3;      /* sand */
+  --light-color: #f7f8f3;
+  /* sand */
   --tofu: #f3f2ef;
   --sky: #dbedee;
-  --agave: #c2f5ff;            /* in-article callout fill */
-  --agave-band: #d6e8f8;       /* media-text .agave band fill */
-  --cyan-band: #c2f5ff;        /* media-text .cyan band fill, >=1200px */
-  --ice-band: #eaf6f7;         /* media-text .cyan band fill, below 1200px */
-  --rail-promo: #81f2fe;       /* blog right-rail promo card fill */
-  --toc-bar-bg: #f0f4f6;       /* blog TOC bar / rail card fill */
+  --agave: #c2f5ff;
+  /* in-article callout fill */
+  --agave-band: #d6e8f8;
+  /* media-text .agave band fill */
+  --cyan-band: #c2f5ff;
+  /* media-text .cyan band fill, >=1200px */
+  --ice-band: #eaf6f7;
+  /* media-text .cyan band fill, below 1200px */
+  --rail-promo: #81f2fe;
+  /* blog right-rail promo card fill */
+  --toc-bar-bg: #f0f4f6;
+  /* blog TOC bar / rail card fill */
   --toc-bar-text: #282828;
   --wintermint: #eff4f9;
-  --blog-hero-bg: var(--wintermint);   /* blog article hero band */
+  --blog-hero-bg: var(--wintermint);
+  /* blog article hero band */
   --dark-color: #6b6c72;
   --text-color: #21262a;
   --heading-color: #11181c;
   --text-muted: #6b6c72;
   --text-soft: #8d9096;
-  --primary: #0077c5;          /* Intuit blue */
+  --primary: #0077c5;
+  /* Intuit blue */
   --primary-dark: #055393;
-  --navy: #00254a;             /* primary CTA / dark hero */
+  --navy: #00254a;
+  /* primary CTA / dark hero */
   --navy-hover: #001a36;
   --navy-mid: #053d6d;
   --hero-violet: #3b2f7a;
@@ -73,8 +83,10 @@
   --body-font-size-xxs: 12px;
 
   /* heading sizes */
-  --heading-font-size-xxl: 48px;   /* hero h1 */
-  --heading-font-size-xl: 38px;    /* section h2 */
+  --heading-font-size-xxl: 48px;
+  /* hero h1 */
+  --heading-font-size-xl: 38px;
+  /* section h2 */
   --heading-font-size-l: 30px;
   --heading-font-size-m: 24px;
   --heading-font-size-s: 20px;
@@ -197,7 +209,7 @@
   src: local('Arial');
 }
 
-@media (width >= 900px) {
+@media (width >=900px) {
   :root {
     --heading-font-size-xxl: 48px;
     --heading-font-size-xl: 38px;
@@ -243,7 +255,8 @@ body.author header {
   min-height: 172px;
 }
 
-@media (width <= 1299px) {
+@media (width <=1299px) {
+
   body.blog-home header,
   body.blog-article header,
   body.category header,
@@ -266,13 +279,13 @@ body.has-events-bar header {
   min-height: 149px;
 }
 
-@media (width <= 1299px) {
+@media (width <=1299px) {
   body.has-events-bar header {
     min-height: 106px;
   }
 }
 
-@media (width <= 540px) {
+@media (width <=540px) {
   body.has-events-bar header {
     min-height: 122px;
   }
@@ -303,12 +316,29 @@ h6 {
   scroll-margin: 100px;
 }
 
-h1 { font-size: var(--heading-font-size-xxl); }
-h2 { font-size: var(--heading-font-size-xl); }
-h3 { font-size: var(--heading-font-size-l); }
-h4 { font-size: var(--heading-font-size-m); }
-h5 { font-size: var(--heading-font-size-s); }
-h6 { font-size: var(--heading-font-size-xs); }
+h1 {
+  font-size: var(--heading-font-size-xxl);
+}
+
+h2 {
+  font-size: var(--heading-font-size-xl);
+}
+
+h3 {
+  font-size: var(--heading-font-size-l);
+}
+
+h4 {
+  font-size: var(--heading-font-size-m);
+}
+
+h5 {
+  font-size: var(--heading-font-size-s);
+}
+
+h6 {
+  font-size: var(--heading-font-size-xs);
+}
 
 p,
 dl,
@@ -333,7 +363,7 @@ pre {
   white-space: pre;
 }
 
-main > div {
+main>div {
   margin: 40px 16px;
 }
 
@@ -487,22 +517,22 @@ main img {
 }
 
 /* sections */
-main > .section {
+main>.section {
   margin: 40px 0;
 }
 
-main > .section > div {
+main>.section>div {
   max-width: 1200px;
   margin: auto;
   padding: 0 24px;
 }
 
-main > .section:first-of-type {
+main>.section:first-of-type {
   margin-top: 0;
 }
 
-@media (width >= 900px) {
-  main > .section > div {
+@media (width >=900px) {
+  main>.section>div {
     padding: 0 32px;
   }
 }
@@ -520,55 +550,116 @@ main .section.highlight {
    ============================================================ */
 
 /* content width */
-main > .section > div { max-width: var(--container); margin: 0 auto; padding: 0 40px; }
-main .section.full-bleed > div { max-width: none; padding: 0; }
-main .section { padding: 0; }
+main>.section>div {
+  max-width: var(--container);
+  margin: 0 auto;
+  padding: 0 40px;
+}
+
+main .section.full-bleed>div {
+  max-width: none;
+  padding: 0;
+}
+
+main .section {
+  padding: 0;
+}
 
 /* replica: colored section bands sit flush — no inter-section margin */
-main > .section { margin: 0; }
-main .section:empty { display: none; }
-.da-form-wrapper { display: none; }
+main>.section {
+  margin: 0;
+}
+
+main .section:empty {
+  display: none;
+}
+
+.da-form-wrapper {
+  display: none;
+}
 
 /* narrow container variant (prototype .container-narrow = 1180px) */
-main .section.narrow > div { max-width: 1180px; }
-main .section.center > div { text-align: center; }
+main .section.narrow>div {
+  max-width: 1180px;
+}
+
+main .section.center>div {
+  text-align: center;
+}
 
 /* section backgrounds */
-main > .section[data-background] {
+main>.section[data-background] {
   padding: 2rem 0;
 }
 
-main > .section[data-background="sky"] { background-color: var(--sky); }
-main > .section[data-background="agave"] { background-color: var(--agave); }
-main > .section[data-background="sand"] { background-color: var(--light-color); }
-main > .section[data-background="tofu"] { background-color: var(--tofu); }
+main>.section[data-background="sky"] {
+  background-color: var(--sky);
+}
+
+main>.section[data-background="agave"] {
+  background-color: var(--agave);
+}
+
+main>.section[data-background="sand"] {
+  background-color: var(--light-color);
+}
+
+main>.section[data-background="tofu"] {
+  background-color: var(--tofu);
+}
 
 /* contained sections */
-main > .section.contained {
+main>.section.contained {
   margin: 2rem auto;
   max-width: 1400px;
   border-radius: 6px;
 }
 
 /* case-studies index intro (Template: "Case Studies Index" metadata -> body.case-studies-index) */
-body.case-studies-index main > .section:first-of-type .default-content-wrapper {
-  max-width: 46em; margin: 0 auto; text-align: center;
+body.case-studies-index main>.section:first-of-type .default-content-wrapper {
+  max-width: 46em;
+  margin: 0 auto;
+  text-align: center;
 }
-body.case-studies-index main > .section:first-of-type h1 { font-size: 40px; font-weight: 600; margin: 0 0 16px; }
-body.case-studies-index main > .section:first-of-type p { font-size: 17px; color: var(--text-muted); }
+
+body.case-studies-index main>.section:first-of-type h1 {
+  font-size: 40px;
+  font-weight: 600;
+  margin: 0 0 16px;
+}
+
+body.case-studies-index main>.section:first-of-type p {
+  font-size: 17px;
+  color: var(--text-muted);
+}
 
 /* blog category listing intro (Template: "Category" metadata -> body.category) */
-body.category main > .section:first-of-type { padding-top: 5rem; }
-
-body.category main > .section:first-of-type .default-content-wrapper {
-  max-width: 46em; margin: 0 auto; text-align: center;
+body.category main>.section:first-of-type {
+  padding-top: 5rem;
 }
-body.category main > .section:first-of-type h1 { font-size: 40px; font-weight: 600; margin: 0 0 16px; }
-body.category main > .section:first-of-type p { font-size: 17px; color: var(--text-muted); }
+
+body.category main>.section:first-of-type .default-content-wrapper {
+  max-width: 46em;
+  margin: 0 auto;
+  text-align: center;
+}
+
+body.category main>.section:first-of-type h1 {
+  font-size: 40px;
+  font-weight: 600;
+  margin: 0 0 16px;
+}
+
+body.category main>.section:first-of-type p {
+  font-size: 17px;
+  color: var(--text-muted);
+}
 
 /* search results page (Template: "Search" metadata -> body.search): give the
    first section the same top breathing room below the nav as category pages */
-body.search main > .section:first-of-type { padding-top: 5rem; }
+body.search main>.section:first-of-type {
+  padding-top: 5rem;
+}
 
 /* events listing lead band (erp.intuit.com/events): a centred white heading on a
    dark gradient. The page authors its intro as plain default content rather than
@@ -576,44 +667,71 @@ body.search main > .section:first-of-type { padding-top: 5rem; }
    This MUST stay in eager CSS — it is above the fold, and living in the lazily
    loaded blocks/event-cards/event-cards.css shifted the band 96px -> 328px after
    first paint (0.28 CLS). */
-main:has(.event-cards) > .section:first-of-type {
+main:has(.event-cards)>.section:first-of-type {
   background: var(--navy);
   background-image: linear-gradient(135deg, #041839 0%, #041f53 45%, #03339c 100%);
   color: #fff;
   padding: 96px 0 80px;
 }
 
-main:has(.event-cards) > .section:first-of-type .default-content-wrapper {
-  max-width: 1000px; margin: 0 auto; text-align: center;
+main:has(.event-cards)>.section:first-of-type .default-content-wrapper {
+  max-width: 1000px;
+  margin: 0 auto;
+  text-align: center;
 }
 
-main:has(.event-cards) > .section:first-of-type h1 {
-  font-size: 48px; line-height: 1.27; font-weight: 500; color: #fff; margin: 0 0 20px;
+main:has(.event-cards)>.section:first-of-type h1 {
+  font-size: 48px;
+  line-height: 1.27;
+  font-weight: 500;
+  color: #fff;
+  margin: 0 0 20px;
 }
 
-main:has(.event-cards) > .section:first-of-type p {
-  font-size: 20px; line-height: 1.4; color: #fff; margin: 0;
+main:has(.event-cards)>.section:first-of-type p {
+  font-size: 20px;
+  line-height: 1.4;
+  color: #fff;
+  margin: 0;
 }
 
 /* upstream runs one step: 48px until the 1200px container is reached, 60px above */
-@media (width >= 1200px) {
-  main:has(.event-cards) > .section:first-of-type h1 { font-size: 60px; }
+@media (width >=1200px) {
+  main:has(.event-cards)>.section:first-of-type h1 {
+    font-size: 60px;
+  }
 }
 
-@media (width <= 900px) {
-  main:has(.event-cards) > .section:first-of-type { padding: 64px 0 56px; }
+@media (width <=900px) {
+  main:has(.event-cards)>.section:first-of-type {
+    padding: 64px 0 56px;
+  }
 }
 
-@media (width <= 600px) {
-  main:has(.event-cards) > .section:first-of-type h1 { font-size: 36px; }
+@media (width <=600px) {
+  main:has(.event-cards)>.section:first-of-type h1 {
+    font-size: 36px;
+  }
 }
 
 /* eyebrow utility */
-.eyebrow { font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
+.eyebrow {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
 
 body.case-study main .default-content-wrapper,
-body.case-study main .stat-band { max-width: 46em; margin: 0 auto; }
-body.case-study main .stat-band { margin-top: 1rem; }
+body.case-study main .stat-band {
+  max-width: 46em;
+  margin: 0 auto;
+}
+
+body.case-study main .stat-band {
+  margin-top: 1rem;
+}
 
 body.author main .default-content-wrapper {
   display: flex;
@@ -637,56 +755,144 @@ body.author main .default-content-wrapper p:has(picture) img {
   object-fit: cover;
 }
 
-body.author main .default-content-wrapper p:not(:has(picture)) { max-width: 34em; }
+body.author main .default-content-wrapper p:not(:has(picture)) {
+  max-width: 34em;
+}
 
 /* pull-quote (case-study article body prose) */
 blockquote {
-  position: relative; margin: 48px 0; padding: 0 0 0 44px;
-  font-size: 28px; line-height: 1.35; font-weight: 400; color: var(--heading);
+  position: relative;
+  margin: 48px 0;
+  padding: 0 0 0 44px;
+  font-size: 28px;
+  line-height: 1.35;
+  font-weight: 400;
+  color: var(--heading);
 }
 
 blockquote::before {
-  content: '\201C'; position: absolute; left: 0; top: -0.1em;
-  font-size: 48px; line-height: 1; color: var(--primary); font-weight: 700;
+  content: '\201C';
+  position: absolute;
+  left: 0;
+  top: -0.1em;
+  font-size: 48px;
+  line-height: 1;
+  color: var(--primary);
+  font-weight: 700;
 }
-blockquote p { margin: 0; }
-blockquote cite { display: block; margin-top: 14px; font-size: 14px; font-style: normal; font-weight: 600; color: var(--text-muted); }
+
+blockquote p {
+  margin: 0;
+}
+
+blockquote cite {
+  display: block;
+  margin-top: 14px;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 600;
+  color: var(--text-muted);
+}
 
 /* buttons — EDS decorates <strong><a> -> .button.primary, <em><a> -> .button.secondary */
-a.button:any-link, button.button {
-  display: inline-flex; align-items: center; justify-content: center;
-  height: 44px; padding: 0 30px; border-radius: var(--radius);
-  font-family: inherit; font-size: 16px; font-weight: 600; line-height: 1;
-  border: 2px solid transparent; text-decoration: none; margin: 0;
+a.button:any-link,
+button.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  padding: 0 30px;
+  border-radius: var(--radius);
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1;
+  border: 2px solid transparent;
+  text-decoration: none;
+  margin: 0;
   transition: background-color .15s ease, color .15s ease, border-color .15s ease;
 }
 
-a.button.primary, button.button.primary {
-  background: var(--navy); color: #fff; border-color: var(--navy);
+a.button.primary,
+button.button.primary {
+  background: var(--navy);
+  color: #fff;
+  border-color: var(--navy);
 }
-a.button.primary:hover { background: var(--navy-hover); border-color: var(--navy-hover); }
 
-a.button.secondary, button.button.secondary {
-  background: transparent; color: var(--navy); border-color: var(--navy);
+a.button.primary:hover {
+  background: var(--navy-hover);
+  border-color: var(--navy-hover);
 }
-a.button.secondary:hover { background: rgb(0 37 74 / 6%); }
+
+a.button.secondary,
+button.button.secondary {
+  background: transparent;
+  color: var(--navy);
+  border-color: var(--navy);
+}
+
+a.button.secondary:hover {
+  background: rgb(0 37 74 / 6%);
+}
 
 /* on-dark secondary (hero bands) — matches erp.intuit.com's real qbmds
    button component (Button_rwSecondary_White): hover is a full color
    inversion (solid white fill, dark text), not a translucent white tint. */
-.section.dark a.button.secondary, .hero a.button.secondary { color: #fff; border-color: #fff; }
-.section.dark a.button.secondary:hover, .hero a.button.secondary:hover { background: #fff; color: #09222a; border-color: #fff; }
-p.button-wrapper { display: inline-flex; gap: 16px; flex-wrap: wrap; margin: 0; }
+.section.dark a.button.secondary,
+.hero a.button.secondary {
+  color: #fff;
+  border-color: #fff;
+}
 
-body { font-weight: 400; }
-a { color: var(--link-color); }
-img { display: block; max-width: 100%; height: auto; }
+.section.dark a.button.secondary:hover,
+.hero a.button.secondary:hover {
+  background: #fff;
+  color: #09222a;
+  border-color: #fff;
+}
 
-@media (width <= 768px) {
-  :root { --section-y: 48px; --nav-height: 56px; }
-  main > .section > div { padding: 0 20px; }
+p.button-wrapper {
+  display: inline-flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin: 0;
+}
+
+body {
+  font-weight: 400;
+}
+
+a {
+  color: var(--link-color);
+}
+
+img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+@media (width <=768px) {
+  :root {
+    --section-y: 48px;
+    --nav-height: 56px;
+  }
+
+  main>.section>div {
+    padding: 0 20px;
+  }
 }
 
 .library-metadata-wrapper {
   display: none;
+}
+
+body:not(.case-study):not(.blog-article) .section:not(:first-of-type)>.default-content-wrapper> :is(h1, h2, h3, h4, h5, h6) {
+  text-align: center;
+}
+
+.section>.default-content-wrapper {
+  margin-top: 2rem;
+  margin-bottom: 2rem;
 }

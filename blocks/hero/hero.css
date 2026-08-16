@@ -26,6 +26,7 @@
      supplies its own vertical rhythm via .hero-grid, so keep the section flush
      like the navy hero. */
   padding: 0;
+  margin-bottom: 2rem;
 }
 
 .section.hero-container.light .hero-copy .hero-eyebrow,
@@ -102,7 +103,7 @@
   margin: 0 0 40px;
 }
 
-.hero .hero-actions { display: flex; gap: 16px; flex-wrap: wrap; margin: 0; }
+.hero .hero-actions { display: flex; gap: 16px; flex-wrap: wrap; margin: 0; padding-bottom: 2rem;}
 
 .hero .hero-media { position: relative; isolation: isolate; }
 

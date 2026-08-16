@@ -451,6 +451,10 @@ async function loadEager(doc) {
       ({ buildBlogTemplate } = await import('../blocks/blog-template/blog-template.js'));
     } else if (isCaseStudyPage()) {
       ({ buildCaseStudyHeader } = await import('../blocks/case-study-header/case-study-header.js'));
+      // case-study pages share the same in-article testimonial pull-quote
+      // treatment as blog articles; that override lives in blog-template.css,
+      // which only blog pages otherwise load.
+      loadCSS(`${window.hlx.codeBasePath}/blocks/blog-template/blog-template.css`);
     }
     decorateMain(main);
     // Personalize/experiment the first (LCP) section before reveal so the visitor
