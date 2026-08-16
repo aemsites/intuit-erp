@@ -109,6 +109,23 @@
   .cards.icons .cards-card-body h3 { font-size: 28px; }
 }
 
+/* feature-cards — Section Metadata "Style: feature-cards": center the section
+   heading/subheading and render the .cards.icons items as gray rounded cards
+   (human-capital-management "data behind every workforce decision"). Opt-in and
+   scoped to the section, so other .cards.icons sections (e.g. /account-management)
+   are unaffected. */
+.section.feature-cards .default-content-wrapper { text-align: center; }
+
+.section.feature-cards .cards.icons > div {
+  box-sizing: border-box;
+  padding: 32px;
+  background: #eef2f6;
+  border-radius: 16px;
+}
+
+/* production's carded titles are smaller than the plain icon-card title (32px) */
+.section.feature-cards .cards.icons .cards-card-body h3 { font-size: 24px; }
+
 /* ---- .carousel / .boxed — single-row, horizontally-scrolling photo cards
    (events, financial-services, professional-services, oa). Cards scroll via
    native overflow (free touch/trackpad swipe); the progress bar + counter +
