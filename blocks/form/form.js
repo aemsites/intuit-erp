@@ -72,12 +72,6 @@ export function parseFormConfig(block) {
   };
 }
 
-// Basic shape check — enough to gate the identity send without over-validating
-// (demo lead form; not an auth boundary).
-export function isValidBusinessEmail(value) {
-  return typeof value === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
-}
-
 // Maps lead fields → an identity sendEvent XDM. Email goes in identityMap as
 // 'ambiguous' (unverified). Pure — no DOM/network.
 export function buildIdentityXdm(fields) {
@@ -146,7 +140,9 @@ async function setupRecaptcha(cfg, config, form) {
   if (!config.recaptcha || cfg['recaptcha.enabled'] === false || !siteKey || !verifyUrl || !apiKey) {
     return;
   }
-  const threshold = parseFloat(cfg['recaptcha.scoreThreshold']) || RECAPTCHA_DEFAULT_THRESHOLD;
+  // Number.isFinite (not `|| default`) so an explicit threshold of "0" is honored.
+  const parsed = parseFloat(cfg['recaptcha.scoreThreshold']);
+  const threshold = Number.isFinite(parsed) ? parsed : RECAPTCHA_DEFAULT_THRESHOLD;
 
   // Distinguish "endpoint says bot" (low/invalid score → block) from "endpoint
   // unreachable" (network/CORS → allow, so an outage never drops real leads).
@@ -199,15 +195,20 @@ async function embedMarketoForm(formEl, cfg, config) {
       btnRow.parentNode.insertBefore(el, btnRow);
     }
     setupRecaptcha(cfg, config, form);
+    // A ChiliPiper handoff only actually fires when both router (authored) and
+    // subdomain (site-config) are present; decide synchronously so onSuccess can
+    // fall back to Marketo's own thank-you if ChiliPiper is misconfigured.
+    const canHandoff = !!(config.chiliPiperRouter && cfg['chilipiper.subdomain']);
     form.onSuccess((vals) => {
       try { trackFormSubmit(marketoValuesToLead(vals)); } catch (e) { /* non-fatal */ }
-      chiliPiperHandoff(cfg, config.chiliPiperRouter, form);
+      if (canHandoff) chiliPiperHandoff(cfg, config.chiliPiperRouter, form);
       if (config.downloadUrl) window.open(config.downloadUrl, '_blank', 'noopener');
-      else if (config.successUrl && !config.chiliPiperRouter) {
-        window.location.href = config.successUrl;
-      }
-      // Suppress Marketo's default redirect — ChiliPiper / download / successUrl takes over.
-      return false;
+      else if (config.successUrl && !canHandoff) window.location.href = config.successUrl;
+      // Suppress Marketo's default redirect only when we provide our own feedback
+      // (ChiliPiper / download / successUrl). Otherwise let Marketo show its
+      // thank-you so a misconfigured handoff never leaves the visitor with nothing.
+      const handled = canHandoff || !!config.downloadUrl || !!config.successUrl;
+      return !handled;
     });
   });
 }

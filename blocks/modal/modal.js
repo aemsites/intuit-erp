@@ -1,8 +1,12 @@
 // eslint-disable-next-line import/no-cycle
 import { loadFragment } from '../fragment/fragment.js';
 import {
-  buildBlock, decorateBlock, loadBlock, loadCSS,
+  buildBlock, decorateBlock, loadBlock, loadCSS, loadSections,
 } from '../../scripts/aem.js';
+
+// Fragments are fetched once and reused across opens; each open clones the
+// cached copy (loadFragment has no cache of its own).
+const fragmentCache = new Map();
 
 // Not a decorated block: links to a /modals/ path are turned into modals, and
 // other code opens modals via createModal()/openModal(). Adapted from the AEM
@@ -24,8 +28,12 @@ export async function createModal(contentNodes) {
   closeButton.addEventListener('click', () => dialog.close());
   dialog.prepend(closeButton);
 
+  // Wrap the block in its own div so decorateBlock() adds `modal-wrapper` to the
+  // wrapper, not to <main> (which would permanently pollute main's classList).
   const block = buildBlock('modal', '');
-  document.querySelector('main').append(block);
+  const wrapper = document.createElement('div');
+  wrapper.append(block);
+  document.querySelector('main').append(wrapper);
   decorateBlock(block);
   await loadBlock(block);
 
@@ -39,9 +47,12 @@ export async function createModal(contentNodes) {
     }
   });
 
+  let previouslyFocused;
   dialog.addEventListener('close', () => {
     document.body.classList.remove('modal-open');
-    block.remove();
+    wrapper.remove();
+    // Restore focus to whatever opened the modal (a11y).
+    if (previouslyFocused?.focus) previouslyFocused.focus();
   });
 
   block.innerHTML = '';
@@ -50,6 +61,7 @@ export async function createModal(contentNodes) {
   return {
     block,
     showModal: () => {
+      previouslyFocused = document.activeElement;
       dialog.showModal();
       setTimeout(() => { dialogContent.scrollTop = 0; }, 0);
       document.body.classList.add('modal-open');
@@ -62,7 +74,30 @@ export async function openModal(fragmentUrl) {
     ? new URL(fragmentUrl, window.location).pathname
     : fragmentUrl;
 
-  const fragment = await loadFragment(path);
-  const { showModal } = await createModal(fragment.childNodes);
+  let fragment = fragmentCache.get(path);
+  if (fragment === undefined) {
+    fragment = await loadFragment(path);
+    // Cache only a successful load, so a failed fetch can be retried on reopen.
+    if (fragment) fragmentCache.set(path, fragment);
+  }
+  if (!fragment) {
+    // Fragment fetch failed (404/network) — show a fallback instead of throwing.
+    const error = document.createElement('p');
+    error.className = 'modal-error';
+    error.textContent = 'Sorry, something went wrong loading this content. Please try again.';
+    const { showModal } = await createModal([error]);
+    showModal();
+    return;
+  }
+
+  // Clone so the cached fragment keeps its content for the next open. cloneNode
+  // copies DOM + attributes but not JS-attached listeners, so re-decorate the
+  // clones: reset the "loaded" block/section status the cache carries back to
+  // "initialized" so loadSections re-runs each block's decorate() and rebinds.
+  const clones = [...fragment.childNodes].map((node) => node.cloneNode(true));
+  const { block, showModal } = await createModal(clones);
+  block.querySelectorAll('[data-block-status]').forEach((b) => { b.dataset.blockStatus = 'initialized'; });
+  block.querySelectorAll('.section[data-section-status]').forEach((s) => { s.dataset.sectionStatus = 'initialized'; });
+  await loadSections(block);
   showModal();
 }

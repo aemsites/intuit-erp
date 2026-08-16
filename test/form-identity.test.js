@@ -5,23 +5,12 @@ import { OF1_SIGNAL } from '../scripts/of1-rtcdp-signal.js';
 // eslint-disable-next-line import/no-relative-packages
 import { sendEvent } from '../plugins/martech/src/index.js';
 import {
-  isValidBusinessEmail, buildIdentityXdm, trackFormSubmit,
+  buildIdentityXdm, trackFormSubmit,
 } from '../blocks/form/form.js';
 
 vi.mock('../plugins/martech/src/index.js', () => ({
   sendEvent: vi.fn(() => Promise.resolve()),
 }));
-
-describe('isValidBusinessEmail', () => {
-  it('accepts a normal business email', () => {
-    expect(isValidBusinessEmail('controller@brightpathco.com')).toBe(true);
-  });
-  it('rejects empty / malformed', () => {
-    expect(isValidBusinessEmail('')).toBe(false);
-    expect(isValidBusinessEmail('not-an-email')).toBe(false);
-    expect(isValidBusinessEmail('a@b')).toBe(false);
-  });
-});
 
 describe('buildIdentityXdm', () => {
   it('puts the email in identityMap as ambiguous and carries lead fields', () => {

@@ -8,10 +8,10 @@
 .form-container .default-content-wrapper { text-align: center; }
 
 /* Heading + copy above a standalone form (webinar pages) mirror erp.intuit.com:
-   bold 40px title, uniform 16px centered paragraphs. The hero-card and modal
-   override these (blocks/hero, smaller card heading) so this only affects the
-   standalone form-landing layout. */
-.form-container .default-content-wrapper h2 { font-size: 40px; line-height: 1.3; font-weight: 700; color: var(--heading); margin: 0 0 20px; }
+   mobile-first 28px title stepping up to 40px on desktop, uniform 16px centered
+   paragraphs. The hero-card and modal override these (blocks/hero, smaller card
+   heading) so this only affects the standalone form-landing layout. */
+.form-container .default-content-wrapper h2 { font-size: 28px; line-height: 1.3; font-weight: 700; color: var(--heading); margin: 0 0 20px; }
 .form-container .default-content-wrapper p { font-size: 16px; color: var(--heading); max-width: 44em; margin: 0 auto 12px; line-height: 1.3; text-align: center; }
 .form-container .default-content-wrapper p a { color: var(--primary); text-decoration: underline; }
 
@@ -110,7 +110,7 @@
 
 .form.card {
   background: var(--background-color); border: 1px solid var(--line); border-radius: var(--radius-card);
-  max-width: 420px; margin: 0 auto; padding: 32px; box-shadow: 0 12px 32px rgb(0 0 0 / 12%);
+  max-width: none; margin: 0 auto; padding: 24px; box-shadow: 0 12px 32px rgb(0 0 0 / 12%);
 }
 .form.card .form-header { font-size: var(--heading-font-size-m); margin: 0 0 8px; }
 
@@ -120,7 +120,7 @@
 .section.form-container:has(.form.download) > div { max-width: var(--container); margin: 0 auto; }
 
 .section.form-container:has(.form.download):has(.default-content-wrapper) {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: start;
+  display: grid; grid-template-columns: 1fr; gap: 32px; align-items: start;
 }
 .section.form-container:has(.form.download) .default-content-wrapper { text-align: left; color: #d5e0ec; }
 
@@ -134,12 +134,13 @@
 }
 .form.download .form-header { font-size: 22px; font-weight: 700; color: var(--heading); margin: 0 0 20px; }
 
-@media (width <= 900px) {
-  .section.form-container:has(.form.download):has(.default-content-wrapper) { grid-template-columns: 1fr; gap: 32px; }
+/* Tablet+: standalone heading grows, the card regains its fixed centered width. */
+@media (width >= 768px) {
+  .form-container .default-content-wrapper h2 { font-size: 40px; }
+  .form.card { max-width: 420px; padding: 32px; }
 }
 
-@media (width <= 768px) {
-  .form-container .default-content-wrapper h2 { font-size: 28px; }
-  .form { max-width: none; }
-  .form.card { max-width: none; padding: 24px; }
+/* Desktop: the gated-download band splits into two columns. */
+@media (width >= 900px) {
+  .section.form-container:has(.form.download):has(.default-content-wrapper) { grid-template-columns: 1fr 1fr; gap: 48px; }
 }
