@@ -380,6 +380,16 @@ function buildCardCarousel(figures) {
 
   if (figures.length <= 1) return wrap;
 
+  // carousel semantics for screen readers (mirrors blocks/carousel)
+  wrap.setAttribute('role', 'region');
+  wrap.setAttribute('aria-roledescription', 'carousel');
+  wrap.setAttribute('aria-label', 'Customer testimonials');
+  figures.forEach((f, i) => {
+    f.setAttribute('role', 'group');
+    f.setAttribute('aria-roledescription', 'slide');
+    f.setAttribute('aria-label', `${i + 1} of ${figures.length}`);
+  });
+
   const nav = document.createElement('div');
   nav.className = 'testimonial-carousel-nav';
 
@@ -399,15 +409,19 @@ function buildCardCarousel(figures) {
   });
   dotsWrap.append(...dots);
 
+  // icon path is codeBasePath-prefixed — EDS isn't guaranteed to be root-served
+  const iconBase = `${window.hlx?.codeBasePath || ''}/icons`;
   const prev = document.createElement('button');
   prev.type = 'button';
   prev.className = 'testimonial-arrow testimonial-prev';
   prev.setAttribute('aria-label', 'Previous testimonial');
+  prev.style.setProperty('--tc-chevron', `url("${iconBase}/chevron-left.svg")`);
 
   const next = document.createElement('button');
   next.type = 'button';
   next.className = 'testimonial-arrow testimonial-next';
   next.setAttribute('aria-label', 'Next testimonial');
+  next.style.setProperty('--tc-chevron', `url("${iconBase}/chevron-right.svg")`);
 
   nav.append(dotsWrap, prev, next);
   wrap.append(nav);
@@ -449,6 +463,9 @@ function buildCardCarousel(figures) {
     if (Math.abs(dx) > 40) go(index + (dx < 0 ? 1 : -1));
     startX = null;
   });
+  // an interrupted gesture (scroll/back-nav hijack) fires pointercancel, not
+  // pointerup — reset so a later tap doesn't compute dx against a stale startX
+  viewport.addEventListener('pointercancel', () => { startX = null; });
 
   go(0);
   return wrap;
