@@ -5,9 +5,10 @@
  * ChiliPiper-only demo booking (bookDemo).
  *
  * Per-page config rows (author): formId, chiliPiperRouter, downloadUrl,
- * successUrl, header, subheader, disclaimer. Site-wide values (munchkin,
- * chilipiper subdomain, script URLs) come from /site-config.json via
- * getSiteConfig() — never authored per page, never hardcoded.
+ * successUrl, header, subheader, disclaimer, recaptcha (per-form v3 opt-in).
+ * Site-wide values (munchkin, chilipiper subdomain, script URLs, reCAPTCHA
+ * site key/verify endpoint) come from /site-config.json via getSiteConfig() —
+ * never authored per page, never hardcoded.
  *
  * CSS: blocks/form/form.css
  */
@@ -26,10 +27,19 @@ const CONFIG_KEYS = [
   'header',
   'subheader',
   'disclaimer',
+  'recaptcha',
 ];
 
 const CHILIPIPER_SRC_DEFAULT = '//js.chilipiper.com/marketing.js';
 const SCHEDULE_FRAGMENT = '/fragments/schedule-call';
+
+// reCAPTCHA v3 (invisible). erp.intuit.com's own siteverify proxy scores the
+// token; enable per form block via the `recaptcha` config row. Runs only on an
+// *.intuit.com origin (the endpoint's CORS allowlist) — see setupRecaptcha.
+const RECAPTCHA_API_SRC = 'https://www.google.com/recaptcha/api.js';
+const RECAPTCHA_DEFAULT_THRESHOLD = 0.3;
+const RECAPTCHA_MAX_ATTEMPTS = 3;
+const RECAPTCHA_RETRY_MS = 2000;
 
 // getSiteConfig lives in scripts.js; import it dynamically so this block (which
 // scripts.js's graph pulls in for the schedule modal) doesn't form a static cycle.
@@ -58,6 +68,7 @@ export function parseFormConfig(block) {
     header: found.header,
     subheader: found.subheader,
     disclaimer: found.disclaimer,
+    recaptcha: found.recaptcha === 'true',
   };
 }
 
@@ -122,6 +133,55 @@ async function chiliPiperHandoff(cfg, router, form) {
   return true;
 }
 
+// reCAPTCHA v3, mirroring erp.intuit.com: on form load fetch a score token and
+// verify it via Intuit's siteverify proxy, then gate the Marketo submit on the
+// result (Marketo's own captcha is off; the token is never a form field). The
+// verify endpoint's CORS allowlist is *.intuit.com, so this is a no-op that
+// never blocks a submit anywhere else. Config: per-form `recaptcha` opt-in plus
+// site-wide recaptcha.siteKey/verifyUrl/apiKey/scoreThreshold from /site-config.json.
+async function setupRecaptcha(cfg, config, form) {
+  const siteKey = cfg['recaptcha.siteKey'];
+  const verifyUrl = cfg['recaptcha.verifyUrl'];
+  const apiKey = cfg['recaptcha.apiKey'];
+  if (!config.recaptcha || cfg['recaptcha.enabled'] === false || !siteKey || !verifyUrl || !apiKey) {
+    return;
+  }
+  const threshold = parseFloat(cfg['recaptcha.scoreThreshold']) || RECAPTCHA_DEFAULT_THRESHOLD;
+
+  // Distinguish "endpoint says bot" (low/invalid score → block) from "endpoint
+  // unreachable" (network/CORS → allow, so an outage never drops real leads).
+  const verify = async (token) => {
+    try {
+      const res = await fetch(verifyUrl, {
+        method: 'POST',
+        headers: { Authorization: apiKey, 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `response=${encodeURIComponent(token)}`,
+      });
+      const data = await res.json();
+      if (data.success === true) return data.score === undefined || data.score >= threshold;
+      return false; // expired/invalid/low-score token — refresh and retry
+    } catch (e) {
+      return true;
+    }
+  };
+
+  let verified = false;
+  form.onValidate(() => form.submittable(verified));
+
+  await loadScript(`${RECAPTCHA_API_SRC}?render=${siteKey}`);
+  let attempts = 0;
+  const run = () => window.grecaptcha?.ready(() => {
+    window.grecaptcha.execute(siteKey, { action: '' })
+      .then(async (token) => {
+        verified = await verify(token);
+        attempts += 1;
+        if (!verified && attempts < RECAPTCHA_MAX_ATTEMPTS) setTimeout(run, RECAPTCHA_RETRY_MS);
+      })
+      .catch(() => { verified = true; }); // grecaptcha unavailable — don't block leads
+  });
+  run();
+}
+
 async function embedMarketoForm(formEl, cfg, config) {
   const munchkin = cfg['marketo.munchkin'];
   if (!munchkin) return;
@@ -138,6 +198,7 @@ async function embedMarketoForm(formEl, cfg, config) {
       el.innerHTML = config.disclaimer;
       btnRow.parentNode.insertBefore(el, btnRow);
     }
+    setupRecaptcha(cfg, config, form);
     form.onSuccess((vals) => {
       try { trackFormSubmit(marketoValuesToLead(vals)); } catch (e) { /* non-fatal */ }
       chiliPiperHandoff(cfg, config.chiliPiperRouter, form);

@@ -11,6 +11,8 @@ vi.mock('../plugins/martech/src/index.js', () => ({
 vi.mock('../scripts/aem.js', () => ({
   loadScript: vi.fn(() => Promise.resolve()),
 }));
+import { getSiteConfig } from '../scripts/scripts.js';
+
 vi.mock('../scripts/scripts.js', () => ({
   getSiteConfig: vi.fn(() => Promise.resolve({
     'marketo.munchkin': '743-RZM-619',
@@ -20,11 +22,30 @@ vi.mock('../scripts/scripts.js', () => ({
 
 const flush = () => new Promise((r) => { setTimeout(r, 0); });
 
+const RECAPTCHA_CFG = {
+  'marketo.munchkin': '743-RZM-619',
+  'chilipiper.subdomain': 'intuitsales',
+  'recaptcha.enabled': true,
+  'recaptcha.siteKey': '6LeQ-test',
+  'recaptcha.verifyUrl': 'https://marketingplatform.api.intuit.com/v3/captcha/verify',
+  'recaptcha.apiKey': 'Intuit_APIKey intuit_apikey=test',
+};
+
 let onSuccessFn;
+let onValidateFn;
+let submittable;
 beforeEach(() => {
   onSuccessFn = null;
+  onValidateFn = null;
+  submittable = vi.fn();
   sendEvent.mockClear();
+  getSiteConfig.mockResolvedValue({
+    'marketo.munchkin': '743-RZM-619',
+    'chilipiper.subdomain': 'intuitsales',
+  });
   delete window.utag;
+  delete window.grecaptcha;
+  delete global.fetch;
   global.IntersectionObserver = class {
     constructor(cb) { this.cb = cb; }
 
@@ -39,12 +60,22 @@ beforeEach(() => {
       if (el) el.innerHTML = '<div class="mktoButtonRow"><button class="mktoButton" type="submit">Schedule a call</button></div>';
       cb({
         onSuccess: (fn) => { onSuccessFn = fn; },
+        onValidate: (fn) => { onValidateFn = fn; },
+        submittable,
         getValues: () => ({ Email: 'controller@brightpathco.com', FirstName: 'Dana', Company: 'Bright Path' }),
       });
     }),
   };
   window.ChiliPiper = { submit: vi.fn(), scheduling: vi.fn() };
 });
+
+// grecaptcha stub whose execute() resolves the given token
+function mockGrecaptcha(token = 'tok') {
+  window.grecaptcha = {
+    ready: (fn) => fn(),
+    execute: vi.fn(() => Promise.resolve(token)),
+  };
+}
 
 function make(rows) {
   const block = document.createElement('div');
@@ -65,6 +96,12 @@ describe('parseFormConfig', () => {
     expect(cfg.chiliPiperRouter).toBe('mid-us-webform-managed-ies');
     expect(cfg.header).toBe('Let’s connect');
     expect(cfg.downloadUrl).toBe('/assets/report.pdf');
+  });
+
+  it('parses the per-form recaptcha opt-in as a boolean', () => {
+    expect(parseFormConfig(make([['formId', '1058'], ['recaptcha', 'true']])).recaptcha).toBe(true);
+    expect(parseFormConfig(make([['formId', '1058'], ['recaptcha', 'false']])).recaptcha).toBe(false);
+    expect(parseFormConfig(make([['formId', '1058']])).recaptcha).toBe(false);
   });
 });
 
@@ -135,5 +172,65 @@ describe('decorate — live Marketo form', () => {
     // analytics preserved: with no Tealium, the Adobe identity event fires with mapped values
     expect(sendEvent).toHaveBeenCalledTimes(1);
     expect(sendEvent.mock.calls[0][0].xdm.identityMap.Email[0].id).toBe('controller@brightpathco.com');
+  });
+});
+
+describe('decorate — reCAPTCHA v3 gate', () => {
+  const settle = async () => { for (let i = 0; i < 6; i += 1) await flush(); };
+
+  async function decorateWithRecaptcha(rows, fetchImpl) {
+    getSiteConfig.mockResolvedValue(RECAPTCHA_CFG);
+    mockGrecaptcha('score-token');
+    global.fetch = vi.fn(fetchImpl);
+    await decorate(make([['formId', '1058'], ['recaptcha', 'true'], ...rows]));
+    await settle();
+  }
+
+  const okScore = () => Promise.resolve({ json: () => Promise.resolve({ success: true, score: 0.9 }) });
+  const lowScore = () => Promise.resolve({ json: () => Promise.resolve({ success: true, score: 0.1 }) });
+
+  it('does not load reCAPTCHA or register a gate when the form does not opt in', async () => {
+    getSiteConfig.mockResolvedValue(RECAPTCHA_CFG);
+    global.fetch = vi.fn(okScore);
+    await decorate(make([['formId', '1058']])); // no recaptcha row
+    await flush();
+    expect(onValidateFn).toBeNull();
+    expect(window.grecaptcha).toBeUndefined();
+  });
+
+  it('does nothing when reCAPTCHA is globally disabled, even if the form opts in', async () => {
+    getSiteConfig.mockResolvedValue({ ...RECAPTCHA_CFG, 'recaptcha.enabled': false });
+    global.fetch = vi.fn(okScore);
+    await decorate(make([['formId', '1058'], ['recaptcha', 'true']]));
+    await flush();
+    expect(onValidateFn).toBeNull();
+  });
+
+  it('verifies the token and marks the form submittable on a passing score', async () => {
+    await decorateWithRecaptcha([], okScore);
+    expect(window.grecaptcha.execute).toHaveBeenCalledWith('6LeQ-test', { action: '' });
+    // token POSTed to the Intuit siteverify proxy with the API key + response body
+    expect(global.fetch).toHaveBeenCalledWith(
+      RECAPTCHA_CFG['recaptcha.verifyUrl'],
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({ Authorization: RECAPTCHA_CFG['recaptcha.apiKey'] }),
+        body: 'response=score-token',
+      }),
+    );
+    onValidateFn();
+    expect(submittable).toHaveBeenLastCalledWith(true);
+  });
+
+  it('blocks submit on a failing score', async () => {
+    await decorateWithRecaptcha([], lowScore);
+    onValidateFn();
+    expect(submittable).toHaveBeenLastCalledWith(false);
+  });
+
+  it('fails open (allows submit) when the verify endpoint is unreachable', async () => {
+    await decorateWithRecaptcha([], () => Promise.reject(new Error('CORS')));
+    onValidateFn();
+    expect(submittable).toHaveBeenLastCalledWith(true);
   });
 });
