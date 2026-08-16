@@ -202,3 +202,65 @@
 @media (min-width: 900px) {
   .testimonial .testimonial-card { flex: 1 1 calc(33.333% - 16px); }
 }
+
+/* .carousel — opt-in single-view slider with dot pagination + prev/next arrows,
+   matching production. Overrides the side-by-side card grid above so exactly
+   one card shows at a time; scoped so the default .card layout is unaffected. */
+.testimonial.card.carousel { display: block; max-width: var(--container); }
+.testimonial.card.carousel .testimonial-carousel-viewport { overflow: hidden; }
+
+.testimonial.card.carousel .testimonial-carousel-track {
+  display: flex;
+  transition: transform 0.4s cubic-bezier(0.35, 0, 0.25, 1);
+}
+.testimonial.card.carousel .testimonial-card { flex: 0 0 100%; box-sizing: border-box; }
+
+/* pagination: dots + prev/next arrows, bottom-right (matches production) */
+.testimonial.card.carousel .testimonial-carousel-nav {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  margin-top: 28px;
+}
+
+.testimonial.card.carousel .testimonial-dots {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-right: 8px;
+}
+
+.testimonial.card.carousel .testimonial-dot {
+  width: 10px;
+  height: 10px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: #c3ccd3;
+  cursor: pointer;
+}
+
+.testimonial.card.carousel .testimonial-dot.is-active { background: var(--heading); }
+
+.testimonial.card.carousel .testimonial-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--navy);
+  color: #fff;
+  cursor: pointer;
+}
+
+.testimonial.card.carousel .testimonial-arrow svg { width: 18px; height: 18px; }
+.testimonial.card.carousel .testimonial-arrow:disabled { background: #d3d9dd; cursor: default; }
+
+@media (min-width: 600px) {
+  /* keep one-at-a-time even where the default .card grid would go multi-column */
+  .testimonial.card.carousel .testimonial-card { flex: 0 0 100%; box-sizing: border-box; }
+}

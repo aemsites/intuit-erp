@@ -50,6 +50,40 @@ describe('testimonial card variant', () => {
     expect(fig.querySelector('figcaption').textContent).toContain('Anonymous');
   });
 
+  it('.carousel variant wraps cards in a one-at-a-time slider with dots + prev/next arrows', () => {
+    const block = makeCard(3);
+    block.classList.add('carousel');
+    decorate(block);
+    expect(block.querySelector('.testimonial-carousel')).not.toBeNull();
+    expect(block.querySelectorAll('.testimonial-carousel-track > figure.testimonial-card').length).toBe(3);
+    const dots = block.querySelectorAll('.testimonial-dot');
+    expect(dots.length).toBe(3);
+    expect([...dots].every((d) => d.textContent === '')).toBe(true); // dots, not numbers
+    expect(dots[0].classList.contains('is-active')).toBe(true);
+    expect(block.querySelector('.testimonial-prev')).not.toBeNull();
+    expect(block.querySelector('.testimonial-next')).not.toBeNull();
+    // bounded: prev disabled on the first slide, next enabled
+    expect(block.querySelector('.testimonial-prev').disabled).toBe(true);
+    expect(block.querySelector('.testimonial-next').disabled).toBe(false);
+  });
+
+  it('.carousel with a single card renders no dots or arrows', () => {
+    const block = makeCard(1);
+    block.classList.add('carousel');
+    decorate(block);
+    expect(block.querySelector('.testimonial-carousel')).not.toBeNull();
+    expect(block.querySelector('.testimonial-dot')).toBeNull();
+    expect(block.querySelector('.testimonial-arrow')).toBeNull();
+  });
+
+  it('default .card (no carousel) stays stacked — no carousel wrapper or dots', () => {
+    const block = makeCard(3);
+    decorate(block);
+    expect(block.querySelector('.testimonial-carousel')).toBeNull();
+    expect(block.querySelector('.testimonial-dot')).toBeNull();
+    expect(block.querySelectorAll(':scope > figure.testimonial-card').length).toBe(3);
+  });
+
   it('does not affect the default (non-card) rendering path', () => {
     const block = document.createElement('div');
     block.className = 'testimonial block';

@@ -358,10 +358,115 @@ function buildVideoSplit(cells) {
   return grid;
 }
 
+const CHEVRON_LEFT = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const CHEVRON_RIGHT = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+/**
+ * Wraps card figures into a one-at-a-time carousel with dot pagination + prev/
+ * next arrows and horizontal swipe, matching production's single-view
+ * testimonial slider. Opt-in via the `.carousel` variant on a `.testimonial.card`
+ * block; a single card renders as-is with no controls.
+ * @param {HTMLElement[]} figures the `.testimonial-card` elements
+ * @returns {HTMLElement} the carousel wrapper
+ */
+function buildCardCarousel(figures) {
+  const wrap = document.createElement('div');
+  wrap.className = 'testimonial-carousel';
+
+  const viewport = document.createElement('div');
+  viewport.className = 'testimonial-carousel-viewport';
+  const track = document.createElement('div');
+  track.className = 'testimonial-carousel-track';
+  track.append(...figures);
+  viewport.append(track);
+  wrap.append(viewport);
+
+  if (figures.length <= 1) return wrap;
+
+  const nav = document.createElement('div');
+  nav.className = 'testimonial-carousel-nav';
+
+  const dotsWrap = document.createElement('div');
+  dotsWrap.className = 'testimonial-dots';
+  dotsWrap.setAttribute('role', 'tablist');
+  dotsWrap.setAttribute('aria-label', 'Customer testimonials');
+
+  let index = 0;
+  const dots = figures.map((fig, i) => {
+    const dot = document.createElement('button');
+    dot.type = 'button';
+    dot.className = 'testimonial-dot';
+    dot.setAttribute('role', 'tab');
+    dot.setAttribute('aria-label', `Show testimonial ${i + 1} of ${figures.length}`);
+    return dot;
+  });
+  dotsWrap.append(...dots);
+
+  const prev = document.createElement('button');
+  prev.type = 'button';
+  prev.className = 'testimonial-arrow testimonial-prev';
+  prev.setAttribute('aria-label', 'Previous testimonial');
+  prev.innerHTML = CHEVRON_LEFT;
+
+  const next = document.createElement('button');
+  next.type = 'button';
+  next.className = 'testimonial-arrow testimonial-next';
+  next.setAttribute('aria-label', 'Next testimonial');
+  next.innerHTML = CHEVRON_RIGHT;
+
+  nav.append(dotsWrap, prev, next);
+  wrap.append(nav);
+
+  const go = (i) => {
+    index = Math.max(0, Math.min(i, figures.length - 1));
+    track.style.transform = `translateX(-${index * 100}%)`;
+    dots.forEach((d, di) => {
+      d.classList.toggle('is-active', di === index);
+      d.setAttribute('aria-selected', di === index ? 'true' : 'false');
+      d.tabIndex = di === index ? 0 : -1;
+    });
+    figures.forEach((f, fi) => { f.inert = fi !== index; });
+    prev.disabled = index === 0;
+    next.disabled = index === figures.length - 1;
+  };
+
+  dots.forEach((d, i) => d.addEventListener('click', () => go(i)));
+  prev.addEventListener('click', () => go(index - 1));
+  next.addEventListener('click', () => go(index + 1));
+  dotsWrap.addEventListener('keydown', (e) => {
+    let target = null;
+    if (e.key === 'ArrowRight') target = index + 1;
+    else if (e.key === 'ArrowLeft') target = index - 1;
+    else if (e.key === 'Home') target = 0;
+    else if (e.key === 'End') target = figures.length - 1;
+    if (target === null) return;
+    e.preventDefault();
+    go(target);
+    dots[index].focus();
+  });
+
+  // horizontal swipe
+  let startX = null;
+  viewport.addEventListener('pointerdown', (e) => { startX = e.clientX; });
+  viewport.addEventListener('pointerup', (e) => {
+    if (startX === null) return;
+    const dx = e.clientX - startX;
+    if (Math.abs(dx) > 40) go(index + (dx < 0 ? 1 : -1));
+    startX = null;
+  });
+
+  go(0);
+  return wrap;
+}
+
 export default function decorate(block) {
   if (block.classList.contains('card')) {
     const figures = [...block.querySelectorAll(':scope > div')].map(buildCard);
-    block.replaceChildren(...figures);
+    if (block.classList.contains('carousel')) {
+      block.replaceChildren(buildCardCarousel(figures));
+    } else {
+      block.replaceChildren(...figures);
+    }
     return;
   }
 
