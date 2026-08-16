@@ -358,9 +358,6 @@ function buildVideoSplit(cells) {
   return grid;
 }
 
-const CHEVRON_LEFT = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-const CHEVRON_RIGHT = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-
 /**
  * Wraps card figures into a one-at-a-time carousel with dot pagination + prev/
  * next arrows and horizontal swipe, matching production's single-view
@@ -406,13 +403,11 @@ function buildCardCarousel(figures) {
   prev.type = 'button';
   prev.className = 'testimonial-arrow testimonial-prev';
   prev.setAttribute('aria-label', 'Previous testimonial');
-  prev.innerHTML = CHEVRON_LEFT;
 
   const next = document.createElement('button');
   next.type = 'button';
   next.className = 'testimonial-arrow testimonial-next';
   next.setAttribute('aria-label', 'Next testimonial');
-  next.innerHTML = CHEVRON_RIGHT;
 
   nav.append(dotsWrap, prev, next);
   wrap.append(nav);

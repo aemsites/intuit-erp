@@ -287,7 +287,26 @@
   cursor: pointer;
 }
 
-.testimonial.card.carousel .testimonial-arrow svg { width: 18px; height: 18px; }
+/* chevron glyph from /icons/*.svg, masked so the button `color` tints it */
+.testimonial.card.carousel .testimonial-arrow::before {
+  content: "";
+  width: 18px;
+  height: 18px;
+  background: currentcolor;
+  mask: center / 18px no-repeat;
+  -webkit-mask: center / 18px no-repeat;
+}
+
+.testimonial.card.carousel .testimonial-prev::before {
+  mask-image: url("/icons/chevron-left.svg");
+  -webkit-mask-image: url("/icons/chevron-left.svg");
+}
+
+.testimonial.card.carousel .testimonial-next::before {
+  mask-image: url("/icons/chevron-right.svg");
+  -webkit-mask-image: url("/icons/chevron-right.svg");
+}
+
 .testimonial.card.carousel .testimonial-arrow:disabled { background: #d3d9dd; cursor: default; }
 
 @media (min-width: 600px) {
