@@ -1,6 +1,7 @@
 /**
  * logo-band — row of partner/customer logos, two layouts:
- *   default   responsive static grid
+ *   default   responsive column grid; each logo fills its column, so every logo
+ *             renders the same width
  *   .marquee  infinite scrolling band (dark, desaturated), behavior lifted
  *             from erp.intuit.com's #ies-slider: duplicate the logo set until
  *             it's wider than the viewport, clone that set once more for a
