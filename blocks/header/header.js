@@ -18,7 +18,7 @@
  * CSS: blocks/header/header.css · nav content: content/nav.html (nav-menu block)
  */
 import { getMetadata } from '../../scripts/aem.js';
-import { openScheduleModal } from '../../scripts/schedule-modal.js';
+import { openScheduleModal } from '../form/form.js';
 import { loadFragment } from '../fragment/fragment.js';
 import { enhanceSecondaryNavSearch } from '../blog-search/search-utils.js';
 import {

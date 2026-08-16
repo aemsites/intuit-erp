@@ -21,7 +21,7 @@
  *              card bottom (erp-solutions "Move to a modern ERP" / solution-cards)
  * CSS: blocks/media-text/media-text.css
  */
-import { bindScheduleLinks } from '../../scripts/schedule-modal.js';
+import { bindScheduleLinks } from '../form/form.js';
 
 function buildCopy(textCell) {
   const copy = document.createElement('div');
