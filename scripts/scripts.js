@@ -445,6 +445,14 @@ async function loadEager(doc) {
     document.body.classList.add('has-events-bar');
   }
 
+  // Seed window.appVars before martech so the tracker finds it; analytics.js fills the arrays.
+  const appVars = window.appVars || (window.appVars = {});
+  const casId = getMetadata('cas-id') || getMetadata('page-cas-id');
+  appVars.externalContentIdentifier = casId || appVars.externalContentIdentifier || '';
+  appVars.pznRecDetailsArr = appVars.pznRecDetailsArr || [];
+  appVars.pznPageRecDetailsArr = appVars.pznPageRecDetailsArr || [];
+  appVars.ixpDetailsArr = appVars.ixpDetailsArr || [];
+
   // Gated conversion pages (e.g. /webinar-* form landings) opt out of the global
   // header/footer via `hide-header` / `hide-footer` metadata, matching production
   // which serves them chrome-less. Set the body classes eagerly (like has-events-bar)

@@ -95,7 +95,7 @@ describe('runExperiment', () => {
     expect(document.querySelector('main').innerHTML).not.toContain('BASE');
 
     // Analytics record published (treatment ⇒ has a replacement path).
-    expect(JSON.parse(window.appVars.ixpDetailsArr)).toEqual([{
+    expect(window.appVars.ixpDetailsArr).toEqual([{
       experiment_id: 385944,
       experiment_version: 7,
       experiment_treatment: 39927,
@@ -133,7 +133,7 @@ describe('runExperiment', () => {
     fetchDecision.mockResolvedValue({ assignments: [assignment({ control: true })] });
     await runExperiment(document);
     expect(document.querySelector('main').innerHTML).toContain('BASE');
-    expect(JSON.parse(window.appVars.ixpDetailsArr)).toEqual([{
+    expect(window.appVars.ixpDetailsArr).toEqual([{
       experiment_id: 385944,
       experiment_version: 7,
       experiment_treatment: 39927,
@@ -234,7 +234,7 @@ describe('runBlockExperiments', () => {
     expect(source).toContain('label=Homepage_Hero');
     expect(source).not.toContain('fidelity=');
     expect(applyFragment).toHaveBeenCalledWith(m.querySelector('[data-exp]'), '/fragments/exp/a');
-    expect(JSON.parse(window.appVars.ixpDetailsArr)).toHaveLength(1);
+    expect(window.appVars.ixpDetailsArr).toHaveLength(1);
   });
 
   it('queries by experimentId (numeric id) for a block-scoped tag', async () => {
