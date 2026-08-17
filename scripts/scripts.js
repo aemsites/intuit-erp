@@ -445,6 +445,18 @@ async function loadEager(doc) {
     document.body.classList.add('has-events-bar');
   }
 
+  // Gated conversion pages (e.g. /webinar-* form landings) opt out of the global
+  // header/footer via `hide-header` / `hide-footer` metadata, matching production
+  // which serves them chrome-less. Set the body classes eagerly (like has-events-bar)
+  // so styles.css can drop the reserved header height NOW and avoid a post-LCP
+  // layout shift when loadLazy skips loadHeader/loadFooter.
+  if (['true', 'yes', 'hide'].includes((getMetadata('hide-header') || '').trim().toLowerCase())) {
+    document.body.classList.add('hide-header');
+  }
+  if (['true', 'yes', 'hide'].includes((getMetadata('hide-footer') || '').trim().toLowerCase())) {
+    document.body.classList.add('hide-footer');
+  }
+
   // Adobe Web SDK (aem-martech). Kept INERT until a real AEP datastream id is
   // set (MARTECH_ENABLED). When enabled, initMartech kicks off the datastream
   // call that will surface RTCDP/AJO propositions; martechEager applies any
@@ -536,7 +548,13 @@ function shouldRenderContactUs() {
  * @param {Element} doc The container element
  */
 async function loadLazy(doc) {
-  loadHeader(doc.querySelector('header'));
+  // Gated/conversion pages opt out of the global header/footer via the
+  // `hide-header` / `hide-footer` metadata, surfaced as body classes in the eager
+  // phase (see loadEager) so the reserved header height is dropped before LCP.
+  // Here we simply skip loading (and remove the empty element). Default: load both.
+  const headerEl = doc.querySelector('header');
+  if (headerEl && document.body.classList.contains('hide-header')) headerEl.remove();
+  else loadHeader(headerEl);
 
   const main = doc.querySelector('main');
   // Below-the-fold personalization/experimentation: run the sections after the
@@ -549,7 +567,9 @@ async function loadLazy(doc) {
   const element = hash ? doc.getElementById(hash.substring(1)) : false;
   if (hash && element) element.scrollIntoView();
 
-  loadFooter(doc.querySelector('footer'));
+  const footerEl = doc.querySelector('footer');
+  if (footerEl && document.body.classList.contains('hide-footer')) footerEl.remove();
+  else loadFooter(footerEl);
 
   // Persistent bottom-right sales widget ("Contact us" / "Talk to sales"),
   // present on every page except CONTACT_WIDGET_EXCLUDED_PATHS. Loaded here
