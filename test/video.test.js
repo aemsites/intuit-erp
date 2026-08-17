@@ -1,5 +1,40 @@
 import { describe, it, expect } from 'vitest';
-import { videoInfo, isVideoLink, posterFor } from '../blocks/video/video.js';
+import decorate, { videoInfo, isVideoLink, posterFor } from '../blocks/video/video.js';
+
+function makeVideoBlock(linkText, href) {
+  const block = document.createElement('div');
+  block.className = 'video block';
+  const a = document.createElement('a');
+  a.setAttribute('href', href);
+  a.textContent = linkText;
+  const p = document.createElement('p');
+  p.append(a);
+  const inner = document.createElement('div');
+  const cell = document.createElement('div');
+  cell.append(p);
+  inner.append(cell);
+  block.append(inner);
+  return block;
+}
+
+describe('video decorate — authored label', () => {
+  it('renders the authored link label (with duration) as a caption + keeps the play preview', () => {
+    const block = makeVideoBlock('See how it works (2:02)', 'https://www.youtube.com/watch?v=v7W4vIWey1U');
+    decorate(block);
+    expect(block.querySelector('.video-preview')).not.toBeNull();
+    const label = block.querySelector('.video-label');
+    expect(label).not.toBeNull();
+    expect(label.textContent).toBe('See how it works (2:02)');
+  });
+
+  it('omits the caption when the authored link text is just the bare URL', () => {
+    const url = 'https://www.youtube.com/watch?v=v7W4vIWey1U';
+    const block = makeVideoBlock(url, url);
+    decorate(block);
+    expect(block.querySelector('.video-preview')).not.toBeNull();
+    expect(block.querySelector('.video-label')).toBeNull();
+  });
+});
 
 describe('videoInfo', () => {
   it('parses a YouTube watch URL', () => {

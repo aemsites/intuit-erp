@@ -73,6 +73,9 @@ function openVideoModal(embedUrl, title) {
 export default function decorate(block) {
   const link = block.querySelector('a[href]');
   const href = link ? link.getAttribute('href') : block.textContent.trim();
+  // preserve the authored link label (e.g. "See how it works (2:02)") — the source
+  // renders it as a caption beside the play control; the old block discarded it.
+  const labelText = link ? link.textContent.trim() : '';
   const info = videoInfo(href);
   if (!info) return; // unrecognized host — leave the authored link untouched
 
@@ -98,5 +101,16 @@ export default function decorate(block) {
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
   });
 
-  block.replaceChildren(preview);
+  const nodes = [preview];
+  // render the authored label as a caption that also opens the video, unless the
+  // link was a bare URL (autoblocked links with no meaningful text).
+  if (labelText && labelText !== href && !/^https?:\/\//i.test(labelText)) {
+    const caption = document.createElement('button');
+    caption.type = 'button';
+    caption.className = 'video-label';
+    caption.textContent = labelText;
+    caption.addEventListener('click', open);
+    nodes.push(caption);
+  }
+  block.replaceChildren(...nodes);
 }
