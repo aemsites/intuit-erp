@@ -18,7 +18,18 @@
 /* config-authored copy around the form (see parseFormConfig in form.js) */
 .form .form-header { font-size: 24px; line-height: 1.2; font-weight: 400; color: var(--heading); margin: 0 0 8px; }
 .form .form-subheader { font-size: 15px; color: var(--text-muted); margin: 0 0 16px; line-height: 1.5; }
-.form .form-disclaimer { font-size: 12px; color: var(--text-muted); margin: 16px 0 0; line-height: 1.5; }
+
+/* sits above the field row, as upstream does, in an 800px centred column */
+.form .form-disclaimer {
+  font-size: 12px; line-height: 16px; color: #000;
+  text-align: center; max-width: 800px; margin: 0 auto 40px;
+}
+.form .form-disclaimer p { margin: 0 0 20px; }
+.form .form-disclaimer p:last-child { margin-bottom: 0; }
+.form .form-disclaimer a { color: #205ea3; }
+
+/* upstream underlines the Google policy links but not the Privacy Statement */
+.form .form-disclaimer a[href*="policies.google.com"] { text-decoration: underline; }
 
 /* ---- Marketo form (.mktoForm) — Marketo sets inline widths, so full-width
    layout needs !important. Keep overrides minimal; inherit the site's font.

@@ -190,14 +190,13 @@ async function embedMarketoForm(formEl, cfg, config) {
   const forms2Src = cfg['marketo.forms2Src'] || `${host}/js/forms2/js/forms2.min.js`;
   await loadScript(forms2Src);
   window.MktoForms2.loadForm(host, munchkin, config.formId, (form) => {
-    // Place the disclaimer between the fields and Marketo's submit button
-    // (matches erp.intuit.com), preserving its Privacy Statement link.
-    const btnRow = formEl.querySelector('.mktoButtonRow');
-    if (config.disclaimer && btnRow) {
+    // Upstream puts the disclaimer above the field row, not between the fields
+    // and the submit button. Inline markup (privacy/policy links) is preserved.
+    if (config.disclaimer) {
       const el = document.createElement('div');
       el.className = 'form-disclaimer';
       el.innerHTML = config.disclaimer;
-      btnRow.parentNode.insertBefore(el, btnRow);
+      formEl.parentNode.insertBefore(el, formEl);
     }
     setupRecaptcha(cfg, config, form);
     // A ChiliPiper handoff only actually fires when both router (authored) and
