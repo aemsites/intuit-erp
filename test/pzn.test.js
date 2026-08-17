@@ -5,12 +5,13 @@ import {
 vi.mock('../scripts/personalization/decision.js', () => ({
   fetchDecision: vi.fn(),
   applyFragment: vi.fn().mockResolvedValue(true),
+  swapMain: vi.fn().mockResolvedValue(true),
 }));
 
 // eslint-disable-next-line import/first
-import { collectSlots, runPersonalization } from '../scripts/pzn.js';
+import { collectSlots, runPersonalization, runPersonalizationPage } from '../scripts/pzn.js';
 // eslint-disable-next-line import/first
-import { fetchDecision, applyFragment } from '../scripts/personalization/decision.js';
+import { fetchDecision, applyFragment, swapMain } from '../scripts/personalization/decision.js';
 // eslint-disable-next-line import/first
 import { resetAnalytics } from '../scripts/personalization/analytics.js';
 
@@ -20,6 +21,7 @@ beforeEach(() => {
   // restoreMocks wipes the factory's mockResolvedValue before each test; re-arm the
   // applied-successfully default so applyFragment resolves like production.
   applyFragment.mockResolvedValue(true);
+  swapMain.mockResolvedValue(true);
   // Run the idle-deferred analytics flush synchronously for deterministic asserts.
   window.requestIdleCallback = (cb) => { cb(); return 0; };
 });
@@ -95,6 +97,33 @@ describe('collectSlots', () => {
   it('returns [] when there are no data-pzn sections', () => {
     expect(collectSlots(main('<div class="hero"></div>'))).toEqual([]);
   });
+
+  // Req 4: when the same target carries both pzn and exp, IXP wins — drop the pzn slot.
+  describe('IXP precedence (Req 4)', () => {
+    it('drops a whole-section pzn slot when the section also has a whole-section exp', () => {
+      const m = main('<div data-pzn="p" data-exp="385944"></div>');
+      expect(collectSlots(m)).toEqual([]);
+    });
+
+    it('drops a block-scoped pzn slot when exp targets the same block', () => {
+      const m = main('<div data-pzn="p" data-pzn-block="cards" data-exp="e" data-exp-block="cards"><div class="cards" data-block-name="cards"></div></div>');
+      expect(collectSlots(m)).toEqual([]);
+    });
+
+    it('keeps pzn when exp targets a different block (independent targets)', () => {
+      const m = main('<div data-pzn="p" data-pzn-block="cards" data-exp="e" data-exp-block="hero"><div class="cards" data-block-name="cards"></div><div class="hero" data-block-name="hero"></div></div>');
+      const slots = collectSlots(m);
+      expect(slots).toHaveLength(1);
+      expect(slots[0].el).toBe(m.querySelector('[data-block-name="cards"]'));
+    });
+
+    it('keeps pzn (whole section) when exp is scoped to a block (different targets)', () => {
+      const m = main('<div data-pzn="p" data-exp="e" data-exp-block="cards"><div class="cards" data-block-name="cards"></div></div>');
+      const slots = collectSlots(m);
+      expect(slots).toHaveLength(1);
+      expect(slots[0].el).toBe(m.querySelector('[data-pzn]'));
+    });
+  });
 });
 
 describe('runPersonalization', () => {
@@ -108,7 +137,12 @@ describe('runPersonalization', () => {
     const [source, opts] = fetchDecision.mock.calls[0];
     expect(source).toBe('pzn');
     expect(opts.method).toBe('POST');
-    expect(opts.body.slots).toEqual([{ placement: 'alpha' }, { placement: 'beta' }]);
+    // Full upstream batch body: one batchItem per placement + a shared attributes object.
+    expect(opts.body.batchItems.map((b) => b.placement)).toEqual(['alpha', 'beta']);
+    expect(opts.body.batchItems[0]).toMatchObject({
+      experience: 'marketing', numberOfRecommendations: 1, recommendationMetadata: true,
+    });
+    expect(opts.body.attributes).toMatchObject({ permalink: expect.any(String), newVisitor: true });
 
     expect(applyFragment).toHaveBeenCalledTimes(1);
     expect(applyFragment.mock.calls[0][0]).toBe(m.querySelector('[data-pzn="alpha"]'));
@@ -144,7 +178,7 @@ describe('runPersonalization', () => {
     const m = main('<div data-pzn="alpha"></div><div data-pzn="alpha"></div>');
     fetchDecision.mockResolvedValue(batch('alpha', '/fragments/pzn/a'));
     await runPersonalization(m);
-    expect(fetchDecision.mock.calls[0][1].body.slots).toEqual([{ placement: 'alpha' }]);
+    expect(fetchDecision.mock.calls[0][1].body.batchItems.map((b) => b.placement)).toEqual(['alpha']);
     expect(applyFragment).toHaveBeenCalledTimes(2);
   });
 
@@ -168,7 +202,7 @@ describe('runPersonalization', () => {
     const first = m.querySelector('[data-pzn]');
     fetchDecision.mockResolvedValue({});
     await runPersonalization(m, { skip: first });
-    expect(fetchDecision.mock.calls[0][1].body.slots).toEqual([{ placement: 'beta' }]);
+    expect(fetchDecision.mock.calls[0][1].body.batchItems.map((b) => b.placement)).toEqual(['beta']);
   });
 
   // The block-level click channel: the applied slot carries the offer identity as the
@@ -233,5 +267,50 @@ describe('runPersonalization', () => {
       await runPersonalization(m);
       expect(m.querySelector('[data-pzn="alpha"]').hasAttribute('data-pzn-placement')).toBe(false);
     });
+  });
+});
+
+describe('runPersonalizationPage (whole-page pzn)', () => {
+  afterEach(() => {
+    document.head.innerHTML = '';
+    document.body.innerHTML = '';
+  });
+
+  it('does nothing when the page has no personalization-id metadata', async () => {
+    await runPersonalizationPage(document);
+    expect(fetchDecision).not.toHaveBeenCalled();
+    expect(swapMain).not.toHaveBeenCalled();
+  });
+
+  it('POSTs a one-placement batch, swaps <main>, stamps it, and records page analytics', async () => {
+    document.head.innerHTML = '<meta name="personalization-id" content="homepageHero">';
+    document.body.innerHTML = '<main></main>';
+    fetchDecision.mockResolvedValue(batch('homepageHero', '/fragments/pzn/home'));
+
+    await runPersonalizationPage(document);
+
+    const [source, opts] = fetchDecision.mock.calls[0];
+    expect(source).toBe('pzn');
+    expect(opts.method).toBe('POST');
+    expect(opts.body.batchItems.map((b) => b.placement)).toEqual(['homepageHero']);
+
+    expect(swapMain).toHaveBeenCalledTimes(1);
+    expect(swapMain.mock.calls[0][1]).toBe('/fragments/pzn/home');
+
+    // Whole-page pzn feeds the page analytics channel (was always empty before).
+    expect(window.appVars.pznPageRecDetailsArr).toEqual([expect.objectContaining({
+      personalization_placement: 'homepageHero',
+      personalization_id: 'rec-homepageHero',
+    })]);
+    // …and stamps <main> for the click channel (parity with page IXP).
+    expect(document.querySelector('main').getAttribute('data-pzn-id')).toBe('rec-homepageHero');
+  });
+
+  it('leaves the baseline (no swap) when the api returns null', async () => {
+    document.head.innerHTML = '<meta name="personalization-id" content="homepageHero">';
+    document.body.innerHTML = '<main></main>';
+    fetchDecision.mockResolvedValue(null);
+    await runPersonalizationPage(document);
+    expect(swapMain).not.toHaveBeenCalled();
   });
 });

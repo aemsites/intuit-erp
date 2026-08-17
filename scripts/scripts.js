@@ -489,14 +489,29 @@ async function loadEager(doc) {
   }
 
   await runExperimentation(doc, experimentationConfig);
-  // Intuit IXP whole-page experiment: swaps <main> before decoration. Metadata-
-  // gated (loaded only when enrolled) and phase-bounded so it never blocks reveal.
-  if (getMetadata('experiment-id') || getMetadata('experiment-label')) {
-    const [{ runExperiment }, { withTimeout }] = await Promise.all([
-      import('./exp.js'),
-      import('./personalization/decision.js'),
-    ]);
-    await withTimeout(runExperiment(doc), 1500);
+  // Intuit whole-page personalization/experimentation: swaps <main> before
+  // decoration. Metadata-gated (loaded only when enrolled) and phase-bounded so it
+  // never blocks reveal. IXP wins when a page carries both (Req 4). The one-shot
+  // guard means a swapped-in variant that itself carries page-level tags can never
+  // trigger a second full-page swap (Req 5 — no recursion).
+  window.hlx = window.hlx || {};
+  if (!window.hlx.pageExperienceApplied) {
+    window.hlx.pageExperienceApplied = true;
+    const pageExp = getMetadata('experiment-id') || getMetadata('experiment-label');
+    const pagePzn = getMetadata('personalization-id');
+    if (pageExp) {
+      const [{ runExperiment }, { withTimeout }] = await Promise.all([
+        import('./exp.js'),
+        import('./personalization/decision.js'),
+      ]);
+      await withTimeout(runExperiment(doc), 1500);
+    } else if (pagePzn) {
+      const [{ runPersonalizationPage }, { withTimeout }] = await Promise.all([
+        import('./pzn.js'),
+        import('./personalization/decision.js'),
+      ]);
+      await withTimeout(runPersonalizationPage(doc), 1500);
+    }
   }
   const main = doc.querySelector('main');
   if (main) {

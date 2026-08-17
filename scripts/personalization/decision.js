@@ -20,10 +20,20 @@ export function fragmentPath(ref) {
   return ref.startsWith('/') ? ref : `/${ref}`;
 }
 
+// A per-request transaction id the pzn/ixp service correlates in its logs. Not a
+// secret — the front-end supplies it now that no worker sits in front.
+function intuitTid() {
+  const rand = window.crypto?.randomUUID
+    ? window.crypto.randomUUID()
+    : Math.random().toString(36).slice(2);
+  return `rp-${rand}`;
+}
+
 // Calls /api/<source>; returns parsed JSON, or null on any non-ok/timeout/parse
-// failure (fail-open — caller shows the baseline). Forwards a page ?ivid= for QA.
-// When `signal` is given the caller owns the deadline; otherwise a `timeoutMs`
-// (default 1000) internal AbortController is used.
+// failure (fail-open — caller shows the baseline). The visitor id + attributes are
+// built by the caller (see attributes.js) — ivid lives in the IXP query / PZN body,
+// not here. When `signal` is given the caller owns the deadline; otherwise a
+// `timeoutMs` (default 1000) internal AbortController is used.
 export async function fetchDecision(source, opts = {}) {
   const {
     method = 'GET', body, timeoutMs = 1000, signal: externalSignal,
@@ -36,15 +46,12 @@ export async function fetchDecision(source, opts = {}) {
     timer = setTimeout(() => controller.abort(), timeoutMs);
   }
   try {
-    let requestUrl = `${apiBase()}/${source}`;
-    const pageIvid = new URLSearchParams(window.location.search).get('ivid');
-    if (pageIvid) {
-      requestUrl += `${requestUrl.includes('?') ? '&' : '?'}ivid=${encodeURIComponent(pageIvid)}`;
-    }
-    const res = await fetch(requestUrl, {
+    const headers = { intuit_tid: intuitTid() };
+    if (body) headers['content-type'] = 'application/json';
+    const res = await fetch(`${apiBase()}/${source}`, {
       method,
       credentials: 'include',
-      headers: body ? { 'content-type': 'application/json' } : undefined,
+      headers,
       body: body ? JSON.stringify(body) : undefined,
       signal,
     });
@@ -54,6 +61,25 @@ export async function fetchDecision(source, opts = {}) {
     return null;
   } finally {
     if (timer) clearTimeout(timer);
+  }
+}
+
+// Replaces <main>'s raw content with a variation page's plain.html so the caller's
+// decorateMain decorates it. Bound by the caller's shared signal: fail-open, so a
+// late/aborted swap can't clobber already-decorated content. Returns true when the
+// swap lands. Shared by page-level IXP (exp.js) and page-level PZN (pzn.js).
+export async function swapMain(doc, variationPath, signal) {
+  const main = doc.querySelector('main');
+  if (!main) return false;
+  const path = fragmentPath(variationPath);
+  if (!path) return false;
+  try {
+    const resp = await fetch(`${path}.plain.html`, { signal });
+    if (!resp.ok) return false;
+    main.innerHTML = await resp.text();
+    return true;
+  } catch {
+    return false;
   }
 }
 
