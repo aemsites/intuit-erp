@@ -7,9 +7,11 @@ function makeCard(rows = 1) {
   const row = `
     <div>
       <div><img src="https://erp.intuit.com/a.jpg" alt="Jasmine Pyles"></div>
-      <div>“Accounting AI flagged a $6,000 discrepancy.”</div>
-      <div>Jasmine Pyles</div>
-      <div>VP of Finance, Tampa Bay EDC</div>
+      <div>
+        <p>“Accounting AI flagged a $6,000 discrepancy.”</p>
+        <p><strong>Jasmine Pyles</strong></p>
+        <p>VP of Finance, Tampa Bay EDC</p>
+      </div>
     </div>`;
   block.innerHTML = row.repeat(rows);
   return block;
@@ -39,8 +41,10 @@ describe('testimonial card variant', () => {
     block.innerHTML = `
       <div>
         <div></div>
-        <div>Great product.</div>
-        <div>Anonymous</div>
+        <div>
+          <p>Great product.</p>
+          <p><strong>Anonymous</strong></p>
+        </div>
       </div>`;
     decorate(block);
     const fig = block.querySelector('figure.testimonial-card');
@@ -48,6 +52,40 @@ describe('testimonial card variant', () => {
     expect(fig.querySelector('img.testimonial-photo')).toBeNull();
     expect(fig.querySelector('blockquote').textContent).toContain('Great product.');
     expect(fig.querySelector('figcaption').textContent).toContain('Anonymous');
+  });
+
+  it('.carousel variant wraps cards in a one-at-a-time slider with dots + prev/next arrows', () => {
+    const block = makeCard(3);
+    block.classList.add('carousel');
+    decorate(block);
+    expect(block.querySelector('.testimonial-carousel')).not.toBeNull();
+    expect(block.querySelectorAll('.testimonial-carousel-track > figure.testimonial-card').length).toBe(3);
+    const dots = block.querySelectorAll('.testimonial-dot');
+    expect(dots.length).toBe(3);
+    expect([...dots].every((d) => d.textContent === '')).toBe(true); // dots, not numbers
+    expect(dots[0].classList.contains('is-active')).toBe(true);
+    expect(block.querySelector('.testimonial-prev')).not.toBeNull();
+    expect(block.querySelector('.testimonial-next')).not.toBeNull();
+    // bounded: prev disabled on the first slide, next enabled
+    expect(block.querySelector('.testimonial-prev').disabled).toBe(true);
+    expect(block.querySelector('.testimonial-next').disabled).toBe(false);
+  });
+
+  it('.carousel with a single card renders no dots or arrows', () => {
+    const block = makeCard(1);
+    block.classList.add('carousel');
+    decorate(block);
+    expect(block.querySelector('.testimonial-carousel')).not.toBeNull();
+    expect(block.querySelector('.testimonial-dot')).toBeNull();
+    expect(block.querySelector('.testimonial-arrow')).toBeNull();
+  });
+
+  it('default .card (no carousel) stays stacked — no carousel wrapper or dots', () => {
+    const block = makeCard(3);
+    decorate(block);
+    expect(block.querySelector('.testimonial-carousel')).toBeNull();
+    expect(block.querySelector('.testimonial-dot')).toBeNull();
+    expect(block.querySelectorAll(':scope > figure.testimonial-card').length).toBe(3);
   });
 
   it('does not affect the default (non-card) rendering path', () => {
