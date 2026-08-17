@@ -35,6 +35,7 @@ import { sendOf1Signal, readAlloySegmentIds } from './of1-rtcdp-signal.js';
 // video block loads lazily when a video is actually decorated.
 import { isBlogPage, isCaseStudyPage } from '../blocks/blog-template/blog-detect.js';
 import { isVideoLink } from '../blocks/video/video-info.js';
+import { isGuidePage } from '../blocks/guide-hero/guide-detect.js';
 
 // Adobe Web SDK / AEP datastream. The datastream id is public (not a secret)
 // and safe in client source. While the id starts with "REPLACE_", martech is
@@ -229,6 +230,11 @@ function buildVideoAutoBlocks(main) {
 // elsewhere, which also serves as the "is this a blog page" gate below.
 let buildBlogTemplate;
 
+// Same treatment for the Guide landing-page card: imported in loadEager only for
+// `template: Guide` pages, so the other ~335 pages in the sitemap never fetch or
+// parse it. Undefined elsewhere, which is the gate in buildAutoBlocks.
+let buildGuideHeroAutoBlock;
+
 // Populated in loadEager (via dynamic import) only on case-study pages, so the
 // case-study-header module loads only where needed. Also serves as the gate in
 // buildAutoBlocks below.
@@ -248,6 +254,12 @@ function buildAutoBlocks(main) {
     // from re-injecting a right-rail link into every loaded fragment (which
     // buildAutoBlocks would then re-load — an infinite loop).
     if (buildBlogTemplate && main.isConnected) buildBlogTemplate(main);
+    // Guide landing pages get their own lead card instead. The isConnected guard
+    // matters as much here as above: loadFragment decorates a DETACHED main, and
+    // getMetadata reads the HOST page's head — so on a Guide page every loaded
+    // fragment would otherwise have its own first section wrapped in a second
+    // card (verified: 2 `.guide-hero` blocks, the fragment's heading inside one).
+    if (buildGuideHeroAutoBlock && main.isConnected) buildGuideHeroAutoBlock(main);
     // Case-study autoblock — synthesize the case-study-header (eyebrow + byline +
     // banner) from metadata when it isn't hand-authored, so migrated case studies
     // show their author. isConnected guard mirrors buildBlogTemplate (skip the
@@ -480,6 +492,12 @@ async function loadEager(doc) {
       // treatment as blog articles; that override lives in blog-template.css,
       // which only blog pages otherwise load.
       loadCSS(`${window.hlx.codeBasePath}/blocks/blog-template/blog-template.css`);
+    }
+    // Guide landing pages: same shape, so the module is fetched only for the
+    // pages that use it. Gated on the `Guide` template alone — see guide-detect.js
+    // for why the path is deliberately not part of the test.
+    if (isGuidePage()) {
+      ({ default: buildGuideHeroAutoBlock } = await import('../blocks/guide-hero/guide-hero-autoblock.js'));
     }
     decorateMain(main);
     // Personalize/experiment the first (LCP) section before reveal so the visitor
