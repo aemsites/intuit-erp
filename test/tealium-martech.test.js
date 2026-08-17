@@ -11,6 +11,7 @@ import TealiumMartech, {
   consentCdnHost,
   loadUtag,
   loadConsentStack,
+  loadObservabilityRum,
   settleConsent,
 } from '../plugins/tealium-martech/src/index.js';
 
@@ -482,6 +483,58 @@ describe('loadConsentStack', () => {
     await settle();
     document.getElementById('intuit-gdpr-util').dispatchEvent(new Event('error'));
 
+    await expect(promise).resolves.toBeUndefined();
+  });
+});
+
+describe('loadObservabilityRum (Intuit o11y RUM — page-authored on prod, prod-only)', () => {
+  it('env "prod": appends o11y-rum-web then o11y-rum-init, in order (init waits for the bundle)', async () => {
+    const promise = loadObservabilityRum('prod');
+
+    // 1. The RUM bundle loads first; the init/config script is not requested until it resolves,
+    //    so init never runs before window.O11yRUM (which the bundle defines) exists.
+    const bundle = document.getElementById('o11y-rum-web');
+    expect(bundle).toBeTruthy();
+    expect(bundle.src).toBe('https://uxfabric.intuitcdn.net/@cloud-monitoring/prod/o11y-rum-web.min.js');
+    expect(document.getElementById('o11y-rum-init')).toBeNull();
+    bundle.dispatchEvent(new Event('load'));
+
+    // 2. init loads only once the bundle has resolved.
+    await settle();
+    const init = document.getElementById('o11y-rum-init');
+    expect(init).toBeTruthy();
+    expect(init.src).toBe('https://www.intuit.com/qbmds-components/scripts/o11y/init-0.0.1.js');
+    init.dispatchEvent(new Event('load'));
+
+    await promise;
+    expect(document.head.querySelectorAll('script').length).toBe(2);
+  });
+
+  it.each([['dev'], ['qa'], [null]])('env "%s": no-op — o11y is prod-only, loads nothing', async (env) => {
+    const promise = loadObservabilityRum(env);
+    expect(document.getElementById('o11y-rum-web')).toBeNull();
+    expect(document.getElementById('o11y-rum-init')).toBeNull();
+    await expect(promise).resolves.toBeUndefined();
+    expect(document.head.querySelectorAll('script').length).toBe(0);
+  });
+
+  it('is idempotent — a second prod call appends nothing new', async () => {
+    const first = loadObservabilityRum('prod');
+    document.getElementById('o11y-rum-web').dispatchEvent(new Event('load'));
+    await settle();
+    document.getElementById('o11y-rum-init').dispatchEvent(new Event('load'));
+    await first;
+    expect(document.head.querySelectorAll('script').length).toBe(2);
+
+    await loadObservabilityRum('prod');
+    expect(document.head.querySelectorAll('script').length).toBe(2);
+  });
+
+  it('resolves fail-open (never rejects) when a RUM script errors out (e.g. ad-blocked)', async () => {
+    const promise = loadObservabilityRum('prod');
+    document.getElementById('o11y-rum-web').dispatchEvent(new Event('error'));
+    await settle();
+    document.getElementById('o11y-rum-init').dispatchEvent(new Event('error'));
     await expect(promise).resolves.toBeUndefined();
   });
 });
