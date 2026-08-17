@@ -497,15 +497,14 @@ body.nav-scroll-lock { overflow: hidden; }
      the line to the next heading. */
   .header .flyout-col { margin-top: 24px; padding-top: 24px; border-top: 1px solid rgb(0 37 74 / 20%); }
 
-  /* Drill-down page-title heading (see navItemHTML in header.js) — desktop-
+  /* Drill-down page-title label (see navItemHTML in header.js) — desktop-
      hidden by the base rule; shown only in the primary drawer's own
      full-screen drill-down (:not(.secondary-nav-items) excludes the
      secondary Resource Center nav's plain inline accordion below, which has
-     no equivalent title). 36px/500/black, matching source's own
-     SubMenuOverlay-category-title exactly. margin-bottom: 0 — the divider's
+     no equivalent title). 30px/500/black. margin-bottom: 0 — the divider's
      own margin-top above now supplies the gap before the line instead of
-     double-stacking with this heading's own trailing margin (issue #78). */
-  .header .nav-main:not(.secondary-nav-items) .flyout-title { display: block; margin: 4px 0 0; font-size: 36px; font-weight: 500; line-height: 1.3; color: var(--heading); }
+     double-stacking with this label's own trailing margin (issue #78). */
+  .header .nav-main:not(.secondary-nav-items) .flyout-title { display: block; margin: 4px 0 0; font-size: 30px; font-weight: 500; line-height: 1.3; color: var(--heading); }
 
   /* Mobile drill-down heading/link styling differs from the desktop dropdown
      (base rule above): source's own SubMenuOverlay uses a smaller, faded

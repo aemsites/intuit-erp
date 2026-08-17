@@ -31,6 +31,11 @@
   --sky: #dbedee;
   --agave: #c2f5ff;
 
+  /* section/form "sky" style band fill — distinct from --sky above (same
+     word, unrelated token; --sky is the sand-palette teal used by
+     highlight/tabs/testimonial) */
+  --sky-blue: #e0edff;
+
   /* in-article callout fill */
   --agave-band: #d6e8f8;
 
@@ -556,6 +561,15 @@ main .section.highlight {
   padding: 40px 0;
 }
 
+/* Section Metadata "Style: sky" — the light-blue band used behind the
+   "Let's connect" form section, letting a page request this background at
+   the section level without needing a form present. blocks/form/form.css
+   matches --sky-blue too for the nested-fragment case (.section.sky
+   wrapping a .section.form-container), so both stay the same shade. */
+main .section.sky {
+  background-color: var(--sky-blue);
+}
+
 /* ============================================================
    IES foundation additions (replica of erp.intuit.com)
    ============================================================ */
@@ -664,6 +678,26 @@ body.category main>.section:first-of-type h1 {
 body.category main>.section:first-of-type p {
   font-size: 17px;
   color: var(--text-muted);
+}
+
+/* blog hub home (body.blog-home) — matches erp.intuit.com's responsive heading
+   scales: the intro (first section, source Heading_heading2) is centred 34px on
+   mobile, 40px at >=1024px; the listing section headings (source
+   Heading_heading3) are 28px on mobile, 34px at >=1024px. Both bold and #000.
+   Keyed to section order (:first-of-type) rather than the authored .slot-1
+   personalization class, matching the body.category intro rule above. */
+body.blog-home main > .section:first-of-type .default-content-wrapper { text-align: center; }
+body.blog-home main > .section:first-of-type h2 { font-size: 34px; font-weight: 700; color: #000; margin: 0 0 16px; }
+
+body.blog-home main > .section:first-of-type p {
+  font-size: 16px; line-height: 1.5; color: #000; max-width: 46em; margin-inline: auto;
+}
+
+body.blog-home main > .section:not(:first-of-type) h2 { font-size: 28px; font-weight: 700; color: #000; }
+
+@media (min-width: 1024px) {
+  body.blog-home main > .section:first-of-type h2 { font-size: 40px; }
+  body.blog-home main > .section:not(:first-of-type) h2 { font-size: 34px; }
 }
 
 /* search results page (Template: "Search" metadata -> body.search): give the

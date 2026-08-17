@@ -1,23 +1,21 @@
 /* logo-band — default: static responsive grid of partner/integration logos. */
 
 .logo-band:not(.marquee) {
-  padding: 4rem 0;
+  padding: 0;
   text-align: center;
   display: flex;
   justify-content: center;
-
-    > ul {
-      display: flex;
-    }
 }
 
 .logo-band .logoband-list {
   list-style: none;
-  margin: 0;
+  margin: 32px 0 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 24px;
+  grid-template-columns: minmax(0, 254px);
+  grid-auto-rows: 55px;
+  justify-content: center;
+  gap: 32px;
   align-items: center;
 }
 
@@ -25,23 +23,32 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
-  min-height: 120px;
+  padding: 0;
+  min-height: 0;
 }
 
+/* flex, not block: a logo narrower than its column would otherwise sit flush left */
 .logo-band .logoband-list li picture {
-  display: block;
-  max-width: 100%;
-  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
 }
 
+/* logos draw at their intrinsic size, bounded by the column; 80px is the tallest
+   upstream draws */
 .logo-band .logoband-list li picture img,
 .logo-band .logoband-list li img {
+  width: auto;
   max-width: 100%;
-  max-height: 60px;
+  height: auto;
+  max-height: 80px;
   object-fit: contain;
-  filter: grayscale(100%);
-  transition: filter 0.3s ease;
+}
+
+/* these arrive 96px tall from the pipeline; upstream ships them at 52px */
+.logo-band .logoband-list li img[height="96"] {
+  max-height: 52px;
 }
 
 .logo-band .logoband-list li a {
@@ -58,32 +65,77 @@
   color: var(--link-hover-color);
 }
 
-.logo-band .logoband-list li:hover picture img,
-.logo-band .logoband-list li:hover img {
-  filter: grayscale(0%);
+.section.logo-band-container:has(.logo-band:not(.marquee)) {
+  padding: 80px 0;
+  border-radius: 8px;
+  background: var(--ice-band);
+
+  /* a rounded card inset from the viewport, not a full-bleed strip */
+  max-width: 1360px;
+  margin: 20px 20px 40px;
 }
 
-@media (min-width: 600px) {
-  .logo-band .logoband-list {
-    grid-template-columns: repeat(3, 1fr);
+@media (min-width: 1400px) {
+  .section.logo-band-container:has(.logo-band:not(.marquee)) {
+    margin-inline: auto;
   }
 }
 
-@media (min-width: 900px) {
+.section.logo-band-container:has(.logo-band:not(.marquee)) .default-content-wrapper h2,
+.section.logo-band-container:has(.logo-band:not(.marquee)) .default-content-wrapper h4 {
+  font-size: 28px;
+  line-height: 1.4;
+  font-weight: 400;
+  color: #000;
+  margin: 0;
+  text-align: center;
+}
+
+/* 32px upstream separation + the 7px the logo cell adds below the tallest logo */
+.section.logo-band-container:has(.logo-band:not(.marquee)) .default-content-wrapper h4 {
+  padding-top: 39px;
+}
+
+@media (min-width: 768px) {
+  .section.logo-band-container:has(.logo-band:not(.marquee)) { padding: 60px 0; }
+
   .logo-band .logoband-list {
-    grid-template-columns: repeat(6, 1fr);
-    gap: 16px;
+    grid-template-columns: repeat(2, minmax(0, 270px));
+  }
+}
+
+@media (min-width: 1024px) {
+  .section.logo-band-container:has(.logo-band:not(.marquee)) { padding: 80px 0; }
+
+  .section.logo-band-container:has(.logo-band:not(.marquee)) .default-content-wrapper h2,
+  .section.logo-band-container:has(.logo-band:not(.marquee)) .default-content-wrapper h4 {
+    font-size: 34px;
   }
 
-  .logo-band .logoband-list li {
-    padding: 16px;
-    min-height: 100px;
+  /* one row whatever the logo count: 4 sit at 230px, 5 squeeze to ~198px */
+  .logo-band .logoband-list {
+    grid-auto-flow: column;
+    grid-template-columns: none;
+    grid-auto-columns: minmax(0, 230px);
+    grid-auto-rows: auto;
   }
+
+  .logo-band .logoband-list li picture { width: 75%; }
 
   .logo-band .logoband-list li picture img,
   .logo-band .logoband-list li img {
-    max-height: 48px;
+    width: auto;
+    max-width: 100%;
   }
+}
+
+@media (min-width: 1200px) {
+  .section.logo-band-container:has(.logo-band:not(.marquee)) .default-content-wrapper h2,
+  .section.logo-band-container:has(.logo-band:not(.marquee)) .default-content-wrapper h4 {
+    font-size: 40px;
+  }
+
+  .logo-band .logoband-list { max-width: 1120px; }
 }
 
 /* logo-band.marquee — dark band, infinite scrolling logos.
