@@ -47,6 +47,9 @@ describe('vertical-scroll-carousel', () => {
     headings.forEach((h) => {
       expect(h.tagName).toBe('BUTTON');
       expect(h.getAttribute('role')).toBe('tab');
+      // the tab button is wrapped in an h3 so it stays in the heading outline
+      expect(h.parentElement.tagName).toBe('H3');
+      expect(h.parentElement.classList.contains('vsc-heading-wrap')).toBe(true);
     });
   });
   it('renders every item body (CSS collapses the inactive ones)', () => {
