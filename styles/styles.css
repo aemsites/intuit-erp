@@ -255,6 +255,15 @@ header {
   height: var(--nav-height);
 }
 
+/* Gated conversion pages opt out of the global header/footer (hide-header /
+   hide-footer metadata → body class, set eagerly in scripts.js). Drop the
+   reserved header height up front so removing the header in the lazy phase does
+   not cause a post-LCP layout shift. */
+body.hide-header header {
+  height: 0;
+  min-height: 0;
+}
+
 /* Resource Center pages (/blog*) render a secondary nav below the primary one.
    Reserve its height eagerly too — keyed on the body.<template> class those
    pages already get from decorateTemplateAndTheme — so the lazily-loaded header
