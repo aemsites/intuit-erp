@@ -21,7 +21,7 @@ import { runExperimentation, runExperimentationLazy } from './experiment-loader.
 // Vendored via git subtree at plugins/martech (see its README), not an
 // installed npm package, so this necessarily crosses a package.json boundary.
 import {
-  initMartech, martechEager, martechLazy,
+  initMartech, martechEager, martechLazy, updateUserConsent,
   // eslint-disable-next-line import/no-relative-packages
 } from '../plugins/martech/src/index.js';
 // Not a vendored subtree (unlike plugins/martech above) — project-owned code, but the relative
@@ -533,6 +533,10 @@ async function loadLazy(doc) {
 
   if (MARTECH_PROVIDER === 'adobe' && MARTECH_ENABLED) {
     try { await martechLazy(); } catch (e) { /* non-fatal */ }
+    // Demo posture: auto-grant collection consent (martech inits consent 'pending', which
+    // would otherwise drop sendEvent). Needed for blocks/form/form.js's lead-identity
+    // sendEvent call on this provider path. Fail-open — never blocks the page.
+    try { await updateUserConsent({ collect: true }); } catch (e) { /* non-fatal */ }
   } else if (MARTECH_PROVIDER === 'tealium') {
     // Loads utag.js for the resolved env (no-op on an inert host) and applies consent. Fail-open,
     // like the Adobe branch above — never block the page.
