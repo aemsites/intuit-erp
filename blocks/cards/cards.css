@@ -284,6 +284,39 @@
   .cards.carousel .cards-track > div, .cards.boxed .cards-track > div { flex-basis: 260px; }
 }
 
+
+.cards.list { display: flex; flex-direction: column; gap: 24px; }
+
+.cards.list > div {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.cards.list .cards-card-image { margin: 0; border-radius: 8px; overflow: hidden; }
+
+.cards.list .cards-eyebrow { font-size: var(--body-font-size-xxs); text-transform: capitalize; }
+
+.cards.list .cards-card-body p:has(a) {
+  margin-top: 0;
+  font-size: var(--body-font-size-s);
+  font-weight: 700;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.cards.list .cards-card-body a { color: var(--text-color); font-weight: 700; }
+
+@media (width <= 480px) {
+  .cards.list > div { grid-template-columns: 166px 1fr; }
+  .cards.list .cards-card-image img { height: 188px; object-fit: cover; }
+}
+
 /* ---- custom "camera-focus" cursor (erp.intuit.com CustomCursor): a floating
    ring with two chevrons flanking a center dot that follows the pointer while
    it's over the carousel. Element is created + positioned by cards.js and only

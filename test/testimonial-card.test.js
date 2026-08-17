@@ -7,9 +7,11 @@ function makeCard(rows = 1) {
   const row = `
     <div>
       <div><img src="https://erp.intuit.com/a.jpg" alt="Jasmine Pyles"></div>
-      <div>“Accounting AI flagged a $6,000 discrepancy.”</div>
-      <div>Jasmine Pyles</div>
-      <div>VP of Finance, Tampa Bay EDC</div>
+      <div>
+        <p>“Accounting AI flagged a $6,000 discrepancy.”</p>
+        <p><strong>Jasmine Pyles</strong></p>
+        <p>VP of Finance, Tampa Bay EDC</p>
+      </div>
     </div>`;
   block.innerHTML = row.repeat(rows);
   return block;
@@ -39,8 +41,10 @@ describe('testimonial card variant', () => {
     block.innerHTML = `
       <div>
         <div></div>
-        <div>Great product.</div>
-        <div>Anonymous</div>
+        <div>
+          <p>Great product.</p>
+          <p><strong>Anonymous</strong></p>
+        </div>
       </div>`;
     decorate(block);
     const fig = block.querySelector('figure.testimonial-card');

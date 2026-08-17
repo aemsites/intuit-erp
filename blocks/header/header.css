@@ -260,10 +260,6 @@ body.nav-scroll-lock { overflow: hidden; }
   .header .ies-secondary-nav .flyout-inner { max-width: none; margin: 0; padding: 0 24px; }
 }
 
-@media (width <= 768px) {
-  .schedule-modal { padding: 28px 20px; }
-}
-
 /* events bar */
 .header .ies-events { background: #c9f2fa; color: var(--heading); }
 .header .ies-events .container { text-align: center; padding-top: 17px; padding-bottom: 17px; font-size: 15px; }

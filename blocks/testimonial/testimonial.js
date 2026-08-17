@@ -2,17 +2,30 @@
  * testimonial — customer proof (index video, compare quote).
  * Section head (h2) authored as default content before the block.
  *
- * Default (compare) — one row, cells:
- *   1. quote-mark <img>   2. quote text   3. name   4. role   5. headshot <img>
- * Variant .video (index) — one row, cells:
- *   1. poster <img>   2. eyebrow   3. quote   4. attribution (may contain a link)
- *   5. YouTube video id (optional — defaults to the Rhodes Companies story clip)
- * When a YouTube id is authored, the poster photo is shown as a static
- * background (no muted autoplay loop, since we only have a YouTube id, not
- * a cutdown mp4 for that story) and the play button opens that video.
+ * Default (compare) — 1-2 cells:
+ *   1. content (required) — quote paragraph(s), a bold-only line for the
+ *      name, then plain role paragraph(s)
+ *   2. headshot <img> (optional)
+ * The quote-mark glyph is decorative and lives in CSS, not authored content.
+ *
  * Variant .card (migration rationale / account testimonials) — one or more
- * rows, each row a card with cells:
- *   1. photo <img>   2. quote   3. name   4. title (optional)
+ * rows, each row a card with 1-2 cells:
+ *   1. photo <img> (optional)   2. content (quote, bold name, plain title)
+ *
+ * Variant .video (index) — one or more rows, each row 1-2 cells:
+ *   1. media — poster <img>, optionally a second image (customer logo)
+ *   2. content (required) — an optional italic-only eyebrow line, quote
+ *      paragraph(s), an attribution paragraph (may hold a trailing link to
+ *      the case study), and the mp4/YouTube video source(s), each authored
+ *      as its own link or bare URL/id, detected by pattern rather than
+ *      position. Falls back to the Rhodes Companies story clip when no
+ *      video source is authored at all.
+ *
+ * Variant .video-split (professional-services) — copy left, video right on a
+ * tinted band. One row, 3 cells:
+ *   1. media — poster <img> plus a trailing caption line
+ *   2. content — a heading tag and body paragraph(s)
+ *   3. video URL/id (isolated — a config-shaped value, not prose)
  * CSS: blocks/testimonial/testimonial.css
  */
 
@@ -50,8 +63,39 @@ function openVideoModal(videoId) {
   document.body.append(overlay);
 }
 
+// Parse a YouTube watch/short/embed URL into its id; '' if not a URL (a bare
+// id authored directly is returned as-is by the caller's fallback).
+function ytId(url) {
+  if (!url) return '';
+  const m = url.match(/(?:youtube(?:-nocookie)?\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/);
+  return m ? m[1] : '';
+}
+
+// quote (+ optional name/role) flowing cell, shared by the default and .card
+// variants: name is the bold-only line; everything before it is the quote,
+// everything after is the role/title.
+function parseQuote(cell) {
+  let name = '';
+  const quoteParas = [];
+  const roleParas = [];
+  if (cell) {
+    [...cell.children].forEach((node) => {
+      if (node.tagName !== 'P') return;
+      const text = node.textContent.trim();
+      if (!text) return;
+      const only = node.children.length === 1 ? node.children[0] : null;
+      if (!name && only?.tagName === 'STRONG' && text === only.textContent.trim()) {
+        name = text;
+        return;
+      }
+      (name ? roleParas : quoteParas).push(node);
+    });
+  }
+  return { quoteParas, name, roleParas };
+}
+
 function buildCard(row) {
-  const [photoCell, quoteCell, nameCell, titleCell] = [...row.children];
+  const [photoCell, contentCell] = [...row.children];
   const figure = document.createElement('figure');
   figure.className = 'testimonial-card';
 
@@ -62,19 +106,23 @@ function buildCard(row) {
     figure.append(media);
   }
 
+  const { quoteParas, name, roleParas } = parseQuote(contentCell);
   const quote = document.createElement('blockquote');
-  if (quoteCell) quote.innerHTML = quoteCell.innerHTML;
+  quoteParas.forEach((p) => {
+    const q = document.createElement('p');
+    q.innerHTML = p.innerHTML;
+    quote.append(q);
+  });
   figure.append(quote);
 
   const figcaption = document.createElement('figcaption');
-  const name = nameCell ? nameCell.textContent.trim() : '';
-  const title = titleCell ? titleCell.textContent.trim() : '';
   if (name) {
     const nameEl = document.createElement('p');
     nameEl.className = 'testimonial-name';
     nameEl.textContent = name;
     figcaption.append(nameEl);
   }
+  const title = roleParas.map((p) => p.textContent.trim()).filter(Boolean).join(', ');
   if (title) {
     const titleEl = document.createElement('p');
     titleEl.className = 'testimonial-title';
@@ -86,22 +134,53 @@ function buildCard(row) {
   return figure;
 }
 
-// Parse a YouTube watch/short/embed URL into its id; '' if not a URL (a bare
-// id authored directly is returned as-is by the caller's fallback).
-function ytId(url) {
-  if (!url) return '';
-  const m = url.match(/(?:youtube(?:-nocookie)?\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/);
-  return m ? m[1] : '';
+// flowing content cell for .video: optional italic-only eyebrow, quote
+// paragraph(s), an attribution paragraph (holds a link but isn't link-only),
+// and the mp4/YouTube source(s) — each its own link or bare URL/id,
+// detected by pattern rather than position.
+function parseVideoContent(cell) {
+  let eyebrow = '';
+  let attribution = null;
+  let mp4Href = '';
+  let youtubeRaw = '';
+  const quoteParas = [];
+  if (cell) {
+    [...cell.children].forEach((node) => {
+      if (node.tagName !== 'P') return;
+      const text = node.textContent.trim();
+      if (!text) return;
+      const only = node.children.length === 1 ? node.children[0] : null;
+      if (!eyebrow && only?.tagName === 'EM' && text === only.textContent.trim()) {
+        eyebrow = text;
+        return;
+      }
+      if (only?.tagName === 'A' && text === only.textContent.trim()) {
+        const href = only.getAttribute('href') || '';
+        if (/\.mp4(?:$|\?)/i.test(href)) { mp4Href = href; return; }
+        youtubeRaw = href;
+        return;
+      }
+      // a bare YouTube URL, or just its bare id, authored as its own line
+      if (!youtubeRaw && !node.querySelector('a')
+        && (/youtube|youtu\.be/i.test(text) || /^[\w-]{6,}$/.test(text))) {
+        youtubeRaw = text;
+        return;
+      }
+      if (node.querySelector('a')) { attribution = node; return; }
+      quoteParas.push(node);
+    });
+  }
+  return {
+    eyebrow, quoteParas, attribution, mp4Href, youtubeRaw,
+  };
 }
 
 /**
- * Builds one video story frame from a row's positional cells:
- *   [poster img, eyebrow, quote, attribution (may hold a link),
- *    youtube (url or id), mp4 link (optional), logo img (optional)]
- * When an mp4 cell is present the frame shows that clip inline (muted loop)
- * as the background; otherwise an authored youtube shows the poster photo as
- * a static background, and the bare default falls back to the Rhodes clip.
- * The centered play button opens the full video (youtube) in a modal.
+ * Builds one video story frame from a row's [media, content] cells.
+ * When an mp4 source is authored the frame shows that clip inline (muted
+ * loop) as the background; otherwise an authored YouTube shows the poster
+ * photo as a static background, and no authored source at all falls back to
+ * the Rhodes clip. The centered play button opens the full video in a modal.
  * @param {Element[]} cells the row's cells
  * @param {{caption?:boolean}} [opts] when caption is false the in-frame
  *   caption is omitted (the switcher renders a shared caption bar instead)
@@ -109,27 +188,32 @@ function ytId(url) {
  */
 export function buildVideoFrame(cells, opts = {}) {
   const { caption = true } = opts;
-  const [posterCell, eyebrowCell, quoteCell, attrCell, youtubeCell, mp4Cell, logoCell] = cells;
-  const authoredYoutube = youtubeCell ? youtubeCell.textContent.trim() : '';
-  const youtubeId = ytId(authoredYoutube) || authoredYoutube || STORY_YOUTUBE_ID;
-  const mp4Link = mp4Cell ? mp4Cell.querySelector('a[href*=".mp4"]') : null;
+  const [mediaCell, contentCell] = cells;
+  const imgs = mediaCell ? [...mediaCell.querySelectorAll('img')] : [];
+  const posterImg = imgs[0];
+  const logoImg = imgs[1];
+  const logoEl = logoImg ? (logoImg.closest('picture') || logoImg) : null;
+
+  const {
+    eyebrow, quoteParas, attribution, mp4Href, youtubeRaw,
+  } = parseVideoContent(contentCell);
+  const youtubeId = ytId(youtubeRaw) || youtubeRaw || STORY_YOUTUBE_ID;
 
   const frame = document.createElement('div');
   frame.className = 'video-frame';
-  const posterImg = posterCell ? posterCell.querySelector('img') : null;
 
   let bg;
-  if (mp4Link) {
+  if (mp4Href) {
     bg = document.createElement('video');
     bg.className = 'video-bg';
-    bg.setAttribute('src', mp4Link.getAttribute('href'));
+    bg.setAttribute('src', mp4Href);
     if (posterImg) bg.poster = posterImg.currentSrc || posterImg.src;
     bg.muted = true;
     bg.loop = true;
     bg.autoplay = true;
     bg.playsInline = true;
     bg.setAttribute('aria-hidden', 'true');
-  } else if (authoredYoutube) {
+  } else if (youtubeRaw) {
     // no cutdown mp4 for this story — show the poster photo as a static
     // background instead of faking a muted autoplay loop.
     bg = posterImg ? posterImg.cloneNode(true) : document.createElement('img');
@@ -147,7 +231,6 @@ export function buildVideoFrame(cells, opts = {}) {
     bg.setAttribute('aria-hidden', 'true');
   }
 
-  const logoImg = logoCell ? logoCell.querySelector('img') : null;
   const play = document.createElement('button');
   play.className = 'video-play';
   play.type = 'button';
@@ -156,17 +239,21 @@ export function buildVideoFrame(cells, opts = {}) {
   play.addEventListener('click', () => openVideoModal(youtubeId));
 
   const parts = [];
-  if (logoImg) { logoImg.classList.add('video-logo'); parts.push(logoImg); }
+  if (logoEl) { logoEl.classList.add('video-logo'); parts.push(logoEl); }
   parts.push(bg, play);
   if (caption) {
     const cap = document.createElement('div');
     cap.className = 'video-caption';
-    cap.innerHTML = `
-      <p class="video-eyebrow">${eyebrowCell ? eyebrowCell.textContent.trim() : ''}</p>
-      <p class="video-quote">${quoteCell ? quoteCell.textContent.trim() : ''}</p>`;
+    const eb = document.createElement('p');
+    eb.className = 'video-eyebrow';
+    eb.textContent = eyebrow;
+    const q = document.createElement('p');
+    q.className = 'video-quote';
+    q.textContent = quoteParas.map((p) => p.textContent.trim()).join(' ');
+    cap.append(eb, q);
     const attr = document.createElement('p');
     attr.className = 'video-attr';
-    if (attrCell) attr.innerHTML = attrCell.innerHTML;
+    if (attribution) attr.innerHTML = attribution.innerHTML;
     cap.append(attr);
     parts.push(cap);
   }
@@ -180,14 +267,15 @@ export function buildVideoFrame(cells, opts = {}) {
 
 // Per-story caption data for the shared switcher info bar.
 function storyData(cells) {
-  const [posterCell, eyebrowCell, quoteCell, attrCell] = cells;
-  const posterImg = posterCell ? posterCell.querySelector('img') : null;
+  const [mediaCell, contentCell] = cells;
+  const posterEl = mediaCell ? mediaCell.querySelector('img') : null;
+  const { eyebrow, quoteParas, attribution } = parseVideoContent(contentCell);
   return {
-    avatarSrc: posterImg ? (posterImg.currentSrc || posterImg.getAttribute('src')) : '',
-    avatarAlt: posterImg ? (posterImg.getAttribute('alt') || '') : '',
-    eyebrow: eyebrowCell ? eyebrowCell.textContent.trim() : '',
-    quote: quoteCell ? quoteCell.textContent.trim() : '',
-    attrHtml: attrCell ? attrCell.innerHTML : '',
+    avatarSrc: posterEl ? (posterEl.currentSrc || posterEl.getAttribute('src')) : '',
+    avatarAlt: posterEl ? (posterEl.getAttribute('alt') || '') : '',
+    eyebrow,
+    quote: quoteParas.map((p) => p.textContent.trim()).join(' '),
+    attrHtml: attribution ? attribution.innerHTML : '',
   };
 }
 
@@ -303,38 +391,49 @@ export function buildVideoSection(rows) {
 
 /**
  * Variant .video-split (professional-services) — copy left, video right on a
- * tinted band, rather than .video's full-width frame with the copy overlaid.
- * Cells: 1. poster <img> + attribution  2. video URL  3. heading  4. body copy
+ * tinted band. Cells: 1. media (poster <img> + trailing caption line)
+ * 2. content (heading tag + body) 3. video URL/id (isolated).
  */
 function buildVideoSplit(cells) {
-  const [posterCell, urlCell, headingCell, copyCell] = cells;
+  const [mediaCell, contentCell, urlCell] = cells;
 
   const grid = document.createElement('div');
   grid.className = 'split-grid';
 
   const copy = document.createElement('div');
   copy.className = 'split-copy';
-  if (headingCell) {
-    // the cell may hold an authored heading element, or just its text
-    const authoredHeading = headingCell.querySelector('h1, h2, h3, h4');
-    const heading = document.createElement('h2');
-    heading.className = 'split-title';
-    heading.textContent = authoredHeading
-      ? authoredHeading.textContent.trim()
-      : headingCell.textContent.trim();
-    copy.append(heading);
+  const heading = contentCell ? contentCell.querySelector('h1, h2, h3, h4') : null;
+  if (heading) {
+    const h = document.createElement('h2');
+    h.className = 'split-title';
+    h.innerHTML = heading.innerHTML;
+    copy.append(h);
   }
-  if (copyCell && copyCell.textContent.trim()) {
-    const body = document.createElement('p');
-    body.className = 'split-body';
-    body.textContent = copyCell.textContent.trim();
-    copy.append(body);
+  if (contentCell) {
+    contentCell.querySelectorAll('p').forEach((p) => {
+      if (!p.textContent.trim()) return;
+      const body = document.createElement('p');
+      body.className = 'split-body';
+      body.innerHTML = p.innerHTML;
+      copy.append(body);
+    });
   }
 
   const media = document.createElement('div');
   media.className = 'split-media';
-  const poster = pic(posterCell);
+  const poster = pic(mediaCell);
   if (poster) media.append(poster);
+  if (mediaCell) {
+    const withoutMedia = mediaCell.cloneNode(true);
+    withoutMedia.querySelector('picture, img')?.remove();
+    const captionText = withoutMedia.textContent.trim();
+    if (captionText) {
+      const cap = document.createElement('p');
+      cap.className = 'split-caption';
+      cap.textContent = captionText;
+      media.append(cap);
+    }
+  }
 
   const authored = urlCell ? (urlCell.querySelector('a')?.getAttribute('href') || urlCell.textContent.trim()) : '';
   // a bare id is authorable directly, as in .video; anything else ytId can't read
@@ -498,28 +597,28 @@ export default function decorate(block) {
 
   const row = block.querySelector(':scope > div');
   if (!row) return;
-  const cells = [...row.children];
+  const [contentCell, mediaCell] = [...row.children];
 
-  // markCell (cells[0]) intentionally unused: the decorative quote mark is now a
-  // CSS glyph (.cmp-quote-card::before) instead of an authored image.
-  const [, quoteCell, nameCell, roleCell, mediaCell] = cells;
+  const { quoteParas, name, roleParas } = parseQuote(contentCell);
   const grid = document.createElement('div');
   grid.className = 'cmp-testi-grid';
   const card = document.createElement('div');
   card.className = 'cmp-quote-card';
-  // The decorative quote mark is rendered as a CSS glyph (.cmp-quote-card::before)
-  // rather than an authored image, which was failing to load (src="about:error").
   const quote = document.createElement('blockquote');
   quote.className = 'cmp-quote';
-  if (quoteCell) quote.innerHTML = quoteCell.innerHTML;
+  quoteParas.forEach((p) => {
+    const q = document.createElement('p');
+    q.innerHTML = p.innerHTML;
+    quote.append(q);
+  });
   card.append(quote);
-  const name = document.createElement('p');
-  name.className = 'cmp-quote-name';
-  name.textContent = nameCell ? nameCell.textContent.trim() : '';
+  const nameEl = document.createElement('p');
+  nameEl.className = 'cmp-quote-name';
+  nameEl.textContent = name;
   const role = document.createElement('p');
   role.className = 'cmp-quote-role';
-  role.textContent = roleCell ? roleCell.textContent.trim() : '';
-  card.append(name, role);
+  role.textContent = roleParas.map((p) => p.textContent.trim()).filter(Boolean).join(', ');
+  card.append(nameEl, role);
   grid.append(card);
   const media = document.createElement('div');
   media.className = 'cmp-testi-media';
