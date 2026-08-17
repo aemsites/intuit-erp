@@ -297,6 +297,24 @@ export async function loadConsentStack(env, local = false) {
   });
 }
 
+// Intuit Observability RUM: page-authored on prod (NOT Tealium tags), so the rebuild loads them.
+const OBSERVABILITY_RUM = {
+  bundle: 'https://uxfabric.intuitcdn.net/@cloud-monitoring/prod/o11y-rum-web.min.js',
+  init: 'https://www.intuit.com/qbmds-components/scripts/o11y/init-0.0.1.js',
+};
+
+/**
+ * Loads Intuit's Observability RUM, prod-only via the same `resolveEnvironment` gate as Tealium.
+ * Fail-open; the bundle is awaited before `init`, which needs the `window.O11yRUM` it defines.
+ * @param {String|null} env resolved utag environment (only `'prod'` loads o11y; else a no-op)
+ * @returns {Promise<void>} resolves once both scripts settled (loaded or failed)
+ */
+export async function loadObservabilityRum(env) {
+  if (env !== 'prod') return;
+  await loadScriptOnce({ id: 'o11y-rum-web', src: OBSERVABILITY_RUM.bundle });
+  await loadScriptOnce({ id: 'o11y-rum-init', src: OBSERVABILITY_RUM.init });
+}
+
 /**
  * Waits for a consistent `OptanonConsent` cookie to exist (as parsed by `readOptanonConsent`),
  * polling roughly every 100ms, or until `timeoutMs` elapses — whichever comes first. Fail-open:
@@ -415,6 +433,8 @@ export default class TealiumMartech {
    */
   async lazy() {
     if (!this.enabled) return;
+    // o11y RUM: prod-only, page-authored (not a Tealium tag); intentionally not awaited.
+    loadObservabilityRum(this.env);
     await loadConsentStack(this.env, this.local);
     await settleConsent();
     await loadUtag(this.env, this.local);
