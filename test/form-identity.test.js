@@ -1,11 +1,10 @@
 import {
   describe, it, expect, vi, beforeEach, afterEach,
 } from 'vitest';
-import { OF1_SIGNAL } from '../scripts/of1-rtcdp-signal.js';
 // eslint-disable-next-line import/no-relative-packages
 import { sendEvent } from '../plugins/martech/src/index.js';
 import {
-  buildIdentityXdm, trackFormSubmit,
+  buildIdentityXdm, trackFormSubmit, LEAD_XDM_TARGET,
 } from '../blocks/form/form.js';
 
 vi.mock('../plugins/martech/src/index.js', () => ({
@@ -25,7 +24,7 @@ describe('buildIdentityXdm', () => {
     expect(id.id).toBe('controller@brightpathco.com');
     expect(id.primary).toBe(true);
     expect(id.authenticatedState).toBe('ambiguous');
-    const { lead } = xdm[OF1_SIGNAL.prefix][OF1_SIGNAL.object];
+    const { lead } = xdm[LEAD_XDM_TARGET.prefix][LEAD_XDM_TARGET.object];
     expect(lead.businessName).toBe('Bright Path');
     expect(lead.email).toBe('controller@brightpathco.com');
   });
