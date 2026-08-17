@@ -17,7 +17,12 @@ import { loadScript } from '../../scripts/aem.js';
 // installed npm package, so this necessarily crosses a package.json boundary.
 // eslint-disable-next-line import/no-relative-packages
 import { sendEvent } from '../../plugins/martech/src/index.js';
-import { OF1_SIGNAL } from '../../scripts/of1-rtcdp-signal.js';
+
+// Tenant-namespaced XDM location for lead-identity events. Object name `of1Signal` must
+// byte-match the AEP "Experience Event Schema" field group path (AEP console config) or
+// ingestion silently drops it. Independent of the (removed) OF1 generative-page feature,
+// which used to write interest/intent data to this same object.
+export const LEAD_XDM_TARGET = { prefix: '_sapphiredemo1', object: 'of1Signal' };
 
 const CONFIG_KEYS = [
   'formId',
@@ -80,8 +85,8 @@ export function buildIdentityXdm(fields) {
     identityMap: {
       Email: [{ id: fields.email, primary: true, authenticatedState: 'ambiguous' }],
     },
-    [OF1_SIGNAL.prefix]: {
-      [OF1_SIGNAL.object]: { lead: { ...fields }, capturedAt: new Date().toISOString() },
+    [LEAD_XDM_TARGET.prefix]: {
+      [LEAD_XDM_TARGET.object]: { lead: { ...fields }, capturedAt: new Date().toISOString() },
     },
   };
 }
