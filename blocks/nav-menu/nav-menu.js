@@ -88,13 +88,17 @@ function menuItemHTML(label, menuCell, idx) {
   // control that returns to the top-level list; header.js's wireFlyouts
   // wires its click regardless of which module produced this markup.
   // .flyout-title mirrors header.js's own navItemHTML: the drill-down
-  // panel's mobile-only page-title heading repeating the trigger's label,
+  // panel's mobile-only page-title label repeating the trigger's label,
   // since that trigger itself has slid off-screen by the time the panel is
-  // showing (issue #78).
+  // showing (issue #78). Not a heading element: this is nav chrome, not
+  // page content, so it must stay out of the document's heading outline —
+  // aria-labelledby gives the panel the same screen-reader context without
+  // a fake <h2>.
+  const titleId = `${id}-title`;
   return `
       <div class="nav-item">
         <button type="button" aria-expanded="false" aria-controls="${id}">${label}<i class="caret"></i></button>
-        <div class="flyout" id="${id}" aria-hidden="true"><button type="button" class="flyout-back"><i class="flyout-back-icon"></i>Back</button><h2 class="flyout-title">${label}</h2><div class="flyout-inner">${colsHTML}</div></div>
+        <div class="flyout" id="${id}" aria-hidden="true" aria-labelledby="${titleId}"><button type="button" class="flyout-back"><i class="flyout-back-icon"></i>Back</button><p class="flyout-title" id="${titleId}">${label}</p><div class="flyout-inner">${colsHTML}</div></div>
       </div>`;
 }
 
