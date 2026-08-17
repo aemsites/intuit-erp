@@ -522,6 +522,16 @@ async function loadEager(doc) {
   }
 }
 
+// Pages that already have their own full contact form suppress the
+// site-wide floating "Contact us" widget, matching production behavior.
+const CONTACT_WIDGET_EXCLUDED_PATHS = ['/contact'];
+
+/** True unless the current path opts out of the floating contact widget. */
+function shouldRenderContactUs() {
+  const path = window.location.pathname.replace(/\/$/, '');
+  return !CONTACT_WIDGET_EXCLUDED_PATHS.includes(path);
+}
+
 /**
  * Loads everything that doesn't need to be delayed.
  * @param {Element} doc The container element
@@ -543,12 +553,15 @@ async function loadLazy(doc) {
   loadFooter(doc.querySelector('footer'));
 
   // Persistent bottom-right sales widget ("Contact us" / "Talk to sales"),
-  // present on every page. Loaded here (lazy phase) so it never touches LCP.
-  loadCSS(`${window.hlx.codeBasePath}/blocks/contact-us/contact-us.css`);
-  // eslint-disable-next-line import/no-cycle
-  import('../blocks/contact-us/contact-us.js')
-    .then(({ default: initContactUs }) => initContactUs())
-    .catch(() => { /* non-fatal — widget is non-critical chrome */ });
+  // present on every page except CONTACT_WIDGET_EXCLUDED_PATHS. Loaded here
+  // (lazy phase) so it never touches LCP.
+  if (shouldRenderContactUs()) {
+    loadCSS(`${window.hlx.codeBasePath}/blocks/contact-us/contact-us.css`);
+    // eslint-disable-next-line import/no-cycle
+    import('../blocks/contact-us/contact-us.js')
+      .then(({ default: initContactUs }) => initContactUs())
+      .catch(() => { /* non-fatal — widget is non-critical chrome */ });
+  }
 
   if (MARTECH_PROVIDER === 'adobe' && MARTECH_ENABLED) {
     try { await martechLazy(); } catch (e) { /* non-fatal */ }
