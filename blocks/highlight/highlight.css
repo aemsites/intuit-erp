@@ -18,6 +18,31 @@
 }
 .highlight.dark .highlight-inner :is(h1, h2, h3, h4) { color: #fff; }
 .highlight.dark .highlight-inner p { color: rgb(255 255 255 / 82%); }
+
+/* stat figures (construction "72%"/"92%") — production renders these big accent
+   numbers at 84px (60px mobile) in cyan, like the fixed stat-band block (#42).
+   They are authored as h3, so styles.css otherwise sizes them at 30px.
+   Scoped with :has(h3 ~ h3) to the multi-figure stat pattern (two+ stacked h3s),
+   so the events highlight.dark bands — whose headings are a single h2 or a single
+   h3 sentence — are left untouched. */
+.highlight.dark .highlight-inner:has(h3 ~ h3) h3 {
+  font-size: 60px;
+  line-height: 1.4;
+  font-weight: 400;
+  color: #81f2fe;
+  margin: 0 0 8px;
+}
+
+.highlight.dark .highlight-inner:has(h3 ~ h3) h3 + p {
+  font-size: 16px;
+  line-height: 1.4;
+  color: #fff;
+}
+
+@media (min-width: 900px) {
+  .highlight.dark .highlight-inner:has(h3 ~ h3) h3 { font-size: 84px; }
+  .highlight.dark .highlight-inner:has(h3 ~ h3) h3 + p { font-size: 20px; line-height: 28px; }
+}
 .highlight.dark .highlight-inner a:not(.button) { color: #fff; }
 .highlight.dark .highlight-inner .button.primary { background: #fff; color: var(--navy); border-color: #fff; }
 .highlight.dark .highlight-inner .button.primary:hover { background: rgb(255 255 255 / 88%); border-color: rgb(255 255 255 / 88%); }
