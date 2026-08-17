@@ -556,6 +556,16 @@ main .section.highlight {
   padding: 40px 0;
 }
 
+/* Section Metadata "Style: sky" — the light-blue band used behind the
+   "Let's connect" form section, letting a page request this background at
+   the section level without needing a form present. Matches .form.sky's
+   own fill (blocks/form/form.css) so the two stay visually identical.
+   Note: this is a distinct color from the --sky custom property (#dbedee,
+   used by highlight/tabs/testimonial) — same word, unrelated token. */
+main .section.sky {
+  background-color: #eaf3fb;
+}
+
 /* ============================================================
    IES foundation additions (replica of erp.intuit.com)
    ============================================================ */
