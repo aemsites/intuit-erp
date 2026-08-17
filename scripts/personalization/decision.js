@@ -48,7 +48,10 @@ export async function fetchDecision(source, opts = {}) {
   try {
     const headers = { intuit_tid: intuitTid() };
     if (body) headers['content-type'] = 'application/json';
-    const res = await fetch(`${apiBase()}/${source}`, {
+    // An absolute URL (e.g. a direct-endpoint override) is used verbatim; a bare
+    // source is resolved under the same-origin /api base.
+    const url = /^https?:\/\//i.test(source) ? source : `${apiBase()}/${source}`;
+    const res = await fetch(url, {
       method,
       credentials: 'include',
       headers,

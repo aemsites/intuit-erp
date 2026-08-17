@@ -86,6 +86,21 @@ describe('buildBatchBody', () => {
     ]);
     expect(body.attributes).toMatchObject({ permalink: '/p', newVisitor: true });
   });
+
+  it('merges extraAttributes onto the shared attributes object', () => {
+    const body = buildBatchBody(['alpha'], '/p', { zi_c_industry_primary: 'Education', zi_c_employees: 2143 });
+    expect(body.attributes).toMatchObject({
+      permalink: '/p',
+      newVisitor: true,
+      zi_c_industry_primary: 'Education',
+      zi_c_employees: 2143,
+    });
+  });
+
+  it('is backward compatible with no extraAttributes', () => {
+    const body = buildBatchBody(['alpha'], '/p');
+    expect(body.attributes).toMatchObject({ permalink: '/p', newVisitor: true });
+  });
 });
 
 describe('ixpParams', () => {

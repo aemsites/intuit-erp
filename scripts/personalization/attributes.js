@@ -47,7 +47,9 @@ export function buildPznAttributes(permalink = window.location.pathname) {
 }
 
 // The faithful Batch request body for the page's placements + visitor context.
-export function buildBatchBody(placements, permalink) {
+// `extraAttributes` (e.g. the marketing-profile firmographics) are merged onto the
+// client attributes so the decision can target on them.
+export function buildBatchBody(placements, permalink, extraAttributes = {}) {
   return {
     batchItems: placements.map((placement) => ({
       placement,
@@ -55,7 +57,7 @@ export function buildBatchBody(placements, permalink) {
       numberOfRecommendations: 1,
       recommendationMetadata: true,
     })),
-    attributes: buildPznAttributes(permalink),
+    attributes: { ...buildPznAttributes(permalink), ...extraAttributes },
   };
 }
 

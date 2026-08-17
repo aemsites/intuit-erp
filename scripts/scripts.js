@@ -427,7 +427,9 @@ async function runExperienceLayer(root, { skip } = {}) {
   const tasks = [];
   if (hasPzn) tasks.push(import('./pzn.js').then(({ runPersonalization }) => runPersonalization(root, { skip })));
   if (hasExp) tasks.push(import('./exp.js').then(({ runBlockExperiments }) => runBlockExperiments(root, { skip })));
-  await withTimeout(Promise.all(tasks), 1500);
+  // 2000ms = the 1500ms decision budget + the 500ms marketing-profile enrichment that
+  // runs before pzn on a first-visit cache miss (0 on a cache hit).
+  await withTimeout(Promise.all(tasks), 2000);
 }
 
 async function loadEager(doc) {
@@ -510,7 +512,9 @@ async function loadEager(doc) {
         import('./pzn.js'),
         import('./personalization/decision.js'),
       ]);
-      await withTimeout(runPersonalizationPage(doc), 1500);
+      // 2000ms accommodates the 500ms marketing-profile enrichment that runs before the
+      // whole-page pzn decision on a first-visit cache miss (0 on a cache hit).
+      await withTimeout(runPersonalizationPage(doc), 2000);
     }
   }
   const main = doc.querySelector('main');
