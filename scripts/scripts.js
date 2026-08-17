@@ -231,7 +231,7 @@ function buildVideoAutoBlocks(main) {
 let buildBlogTemplate;
 
 // Same treatment for the Guide landing-page card: imported in loadEager only for
-// /blog/guide/* pages, so the other ~325 pages in the sitemap never fetch or
+// `template: Guide` pages, so the other ~335 pages in the sitemap never fetch or
 // parse it. Undefined elsewhere, which is the gate in buildAutoBlocks.
 let buildGuideHeroAutoBlock;
 
@@ -493,10 +493,9 @@ async function loadEager(doc) {
       // which only blog pages otherwise load.
       loadCSS(`${window.hlx.codeBasePath}/blocks/blog-template/blog-template.css`);
     }
-    // Guide landing pages: same shape, so the module is fetched only for the 9
-    // pages that use it. Path-gated as well as template-gated — every Guide page
-    // lives under /blog/guide/, and isBlogPage() sets the same precedent of
-    // requiring both.
+    // Guide landing pages: same shape, so the module is fetched only for the
+    // pages that use it. Gated on the `Guide` template alone — see guide-detect.js
+    // for why the path is deliberately not part of the test.
     if (isGuidePage()) {
       ({ default: buildGuideHeroAutoBlock } = await import('../blocks/guide-hero/guide-hero-autoblock.js'));
     }

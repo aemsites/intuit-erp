@@ -7,21 +7,24 @@
 import { getMetadata } from '../../scripts/aem.js';
 
 /**
- * True on a /blog/guide/* landing page, i.e. one that gets the `guide-hero` card
- * (blocks/guide-hero). Both halves are required:
- *  - the `Guide` template is the authored signal, and the same one
- *    decorateTemplateAndTheme turns into `body.guide`;
- *  - the path bounds it to the 9 pages the design was measured against, matching
- *    isBlogPage()'s precedent of requiring a /blog/ prefix as well as a template.
+ * True on a Guide landing page, i.e. one that gets the `guide-hero` card
+ * (blocks/guide-hero). The `Guide` template is the whole test — the same authored
+ * signal decorateTemplateAndTheme turns into `body.guide`.
  *
- * Note the asymmetry this leaves: styles.css's imageless-guide rules key on
- * `body.guide` alone, since CSS cannot test the path. A `Guide` page outside
- * /blog/guide/ would therefore get the centred-headline treatment but no card.
- * That is cosmetic, and no such page exists today.
+ * Deliberately NOT also gated on a /blog/guide/ path. An earlier revision was, to
+ * bound the change to the 9 pages the design was measured against, but the
+ * template is the authored contract and the path is not: /library/templates/guide
+ * already carries `template: Guide` with the same h1 + hero photo in section 1, so
+ * a path gate leaves the very document authors copy a new guide FROM rendering as
+ * the bare headline over an unconstrained image that issue #423 filed.
+ *
+ * isCaseStudyPage() (blog-detect.js) sets the precedent: template alone, no path.
+ * isBlogPage()'s /blog/ prefix is load-bearing for a different reason — it has a
+ * path-shape fallback for articles that carry no template metadata, which this
+ * has no need of.
  * @returns {boolean}
  */
 // eslint-disable-next-line import/prefer-default-export
 export function isGuidePage() {
-  if (!window.location.pathname.startsWith('/blog/guide/')) return false;
   return getMetadata('template').trim().toLowerCase() === 'guide';
 }

@@ -13,14 +13,14 @@
  * NOT the blog-article treatment: no category eyebrow, no byline, no table of
  * contents and no rails, because these are landing pages rather than articles
  * (see issue #423). Guides with no hero image get no band at all upstream, just
- * a centred headline — that case never reaches this block; the autoblock skips
- * it and styles/styles.css handles it.
+ * a centred headline — that is this block's `no-media` variant, described below.
  *
  * All this decorate() does is split the authored flow into a media half and a
  * copy half so CSS has two boxes to place. Media comes first in the DOM because
  * that is also the mobile order (photo above the copy), so the stacked layout
  * needs no reordering, and it makes the photo section 1's first <img> so aem.js
- * eager-loads it as the LCP candidate. CTA buttonizing is left to the global
+ * un-defers it as the LCP candidate (this block adds the priority hint that
+ * treatment lacks — see below). CTA buttonizing is left to the global
  * decorateButtons (an <em>- or <strong>-wrapped link becomes .button.secondary /
  * .button.primary and this block's CSS styles either as the upstream ghost
  * button).
@@ -78,11 +78,23 @@ export default function decorate(block) {
       host = parent;
     }
     media.append(el);
+
+    // loading="eager" is left to aem.js — waitForFirstImage() sets it on section
+    // 1's first <img>, which after this split is this one. But that only
+    // UN-DEFERS the fetch; it does not raise its priority, and Chrome starts an
+    // <img> at Low, boosting it only once layout has proved it is in the
+    // viewport. This photo is the LCP element on every card-variant guide, so it
+    // gets the hint outright.
+    //
+    // The timing works out: the pipeline delivers the photo `loading="lazy"`, so
+    // no request exists yet, and decorate() runs inside loadSection's block loop
+    // while waitForFirstImage is that same call's loadCallback — strictly after.
+    // The attribute is therefore on the element before the request is created,
+    // which is the only moment priority is read.
+    const img = el.tagName === 'IMG' ? el : el.querySelector('img');
+    if (img) img.setAttribute('fetchpriority', 'high');
   }
 
-  // loading="eager" on the photo is left to aem.js: waitForFirstImage() sets it
-  // on section 1's first <img> — which, after this split, is this one — and
-  // loadSection awaits it as the callback right after loading this block.
   if (media.children.length) {
     block.replaceChildren(media, copy);
   } else {

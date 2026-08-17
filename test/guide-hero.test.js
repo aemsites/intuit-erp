@@ -50,12 +50,38 @@ describe('guide-hero decorate', () => {
   });
 
   it('puts the photo ahead of the copy, so it is the section\'s first img', () => {
-    // aem.js's waitForFirstImage() eager-loads section 1's first <img> as the LCP
+    // aem.js's waitForFirstImage() un-defers section 1's first <img> as the LCP
     // candidate, so the ordering is what gets the hero photo that treatment —
     // this block deliberately does not set loading itself.
     const block = blockWith('<h1>Headline</h1><p>Lede.</p><p><picture><img src="hero.jpg"></picture></p>');
     decorate(block);
     expect(block.querySelector('img').closest('div').className).toBe('guide-hero-media');
+    expect(block.querySelector('img').getAttribute('loading')).toBeNull();
+  });
+
+  it('marks the hero photo fetchpriority="high" — loading="eager" alone does not prioritize', () => {
+    const block = blockWith('<h1>Headline</h1><p><picture><source srcset="hero.webp"><img src="hero.jpg"></picture></p>');
+    decorate(block);
+    // the hint has to land on the <img>, not the <picture> that was moved
+    expect(block.querySelector('.guide-hero-media picture').hasAttribute('fetchpriority')).toBe(false);
+    expect(block.querySelector('.guide-hero-media img').getAttribute('fetchpriority')).toBe('high');
+  });
+
+  it('marks the hero photo when it is a bare img, and when it is wrapped in a link', () => {
+    const bare = blockWith('<h1>H</h1><p><img src="hero.jpg"></p>');
+    decorate(bare);
+    expect(bare.querySelector('.guide-hero-media img').getAttribute('fetchpriority')).toBe('high');
+
+    const linked = blockWith('<h1>H</h1><p><a href="/gated"><picture><img src="hero.jpg"></picture></a></p>');
+    decorate(linked);
+    expect(linked.querySelector('.guide-hero-media a img').getAttribute('fetchpriority')).toBe('high');
+  });
+
+  it('does not prioritize anything on the no-media variant', () => {
+    // an icon is not the LCP element; hinting it would waste the boost
+    const block = blockWith('<h1>H</h1><p>Lede <span class="icon icon-check"><img data-icon-name="check" src="/icons/check.svg"></span>.</p>');
+    decorate(block);
+    expect(block.querySelector('img').hasAttribute('fetchpriority')).toBe(false);
   });
 
   it('carries an authored CTA into the copy column', () => {
@@ -180,17 +206,33 @@ describe('isGuidePage', () => {
     expect(isGuidePage()).toBe(true);
   });
 
-  it('is false for every other template on a guide-shaped path', () => {
+  it('is true for a Guide page anywhere else — the template is the contract, not the path', () => {
+    // /library/templates/guide is the real case: it carries `template: Guide` and
+    // the same h1 + hero photo, and it is the document authors copy a new guide
+    // from, so it has to render like one
+    ['/library/templates/guide', '/resources/some-new-guide', '/guide'].forEach((path) => {
+      setPage(path, 'Guide');
+      expect(isGuidePage()).toBe(true);
+    });
+  });
+
+  it('is false for every other template', () => {
     ['Blog Article', 'Case Study', 'Research', 'Category', 'Author', ''].forEach((template) => {
       setPage('/blog/guide/construction-accounting-erp', template);
       expect(isGuidePage()).toBe(false);
     });
   });
 
-  it('is false off the /blog/guide/ path, even with the Guide template', () => {
-    ['/blog/acquisition-and-mergers/what-is-enterprise-value', '/blog/guide', '/accounting', '/'].forEach((path) => {
-      setPage(path, 'Guide');
-      expect(isGuidePage()).toBe(false);
+  it('is false on the guide listing page, which is a Category', () => {
+    // /blog/guide (no trailing segment) is the paginated blog-cards index
+    setPage('/blog/guide', 'Category');
+    expect(isGuidePage()).toBe(false);
+  });
+
+  it('tolerates casing and stray whitespace in the metadata', () => {
+    ['guide', ' Guide ', 'GUIDE'].forEach((template) => {
+      setPage('/blog/guide/data-analytics', template);
+      expect(isGuidePage()).toBe(true);
     });
   });
 });

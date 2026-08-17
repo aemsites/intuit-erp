@@ -2,8 +2,8 @@
  * buildGuideHeroAutoBlock — promotes section 1 of a Guide landing page into a
  * `guide-hero` block. Split out of scripts.js so it is unit-testable, and so the
  * module is only fetched for the pages that use it: loadEager imports it behind
- * isGuidePage() (./guide-detect.js), which is therefore the template/path gate —
- * this function only decides whether section 1 has the right SHAPE.
+ * isGuidePage() (./guide-detect.js), which is therefore the template gate — this
+ * function only decides whether section 1 has the right SHAPE.
  *
  * See blocks/guide-hero/guide-hero.js for what the block does with the content
  * and why Guide pages get their own card rather than the blog-article band.

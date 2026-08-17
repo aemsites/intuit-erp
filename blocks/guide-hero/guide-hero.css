@@ -174,7 +174,7 @@
 
 /* ============================================================
    no-media — a guide that authors no hero photo. Upstream drops the band
-   entirely and shows a plain centred 40px headline
+   entirely and shows a plain centred headline at the same 34px/44px as the card
    (/blog/guide/webinars-on-demand), so this variant is the whole treatment for
    those pages. It lives here, in the block's own stylesheet, because the
    autoblock builds the block whether or not there is a photo — the alternative
