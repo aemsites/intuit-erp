@@ -1,4 +1,4 @@
-import { bindScheduleLinks } from '../../scripts/schedule-modal.js';
+import { bindScheduleLinks } from '../form/form.js';
 
 function text(el) {
   return el ? el.textContent.trim() : '';

@@ -1,4 +1,16 @@
 /* logo-band — default: static responsive grid of partner/integration logos. */
+
+.logo-band:not(.marquee) {
+  padding: 4rem 0;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+
+    > ul {
+      display: flex;
+    }
+}
+
 .logo-band .logoband-list {
   list-style: none;
   margin: 0;
@@ -14,9 +26,6 @@
   align-items: center;
   justify-content: center;
   padding: 24px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background-color: var(--light-color);
   min-height: 120px;
 }
 

@@ -2,6 +2,7 @@ helix-importer-ui
 *.min.js
 plugins/experimentation
 plugins/martech
+scripts/martech
 vitest.config.js
 test
 edge

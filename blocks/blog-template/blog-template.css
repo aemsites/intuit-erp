@@ -17,10 +17,19 @@
 .blog-article .blog-hero .blog-byline-tag {
   margin: 0 0 12px;
   color: var(--text-muted);
-  font-size: var(--body-font-size-xxs);
+  font-size: var(--body-font-size-m);
   font-weight: 500;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+}
+
+.blog-article .blog-hero .blog-byline-tag a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.blog-article .blog-hero .blog-byline-tag a:hover {
+  text-decoration: underline;
 }
 
 .blog-article > .blog-hero {
@@ -620,7 +629,7 @@
   }
 
   .blog-article > .blog-hero > .default-content-wrapper > .blog-byline-tag {
-    font-size: var(--body-font-size-xxs);
+    font-size: var(--body-font-size-m);
   }
 
   .blog-article > .blog-hero > .default-content-wrapper > .blog-byline-meta {
@@ -660,7 +669,7 @@
    `.section.testimonial-container:has(.testimonial:not(.video, .card))`
    and score (0,4,0), which would beat this selector without it. It also
    reads correctly — only sections that actually hold blocks carry a band. */
-main.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail):has(.block) {
+main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .blog-rail):has(.block) {
   background: #fff;
   padding: 0;
 }
@@ -749,7 +758,7 @@ main.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail):has(.bl
    breakout only applies once there IS a prose column to break out of (see
    the >=900px rule below) — applying it here too pushed the panel past the
    viewport's left edge and caused horizontal scroll. */
-.blog-article .testimonial:not(.video) {
+:is(.blog-article, .case-study) .testimonial:not(.video) {
   box-sizing: border-box;
   margin: 32px 0;
   background: var(--tofu);
@@ -757,14 +766,14 @@ main.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail):has(.bl
 }
 
 @media (width >= 900px) {
-  .blog-article .testimonial:not(.video) {
+  :is(.blog-article, .case-study) .testimonial:not(.video) {
     width: calc(100% + 80px);
     margin: 32px -40px;
     padding: 8px 40px 24px;
   }
 }
 
-.blog-article .testimonial:not(.video) .cmp-testi-grid {
+:is(.blog-article, .case-study) .testimonial:not(.video) .cmp-testi-grid {
   display: block;
   max-width: none;
   margin: 0;
@@ -773,7 +782,7 @@ main.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail):has(.bl
 /* the global blockquote treatment (styles.css) adds a 48px decorative “ glyph
    and a 44px indent to hang it in; upstream's in-article quote has neither —
    the quote marks are part of the authored text. */
-.blog-article .testimonial:not(.video) .cmp-quote {
+:is(.blog-article, .case-study) .testimonial:not(.video) .cmp-quote {
   margin: 0 0 18px;
   padding: 0;
   font-size: 18px;
@@ -781,10 +790,10 @@ main.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail):has(.bl
   color: #000;
 }
 
-.blog-article .testimonial:not(.video) .cmp-quote::before { content: none; }
+:is(.blog-article, .case-study) .testimonial:not(.video) .cmp-quote::before { content: none; }
 
-.blog-article .testimonial:not(.video) .cmp-quote-name,
-.blog-article .testimonial:not(.video) .cmp-quote-role {
+:is(.blog-article, .case-study) .testimonial:not(.video) .cmp-quote-name,
+:is(.blog-article, .case-study) .testimonial:not(.video) .cmp-quote-role {
   display: inline;
   font-size: 18px;
   font-weight: 400;
@@ -792,8 +801,8 @@ main.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail):has(.bl
 }
 
 /* upstream renders attribution as one "- Name, Role" line */
-.blog-article .testimonial:not(.video) .cmp-quote-name::before { content: '- '; }
-.blog-article .testimonial:not(.video) .cmp-quote-name::after { content: ', '; }
+:is(.blog-article, .case-study) .testimonial:not(.video) .cmp-quote-name::before { content: '- '; }
+:is(.blog-article, .case-study) .testimonial:not(.video) .cmp-quote-name::after { content: ', '; }
 
 /* related-cards category label: pink w400 on the blog index (which is what
    blog-cards styles by default and is correct there), but black w500 in the

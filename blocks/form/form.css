@@ -1,101 +1,146 @@
-/* form — "Let's connect" lead form. Lifted from .connect / .cmp-connect / .cf */
+/* form — live Marketo lead form. Marketo's forms2.css renders the fields;
+   these rules only normalize layout and map the form onto the site's tokens.
+   Discrepancies vs erp.intuit.com are closed by testing at each breakpoint. */
+
+/* stylelint-disable selector-class-pattern -- .mkto* class names are Marketo's */
 
 .section.form-container { background: #fff; padding: 20px 0 var(--section-y); text-align: center; }
 .form-container .default-content-wrapper { text-align: center; }
-.form-container .default-content-wrapper h2 { font-size: 38px; line-height: 1.1; font-weight: 400; color: var(--heading); margin: 0 0 16px; }
-.form-container .default-content-wrapper p { font-size: 16px; color: var(--text); max-width: 44em; margin: 0 auto 12px; line-height: 1.55; }
-.form-container .default-content-wrapper p a { color: var(--primary); text-decoration: underline; }
-.form-container .default-content-wrapper:last-of-type p { font-size: 12px; color: var(--text-muted); }
 
-/* config-authored header/subheader/disclaimer (see parseFormConfig in form.js) */
+/* Heading + copy above a standalone form (webinar pages) mirror erp.intuit.com:
+   mobile-first 28px title stepping up to 40px on desktop, uniform 16px centered
+   paragraphs. The hero-card and modal override these (blocks/hero, smaller card
+   heading) so this only affects the standalone form-landing layout. */
+.form-container .default-content-wrapper h2 { font-size: 28px; line-height: 1.3; font-weight: 700; color: var(--heading); margin: 0 0 20px; }
+.form-container .default-content-wrapper p { font-size: 16px; color: var(--heading); max-width: 44em; margin: 0 auto 12px; line-height: 1.3; text-align: center; }
+.form-container .default-content-wrapper p a { color: var(--primary); text-decoration: underline; }
+
+/* config-authored copy around the form (see parseFormConfig in form.js) */
 .form .form-header { font-size: 24px; line-height: 1.2; font-weight: 400; color: var(--heading); margin: 0 0 8px; }
 .form .form-subheader { font-size: 15px; color: var(--text-muted); margin: 0 0 16px; line-height: 1.5; }
 .form .form-disclaimer { font-size: 12px; color: var(--text-muted); margin: 16px 0 0; line-height: 1.5; }
 
-/* fields */
-.form .lead-fields { display: flex; align-items: center; justify-content: center; gap: 20px; flex-wrap: nowrap; margin-top: 40px; }
+/* ---- Marketo form (.mktoForm) — Marketo sets inline widths, so full-width
+   layout needs !important. Keep overrides minimal; inherit the site's font.
+   Scoped `:not(.hero)` so these never touch the hero block (class "hero form"),
+   which embeds a form via blocks/hero and owns its own layout. */
+.form:not(.hero) { text-align: left; }
+.form:not(.hero) .mktoForm { width: 100% !important; font-family: inherit !important; }
+.form:not(.hero) .mktoForm .mktoOffset, .form:not(.hero) .mktoForm .mktoGutter { display: none !important; }
+.form:not(.hero) .mktoForm .mktoFormRow, .form:not(.hero) .mktoForm .mktoFieldWrap { width: 100% !important; }
+.form:not(.hero) .mktoForm .mktoFormCol { width: 100% !important; min-height: 0 !important; }
 
-/* default (underline) variant only — bounds the row so it can't sprawl
-   edge-to-edge and squish on wide sections. Scoped away from .boxed/.sky/
-   .hero/.card so those already-live variants keep their existing width and
-   are provably unaffected by this change. */
-.form:not(.boxed, .sky, .hero, .card) .lead-fields { max-width: 960px; margin: 40px auto 0; }
+/* Hide Marketo's hidden tracking-field rows, and space the visible field rows
+   (single-column Marketo forms have no .mktoFormCol, so spacing lives on the row). */
+.form:not(.hero) .mktoForm > .mktoFormRow:not(:has(input:not([type="hidden"]), select, textarea)) { display: none !important; }
+.form:not(.hero) .mktoForm > .mktoFormRow { margin-bottom: 16px; }
 
-.form .ff { flex: 1; min-width: 0; text-align: left; display: flex; flex-direction: column; }
-.form .ff span { display: none; }
-
-/* box-sizing: border-box — width:100% is content width by default, so the
-   side padding below (and .boxed/.card's wider 14px variant) was adding on
-   top of the field's full width instead of being carved out of it. That
-   overflowed the page horizontally by a few px site-wide wherever this form
-   renders (e.g. the homepage's "Let's connect" section), which is reachable
-   as a slight rubber-band horizontal scroll even while an unrelated
-   overflow-locked panel (like the mobile nav drawer) is open. */
-.form .ff input {
-  width: 100%; height: 46px; border: 0; border-bottom: 1px solid var(--line); background: transparent;
-  padding: 0 4px; font-size: 15px; font-family: inherit; color: var(--text); box-sizing: border-box;
+/* Match erp.intuit.com: hide field labels, rely on Marketo's placeholders.
+   Visually hidden (not display:none) so screen readers still announce them. */
+.form:not(.hero) .mktoForm .mktoLabel {
+  position: absolute !important; width: 1px !important; height: 1px !important;
+  padding: 0 !important; margin: -1px !important; overflow: hidden !important;
+  clip-path: inset(50%) !important; white-space: nowrap !important; border: 0 !important;
 }
-.form .ff input::placeholder { color: var(--text-muted); }
-.form .ff input:focus { outline: none; border-bottom-color: var(--primary); }
 
-.form .form-submit {
-  flex: 0 0 auto; height: 46px; padding: 0 30px; border: 0; border-radius: var(--radius);
-  background: var(--navy); color: var(--background-color); font-size: 16px; font-weight: 600; cursor: pointer;
+/* Fields mirror erp.intuit.com: filled light-gray, bottom rule only, top-rounded. */
+.form:not(.hero) .mktoForm input.mktoField,
+.form:not(.hero) .mktoForm select.mktoField,
+.form:not(.hero) .mktoForm textarea.mktoField {
+  width: 100% !important; height: 49px; box-sizing: border-box;
+  background: #f4f5f8 !important;
+  border: 0 !important; border-bottom: 1px solid var(--dark-color) !important;
+  border-radius: 4px 4px 0 0 !important;
+  padding: 0 14px; font-size: 16px; font-family: inherit; color: var(--text);
 }
-.form .form-submit:hover { background: var(--navy-hover); }
+.form:not(.hero) .mktoForm textarea.mktoField { height: auto; padding: 12px 14px; }
 
-/* ---- .boxed (compare) — labelled boxed inputs ---- */
-.form.boxed .lead-fields { flex-wrap: wrap; gap: 14px; align-items: flex-end; }
-.form.boxed .ff { flex: 1 1 150px; min-width: 130px; }
-.form.boxed .ff span { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
-.form.boxed .ff input { height: 48px; border: 1px solid var(--line); border-radius: 4px; padding: 0 14px; }
-.form.boxed .ff input:focus { outline: 2px solid var(--primary); outline-offset: -1px; border-color: var(--primary); }
-.form.boxed .form-submit { height: 48px; }
+.form:not(.hero) .mktoForm input.mktoField:focus,
+.form:not(.hero) .mktoForm select.mktoField:focus,
+.form:not(.hero) .mktoForm textarea.mktoField:focus { outline: none !important; border-bottom: 2px solid var(--primary) !important; }
 
-/* ---- .sky (erp-solutions) — sky band + hidden labels ---- */
+.form:not(.hero) .mktoForm .mktoButtonRow { width: 100%; margin-top: 8px; }
+.form:not(.hero) .mktoForm .mktoButtonWrap { margin-left: 0 !important; }
+
+.form:not(.hero) .mktoForm .mktoButton {
+  height: 49px; padding: 0 30px !important; border: 0 !important; border-radius: var(--radius) !important;
+  background: var(--navy) !important; color: var(--background-color) !important;
+  font-size: 16px !important; font-weight: 600 !important; cursor: pointer;
+}
+.form:not(.hero) .mktoForm .mktoButton:hover { background: var(--navy-hover) !important; }
+.form:not(.hero) .mktoForm .mktoError { color: #d2192a; font-size: 12px; }
+
+/* In the hero card and modal the form is stacked, so the button spans full width. */
+.hero-form .mktoForm .mktoButtonRow, .modal .mktoForm .mktoButtonRow,
+.hero-form .mktoForm .mktoButtonWrap, .modal .mktoForm .mktoButtonWrap { width: 100% !important; }
+.hero-form .mktoForm .mktoButtonRow, .modal .mktoForm .mktoButtonRow { margin-top: 12px; }
+.hero-form .mktoForm .mktoButton, .modal .mktoForm .mktoButton { width: 100% !important; justify-content: center; }
+
+/* Space the disclaimer/reCAPTCHA copy (rendered below the form) from the button. */
+.hero-form .form-wrapper + .default-content-wrapper,
+.modal .form-wrapper + .default-content-wrapper { margin-top: 20px; }
+
+/* Desktop: a standalone form (e.g. webinar registration) lays its fields out in
+   one row, matching erp.intuit.com. The hero-embedded card, modal, and download
+   variants stay stacked (reset below). */
+@media (width >= 900px) {
+  .form:not(.hero) .mktoForm { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 16px; }
+  .form:not(.hero) .mktoForm > .mktoFormRow { flex: 1 1 140px; width: auto !important; margin-bottom: 0; }
+  .form:not(.hero) .mktoForm > .mktoButtonRow { flex: 0 0 auto; width: auto; margin: 0; }
+
+  /* Card/modal/download forms stay stacked (not a single flex row). */
+  .hero-form .mktoForm,
+  .modal .mktoForm,
+  .form.download .mktoForm { display: block !important; }
+
+  .hero-form .mktoForm > .mktoFormRow,
+  .modal .mktoForm > .mktoFormRow,
+  .form.download .mktoForm > .mktoFormRow { width: 100% !important; margin-bottom: 16px !important; }
+}
+
+/* ---- .info — bright-blue submit button (e.g. pricing) instead of the navy default ---- */
+.form.info .mktoForm .mktoButton { background: var(--info) !important; }
+.form.info .mktoForm .mktoButton:hover { background: var(--blue-bright) !important; }
+
+/* ---- .sky — sky band ---- */
 .section.form-container:has(.form.sky) { background: #eaf3fb; padding: var(--section-y) 0; }
-.form.sky .lead-fields { flex-wrap: nowrap; align-items: flex-end; }
-.form.sky .ff span { display: none; }
-.form.sky .ff input { background: #fff; }
 
-/* ---- .hero — embedded directly in a dark hero band (e.g. pricing) ----
-   The section keeps its own dark hero background; this variant just makes
-   the form's own text/inputs read on dark instead of the light default. */
-.section.form-container:has(.form.hero) { background: var(--navy); padding: var(--section-y) 0; }
-
-.section.form-container:has(.form.hero) .default-content-wrapper h2,
-.form.hero .form-header { color: var(--background-color); }
-
-.section.form-container:has(.form.hero) .default-content-wrapper p,
-.form.hero .form-subheader,
-.form.hero .form-disclaimer { color: var(--background-color); opacity: 0.7; }
-.form.hero .ff span { color: var(--background-color); }
-.form.hero .ff input { color: var(--background-color); border-bottom-color: rgb(255 255 255 / 40%); }
-.form.hero .ff input::placeholder { color: var(--background-color); opacity: 0.6; }
-.form.hero .ff input:focus { border-bottom-color: var(--background-color); }
-.form.hero .form-submit { background: var(--background-color); color: var(--navy); }
-.form.hero .form-submit:hover { background: var(--light-color); }
-
-/* ---- .card — white overlay card (e.g. accountant "Request a detailed
-   demo"). The card supplies its own bg/border/radius; positioning it over a
-   hero image is a section/page-layout concern, not this block's. ---- */
+/* ---- .card — white overlay card ---- */
 .section.form-container:has(.form.card) { background: transparent; padding: 0; }
 
 .form.card {
   background: var(--background-color); border: 1px solid var(--line); border-radius: var(--radius-card);
-  max-width: 420px; margin: 0 auto; padding: 32px; text-align: left; box-shadow: 0 12px 32px rgb(0 0 0 / 12%);
+  max-width: none; margin: 0 auto; padding: 24px; box-shadow: 0 12px 32px rgb(0 0 0 / 12%);
 }
 .form.card .form-header { font-size: var(--heading-font-size-m); margin: 0 0 8px; }
-.form.card .form-subheader { margin: 0 0 8px; }
-.form.card .lead-fields { flex-direction: column; align-items: stretch; gap: 14px; max-width: none; margin: 20px 0 0; }
-.form.card .ff span { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
-.form.card .ff input { height: 48px; border: 1px solid var(--line); border-radius: var(--radius); padding: 0 14px; }
-.form.card .ff input:focus { outline: 2px solid var(--primary); outline-offset: -1px; border-color: var(--primary); }
-.form.card .form-submit { height: 48px; }
 
-@media (width <= 768px) {
-  .form-container .default-content-wrapper h2 { font-size: 28px; }
-  .form .lead-fields { flex-direction: column; align-items: stretch; gap: 14px; }
-  .form .ff, .form .form-submit { width: 100%; }
-  .form.card { max-width: none; padding: 24px; }
+/* ---- .download — gated-content split band (copy left, form card right).
+   Copy is authored as section default content; the block is the card. ---- */
+.section.form-container:has(.form.download) { background: var(--navy); padding: var(--section-y) 0; text-align: left; }
+.section.form-container:has(.form.download) > div { max-width: var(--container); margin: 0 auto; }
+
+.section.form-container:has(.form.download):has(.default-content-wrapper) {
+  display: grid; grid-template-columns: 1fr; gap: 32px; align-items: start;
+}
+.section.form-container:has(.form.download) .default-content-wrapper { text-align: left; color: #d5e0ec; }
+
+.section.form-container:has(.form.download) .default-content-wrapper h2,
+.section.form-container:has(.form.download) .default-content-wrapper h3 { color: #fff; font-size: 32px; font-weight: 700; margin: 0 0 16px; }
+.section.form-container:has(.form.download) .default-content-wrapper li strong { color: #fff; }
+
+.form.download {
+  background: #fff; border-radius: var(--radius-card); padding: 32px; max-width: none;
+  box-shadow: 0 20px 50px rgb(0 0 0 / 25%);
+}
+.form.download .form-header { font-size: 22px; font-weight: 700; color: var(--heading); margin: 0 0 20px; }
+
+/* Tablet+: standalone heading grows, the card regains its fixed centered width. */
+@media (width >= 768px) {
+  .form-container .default-content-wrapper h2 { font-size: 40px; }
+  .form.card { max-width: 420px; padding: 32px; }
+}
+
+/* Desktop: the gated-download band splits into two columns. */
+@media (width >= 900px) {
+  .section.form-container:has(.form.download):has(.default-content-wrapper) { grid-template-columns: 1fr 1fr; gap: 48px; }
 }

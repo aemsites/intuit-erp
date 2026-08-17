@@ -89,18 +89,24 @@
 }
 
 .cards.icons { grid-template-columns: repeat(3, 1fr); gap: 48px; max-width: 1120px; margin: 0 auto; }
-.cards.icons .cards-card-image { width: 56px; margin-bottom: 20px; }
+
+/* icon inline with the eyebrow label (icon left, label right); title + body
+   below — matches production. cards.js groups the icon + eyebrow into
+   .cards-card-head. */
+.cards.icons .cards-card-head { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+.cards.icons .cards-card-image { width: 56px; margin: 0; }
 .cards.icons .cards-card-image img { width: 56px; height: 56px; object-fit: contain; }
-.cards.icons .cards-card-body .cards-eyebrow { margin: 0 0 12px; font-style: normal; font-size: 14px;}
+.cards.icons .cards-eyebrow { margin: 0; font-style: normal; font-size: 14px; }
 
 .cards.icons .cards-card-body h3 {
-  font-size: 24px; line-height: 1.25; font-weight: 400; color: var(--heading); margin: 0 0 16px;
+  /* production renders these icon-card titles at 32px (was 24px) */
+  font-size: 32px; line-height: 1.25; font-weight: 400; color: var(--heading); margin: 0 0 16px;
 }
 .cards.icons .cards-card-body p { font-size: 15px; line-height: 1.55; color: var(--text-muted); margin: 0; }
 
 @media (width <= 768px) {
   .cards.icons { grid-template-columns: 1fr; gap: 36px; }
-  .cards.icons .cards-card-body h3 { font-size: 22px; }
+  .cards.icons .cards-card-body h3 { font-size: 28px; }
 }
 
 /* ---- .carousel / .boxed — single-row, horizontally-scrolling photo cards
@@ -276,6 +282,39 @@
 
 @media (width <= 768px) {
   .cards.carousel .cards-track > div, .cards.boxed .cards-track > div { flex-basis: 260px; }
+}
+
+
+.cards.list { display: flex; flex-direction: column; gap: 24px; }
+
+.cards.list > div {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.cards.list .cards-card-image { margin: 0; border-radius: 8px; overflow: hidden; }
+
+.cards.list .cards-eyebrow { font-size: var(--body-font-size-xxs); text-transform: capitalize; }
+
+.cards.list .cards-card-body p:has(a) {
+  margin-top: 0;
+  font-size: var(--body-font-size-s);
+  font-weight: 700;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.cards.list .cards-card-body a { color: var(--text-color); font-weight: 700; }
+
+@media (width <= 480px) {
+  .cards.list > div { grid-template-columns: 166px 1fr; }
+  .cards.list .cards-card-image img { height: 188px; object-fit: cover; }
 }
 
 /* ---- custom "camera-focus" cursor (erp.intuit.com CustomCursor): a floating
