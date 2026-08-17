@@ -7,6 +7,10 @@
  *   .icons      small (56px) icon + optional eyebrow + heading + body,
  *               unboxed, fixed 3-up (account-management, compare,
  *               human-capital-management, migration, oa "One view...")
+ *   .list       vertical stack of horizontal image+text rows, no heading —
+ *               the link paragraph's own text is the title, an optional
+ *               eyebrow paragraph doubles as a category label (blog rail
+ *               "download" promos, e.g. fragments/right-rail)
  * .carousel/.boxed combine with the .accent/.dark tone classes (section
  * background) independently — see cards.css.
  *

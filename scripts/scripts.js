@@ -78,6 +78,31 @@ export function getTealium() {
   return tealium;
 }
 
+let siteConfigPromise;
+
+// Site-wide integration values (Marketo/ChiliPiper/reCAPTCHA) live in the
+// ops-owned /site-config.json DA sheet, never in code or per-page authoring.
+// Fetched once; returns a flat key->value map ("true"/"false" coerced to
+// boolean), or {} when the sheet is unavailable (local/dev without it).
+export function getSiteConfig() {
+  if (!siteConfigPromise) {
+    siteConfigPromise = fetch('/site-config.json')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json) => {
+        const cfg = {};
+        (json?.data || []).forEach(({ key, value }) => {
+          if (!key) return;
+          if (value === 'true') cfg[key] = true;
+          else if (value === 'false') cfg[key] = false;
+          else cfg[key] = value;
+        });
+        return cfg;
+      })
+      .catch(() => ({}));
+  }
+  return siteConfigPromise;
+}
+
 // no custom prod domain configured yet — treat only the .aem.live CDN as
 // prod (no pill overlay); .aem.page previews and localhost stay in debug mode.
 const experimentationConfig = {
@@ -451,6 +476,10 @@ async function loadEager(doc) {
       ({ buildBlogTemplate } = await import('../blocks/blog-template/blog-template.js'));
     } else if (isCaseStudyPage()) {
       ({ buildCaseStudyHeader } = await import('../blocks/case-study-header/case-study-header.js'));
+      // case-study pages share the same in-article testimonial pull-quote
+      // treatment as blog articles; that override lives in blog-template.css,
+      // which only blog pages otherwise load.
+      loadCSS(`${window.hlx.codeBasePath}/blocks/blog-template/blog-template.css`);
     }
     decorateMain(main);
     // Personalize/experiment the first (LCP) section before reveal so the visitor
@@ -498,6 +527,7 @@ async function loadLazy(doc) {
   // Persistent bottom-right sales widget ("Contact us" / "Talk to sales"),
   // present on every page. Loaded here (lazy phase) so it never touches LCP.
   loadCSS(`${window.hlx.codeBasePath}/blocks/contact-us/contact-us.css`);
+  // eslint-disable-next-line import/no-cycle
   import('../blocks/contact-us/contact-us.js')
     .then(({ default: initContactUs }) => initContactUs())
     .catch(() => { /* non-fatal — widget is non-critical chrome */ });

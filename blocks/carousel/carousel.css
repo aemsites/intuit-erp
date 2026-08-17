@@ -170,7 +170,7 @@
 
 .carousel.testimonial .testi-media { flex: none; }
 
-.carousel.testimonial.has-title .testi-media { padding: 0 30px 60px; }
+.carousel.testimonial.has-title .testi-media:has(img) { padding: 0 30px 60px; }
 
 .carousel.testimonial .testi-media img {
   display: block;
@@ -329,7 +329,7 @@
 @media (width >= 600px) {
   .carousel.testimonial .testi-body { padding: 60px 30px; }
 
-  .carousel.testimonial.has-title .testi-media { padding: 0 30px 60px; }
+  .carousel.testimonial.has-title .testi-media:has(img) { padding: 0 30px 60px; }
 
   /* pale holds its larger attribution from tablet up; the others are already
      at 16px and stay there for the whole ramp */
@@ -354,7 +354,7 @@
      from a zero basis reproduces it at every size. min-width:0 because a flex
      item's automatic minimum is its content size, which a wide portrait would
      otherwise use to push the column past its share. */
-  .carousel.testimonial .testi-media {
+  .carousel.testimonial .testi-media:has(img) {
     flex: 40 1 0;
     min-width: 0;
     align-self: stretch;
@@ -391,7 +391,7 @@
 
   /* border-box so the 80px inset counts inside the 50% rather than widening
      the column past it */
-  .carousel.testimonial.has-title .testi-media {
+  .carousel.testimonial.has-title .testi-media:has(img) {
     box-sizing: border-box;
     flex: 0 0 50%;
     min-width: 0;
@@ -550,4 +550,9 @@
   }
 
   .carousel.feature .carousel-quote { font-size: 40px; }
+}
+
+
+.section > [class*="-wrapper"] + .carousel-wrapper {
+  margin-top: 4rem;
 }

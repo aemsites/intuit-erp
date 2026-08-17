@@ -39,6 +39,12 @@ import { toClassName, getMetadata } from '../../scripts/aem.js';
  * @param {Element} main the page's <main>
  */
 export function buildCaseStudyHeader(main) {
+  // mirrors blog-template.js's main.classList.add('blog-article') — lets
+  // shared in-article overrides (blog-template.css) target both templates
+  // via `main:is(.blog-article, .case-study)`. Applied even when the header
+  // itself is hand-authored (early return below), since it's independent.
+  main.classList.add('case-study');
+
   // already authored — nothing to do
   if (main.querySelector('.case-study-header')) return;
 

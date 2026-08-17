@@ -142,6 +142,23 @@
   .section.product-cards .cards { grid-template-columns: 1fr; }
 }
 
+/* feature-cards — Section Metadata "Style: feature-cards": center the section
+   heading/subheading and render the .cards.icons items as gray rounded cards
+   (human-capital-management "data behind every workforce decision"). Opt-in and
+   scoped to the section, so other .cards.icons sections (e.g. /account-management)
+   are unaffected. */
+.section.feature-cards .default-content-wrapper { text-align: center; }
+
+.section.feature-cards .cards.icons > div {
+  box-sizing: border-box;
+  padding: 32px;
+  background: #eef2f6;
+  border-radius: 16px;
+}
+
+/* production's carded titles are smaller than the plain icon-card title (32px) */
+.section.feature-cards .cards.icons .cards-card-body h3 { font-size: 24px; }
+
 /* ---- .carousel / .boxed — single-row, horizontally-scrolling photo cards
    (events, financial-services, professional-services, oa). Cards scroll via
    native overflow (free touch/trackpad swipe); the progress bar + counter +
@@ -315,6 +332,39 @@
 
 @media (width <= 768px) {
   .cards.carousel .cards-track > div, .cards.boxed .cards-track > div { flex-basis: 260px; }
+}
+
+
+.cards.list { display: flex; flex-direction: column; gap: 24px; }
+
+.cards.list > div {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.cards.list .cards-card-image { margin: 0; border-radius: 8px; overflow: hidden; }
+
+.cards.list .cards-eyebrow { font-size: var(--body-font-size-xxs); text-transform: capitalize; }
+
+.cards.list .cards-card-body p:has(a) {
+  margin-top: 0;
+  font-size: var(--body-font-size-s);
+  font-weight: 700;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.cards.list .cards-card-body a { color: var(--text-color); font-weight: 700; }
+
+@media (width <= 480px) {
+  .cards.list > div { grid-template-columns: 166px 1fr; }
+  .cards.list .cards-card-image img { height: 188px; object-fit: cover; }
 }
 
 /* ---- custom "camera-focus" cursor (erp.intuit.com CustomCursor): a floating
