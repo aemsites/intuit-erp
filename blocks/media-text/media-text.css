@@ -8,7 +8,7 @@
 .section.media-text-container:has(.media-text.tint) { background: var(--tofu); }
 
 .media-text-container .default-content-wrapper h2 {
-  font-size: 38px; line-height: 1.15; font-weight: 400; color: var(--heading);
+  font-size: 38px; line-height: 1.15; font-weight: 500; color: var(--heading);
   text-align: center; margin: 0 0 40px;
 }
 
@@ -26,7 +26,7 @@
 .media-text .media-copy .media-eyebrow { margin-bottom: 16px; color: var(--text-muted); }
 
 .media-text .media-copy h2,
-.media-text .media-copy h3 { font-size: 34px; line-height: 1.2; font-weight: 400; color: var(--heading); margin: 0 0 18px; }
+.media-text .media-copy h3 { font-size: 34px; line-height: 1.2; font-weight: 500; color: var(--heading); margin: 0 0 18px; }
 .media-text .media-copy .media-body { font-size: 15px; line-height: 1.6; color: var(--text-muted); max-width: 34em; margin: 0 0 14px; }
 .media-text .media-copy .button-wrapper { margin-top: 12px; }
 
@@ -63,6 +63,13 @@
 
 @media (width >= 900px) {
   .media-text.cyan .media-row { padding-inline: 115px; gap: 116px; }
+
+  /* desktop parity with erp.intuit.com: section/copy h2 render at 40px (h3
+     sub-headings stay 34px). Bumped only at desktop so the smaller mobile
+     sizes are left untouched. Weight is 500 at every breakpoint (base rules) —
+     the value that matches the source's rendered heading weight. */
+  .media-text-container .default-content-wrapper h2 { font-size: 40px; }
+  .media-text .media-copy h2 { font-size: 40px; }
 }
 
 @media (width >= 1200px) {
