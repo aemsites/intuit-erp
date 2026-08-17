@@ -4,6 +4,7 @@ import {
   entryForSlot, recommendationOf, pznRecord, pznFragment,
 } from './personalization/pzn-response.js';
 import { recordPzn } from './personalization/analytics.js';
+import { stampPzn } from './personalization/stamp.js';
 
 // Sections tagged `data-pzn` within `root` (root itself may match), minus `skip`.
 // The placement id is the verbatim `data-pzn` value; a `data-pzn-block` scopes the
@@ -55,10 +56,15 @@ export async function runPersonalization(root = document.querySelector('main'), 
     const fragment = pznFragment(rec);
     if (!fragment) return;
     const key = placement.toLowerCase();
-    // Apply to every slot sharing this placement, not just the first.
+    // Apply to every slot sharing this placement; stamp the offer identity once the
+    // swap lands (stamp.js) for click attribution.
     slots
       .filter((s) => s.placement.toLowerCase() === key)
-      .forEach((slot) => applications.push(applyFragment(slot.el, fragment)));
+      .forEach((slot) => applications.push(
+        applyFragment(slot.el, fragment).then((applied) => {
+          if (applied && record) stampPzn(slot.el, record);
+        }),
+      ));
   });
   await Promise.all(applications);
 
