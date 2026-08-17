@@ -15,7 +15,7 @@
  * CSS: blocks/contact-us/contact-us.css.
  */
 // eslint-disable-next-line import/no-cycle
-import { openScheduleModal } from '../../scripts/schedule-modal.js';
+import { openScheduleModal } from '../form/form.js';
 
 // Contact info (sales phone, hours, support URL) is authored in DA — a
 // fragment table, not hardcoded here — so it can change without a code

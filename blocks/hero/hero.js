@@ -26,7 +26,7 @@
  * once the page finishes loading; see enhanceDashboardAnimation.
  * CSS: blocks/hero/hero.css
  */
-import { bindScheduleLinks } from '../../scripts/schedule-modal.js';
+import { bindScheduleLinks } from '../form/form.js';
 import { loadFragment } from '../fragment/fragment.js';
 
 const DEFAULT_FORM_FRAGMENT = '/fragments/schedule-call';

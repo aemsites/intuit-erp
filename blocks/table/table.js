@@ -1,7 +1,6 @@
 /**
- * table — generic div-based data table (no <table>/<th>/<td>). Used by
- * OF1-generated content (blocks/of1): first row = header, rest = data rows.
- * Full styling lives in blocks/of1/of1.css (.generated-section .table).
+ * table — generic div-based data table (no <table>/<th>/<td>): first row =
+ * header, rest = data rows.
  * CSS: blocks/table/table.css
  */
 export default function decorate(block) {

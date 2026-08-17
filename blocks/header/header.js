@@ -18,7 +18,7 @@
  * CSS: blocks/header/header.css · nav content: content/nav.html (nav-menu block)
  */
 import { getMetadata } from '../../scripts/aem.js';
-import { openScheduleModal } from '../../scripts/schedule-modal.js';
+import { openScheduleModal } from '../form/form.js';
 import { loadFragment } from '../fragment/fragment.js';
 import { enhanceSecondaryNavSearch } from '../blog-search/search-utils.js';
 import {
@@ -229,12 +229,17 @@ function navItemHTML(entry, idx, idPrefix = 'flyout') {
           ${c.links.map(linkHTML).join('')}
         </div>`).join('');
   // flyout-title is mobile-only (see header.css) — the drill-down panel's own
-  // page-title heading repeating the trigger's label, since that trigger
+  // page-title label repeating the trigger's label, since that trigger
   // itself has slid off-screen by the time the panel is showing (issue #78).
+  // Not a heading element: this is nav chrome, not page content, so it must
+  // stay out of the document's heading outline (issue: nav h2 breaks
+  // heading hierarchy) — aria-labelledby gives the panel the same
+  // screen-reader context without a fake <h2>.
+  const titleId = `${id}-title`;
   return `
       <div class="nav-item">
         <button type="button" aria-expanded="false" aria-controls="${id}">${entry.label}<i class="caret"></i></button>
-        <div class="flyout" id="${id}" aria-hidden="true">${FLYOUT_BACK_HTML}<h2 class="flyout-title">${entry.label}</h2><div class="flyout-inner">${cols}</div></div>
+        <div class="flyout" id="${id}" aria-hidden="true" aria-labelledby="${titleId}">${FLYOUT_BACK_HTML}<p class="flyout-title" id="${titleId}">${entry.label}</p><div class="flyout-inner">${cols}</div></div>
       </div>`;
 }
 

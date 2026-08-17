@@ -10,7 +10,6 @@ import { getMetadata } from '../../scripts/aem.js';
  * True on a blog *article* page (drives the TOC/right-rail template build).
  * @returns {boolean}
  */
-// eslint-disable-next-line import/prefer-default-export
 export function isBlogPage() {
   const path = window.location.pathname;
   if (!path.startsWith('/blog/')) return false;
@@ -19,4 +18,15 @@ export function isBlogPage() {
   // fallback (no template metadata): /blog/<category>/<slug>, not /blog/author/*
   const segments = path.replace(/\/+$/, '').slice('/blog/'.length).split('/').filter(Boolean);
   return segments.length >= 2 && segments[0] !== 'author';
+}
+
+/**
+ * True on a case-study detail page (template metadata = "case study"). These
+ * pages use the dedicated case-study-header block; the autoblock synthesizes it
+ * from metadata when it isn't hand-authored.
+ * @returns {boolean}
+ */
+export function isCaseStudyPage() {
+  const template = getMetadata('template').trim().toLowerCase();
+  return template === 'case study';
 }

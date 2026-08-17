@@ -7,6 +7,10 @@
  *   .icons      small (56px) icon + optional eyebrow + heading + body,
  *               unboxed, fixed 3-up (account-management, compare,
  *               human-capital-management, migration, oa "One view...")
+ *   .list       vertical stack of horizontal image+text rows, no heading —
+ *               the link paragraph's own text is the title, an optional
+ *               eyebrow paragraph doubles as a category label (blog rail
+ *               "download" promos, e.g. fragments/right-rail)
  * .carousel/.boxed combine with the .accent/.dark tone classes (section
  * background) independently — see cards.css.
  *
@@ -14,12 +18,7 @@
  * becomes the eyebrow, an authored heading tag becomes the card title,
  * everything else stays as body copy untouched.
  *
- * Used by OF1-generated content (blocks/of1), which emits plain `.cards > div`
- * rows rather than authoring this block directly. The default (grid) shape is
- * kept structurally as-is (no ul/li wrap, no scroll wrapper) to match the DOM
- * blocks/of1/of1.css already targets.
- * CSS: blocks/cards/cards.css (baseline) + blocks/of1/of1.css
- *      (.generated-section .cards, full styling)
+ * CSS: blocks/cards/cards.css
  */
 import { createOptimizedPicture } from '../../scripts/aem.js';
 
@@ -195,6 +194,23 @@ export default function decorate(block) {
       }
     });
   });
+
+  // .icons: production lays the icon inline with the eyebrow label (icon left,
+  // label right) and drops the title/body below that row. Group the icon +
+  // eyebrow into a header row so CSS can render them side by side; the title
+  // and body stay in .cards-card-body untouched.
+  if (isIcons) {
+    [...block.children].forEach((card) => {
+      const icon = card.querySelector(':scope > .cards-card-image');
+      const eyebrow = card.querySelector(':scope > .cards-card-body > .cards-eyebrow');
+      if (!icon) return;
+      const head = document.createElement('div');
+      head.className = 'cards-card-head';
+      head.append(icon);
+      if (eyebrow) head.append(eyebrow);
+      card.prepend(head);
+    });
+  }
 
   if (SCROLL_SHAPE_CLASSES.some((c) => block.classList.contains(c))) {
     enhanceScroll(block);

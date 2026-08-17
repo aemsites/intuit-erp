@@ -128,7 +128,14 @@ export function enhanceSecondaryNavSearch(root) {
     toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
     if (open) input.focus();
   };
-  toggle.addEventListener('click', () => setOpen(!widget.classList.contains('rc-search-open')));
+  // On mobile the field is always shown in the open accordion (see header.css),
+  // so the magnifier just focuses it rather than toggling expand/collapse.
+  const isMobileAccordion = () => typeof window.matchMedia === 'function'
+    && window.matchMedia('(max-width: 1299px)').matches;
+  toggle.addEventListener('click', () => {
+    if (isMobileAccordion()) { input.focus(); return; }
+    setOpen(!widget.classList.contains('rc-search-open'));
+  });
   // × collapses the expanded search (and clears it), returning focus to the icon.
   clear.addEventListener('click', () => { input.value = ''; setOpen(false); toggle.focus(); });
   form.addEventListener('submit', (e) => {

@@ -41,7 +41,8 @@
  *   node scripts/diff/martech-diff.mjs --local-base http://localhost:3001
  *   node scripts/diff/martech-diff.mjs --headed     # stealth real Chrome (past a bot block)
  *   node scripts/diff/martech-diff.mjs --json out.json  # also write the raw capture+diff
- *   node scripts/diff/martech-diff.mjs --refresh scripts/diff/fixtures/martech-homepage.golden.json
+ *   node scripts/diff/martech-diff.mjs --samples 8   # capture each env 8x; UNION into golden
+ *   node scripts/diff/martech-diff.mjs --env prod --samples 8 --refresh <golden.json>
  */
 
 /* standalone dev tool (sibling of content-diff): CLI-style loops + argv walking by design */
@@ -100,7 +101,11 @@ const VENDORS = [
   ['adobe-analytics', /\.sc\.omtrdc\.net|\.2o7\.net/i],
   ['adobe-audience', /demdex\.net/i],
   ['adobe-target', /\.tt\.omtrdc\.net/i],
-  ['fullstory', /fullstory\.com|fullstory/i], // prod self-hosts it (lib.intuitcdn.net/…fullstory…)
+  // Two firing paths: the SELF-HOSTED loader `lib.intuitcdn.net/libs/fs/<ver>/fs.js` fires every
+  // load (path has no "fullstory" token — the old /fullstory/i missed it, and intuitcdn.net was
+  // infra-swallowed, so it was doubly invisible); the recording beacons to fullstory.com are
+  // SAMPLED (fs_is_sampled) and absent on most visits. Match both.
+  ['fullstory', /fullstory\.com|\/libs\/fs\/[\d.]+\/fs\.js/i],
   ['liveperson', /liveperson\.net|lpsnmedia\.net|\.liveperson\./i],
   ['zoominfo', /zoominfo\.com|ws\.zoominfo|zi-scripts\.com/i],
   ['merkle-rkd', /rkdms\.com/i],
@@ -111,7 +116,7 @@ const VENDORS = [
   ['hotjar', /hotjar\.com/i],
   ['ms-clarity', /clarity\.ms/i],
   // Added after auditing prod's actual third-party set (was badly undercounted):
-  ['o11y-rum', /rum\.api\.intuit\.com/i], // Intuit Observability RUM (prod-only in the dev profile)
+  ['o11y-rum', /rum\.api\.intuit\.com/i], // Intuit Observability RUM — this is the beacon; its loader o11y-rum-web.min.js is a page-authored <script> in prod HTML (see LOAD_CLASS)
   ['mpulse', /go-mpulse\.net|akstat\.io/i], // Akamai mPulse RUM
   ['demandbase', /demandbase\.com|company-target\.com/i],
   ['nielsen', /imrworldwide\.com/i],
@@ -129,6 +134,13 @@ const VENDORS = [
 
 const UTAG_TAG_RE = /tags\.tiqcdn\.com\/utag\/intuit\/ies-erp\/[a-z0-9]+\/utag\.(\d+)\.js/i;
 
+// Only executable/beacon requests can be martech; a static asset (image, font,
+// stylesheet, media) never is. The completeness net records unclassified hosts
+// ONLY for these types, so un-swallowing self-host CDNs (intuitcdn.net — see
+// isInfraHost) surfaces self-hosted martech (FullStory on lib.intuitcdn.net)
+// WITHOUT flooding the golden with first-party image/font hosts.
+const TRACKING_RTYPES = new Set(['script', 'xhr', 'fetch', 'ping', 'websocket', 'eventsource', 'other']);
+
 // --------------------------------------------------------------------------
 // Helpers
 // --------------------------------------------------------------------------
@@ -141,9 +153,14 @@ function classifyVendor(url) {
 function hostFromUrl(u) { try { return new URL(u).host; } catch { return ''; } }
 
 // First-party / infra / static-asset hosts — NOT "unclassified third-party martech".
+// NOTE: `intuitcdn.net` is deliberately NOT swallowed here — Intuit self-hosts martech on it
+// (Segment @ segment.intuitcdn.net, FullStory @ lib.intuitcdn.net). Known self-hosted vendors are
+// still caught by VENDORS above (they run before this check); an UNKNOWN self-hosted vendor must
+// surface via the completeness net, not vanish. The TRACKING_RTYPES gate keeps first-party
+// image/font/css requests on intuitcdn.net out of the net, so un-swallowing it adds no asset noise.
 function isInfraHost(h, pageHost) {
   if (h && h === pageHost) return true;
-  return /(^|\.)(intuit\.com|intuitcdn\.net|tiqcdn\.com|akamaized\.net|akamaihd\.net)$/i.test(h)
+  return /(^|\.)(intuit\.com|tiqcdn\.com|akamaized\.net|akamaihd\.net)$/i.test(h)
     || /(^|\.)(aem|hlx)\.(live|page)$/i.test(h) || /(^|\.)?localhost$/i.test(h)
     || /(^|\.)(gstatic\.com|googleapis\.com|jsdelivr\.net|unpkg\.com|cloudfront\.net|cloudflareinsights\.com)$/i.test(h);
 }
@@ -156,6 +173,12 @@ function isInfraHost(h, pageHost) {
 const LOAD_CLASS = {
   mpulse: 'edge', // Akamai Boomerang, injected by the edge — appears once behind Akamai
   trustarc: 'authored', // TrustArc privacy-seal badge embedded in the page → LOOK INTO
+  // Intuit Observability RUM: on prod, o11y-rum-web.min.js is a page-authored <script> in the
+  // server HTML (verified via request initiator = parser, NOT utag.js), so it does NOT ride on the
+  // Tealium loader. The EDS rebuild loads Tealium + the OneTrust stack but not o11y-rum → if it's
+  // missing it's a page-authored gap to LOOK INTO (author it, or accept EDS-native RUM instead),
+  // never an "ok, fires under the prod profile" gap.
+  'o11y-rum': 'authored',
   'tealium-lib': 'infra', // the utag loader itself — both sides load it
   'tealium-collect': 'infra',
   // Programmatic DSP cookie-syncs — fire downstream of the ad tags, a different subset each load
@@ -234,7 +257,8 @@ async function captureEnv({ browser, env, page, scenario, opts }) {
       if (m) tagUids.add(Number(m[1]));
       if (!v) {
         const h = hostFromUrl(ru);
-        if (h && !isInfraHost(h, pageHost)) unclassifiedHosts.add(h);
+        // Only executable/beacon requests are martech candidates — static assets never are.
+        if (h && !isInfraHost(h, pageHost) && TRACKING_RTYPES.has(req.resourceType())) unclassifiedHosts.add(h);
       }
     });
 
@@ -271,6 +295,75 @@ async function captureEnv({ browser, env, page, scenario, opts }) {
   } finally {
     await context.close().catch(() => {});
   }
+}
+
+// --------------------------------------------------------------------------
+// Multi-sampling. A single capture UNDER-measures prod: FullStory is sampled
+// (its `fs_is_sampled` UDO flag), Akamai mPulse RUM is sampled, and the DSP
+// cookie-syncs fire a different subset each load — so one shot legitimately
+// misses them (MARTECH.md § Known limitations: "a single golden capture isn't
+// perfectly stable ... multi-sampling ... is the next hardening step"). With
+// `--samples N` each env is captured N times (fresh context = fresh visitor =
+// independent sampling roll) and the env-independent sets are UNIONED into the
+// golden. A per-item hit frequency rides along (under `sampling`) so the
+// operator SEES what was nondeterministic (`fullstory 3/8`) instead of silently
+// unioning it in. stripSampling() drops that telemetry from the committed golden.
+// --------------------------------------------------------------------------
+
+async function captureEnvSampled({ browser, env, page, scenario, opts }) {
+  const n = Math.max(1, opts.samples || 1);
+  if (n === 1) return captureEnv({ browser, env, page, scenario, opts });
+  const runs = [];
+  for (let i = 0; i < n; i += 1) {
+    process.stderr.write(DIM(`    sample ${i + 1}/${n} …\n`));
+    // eslint-disable-next-line no-await-in-loop
+    runs.push(await captureEnv({ browser, env, page, scenario, opts }));
+  }
+  return mergeSamples(runs, n);
+}
+
+// Union the OK samples into one capture. Sets are unioned; scalars are reduced
+// (utagLoaded = any true, cfgSendCount = max, url/consentState from the first OK
+// sample). If every sample was SKIPPED, the env stays SKIPPED (never parity).
+function mergeSamples(runs, n) {
+  const ok = runs.filter((r) => r.status === 'OK');
+  if (!ok.length) return runs.find((r) => r.status === 'SKIPPED') || runs[0];
+  const freq = (key) => {
+    const m = new Map();
+    for (const r of ok) for (const x of (r[key] || [])) m.set(x, (m.get(x) || 0) + 1);
+    return m;
+  };
+  const vendorFreq = freq('vendors');
+  const tagFreq = freq('tagUids');
+  const udoFreq = freq('udoKeys');
+  const unclassifiedFreq = freq('unclassifiedHosts');
+  return {
+    status: 'OK',
+    url: ok[0].url,
+    utagLoaded: ok.some((r) => r.utagLoaded),
+    consentState: ok[0].consentState,
+    cfgSendCount: Math.max(...ok.map((r) => r.cfgSendCount || 0)),
+    vendors: [...vendorFreq.keys()].sort(),
+    tagUids: [...tagFreq.keys()].sort((a, b) => a - b),
+    udoKeys: [...udoFreq.keys()].sort(),
+    udoAuthorKeys: [...freq('udoAuthorKeys').keys()].sort(),
+    unclassifiedHosts: [...unclassifiedFreq.keys()].sort(),
+    sampling: {
+      samples: n,
+      samplesOk: ok.length,
+      vendorFreq: Object.fromEntries(vendorFreq),
+      tagFreq: Object.fromEntries([...tagFreq].map(([k, v]) => [String(k), v])),
+      unclassifiedFreq: Object.fromEntries(unclassifiedFreq),
+    },
+  };
+}
+
+// The golden stores normalized sets only (safe-to-commit contract) — drop the
+// per-run `sampling` frequency telemetry before writing it.
+function stripSampling(capture) {
+  if (!capture || !capture.sampling) return capture;
+  const { sampling, ...rest } = capture;
+  return rest;
 }
 
 function skipReason(e) {
@@ -374,6 +467,27 @@ function renderPage(page, scenario, captures, baseline, baselineSource) {
   return lines.join('\n');
 }
 
+// Per-env sampling summary (only when --samples > 1): surfaces the vendors/tags
+// that did NOT fire on every capture — the nondeterministic set the union just
+// recovered — so "we now see it fire" is explicit rather than buried in a union.
+function renderSamplingSummary(page, captures) {
+  const lines = [`\n${DIM('─'.repeat(78))}`, DIM(`sampling summary · ${page.name} (union of N captures per env)`)];
+  for (const env of ENVS) {
+    const cap = captures[env.name];
+    if (!cap || cap.status !== 'OK' || !cap.sampling) continue;
+    const { samples, samplesOk, vendorFreq, tagFreq } = cap.sampling;
+    const flaky = Object.entries(vendorFreq).filter(([, c]) => c < samplesOk)
+      .sort((a, b) => a[1] - b[1] || a[0].localeCompare(b[0])).map(([v, c]) => `${v} ${c}/${samplesOk}`);
+    const flakyTags = Object.entries(tagFreq).filter(([, c]) => c < samplesOk)
+      .sort((a, b) => a[1] - b[1]).map(([t, c]) => `#${t} ${c}/${samplesOk}`);
+    lines.push(`${env.name.padEnd(8)} ${samplesOk}/${samples} captures ok · union: ${cap.vendors.length} vendors, ${cap.tagUids.length} tag-uids, ${cap.udoKeys.length} udo-keys`);
+    if (flaky.length) lines.push(`${' '.repeat(9)}${Y(`nondeterministic vendors (recovered by sampling): ${flaky.join(', ')}`)}`);
+    if (flakyTags.length) lines.push(`${' '.repeat(9)}${Y(`nondeterministic tag-uids: ${flakyTags.join(', ')}`)}`);
+    if (!flaky.length && !flakyTags.length) lines.push(`${' '.repeat(9)}${DIM('every vendor/tag fired on all captures (stable)')}`);
+  }
+  return lines.join('\n');
+}
+
 // --------------------------------------------------------------------------
 // CLI
 // --------------------------------------------------------------------------
@@ -381,7 +495,7 @@ function renderPage(page, scenario, captures, baseline, baselineSource) {
 function parseArgs(argv) {
   const opts = {
     pages: null, envs: null, scenario: 'us-optout', headed: false, settleMs: 6000,
-    json: null, baseline: null, refresh: null, cookies: [], oursPath: null,
+    json: null, baseline: null, refresh: null, cookies: [], oursPath: null, samples: 1,
   };
   // Default settle spans the EDS delayed phase (~3s) + tag fan-out so delayed-phase, self-hosted
   // vendors (FullStory, LivePerson) are captured; both baseline and compared env use the same value.
@@ -393,6 +507,9 @@ function parseArgs(argv) {
     else if (a === '--scenario') opts.scenario = argv[++i];
     else if (a === '--headed') opts.headed = true;
     else if (a === '--settle') opts.settleMs = Number(argv[++i]);
+    // --samples N: capture each env N times and UNION the sets into the golden (recovers
+    // nondeterministic martech — FullStory/mPulse sampling, DSP cookie-syncs). Default 1.
+    else if (a === '--samples') opts.samples = Math.max(1, Number(argv[++i]) || 1);
     else if (a === '--json') opts.json = argv[++i];
     // --cookie 'name=value' (repeatable): auth cookie for the gated our-build envs
     // (aem.page/aem.live previews are access-controlled), added on that env's origin.
@@ -423,15 +540,15 @@ async function main() {
 
   const golden = loadGolden(opts.baseline);
   const browser = opts.headed ? await launchStealthHeaded(chromium) : await chromium.launch();
-  const report = { scenario, capturedAt: new Date().toISOString(), pages: {} };
-  const goldenOut = { scenario, capturedAt: new Date().toISOString(), pages: {} };
+  const report = { scenario, capturedAt: new Date().toISOString(), samples: opts.samples, pages: {} };
+  const goldenOut = { scenario, capturedAt: new Date().toISOString(), samples: opts.samples, pages: {} };
   try {
     for (const page of pages) {
       const captures = {};
       for (const env of envs) {
-        process.stderr.write(DIM(`  capturing ${page.name} @ ${env.name} …\n`));
+        process.stderr.write(DIM(`  capturing ${page.name} @ ${env.name}${opts.samples > 1 ? ` ×${opts.samples}` : ''} …\n`));
         // eslint-disable-next-line no-await-in-loop
-        captures[env.name] = await captureEnv({ browser, env, page, scenario, opts });
+        captures[env.name] = await captureEnvSampled({ browser, env, page, scenario, opts });
       }
       report.pages[page.name] = captures;
 
@@ -441,8 +558,9 @@ async function main() {
       else if (golden && golden.pages && golden.pages[page.name]) { baseline = golden.pages[page.name]; baselineSource = `golden(${opts.baseline})`; }
       else { baseline = captures.prod || null; baselineSource = 'prod(unavailable)'; }
 
-      if (baseline && baseline.status === 'OK') goldenOut.pages[page.name] = baseline;
+      if (baseline && baseline.status === 'OK') goldenOut.pages[page.name] = stripSampling(baseline);
       process.stdout.write(`${renderPage(page, scenario, captures, baseline, baselineSource)}\n`);
+      if (opts.samples > 1) process.stdout.write(`${renderSamplingSummary(page, captures)}\n`);
     }
   } finally {
     await browser.close().catch(() => {});

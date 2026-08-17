@@ -60,7 +60,9 @@ function buildMedia(cell) {
 
 /**
  * Build one tab: a heading button (the clickable control) plus its always-visible
- * body. Returns { item, heading }.
+ * body. The button is wrapped in an `<h3>` so the item keeps its place in the
+ * page's heading outline (matching upstream, which renders these as `<h3>`)
+ * without losing the interactive tab control. Returns { item, heading }.
  */
 function buildTab(headingCell, bodyCell, index) {
   const item = document.createElement('div');
@@ -72,7 +74,11 @@ function buildTab(headingCell, bodyCell, index) {
   heading.setAttribute('role', 'tab');
   heading.id = `vsc-tab-${index}`;
   heading.textContent = headingCell ? headingCell.textContent.trim() : '';
-  item.append(heading);
+
+  const headingWrap = document.createElement('h3');
+  headingWrap.className = 'vsc-heading-wrap';
+  headingWrap.append(heading);
+  item.append(headingWrap);
 
   if (bodyCell && bodyCell.textContent.trim()) {
     const body = document.createElement('div');

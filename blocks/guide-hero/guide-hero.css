@@ -1,0 +1,211 @@
+/*
+ * guide-hero — mint lead card for /blog/guide/* landing pages.
+ *
+ * Every number here is measured off erp.intuit.com at 1440 and 390
+ * (/blog/guide/construction-accounting-erp, /blog/guide/data-analytics — both
+ * identical): card inset in the container with an 8px radius on #dbedee
+ * (= --sky), the photo filling exactly half the card width as a square flush to
+ * its edges, and the copy in the other half — 34px/44px 700 headline, 20px/28px
+ * 500 lede, outlined navy CTA at 16px/600. Mobile stacks the photo (full card
+ * width, still square) above the copy; the type scale does NOT change between
+ * breakpoints upstream, so it is declared once here.
+ *
+ * Read those values off the element that actually paints the text, not the
+ * <h1>/<p> around it: upstream nests a `span.ql-font-heading03` inside the h1
+ * and the wrapper reports 48px/700/60px while the span renders 34px/44px. */
+
+/* The card fills its own wrapper, so the photo can sit flush against the card's
+   edge — which means replacing that wrapper's 40px gutter (styles.css) rather
+   than padding inside it. Upstream insets the card 20px on mobile and lets it
+   span the container on desktop, so the gutter goes to 0 at the breakpoint below.
+
+   Scoped two ways. `> .guide-hero-wrapper`, not `> div`: decorateBlock puts
+   `guide-hero-container` on whichever section holds the block, and a section can
+   hold sibling wrappers (default content, other blocks) that must keep the page
+   gutter, or prose in the same section renders flush to the viewport. And
+   `:has(.guide-hero:not(.no-media))`, because the plain variant is not a card —
+   it keeps the ordinary page gutter (see the no-media rules at the end). */
+.section.guide-hero-container:has(.guide-hero:not(.no-media)) > .guide-hero-wrapper {
+  padding: 0 20px;
+}
+
+.section.guide-hero-container:has(.guide-hero:not(.no-media)) {
+  padding: 40px 0 var(--section-y);
+}
+
+.guide-hero {
+  border-radius: 8px;
+  background: var(--sky);
+  overflow: hidden;
+}
+
+/* The photo's box is a square FLOOR that can grow, never a fixed square: the
+   ::before contributes a square's worth of height (its width is the box's, so
+   aspect-ratio 1 makes it as tall as the column is wide), which is exactly
+   upstream's card height, and `align-self: stretch` on desktop lets the box grow
+   past it when the copy is the taller side. The photo itself is taken out of flow
+   so it fills whatever that box ends up being.
+
+   Two simpler shapes were tried and are wrong: a plain `aspect-ratio: 1` photo
+   centres and leaves ~150px of bare mint above and below at 900-1024px, and
+   stretching that square makes aspect-ratio derive its WIDTH from the stretched
+   height, overflowing the column by 140px. `aspect-ratio` on the card itself is
+   also wrong — on a grid container it is a clamp, so the copy overflows instead
+   of growing the card. */
+.guide-hero .guide-hero-media {
+  position: relative;
+}
+
+.guide-hero .guide-hero-media::before {
+  display: block;
+  aspect-ratio: 1;
+  content: "";
+}
+
+.guide-hero .guide-hero-media picture,
+.guide-hero .guide-hero-media img {
+  position: absolute;
+  display: block;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.guide-hero .guide-hero-copy {
+  padding: 32px;
+}
+
+.guide-hero .guide-hero-copy h1 {
+  margin: 0 0 20px;
+  color: var(--heading);
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 44px;
+}
+
+.guide-hero .guide-hero-copy p {
+  margin: 0 0 20px;
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 28px;
+}
+
+/* Upstream shows one ghost CTA regardless of which emphasis the author used, so
+   both button variants get the same treatment below. Same ghost treatment as the
+   guide download CTA lower on these pages (blocks/cta-band/cta-band.css,
+   .cta-band.simple) — but deliberately 52px tall where that one is 48px, which
+   is the difference upstream renders between the two.
+
+   `display: flex` overrides the global `p.button-wrapper { display: inline-flex }`
+   (styles.css): inline-flex shrinks the wrapper to the button, which leaves the
+   mobile CTA unable to stretch to the copy width the way upstream's does. */
+.guide-hero .guide-hero-copy .button-wrapper {
+  display: flex;
+  margin: 24px 0 0;
+}
+
+.guide-hero .guide-hero-copy a.button {
+  /* full width on mobile, natural width from the breakpoint up — as upstream */
+  width: 100%;
+
+  /* The global a.button rule is nowrap + ellipsis, which truncates a realistic
+     gated-asset label ("Download the free construction accounting guide") at
+     every width. Wrap instead, and let the height grow from the 52px upstream
+     uses for a single line. */
+  min-height: 52px;
+  padding: 14px 28px;
+  white-space: normal;
+  text-align: center;
+  border: 2px solid var(--navy);
+  border-radius: 4px;
+  background: none;
+  color: var(--navy);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.guide-hero .guide-hero-copy a.button:hover,
+.guide-hero .guide-hero-copy a.button:focus-visible {
+  background: var(--navy);
+  color: #fff;
+}
+
+@media (min-width: 900px) {
+  .section.guide-hero-container:has(.guide-hero:not(.no-media)) > .guide-hero-wrapper {
+    padding: 0;
+  }
+
+  .guide-hero {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+  }
+
+  /* stretch, so the photo stays flush top and bottom when the copy is taller
+     than the square floor above */
+  .guide-hero .guide-hero-media {
+    grid-column: 1;
+    align-self: stretch;
+  }
+
+  /* Percentages, not px: upstream sets the copy ~135px clear of the photo in a
+     680px column (~20%), and a fixed 135px would strand the text in a ~240px
+     ribbon at the 900px breakpoint. Resolves against the column, so the ratio
+     holds at every width. */
+  .guide-hero .guide-hero-copy {
+    grid-column: 2;
+    padding: 40px 8% 40px 20%;
+  }
+
+  /* upstream's measures: 485px headline, 360px lede, in em of their own size */
+  .guide-hero .guide-hero-copy h1 {
+    max-width: 14em;
+  }
+
+  .guide-hero .guide-hero-copy p {
+    max-width: 18em;
+  }
+
+  .guide-hero .guide-hero-copy a.button {
+    width: auto;
+  }
+}
+
+/* ============================================================
+   no-media — a guide that authors no hero photo. Upstream drops the band
+   entirely and shows a plain centred headline at the same 34px/44px as the card
+   (/blog/guide/webinars-on-demand), so this variant is the whole treatment for
+   those pages. It lives here, in the block's own stylesheet, because the
+   autoblock builds the block whether or not there is a photo — the alternative
+   was a template rule in styles.css, which every page on the site downloads.
+   ============================================================ */
+.section.guide-hero-container:has(.guide-hero.no-media) {
+  padding-top: 5rem;
+}
+
+.guide-hero.no-media {
+  /* block, not the 2-col grid the card variant switches to at 900px — a single
+     child would otherwise be stranded in the left half */
+  display: block;
+  border-radius: 0;
+  background: none;
+}
+
+.guide-hero.no-media .guide-hero-copy {
+  padding: 0;
+  text-align: center;
+}
+
+.guide-hero.no-media .guide-hero-copy h1,
+.guide-hero.no-media .guide-hero-copy p {
+  /* the card variant clamps its measure to the copy column (10em/24em); the plain
+     variant is full width, as upstream renders it */
+  max-width: none;
+}
+
+.guide-hero.no-media .guide-hero-copy h1 {
+  /* size/weight/line-height are the shared scale above — upstream renders the
+     imageless headline at the same 34px/44px, only centred and full width */
+  margin: 0 0 16px;
+}
