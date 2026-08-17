@@ -602,6 +602,13 @@ function renderNavyTabs(block, items) {
     syncHeight();
   });
   nav.querySelectorAll('.it-media img').forEach((img) => img.addEventListener('load', syncHeight));
+
+  // Panel size can change after this first paint (block CSS still loading, web
+  // fonts swapping, images decoding), which a one-off offsetHeight read misses.
+  if (typeof ResizeObserver !== 'undefined') {
+    const ro = new ResizeObserver(syncHeight);
+    panels.forEach((p) => ro.observe(p));
+  }
 }
 
 export default function decorate(block) {
