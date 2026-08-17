@@ -522,14 +522,14 @@ async function loadEager(doc) {
   }
 }
 
-// Pages that already have their own full contact form suppress the
-// site-wide floating "Contact us" widget, matching production behavior.
-const CONTACT_WIDGET_EXCLUDED_PATHS = ['/contact'];
+// Pages that already carry the full contact form (the live page and the
+// library stencil authors copy it from) suppress the site-wide floating
+// "Contact us" widget, matching production behavior.
+const CONTACT_WIDGET_EXCLUDED_PATHS = ['/contact', '/library/templates/contact'];
 
 /** True unless the current path opts out of the floating contact widget. */
 function shouldRenderContactUs() {
-  const path = window.location.pathname.replace(/\/$/, '');
-  return !CONTACT_WIDGET_EXCLUDED_PATHS.includes(path);
+  return !CONTACT_WIDGET_EXCLUDED_PATHS.includes(window.location.pathname);
 }
 
 /**
