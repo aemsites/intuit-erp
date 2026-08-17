@@ -93,14 +93,17 @@ main .section.video-container {
   transform: translateX(2px);
 }
 
-/* authored label/duration caption (e.g. "See how it works (2:02)"), matching the
-   source's blue play-link shown with the video control. */
+/* stack the poster + caption so the caption can sit at the poster's right edge */
+.video:has(.video-label) { display: flex; flex-direction: column; }
+
+/* authored label/duration caption (e.g. "See how it works (2:02)") — the source
+   renders it as a blue play-link at the bottom-right, below the poster. */
 .video .video-label {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
+  align-self: flex-end;
   gap: 8px;
-  margin: 16px auto 0;
+  margin: 16px 0 0;
   padding: 0;
   border: 0;
   background: none;
