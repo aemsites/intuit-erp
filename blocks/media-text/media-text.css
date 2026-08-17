@@ -26,7 +26,14 @@
 .media-text .media-copy .media-eyebrow { margin-bottom: 16px; color: var(--text-muted); }
 
 .media-text .media-copy h2,
-.media-text .media-copy h3 { font-size: 34px; line-height: 1.2; font-weight: 500; color: var(--heading); margin: 0 0 18px; }
+.media-text .media-copy h3 { font-size: 34px; line-height: 1.2; font-weight: 400; color: var(--heading); margin: 0 0 18px; }
+
+/* default/tint/reverse media-copy headings are bold in the source (700 -> our
+   500, matching pixel-for-pixel — see the hero.css note on the font's weight
+   offset). Scoped away from .agave (ai-agents) and .dark (accountant), whose
+   source headings use a lighter treatment — they keep the base 400. */
+.media-text:not(.agave, .dark) .media-copy h2,
+.media-text:not(.agave, .dark) .media-copy h3 { font-weight: 500; }
 .media-text .media-copy .media-body { font-size: 15px; line-height: 1.6; color: var(--text-muted); max-width: 34em; margin: 0 0 14px; }
 .media-text .media-copy .button-wrapper { margin-top: 12px; }
 
@@ -38,7 +45,11 @@
 
 /* ---- .dark (accountant "Empowering your firm's success") ---- */
 .section.media-text-container:has(.media-text.dark) { background: var(--navy); padding: var(--section-y) 0; }
-.media-text-container:has(.media-text.dark) .default-content-wrapper h2 { color: #fff; }
+
+/* the .dark section title uses the source's lighter/smaller treatment, so keep
+   it at the base 400/38px rather than the 500/40px parity applied to default
+   (non-dark) media-text section headings above */
+.media-text-container:has(.media-text.dark) .default-content-wrapper h2 { color: #fff; font-weight: 400; font-size: 38px; }
 
 .media-text.dark .media-copy h2,
 .media-text.dark .media-copy h3 { color: #fff; }
@@ -66,10 +77,10 @@
 
   /* desktop parity with erp.intuit.com: section/copy h2 render at 40px (h3
      sub-headings stay 34px). Bumped only at desktop so the smaller mobile
-     sizes are left untouched. Weight is 500 at every breakpoint (base rules) —
-     the value that matches the source's rendered heading weight. */
+     sizes are left untouched. Scoped away from the .agave/.dark media-copy
+     variants (see the weight note above) so their source sizes are untouched. */
   .media-text-container .default-content-wrapper h2 { font-size: 40px; }
-  .media-text .media-copy h2 { font-size: 40px; }
+  .media-text:not(.agave, .dark) .media-copy h2 { font-size: 40px; }
 }
 
 @media (width >= 1200px) {
@@ -141,7 +152,7 @@
 /* the source's section heading is a bigger, darker display size than the shared
    media-text head, and steps 34 -> 40 -> 48px */
 .media-text-container:has(.media-text.cards) .default-content-wrapper h2 {
-  font-size: 34px; line-height: 1.4; color: var(--text-color); margin: 0 0 56px;
+  font-size: 34px; line-height: 1.4; font-weight: 400; color: var(--text-color); margin: 0 0 56px;
 }
 
 /* the grid is capped so cards don't outrun the source's 555px max card width */

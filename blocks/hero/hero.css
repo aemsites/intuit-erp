@@ -93,17 +93,19 @@
 .hero .hero-copy h1 {
   font-size: 48px;
   line-height: 1.25;
-
-  /* match the visual weight of erp.intuit.com's hero headline. The source
-     computes font-weight:700, but its "AvenirNext forINTUIT" cut is lighter
-     than ours — at 700 our headline renders visibly heavier than the source,
-     so 500 is the value that matches it pixel-for-pixel. The site-wide default
-     (400) is too thin. */
-  font-weight: 500;
+  font-weight: 400;
   max-width: 10em;
   margin: 0 0 20px;
   color: #fff;
 }
+
+/* The default (navy/light) hero headline is bold in the source. It computes
+   font-weight:700 there, but our "AvenirNext forINTUIT" cut renders heavier
+   than the source's, so 500 is the value that matches it pixel-for-pixel (700
+   looks too bold; 400 too thin). Scoped away from the .centered (ai-agents) and
+   .form (pricing/contact/accountant) hero variants, whose source headlines use
+   a lighter treatment — they keep the base 400. */
+.hero:not(.centered, .form) .hero-copy h1 { font-weight: 500; }
 
 .hero .hero-copy .hero-lede {
   font-size: 20px;
