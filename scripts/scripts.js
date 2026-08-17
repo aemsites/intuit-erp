@@ -21,14 +21,13 @@ import { runExperimentation, runExperimentationLazy } from './experiment-loader.
 // Vendored via git subtree at plugins/martech (see its README), not an
 // installed npm package, so this necessarily crosses a package.json boundary.
 import {
-  initMartech, martechEager, martechLazy, updateUserConsent, sendEvent,
+  initMartech, martechEager, martechLazy,
   // eslint-disable-next-line import/no-relative-packages
 } from '../plugins/martech/src/index.js';
 // Not a vendored subtree (unlike plugins/martech above) — project-owned code, but the relative
 // import still crosses into plugins/ so the disable comment mirrors the existing martech import.
 // eslint-disable-next-line import/no-relative-packages
 import TealiumMartech from '../plugins/tealium-martech/src/index.js';
-import { sendOf1Signal, readAlloySegmentIds } from './of1-rtcdp-signal.js';
 // Cheap predicates only — the heavy blog-template / video blocks they belong to
 // are NOT pulled onto the eager critical path here. buildBlogTemplate is
 // dynamically imported in loadEager for blog pages only (see below); the full
@@ -534,18 +533,6 @@ async function loadLazy(doc) {
 
   if (MARTECH_PROVIDER === 'adobe' && MARTECH_ENABLED) {
     try { await martechLazy(); } catch (e) { /* non-fatal */ }
-    // Demo posture: auto-grant collection consent (martech inits consent
-    // 'pending', which would otherwise drop sendEvent). Then push the OF1
-    // anonymous signal to RTCDP. Both fail-open — never block the page.
-    try { await updateUserConsent({ collect: true }); } catch (e) { /* non-fatal */ }
-    // Capture the segments the page's Alloy already resolved and hand them to
-    // the OF1 extension (page owns the Alloy call; the extension maps + displays).
-    sendOf1Signal({ sendEvent }).then((r) => {
-      const ids = readAlloySegmentIds(r && r.result);
-      if (ids.length) {
-        window.postMessage({ type: 'OF1_AUDIENCE_SEGMENTS', domain: window.location.hostname, ids }, '*');
-      }
-    }).catch(() => {});
   } else if (MARTECH_PROVIDER === 'tealium') {
     // Loads utag.js for the resolved env (no-op on an inert host) and applies consent. Fail-open,
     // like the Adobe branch above — never block the page.
