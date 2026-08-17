@@ -132,6 +132,7 @@ Other options:
 | `--cookie 'name=value'` | pass an auth cookie if you must capture a gated preview directly (repeatable) |
 | `--headed` | stealth real Chrome — escalate if prod bot-challenges the headless capture |
 | `--settle <ms>` | capture window (default 9000 — spans the EDS delayed phase) |
+| `--samples <n>` | capture each env `n` times and **union** the sets into the golden — recovers sampled/nondeterministic martech (FullStory, Akamai mPulse, DSP cookie-syncs). Prints a per-vendor hit frequency so you see what was flaky. Default 1. |
 | `--json out.json` | also write the raw capture + diff |
 
 ### Reading the output
@@ -175,9 +176,12 @@ pattern (see below) or confirm it's noise, so nothing is ever silently dropped.
 
 - **Report-only** today (exit 0). A phase 2 will assert an allowlist of must-fire vendors +
   must-have UDO keys once the current gaps are triaged.
-- Some vendors (Adobe `demdex`, the DSP cookie-syncs) fire **nondeterministically**, so a single
-  golden capture isn't perfectly stable. **Multi-sampling** the golden (capture N times, union the
-  stable set) is the next hardening step; the DSP syncs are already class-separated so they don't
-  gate parity.
+- Some vendors fire **nondeterministically** — FullStory and Akamai mPulse are **sampled** (only a
+  subset of visits records; note `fs_is_sampled` in the UDO), and the DSP cookie-syncs fire a
+  different subset each load — so a single golden capture under-measures prod. Use **`--samples <n>`**
+  to capture N times and union the stable set into the golden (each capture is a fresh context =
+  fresh visitor = independent sampling roll); the summary reports the per-vendor hit frequency
+  (e.g. `fullstory 3/8`) so the recovered set is explicit. The DSP syncs are additionally
+  class-separated so they never gate parity.
 - Tags are **page-specific** (load rules) — the homepage fires 14 tags, other page types fire
   others. Capture a golden per reference page.
