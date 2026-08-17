@@ -13,9 +13,14 @@
  * On /blog/* pages only, a second "Resource center" nav bar renders below the
  * primary one (see secondaryNavHTML/isResourceCenterPath) — matching
  * erp.intuit.com, which has a dedicated Resource Center nav there too
- * (issue #59). On desktop it's this secondary nav that becomes sticky on
- * scroll, not the primary one — see the has-secondary-nav rules in header.css.
- * CSS: blocks/header/header.css · nav content: content/nav.html (nav-menu block)
+ * (issue #59). Its items are authored content too, in their own fragment
+ * (default content/blog-nav.html, see fetchSecondaryNavItemsHTML) rather than
+ * a section of content/nav.html — SECONDARY_NAV_ITEMS below is only the
+ * fallback (issue #69). On desktop it's this secondary nav that becomes
+ * sticky on scroll, not the primary one — see the has-secondary-nav rules in
+ * header.css.
+ * CSS: blocks/header/header.css · nav content: content/nav.html,
+ * content/blog-nav.html (nav-menu block)
  */
 import { getMetadata } from '../../scripts/aem.js';
 import { openScheduleModal } from '../form/form.js';
@@ -34,9 +39,11 @@ import {
   LOGO_IES,
 } from './brand-logos.js';
 
-// Shared with SECONDARY_NAV_ITEMS below (the /blog/* "Resource center" nav,
-// see issue #59) so both navs list the exact same categories/links from one
-// source instead of two copies drifting apart.
+// Feeds the primary nav's "Resources" flyout (NAV below) directly, and
+// SECONDARY_NAV_ITEMS' fallback render — but NOT the live /blog/* secondary
+// nav itself, which is authored separately (content/blog-nav.html, issue
+// #69) and can drift from these. Keep both in sync manually if they should
+// still match.
 const INSIGHTS_LEARNING_LINKS = [
   { text: 'Thought leadership', href: '/blog/thought-leadership', internal: true },
   { text: 'Trends & research', href: '/blog/research', internal: true },
@@ -154,11 +161,12 @@ const NAV = [
   },
 ];
 
-// The secondary "Resource center" nav — a second, dedicated nav bar erp.intuit.com
-// renders only on /blog/* pages (issue #59), separate from the primary nav above.
-// Same `navItemHTML` menu-entry shape as NAV, built from the shared link arrays
-// above so both navs can't drift apart. Search (also present on the live
-// secondary nav) is tracked separately as issue #60 — not implemented here.
+// Fallback for the secondary "Resource center" nav (issue #69) — used only
+// when the authored content/blog-nav.html fragment (see fetchSecondaryNavHTML)
+// is missing or malformed, same resilience pattern as NAV/NAV_MAIN_FALLBACK
+// above. Since the live nav is now authored separately, this list and the
+// authored copy are no longer guaranteed to match — keep it updated manually
+// if the authored links change materially.
 const SECONDARY_NAV_ITEMS = [
   { type: 'menu', label: 'Insights & learning', columns: [{ links: INSIGHTS_LEARNING_LINKS }] },
   { type: 'menu', label: 'Industries', columns: [{ links: INDUSTRY_KNOWLEDGE_LINKS }] },
@@ -252,14 +260,83 @@ export function isResourceCenterPath(pathname = window.location.pathname) {
   return pathname === '/blog' || pathname.startsWith('/blog/');
 }
 
+// Shared by fetchNavMainHTML and fetchSecondaryNavItemsHTML below: both fetch
+// a fragment expected to contain exactly one authored nav-menu block (see
+// blocks/nav-menu/nav-menu.js) and fall back to a built-in nav on any
+// failure — so both share this same fetch/validate/catch shape, differing
+// only in what they do with the resulting block. A console.warn on failure
+// (rather than a silently swallowed error) gives content QA a signal when a
+// nav fragment is missing or malformed, instead of just seeing the fallback
+// nav render with no clue why.
+async function fetchNavMenuBlock(path) {
+  try {
+    const frag = await loadFragment(path);
+    const menuBlock = frag && frag.querySelector('.nav-menu');
+    if (menuBlock && menuBlock.querySelector('.nav-item, .nav-link, .acct-link')) {
+      return menuBlock;
+    }
+    // A 404/missing fragment or one with no valid nav-menu content doesn't
+    // throw (loadFragment just resolves null on a non-ok response) — warn
+    // here too, not only in the catch below, so both failure modes are
+    // actually QA-visible rather than just the thrown-exception one.
+    // eslint-disable-next-line no-console
+    console.warn(`header: no valid nav-menu content at ${path}, using fallback`);
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.warn(`header: couldn't load nav content from ${path}, using fallback`, e);
+  }
+  return null;
+}
+
+// The nav-menu block (blocks/nav-menu/nav-menu.js) is decorated in full by
+// loadFragment before it returns, so menuBlock's markup is already the final
+// nav-item/flyout DOM — just needs the <nav> landmark wrapped around it.
+async function fetchNavMainHTML(path) {
+  const menuBlock = await fetchNavMenuBlock(path);
+  return menuBlock ? `<nav class="nav-main" aria-label="Primary">${menuBlock.innerHTML}</nav>` : null;
+}
+
+// The /blog/* secondary "Resource center" nav's authored items (issue #69),
+// from a fragment dedicated to that nav (default content/blog-nav.html, see
+// decorate()'s secondary-nav metadata) rather than a second section inside
+// /nav — keeps blog-only content out of the global nav doc. Reuses the same
+// nav-menu block/parsing as the primary nav; only the inner nav-item/flyout
+// markup is needed here since secondaryNavHTML() supplies its own wrapper.
+async function fetchSecondaryNavItemsHTML(path) {
+  const menuBlock = await fetchNavMenuBlock(path);
+  return menuBlock ? menuBlock.innerHTML : null;
+}
+
+// A malformed metadata value (e.g. an unbalanced IPv6-literal-looking string)
+// makes `new URL()` throw synchronously; since this path is computed inside
+// the Promise.all in decorate(), an uncaught throw here would reject that
+// whole promise and leave the header block completely undecorated — not just
+// the secondary nav — so this needs its own resilience, same as the fetches.
+// Warn on the parse failure too (like fetchNavMenuBlock above) so a malformed
+// value isn't indistinguishable in the console from simply omitting it.
+function resolveNavPath(meta, fallback) {
+  if (!meta) return fallback;
+  try {
+    return new URL(meta, window.location).pathname;
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.warn(`header: invalid nav path metadata "${meta}", using ${fallback}`, e);
+    return fallback;
+  }
+}
+
 // The secondary "Resource center" nav bar (issue #59) — desktop renders it as
 // its own row with a brand link + inline flyout items; mobile collapses it
 // behind its own toggle (.secondary-nav-toggle), independent of the primary
 // hamburger — see header.css. Returns '' outside the Resource Center section
-// so decorate() can skip wiring it up entirely.
-function secondaryNavHTML() {
+// so decorate() can skip wiring it up entirely. Items are authored content
+// (issue #69, see fetchSecondaryNavItemsHTML) when available, falling back to
+// the hardcoded SECONDARY_NAV_ITEMS render otherwise.
+async function secondaryNavHTML() {
   if (!isResourceCenterPath()) return '';
-  const items = SECONDARY_NAV_ITEMS.map((e, i) => navItemHTML(e, i, 'secondary-flyout')).join('');
+  const secondaryNavPath = resolveNavPath(getMetadata('secondary-nav'), '/blog-nav');
+  const items = (await fetchSecondaryNavItemsHTML(secondaryNavPath))
+    || SECONDARY_NAV_ITEMS.map((e, i) => navItemHTML(e, i, 'secondary-flyout')).join('');
   return `
 <div class="ies-secondary-nav-spacer">
   <nav class="ies-secondary-nav" aria-label="Resource center">
@@ -333,20 +410,6 @@ ${secondaryNavHtml}
 ${eventsHTML}`;
 }
 
-// The nav-menu block (blocks/nav-menu/nav-menu.js) is decorated in full by
-// loadFragment before it returns, so menuBlock's markup is already the final
-// nav-item/flyout DOM — just needs the <nav> landmark wrapped around it.
-async function fetchNavMainHTML(path) {
-  try {
-    const frag = await loadFragment(path);
-    const menuBlock = frag && frag.querySelector('.nav-menu');
-    if (menuBlock && menuBlock.querySelector('.nav-item, .nav-link, .acct-link')) {
-      return `<nav class="nav-main" aria-label="Primary">${menuBlock.innerHTML}</nav>`;
-    }
-  } catch (e) { /* fall back to built-in nav */ }
-  return null;
-}
-
 // Wire the click-to-open flyouts for one nav group (primary .nav-main, or the
 // secondary Resource Center nav's .secondary-nav-items — see wireFlyouts):
 // one panel open at a time within the group, closes on outside click or
@@ -414,11 +477,12 @@ function wireFlyouts(block) {
 }
 
 export default async function decorate(block) {
-  const navMeta = getMetadata('nav');
-  const navPath = navMeta ? new URL(navMeta, window.location).pathname : '/nav';
-  const navMainHTML = (await fetchNavMainHTML(navPath)) || NAV_MAIN_FALLBACK;
+  const navPath = resolveNavPath(getMetadata('nav'), '/nav');
+  const [navMainHTML, secondaryHTML] = await Promise.all([
+    fetchNavMainHTML(navPath).then((html) => html || NAV_MAIN_FALLBACK),
+    secondaryNavHTML(),
+  ]);
   const eventsHTML = eventsBarHTML();
-  const secondaryHTML = secondaryNavHTML();
   block.innerHTML = chromeHTML(navMainHTML, eventsHTML, secondaryHTML);
   // The min-height reserved to avoid layout shift while this decorates
   // async only needs to be the taller value (see header.css) on the pages

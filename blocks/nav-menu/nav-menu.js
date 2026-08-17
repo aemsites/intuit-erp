@@ -76,8 +76,8 @@ function parseColumns(menuCell) {
   return cols;
 }
 
-function menuItemHTML(label, menuCell, idx) {
-  const id = `flyout-${idx}`;
+function menuItemHTML(label, menuCell, idx, instanceId) {
+  const id = `flyout-${instanceId}-${idx}`;
   const cols = parseColumns(menuCell);
   const colsHTML = cols.map((c) => `
         <div class="flyout-col">
@@ -102,7 +102,19 @@ function menuItemHTML(label, menuCell, idx) {
       </div>`;
 }
 
+// Module-level counter, not a per-call idx: header.js can decorate more than
+// one nav-menu block on the same page (primary nav + the /blog/* secondary
+// Resource Center nav, see secondaryNavHTML in header.js), each fetched via
+// its own loadFragment() call. Flyout ids only need to be unique within the
+// page, so a counter scoped to this module (a singleton for the page's
+// lifetime) is enough to keep two instances' `flyout-0`, `flyout-1`... ids
+// from colliding, without threading an id-prefix through the standard
+// decorate(block) block-loading pipeline (which only ever passes `block`).
+let instanceCount = 0;
+
 export default function decorate(block) {
+  const instanceId = instanceCount;
+  instanceCount += 1;
   const rows = [...block.children];
   const html = rows.map((row, idx) => {
     const [labelCell, menuCell] = row.children;
@@ -110,7 +122,7 @@ export default function decorate(block) {
     const link = labelCell.querySelector('a');
     const hasMenu = menuCell && menuCell.querySelector('ul');
     if (link && !hasMenu) return navLinkHTML(link);
-    return menuItemHTML(labelCell.textContent.trim(), menuCell || document.createElement('div'), idx);
+    return menuItemHTML(labelCell.textContent.trim(), menuCell || document.createElement('div'), idx, instanceId);
   }).join('');
   block.innerHTML = html;
 }
