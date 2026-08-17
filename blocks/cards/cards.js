@@ -18,12 +18,7 @@
  * becomes the eyebrow, an authored heading tag becomes the card title,
  * everything else stays as body copy untouched.
  *
- * Used by OF1-generated content (blocks/of1), which emits plain `.cards > div`
- * rows rather than authoring this block directly. The default (grid) shape is
- * kept structurally as-is (no ul/li wrap, no scroll wrapper) to match the DOM
- * blocks/of1/of1.css already targets.
- * CSS: blocks/cards/cards.css (baseline) + blocks/of1/of1.css
- *      (.generated-section .cards, full styling)
+ * CSS: blocks/cards/cards.css
  */
 import { createOptimizedPicture } from '../../scripts/aem.js';
 

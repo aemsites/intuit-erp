@@ -1,8 +1,6 @@
 /* cards — image-and-text grid (erp.intuit.com "Resources" cards). Photo cards
    (events, financial-services, professional-services, oa) are square images
-   with plain text below, no card chrome. Full OF1 generated-content styling
-   lives in blocks/of1/of1.css (.generated-section .cards), which is more
-   specific. */
+   with plain text below, no card chrome. */
 .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 32px; }
 .cards > div { display: flex; flex-direction: column; }
 .cards picture { display: block; }

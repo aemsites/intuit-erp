@@ -21,20 +21,20 @@ import { runExperimentation, runExperimentationLazy } from './experiment-loader.
 // Vendored via git subtree at plugins/martech (see its README), not an
 // installed npm package, so this necessarily crosses a package.json boundary.
 import {
-  initMartech, martechEager, martechLazy, updateUserConsent, sendEvent,
+  initMartech, martechEager, martechLazy, updateUserConsent,
   // eslint-disable-next-line import/no-relative-packages
 } from '../plugins/martech/src/index.js';
 // Not a vendored subtree (unlike plugins/martech above) — project-owned code, but the relative
 // import still crosses into plugins/ so the disable comment mirrors the existing martech import.
 // eslint-disable-next-line import/no-relative-packages
 import TealiumMartech from '../plugins/tealium-martech/src/index.js';
-import { sendOf1Signal, readAlloySegmentIds } from './of1-rtcdp-signal.js';
 // Cheap predicates only — the heavy blog-template / video blocks they belong to
 // are NOT pulled onto the eager critical path here. buildBlogTemplate is
 // dynamically imported in loadEager for blog pages only (see below); the full
 // video block loads lazily when a video is actually decorated.
 import { isBlogPage, isCaseStudyPage } from '../blocks/blog-template/blog-detect.js';
 import { isVideoLink } from '../blocks/video/video-info.js';
+import { isGuidePage } from '../blocks/guide-hero/guide-detect.js';
 
 // Adobe Web SDK / AEP datastream. The datastream id is public (not a secret)
 // and safe in client source. While the id starts with "REPLACE_", martech is
@@ -229,6 +229,11 @@ function buildVideoAutoBlocks(main) {
 // elsewhere, which also serves as the "is this a blog page" gate below.
 let buildBlogTemplate;
 
+// Same treatment for the Guide landing-page card: imported in loadEager only for
+// `template: Guide` pages, so the other ~335 pages in the sitemap never fetch or
+// parse it. Undefined elsewhere, which is the gate in buildAutoBlocks.
+let buildGuideHeroAutoBlock;
+
 // Populated in loadEager (via dynamic import) only on case-study pages, so the
 // case-study-header module loads only where needed. Also serves as the gate in
 // buildAutoBlocks below.
@@ -248,6 +253,12 @@ function buildAutoBlocks(main) {
     // from re-injecting a right-rail link into every loaded fragment (which
     // buildAutoBlocks would then re-load — an infinite loop).
     if (buildBlogTemplate && main.isConnected) buildBlogTemplate(main);
+    // Guide landing pages get their own lead card instead. The isConnected guard
+    // matters as much here as above: loadFragment decorates a DETACHED main, and
+    // getMetadata reads the HOST page's head — so on a Guide page every loaded
+    // fragment would otherwise have its own first section wrapped in a second
+    // card (verified: 2 `.guide-hero` blocks, the fragment's heading inside one).
+    if (buildGuideHeroAutoBlock && main.isConnected) buildGuideHeroAutoBlock(main);
     // Case-study autoblock — synthesize the case-study-header (eyebrow + byline +
     // banner) from metadata when it isn't hand-authored, so migrated case studies
     // show their author. isConnected guard mirrors buildBlogTemplate (skip the
@@ -434,6 +445,18 @@ async function loadEager(doc) {
     document.body.classList.add('has-events-bar');
   }
 
+  // Gated conversion pages (e.g. /webinar-* form landings) opt out of the global
+  // header/footer via `hide-header` / `hide-footer` metadata, matching production
+  // which serves them chrome-less. Set the body classes eagerly (like has-events-bar)
+  // so styles.css can drop the reserved header height NOW and avoid a post-LCP
+  // layout shift when loadLazy skips loadHeader/loadFooter.
+  if (['true', 'yes', 'hide'].includes((getMetadata('hide-header') || '').trim().toLowerCase())) {
+    document.body.classList.add('hide-header');
+  }
+  if (['true', 'yes', 'hide'].includes((getMetadata('hide-footer') || '').trim().toLowerCase())) {
+    document.body.classList.add('hide-footer');
+  }
+
   // Adobe Web SDK (aem-martech). Kept INERT until a real AEP datastream id is
   // set (MARTECH_ENABLED). When enabled, initMartech kicks off the datastream
   // call that will surface RTCDP/AJO propositions; martechEager applies any
@@ -481,6 +504,12 @@ async function loadEager(doc) {
       // which only blog pages otherwise load.
       loadCSS(`${window.hlx.codeBasePath}/blocks/blog-template/blog-template.css`);
     }
+    // Guide landing pages: same shape, so the module is fetched only for the
+    // pages that use it. Gated on the `Guide` template alone — see guide-detect.js
+    // for why the path is deliberately not part of the test.
+    if (isGuidePage()) {
+      ({ default: buildGuideHeroAutoBlock } = await import('../blocks/guide-hero/guide-hero-autoblock.js'));
+    }
     decorateMain(main);
     // Personalize/experiment the first (LCP) section before reveal so the visitor
     // sees final content with no flash. Sections below the fold are handled in
@@ -504,12 +533,28 @@ async function loadEager(doc) {
   }
 }
 
+// Pages that already carry the full contact form (the live page and the
+// library stencil authors copy it from) suppress the site-wide floating
+// "Contact us" widget, matching production behavior.
+const CONTACT_WIDGET_EXCLUDED_PATHS = ['/contact', '/library/templates/contact'];
+
+/** True unless the current path opts out of the floating contact widget. */
+function shouldRenderContactUs() {
+  return !CONTACT_WIDGET_EXCLUDED_PATHS.includes(window.location.pathname);
+}
+
 /**
  * Loads everything that doesn't need to be delayed.
  * @param {Element} doc The container element
  */
 async function loadLazy(doc) {
-  loadHeader(doc.querySelector('header'));
+  // Gated/conversion pages opt out of the global header/footer via the
+  // `hide-header` / `hide-footer` metadata, surfaced as body classes in the eager
+  // phase (see loadEager) so the reserved header height is dropped before LCP.
+  // Here we simply skip loading (and remove the empty element). Default: load both.
+  const headerEl = doc.querySelector('header');
+  if (headerEl && document.body.classList.contains('hide-header')) headerEl.remove();
+  else loadHeader(headerEl);
 
   const main = doc.querySelector('main');
   // Below-the-fold personalization/experimentation: run the sections after the
@@ -522,30 +567,27 @@ async function loadLazy(doc) {
   const element = hash ? doc.getElementById(hash.substring(1)) : false;
   if (hash && element) element.scrollIntoView();
 
-  loadFooter(doc.querySelector('footer'));
+  const footerEl = doc.querySelector('footer');
+  if (footerEl && document.body.classList.contains('hide-footer')) footerEl.remove();
+  else loadFooter(footerEl);
 
   // Persistent bottom-right sales widget ("Contact us" / "Talk to sales"),
-  // present on every page. Loaded here (lazy phase) so it never touches LCP.
-  loadCSS(`${window.hlx.codeBasePath}/blocks/contact-us/contact-us.css`);
-  // eslint-disable-next-line import/no-cycle
-  import('../blocks/contact-us/contact-us.js')
-    .then(({ default: initContactUs }) => initContactUs())
-    .catch(() => { /* non-fatal — widget is non-critical chrome */ });
+  // present on every page except CONTACT_WIDGET_EXCLUDED_PATHS. Loaded here
+  // (lazy phase) so it never touches LCP.
+  if (shouldRenderContactUs()) {
+    loadCSS(`${window.hlx.codeBasePath}/blocks/contact-us/contact-us.css`);
+    // eslint-disable-next-line import/no-cycle
+    import('../blocks/contact-us/contact-us.js')
+      .then(({ default: initContactUs }) => initContactUs())
+      .catch(() => { /* non-fatal — widget is non-critical chrome */ });
+  }
 
   if (MARTECH_PROVIDER === 'adobe' && MARTECH_ENABLED) {
     try { await martechLazy(); } catch (e) { /* non-fatal */ }
-    // Demo posture: auto-grant collection consent (martech inits consent
-    // 'pending', which would otherwise drop sendEvent). Then push the OF1
-    // anonymous signal to RTCDP. Both fail-open — never block the page.
+    // Demo posture: auto-grant collection consent (martech inits consent 'pending', which
+    // would otherwise drop sendEvent). Needed for blocks/form/form.js's lead-identity
+    // sendEvent call on this provider path. Fail-open — never blocks the page.
     try { await updateUserConsent({ collect: true }); } catch (e) { /* non-fatal */ }
-    // Capture the segments the page's Alloy already resolved and hand them to
-    // the OF1 extension (page owns the Alloy call; the extension maps + displays).
-    sendOf1Signal({ sendEvent }).then((r) => {
-      const ids = readAlloySegmentIds(r && r.result);
-      if (ids.length) {
-        window.postMessage({ type: 'OF1_AUDIENCE_SEGMENTS', domain: window.location.hostname, ids }, '*');
-      }
-    }).catch(() => {});
   } else if (MARTECH_PROVIDER === 'tealium') {
     // Loads utag.js for the resolved env (no-op on an inert host) and applies consent. Fail-open,
     // like the Adobe branch above — never block the page.
