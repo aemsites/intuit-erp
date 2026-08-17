@@ -255,6 +255,15 @@ header {
   height: var(--nav-height);
 }
 
+/* Gated conversion pages opt out of the global header/footer (hide-header /
+   hide-footer metadata → body class, set eagerly in scripts.js). Drop the
+   reserved header height up front so removing the header in the lazy phase does
+   not cause a post-LCP layout shift. */
+body.hide-header header {
+  height: 0;
+  min-height: 0;
+}
+
 /* Resource Center pages (/blog*) render a secondary nav below the primary one.
    Reserve its height eagerly too — keyed on the body.<template> class those
    pages already get from decorateTemplateAndTheme — so the lazily-loaded header
@@ -631,6 +640,76 @@ main>.section[data-background="sand"] {
 
 main>.section[data-background="tofu"] {
   background-color: var(--tofu);
+}
+
+/* navy-center — full-bleed dark CTA section, See GH issue #515. */
+main .section.navy-center {
+  background-color: var(--navy);
+  margin: 0;
+  padding: 64px 24px;
+
+  @media (width >=900px) {
+    padding: 120px 24px;
+  }
+}
+
+main .section.navy-center .default-content-wrapper {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+}
+
+main .section.navy-center h1,
+main .section.navy-center h2,
+main .section.navy-center h3,
+main .section.navy-center p {
+  color: #fff;
+  margin: 0;
+}
+
+main .section.navy-center h2 {
+  font-size: 40px;
+  font-weight: 500;
+}
+
+main .section.navy-center .default-content-wrapper>p:not(.button-wrapper) {
+  font-size: 20px;
+}
+
+main .section.navy-center a.button.primary,
+main .section.navy-center button.button.primary {
+  background: #fff;
+  color: var(--navy);
+  border-color: #fff;
+  gap: 10px;
+}
+
+/* Hover: white fill fades to a translucent overlay (navy shows through),
+   text flips to white to stay legible, and a chevron fades in — matches
+   erp.intuit.com's own dark-band CTA hover. */
+main .section.navy-center a.button.primary:hover {
+  background: rgb(255 255 255 / 30%);
+  border-color: transparent;
+  color: #fff;
+}
+
+main .section.navy-center a.button.primary::after {
+  content: "";
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  background-color: currentcolor;
+  mask: center / contain no-repeat url("/icons/chevron-right.svg");
+  -webkit-mask: center / contain no-repeat url("/icons/chevron-right.svg");
+  opacity: 0;
+  transition: opacity .15s ease;
+}
+
+main .section.navy-center a.button.primary:hover::after {
+  opacity: 1;
 }
 
 /* contained sections */
