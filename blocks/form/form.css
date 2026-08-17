@@ -103,7 +103,8 @@
 .form.info .mktoForm .mktoButton:hover { background: var(--blue-bright) !important; }
 
 /* ---- .sky — sky band ---- */
-.section.form-container:has(.form.sky), .section.sky .section.form-container { background: #eaf3fb; padding: var(--section-y) 0; }
+.section.form-container:has(.form.sky) { background: #eaf3fb; padding: var(--section-y) 0; }
+.section.sky .section.form-container { background: var(--sky-blue); }
 
 /* ---- .card — white overlay card ---- */
 .section.form-container:has(.form.card) { background: transparent; padding: 0; }
