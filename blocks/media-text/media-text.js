@@ -12,7 +12,7 @@
  * Variants:
  *   (default)  text left, media right; multiple rows alternate media right→left
  *   .reverse   first row media LEFT (then alternates); also used for single media-left rows
- *   .sky       sky band skin (pricing "Switch now and save")
+ *   .cyan      pale-cyan band skin (pricing "Switch now and save")
  *   .agave     pale-blue band skin (ai-agents "From questions to clarity")
  *   .center    text-only, centered single column (pricing "Built for the way")
  *   .cards     2-up cards, media below text (index "migration path")
@@ -21,7 +21,7 @@
  *              card bottom (erp-solutions "Move to a modern ERP" / solution-cards)
  * CSS: blocks/media-text/media-text.css
  */
-import { bindScheduleLinks } from '../../scripts/schedule-modal.js';
+import { bindScheduleLinks } from '../form/form.js';
 
 function buildCopy(textCell) {
   const copy = document.createElement('div');
@@ -147,7 +147,7 @@ export default function decorate(block) {
     return;
   }
 
-  // default / reverse / sky — media+text split rows
+  // default / reverse / cyan — media+text split rows
   const frag = document.createDocumentFragment();
   rows.forEach((row, i) => {
     const cells = [...row.children];

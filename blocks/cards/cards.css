@@ -89,19 +89,75 @@
 }
 
 .cards.icons { grid-template-columns: repeat(3, 1fr); gap: 48px; max-width: 1120px; margin: 0 auto; }
-.cards.icons .cards-card-image { width: 56px; margin-bottom: 20px; }
+
+/* icon inline with the eyebrow label (icon left, label right); title + body
+   below — matches production. cards.js groups the icon + eyebrow into
+   .cards-card-head. */
+.cards.icons .cards-card-head { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+.cards.icons .cards-card-image { width: 56px; margin: 0; }
 .cards.icons .cards-card-image img { width: 56px; height: 56px; object-fit: contain; }
-.cards.icons .cards-card-body .cards-eyebrow { margin: 0 0 12px; font-style: normal; font-size: 14px;}
+.cards.icons .cards-eyebrow { margin: 0; font-style: normal; font-size: 14px; }
 
 .cards.icons .cards-card-body h3 {
-  font-size: 24px; line-height: 1.25; font-weight: 400; color: var(--heading); margin: 0 0 16px;
+  /* production renders these icon-card titles at 32px (was 24px) */
+  font-size: 32px; line-height: 1.25; font-weight: 400; color: var(--heading); margin: 0 0 16px;
 }
 .cards.icons .cards-card-body p { font-size: 15px; line-height: 1.55; color: var(--text-muted); margin: 0; }
 
 @media (width <= 768px) {
   .cards.icons { grid-template-columns: 1fr; gap: 36px; }
-  .cards.icons .cards-card-body h3 { font-size: 22px; }
+  .cards.icons .cards-card-body h3 { font-size: 28px; }
 }
+
+/* product-cards — Section Metadata "Style: product-cards": a 2-up grid of
+   product-screenshot feature cards (image + title + bullets), matching
+   erp.intuit.com "Where finance and HR gain ground". The default .cards grid
+   packs ~4 narrow columns; this shows 2 larger cards per row with a
+   regular-weight title. Scoped to the section so other .cards are unaffected. */
+.section.product-cards .cards {
+  grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));
+  gap: 44px 32px;
+  max-width: var(--container);
+  margin: 0 auto;
+}
+
+.section.product-cards .cards .cards-card-body :is(h3, h4) {
+  margin: 24px 0 12px;
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 1.2;
+  color: var(--heading);
+}
+
+.section.product-cards .cards .cards-card-body ul { margin: 0; padding-left: 20px; }
+
+.section.product-cards .cards .cards-card-body li {
+  margin: 0 0 8px;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+@media (width <= 768px) {
+  .section.product-cards .cards { grid-template-columns: 1fr; }
+}
+
+/* feature-cards — Section Metadata "Style: feature-cards": center the section
+   heading/subheading and render the .cards.icons items as gray rounded cards
+   (human-capital-management "data behind every workforce decision"). Opt-in and
+   scoped to the section, so other .cards.icons sections (e.g. /account-management)
+   are unaffected. */
+.section.feature-cards .default-content-wrapper { text-align: center; }
+
+.section.feature-cards .cards.icons > div {
+  box-sizing: border-box;
+  padding: 32px;
+  background: #eef2f6;
+  border-radius: 16px;
+}
+
+/* production's carded titles are smaller than the plain icon-card title (32px) */
+.section.feature-cards .cards.icons .cards-card-body h3 { font-size: 24px; }
 
 /* ---- .carousel / .boxed — single-row, horizontally-scrolling photo cards
    (events, financial-services, professional-services, oa). Cards scroll via
@@ -276,6 +332,39 @@
 
 @media (width <= 768px) {
   .cards.carousel .cards-track > div, .cards.boxed .cards-track > div { flex-basis: 260px; }
+}
+
+
+.cards.list { display: flex; flex-direction: column; gap: 24px; }
+
+.cards.list > div {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.cards.list .cards-card-image { margin: 0; border-radius: 8px; overflow: hidden; }
+
+.cards.list .cards-eyebrow { font-size: var(--body-font-size-xxs); text-transform: capitalize; }
+
+.cards.list .cards-card-body p:has(a) {
+  margin-top: 0;
+  font-size: var(--body-font-size-s);
+  font-weight: 700;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.cards.list .cards-card-body a { color: var(--text-color); font-weight: 700; }
+
+@media (width <= 480px) {
+  .cards.list > div { grid-template-columns: 166px 1fr; }
+  .cards.list .cards-card-image img { height: 188px; object-fit: cover; }
 }
 
 /* ---- custom "camera-focus" cursor (erp.intuit.com CustomCursor): a floating

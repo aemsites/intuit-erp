@@ -24,6 +24,10 @@ import {
   initMartech, martechEager, martechLazy, updateUserConsent, sendEvent,
   // eslint-disable-next-line import/no-relative-packages
 } from '../plugins/martech/src/index.js';
+// Not a vendored subtree (unlike plugins/martech above) — project-owned code, but the relative
+// import still crosses into plugins/ so the disable comment mirrors the existing martech import.
+// eslint-disable-next-line import/no-relative-packages
+import TealiumMartech from '../plugins/tealium-martech/src/index.js';
 import { sendOf1Signal, readAlloySegmentIds } from './of1-rtcdp-signal.js';
 // Cheap predicates only — the heavy blog-template / video blocks they belong to
 // are NOT pulled onto the eager critical path here. buildBlogTemplate is
@@ -31,6 +35,7 @@ import { sendOf1Signal, readAlloySegmentIds } from './of1-rtcdp-signal.js';
 // video block loads lazily when a video is actually decorated.
 import { isBlogPage, hasAuthoredCaseStudyHeader } from '../blocks/blog-template/blog-detect.js';
 import { isVideoLink } from '../blocks/video/video-info.js';
+import { isGuidePage } from '../blocks/guide-hero/guide-detect.js';
 
 // Adobe Web SDK / AEP datastream. The datastream id is public (not a secret)
 // and safe in client source. While the id starts with "REPLACE_", martech is
@@ -45,6 +50,59 @@ const AEP_ORG_ID = '87020D54659BEED90A495E68@AdobeOrg';
 // disabled regardless of datastream config on that host.
 const MARTECH_ENABLED = !AEP_DATASTREAM_ID.startsWith('REPLACE_')
   && !window.location.hostname.endsWith('.preview.da.live');
+
+// Provider gate via the `?martech=` query param:
+//   off    -> disable ALL martech (no Tealium, no Adobe — fully inert)
+//   adobe  -> legacy Adobe/aem-martech path (opt-in)
+//   local  -> Tealium, loading utag.js + the OneTrust consent stack from local copies in
+//             /scripts/martech/ (for testing without Intuit's VPN-gated consent CDN)
+//   (absent / any other value) -> Tealium, loading from the vendor CDNs (the default)
+// Tealium still self-gates via TealiumMartech's `resolveEnvironment`
+// (plugins/tealium-martech/src/index.js): only erp.intuit.com -> 'prod'; stage.erp.intuit.com, the
+// aem.page/aem.live previews, and localhost -> 'dev'; every other host stays inert.
+const MARTECH_PARAM = new URLSearchParams(window.location.search).get('martech');
+const MARTECH_PROVIDER = { off: 'off', adobe: 'adobe' }[MARTECH_PARAM] || 'tealium';
+// `?martech=local`: load utag.js + the consent stack from /scripts/martech/ instead of the CDNs.
+const MARTECH_LOCAL = MARTECH_PARAM === 'local';
+
+// Set in loadEager when MARTECH_PROVIDER === 'tealium' (the default); stays undefined on the
+// opt-in Adobe path. Exposed via getTealium() so scripts/delayed.js can call `.delayed()`
+// without importing the class itself.
+let tealium;
+
+/**
+ * Returns the active `TealiumMartech` instance, or `undefined` when the opt-in Adobe provider
+ * (`?martech=adobe`) is active instead.
+ * @returns {TealiumMartech|undefined} the active Tealium loader instance, if any
+ */
+export function getTealium() {
+  return tealium;
+}
+
+let siteConfigPromise;
+
+// Site-wide integration values (Marketo/ChiliPiper/reCAPTCHA) live in the
+// ops-owned /site-config.json DA sheet, never in code or per-page authoring.
+// Fetched once; returns a flat key->value map ("true"/"false" coerced to
+// boolean), or {} when the sheet is unavailable (local/dev without it).
+export function getSiteConfig() {
+  if (!siteConfigPromise) {
+    siteConfigPromise = fetch('/site-config.json')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json) => {
+        const cfg = {};
+        (json?.data || []).forEach(({ key, value }) => {
+          if (!key) return;
+          if (value === 'true') cfg[key] = true;
+          else if (value === 'false') cfg[key] = false;
+          else cfg[key] = value;
+        });
+        return cfg;
+      })
+      .catch(() => ({}));
+  }
+  return siteConfigPromise;
+}
 
 // no custom prod domain configured yet — treat only the .aem.live CDN as
 // prod (no pill overlay); .aem.page previews and localhost stay in debug mode.
@@ -172,6 +230,11 @@ function buildVideoAutoBlocks(main) {
 // elsewhere, which also serves as the "is this a blog page" gate below.
 let buildBlogTemplate;
 
+// Same treatment for the Guide landing-page card: imported in loadEager only for
+// `template: Guide` pages, so the other ~335 pages in the sitemap never fetch or
+// parse it. Undefined elsewhere, which is the gate in buildAutoBlocks.
+let buildGuideHeroAutoBlock;
+
 // Longest the eager phase will hold the (hidden) page waiting for
 // blog-template.css before giving up and painting unstyled — see
 // resolveBlogTemplate.
@@ -243,6 +306,12 @@ function buildAutoBlocks(main) {
     // from re-injecting a right-rail link into every loaded fragment (which
     // buildAutoBlocks would then re-load — an infinite loop).
     if (buildBlogTemplate && main.isConnected) buildBlogTemplate(main);
+    // Guide landing pages get their own lead card instead. The isConnected guard
+    // matters as much here as above: loadFragment decorates a DETACHED main, and
+    // getMetadata reads the HOST page's head — so on a Guide page every loaded
+    // fragment would otherwise have its own first section wrapped in a second
+    // card (verified: 2 `.guide-hero` blocks, the fragment's heading inside one).
+    if (buildGuideHeroAutoBlock && main.isConnected) buildGuideHeroAutoBlock(main);
     // auto load `*/fragments/*` references
     const fragments = [...main.querySelectorAll('a[href*="/fragments/"]')].filter((f) => !f.closest('.fragment'));
     if (fragments.length > 0) {
@@ -273,37 +342,59 @@ function buildAutoBlocks(main) {
  * @param {HTMLElement} main The main container element
  */
 function decorateButtons(main) {
-  main.querySelectorAll('p a[href]').forEach((a) => {
-    a.title = a.title || a.textContent;
-    const p = a.closest('p');
-    const text = a.textContent.trim();
+  main.querySelectorAll('p').forEach((p) => {
+    // Decide per-paragraph up front (before any mutation): a paragraph may hold a
+    // single CTA (whose text must equal the paragraph's) OR multiple formatted CTA
+    // links sharing one line (e.g. primary <strong><a> + secondary <em><a>). In the
+    // multi-link case we buttonize each link and skip the whole-paragraph text guard.
+    const formatted = [...p.querySelectorAll(':scope strong > a[href], :scope em > a[href]')];
+    // Only treat as a multi-CTA paragraph when the paragraph's ENTIRE visible text
+    // is just the formatted link texts (plus whitespace/separators) — i.e. a row of
+    // CTAs, not prose that happens to bold/italic-link two words. This mirrors the
+    // single-CTA "sole content" guard so buttonization stays scoped to real CTAs.
+    const ctaOnly = formatted.length > 1 && (() => {
+      let rest = p.textContent;
+      formatted.forEach((a) => { rest = rest.replace(a.textContent, ''); });
+      return rest.replace(/[\s|·•,/–-]+/g, '') === '';
+    })();
+    const multi = ctaOnly;
+    const links = multi ? formatted : [...p.querySelectorAll(':scope a[href]')];
 
-    // quick structural checks
-    if (a.querySelector('img') || p.textContent.trim() !== text) return;
+    links.forEach((a) => {
+      a.title = a.title || a.textContent;
+      const text = a.textContent.trim();
 
-    // skip URL display links
-    try {
-      if (new URL(a.href).href === new URL(text, window.location).href) return;
-    } catch { /* continue */ }
+      // skip links that wrap an image
+      if (a.querySelector('img')) return;
 
-    // require authored formatting for buttonization
-    const strong = a.closest('strong');
-    const em = a.closest('em');
-    if (!strong && !em) return;
+      // require authored formatting for buttonization
+      const strong = a.closest('strong');
+      const em = a.closest('em');
+      if (!strong && !em) return;
 
-    p.className = 'button-wrapper';
-    a.className = 'button';
-    if (strong && em) { // high-impact call-to-action
-      a.classList.add('accent');
-      const outer = strong.contains(em) ? strong : em;
-      outer.replaceWith(a);
-    } else if (strong) {
-      a.classList.add('primary');
-      strong.replaceWith(a);
-    } else {
-      a.classList.add('secondary');
-      em.replaceWith(a);
-    }
+      // single-CTA paragraphs must be the sole content
+      if (!multi && p.textContent.trim() !== text) return;
+
+      // skip URL display links
+      try {
+        if (new URL(a.href).href === new URL(text, window.location).href) return;
+      } catch { /* continue */ }
+
+      if (multi) p.classList.add('button-wrapper', 'buttons-multi');
+      else p.className = 'button-wrapper';
+      a.className = 'button';
+      if (strong && em) { // high-impact call-to-action
+        a.classList.add('accent');
+        const outer = strong.contains(em) ? strong : em;
+        outer.replaceWith(a);
+      } else if (strong) {
+        a.classList.add('primary');
+        strong.replaceWith(a);
+      } else {
+        a.classList.add('secondary');
+        em.replaceWith(a);
+      }
+    });
   });
 }
 
@@ -407,8 +498,9 @@ async function loadEager(doc) {
   // call that will surface RTCDP/AJO propositions; martechEager applies any
   // personalization decisions before content reveal (flicker-free). Guarded so
   // a missing/placeholder datastream never initializes Alloy or hides the body.
+  // Only runs on the opt-in Adobe provider path (`?martech=adobe`).
   let martechLoadedPromise = null;
-  if (MARTECH_ENABLED) {
+  if (MARTECH_PROVIDER === 'adobe' && MARTECH_ENABLED) {
     try {
       martechLoadedPromise = initMartech(
         { datastreamId: AEP_DATASTREAM_ID, orgId: AEP_ORG_ID },
@@ -417,6 +509,11 @@ async function loadEager(doc) {
     } catch (e) {
       martechLoadedPromise = null;
     }
+  } else if (MARTECH_PROVIDER === 'tealium') {
+    // Real Tealium (env 'prod'/'qa'/'dev') only ever loads once TealiumMartech#resolveEnvironment
+    // recognizes the hostname; every other host stays inert — eager() itself does no network work.
+    tealium = new TealiumMartech({ local: MARTECH_LOCAL });
+    tealium.eager();
   }
 
   await runExperimentation(doc, experimentationConfig);
@@ -432,6 +529,12 @@ async function loadEager(doc) {
   const main = doc.querySelector('main');
   if (main) {
     buildBlogTemplate = await resolveBlogTemplate(main);
+    // Guide landing pages: same shape, so the module is fetched only for the
+    // pages that use it. Gated on the `Guide` template alone — see guide-detect.js
+    // for why the path is deliberately not part of the test.
+    if (isGuidePage()) {
+      ({ default: buildGuideHeroAutoBlock } = await import('../blocks/guide-hero/guide-hero-autoblock.js'));
+    }
     decorateMain(main);
     // Personalize/experiment the first (LCP) section before reveal so the visitor
     // sees final content with no flash. Sections below the fold are handled in
@@ -478,11 +581,12 @@ async function loadLazy(doc) {
   // Persistent bottom-right sales widget ("Contact us" / "Talk to sales"),
   // present on every page. Loaded here (lazy phase) so it never touches LCP.
   loadCSS(`${window.hlx.codeBasePath}/blocks/contact-us/contact-us.css`);
+  // eslint-disable-next-line import/no-cycle
   import('../blocks/contact-us/contact-us.js')
     .then(({ default: initContactUs }) => initContactUs())
     .catch(() => { /* non-fatal — widget is non-critical chrome */ });
 
-  if (MARTECH_ENABLED) {
+  if (MARTECH_PROVIDER === 'adobe' && MARTECH_ENABLED) {
     try { await martechLazy(); } catch (e) { /* non-fatal */ }
     // Demo posture: auto-grant collection consent (martech inits consent
     // 'pending', which would otherwise drop sendEvent). Then push the OF1
@@ -496,6 +600,10 @@ async function loadLazy(doc) {
         window.postMessage({ type: 'OF1_AUDIENCE_SEGMENTS', domain: window.location.hostname, ids }, '*');
       }
     }).catch(() => {});
+  } else if (MARTECH_PROVIDER === 'tealium') {
+    // Loads utag.js for the resolved env (no-op on an inert host) and applies consent. Fail-open,
+    // like the Adobe branch above — never block the page.
+    try { await tealium.lazy(); } catch (e) { /* non-fatal */ }
   }
 
   await runExperimentationLazy(doc, experimentationConfig);

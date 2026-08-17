@@ -18,8 +18,8 @@ import { getMetadata } from '../../scripts/aem.js';
  *  - `category`, `author`, `search` — listing pages; they own their own layout.
  *  - `guide` — a gated-asset landing page. Upstream gives it a different hero
  *    (image left on a mint band, headline + lede + CTA right, no eyebrow and no
- *    byline) over a full-width body, not this article layout. Adding it here
- *    would be worse than leaving it plain; tracked in issue #423.
+ *    byline) over a full-width body, not this article layout. It has its own
+ *    autoblock — see blocks/guide-hero, gated by isGuidePage (issue #423).
  */
 const ARTICLE_TEMPLATES = ['blog article', 'case study', 'research'];
 
