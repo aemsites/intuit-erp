@@ -7,6 +7,11 @@
  * markup in place and the Vev React runtime initializes its scroll interactions
  * — injecting the markup via innerHTML instead leaves the animations unwired.
  * So we append the bundle as a script inside the widget rather than fetching it.
+ *
+ * The bundle carries one local patch (search `eds-carousel-fix`): it appends a
+ * <style> to its shadow root so the testimonial carousel's stacked quote frames
+ * hug their content and reveal one at a time, instead of stretching to the full
+ * grid row and overlapping under the EDS runtime.
  */
 export default async function decorate(widget) {
   if (widget.querySelector('script[data-vev-embed]')) return;
