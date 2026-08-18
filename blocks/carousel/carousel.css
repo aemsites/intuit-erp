@@ -406,6 +406,70 @@
   .carousel.testimonial .carousel-controls { justify-content: flex-end; }
 }
 
+/* ---- .spotlight — light-blue band, a fixed SQUARE portrait beside a large
+   quote that leads (erp.intuit.com "C14" testimonial, e.g. /financial-services).
+   Unlike the default portrait treatment, the band is a full-bleed sky tint, the
+   photo is a fixed square (not stretched to the card height), the quote sits on
+   the leading edge, and a blue opening-quote glyph leads the copy. */
+.section.carousel-container:has(.carousel.testimonial.spotlight) {
+  background: #c2f5ff;
+  padding: var(--section-y) 0;
+}
+
+.carousel.testimonial.spotlight {
+  --testi-card: transparent;
+  --testi-text: #21262a;
+  --testi-quote: 24px;
+  --testi-quote-lh: 31.2px;
+  --testi-attr: 16px;
+  --testi-attr-lh: 22.4px;
+}
+
+.carousel.testimonial.spotlight .carousel-viewport { border-radius: 0; }
+
+/* fixed square photo (source is a 1:1 asset shown at 520px), not the default
+   stretched portrait */
+.carousel.testimonial.spotlight .testi-media img {
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+/* the leading blue opening-quote glyph */
+.carousel.testimonial.spotlight .testi-body::before {
+  content: "\201C";
+  display: block;
+  color: #236cff;
+  font-size: 56px;
+  line-height: 0.7;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.carousel.testimonial.spotlight .testi-attr { color: rgb(33 38 42 / 80%); }
+
+@media (width >= 1024px) {
+  /* quote leads on the left, square photo trails on the right */
+  .carousel.testimonial.spotlight .carousel-slide { flex-direction: row-reverse; align-items: center; }
+
+  .carousel.testimonial.spotlight { --testi-quote: 32px; --testi-quote-lh: 41.6px; }
+
+  .carousel.testimonial.spotlight .testi-media:has(img) {
+    position: static;
+    flex: 0 1 520px;
+    align-self: center;
+  }
+
+  .carousel.testimonial.spotlight .testi-media img {
+    position: static;
+    inset: auto;
+    width: 100%;
+    height: auto;
+  }
+
+  .carousel.testimonial.spotlight .testi-body { flex: 1 1 0; padding: 0 60px; }
+}
+
 @media (width >= 1200px) {
   .carousel.testimonial { --testi-quote: 40px; --testi-quote-lh: 56px; }
 
