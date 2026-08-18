@@ -633,8 +633,11 @@ main>.section[data-background="tofu"] {
   background-color: var(--tofu);
 }
 
-/* navy-center — full-bleed dark CTA section, See GH issue #515. */
-main .section.navy-center {
+/* navy — full-bleed dark band background only. Combine with Section
+   Metadata "Style: center" (main .section.center>div, above) for the
+   centered-copy layout used on production's dark CTA bands — this rule
+   intentionally doesn't handle alignment itself. See GH issue #515. */
+main .section.navy {
   background-color: var(--navy);
   margin: 0;
   padding: 64px 24px;
@@ -644,34 +647,25 @@ main .section.navy-center {
   }
 }
 
-main .section.navy-center .default-content-wrapper {
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 32px;
-}
-
-main .section.navy-center h1,
-main .section.navy-center h2,
-main .section.navy-center h3,
-main .section.navy-center p {
+main .section.navy h1,
+main .section.navy h2,
+main .section.navy h3,
+main .section.navy p {
   color: #fff;
-  margin: 0;
+  margin: 16px 0;
 }
 
-main .section.navy-center h2 {
+main .section.navy h2 {
   font-size: 40px;
   font-weight: 500;
 }
 
-main .section.navy-center .default-content-wrapper>p:not(.button-wrapper) {
+main .section.navy .default-content-wrapper>p:not(.button-wrapper) {
   font-size: 20px;
 }
 
-main .section.navy-center a.button.primary,
-main .section.navy-center button.button.primary {
+main .section.navy a.button.primary,
+main .section.navy button.button.primary {
   background: #fff;
   color: var(--navy);
   border-color: #fff;
@@ -680,14 +674,17 @@ main .section.navy-center button.button.primary {
 
 /* Hover: white fill fades to a translucent overlay (navy shows through),
    text flips to white to stay legible, and a chevron fades in — matches
-   erp.intuit.com's own dark-band CTA hover. */
-main .section.navy-center a.button.primary:hover {
+   erp.intuit.com's own dark-band CTA hover. No existing button-hover
+   pattern in the codebase matches this exact case (checked cards.css,
+   testimonial.css, video.css, of1-*.css — all use rgb(255 255 255 / X%)
+   for other purposes/opacities), so this stays a dedicated rule. */
+main .section.navy a.button.primary:hover {
   background: rgb(255 255 255 / 30%);
   border-color: transparent;
   color: #fff;
 }
 
-main .section.navy-center a.button.primary::after {
+main .section.navy a.button.primary::after {
   content: "";
   display: inline-block;
   width: 16px;
@@ -699,7 +696,7 @@ main .section.navy-center a.button.primary::after {
   transition: opacity .15s ease;
 }
 
-main .section.navy-center a.button.primary:hover::after {
+main .section.navy a.button.primary:hover::after {
   opacity: 1;
 }
 
