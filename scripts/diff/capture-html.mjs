@@ -21,10 +21,15 @@ import { newLiveContext, gotoLive, dismissOverlays } from './live-session.mjs';
  * @param {{settleMs?: number, headed?: boolean}} [opts]
  * @returns {Promise<string>}
  */
-export async function captureHtml(browser, url, { settleMs = 1500, headed = false } = {}) {
+export async function captureHtml(browser, url, { settleMs = 1500, headed = false, routes = [] } = {}) {
   const context = await newLiveContext(browser, {});
   try {
     const pg = await context.newPage();
+    // Stub responses (e.g. route /tracking.json to a local fixture for the "ours"
+    // side) — must be registered before navigation so the runtime's fetch is caught.
+    await Promise.all(routes.map((r) => pg.route(r.pattern, (route) => route.fulfill({
+      contentType: 'application/json', body: JSON.stringify(r.json),
+    }))));
     const resp = await gotoLive(pg, url, {
       waitUntil: 'domcontentloaded', timeoutMs: 45000, settleMs: 0, httpError: 'measure', solveWindow: headed,
     });
