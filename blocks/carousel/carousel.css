@@ -517,6 +517,43 @@
 
 .carousel.testimonial.spotlight .carousel-next:hover:not(:disabled) { background: var(--navy-hover); }
 
+/* animation: the source cross-fades + slides the active card up rather than
+   sliding a horizontal track. Slides are stacked; only the active one shows,
+   fading in while its copy and photo rise into place. */
+.carousel.testimonial.spotlight .carousel-viewport { overflow: visible; }
+
+.carousel.testimonial.spotlight .carousel-track {
+  display: block;
+  position: relative;
+  transform: none;
+}
+
+.carousel.testimonial.spotlight .carousel-slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.5s ease, visibility 0s linear 0.5s;
+}
+
+.carousel.testimonial.spotlight .carousel-slide.is-active {
+  position: relative;
+  z-index: 2;
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.5s ease;
+}
+
+.carousel.testimonial.spotlight .testi-body,
+.carousel.testimonial.spotlight .testi-media {
+  transition: transform 0.5s ease, opacity 0.4s ease;
+}
+
+.carousel.testimonial.spotlight .carousel-slide:not(.is-active) .testi-body,
+.carousel.testimonial.spotlight .carousel-slide:not(.is-active) .testi-media {
+  transform: translateY(28px);
+}
+
 @media (width >= 1024px) {
   /* quote leads on the left, square photo trails on the right */
   .carousel.testimonial.spotlight .carousel-slide { flex-direction: row-reverse; align-items: center; }
@@ -537,6 +574,28 @@
   }
 
   .carousel.testimonial.spotlight .testi-body { flex: 1 1 0; padding: 0 60px; }
+
+  /* the neighbouring customer photos peek behind the active card, offset and
+     dimmed — their copy stays hidden so only the portraits show */
+  .carousel.testimonial.spotlight .carousel-slide.is-prev,
+  .carousel.testimonial.spotlight .carousel-slide.is-next {
+    opacity: 1;
+    visibility: visible;
+    z-index: 1;
+  }
+
+  .carousel.testimonial.spotlight .carousel-slide.is-prev .testi-body,
+  .carousel.testimonial.spotlight .carousel-slide.is-next .testi-body { opacity: 0; }
+
+  .carousel.testimonial.spotlight .carousel-slide.is-prev .testi-media {
+    transform: translate(-28px, -28px) scale(0.92);
+    opacity: 0.5;
+  }
+
+  .carousel.testimonial.spotlight .carousel-slide.is-next .testi-media {
+    transform: translate(28px, 28px) scale(0.92);
+    opacity: 0.5;
+  }
 }
 
 @media (width >= 1200px) {

@@ -301,6 +301,9 @@ export default function decorate(block) {
   // cards) per step, so the offset is measured in real pixels from the
   // slide's own rendered width instead of assumed from the index alone.
   function applyOffset() {
+    // .spotlight stacks its slides and cross-fades between them (see CSS), so
+    // there's no horizontal track to translate
+    if (isSpotlight) return;
     const first = slides[0];
     if (!first) return;
     const { width } = first.getBoundingClientRect();
@@ -314,6 +317,12 @@ export default function decorate(block) {
     slides.forEach((slide, i) => {
       const active = i === clamped;
       slide.classList.toggle('is-active', active);
+      // .spotlight peeks the neighbouring customer photos behind the active
+      // card; mark them so CSS can offset each one
+      if (isSpotlight) {
+        slide.classList.toggle('is-prev', i === clamped - 1);
+        slide.classList.toggle('is-next', i === clamped + 1);
+      }
       slide.setAttribute('aria-hidden', active ? 'false' : 'true');
       // keep focusable content inside off-screen slides out of the tab
       // order (aria-hidden alone doesn't stop keyboard focus)
