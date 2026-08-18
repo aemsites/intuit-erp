@@ -8,8 +8,7 @@
  * the 4 link columns and a "Footer Legal" block supplies the legal nav,
  * copyright paragraphs, and legal links line. Brand/social SVGs, the country
  * selector, and the search input are fixed UI chrome, not authored content.
- * Missing/unparseable sections fall back to built-in defaults so the footer
- * always paints (local QA + preview + a fragment that 404s).
+ * If a block is missing from the fragment, that section renders empty.
  * CSS: blocks/footer/footer.css · source fragment: content/footer.html
  */
 import { getMetadata } from '../../scripts/aem.js';
@@ -27,82 +26,6 @@ function escapeHtml(str) {
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
   }[c]));
 }
-
-// Fallback content, used whenever the authored "Footer Columns" / "Footer
-// Legal" blocks are missing, empty, or the /footer fragment can't be fetched.
-const FOOTER_COLUMNS_DEFAULT = [
-  {
-    title: 'Company',
-    links: [
-      { text: 'About Intuit', href: 'https://www.intuit.com/company/' },
-      { text: 'Investor Relations', href: 'https://investors.intuit.com' },
-      { text: 'Corporate Responsibility', href: 'https://www.intuit.com/company/corporate-responsibility/' },
-      { text: 'Partner with Intuit', href: 'https://www.intuit.com/partners/' },
-      { text: 'Contact Us', href: 'https://www.intuit.com/company/contact' },
-    ],
-  },
-  {
-    title: 'For Individuals',
-    links: [
-      { text: 'TurboTax', href: 'https://turbotax.intuit.com/' },
-      { text: 'TurboTax Live', href: 'https://turbotax.intuit.com/personal-taxes/online/live/full-service/' },
-      { text: 'Credit Karma', href: 'https://www.creditkarma.com/' },
-      { text: 'Credit Cards', href: 'https://www.creditkarma.com/credit-cards' },
-      { text: 'Personal Loans', href: 'https://www.creditkarma.com/personal-loans/shop' },
-      { text: 'Auto Loans', href: 'https://www.creditkarma.com/shop/autos' },
-      { text: 'Home Loans', href: 'https://www.creditkarma.com/home-loans/mortgage-rates' },
-      { text: 'QuickBooks Solopreneur', href: 'https://quickbooks.intuit.com/solopreneur/' },
-    ],
-  },
-  {
-    title: 'For Small Business',
-    links: [
-      { text: 'QuickBooks', href: 'https://quickbooks.intuit.com/' },
-      { text: 'Accounting Software', href: 'https://quickbooks.intuit.com/accounting/' },
-      { text: 'Payroll', href: 'https://quickbooks.intuit.com/payroll' },
-      { text: 'Online Payments', href: 'https://quickbooks.intuit.com/payments/' },
-      { text: 'Invoicing Software', href: 'https://quickbooks.intuit.com/accounting/invoicing/' },
-      { text: 'Time Tracking', href: 'https://quickbooks.intuit.com/time-tracking/' },
-      { text: 'Term Loans', href: 'https://quickbooks.intuit.com/business-banking/loans/term-loans/' },
-      { text: 'Line of Credit', href: 'https://quickbooks.intuit.com/business-banking/loans/line-of-credit/' },
-      { text: 'Bookkeeper Services', href: 'https://quickbooks.intuit.com/live/' },
-      { text: 'Mailchimp', href: 'https://mailchimp.com/' },
-      { text: 'TurboTax Live for Business', href: 'https://turbotax.intuit.com/small-business-taxes/' },
-      { text: 'Business Credit Card', href: 'https://quickbooks.intuit.com/business-banking/' },
-    ],
-  },
-  {
-    title: 'For Accountants',
-    links: [
-      { text: 'Intuit Accountant Suite', href: 'https://accountants.intuit.com/' },
-      { text: 'Lacerte Tax', href: 'https://accountants.intuit.com/tax/lacerte/' },
-      { text: 'ProConnect Tax', href: 'https://proconnect.intuit.com/tax-online/' },
-      { text: 'ProSeries Tax', href: 'https://accountants.intuit.com/tax/proseries/' },
-      { text: 'ProAdvisor Program', href: 'https://proadvisor.intuit.com/' },
-    ],
-  },
-];
-
-const FOOTER_LEGAL_DEFAULT = {
-  nav: [
-    { text: 'About Intuit', href: 'https://www.intuit.com/company/' },
-    { text: 'Join Our Team', href: 'https://www.intuit.com/careers/' },
-    { text: 'Press Room', href: 'https://www.intuit.com/company/press-room/' },
-    { text: 'Accessibility', href: 'https://www.intuit.com/accessibility/' },
-    { text: 'Terms and Conditions', href: 'https://www.intuit.com/legal/' },
-  ],
-  copyHtml: [
-    '© 2026 Intuit Inc. All rights reserved.',
-    'Intuit, QuickBooks, QB, TurboTax, Credit Karma, and Mailchimp are registered trademarks of Intuit Inc. Terms and conditions, features, support, pricing, and service options subject to change without notice.',
-    'Money movement services are provided by Intuit Payments Inc., licensed as a Money Transmitter by the New York State Department of Financial Services. For details about our money transmission licenses, or for Texas customers with complaints about our service, please <a href="https://www.intuit.com/legal/licenses/payment-licenses/">click here.</a>',
-  ],
-  links: [
-    { text: 'Legal', href: 'https://www.intuit.com/legal/' },
-    { text: 'Privacy', href: 'https://www.intuit.com/privacy/' },
-    { text: 'Security', href: 'https://security.intuit.com' },
-    { text: 'Compliance', href: 'https://www.intuit.com/compliance/' },
-  ],
-};
 
 // "Footer Columns" content model: one row per column, cell 1 = heading text,
 // cell 2 = a list of links. Authors add/remove/reorder rows to add/remove
@@ -312,14 +235,9 @@ export default async function decorate(block) {
   // live /footer document.
   const footerPath = footerMeta ? new URL(footerMeta, window.location).pathname : '/footer1';
   const frag = await fetchFragment(footerPath);
-
-  let columns = FOOTER_COLUMNS_DEFAULT;
-  let legal = FOOTER_LEGAL_DEFAULT;
-  if (frag) {
-    const doc = new DOMParser().parseFromString(frag, 'text/html');
-    columns = parseFooterColumns(doc) || FOOTER_COLUMNS_DEFAULT;
-    legal = parseFooterLegal(doc) || FOOTER_LEGAL_DEFAULT;
-  }
+  const doc = frag ? new DOMParser().parseFromString(frag, 'text/html') : null;
+  const columns = (doc && parseFooterColumns(doc)) || [];
+  const legal = (doc && parseFooterLegal(doc)) || { nav: [], copyHtml: [], links: [] };
 
   block.innerHTML = buildChrome(columns, legal);
   wireAccordions(block);
