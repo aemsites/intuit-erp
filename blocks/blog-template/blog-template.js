@@ -43,6 +43,7 @@
  */
 import { getMetadata, toClassName, loadCSS } from '../../scripts/aem.js';
 import { hasAuthoredCaseStudyHeader } from './blog-detect.js';
+import { loadIndex } from '../../scripts/content-index.js';
 
 /**
  * Selects the article's main H2 sections only — excludes headings nested
@@ -390,6 +391,143 @@ function wireToc(tocWrap, nav, headings, mq) {
   headings.forEach((h) => observer.observe(h));
 }
 
+
+const BLOG_INDEX = '/blog/query-index.json';
+
+/**
+ * Fetches the blog query-index and returns the author row for the given slug,
+ * or null if not found. The index is cached by content-index.js so multiple
+ * blocks share a single fetch.
+ * @param {string} slug author slug (e.g. "abigail-sims")
+ * @returns {Promise<object|null>}
+ */
+async function fetchAuthorRow(slug) {
+  try {
+    const entries = await loadIndex(BLOG_INDEX);
+    const authorPath = `/blog/author/${slug}`;
+    return entries.find((e) => e.path === authorPath) || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Builds and inserts the end-of-article author bio strip from the given
+ * query-index row: circular headshot (row.image), author name linked to the
+ * author page (row.title), and bio text (row.description). Placed in the prose
+ * column. Untrusted feed values are assigned via textContent / img.src — never
+ * innerHTML.
+ * @param {Element} main the page's <main>
+ * @param {object} row the author's query-index row
+ * @param {string} authorPath /blog/author/<slug>
+ */
+function insertAuthorBio(main, row, authorPath) {
+  const wrap = document.createElement('div');
+  wrap.className = 'blog-author-bio';
+  const inner = document.createElement('div');
+  inner.className = 'blog-author-bio-inner';
+  if (row.image) {
+    const imgWrap = document.createElement('div');
+    imgWrap.className = 'blog-author-bio-avatar';
+    const img = document.createElement('img');
+    img.src = row.image;
+    img.alt = row.title || '';
+    img.width = 120;
+    img.height = 120;
+    img.loading = 'eager';
+    imgWrap.append(img);
+    inner.append(imgWrap);
+  }
+  const textWrap = document.createElement('div');
+  textWrap.className = 'blog-author-bio-text';
+  if (row.title) {
+    const nameEl = document.createElement('p');
+    nameEl.className = 'blog-author-bio-name';
+    const nameLink = document.createElement('a');
+    nameLink.href = authorPath;
+    nameLink.textContent = row.title;
+    nameEl.append(nameLink);
+    textWrap.append(nameEl);
+  }
+  if (row.description) {
+    const bioEl = document.createElement('p');
+    bioEl.className = 'blog-author-bio-desc';
+    bioEl.textContent = row.description;
+    textWrap.append(bioEl);
+  }
+  inner.append(textWrap);
+  wrap.append(inner);
+  const rail = main.querySelector(':scope > .blog-rail');
+  if (rail) rail.before(wrap);
+  else main.append(wrap);
+}
+
+/**
+ * Builds the social-share strip (Facebook / X / LinkedIn) that production
+ * renders just above the author bio, with a "Share" label. Share links carry
+ * the current article URL. Icons are referenced from /icons/*.svg.
+ * @param {Element} main the page's <main>
+ */
+function insertSocialShare(main) {
+  if (main.querySelector(':scope > .blog-social-share')) return;
+  const enc = encodeURIComponent(window.location.href);
+  const NETWORKS = [
+    { name: 'facebook', label: 'Facebook', href: `https://www.facebook.com/sharer/sharer.php?u=${enc}` },
+    { name: 'x', label: 'X', href: `https://twitter.com/share?url=${enc}` },
+    { name: 'linkedin', label: 'LinkedIn', href: `https://www.linkedin.com/sharing/share-offsite/?url=${enc}` },
+  ];
+  const wrap = document.createElement('div');
+  wrap.className = 'blog-social-share';
+  const label = document.createElement('span');
+  label.className = 'blog-social-share-label';
+  label.textContent = 'Share';
+  wrap.append(label);
+  const list = document.createElement('ul');
+  list.className = 'blog-social-share-list';
+  NETWORKS.forEach((n) => {
+    const li = document.createElement('li');
+    const a = document.createElement('a');
+    a.className = `blog-social-share-icon blog-social-${n.name}`;
+    a.href = n.href;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    a.setAttribute('aria-label', `Share on ${n.label}`);
+    const icon = document.createElement('img');
+    icon.src = `${window.hlx.codeBasePath}/icons/${n.name}.svg`;
+    icon.alt = '';
+    icon.width = 16;
+    icon.height = 16;
+    icon.loading = 'lazy';
+    a.append(icon);
+    li.append(a);
+    list.append(li);
+  });
+  wrap.append(list);
+  const bio = main.querySelector(':scope > .blog-author-bio');
+  const rail = main.querySelector(':scope > .blog-rail');
+  if (bio) bio.before(wrap);
+  else if (rail) rail.before(wrap);
+  else main.append(wrap);
+}
+
+/**
+ * Async: loads the author's query-index row and, if found, renders the bio
+ * strip plus the social-share strip above it. Fire-and-forget from
+ * buildBlogTemplate so the sync layout setup isn't delayed.
+ * @param {Element} main the page's <main>
+ */
+async function appendAuthorBio(main) {
+  const author = getMetadata('author');
+  if (!author) return;
+  const slug = toClassName(author);
+  if (!slug) return;
+  const authorPath = `/blog/author/${slug}`;
+  const row = await fetchAuthorRow(slug);
+  if (!row) return;
+  insertAuthorBio(main, row, authorPath);
+  insertSocialShare(main);
+}
+
 /**
  * Auto-block orchestrator. Called from scripts.js buildAutoBlocks() when
  * isBlogPage() is true, BEFORE the fragment-link collection runs. Every article
@@ -524,6 +662,10 @@ export function buildBlogTemplate(main) {
     toc ? () => toc.before(share) : null,
     desktopMQ,
   );
+
+  // end-of-article author bio + social share, sourced from the query-index
+  // (fire-and-forget so it never blocks the synchronous layout above)
+  appendAuthorBio(main);
 }
 
 /**
