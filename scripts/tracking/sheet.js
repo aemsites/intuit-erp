@@ -13,7 +13,7 @@
  *
  * Schema (columns):
  *   key, cta, object, object-detail, action, ui-object, ui-object-detail,
- *   ui-action, access-point, wa-link, custom-properties, survey
+ *   ui-action, access-point, ui-access-point, wa-link, custom-properties, survey
  * `custom-properties` and `survey` are authored as `k=v` pairs separated by
  * newlines or semicolons (never the tracker's fragile `k|v,k|v` string — code
  * assembles that, so the pipe trap can't happen).
@@ -24,7 +24,7 @@ const SHEET_URL = '/tracking.json';
 // Scalar columns copied straight through (blank -> dropped).
 const SCALAR_COLUMNS = [
   'object', 'object-detail', 'action', 'ui-object', 'ui-object-detail',
-  'ui-action', 'access-point', 'wa-link',
+  'ui-action', 'access-point', 'ui-access-point', 'wa-link',
 ];
 
 /**
