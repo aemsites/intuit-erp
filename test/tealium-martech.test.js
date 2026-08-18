@@ -12,6 +12,7 @@ import TealiumMartech, {
   loadUtag,
   loadConsentStack,
   loadObservabilityRum,
+  loadFeedbackWidget,
   settleConsent,
 } from '../plugins/tealium-martech/src/index.js';
 
@@ -539,6 +540,40 @@ describe('loadObservabilityRum (Intuit o11y RUM — page-authored on prod, prod-
   });
 });
 
+describe('loadFeedbackWidget (Qualtrics feedback tab — page-authored on prod, prod-only)', () => {
+  it('env "prod": appends the Qualtrics SIE script', async () => {
+    const promise = loadFeedbackWidget('prod');
+    const script = document.getElementById('feedback-widget');
+    expect(script).toBeTruthy();
+    expect(script.src).toBe('https://znew2pz3yjx9poggn-intuitsocial.siteintercept.qualtrics.com/SIE/?Q_ZID=ZN_eW2Pz3YjX9PoGGN');
+    script.dispatchEvent(new Event('load'));
+    await promise;
+    expect(document.head.querySelectorAll('script').length).toBe(1);
+  });
+
+  it.each([['dev'], ['qa'], [null]])('env "%s": no-op — the feedback widget is prod-only, loads nothing', async (env) => {
+    await loadFeedbackWidget(env);
+    expect(document.getElementById('feedback-widget')).toBeNull();
+    expect(document.head.querySelectorAll('script').length).toBe(0);
+  });
+
+  it('is idempotent — a second prod call appends nothing new', async () => {
+    const first = loadFeedbackWidget('prod');
+    document.getElementById('feedback-widget').dispatchEvent(new Event('load'));
+    await first;
+    expect(document.head.querySelectorAll('script').length).toBe(1);
+
+    await loadFeedbackWidget('prod');
+    expect(document.head.querySelectorAll('script').length).toBe(1);
+  });
+
+  it('resolves fail-open (never rejects) when the script errors out (e.g. ad-blocked)', async () => {
+    const promise = loadFeedbackWidget('prod');
+    document.getElementById('feedback-widget').dispatchEvent(new Event('error'));
+    await expect(promise).resolves.toBeUndefined();
+  });
+});
+
 describe('disabled instance (hostname resolveEnvironment does not recognize) — eager/lazy/delayed are no-ops', () => {
   it('does not append any tiqcdn script tag and does not throw across the full lifecycle', async () => {
     stubLocation({ hostname: INERT_HOST, search: '' });
@@ -676,5 +711,15 @@ describe("enabled instance — lazy() loads the consent stack, settles consent, 
     script.dispatchEvent(new Event('error'));
 
     await expect(lazyPromise).rejects.toThrow('Could not load Tealium utag.js');
+  });
+
+  it('delayed() loads the feedback widget even when window.utag is absent (utag failed/never loaded)', () => {
+    stubLocation({ hostname: PROD_HOST });
+    const tealium = new TealiumMartech();
+    expect(window.utag).toBeUndefined();
+
+    expect(() => tealium.delayed()).not.toThrow();
+
+    expect(document.getElementById('feedback-widget')).toBeTruthy();
   });
 });

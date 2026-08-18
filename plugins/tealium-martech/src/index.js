@@ -315,6 +315,26 @@ export async function loadObservabilityRum(env) {
   await loadScriptOnce({ id: 'o11y-rum-init', src: OBSERVABILITY_RUM.init });
 }
 
+// Qualtrics Website Feedback ("Site Intercept"): page-authored on prod (NOT a Tealium tag), so the
+// rebuild loads it directly — same shape as OBSERVABILITY_RUM above. Self-service (submits straight
+// to Qualtrics, no live agent involved), unlike the LivePerson chat SDK the contact-us widget
+// deliberately omits (see blocks/contact-us) — so embedding the real script is safe here.
+const FEEDBACK_WIDGET = {
+  src: 'https://znew2pz3yjx9poggn-intuitsocial.siteintercept.qualtrics.com/SIE/?Q_ZID=ZN_eW2Pz3YjX9PoGGN',
+};
+
+/**
+ * Loads Intuit's Qualtrics feedback tab, prod-only via the same `resolveEnvironment` gate as
+ * Tealium and o11y RUM — keeps EDS build/QA/preview traffic out of Intuit's live survey responses.
+ * Fail-open, via the idempotent `loadScriptOnce`.
+ * @param {String|null} env resolved utag environment (only `'prod'` loads the widget; else a no-op)
+ * @returns {Promise<void>} resolves once the script has settled (loaded or failed)
+ */
+export async function loadFeedbackWidget(env) {
+  if (env !== 'prod') return;
+  await loadScriptOnce({ id: 'feedback-widget', src: FEEDBACK_WIDGET.src });
+}
+
 /**
  * Waits for a consistent `OptanonConsent` cookie to exist (as parsed by `readOptanonConsent`),
  * polling roughly every 100ms, or until `timeoutMs` elapses — whichever comes first. Fail-open:
@@ -446,10 +466,15 @@ export default class TealiumMartech {
   }
 
   /**
-   * Delayed-phase logic: signals that the page has reached the delayed phase.
+   * Delayed-phase logic: loads the Qualtrics feedback tab (independent of utag), then signals that
+   * the page has reached the delayed phase.
    */
   delayed() {
-    if (!this.enabled || !window.utag?.link) return;
+    if (!this.enabled) return;
+    // Feedback widget: prod-only, page-authored (not a Tealium tag); intentionally not awaited, and
+    // independent of utag — must still load even if utag itself failed.
+    loadFeedbackWidget(this.env);
+    if (!window.utag?.link) return;
     // Consent-gated: firing this link while getConsentState()===0 enqueues it and triggers the
     // profile consent-extension recursion (this was the delayed-phase regression).
     whenConsentResolved(() => window.utag.link({ tealium_event: 'delayed_ready' }));
