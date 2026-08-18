@@ -766,6 +766,15 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
   font-weight: 700;
 }
 
+/* case-study in-body prose headings share the blog-article treatment — prod
+   renders them bold/left-aligned. The rule above is scoped to .blog-article
+   only, so case studies fell back to the global h1-h6 weight:400. See #632. */
+.case-study > .section > .default-content-wrapper :is(h2, h3) {
+  text-align: left;
+  color: #000;
+  font-weight: 700;
+}
+
 .blog-article > .section > .default-content-wrapper h2 {
   font-size: 40px;
   line-height: 52px;
