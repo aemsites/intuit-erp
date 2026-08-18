@@ -749,12 +749,22 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
   background: var(--agave);
   border-radius: 0;
   padding: 0 40px;
+
+  /* no top/bottom padding above — establish a new block formatting context so
+     the child's margin (below) creates space inside the box instead of
+     collapsing straight through this plain block div and out the top/bottom */
+  display: flow-root;
 }
 
-/* spacing comes from the text itself, not box padding — beats highlight.css's
-   :first-child/:last-child margin reset (0,2,0) via the extra class + tag */
+/* spacing comes from the content's own margin, not box padding — applied to
+   first/last child generically (not just `p`) so non-paragraph content
+   (a heading, list, etc.) still gets breathing room from the box edges.
+   Beats highlight.css's :first-child/:last-child margin reset (0,2,0) via
+   the extra class + tag. */
+.blog-article .highlight .highlight-inner > :first-child { margin-top: 18px; }
+.blog-article .highlight .highlight-inner > :last-child { margin-bottom: 18px; }
+
 .blog-article .highlight .highlight-inner p {
-  margin: 18px 0;
   font-size: 18px;
   color: #000;
 }
