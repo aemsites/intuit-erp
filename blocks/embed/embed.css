@@ -1,9 +1,28 @@
-/* embed — responsive external embed (Datawrapper charts, etc.), matching prod's
-   `.widget-container` treatment: capped at the article prose width (740px),
-   centered, with the chart iframe filling the container. Prod authors this as
-   a raw code block with `max-width:740px; padding:0 2.5rem; margin:auto`; we
-   reproduce it so migrated pages render identically. */
+/* Embed Block — aligned with the AEM Block Collection embed block, extended for
+   Datawrapper charts. Datawrapper reproduces production's `.widget-container`
+   treatment (740px prose cap, 2.5rem side padding, centered) so migrated pages
+   render identically; generic providers get the collection's centered 16:9 box. */
+.embed {
+  width: unset;
+  text-align: center;
+  max-width: 800px;
+  margin: 32px auto;
+}
+
+.embed > div {
+  display: flex;
+  justify-content: center;
+}
+
+/* Datawrapper: match prod's authored `.widget-container` exactly. */
+.embed.embed-datawrapper {
+  max-width: none;
+  margin: 0;
+}
+
+.embed.embed-datawrapper > div,
 .embed .widget-container {
+  display: block;
   max-width: 740px;
   padding: 0 2.5rem;
   margin: 2rem auto;

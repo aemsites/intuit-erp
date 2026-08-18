@@ -1,18 +1,16 @@
-/**
- * embed — renders an authored external embed (Datawrapper charts, and other
- * iframe providers) as a responsive iframe. Mirrors production's Datawrapper
- * embed: a `.widget-container` wrapper + a `min-width:100%` responsive iframe,
- * plus the Datawrapper postMessage height-resize listener (installed once).
- *
- * Authoring: a block whose first cell contains a link to the embed URL
- * (e.g. https://datawrapper.dwcdn.net/kAxsQ/1/), or the URL as text.
- *
- * Supported today: Datawrapper (datawrapper.dwcdn.net). Unknown providers are
- * rendered as a plain responsive iframe as a safe fallback.
+/*
+ * Embed Block
+ * Renders external embeds (Datawrapper charts, and generic iframe providers)
+ * directly on the page. Modeled on the AEM Block Collection embed block
+ * (https://github.com/adobe/aem-block-collection/tree/main/blocks/embed):
+ * a per-provider EMBEDS_CONFIG, lazy IntersectionObserver load, and an
+ * `embed-<provider>` class. Datawrapper reproduces production's `.widget-container`
+ * treatment (responsive iframe + the `datawrapper-height` postMessage resize).
  */
 
 // Install the Datawrapper responsive-height listener once per page. Datawrapper
-// iframes post {'datawrapper-height': {<id>: <px>}} messages; match by source.
+// iframes post {'datawrapper-height': {<id>: <px>}}; match the posting frame by
+// its contentWindow and apply the height.
 let dwResizeInstalled = false;
 function installDatawrapperResize() {
   if (dwResizeInstalled) return;
@@ -31,54 +29,60 @@ function installDatawrapperResize() {
   });
 }
 
-function embedDatawrapper(url) {
-  const container = document.createElement('div');
-  container.className = 'widget-container';
-  const iframe = document.createElement('iframe');
-  iframe.setAttribute('title', '');
-  iframe.setAttribute('aria-label', 'Interactive chart');
-  iframe.setAttribute('scrolling', 'no');
-  iframe.setAttribute('frameborder', '0');
-  iframe.setAttribute('loading', 'lazy');
-  iframe.src = url;
-  // responsive: full column width, height set by the resize listener
-  iframe.style.width = '0';
-  iframe.style.minWidth = '100%';
-  iframe.style.border = 'none';
-  container.append(iframe);
+const embedDatawrapper = (url) => {
   installDatawrapperResize();
-  return container;
-}
+  return `<div class="widget-container">
+      <iframe title="" aria-label="Interactive chart" src="${url.href}" scrolling="no" frameborder="0"
+        style="width: 0; min-width: 100% !important; border: none;" loading="lazy"></iframe>
+    </div>`;
+};
 
-function embedGeneric(url) {
-  const container = document.createElement('div');
-  container.className = 'widget-container';
-  const iframe = document.createElement('iframe');
-  iframe.src = url;
-  iframe.setAttribute('loading', 'lazy');
-  iframe.setAttribute('frameborder', '0');
-  iframe.style.width = '100%';
-  iframe.style.border = 'none';
-  container.append(iframe);
-  return container;
-}
+const getDefaultEmbed = (url) => `<div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;">
+    <iframe src="${url.href}" style="border: 0; top: 0; left: 0; width: 100%; height: 100%; position: absolute;" allowfullscreen=""
+      scrolling="no" allow="encrypted-media" title="Content from ${url.hostname}" loading="lazy">
+    </iframe>
+  </div>`;
+
+const loadEmbed = (block, link) => {
+  if (block.classList.contains('embed-is-loaded')) return;
+
+  const EMBEDS_CONFIG = [
+    {
+      match: ['datawrapper.dwcdn.net', 'datawrapper'],
+      embed: embedDatawrapper,
+    },
+  ];
+
+  const config = EMBEDS_CONFIG.find((e) => e.match.some((m) => link.includes(m)));
+  const url = new URL(link);
+  if (config) {
+    block.innerHTML = config.embed(url);
+    block.classList = `block embed embed-${config.match[0].split('.')[0]}`;
+  } else {
+    block.innerHTML = getDefaultEmbed(url);
+    block.classList = 'block embed';
+  }
+  block.classList.add('embed-is-loaded');
+};
 
 export default function decorate(block) {
-  // find the embed URL: an authored anchor, else the block's text content
-  const link = block.querySelector('a[href]');
-  const raw = link ? link.getAttribute('href') : block.textContent.trim();
-  let url;
+  const anchor = block.querySelector('a');
+  const link = anchor ? anchor.href : block.textContent.trim();
+  if (!link) { block.remove(); return; }
   try {
-    url = new URL(raw);
+    // validate
+    new URL(link); // eslint-disable-line no-new
   } catch {
     block.remove();
     return;
   }
   block.textContent = '';
-  if (/datawrapper\.dwcdn\.net/.test(url.hostname + url.pathname)
-    || url.hostname.endsWith('datawrapper.dwcdn.net')) {
-    block.append(embedDatawrapper(url.href));
-  } else {
-    block.append(embedGeneric(url.href));
-  }
+
+  const observer = new IntersectionObserver((entries) => {
+    if (entries.some((e) => e.isIntersecting)) {
+      observer.disconnect();
+      loadEmbed(block, link);
+    }
+  });
+  observer.observe(block);
 }
