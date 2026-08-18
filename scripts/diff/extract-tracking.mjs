@@ -28,7 +28,7 @@ import { dirname, resolve } from 'node:path';
 import { launchStealthHeaded } from './live-session.mjs';
 import { captureHtml } from './capture-html.mjs';
 import { deriveBaseline, slug } from '../tracking/derive.js';
-import { computeTrackingPayload, parseCustomProperties } from '../tracking/tracker-replica.js';
+import { computeTrackingPayload, parseCustomProperties } from './tracker-replica.mjs';
 
 const PROD = 'https://erp.intuit.com';
 

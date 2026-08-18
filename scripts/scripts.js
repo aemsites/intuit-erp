@@ -13,7 +13,6 @@ import {
   getMetadata,
 } from './aem.js';
 import { runExperimentation, runExperimentationLazy } from './experiment-loader.js';
-import { decorateTracking, applyTrackingSheet } from './tracking.js';
 // exp.js / pzn.js are dynamically imported (via runExperienceLayer) only when a
 // `data-pzn` / `data-exp` section is present, so pages without personalization
 // never load them.
@@ -428,9 +427,6 @@ export function decorateMain(main) {
   decorateSectionBackgrounds(main);
   decorateBlocks(main);
   decorateButtons(main);
-  // Synchronous derived click-tracking pass (opt-in blocks only). The authored
-  // sheet is overlaid later in loadLazy via applyTrackingSheet().
-  decorateTracking(main);
 }
 
 /**
@@ -619,10 +615,17 @@ async function loadLazy(doc) {
   if (main) runExperienceLayer(main, { skip: main.querySelector('.section') }).catch(() => {});
   await loadSections(main);
 
-  // Overlay the authored click-tracking sheet on the derived baseline stamped in
-  // decorateMain. Runs after blocks decorate; non-blocking — CTAs already track
-  // with derived values before this resolves.
-  if (main) applyTrackingSheet(main).catch(() => {});
+  // Click tracking (opt-in `tracking-` blocks) is not render-critical, so it's
+  // loaded lazily here (like pzn/exp) — off the eager/LCP module graph entirely.
+  // Derive-stamp first (covers the pre-fetch window), then overlay the sheet.
+  if (main) {
+    import('./tracking.js')
+      .then(({ decorateTracking, applyTrackingSheet }) => {
+        decorateTracking(main);
+        return applyTrackingSheet(main);
+      })
+      .catch(() => {});
+  }
 
   const { hash } = window.location;
   const element = hash ? doc.getElementById(hash.substring(1)) : false;

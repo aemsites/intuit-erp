@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import {
   getTrackingAccessStructure, computeTrackingPayload, parseCustomProperties,
-} from '../scripts/tracking/tracker-replica.js';
+} from '../scripts/diff/tracker-replica.mjs';
 
 beforeEach(() => { document.body.innerHTML = ''; });
 

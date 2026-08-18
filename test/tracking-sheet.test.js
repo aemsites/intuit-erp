@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseKeyValues, normalizeRow, indexRows } from '../scripts/tracking/sheet.js';
+import { parseKeyValues, normalizeRow, indexRows } from '../scripts/tracking.js';
 
 describe('parseKeyValues', () => {
   it('parses newline-separated k=v pairs', () => {
