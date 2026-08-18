@@ -779,9 +779,10 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
   margin: 40px 0 20px;
 }
 
-.blog-article > .section > .default-content-wrapper h3 {
-  font-size: 28px;
-  line-height: 36px;
+.blog-article > .section > .default-content-wrapper h3,
+.case-study > .section > .default-content-wrapper h3 {
+  font-size: 34px;
+  line-height: 44px;
   margin: 32px 0 16px;
 }
 
