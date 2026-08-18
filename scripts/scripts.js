@@ -15,6 +15,7 @@ import {
   toClassName,
 } from './aem.js';
 import { runExperimentation, runExperimentationLazy } from './experiment-loader.js';
+import { decorateTracking, applyTrackingSheet } from './tracking.js';
 // exp.js / pzn.js are dynamically imported (via runExperienceLayer) only when a
 // `data-pzn` / `data-exp` section is present, so pages without personalization
 // never load them.
@@ -419,6 +420,12 @@ function decorateSectionStyles(main) {
         .filter((s) => !!s)
         .forEach((s) => section.classList.add(s));
     }
+    // Section-level access-point trail segment (click tracking): stamp
+    // data-tracking on the section so the tracker's ancestor-chain walk picks
+    // it up between the block and page segments.
+    if (config.tracking) {
+      section.setAttribute('data-tracking', config.tracking.trim());
+    }
     // remove the metadata block (and its wrapper) so it is neither rendered nor
     // picked up by decorateBlocks() as a loadable block.
     const wrapper = meta.closest('.section-metadata-wrapper');
@@ -438,6 +445,9 @@ export function decorateMain(main) {
   decorateSectionStyles(main);
   decorateBlocks(main);
   decorateButtons(main);
+  // Synchronous derived click-tracking pass (opt-in blocks only). The authored
+  // sheet is overlaid later in loadLazy via applyTrackingSheet().
+  decorateTracking(main);
 }
 
 /**
@@ -606,6 +616,11 @@ async function loadLazy(doc) {
   // awaited — these swaps must never block reveal or the lazy pipeline.
   if (main) runExperienceLayer(main, { skip: main.querySelector('.section') }).catch(() => {});
   await loadSections(main);
+
+  // Overlay the authored click-tracking sheet on the derived baseline stamped in
+  // decorateMain. Runs after blocks decorate; non-blocking — CTAs already track
+  // with derived values before this resolves.
+  if (main) applyTrackingSheet(main).catch(() => {});
 
   const { hash } = window.location;
   const element = hash ? doc.getElementById(hash.substring(1)) : false;
