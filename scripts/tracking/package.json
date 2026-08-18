@@ -1,0 +1,4 @@
+{
+  "type": "module",
+  "//": "Marks scripts/tracking/*.js as ESM for Node so dev tools (scripts/diff/*.mjs) can import the derive/replica modules directly. Browsers and vitest ignore this; the files stay plain ESM served as-is by Edge Delivery."
+}
