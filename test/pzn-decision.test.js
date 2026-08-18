@@ -2,7 +2,7 @@ import {
   describe, it, expect, vi, afterEach,
 } from 'vitest';
 import {
-  apiBase, fragmentPath, fetchDecision, applyFragment, withTimeout,
+  apiBase, fragmentPath, fetchDecision, applyFragment, withTimeout, swapMain,
 } from '../scripts/personalization/decision.js';
 
 afterEach(() => {
@@ -59,35 +59,24 @@ describe('fetchDecision', () => {
     expect(JSON.parse(init.body)).toEqual({ slots: [{ placement: 'p' }] });
   });
 
-  it('appends ?ivid= from page URL when present', async () => {
+  it('does not auto-append ivid to the URL — the caller owns it (query for IXP, body for PZN)', async () => {
     window.history.replaceState({}, '', '/page?ivid=qa123');
-    const spy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify({}), { status: 200, headers: { 'content-type': 'application/json' } }),
-    );
-    await fetchDecision('pzn', { method: 'POST', body: {} });
-    const [url] = spy.mock.calls[0];
-    expect(url).toContain('?ivid=qa123');
-  });
-
-  it('appends &ivid= when source already has query parameters', async () => {
-    window.history.replaceState({}, '', '/page?ivid=qa123');
-    const spy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify({}), { status: 200, headers: { 'content-type': 'application/json' } }),
-    );
-    await fetchDecision('ixp?experimentId=385944&fidelity=page', { method: 'POST', body: {} });
-    const [url] = spy.mock.calls[0];
-    expect(url).toContain('experimentId=385944');
-    expect(url).toContain('fidelity=page');
-    expect(url).toContain('&ivid=qa123');
-  });
-
-  it('uses exactly /api/pzn when no ?ivid= in page URL', async () => {
     const spy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(JSON.stringify({}), { status: 200, headers: { 'content-type': 'application/json' } }),
     );
     await fetchDecision('pzn', { method: 'POST', body: {} });
     const [url] = spy.mock.calls[0];
     expect(url).toBe('/api/pzn');
+  });
+
+  it('sends an intuit_tid correlation header (rp- prefixed), plus content-type on a POST body', async () => {
+    const spy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({}), { status: 200, headers: { 'content-type': 'application/json' } }),
+    );
+    await fetchDecision('pzn', { method: 'POST', body: {} });
+    const [, init] = spy.mock.calls[0];
+    expect(init.headers.intuit_tid).toMatch(/^rp-/);
+    expect(init.headers['content-type']).toBe('application/json');
   });
 
   it('returns null on a non-ok response', async () => {
@@ -132,6 +121,36 @@ describe('applyFragment', () => {
     const target = document.createElement('div');
     const ok = await applyFragment(target, 'x', { loadFragment: vi.fn().mockResolvedValue(null) });
     expect(ok).toBe(false);
+  });
+});
+
+describe('swapMain', () => {
+  it("fetches the variation's .plain.html and replaces main.innerHTML; returns true", async () => {
+    const doc = document.implementation.createHTMLDocument('');
+    doc.body.innerHTML = '<main><div>BASE</div></main>';
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response('<div>VARIATION</div>', { status: 200, headers: { 'content-type': 'text/html' } }),
+    );
+    const ok = await swapMain(doc, '/fragments/pzn/home');
+    expect(ok).toBe(true);
+    expect(globalThis.fetch).toHaveBeenCalledWith('/fragments/pzn/home.plain.html', expect.anything());
+    expect(doc.querySelector('main').innerHTML).toContain('VARIATION');
+    expect(doc.querySelector('main').innerHTML).not.toContain('BASE');
+  });
+
+  it('returns false (baseline untouched) on a non-ok response', async () => {
+    const doc = document.implementation.createHTMLDocument('');
+    doc.body.innerHTML = '<main><div>BASE</div></main>';
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('', { status: 404 }));
+    expect(await swapMain(doc, '/x')).toBe(false);
+    expect(doc.querySelector('main').innerHTML).toContain('BASE');
+  });
+
+  it('returns false when there is no <main> or the ref is empty', async () => {
+    const doc = document.implementation.createHTMLDocument('');
+    expect(await swapMain(doc, '/x')).toBe(false);
+    doc.body.innerHTML = '<main></main>';
+    expect(await swapMain(doc, '')).toBe(false);
   });
 });
 

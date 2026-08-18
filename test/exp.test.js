@@ -8,6 +8,9 @@ vi.mock('../scripts/personalization/decision.js', async () => {
     fetchDecision: vi.fn(),
     fragmentPath: actual.fragmentPath,
     applyFragment: vi.fn().mockResolvedValue(true),
+    // swapMain moved out of exp.js into decision.js; the redirect-swap tests exercise
+    // the real fetch + innerHTML behavior, so use the actual implementation.
+    swapMain: actual.swapMain,
   };
 });
 
@@ -129,6 +132,20 @@ describe('runExperiment', () => {
     await runExperiment(document);
     expect(fetchDecision).not.toHaveBeenCalled();
     expect(document.querySelector('main').innerHTML).toContain('BASE');
+  });
+
+  it('appends the ivid (from the cookie) to the ixp query when present', async () => {
+    document.cookie = 'ivid=cookie-abc';
+    try {
+      setMeta('experiment-id', '385944');
+      fetchDecision.mockResolvedValue({ assignments: [assignment({ control: true })] });
+      await runExperiment(document);
+      const [source] = fetchDecision.mock.calls[0];
+      expect(source).toContain('experimentId=385944');
+      expect(source).toContain('ivid=cookie-abc');
+    } finally {
+      document.cookie = 'ivid=; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    }
   });
 
   it('leaves the baseline on a control arm but still records the exposure (no replacement)', async () => {
