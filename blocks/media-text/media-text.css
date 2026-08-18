@@ -65,7 +65,8 @@
 }
 
 .media-text .media-copy .button-wrapper {
-  margin-top: 12px;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
 }
 
 .section.media-text-container:has(.media-text.center) {
@@ -122,6 +123,17 @@
 .media-text.dark .media-copy a {
   color: #fff;
   text-decoration: underline;
+}
+
+.media-text.dark .media-copy .button-wrapper a.button.secondary {
+  border-color: #fff;
+  text-decoration:none;
+
+  &:hover {
+    background: #fff;
+    color: #09222a;
+    border-color: #fff;
+  }
 }
 
 .section.media-text-container:has(.media-text.cyan) {

@@ -4,7 +4,7 @@
 
 /* stylelint-disable selector-class-pattern -- .mkto* class names are Marketo's */
 
-.section.form-container { background: #fff; padding: 20px 0 var(--section-y); text-align: center; }
+.section.form-container { padding: 20px 0 var(--section-y); text-align: center; }
 .form-container .default-content-wrapper { text-align: center; }
 
 /* Heading + copy above a standalone form (webinar pages) mirror erp.intuit.com:
