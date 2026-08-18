@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { stampCta, stampTracking } from '../scripts/tracking/stamp.js';
+import { stampCta, stampTracking } from '../scripts/tracking.js';
 
 const el = () => document.createElement('a');
 

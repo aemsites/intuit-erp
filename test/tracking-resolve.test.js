@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { deriveBaseline } from '../scripts/tracking/derive.js';
 import {
   resolveCta, assembleCustomProperties, mergeCustomProperties,
-} from '../scripts/tracking/resolve.js';
+} from '../scripts/tracking.js';
 
 const cta = (over = {}) => deriveBaseline({
   tagName: 'A', label: 'Schedule a call', blockName: 'cta', ...over,
