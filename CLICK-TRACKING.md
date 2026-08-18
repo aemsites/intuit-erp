@@ -7,8 +7,8 @@ Intuit's SBSEG tracker has **two independent channels**:
   DOM ancestors. **Authored per element**, not code-generated.
 
 On the current WordPress `erp.intuit.com`, these attributes are set per-CTA in a **"Tracking tab"**.
-Edge Delivery has no such tab, so **how authors attach these attributes to CTAs is an open decision**
-— see [The EDS authoring model](#the-eds-authoring-model-the-open-decision). This document is the
+Edge Delivery has no such tab; the **proposed mechanism for attaching them to CTAs** is described in
+[The EDS authoring model](#the-eds-authoring-model-proposed). This document is the
 reference for *what* the tracker reads, so whoever builds that mechanism knows the contract.
 
 > Scope: the attributes below are **authored content** except the personalization/experiment ones,
@@ -32,6 +32,11 @@ the payload shape:
 The 5-ancestor walk matters: a click usually lands on an inner `<span>`, and the tracked attributes
 live on the `<button>`/`<a>` one or more levels up.
 
+This gate is one of **two independent ancestor walks**, and they don't share rules: the gate tests each
+ancestor's attribute **value** and stops at 5, while the [access-point trail](#the-access-point-trail)
+tests **key presence** and walks the entire chain. Keep them separate when reasoning about what
+resolves.
+
 ## Core payload fields (full path only)
 
 | Attribute | Payload field |
@@ -48,17 +53,32 @@ live on the `<button>`/`<a>` one or more levels up.
 
 ## The access-point trail
 
-Two attributes cooperate to produce `ui_access_point`, and the opt-in is easy to miss:
+Two attributes cooperate to produce `ui_access_point`, and both the ordering and the opt-in are easy to
+miss:
 
-- **`data-tracking`** — collected up the *entire* ancestor chain and joined with `|` (hyphens become
-  underscores). Starts from the **parent** of the first match, so the clicked element's own
-  `data-tracking` is skipped. Falls back to `page` when no ancestor carries it.
+- **`data-tracking`** — collected up the ancestor chain and joined with `|`, **outermost ancestor
+  first, nearest last** (broad → specific). Hyphens become underscores. The walk starts from the
+  **parent of the first `data-tracking`-bearing element** at or above the click, so that nearest value
+  is **consumed as an anchor and never appears in the output** (see below). Falls back to `page` when no
+  ancestor carries it. Verified against the live `erp.intuit.com` bundle, real values look like
+  `rw_cards_container|carousel|rw_card_1` and `footer|footer_menus|footer_menu_section` — broadest
+  container on the left, most specific element on the right.
 - **`data-ui-access-point`** — the opt-in switch. The trail is computed **only** if this key exists on
   the element or an ancestor. **Presence, not value:** an empty `data-ui-access-point=""` still turns
-  the trail on; to disable it the attribute must be **absent**.
+  the trail on; to disable it the attribute must be **absent**. An explicit non-empty value on the
+  element wins outright — the trail is not consulted.
 
-This is why a button typically reports the `data-tracking` of its surrounding **block** (e.g.
-`cta_block`), not anything on the button itself.
+**The sacrificial anchor.** Because the walk begins *above* the first `data-tracking` it finds, that
+nearest value is always discarded. A clicked CTA therefore needs its **own** `data-tracking` (the live
+site uses `data-tracking="button"`) purely to absorb that skip — otherwise the *block's* `data-tracking`
+becomes the anchor and drops out of the access point:
+
+- CTA carries `data-tracking="button"` → the anchor is `button` → trail resolves to `…|cta_block` ✅
+- CTA carries none → the block's `cta_block` becomes the anchor → trail resolves to `…|section`, and the
+  block is **lost** ❌
+
+This is why a button reports the `data-tracking` of its surrounding **block** (e.g. `cta_block`) rather
+than anything on the button itself — and why the button must still carry a throwaway value of its own.
 
 ## Personalization / experiment — code-stamped, not authored
 
@@ -105,22 +125,96 @@ authoring them.
 | `data-object-detail`, `data-ui-*`, `data-action` | CTA | Emitted as `""` (and ignored entirely on the wa-link path) |
 | `data-ui-access-point` | CTA | **Presence alone** enables the block trail |
 | `data-custom-properties` | CTA | No custom props beyond `data-wa-link` |
-| `data-tracking` | **Block**, not the CTA | Trail falls back through ancestors, ultimately `page` |
+| `data-tracking` | **Block** (real segment) **and CTA** (throwaway anchor) | Trail falls back through ancestors, ultimately `page`; a CTA with no `data-tracking` of its own loses its block segment |
 | `data-survey-*` | CTA | Emitted as `""` and forwarded |
 | `data-pzn-*`, `data-experiment-*`, `data-treatment-id` | **Code** (pzn/IXP engine) | No personalization details collected |
 
-## The EDS authoring model (the open decision)
+## The EDS authoring model (proposed)
 
 **Owner: content-migration + AEM authoring.** On WordPress each CTA's attributes come from a per-CTA
-"Tracking tab." EDS has no equivalent, so a mechanism is needed for authors to attach the *authored*
-attributes above to CTAs. Options to weigh:
+"Tracking tab." EDS has no equivalent. The model below reproduces the contract from two inputs — what
+code can derive from context, and an authored sheet for the rest — layered so one tracking config can be
+reused across pages with local fine-tuning. **Nothing here is built yet; this is the shape put forward
+for the team to ratify.**
 
-- **Block/section metadata** the block code translates into `data-*` on the rendered CTA (fits the EDS
-  model; scales to per-block defaults like `data-tracking`).
-- **An authoring convention** (e.g. a tracking table/row alongside the CTA) read during decoration.
-- **Carried through content migration**, if the source WordPress attributes are exported with content.
+### Auto-derive + a sparse authored layer
 
-Whatever is chosen has to account for the traps below — several forms of *silent* mis-authoring.
+Most of what the live site stamps per CTA is not really content — it is derivable from context:
+
+| Field | Derivable in code? | Source of truth |
+| --- | --- | --- |
+| `ui_object` | ✅ element tag (`<a>`/`<button>`) | derived |
+| `ui_object_detail` | ✅ the CTA's visible label | derived |
+| `ui_action`, `action` | ✅ constants (`clicked` / `interacted`) | derived |
+| `object` | ✅ generic default (`content`) | derived default, sheet override |
+| `data-tracking` (block segment) | ~ block name → `<block>_block` | derived default, sheet override |
+| `link_name` (custom prop) | ✅ `button-<slug(label)>` | derived |
+| `data-tracking` (CTA anchor) | ✅ constant (`button` / `link`) | derived — always stamped |
+| `object_detail`, a semantic `object` | ❌ | sheet |
+| `wa-link` | ❌ opaque id | sheet |
+| extra `custom-properties` | ❌ | sheet / section / page |
+| `survey-*` | ❌ | sheet (opt-in per column) |
+
+**Code derives a full baseline payload for every opted-in CTA; the sheet supplies only the residue and
+any overrides; the two merge at decoration time.** On a standard CTA the authored row is nearly empty.
+
+### Opt-in trigger and the sheet key
+
+Tracking is **opt-in**: a CTA is tracked only inside a block carrying a variant class with a configurable
+prefix — default `tracking-`, held as a single code constant so it can be changed later — e.g.
+`tracking-1234`. The suffix is a **key** into a tracking sheet; a `key` column holds whatever the team
+prefers, an opaque id (`1234`) or a slug (`schedule-demo`). One block may hold several CTAs; the sheet
+row's per-CTA entries are matched to the CTAs by **DOM order** within the block.
+
+Code-built blocks (header, footer, autoblocks) stamp their attributes in code — the same way the
+pzn/experiment layer already does — so the class+sheet path is only for authored blocks.
+
+### Identity vs context — the precedence model
+
+The tracker natively inherits **exactly one** thing: the access-point trail (`data-tracking`).
+Everything else is read once, off the single anchor CTA. So the fields divide cleanly, and only context
+ever crosses DOM levels:
+
+- **Identity** — `object`, `object_detail`, `action`, `ui_object`, `ui_object_detail`, `ui_action`,
+  `wa-link`, `survey-*`. Resolved **per CTA** as `sheet ?? derived` and stamped on the CTA. Section and
+  page metadata **do not** touch these: letting a broad level override a CTA-specific value would fan
+  out across the heterogeneous CTAs beneath it.
+- **Access-point trail** — `data-tracking`. **Additive, and the tracker assembles it for free.** Each
+  level stamps its own segment: page metadata → `<main>`, section metadata → the section, the sheet's
+  access-point (default `<block>_block`) → the block, plus the throwaway anchor on the CTA. The tracker
+  walks and concatenates `page|section|block`. Section/page here **contribute a segment**; they do not
+  override.
+- **`custom-properties`** — **merged** across page + section + sheet + derived (`link_name`) and stamped
+  as one string on the CTA. On a key collision the **more specific level wins** (CTA > section > page),
+  so a CTA can always override an inherited campaign prop.
+
+This is what lets one sheet row be reused across pages: the *identity* stays fixed in the row, while the
+parts that legitimately vary by location — the trail and shared campaign custom-properties — are exactly
+the parts that cascade.
+
+### Cascade mechanics
+
+- **The tracker only walks for the trail.** Section/page values for non-trail fields never reach the
+  payload on their own — decoration must resolve the cascade and write the final value onto the **CTA**.
+  Stamping `data-object` (or any identity field) on a section does nothing.
+- **Blank = defer.** An empty value at any layer means "no opinion, fall through to the next layer." The
+  one exception is `survey-*`, where empty is meaningful downstream — which is why survey stays
+  identity/per-CTA and opt-in per column.
+- **Timing.** Derived and section/page metadata are available synchronously at decoration; the sheet is
+  an async fetch sitting *between* them in priority. Stamp `local ?? derived` immediately (tracking works
+  before the sheet loads), then re-resolve to `local ?? sheet ?? derived` when the sheet lands.
+- **Blast radius.** Editing one section's or page's tracking metadata shifts the access point of *every*
+  tracked CTA beneath it — the intended consistency lever, but one edit moves many payloads.
+
+### Migration from WordPress
+
+- **Store only the diff.** For each source CTA, compute the code baseline, diff the live attributes
+  against it, and write **only the difference** to the sheet. Most rows come out nearly empty.
+- **Preserve the wa-link path faithfully.** A CTA with `data-wa-link` and no `data-object` must stay on
+  the wa-link path — do **not** inject a derived `data-object`, or the beacon changes shape. The
+  "always derive an `object`" default is for net-new EDS CTAs only.
+- **Preserve tag choice.** Only `<a>` yields `link_href`; migrating a modal-opener `<button>` into a
+  link silently adds it.
 
 ## Authoring traps
 
@@ -134,8 +228,17 @@ Whatever is chosen has to account for the traps below — several forms of *sile
 4. **Blank `data-survey-*` still ship** as empty strings, which is different downstream from the field
    never having been sent.
 
+The proposed authoring model above neutralizes traps 1–4 by construction: code owns attribute assembly,
+so it always sets `data-object` on the full path, builds `custom-properties` from structured columns (no
+hand-written `key|value` strings), controls `data-ui-access-point` presence, and emits `survey-*` only
+for columns an author actually filled.
+
 ## Status
 
 Documentation only — no site-visible change; nothing here is wired into the EDS build yet. The
-authoring mechanism is the open decision above (content/AEM). The `data-pzn-*` / `data-experiment-*`
-code-stamping is a separate change in `scripts/pzn.js` / `scripts/exp.js`.
+access-point behaviour (join order and the anchor) was **verified against the live `erp.intuit.com`
+bundle**, where the click tracker ships inside the Next.js app rather than as a vendor script; on the
+homepage alone the DOM stacks two-, three-, and four-level `data-tracking` chains, so multi-level trails
+are the norm, not an edge case. The authoring model above is a **proposal awaiting team sign-off**, not
+yet built. The `data-pzn-*` / `data-experiment-*` code-stamping is a separate change in
+`scripts/pzn.js` / `scripts/exp.js`.
