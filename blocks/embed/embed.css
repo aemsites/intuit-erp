@@ -1,0 +1,11 @@
+/* embed — responsive external embed (Datawrapper charts, etc.), matching prod's
+   `.widget-container` treatment: centered, column-width-capped. */
+.embed .widget-container {
+  max-width: 740px;
+  padding: 0 2.5rem;
+  margin: 2rem auto;
+}
+
+.embed .widget-container iframe {
+  display: block;
+}
