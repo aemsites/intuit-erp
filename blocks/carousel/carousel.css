@@ -588,13 +588,31 @@
   .carousel.testimonial.spotlight .carousel-slide.is-next .testi-body { opacity: 0; }
 
   .carousel.testimonial.spotlight .carousel-slide.is-prev .testi-media {
-    transform: translate(-28px, -28px) scale(0.92);
-    opacity: 0.5;
+    transform: translate(-52px, 40px) scale(0.94);
+    opacity: 0.7;
+    filter: blur(3px);
   }
 
   .carousel.testimonial.spotlight .carousel-slide.is-next .testi-media {
-    transform: translate(28px, 28px) scale(0.92);
-    opacity: 0.5;
+    transform: translate(52px, -40px) scale(0.94);
+    opacity: 0.7;
+    filter: blur(3px);
+  }
+
+  /* the control pill overlaps the bottom of the photo (centred on it) rather
+     than sitting in a row below the card */
+  .carousel.testimonial.spotlight { position: relative; }
+
+  .carousel.testimonial.spotlight .carousel-controls {
+    position: absolute;
+    right: 260px;
+    bottom: 16px;
+    left: auto;
+    z-index: 3;
+    margin: 0;
+    transform: translateX(50%);
+    background: rgb(255 255 255 / 88%);
+    box-shadow: 0 6px 24px rgb(0 0 0 / 12%);
   }
 }
 

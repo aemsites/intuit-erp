@@ -312,16 +312,22 @@ export default function decorate(block) {
   }
 
   function goTo(index) {
-    const clamped = Math.max(0, Math.min(index, slides.length - 1));
+    // .spotlight loops (past the last slide wraps to the first, and vice versa);
+    // every other variant clamps at the ends
+    const clamped = isSpotlight
+      ? (index + slides.length) % slides.length
+      : Math.max(0, Math.min(index, slides.length - 1));
     current = clamped;
     slides.forEach((slide, i) => {
       const active = i === clamped;
       slide.classList.toggle('is-active', active);
       // .spotlight peeks the neighbouring customer photos behind the active
-      // card; mark them so CSS can offset each one
+      // card; mark them so CSS can offset each one (with wrap-around)
       if (isSpotlight) {
-        slide.classList.toggle('is-prev', i === clamped - 1);
-        slide.classList.toggle('is-next', i === clamped + 1);
+        const prevIdx = (clamped - 1 + slides.length) % slides.length;
+        const nextIdx = (clamped + 1) % slides.length;
+        slide.classList.toggle('is-prev', i === prevIdx);
+        slide.classList.toggle('is-next', i === nextIdx);
       }
       slide.setAttribute('aria-hidden', active ? 'false' : 'true');
       // keep focusable content inside off-screen slides out of the tab
@@ -335,8 +341,9 @@ export default function decorate(block) {
     });
     if (counter) counter.textContent = `${clamped + 1} of ${slides.length}`;
     applyOffset();
-    prevBtn.disabled = clamped === 0;
-    nextBtn.disabled = clamped === slides.length - 1;
+    // spotlight loops, so its arrows never disable
+    prevBtn.disabled = !isSpotlight && clamped === 0;
+    nextBtn.disabled = !isSpotlight && clamped === slides.length - 1;
   }
 
   prevBtn.addEventListener('click', () => goTo(current - 1));
