@@ -381,7 +381,10 @@
 @media (min-width: 900px) {
   .blog-article {
     display: grid;
-    grid-template-columns: 240px minmax(0, 1fr) 300px;
+
+    /* Left rail widened 240px -> 332px so the article content column starts at
+       x~420 like production (was x~328, ~92px too far left). See #633. */
+    grid-template-columns: 332px minmax(0, 1fr) 300px;
     column-gap: 48px;
     align-items: start;
   }
