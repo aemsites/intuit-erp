@@ -1,3 +1,29 @@
-/* table — baseline layout only. */
-.table { width: 100%; }
-.table > div { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
+/* table — generic data table: bold header row over a solid rule, thin rules
+   between data rows (matches the site's Datawrapper-style comparison tables). */
+.table {
+  width: 100%;
+  margin: 2rem 0;
+  border-top: 1px solid var(--line);
+}
+
+.table > div {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  border-bottom: 1px solid var(--line);
+}
+
+.table > div > div {
+  padding: 16px 20px 16px 0;
+}
+
+.table > div > div + div {
+  padding-left: 20px;
+}
+
+.table > div:first-child {
+  border-bottom: 2px solid #000;
+}
+
+.table > div:first-child > div {
+  font-weight: 700;
+}

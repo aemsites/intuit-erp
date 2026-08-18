@@ -722,8 +722,8 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
 }
 
 .blog-article > .section > .default-content-wrapper h3 {
-  font-size: 28px;
-  line-height: 36px;
+  font-size: 34px;
+  line-height: 44px;
   margin: 32px 0 16px;
 }
 
@@ -748,7 +748,15 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
 .blog-article .highlight .highlight-inner {
   background: var(--agave);
   border-radius: 0;
-  padding: 24px 40px;
+  padding: 0 40px;
+}
+
+/* spacing comes from the text itself, not box padding — beats highlight.css's
+   :first-child/:last-child margin reset (0,2,0) via the extra class + tag */
+.blog-article .highlight .highlight-inner p {
+  margin: 18px 0;
+  font-size: 18px;
+  color: #000;
 }
 
 /* testimonial — upstream `.quote-box`: a tofu panel holding a bold lead-in
