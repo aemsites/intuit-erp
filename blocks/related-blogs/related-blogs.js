@@ -21,9 +21,13 @@ function parseDate(str) {
   return Number.isNaN(d.getTime()) ? 0 : d.getTime();
 }
 
+// eager only for the first card — matches the "first item eager, rest lazy"
+// fix applied to blog-cards.js/blog-rail-case-study.js/event-cards.js for the
+// same query-index-driven card pattern (issue #518): a hardcoded 'lazy'
+// unconditionally defers even a card that ends up being the LCP candidate.
 function buildCard({
   path, title, image, category, date,
-}) {
+}, eager = false) {
   const a = document.createElement('a');
   a.href = path;
   a.className = 'related-blogs-card';
@@ -35,7 +39,7 @@ function buildCard({
   const img = document.createElement('img');
   img.src = src.toString();
   img.alt = title;
-  img.loading = 'lazy';
+  img.loading = eager ? 'eager' : 'lazy';
 
   const label = document.createElement('span');
   label.className = 'related-blogs-label';
@@ -67,6 +71,9 @@ export default async function decorate(block) {
   const config = readBlockConfig(block);
   const category = (config.category || '').toLowerCase();
   const limit = parseInt(config.limit, 10) || DEFAULT_LIMIT;
+  // If a page ever stacks more than one instance, only the very first one's
+  // first card can possibly be the LCP candidate (issue #518).
+  const isFirstOnPage = document.querySelector('.related-blogs') === block;
   block.innerHTML = '';
 
   let data;
@@ -88,7 +95,7 @@ export default async function decorate(block) {
   if (!items.length) { block.remove(); return; }
 
   items.forEach((entry, i) => {
-    const card = buildCard(entry);
+    const card = buildCard(entry, isFirstOnPage && i === 0);
     if (i >= PAGE_SIZE) card.classList.add('is-hidden');
     block.append(card);
   });

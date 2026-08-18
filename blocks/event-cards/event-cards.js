@@ -127,14 +127,18 @@ function detailRow(label, value) {
   return p;
 }
 
-function cardHTML(item) {
+// eager only for the first card — same query-index-driven card fix as
+// blog-cards.js/related-blogs.js/blog-rail-case-study.js (issue #518): a
+// hardcoded `false` unconditionally deferred every card's image regardless
+// of position, including one that could end up being the LCP candidate.
+function cardHTML(item, eager = false) {
   const card = document.createElement('div');
   card.className = 'event-card';
 
   const picWrap = document.createElement('div');
   picWrap.className = 'event-card-image';
   if (item.image) {
-    picWrap.append(createOptimizedPicture(item.image, item.title, false, [{ width: '750' }]));
+    picWrap.append(createOptimizedPicture(item.image, item.title, eager, [{ width: '750' }]));
   }
 
   const body = document.createElement('div');
@@ -192,6 +196,9 @@ function cardHTML(item) {
 export default async function decorate(block) {
   const wantsOnDemand = block.classList.contains('on-demand');
   const status = wantsOnDemand ? 'on-demand' : 'upcoming';
+  // /events stacks two instances (.upcoming, .on-demand) — only the very
+  // first one's first card can possibly be the LCP candidate (issue #518).
+  const isFirstOnPage = document.querySelector('.event-cards') === block;
   block.textContent = '';
 
   // an untitled row is not a real event (e.g. the /events listing page, which
@@ -205,7 +212,7 @@ export default async function decorate(block) {
 
   const grid = document.createElement('div');
   grid.className = 'event-grid';
-  items.forEach((item) => grid.append(cardHTML(item)));
+  items.forEach((item, i) => grid.append(cardHTML(item, isFirstOnPage && i === 0)));
   block.append(grid);
 
   if (items.length > eventsPerView()) {

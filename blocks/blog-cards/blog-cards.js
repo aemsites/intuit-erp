@@ -86,7 +86,10 @@ export function categoryLabel(entry) {
 }
 
 // Card: image, category, title, date. Untrusted feed data — no innerHTML.
-export function cardEl(entry, featured = false) {
+// `eager` is only ever true for the grid's first card — the LCP candidate on
+// every listing/category/author page this block drives (issue #518) — so it
+// loads immediately instead of `loading="lazy"` deferring it past first paint.
+export function cardEl(entry, featured = false, eager = false) {
   const card = document.createElement('a');
   card.className = featured ? 'blog-card featured' : 'blog-card';
   card.href = entry.path || '#';
@@ -94,7 +97,7 @@ export function cardEl(entry, featured = false) {
   const imageWrap = document.createElement('div');
   imageWrap.className = 'blog-card-image';
   if (entry.image) {
-    imageWrap.append(createOptimizedPicture(entry.image, entry.title || '', false, [
+    imageWrap.append(createOptimizedPicture(entry.image, entry.title || '', eager, [
       { width: featured ? '750' : '400' },
     ]));
   }
@@ -236,6 +239,12 @@ export default async function decorate(block) {
   const config = readBlockConfig(block);
   const isPaginated = config.variant === 'paginated';
   const isFeatured = block.classList.contains('featured');
+  // Some templates (e.g. the /blog homepage) stack several blog-cards
+  // instances in one page; only the very first one's first card can
+  // possibly be the LCP candidate — eagerly loading every instance's first
+  // card would waste bandwidth/priority on below-the-fold images and could
+  // itself delay the real LCP image (issue #518).
+  const isFirstOnPage = document.querySelector('.blog-cards') === block;
   block.textContent = '';
 
   const source = config.source || DEFAULT_SOURCE;
@@ -262,7 +271,9 @@ export default async function decorate(block) {
   contentArea.className = 'blog-cards-content';
 
   const renderEntries = (activeEntries) => {
-    const cards = activeEntries.map((entry, i) => cardEl(entry, isFeatured && i < 2));
+    const cards = activeEntries.map(
+      (entry, i) => cardEl(entry, isFeatured && i < 2, isFirstOnPage && i === 0),
+    );
     if (config.variant === 'carousel') {
       renderCarousel(contentArea, cards);
     } else if (isPaginated) {
