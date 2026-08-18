@@ -230,10 +230,7 @@ function normalizeCookieLabel(block) {
 
 export default async function decorate(block) {
   const footerMeta = getMetadata('footer');
-  // TODO: revert to '/footer' before merge — '/footer1' is a test-only copy
-  // used to validate the new authored content model without touching the
-  // live /footer document.
-  const footerPath = footerMeta ? new URL(footerMeta, window.location).pathname : '/footer1';
+  const footerPath = footerMeta ? new URL(footerMeta, window.location).pathname : '/footer';
   const frag = await fetchFragment(footerPath);
   const doc = frag ? new DOMParser().parseFromString(frag, 'text/html') : null;
   const columns = (doc && parseFooterColumns(doc)) || [];
