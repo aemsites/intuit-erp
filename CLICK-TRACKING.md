@@ -7,8 +7,8 @@ Intuit's SBSEG tracker has **two independent channels**:
   DOM ancestors. **Authored per element**, not code-generated.
 
 On the current WordPress `erp.intuit.com`, these attributes are set per-CTA in a **"Tracking tab"**.
-Edge Delivery has no such tab; the **proposed mechanism for attaching them to CTAs** is described in
-[The EDS authoring model](#the-eds-authoring-model-proposed). This document is the
+Edge Delivery has no such tab; the **mechanism for attaching them to CTAs** is described in
+[The EDS authoring model](#the-eds-authoring-model). This document is the
 reference for *what* the tracker reads, so whoever builds that mechanism knows the contract.
 
 > Scope: the attributes below are **authored content** except the personalization/experiment ones,
@@ -129,7 +129,7 @@ authoring them.
 | `data-survey-*` | CTA | Emitted as `""` and forwarded |
 | `data-pzn-*`, `data-experiment-*`, `data-treatment-id` | **Code** (pzn/IXP engine) | No personalization details collected |
 
-## The EDS authoring model (proposed)
+## The EDS authoring model
 
 **Owner: content-migration + AEM authoring.** On WordPress each CTA's attributes come from a per-CTA
 "Tracking tab." EDS has no equivalent. The model below reproduces the contract from two inputs — what
@@ -228,17 +228,56 @@ the parts that cascade.
 4. **Blank `data-survey-*` still ship** as empty strings, which is different downstream from the field
    never having been sent.
 
-The proposed authoring model above neutralizes traps 1–4 by construction: code owns attribute assembly,
-so it always sets `data-object` on the full path, builds `custom-properties` from structured columns (no
+The authoring model above neutralizes traps 1–4 by construction: code owns attribute assembly, so it
+always sets `data-object` on the full path, builds `custom-properties` from structured columns (no
 hand-written `key|value` strings), controls `data-ui-access-point` presence, and emits `survey-*` only
 for columns an author actually filled.
 
+## Building & validating (dev guide)
+
+The runtime is implemented and loaded **lazily** — it is not render-critical, so it never touches the
+eager/LCP module graph:
+
+- [`scripts/tracking.js`](scripts/tracking.js) — the whole runtime in one file (sheet fetch, resolve,
+  stamp, orchestration), dynamically imported in `loadLazy` like `pzn.js`/`exp.js`.
+- [`scripts/tracking/derive.js`](scripts/tracking/derive.js) — the derivation helper, split out only
+  because the Node dev tools import it too.
+
+**Authoring a tracked CTA**
+
+1. Give the block a `tracking-<key>` variant class (the prefix is a constant in `tracking.js`). Its CTAs
+   are now tracked with fully **derived** values — no sheet row needed if that is enough.
+2. For the authored residue (a `wa-link`, a semantic `object`/`object-detail`, extra `custom-properties`,
+   `survey-*`), add a row to the tracking sheet keyed by `<key>`. Blank cells defer to the derived value;
+   multiple CTAs in one block map to rows by DOM order via the `cta` column.
+3. Page/section access-point segments come from page metadata `tracking` and a Section Metadata
+   `Tracking` row — not the sheet.
+
+**Dev tools** (Node, `scripts/diff/`, never shipped)
+
+- **Seed the sheet from prod** — `node scripts/diff/extract-tracking.mjs --path / --out out.json`
+  captures a prod page, subtracts what code derives, and emits deduped residue rows (scraped output is
+  gitignored — review before pasting into the sheet).
+- **Check parity** — `node scripts/diff/clicktrack-diff.mjs --path / --ours <url> --assert` diffs every
+  CTA's computed payload, prod vs our build. `scripts/diff/tracker-replica.mjs` is the reverse-engineered
+  oracle both tools share.
+- The `--ours` side needs the dev server (`npx @adobe/aem-cli up --html-folder drafts` +
+  `drafts/click-tracking.plain.html`). Note: `aem up` builds a `<branch>--<repo>--<owner>.aem.page` host,
+  so a branch name past the 63-char DNS-label limit is rejected — run it from `main` or a short branch.
+
+**Tests** — `test/tracking-*.test.js` + `test/clicktrack-diff.test.js` (unit) and
+`test/tracking-parity.test.js` (end-to-end: the runtime's output, read back through the oracle, matches
+the prod `cta_block` payload).
+
 ## Status
 
-Documentation only — no site-visible change; nothing here is wired into the EDS build yet. The
-access-point behaviour (join order and the anchor) was **verified against the live `erp.intuit.com`
-bundle**, where the click tracker ships inside the Next.js app rather than as a vendor script; on the
-homepage alone the DOM stacks two-, three-, and four-level `data-tracking` chains, so multi-level trails
-are the norm, not an edge case. The authoring model above is a **proposal awaiting team sign-off**, not
-yet built. The `data-pzn-*` / `data-experiment-*` code-stamping is a separate change in
-`scripts/pzn.js` / `scripts/exp.js`.
+The **runtime + tooling are implemented** on this branch (dev guide above): opt-in `tracking-` blocks,
+lazy decoration, the reverse-engineered oracle, the prod extractor, and the parity harness, with unit +
+end-to-end parity tests. The access-point behaviour (broad→specific trail, sacrificial anchor) was
+**verified against the live `erp.intuit.com` bundle**, where the click tracker ships inside the Next.js
+app; multi-level trails (two-, three-, four-level `data-tracking` chains on the homepage) are the norm.
+No page is tracked until a `tracking-` class is authored, so there is no site-visible change yet.
+
+**Deferred (follow-up):** porting the full sitemap into the sheet — run the extractor across
+`sitemap.xml`, dedupe, and reconcile parity page by page. The `data-pzn-*` / `data-experiment-*`
+code-stamping remains a separate change in `scripts/pzn.js` / `scripts/exp.js`.
