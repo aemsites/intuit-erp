@@ -1,3 +1,24 @@
 .widget {
   display: block;
 }
+
+/* Widgets render full-bleed: self-contained experiences are designed for the
+   full viewport width, so break them out of the section's max-width + padding.
+   Targets the wrapper by the retained .widget class (the widget name is added
+   to the block but .widget stays), so it applies to every widget. */
+main > .section > div:has(> .widget) {
+  max-width: none;
+  padding: 0;
+}
+
+/* Shadow-DOM widgets isolate host CSS, but inheritable properties still cross
+   the shadow boundary. Notably the EDS page's `body { line-height: 1.6 }` leaks
+   in and perturbs text spacing. Reset the shadow host to a neutral baseline so
+   the embedded experience inherits clean defaults, matching standalone render. */
+.widget > .vev {
+  font: initial;
+  line-height: normal;
+  letter-spacing: normal;
+  color: initial;
+  text-align: initial;
+}

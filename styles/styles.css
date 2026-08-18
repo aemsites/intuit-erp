@@ -579,6 +579,47 @@ main .section.sky {
   background-color: var(--sky-blue);
 }
 
+/* Section Metadata "Style: super-blue" — #236cff band with white text. The
+   theme is set generically on the section: the background and text color cascade
+   to default content and any block that inherits color. Headings set their own
+   color, so they are re-pointed. */
+main .section.super-blue {
+  background-color: var(--info);
+  color: #fff;
+}
+
+main .section.super-blue :is(h1, h2, h3, h4, h5, h6) {
+  color: #fff;
+}
+
+/* The form (download) and faq blocks hardcode their OWN container background and
+   text colors, so a generic section rule can't reach them — override to inherit
+   the section theme. Any new block that doesn't hardcode colors needs nothing. */
+main .section.super-blue.form-container:has(.form.download),
+main .section.super-blue.faq-container {
+  background-color: var(--info);
+}
+
+main .section.super-blue .faq-toggle,
+main .section.super-blue .faq-answer,
+main .section.super-blue .faq-chevron {
+  color: inherit;
+}
+
+main .section.super-blue .faq-list {
+  border-top-color: rgb(255 255 255 / 40%);
+}
+
+main .section.super-blue .faq-item {
+  border-bottom-color: rgb(255 255 255 / 40%);
+}
+
+main .section.super-blue .faq-toggle:hover,
+main .section.super-blue .faq-toggle:focus-visible,
+main .section.super-blue .faq-toggle:hover .faq-chevron {
+  color: rgb(255 255 255 / 80%);
+}
+
 /* ============================================================
    IES foundation additions (replica of erp.intuit.com)
    ============================================================ */
