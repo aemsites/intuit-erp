@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { deriveBaseline } from '../scripts/tracking/derive.js';
+import { deriveBaseline } from '../scripts/tracking.js';
 import {
   resolveCta, assembleCustomProperties, mergeCustomProperties,
 } from '../scripts/tracking.js';

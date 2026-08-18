@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   slug, uiObject, blockAccessPoint, deriveBaseline,
-} from '../scripts/tracking/derive.js';
+} from '../scripts/tracking.js';
 
 describe('slug', () => {
   it('slugifies a visible label to lowercase hyphenated', () => {

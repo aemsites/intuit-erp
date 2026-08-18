@@ -27,7 +27,7 @@ import { writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { launchStealthHeaded } from './live-session.mjs';
 import { captureHtml } from './capture-html.mjs';
-import { deriveBaseline, slug } from '../tracking/derive.js';
+import { deriveBaseline, slug } from '../tracking.js';
 import { computeTrackingPayload, parseCustomProperties } from './tracker-replica.mjs';
 
 const PROD = 'https://erp.intuit.com';

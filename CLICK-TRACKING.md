@@ -238,10 +238,9 @@ for columns an author actually filled.
 The runtime is implemented and loaded **lazily** — it is not render-critical, so it never touches the
 eager/LCP module graph:
 
-- [`scripts/tracking.js`](scripts/tracking.js) — the whole runtime in one file (sheet fetch, resolve,
-  stamp, orchestration), dynamically imported in `loadLazy` like `pzn.js`/`exp.js`.
-- [`scripts/tracking/derive.js`](scripts/tracking/derive.js) — the derivation helper, split out only
-  because the Node dev tools import it too.
+- [`scripts/tracking.js`](scripts/tracking.js) — the entire runtime in one file (derive, sheet fetch,
+  resolve, stamp, orchestration), dynamically imported in `loadLazy` like `pzn.js`/`exp.js`. `scripts/`
+  is marked `type: module` so the Node dev tools import the derive helpers straight from it.
 
 **Authoring a tracked CTA**
 
