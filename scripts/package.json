@@ -1,4 +1,0 @@
-{
-  "type": "module",
-  "//": "Marks scripts/*.js as ESM for Node so the dev tools (scripts/diff/*.mjs) can import runtime modules (e.g. tracking.js) directly. Browsers and vitest already treat these as ESM; nothing else in Node imports scripts/*.js."
-}
