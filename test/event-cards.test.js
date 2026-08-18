@@ -2,12 +2,15 @@ import {
   describe, it, expect, vi, beforeEach,
 } from 'vitest';
 
-// createOptimizedPicture pulls in the full aem.js; stub it to a bare img.
+// createOptimizedPicture pulls in the full aem.js; stub it to a bare img,
+// mirroring the real function's eager -> loading attribute behavior so tests
+// can assert on it.
 vi.mock('../scripts/aem.js', () => ({
-  createOptimizedPicture: (src, alt) => {
+  createOptimizedPicture: (src, alt, eager) => {
     const img = document.createElement('img');
     img.src = src;
     img.alt = alt;
+    img.loading = eager ? 'eager' : 'lazy';
     return img;
   },
 }));
@@ -104,6 +107,23 @@ describe('event-cards', () => {
     await decorate(onDemand);
     expect([...onDemand.querySelectorAll('.event-card h3')].map((h) => h.textContent))
       .toEqual(['Recorded webinar']);
+  });
+
+  // issue #518: previously every card image was always lazy-loaded,
+  // including the first — the LCP candidate on pages where this block is
+  // the first content on the page (e.g. /events).
+  it('eager-loads only the first card of the instance attached to the page', async () => {
+    const decorate = await loadBlock();
+    const upcoming = make('upcoming');
+    document.body.append(upcoming);
+    try {
+      await decorate(upcoming);
+      const imgs = [...upcoming.querySelectorAll('.event-card img')];
+      expect(imgs[0].loading).toBe('eager');
+      expect(imgs.slice(1).every((img) => img.loading === 'lazy')).toBe(true);
+    } finally {
+      upcoming.remove();
+    }
   });
 
   it('skips untitled index rows such as the /events listing page', async () => {
