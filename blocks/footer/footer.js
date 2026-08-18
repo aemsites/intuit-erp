@@ -9,6 +9,8 @@
  * copyright paragraphs, and legal links line. Brand/social SVGs, the country
  * selector, and the search input are fixed UI chrome, not authored content.
  * If a block is missing from the fragment, that section renders empty.
+ * Authored markup is trusted (DA authors, not end users) and injected as-is —
+ * no HTML escaping/sanitization here by design.
  * CSS: blocks/footer/footer.css · source fragment: content/footer.html
  */
 import { getMetadata } from '../../scripts/aem.js';
@@ -21,71 +23,57 @@ import {
 import { LOGO_MAILCHIMP_ICON, LOGO_MAILCHIMP_WORD } from '../header/brand-logos.js';
 import { wireFooterSearch } from '../blog-search/search-utils.js';
 
-function escapeHtml(str) {
-  return str.replace(/[&<>"']/g, (c) => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
-  }[c]));
-}
-
 // "Footer Columns" content model: one row per column, cell 1 = heading text,
 // cell 2 = a list of links. Authors add/remove/reorder rows to add/remove
-// columns and edit the link list per column.
+// columns, and edit/reorder the <li> items per column (hyperlinked or plain
+// text) freely — the authored <ul> markup is used as-is.
 function parseFooterColumns(doc) {
   const block = doc.querySelector('.footer-columns');
   if (!block) return null;
   const columns = [...block.children].map((row) => {
     const [titleCell, linksCell] = row.children;
     const title = (titleCell?.textContent || '').trim();
-    const links = [...(linksCell?.querySelectorAll('a') || [])].map((a) => ({
-      text: a.textContent.trim(),
-      href: a.getAttribute('href') || '#',
-    }));
-    return { title, links };
-  }).filter((col) => col.title && col.links.length);
+    const listHtml = (linksCell?.querySelector('ul')?.innerHTML || '').trim();
+    return { title, listHtml };
+  }).filter((col) => col.title && col.listHtml);
   return columns.length ? columns : null;
 }
 
-// "Footer Legal" content model: row 1 = legal nav links, row 2 = copyright /
-// disclosure paragraphs, row 3 = the Legal | Privacy | Security | Compliance
-// links line.
+// "Footer Legal" content model: one row with a <ul> of links (legal nav),
+// one row with 2+ <p> (copyright/disclosure copy), and one remaining row
+// (the Legal | Privacy | Security | Compliance links line) — identified by
+// shape rather than position, so reordering the rows doesn't misparse them.
 function parseFooterLegal(doc) {
   const block = doc.querySelector('.footer-legal');
   if (!block) return null;
-  const [navRow, copyRow, linksRow] = block.children;
-  const toLinks = (row) => (row ? [...row.querySelectorAll('a')].map((a) => ({
-    text: a.textContent.trim(),
-    href: a.getAttribute('href') || '#',
-  })) : []);
-  const nav = toLinks(navRow);
-  const copyHtml = copyRow ? [...copyRow.querySelectorAll('p')].map((p) => p.innerHTML.trim()).filter(Boolean) : [];
-  const links = toLinks(linksRow);
-  if (!nav.length && !copyHtml.length && !links.length) return null;
-  return { nav, copyHtml, links };
+  const rows = [...block.children];
+  const navRow = rows.find((row) => row.querySelector('ul'));
+  const remaining = rows.filter((row) => row !== navRow);
+  const copyRow = remaining.find((row) => row.querySelectorAll('p').length > 1);
+  const linksRow = remaining.find((row) => row !== copyRow);
+
+  const navHtml = (navRow?.querySelector('ul')?.innerHTML || '').trim();
+  const copyHtml = (copyRow ? [...copyRow.querySelectorAll('p')].map((p) => `<p class="footer-copy">${p.innerHTML}</p>`).join('\n            ') : '');
+  const linksHtml = (linksRow?.querySelector('p')?.innerHTML || '').trim();
+
+  if (!navHtml && !copyHtml && !linksHtml) return null;
+  return { navHtml, copyHtml, linksHtml };
 }
 
 function renderColumns(columns) {
   return columns.map((col) => `
         <div class="footer-col">
-          <h2><button type="button" class="col-toggle" aria-expanded="false">${escapeHtml(col.title)}<i class="caret" aria-hidden="true"></i></button></h2>
+          <h2><button type="button" class="col-toggle" aria-expanded="false">${col.title}<i class="caret" aria-hidden="true"></i></button></h2>
           <ul>
-            ${col.links.map((l) => `<li><a href="${escapeHtml(l.href)}">${escapeHtml(l.text)}</a></li>`).join('\n            ')}
+            ${col.listHtml}
           </ul>
         </div>`).join('');
 }
 
-function renderLegalNav(nav) {
-  return nav.map((l) => `<li><a href="${escapeHtml(l.href)}">${escapeHtml(l.text)}</a></li>`).join('\n            ');
-}
-
 function renderLegalCopy(copyHtml) {
-  const paras = copyHtml.map((html) => `<p class="footer-copy">${html}</p>`).join('\n            ');
   // Cookie preferences row is wired to the OneTrust widget, not authored.
   const cookieRow = '<p class="footer-copy"><a href="https://security.intuit.com/index.php/intuit-cookie-policy/">About cookies</a> | <button type="button" class="ot-sdk-show-settings footer-copy-btn">Manage cookies</button></p>';
-  return `${paras}\n            ${cookieRow}`;
-}
-
-function renderLegalLinks(links) {
-  return links.map((l, i) => `<a href="${escapeHtml(l.href)}">${escapeHtml(l.text)}</a>${i < links.length - 1 ? '<span class="legal-sep">|</span>' : ''}`).join('\n            ');
+  return `${copyHtml}\n            ${cookieRow}`;
 }
 
 // Locale dropdown — rendered twice: a `country-mobile` row that stacks under
@@ -134,7 +122,7 @@ function buildChrome(columns, legal) {
         <div class="legal-left">
           <a href="https://www.intuit.com/" class="ftr-logo" aria-label="Intuit">${FOOTER_LOGO_INTUIT}</a>
           <ul class="legal-nav">
-            ${renderLegalNav(legal.nav)}
+            ${legal.navHtml}
           </ul>
         </div>
         <div class="legal-center">
@@ -150,7 +138,7 @@ function buildChrome(columns, legal) {
         </div>
         <div class="legal-right">
           <div class="legal-links">
-            ${renderLegalLinks(legal.links)}
+            ${legal.linksHtml}
           </div>
           <a class="truste" href="https://privacy.trustarc.com/privacy-seal/validation?rid=ab182efc-5237-493d-8952-9295f7f3800b" target="_blank" rel="noopener">
             <img src="https://hostedseal.trustarc.com/privacy-seal/seal?rid=ab182efc-5237-493d-8952-9295f7f3800b" width="142" height="45" alt="TRUSTe" loading="lazy">
@@ -234,7 +222,7 @@ export default async function decorate(block) {
   const frag = await fetchFragment(footerPath);
   const doc = frag ? new DOMParser().parseFromString(frag, 'text/html') : null;
   const columns = (doc && parseFooterColumns(doc)) || [];
-  const legal = (doc && parseFooterLegal(doc)) || { nav: [], copyHtml: [], links: [] };
+  const legal = (doc && parseFooterLegal(doc)) || { navHtml: '', copyHtml: '', linksHtml: '' };
 
   block.innerHTML = buildChrome(columns, legal);
   wireAccordions(block);
