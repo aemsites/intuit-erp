@@ -601,20 +601,20 @@
   .carousel.testimonial.spotlight .carousel-slide.is-next .testi-body { opacity: 0; }
 
   .carousel.testimonial.spotlight .carousel-slide.is-prev .testi-media {
-    transform: translate(-64px, 52px);
+    transform: translate(-56px, 44px);
     opacity: 0.85;
     filter: blur(5px);
 
-    /* only the outer ~half of the neighbour photo peeks out; the inner half
-       tucks behind the active card */
-    clip-path: inset(0 52% 0 0);
+    /* the inner edge dissolves toward the active card (a soft fade, not a hard
+       cut) so only the outer part of the neighbour photo reads */
+    mask-image: linear-gradient(to right, #000 42%, transparent 88%);
   }
 
   .carousel.testimonial.spotlight .carousel-slide.is-next .testi-media {
-    transform: translate(64px, -52px);
+    transform: translate(56px, -44px);
     opacity: 0.85;
     filter: blur(5px);
-    clip-path: inset(0 0 0 52%);
+    mask-image: linear-gradient(to left, #000 42%, transparent 88%);
   }
 
   /* the control pill overlaps the bottom of the photo (centred on it) rather
