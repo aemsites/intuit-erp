@@ -230,7 +230,7 @@ function wireFlyouts(block) {
 
 export default async function decorate(block) {
   const navMeta = getMetadata('nav');
-  const navPath = navMeta ? new URL(navMeta, window.location).pathname : '/drafts/ukhalid/nav';
+  const navPath = navMeta ? new URL(navMeta, window.location).pathname : '/nav';
   const {
     navMainHTML, brandLinks, logoHTML, resourcesItem,
   } = await fetchChromeHTML(navPath);
