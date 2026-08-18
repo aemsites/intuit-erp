@@ -397,32 +397,11 @@ function decorateButtons(main) {
   });
 }
 
-/**
- * Applies section-level style variants from "Section Metadata" blocks.
- *
- * This project uses a trimmed decorateSections() (in aem.js, which must not be
- * modified) that does not read Section Metadata into style classes like the
- * stock boilerplate does. This re-adds that behaviour generically: any section
- * whose Section Metadata has a "Style" key gets those values applied as classes
- * on the section element. It is a no-op for sections without Section Metadata,
- * so existing pages are unaffected.
- * @param {Element} main The main element
- */
-function decorateSectionStyles(main) {
-  main.querySelectorAll('.section .section-metadata').forEach((meta) => {
-    const section = meta.closest('.section');
-    if (!section) return;
-    const config = readBlockConfig(meta);
-    if (config.style) {
-      config.style.split(',')
-        .map((s) => toClassName(s.trim()))
-        .filter((s) => !!s)
-        .forEach((s) => section.classList.add(s));
+function decorateSectionBackgrounds(main) {
+  main.querySelectorAll('.section').forEach((section) => {
+    if (section.dataset.background) {
+      section.style.background = section.dataset.background;
     }
-    // remove the metadata block (and its wrapper) so it is neither rendered nor
-    // picked up by decorateBlocks() as a loadable block.
-    const wrapper = meta.closest('.section-metadata-wrapper');
-    (wrapper || meta).remove();
   });
 }
 
@@ -435,7 +414,7 @@ export function decorateMain(main) {
   decorateIcons(main);
   buildAutoBlocks(main);
   decorateSections(main);
-  decorateSectionStyles(main);
+  decorateSectionBackgrounds(main);
   decorateBlocks(main);
   decorateButtons(main);
 }

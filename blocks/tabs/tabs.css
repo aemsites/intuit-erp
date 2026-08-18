@@ -634,7 +634,7 @@
 }
 
 @media (width >= 1200px) {
-  .tabs.vertical { gap: 175px; }
+  .tabs.vertical { gap: 175px; margin-bottom: 200px;}
 
   .tabs.vertical .vt-acc { gap: 16px; }
 }

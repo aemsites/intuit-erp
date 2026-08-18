@@ -1,36 +1,106 @@
-/* stylelint-disable max-line-length */
 @font-face {
-  font-family: roboto-condensed;
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url('../fonts/roboto-condensed-bold.woff2') format('woff2');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-
-@font-face {
-  font-family: roboto;
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url('../fonts/roboto-bold.woff2') format('woff2');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-
-@font-face {
-  font-family: roboto;
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: url('../fonts/roboto-medium.woff2') format('woff2');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-
-@font-face {
-  font-family: roboto;
-  font-style: normal;
+  font-family: "AvenirNext forINTUIT";
   font-weight: 400;
+  font-style: normal;
   font-display: swap;
-  src: url('../fonts/roboto-regular.woff2') format('woff2');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  src: local('Avenir Next Regular'), local('AvenirNext-Regular'),
+    url("/styles/fonts/avenir-400.woff2") format("woff2"), url("/styles/fonts/avenir-400.woff") format("woff");
+}
+
+@font-face {
+  font-family: "AvenirNext forINTUIT";
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+  src: local('Avenir Next Regular Italic'), local('AvenirNext-Regular-Italic'),
+    url("/styles/fonts/avenir-400-it.woff2") format("woff2"), url("/styles/fonts/avenir-400-it.woff") format("woff");
+}
+
+@font-face {
+  font-family: "AvenirNext forINTUIT";
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  src: local('Avenir Next Medium'), local('AvenirNext-Medium'),
+    url("/styles/fonts/avenir-500.woff2") format("woff2"), url("/styles/fonts/avenir-500.woff") format("woff");
+}
+
+@font-face {
+  font-family: "AvenirNext forINTUIT";
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+  src: local('Avenir Next Medium Italic'), local('AvenirNext-Medium-Italic'),
+    url("/styles/fonts/avenir-500-it.woff2") format("woff2"), url("/styles/fonts/avenir-500-it.woff") format("woff");
+}
+
+@font-face {
+  font-family: "AvenirNext forINTUIT";
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+  src: local('Avenir Next Demi Bold'), local('AvenirNext-DemiBold'),
+    url("/styles/fonts/avenir-600.woff2") format("woff2"), url("/styles/fonts/avenir-600.woff") format("woff");
+}
+
+@font-face {
+  font-family: "AvenirNext forINTUIT";
+  font-weight: 600;
+  font-style: italic;
+  font-display: swap;
+  src: local('Avenir Next Demi Bold Italic'), local('AvenirNext-DemiBold-Italic'),
+    url("/styles/fonts/avenir-600-it.woff2") format("woff2"), url("/styles/fonts/avenir-600-it.woff") format("woff");
+}
+
+@font-face {
+  font-family: "AvenirNext forINTUIT";
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  src: local('Avenir Next Bold'), local('AvenirNext-Bold'),
+    url("/styles/fonts/avenir-700.woff2") format("woff2"), url("/styles/fonts/avenir-700.woff") format("woff");
+}
+
+@font-face {
+  font-family: "AvenirNext forINTUIT";
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+  src: local('Avenir Next Bold Italic'), local('AvenirNext-Bold-Italic'),
+    url("/styles/fonts/avenir-700-it.woff2") format("woff2"), url("/styles/fonts/avenir-700-it.woff") format("woff");
+}
+
+@font-face {
+  font-family: "AvenirNext forINTUIT";
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+  src: local('Avenir Next Heavy'), local('AvenirNext-Heavy'),
+    url("/styles/fonts/avenir-800.woff2") format("woff2"), url("/styles/fonts/avenir-800.woff") format("woff");
+}
+
+@font-face {
+  font-family: "Mulish Variable";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 1000;
+  src: url("/styles/fonts/mulish-variable.woff2") format("woff2-variations");
+}
+
+@font-face {
+  font-family: "Mulish Variable";
+  font-style: italic;
+  font-display: swap;
+  font-weight: 200 1000;
+  src: url("/styles/fonts/mulish-italic-variable.woff2") format("woff2-variations");
+}
+
+/* metric-matched fallback while the webfont loads */
+@font-face {
+  font-family: mulish-fallback;
+  size-adjust: 98%;
+  ascent-override: 96%;
+  descent-override: 24%;
+  line-gap-override: 0%;
+  src: local('Arial');
 }

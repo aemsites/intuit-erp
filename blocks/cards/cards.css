@@ -1,10 +1,23 @@
-/* cards — image-and-text grid (erp.intuit.com "Resources" cards). Photo cards
-   (events, financial-services, professional-services, oa) are square images
-   with plain text below, no card chrome. */
-.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 32px; }
-.cards > div { display: flex; flex-direction: column; }
-.cards picture { display: block; }
-.cards img { width: 100%; height: auto; display: block; }
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 32px;
+}
+
+.cards>div {
+  display: flex;
+  flex-direction: column;
+}
+
+.cards picture {
+  display: block;
+}
+
+.cards img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
 
 .cards .cards-card-body h3 {
   font-size: var(--heading-font-size-m);
@@ -13,105 +26,162 @@
   margin: 32px 0 0;
 }
 
-.cards .cards-card-body p { font-size: 16px; line-height: 1.5; margin: 16px 0 0; }
-
-/* the "Read more"-style link paragraph always follows directly after the
-   heading (or, in icon cards below, after the body copy) with a wider gap
-   than the body copy itself gets. */
-.cards .cards-card-body p:has(a) { margin-top: 32px; }
-.cards .cards-card-body a { color: var(--info); font-weight: 400; }
-
-/* icon cards (no .carousel/.boxed shape class): blue box, small square icon,
-   white text — shared by the navy-section variant (.dark, e.g. accountant
-   "Resources for firms") and the white-section variant (.accent, e.g.
-   ai-agents "Resources for growing businesses"), which differ only in the
-   surrounding section background. .carousel/.boxed are unrelated *shapes* of
-   photo cards that also use .dark/.accent purely for section-background
-   tone, so every rule here is scoped to exclude them. */
-.cards.dark:not(.carousel, .boxed),
-.cards.accent:not(.carousel, .boxed) { grid-template-columns: repeat(3, 1fr); gap: 24px; }
-
-.cards.dark:not(.carousel, .boxed) > div,
-.cards.accent:not(.carousel, .boxed) > div {
-  background: #236cff; border-radius: var(--radius-card); padding: 32px 28px; color: #fff;
+.cards .cards-card-body p {
+  font-size: 16px;
+  line-height: 1.5;
+  margin: 16px 0 0;
 }
 
-.cards.dark:not(.carousel, .boxed) > div > div:first-child,
-.cards.accent:not(.carousel, .boxed) > div > div:first-child { width: 40px; margin-bottom: 32px; }
+.cards .cards-card-body p:has(a) {
+  margin-top: 32px;
+}
 
-.cards.dark:not(.carousel, .boxed) picture, .cards.dark:not(.carousel, .boxed) img,
-.cards.accent:not(.carousel, .boxed) picture, .cards.accent:not(.carousel, .boxed) img { width: 40px; height: 40px; }
+.cards .cards-card-body a {
+  color: var(--info);
+  font-weight: 400;
+}
+
+.cards.dark:not(.carousel, .boxed),
+.cards.accent:not(.carousel, .boxed) {
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.cards.dark:not(.carousel, .boxed)>div,
+.cards.accent:not(.carousel, .boxed)>div {
+  background: #236cff;
+  border-radius: var(--radius-card);
+  padding: 32px 28px;
+  color: #fff;
+}
+
+.cards.dark:not(.carousel, .boxed)>div>div:first-child,
+.cards.accent:not(.carousel, .boxed)>div>div:first-child {
+  width: 40px;
+  margin-bottom: 32px;
+}
+
+.cards.dark:not(.carousel, .boxed) picture,
+.cards.dark:not(.carousel, .boxed) img,
+.cards.accent:not(.carousel, .boxed) picture,
+.cards.accent:not(.carousel, .boxed) img {
+  width: 40px;
+  height: 40px;
+}
 
 .cards.dark:not(.carousel, .boxed) .cards-card-body h3,
 .cards.accent:not(.carousel, .boxed) .cards-card-body h3 {
-  font-size: 28px; font-weight: 400; line-height: 1.15; color: #fff; margin: 0 0 16px;
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 1.15;
+  color: #fff;
+  margin: 0 0 16px;
 }
 
 .cards.dark:not(.carousel, .boxed) .cards-card-body p,
-.cards.accent:not(.carousel, .boxed) .cards-card-body p { color: rgb(255 255 255 / 90%); }
+.cards.accent:not(.carousel, .boxed) .cards-card-body p {
+  color: rgb(255 255 255 / 90%);
+}
 
 .cards.dark:not(.carousel, .boxed) .cards-card-body p:has(a),
-.cards.accent:not(.carousel, .boxed) .cards-card-body p:has(a) { margin-top: 20px; }
+.cards.accent:not(.carousel, .boxed) .cards-card-body p:has(a) {
+  margin-top: 20px;
+}
 
 .cards.dark:not(.carousel, .boxed) a,
-.cards.accent:not(.carousel, .boxed) a { color: #fff; font-weight: 400; text-decoration: underline; }
+.cards.accent:not(.carousel, .boxed) a {
+  color: #fff;
+  font-weight: 400;
+  text-decoration: underline;
+}
 
-/* dark full-bleed band (accountant "Resources for firms"; also used by the
-   .carousel/.boxed dark instances below) — .accent keeps the section's own
-   (white) background instead. */
-.section.cards-container:has(.cards.dark) { background: var(--navy); padding: var(--section-y) 0; }
-.cards-container:has(.cards.dark) .default-content-wrapper h2 { color: #fff; }
+.section.cards-container:has(.cards.dark) {
+  background: var(--navy);
+  padding: var(--section-y) 0;
+}
 
-/* .boxed (oa) is the one instance whose section heading is centered rather
-   than left-aligned, matching erp.intuit.com's "All your entities. All in
-   one place." band. */
-.cards-container:has(.cards.boxed) .default-content-wrapper { text-align: center; }
+.cards-container:has(.cards.dark) .default-content-wrapper h2 {
+  color: #fff;
+}
 
-/* Bottom breathing room below the carousel controls, matching the source C05
-   section's padding-bottom (--spacing-xxxlarge on desktop). Without it the
-   progress bar/nav row butts straight up against the following section. Dark
-   carousels already get this from the .cards.dark section padding above, so
-   this only targets the accent/default (white-section) carousels. */
+.cards-container:has(.cards.boxed) .default-content-wrapper {
+  text-align: center;
+}
+
 .section.cards-container:has(.cards.carousel):not(:has(.cards.dark)) {
   padding-bottom: 60px;
 }
 
-@media (width >= 900px) {
+@media (width >=900px) {
   .section.cards-container:has(.cards.carousel):not(:has(.cards.dark)) {
     padding-bottom: 120px;
   }
 }
 
-@media (width <= 768px) {
-  .cards.dark:not(.carousel, .boxed), .cards.accent:not(.carousel, .boxed) { grid-template-columns: 1fr; }
+@media (width <=768px) {
+
+  .cards.dark:not(.carousel, .boxed),
+  .cards.accent:not(.carousel, .boxed) {
+    grid-template-columns: 1fr;
+  }
 }
 
-.cards.icons { grid-template-columns: repeat(3, 1fr); gap: 48px; max-width: 1120px; margin: 0 auto; }
+.cards.icons {
+  grid-template-columns: repeat(3, 1fr);
+  gap: 48px;
+  margin: 0 auto;
+}
 
-/* icon inline with the eyebrow label (icon left, label right); title + body
-   below — matches production. cards.js groups the icon + eyebrow into
-   .cards-card-head. */
-.cards.icons .cards-card-head { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
-.cards.icons .cards-card-image { width: 56px; margin: 0; }
-.cards.icons .cards-card-image img { width: 56px; height: 56px; object-fit: contain; }
-.cards.icons .cards-eyebrow { margin: 0; font-style: normal; font-size: 14px; }
+.cards.icons .cards-card-head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.cards.icons .cards-card-image {
+  width: 56px;
+  margin: 0;
+}
+
+.cards.icons .cards-card-image img {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+}
+
+.cards.icons .cards-eyebrow {
+  margin: 0;
+  font-style: normal;
+  font-size: 14px;
+}
 
 .cards.icons .cards-card-body h3 {
-  /* production renders these icon-card titles at 32px (was 24px) */
-  font-size: 32px; line-height: 1.25; font-weight: 400; color: var(--heading); margin: 0 0 16px;
-}
-.cards.icons .cards-card-body p { font-size: 15px; line-height: 1.55; color: var(--text-muted); margin: 0; }
-
-@media (width <= 768px) {
-  .cards.icons { grid-template-columns: 1fr; gap: 36px; }
-  .cards.icons .cards-card-body h3 { font-size: 28px; }
+  font-size: 32px;
+  line-height: 1.25;
+  font-weight: 500;
+  color: var(--heading);
+  margin: 0 0 16px;
 }
 
-/* product-cards — Section Metadata "Style: product-cards": a 2-up grid of
-   product-screenshot feature cards (image + title + bullets), matching
-   erp.intuit.com "Where finance and HR gain ground". The default .cards grid
-   packs ~4 narrow columns; this shows 2 larger cards per row with a
-   regular-weight title. Scoped to the section so other .cards are unaffected. */
+.cards.icons .cards-card-body p {
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+@media (width <=768px) {
+  .cards.icons {
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
+
+  .cards.icons .cards-card-body h3 {
+    font-size: 28px;
+  }
+}
+
 .section.product-cards .cards {
   grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));
   gap: 44px 32px;
@@ -127,7 +197,10 @@
   color: var(--heading);
 }
 
-.section.product-cards .cards .cards-card-body ul { margin: 0; padding-left: 20px; }
+.section.product-cards .cards .cards-card-body ul {
+  margin: 0;
+  padding-left: 20px;
+}
 
 .section.product-cards .cards .cards-card-body li {
   margin: 0 0 8px;
@@ -136,35 +209,34 @@
   color: var(--text-muted);
 }
 
-@media (width <= 768px) {
-  .section.product-cards .cards { grid-template-columns: 1fr; }
+@media (width <=768px) {
+  .section.product-cards .cards {
+    grid-template-columns: 1fr;
+  }
 }
 
-/* feature-cards — Section Metadata "Style: feature-cards": center the section
-   heading/subheading and render the .cards.icons items as gray rounded cards
-   (human-capital-management "data behind every workforce decision"). Opt-in and
-   scoped to the section, so other .cards.icons sections (e.g. /account-management)
-   are unaffected. */
-.section.feature-cards .default-content-wrapper { text-align: center; }
+.section.feature-cards .default-content-wrapper {
+  text-align: center;
+}
 
-.section.feature-cards .cards.icons > div {
+.section.feature-cards .cards.icons>div {
   box-sizing: border-box;
   padding: 32px;
   background: #eef2f6;
   border-radius: 16px;
 }
 
-/* production's carded titles are smaller than the plain icon-card title (32px) */
-.section.feature-cards .cards.icons .cards-card-body h3 { font-size: 24px; }
+.section.feature-cards .cards.icons .cards-card-body h3 {
+  font-size: 24px;
+}
 
-/* ---- .carousel / .boxed — single-row, horizontally-scrolling photo cards
-   (events, financial-services, professional-services, oa). Cards scroll via
-   native overflow (free touch/trackpad swipe); the progress bar + counter +
-   prev/next buttons are only shown once cards.js detects real overflow —
-   oa's 3 cards fit on screen today and get no controls at all. ---- */
-.cards.carousel, .cards.boxed { display: block; }
+.cards.carousel,
+.cards.boxed {
+  display: block;
+}
 
-.cards.carousel .cards-viewport, .cards.boxed .cards-viewport {
+.cards.carousel .cards-viewport,
+.cards.boxed .cards-viewport {
   display: block;
   overflow-x: auto;
   scrollbar-width: none;
@@ -172,34 +244,34 @@
 }
 
 .cards.carousel .cards-viewport::-webkit-scrollbar,
-.cards.boxed .cards-viewport::-webkit-scrollbar { display: none; width: 0; height: 0; }
+.cards.boxed .cards-viewport::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
 
-.cards.carousel .cards-track, .cards.boxed .cards-track { display: flex; gap: 32px; }
+.cards.carousel .cards-track,
+.cards.boxed .cards-track {
+  display: flex;
+  gap: 32px;
+}
 
-/* The hover scrim (::before below) overhangs each card by 8px top / 22px
-   bottom and casts a shadow ~20px past that. The viewport's overflow-y is
-   forced to `auto` by its overflow-x:auto, so without room it would clip that
-   overhang and add a phantom vertical scrollbar. Pad the track vertically so
-   the scrim renders fully inside the scroll area, mirroring the source
-   card-list's own vertical padding. */
-.cards.carousel .cards-track { padding: 8px 0 44px; }
-.cards.boxed .cards-track { justify-content: center; }
+.cards.carousel .cards-track {
+  padding: 8px 0 44px;
+}
 
-.cards.carousel .cards-track > div, .cards.boxed .cards-track > div {
+.cards.boxed .cards-track {
+  justify-content: center;
+}
+
+.cards.carousel .cards-track>div,
+.cards.boxed .cards-track>div {
   display: flex;
   flex-direction: column;
   flex: 0 0 320px;
   scroll-snap-align: start;
 }
 
-/* ---- .carousel photo cards: uniform image box + hover interaction, ported
-   from erp.intuit.com's M05ArticleCard. Authored assets have inconsistent
-   natural aspect ratios (e.g. 900x506 vs 396x396), which made rows look
-   vertically jagged; a fixed square box with object-fit:cover keeps every
-   card's image (and therefore its heading) aligned across the row. The hover
-   treatment (clip-path inset, content nudge, background scrim) mirrors the
-   source's timing/easing exactly. Scoped to .carousel so the .boxed (oa) white
-   cards keep their own chrome. ---- */
 .cards.carousel {
   --custom-ease: cubic-bezier(0.6, 0, 0.25, 1);
   --transition-duration: 600ms;
@@ -212,38 +284,36 @@
   border-radius: 2px;
 }
 
-/* keep card content painting above the hover scrim (::before, z-index 0) */
-.cards.carousel .cards-card-image, .cards.carousel .cards-card-body {
+.cards.carousel .cards-card-image,
+.cards.carousel .cards-card-body {
   position: relative;
   z-index: 1;
 }
 
-/* image clips inward from top/left/right on hover (bottom edge stays put),
-   revealing the scrim behind it */
 .cards.carousel .cards-card-image {
   clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
   transition: clip-path var(--transition-duration) var(--custom-ease);
 }
 
-.cards.carousel .cards-track > div:hover .cards-card-image,
-.cards.carousel .cards-track > div:focus-within .cards-card-image {
+.cards.carousel .cards-track>div:hover .cards-card-image,
+.cards.carousel .cards-track>div:focus-within .cards-card-image {
   clip-path: polygon(16px 16px, calc(100% - 16px) 16px, calc(100% - 16px) 100%, 16px 100%);
 }
 
-/* text content nudges right on hover */
 .cards.carousel .cards-card-body {
   transition: padding var(--transition-duration) var(--custom-ease);
 }
 
-.cards.carousel .cards-track > div:hover .cards-card-body,
-.cards.carousel .cards-track > div:focus-within .cards-card-body {
+.cards.carousel .cards-track>div:hover .cards-card-body,
+.cards.carousel .cards-track>div:focus-within .cards-card-body {
   padding-left: 16px;
 }
 
-/* background scrim (border + soft shadow) that fades in behind the card */
-.cards.carousel .cards-track > div { position: relative; }
+.cards.carousel .cards-track>div {
+  position: relative;
+}
 
-.cards.carousel .cards-track > div::before {
+.cards.carousel .cards-track>div::before {
   content: "";
   position: absolute;
   z-index: 0;
@@ -256,95 +326,179 @@
   transition: opacity var(--transition-duration) var(--custom-ease);
 }
 
-.cards.carousel .cards-track > div:hover::before,
-.cards.carousel .cards-track > div:focus-within::before { opacity: 1; }
+.cards.carousel .cards-track>div:hover::before,
+.cards.carousel .cards-track>div:focus-within::before {
+  opacity: 1;
+}
 
 @media (prefers-reduced-motion: reduce) {
+
   .cards.carousel .cards-card-image,
   .cards.carousel .cards-card-body,
-  .cards.carousel .cards-track > div::before { transition: none; }
+  .cards.carousel .cards-track>div::before {
+    transition: none;
+  }
 
   /* keep the static scrim affordance, drop the movement */
-  .cards.carousel .cards-track > div:hover .cards-card-image,
-  .cards.carousel .cards-track > div:focus-within .cards-card-image {
+  .cards.carousel .cards-track>div:hover .cards-card-image,
+  .cards.carousel .cards-track>div:focus-within .cards-card-image {
     clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
   }
 
-  .cards.carousel .cards-track > div:hover .cards-card-body,
-  .cards.carousel .cards-track > div:focus-within .cards-card-body { padding-left: 0; }
+  .cards.carousel .cards-track>div:hover .cards-card-body,
+  .cards.carousel .cards-track>div:focus-within .cards-card-body {
+    padding-left: 0;
+  }
 }
 
-/* .carousel — plain photo + text directly on the section background; the
-   .dark instance (professional-services) needs white text since there's no
-   card chrome behind it (.accent, e.g. events, keeps the normal dark text). */
 .cards.dark.carousel .cards-card-body h3,
-.cards.dark.carousel .cards-card-body p { color: #fff; }
-.cards.dark.carousel .cards-card-body a { color: #fff; text-decoration: underline; }
+.cards.dark.carousel .cards-card-body p {
+  color: #fff;
+}
 
-/* .boxed — white rounded card (oa); text stays the normal dark color even in
-   a .dark section since it sits on the card's own white background. */
-.cards.boxed .cards-track > div { background: #fff; border-radius: 20px; overflow: hidden; }
-.cards.boxed .cards-card-body { padding: 24px; }
-.cards.boxed .cards-card-body h3 { margin-top: 20px; }
+.cards.dark.carousel .cards-card-body a {
+  color: #fff;
+  text-decoration: underline;
+}
 
-/* .cards-controls is a direct child of .cards, so it's also matched by the
-   generic ".cards > div { flex-direction: column }" rule above — reset it
-   back to a row explicitly, or the counter/bar/buttons stack vertically and
-   collapse into a centered clump instead of counter-left/bar-fill/buttons-
-   right. */
-.cards.carousel .cards-controls, .cards.boxed .cards-controls {
+.cards.boxed .cards-track>div {
+  background: #fff;
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.cards.boxed .cards-card-body {
+  padding: 24px;
+}
+
+.cards.boxed .cards-card-body h3 {
+  margin-top: 20px;
+}
+
+.cards.carousel .cards-controls,
+.cards.boxed .cards-controls {
   display: flex;
   flex-direction: row;
   align-items: center;
   gap: 24px;
   margin-top: 32px;
 }
-.cards.carousel .cards-controls[hidden], .cards.boxed .cards-controls[hidden] { display: none; }
 
-/* carousel adds 44px of in-viewport track padding below the cards (for the
-   hover scrim); trim the controls' own top margin so the total cards→controls
-   gap stays close to the source's ~64px rather than stacking to 76px. */
-.cards.carousel .cards-controls { margin-top: 20px; }
+.cards.carousel .cards-controls[hidden],
+.cards.boxed .cards-controls[hidden] {
+  display: none;
+}
 
-.cards .cards-counter { flex: 0 0 auto; margin: 0; font-size: 14px; color: var(--text-muted); white-space: nowrap; }
-.cards.dark .cards-counter { color: rgb(255 255 255 / 70%); }
+.cards.carousel .cards-controls {
+  margin-top: 20px;
+}
 
-.cards .cards-progress-track { flex: 1 1 auto; height: 2px; background: rgb(0 37 74 / 15%); }
-.cards.dark .cards-progress-track { background: rgb(255 255 255 / 25%); }
-.cards .cards-progress-fill { height: 100%; background: var(--heading); }
-.cards.dark .cards-progress-fill { background: #fff; }
+.cards .cards-counter {
+  flex: 0 0 auto;
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
 
-.cards .cards-nav-buttons { display: flex; flex: 0 0 auto; gap: 12px; }
+.cards.dark .cards-counter {
+  color: rgb(255 255 255 / 70%);
+}
+
+.cards .cards-progress-track {
+  flex: 1 1 auto;
+  height: 2px;
+  background: rgb(0 37 74 / 15%);
+}
+
+.cards.dark .cards-progress-track {
+  background: rgb(255 255 255 / 25%);
+}
+
+.cards .cards-progress-fill {
+  height: 100%;
+  background: var(--heading);
+}
+
+.cards.dark .cards-progress-fill {
+  background: #fff;
+}
+
+.cards .cards-nav-buttons {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 12px;
+}
 
 .cards .cards-nav {
-  width: 48px; height: 48px; border-radius: 50%; border: none; padding: 0;
-  display: flex; align-items: center; justify-content: center;
-  background: rgb(0 37 74 / 8%); color: var(--navy); cursor: pointer;
-}
-.cards .cards-nav svg { width: 8px; height: 12px; }
-.cards .cards-nav:not(:disabled):hover { background: rgb(0 37 74 / 15%); }
-.cards .cards-nav:disabled { opacity: 0.4; cursor: not-allowed; }
-
-.cards.dark .cards-nav { background: rgb(255 255 255 / 15%); color: #fff; }
-.cards.dark .cards-nav:not(:disabled):hover { background: rgb(255 255 255 / 28%); }
-
-@media (width <= 768px) {
-  .cards.carousel .cards-track > div, .cards.boxed .cards-track > div { flex-basis: 260px; }
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(0 37 74 / 8%);
+  color: var(--navy);
+  cursor: pointer;
 }
 
+.cards .cards-nav svg {
+  width: 8px;
+  height: 12px;
+}
 
-.cards.list { display: flex; flex-direction: column; gap: 24px; }
+.cards .cards-nav:not(:disabled):hover {
+  background: rgb(0 37 74 / 15%);
+}
 
-.cards.list > div {
+.cards .cards-nav:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.cards.dark .cards-nav {
+  background: rgb(255 255 255 / 15%);
+  color: #fff;
+}
+
+.cards.dark .cards-nav:not(:disabled):hover {
+  background: rgb(255 255 255 / 28%);
+}
+
+@media (width <=768px) {
+
+  .cards.carousel .cards-track>div,
+  .cards.boxed .cards-track>div {
+    flex-basis: 260px;
+  }
+}
+
+
+.cards.list {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.cards.list>div {
   display: grid;
   grid-template-columns: 1fr 2fr;
   gap: 16px;
   align-items: start;
 }
 
-.cards.list .cards-card-image { margin: 0; border-radius: 8px; overflow: hidden; }
+.cards.list .cards-card-image {
+  margin: 0;
+  border-radius: 8px;
+  overflow: hidden;
+}
 
-.cards.list .cards-eyebrow { font-size: var(--body-font-size-xxs); text-transform: capitalize; }
+.cards.list .cards-eyebrow {
+  font-size: var(--body-font-size-xxs);
+  text-transform: capitalize;
+}
 
 .cards.list .cards-card-body p:has(a) {
   margin-top: 0;
@@ -358,17 +512,22 @@
   overflow: hidden;
 }
 
-.cards.list .cards-card-body a { color: var(--text-color); font-weight: 700; }
-
-@media (width <= 480px) {
-  .cards.list > div { grid-template-columns: 166px 1fr; }
-  .cards.list .cards-card-image img { height: 188px; object-fit: cover; }
+.cards.list .cards-card-body a {
+  color: var(--text-color);
+  font-weight: 700;
 }
 
-/* ---- custom "camera-focus" cursor (erp.intuit.com CustomCursor): a floating
-   ring with two chevrons flanking a center dot that follows the pointer while
-   it's over the carousel. Element is created + positioned by cards.js and only
-   activates for fine pointers (mouse/trackpad); touch keeps the native UX. ---- */
+@media (width <=480px) {
+  .cards.list>div {
+    grid-template-columns: 166px 1fr;
+  }
+
+  .cards.list .cards-card-image img {
+    height: 188px;
+    object-fit: cover;
+  }
+}
+
 .cards-focus-cursor {
   position: fixed;
   top: 0;
@@ -390,7 +549,10 @@
   transition: opacity 0.12s linear, visibility 0.12s linear;
 }
 
-.cards-focus-cursor.is-enabled { opacity: 1; visibility: visible; }
+.cards-focus-cursor.is-enabled {
+  opacity: 1;
+  visibility: visible;
+}
 
 .cards-focus-cursor .cards-cursor-dot {
   width: 8px;
@@ -401,14 +563,23 @@
   transition: margin 0.2s ease-out;
 }
 
-/* chevrons squeeze toward the dot on press, echoing a shutter */
-.cards-focus-cursor.is-mouse-down .cards-cursor-dot { margin: 0 10px; }
+.cards-focus-cursor.is-mouse-down .cards-cursor-dot {
+  margin: 0 10px;
+}
 
-.cards-focus-cursor .cards-cursor-chevron { width: 6px; height: 10px; }
+.cards-focus-cursor .cards-cursor-chevron {
+  width: 6px;
+  height: 10px;
+}
 
 .cards.carousel .cards-viewport.cards-cursor-active,
-.cards.carousel .cards-viewport.cards-cursor-active * { cursor: none; }
+.cards.carousel .cards-viewport.cards-cursor-active * {
+  cursor: none;
+}
 
-@media (pointer: coarse), (prefers-reduced-motion: reduce) {
-  .cards-focus-cursor .cards-cursor-dot { transition: none; }
+@media (pointer: coarse),
+(prefers-reduced-motion: reduce) {
+  .cards-focus-cursor .cards-cursor-dot {
+    transition: none;
+  }
 }

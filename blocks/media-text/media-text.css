@@ -27,7 +27,7 @@
 
 .media-text .media-copy h2,
 .media-text .media-copy h3 { font-size: 34px; line-height: 1.2; font-weight: 400; color: var(--heading); margin: 0 0 18px; }
-.media-text .media-copy .media-body { font-size: 15px; line-height: 1.6; color: var(--text-muted); max-width: 34em; margin: 0 0 14px; }
+.media-text .media-copy .media-body {font-size: 15px;line-height: 1.6;max-width: 34em;margin: 0 0 14px;}
 .media-text .media-copy .button-wrapper { margin-top: 12px; }
 
 /* ---- .center (pricing "Built for the way") ---- */
