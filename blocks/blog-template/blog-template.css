@@ -399,13 +399,29 @@
      to span the full page width, as upstream does — its 3-up card grid needs
      ~1345px to give 440px cards.
 
-     `grid-row` is as load-bearing as `grid-column` here: the rails occupy
-     row 2 (JS sets `grid-row: 2 / 3`), and a full-width item with no explicit
-     row auto-places into that same row 2, landing underneath both rails and
-     overlapping them. Row 3 puts it cleanly below. */
+     Deliberately NO explicit `grid-row`: auto-placement is what puts it after
+     the article body. A full-width item needs a row where all three columns are
+     free, and the rails reserve columns 1 and 3 from row 2 to their computed end
+     (`grid-row: 2 / <rowEnd>`, set inline by tocRailRowEnd, or the `span 999`
+     fallback below), so the first row it fits in is the one after the rails end.
+
+     It used to be pinned to `grid-row: 3` on the assumption that the rails only
+     ever occupied row 2. They don't — rowEnd grows with the article — so on any
+     article with more than one prose section after the intro, row 3 was still
+     inside the rails' span and the appendix rendered *mid-article*, on top of
+     the TOC rail, with the rest of the body below it.
+
+     The `span 999` fallback shape (article with <2 TOC headings, so no inline
+     rowEnd) is exercised by three real pages — /blog/ask-the-expert/intuit-
+     enterprise-suite-gene-marks, /blog/erp/ai-native-erp-idc-info-snapshot and
+     /blog/erp/constellation-shortlist-services-erp — all of which end in this
+     appendix. It lands after the rails there because the ~999 spanned rows the
+     appendix has to clear are empty AND this grid has no `row-gap`, so they
+     collapse to zero height. Do not add `row-gap` to `.blog-article`: 999 empty
+     rows would each take the gap and push the appendix off the page. Use
+     margins on the sections instead (which is what they already do). */
   .blog-article > .blog-cards-container {
     grid-column: 1 / -1;
-    grid-row: 3;
   }
 
   /* hero pinned to row 1 (full width) — it must have an explicit row, not
@@ -612,6 +628,19 @@
     padding: 40px;
   }
 
+  /* No `.blog-hero-image` in the band — collapse to a single column so the copy
+     uses the full width instead of leaving the media column as dead space.
+
+     Two ways to get here: an article that authors no hero media at all, and one
+     whose hero media is a video-host link. In the second case the marker exists
+     only briefly — buildVideoAutoBlocks runs after buildBlogTemplate and
+     replaces the marked <p> with a `video` block, which lands in its own wrapper
+     below the copy (e.g. /blog/ask-the-expert/intuit-enterprise-suite-gene-marks).
+     Either way the band itself has no media column, which is what this matches. */
+  .blog-article .blog-hero > .default-content-wrapper:not(:has(.blog-hero-image)) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .blog-article .blog-hero .blog-byline-tag,
   .blog-article .blog-hero h1,
   .blog-article .blog-hero .blog-byline-meta {
@@ -672,6 +701,28 @@
 main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .blog-rail):has(.block) {
   background: #fff;
   padding: 0;
+}
+
+/* download-form is the one in-article block whose section band is NOT
+   decorative: it paints white copy (`.download-copy` and its <h2>/<strong>) that
+   is only legible on the navy band, so the neutralisation above renders its
+   whole left column white-on-white. Research articles carry one
+   (/blog/research/intuit-enterprise-suite-cost-savings-forrester-tei), so the
+   band has to survive.
+
+   Re-applied to the BLOCK's own wrapper rather than exempting the section: a
+   section's class list is the union of every block in it (see the note above),
+   so exempting `.download-form-container` would also un-neutralise any prose or
+   other block sharing that section — and article prose is forced to
+   `color: #000` below, i.e. black on navy. Painting the wrapper keeps the band
+   exactly as wide as the block.
+
+   The same would apply to any other block that carries its contrast on the
+   section band (.highlight.dark, .cards.dark, .logo-strip, .form.hero) if one is
+   ever authored into an article — none is today. */
+.blog-article .download-form-wrapper {
+  background: var(--navy);
+  padding: var(--section-y) 0;
 }
 
 /* Same collision, different property: blocks style their section's *heading*

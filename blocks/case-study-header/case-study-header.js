@@ -27,63 +27,7 @@
  * through its content roundtrip, so heading level is the durable signal.
  * CSS: blocks/case-study-header/case-study-header.css
  */
-import { toClassName, getMetadata } from '../../scripts/aem.js';
-
-/**
- * Autoblock: on a case-study page (template metadata = "case study") that does
- * NOT already hand-author a `.case-study-header` block, synthesize one from the
- * page's <h1>, the hero <picture>, and the author/date metadata — matching the
- * hand-authored block on pages like /blog/case-study/aprio-… — then decorate it.
- * Migrated case studies previously showed no eyebrow/byline because the
- * blog-template autoblock only fires for template="blog article".
- * @param {Element} main the page's <main>
- */
-export function buildCaseStudyHeader(main) {
-  // mirrors blog-template.js's main.classList.add('blog-article') — lets
-  // shared in-article overrides (blog-template.css) target both templates
-  // via `main:is(.blog-article, .case-study)`. Applied even when the header
-  // itself is hand-authored (early return below), since it's independent.
-  main.classList.add('case-study');
-
-  // already authored — nothing to do
-  if (main.querySelector('.case-study-header')) return;
-
-  const h1 = main.querySelector('h1');
-  if (!h1) return;
-
-  // hero picture: the first picture at/after the h1 (authored right after it)
-  const wrapper = h1.closest('div') || main;
-  const pic = wrapper.querySelector('picture')
-    || h1.parentElement?.querySelector('picture')
-    || main.querySelector('picture');
-
-  const author = (getMetadata('author') || '').trim();
-  const date = (getMetadata('date') || '').trim();
-
-  const cell = (html) => `<div><div>${html}</div></div>`;
-  const eyebrowRow = cell('<p>Case study</p>');
-  const headingRow = cell(`<h1>${h1.innerHTML}</h1>`);
-  const bylineText = [author && `By ${author}`, date && `Published ${date}`]
-    .filter(Boolean).join(' \u00B7 ');
-  const bylineRow = bylineText ? cell(`<p>${bylineText}</p>`) : '';
-  const bannerRow = pic ? `<div><div>${pic.outerHTML}</div></div>` : '';
-
-  const block = document.createElement('div');
-  block.className = 'case-study-header';
-  block.innerHTML = eyebrowRow + headingRow + bylineRow + bannerRow;
-
-  // insert at the very top of the article content, then remove the originals
-  // it replaces (the standalone h1 + hero picture).
-  const firstSection = main.querySelector(':scope > div') || main;
-  firstSection.prepend(block);
-  // remove the original h1 (now duplicated inside the header) and its hero picture
-  const origPicWrap = pic ? (pic.closest('p') || pic) : null;
-  h1.remove();
-  if (origPicWrap && !block.contains(origPicWrap)) origPicWrap.remove();
-
-  // eslint-disable-next-line no-use-before-define
-  decorate(block);
-}
+import { toClassName } from '../../scripts/aem.js';
 
 function shareRow() {
   const nav = document.createElement('div');

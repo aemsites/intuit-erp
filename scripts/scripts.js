@@ -32,7 +32,7 @@ import TealiumMartech from '../plugins/tealium-martech/src/index.js';
 // are NOT pulled onto the eager critical path here. buildBlogTemplate is
 // dynamically imported in loadEager for blog pages only (see below); the full
 // video block loads lazily when a video is actually decorated.
-import { isBlogPage, isCaseStudyPage } from '../blocks/blog-template/blog-detect.js';
+import { isBlogPage, hasAuthoredCaseStudyHeader } from '../blocks/blog-template/blog-detect.js';
 import { isVideoLink } from '../blocks/video/video-info.js';
 import { isGuidePage } from '../blocks/guide-hero/guide-detect.js';
 
@@ -234,10 +234,62 @@ let buildBlogTemplate;
 // parse it. Undefined elsewhere, which is the gate in buildAutoBlocks.
 let buildGuideHeroAutoBlock;
 
-// Populated in loadEager (via dynamic import) only on case-study pages, so the
-// case-study-header module loads only where needed. Also serves as the gate in
-// buildAutoBlocks below.
-let buildCaseStudyHeader;
+// Longest the eager phase will hold the (hidden) page waiting for
+// blog-template.css before giving up and painting unstyled — see
+// resolveBlogTemplate.
+const BLOG_TEMPLATE_CSS_TIMEOUT = 2000;
+
+/**
+ * Resolves the blog autoblock's builder for a blog article page, or `undefined`
+ * for every other page — which is also what makes buildAutoBlocks skip it.
+ * Keeps the ~21KB module (and its stylesheet) off every non-blog page.
+ *
+ * Loads the stylesheet alongside the module, rather than leaving it to the
+ * autoblock's own non-blocking loadCSS, because the article layout lives there:
+ * with nothing awaiting it, a slow response let the hero paint in the unstyled
+ * single-column flow and then reflow into the band (measured at 0.33 CLS on
+ * desktop, on plain `Blog Article` pages too).
+ *
+ * Fail-open in both directions, and that part isn't optional — `body` is
+ * `display: none` until loadEager adds `appear`:
+ *  - the CSS wait is capped, since loadCSS settles only on the link's
+ *    `load`/`error` events and a request that stalls without erroring fires
+ *    neither. Past the cap, painting unstyled beats never painting.
+ *  - a rejected `import()` is swallowed, or it would propagate out of loadEager
+ *    (loadPage doesn't catch it), `appear` would never be added, and the page
+ *    would stay blank permanently.
+ *
+ * The cap is hand-rolled rather than reusing withTimeout
+ * (scripts/personalization/decision.js): that helper has to be fetched with a
+ * dynamic import first, and a fetch that stalls while acquiring the timeout
+ * mechanism re-opens the very hole the cap closes.
+ * @param {Element} main the page's <main>, before decoration
+ * @returns {Promise<Function|undefined>} buildBlogTemplate, or undefined
+ */
+async function resolveBlogTemplate(main) {
+  // Pages that author their own case-study-header own their header, so they use
+  // neither the module nor the stylesheet — skip both instead of fetching them
+  // onto the LCP path and throwing the result away.
+  if (!isBlogPage() || hasAuthoredCaseStudyHeader(main)) return undefined;
+  let cssTimer;
+  try {
+    const [mod] = await Promise.all([
+      import('../blocks/blog-template/blog-template.js'),
+      Promise.race([
+        loadCSS(`${window.hlx.codeBasePath}/blocks/blog-template/blog-template.css`)
+          .catch(() => {}),
+        new Promise((resolve) => {
+          cssTimer = window.setTimeout(resolve, BLOG_TEMPLATE_CSS_TIMEOUT);
+        }),
+      ]),
+    ]);
+    return mod.buildBlogTemplate;
+  } catch (e) {
+    return undefined; // render the article unstyled rather than not at all
+  } finally {
+    window.clearTimeout(cssTimer);
+  }
+}
 
 /**
  * Builds all synthetic blocks in a container element.
@@ -259,11 +311,6 @@ function buildAutoBlocks(main) {
     // fragment would otherwise have its own first section wrapped in a second
     // card (verified: 2 `.guide-hero` blocks, the fragment's heading inside one).
     if (buildGuideHeroAutoBlock && main.isConnected) buildGuideHeroAutoBlock(main);
-    // Case-study autoblock — synthesize the case-study-header (eyebrow + byline +
-    // banner) from metadata when it isn't hand-authored, so migrated case studies
-    // show their author. isConnected guard mirrors buildBlogTemplate (skip the
-    // detached fragment main).
-    if (buildCaseStudyHeader && main.isConnected) buildCaseStudyHeader(main);
     // auto load `*/fragments/*` references
     const fragments = [...main.querySelectorAll('a[href*="/fragments/"]')].filter((f) => !f.closest('.fragment'));
     if (fragments.length > 0) {
@@ -500,18 +547,7 @@ async function loadEager(doc) {
   }
   const main = doc.querySelector('main');
   if (main) {
-    // Blog article pages need buildBlogTemplate during eager decoration; import
-    // it here — only for those pages — so buildAutoBlocks can call it
-    // synchronously while every other page skips the ~21KB module entirely.
-    if (isBlogPage()) {
-      ({ buildBlogTemplate } = await import('../blocks/blog-template/blog-template.js'));
-    } else if (isCaseStudyPage()) {
-      ({ buildCaseStudyHeader } = await import('../blocks/case-study-header/case-study-header.js'));
-      // case-study pages share the same in-article testimonial pull-quote
-      // treatment as blog articles; that override lives in blog-template.css,
-      // which only blog pages otherwise load.
-      loadCSS(`${window.hlx.codeBasePath}/blocks/blog-template/blog-template.css`);
-    }
+    buildBlogTemplate = await resolveBlogTemplate(main);
     // Guide landing pages: same shape, so the module is fetched only for the
     // pages that use it. Gated on the `Guide` template alone — see guide-detect.js
     // for why the path is deliberately not part of the test.

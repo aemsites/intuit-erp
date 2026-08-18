@@ -844,16 +844,6 @@ main:has(.event-cards)>.section:first-of-type p {
   color: var(--text-muted);
 }
 
-body.case-study main .default-content-wrapper,
-body.case-study main .stat-band {
-  max-width: 46em;
-  margin: 0 auto;
-}
-
-body.case-study main .stat-band {
-  margin-top: 1rem;
-}
-
 body.author main .default-content-wrapper {
   display: flex;
   flex-direction: column;

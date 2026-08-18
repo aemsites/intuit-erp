@@ -1,7 +1,10 @@
-import { describe, it, expect, vi } from 'vitest';
+import {
+  describe, it, expect, vi, afterEach,
+} from 'vitest';
 import {
   buildToc, buildByline, buildEyebrow, buildBylineMeta,
   buildShare, relocateShare, tocRailRowEnd, isBlogPage,
+  buildBlogTemplate,
 } from '../blocks/blog-template/blog-template.js';
 
 describe('buildToc', () => {
@@ -206,6 +209,18 @@ describe('isBlogPage', () => {
     expect(isBlogPage()).toBe(true);
   });
 
+  it('is true for the other article templates — Case Study and Research', () => {
+    setPage('/blog/case-study/fire-and-ice-intuit-enterprise-suite-review', 'Case Study');
+    expect(isBlogPage()).toBe(true);
+    setPage('/blog/research/business-solutions-survey-2024', 'Research');
+    expect(isBlogPage()).toBe(true);
+  });
+
+  it('is false for a Guide — upstream gives it its own landing-page hero, not the article layout', () => {
+    setPage('/blog/guide/construction-accounting-erp', 'Guide');
+    expect(isBlogPage()).toBe(false);
+  });
+
   it('is false for a Category listing page', () => {
     setPage('/blog/acquisition-and-mergers', 'Category');
     expect(isBlogPage()).toBe(false);
@@ -213,6 +228,17 @@ describe('isBlogPage', () => {
 
   it('is false for an Author listing page', () => {
     setPage('/blog/author/gene-marks', 'Author');
+    expect(isBlogPage()).toBe(false);
+  });
+
+  it('is false for a Search or unknown template even on an article-shaped path', () => {
+    // deliberately article-shaped paths (>=2 segments, not /author/*) so the
+    // template value is what decides — a single-segment path like /blog/search
+    // would return false via the path fallback whatever the template said, and
+    // would keep passing if `search` were ever added to the article list.
+    setPage('/blog/search/results', 'Search');
+    expect(isBlogPage()).toBe(false);
+    setPage('/blog/case-study/some-slug', 'Landing Page');
     expect(isBlogPage()).toBe(false);
   });
 
@@ -228,5 +254,118 @@ describe('isBlogPage', () => {
     expect(isBlogPage()).toBe(false); // single-segment category
     setPage('/blog/author/gene-marks', null);
     expect(isBlogPage()).toBe(false); // author listing
+  });
+});
+
+describe('buildBlogTemplate', () => {
+  const mainWith = (html) => {
+    const main = document.createElement('main');
+    main.innerHTML = html;
+    document.body.append(main);
+    return main;
+  };
+
+  afterEach(() => {
+    document.querySelectorAll('main').forEach((m) => m.remove());
+    document.head.innerHTML = '';
+    delete window.hlx;
+    delete window.matchMedia;
+  });
+
+  it('leaves a page that authors a case-study-header completely undecorated', () => {
+    // The three net-new case studies render their own centred banner. Decorating
+    // them as well would double up, so nothing here may run — in particular the
+    // `blog-article` class, which is what tells the article CSS to take over.
+    const main = mainWith('<div><div class="case-study-header"><div><div>Case study</div></div></div></div>');
+    const before = main.innerHTML;
+
+    buildBlogTemplate(main);
+
+    expect(main.classList.contains('blog-article')).toBe(false);
+    expect(main.querySelector('.blog-hero')).toBeNull();
+    expect(main.querySelector('.blog-toc-rail')).toBeNull();
+    expect(main.querySelector('.blog-rail')).toBeNull();
+    expect(main.innerHTML).toBe(before);
+  });
+
+  it('decorates an ordinary article — the guard above is what makes the difference', () => {
+    window.hlx = { codeBasePath: '' };
+    window.matchMedia = () => ({ matches: false, addEventListener: () => {} });
+    const main = mainWith(`
+      <div><h1>Headline</h1><p><picture><img src="hero.jpg"></picture></p></div>
+      <div><h2>One</h2><p>a</p></div>
+      <div><h2>Two</h2><p>b</p></div>
+    `);
+
+    buildBlogTemplate(main);
+
+    expect(main.classList.contains('blog-article')).toBe(true);
+    expect(main.querySelector('.blog-hero')).toBeTruthy();
+    expect(main.querySelector('.blog-toc-rail')).toBeTruthy();
+    // right-rail fragment link, which the fragment autoblock then picks up
+    expect(main.querySelector('.blog-rail a').getAttribute('href')).toBe('/fragments/right-rail');
+  });
+
+  it('still decorates when a case-study-header is authored below section 1', () => {
+    // The early return is scoped to section 1 so a header further down a page
+    // can't silently strip that page's hero band and rails. The 46em clamp in
+    // styles.css is scoped the same way (`main:has(> div:first-child
+    // .case-study-header)`) — if either side loses that scope the two disagree,
+    // and a full-width hero band gets clamped to a narrow column.
+    window.hlx = { codeBasePath: '' };
+    window.matchMedia = () => ({ matches: false, addEventListener: () => {} });
+    const main = mainWith(`
+      <div><h1>Headline</h1><p><picture><img src="hero.jpg"></picture></p></div>
+      <div><div class="case-study-header"><div><div>Case study</div></div></div></div>
+      <div><h2>One</h2><p>a</p></div>
+      <div><h2>Two</h2><p>b</p></div>
+    `);
+
+    buildBlogTemplate(main);
+
+    expect(main.classList.contains('blog-article')).toBe(true);
+    expect(main.querySelector('.blog-hero')).toBeTruthy();
+  });
+
+  it('leaves both rails without an inline grid-row when there is no TOC', () => {
+    // <2 TOC-eligible headings means tocRailRowEnd can't anchor, so no inline
+    // `grid-row` is set and the rails fall back to the stylesheet's
+    // `grid-row: 2 / span 999`. The full-width cards appendix has no explicit
+    // row either, so it auto-places after that span — which only lands
+    // correctly because the ~999 spanned rows are empty and `.blog-article`
+    // has no `row-gap`. Three live pages render this shape (see the comment on
+    // `.blog-article > .blog-cards-container` in blog-template.css), so pin the
+    // contract here: no TOC rail, and no inline row on the right rail.
+    window.hlx = { codeBasePath: '' };
+    window.matchMedia = () => ({ matches: false, addEventListener: () => {} });
+    const main = mainWith(`
+      <div><h1>Headline</h1><p><picture><img src="hero.jpg"></picture></p></div>
+      <div><p>intro prose, no headings</p></div>
+      <div><h2>Recommended for you</h2><div class="blog-cards"></div></div>
+    `);
+
+    buildBlogTemplate(main);
+
+    expect(main.classList.contains('blog-article')).toBe(true);
+    expect(main.querySelector('.blog-toc-rail')).toBeNull();
+    expect(main.querySelector('.blog-rail').style.gridRow).toBe('');
+  });
+
+  it('bounds both rails to the last TOC section when there is a TOC', () => {
+    window.hlx = { codeBasePath: '' };
+    window.matchMedia = () => ({ matches: false, addEventListener: () => {} });
+    const main = mainWith(`
+      <div><h1>Headline</h1><p><picture><img src="hero.jpg"></picture></p></div>
+      <div><h2>One</h2><p>a</p></div>
+      <div><h2>Two</h2><p>b</p></div>
+      <div><h2>Recommended for you</h2><div class="blog-cards"></div></div>
+    `);
+
+    buildBlogTemplate(main);
+
+    // hero = row 1, so the last TOC section (index 2) ends at line 4 — the
+    // appendix then auto-places at row 4, after the rails rather than inside them
+    expect(main.querySelector('.blog-toc-rail').style.gridRow).toBe('2 / 4');
+    expect(main.querySelector('.blog-rail').style.gridRow).toBe('2 / 4');
   });
 });

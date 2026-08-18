@@ -1,8 +1,12 @@
 /**
  * blog-template — auto-block for /blog/* article pages (case study / research /
  * standard post). Authors write only the Title + hero image (section 1) and the
- * prose (section 2+). This block, invoked from scripts.js's buildAutoBlocks BEFORE
- * the fragment-link collection runs, renders everything else from page metadata:
+ * prose (section 2+). Which templates land here is decided by isBlogPage
+ * (./blog-detect.js) — `Blog Article`, `Case Study` and `Research`, which all
+ * get the identical treatment below.
+ *
+ * Invoked from scripts.js's buildAutoBlocks BEFORE the fragment-link collection
+ * runs, it renders everything the author didn't write from page metadata:
  *
  *   - a `.blog-hero` band in section 1: tag eyebrow before the H1, a byline meta
  *     (author link / published + updated dates) after it, hero image last —
@@ -38,6 +42,7 @@
  * CSS: blocks/blog-template/blog-template.css
  */
 import { getMetadata, toClassName, loadCSS } from '../../scripts/aem.js';
+import { hasAuthoredCaseStudyHeader } from './blog-detect.js';
 
 /**
  * Selects the article's main H2 sections only — excludes headings nested
@@ -387,10 +392,33 @@ function wireToc(tocWrap, nav, headings, mq) {
 
 /**
  * Auto-block orchestrator. Called from scripts.js buildAutoBlocks() when
- * isBlogPage() is true, BEFORE the fragment-link collection runs.
+ * isBlogPage() is true, BEFORE the fragment-link collection runs. Every article
+ * template it runs for (`Blog Article`, `Case Study`, `Research`) gets the same
+ * hero band + TOC + rails treatment.
  * @param {Element} main the page's <main>
  */
 export function buildBlogTemplate(main) {
+  // Three case studies author a `case-study-header` block in section 1 (its own
+  // centred banner, share row and inline TOC). Bail out so those pages aren't
+  // decorated twice — the hero band would wrap the banner. The migrated case
+  // studies, which have a bare H1 + hero image, fall through and get the band
+  // that upstream uses.
+  //
+  // Only ONE of the three is genuinely net-new (steves-construction-company; no
+  // erp.intuit.com counterpart under any slug). The other two —
+  // aprio-intuit-enterprise-suite and sparq-partners — ARE migrated pages whose
+  // upstream counterparts render this article band, so the authored block is a
+  // content discrepancy on those two, tracked separately; it is not this
+  // function's job to override an authored block to paper over it. Overriding
+  // would also strip the header from the one page that legitimately owns it.
+  // (The validation report files all three under `newPages`, which is why they
+  // were previously believed net-new — but that run mapped against the migrated
+  // sitemap with `sourceSite: null`, and erp.intuit.com's own sitemap.xml omits
+  // aprio and sparq even though both are live and linked from
+  // /blog/case-study/. Verified with a real browser: both return HTTP 200 with
+  // the eyebrow + headline-left + image-right band.)
+  if (hasAuthoredCaseStudyHeader(main)) return;
+
   main.classList.add('blog-article');
 
   // 0. load this autoblock's stylesheet — it is invoked directly (not via the

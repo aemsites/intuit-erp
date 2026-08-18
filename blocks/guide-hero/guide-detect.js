@@ -18,10 +18,10 @@ import { getMetadata } from '../../scripts/aem.js';
  * a path gate leaves the very document authors copy a new guide FROM rendering as
  * the bare headline over an unconstrained image that issue #423 filed.
  *
- * isCaseStudyPage() (blog-detect.js) sets the precedent: template alone, no path.
- * isBlogPage()'s /blog/ prefix is load-bearing for a different reason — it has a
- * path-shape fallback for articles that carry no template metadata, which this
- * has no need of.
+ * isBlogPage()'s /blog/ prefix is not a counter-example: it is load-bearing for a
+ * different reason — that predicate has a path-shape fallback for articles which
+ * carry no template metadata, and the prefix bounds the fallback. This has no
+ * fallback and so no need of it.
  * @returns {boolean}
  */
 // eslint-disable-next-line import/prefer-default-export
