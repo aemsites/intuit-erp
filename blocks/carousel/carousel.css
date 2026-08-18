@@ -412,7 +412,7 @@
    photo is a fixed square (not stretched to the card height), the quote sits on
    the leading edge, and a blue opening-quote glyph leads the copy. */
 .section.carousel-container:has(.carousel.testimonial.spotlight) {
-  background: #c2f5ff;
+  background: var(--agave);
   padding: var(--section-y) 0;
 }
 
@@ -435,15 +435,17 @@
   border-radius: 8px;
 }
 
-/* the leading blue opening-quote glyph */
+/* the leading opening-quote glyph — reuse the shared testimonial quote asset
+   (/media/quote-icon.svg), recoloured to brand blue with the same background +
+   filter the testimonial block uses, rather than a text glyph. */
 .carousel.testimonial.spotlight .testi-body::before {
-  content: "\201C";
+  content: "";
   display: block;
-  color: #236cff;
-  font-size: 56px;
-  line-height: 0.7;
-  font-weight: 700;
-  margin-bottom: 12px;
+  width: 44px;
+  height: 30px;
+  margin-bottom: 16px;
+  background: url("/media/quote-icon.svg") left center / contain no-repeat;
+  filter: invert(60%) sepia(100%) saturate(7500%) hue-rotate(220deg) brightness(110%) contrast(100%);
 }
 
 .carousel.testimonial.spotlight .testi-attr { color: rgb(33 38 42 / 80%); }
@@ -568,8 +570,9 @@
 }
 
 @media (width >= 1024px) {
-  /* quote leads on the left, square photo trails on the right */
-  .carousel.testimonial.spotlight .carousel-slide { flex-direction: row-reverse; align-items: center; }
+  /* quote leads on the left (pinned to the container edge), square photo trails on
+     the right, with the free space between them — not the quote crowding the photo */
+  .carousel.testimonial.spotlight .carousel-slide { flex-direction: row-reverse; align-items: center; justify-content: space-between; }
 
   .carousel.testimonial.spotlight { --testi-quote: 32px; --testi-quote-lh: 41.6px; }
 
@@ -586,7 +589,9 @@
     height: auto;
   }
 
-  .carousel.testimonial.spotlight .testi-body { flex: 1 1 0; padding: 0 60px; }
+  /* constrain the quote to a readable column at the leading edge (prod ~496px),
+     so `space-between` leaves the gap between it and the photo */
+  .carousel.testimonial.spotlight .testi-body { flex: 0 1 auto; max-width: 560px; padding: 0; }
 
   /* the neighbouring customer photos peek behind the active card, offset and
      dimmed — their copy stays hidden so only the portraits show */
@@ -632,6 +637,20 @@
     background: rgb(255 255 255 / 88%);
     box-shadow: 0 6px 24px rgb(0 0 0 / 12%);
   }
+}
+
+/* mobile: match erp.intuit.com — the quote copy is LEFT-aligned below the photo
+   (not centred), and the default control sizes make the pill wider than the
+   viewport (horizontal overflow), so shrink the arrows/thumbs/gaps to fit. */
+@media (width <= 768px) {
+  .carousel.testimonial.spotlight .testi-body { text-align: left; padding: 32px 20px 8px; }
+
+  .carousel.testimonial.spotlight .carousel-controls { gap: 12px; padding: 10px 12px 16px; max-width: 100%; }
+
+  .carousel.testimonial.spotlight .carousel-prev,
+  .carousel.testimonial.spotlight .carousel-next { width: 44px; height: 44px; font-size: 18px; }
+  .carousel.testimonial.spotlight .carousel-thumbs { gap: 6px; }
+  .carousel.testimonial.spotlight .carousel-thumb { width: 40px; height: 40px; }
 }
 
 @media (width >= 1200px) {

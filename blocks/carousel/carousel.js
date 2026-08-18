@@ -324,10 +324,15 @@ export default function decorate(block) {
       // .spotlight peeks the neighbouring customer photos behind the active
       // card; mark them so CSS can offset each one (with wrap-around)
       if (isSpotlight) {
+        // Peeking needs 3+ distinct slides. With 1–2, plain modulo wrap makes
+        // prevIdx/nextIdx collide with the active slide (1 slide) or with each
+        // other (2 slides), so the peek styling would blur/offset the only
+        // visible testimonial. Disable peeking below 3 slides.
+        const peek = slides.length > 2;
         const prevIdx = (clamped - 1 + slides.length) % slides.length;
         const nextIdx = (clamped + 1) % slides.length;
-        slide.classList.toggle('is-prev', i === prevIdx);
-        slide.classList.toggle('is-next', i === nextIdx);
+        slide.classList.toggle('is-prev', peek && i === prevIdx);
+        slide.classList.toggle('is-next', peek && i === nextIdx);
       }
       slide.setAttribute('aria-hidden', active ? 'false' : 'true');
       // keep focusable content inside off-screen slides out of the tab
