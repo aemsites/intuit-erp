@@ -1,7 +1,7 @@
 /* Embed Block — aligned with the AEM Block Collection embed block, extended for
    Datawrapper charts. Datawrapper reproduces production's `.widget-container`
-   treatment (740px prose cap, 2.5rem side padding, centered) so migrated pages
-   render identically; generic providers get the collection's centered 16:9 box. */
+   exactly (max-width 740px, 2.5rem side padding, centered → a 660px iframe that
+   matches the article body-text width), so migrated pages render identically. */
 .embed {
   width: unset;
   text-align: center;
@@ -14,21 +14,30 @@
   justify-content: center;
 }
 
-/* Datawrapper: match prod's authored `.widget-container` exactly. */
+/* place the embed in the prose content column of the blog-article/case-study grid */
+@media (min-width: 900px) {
+  .blog-article > .embed-wrapper,
+  .case-study > .embed-wrapper {
+    grid-column: 2;
+  }
+}
+
 .embed.embed-datawrapper {
   max-width: none;
-  margin: 0;
+  margin: 2rem 0;
+  text-align: left;
 }
 
 .embed.embed-datawrapper > div,
-.embed .widget-container {
+.embed.embed-datawrapper .widget-container {
   display: block;
-  max-width: 740px;
-  padding: 0 2.5rem;
-  margin: 2rem auto;
+  width: 100%;
+  max-width: none;
+  padding: 0;
+  margin: 0;
 }
 
-.embed .widget-container iframe {
+.embed.embed-datawrapper .widget-container iframe {
   display: block;
   width: 0;
   min-width: 100%;
