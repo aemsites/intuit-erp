@@ -1,5 +1,8 @@
 /* embed — responsive external embed (Datawrapper charts, etc.), matching prod's
-   `.widget-container` treatment: centered, column-width-capped. */
+   `.widget-container` treatment: capped at the article prose width (740px),
+   centered, with the chart iframe filling the container. Prod authors this as
+   a raw code block with `max-width:740px; padding:0 2.5rem; margin:auto`; we
+   reproduce it so migrated pages render identically. */
 .embed .widget-container {
   max-width: 740px;
   padding: 0 2.5rem;
@@ -8,4 +11,7 @@
 
 .embed .widget-container iframe {
   display: block;
+  width: 0;
+  min-width: 100%;
+  border: none;
 }
