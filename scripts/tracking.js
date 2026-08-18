@@ -10,16 +10,84 @@
  *    block (covers the window before the sheet fetch resolves).
  *  - applyTrackingSheet(): fetch the authored sheet and re-stamp overrides.
  *
- * Everything the runtime needs lives here (sheet, resolve, stamp, orchestration).
- * The only split-out is ./tracking/derive.js — ALSO imported by the Node dev
- * tools (scripts/diff/extract-tracking.mjs + the parity harness), a genuine
- * cross-context reuse. See CLICK-TRACKING.md ("The EDS authoring model").
+ * Everything the runtime needs lives here in one file (derive, sheet, resolve,
+ * stamp, orchestration). The Node dev tools import the derive helpers from here
+ * too — scripts/ is marked `type: module` so Node loads this ESM directly. See
+ * CLICK-TRACKING.md ("The EDS authoring model").
  */
-
-import { deriveBaseline, blockAccessPoint } from './tracking/derive.js';
 
 // The block-variant class prefix that opts a block into click tracking.
 export const PREFIX = 'tracking-';
+
+// ===========================================================================
+// Derive — the ~75% of a CTA's payload derivable from element + block context
+// (no authoring). Exported so the Node dev tools reuse the exact same logic.
+// ===========================================================================
+
+const UI_ACTION = 'clicked';
+const ACTION = 'interacted';
+const DEFAULT_OBJECT = 'content';
+
+/**
+ * Slugify a visible label the way the live `link_name` reads:
+ * "Schedule a call" -> "schedule-a-call".
+ * @param {string} label
+ * @returns {string}
+ */
+export function slug(label) {
+  return (label || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+/**
+ * `ui_object` from the element: styled CTAs report "button", a plain anchor "link".
+ * @param {string} tagName uppercase tag (e.g. 'A', 'BUTTON')
+ * @param {boolean} isButtonStyled whether an anchor is decorated as a button
+ * @returns {string}
+ */
+export function uiObject(tagName, isButtonStyled) {
+  if (tagName === 'BUTTON') return 'button';
+  if (tagName === 'A') return isButtonStyled ? 'button' : 'link';
+  return 'button';
+}
+
+/**
+ * The block's own access-point segment, defaulted from its block name: a "cta"
+ * block -> "cta_block". Hyphens become underscores (the tracker's trail rule).
+ * @param {string} blockName
+ * @returns {string}
+ */
+export function blockAccessPoint(blockName) {
+  if (!blockName) return '';
+  return `${blockName.replace(/-/g, '_')}_block`;
+}
+
+/**
+ * Derived baseline for one CTA (map keyed by tracking-field name), plus `anchor`
+ * (the sacrificial data-tracking value) and `custom-properties` (merged later).
+ * @param {{tagName: string, label: string, blockName: string, isButtonStyled?: boolean}} ctx
+ * @returns {Record<string, unknown>}
+ */
+export function deriveBaseline({
+  tagName, label, blockName, isButtonStyled = true,
+}) {
+  const kind = uiObject(tagName, isButtonStyled);
+  const detail = (label || '').trim();
+  const custom = {};
+  if (detail) custom.link_name = `${kind}-${slug(detail)}`;
+  return {
+    object: DEFAULT_OBJECT,
+    'ui-object': kind,
+    'ui-object-detail': detail,
+    'ui-action': UI_ACTION,
+    action: ACTION,
+    'access-point': blockAccessPoint(blockName),
+    anchor: kind,
+    'custom-properties': custom,
+  };
+}
 
 // ===========================================================================
 // Sheet — the authored residue + overrides.
