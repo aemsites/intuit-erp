@@ -448,6 +448,75 @@
 
 .carousel.testimonial.spotlight .testi-attr { color: rgb(33 38 42 / 80%); }
 
+/* thumbnail-avatar controls: a light pill of customer photos + an "N of N"
+   counter between the arrows, replacing the default dot strip (built in the JS
+   for .spotlight). */
+.carousel.testimonial.spotlight .carousel-controls {
+  gap: 14px;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  margin: 32px auto 0;
+  padding: 8px 12px;
+  background: rgb(255 255 255 / 55%);
+  border-radius: 999px;
+}
+
+.carousel.testimonial.spotlight .carousel-prev { order: 1; }
+.carousel.testimonial.spotlight .carousel-thumbs { order: 2; display: flex; gap: 8px; }
+.carousel.testimonial.spotlight .carousel-counter { order: 3; }
+.carousel.testimonial.spotlight .carousel-next { order: 4; }
+
+.carousel.testimonial.spotlight .carousel-thumb {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  background: none;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.carousel.testimonial.spotlight .carousel-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.carousel.testimonial.spotlight .carousel-thumb.is-active { border-color: var(--navy); }
+
+.carousel.testimonial.spotlight .carousel-counter {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--navy);
+  white-space: nowrap;
+}
+
+/* the source's arrows: a light outlined back, a solid navy forward */
+.carousel.testimonial.spotlight .carousel-prev,
+.carousel.testimonial.spotlight .carousel-next {
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgb(0 0 0 / 15%);
+  background: #fff;
+  color: var(--navy);
+}
+
+.carousel.testimonial.spotlight .carousel-prev:hover:not(:disabled) { background: #eef4f6; }
+
+.carousel.testimonial.spotlight .carousel-next {
+  border-color: var(--navy);
+  background: var(--navy);
+  color: #fff;
+}
+
+.carousel.testimonial.spotlight .carousel-next:hover:not(:disabled) { background: var(--navy-hover); }
+
 @media (width >= 1024px) {
   /* quote leads on the left, square photo trails on the right */
   .carousel.testimonial.spotlight .carousel-slide { flex-direction: row-reverse; align-items: center; }

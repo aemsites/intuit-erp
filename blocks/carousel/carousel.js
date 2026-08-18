@@ -43,6 +43,30 @@ function buildDot(index) {
 }
 
 /**
+ * A navigation control that shows the slide's own customer photo as a circular
+ * avatar (the `.spotlight` testimonial's thumbnail strip). Falls back to a plain
+ * dot-style button when a slide has no image. `slide` is already normalised, so
+ * its portrait lives at `.testi-media img`.
+ * @param {Element} slide a normalised `.carousel-slide`
+ * @param {number} index the slide's position
+ */
+function buildThumb(slide, index) {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'carousel-thumb';
+  btn.setAttribute('aria-label', `Go to slide ${index + 1}`);
+  const src = slide.querySelector('img')?.getAttribute('src');
+  if (src) {
+    const img = document.createElement('img');
+    img.src = src;
+    img.alt = '';
+    img.loading = 'lazy';
+    btn.append(img);
+  }
+  return btn;
+}
+
+/**
  * `.feature` slides author the pull-quote and its attribution as one string,
  * separated by an em dash: `“…quote…” — Name, Role, Company`. The source
  * styles those as two distinct blocks (40px quote, 16px attribution), so split
@@ -220,6 +244,9 @@ export default function decorate(block) {
 
   const isFeature = block.classList.contains('feature');
   const isTestimonial = block.classList.contains('testimonial');
+  // .spotlight swaps the dot strip for a row of customer-photo thumbnails plus
+  // an "N of N" counter, matching erp.intuit.com's C14 testimonial controls
+  const isSpotlight = isTestimonial && block.classList.contains('spotlight');
   let hasTitle = false;
 
   slides.forEach((slide, i) => {
@@ -244,14 +271,22 @@ export default function decorate(block) {
   const prevBtn = buildArrow('prev', 'Previous slide', '‹');
   const nextBtn = buildArrow('next', 'Next slide', '›');
 
+  // .spotlight navigates with photo thumbnails + a counter; every other variant
+  // uses the dot strip. Only one set is built, so goTo below updates whichever
+  // exists (the other stays an empty array / null).
   const dotsWrap = document.createElement('div');
-  dotsWrap.className = 'carousel-dots';
-  const dots = slides.map((_, i) => buildDot(i));
+  dotsWrap.className = isSpotlight ? 'carousel-thumbs' : 'carousel-dots';
+  const dots = isSpotlight
+    ? slides.map((slide, i) => buildThumb(slide, i))
+    : slides.map((_, i) => buildDot(i));
   dotsWrap.append(...dots);
+
+  const counter = isSpotlight ? document.createElement('p') : null;
+  if (counter) counter.className = 'carousel-counter';
 
   const controls = document.createElement('div');
   controls.className = 'carousel-controls';
-  controls.append(prevBtn, dotsWrap, nextBtn);
+  controls.append(prevBtn, dotsWrap, ...(counter ? [counter] : []), nextBtn);
 
   block.setAttribute('role', 'region');
   block.setAttribute('aria-roledescription', 'carousel');
@@ -289,6 +324,7 @@ export default function decorate(block) {
       dot.classList.toggle('is-active', active);
       dot.setAttribute('aria-current', active ? 'true' : 'false');
     });
+    if (counter) counter.textContent = `${clamped + 1} of ${slides.length}`;
     applyOffset();
     prevBtn.disabled = clamped === 0;
     nextBtn.disabled = clamped === slides.length - 1;
