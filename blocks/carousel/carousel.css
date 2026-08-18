@@ -452,12 +452,14 @@
    counter between the arrows, replacing the default dot strip (built in the JS
    for .spotlight). */
 .carousel.testimonial.spotlight .carousel-controls {
-  gap: 14px;
+  gap: 18px;
   align-items: center;
   justify-content: center;
   width: fit-content;
   margin: 32px auto 0;
-  padding: 8px 12px;
+
+  /* extra bottom padding leaves room for the active-photo dot */
+  padding: 12px 16px 18px;
   background: rgb(255 255 255 / 55%);
   border-radius: 999px;
 }
@@ -468,25 +470,35 @@
 .carousel.testimonial.spotlight .carousel-next { order: 4; }
 
 .carousel.testimonial.spotlight .carousel-thumb {
-  width: 44px;
-  height: 44px;
+  position: relative;
+  width: 48px;
+  height: 48px;
   padding: 0;
-  border: 2px solid transparent;
-  border-radius: 50%;
+  border: 0;
   background: none;
-  overflow: hidden;
   cursor: pointer;
-  transition: border-color 0.2s ease;
 }
 
 .carousel.testimonial.spotlight .carousel-thumb img {
   display: block;
   width: 100%;
   height: 100%;
+  border-radius: 50%;
   object-fit: cover;
 }
 
-.carousel.testimonial.spotlight .carousel-thumb.is-active { border-color: var(--navy); }
+/* the active photo is marked by a small navy dot below it, not a ring */
+.carousel.testimonial.spotlight .carousel-thumb.is-active::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -9px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--navy);
+  transform: translateX(-50%);
+}
 
 .carousel.testimonial.spotlight .carousel-counter {
   margin: 0;
@@ -500,11 +512,12 @@
 /* the source's arrows: a light outlined back, a solid navy forward */
 .carousel.testimonial.spotlight .carousel-prev,
 .carousel.testimonial.spotlight .carousel-next {
-  width: 44px;
-  height: 44px;
+  width: 52px;
+  height: 52px;
   border: 1px solid rgb(0 0 0 / 15%);
   background: #fff;
   color: var(--navy);
+  font-size: 22px;
 }
 
 .carousel.testimonial.spotlight .carousel-prev:hover:not(:disabled) { background: #eef4f6; }
@@ -588,15 +601,15 @@
   .carousel.testimonial.spotlight .carousel-slide.is-next .testi-body { opacity: 0; }
 
   .carousel.testimonial.spotlight .carousel-slide.is-prev .testi-media {
-    transform: translate(-52px, 40px) scale(0.94);
-    opacity: 0.7;
-    filter: blur(3px);
+    transform: translate(-64px, 52px);
+    opacity: 0.85;
+    filter: blur(5px);
   }
 
   .carousel.testimonial.spotlight .carousel-slide.is-next .testi-media {
-    transform: translate(52px, -40px) scale(0.94);
-    opacity: 0.7;
-    filter: blur(3px);
+    transform: translate(64px, -52px);
+    opacity: 0.85;
+    filter: blur(5px);
   }
 
   /* the control pill overlaps the bottom of the photo (centred on it) rather
