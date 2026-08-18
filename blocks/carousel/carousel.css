@@ -605,16 +605,16 @@
     opacity: 0.85;
     filter: blur(5px);
 
-    /* the inner edge dissolves toward the active card (a soft fade, not a hard
-       cut) so only the outer part of the neighbour photo reads */
-    mask-image: linear-gradient(to right, #000 42%, transparent 88%);
+    /* only the outer ~half of the neighbour photo reads, its inner edge
+       dissolving toward the active card (a soft vertical fade, not a hard cut) */
+    mask-image: linear-gradient(to right, #000 28%, transparent 56%);
   }
 
   .carousel.testimonial.spotlight .carousel-slide.is-next .testi-media {
     transform: translate(56px, -44px);
     opacity: 0.85;
     filter: blur(5px);
-    mask-image: linear-gradient(to left, #000 42%, transparent 88%);
+    mask-image: linear-gradient(to left, #000 28%, transparent 56%);
   }
 
   /* the control pill overlaps the bottom of the photo (centred on it) rather
