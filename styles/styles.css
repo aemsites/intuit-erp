@@ -506,6 +506,24 @@ main .section.center>div.default-content-wrapper {
   text-align: center;
 }
 
+main > .section.spacer-top-s { margin-top: 0.25rem; }
+main > .section.spacer-top-m { margin-top: 0.5rem; }
+main > .section.spacer-top-l { margin-top: 1rem; }
+main > .section.spacer-top-xl { margin-top: 2rem; }
+main > .section.spacer-bottom-s { margin-bottom: 0.25rem; }
+main > .section.spacer-bottom-m { margin-bottom: 0.5rem; }
+main > .section.spacer-bottom-l { margin-bottom: 1rem; }
+main > .section.spacer-bottom-xl { margin-bottom: 2rem; }
+
+main > .section .block.spacer-top-s { margin-top: 0.25rem; }
+main > .section .block.spacer-top-m { margin-top: 0.5rem; }
+main > .section .block.spacer-top-l { margin-top: 1rem; }
+main > .section .block.spacer-top-xl { margin-top: 2rem; }
+main > .section .block.spacer-bottom-s { margin-bottom: 0.25rem; }
+main > .section .block.spacer-bottom-m { margin-bottom: 0.5rem; }
+main > .section .block.spacer-bottom-l { margin-bottom: 1rem; }
+main > .section .block.spacer-bottom-xl { margin-bottom: 2rem; }
+
 /* navy — full-bleed dark band background only. Combine with Section
    Metadata "Style: center" (main .section.center>div, above) for the
    centered-copy layout used on production's dark CTA bands — this rule
