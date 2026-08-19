@@ -9,6 +9,8 @@ import {
   clearSectionTag,
   setPageExperiment,
   clearPageExperiment,
+  setPagePersonalization,
+  clearPagePersonalization,
   buildFormData,
 } from './experience.js';
 import pickFragment from './picker.js';
@@ -232,6 +234,38 @@ function pageForm(target) {
   ]);
 }
 
+/** Page form: whole-page personalization placement id + page variants (no label). */
+function pagePznForm(target) {
+  const idInput = el('input', {
+    class: 'pzn-input',
+    attrs: { type: 'text', placeholder: 'Personalization ID', value: target.personalizationId || '' },
+  });
+  const err = fieldError(idInput);
+  const variants = variantList(
+    target.personalizationVariants,
+    () => pickFragment(state.sdk, { placeholder: '/fragments/pzn/…' }),
+  );
+
+  const saveBtn = el('button', {
+    class: 'pzn-save',
+    text: 'Save',
+    onclick: () => {
+      const id = idInput.value.trim();
+      if (!id) { err.show('Personalization ID is required'); return; }
+      save(setPagePersonalization(state.source, { id, variants: variants.get() }));
+    },
+  });
+
+  return el('div', { class: 'pzn-form' }, [
+    el('label', { class: 'pzn-field-label', text: 'Personalization ID' }),
+    idInput,
+    err.element,
+    el('label', { class: 'pzn-field-label', text: `Variants — fragments (max ${MAX_VARIANTS})` }),
+    variants.element,
+    saveBtn,
+  ]);
+}
+
 /* ---------------------------------------------------------------------- popup */
 
 function closePopup() {
@@ -304,31 +338,76 @@ function openSectionPopup(target, initialMode = 'exp') {
   showMode(initialMode === 'pzn' ? 'pzn' : 'exp');
 }
 
-/** Page popup: experimentation only. */
-function openPagePopup(target) {
-  closePopup();
-  const popup = el('div', { class: 'pzn-popup' }, [
-    el('div', { class: 'pzn-popup-title', text: 'Page — Experimentation' }),
-  ]);
+/** Page current-tag rows (exp + pzn) with per-mode Clear. Null when nothing is set. */
+function pageCurrent(target) {
+  const rows = [];
   if (target.experimentId) {
-    popup.appendChild(el('div', { class: 'pzn-current' }, [
-      el('div', { class: 'pzn-current-row' }, [
-        el('span', { class: 'pzn-tag pzn-tag-exp', text: pageSummary(target) }),
-        el('button', {
-          class: 'pzn-clear',
-          text: 'Clear',
-          onclick: () => save(clearPageExperiment(state.source)),
-        }),
-      ]),
+    rows.push(el('div', { class: 'pzn-current-row' }, [
+      el('span', { class: 'pzn-tag pzn-tag-exp', text: pageSummary(target) }),
+      el('button', {
+        class: 'pzn-clear',
+        text: 'Clear',
+        onclick: () => save(clearPageExperiment(state.source)),
+      }),
     ]));
   }
+  if (target.personalizationId) {
+    rows.push(el('div', { class: 'pzn-current-row' }, [
+      el('span', { class: 'pzn-tag pzn-tag-pzn', text: pagePznSummary(target) }),
+      el('button', {
+        class: 'pzn-clear',
+        text: 'Clear',
+        onclick: () => save(clearPagePersonalization(state.source)),
+      }),
+    ]));
+  }
+  return rows.length ? el('div', { class: 'pzn-current' }, rows) : null;
+}
+
+/**
+ * Page popup: experimentation + personalization. Both forms are mounted once and
+ * toggled (not rebuilt), so unsaved edits survive switching. IXP wins at runtime
+ * when a page carries both — the panel still lets an author configure each. Opens
+ * on `initialMode`.
+ */
+function openPagePopup(target, initialMode = 'exp') {
+  closePopup();
+  const forms = { exp: pageForm(target), pzn: pagePznForm(target) };
+  const body = el('div', { class: 'pzn-popup-body' }, [forms.exp, forms.pzn]);
+  const selector = el('div', { class: 'pzn-mode-select' });
+
+  const showMode = (mode) => {
+    Array.from(selector.children).forEach((btn) => {
+      btn.classList.toggle('is-active', btn.dataset.mode === mode);
+    });
+    forms.exp.style.display = mode === 'exp' ? '' : 'none';
+    forms.pzn.style.display = mode === 'pzn' ? '' : 'none';
+  };
+
+  ['exp', 'pzn'].forEach((mode) => {
+    selector.appendChild(el('button', {
+      class: 'pzn-mode-btn',
+      text: MODE_LABEL[mode],
+      attrs: { 'data-mode': mode },
+      onclick: () => showMode(mode),
+    }));
+  });
+
+  const popup = el('div', { class: 'pzn-popup' }, [
+    el('div', { class: 'pzn-popup-title', text: 'Page' }),
+  ]);
+  const current = pageCurrent(target);
+  if (current) popup.appendChild(current);
   popup.append(
-    pageForm(target),
+    el('div', { class: 'pzn-popup-label', text: 'Add / edit tag' }),
+    selector,
+    body,
     el('div', { class: 'pzn-popup-footer' }, [
       el('button', { class: 'pzn-close', text: 'Close', onclick: closePopup }),
     ]),
   );
   state.root.appendChild(popup);
+  showMode(initialMode === 'pzn' ? 'pzn' : 'exp');
 }
 
 /* --------------------------------------------------------------------- render */
@@ -356,6 +435,17 @@ function pageSummary(page) {
   return text;
 }
 
+/** One-line summary of the page personalization. */
+function pagePznSummary(page) {
+  if (!page.personalizationId) return '';
+  let text = `pzn: ${page.personalizationId}`;
+  if (page.personalizationVariants.length) {
+    const n = page.personalizationVariants.length;
+    text += ` · ${n} variant${n > 1 ? 's' : ''}`;
+  }
+  return text;
+}
+
 /** A clickable state chip that opens the popup on this mode's tab. */
 function chip(mode, text, onclick) {
   return el('button', {
@@ -378,13 +468,16 @@ function render() {
   statusEl = el('div', { class: 'pzn-status' });
   state.root.appendChild(statusEl);
 
-  // page-level experimentation
+  // page-level experimentation + personalization
   state.root.appendChild(el('div', { class: 'pzn-section pzn-page' }, [
     el('div', { class: 'pzn-section-head' }, [
       el('span', { class: 'pzn-section-title', text: 'Page' }),
       tagButton(() => openPagePopup(page)),
     ]),
-    el('div', { class: 'pzn-chips' }, [chip('exp', pageSummary(page), () => openPagePopup(page))]),
+    el('div', { class: 'pzn-chips' }, [
+      chip('exp', pageSummary(page), () => openPagePopup(page, 'exp')),
+      chip('pzn', pagePznSummary(page), () => openPagePopup(page, 'pzn')),
+    ]),
   ]));
 
   const targetable = sections.filter((s) => !s.hasPageMeta);

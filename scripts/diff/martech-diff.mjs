@@ -29,9 +29,9 @@
  * the env and a set differed. So the same command degrades per operator: prod +
  * preview for anyone; stage only on VPN.
  *
- * SCOPE (MVP) — report-only (exit 0). Once real gaps are triaged apart from
- * Tealium profile/env drift, phase 2 adds allowlist assertions (must-fire
- * vendors + must-have UDO keys) and per-vendor param comparison.
+ * SCOPE (MVP) — report-only (exit 0) by default. Phase-2 allowlist assertions land
+ * incrementally: per-page must-fire/must-not-fire vendors via `--assert` (see below);
+ * must-have UDO keys and per-vendor param comparison are still TODO.
  *
  * Usage:
  *   node scripts/diff/martech-diff.mjs                       # all pages, all reachable envs
@@ -43,6 +43,13 @@
  *   node scripts/diff/martech-diff.mjs --json out.json  # also write the raw capture+diff
  *   node scripts/diff/martech-diff.mjs --samples 8   # capture each env 8x; UNION into golden
  *   node scripts/diff/martech-diff.mjs --env prod --samples 8 --refresh <golden.json>
+ *
+ *   # Phase-2 allowlist assertions — `--assert` makes a failing must-fire/must-not-fire exit 1.
+ *   # The blog-feedback/non-blog-scope pages use committed drafts fixtures served at real paths:
+ *   npx @adobe/aem-cli up --no-open --html-folder drafts --html-mount / --port 3001 &
+ *   node scripts/diff/martech-diff.mjs --env local --page blog-feedback,non-blog-scope \
+ *     --local-base http://localhost:3001 --settle 15000 --assert
+ *   # → Qualtrics (ies-erp tag #35) must fire on /blog/* and stay absent off it. See #148/#620.
  */
 
 /* standalone dev tool (sibling of content-diff): CLI-style loops + argv walking by design */
@@ -62,8 +69,15 @@ import {
 
 const PAGES = [
   { name: 'homepage', prod: '/', ours: '/' },
-  // { name: '<tbd-1>', prod: '/<path>', ours: '/<path>' },   // customer-chosen
-  // { name: '<tbd-2>', prod: '/<path>', ours: '/<path>' },   // customer-chosen
+  // Qualtrics Site Intercept (ies-erp tag #35) is scoped to /blog/* by its Tealium load rule
+  // (cond[2] = /^\/blog\//), riding the profile fan-out — no page code loads it (see #148/#620).
+  // The assertions below verify the migrated site still gets it via the profile: it must fire on a
+  // /blog/* page and stay absent off it. `ours` points at synthetic drafts fixtures served at real
+  // paths via `aem up --html-folder drafts --html-mount /`, so the dev profile's rule matches even
+  // though the migrated /blog content is auth-gated. `prod` uses the real public pages.
+  { name: 'blog-feedback', prod: '/blog/construction/', ours: '/blog/parity-probe', mustFire: ['qualtrics'] },
+  { name: 'non-blog-scope', prod: '/', ours: '/parity-probe', mustNotFire: ['qualtrics'] },
+  // { name: '<tbd>', prod: '/<path>', ours: '/<path>' },   // customer-chosen
 ];
 
 const ENVS = [
@@ -489,6 +503,47 @@ function renderSamplingSummary(page, captures) {
 }
 
 // --------------------------------------------------------------------------
+// Phase-2 allowlist assertions (#136)
+// --------------------------------------------------------------------------
+// Per-page must-fire / must-not-fire vendor checks, evaluated against the OUR-BUILD envs
+// (non-baseline) — the migrated site is the thing under test; prod is the trusted baseline.
+// Reported on every run; only `--assert` lets a failure set the process exit code, so the default
+// stays report-only. Locks in that a profile-fan-out vendor still fires where prod scopes it
+// (e.g. Qualtrics tag #35 on /blog/*) and stays absent elsewhere — see #148/#620.
+function evalAssertions(page, captures) {
+  const mustFire = page.mustFire || [];
+  const mustNotFire = page.mustNotFire || [];
+  if (!mustFire.length && !mustNotFire.length) return [];
+  const results = [];
+  for (const env of ENVS) {
+    if (env.role === 'baseline') continue;
+    const cap = captures[env.name];
+    if (!cap || cap.status !== 'OK') continue;
+    const fired = new Set(cap.vendors || []);
+    const missing = mustFire.filter((v) => !fired.has(v));
+    const present = mustNotFire.filter((v) => fired.has(v));
+    results.push({ env: env.name, missing, present, ok: !missing.length && !present.length });
+  }
+  return results;
+}
+
+function renderAssertions(page, results) {
+  const lines = [];
+  for (const r of results) {
+    if (r.ok) {
+      const parts = [];
+      if (page.mustFire && page.mustFire.length) parts.push(`fires [${page.mustFire.join(', ')}]`);
+      if (page.mustNotFire && page.mustNotFire.length) parts.push(`absent [${page.mustNotFire.join(', ')}]`);
+      lines.push(`${' '.repeat(9)}${G('ASSERT ok')}  ${r.env}: ${parts.join(' · ')}`);
+    } else {
+      if (r.missing.length) lines.push(`${' '.repeat(9)}${R('ASSERT FAIL')}  ${r.env}: expected to fire but MISSING [${r.missing.join(', ')}]`);
+      if (r.present.length) lines.push(`${' '.repeat(9)}${R('ASSERT FAIL')}  ${r.env}: expected absent but FIRED [${r.present.join(', ')}]`);
+    }
+  }
+  return lines.join('\n');
+}
+
+// --------------------------------------------------------------------------
 // CLI
 // --------------------------------------------------------------------------
 
@@ -496,6 +551,7 @@ function parseArgs(argv) {
   const opts = {
     pages: null, envs: null, scenario: 'us-optout', headed: false, settleMs: 6000,
     json: null, baseline: null, refresh: null, cookies: [], oursPath: null, samples: 1,
+    assert: false,
   };
   // Default settle spans the EDS delayed phase (~3s) + tag fan-out so delayed-phase, self-hosted
   // vendors (FullStory, LivePerson) are captured; both baseline and compared env use the same value.
@@ -521,6 +577,9 @@ function parseArgs(argv) {
     else if (a === '--refresh') opts.refresh = argv[++i]; // capture prod live and (re)write the golden here
     else if (a === '--preview-base') ENVS.find((e) => e.name === 'preview').base = argv[++i];
     else if (a === '--local-base') ENVS.find((e) => e.name === 'local').base = argv[++i];
+    // --assert: enforce per-page must-fire/must-not-fire allowlists. A failing assertion sets a
+    // non-zero exit code; without it the run stays report-only (exit 0).
+    else if (a === '--assert') opts.assert = true;
   }
   return opts;
 }
@@ -542,6 +601,7 @@ async function main() {
   const browser = opts.headed ? await launchStealthHeaded(chromium) : await chromium.launch();
   const report = { scenario, capturedAt: new Date().toISOString(), samples: opts.samples, pages: {} };
   const goldenOut = { scenario, capturedAt: new Date().toISOString(), samples: opts.samples, pages: {} };
+  let anyAssertFail = false;
   try {
     for (const page of pages) {
       const captures = {};
@@ -561,14 +621,22 @@ async function main() {
       if (baseline && baseline.status === 'OK') goldenOut.pages[page.name] = stripSampling(baseline);
       process.stdout.write(`${renderPage(page, scenario, captures, baseline, baselineSource)}\n`);
       if (opts.samples > 1) process.stdout.write(`${renderSamplingSummary(page, captures)}\n`);
+      const assertResults = evalAssertions(page, captures);
+      const assertLines = renderAssertions(page, assertResults);
+      if (assertLines) process.stdout.write(`${assertLines}\n`);
+      if (assertResults.some((r) => !r.ok)) anyAssertFail = true;
     }
   } finally {
     await browser.close().catch(() => {});
   }
 
-  process.stdout.write(`\n${DIM('report-only — exit 0. Triage GAPs vs Tealium profile/env drift, then enable phase-2 allowlist assertions.')}\n`);
+  let assertMsg = DIM('report-only — exit 0. Pass --assert to enforce per-page must-fire/must-not-fire allowlists (#136).');
+  if (opts.assert && anyAssertFail) assertMsg = R('allowlist assertions FAILED — exit 1');
+  else if (opts.assert) assertMsg = G('allowlist assertions passed — exit 0');
+  process.stdout.write(`\n${assertMsg}\n`);
   if (opts.refresh) { writeFileSync(opts.refresh, JSON.stringify(goldenOut, null, 2)); process.stdout.write(`${DIM(`wrote golden baseline → ${opts.refresh}`)}\n`); }
   if (opts.json) { writeFileSync(opts.json, JSON.stringify(report, null, 2)); process.stdout.write(`${DIM(`wrote ${opts.json}`)}\n`); }
+  if (opts.assert && anyAssertFail) process.exit(1);
 }
 
 main().catch((e) => { process.stderr.write(`martech-diff error: ${e.message}\n`); process.exit(1); });

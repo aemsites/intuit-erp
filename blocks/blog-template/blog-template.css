@@ -763,6 +763,7 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
 /* section headings: upstream in-article h2 is bold 40px/52px black, and the
    same block-container collision applies (faq.css was winning with a centered
    48px section-head treatment). */
+
 /* blog-article AND case-study in-body prose headings — prod renders these
    bold, left-aligned, near-black. Scoped to these two templates (the global
    h1-h6 default is weight 400 / centered in some block containers). See #632. */

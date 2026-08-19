@@ -34,6 +34,7 @@ export default function decorate(block) {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'faq-toggle';
+    button.id = `faq-toggle-${i}`;
     button.setAttribute('aria-expanded', open ? 'true' : 'false');
 
     const label = document.createElement('span');
@@ -53,6 +54,11 @@ export default function decorate(block) {
     const id = `faq-panel-${i}`;
     panel.id = id;
     button.setAttribute('aria-controls', id);
+
+    // Expose each answer as an ARIA disclosure region tied to its toggle,
+    // matching production's accordion (role=region + aria-labelledby). See #660.
+    panel.setAttribute('role', 'region');
+    panel.setAttribute('aria-labelledby', button.id);
 
     const answer = document.createElement('div');
     answer.className = 'faq-answer';
