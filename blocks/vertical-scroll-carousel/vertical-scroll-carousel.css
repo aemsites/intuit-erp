@@ -169,6 +169,17 @@
     visibility: visible;
   }
 
+  /*
+   * expanded variant — opt out of the desktop accordion: every item's body
+   * stays open (matching erp.intuit.com "Connect everything"), while the
+   * active item still gets the highlight and drives the shared media swap.
+   */
+  .vertical-scroll-carousel.expanded .vsc-body {
+    max-height: 40rem;
+    opacity: 1;
+    visibility: visible;
+  }
+
   /* single shared media panel, cross-fading as tabs change */
   .vertical-scroll-carousel .vsc-stage {
     display: block;
