@@ -21,7 +21,10 @@
  *              card bottom (erp-solutions "Move to a modern ERP" / solution-cards)
  * CSS: blocks/media-text/media-text.css
  */
+import { loadCSS } from '../../scripts/aem.js';
 import { bindScheduleLinks } from '../form/form.js';
+import { videoInfo } from '../video/video-info.js';
+import decorateVideo from '../video/video.js';
 
 function buildCopy(textCell) {
   const copy = document.createElement('div');
@@ -82,6 +85,7 @@ export default function decorate(block) {
   if (isCards) {
     const grid = document.createElement('div');
     grid.className = 'mig-grid';
+    let hasVideoCard = false;
     rows.forEach((row) => {
       const cells = [...row.children];
       const card = document.createElement('article');
@@ -92,27 +96,55 @@ export default function decorate(block) {
         const vis = document.createElement('div');
         vis.className = 'mig-visual';
         [...cells[1].childNodes].forEach((n) => vis.append(n));
-        // normalise the "Migrating progression" step list (robust to class stripping)
-        const list = vis.querySelector('ul');
-        if (list) {
-          list.classList.add('mig-steps');
-          const head = vis.querySelector('p');
-          if (head) head.classList.add('mig-visual-head');
-          list.querySelectorAll('li').forEach((li) => {
-            if (/^\s*✓/.test(li.textContent)) {
-              li.classList.add('done');
-              li.textContent = li.textContent.replace(/^\s*✓\s*/, '');
-              const tick = document.createElement('span');
-              tick.className = 'tick';
-              tick.textContent = '✓';
-              li.prepend(tick);
-            }
-          });
+
+        // detect a video-host link in the visual cell; convert to click-to-play
+        // (poster + play button → lightbox) using the existing video block.
+        // Non-video cards (step lists, plain images, etc.) are untouched.
+        const videoLink = vis.querySelector('a[href]');
+        const info = videoLink ? videoInfo(videoLink.getAttribute('href')) : null;
+        if (info) {
+          hasVideoCard = true;
+          // build a synthetic video block: bare link + authored poster img
+          const videoBlock = document.createElement('div');
+          videoBlock.className = 'video';
+          const linkEl = document.createElement('a');
+          linkEl.setAttribute('href', videoLink.getAttribute('href'));
+          const titleAttr = videoLink.getAttribute('title');
+          if (titleAttr) linkEl.setAttribute('title', titleAttr);
+          videoBlock.append(linkEl);
+          const img = vis.querySelector('img');
+          if (img) videoBlock.append(img.cloneNode(true));
+          // let video.js produce the poster + play-button + lightbox handler
+          decorateVideo(videoBlock);
+          vis.replaceChildren(videoBlock);
+        } else {
+          // normalise the "Migrating progression" step list (robust to class stripping)
+          const list = vis.querySelector('ul');
+          if (list) {
+            list.classList.add('mig-steps');
+            const head = vis.querySelector('p');
+            if (head) head.classList.add('mig-visual-head');
+            list.querySelectorAll('li').forEach((li) => {
+              if (/^\s*✓/.test(li.textContent)) {
+                li.classList.add('done');
+                li.textContent = li.textContent.replace(/^\s*✓\s*/, '');
+                const tick = document.createElement('span');
+                tick.className = 'tick';
+                tick.textContent = '✓';
+                li.prepend(tick);
+              }
+            });
+          }
         }
         card.append(vis);
       }
       grid.append(card);
     });
+    // load video.css so the .video-preview / .video-play / lightbox styles apply
+    // (these pages have no standalone video block, so video.css is not auto-loaded)
+    if (hasVideoCard) {
+      loadCSS(`${window.hlx.codeBasePath}/blocks/video/video.css`);
+    }
     block.replaceChildren(grid);
     return;
   }
