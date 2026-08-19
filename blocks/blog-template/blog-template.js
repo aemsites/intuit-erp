@@ -215,13 +215,9 @@ export function buildByline({
 // Icon files live in /icons (facebook.svg, x.svg, linkedin.svg, youtube.svg)
 // — glyphs match the ones in blocks/footer/footer.js's `.social` links,
 // baked to a fixed white fill since they're always shown on the widget's
-// solid-color circle (see .blog-share-link in blog-template.css).
-const SHARE_ICON_DIMS = {
-  facebook: { width: 18, height: 18 },
-  x: { width: 16, height: 16 },
-  linkedin: { width: 17, height: 17 },
-  youtube: { width: 20, height: 20 },
-};
+// solid-color circle. Sizing (per-icon, since the glyphs aren't visually
+// balanced at a uniform size) lives entirely in blog-template.css via the
+// blog-share-icon-<name> class below — not repeated here.
 
 /**
  * Builds the 4 share-widget entries: Facebook/X/LinkedIn are share-intent
@@ -267,14 +263,11 @@ export function buildShare() {
     a.target = '_blank';
     a.rel = 'noopener';
     a.setAttribute('aria-label', name);
-    const { width, height } = SHARE_ICON_DIMS[icon];
     const img = document.createElement('img');
     img.className = `blog-share-icon-${icon}`;
     img.src = `${window.hlx.codeBasePath}/icons/${icon}.svg`;
     img.alt = '';
     img.loading = 'lazy';
-    img.width = width;
-    img.height = height;
     a.append(img);
     wrap.append(a);
   });
