@@ -7,14 +7,18 @@
  * first match wins:
  *
  *   erp.intuit.com                              -> 'prod'
- *   stage.erp.intuit.com                        -> 'dev'   (Intuit staging; consent CDN reachable)
+ *   stage.erp.intuit.com                        -> 'prod'  (E2E BRANCH; 'dev' on main)
  *   *--intuit-erp--aemsites.aem.live            -> 'dev'
  *   *--intuit-erp--aemsites.aem.page            -> 'dev'
  *   localhost, 127.0.0.1                        -> 'dev'
  *   anything else (e.g. *.preview.da.live)      -> null (inert)
  *
- * Only `erp.intuit.com` can ever resolve to `'prod'` — there is no override/config path that can
- * escalate a non-prod host to `'prod'`. CONSENT CAVEAT: the AEM preview hosts
+ * E2E BRANCH — DO NOT MERGE TO main: `stage.erp.intuit.com` is intentionally escalated to `'prod'`
+ * here (it is `'dev'` on main) so the Intuit staging host exercises the production martech setup
+ * end-to-end. On this branch both `erp.intuit.com` and `stage.erp.intuit.com` — the two real,
+ * trusted Intuit origins — resolve to `'prod'`; every AEM preview/localhost host stays `'dev'` and
+ * every other host stays inert, and there is still no query-string/config path that can escalate an
+ * untrusted host. CONSENT CAVEAT: the AEM preview hosts
  * (`*--intuit-erp--aemsites.aem.page` / `.aem.live`) and `localhost` are NOT `intuit.com`
  * origins, so Intuit's OneTrust consent CDN (`privacy-cdn*.a.intuit.com`) CloudFront-blocks them
  * and the default (CDN) consent stack can't settle there — the profile's consent extension would
@@ -67,15 +71,19 @@ let config = { ...DEFAULT_CONFIG };
  * (any branch prefix). Lookalikes — `erp.intuit.com.evil.com`,
  * `x--intuit-erp--aemsites.aem.live.evil.com` — resolve to `null`, since the exact checks and the
  * suffix-must-be-at-the-end (`endsWith`) check both reject a trailing `.evil.com`.
- * SAFETY: only `erp.intuit.com` may ever resolve to `'prod'`; every other host resolves to
- * `'dev'` or `null` (inert) — there is no config/query-string override that can escalate a
- * non-prod host to `'prod'`.
+ * E2E BRANCH: `erp.intuit.com` and `stage.erp.intuit.com` both resolve to `'prod'` here (stage is
+ * `'dev'` on main); every other host resolves to `'dev'` or `null` (inert) — there is no
+ * config/query-string override that can escalate any other host to `'prod'`. Keep the stage→prod
+ * line on the `e2e` branch only.
  * @returns {String|null} 'prod' | 'dev', or `null` to stay completely inert
  */
 export function resolveEnvironment() {
   const { hostname } = window.location;
   if (hostname === 'erp.intuit.com') return 'prod';
-  if (hostname === 'stage.erp.intuit.com') return 'dev';
+  // E2E BRANCH: escalated from 'dev' to 'prod' so Intuit staging runs the full production martech
+  // stack (prod Tealium profile + prod OneTrust consent CDN + o11y). This is 'dev' on main — do
+  // not merge this line to main.
+  if (hostname === 'stage.erp.intuit.com') return 'prod';
   if (hostname.endsWith('--intuit-erp--aemsites.aem.live')) return 'dev';
   if (hostname.endsWith('--intuit-erp--aemsites.aem.page')) return 'dev';
   if (hostname === 'localhost' || hostname === '127.0.0.1') return 'dev';

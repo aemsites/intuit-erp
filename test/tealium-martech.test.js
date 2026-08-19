@@ -75,10 +75,12 @@ describe('resolveEnvironment / isProdHost', () => {
     expect(isProdHost()).toBe(true);
   });
 
-  it('resolves "dev" on the Intuit staging host (stage.erp.intuit.com)', () => {
+  // E2E BRANCH: stage is deliberately escalated to 'prod' (it resolves to 'dev' on main) so the
+  // Intuit staging host exercises the full production martech stack. Do not merge to main.
+  it('resolves "prod" on the Intuit staging host (stage.erp.intuit.com) — E2E BRANCH escalation', () => {
     stubLocation({ hostname: STAGE_HOST });
-    expect(resolveEnvironment()).toBe('dev');
-    expect(isProdHost()).toBe(false);
+    expect(resolveEnvironment()).toBe('prod');
+    expect(isProdHost()).toBe(true);
   });
 
   it('resolves "dev" on localhost', () => {
@@ -131,9 +133,11 @@ describe('resolveEnvironment / isProdHost', () => {
     });
   });
 
-  it('NEVER resolves "prod" for any host other than the exact erp.intuit.com hostname', () => {
+  // E2E BRANCH: erp.intuit.com AND stage.erp.intuit.com resolve 'prod' here (stage is 'dev' on
+  // main). Every other host — previews, localhost, inert, and lookalikes — must still never
+  // escalate to 'prod'.
+  it('NEVER resolves "prod" for any host other than the trusted Intuit hosts (erp/stage)', () => {
     [
-      STAGE_HOST,
       DEV_HOST_LOCALHOST,
       '127.0.0.1',
       AEM_PAGE_HOST,
@@ -205,11 +209,13 @@ describe('TealiumMartech constructor', () => {
 });
 
 describe('utag_cfg_ovrd.utagdb (Tealium debug console) by resolved environment', () => {
-  it('sets utagdb=true for the dev environment (stage.erp.intuit.com host)', () => {
+  // E2E BRANCH: stage.erp.intuit.com now resolves 'prod', so — like real prod — it must NOT turn
+  // on Tealium's verbose utagdb console (dev hosts like localhost still do; see below).
+  it('does NOT enable utagdb on stage.erp.intuit.com (now "prod" on the E2E BRANCH)', () => {
     stubLocation({ hostname: STAGE_HOST });
     // eslint-disable-next-line no-new
     new TealiumMartech();
-    expect(window.utag_cfg_ovrd.utagdb).toBe(true);
+    expect(window.utag_cfg_ovrd).toBeUndefined();
   });
 
   it('sets utagdb=true for the dev environment (localhost)', () => {
@@ -570,7 +576,9 @@ describe('disabled instance (hostname resolveEnvironment does not recognize) —
 describe("enabled instance — lazy() loads the consent stack, settles consent, loads utag.js, then fires the CONSENT-GATED initial view", () => {
   it.each([
     ['prod', PROD_HOST, 'privacy-cdn.a.intuit.com'],
-    ['dev', STAGE_HOST, 'privacy-cdn.e2e.a.intuit.com'],
+    // E2E BRANCH: stage resolves 'prod' now, so use a still-'dev' host (localhost) to keep the
+    // dev consent-CDN path covered.
+    ['dev', DEV_HOST_LOCALHOST, 'privacy-cdn.e2e.a.intuit.com'],
   ])('env "%s" (host %s): eager() does no network; lazy() loads the consent stack (CDN %s) before utag.js, then fires the initial view once consent is resolved', async (env, hostname, cdnHost) => {
     stubLocation({ hostname });
     // A pre-existing OptanonConsent cookie lets settleConsent() resolve as soon as it's invoked

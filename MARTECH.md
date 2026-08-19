@@ -5,6 +5,12 @@ manager (account `intuit`, profile `ies-erp`) that injects every downstream vend
 gated by **OneTrust** consent (US opt-out model). Client loader:
 [`plugins/tealium-martech/src/index.js`](plugins/tealium-martech/src/index.js).
 
+> ⚠️ **E2E BRANCH — do not merge to `main`.** On this branch `stage.erp.intuit.com` is deliberately
+> mapped to the **`prod`** Tealium env (it is `dev` on `main`), so Intuit staging runs the full
+> production martech stack — prod Tealium profile, prod OneTrust consent CDN, and Intuit o11y RUM.
+> The `?martech` flag and everything else below behave the same; only stage's resolved env changed.
+> (Requires Intuit to point `stage.erp.intuit.com`'s edge/fstab at the `e2e` branch.)
+
 Two things you'll want:
 
 1. [The `?martech` runtime flag](#the-martech-runtime-flag) — switch what loads, per environment.
@@ -20,13 +26,14 @@ use, if any) and the optional **`?martech=` query param** (which *provider / sou
 
 ### Host → Tealium environment
 
-`resolveEnvironment()` maps the hostname to a Tealium env. **Only the real prod host can ever be
-`prod`** — there is no query-string or config override that escalates a non-prod host to `prod`.
+`resolveEnvironment()` maps the hostname to a Tealium env. **On this E2E BRANCH both the real prod
+host and `stage.erp.intuit.com` resolve to `prod`** (on `main`, only the real prod host does); there
+is still no query-string or config override that escalates any *other* host to `prod`.
 
 | Host | Tealium env | Notes |
 | --- | --- | --- |
 | `erp.intuit.com` | **`prod`** | the live customer site |
-| `stage.erp.intuit.com` | `dev` | Intuit staging (an `intuit.com` origin — consent CDN reachable) |
+| `stage.erp.intuit.com` | **`prod`** | **E2E BRANCH** (`dev` on `main`) — Intuit staging, an `intuit.com` origin so the prod consent CDN is reachable |
 | `<branch>--intuit-erp--aemsites.aem.page` | `dev` | AEM preview |
 | `<branch>--intuit-erp--aemsites.aem.live` | `dev` | AEM published |
 | `localhost` / `127.0.0.1` | `dev` | local `aem up` |
@@ -67,7 +74,7 @@ OneTrust's consent CDN (`privacy-cdn*.a.intuit.com`) only serves **`*.intuit.com
 | Where | Default (no param) | `?martech=local` | `?martech=off` |
 | --- | --- | --- | --- |
 | `erp.intuit.com` | Tealium **prod** + OneTrust (CDN) ✅ | — | inert |
-| `stage.erp.intuit.com` | Tealium **dev** + OneTrust (CDN) ✅ | Tealium dev + local consent | inert |
+| `stage.erp.intuit.com` | Tealium **prod** + OneTrust (CDN) ✅ _(E2E BRANCH; **dev** on `main`)_ | Tealium prod + local consent | inert |
 | aem.page / aem.live preview | Tealium **dev** from CDN; consent CDN blocked → utag self-resolves (US opt-out) | ❌ 404 (vendor files not committed) | inert |
 | `localhost` (`aem up`) | Tealium **dev** from CDN; consent CDN blocked | Tealium dev + **local** copies ✅ | inert |
 
