@@ -875,7 +875,9 @@ a.button.secondary:hover {
 
 .section.dark .block p,
 .section.dark .block :is(h1, h2, h3, h4, h5, h6),
-.section.dark .block :is(ul, ol) {
+.section.dark .block :is(ul, ol), 
+.section.dark > .default-content-wrapper > :is(h1, h2, h3, h4, h5, h6),
+.section.dark > .default-content-wrapper > p {
   color: #fff;
 }
 
