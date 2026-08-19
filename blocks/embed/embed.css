@@ -35,3 +35,44 @@
   min-width: 100%;
   border: none;
 }
+
+/* ---- .embed-pdf — a framed PDF at upstream's 930px cap and 8.5x11 page ratio,
+   going taller on mobile so a portrait page stays legible in a narrow column. ---- */
+.embed.embed-pdf {
+  max-width: 930px;
+  text-align: left;
+}
+
+.embed.embed-pdf .pdf-frame {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 8.5 / 15;
+  overflow: hidden;
+  background: #fff;
+}
+
+.embed.embed-pdf .pdf-frame iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* Always visible, not just a no-JS fallback: the frame is CSP-blocked off an
+   intuit.com origin, and a reader who wants the file still needs the link. */
+.embed.embed-pdf .embed-fallback {
+  margin: 12px 0 0;
+  text-align: center;
+  font-size: 14px;
+}
+
+.embed.embed-pdf .embed-fallback a {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+@media (width >= 768px) {
+  .embed.embed-pdf .pdf-frame { aspect-ratio: 8.5 / 11; }
+}
