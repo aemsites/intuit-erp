@@ -11,8 +11,6 @@ import {
   loadCSS,
   buildBlock,
   getMetadata,
-  readBlockConfig,
-  toClassName,
 } from './aem.js';
 import { runExperimentation, runExperimentationLazy } from './experiment-loader.js';
 // exp.js / pzn.js are dynamically imported (via runExperienceLayer) only when a

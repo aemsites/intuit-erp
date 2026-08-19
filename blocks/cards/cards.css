@@ -119,7 +119,6 @@
 }
 
 @media (width <=768px) {
-
   .cards.dark:not(.carousel, .boxed),
   .cards.accent:not(.carousel, .boxed) {
     grid-template-columns: 1fr;
@@ -332,7 +331,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-
   .cards.carousel .cards-card-image,
   .cards.carousel .cards-card-body,
   .cards.carousel .cards-track>div::before {
@@ -468,7 +466,6 @@
 }
 
 @media (width <=768px) {
-
   .cards.carousel .cards-track>div,
   .cards.boxed .cards-track>div {
     flex-basis: 260px;

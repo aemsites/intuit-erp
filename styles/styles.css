@@ -173,7 +173,6 @@ body.author header {
 }
 
 @media (width <=1299px) {
-
   body.blog-home header,
   body.blog-article header,
   body.category header,
@@ -454,6 +453,15 @@ main .section.highlight {
   background-color: var(--light-color);
   margin: 0;
   padding: 40px 0;
+}
+
+/* Section Metadata "Style: sky" — the light-blue band used behind the
+   "Let's connect" form section, letting a page request this background at
+   the section level without needing a form present. blocks/form/form.css
+   matches --sky-blue too for the nested-fragment case (.section.sky
+   wrapping a .section.form-container), so both stay the same shade. */
+main .section.sky {
+  background-color: var(--sky-blue);
 }
 
 /* ============================================================

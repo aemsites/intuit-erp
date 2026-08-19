@@ -241,7 +241,7 @@
   color: var(--text-muted);
 }
 
-   dots, arrows, or scrolling — so a plain grid is behaviourally identical. */
+
 .section.media-text-container:has(.media-text.cards) {
   background: #fff;
   padding: var(--section-y) 0;
