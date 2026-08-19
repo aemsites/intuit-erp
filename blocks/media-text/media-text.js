@@ -21,10 +21,9 @@
  *              card bottom (erp-solutions "Move to a modern ERP" / solution-cards)
  * CSS: blocks/media-text/media-text.css
  */
-import { loadCSS } from '../../scripts/aem.js';
+import { buildBlock, loadBlock } from '../../scripts/aem.js';
 import { bindScheduleLinks } from '../form/form.js';
 import { videoInfo } from '../video/video-info.js';
-import decorateVideo from '../video/video.js';
 
 function buildCopy(textCell) {
   const copy = document.createElement('div');
@@ -85,7 +84,6 @@ export default function decorate(block) {
   if (isCards) {
     const grid = document.createElement('div');
     grid.className = 'mig-grid';
-    let hasVideoCard = false;
     rows.forEach((row) => {
       const cells = [...row.children];
       const card = document.createElement('article');
@@ -97,26 +95,30 @@ export default function decorate(block) {
         vis.className = 'mig-visual';
         [...cells[1].childNodes].forEach((n) => vis.append(n));
 
-        // detect a video-host link in the visual cell; convert to click-to-play
-        // (poster + play button → lightbox) using the existing video block.
-        // Non-video cards (step lists, plain images, etc.) are untouched.
+        // detect a video-host link in the visual cell; if found, compose a
+        // `video` block using the EDS buildBlock/loadBlock pipeline instead of
+        // rendering a static poster link.  Non-video cards (step lists, plain
+        // images on /index, /pricing, etc.) are completely untouched.
         const videoLink = vis.querySelector('a[href]');
         const info = videoLink ? videoInfo(videoLink.getAttribute('href')) : null;
         if (info) {
-          hasVideoCard = true;
-          // build a synthetic video block: bare link + authored poster img
-          const videoBlock = document.createElement('div');
-          videoBlock.className = 'video';
-          const linkEl = document.createElement('a');
-          linkEl.setAttribute('href', videoLink.getAttribute('href'));
-          const titleAttr = videoLink.getAttribute('title');
-          if (titleAttr) linkEl.setAttribute('title', titleAttr);
-          videoBlock.append(linkEl);
+          // extract the authored poster img (if present) so the video block
+          // can use the already-published thumbnail rather than the fallback
           const img = vis.querySelector('img');
-          if (img) videoBlock.append(img.cloneNode(true));
-          // let video.js produce the poster + play-button + lightbox handler
-          decorateVideo(videoBlock);
+          // build a video block: one row, one column containing [link, img]
+          // (matches the structure that buildVideoAutoBlocks produces for
+          // section-level video paragraphs — see scripts.js:204)
+          const elems = [videoLink];
+          if (img) elems.push(img);
+          const videoBlock = buildBlock('video', { elems });
+          // set blockName so loadBlock can resolve the JS/CSS paths;
+          // skip decorateBlock() to avoid adding video-wrapper/-container
+          // classes that would alter section background/padding via video.css
+          videoBlock.dataset.blockName = 'video';
           vis.replaceChildren(videoBlock);
+          // fire-and-forget: card grid renders synchronously; the video block
+          // (poster + play button) fills in once loadBlock resolves
+          loadBlock(videoBlock);
         } else {
           // normalise the "Migrating progression" step list (robust to class stripping)
           const list = vis.querySelector('ul');
@@ -140,11 +142,6 @@ export default function decorate(block) {
       }
       grid.append(card);
     });
-    // load video.css so the .video-preview / .video-play / lightbox styles apply
-    // (these pages have no standalone video block, so video.css is not auto-loaded)
-    if (hasVideoCard) {
-      loadCSS(`${window.hlx.codeBasePath}/blocks/video/video.css`);
-    }
     block.replaceChildren(grid);
     return;
   }
