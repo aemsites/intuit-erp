@@ -381,7 +381,10 @@
 @media (min-width: 900px) {
   .blog-article {
     display: grid;
-    grid-template-columns: 240px minmax(0, 1fr) 300px;
+
+    /* Left rail widened 240px -> 332px so the article content column starts at
+       x~420 like production (was x~328, ~92px too far left). See #633. */
+    grid-template-columns: 332px minmax(0, 1fr) 300px;
     column-gap: 48px;
     align-items: start;
   }
@@ -760,7 +763,12 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
 /* section headings: upstream in-article h2 is bold 40px/52px black, and the
    same block-container collision applies (faq.css was winning with a centered
    48px section-head treatment). */
-.blog-article > .section > .default-content-wrapper :is(h2, h3) {
+
+/* blog-article AND case-study in-body prose headings — prod renders these
+   bold, left-aligned, near-black. Scoped to these two templates (the global
+   h1-h6 default is weight 400 / centered in some block containers). See #632. */
+.blog-article > .section > .default-content-wrapper :is(h2, h3),
+.case-study > .section > .default-content-wrapper :is(h2, h3) {
   text-align: left;
   color: #000;
   font-weight: 700;

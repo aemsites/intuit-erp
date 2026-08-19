@@ -1,7 +1,7 @@
 ---
 name: add-personalization-experimentation
-description: Tag a page, section, or block for Personalization (pzn) or Experimentation (exp) by writing the right rows into the DA source — page-level experiment metadata, or Section Metadata keys that the aem.live pipeline turns into data-pzn / data-exp attributes on the section. Also records up to 5 content variants (fragments) so authors can preview each option on the page. Use when a marketer, author, or agent wants to mark an area of a page as personalized or experiment-targeted, without the DA panel — and whenever you have the variant fragments from the offer engine, write them too.
-version: 2
+description: Tag a page, section, or block for Personalization (pzn) or Experimentation (exp) by writing the right rows into the DA source — page-level experiment or personalization metadata, or Section Metadata keys that the aem.live pipeline turns into data-pzn / data-exp attributes on the section. Also records up to 5 content variants (fragments) so authors can preview each option on the page. Use when a marketer, author, or agent wants to mark an area of a page as personalized or experiment-targeted, without the DA panel — and whenever you have the variant fragments from the offer engine, write them too.
+version: 3
 status: approved
 ---
 
@@ -26,8 +26,8 @@ but authors lose that preview — so treat the variants as expected input, not a
 
 Everything is stored in **metadata blocks** so the aem.live **pipeline** emits it as `data-*` attributes on
 the section, with the value preserved **verbatim** (camelCase survives). Section/block tags live in the
-**Section Metadata** block; page-level experiments live in the page **Metadata** block. There are no CSS
-classes and no `Style` tokens involved.
+**Section Metadata** block; page-level experiments and personalization live in the page **Metadata**
+block. There are no CSS classes and no `Style` tokens involved.
 
 ## Where the id and variants come from — the offer engine
 
@@ -46,9 +46,11 @@ write a bare id when the variants are within reach.
 
 | Placement | Experimentation (`exp`) | Personalization (`pzn`) |
 |-----------|-------------------------|-------------------------|
-| **Page**    | `experiment-id` (+ optional `experiment-label`, `experiment-variants`) rows in the page **Metadata** block | — (not supported) |
+| **Page**    | `experiment-id` (+ optional `experiment-label`, `experiment-variants`) rows in the page **Metadata** block | `personalization-id` (+ optional `personalization-variants`) rows in the page **Metadata** block |
 | **Section** | `exp` row in the section's **Section Metadata** | `pzn` row in the Section Metadata |
 | **Block**   | `exp` + `exp-block` rows in the section's Section Metadata | `pzn` + `pzn-block` rows |
+
+Page-level tags drive a whole-page swap before the page is revealed; section/block tags swap just that area. When a page (or the same section/block target) carries **both** an experiment and a personalization tag, the runtime runs **only the experiment** (IXP wins).
 
 Each Section Metadata key becomes a `data-<key>` attribute on the section via the pipeline:
 
@@ -76,7 +78,10 @@ Up to **5** per tag, stored as one comma-separated cell (splits on comma or newl
 
 - **Block/section (`pzn`/`exp`)** → **fragment** paths under `/fragments/pzn/…`.
 - **Page-level experimentation** → **fragment** paths under `/fragments/experiments/…` (the whole-page
-  variant authored as a fragment). Both are picked from the same DA fragment picker.
+  variant authored as a fragment).
+- **Page-level personalization** → whole-page variant **fragment** paths under `/fragments/pzn/…`.
+
+All are picked from the same DA fragment picker.
 
 Write variant references as **plain text** (not DA links) so the pipeline's data-attribute value stays clean
 and body `/fragments/` autoblocking is never triggered.
@@ -126,6 +131,21 @@ All authored as nested `<div>`s (never literal `<table>`), inside `<main>`.
 `experiment-id` is the experiment id (verbatim). `experiment-label` and `experiment-variants` are optional.
 If the page has no `metadata` block, create one as the last section of `<main>`; keep existing rows intact.
 
+### Page-level personalization → Metadata block
+
+```html
+<div>
+  <div class="metadata">
+    <div><div>Title</div><div>My Page</div></div>
+    <div><div>personalization-id</div><div>homepageHero</div></div>
+    <div><div>personalization-variants</div><div>/fragments/pzn/retail, /fragments/pzn/default</div></div>
+  </div>
+</div>
+```
+`personalization-id` is the page-level placement id (verbatim); `personalization-variants` is optional.
+There is no label. A page may carry both a page experiment and a page personalization tag — the runtime
+runs only the experiment (IXP wins).
+
 ## Reading and writing the page source
 
 Work against the **DA source** (stored authoring HTML), not the rendered page.
@@ -145,12 +165,14 @@ A save can conflict with a concurrently open live DA edit.
 
 - **Section/block**: remove the `pzn`/`exp` row and its `*-block` / `*-variants` rows; drop the
   `section-metadata` block if no rows remain.
-- **Page**: remove `experiment-id` / `experiment-label` / `experiment-variants`; drop the `metadata` block
-  (and its now-empty wrapping section) only if no other rows remain.
+- **Page (experimentation)**: remove `experiment-id` / `experiment-label` / `experiment-variants`.
+- **Page (personalization)**: remove `personalization-id` / `personalization-variants`.
+- In both cases drop the `metadata` block (and its now-empty wrapping section) only if no other rows remain
+  (e.g. clearing the experiment tag must preserve a personalization tag still on the page).
 
 ## Reference implementation
 
 The pure, unit-tested logic for every operation above lives in
 `tools/plugins/personalization/experience.js` (`parseExperience`, `setSectionTag`, `clearSectionTag`,
-`setPageExperiment`, `clearPageExperiment`, plus `splitList` / `joinList` / `toPath`). Mirror its behavior
-when applying tags by hand.
+`setPageExperiment`, `clearPageExperiment`, `setPagePersonalization`, `clearPagePersonalization`, plus
+`splitList` / `joinList` / `toPath`). Mirror its behavior when applying tags by hand.

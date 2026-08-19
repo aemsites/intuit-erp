@@ -5,9 +5,19 @@
   color: #fff;
   overflow: hidden;
 
+  /* the `gradient` variant is erp.intuit.com's flat 3-stop brand diagonal
+     (navy -> blue -> lavender). We previously approximated it with a 9-stop
+     conic gradient, which rendered a visible off-centre "bloom" instead of a
+     smooth diagonal wash (#506). Match the source's linear gradient exactly. */
   &.gradient {
-    /* bottom fade to the section navy so the band blends into the next section
-       instead of a hard cut-off, layered over the diagonal brand gradient */
+    background: linear-gradient(135deg, #00254a 55%, #3f6fdd 75%, #b494d1 100%);
+  }
+
+  /* the form-hero pages (pricing / accountant / contact) don't use this
+     diagonal in the source — pricing/accountant are flat navy, contact uses a
+     re-tuned conic. Those are tracked separately (#541), so keep them on the
+     previous conic here rather than restyling pages outside this fix's scope. */
+  &.gradient:has(.hero.form) {
     background:
       linear-gradient(to bottom, rgb(4 24 57 / 0%) 62%, #041839 100%),
       conic-gradient(from 103deg at 28.36% 120.78%, #04193C 115.9615deg, #041F53 204.2308deg, #03339C 267.2082deg, #0F44AC 273.7572deg, #2B66D0 289.9528deg, #3875E0 324.4898deg, #BB95CD 329.7278deg, #DEBCB3 334.1040deg, #041839 359.1429deg);

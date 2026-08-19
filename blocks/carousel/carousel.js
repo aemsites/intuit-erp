@@ -43,6 +43,30 @@ function buildDot(index) {
 }
 
 /**
+ * A navigation control that shows the slide's own customer photo as a circular
+ * avatar (the `.spotlight` testimonial's thumbnail strip). Falls back to a plain
+ * dot-style button when a slide has no image. `slide` is already normalised, so
+ * its portrait lives at `.testi-media img`.
+ * @param {Element} slide a normalised `.carousel-slide`
+ * @param {number} index the slide's position
+ */
+function buildThumb(slide, index) {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'carousel-thumb';
+  btn.setAttribute('aria-label', `Go to slide ${index + 1}`);
+  const src = slide.querySelector('img')?.getAttribute('src');
+  if (src) {
+    const img = document.createElement('img');
+    img.src = src;
+    img.alt = '';
+    img.loading = 'lazy';
+    btn.append(img);
+  }
+  return btn;
+}
+
+/**
  * `.feature` slides author the pull-quote and its attribution as one string,
  * separated by an em dash: `“…quote…” — Name, Role, Company`. The source
  * styles those as two distinct blocks (40px quote, 16px attribution), so split
@@ -220,6 +244,9 @@ export default function decorate(block) {
 
   const isFeature = block.classList.contains('feature');
   const isTestimonial = block.classList.contains('testimonial');
+  // .spotlight swaps the dot strip for a row of customer-photo thumbnails plus
+  // an "N of N" counter, matching erp.intuit.com's C14 testimonial controls
+  const isSpotlight = isTestimonial && block.classList.contains('spotlight');
   let hasTitle = false;
 
   slides.forEach((slide, i) => {
@@ -244,14 +271,22 @@ export default function decorate(block) {
   const prevBtn = buildArrow('prev', 'Previous slide', '‹');
   const nextBtn = buildArrow('next', 'Next slide', '›');
 
+  // .spotlight navigates with photo thumbnails + a counter; every other variant
+  // uses the dot strip. Only one set is built, so goTo below updates whichever
+  // exists (the other stays an empty array / null).
   const dotsWrap = document.createElement('div');
-  dotsWrap.className = 'carousel-dots';
-  const dots = slides.map((_, i) => buildDot(i));
+  dotsWrap.className = isSpotlight ? 'carousel-thumbs' : 'carousel-dots';
+  const dots = isSpotlight
+    ? slides.map((slide, i) => buildThumb(slide, i))
+    : slides.map((_, i) => buildDot(i));
   dotsWrap.append(...dots);
+
+  const counter = isSpotlight ? document.createElement('p') : null;
+  if (counter) counter.className = 'carousel-counter';
 
   const controls = document.createElement('div');
   controls.className = 'carousel-controls';
-  controls.append(prevBtn, dotsWrap, nextBtn);
+  controls.append(prevBtn, dotsWrap, ...(counter ? [counter] : []), nextBtn);
 
   block.setAttribute('role', 'region');
   block.setAttribute('aria-roledescription', 'carousel');
@@ -266,6 +301,9 @@ export default function decorate(block) {
   // cards) per step, so the offset is measured in real pixels from the
   // slide's own rendered width instead of assumed from the index alone.
   function applyOffset() {
+    // .spotlight stacks its slides and cross-fades between them (see CSS), so
+    // there's no horizontal track to translate
+    if (isSpotlight) return;
     const first = slides[0];
     if (!first) return;
     const { width } = first.getBoundingClientRect();
@@ -274,11 +312,28 @@ export default function decorate(block) {
   }
 
   function goTo(index) {
-    const clamped = Math.max(0, Math.min(index, slides.length - 1));
+    // .spotlight loops (past the last slide wraps to the first, and vice versa);
+    // every other variant clamps at the ends
+    const clamped = isSpotlight
+      ? (index + slides.length) % slides.length
+      : Math.max(0, Math.min(index, slides.length - 1));
     current = clamped;
     slides.forEach((slide, i) => {
       const active = i === clamped;
       slide.classList.toggle('is-active', active);
+      // .spotlight peeks the neighbouring customer photos behind the active
+      // card; mark them so CSS can offset each one (with wrap-around)
+      if (isSpotlight) {
+        // Peeking needs 3+ distinct slides. With 1–2, plain modulo wrap makes
+        // prevIdx/nextIdx collide with the active slide (1 slide) or with each
+        // other (2 slides), so the peek styling would blur/offset the only
+        // visible testimonial. Disable peeking below 3 slides.
+        const peek = slides.length > 2;
+        const prevIdx = (clamped - 1 + slides.length) % slides.length;
+        const nextIdx = (clamped + 1) % slides.length;
+        slide.classList.toggle('is-prev', peek && i === prevIdx);
+        slide.classList.toggle('is-next', peek && i === nextIdx);
+      }
       slide.setAttribute('aria-hidden', active ? 'false' : 'true');
       // keep focusable content inside off-screen slides out of the tab
       // order (aria-hidden alone doesn't stop keyboard focus)
@@ -289,9 +344,11 @@ export default function decorate(block) {
       dot.classList.toggle('is-active', active);
       dot.setAttribute('aria-current', active ? 'true' : 'false');
     });
+    if (counter) counter.textContent = `${clamped + 1} of ${slides.length}`;
     applyOffset();
-    prevBtn.disabled = clamped === 0;
-    nextBtn.disabled = clamped === slides.length - 1;
+    // spotlight loops, so its arrows never disable
+    prevBtn.disabled = !isSpotlight && clamped === 0;
+    nextBtn.disabled = !isSpotlight && clamped === slides.length - 1;
   }
 
   prevBtn.addEventListener('click', () => goTo(current - 1));

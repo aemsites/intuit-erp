@@ -406,6 +406,270 @@
   .carousel.testimonial .carousel-controls { justify-content: flex-end; }
 }
 
+/* ---- .spotlight — light-blue band, a fixed SQUARE portrait beside a large
+   quote that leads (erp.intuit.com "C14" testimonial, e.g. /financial-services).
+   Unlike the default portrait treatment, the band is a full-bleed sky tint, the
+   photo is a fixed square (not stretched to the card height), the quote sits on
+   the leading edge, and a blue opening-quote glyph leads the copy. */
+.section.carousel-container:has(.carousel.testimonial.spotlight) {
+  background: var(--agave);
+  padding: var(--section-y) 0;
+}
+
+.carousel.testimonial.spotlight {
+  --testi-card: transparent;
+  --testi-text: #21262a;
+  --testi-quote: 24px;
+  --testi-quote-lh: 31.2px;
+  --testi-attr: 16px;
+  --testi-attr-lh: 22.4px;
+}
+
+.carousel.testimonial.spotlight .carousel-viewport { border-radius: 0; }
+
+/* fixed square photo (source is a 1:1 asset shown at 520px), not the default
+   stretched portrait */
+.carousel.testimonial.spotlight .testi-media img {
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+/* the leading opening-quote glyph — reuse the shared testimonial quote asset
+   (/media/quote-icon.svg), recoloured to brand blue with the same background +
+   filter the testimonial block uses, rather than a text glyph. */
+.carousel.testimonial.spotlight .testi-body::before {
+  content: "";
+  display: block;
+  width: 44px;
+  height: 30px;
+  margin-bottom: 16px;
+  background: url("/media/quote-icon.svg") left center / contain no-repeat;
+  filter: invert(60%) sepia(100%) saturate(7500%) hue-rotate(220deg) brightness(110%) contrast(100%);
+}
+
+.carousel.testimonial.spotlight .testi-attr { color: rgb(33 38 42 / 80%); }
+
+/* thumbnail-avatar controls: a light pill of customer photos + an "N of N"
+   counter between the arrows, replacing the default dot strip (built in the JS
+   for .spotlight). */
+.carousel.testimonial.spotlight .carousel-controls {
+  gap: 18px;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  margin: 32px auto 0;
+
+  /* extra bottom padding leaves room for the active-photo dot */
+  padding: 12px 16px 18px;
+  background: rgb(255 255 255 / 55%);
+  border-radius: 999px;
+}
+
+.carousel.testimonial.spotlight .carousel-prev { order: 1; }
+.carousel.testimonial.spotlight .carousel-thumbs { order: 2; display: flex; gap: 8px; }
+.carousel.testimonial.spotlight .carousel-counter { order: 3; }
+.carousel.testimonial.spotlight .carousel-next { order: 4; }
+
+.carousel.testimonial.spotlight .carousel-thumb {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.carousel.testimonial.spotlight .carousel-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* the active photo is marked by a small navy dot below it, not a ring */
+.carousel.testimonial.spotlight .carousel-thumb.is-active::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -9px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--navy);
+  transform: translateX(-50%);
+}
+
+.carousel.testimonial.spotlight .carousel-counter {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--navy);
+  white-space: nowrap;
+}
+
+/* the source's arrows: a light outlined back, a solid navy forward */
+.carousel.testimonial.spotlight .carousel-prev,
+.carousel.testimonial.spotlight .carousel-next {
+  width: 52px;
+  height: 52px;
+  border: 1px solid rgb(0 0 0 / 15%);
+  background: #fff;
+  color: var(--navy);
+  font-size: 22px;
+}
+
+.carousel.testimonial.spotlight .carousel-prev:hover:not(:disabled) { background: #eef4f6; }
+
+.carousel.testimonial.spotlight .carousel-next {
+  border-color: var(--navy);
+  background: var(--navy);
+  color: #fff;
+}
+
+.carousel.testimonial.spotlight .carousel-next:hover:not(:disabled) { background: var(--navy-hover); }
+
+/* animation: the source cross-fades + slides the active card up rather than
+   sliding a horizontal track. Slides are stacked; only the active one shows,
+   fading in while its copy and photo rise into place. */
+.carousel.testimonial.spotlight .carousel-viewport { overflow: visible; }
+
+.carousel.testimonial.spotlight .carousel-track {
+  display: block;
+  position: relative;
+  transform: none;
+}
+
+.carousel.testimonial.spotlight .carousel-slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.5s ease, visibility 0s linear 0.5s;
+}
+
+.carousel.testimonial.spotlight .carousel-slide.is-active {
+  position: relative;
+  z-index: 2;
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.5s ease;
+}
+
+.carousel.testimonial.spotlight .testi-body,
+.carousel.testimonial.spotlight .testi-media {
+  transition: transform 0.5s ease, opacity 0.4s ease;
+}
+
+.carousel.testimonial.spotlight .carousel-slide:not(.is-active) .testi-body,
+.carousel.testimonial.spotlight .carousel-slide:not(.is-active) .testi-media {
+  transform: translateY(28px);
+}
+
+@media (width >= 1024px) {
+  /* quote leads on the left (pinned to the container edge), square photo trails on
+     the right, with the free space between them — not the quote crowding the photo */
+  .carousel.testimonial.spotlight .carousel-slide { flex-direction: row-reverse; align-items: center; justify-content: space-between; }
+
+  .carousel.testimonial.spotlight { --testi-quote: 32px; --testi-quote-lh: 41.6px; }
+
+  .carousel.testimonial.spotlight .testi-media:has(img) {
+    position: static;
+    flex: 0 1 520px;
+    align-self: center;
+  }
+
+  .carousel.testimonial.spotlight .testi-media img {
+    position: static;
+    inset: auto;
+    width: 100%;
+    height: auto;
+  }
+
+  /* constrain the quote to a readable column at the leading edge (prod ~496px),
+     so `space-between` leaves the gap between it and the photo */
+  .carousel.testimonial.spotlight .testi-body { flex: 0 1 auto; max-width: 560px; padding: 0; }
+
+  /* the neighbouring customer photos peek behind the active card, offset and
+     dimmed — their copy stays hidden so only the portraits show */
+  .carousel.testimonial.spotlight .carousel-slide.is-prev,
+  .carousel.testimonial.spotlight .carousel-slide.is-next {
+    opacity: 1;
+    visibility: visible;
+    z-index: 1;
+  }
+
+  .carousel.testimonial.spotlight .carousel-slide.is-prev .testi-body,
+  .carousel.testimonial.spotlight .carousel-slide.is-next .testi-body { opacity: 0; }
+
+  .carousel.testimonial.spotlight .carousel-slide.is-prev .testi-media {
+    transform: translate(-56px, 44px);
+    opacity: 0.85;
+    filter: blur(5px);
+
+    /* only the outer ~half of the neighbour photo reads, its inner edge
+       dissolving toward the active card (a soft vertical fade, not a hard cut) */
+    mask-image: linear-gradient(to right, #000 28%, transparent 56%);
+  }
+
+  .carousel.testimonial.spotlight .carousel-slide.is-next .testi-media {
+    transform: translate(56px, -44px);
+    opacity: 0.85;
+    filter: blur(5px);
+    mask-image: linear-gradient(to left, #000 28%, transparent 56%);
+  }
+
+  /* the control pill overlaps the bottom of the photo (centred on it) rather
+     than sitting in a row below the card */
+  .carousel.testimonial.spotlight { position: relative; }
+
+  .carousel.testimonial.spotlight .carousel-controls {
+    position: absolute;
+    right: 260px;
+    bottom: 16px;
+    left: auto;
+    z-index: 3;
+    margin: 0;
+    transform: translateX(50%);
+    background: rgb(255 255 255 / 88%);
+    box-shadow: 0 6px 24px rgb(0 0 0 / 12%);
+  }
+}
+
+/* mobile: match erp.intuit.com — a fixed ~280px square photo, the nav pill
+   overlapping the photo's bottom edge (like desktop, but centred), then the
+   LEFT-aligned quote below it (order: photo -> controls -> quote). The default
+   control sizes also overflow the viewport, so shrink the arrows/thumbs/gaps. */
+@media (width <= 768px) {
+  .carousel.testimonial.spotlight { position: relative; }
+
+  .carousel.testimonial.spotlight .testi-media { max-width: 280px; margin: 0 auto; }
+
+  /* left-align the copy; the top padding clears the pill that overlaps the photo */
+  .carousel.testimonial.spotlight .testi-body { text-align: left; padding: 66px 20px 8px; }
+
+  /* pill overlaps the bottom of the 280px photo, centred, above the quote */
+  .carousel.testimonial.spotlight .carousel-controls {
+    position: absolute;
+    top: 246px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 3;
+    margin: 0;
+    gap: 12px;
+    padding: 10px 12px 16px;
+    max-width: 100%;
+  }
+
+  .carousel.testimonial.spotlight .carousel-prev,
+  .carousel.testimonial.spotlight .carousel-next { width: 44px; height: 44px; font-size: 18px; }
+  .carousel.testimonial.spotlight .carousel-thumbs { gap: 6px; }
+  .carousel.testimonial.spotlight .carousel-thumb { width: 40px; height: 40px; }
+}
+
 @media (width >= 1200px) {
   .carousel.testimonial { --testi-quote: 40px; --testi-quote-lh: 56px; }
 

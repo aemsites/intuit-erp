@@ -4,8 +4,13 @@
  * On mobile the link columns collapse into accordions, the "Select Country"
  * selector drops under the columns, and the legal tier regroups (logos on one
  * row, About links beside the copyright) to mirror erp.intuit.com.
- * Reads the authorable /footer fragment when available, else renders the
- * built-in chrome so it always paints (local QA + preview).
+ * Reads the authorable /footer fragment: a "Footer Columns" block supplies
+ * the 4 link columns and a "Footer Legal" block supplies the legal nav,
+ * copyright paragraphs, and legal links line. Brand/social SVGs, the country
+ * selector, and the search input are fixed UI chrome, not authored content.
+ * If a block is missing from the fragment, that section renders empty.
+ * Authored markup is trusted (DA authors, not end users) and injected as-is —
+ * no HTML escaping/sanitization here by design.
  * CSS: blocks/footer/footer.css · source fragment: content/footer.html
  */
 import { getMetadata } from '../../scripts/aem.js';
@@ -17,6 +22,59 @@ import {
 } from './brand-logos.js';
 import { LOGO_MAILCHIMP_ICON, LOGO_MAILCHIMP_WORD } from '../header/brand-logos.js';
 import { wireFooterSearch } from '../blog-search/search-utils.js';
+
+// "Footer Columns" content model: one row per column, cell 1 = heading text,
+// cell 2 = a list of links. Authors add/remove/reorder rows to add/remove
+// columns, and edit/reorder the <li> items per column (hyperlinked or plain
+// text) freely — the authored <ul> markup is used as-is.
+function parseFooterColumns(doc) {
+  const block = doc.querySelector('.footer-columns');
+  if (!block) return null;
+  const columns = [...block.children].map((row) => {
+    const [titleCell, linksCell] = row.children;
+    const title = (titleCell?.textContent || '').trim();
+    const listHtml = (linksCell?.querySelector('ul')?.innerHTML || '').trim();
+    return { title, listHtml };
+  }).filter((col) => col.title && col.listHtml);
+  return columns.length ? columns : null;
+}
+
+// "Footer Legal" content model: one row with a <ul> of links (legal nav),
+// one row with 2+ <p> (copyright/disclosure copy), and one remaining row
+// (the Legal | Privacy | Security | Compliance links line) — identified by
+// shape rather than position, so reordering the rows doesn't misparse them.
+function parseFooterLegal(doc) {
+  const block = doc.querySelector('.footer-legal');
+  if (!block) return null;
+  const rows = [...block.children];
+  const navRow = rows.find((row) => row.querySelector('ul'));
+  const remaining = rows.filter((row) => row !== navRow);
+  const copyRow = remaining.find((row) => row.querySelectorAll('p').length > 1);
+  const linksRow = remaining.find((row) => row !== copyRow);
+
+  const navHtml = (navRow?.querySelector('ul')?.innerHTML || '').trim();
+  const copyHtml = (copyRow ? [...copyRow.querySelectorAll('p')].map((p) => `<p class="footer-copy">${p.innerHTML}</p>`).join('\n            ') : '');
+  const linksHtml = (linksRow?.querySelector('p')?.innerHTML || '').trim();
+
+  if (!navHtml && !copyHtml && !linksHtml) return null;
+  return { navHtml, copyHtml, linksHtml };
+}
+
+function renderColumns(columns) {
+  return columns.map((col) => `
+        <div class="footer-col">
+          <h2><button type="button" class="col-toggle" aria-expanded="false">${col.title}<i class="caret" aria-hidden="true"></i></button></h2>
+          <ul>
+            ${col.listHtml}
+          </ul>
+        </div>`).join('');
+}
+
+function renderLegalCopy(copyHtml) {
+  // Cookie preferences row is wired to the OneTrust widget, not authored.
+  const cookieRow = '<p class="footer-copy"><a href="https://security.intuit.com/index.php/intuit-cookie-policy/">About cookies</a> | <button type="button" class="ot-sdk-show-settings footer-copy-btn">Manage cookies</button></p>';
+  return `${copyHtml}\n            ${cookieRow}`;
+}
 
 // Locale dropdown — rendered twice: a `country-mobile` row that stacks under
 // the menu columns (accordion-style) and a `country-desktop` chip inside the
@@ -34,61 +92,13 @@ const countryMenu = (id, variant) => `
           </ul>
         </div>`;
 
-const CHROME = `
+function buildChrome(columns, legal) {
+  return `
 <div class="ies-footer">
   <div class="ftr-main">
     <div class="container">
       <div class="footer-cols">
-        <div class="footer-col">
-          <h2><button type="button" class="col-toggle" aria-expanded="false">Company<i class="caret" aria-hidden="true"></i></button></h2>
-          <ul>
-            <li><a href="https://www.intuit.com/company/">About Intuit</a></li>
-            <li><a href="https://investors.intuit.com">Investor Relations</a></li>
-            <li><a href="https://www.intuit.com/company/corporate-responsibility/">Corporate Responsibility</a></li>
-            <li><a href="https://www.intuit.com/partners/">Partner with Intuit</a></li>
-            <li><a href="https://www.intuit.com/company/contact">Contact Us</a></li>
-          </ul>
-        </div>
-        <div class="footer-col">
-          <h2><button type="button" class="col-toggle" aria-expanded="false">For Individuals<i class="caret" aria-hidden="true"></i></button></h2>
-          <ul>
-            <li><a href="https://turbotax.intuit.com/">TurboTax</a></li>
-            <li><a href="https://turbotax.intuit.com/personal-taxes/online/live/full-service/">TurboTax Live</a></li>
-            <li><a href="https://www.creditkarma.com/">Credit Karma</a></li>
-            <li><a href="https://www.creditkarma.com/credit-cards">Credit Cards</a></li>
-            <li><a href="https://www.creditkarma.com/personal-loans/shop">Personal Loans</a></li>
-            <li><a href="https://www.creditkarma.com/shop/autos">Auto Loans</a></li>
-            <li><a href="https://www.creditkarma.com/home-loans/mortgage-rates">Home Loans</a></li>
-            <li><a href="https://quickbooks.intuit.com/solopreneur/">QuickBooks Solopreneur</a></li>
-          </ul>
-        </div>
-        <div class="footer-col">
-          <h2><button type="button" class="col-toggle" aria-expanded="false">For Small Business<i class="caret" aria-hidden="true"></i></button></h2>
-          <ul>
-            <li><a href="https://quickbooks.intuit.com/">QuickBooks</a></li>
-            <li><a href="https://quickbooks.intuit.com/accounting/">Accounting Software</a></li>
-            <li><a href="https://quickbooks.intuit.com/payroll">Payroll</a></li>
-            <li><a href="https://quickbooks.intuit.com/payments/">Online Payments</a></li>
-            <li><a href="https://quickbooks.intuit.com/accounting/invoicing/">Invoicing Software</a></li>
-            <li><a href="https://quickbooks.intuit.com/time-tracking/">Time Tracking</a></li>
-            <li><a href="https://quickbooks.intuit.com/business-banking/loans/term-loans/">Term Loans</a></li>
-            <li><a href="https://quickbooks.intuit.com/business-banking/loans/line-of-credit/">Line of Credit</a></li>
-            <li><a href="https://quickbooks.intuit.com/live/">Bookkeeper Services</a></li>
-            <li><a href="https://mailchimp.com/">Mailchimp</a></li>
-            <li><a href="https://turbotax.intuit.com/small-business-taxes/">TurboTax Live for Business</a></li>
-            <li><a href="https://quickbooks.intuit.com/business-banking/">Business Credit Card</a></li>
-          </ul>
-        </div>
-        <div class="footer-col">
-          <h2><button type="button" class="col-toggle" aria-expanded="false">For Accountants<i class="caret" aria-hidden="true"></i></button></h2>
-          <ul>
-            <li><a href="https://accountants.intuit.com/">Intuit Accountant Suite</a></li>
-            <li><a href="https://accountants.intuit.com/tax/lacerte/">Lacerte Tax</a></li>
-            <li><a href="https://proconnect.intuit.com/tax-online/">ProConnect Tax</a></li>
-            <li><a href="https://accountants.intuit.com/tax/proseries/">ProSeries Tax</a></li>
-            <li><a href="https://proadvisor.intuit.com/">ProAdvisor Program</a></li>
-          </ul>
-        </div>
+        ${renderColumns(columns)}
       </div>
       ${countryMenu('footer-country-menu-m', 'mobile')}
       <div class="footer-search">
@@ -112,11 +122,7 @@ const CHROME = `
         <div class="legal-left">
           <a href="https://www.intuit.com/" class="ftr-logo" aria-label="Intuit">${FOOTER_LOGO_INTUIT}</a>
           <ul class="legal-nav">
-            <li><a href="https://www.intuit.com/company/">About Intuit</a></li>
-            <li><a href="https://www.intuit.com/careers/">Join Our Team</a></li>
-            <li><a href="https://www.intuit.com/company/press-room/">Press Room</a></li>
-            <li><a href="https://www.intuit.com/accessibility/">Accessibility</a></li>
-            <li><a href="https://www.intuit.com/legal/">Terms and Conditions</a></li>
+            ${legal.navHtml}
           </ul>
         </div>
         <div class="legal-center">
@@ -127,18 +133,12 @@ const CHROME = `
             <a href="https://mailchimp.com/" class="ftr-brand ftr-brand-mailchimp" target="_blank" rel="noopener" aria-label="Mailchimp">${LOGO_MAILCHIMP_ICON}${LOGO_MAILCHIMP_WORD}</a>
           </div>
           <div class="legal-copy">
-            <p class="footer-copy">© 2026 Intuit Inc. All rights reserved.</p>
-            <p class="footer-copy">Intuit, QuickBooks, QB, TurboTax, Credit Karma, and Mailchimp are registered trademarks of Intuit Inc. Terms and conditions, features, support, pricing, and service options subject to change without notice.</p>
-            <p class="footer-copy">Money movement services are provided by Intuit Payments Inc., licensed as a Money Transmitter by the New York State Department of Financial Services. For details about our money transmission licenses, or for Texas customers with complaints about our service, please <a href="https://www.intuit.com/legal/licenses/payment-licenses/">click here.</a></p>
-            <p class="footer-copy"><a href="https://security.intuit.com/index.php/intuit-cookie-policy/">About cookies</a> | <button type="button" class="ot-sdk-show-settings footer-copy-btn">Manage cookies</button></p>
+            ${renderLegalCopy(legal.copyHtml)}
           </div>
         </div>
         <div class="legal-right">
           <div class="legal-links">
-            <a href="https://www.intuit.com/legal/">Legal</a><span class="legal-sep">|</span>
-            <a href="https://www.intuit.com/privacy/">Privacy</a><span class="legal-sep">|</span>
-            <a href="https://security.intuit.com">Security</a><span class="legal-sep">|</span>
-            <a href="https://www.intuit.com/compliance/">Compliance</a>
+            ${legal.linksHtml}
           </div>
           <a class="truste" href="https://privacy.trustarc.com/privacy-seal/validation?rid=ab182efc-5237-493d-8952-9295f7f3800b" target="_blank" rel="noopener">
             <img src="https://hostedseal.trustarc.com/privacy-seal/seal?rid=ab182efc-5237-493d-8952-9295f7f3800b" width="142" height="45" alt="TRUSTe" loading="lazy">
@@ -148,6 +148,7 @@ const CHROME = `
     </div>
   </div>
 </div>`;
+}
 
 async function fetchFragment(path) {
   try {
@@ -156,7 +157,7 @@ async function fetchFragment(path) {
       const text = await resp.text();
       if (text && text.trim()) return text;
     }
-  } catch (e) { /* fall back to built-in chrome */ }
+  } catch (e) { /* fall back to built-in defaults */ }
   return null;
 }
 
@@ -218,11 +219,12 @@ function normalizeCookieLabel(block) {
 export default async function decorate(block) {
   const footerMeta = getMetadata('footer');
   const footerPath = footerMeta ? new URL(footerMeta, window.location).pathname : '/footer';
-  // Prefer the authored fragment only when it preserves the chrome markup;
-  // the EDS content pipeline strips the ies-* classes, so fall back to the
-  // canonical embedded chrome for a faithful, reliable render.
   const frag = await fetchFragment(footerPath);
-  block.innerHTML = (frag && frag.includes('ies-footer')) ? frag : CHROME;
+  const doc = frag ? new DOMParser().parseFromString(frag, 'text/html') : null;
+  const columns = (doc && parseFooterColumns(doc)) || [];
+  const legal = (doc && parseFooterLegal(doc)) || { navHtml: '', copyHtml: '', linksHtml: '' };
+
+  block.innerHTML = buildChrome(columns, legal);
   wireAccordions(block);
   wireCountry(block);
   normalizeCookieLabel(block);
