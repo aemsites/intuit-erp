@@ -5,6 +5,8 @@ import {
   clearSectionTag,
   setPageExperiment,
   clearPageExperiment,
+  setPagePersonalization,
+  clearPagePersonalization,
   splitList,
   joinList,
   toPath,
@@ -78,6 +80,8 @@ describe('parseExperience', () => {
       experimentId: '385944',
       experimentLabel: '',
       experimentVariants: [],
+      personalizationId: '',
+      personalizationVariants: [],
     });
     expect(sections).toHaveLength(3);
 
@@ -103,7 +107,13 @@ describe('parseExperience', () => {
 
   it('returns empty page + no sections when there is no <main>', () => {
     const { page, sections } = parseExperience('<body><header></header></body>');
-    expect(page).toEqual({ experimentId: '', experimentLabel: '', experimentVariants: [] });
+    expect(page).toEqual({
+      experimentId: '',
+      experimentLabel: '',
+      experimentVariants: [],
+      personalizationId: '',
+      personalizationVariants: [],
+    });
     expect(sections).toEqual([]);
   });
 });
@@ -195,6 +205,8 @@ describe('setPageExperiment / clearPageExperiment', () => {
       experimentId: '999',
       experimentLabel: 'Hero Test',
       experimentVariants: ['/v1', '/v2'],
+      personalizationId: '',
+      personalizationVariants: [],
     });
     expect(out).toContain('My Page'); // existing Title preserved
   });
@@ -206,6 +218,8 @@ describe('setPageExperiment / clearPageExperiment', () => {
       experimentId: '1',
       experimentLabel: '',
       experimentVariants: [],
+      personalizationId: '',
+      personalizationVariants: [],
     });
     expect(stripped).not.toContain('experiment-label');
     expect(stripped).not.toContain('experiment-variants');
@@ -232,6 +246,57 @@ describe('setPageExperiment / clearPageExperiment', () => {
   it('removes the metadata block + trailing section when it becomes empty', () => {
     const created = setPageExperiment(NOMETA, { id: 'abc', label: 'L' });
     const cleared = clearPageExperiment(created);
+    expect(cleared).not.toContain('class="metadata"');
+    expect(parseExperience(cleared).sections).toHaveLength(1);
+  });
+});
+
+describe('setPagePersonalization / clearPagePersonalization', () => {
+  const NOMETA = `<body><header></header><main><div><h1>Hi</h1></div></main><footer></footer></body>`;
+
+  it('writes personalization-id (+ variants) into the page Metadata block', () => {
+    const out = setPagePersonalization(PAGE, {
+      id: 'homepageHero',
+      variants: ['https://x.aem.page/fragments/pzn/a', '/fragments/pzn/b'],
+    });
+    const { page } = parseExperience(out);
+    expect(page.personalizationId).toBe('homepageHero');
+    expect(page.personalizationVariants).toEqual(['/fragments/pzn/a', '/fragments/pzn/b']);
+    expect(out).toContain('My Page'); // existing Title preserved
+    expect(page.experimentId).toBe('385944'); // experiment tag untouched
+  });
+
+  it('removes the variants row when re-set without them', () => {
+    const withAll = setPagePersonalization(PAGE, { id: 'p', variants: ['/v'] });
+    const stripped = setPagePersonalization(withAll, { id: 'p' });
+    expect(parseExperience(stripped).page.personalizationVariants).toEqual([]);
+    expect(stripped).not.toContain('personalization-variants');
+  });
+
+  it('creates a metadata block in a trailing section when none exists', () => {
+    const out = setPagePersonalization(NOMETA, { id: 'abc' });
+    expect(out).toContain('class="metadata"');
+    expect(parseExperience(out).page.personalizationId).toBe('abc');
+  });
+
+  it('is a no-op when id is empty', () => {
+    expect(setPagePersonalization(PAGE, { id: '' })).toBe(PAGE);
+    expect(setPagePersonalization(PAGE, {})).toBe(PAGE);
+  });
+
+  it('clears personalization rows but keeps the experiment tag and the block', () => {
+    const withPzn = setPagePersonalization(PAGE, { id: 'p', variants: ['/v'] });
+    const cleared = clearPagePersonalization(withPzn);
+    const { page } = parseExperience(cleared);
+    expect(page.personalizationId).toBe('');
+    expect(page.personalizationVariants).toEqual([]);
+    expect(page.experimentId).toBe('385944'); // experiment preserved
+    expect(cleared).toContain('class="metadata"');
+  });
+
+  it('removes the metadata block + trailing section when personalization was its only content', () => {
+    const created = setPagePersonalization(NOMETA, { id: 'abc', variants: ['/v'] });
+    const cleared = clearPagePersonalization(created);
     expect(cleared).not.toContain('class="metadata"');
     expect(parseExperience(cleared).sections).toHaveLength(1);
   });

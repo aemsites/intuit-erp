@@ -5,7 +5,8 @@
 // seeds the object + externalContentIdentifier eagerly; this fills the record arrays.)
 
 // Persistent, deduped buffers (survive across the eager + lazy phases).
-const pznById = new Map(); // key: personalization_id
+const pznById = new Map(); // key: personalization_id (block/section pzn)
+const pznPageById = new Map(); // key: personalization_id (whole-page pzn)
 const ixpById = new Map(); // key: experiment_id
 
 let flushScheduled = false;
@@ -26,7 +27,7 @@ export function flushAppVars() {
   // Real arrays, not JSON strings — the tracker reads them directly (no JSON.parse).
   appVars.pznRecDetailsArr = [...pznById.values()];
   appVars.ixpDetailsArr = [...ixpById.values()];
-  appVars.pznPageRecDetailsArr = []; // no whole-page pzn source on EDS yet
+  appVars.pznPageRecDetailsArr = [...pznPageById.values()]; // whole-page pzn
 }
 
 // Schedules a single debounced flush after paint (idle), off the critical path.
@@ -61,6 +62,11 @@ export function recordPzn(records) {
   record(pznById, records, 'personalization_id');
 }
 
+// Enqueue whole-page pzn records (deduped by personalization_id). Cheap + synchronous.
+export function recordPznPage(records) {
+  record(pznPageById, records, 'personalization_id');
+}
+
 // Enqueue ixp records (deduped by experiment_id). Cheap + synchronous.
 export function recordIxp(records) {
   record(ixpById, records, 'experiment_id');
@@ -69,6 +75,7 @@ export function recordIxp(records) {
 // Test-only: reset the accumulators between cases.
 export function resetAnalytics() {
   pznById.clear();
+  pznPageById.clear();
   ixpById.clear();
   flushScheduled = false;
 }

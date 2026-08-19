@@ -2,7 +2,7 @@ import {
   describe, it, expect, beforeEach, afterEach,
 } from 'vitest';
 import {
-  ensureAppVars, recordPzn, recordIxp, flushAppVars, resetAnalytics,
+  ensureAppVars, recordPzn, recordPznPage, recordIxp, flushAppVars, resetAnalytics,
 } from '../scripts/personalization/analytics.js';
 
 beforeEach(() => {
@@ -43,6 +43,30 @@ describe('recordPzn', () => {
     recordPzn([rec('a')]);
     recordPzn([rec('a'), rec('b')]); // 'a' repeats
     expect(window.appVars.pznRecDetailsArr).toEqual([rec('a'), rec('b')]);
+  });
+});
+
+describe('recordPznPage', () => {
+  const rec = (id) => ({ personalization_id: id, content_id: `c-${id}` });
+
+  it('emits pznPageRecDetailsArr as its own real array, independent of block/section pzn', () => {
+    recordPzn([rec('block')]);
+    recordPznPage([rec('page')]);
+    expect(window.appVars.pznPageRecDetailsArr).toEqual([rec('page')]);
+    expect(window.appVars.pznRecDetailsArr).toEqual([rec('block')]);
+  });
+
+  it('accumulates across phases and dedups by personalization_id', () => {
+    recordPznPage([rec('page')]);
+    recordPznPage([rec('page'), rec('other')]); // 'page' repeats
+    expect(window.appVars.pznPageRecDetailsArr).toEqual([rec('page'), rec('other')]);
+  });
+
+  it('is cleared by resetAnalytics', () => {
+    recordPznPage([rec('page')]);
+    resetAnalytics();
+    flushAppVars();
+    expect(window.appVars.pznPageRecDetailsArr).toEqual([]);
   });
 });
 

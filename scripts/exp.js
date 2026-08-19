@@ -1,32 +1,15 @@
 import { getMetadata } from './aem.js';
 // eslint-disable-next-line import/no-cycle
-import { fetchDecision, fragmentPath, applyFragment } from './personalization/decision.js';
+import { fetchDecision, applyFragment, swapMain } from './personalization/decision.js';
 import {
   isRedirect, isReplace, ixpContentPath, ixpRecord,
 } from './personalization/ixp-response.js';
 import { recordIxp } from './personalization/analytics.js';
 import { stampExperiment } from './personalization/stamp.js';
+import { resolveIvid, ixpParams } from './personalization/attributes.js';
 
 export function isExperimentEnabled() {
   return !!(getMetadata('experiment') || getMetadata('experiment-id') || getMetadata('experiment-label'));
-}
-
-// Replaces <main>'s raw content with the variation page's plain.html so the
-// caller's decorateMain decorates it. Bound by the caller's shared signal:
-// fail-open, so a late/aborted swap can't clobber already-decorated content.
-async function swapMain(doc, variationPath, signal) {
-  const main = doc.querySelector('main');
-  if (!main) return false;
-  const path = fragmentPath(variationPath);
-  if (!path) return false;
-  try {
-    const resp = await fetch(`${path}.plain.html`, { signal });
-    if (!resp.ok) return false;
-    main.innerHTML = await resp.text();
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 export async function runExperiment(doc = document) {
@@ -38,6 +21,8 @@ export async function runExperiment(doc = document) {
   const params = new URLSearchParams();
   if (experimentId) params.set('experimentId', experimentId);
   if (label) params.set('label', label);
+  const ivid = resolveIvid();
+  if (ivid) params.set('ivid', ivid);
 
   // One shared deadline across fetchDecision + swapMain, so a slow decision
   // can't hand the swap a fresh budget and let it land after decoration.
@@ -94,8 +79,7 @@ export async function runBlockExperiments(root = document.querySelector('main'),
   const experiments = collectExperiments(root, skip);
   if (experiments.length === 0) return;
   await Promise.all(experiments.map(async ({ el, id }) => {
-    const key = /^\d+$/.test(id) ? `experimentId=${encodeURIComponent(id)}` : `label=${encodeURIComponent(id)}`;
-    const res = await fetchDecision(`ixp?${key}`);
+    const res = await fetchDecision(`ixp?${ixpParams(id)}`);
     const assignment = res?.assignments?.[0];
     if (!assignment) return;
     const record = ixpRecord(assignment, window.location.pathname);
