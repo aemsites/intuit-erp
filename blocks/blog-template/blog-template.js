@@ -41,7 +41,9 @@
  *
  * CSS: blocks/blog-template/blog-template.css
  */
-import { getMetadata, toClassName, loadCSS, createOptimizedPicture } from '../../scripts/aem.js';
+import {
+  getMetadata, toClassName, loadCSS, createOptimizedPicture,
+} from '../../scripts/aem.js';
 import { hasAuthoredCaseStudyHeader } from './blog-detect.js';
 import { loadIndex } from '../../scripts/content-index.js';
 
