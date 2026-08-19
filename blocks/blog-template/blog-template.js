@@ -391,7 +391,6 @@ function wireToc(tocWrap, nav, headings, mq) {
   headings.forEach((h) => observer.observe(h));
 }
 
-
 const BLOG_INDEX = '/blog/query-index.json';
 
 /**
