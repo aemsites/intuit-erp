@@ -1,5 +1,5 @@
 import {
-  describe, it, expect, vi, afterEach,
+  describe, it, expect, vi, beforeEach, afterEach,
 } from 'vitest';
 import {
   buildToc, buildByline, buildEyebrow, buildBylineMeta,
@@ -108,6 +108,14 @@ describe('buildBylineMeta', () => {
 });
 
 describe('buildShare', () => {
+  beforeEach(() => {
+    window.hlx = { codeBasePath: '' };
+  });
+
+  afterEach(() => {
+    delete window.hlx;
+  });
+
   it('builds a label plus 4 social links in Facebook, X, LinkedIn, YouTube order', () => {
     const el = buildShare();
     expect(el.tagName).toBe('P');
@@ -117,17 +125,32 @@ describe('buildShare', () => {
     expect(links.map((a) => a.getAttribute('aria-label'))).toEqual([
       'Facebook', 'X', 'LinkedIn', 'YouTube',
     ]);
-    expect(links.map((a) => a.getAttribute('href'))).toEqual([
-      'https://www.facebook.com/intuit',
-      'https://twitter.com/intuit',
-      'https://www.linkedin.com/company/intuit',
-      'https://www.youtube.com/user/intuit',
-    ]);
     links.forEach((a) => {
       expect(a.getAttribute('target')).toBe('_blank');
       expect(a.getAttribute('rel')).toBe('noopener');
-      expect(a.querySelector('svg')).toBeTruthy();
     });
+  });
+
+  it('renders each icon from /icons as an <img>, not an embedded <svg>', () => {
+    const el = buildShare();
+    const links = [...el.querySelectorAll('.blog-share-link')];
+    expect(links.map((a) => a.querySelector('img')?.getAttribute('src'))).toEqual([
+      '/icons/facebook.svg', '/icons/x.svg', '/icons/linkedin.svg', '/icons/youtube.svg',
+    ]);
+    links.forEach((a) => expect(a.querySelector('svg')).toBeNull());
+  });
+
+  it('builds Facebook/X/LinkedIn as share-intent links carrying the current article URL', () => {
+    const el = buildShare();
+    const links = [...el.querySelectorAll('.blog-share-link')];
+    const encodedUrl = encodeURIComponent(window.location.href);
+    const [facebook, x, linkedin, youtube] = links.map((a) => a.getAttribute('href'));
+    expect(facebook).toBe(`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`);
+    expect(x).toBe(`https://twitter.com/share?url=${encodedUrl}`);
+    expect(linkedin).toBe(`https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`);
+    // YouTube stays a static "visit our channel" link, matching production —
+    // its share row's 4th icon is a follow link, not a share intent.
+    expect(youtube).toBe('https://www.youtube.com/user/intuit');
   });
 });
 

@@ -127,8 +127,31 @@
   background: var(--primary-dark);
 }
 
-.blog-article .blog-share-link svg {
+.blog-article .blog-share-link img {
   display: block;
+}
+
+/* explicit sizes (beats the global `main img { width: auto; height: auto; }`
+   rule via specificity) — kept per-network since the glyphs aren't visually
+   balanced at a single uniform size. */
+.blog-article .blog-share-icon-facebook {
+  width: 18px;
+  height: 18px;
+}
+
+.blog-article .blog-share-icon-x {
+  width: 16px;
+  height: 16px;
+}
+
+.blog-article .blog-share-icon-linkedin {
+  width: 17px;
+  height: 17px;
+}
+
+.blog-article .blog-share-icon-youtube {
+  width: 20px;
+  height: 20px;
 }
 
 /* ============================================================
@@ -780,9 +803,10 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
   margin: 40px 0 20px;
 }
 
-.blog-article > .section > .default-content-wrapper h3 {
-  font-size: 28px;
-  line-height: 36px;
+.blog-article > .section > .default-content-wrapper h3,
+.case-study > .section > .default-content-wrapper h3 {
+  font-size: 34px;
+  line-height: 44px;
   margin: 32px 0 16px;
 }
 
