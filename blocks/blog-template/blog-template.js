@@ -41,7 +41,7 @@
  *
  * CSS: blocks/blog-template/blog-template.css
  */
-import { getMetadata, toClassName, loadCSS } from '../../scripts/aem.js';
+import { getMetadata, toClassName, loadCSS, createOptimizedPicture } from '../../scripts/aem.js';
 import { hasAuthoredCaseStudyHeader } from './blog-detect.js';
 import { loadIndex } from '../../scripts/content-index.js';
 
@@ -409,7 +409,9 @@ async function fetchAuthorRow(slug) {
     const entries = await loadIndex(BLOG_INDEX);
     const authorPath = `/blog/author/${slug}`;
     return entries.find((e) => e.path === authorPath) || null;
-  } catch {
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.debug(`author-bio: could not load author row for "${slug}"`, error);
     return null;
   }
 }
@@ -432,13 +434,13 @@ function insertAuthorBio(main, row, authorPath) {
   if (row.image) {
     const imgWrap = document.createElement('div');
     imgWrap.className = 'blog-author-bio-avatar';
-    const img = document.createElement('img');
-    img.src = row.image;
-    img.alt = row.title || '';
+    // Responsive <picture> via the site's media pipeline; lazy since the bio
+    // sits at the very bottom of the article (below the fold).
+    const picture = createOptimizedPicture(row.image, row.title || '', false, [{ width: '120' }]);
+    const img = picture.querySelector('img');
     img.width = 120;
     img.height = 120;
-    img.loading = 'eager';
-    imgWrap.append(img);
+    imgWrap.append(picture);
     inner.append(imgWrap);
   }
   const textWrap = document.createElement('div');
