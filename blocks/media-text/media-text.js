@@ -21,7 +21,9 @@
  *              card bottom (erp-solutions "Move to a modern ERP" / solution-cards)
  * CSS: blocks/media-text/media-text.css
  */
+import { buildBlock, loadBlock } from '../../scripts/aem.js';
 import { bindScheduleLinks } from '../form/form.js';
+import { videoInfo } from '../video/video-info.js';
 
 function buildCopy(textCell) {
   const copy = document.createElement('div');
@@ -92,22 +94,49 @@ export default function decorate(block) {
         const vis = document.createElement('div');
         vis.className = 'mig-visual';
         [...cells[1].childNodes].forEach((n) => vis.append(n));
-        // normalise the "Migrating progression" step list (robust to class stripping)
-        const list = vis.querySelector('ul');
-        if (list) {
-          list.classList.add('mig-steps');
-          const head = vis.querySelector('p');
-          if (head) head.classList.add('mig-visual-head');
-          list.querySelectorAll('li').forEach((li) => {
-            if (/^\s*✓/.test(li.textContent)) {
-              li.classList.add('done');
-              li.textContent = li.textContent.replace(/^\s*✓\s*/, '');
-              const tick = document.createElement('span');
-              tick.className = 'tick';
-              tick.textContent = '✓';
-              li.prepend(tick);
-            }
-          });
+
+        // detect a video-host link in the visual cell; if found, compose a
+        // `video` block using the EDS buildBlock/loadBlock pipeline instead of
+        // rendering a static poster link.  Non-video cards (step lists, plain
+        // images on /index, /pricing, etc.) are completely untouched.
+        const videoLink = vis.querySelector('a[href]');
+        const info = videoLink ? videoInfo(videoLink.getAttribute('href')) : null;
+        if (info) {
+          // extract the authored poster img (if present) so the video block
+          // can use the already-published thumbnail rather than the fallback
+          const img = vis.querySelector('img');
+          // build a video block: one row, one column containing [link, img]
+          // (matches the structure that buildVideoAutoBlocks produces for
+          // section-level video paragraphs — see scripts.js:204)
+          const elems = [videoLink];
+          if (img) elems.push(img);
+          const videoBlock = buildBlock('video', { elems });
+          // set blockName so loadBlock can resolve the JS/CSS paths;
+          // skip decorateBlock() to avoid adding video-wrapper/-container
+          // classes that would alter section background/padding via video.css
+          videoBlock.dataset.blockName = 'video';
+          vis.replaceChildren(videoBlock);
+          // fire-and-forget: card grid renders synchronously; the video block
+          // (poster + play button) fills in once loadBlock resolves
+          loadBlock(videoBlock);
+        } else {
+          // normalise the "Migrating progression" step list (robust to class stripping)
+          const list = vis.querySelector('ul');
+          if (list) {
+            list.classList.add('mig-steps');
+            const head = vis.querySelector('p');
+            if (head) head.classList.add('mig-visual-head');
+            list.querySelectorAll('li').forEach((li) => {
+              if (/^\s*✓/.test(li.textContent)) {
+                li.classList.add('done');
+                li.textContent = li.textContent.replace(/^\s*✓\s*/, '');
+                const tick = document.createElement('span');
+                tick.className = 'tick';
+                tick.textContent = '✓';
+                li.prepend(tick);
+              }
+            });
+          }
         }
         card.append(vis);
       }
