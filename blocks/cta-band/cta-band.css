@@ -64,6 +64,16 @@ main > .section.cta-band-container:has(.cta-band.simple) > div { max-width: none
   background: var(--navy); color: #fff;
 }
 
+/*
+ * solo variant — navy CTA card with no stat column, content centered.
+ * Matches erp.intuit.com HCM "Assess your fit" CTA (navy card, 48px title,
+ * eyebrow/title/body/button all centered).
+ */
+.cta-band.solo .firstcall-grid { grid-template-columns: 1fr; }
+.cta-band.solo .firstcall-card { text-align: center; }
+.cta-band.solo .fc-body { max-width: 40em; margin-left: auto; margin-right: auto; }
+.cta-band.solo .firstcall-card .button-wrapper { display: flex; justify-content: center; }
+
 @media (width <= 768px) {
   .cta-band .firstcall-grid { grid-template-columns: 1fr; gap: 16px; }
   .cta-band .firstcall-stat, .cta-band .firstcall-card { padding: 40px 28px; }

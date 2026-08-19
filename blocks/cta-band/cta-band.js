@@ -78,7 +78,9 @@ export default function decorate(block) {
   if (!rows.length) return;
 
   const hasStat = rows.length > 1;
-  block.classList.toggle('simple', !hasStat);
+  // `simple` (light band) is derived from the absence of a stat column, unless
+  // the block opts into the `solo` variant (navy card, no stat, centered).
+  block.classList.toggle('simple', !hasStat && !block.classList.contains('solo'));
 
   const grid = document.createElement('div');
   grid.className = 'firstcall-grid';
