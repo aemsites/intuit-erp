@@ -56,6 +56,17 @@
 .cards.dark:not(.carousel, .boxed) a,
 .cards.accent:not(.carousel, .boxed) a { color: #fff; font-weight: 400; text-decoration: underline; }
 
+/* editorial variant — pale-blue icon-card boxes with dark copy, matching
+   erp.intuit.com's default RwCard treatment (e.g. multi-entity
+   Resources/Events/Support). Layers on .cards.icons: identical structure to
+   .accent but the pale --agave-band surface and dark text instead of the
+   vivid-blue/white scheme. Opt-in, so the .accent pages are untouched. */
+.cards.editorial > div {
+  background: var(--agave-band); border-radius: var(--radius-card); padding: 32px 28px;
+}
+.cards.editorial .cards-card-body h3 { color: var(--heading); }
+.cards.editorial .cards-card-body p { color: var(--text); }
+
 /* dark full-bleed band (accountant "Resources for firms"; also used by the
    .carousel/.boxed dark instances below) — .accent keeps the section's own
    (white) background instead. */
