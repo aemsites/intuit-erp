@@ -639,13 +639,30 @@
   }
 }
 
-/* mobile: match erp.intuit.com — the quote copy is LEFT-aligned below the photo
-   (not centred), and the default control sizes make the pill wider than the
-   viewport (horizontal overflow), so shrink the arrows/thumbs/gaps to fit. */
+/* mobile: match erp.intuit.com — a fixed ~280px square photo, the nav pill
+   overlapping the photo's bottom edge (like desktop, but centred), then the
+   LEFT-aligned quote below it (order: photo -> controls -> quote). The default
+   control sizes also overflow the viewport, so shrink the arrows/thumbs/gaps. */
 @media (width <= 768px) {
-  .carousel.testimonial.spotlight .testi-body { text-align: left; padding: 32px 20px 8px; }
+  .carousel.testimonial.spotlight { position: relative; }
 
-  .carousel.testimonial.spotlight .carousel-controls { gap: 12px; padding: 10px 12px 16px; max-width: 100%; }
+  .carousel.testimonial.spotlight .testi-media { max-width: 280px; margin: 0 auto; }
+
+  /* left-align the copy; the top padding clears the pill that overlaps the photo */
+  .carousel.testimonial.spotlight .testi-body { text-align: left; padding: 66px 20px 8px; }
+
+  /* pill overlaps the bottom of the 280px photo, centred, above the quote */
+  .carousel.testimonial.spotlight .carousel-controls {
+    position: absolute;
+    top: 246px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 3;
+    margin: 0;
+    gap: 12px;
+    padding: 10px 12px 16px;
+    max-width: 100%;
+  }
 
   .carousel.testimonial.spotlight .carousel-prev,
   .carousel.testimonial.spotlight .carousel-next { width: 44px; height: 44px; font-size: 18px; }
