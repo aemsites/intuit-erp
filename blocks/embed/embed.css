@@ -14,14 +14,6 @@
   justify-content: center;
 }
 
-/* place the embed in the prose content column of the blog-article/case-study grid */
-@media (min-width: 900px) {
-  .blog-article > .embed-wrapper,
-  .case-study > .embed-wrapper {
-    grid-column: 2;
-  }
-}
-
 .embed.embed-datawrapper {
   max-width: none;
   margin: 2rem 0;

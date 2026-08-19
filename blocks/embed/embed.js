@@ -10,15 +10,18 @@
 
 // Install the Datawrapper responsive-height listener once per page. Datawrapper
 // iframes post {'datawrapper-height': {<id>: <px>}}; match the posting frame by
-// its contentWindow and apply the height.
+// its contentWindow and apply the height. The listener is scoped to
+// `.embed-datawrapper iframe` and rejects messages that are not from a
+// datawrapper (*.dwcdn.net) origin.
 let dwResizeInstalled = false;
 function installDatawrapperResize() {
   if (dwResizeInstalled) return;
   dwResizeInstalled = true;
   window.addEventListener('message', (event) => {
+    if (!event.origin.endsWith('.dwcdn.net')) return;
     const heights = event.data && event.data['datawrapper-height'];
     if (!heights) return;
-    const iframes = document.querySelectorAll('iframe');
+    const iframes = document.querySelectorAll('.embed-datawrapper iframe');
     Object.keys(heights).forEach((key) => {
       iframes.forEach((iframe) => {
         if (iframe.contentWindow === event.source) {
@@ -32,8 +35,7 @@ function installDatawrapperResize() {
 const embedDatawrapper = (url) => {
   installDatawrapperResize();
   return `<div class="widget-container">
-      <iframe title="" aria-label="Interactive chart" src="${url.href}" scrolling="no" frameborder="0"
-        style="width: 0; min-width: 100% !important; border: none;" loading="lazy"></iframe>
+      <iframe title="" aria-label="Interactive chart" src="${url.href}" scrolling="no" frameborder="0" loading="lazy"></iframe>
     </div>`;
 };
 
