@@ -134,6 +134,7 @@ Other options:
 | `--settle <ms>` | capture window (default 9000 — spans the EDS delayed phase) |
 | `--samples <n>` | capture each env `n` times and **union** the sets into the golden — recovers sampled/nondeterministic martech (FullStory, Akamai mPulse, DSP cookie-syncs). Prints a per-vendor hit frequency so you see what was flaky. Default 1. |
 | `--json out.json` | also write the raw capture + diff |
+| `--assert` | gate mode — exit 1 on any per-page `mustFire`/`mustNotFire` violation (see [Allowlist assertions](#allowlist-assertions)) |
 
 ### Reading the output
 
@@ -163,6 +164,44 @@ differences, not rebuild gaps.** Each missing vendor is auto-classified by *how 
 The **unclassified 3rd-party** line lists any host not yet recognized by a vendor pattern — add a
 pattern (see below) or confirm it's noise, so nothing is ever silently dropped.
 
+### Allowlist assertions
+
+`--assert` turns the report into a **gate**: each page in `PAGES` may declare vendors that
+**must fire** (`mustFire`) or **must not fire** (`mustNotFire`) on the our-build envs, and any
+violation exits **1**. Without `--assert` the run stays report-only (exit 0), so existing usage is
+unchanged. Use it to lock in behavior that would otherwise regress silently — in particular, that a
+vendor riding the Tealium profile fan-out still fires **where prod scopes it, and nowhere else**.
+
+**Why this exists — Qualtrics (#148, #620).** The "Feedback" tab on `/blog/*` is Qualtrics Site
+Intercept, and it is **not** page code: it is `ies-erp` Tealium **tag #35** (`utag.35.js`), scoped by
+the tag's own load rule `cond[2] = /^\/blog\//` and gated on the analytics consent category
+(`tcat:1`). The rebuild loads the real profile, so it already fires — no `scripts/delayed.js` loader
+needed. A manual loader (proposed in #620) would **double-load** it on `/blog/*`, **over-fire** it
+site-wide (it has no path gate), and **bypass** the consent category. These assertions encode the
+correct contract so either regression — losing it, or re-broadening it — fails loudly.
+
+| Page | `ours` path | assertion |
+| --- | --- | --- |
+| `blog-feedback` | `/blog/parity-probe` | `mustFire: ['qualtrics']` |
+| `non-blog-scope` | `/parity-probe` | `mustNotFire: ['qualtrics']` |
+
+The migrated `/blog` content is auth-gated, so `ours` points at committed drafts fixtures
+(`drafts/blog/parity-probe.html`, `drafts/parity-probe.html`) served at **real** paths. Tag #35 keys
+off `location.pathname`, so a synthetic `/blog/*` path triggers it exactly like real content. Serve
+the fixtures at root with `--html-mount /`:
+
+```bash
+npx @adobe/aem-cli up --no-open --html-folder drafts --html-mount / --port 3001 &
+node scripts/diff/martech-diff.mjs --env local --page blog-feedback,non-blog-scope \
+  --local-base http://localhost:3001 --settle 15000 --assert
+# → ASSERT ok  local: fires [qualtrics]   ·   ASSERT ok  local: absent [qualtrics]   (exit 0)
+```
+
+Run this **manually or on a schedule, not as a blocking CI gate.** It drives a browser, needs network
+to `tags.tiqcdn.com`, fires a **real Qualtrics impression** each run (the dev profile points at the
+production zone), and it guards an *external* dependency (the Tealium profile), so it can legitimately
+go red for reasons outside any given PR.
+
 ### Updating / extending
 
 - **Add a reference page:** add `{ name, prod, ours }` to `PAGES` in the script, then `--refresh` a
@@ -174,8 +213,9 @@ pattern (see below) or confirm it's noise, so nothing is ever silently dropped.
 
 ### Known limitations
 
-- **Report-only** today (exit 0). A phase 2 will assert an allowlist of must-fire vendors +
-  must-have UDO keys once the current gaps are triaged.
+- **Report-only by default** (exit 0). `--assert` enables per-page must-fire/must-not-fire vendor
+  allowlists (see [Allowlist assertions](#allowlist-assertions)); must-have UDO keys and per-vendor
+  param comparison are still TODO.
 - Some vendors fire **nondeterministically** — FullStory and Akamai mPulse are **sampled** (only a
   subset of visits records; note `fs_is_sampled` in the UDO), and the DSP cookie-syncs fire a
   different subset each load — so a single golden capture under-measures prod. Use **`--samples <n>`**

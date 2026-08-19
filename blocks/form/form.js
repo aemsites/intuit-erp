@@ -5,7 +5,8 @@
  * ChiliPiper-only demo booking (bookDemo).
  *
  * Per-page config rows (author): formId, chiliPiperRouter, downloadUrl,
- * successUrl, header, subheader, disclaimer, recaptcha (per-form v3 opt-in).
+ * successUrl, header, subheader, disclaimer, recaptcha (per-form v3 opt-in),
+ * buttonLabel (overrides Marketo's own hardcoded submit button text).
  * Site-wide values (munchkin, chilipiper subdomain, script URLs, reCAPTCHA
  * site key/verify endpoint) come from /site-config.json via getSiteConfig() —
  * never authored per page, never hardcoded.
@@ -33,6 +34,7 @@ const CONFIG_KEYS = [
   'subheader',
   'disclaimer',
   'recaptcha',
+  'buttonLabel',
 ];
 
 const CHILIPIPER_SRC_DEFAULT = '//js.chilipiper.com/marketing.js';
@@ -74,6 +76,7 @@ export function parseFormConfig(block) {
     subheader: found.subheader,
     disclaimer: found.disclaimer,
     recaptcha: found.recaptcha === 'true',
+    buttonLabel: found.buttonLabel,
   };
 }
 
@@ -197,6 +200,13 @@ async function embedMarketoForm(formEl, cfg, config) {
       el.className = 'form-disclaimer';
       el.innerHTML = config.disclaimer;
       formEl.parentNode.insertBefore(el, formEl);
+    }
+    // Marketo forms ship with their own hardcoded button text (e.g. "Watch Now"
+    // on a form template built for webinars); override it per-page when the
+    // form is reused in a context that needs different copy.
+    if (config.buttonLabel) {
+      const button = formEl.querySelector('.mktoButton');
+      if (button) button.textContent = config.buttonLabel;
     }
     setupRecaptcha(cfg, config, form);
     // A ChiliPiper handoff only actually fires when both router (authored) and

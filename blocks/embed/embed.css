@@ -1,0 +1,37 @@
+/* Embed Block — aligned with the AEM Block Collection embed block, extended for
+   Datawrapper charts. Datawrapper reproduces production's `.widget-container`
+   exactly (max-width 740px, 2.5rem side padding, centered → a 660px iframe that
+   matches the article body-text width), so migrated pages render identically. */
+.embed {
+  width: unset;
+  text-align: center;
+  max-width: 800px;
+  margin: 32px auto;
+}
+
+.embed > div {
+  display: flex;
+  justify-content: center;
+}
+
+.embed.embed-datawrapper {
+  max-width: none;
+  margin: 2rem 0;
+  text-align: left;
+}
+
+.embed.embed-datawrapper > div,
+.embed.embed-datawrapper .widget-container {
+  display: block;
+  width: 100%;
+  max-width: none;
+  padding: 0;
+  margin: 0;
+}
+
+.embed.embed-datawrapper .widget-container iframe {
+  display: block;
+  width: 0;
+  min-width: 100%;
+  border: none;
+}

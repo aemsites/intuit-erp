@@ -20,8 +20,9 @@
  *     `pzn-block` / `exp-block`     = block name        → data-pzn-block / …
  *                                     (present only when block-scoped)
  *     `pzn-variants` / `exp-variants` = up to 5 fragment paths, comma-joined
- *   PAGE (experimentation only) → rows in the page Metadata block:
- *     `experiment-id`, `experiment-label` (optional), `experiment-variants`
+ *   PAGE → rows in the page Metadata block:
+ *     experimentation: `experiment-id`, `experiment-label` (opt), `experiment-variants`
+ *     personalization:  `personalization-id`, `personalization-variants` (opt)
  *
  * A section carries the tag; the optional `*-block` row scopes it to one block
  * (matched by name — first match wins). `pzn` and `exp` are independent and may
@@ -206,6 +207,8 @@ export function parseExperience(html) {
     experimentId: valueOf(meta, 'experiment-id'),
     experimentLabel: valueOf(meta, 'experiment-label'),
     experimentVariants: splitList(valueOf(meta, 'experiment-variants')),
+    personalizationId: valueOf(meta, 'personalization-id'),
+    personalizationVariants: splitList(valueOf(meta, 'personalization-variants')),
   };
   const sections = sectionEls(doc).map((sectionEl, index) => {
     const smeta = sectionMetaEl(sectionEl);
@@ -317,6 +320,52 @@ export function clearPageExperiment(html) {
   removeRow(meta, 'experiment-id');
   removeRow(meta, 'experiment-label');
   removeRow(meta, 'experiment-variants');
+  if (meta.children.length === 0) {
+    const section = meta.parentElement;
+    meta.remove();
+    if (section && section.tagName === 'DIV'
+      && section.parentElement && section.parentElement.tagName === 'MAIN'
+      && section.children.length === 0) {
+      section.remove();
+    }
+  }
+  return serialize(doc);
+}
+
+/**
+ * Set the page-level personalization tags in the Metadata block. `id` is the
+ * page-level placement (required — falsy id is a no-op); `variants` are optional
+ * and removed when empty. There is no label (unlike experimentation). Creates the
+ * Metadata block in a trailing section if none exists; preserves any experiment rows.
+ * @param {string} html
+ */
+export function setPagePersonalization(html, { id, variants } = {}) {
+  const cleanId = (id == null ? '' : String(id)).trim();
+  if (!cleanId) return html;
+  const doc = parseDoc(html);
+  const meta = ensureMetadata(doc);
+  if (!meta) return html;
+
+  setRow(doc, meta, 'personalization-id', cleanId);
+
+  const list = joinList(variants);
+  if (list) setRow(doc, meta, 'personalization-variants', list);
+  else removeRow(meta, 'personalization-variants');
+
+  return serialize(doc);
+}
+
+/**
+ * Clear the page-level personalization tags. Removes the Metadata block (and its
+ * wrapping section) only when it has no other rows left (e.g. an experiment tag).
+ * @param {string} html
+ */
+export function clearPagePersonalization(html) {
+  const doc = parseDoc(html);
+  const meta = metadataEl(doc);
+  if (!meta) return html;
+  removeRow(meta, 'personalization-id');
+  removeRow(meta, 'personalization-variants');
   if (meta.children.length === 0) {
     const section = meta.parentElement;
     meta.remove();
