@@ -269,16 +269,12 @@ export function buildShare() {
     a.setAttribute('aria-label', name);
     const { width, height } = SHARE_ICON_DIMS[icon];
     const img = document.createElement('img');
+    img.className = `blog-share-icon-${icon}`;
     img.src = `${window.hlx.codeBasePath}/icons/${icon}.svg`;
     img.alt = '';
     img.loading = 'lazy';
     img.width = width;
     img.height = height;
-    // the global `main img { width: auto; height: auto; }` rule (styles.css)
-    // overrides the width/height attributes above — pin the size inline so
-    // these small glyphs don't get stretched to fill the 32px circle.
-    img.style.width = `${width}px`;
-    img.style.height = `${height}px`;
     a.append(img);
     wrap.append(a);
   });

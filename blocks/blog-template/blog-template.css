@@ -131,6 +131,29 @@
   display: block;
 }
 
+/* explicit sizes (beats the global `main img { width: auto; height: auto; }`
+   rule via specificity) — kept per-network since the glyphs aren't visually
+   balanced at a single uniform size. */
+.blog-article .blog-share-icon-facebook {
+  width: 18px;
+  height: 18px;
+}
+
+.blog-article .blog-share-icon-x {
+  width: 16px;
+  height: 16px;
+}
+
+.blog-article .blog-share-icon-linkedin {
+  width: 17px;
+  height: 17px;
+}
+
+.blog-article .blog-share-icon-youtube {
+  width: 20px;
+  height: 20px;
+}
+
 /* ============================================================
    table of contents — numbered, collapsible. `.blog-toc-toggle` is the
    always-visible bar/heading; `.blog-toc-list` is the numbered link list
