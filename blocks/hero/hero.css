@@ -348,3 +348,6 @@
   .hero.centered .hero-video { margin-top: 32px; }
   .hero.centered .hero-video video { border-radius: 10px; }
 }
+
+/* #508/#522/#570: hero headline weight 700 to match prod; the centered variant (e.g. /ai-agents) stays 400. */
+.hero:not(.centered) .hero-copy h1 { font-weight: 700; }
