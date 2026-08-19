@@ -1,0 +1,223 @@
+[
+  {
+    "id": "multi-entity-finance-leader",
+    "name": "Multi-Entity Finance Leader",
+    "description": "CFO or controller running finance for a company with multiple entities, subsidiaries, or locations who needs one consolidated view instead of stitching together spreadsheets. Often in financial services, nonprofit, or complex mid-market organizations.",
+    "keywords": [
+      "multi-entity",
+      "consolidation",
+      "subsidiaries",
+      "intercompany",
+      "consolidated reporting",
+      "multiple entities",
+      "close process",
+      "entity management",
+      "board reporting",
+      "investor reporting",
+      "FP&A"
+    ],
+    "priorities": [
+      "consolidated reporting across entities",
+      "automatic intercompany eliminations",
+      "a single source of truth",
+      "board-ready financial reports",
+      "AI-driven forecasting and cash flow visibility"
+    ],
+    "recommendedProducts": [
+      "multi-entity-consolidation",
+      "audit-ready-controls",
+      "business-intelligence-reporting",
+      "business-forecasting-fpa",
+      "financial-services-erp"
+    ],
+    "intentProfile": {
+      "explore": 0.3,
+      "research": 0.8,
+      "compare": 0.6,
+      "purchase": 0.4,
+      "deals": 0.2,
+      "support": 0.3
+    }
+  },
+  {
+    "id": "quickbooks-upgrader",
+    "name": "QuickBooks Upgrader",
+    "description": "Finance lead who has outgrown QuickBooks Online or Desktop and is evaluating an ERP step-up, wanting a fast, low-disruption migration rather than a rebuild. Often in services, construction, or growing SMBs.",
+    "keywords": [
+      "quickbooks",
+      "outgrown quickbooks",
+      "upgrade",
+      "switch erp",
+      "quickbooks desktop enterprise",
+      "migration",
+      "go live",
+      "step up from quickbooks",
+      "automate bookkeeping",
+      "month-end close"
+    ],
+    "priorities": [
+      "fast, guided migration",
+      "keep existing Chart of Accounts and lists",
+      "avoid disruptive legacy ERP implementations",
+      "AI automation to reduce manual work",
+      "faster month-end close"
+    ],
+    "recommendedProducts": [
+      "quickbooks-legacy-migration",
+      "ai-finance-agents",
+      "payments-bill-pay"
+    ],
+    "intentProfile": {
+      "explore": 0.4,
+      "research": 0.5,
+      "compare": 0.5,
+      "purchase": 0.8,
+      "deals": 0.2,
+      "support": 0.3
+    }
+  },
+  {
+    "id": "construction-field-services-controller",
+    "name": "Construction & Field Services Controller",
+    "description": "Controller at a project-based construction, field-services, or trades business weighing Intuit Enterprise Suite against other mid-market ERPs. Needs real-time job costing, WIP visibility, and AIA billing without months of implementation.",
+    "keywords": [
+      "construction",
+      "field services",
+      "job costing",
+      "project accounting",
+      "trades business",
+      "specialty contractor",
+      "month-end close",
+      "compare erp",
+      "WIP report",
+      "AIA billing",
+      "Procore"
+    ],
+    "priorities": [
+      "faster month-end close",
+      "project-based accounting across jobs",
+      "real-time WIP visibility",
+      "native integrations with construction tools",
+      "proof from similar construction customers"
+    ],
+    "recommendedProducts": [
+      "construction-erp",
+      "multi-entity-consolidation",
+      "ai-finance-agents"
+    ],
+    "intentProfile": {
+      "explore": 0.4,
+      "research": 0.6,
+      "compare": 0.8,
+      "purchase": 0.4,
+      "deals": 0.3,
+      "support": 0.2
+    }
+  },
+  {
+    "id": "proadvisor-accountant",
+    "name": "Accountant / ProAdvisor",
+    "description": "Accounting firm or ProAdvisor helping clients evaluate and migrate to Intuit Enterprise Suite, motivated by preferred pricing, referral bonuses, and hands-on migration support. Manages complex multi-entity clients across industries.",
+    "keywords": [
+      "proadvisor",
+      "accountant",
+      "accounting firm",
+      "client migration",
+      "professional services",
+      "preferred pricing",
+      "im an accountant",
+      "referral bonus",
+      "CPA",
+      "advisory services"
+    ],
+    "priorities": [
+      "ProAdvisor preferred pricing (up to 60% off)",
+      "30% referral bonus on first-year subscription",
+      "professional services support for client migrations",
+      "tools that save time on journal entries and reconciliations",
+      "an open ecosystem of apps clients already use"
+    ],
+    "recommendedProducts": [
+      "accountant-proadvisor",
+      "connected-ecosystem",
+      "quickbooks-legacy-migration",
+      "workforce-elite"
+    ],
+    "intentProfile": {
+      "explore": 0.2,
+      "research": 0.5,
+      "compare": 0.4,
+      "purchase": 0.3,
+      "deals": 0.7,
+      "support": 0.8
+    }
+  },
+  {
+    "id": "nonprofit-professional-services",
+    "name": "Nonprofit & Professional Services Finance Director",
+    "description": "Finance director at a nonprofit or professional-services organization managing multiple locations, grants, programs, or project-based contracts. Prioritizes governance, compliance, and audit-readiness.",
+    "keywords": [
+      "nonprofit",
+      "professional services",
+      "compliance",
+      "audit trail",
+      "grants",
+      "multi-location",
+      "governance",
+      "controls",
+      "revenue recognition",
+      "project billing",
+      "HIPAA",
+      "SOC1"
+    ],
+    "priorities": [
+      "audit-ready controls and complete approval history",
+      "consolidated reporting across programs or locations",
+      "role-based permissions for oversight",
+      "project profitability and revenue recognition",
+      "GAAP, SOC1, and HIPAA compliance"
+    ],
+    "recommendedProducts": [
+      "audit-ready-controls",
+      "multi-entity-consolidation",
+      "professional-services-erp"
+    ],
+    "intentProfile": {
+      "explore": 0.3,
+      "research": 0.6,
+      "compare": 0.4,
+      "purchase": 0.3,
+      "deals": 0.2,
+      "support": 0.7
+    }
+  },
+  {
+    "id": "george-buying-group-influencer",
+    "name": "George — Buying Group Influencer (RTCDP test)",
+    "description": "Test persona for the RTCDP/AJO buying-group demo: resolves to George's AEP sandbox profile (Buying Group Member Role is Influencer, Job Title is IT Security) so applying it makes the page's Alloy adopt that identity and surface the real segment membership.",
+    "keywords": [
+      "buying group",
+      "influencer",
+      "IT security",
+      "evaluator",
+      "RTCDP",
+      "account-based"
+    ],
+    "priorities": [
+      "evaluate fit for the buying group",
+      "surface role-appropriate messaging"
+    ],
+    "recommendedProducts": [
+      "ai-finance-agents"
+    ],
+    "intentProfile": {
+      "explore": 0.4,
+      "research": 0.7,
+      "compare": 0.6,
+      "purchase": 0.3,
+      "deals": 0.2,
+      "support": 0.3
+    },
+    "identity": "CiYwMDM5MzU0NTczNzE3Nzg1ODI4MzE0MzI3MTEzNTA2ODgwMDU4NVISCLKp_p_7MxABGAEqA09SMjAA8AGyqf6f-zM="
+  }
+]

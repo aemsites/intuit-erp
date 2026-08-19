@@ -1,0 +1,5 @@
+{
+  "useRouting": true,
+  "baseUrl": "https://of1--intuit-erp--aemsites.aem.page",
+  "catalogPath": "/templates/templates-catalog.json"
+}

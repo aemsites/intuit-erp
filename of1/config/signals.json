@@ -1,0 +1,35 @@
+[
+  {
+    "param": "mkt_tok",
+    "value": "demo-q3-nurture-multientity",
+    "source": "email",
+    "label": "E-Mail",
+    "context": "Existing Intuit Enterprise Suite customer, Q3 nurture campaign, evaluating multi-entity consolidation after a recent acquisition."
+  },
+  {
+    "param": "mkt_tok",
+    "value": "demo-quickbooks-upgrade",
+    "source": "email",
+    "label": "E-Mail",
+    "context": "QuickBooks Desktop Enterprise customer being nurtured toward a guided ERP migration, sensitive to a fast, low-disruption switch."
+  },
+  {
+    "param": "gclid",
+    "value": "Cj0KCQjwk96lBhDHARIsAEKO4xZyfbWi5R9a1Q2jr5glBHkFimC_K49jFdIuzJc_jiVcOlShev2DA98aAvFFEALw_wcB",
+    "context": "Intuit Enterprise Suite | The ERP Built for Growing Businesses\nStop juggling spreadsheets across entities. Consolidate reporting, automate intercompany eliminations, and close the books in days — not months. See why finance teams outgrowing QuickBooks choose IES. Explore ERP Solutions at main--intuit-erp--aemsites.aem.page/erp-solutions"
+  },
+  {
+    "param": "mkt_tok",
+    "value": "quentin-hello-world",
+    "source": "email",
+    "label": "E-Mail",
+    "context": "Campaign about Intuit Enterprise Suite solutions."
+  },
+  {
+    "param": "utm_campaign",
+    "value": "somethinguseful",
+    "source": "email",
+    "label": "E-Mail",
+    "context": "Visitor is currently in an Intuit Enterprise Suite trial and clicked through from a multi-entity consolidation nurture email emphasizing real-time, trustworthy financial data over scattered, stale, rearview reporting at close. Personalize the landing page toward consolidated multi-entity views, automated intercompany eliminations, and a faster month-end close, echoing the email's \"from rearview reporting to real-time decisions\" narrative."
+  }
+]

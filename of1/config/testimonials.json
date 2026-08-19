@@ -1,0 +1,130 @@
+[
+  {
+    "id": "caleb-mcdaniels-rhodes",
+    "quote": "Unified 9 entities and cut accounting time by 50%.",
+    "author": "Caleb McDaniels",
+    "role": "CFO",
+    "company": "Rhodes Companies",
+    "source": "website"
+  },
+  {
+    "id": "keaton-trager-ev-capital",
+    "quote": "The client service has been exceptional. When there's been a problem, it's been fixed way faster than I would have ever expected and much faster than I'd experienced with other software companies.",
+    "author": "Keaton Trager",
+    "role": "Chief Financial Officer",
+    "company": "EV Capital",
+    "source": "website"
+  },
+  {
+    "id": "keaton-trager-fefa",
+    "quote": "The multi-entity journal entry functionality was an immediate cost-saver. We uncovered efficiency improvements and improved financial data.",
+    "author": "Keaton Trager",
+    "role": "CFO",
+    "company": "FEFA Financial",
+    "source": "website"
+  },
+  {
+    "id": "jason-corby-hfmm-migration",
+    "quote": "Data migration is typically a massive acquisition cost, but Intuit Enterprise Suite made it effortless.",
+    "author": "Jason Corby",
+    "role": "Founder & CFO",
+    "company": "HFMM Legacy Group",
+    "source": "website"
+  },
+  {
+    "id": "ryan-handel-fixe",
+    "quote": "We're saving at least 10 to 15 hours a month per account manager thanks to multi-entity automation.",
+    "author": "Ryan Handel",
+    "role": "Finance Leader",
+    "company": "FIXE",
+    "source": "website"
+  },
+  {
+    "id": "josh-daneshforooz-lango",
+    "quote": "Intuit Enterprise Suite gives me the data needed to make informed decisions with my team and shape strategy.",
+    "author": "Josh Daneshforooz",
+    "role": "Co-Founder & CEO",
+    "company": "Lango",
+    "source": "website"
+  },
+  {
+    "id": "brian-sergio-tranex",
+    "quote": "Built on QuickBooks framework — familiar, powerful, easy to use, and affordable. Now I have multiple entities under one environment.",
+    "author": "Brian Sergio",
+    "role": "Managing Partner",
+    "company": "Tranex Consulting",
+    "source": "website"
+  },
+  {
+    "id": "blake-rohm-lallier",
+    "quote": "Previously, I'd spend 10-20 hours weekly ensuring data accuracy. That time is now freed up for strategic work.",
+    "author": "Blake Rohm",
+    "role": "Director of Finance",
+    "company": "Lallier Construction",
+    "source": "website"
+  },
+  {
+    "id": "scott-franchini-redhammer",
+    "quote": "Finally connects construction operations with financial management the way we've always needed.",
+    "author": "Scott Franchini",
+    "role": "Partner",
+    "company": "RedHammer Construction Accounting",
+    "source": "website"
+  },
+  {
+    "id": "billy-jones-southern-brothers",
+    "quote": "Significantly reduced the time our team spends coding expenses to projects.",
+    "author": "Billy Jones",
+    "role": "CFO",
+    "company": "Southern Brothers Construction",
+    "source": "website"
+  },
+  {
+    "id": "beau-beck-elton",
+    "quote": "Intuit Enterprise Suite has allowed us to close our fiscal year end at least 3 months faster than previous years.",
+    "author": "Beau Beck",
+    "role": "President",
+    "company": "Elton R Construction",
+    "source": "website"
+  },
+  {
+    "id": "jasmine-pyles-tampa-bay-edc",
+    "quote": "Accounting AI flagged a $6,000 discrepancy. Our accounting errors are down about 25%.",
+    "author": "Jasmine Pyles",
+    "role": "VP of Finance and Administration",
+    "company": "Tampa Bay EDC",
+    "source": "website"
+  },
+  {
+    "id": "kobad-mathnasium",
+    "quote": "Compliance used to mean chasing down signed paper notices. Now everything is digital, documented, and done.",
+    "author": "Kobad",
+    "role": "Franchise Owner",
+    "company": "Mathnasium",
+    "source": "website"
+  },
+  {
+    "id": "patrick-ball-aprio",
+    "quote": "Seeing all data in one place enables forward-looking planning versus looking back.",
+    "author": "Patrick Ball",
+    "role": "Partner",
+    "company": "Aprio",
+    "source": "website"
+  },
+  {
+    "id": "alicia-eastvold-yptc",
+    "quote": "Having something with all that complexity at a fraction of the cost of traditional enterprise solutions.",
+    "author": "Alicia Eastvold",
+    "role": "Director",
+    "company": "YPTC",
+    "source": "website"
+  },
+  {
+    "id": "kc-eames-dark-horse",
+    "quote": "The versatility and customizability is remarkable — we're no longer stuck to previous dimensions.",
+    "author": "K.C. Eames",
+    "role": "CPA",
+    "company": "Dark Horse CPAs",
+    "source": "website"
+  }
+]
