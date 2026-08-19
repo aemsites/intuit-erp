@@ -456,9 +456,20 @@ function insertAuthorBio(main, row, authorPath) {
   }
   inner.append(textWrap);
   wrap.append(inner);
-  const rail = main.querySelector(':scope > .blog-rail');
-  if (rail) rail.before(wrap);
-  else main.append(wrap);
+  // Insert the bio immediately before the "Recommended for you" section
+  // (the direct-child-of-main section that contains the blog-cards block).
+  // This matches production order: article body → author-bio → recommended cards.
+  // Fallback: if no blog-cards section exists (pages without a Recommended block),
+  // use the previous behavior (before the right-rail, or append to main).
+  const blogCardsEl = main.querySelector('.blog-cards');
+  const recSection = blogCardsEl && [...main.children].find((s) => s.contains(blogCardsEl));
+  if (recSection) {
+    recSection.before(wrap);
+  } else {
+    const rail = main.querySelector(':scope > .blog-rail');
+    if (rail) rail.before(wrap);
+    else main.append(wrap);
+  }
 }
 
 /**
