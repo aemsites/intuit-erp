@@ -502,7 +502,7 @@ main .section.narrow>div {
   max-width: 1180px;
 }
 
-main .section.center>div {
+main .section.center>div.default-content-wrapper {
   text-align: center;
 }
 
