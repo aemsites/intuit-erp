@@ -127,7 +127,7 @@
   background: var(--primary-dark);
 }
 
-.blog-article .blog-share-link svg {
+.blog-article .blog-share-link img {
   display: block;
 }
 

@@ -1,5 +1,5 @@
 import {
-  describe, it, expect, vi, afterEach,
+  describe, it, expect, vi, beforeEach, afterEach,
 } from 'vitest';
 import {
   buildToc, buildByline, buildEyebrow, buildBylineMeta,
@@ -108,6 +108,14 @@ describe('buildBylineMeta', () => {
 });
 
 describe('buildShare', () => {
+  beforeEach(() => {
+    window.hlx = { codeBasePath: '' };
+  });
+
+  afterEach(() => {
+    delete window.hlx;
+  });
+
   it('builds a label plus 4 social links in Facebook, X, LinkedIn, YouTube order', () => {
     const el = buildShare();
     expect(el.tagName).toBe('P');
@@ -120,8 +128,16 @@ describe('buildShare', () => {
     links.forEach((a) => {
       expect(a.getAttribute('target')).toBe('_blank');
       expect(a.getAttribute('rel')).toBe('noopener');
-      expect(a.querySelector('svg')).toBeTruthy();
     });
+  });
+
+  it('renders each icon from /icons as an <img>, not an embedded <svg>', () => {
+    const el = buildShare();
+    const links = [...el.querySelectorAll('.blog-share-link')];
+    expect(links.map((a) => a.querySelector('img')?.getAttribute('src'))).toEqual([
+      '/icons/facebook.svg', '/icons/x.svg', '/icons/linkedin.svg', '/icons/youtube.svg',
+    ]);
+    links.forEach((a) => expect(a.querySelector('svg')).toBeNull());
   });
 
   it('builds Facebook/X/LinkedIn as share-intent links carrying the current article URL', () => {

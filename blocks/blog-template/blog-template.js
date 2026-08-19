@@ -212,13 +212,15 @@ export function buildByline({
   return wrapper;
 }
 
-// SVG markup copied verbatim from blocks/footer/footer.js (its `.social`
-// links, ~lines 73-76) so the glyphs match the rest of the site.
-const SHARE_ICONS = {
-  Facebook: '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M13.5 21v-8h2.7l.4-3.1h-3.1V7.9c0-.9.25-1.5 1.55-1.5H17V3.6c-.3 0-1.3-.1-2.45-.1-2.42 0-4.05 1.48-4.05 4.2v2.2H7.7V13h2.8v8h3z"/></svg>',
-  X: '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M17.5 3h3l-6.6 7.6L22 21h-6.3l-4.4-5.8L6.2 21H3.2l7-8.1L2.5 3h6.4l4 5.3L17.5 3zm-1.1 16h1.7L7.7 4.8H5.9L16.4 19z"/></svg>',
-  LinkedIn: '<svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M6.5 8.8H3.7V21h2.8V8.8zM5.1 3.5A1.6 1.6 0 105 6.7a1.6 1.6 0 00.1-3.2zM21 21v-6.7c0-3.3-1.8-4.8-4.1-4.8-1.9 0-2.7 1-3.2 1.8V8.8H8.9c0 .8 0 12.2 0 12.2h2.8v-6.8c0-.4 0-.7.1-1 .3-.7.9-1.5 2-1.5 1.5 0 2 1.1 2 2.7V21H21z"/></svg>',
-  YouTube: '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M23 12s0-3.2-.4-4.7c-.2-.9-.9-1.5-1.7-1.7C19.4 5.2 12 5.2 12 5.2s-7.4 0-8.9.4c-.8.2-1.5.8-1.7 1.7C1 8.8 1 12 1 12s0 3.2.4 4.7c.2.9.9 1.5 1.7 1.7 1.5.4 8.9.4 8.9.4s7.4 0 8.9-.4c.8-.2 1.5-.8 1.7-1.7.4-1.5.4-4.7.4-4.7zM9.8 15V9l5.2 3-5.2 3z"/></svg>',
+// Icon files live in /icons (facebook.svg, x.svg, linkedin.svg, youtube.svg)
+// — glyphs match the ones in blocks/footer/footer.js's `.social` links,
+// baked to a fixed white fill since they're always shown on the widget's
+// solid-color circle (see .blog-share-link in blog-template.css).
+const SHARE_ICON_DIMS = {
+  facebook: { width: 18, height: 18 },
+  x: { width: 16, height: 16 },
+  linkedin: { width: 17, height: 17 },
+  youtube: { width: 20, height: 20 },
 };
 
 /**
@@ -227,15 +229,15 @@ const SHARE_ICONS = {
  * `sharer.php?u=`, `share?url=`, `sharing/share-offsite/?url=` endpoints);
  * YouTube is a static "visit our channel" follow link, matching production
  * (its share row's 4th icon links to Intuit's channel, not a share intent).
- * @returns {{label: string, href: string, svg: string}[]}
+ * @returns {{label: string, href: string, icon: string}[]}
  */
 function buildShareLinks() {
   const url = encodeURIComponent(window.location.href);
   return [
-    { label: 'Facebook', href: `https://www.facebook.com/sharer/sharer.php?u=${url}`, svg: SHARE_ICONS.Facebook },
-    { label: 'X', href: `https://twitter.com/share?url=${url}`, svg: SHARE_ICONS.X },
-    { label: 'LinkedIn', href: `https://www.linkedin.com/sharing/share-offsite/?url=${url}`, svg: SHARE_ICONS.LinkedIn },
-    { label: 'YouTube', href: 'https://www.youtube.com/user/intuit', svg: SHARE_ICONS.YouTube },
+    { label: 'Facebook', href: `https://www.facebook.com/sharer/sharer.php?u=${url}`, icon: 'facebook' },
+    { label: 'X', href: `https://twitter.com/share?url=${url}`, icon: 'x' },
+    { label: 'LinkedIn', href: `https://www.linkedin.com/sharing/share-offsite/?url=${url}`, icon: 'linkedin' },
+    { label: 'YouTube', href: 'https://www.youtube.com/user/intuit', icon: 'youtube' },
   ];
 }
 
@@ -258,14 +260,20 @@ export function buildShare() {
   label.textContent = 'Share this article:';
   wrap.append(label);
 
-  buildShareLinks().forEach(({ label: name, href, svg }) => {
+  buildShareLinks().forEach(({ label: name, href, icon }) => {
     const a = document.createElement('a');
     a.className = 'blog-share-link';
     a.href = href;
     a.target = '_blank';
     a.rel = 'noopener';
     a.setAttribute('aria-label', name);
-    a.innerHTML = svg;
+    const img = document.createElement('img');
+    img.src = `${window.hlx.codeBasePath}/icons/${icon}.svg`;
+    img.alt = '';
+    img.loading = 'lazy';
+    img.width = SHARE_ICON_DIMS[icon].width;
+    img.height = SHARE_ICON_DIMS[icon].height;
+    a.append(img);
     wrap.append(a);
   });
 
