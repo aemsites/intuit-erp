@@ -88,13 +88,28 @@ const loadEmbed = (block, link, title) => {
   block.classList.add('embed-is-loaded');
 };
 
+// The authored label for an embed. Authors write it either as the link text
+// ("[View the event flyer](url)") or as prose around a bare url that the
+// pipeline auto-links ("View the event flyer (url)") — take whichever is
+// present, ignoring text that is only the url repeated back.
+function embedTitle(block, anchor, link) {
+  const linkText = anchor ? anchor.textContent.trim() : '';
+  if (linkText && linkText !== link) return linkText;
+  // Drop the url, then the now-empty "()" / "[]" the "label (url)" form leaves
+  // mid-string, then any stray edge punctuation.
+  return block.textContent
+    .replace(linkText || link, '')
+    .replace(link, '')
+    .replace(/[([]\s*[)\]]/g, '')
+    .replace(/^[\s([]+/, '')
+    .replace(/[\s)\]]+$/, '')
+    .trim();
+}
+
 export default function decorate(block) {
   const anchor = block.querySelector('a');
   const link = anchor ? anchor.href : block.textContent.trim();
-  // Authored link text ("View the event flyer") labels the embed; ignore it when
-  // it is just the URL again, which is what an unlinked/auto-linked cell yields.
-  const text = anchor ? anchor.textContent.trim() : '';
-  const title = text && text !== link ? text : '';
+  const title = embedTitle(block, anchor, link);
   if (!link) { block.remove(); return; }
   try {
     // validate
