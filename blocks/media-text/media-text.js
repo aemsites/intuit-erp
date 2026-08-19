@@ -19,11 +19,16 @@
  *   .power     feature-list + media (erp-solutions "Powering complex …")
  *   .compare   2-up alternating-skin comparison cards, media pinned to the
  *              card bottom (erp-solutions "Move to a modern ERP" / solution-cards)
+ *   NN-NN      column width split for the default/reverse rows, e.g. `(70-30)`
+ *              gives the text column 70% and the media column 30%. Still
+ *              stacks to a single column below 769px like the default split.
  * CSS: blocks/media-text/media-text.css
  */
 import { buildBlock, loadBlock } from '../../scripts/aem.js';
 import { bindScheduleLinks } from '../form/form.js';
 import { videoInfo } from '../video/video-info.js';
+
+const SPLIT_RE = /^(\d{1,3})-(\d{1,3})$/;
 
 function buildCopy(textCell) {
   const copy = document.createElement('div');
@@ -45,6 +50,9 @@ function buildCopy(textCell) {
 }
 
 export default function decorate(block) {
+  const splitMatch = [...block.classList].map((c) => c.match(SPLIT_RE)).find(Boolean);
+  if (splitMatch) block.style.setProperty('--split', `${splitMatch[1]}fr ${splitMatch[2]}fr`);
+
   const hasReverse = block.classList.contains('reverse');
   const isCards = block.classList.contains('cards');
   const isCompare = block.classList.contains('compare');

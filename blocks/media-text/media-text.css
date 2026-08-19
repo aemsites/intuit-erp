@@ -1,91 +1,214 @@
-/* media-text — media+text splits and related layouts. Lifted from prototype
-   .why/.media-row, .built, .switch, .agents, .roles, .migration, .power */
+.section.media-text-container {
+  background: #fff;
+  padding: var(--section-y) 0;
+}
 
-/* section band + head */
-.section.media-text-container { background: #fff; padding: var(--section-y) 0; }
-
-/* tint variant — warm-gray band (accounting "Work faster … AI agents") */
-.section.media-text-container:has(.media-text.tint) { background: var(--tofu); }
+.section.media-text-container:has(.media-text.tint) {
+  background: var(--tofu);
+}
 
 .media-text-container .default-content-wrapper h2 {
-  font-size: 38px; line-height: 1.15; font-weight: 400; color: var(--heading);
-  text-align: center; margin: 0 0 40px;
+  font-size: 38px;
+  line-height: 1.15;
+  font-weight: 400;
+  color: var(--heading);
+  text-align: center;
+  margin: 0 0 40px;
 }
 
-.media-text-container .default-content-wrapper > p {
-  max-width: 44em; margin: 0 auto 40px; text-align: center; font-size: 16px;
-  line-height: 1.55; color: var(--text-muted);
+.media-text-container .default-content-wrapper>p {
+  max-width: 44em;
+  margin: 0 auto 40px;
+  text-align: center;
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--text-muted);
 }
 
-/* ---- split rows (default / reverse / cyan) ---- */
 .media-text .media-row {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; padding: 44px 0;
+  display: grid;
+  grid-template-columns: var(--split, 1fr 1fr);
+  gap: 60px;
+  align-items: center;
+  padding: 44px 0;
 }
-.media-text .media-row.row-reverse .media-visual { order: -1; }
-.media-text .media-visual img { width: 100%; border-radius: 14px; box-shadow: 0 12px 40px rgb(13 51 63 / 14%); }
-.media-text .media-copy .media-eyebrow { margin-bottom: 16px; color: var(--text-muted); }
+
+.media-text .media-row.row-reverse .media-visual {
+  order: -1;
+}
+
+.media-text .media-visual img {
+  width: 100%;
+  border-radius: 14px;
+  box-shadow: 0 12px 40px rgb(13 51 63 / 14%);
+}
+
+.media-text .media-copy .media-eyebrow {
+  margin-bottom: 16px;
+  color: var(--text-muted);
+}
 
 .media-text .media-copy h2,
-.media-text .media-copy h3 { font-size: 34px; line-height: 1.2; font-weight: 400; color: var(--heading); margin: 0 0 18px; }
-.media-text .media-copy .media-body { font-size: 15px; line-height: 1.6; color: var(--text-muted); max-width: 34em; margin: 0 0 14px; }
-.media-text .media-copy .button-wrapper { margin-top: 12px; }
+.media-text .media-copy h3 {
+  font-size: 34px;
+  line-height: 1.2;
+  font-weight: 500;
+  color: var(--heading);
+  margin: 0 0 18px;
+}
 
-/* ---- .center (pricing "Built for the way") ---- */
-.section.media-text-container:has(.media-text.center) { background: var(--tofu); padding: 76px 0; }
-.media-text.center .media-center { text-align: center; }
-.media-text.center .media-center h2 { font-size: 38px; font-weight: 400; color: var(--heading); text-align: center; margin: 0 0 22px; }
-.media-text.center .media-center .media-body { max-width: 44em; margin: 0 auto; text-align: center; font-size: 17px; line-height: 1.6; color: var(--text); }
+.media-text .media-copy .media-body {
+  font-size: 15px;
+  line-height: 1.6;
+  max-width: 34em;
+  margin: 0 0 14px;
+}
 
-/* ---- .dark (accountant "Empowering your firm's success") ---- */
-.section.media-text-container:has(.media-text.dark) { background: var(--navy); padding: var(--section-y) 0; }
-.media-text-container:has(.media-text.dark) .default-content-wrapper h2 { color: #fff; }
+.media-text .media-copy .button-wrapper {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.section.media-text-container:has(.media-text.center) {
+  background: var(--tofu);
+  padding: 76px 0;
+}
+
+.media-text.center .media-center {
+  text-align: center;
+}
+
+.media-text.center .media-center h2 {
+  font-size: 38px;
+  font-weight: 400;
+  color: var(--heading);
+  text-align: center;
+  margin: 0 0 22px;
+}
+
+.media-text.center .media-center .media-body {
+  max-width: 44em;
+  margin: 0 auto;
+  text-align: center;
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--text);
+}
+
+.section.media-text-container:has(.media-text.dark) {
+  background: var(--navy);
+  padding: var(--section-y) 0;
+}
+
+.media-text-container:has(.media-text.dark) .default-content-wrapper h2 {
+  color: #fff;
+}
 
 .media-text.dark .media-copy h2,
-.media-text.dark .media-copy h3 { color: #fff; }
+.media-text.dark .media-copy h3 {
+  color: #fff;
+}
 
 .media-text.dark .media-copy .media-body,
 .media-text.dark .media-copy .media-eyebrow,
 .media-text.dark .media-copy p,
-.media-text.dark .media-copy li { color: rgb(255 255 255 / 82%); }
-.media-text.dark .media-copy strong { color: #fff; }
-.media-text.dark .media-copy a { color: #fff; text-decoration: underline; }
-
-/* ---- .cyan (pricing "Switch now and save") — pale closing CTA band, inset
-   further than the shared 40px gutter with an uneven 464/580 split. The band
-   fill steps from pale ice to pale cyan at 1200px, as upstream does ---- */
-.section.media-text-container:has(.media-text.cyan) { background: var(--ice-band); padding: 120px 0; }
-.media-text.cyan .media-row { padding: 0; grid-template-columns: 464fr 580fr; gap: 24px; }
-
-/* upper bound keeps this off the stacked <=768px layout, which uses the full gutter */
-@media (width >= 769px) and (width <= 899px) {
-  .media-text.cyan .media-row { margin-inline: -20px; }
+.media-text.dark .media-copy li {
+  color: rgb(255 255 255 / 82%);
 }
 
-@media (width >= 900px) {
-  .media-text.cyan .media-row { padding-inline: 115px; gap: 116px; }
+.media-text.dark .media-copy strong {
+  color: #fff;
 }
 
-@media (width >= 1200px) {
-  .section.media-text-container:has(.media-text.cyan) { background: var(--cyan-band); }
-  .media-text.cyan .media-row { padding-inline: 100px; }
+.media-text.dark .media-copy a {
+  color: #fff;
+  text-decoration: underline;
 }
 
-.media-text.cyan .media-copy h2 { font-size: 48px; line-height: 62.4px; font-weight: 500; color: #000; margin: 0 0 20px; }
+.media-text.dark .media-copy .button-wrapper a.button.secondary {
+  border-color: #fff;
+  text-decoration:none;
 
-/* plain sentence case upstream, not the global .eyebrow's bold uppercase */
+  &:hover {
+    background: #fff;
+    color: #09222a;
+    border-color: #fff;
+  }
+}
+
+.section.media-text-container:has(.media-text.cyan) {
+  background: var(--ice-band);
+  padding: 120px 0;
+}
+
+.media-text.cyan .media-row {
+  padding: 0;
+  grid-template-columns: 464fr 580fr;
+  gap: 24px;
+}
+
+@media (width >=769px) and (width <=899px) {
+  .media-text.cyan .media-row {
+    margin-inline: -20px;
+  }
+}
+
+@media (width >=900px) {
+  .media-text.cyan .media-row {
+    padding-inline: 115px;
+    gap: 116px;
+  }
+}
+
+@media (width >=1200px) {
+  .section.media-text-container:has(.media-text.cyan) {
+    background: var(--cyan-band);
+  }
+
+  .media-text.cyan .media-row {
+    padding-inline: 100px;
+  }
+}
+
+.media-text.cyan .media-copy h2 {
+  font-size: 48px;
+  line-height: 62.4px;
+  font-weight: 500;
+  color: #000;
+  margin: 0 0 20px;
+}
+
 .media-text.cyan .media-copy .media-eyebrow {
-  font-size: 12px; line-height: 18px; font-weight: 400; letter-spacing: normal;
-  text-transform: none; color: #000; margin-bottom: 20px;
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+  color: #000;
+  margin-bottom: 20px;
 }
 
-.media-text.cyan .media-copy .media-body { font-size: 16px; line-height: 24px; color: #000; max-width: 30em; }
-.media-text.cyan .media-copy p a { color: #236cff; text-decoration: underline; font-size: 16px; }
-.media-text.cyan .media-visual img { border-radius: 16px; box-shadow: none; }
+.media-text.cyan .media-copy .media-body {
+  font-size: 16px;
+  line-height: 24px;
+  color: #000;
+  max-width: 30em;
+}
 
-/* ---- .agave (ai-agents "From questions to clarity") — pale-blue band, larger
-   heading, black copy. The image sits in a plain white card upstream rather
-   than the default rounded-with-drop-shadow treatment. ---- */
-.section.media-text-container:has(.media-text.agave) { background: var(--agave-band); }
+.media-text.cyan .media-copy p a {
+  color: #236cff;
+  text-decoration: underline;
+  font-size: 16px;
+}
+
+.media-text.cyan .media-visual img {
+  border-radius: 16px;
+  box-shadow: none;
+}
+
+.section.media-text-container:has(.media-text.agave) {
+  background: var(--agave-band);
+}
 
 .media-text.agave .media-copy h2,
 .media-text.agave .media-copy h3 {
@@ -107,214 +230,392 @@
   box-shadow: none;
 }
 
-/* The CTA is a block-level pill, so it needs breathing room from the copy above
-   and from any trailing legal line below (which otherwise butts straight up
-   against it — the shared `.button-wrapper` only sets a top margin). */
-.media-text.agave .media-copy .button-wrapper { margin: 24px 0 0; }
+.media-text.agave .media-copy .button-wrapper {
+  margin: 24px 0 0;
+}
 
-/* A trailing paragraph AFTER the CTA is a legal/disclaimer line, not body copy:
-   small, muted, and set apart. Matched positionally because it carries no
-   distinguishing class from the authored table. */
-.media-text.agave .media-copy .button-wrapper + .media-body {
+.media-text.agave .media-copy .button-wrapper+.media-body {
   margin-top: 20px;
   font-size: 12px;
   line-height: 16px;
   color: var(--text-muted);
 }
 
-/* ---- .cards (index "A migration path") ----
-   Replica of the source RwCard "fusion" theme: a pale wintermint card, no card
-   shadow, with the visual pinned to the card bottom. Card insets and the
-   heading scale step 30px/34px (mobile) -> 40px/28px (tablet) -> 60px/34px
-   (>=1024), matching the source's own breakpoints. The source has no carousel
-   interactions at this instance — it stacks vertically on mobile with no
-   dots, arrows, or scrolling — so a plain grid is behaviourally identical. */
-.section.media-text-container:has(.media-text.cards) { background: #fff; padding: var(--section-y) 0; }
 
-/* the source's section heading is a bigger, darker display size than the shared
-   media-text head, and steps 34 -> 40 -> 48px */
-.media-text-container:has(.media-text.cards) .default-content-wrapper h2 {
-  font-size: 34px; line-height: 1.4; color: var(--text-color); margin: 0 0 56px;
+.section.media-text-container:has(.media-text.cards) {
+  background: #fff;
+  padding: var(--section-y) 0;
 }
 
-/* the grid is capped so cards don't outrun the source's 555px max card width */
+.media-text-container:has(.media-text.cards) .default-content-wrapper h2 {
+  font-size: 34px;
+  line-height: 1.4;
+  color: var(--text-color);
+  margin: 0 0 56px;
+}
+
 .media-text.cards .mig-grid {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
-  max-width: 1160px; margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  max-width: 1160px;
+  margin: 0 auto;
 }
 
 .media-text.cards .mig-card {
-  display: flex; flex-direction: column;
+  display: flex;
+  flex-direction: column;
   background: var(--wintermint);
   border-radius: 20px;
 }
 
 .media-text.cards .mig-card .media-eyebrow {
-  font-size: 16px; line-height: 1.4; font-weight: 400;
-  letter-spacing: 1px; text-transform: none; color: #000;
+  font-size: 16px;
+  line-height: 1.4;
+  font-weight: 400;
+  letter-spacing: 1px;
+  text-transform: none;
+  color: #000;
   margin: 0 0 20px;
 }
 
 .media-text.cards .mig-card h3 {
-  font-size: 28px; line-height: 36px; font-weight: 400;
-  letter-spacing: -0.84px; color: #000;
+  font-size: 28px;
+  line-height: 36px;
+  font-weight: 400;
+  letter-spacing: -0.84px;
+  color: #000;
   margin: 0 0 16px;
 }
 
 .media-text.cards .mig-card .media-body {
-  font-size: 16px; line-height: 24px; color: #000;
-  margin: 0 0 40px; max-width: none;
+  font-size: 16px;
+  line-height: 24px;
+  color: #000;
+  margin: 0 0 40px;
+  max-width: none;
 }
 
-/* the visual is last in the card and pinned to the bottom, so cards of
-   differing copy length still line their images up */
-.media-text.cards .mig-visual { margin-top: auto; }
+.media-text.cards .mig-visual {
+  margin-top: auto;
+}
 
 .media-text.cards .mig-visual img {
-  width: 100%; display: block; border-radius: 8px;
+  width: 100%;
+  display: block;
+  border-radius: 8px;
   box-shadow: 0 3px 27px 7px rgb(124 188 255 / 25%);
 }
 
-/* the authored step list stands in for the source's baked-in graphic, so it
-   gets the white inner panel the graphic has */
 .media-text.cards .mig-visual:has(.mig-steps) {
-  background: #fff; border-radius: 8px; padding: 28px 32px;
+  background: #fff;
+  border-radius: 8px;
+  padding: 28px 32px;
   box-shadow: 0 3px 27px 7px rgb(124 188 255 / 25%);
 }
 
 .media-text.cards .mig-visual .mig-visual-head {
-  font-size: 22px; line-height: 1.3; font-weight: 600;
-  margin: 0 0 20px; color: var(--heading);
+  font-size: 22px;
+  line-height: 1.3;
+  font-weight: 600;
+  margin: 0 0 20px;
+  color: var(--heading);
 }
 
-.media-text.cards .mig-steps { list-style: none; margin: 0; padding: 0; }
+.media-text.cards .mig-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
 
-/* connector rail behind the step bullets, matching the source graphic */
 .media-text.cards .mig-steps li {
   position: relative;
-  font-size: 16px; line-height: 1.4; color: var(--heading);
-  padding: 10px 0; display: flex; align-items: center; gap: 14px;
+  font-size: 16px;
+  line-height: 1.4;
+  color: var(--heading);
+  padding: 10px 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
 }
 
 .media-text.cards .mig-steps li:not(:last-child)::before {
-  content: ""; position: absolute; left: 11px; top: 50%; bottom: -10px;
-  width: 2px; background: #e3e5e8;
+  content: "";
+  position: absolute;
+  left: 11px;
+  top: 50%;
+  bottom: -10px;
+  width: 2px;
+  background: #e3e5e8;
 }
 
-/* unfinished steps are hollow rings; the completed one is a filled green tick.
-   Both sit above the connector rail so it reads as passing behind them. */
 .media-text.cards .mig-steps li:not(.done)::after {
-  content: ""; width: 24px; height: 24px; flex-shrink: 0; order: -1;
-  border: 2px solid #e3e5e8; border-radius: 50%; background: #fff;
-  position: relative; z-index: 1;
+  content: "";
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  order: -1;
+  border: 2px solid #e3e5e8;
+  border-radius: 50%;
+  background: #fff;
+  position: relative;
+  z-index: 1;
 }
 
 .media-text.cards .mig-steps .tick {
-  width: 24px; height: 24px; flex-shrink: 0;
-  border-radius: 50%; background: var(--green); color: #fff;
-  font-size: 13px; display: inline-flex; align-items: center; justify-content: center;
-  position: relative; z-index: 1;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--green);
+  color: #fff;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
 }
 
-/* ---- .compare (erp-solutions "Move to a modern ERP" / solution-cards) ----
-   Narrower than the page container and tapers with it; vw because % would
-   resolve against the already-guttered wrapper. */
-.section.media-text-container:has(.media-text.compare) { background: #fff; padding: 0 0 var(--section-y); }
+.section.media-text-container:has(.media-text.compare) {
+  background: #fff;
+  padding: 0 0 var(--section-y);
+}
 
-.media-text-container:has(.media-text.compare) .default-content-wrapper > p:first-of-type {
-  text-align: center; margin: 0 0 16px; font-size: 13px; font-weight: 700;
-  letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted);
+.media-text-container:has(.media-text.compare) .default-content-wrapper>p:first-of-type {
+  text-align: center;
+  margin: 0 0 16px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
 }
 
 .media-text-container:has(.media-text.compare) .default-content-wrapper h2 {
-  font-size: 38px; line-height: 1.15; font-weight: 400; color: var(--heading);
-  text-align: center; margin: 0 0 20px;
+  font-size: 38px;
+  line-height: 1.15;
+  font-weight: 400;
+  color: var(--heading);
+  text-align: center;
+  margin: 0 0 20px;
 }
 
-.media-text-container:has(.media-text.compare) .default-content-wrapper > p:last-of-type {
-  max-width: 40em; margin: 0 auto 52px; text-align: center; font-size: 16px;
-  line-height: 1.55; color: var(--text-muted); text-transform: none; letter-spacing: 0; font-weight: 400;
+.media-text-container:has(.media-text.compare) .default-content-wrapper>p:last-of-type {
+  max-width: 40em;
+  margin: 0 auto 52px;
+  text-align: center;
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--text-muted);
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 400;
 }
 
 .media-text.compare .compare-grid {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
-  width: min(100%, 83.8vw); max-width: 1134px; margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  width: min(100%, 83.8vw);
+  max-width: 1134px;
+  margin: 0 auto;
 }
-.media-text.compare .compare-card { border-radius: 20px; padding: 60px; display: flex; flex-direction: column; }
-.media-text.compare .compare-blue { background: #d6e8f8; }
-.media-text.compare .compare-sand { background: #f4f4ef; }
 
-/* plain small text, not the bold letter-spaced global .eyebrow; explicit
-   line-height because the inherited 1.6 made the box 2px too tall */
+.media-text.compare .compare-card {
+  border-radius: 20px;
+  padding: 60px;
+  display: flex;
+  flex-direction: column;
+}
+
+.media-text.compare .compare-blue {
+  background: #d6e8f8;
+}
+
+.media-text.compare .compare-sand {
+  background: #f4f4ef;
+}
+
 .media-text.compare .compare-card .media-eyebrow {
-  font-size: 12px; line-height: 16px; font-weight: 400; letter-spacing: normal;
-  text-transform: none; color: #000; margin: 0 0 52px;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+  color: #000;
+  margin: 0 0 52px;
 }
 
-/* the negative tracking is load-bearing: at `normal` the second title wraps */
 .media-text.compare .compare-card h3 {
-  font-size: 48px; line-height: 1.3; font-weight: 400; letter-spacing: -0.03em;
-  color: #000; margin: 0 0 16px;
+  font-size: 48px;
+  line-height: 1.3;
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  color: #000;
+  margin: 0 0 16px;
 }
 
-/* upstream sizes the sand (second) card's title smaller */
-.media-text.compare .compare-sand h3 { font-size: 40px; line-height: 52px; }
-.media-text.compare .compare-card .media-body { font-size: 20px; font-weight: 400; line-height: 30px; color: #000; margin: 0 0 24px; max-width: none; }
-.media-text.compare .compare-card ul { list-style: disc; margin: 0; padding-left: 40px; }
-.media-text.compare .compare-card ul li { font-size: 20px; color: #000; line-height: 30px; margin-bottom: 0; }
+.media-text.compare .compare-sand h3 {
+  font-size: 40px;
+  line-height: 52px;
+}
 
-/* 40px above; `auto` on top of that keeps both cards' CTAs (and the visuals
-   under them) level despite unequal copy length */
-.media-text.compare .compare-card .button-wrapper { align-self: flex-start; margin: auto 0 64px; padding-top: 40px; }
+.media-text.compare .compare-card .media-body {
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 30px;
+  color: #000;
+  margin: 0 0 24px;
+  max-width: none;
+}
+
+.media-text.compare .compare-card ul {
+  list-style: disc;
+  margin: 0;
+  padding-left: 40px;
+}
+
+.media-text.compare .compare-card ul li {
+  font-size: 20px;
+  color: #000;
+  line-height: 30px;
+  margin-bottom: 0;
+}
+
+.media-text.compare .compare-card .button-wrapper {
+  align-self: flex-start;
+  margin: auto 0 64px;
+  padding-top: 40px;
+}
 
 /* scoped rather than raising the global .button height */
-.media-text.compare .compare-card .button-wrapper .button { height: 52px; }
-
-.media-text.compare .compare-visual { border-radius: 8px; overflow: hidden; }
-.media-text.compare .compare-visual img { width: 100%; display: block; }
-
-/* tablet: still two-up, but the row widens to a near-full-width gutter */
-@media (width <= 1023px) {
-  .media-text.compare .compare-grid { width: auto; max-width: none; }
-  .media-text.compare .compare-card { padding: 40px; }
-
-  .media-text.compare .compare-card h3,
-  .media-text.compare .compare-sand h3 { font-size: 28px; line-height: 1.3; }
-  .media-text.compare .compare-visual { width: calc(100% - 40px); }
-
-  /* body copy steps down with the narrower card */
-  .media-text.compare .compare-card .media-body,
-  .media-text.compare .compare-card ul li { font-size: 16px; line-height: 24px; }
+.media-text.compare .compare-card .button-wrapper .button {
+  height: 52px;
 }
 
-/* 745px, not 768: upstream is still two-up at 768 */
-@media (width <= 745px) {
-  .media-text-container:has(.media-text.compare) .default-content-wrapper h2 { font-size: 28px; }
-  .media-text.compare .compare-grid { grid-template-columns: 1fr; }
-  .media-text.compare .compare-card { padding: 30px; border-radius: 16px; }
-  .media-text.compare .compare-card .media-eyebrow { margin-bottom: 42px; }
+.media-text.compare .compare-visual {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.media-text.compare .compare-visual img {
+  width: 100%;
+  display: block;
+}
+
+@media (width <=1023px) {
+  .media-text.compare .compare-grid {
+    width: auto;
+    max-width: none;
+  }
+
+  .media-text.compare .compare-card {
+    padding: 40px;
+  }
 
   .media-text.compare .compare-card h3,
-  .media-text.compare .compare-sand h3 { font-size: 34px; }
-  .media-text.compare .compare-visual { width: 100%; }
+  .media-text.compare .compare-sand h3 {
+    font-size: 28px;
+    line-height: 1.3;
+  }
 
-  /* stacked cards size to their own copy, so there is no slack for `auto` to
-     distribute and the CTA needs its normal top margin back */
-  .media-text.compare .compare-card .button-wrapper { margin-top: 40px; margin-bottom: 44px; }
+  .media-text.compare .compare-visual {
+    width: calc(100% - 40px);
+  }
+
+  .media-text.compare .compare-card .media-body,
+  .media-text.compare .compare-card ul li {
+    font-size: 16px;
+    line-height: 24px;
+  }
+}
+
+@media (width <=745px) {
+  .media-text-container:has(.media-text.compare) .default-content-wrapper h2 {
+    font-size: 28px;
+  }
+
+  .media-text.compare .compare-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .media-text.compare .compare-card {
+    padding: 30px;
+    border-radius: 16px;
+  }
+
+  .media-text.compare .compare-card .media-eyebrow {
+    margin-bottom: 42px;
+  }
+
+  .media-text.compare .compare-card h3,
+  .media-text.compare .compare-sand h3 {
+    font-size: 34px;
+  }
+
+  .media-text.compare .compare-visual {
+    width: 100%;
+  }
+
+  .media-text.compare .compare-card .button-wrapper {
+    margin-top: 40px;
+    margin-bottom: 44px;
+  }
 }
 
 /* ---- .power (erp-solutions "Powering complex …") ---- */
-.media-text.power .power-grid { display: grid; grid-template-columns: 1fr 1.15fr; gap: 56px; align-items: center; }
-.media-text.power .power-list { display: flex; flex-direction: column; gap: 26px; }
-.media-text.power .power-item { padding-left: 24px; border-left: 3px solid transparent; }
-.media-text.power .power-item.featured { border-left-color: var(--primary); }
-.media-text.power .power-item h3 { font-size: 22px; font-weight: 500; color: var(--heading); margin: 0 0 8px; }
-.media-text.power .power-item p { font-size: 14px; line-height: 1.55; color: var(--text-muted); margin: 0; }
-.media-text.power .power-media img { width: 100%; border-radius: var(--radius-card); }
+.media-text.power .power-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr;
+  gap: 56px;
+  align-items: center;
+}
 
-@media (width <= 768px) {
-  .media-text .media-row { grid-template-columns: 1fr; gap: 24px; padding: 28px 0; }
-  .media-text .media-row.row-reverse .media-visual { order: 0; }
+.media-text.power .power-list {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+}
+
+.media-text.power .power-item {
+  padding-left: 24px;
+  border-left: 3px solid transparent;
+}
+
+.media-text.power .power-item.featured {
+  border-left-color: var(--primary);
+}
+
+.media-text.power .power-item h3 {
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--heading);
+  margin: 0 0 8px;
+}
+
+.media-text.power .power-item p {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.media-text.power .power-media img {
+  width: 100%;
+  border-radius: var(--radius-card);
+}
+
+@media (width <=768px) {
+  .media-text .media-row {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding: 28px 0;
+  }
+
+  .media-text .media-row.row-reverse .media-visual {
+    order: 0;
+  }
 
   /* pricing "Why IES" only (Section Metadata `Style: media-lead`) — production leads
      each row with the image and centres the copy at mobile. Scoped to the section
@@ -328,53 +629,85 @@
   .section.media-lead .media-text .media-copy .media-body { text-align: center; }
 
   .media-text .media-copy h2,
-  .media-text .media-copy h3 { font-size: 26px; }
+  .media-text .media-copy h3 {
+    font-size: 26px;
+  }
 
   .media-text.cards .mig-grid,
   .media-text.cyan .media-row,
-  .media-text.power .power-grid { grid-template-columns: 1fr; gap: 28px; }
+  .media-text.power .power-grid {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
 
-  /* agave keeps a larger heading than the shared 26px, stepping 40 -> 34px */
   .media-text.agave .media-copy h2,
-  .media-text.agave .media-copy h3 { font-size: 34px; line-height: 44.2px; }
+  .media-text.agave .media-copy h3 {
+    font-size: 34px;
+    line-height: 44.2px;
+  }
 
-  /* cyan leads the stack with the image; the copy is authored first, so the flip
-     is explicit here rather than via `.row-reverse` (which would also move the
-     media on desktop). The copy indents 30px past the image's band gutter, and
-     the eyebrow's inherited <p> margin-top is zeroed so the 84px row gap alone
-     sets the image-to-copy distance. */
-  .section.media-text-container:has(.media-text.cyan) { padding: 60px 0; }
-  .media-text.cyan .media-copy h2 { font-size: 40px; line-height: 52px; }
-  .media-text.cyan .media-row { gap: 84px; }
-  .media-text.cyan .media-row .media-visual { order: -1; }
-  .media-text.cyan .media-copy { padding-inline: 30px; }
-  .media-text.cyan .media-copy .media-eyebrow { margin-top: 0; margin-bottom: 9px; }
+  .section.media-text-container:has(.media-text.cyan) {
+    padding: 60px 0;
+  }
 
-  /* stacked cards tighten to 30px side insets, 16px radius, and the source
-     bumps the heading back up to 34px once each card has the full width */
-  .media-text.cards .mig-card { padding: 40px 30px; border-radius: 16px; }
+  .media-text.cyan .media-copy h2 {
+    font-size: 40px;
+    line-height: 52px;
+  }
+
+  .media-text.cyan .media-row {
+    gap: 84px;
+  }
+
+  .media-text.cyan .media-row .media-visual {
+    order: -1;
+  }
+
+  .media-text.cyan .media-copy {
+    padding-inline: 30px;
+  }
+
+  .media-text.cyan .media-copy .media-eyebrow {
+    margin-top: 0;
+    margin-bottom: 9px;
+  }
+
+  .media-text.cards .mig-card {
+    padding: 40px 30px;
+    border-radius: 16px;
+  }
 
   .media-text.cards .mig-card h3 {
-    font-size: 34px; line-height: 44.2px; letter-spacing: -1.02px;
+    font-size: 34px;
+    line-height: 44.2px;
+    letter-spacing: -1.02px;
   }
 }
 
-/* tablet keeps the 28px base heading but relaxes the card insets to 40px */
-@media (width >= 769px) {
-  .media-text.cards .mig-card { padding: 40px; }
-}
-
-/* desktop: the source reaches its full card scale — 60px insets, 34px heading
-   with tighter tracking — and the section heading steps to 40px */
-@media (width >= 1024px) {
-  .media-text-container:has(.media-text.cards) .default-content-wrapper h2 { font-size: 40px; }
-  .media-text.cards .mig-card { padding: 60px; }
-
-  .media-text.cards .mig-card h3 {
-    font-size: 34px; line-height: 44.2px; letter-spacing: -1.44px;
+@media (width >=769px) {
+  .media-text.cards .mig-card {
+    padding: 40px;
   }
 }
 
-@media (width >= 1200px) {
-  .media-text-container:has(.media-text.cards) .default-content-wrapper h2 { font-size: 48px; }
+@media (width >=1024px) {
+  .media-text-container:has(.media-text.cards) .default-content-wrapper h2 {
+    font-size: 40px;
+  }
+
+  .media-text.cards .mig-card {
+    padding: 60px;
+  }
+
+  .media-text.cards .mig-card h3 {
+    font-size: 34px;
+    line-height: 44.2px;
+    letter-spacing: -1.44px;
+  }
+}
+
+@media (width >=1200px) {
+  .media-text-container:has(.media-text.cards) .default-content-wrapper h2 {
+    font-size: 48px;
+  }
 }

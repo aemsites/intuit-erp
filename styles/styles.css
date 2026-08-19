@@ -117,115 +117,6 @@
   --section-y: 80px;
 }
 
-/* brand font, self-hosted (licensed kit mirrored from erp.intuit.com/qbmds-components/fonts) */
-@font-face {
-  font-family: "AvenirNext forINTUIT";
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-  src: local('Avenir Next Regular'), local('AvenirNext-Regular'),
-    url("/styles/fonts/avenir-400.woff2") format("woff2"), url("/styles/fonts/avenir-400.woff") format("woff");
-}
-
-@font-face {
-  font-family: "AvenirNext forINTUIT";
-  font-weight: 400;
-  font-style: italic;
-  font-display: swap;
-  src: local('Avenir Next Regular Italic'), local('AvenirNext-Regular-Italic'),
-    url("/styles/fonts/avenir-400-it.woff2") format("woff2"), url("/styles/fonts/avenir-400-it.woff") format("woff");
-}
-
-@font-face {
-  font-family: "AvenirNext forINTUIT";
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-  src: local('Avenir Next Medium'), local('AvenirNext-Medium'),
-    url("/styles/fonts/avenir-500.woff2") format("woff2"), url("/styles/fonts/avenir-500.woff") format("woff");
-}
-
-@font-face {
-  font-family: "AvenirNext forINTUIT";
-  font-weight: 500;
-  font-style: italic;
-  font-display: swap;
-  src: local('Avenir Next Medium Italic'), local('AvenirNext-Medium-Italic'),
-    url("/styles/fonts/avenir-500-it.woff2") format("woff2"), url("/styles/fonts/avenir-500-it.woff") format("woff");
-}
-
-@font-face {
-  font-family: "AvenirNext forINTUIT";
-  font-weight: 600;
-  font-style: normal;
-  font-display: swap;
-  src: local('Avenir Next Demi Bold'), local('AvenirNext-DemiBold'),
-    url("/styles/fonts/avenir-600.woff2") format("woff2"), url("/styles/fonts/avenir-600.woff") format("woff");
-}
-
-@font-face {
-  font-family: "AvenirNext forINTUIT";
-  font-weight: 600;
-  font-style: italic;
-  font-display: swap;
-  src: local('Avenir Next Demi Bold Italic'), local('AvenirNext-DemiBold-Italic'),
-    url("/styles/fonts/avenir-600-it.woff2") format("woff2"), url("/styles/fonts/avenir-600-it.woff") format("woff");
-}
-
-@font-face {
-  font-family: "AvenirNext forINTUIT";
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-  src: local('Avenir Next Bold'), local('AvenirNext-Bold'),
-    url("/styles/fonts/avenir-700.woff2") format("woff2"), url("/styles/fonts/avenir-700.woff") format("woff");
-}
-
-@font-face {
-  font-family: "AvenirNext forINTUIT";
-  font-weight: 700;
-  font-style: italic;
-  font-display: swap;
-  src: local('Avenir Next Bold Italic'), local('AvenirNext-Bold-Italic'),
-    url("/styles/fonts/avenir-700-it.woff2") format("woff2"), url("/styles/fonts/avenir-700-it.woff") format("woff");
-}
-
-@font-face {
-  font-family: "AvenirNext forINTUIT";
-  font-weight: 800;
-  font-style: normal;
-  font-display: swap;
-  src: local('Avenir Next Heavy'), local('AvenirNext-Heavy'),
-    url("/styles/fonts/avenir-800.woff2") format("woff2"), url("/styles/fonts/avenir-800.woff") format("woff");
-}
-
-/* self-hosted brand-substitute font (Mulish, OFL) */
-@font-face {
-  font-family: "Mulish Variable";
-  font-style: normal;
-  font-display: swap;
-  font-weight: 200 1000;
-  src: url("/styles/fonts/mulish-variable.woff2") format("woff2-variations");
-}
-
-@font-face {
-  font-family: "Mulish Variable";
-  font-style: italic;
-  font-display: swap;
-  font-weight: 200 1000;
-  src: url("/styles/fonts/mulish-italic-variable.woff2") format("woff2-variations");
-}
-
-/* metric-matched fallback while the webfont loads */
-@font-face {
-  font-family: mulish-fallback;
-  size-adjust: 98%;
-  ascent-override: 96%;
-  descent-override: 24%;
-  line-gap-override: 0%;
-  src: local('Arial');
-}
-
 @media (width >=900px) {
   :root {
     --heading-font-size-xxl: 48px;
@@ -294,12 +185,6 @@ body.author header {
   }
 }
 
-/* Events-bar pages (events-bar metadata → body.has-events-bar, set eagerly in
-   scripts.js) get a taller header. Reserve its real rendered height up front so
-   the lazily-loaded bar lands in reserved space instead of shoving content down
-   (CLS). Values are measured rendered heights: topstrip+nav+bar on desktop; the
-   topstrip hides and the bar's text shrinks ≤1299px; the bar's text wraps to two
-   lines on phones (≤540px). Keep in sync with header.css's .has-events-bar. */
 body.has-events-bar header {
   min-height: 149px;
 }
@@ -621,27 +506,6 @@ main .section.center>div {
   text-align: center;
 }
 
-/* section backgrounds */
-main>.section[data-background] {
-  padding: 2rem 0;
-}
-
-main>.section[data-background="sky"] {
-  background-color: var(--sky);
-}
-
-main>.section[data-background="agave"] {
-  background-color: var(--agave);
-}
-
-main>.section[data-background="sand"] {
-  background-color: var(--light-color);
-}
-
-main>.section[data-background="tofu"] {
-  background-color: var(--tofu);
-}
-
 /* navy — full-bleed dark band background only. Combine with Section
    Metadata "Style: center" (main .section.center>div, above) for the
    centered-copy layout used on production's dark CTA bands — this rule
@@ -756,24 +620,39 @@ body.category main>.section:first-of-type p {
   color: var(--text-muted);
 }
 
-/* blog hub home (body.blog-home) — matches erp.intuit.com's responsive heading
-   scales: the intro (first section, source Heading_heading2) is centred 34px on
-   mobile, 40px at >=1024px; the listing section headings (source
-   Heading_heading3) are 28px on mobile, 34px at >=1024px. Both bold and #000.
-   Keyed to section order (:first-of-type) rather than the authored .slot-1
-   personalization class, matching the body.category intro rule above. */
-body.blog-home main > .section:first-of-type .default-content-wrapper { text-align: center; }
-body.blog-home main > .section:first-of-type h2 { font-size: 34px; font-weight: 700; color: #000; margin: 0 0 16px; }
-
-body.blog-home main > .section:first-of-type p {
-  font-size: 16px; line-height: 1.5; color: #000; max-width: 46em; margin-inline: auto;
+body.blog-home main>.section:first-of-type .default-content-wrapper {
+  text-align: center;
 }
 
-body.blog-home main > .section:not(:first-of-type) h2 { font-size: 28px; font-weight: 700; color: #000; }
+body.blog-home main>.section:first-of-type h2 {
+  font-size: 34px;
+  font-weight: 700;
+  color: #000;
+  margin: 0 0 16px;
+}
+
+body.blog-home main>.section:first-of-type p {
+  font-size: 16px;
+  line-height: 1.5;
+  color: #000;
+  max-width: 46em;
+  margin-inline: auto;
+}
+
+body.blog-home main>.section:not(:first-of-type) h2 {
+  font-size: 28px;
+  font-weight: 700;
+  color: #000;
+}
 
 @media (min-width: 1024px) {
-  body.blog-home main > .section:first-of-type h2 { font-size: 40px; }
-  body.blog-home main > .section:not(:first-of-type) h2 { font-size: 34px; }
+  body.blog-home main>.section:first-of-type h2 {
+    font-size: 40px;
+  }
+
+  body.blog-home main>.section:not(:first-of-type) h2 {
+    font-size: 34px;
+  }
 }
 
 /* search results page (Template: "Search" metadata -> body.search): give the
@@ -961,6 +840,12 @@ a.button.secondary:hover {
   background: #fff;
   color: #09222a;
   border-color: #fff;
+}
+
+.section.dark .block p,
+.section.dark .block :is(h1, h2, h3, h4, h5, h6),
+.section.dark .block :is(ul, ol) {
+  color: #fff;
 }
 
 p.button-wrapper {

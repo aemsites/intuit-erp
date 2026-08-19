@@ -5,18 +5,10 @@
   color: #fff;
   overflow: hidden;
 
-  /* the `gradient` variant is erp.intuit.com's flat 3-stop brand diagonal
-     (navy -> blue -> lavender). We previously approximated it with a 9-stop
-     conic gradient, which rendered a visible off-centre "bloom" instead of a
-     smooth diagonal wash (#506). Match the source's linear gradient exactly. */
   &.gradient {
     background: linear-gradient(135deg, #00254a 55%, #3f6fdd 75%, #b494d1 100%);
   }
 
-  /* the form-hero pages (pricing / accountant / contact) don't use this
-     diagonal in the source — pricing/accountant are flat navy, contact uses a
-     re-tuned conic. Those are tracked separately (#541), so keep them on the
-     previous conic here rather than restyling pages outside this fix's scope. */
   &.gradient:has(.hero.form) {
     background:
       linear-gradient(to bottom, rgb(4 24 57 / 0%) 62%, #041839 100%),
@@ -24,21 +16,9 @@
   }
 }
 
-/* Light section treatment for a hero band — opt-in per section via Section
-   Metadata "Style: light". `light` is the project's generic, block-agnostic
-   section-style token (see the base `.section.light` rule in styles.css); the
-   rules below refine that token for a hero section so it matches the
-   erp.intuit.com source hero on pages that use a light-beige band with dark text
-   (e.g. /account-management). They are scoped to `.hero-container` because they
-   only undo the hero's own dark-band defaults (white text, on-dark buttons) —
-   the navy default on every other hero page is unaffected. */
 .section.hero-container.light {
-  background: var(--tofu); /* #f3f2ef — source beige */
+  background: var(--tofu);
   color: var(--text, #11181c);
-
-  /* the generic `.section.light` rule adds 40px block padding; the hero band
-     supplies its own vertical rhythm via .hero-grid, so keep the section flush
-     like the navy hero. */
   padding: 0;
   margin-bottom: 2rem;
 }
@@ -49,11 +29,6 @@
   color: var(--text, #11181c);
 }
 
-/* Buttons on the light hero: the default hero buttons are styled for the dark
-   band (white-fill primary at hero.css and white-outline secondary in
-   styles.css). On the light section, revert to the base button treatment
-   (dark-fill primary, dark-outline secondary) so they match the source's
-   light-hero CTAs — navy/solid primary, dark-outline secondary. */
 .section.hero-container.light a.button.primary {
   background: var(--navy);
   border-color: var(--navy);
@@ -89,8 +64,6 @@
   padding-bottom: 80px;
 }
 
-/* matches erp.intuit.com's kicker: regular weight (not the shared
-   .eyebrow class's bold), white, 12px/16px */
 .hero .hero-copy .hero-eyebrow {
   color: #fff;
   font-weight: 400;
@@ -103,7 +76,7 @@
 .hero .hero-copy h1 {
   font-size: 48px;
   line-height: 1.25;
-  font-weight: 400;
+  font-weight: 500;
   max-width: 10em;
   margin: 0 0 20px;
   color: #fff;
@@ -117,22 +90,30 @@
   margin: 0 0 40px;
 }
 
-.hero .hero-actions { display: flex; gap: 16px; flex-wrap: wrap; margin: 0; padding-bottom: 2rem;}
+.hero .hero-actions {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin: 0;
+  padding-bottom: 2rem;
+}
 
-.hero .hero-media { position: relative; isolation: isolate; }
+.hero .hero-media {
+  position: relative;
+  isolation: isolate;
+}
 
-/* max-height caps the band's overall height for square/portrait photos
-   (e.g. /accounting's hero) — matches erp.intuit.com's own hero, which sets
-   a fixed min-height on the whole band (not driven by the image) and clips
-   overflow, rather than letting the image dictate the row's height like
-   ours did. Landscape images (e.g. the homepage dashboard mockup) are
-   already shorter than this cap, so it's a no-op there. */
-.hero .hero-media img { position: relative; z-index: 1; width: 100%; max-height: 420px; object-fit: cover; border-radius: 12px; box-shadow: 0 24px 60px rgb(0 0 0 / 35%); }
+.hero .hero-media img {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-height: 420px;
+  object-fit: cover;
+  border-radius: 12px;
 
-/* homepage dashboard mockup, once the Lottie animation (hero.js) mounts:
-   layered exactly over the static image (which stays in the DOM, sized as
-   normal, just hidden) so there's no layout shift and no gap if the
-   animation fails to load. */
+  /* box-shadow: 0 24px 60px rgb(0 0 0 / 35%); */
+}
+
 .hero .hero-dashboard-lottie {
   position: absolute;
   inset: 0;
@@ -142,51 +123,52 @@
   box-shadow: 0 24px 60px rgb(0 0 0 / 35%);
 }
 
-.hero .hero-dashboard-lottie svg { display: block; width: 100%; height: 100%; }
-
-/* class goes on whichever element hero.js wraps mediaEl in — a <picture> when
-   the author supplied responsive sources, or a bare <img> otherwise */
-.hero .hero-media .hero-dashboard-fallback { visibility: hidden; }
-
-/* radial glow behind the hero image — adapted from erp.intuit.com's Lottie glow treatment.
-   Fades straight to 0% alpha (no opaque-navy midpoint) so it blends over the hero's
-   diagonal navy/teal/purple background instead of showing a seam against it. */
-.hero .hero-media::before,
-.hero .hero-media::after {
-  content: ""; position: absolute; z-index: -1; pointer-events: none;
+.hero .hero-dashboard-lottie svg {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
-.hero .hero-media::before {
+.hero .hero-media .hero-dashboard-fallback {
+  visibility: hidden;
+}
+
+/* .hero .hero-media::before,
+.hero .hero-media::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+} */
+
+/* .hero .hero-media::before {
   inset: -30% -32%;
-  background: radial-gradient(
-    ellipse 62% 58% at 50% 50%,
-    rgb(51 181 255 / 85%) 0%, rgb(0 153 255 / 55%) 32%, rgb(0 119 255 / 22%) 58%, rgb(0 119 255 / 0%) 80%
-  );
+  background: radial-gradient(ellipse 62% 58% at 50% 50%,
+      rgb(51 181 255 / 85%) 0%, rgb(0 153 255 / 55%) 32%, rgb(0 119 255 / 22%) 58%, rgb(0 119 255 / 0%) 80%);
   filter: blur(64px);
-}
+} */
 
-.hero .hero-media::after {
+/* .hero .hero-media::after {
   inset: -14% -16%;
-  background: radial-gradient(
-    ellipse 56% 52% at 50% 50%,
-    rgb(150 210 255 / 65%) 0%, rgb(51 181 255 / 30%) 45%, rgb(51 181 255 / 0%) 78%
-  );
+  background: radial-gradient(ellipse 56% 52% at 50% 50%,
+      rgb(150 210 255 / 65%) 0%, rgb(51 181 255 / 30%) 45%, rgb(51 181 255 / 0%) 78%);
   filter: blur(28px);
+} */
+
+.hero a.button.primary {
+  background: #fff;
+  color: var(--ink-teal, #0d333f);
+  border-color: #fff;
 }
 
-/* on-dark primary treatment (white fill); secondary's on-dark treatment
-   (white outline, inverts to solid white + dark text on hover) is shared
-   across all dark sections via styles.css so it can't drift out of sync
-   here again — this used to duplicate (and, being loaded after the shared
-   rule, silently override) it with a stale translucent-tint hover. */
-.hero a.button.primary { background: #fff; color: var(--ink-teal, #0d333f); border-color: #fff; }
-.hero a.button.primary:hover { background: #eef4f6; border-color: #eef4f6; }
+.hero a.button.primary:hover {
+  background: #eef4f6;
+  border-color: #eef4f6;
+}
 
-/* video CTAs ("Watch product demo") get a leading circular play icon,
-   matching erp.intuit.com. The icon (ring + triangle) is one SVG used as a
-   mask filled with currentColor, so it tracks the button's text color on
-   either the primary (dark) or secondary (white) variant. */
-.hero a.button.icon-video { gap: 10px; }
+.hero a.button.icon-video {
+  gap: 10px;
+}
 
 .hero a.button.icon-video::before {
   content: "";
@@ -194,59 +176,147 @@
   width: 22px;
   height: 22px;
   background-color: currentcolor;
-  mask: center / contain no-repeat
-    url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="black" stroke-width="2"/><path d="M10 8l6 4-6 4z" fill="black"/></svg>');
+  mask: center / contain no-repeat url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="black" stroke-width="2"/><path d="M10 8l6 4-6 4z" fill="black"/></svg>');
 }
 
-/* ---- .hero.form (pricing) — lead card on the right, content from the
-   shared schedule-call fragment (content/fragments/schedule-call.html) ---- */
-.hero.form .hero-grid { grid-template-columns: repeat(2, minmax(0, 550px)); justify-content: center; gap: 120px; min-height: 560px; max-width: 86.25rem; margin-inline: auto; }
-.hero.form .hero-grid:has(.hero-copy > h1:only-child) { align-items: center; }
-.hero.form .hero-copy h1 { font-size: 52px; max-width: 7em; margin-bottom: 0; }
+.hero.form .hero-grid {
+  grid-template-columns: repeat(2, minmax(0, 550px));
+  justify-content: center;
+  gap: 120px;
+  min-height: 560px;
+  max-width: 86.25rem;
+  margin-inline: auto;
+}
 
-/* Badge/lockup that follows the CTA in the form-hero copy (e.g. accountant's
-   "Top New Products" badge): space it from the button; cap the accountant
-   badge (.gradient) so it matches erp.intuit.com rather than its full asset size. */
-.hero.form .hero-copy .button-wrapper + img,
-.hero.form .hero-copy .button-wrapper + picture { display: block; margin-top: 32px; }
-.hero.form.gradient .hero-copy img { max-width: 190px; height: auto; }
+.hero.form .hero-grid:has(.hero-copy > h1:only-child) {
+  align-items: center;
+}
+
+.hero.form .hero-copy h1 {
+  font-size: 60px;
+  margin-bottom: 0;
+}
+
+.hero.form .hero-copy .button-wrapper+img,
+.hero.form .hero-copy .button-wrapper+picture {
+  display: block;
+  margin-top: 32px;
+}
+
+.hero.form.gradient .hero-copy img {
+  height: auto;
+}
 
 .hero .hero-form {
-  box-sizing: border-box; justify-self: end; width: 100%; background: #fff; border-radius: 12px;
-  padding: 34px 34px 30px; box-shadow: 0 24px 60px rgb(0 0 0 / 28%); color: var(--text);
-}
-.hero .hero-form-loading { text-align: center; color: var(--text-muted); font-size: 14px; padding: 20px 0; }
-
-/* Neutralize the form block's own section chrome inside the hero card
-   (the Marketo fields themselves are styled in blocks/form/form.css). */
-.hero .hero-form .section.form-container { padding: 0; background: transparent; }
-
-/* Fragment-driven cards (contact/pricing, .form.boxed) center their copy;
-   the .form.card variant (accountant) left-aligns (see below). */
-.hero .hero-form .default-content-wrapper h2 { font-size: 26px; font-weight: 500; color: var(--heading); text-align: center; margin: 0 0 8px; }
-.hero .hero-form .default-content-wrapper p { font-size: 14px; color: var(--text-muted); text-align: center; line-height: 1.45; margin: 0 0 12px; }
-.hero .hero-form .form.boxed .form-disclaimer { text-align: center; }
-.hero .hero-form .default-content-wrapper p a { color: var(--primary); font-weight: 600; }
-
-/* a .form.card fragment (accountant "Request a detailed demo") supplies its own
-   card chrome; strip it inside the hero-form so we don't get a card-in-a-card. */
-.hero .hero-form .form.card { background: transparent; border: 0; box-shadow: none; max-width: none; margin: 0; padding: 0; }
-.hero .hero-form .form .form-header { text-align: left; font-size: 26px; font-weight: 500; color: var(--heading); margin: 0 0 8px; }
-.hero .hero-form .form .form-subheader { text-align: left; font-size: 14px; color: var(--text-muted); line-height: 1.45; margin: 0 0 12px; }
-.hero .hero-form .form .form-disclaimer { text-align: left; font-size: 12px; color: var(--text-muted); }
-
-@media (width <= 768px) {
-  .hero .hero-grid { grid-template-columns: 1fr; gap: 28px; padding-top: 40px; padding-bottom: 40px; }
-  .hero .hero-copy h1 { font-size: 40px; }
-  .hero .hero-copy .hero-lede { font-size: 16px; }
-  .hero .hero-actions { flex-direction: column; align-items: stretch; }
-  .hero.form .hero-grid { grid-template-columns: 1fr; }
-  .hero .hero-form { justify-self: stretch; padding: 24px 20px; }
+  box-sizing: border-box;
+  justify-self: end;
+  width: 100%;
+  background: #fff;
+  border-radius: 12px;
+  padding: 34px 34px 30px;
+  box-shadow: 0 24px 60px rgb(0 0 0 / 28%);
+  color: var(--text);
 }
 
-/* ---- .centered — single centred column with a gradient headline and an
-   inline looping animation below (ai-agents). The other pages' heroes are a
-   left-aligned two-column split, hence a variant rather than a default. ---- */
+.hero .hero-form-loading {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 14px;
+  padding: 20px 0;
+}
+
+.hero .hero-form .section.form-container {
+  padding: 0;
+  background: transparent;
+}
+
+.hero .hero-form .default-content-wrapper h2 {
+  font-size: 26px;
+  font-weight: 500;
+  color: var(--heading);
+  text-align: center;
+  margin: 0 0 8px;
+}
+
+.hero .hero-form .default-content-wrapper p {
+  font-size: 14px;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.45;
+  margin: 0 0 12px;
+}
+
+.hero .hero-form .form.boxed .form-disclaimer {
+  text-align: center;
+}
+
+.hero .hero-form .default-content-wrapper p a {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.hero .hero-form .form.card {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+.hero .hero-form .form .form-header {
+  text-align: left;
+  font-size: 26px;
+  font-weight: 500;
+  color: var(--heading);
+  margin: 0 0 8px;
+}
+
+.hero .hero-form .form .form-subheader {
+  text-align: left;
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.45;
+  margin: 0 0 12px;
+}
+
+.hero .hero-form .form .form-disclaimer {
+  text-align: left;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+@media (width <=768px) {
+  .hero .hero-grid {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    padding-top: 40px;
+    padding-bottom: 40px;
+  }
+
+  .hero .hero-copy h1 {
+    font-size: 40px;
+  }
+
+  .hero .hero-copy .hero-lede {
+    font-size: 16px;
+  }
+
+  .hero .hero-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .hero.form .hero-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero .hero-form {
+    justify-self: stretch;
+    padding: 24px 20px;
+  }
+}
+
 .hero.centered .hero-grid {
   grid-template-columns: 1fr;
   justify-items: center;
@@ -261,8 +331,9 @@
   text-align: center;
 }
 
-/* product lockup above the headline ("✳ Intuit Intelligence") */
-.hero.centered .hero-lockup { margin-bottom: 15px; }
+.hero.centered .hero-lockup {
+  margin-bottom: 15px;
+}
 
 .hero.centered .hero-lockup img {
   display: block;
@@ -270,10 +341,6 @@
   height: 30px;
 }
 
-/* The headline is a blue → cyan → green gradient clipped to the glyphs.
-   `color: transparent` is what reveals the background, so the gradient IS the
-   text colour — if the background fails to paint the text would vanish, hence
-   the paint-order-safe fallback colour above it. */
 .hero.centered .hero-copy h1 {
   max-width: 930px;
   margin: 0;
@@ -286,9 +353,6 @@
   -webkit-text-fill-color: transparent;
 }
 
-/* Vertical rhythm comes from this element's own padding rather than margins on
-   the neighbours, matching upstream — it sets the h1→lede and lede→buttons gaps
-   in one place (16px above, 40px below). */
 .hero.centered .hero-copy .hero-lede {
   max-width: 744px;
   margin: 0;
@@ -298,16 +362,16 @@
   line-height: 1.4;
 }
 
-.hero.centered .hero-actions { justify-content: center; }
+.hero.centered .hero-actions {
+  justify-content: center;
+}
 
-/* upstream's hero buttons are taller with slightly tighter side padding */
 .hero.centered .hero-actions a.button {
   min-height: 52px;
   padding: 0 28px;
   line-height: 24px;
 }
 
-/* inline looping animation, inside the navy band below the copy */
 .hero.centered .hero-video {
   position: relative;
   max-width: 1120px;
@@ -337,14 +401,28 @@
   cursor: pointer;
 }
 
-.hero.centered .hero-video-toggle:hover { background: rgb(0 0 0 / 65%); }
+.hero.centered .hero-video-toggle:hover {
+  background: rgb(0 0 0 / 65%);
+}
 
-/* ▮▮ while playing, ▶ once paused */
-.hero.centered .hero-video-toggle::before { content: '\275A\275A'; }
-.hero.centered .hero-video-toggle[data-state="paused"]::before { content: '\25B6'; }
+.hero.centered .hero-video-toggle::before {
+  content: '\275A\275A';
+}
 
-@media (width <= 900px) {
-  .hero.centered .hero-copy h1 { font-size: 40px; }
-  .hero.centered .hero-video { margin-top: 32px; }
-  .hero.centered .hero-video video { border-radius: 10px; }
+.hero.centered .hero-video-toggle[data-state="paused"]::before {
+  content: '\25B6';
+}
+
+@media (width <=900px) {
+  .hero.centered .hero-copy h1 {
+    font-size: 40px;
+  }
+
+  .hero.centered .hero-video {
+    margin-top: 32px;
+  }
+
+  .hero.centered .hero-video video {
+    border-radius: 10px;
+  }
 }
