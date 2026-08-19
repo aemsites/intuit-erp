@@ -39,13 +39,26 @@ const embedDatawrapper = (url) => {
     </div>`;
 };
 
+// A PDF framed in a portrait container, matching erp.intuit.com's treatment of
+// the /ibs event flyer. The authored link text becomes the iframe title and a
+// visible link below it: digitalasset.intuit.com restricts frame-ancestors to
+// *.intuit.com (plus *.google.com), so on any other origin — localhost and
+// *.aem.page branch previews included — the frame is CSP-blocked and that link is
+// all the reader gets. Upstream routes through docs.google.com/gview to dodge
+// this; framing the asset directly keeps a first-party PDF off a third party and
+// renders natively once the site serves from an intuit.com host.
+const embedPdf = (url, title) => `<div class="pdf-frame">
+      <iframe src="${url.href}" title="${title || `PDF document from ${url.hostname}`}" loading="lazy"></iframe>
+    </div>
+    <p class="embed-fallback"><a href="${url.href}" target="_blank" rel="noopener">${title || 'Open the PDF'}</a></p>`;
+
 const getDefaultEmbed = (url) => `<div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;">
     <iframe src="${url.href}" style="border: 0; top: 0; left: 0; width: 100%; height: 100%; position: absolute;" allowfullscreen=""
       scrolling="no" allow="encrypted-media" title="Content from ${url.hostname}" loading="lazy">
     </iframe>
   </div>`;
 
-const loadEmbed = (block, link) => {
+const loadEmbed = (block, link, title) => {
   if (block.classList.contains('embed-is-loaded')) return;
 
   const EMBEDS_CONFIG = [
@@ -53,12 +66,20 @@ const loadEmbed = (block, link) => {
       match: ['datawrapper.dwcdn.net', 'datawrapper'],
       embed: embedDatawrapper,
     },
+    {
+      // extension match, not a host match — any PDF gets this treatment
+      match: ['pdf'],
+      test: (url) => /\.pdf(?:$|\?)/i.test(url.pathname + url.search),
+      embed: embedPdf,
+    },
   ];
 
-  const config = EMBEDS_CONFIG.find((e) => e.match.some((m) => link.includes(m)));
   const url = new URL(link);
+  const config = EMBEDS_CONFIG.find((e) => (
+    e.test ? e.test(url) : e.match.some((m) => link.includes(m))
+  ));
   if (config) {
-    block.innerHTML = config.embed(url);
+    block.innerHTML = config.embed(url, title);
     block.classList = `block embed embed-${config.match[0].split('.')[0]}`;
   } else {
     block.innerHTML = getDefaultEmbed(url);
@@ -67,9 +88,28 @@ const loadEmbed = (block, link) => {
   block.classList.add('embed-is-loaded');
 };
 
+// The authored label for an embed. Authors write it either as the link text
+// ("[View the event flyer](url)") or as prose around a bare url that the
+// pipeline auto-links ("View the event flyer (url)") — take whichever is
+// present, ignoring text that is only the url repeated back.
+function embedTitle(block, anchor, link) {
+  const linkText = anchor ? anchor.textContent.trim() : '';
+  if (linkText && linkText !== link) return linkText;
+  // Drop the url, then the now-empty "()" / "[]" the "label (url)" form leaves
+  // mid-string, then any stray edge punctuation.
+  return block.textContent
+    .replace(linkText || link, '')
+    .replace(link, '')
+    .replace(/[([]\s*[)\]]/g, '')
+    .replace(/^[\s([]+/, '')
+    .replace(/[\s)\]]+$/, '')
+    .trim();
+}
+
 export default function decorate(block) {
   const anchor = block.querySelector('a');
   const link = anchor ? anchor.href : block.textContent.trim();
+  const title = embedTitle(block, anchor, link);
   if (!link) { block.remove(); return; }
   try {
     // validate
@@ -85,5 +125,5 @@ export default function decorate(block) {
   // (An IntersectionObserver on the block/wrapper is unreliable here: once the
   // block is emptied it collapses to 0px height, and an observer never reports a
   // zero-area target as intersecting, so the embed would never load.)
-  loadEmbed(block, link);
+  loadEmbed(block, link, title);
 }
