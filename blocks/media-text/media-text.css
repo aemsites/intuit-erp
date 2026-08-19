@@ -388,16 +388,6 @@
   padding: 0 0 var(--section-y);
 }
 
-.media-text-container:has(.media-text.compare) .default-content-wrapper>p:first-of-type {
-  text-align: center;
-  margin: 0 0 16px;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-
 .media-text-container:has(.media-text.compare) .default-content-wrapper h2 {
   font-size: 38px;
   line-height: 1.15;

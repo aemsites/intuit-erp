@@ -500,33 +500,42 @@ main .section:empty {
 /* narrow container variant (prototype .container-narrow = 1180px) */
 main .section.narrow>div {
   max-width: 1180px;
+
+  &.default-content-wrapper {
+    max-width: 820px;
+    margin: 2rem auto;
+  }
+}
+
+main > .section > .default-content-wrapper > h2 {
+  font-size: 48px;
 }
 
 main .section.center>div.default-content-wrapper {
   text-align: center;
 }
 
-main > .section.spacer-top-s { margin-top: 0.5rem; }
-main > .section.spacer-top-m { margin-top: 0.75rem; }
-main > .section.spacer-top-l { margin-top: 1.5rem; }
-main > .section.spacer-top-xl { margin-top: 3rem; }
-main > .section.spacer-top-xxl { margin-top: 4.5rem; }
-main > .section.spacer-bottom-s { margin-bottom: 0.5rem; }
-main > .section.spacer-bottom-m { margin-bottom: 0.75rem; }
-main > .section.spacer-bottom-l { margin-bottom: 1.5rem; }
-main > .section.spacer-bottom-xl { margin-bottom: 3rem; }
-main > .section.spacer-bottom-xxl { margin-bottom: 4.5rem; }
+main > .section.spacer-top-s { margin-top: 1rem; }
+main > .section.spacer-top-m { margin-top: 1.5rem; }
+main > .section.spacer-top-l { margin-top: 2.5rem; }
+main > .section.spacer-top-xl { margin-top: 4rem; }
+main > .section.spacer-top-xxl { margin-top: 6rem; }
+main > .section.spacer-bottom-s { margin-bottom: 1rem; }
+main > .section.spacer-bottom-m { margin-bottom: 1.5rem; }
+main > .section.spacer-bottom-l { margin-bottom: 2.5rem; }
+main > .section.spacer-bottom-xl { margin-bottom: 4rem; }
+main > .section.spacer-bottom-xxl { margin-bottom: 6rem; }
 
-main > .section .block.spacer-top-s { margin-top: 0.5rem; }
-main > .section .block.spacer-top-m { margin-top: 0.75rem; }
-main > .section .block.spacer-top-l { margin-top: 1.5rem; }
-main > .section .block.spacer-top-xl { margin-top: 3rem; }
-main > .section .block.spacer-top-xxl { margin-top: 4.5rem; }
-main > .section .block.spacer-bottom-s { margin-bottom: 0.5rem; }
-main > .section .block.spacer-bottom-m { margin-bottom: 0.75rem; }
-main > .section .block.spacer-bottom-l { margin-bottom: 1.5rem; }
-main > .section .block.spacer-bottom-xl { margin-bottom: 3rem; }
-main > .section .block.spacer-bottom-xxl { margin-bottom: 4.5rem; }
+main > .section .block.spacer-top-s { margin-top: 1rem; }
+main > .section .block.spacer-top-m { margin-top: 1.5rem; }
+main > .section .block.spacer-top-l { margin-top: 2.5rem; }
+main > .section .block.spacer-top-xl { margin-top: 4rem; }
+main > .section .block.spacer-top-xxl { margin-top: 6rem; }
+main > .section .block.spacer-bottom-s { margin-bottom: 1rem; }
+main > .section .block.spacer-bottom-m { margin-bottom: 1.5rem; }
+main > .section .block.spacer-bottom-l { margin-bottom: 2.5rem; }
+main > .section .block.spacer-bottom-xl { margin-bottom: 4rem; }
+main > .section .block.spacer-bottom-xxl { margin-bottom: 6rem; }
 
 /* navy — full-bleed dark band background only. Combine with Section
    Metadata "Style: center" (main .section.center>div, above) for the
