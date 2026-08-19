@@ -395,10 +395,19 @@ function decorateButtons(main) {
   });
 }
 
+const IMAGE_EXT_RE = /\.(jpe?g|png|gif|webp)(\?|$)/i;
+
 function decorateSectionBackgrounds(main) {
   main.querySelectorAll('.section').forEach((section) => {
-    if (section.dataset.background) {
-      section.style.background = section.dataset.background;
+    const { background } = section.dataset;
+    if (!background) return;
+    if (IMAGE_EXT_RE.test(background)) {
+      const { pathname } = new URL(background, window.location.href);
+      section.style.backgroundImage = `url('${pathname}?width=2000&format=webply&optimize=medium')`;
+      section.style.backgroundSize = 'cover';
+      section.style.backgroundPosition = 'center';
+    } else {
+      section.style.background = background;
     }
   });
 }
