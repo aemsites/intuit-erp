@@ -80,11 +80,10 @@ export default function decorate(block) {
   }
   block.textContent = '';
 
-  const observer = new IntersectionObserver((entries) => {
-    if (entries.some((e) => e.isIntersecting)) {
-      observer.disconnect();
-      loadEmbed(block, link);
-    }
-  });
-  observer.observe(block);
+  // Load immediately. The generated iframe carries loading="lazy", so the browser
+  // still defers the actual network fetch until the chart nears the viewport.
+  // (An IntersectionObserver on the block/wrapper is unreliable here: once the
+  // block is emptied it collapses to 0px height, and an observer never reports a
+  // zero-area target as intersecting, so the embed would never load.)
+  loadEmbed(block, link);
 }
