@@ -29,16 +29,33 @@ function buildCopy(textCell) {
   if (textCell) [...textCell.childNodes].forEach((n) => copy.append(n));
   const heading = copy.querySelector('h2, h3, h4');
   // eyebrow = a paragraph that precedes the heading and is not a button/link
+  const eyebrowPs = [];
   [...copy.querySelectorAll('p')].forEach((p) => {
     if (p.classList.contains('button-wrapper')) return;
     if (p.querySelector('a')) return;
     // eslint-disable-next-line no-bitwise -- compareDocumentPosition returns a bitmask
     if (heading && (p.compareDocumentPosition(heading) & Node.DOCUMENT_POSITION_FOLLOWING)) {
       p.classList.add('eyebrow', 'media-eyebrow');
+      eyebrowPs.push(p);
     } else {
       p.classList.add('media-body');
     }
   });
+  // an eyebrow "paragraph" that is only an icon image (no text), immediately
+  // followed by the capitalised title, is a source icon+title pair (e.g.
+  // /accounting/business-forecasting) — pair them into one row so the icon
+  // sits before the title instead of stacking above it. Anything else (no
+  // icon, or an icon with no adjacent title) is left as plain eyebrow text.
+  const iconP = eyebrowPs.find((p) => !p.textContent.trim() && p.querySelector('picture, img'));
+  const titleP = iconP?.nextElementSibling;
+  if (iconP && titleP?.classList.contains('media-eyebrow') && titleP.textContent.trim()) {
+    const row = document.createElement('div');
+    row.className = 'media-eyebrow-row';
+    copy.insertBefore(row, iconP);
+    iconP.classList.remove('eyebrow', 'media-eyebrow');
+    iconP.classList.add('media-eyebrow-icon');
+    row.append(iconP, titleP);
+  }
   return copy;
 }
 
@@ -151,8 +168,15 @@ export default function decorate(block) {
   const frag = document.createDocumentFragment();
   rows.forEach((row, i) => {
     const cells = [...row.children];
-    const mediaCell = cells.find((c) => c.querySelector('picture, img'));
-    const textCell = cells.find((c) => c !== mediaCell) || cells[0];
+    // The text cell can carry its own small icon image (e.g. business-forecasting),
+    // so "first cell with an image" is not a reliable way to find the media cell.
+    // The heading is the unambiguous signal: whichever cell has it is the text
+    // cell, and the media cell is the *other* one that has an image.
+    const headingCell = cells.find((c) => c.querySelector('h2, h3, h4'));
+    const mediaCell = headingCell
+      ? cells.find((c) => c !== headingCell && c.querySelector('picture, img'))
+      : cells.find((c) => c.querySelector('picture, img'));
+    const textCell = headingCell || cells.find((c) => c !== mediaCell) || cells[0];
     const rowEl = document.createElement('div');
     rowEl.className = 'media-row';
     // Media-left is expressed two ways, and they must not compound:

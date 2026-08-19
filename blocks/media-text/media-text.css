@@ -25,6 +25,13 @@
 .media-text .media-visual img { width: 100%; border-radius: 14px; box-shadow: 0 12px 40px rgb(13 51 63 / 14%); }
 .media-text .media-copy .media-eyebrow { margin-bottom: 16px; color: var(--text-muted); }
 
+/* icon + capitalised title pair (e.g. /accounting/business-forecasting) — icon
+   sits inline before the title instead of stacking above it, matching source */
+.media-text .media-copy .media-eyebrow-row { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.media-text .media-copy .media-eyebrow-row .media-eyebrow { margin: 0; }
+.media-text .media-copy .media-eyebrow-icon { margin: 0; line-height: 0; }
+.media-text .media-copy .media-eyebrow-icon img { width: 32px; height: 32px; display: block; }
+
 .media-text .media-copy h2,
 .media-text .media-copy h3 { font-size: 34px; line-height: 1.2; font-weight: 400; color: var(--heading); margin: 0 0 18px; }
 .media-text .media-copy .media-body { font-size: 15px; line-height: 1.6; color: var(--text-muted); max-width: 34em; margin: 0 0 14px; }
