@@ -824,3 +824,14 @@
 .section > [class*="-wrapper"] + .carousel-wrapper {
   margin-top: 4rem;
 }
+
+/* #570 square portrait: prod renders the has-title testimonial headshot as a
+   1:1 square (547x547); AEM stretched it to the copy height (~1.52:1). Pin the
+   media to a square and let object-fit: cover crop it. */
+@media (width >= 1024px) {
+  .carousel.testimonial.has-title .testi-media:has(img) {
+    flex: 0 0 40%;
+    align-self: center;
+    aspect-ratio: 1 / 1;
+  }
+}
