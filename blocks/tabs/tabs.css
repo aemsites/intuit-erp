@@ -853,3 +853,47 @@ main > .section.tabs-container:has(.tabs.navy) > div { padding: 0; }
   main > .section.tabs-container:has(.tabs.navy) { max-width: 1400px; }
   .tabs-container:has(.tabs.navy) .default-content-wrapper p { max-width: 66.7%; padding: 0 80px; }
 }
+
+/* #555 mobile: .tabs.pill on /migration — prod shows media (266x395 centered),
+   then a single-item swipe carousel selector (one centered pill at a time),
+   then the copy. Scoped below the 768px desktop grid (desktop unchanged). */
+@media (width < 768px) {
+  .tabs.pill { display: flex; flex-direction: column; }
+
+  /* flatten the panel wrappers so media, nav, copy order as siblings */
+  .tabs.pill .vt-panels,
+  .tabs.pill .vt-panel.is-active { display: contents; }
+  .tabs.pill .vt-panel:not(.is-active) { display: none; }
+
+  /* media first, centered, at prod proportions (266x395) */
+  .tabs.pill .vt-media {
+    order: 0;
+    width: 266px;
+    max-width: 100%;
+    aspect-ratio: 266 / 395;
+    margin: 0 auto 16px;
+  }
+  .tabs.pill .vt-media img { width: 100%; height: 100%; object-fit: cover; }
+
+  /* selector: single-item swipe carousel — one centered pill at a time */
+  .tabs.pill .vt-nav {
+    order: 1;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: 0;
+    margin: 0 0 20px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .tabs.pill .vt-nav::-webkit-scrollbar { display: none; }
+  .tabs.pill .vt-tab {
+    flex: 0 0 100%;
+    width: 100%;
+    justify-content: center;
+    scroll-snap-align: center;
+  }
+
+  .tabs.pill .vt-copy { order: 2; }
+}
