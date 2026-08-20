@@ -671,3 +671,18 @@
   /* keep one-at-a-time even where the default .card grid would go multi-column */
   .testimonial.card.carousel .testimonial-card { flex: 0 0 100%; box-sizing: border-box; }
 }
+
+/* #742 mobile: video-split 2-col grid overflowed the viewport on
+   /professional-services. Stack to one column AND allow the grid items to
+   shrink below their intrinsic content width (grid items default to
+   min-width: auto, which was keeping .split-copy/.split-media at ~402px). */
+@media (width < 768px) {
+  .testimonial.video-split .split-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .testimonial.video-split .split-copy,
+  .testimonial.video-split .split-media {
+    min-width: 0;
+  }
+}
