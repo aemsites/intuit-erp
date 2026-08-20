@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Personalization cell-resolution demo</title>
+  <title>Personalization placement-resolution demo</title>
   <!--
     `audience-manifest` normally comes from an authored "Metadata" block (a
     name/value table) that the real CMS pipeline lifts into a <meta> tag here.
@@ -14,6 +14,15 @@
     /parity-probe -> 401).
   -->
   <meta name="audience-manifest" content="/drafts/pzn-manifest.json">
+  <!--
+    `aem up --html-folder drafts` can't serve a real /api/pzn, so this demo
+    opts in to byo.js's canned-response fallback (see resolvePznPlacementCache
+    / mockPznBatchResponse in scripts/personalization/byo.js). A real
+    deployment never sets this, and a real /api/pzn (or `pzn-api-base`
+    override) always wins over the mock when present — see fetchDecision in
+    scripts/personalization/decision.js.
+  -->
+  <meta name="pzn-mock" content="true">
   <script nonce="aem" src="/scripts/scripts.js" type="module"></script>
   <link rel="stylesheet" href="/styles/styles.css">
   <link rel="stylesheet" href="/styles/lazy-styles.css">
@@ -22,24 +31,30 @@
   <header></header>
   <main>
     <div>
-      <h1>Cell-resolution personalization demo</h1>
-      <p>This page wires Intuit's decision engine onto the vendored aem-experimentation
-      plugin's bring-your-own manifest mechanism, using the cell-resolution model: the
-      engine (<code>scripts/personalization/byo.js</code>) resolves which audience cell a
-      visitor is in, and the published manifest sheet below owns the cell-to-fragment
-      mapping for each personalizable slot on this page.</p>
-      <p>Try <code>?audience=retail</code>, <code>?audience=hospitality</code>, or no
-      parameter at all (sticky demo mock — persisted in a <code>pzn-cell</code> cookie) to
-      see the hero and offer slots below swap content. Open devtools while loading to
-      confirm there are no console errors.</p>
+      <h1>Placement-resolution personalization demo</h1>
+      <p>This page wires Intuit's Decision Engine onto the vendored aem-experimentation
+      plugin's bring-your-own manifest mechanism, using the <strong>frozen-API</strong>
+      model: Intuit's <code>/pzn</code> endpoint returns CONTENT (a fragment ref, in
+      <code>copyData.pznblock</code>), not a cell name for authoring to map. So the
+      published manifest sheet below only declares a <strong>placement id</strong> per
+      selector (a key into the Decision Engine's batch response, not a fragment path), and
+      <code>scripts/personalization/byo.js</code>'s <code>resolveAudiences</code> issues
+      ONE batched call for every placement on the page and caches what the engine hands
+      back; <code>renderDecision</code> applies THAT cached fragment, never the manifest's
+      own "url" directly.</p>
+      <p>Try <code>?audience=anything-else</code> to force the plugin's own upstream QA
+      override to a miss (deterministically shows the default content below, bypassing the
+      engine entirely), or no parameter at all to see the mock engine's pick for each slot
+      (sticky per placement — persisted in <code>pzn-mock-&lt;placement&gt;</code> cookies).
+      Open devtools while loading to confirm there are no console errors.</p>
     </div>
     <div>
       <div class="pzn-hero">
         <div>
           <div>
             <h2>Default hero</h2>
-            <p>Generic baseline hero copy, shown until a cell resolves and its manifest
-            fragment is swapped in.</p>
+            <p>Generic baseline hero copy, shown until the engine returns a
+            recommendation for this placement and its fragment is swapped in.</p>
           </div>
         </div>
       </div>
@@ -49,21 +64,24 @@
         <div>
           <div>
             <h3>Default offer</h3>
-            <p>Generic baseline offer copy, shown until a cell resolves and its manifest
-            fragment is swapped in.</p>
+            <p>Generic baseline offer copy, shown until the engine returns a
+            recommendation for this placement and its fragment is swapped in.</p>
           </div>
         </div>
       </div>
     </div>
     <div>
       <h2>How this works</h2>
-      <p>The engine owns cell resolution (who is this visitor), and the manifest sheet
-      owns cell-to-content (what does that cell see). Neither the hero nor the offer slot
-      above carries a <code>data-pzn</code>, <code>data-exp</code>, or
-      <code>personalization-id</code> marker, so this page never touches Intuit's existing
-      pzn.js/exp.js path — it exercises only the plugin's own audience-manifest mechanism.</p>
-      <p>See <code>drafts/pzn-manifest.json</code> for the published sheet, and
-      <code>drafts/fragments/pzn/</code> for the per-cell fragments it points to.</p>
+      <p>The engine owns both WHO (targeting) and WHAT (content) — it returns the
+      resolved fragment ref directly. The manifest sheet only owns selector-to-placement
+      (which DOM slot asks for which placement id); it no longer owns any content mapping.
+      Neither the hero nor the offer slot above carries a <code>data-pzn</code>,
+      <code>data-exp</code>, or <code>personalization-id</code> marker, so this page never
+      touches Intuit's existing pzn.js/exp.js path — it exercises only the plugin's own
+      audience-manifest mechanism.</p>
+      <p>See <code>drafts/pzn-manifest.json</code> for the published sheet (selector -&gt;
+      placement id), and <code>drafts/fragments/pzn/</code> for the candidate fragments the
+      demo mock engine can return for each placement.</p>
     </div>
   </main>
   <footer></footer>

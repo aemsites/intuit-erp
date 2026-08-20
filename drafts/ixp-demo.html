@@ -16,7 +16,7 @@
     plugin's getAllMetadata), and a hand-authored "Metadata" block is NOT
     converted into <meta> tags when served locally via
     `aem up --html-folder drafts` (no pipeline step runs — the same finding the
-    PZN cell-resolution demo already documents, see pzn-cell-demo.html).
+    PZN placement-resolution demo already documents, see pzn-cell-demo.html).
     `.section-metadata`, by contrast, is read straight off the DOM as authored,
     so it works locally with zero extra plumbing. Verified against the plugin's
     own Playwright fixture
@@ -26,13 +26,22 @@
     This page carries NO `audience-manifest` / `data-pzn` / `data-exp` marker —
     it is IXP-only, exercising only the plugin's native experiment path via the
     `getAssignment` BYO hook (scripts/personalization/byo.js), never Intuit's
-    existing pzn.js/exp.js path nor the cell-resolution manifest lane
+    existing pzn.js/exp.js path nor the placement-resolution manifest lane
     (pzn-cell-demo.html).
 
-    A real decision engine would be wired via a `<meta name="ixp-endpoint"
-    content="https://...">` tag here (see getAssignment in byo.js) — omitted on
-    this demo page so it exercises the sticky mock instead.
+    Frozen-API model: Intuit's /ixp endpoint returns the arm (`control` flag /
+    `treatmentKey`) AND the variation CONTENT (`assetLocation` / a redirect
+    payload) — so the `Experiment Variants` href below is now only a
+    PLACEHOLDER key, never a real fragment path. getAssignment (byo.js) is the
+    one that fetches/stashes the engine's own content; renderDecision applies
+    THAT, not this href. A real decision engine is reached through the same
+    `pzn-api-base` (or same-origin /api) config `scripts/personalization/
+    attributes.js` already resolves for the existing pzn.js/exp.js path — no
+    separate endpoint metadata for IXP. This demo page instead opts in to
+    byo.js's canned-response fallback via `ixp-mock` below, since
+    `aem up --html-folder drafts` can't serve a real /api/ixp.
   -->
+  <meta name="ixp-mock" content="true">
   <style>
     /* The `.section-metadata` block below is authoring configuration, not
        visible copy. On the real aem.live pipeline this table is not part of a
@@ -49,19 +58,24 @@
   <main>
     <div>
       <h1>Experiment-assignment (IXP) demo</h1>
-      <p>This page wires Intuit's decision engine onto the vendored aem-experimentation
-      plugin's <code>getAssignment</code> hook (<code>scripts/personalization/byo.js</code>):
-      the engine owns the arm (bucketing/stickiness/exposure) for a
-      <strong>natively-authored</strong> experiment — a <code>Section Metadata</code> block
-      with <code>Experiment</code> / <code>Experiment Variants</code> rows, not a manifest
-      sheet — and the plugin renders whichever variant the engine (here, a sticky demo mock)
-      picked.</p>
+      <p>This page wires Intuit's Decision Engine onto the vendored aem-experimentation
+      plugin's <code>getAssignment</code> hook (<code>scripts/personalization/byo.js</code>),
+      using the <strong>frozen-API</strong> model: the engine owns the arm
+      (bucketing/stickiness/exposure) AND hands back the variation content itself
+      (<code>assetLocation</code>) for a <strong>natively-authored</strong> experiment — a
+      <code>Section Metadata</code> block with <code>Experiment</code> /
+      <code>Experiment Variants</code> rows, not a manifest sheet. The
+      <code>Experiment Variants</code> href below is only a placeholder key now (the plugin
+      just needs a truthy variant url to proceed to <code>renderDecision</code>); the
+      content that actually renders comes from whatever <code>getAssignment</code> stashed
+      from the engine's own answer, never from that href.</p>
       <p>Try <code>?experiment=ixp-hero-test/challenger-1</code> or
       <code>?experiment=ixp-hero-test/control</code> to force an arm (the plugin's own QA
-      override), or no parameter at all to see the sticky demo mock (persisted in an
-      <code>ixp-arm-ixp-hero-test</code> cookie) — reload a few times with no parameter and the
-      same arm keeps showing. Open devtools while loading to confirm there are no console
-      errors.</p>
+      override, unchanged — upstream of getAssignment entirely), or no parameter at all to
+      see the mock engine's assignment (sticky per experiment — persisted in an
+      <code>ixp-mock-ixp-hero-test</code> cookie) — reload a few times with no parameter and
+      the same arm keeps showing. Open devtools while loading to confirm there are no
+      console errors.</p>
     </div>
     <div>
       <h2>Control — default hero copy</h2>
@@ -75,18 +89,22 @@
         </div>
         <div>
           <div>Experiment Variants</div>
-          <div><a href="/drafts/fragments/experiments/hero-challenger-1">Challenger 1</a></div>
+          <div><a href="engine-resolves-this-key">Challenger 1 (content resolved by the
+          engine, not this href)</a></div>
         </div>
       </div>
     </div>
     <div>
       <h2>How this works</h2>
-      <p>The engine owns the arm (<code>getAssignment</code>), and the page's own
-      <code>Experiment Variants</code> metadata owns arm-to-content — there is no manifest
-      sheet involved here, unlike the cell-resolution demo (<code>pzn-cell-demo.html</code>).
-      This is a <strong>section-level</strong> experiment: the section above (the control
-      content plus its <code>Section Metadata</code> block) is the control arm, and
-      <code>drafts/fragments/experiments/hero-challenger-1</code> is the sole challenger.</p>
+      <p>The engine owns both the arm AND the content (<code>getAssignment</code> stashes
+      the engine's <code>assetLocation</code>/redirect path, keyed by experiment id); the
+      page's own <code>Experiment Variants</code> metadata is now just a placeholder that
+      lets the plugin's existing arm-vs-control dispatch keep working unchanged. There is no
+      manifest sheet involved here, unlike the placement-resolution demo
+      (<code>pzn-cell-demo.html</code>). This is a <strong>section-level</strong> experiment:
+      the section above (the control content plus its <code>Section Metadata</code> block)
+      is the control arm, and <code>drafts/fragments/experiments/hero-challenger-1</code> is
+      the content the mock engine hands back for the sole challenger arm.</p>
       <p>See <code>documentation/experiments.md</code> in the vendored plugin for the native
       authoring convention, and <code>documentation/byo-decision-engine.md</code> for the
       <code>getAssignment</code> hook contract.</p>

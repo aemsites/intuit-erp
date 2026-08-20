@@ -1,10 +1,11 @@
 /**
- * pzn-hero — personalization target block for the cell-resolution demo
+ * pzn-hero — personalization target block for the placement-resolution demo
  * (see drafts/pzn-cell-demo.html and drafts/pzn-manifest.json). No decisioning
  * happens here: this block only renders the authored default content until the
- * aem-experimentation plugin's audience-manifest mechanism swaps in a
- * cell-specific fragment (see scripts/personalization/byo.js `renderDecision`).
- * Content model: single cell of rich content (heading + paragraph).
+ * aem-experimentation plugin's audience-manifest mechanism swaps in the
+ * Decision Engine's own returned fragment for this placement (see
+ * scripts/personalization/byo.js `renderDecision`).
+ * Content model: single default block of rich content (heading + paragraph).
  * @param {Element} block The block element
  */
 export default function decorate(block) {
