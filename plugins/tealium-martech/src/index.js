@@ -370,7 +370,7 @@ const DEBUG_ENVIRONMENTS = ['dev'];
  * @param {Function} fn the tracked call to run once consent is resolved
  * @param {Number} [timeoutMs=8000] max time to wait for consent before dropping the call
  */
-function whenConsentResolved(fn, timeoutMs = 8000) {
+export function whenConsentResolved(fn, timeoutMs = 8000) {
   const gdpr = window.utag && window.utag.gdpr;
   if (!gdpr || typeof gdpr.getConsentState !== 'function') return;
   if (gdpr.getConsentState() !== 0) { fn(); return; }
