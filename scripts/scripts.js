@@ -502,16 +502,18 @@ async function loadEager(doc) {
 
   // Adobe Web SDK (aem-martech). Kept INERT until a real AEP datastream id is
   // set (MARTECH_ENABLED). When enabled, initMartech kicks off the datastream
-  // call that will surface RTCDP/AJO propositions; martechEager applies any
-  // personalization decisions before content reveal (flicker-free). Guarded so
-  // a missing/placeholder datastream never initializes Alloy or hides the body.
-  // Only runs on the opt-in Adobe provider path (`?martech=adobe`).
+  // call for data collection, identity, and RTCDP segment resolution. Runs
+  // TRANSPORT-ONLY (`personalization: false`): page decisioning stays in Intuit's
+  // engine (scripts/pzn.js + scripts/exp.js), so martech applies no AJO/Target
+  // propositions. Guarded so a missing/placeholder datastream never initializes
+  // Alloy or hides the body. Only runs on the opt-in Adobe provider path
+  // (`?martech=adobe`).
   let martechLoadedPromise = null;
   if (MARTECH_PROVIDER === 'adobe' && MARTECH_ENABLED) {
     try {
       martechLoadedPromise = initMartech(
         { datastreamId: AEP_DATASTREAM_ID, orgId: AEP_ORG_ID },
-        { personalization: true },
+        { personalization: false },
       );
     } catch (e) {
       martechLoadedPromise = null;
