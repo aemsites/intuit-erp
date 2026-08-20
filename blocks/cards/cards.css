@@ -312,9 +312,12 @@
   border-radius: 2px;
 }
 
-.cards.carousel .cards-card-image,
-.cards.carousel .cards-card-body {
+.cards.carousel .cards-card-image {
   position: relative;
+  z-index: 1;
+}
+
+.cards.carousel .cards-card-body {
   z-index: 1;
 }
 
@@ -339,6 +342,13 @@
 
 .cards.carousel .cards-track>div {
   position: relative;
+}
+
+.cards.carousel .cards-card-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
 }
 
 .cards.carousel .cards-track>div::before {

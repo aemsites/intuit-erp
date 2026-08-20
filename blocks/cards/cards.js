@@ -212,6 +212,17 @@ export default function decorate(block) {
     });
   }
 
+  if (block.classList.contains('carousel')) {
+    [...block.children].forEach((card) => {
+      const links = card.querySelectorAll('.cards-card-body a');
+      if (links.length !== 1) return;
+      const [link] = links;
+      const title = card.querySelector('.cards-card-body h3');
+      link.classList.add('cards-card-link');
+      if (title) link.setAttribute('aria-label', `${title.textContent.trim()}: ${link.textContent.trim()}`);
+    });
+  }
+
   if (SCROLL_SHAPE_CLASSES.some((c) => block.classList.contains(c))) {
     enhanceScroll(block);
   }
