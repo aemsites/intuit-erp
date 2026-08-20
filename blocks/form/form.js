@@ -11,9 +11,15 @@
  * site key/verify endpoint) come from /site-config.json via getSiteConfig() —
  * never authored per page, never hardcoded.
  *
+ * Marketo instance: production by default. A page opts into a non-prod instance
+ * with `marketo: dev` | `marketo: e2e` metadata (no hostname logic), which selects
+ * the Munchkin from site-config (marketo.munchkin.dev/.e2e). The Forms2 script URL
+ * is generated from the selected Munchkin. `formId` is authored to match whichever
+ * instance the page targets (Marketo form ids differ per instance).
+ *
  * CSS: blocks/form/form.css
  */
-import { loadScript } from '../../scripts/aem.js';
+import { loadScript, getMetadata } from '../../scripts/aem.js';
 // Vendored via git subtree at plugins/martech (see its README), not an
 // installed npm package, so this necessarily crosses a package.json boundary.
 // eslint-disable-next-line import/no-relative-packages
@@ -39,6 +45,19 @@ const CONFIG_KEYS = [
 
 const CHILIPIPER_SRC_DEFAULT = '//js.chilipiper.com/marketing.js';
 const SCHEDULE_FRAGMENT = '/fragments/schedule-call';
+
+// Marketo instance selection, keyed by the `marketo` page metadata. Prod unless the
+// page opts in; hostname is deliberately not consulted.
+const MARKETO_MUNCHKIN_KEYS = {
+  dev: 'marketo.munchkin.dev',
+  e2e: 'marketo.munchkin.e2e',
+  prod: 'marketo.munchkin',
+};
+
+function marketoEnv() {
+  const m = getMetadata('marketo').trim().toLowerCase();
+  return m === 'dev' || m === 'e2e' ? m : 'prod';
+}
 
 // reCAPTCHA v3 (invisible). erp.intuit.com's own siteverify proxy scores the
 // token; enable per form block via the `recaptcha` config row. Runs only on an
@@ -186,11 +205,13 @@ async function setupRecaptcha(cfg, config, form) {
   run();
 }
 
-async function embedMarketoForm(formEl, cfg, config) {
-  const munchkin = cfg['marketo.munchkin'];
+async function embedMarketoForm(formEl, cfg, config, env) {
+  // Munchkin for the active instance, falling back to the base (prod) key. The
+  // Forms2 script URL is generated from it — one host per Marketo instance.
+  const munchkin = cfg[MARKETO_MUNCHKIN_KEYS[env]] || cfg['marketo.munchkin'];
   if (!munchkin) return;
   const host = `//${munchkin.toLowerCase()}.mktoweb.com`;
-  const forms2Src = cfg['marketo.forms2Src'] || `${host}/js/forms2/js/forms2.min.js`;
+  const forms2Src = `${host}/js/forms2/js/forms2.min.js`;
   await loadScript(forms2Src);
   window.MktoForms2.loadForm(host, munchkin, config.formId, (form) => {
     // Upstream puts the disclaimer above the field row, not between the fields
@@ -254,10 +275,11 @@ export default async function decorate(block) {
   block.replaceChildren(...children);
 
   const cfg = await siteConfig();
+  const env = marketoEnv();
   const observer = new IntersectionObserver((entries) => {
     if (entries.some((e) => e.isIntersecting)) {
       observer.disconnect();
-      embedMarketoForm(form, cfg, config);
+      embedMarketoForm(form, cfg, config, env);
     }
   });
   observer.observe(block);
