@@ -617,13 +617,11 @@ async function loadLazy(doc) {
 
   // Click tracking (opt-in `tracking-` blocks) is not render-critical, so it's
   // loaded lazily here (like pzn/exp) — off the eager/LCP module graph entirely.
-  // Derive-stamp first (covers the pre-fetch window), then overlay the sheet.
+  // Option B: a delegated handler derives + JIT-stamps data-* on interaction so
+  // the injected clickstream tracker reads them — nothing is stamped at rest.
   if (main) {
     import('./tracking.js')
-      .then(({ decorateTracking, applyTrackingSheet }) => {
-        decorateTracking(main);
-        return applyTrackingSheet(main);
-      })
+      .then(({ initTracking }) => initTracking(main))
       .catch(() => {});
   }
 

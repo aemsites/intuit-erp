@@ -5,10 +5,13 @@
  * class. PREFIX is a single constant — change it here to re-map the trigger.
  *
  * Loaded LAZILY from scripts.js (like pzn/exp): tracking is not render-critical,
- * so it never sits on the eager/LCP module graph. Two passes run in loadLazy:
- *  - decorateTracking(): stamp the derived baseline on every CTA in an opted-in
- *    block (covers the window before the sheet fetch resolves).
- *  - applyTrackingSheet(): fetch the authored sheet and re-stamp overrides.
+ * so it never sits on the eager/LCP module graph. Option B (data-layer):
+ *  - initTracking(): register a delegated, capture-phase pointerdown/keydown
+ *    handler and stamp the structural access-point trail.
+ *  - stampInteraction(): on interaction, derive + JIT-stamp the CTA's data-* so
+ *    the injected `ies-erp` clickstream tracker reads them on the ensuing click.
+ * Nothing is stamped per-CTA at rest; the injected tracker attaches the ~47
+ * context + consent and posts the batched `content:<action>` beacon.
  *
  * Everything the runtime needs lives here in one file (derive, sheet, resolve,
  * stamp, orchestration). The Node dev tools import the derive helpers from here
@@ -171,6 +174,9 @@ export function indexRows(data) {
 }
 
 let sheetPromise;
+// The resolved sheet map, cached synchronously once the fetch settles so the
+// delegated pointerdown handler can read it without awaiting at click time.
+let sheetMap = null;
 
 /**
  * Fetch + index the tracking sheet once (cached). Returns an empty Map when the
@@ -185,6 +191,15 @@ export function fetchTrackingSheet() {
       .catch(() => new Map());
   }
   return sheetPromise;
+}
+
+/**
+ * Reset cached sheet state — test isolation only (each test needs a fresh fetch
+ * stub and an empty resolved map).
+ */
+export function resetTrackingState() {
+  sheetPromise = undefined;
+  sheetMap = null;
 }
 
 // ===========================================================================
@@ -366,41 +381,75 @@ function optedInBlocks(root) {
 }
 
 /**
- * Synchronous derived pass: stamp the baseline on every CTA in an opted-in
- * block, plus the page + block trail segments. Idempotent across re-runs.
+ * Stamp the STRUCTURAL access-point trail (page + per-block segments) — a
+ * handful of attributes, never per-CTA. This is the one thing that must exist
+ * at rest so the injected clickstream tracker's ancestor-chain walk resolves a
+ * trail (rather than falling back to `page`). Idempotent; consults the sheet
+ * for a block access-point override once it has loaded.
  * @param {ParentNode} [scope]
  */
-export function decorateTracking(scope = document) {
+export function stampTrail(scope = document) {
   const root = scope.querySelectorAll ? scope : document;
   const main = document.querySelector('main');
   const pageSeg = (document.head?.querySelector('meta[name="tracking"]')?.content || '').trim();
   if (main && pageSeg) stampTracking(main, pageSeg);
 
   optedInBlocks(root).forEach((block) => {
-    const blockName = blockNameOf(block);
-    stampTracking(block, blockAccessPoint(blockName));
-    ctasIn(block).forEach((el) => stampCta(el, resolveCta(deriveForCta(el, blockName), null)));
+    const rows = (sheetMap && sheetMap.get(trackingKey(block))) || [];
+    const apRow = rows.find((r) => r['access-point']);
+    stampTracking(block, apRow ? apRow['access-point'] : blockAccessPoint(blockNameOf(block)));
   });
 }
 
 /**
- * Asynchronous authoritative pass: fetch the sheet and re-derive + overlay it
- * for every opted-in CTA. Runs after blocks decorate (some rebuild their own
- * DOM), so it restores stamps a block's decoration may have replaced and fills
- * in the residue. No-op-safe when the sheet is empty/unavailable.
- * @param {ParentNode} [scope]
+ * From an interaction target, resolve the trackable CTA — the nearest
+ * a[href]/button inside an opted-in `tracking-` block — plus that block. Null
+ * when the target is untracked.
+ * @param {EventTarget} target
+ * @returns {{cta: Element, block: Element}|null}
  */
-export async function applyTrackingSheet(scope = document) {
-  const sheet = await fetchTrackingSheet();
-  const root = scope.querySelectorAll ? scope : document;
+export function resolveTrackable(target) {
+  if (!target || !target.closest) return null;
+  const cta = target.closest('a[href], button');
+  if (!cta) return null;
+  const block = cta.closest(`[class*="${PREFIX}"]`);
+  if (!block || !trackingKey(block)) return null;
+  return { cta, block };
+}
 
-  optedInBlocks(root).forEach((block) => {
-    const rows = (sheet && sheet.get(trackingKey(block))) || [];
-    const blockName = blockNameOf(block);
-    const apRow = rows.find((r) => r['access-point']);
-    stampTracking(block, apRow ? apRow['access-point'] : blockAccessPoint(blockName));
-    ctasIn(block).forEach((el, i) => {
-      stampCta(el, resolveCta(deriveForCta(el, blockName), rowForIndex(rows, i)));
-    });
-  });
+/**
+ * JIT-stamp the resolved (derived + sheet) data-* onto the interacted CTA so the
+ * injected clickstream tracker reads them on the ensuing click. This is the
+ * Option B core: nothing is stamped at rest — only the element the user is about
+ * to activate, on the pointerdown/keydown that precedes its click.
+ * @param {Event} e
+ */
+export function stampInteraction(e) {
+  const hit = resolveTrackable(e.target);
+  if (!hit) return;
+  const { cta, block } = hit;
+  const blockName = blockNameOf(block);
+  const rows = (sheetMap && sheetMap.get(trackingKey(block))) || [];
+  const idx = ctasIn(block).indexOf(cta);
+  stampCta(cta, resolveCta(deriveForCta(cta, blockName), rowForIndex(rows, idx)));
+}
+
+/**
+ * Option B runtime entry point: a delegated, capture-phase handler that derives
+ * and JIT-stamps click-tracking data-* on interaction (pointerdown + keyboard
+ * activation), feeding the injected `ies-erp` clickstream tracker without
+ * cluttering the DOM at rest. Pre-warms the sheet and stamps the structural
+ * trail up front (and re-stamps it once the sheet resolves).
+ * @param {ParentNode} [scope]
+ * @returns {(e: Event) => void} the bound handler (for teardown/tests)
+ */
+export function initTracking(scope = document) {
+  const root = scope && scope.addEventListener ? scope : document;
+  fetchTrackingSheet().then((m) => { sheetMap = m; stampTrail(root); }).catch(() => {});
+  stampTrail(root);
+  root.addEventListener('pointerdown', stampInteraction, true);
+  root.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') stampInteraction(e);
+  }, true);
+  return stampInteraction;
 }
