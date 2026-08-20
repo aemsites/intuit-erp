@@ -10,7 +10,9 @@ vi.mock('../plugins/martech/src/index.js', () => ({
 }));
 vi.mock('../scripts/aem.js', () => ({
   loadScript: vi.fn(() => Promise.resolve()),
+  getMetadata: vi.fn(() => ''),
 }));
+import { loadScript, getMetadata } from '../scripts/aem.js';
 import { getSiteConfig } from '../scripts/scripts.js';
 
 vi.mock('../scripts/scripts.js', () => ({
@@ -43,6 +45,7 @@ beforeEach(() => {
     'marketo.munchkin': '743-RZM-619',
     'chilipiper.subdomain': 'intuitsales',
   });
+  getMetadata.mockReturnValue(''); // no `marketo` metadata → prod instance
   delete window.utag;
   delete window.grecaptcha;
   delete global.fetch;
@@ -143,6 +146,58 @@ describe('decorate — live Marketo form', () => {
   });
 
   it('embeds the Marketo form once the block scrolls into view', async () => {
+    const block = make([['formId', '1058']]);
+    await decorate(block);
+    await flush();
+    expect(window.MktoForms2.loadForm).toHaveBeenCalledWith(
+      '//743-rzm-619.mktoweb.com',
+      '743-RZM-619',
+      '1058',
+      expect.any(Function),
+    );
+    // Forms2 script generated from the (prod) Munchkin, not a site-config key
+    expect(loadScript).toHaveBeenCalledWith('//743-rzm-619.mktoweb.com/js/forms2/js/forms2.min.js');
+  });
+
+  it('uses the e2e Munchkin when the page metadata opts into e2e', async () => {
+    getMetadata.mockReturnValue('e2e');
+    getSiteConfig.mockResolvedValue({
+      'marketo.munchkin': '743-RZM-619',
+      'marketo.munchkin.e2e': '929-LXU-908',
+      'marketo.munchkin.dev': '964-TCT-456',
+    });
+    const block = make([['formId', '2001']]);
+    await decorate(block);
+    await flush();
+    expect(window.MktoForms2.loadForm).toHaveBeenCalledWith(
+      '//929-lxu-908.mktoweb.com',
+      '929-LXU-908',
+      '2001', // authored formId used as-is against the selected instance
+      expect.any(Function),
+    );
+    expect(loadScript).toHaveBeenCalledWith('//929-lxu-908.mktoweb.com/js/forms2/js/forms2.min.js');
+  });
+
+  it('uses the dev Munchkin when the page metadata opts into dev', async () => {
+    getMetadata.mockReturnValue('dev');
+    getSiteConfig.mockResolvedValue({
+      'marketo.munchkin': '743-RZM-619',
+      'marketo.munchkin.dev': '964-TCT-456',
+    });
+    const block = make([['formId', '3001']]);
+    await decorate(block);
+    await flush();
+    expect(window.MktoForms2.loadForm).toHaveBeenCalledWith(
+      '//964-tct-456.mktoweb.com',
+      '964-TCT-456',
+      '3001',
+      expect.any(Function),
+    );
+  });
+
+  it('falls back to the base Munchkin when the opted-in per-env key is missing', async () => {
+    getMetadata.mockReturnValue('e2e');
+    getSiteConfig.mockResolvedValue({ 'marketo.munchkin': '743-RZM-619' });
     const block = make([['formId', '1058']]);
     await decorate(block);
     await flush();

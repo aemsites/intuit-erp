@@ -312,9 +312,12 @@
   border-radius: 2px;
 }
 
-.cards.carousel .cards-card-image,
-.cards.carousel .cards-card-body {
+.cards.carousel .cards-card-image {
   position: relative;
+  z-index: 1;
+}
+
+.cards.carousel .cards-card-body {
   z-index: 1;
 }
 
@@ -339,6 +342,13 @@
 
 .cards.carousel .cards-track>div {
   position: relative;
+}
+
+.cards.carousel .cards-card-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
 }
 
 .cards.carousel .cards-track>div::before {
@@ -608,4 +618,18 @@
   .cards-focus-cursor .cards-cursor-dot {
     transition: none;
   }
+}
+
+/* HIGH-1 fix (issue-574): /events accent carousel card titles match prod at
+18px — scoped to .accent.carousel so other carousel/cards variants are
+unaffected (plain .carousel stays at var(--heading-font-size-m) = 24px). */
+.cards.accent.carousel .cards-card-body h3 { font-size: var(--heading-font-size-xs); }
+
+/* HIGH-3 fix (issue-574): "Resources for growing businesses" section heading
+in the .cards-container that wraps the accent carousel — prod renders it at
+40px/700. Scoped with :has(.cards.accent.carousel) so the dark-carousel and
+icon-card sections on other pages are unaffected. */
+.section.cards-container:has(.cards.accent.carousel) .default-content-wrapper h2 {
+font-size: 40px;
+font-weight: 700;
 }
