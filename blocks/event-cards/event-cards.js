@@ -199,6 +199,19 @@ export default async function decorate(block) {
   const items = [...await loadIndex(INDEX_PATH)]
     .filter((item) => item.title && item.title.trim())
     .filter((item) => (item.status || 'upcoming').trim() === status)
+    // Upcoming events whose date has already passed are stale — production drops
+    // them. Only exclude items that HAVE a valid date in the past (day
+    // granularity, so an event happening today still counts); undated evergreen
+    // upcoming items (e.g. an ongoing demo series) and all on-demand items stay.
+    .filter((item) => {
+      if (wantsOnDemand) return true;
+      if (!item.date || !String(item.date).trim()) return true;
+      const when = new Date(item.date);
+      if (Number.isNaN(when.getTime())) return true;
+      const startOfToday = new Date();
+      startOfToday.setHours(0, 0, 0, 0);
+      return when >= startOfToday;
+    })
     .sort((a, b) => (wantsOnDemand
       ? new Date(b.date) - new Date(a.date)
       : new Date(a.date) - new Date(b.date)));
