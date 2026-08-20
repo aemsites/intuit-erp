@@ -12,6 +12,13 @@ import {
   buildBlock,
   getMetadata,
 } from './aem.js';
+// BYO decision-engine hooks (scripts/personalization/byo.js, dynamically imported
+// from experiment-loader.js) reuse decision.js's applyFragment, which itself
+// dynamically imports blocks/fragment/fragment.js — and that imports this very
+// file for decorateMain. Same unavoidable cycle pzn.js/exp.js/decision.js/
+// fragment.js already carry this exact disable comment for; this import didn't
+// change, it's just newly part of that cycle's graph.
+// eslint-disable-next-line import/no-cycle
 import { runExperimentation, runExperimentationLazy } from './experiment-loader.js';
 // exp.js / pzn.js are dynamically imported (via runExperienceLayer) only when a
 // `data-pzn` / `data-exp` section is present, so pages without personalization

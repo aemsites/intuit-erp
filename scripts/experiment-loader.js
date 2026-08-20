@@ -6,6 +6,30 @@ const isExperimentationEnabled = () => document.head.querySelector('[name^="expe
   || [...document.querySelectorAll('.section-metadata div')].some((d) => d.textContent.match(/Experiment|Campaign|Audience/i));
 
 /**
+ * Loads the BYO decision-engine hooks (Intuit's cell-resolution wiring) that get
+ * spread onto the plugin config. Loaded dynamically so it only ever loads
+ * alongside the plugin itself, never on pages without experimentation/audiences.
+ * Fails open (empty object) so a broken/missing hooks module never blocks the
+ * plugin from loading with its default (no-BYO) behavior.
+ * @returns {Promise<Object>} the `{ resolveAudiences, renderDecision, rumTracking }`
+ *   hooks, or `{}` if they failed to load
+ */
+async function loadByoHooks() {
+  try {
+    // byo.js's renderDecision imports decision.js (which reaches back to
+    // scripts.js via fragment.js's decorateMain), the same unavoidable cycle
+    // pzn.js/exp.js/decision.js/fragment.js already carry this disable comment
+    // for.
+    // eslint-disable-next-line import/no-cycle
+    return await import('./personalization/byo.js');
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('Failed to load BYO decision-engine hooks:', error);
+    return {};
+  }
+}
+
+/**
  * Loads the experimentation module (eager).
  * @param {Document} document The document object.
  * @param {Object} config The experimentation configuration.
@@ -30,7 +54,12 @@ export async function runExperimentation(document, config) {
     // installed npm package, so this necessarily crosses a package.json boundary.
     // eslint-disable-next-line import/no-relative-packages
     const { loadEager } = await import('../plugins/experimentation/src/index.js');
-    return loadEager(document, config);
+    // Bring-your-own decision engine hooks (see documentation/byo-decision-engine.md
+    // in the vendored plugin): resolveAudiences/renderDecision/rumTracking. Opt-in —
+    // spreading `{}` when they fail to load leaves the plugin's default behavior
+    // untouched.
+    const byoHooks = await loadByoHooks();
+    return loadEager(document, { ...config, ...byoHooks });
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error('Failed to load experimentation module (eager):', error);
@@ -59,7 +88,11 @@ export async function runExperimentationLazy(document, config) {
   try {
     // eslint-disable-next-line import/no-relative-packages
     const { loadLazy } = await import('../plugins/experimentation/src/index.js');
-    return loadLazy(document, config);
+    // Same BYO hooks as the eager phase (see runExperimentation above), so the
+    // simulation panel/audience catalog stay consistent with the engine actually
+    // deciding cells.
+    const byoHooks = await loadByoHooks();
+    return loadLazy(document, { ...config, ...byoHooks });
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error('Failed to load experimentation module (lazy):', error);
