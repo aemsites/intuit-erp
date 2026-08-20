@@ -1,0 +1,19 @@
+.pzn-offer .pzn-offer-inner {
+  padding: 1rem 1.25rem;
+  border: 1px dashed var(--line);
+  border-radius: 0.5rem;
+}
+
+.pzn-offer .pzn-offer-inner :first-child {
+  margin-top: 0;
+}
+
+.pzn-offer .pzn-offer-inner :last-child {
+  margin-bottom: 0;
+}
+
+@media (min-width: 600px) {
+  .pzn-offer .pzn-offer-inner {
+    padding: 1.5rem 2rem;
+  }
+}

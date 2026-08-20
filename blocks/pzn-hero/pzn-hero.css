@@ -1,0 +1,20 @@
+.pzn-hero .pzn-hero-inner {
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  background-color: var(--light-color);
+}
+
+.pzn-hero .pzn-hero-inner :first-child {
+  margin-top: 0;
+}
+
+.pzn-hero .pzn-hero-inner :last-child {
+  margin-bottom: 0;
+}
+
+@media (min-width: 600px) {
+  .pzn-hero .pzn-hero-inner {
+    padding: 1.5rem 2rem;
+  }
+}
