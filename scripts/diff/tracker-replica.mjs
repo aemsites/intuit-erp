@@ -93,44 +93,57 @@ function collectSurvey(ds, payload) {
 /**
  * Compute the tracker payload for a clicked element, or null when the gate
  * (no data-object / data-wa-link within 5 ancestors) blocks it.
+ *
+ * Models the LIVE `track-event-lib-init` tracker as re-verified 2026-08-20 (see
+ * scripts/diff/fixtures/backend-contract.json), NOT the older reverse-engineered
+ * shape:
+ *  - event name is `${object}:${action}`;
+ *  - unauthored defaults: object=content, action=engaged, ui_object=link,
+ *    ui_action=clicked (there is NO separate walink/INTERACTED path);
+ *  - every `data-custom-properties` `k|v` pair expands to a TOP-LEVEL property
+ *    (no `custom_properties` object);
+ *  - ui_access_point is the computed data-tracking trail (fallback `page`),
+ *    opt-in by the mere PRESENCE of data-ui-access-point — an authored value
+ *    does NOT win;
+ *  - a wa-link adds a top-level `data-wa-link` and `icom_user_action`
+ *    (`<wa-link> [breadcrumb]`, breadcrumb = page context supplied by caller).
  * @param {Element} target clicked element
+ * @param {{breadcrumb?: string}} [context] page context (org|purpose|scope|
+ *   scope_area|screen) the tracker appends to icom_user_action — not DOM-derivable.
  * @returns {Record<string, unknown>|null}
  */
-export function computeTrackingPayload(target) {
+export function computeTrackingPayload(target, context = {}) {
   const el = findTrackableAncestor(target, 5, ['object', 'waLink']);
   if (!el) return null;
   const ds = el.dataset;
 
-  // ui_access_point: an explicit own value wins; otherwise the trail, but only
-  // if the opt-in key is present on the element or an ancestor (presence, not value).
-  let uiAccessPoint = '';
-  if (ds.uiAccessPoint) uiAccessPoint = ds.uiAccessPoint;
-  else if (el.closest('[data-ui-access-point]')) uiAccessPoint = getTrackingAccessStructure(target);
+  const object = ds.object || 'content';
+  const action = ds.action || 'engaged';
+  const payload = {
+    event: `${object}:${action}`,
+    object,
+    action,
+    ui_object: ds.uiObject || 'link',
+    ui_action: ds.uiAction || 'clicked',
+  };
+  if (ds.objectDetail != null) payload.object_detail = ds.objectDetail;
+  if (ds.uiObjectDetail != null) payload.ui_object_detail = ds.uiObjectDetail;
 
-  const { waLink } = ds;
-  if (!ds.object && waLink) {
-    // wa-link path: minimal, hardcoded; element object/action attrs discarded.
-    return {
-      object: 'walink',
-      ui_object: 'walink',
-      action: 'INTERACTED',
-      ui_action: 'INTERACTED',
-      ui_access_point: uiAccessPoint,
-      custom_properties: { 'data-wa-link': waLink },
-    };
+  // ui_access_point: opt-in by PRESENCE of data-ui-access-point (empty '' counts);
+  // value = the computed data-tracking trail, falling back to 'page'.
+  if (el.closest('[data-ui-access-point]')) {
+    payload.ui_access_point = getTrackingAccessStructure(target) || 'page';
   }
 
-  const payload = {
-    object: ds.object,
-    object_detail: ds.objectDetail ?? '',
-    action: ds.action ?? '',
-    ui_object: ds.uiObject ?? '',
-    ui_object_detail: ds.uiObjectDetail ?? '',
-    ui_action: ds.uiAction ?? '',
-    ui_access_point: uiAccessPoint,
-    custom_properties: parseCustomProperties(ds.customProperties),
-  };
-  if (waLink) payload.custom_properties['data-wa-link'] = waLink;
+  const { waLink } = ds;
+  if (waLink) {
+    payload['data-wa-link'] = waLink;
+    payload.icom_user_action = context.breadcrumb ? `${waLink} [${context.breadcrumb}]` : waLink;
+  }
+
+  // custom-properties: every k|v pair becomes a TOP-LEVEL property.
+  Object.assign(payload, parseCustomProperties(ds.customProperties));
+
   collectSurvey(ds, payload);
   return payload;
 }

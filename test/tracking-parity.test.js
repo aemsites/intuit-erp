@@ -42,6 +42,7 @@ describe('parity: runtime reproduces the prod cta_block payload', () => {
     stampAll(main);
     const p = computeTrackingPayload(main.querySelector('a.button'));
     expect(p).toMatchObject({
+      event: 'content:interacted',
       object: 'content',
       ui_object: 'button',
       ui_object_detail: 'Schedule a call',
@@ -49,7 +50,8 @@ describe('parity: runtime reproduces the prod cta_block payload', () => {
       action: 'interacted',
       ui_access_point: 'cta_block', // trail, anchor skipped
     });
-    expect(p.custom_properties).toEqual({ link_name: 'button-schedule-a-call' });
+    expect(p.link_name).toBe('button-schedule-a-call'); // custom-prop expanded to top-level
+    expect(p.custom_properties).toBeUndefined();
   });
 
   it('both CTAs in the block resolve the cta_block access-point', () => {
@@ -64,7 +66,7 @@ describe('parity: sheet overlay reproduces authored variants', () => {
   beforeEach(() => { document.head.innerHTML = ''; document.body.innerHTML = MARKUP; resetTrackingState(); });
   afterEach(() => vi.unstubAllGlobals());
 
-  it('a wa-link row flips the first CTA to the wa-link payload', async () => {
+  it('a wa-link row adds the wa-link fields to the first CTA', async () => {
     const data = [{ key: 'demo', cta: '1', 'wa-link': 'ies-nav:main-demo-cta' }];
     vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({ data }) })));
     const main = document.querySelector('main');
@@ -72,9 +74,11 @@ describe('parity: sheet overlay reproduces authored variants', () => {
     await new Promise((r) => { setTimeout(r, 0); });
     main.querySelectorAll('a.button').forEach((el) => stampInteraction({ target: el }));
     const [first, second] = [...main.querySelectorAll('a.button')].map((el) => computeTrackingPayload(el));
-    // CTA 1 -> wa-link path
-    expect(first.object).toBe('walink');
-    expect(first.custom_properties).toEqual({ 'data-wa-link': 'ies-nav:main-demo-cta' });
+    // CTA 1 -> wa-link, but object defaults to content (no walink path) + top-level data-wa-link
+    expect(first.event).toBe('content:engaged');
+    expect(first.object).toBe('content');
+    expect(first['data-wa-link']).toBe('ies-nav:main-demo-cta');
+    expect(first.icom_user_action).toBe('ies-nav:main-demo-cta');
     // CTA 2 -> still the derived full-path payload
     expect(second.object).toBe('content');
     expect(second.ui_object_detail).toBe('Schedule a call');

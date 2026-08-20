@@ -44,23 +44,27 @@ describe('parseCustomProperties', () => {
   });
 });
 
-describe('computeTrackingPayload', () => {
+describe('computeTrackingPayload (re-verified 2026-08-20 tracker contract)', () => {
   it('returns null when the gate finds no object/wa-link (nothing sent)', () => {
     document.body.innerHTML = '<div><a id="a" href="#">x</a></div>';
     expect(computeTrackingPayload(document.getElementById('a'))).toBe(null);
   });
 
-  it('takes the wa-link path: hardcoded walink, object/action attrs discarded', () => {
+  it('wa-link without data-object defaults object=content/action=engaged and folds into icom_user_action', () => {
     document.body.innerHTML = '<div data-tracking="cta_block">'
       + '<a id="a" data-wa-link="ies-nav:main-demo-cta" data-object-detail="nav|schedule_demo">x</a></div>';
-    const p = computeTrackingPayload(document.getElementById('a'));
-    expect(p.object).toBe('walink');
-    expect(p.ui_action).toBe('INTERACTED');
-    expect(p.custom_properties).toEqual({ 'data-wa-link': 'ies-nav:main-demo-cta' });
-    expect(p.object_detail).toBeUndefined(); // discarded on the wa-link path
+    const p = computeTrackingPayload(document.getElementById('a'), { breadcrumb: 'cmo|mktg|corp|enterprise|homepage' });
+    expect(p.event).toBe('content:engaged');
+    expect(p.object).toBe('content'); // no walink hardcoding anymore
+    expect(p.action).toBe('engaged');
+    expect(p.ui_object).toBe('link');
+    expect(p['data-wa-link']).toBe('ies-nav:main-demo-cta');
+    expect(p.icom_user_action).toBe('ies-nav:main-demo-cta [cmo|mktg|corp|enterprise|homepage]');
+    expect(p.object_detail).toBe('nav|schedule_demo'); // read normally, not discarded
+    expect(p.custom_properties).toBeUndefined(); // no custom_properties object
   });
 
-  it('takes the full path and reproduces the live cta_block button payload', () => {
+  it('reads the full path and derives the event name from object:action', () => {
     document.body.innerHTML = '<div data-tracking="cta_block"><button id="b"'
       + ' data-object="content" data-object-detail="" data-ui-object="button"'
       + ' data-ui-object-detail="Schedule a call" data-action="interacted"'
@@ -68,18 +72,40 @@ describe('computeTrackingPayload', () => {
       + ' data-custom-properties="link_name|button-schedule-a-call">'
       + '<span id="s">Schedule a call</span></button></div>';
     const p = computeTrackingPayload(document.getElementById('s'));
+    expect(p.event).toBe('content:interacted');
     expect(p.object).toBe('content');
     expect(p.ui_object).toBe('button');
     expect(p.ui_object_detail).toBe('Schedule a call');
     expect(p.object_detail).toBe(''); // present-but-empty ships
-    expect(p.ui_access_point).toBe('cta_block'); // empty opt-in -> trail
-    expect(p.custom_properties).toEqual({ link_name: 'button-schedule-a-call' });
+    expect(p.ui_access_point).toBe('cta_block'); // empty opt-in -> trail, anchor skipped
+    expect(p.link_name).toBe('button-schedule-a-call'); // custom-prop expanded to top-level
+    expect(p.custom_properties).toBeUndefined();
   });
 
-  it('lets an explicit ui-access-point win over the trail', () => {
+  it('computes the trail for ui_access_point — an authored value does NOT win', () => {
     document.body.innerHTML = '<div data-tracking="cta_block">'
-      + '<button id="b" data-object="content" data-ui-access-point="hero">x</button></div>';
-    expect(computeTrackingPayload(document.getElementById('b')).ui_access_point).toBe('hero');
+      + '<button id="b" data-object="content" data-ui-access-point="hero" data-tracking="button">x</button></div>';
+    // authored "hero" is ignored; the computed trail (anchor skipped) wins
+    expect(computeTrackingPayload(document.getElementById('b')).ui_access_point).toBe('cta_block');
+  });
+
+  it('falls ui_access_point back to "page" when the trail is empty', () => {
+    document.body.innerHTML = '<button id="b" data-object="content" data-ui-access-point="">x</button>';
+    expect(computeTrackingPayload(document.getElementById('b')).ui_access_point).toBe('page');
+  });
+
+  it('omits ui_access_point entirely when data-ui-access-point is absent (no opt-in)', () => {
+    document.body.innerHTML = '<button id="b" data-object="content">x</button>';
+    expect(computeTrackingPayload(document.getElementById('b')).ui_access_point).toBeUndefined();
+  });
+
+  it('expands every custom-property to a top-level field (not a custom_properties object)', () => {
+    document.body.innerHTML = '<button id="b" data-object="content"'
+      + ' data-custom-properties="link_name|button-x,my_prop|xyz">x</button>';
+    const p = computeTrackingPayload(document.getElementById('b'));
+    expect(p.link_name).toBe('button-x');
+    expect(p.my_prop).toBe('xyz');
+    expect(p.custom_properties).toBeUndefined();
   });
 
   it('forwards survey fields (snake_case; survey-answer coerced to boolean)', () => {
