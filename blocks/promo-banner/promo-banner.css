@@ -1,0 +1,64 @@
+/* promo-banner — slim full-width announcement bar (compare QuickBooks resource-page promo strip) */
+.section.promo-banner-container { background: var(--navy); padding: 0; }
+
+.promo-banner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 14px 48px;
+  text-align: center;
+}
+
+.promo-banner .promo-banner-message {
+  color: #fff;
+  font-size: 14px;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.promo-banner .promo-banner-cta {
+  display: inline-block;
+  margin-left: 8px;
+  color: #fff;
+  font-weight: 600;
+  text-decoration: underline;
+  white-space: nowrap;
+}
+
+.promo-banner .promo-banner-cta:hover,
+.promo-banner .promo-banner-cta:focus-visible {
+  text-decoration: none;
+}
+
+.promo-banner .promo-banner-close {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  background: none;
+  border: 0;
+  color: #fff;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.promo-banner .promo-banner-close:hover,
+.promo-banner .promo-banner-close:focus-visible {
+  opacity: 0.75;
+}
+
+@media (width <= 600px) {
+  .promo-banner {
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 40px;
+  }
+
+  .promo-banner .promo-banner-cta {
+    margin-left: 0;
+  }
+}
