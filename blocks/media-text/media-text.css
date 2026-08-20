@@ -330,8 +330,6 @@
 
 .media-text.cards .mig-grid:not(:has(.mig-steps)) .mig-visual img {
   width: 56px;
-  height: auto;
-  margin: 0 auto;
   border-radius: 0;
   box-shadow: none;
 }
@@ -708,9 +706,10 @@
     padding: 40px;
   }
 
-  /* icon variant: 3-up on desktop (the steps treatment keeps its 2-up grid) */
+  /* icon variant: 3-up on desktop (the steps treatment keeps its 2-up grid).
+     minmax(0, 1fr) caps the track so a wide token can't overflow the row. */
   .media-text.cards .mig-grid:not(:has(.mig-steps)) {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
