@@ -19,6 +19,8 @@
  * CLICK-TRACKING.md ("The EDS authoring model").
  */
 
+import { isVideoLink } from '../blocks/video/video-info.js';
+
 // The block-variant class prefix that opts a block into click tracking.
 export const PREFIX = 'tracking-';
 
@@ -29,6 +31,10 @@ export const PREFIX = 'tracking-';
 
 const UI_ACTION = 'clicked';
 const ACTION = 'interacted';
+// A video link opens a player -> the live tracker reports object=video with
+// action=engaged (vs the generic content default). Play buttons that emit
+// `started` are a separate authored pattern (sheet), not auto-derived here.
+const VIDEO_ACTION = 'engaged';
 const DEFAULT_OBJECT = 'content';
 
 /**
@@ -70,22 +76,24 @@ export function blockAccessPoint(blockName) {
 /**
  * Derived baseline for one CTA (map keyed by tracking-field name), plus `anchor`
  * (the sacrificial data-tracking value) and `custom-properties` (merged later).
- * @param {{tagName: string, label: string, blockName: string, isButtonStyled?: boolean}} ctx
+ * A video link derives object=video / ui_object=video_link / action=engaged.
+ * @param {{tagName: string, label: string, blockName: string,
+ *   isButtonStyled?: boolean, isVideo?: boolean}} ctx
  * @returns {Record<string, unknown>}
  */
 export function deriveBaseline({
-  tagName, label, blockName, isButtonStyled = true,
+  tagName, label, blockName, isButtonStyled = true, isVideo = false,
 }) {
-  const kind = uiObject(tagName, isButtonStyled);
+  const kind = isVideo ? 'video_link' : uiObject(tagName, isButtonStyled);
   const detail = (label || '').trim();
   const custom = {};
   if (detail) custom.link_name = `${kind}-${slug(detail)}`;
   return {
-    object: DEFAULT_OBJECT,
+    object: isVideo ? 'video' : DEFAULT_OBJECT,
     'ui-object': kind,
     'ui-object-detail': detail,
     'ui-action': UI_ACTION,
-    action: ACTION,
+    action: isVideo ? VIDEO_ACTION : ACTION,
     'access-point': blockAccessPoint(blockName),
     anchor: kind,
     'custom-properties': custom,
@@ -367,12 +375,21 @@ export function rowForIndex(rows, i) {
   return null;
 }
 
-function deriveForCta(el, blockName) {
+/**
+ * Derive the baseline for a live element, detecting video links (YouTube/Vimeo)
+ * so they map to object=video / ui_object=video_link. Exported so the Node dev
+ * tools (harness, extractor) derive exactly as the runtime does.
+ * @param {Element} el
+ * @param {string} blockName
+ * @returns {Record<string, unknown>}
+ */
+export function deriveForCta(el, blockName) {
   return deriveBaseline({
     tagName: el.tagName,
     label: el.textContent,
     blockName,
     isButtonStyled: el.tagName === 'BUTTON' || el.classList.contains('button'),
+    isVideo: el.tagName === 'A' && isVideoLink(el.getAttribute('href')),
   });
 }
 

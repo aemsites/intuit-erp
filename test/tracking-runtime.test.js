@@ -181,3 +181,28 @@ describe('Phase 2: coexistence with the pzn/experiment layer', () => {
     expect(a.getAttribute('data-treatment-id')).toBe('840422');
   });
 });
+
+describe('Phase 3: video-link detection in the derive', () => {
+  beforeEach(() => { document.body.innerHTML = ''; resetTrackingState(); });
+
+  it('derives object=video / ui_object=video_link / action=engaged for a YouTube link', () => {
+    document.body.innerHTML = '<main><div class="hero block tracking-1" data-block-name="hero">'
+      + '<p class="button-container"><a class="button" href="https://www.youtube.com/watch?v=abc123">Watch product demo</a></p></div></main>';
+    const a = document.querySelector('a');
+    stampInteraction({ target: a });
+    expect(a.getAttribute('data-object')).toBe('video');
+    expect(a.getAttribute('data-ui-object')).toBe('video_link');
+    expect(a.getAttribute('data-action')).toBe('engaged'); // vs generic 'interacted'
+    expect(a.getAttribute('data-ui-object-detail')).toBe('Watch product demo');
+    expect(a.getAttribute('data-custom-properties')).toContain('link_name|video_link-watch-product-demo');
+  });
+
+  it('leaves a non-video styled link as generic content', () => {
+    document.body.innerHTML = '<main><div class="hero block tracking-1">'
+      + '<p class="button-container"><a class="button" href="/pricing">Pricing</a></p></div></main>';
+    const a = document.querySelector('a');
+    stampInteraction({ target: a });
+    expect(a.getAttribute('data-object')).toBe('content');
+    expect(a.getAttribute('data-ui-object')).toBe('button');
+  });
+});

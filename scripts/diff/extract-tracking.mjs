@@ -27,7 +27,7 @@ import { writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { launchStealthHeaded } from './live-session.mjs';
 import { captureHtml } from './capture-html.mjs';
-import { deriveBaseline, slug } from '../tracking.js';
+import { deriveForCta, slug } from '../tracking.js';
 import { computeTrackingPayload, parseCustomProperties } from './tracker-replica.mjs';
 
 const PROD = 'https://erp.intuit.com';
@@ -47,11 +47,9 @@ function parseArgs(argv) {
 // label. Only the difference needs to be authored in the sheet.
 function residueOf(el) {
   const ds = el.dataset;
-  const label = (el.textContent || '').trim();
-  const isButton = el.tagName === 'BUTTON' || el.classList.contains('button');
-  const derived = deriveBaseline({
-    tagName: el.tagName, label, blockName: '', isButtonStyled: isButton,
-  });
+  // Derive exactly as the runtime does (incl. video-link detection), so only the
+  // authored residue that code cannot reproduce is written to the sheet.
+  const derived = deriveForCta(el, '');
   const kind = derived['ui-object'];
   const r = {};
   const keep = (col, authored, derivedVal) => {

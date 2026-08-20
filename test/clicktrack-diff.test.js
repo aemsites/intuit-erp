@@ -62,6 +62,16 @@ describe('simulate — Option B JIT-stamp on the OURS side (clean at rest)', () 
     expect(payloadsFrom(html, { simulate: true })).toHaveLength(0); // not opted in
     expect(payloadsFrom(html, { simulate: true, forceTrackAll: true })).toHaveLength(1);
   });
+
+  it('derives a video:engaged payload for a video link (Phase 3)', () => {
+    const html = '<main><div class="hero block tracking-1"><p class="button-container">'
+      + '<a class="button" href="https://youtu.be/abc123">Watch product demo</a></p></div></main>';
+    const [{ payload }] = payloadsFrom(html, { simulate: true });
+    expect(payload.event).toBe('video:engaged');
+    expect(payload.object).toBe('video');
+    expect(payload.ui_object).toBe('video_link');
+    expect(payload.link_name).toBe('video_link-watch-product-demo');
+  });
 });
 
 describe('perClickOf', () => {
