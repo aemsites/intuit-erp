@@ -855,8 +855,9 @@ main > .section.tabs-container:has(.tabs.navy) > div { padding: 0; }
 }
 
 /* #555 mobile: .tabs.pill on /migration — prod shows media (266x395 centered),
-   then a single-item swipe carousel selector (one centered pill at a time),
-   then the copy. Scoped below the 768px desktop grid (desktop unchanged). */
+   then a selector row where inactive options are icon-only and the active one
+   expands to show its label (click to switch, no scrolling), then the copy.
+   Scoped below the 768px desktop grid (desktop unchanged). */
 @media (width < 768px) {
   .tabs.pill {
     display: flex;
@@ -886,26 +887,29 @@ main > .section.tabs-container:has(.tabs.navy) > div { padding: 0; }
     object-fit: cover;
   }
 
+  /* selector row: all options on one line, no scroll */
   .tabs.pill .vt-nav {
     order: 1;
     flex-flow: row nowrap;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    gap: 0;
+    gap: 8px;
     margin: 0 0 20px;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
   }
 
-  .tabs.pill .vt-nav::-webkit-scrollbar {
-    display: none;
-  }
-
+  /* inactive options collapse to their icon; active expands to icon + label */
   .tabs.pill .vt-tab {
     flex: 0 0 auto;
     width: auto;
-    justify-content: flex-start;
-    scroll-snap-align: start;
+    min-width: 0;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .tabs.pill .vt-tab[aria-selected="false"] .vt-tab-label {
+    display: none;
+  }
+
+  .tabs.pill .vt-tab[aria-selected="true"] {
+    flex: 1 1 auto;
   }
 
   .tabs.pill .vt-copy {
