@@ -1005,12 +1005,26 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
     padding: 0 40px;
   }
 
+  .section.hear-customers {
+    padding: 40px 0;
+  }
+
   .section.hear-customers .default-content-wrapper {
     display: flex;
     flex-direction: row;
     gap: 20px;
     align-items: center;
     justify-content: space-between;
+    padding: 0 40px;
+
+    a.button {
+      background-color: var(--navy);
+    }
+  
+    a.button:hover {
+      background-color: var(--navy-hover);
+    }
+  
 
     h2 {
       font-size: 34px;
