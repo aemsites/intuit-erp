@@ -925,3 +925,16 @@ body:not(.case-study, .blog-article) .section:not(:first-of-type)>.default-conte
   margin-top: 2rem;
   margin-bottom: 2rem;
 }
+
+.section.ice-band {
+  background-color: var(--ice-band);
+  padding: 40px 0;
+
+  a.button {
+    background-color: var(--navy);
+  }
+
+  a.button:hover {
+    background-color: var(--navy-hover);
+  }
+}
