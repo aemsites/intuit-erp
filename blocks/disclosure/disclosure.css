@@ -8,7 +8,17 @@
 .disclosure .disclosure-item summary::-webkit-details-marker { display: none; }
 .disclosure .disc-caret { width: 17px; height: 8px; margin-left: 6px; vertical-align: middle; transition: transform 0.2s ease; }
 .disclosure .disclosure-item[open] .disc-caret { transform: rotate(180deg); }
-.disclosure .disclosure-body { color: #fff; font-size: 14px; padding: 0 0 20px; line-height: 1.6; opacity: 0.95; }
+
+/* expanded body: prod drops out of the blue bar onto a light band with dark
+   text (the summary bar stays blue). Full-bleed light background so it spans
+   the viewport under the bar, matching erp.intuit.com. */
+.disclosure .disclosure-body {
+  color: var(--text-color);
+  background: var(--background-color);
+  box-shadow: 0 0 0 100vw var(--background-color);
+  clip-path: inset(0 -100vw);
+  font-size: 14px; padding: 24px 0 40px; line-height: 1.6; opacity: 1; text-align: left;
+}
 .disclosure .disclosure-body p { margin: 0 0 6px; }
 
 /* light variant — home page uses a pale blue-gray bar with dark text */
