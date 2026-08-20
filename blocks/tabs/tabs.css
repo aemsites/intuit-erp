@@ -902,10 +902,10 @@ main > .section.tabs-container:has(.tabs.navy) > div { padding: 0; }
   }
 
   .tabs.pill .vt-tab {
-    flex: 0 0 100%;
-    width: 100%;
-    justify-content: center;
-    scroll-snap-align: center;
+    flex: 0 0 auto;
+    width: auto;
+    justify-content: flex-start;
+    scroll-snap-align: start;
   }
 
   .tabs.pill .vt-copy {
