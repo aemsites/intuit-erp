@@ -89,13 +89,18 @@ export function payloadsFrom(html, { simulate = false, forceTrackAll = false } =
   return list;
 }
 
+// The link_name host suffix ("… [erp.intuit.com]") is page context (the runtime
+// appends the page host); strip it so a cross-env capture (localhost/preview vs
+// prod) doesn't diff on host alone — the base "<kind>-<slug>" is the identity.
+export const normLinkName = (v) => (typeof v === 'string' ? v.replace(/ \[[^\]]*\]$/, '') : v);
+
 // Field-level payload comparison -> human-readable diffs, restricted to the
 // DOM-derivable per-click fields (the oracle's scope).
 export function payloadDiff(a, b, fields = DIFF_FIELDS) {
   const diffs = [];
   for (const k of fields) {
-    const av = JSON.stringify(a[k]);
-    const bv = JSON.stringify(b[k]);
+    const av = JSON.stringify(k === 'link_name' ? normLinkName(a[k]) : a[k]);
+    const bv = JSON.stringify(k === 'link_name' ? normLinkName(b[k]) : b[k]);
     if (av !== bv) diffs.push(`${k}: ${av ?? '∅'} -> ${bv ?? '∅'}`);
   }
   return diffs;

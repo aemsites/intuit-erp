@@ -71,12 +71,15 @@ function residueOf(el) {
   // explicit per-CTA access-point override (empty = just the opt-in switch)
   if (ds.uiAccessPoint) r['ui-access-point'] = ds.uiAccessPoint;
 
-  // custom-properties minus the derived link_name
+  // custom-properties minus the derived link_name. The page-host suffix
+  // ("… [erp.intuit.com]") is context, not authored residue, so normalize it
+  // before deciding whether the authored link_name adds anything.
+  const stripHost = (v) => (typeof v === 'string' ? v.replace(/ \[[^\]]*\]$/, '') : v);
   const authoredCp = parseCustomProperties(ds.customProperties);
   const derivedLink = derived['custom-properties'].link_name;
   const cp = {};
   for (const [k, v] of Object.entries(authoredCp)) {
-    if (k === 'link_name' && v === derivedLink) continue;
+    if (k === 'link_name' && stripHost(v) === stripHost(derivedLink)) continue;
     cp[k] = v;
   }
   if (Object.keys(cp).length) r['custom-properties'] = cp;

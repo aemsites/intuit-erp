@@ -78,16 +78,19 @@ export function blockAccessPoint(blockName) {
  * (the sacrificial data-tracking value) and `custom-properties` (merged later).
  * A video link derives object=video / ui_object=video_link / action=engaged.
  * @param {{tagName: string, label: string, blockName: string,
- *   isButtonStyled?: boolean, isVideo?: boolean}} ctx
+ *   isButtonStyled?: boolean, isVideo?: boolean, host?: string}} ctx
  * @returns {Record<string, unknown>}
  */
 export function deriveBaseline({
-  tagName, label, blockName, isButtonStyled = true, isVideo = false,
+  tagName, label, blockName, isButtonStyled = true, isVideo = false, host = '',
 }) {
   const kind = isVideo ? 'video_link' : uiObject(tagName, isButtonStyled);
   const detail = (label || '').trim();
   const custom = {};
-  if (detail) custom.link_name = `${kind}-${slug(detail)}`;
+  // The live tracker appends the page host to link_name (e.g. "... [erp.intuit.com]").
+  // Host is supplied only at runtime (stampInteraction); the pure derive + the
+  // Node harness stay host-free, and the oracle normalizes the token.
+  if (detail) custom.link_name = `${kind}-${slug(detail)}${host ? ` [${host}]` : ''}`;
   return {
     object: isVideo ? 'video' : DEFAULT_OBJECT,
     'ui-object': kind,
@@ -381,15 +384,17 @@ export function rowForIndex(rows, i) {
  * tools (harness, extractor) derive exactly as the runtime does.
  * @param {Element} el
  * @param {string} blockName
+ * @param {string} [host] page host to append to link_name (runtime only)
  * @returns {Record<string, unknown>}
  */
-export function deriveForCta(el, blockName) {
+export function deriveForCta(el, blockName, host = '') {
   return deriveBaseline({
     tagName: el.tagName,
     label: el.textContent,
     blockName,
     isButtonStyled: el.tagName === 'BUTTON' || el.classList.contains('button'),
     isVideo: el.tagName === 'A' && isVideoLink(el.getAttribute('href')),
+    host,
   });
 }
 
@@ -448,7 +453,8 @@ export function stampInteraction(e) {
   const blockName = blockNameOf(block);
   const rows = (sheetMap && sheetMap.get(trackingKey(block))) || [];
   const idx = ctasIn(block).indexOf(cta);
-  stampCta(cta, resolveCta(deriveForCta(cta, blockName), rowForIndex(rows, idx)));
+  const host = (typeof window !== 'undefined' && window.location && window.location.hostname) || '';
+  stampCta(cta, resolveCta(deriveForCta(cta, blockName, host), rowForIndex(rows, idx)));
 }
 
 /**

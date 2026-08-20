@@ -50,7 +50,9 @@ describe('parity: runtime reproduces the prod cta_block payload', () => {
       action: 'interacted',
       ui_access_point: 'cta_block', // trail, anchor skipped
     });
-    expect(p.link_name).toBe('button-schedule-a-call'); // custom-prop expanded to top-level
+    // custom-prop expanded to top-level; the runtime appends the page host
+    // ("… [<host>]"), so match the base.
+    expect(p.link_name.startsWith('button-schedule-a-call')).toBe(true);
     expect(p.custom_properties).toBeUndefined();
   });
 

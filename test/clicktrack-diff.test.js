@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  payloadsFrom, diffCaptures, perClickOf,
+  payloadsFrom, diffCaptures, perClickOf, payloadDiff,
 } from '../scripts/diff/clicktrack-diff.mjs';
 
 const block = (attrs) => `<div data-tracking="cta_block"><button ${attrs} data-tracking="button">`
@@ -71,6 +71,14 @@ describe('simulate — Option B JIT-stamp on the OURS side (clean at rest)', () 
     expect(payload.object).toBe('video');
     expect(payload.ui_object).toBe('video_link');
     expect(payload.link_name).toBe('video_link-watch-product-demo');
+  });
+});
+
+describe('payloadDiff — link_name host normalization (Phase 5)', () => {
+  it('ignores the page-host suffix but still flags a base difference', () => {
+    // prod carries "… [erp.intuit.com]"; our Node-side derive is host-free
+    expect(payloadDiff({ link_name: 'button-0 [erp.intuit.com]' }, { link_name: 'button-0' }, ['link_name'])).toEqual([]);
+    expect(payloadDiff({ link_name: 'button-0 [erp.intuit.com]' }, { link_name: 'button-1' }, ['link_name'])).toHaveLength(1);
   });
 });
 

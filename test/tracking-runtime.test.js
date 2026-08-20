@@ -2,7 +2,7 @@ import {
   describe, it, expect, beforeEach, afterEach, vi,
 } from 'vitest';
 import {
-  trackingKey, blockNameOf, rowForIndex,
+  trackingKey, blockNameOf, rowForIndex, deriveForCta,
   stampTrail, resolveTrackable, stampInteraction, initTracking, resetTrackingState,
 } from '../scripts/tracking.js';
 
@@ -204,5 +204,21 @@ describe('Phase 3: video-link detection in the derive', () => {
     stampInteraction({ target: a });
     expect(a.getAttribute('data-object')).toBe('content');
     expect(a.getAttribute('data-ui-object')).toBe('button');
+  });
+});
+
+describe('Phase 5: link_name page-host suffix', () => {
+  beforeEach(() => { document.body.innerHTML = ''; });
+
+  it('appends the page host to link_name when a host is supplied (runtime parity)', () => {
+    document.body.innerHTML = '<a class="button" href="#">Schedule a call</a>';
+    const derived = deriveForCta(document.querySelector('a'), 'cta', 'erp.intuit.com');
+    expect(derived['custom-properties'].link_name).toBe('button-schedule-a-call [erp.intuit.com]');
+  });
+
+  it('stays host-free when no host is supplied (pure derive / Node harness)', () => {
+    document.body.innerHTML = '<a class="button" href="#">Schedule a call</a>';
+    const derived = deriveForCta(document.querySelector('a'), 'cta');
+    expect(derived['custom-properties'].link_name).toBe('button-schedule-a-call');
   });
 });
