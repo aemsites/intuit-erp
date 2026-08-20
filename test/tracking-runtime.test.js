@@ -48,15 +48,35 @@ describe('rowForIndex', () => {
 describe('stampTrail (structural access-point trail — NOT per-CTA)', () => {
   beforeEach(() => { document.head.innerHTML = ''; document.body.innerHTML = ''; resetTrackingState(); });
 
-  it('stamps the page trail on <main> and the block access-point, leaving CTAs clean', () => {
+  it('stamps the page trail on <main> and the block name, leaving CTAs clean', () => {
     document.head.innerHTML = '<meta name="tracking" content="home">';
     document.body.innerHTML = '<main><div class="cta block tracking-demo" data-block-name="cta">'
       + '<p class="button-wrapper"><a class="button" href="#">Schedule a call</a></p></div></main>';
     const main = document.querySelector('main');
     stampTrail(main);
     expect(main.getAttribute('data-tracking')).toBe('home');
-    expect(main.querySelector('.cta').getAttribute('data-tracking')).toBe('cta_block');
+    expect(main.querySelector('.cta').getAttribute('data-tracking')).toBe('cta'); // block name (default)
     expect(main.querySelector('a').hasAttribute('data-object')).toBe(false); // clean at rest
+  });
+
+  it('respects an explicit authored data-tracking on the block (customer override wins)', () => {
+    document.body.innerHTML = '<main><div class="cta block tracking-demo" data-block-name="cta" data-tracking="cta_block">'
+      + '<a class="button" href="#">Go</a></div></main>';
+    stampTrail(document.querySelector('main'));
+    expect(document.querySelector('.cta').getAttribute('data-tracking')).toBe('cta_block'); // not overwritten
+  });
+
+  it('falls the block segment back to the CSS class when there is no block-name', () => {
+    document.body.innerHTML = '<main><div class="rw-cards block tracking-x"><a class="button" href="#">Go</a></div></main>';
+    stampTrail(document.querySelector('main'));
+    expect(document.querySelector('.rw-cards').getAttribute('data-tracking')).toBe('rw-cards');
+  });
+
+  it('respects an explicit authored data-tracking on <main> (page override wins)', () => {
+    document.head.innerHTML = '<meta name="tracking" content="home">';
+    document.body.innerHTML = '<main data-tracking="landing"><div class="cta block tracking-demo"><a class="button" href="#">Go</a></div></main>';
+    stampTrail(document.querySelector('main'));
+    expect(document.querySelector('main').getAttribute('data-tracking')).toBe('landing');
   });
 });
 

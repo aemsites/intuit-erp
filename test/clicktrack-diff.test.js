@@ -53,7 +53,7 @@ describe('simulate — Option B JIT-stamp on the OURS side (clean at rest)', () 
     expect(list[0].payload.event).toBe('content:interacted');
     expect(list[0].payload.ui_object).toBe('button');
     expect(list[0].payload.ui_object_detail).toBe('Schedule a call');
-    expect(list[0].payload.ui_access_point).toBe('cta_block');
+    expect(list[0].payload.ui_access_point).toBe('cta'); // block-name default
     expect(list[0].payload.link_name).toBe('button-schedule-a-call');
   });
 

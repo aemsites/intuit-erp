@@ -414,12 +414,18 @@ export function stampTrail(scope = document) {
   const root = scope.querySelectorAll ? scope : document;
   const main = document.querySelector('main');
   const pageSeg = (document.head?.querySelector('meta[name="tracking"]')?.content || '').trim();
-  if (main && pageSeg) stampTracking(main, pageSeg);
+  // Explicit authored data-tracking ALWAYS wins — the customer can inject trail
+  // values on any parent (block, section, container) and the injected tracker
+  // walks them up the DOM. We only fill in a default where none was authored.
+  if (main && pageSeg && !main.hasAttribute('data-tracking')) main.setAttribute('data-tracking', pageSeg);
 
   optedInBlocks(root).forEach((block) => {
+    if (block.hasAttribute('data-tracking')) return; // author's explicit value wins
     const rows = (sheetMap && sheetMap.get(trackingKey(block))) || [];
     const apRow = rows.find((r) => r['access-point']);
-    stampTracking(block, apRow ? apRow['access-point'] : blockAccessPoint(blockNameOf(block)));
+    // Default: the block name (dataset.blockName), falling back to its CSS class.
+    const seg = apRow ? apRow['access-point'] : blockNameOf(block);
+    if (seg) block.setAttribute('data-tracking', seg);
   });
 }
 

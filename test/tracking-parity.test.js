@@ -48,7 +48,7 @@ describe('parity: runtime reproduces the prod cta_block payload', () => {
       ui_object_detail: 'Schedule a call',
       ui_action: 'clicked',
       action: 'interacted',
-      ui_access_point: 'cta_block', // trail, anchor skipped
+      ui_access_point: 'cta', // trail = block name (default), anchor skipped
     });
     // custom-prop expanded to top-level; the runtime appends the page host
     // ("… [<host>]"), so match the base.
@@ -56,11 +56,11 @@ describe('parity: runtime reproduces the prod cta_block payload', () => {
     expect(p.custom_properties).toBeUndefined();
   });
 
-  it('both CTAs in the block resolve the cta_block access-point', () => {
+  it('both CTAs in the block resolve the block-name access-point', () => {
     const main = document.querySelector('main');
     stampAll(main);
     const aps = [...main.querySelectorAll('a.button')].map((el) => computeTrackingPayload(el).ui_access_point);
-    expect(aps).toEqual(['cta_block', 'cta_block']);
+    expect(aps).toEqual(['cta', 'cta']);
   });
 });
 
