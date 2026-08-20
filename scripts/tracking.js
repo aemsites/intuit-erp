@@ -494,15 +494,15 @@ export function initTracking(scope = document) {
  *
  *   return trackAs('carousel', block, {
  *     itemSelector: '.carousel-card',
- *     trackItem: (item, i) => `carousel_${i}`,
+ *     itemLabel: (i, item) => `carousel_${i}`,
  *   });
  *
  * @param {string} name the block's trail segment + opt-in key
  * @param {Element} block
- * @param {{itemSelector?: string, trackItem?: (item: Element, index: number) => string}} [opts]
+ * @param {{itemSelector?: string, itemLabel?: (index: number, item: Element) => string}} [opts]
  * @returns {Element} the block (so it can be the decorate return value)
  */
-export function trackAs(name, block, { itemSelector, trackItem } = {}) {
+export function trackAs(name, block, { itemSelector, itemLabel } = {}) {
   if (!block) return block;
   // Opt the block into click tracking (reuses the tracking-<key> machinery so
   // the delegated handler JIT-stamps its CTAs); an authored opt-in is left as-is.
@@ -510,10 +510,10 @@ export function trackAs(name, block, { itemSelector, trackItem } = {}) {
   // Block trail segment — an explicit authored data-tracking wins.
   if (name && !block.hasAttribute('data-tracking')) block.setAttribute('data-tracking', name);
   // Per-item trail segments for repeated children (carousel cards, accordion items…).
-  if (itemSelector && typeof trackItem === 'function') {
+  if (itemSelector && typeof itemLabel === 'function') {
     block.querySelectorAll(itemSelector).forEach((item, idx) => {
       if (item.hasAttribute('data-tracking')) return; // respect explicit
-      const seg = trackItem(item, idx);
+      const seg = itemLabel(idx, item);
       if (seg) item.setAttribute('data-tracking', String(seg));
     });
   }

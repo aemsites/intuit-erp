@@ -263,11 +263,20 @@ describe('trackAs — declarative block opt-in from decorate()', () => {
       + '<div class="carousel-card"><a class="button" href="#">One</a></div>'
       + '<div class="carousel-card"><a class="button" href="#">Two</a></div></div></main>';
     const block = document.querySelector('.carousel');
-    trackAs('carousel', block, { itemSelector: '.carousel-card', trackItem: (item, i) => `carousel_${i}` });
+    trackAs('carousel', block, { itemSelector: '.carousel-card', itemLabel: (i) => `carousel_${i}` });
     const cards = [...block.querySelectorAll('.carousel-card')];
     expect(block.getAttribute('data-tracking')).toBe('carousel');
     expect(cards[0].getAttribute('data-tracking')).toBe('carousel_0');
     expect(cards[1].getAttribute('data-tracking')).toBe('carousel_1');
+  });
+
+  it('passes itemLabel (index, item) in that order', () => {
+    document.body.innerHTML = '<main><div class="c block">'
+      + '<span class="i" data-k="a"></span><span class="i" data-k="b"></span></div></main>';
+    trackAs('c', document.querySelector('.c'), { itemSelector: '.i', itemLabel: (i, item) => `${item.dataset.k}_${i}` });
+    const items = [...document.querySelectorAll('.i')];
+    expect(items[0].getAttribute('data-tracking')).toBe('a_0'); // index first, item second
+    expect(items[1].getAttribute('data-tracking')).toBe('b_1');
   });
 
   it('respects an authored opt-in + explicit data-tracking (never overwrites)', () => {
