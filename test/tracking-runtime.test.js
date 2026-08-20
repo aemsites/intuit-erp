@@ -3,7 +3,7 @@ import {
 } from 'vitest';
 import {
   trackingKey, blockNameOf, rowForIndex, deriveForCta,
-  stampTrail, resolveTrackable, stampInteraction, initTracking, resetTrackingState,
+  stampTrail, resolveTrackable, stampInteraction, initTracking, resetTrackingState, trackAs,
 } from '../scripts/tracking.js';
 
 describe('trackingKey', () => {
@@ -240,5 +240,48 @@ describe('Phase 5: link_name page-host suffix', () => {
     document.body.innerHTML = '<a class="button" href="#">Schedule a call</a>';
     const derived = deriveForCta(document.querySelector('a'), 'cta');
     expect(derived['custom-properties'].link_name).toBe('button-schedule-a-call');
+  });
+});
+
+describe('trackAs — declarative block opt-in from decorate()', () => {
+  beforeEach(() => { document.body.innerHTML = ''; resetTrackingState(); });
+
+  it('opts a non-container block in, stamps its trail, and makes its CTA trackable', () => {
+    document.body.innerHTML = '<main><div class="hero block"><p class="button-container"><a class="button" href="#">Go</a></p></div></main>';
+    const block = document.querySelector('.hero');
+    trackAs('hero', block);
+    expect(trackingKey(block)).toBe('hero'); // opted in (reuses the tracking- machinery)
+    expect(block.getAttribute('data-tracking')).toBe('hero'); // trail segment
+    // the delegated handler now JIT-stamps its CTA identity on interaction
+    stampInteraction({ target: block.querySelector('a') });
+    expect(block.querySelector('a').getAttribute('data-object')).toBe('content');
+    expect(block.querySelector('a').getAttribute('data-ui-object-detail')).toBe('Go');
+  });
+
+  it('stamps per-item trail segments for a container block', () => {
+    document.body.innerHTML = '<main><div class="carousel block">'
+      + '<div class="carousel-card"><a class="button" href="#">One</a></div>'
+      + '<div class="carousel-card"><a class="button" href="#">Two</a></div></div></main>';
+    const block = document.querySelector('.carousel');
+    trackAs('carousel', block, { itemSelector: '.carousel-card', trackItem: (item, i) => `carousel_${i}` });
+    const cards = [...block.querySelectorAll('.carousel-card')];
+    expect(block.getAttribute('data-tracking')).toBe('carousel');
+    expect(cards[0].getAttribute('data-tracking')).toBe('carousel_0');
+    expect(cards[1].getAttribute('data-tracking')).toBe('carousel_1');
+  });
+
+  it('respects an authored opt-in + explicit data-tracking (never overwrites)', () => {
+    document.body.innerHTML = '<main><div class="hero block tracking-authored" data-tracking="custom"><a class="button" href="#">Go</a></div></main>';
+    const block = document.querySelector('.hero');
+    trackAs('hero', block);
+    expect(block.getAttribute('data-tracking')).toBe('custom'); // explicit trail wins
+    expect(trackingKey(block)).toBe('authored'); // existing opt-in key kept
+    expect(block.classList.contains('tracking-hero')).toBe(false); // no second opt-in class
+  });
+
+  it('returns the block so it can be the decorate() return value', () => {
+    document.body.innerHTML = '<main><div class="hero block"></div></main>';
+    const block = document.querySelector('.hero');
+    expect(trackAs('hero', block)).toBe(block);
   });
 });

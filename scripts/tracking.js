@@ -482,3 +482,40 @@ export function initTracking(scope = document) {
   }, true);
   return stampInteraction;
 }
+
+/**
+ * Declarative opt-in for a block's own `decorate()` — the code-built counterpart
+ * to the authored `tracking-<key>` class. Marks the block tracked and stamps its
+ * access-point trail segment (+ optional per-item segments), the way prod's
+ * components emit their own `data-tracking`. Explicit authored values win.
+ * Call it as the last statement of a block's decorate:
+ *
+ *   export default function decorate(block) { … return trackAs('hero', block); }
+ *
+ *   return trackAs('carousel', block, {
+ *     itemSelector: '.carousel-card',
+ *     trackItem: (item, i) => `carousel_${i}`,
+ *   });
+ *
+ * @param {string} name the block's trail segment + opt-in key
+ * @param {Element} block
+ * @param {{itemSelector?: string, trackItem?: (item: Element, index: number) => string}} [opts]
+ * @returns {Element} the block (so it can be the decorate return value)
+ */
+export function trackAs(name, block, { itemSelector, trackItem } = {}) {
+  if (!block) return block;
+  // Opt the block into click tracking (reuses the tracking-<key> machinery so
+  // the delegated handler JIT-stamps its CTAs); an authored opt-in is left as-is.
+  if (!trackingKey(block)) block.classList.add(`${PREFIX}${name}`);
+  // Block trail segment — an explicit authored data-tracking wins.
+  if (name && !block.hasAttribute('data-tracking')) block.setAttribute('data-tracking', name);
+  // Per-item trail segments for repeated children (carousel cards, accordion items…).
+  if (itemSelector && typeof trackItem === 'function') {
+    block.querySelectorAll(itemSelector).forEach((item, idx) => {
+      if (item.hasAttribute('data-tracking')) return; // respect explicit
+      const seg = trackItem(item, idx);
+      if (seg) item.setAttribute('data-tracking', String(seg));
+    });
+  }
+  return block;
+}
