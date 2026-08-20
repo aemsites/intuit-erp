@@ -84,3 +84,12 @@
 .highlight .highlight-inner > :last-child { margin-bottom: 0; }
 
 @media (min-width: 900px) { .highlight .highlight-inner { padding: 3rem; } }
+
+/* HIGH-2 fix (issue-574): single-heading highlight.dark band ("How growing
+businesses keep growing") — prod renders the h3 at 48px/700. Scoped with
+:not(:has(h3 ~ h3)) so the construction-page dual-stat pattern (two sibling
+h3s handled separately above) is not affected. */
+.highlight.dark .highlight-inner:not(:has(h3 ~ h3)) h3 {
+font-size: 48px;
+font-weight: 700;
+}
