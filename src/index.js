@@ -29,7 +29,7 @@ export function debug(...args) {
   }
 }
 
-export const VERSION = '1.2.0';
+export const VERSION = '1.2.2';
 
 export const DEFAULT_OPTIONS = {
 
@@ -55,6 +55,20 @@ export const DEFAULT_OPTIONS = {
   // - 'universal-editor': the panel is delivered as a UE extension, so stay out of the way
   // - false: do not load any simulation UI
   simulationUI: 'auto',
+
+  // Bring-your-own decision engine hooks — all opt-in. When unset, the plugin
+  // keeps deciding, rendering and reporting exactly as before (no behavior
+  // change). See documentation/byo-decision-engine.md.
+  // - resolveAudiences: async (names, context) => ({ [name]: boolean })
+  //     one batched, context-aware audience resolution instead of N calls
+  // - getAssignment: async (experimentId, context) => variant
+  //     delegate the experiment split to an external engine (skip randomization)
+  // - rumTracking: 'off' | ((event) => void)
+  //     disable ('off') or delegate (function) the built-in RUM exposure tracking
+  // - renderDecision: async (el, decision) => { … }
+  //     apply a decision however it is shaped (JSON, content ref, DOM patch)
+  // - listAudiences: async () => Array<{ name, label? }>
+  //     enumerate the audience universe for the simulation panel (author-time)
 };
 
 const CONSENT_STORAGE_KEY = 'experimentation-consented';
@@ -160,6 +174,13 @@ export function updateUserConsent(consented) {
  * @param {string} result - the URL of the served experience.
  */
 function fireRUM(type, config, pluginOptions, result) {
+  const { rumTracking } = pluginOptions;
+  // Opt-out: a BYO engine that already fires exposure server-side disables the
+  // built-in RUM to avoid double counting.
+  if (rumTracking === 'off') {
+    return;
+  }
+
   const { selectedCampaign = 'default', selectedAudience = 'default' } = config;
 
   const typeHandlers = {
@@ -180,7 +201,13 @@ function fireRUM(type, config, pluginOptions, result) {
   const { source, target } = typeHandlers[type]();
   const rumType = type === 'experiment' ? 'experiment' : 'audience';
   onPageActivation(() => {
-    window.hlx?.rum?.sampleRUM(rumType, { source, target });
+    // Delegate to a custom sink when a function is provided, otherwise fire the
+    // built-in RUM. Same payload either way.
+    if (typeof rumTracking === 'function') {
+      rumTracking({ type: rumType, source, target });
+    } else {
+      window.hlx?.rum?.sampleRUM(rumType, { source, target });
+    }
   });
 }
 
@@ -216,9 +243,13 @@ export function getMetadata(name) {
 /**
  * Gets all the metadata elements that are in the given scope.
  * @param {String} scope The scope/prefix for the metadata
+ * @param {Function} keyFn Transforms each metadata key. Defaults to `toCamelCase`
+ *   (config props like `startDate`, `requiresConsent`); pass `toClassName` to
+ *   preserve multi-word *names* (audience/campaign names must stay class-name to
+ *   match the project config + resolution).
  * @returns a map of key/value pairs for the given scope
  */
-export function getAllMetadata(scope) {
+export function getAllMetadata(scope, keyFn = toCamelCase) {
   const value = getMetadata(scope);
   const metaTags = document.head.querySelectorAll(`meta[name^="${scope}"], meta[property^="${scope}:"]`);
   return [...metaTags].reduce((res, meta) => {
@@ -228,8 +259,7 @@ export function getAllMetadata(scope) {
         : meta.getAttribute('property').substring(scope.length + 1),
     );
 
-    const camelCaseKey = toCamelCase(key);
-    res[camelCaseKey] = meta.getAttribute('content');
+    res[keyFn(key)] = meta.getAttribute('content');
     return res;
   }, value ? { value } : {});
 }
@@ -346,13 +376,62 @@ async function replaceInner(path, el, selector) {
 }
 
 /**
+ * Applies a resolved decision to an element.
+ *
+ * By default this fetches the experience URL and swaps in its content (see
+ * `replaceInner`). When the project provides a `renderDecision` hook, that hook
+ * owns application instead — so an engine that returns JSON, a content
+ * reference or an external-CMS id can apply the decision however it is shaped.
+ * @param {Object} pluginOptions the plugin options
+ * @param {HTMLElement} el the target element
+ * @param {Object} decision the normalized decision
+ *   (`{ type, scope, url, selector?, config }`)
+ * @returns the served URL on success, or `null` if application failed
+ */
+async function applyDecision(pluginOptions, el, decision) {
+  if (typeof pluginOptions.renderDecision === 'function') {
+    try {
+      await pluginOptions.renderDecision(el, decision);
+      return decision.url;
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.log('error rendering decision:', decision, e);
+      return null;
+    }
+  }
+  return replaceInner(
+    new URL(decision.url, window.location.origin).pathname,
+    el,
+    decision.selector,
+  );
+}
+
+/**
+ * Builds the shared context handed to the batched decision hooks
+ * (`resolveAudiences`, `getAssignment`). The client provides what it can know
+ * authoritatively; a worker/engine enriches it server-side (e.g. `visitorId`
+ * from the cookie, `geo` from the edge). See documentation/byo-decision-engine.md.
+ * @returns {{ url: string, consent: boolean }} the decision context
+ */
+function getDecisionContext() {
+  return {
+    url: window.location.href,
+    consent: isUserConsentGiven(),
+  };
+}
+
+/**
  * Checks if any of the configured audiences on the page can be resolved.
  * @param {String[]} pageAudiences a list of configured audiences for the page
  * @param {Object} options the plugin options
  * @returns Returns the names of the resolved audiences, or `null` if no audience is configured
  */
 export async function getResolvedAudiences(pageAudiences, options) {
-  if (!pageAudiences.length || !Object.keys(options.audiences).length) {
+  const hasResolver = typeof options.resolveAudiences === 'function';
+  // A batched resolver can answer audiences without a per-audience registry, so
+  // only bail when there is neither a resolver nor a configured `audiences` map.
+  if (!pageAudiences.length
+    || (!hasResolver && !Object.keys(options.audiences).length)) {
     return null;
   }
   // If we have a forced audience set in the query parameters (typically for simulation purposes)
@@ -365,7 +444,20 @@ export async function getResolvedAudiences(pageAudiences, options) {
     return pageAudiences.includes(forcedAudience) ? [forcedAudience] : [];
   }
 
-  // Otherwise, return the list of audiences that are resolved on the page
+  // A batched, context-aware resolver answers every audience in one call.
+  if (hasResolver) {
+    try {
+      const resolved = await options.resolveAudiences(pageAudiences, getDecisionContext());
+      return pageAudiences.filter((name) => resolved && resolved[name]);
+    } catch (e) {
+      // A rejection (or a helper timeout) falls back to control rather than
+      // blocking render indefinitely.
+      debug('resolveAudiences failed; serving control', e);
+      return [];
+    }
+  }
+
+  // Otherwise, resolve each configured audience independently.
   const results = await Promise.all(
     pageAudiences
       .map((key) => {
@@ -376,6 +468,61 @@ export async function getResolvedAudiences(pageAudiences, options) {
       }),
   );
   return pageAudiences.filter((_, i) => results[i]);
+}
+
+/**
+ * Builds a batched, memoized `resolveAudiences` implementation that delegates to
+ * a remote endpoint (typically the auth-proxy worker — see examples/). It hides
+ * the common glue: one request per page, a timeout, and a control fallback so a
+ * slow or failing engine never blocks render.
+ *
+ * The endpoint receives `POST { names, context }` and answers with the audience
+ * resolution shape from the contract — `{ audiences: { [name]: boolean } }` (a
+ * bare `{ [name]: boolean }` map is also accepted).
+ *
+ * @param {Object} options
+ * @param {String} options.endpoint the URL to resolve audiences against
+ * @param {Number} [options.timeout=1000] milliseconds before serving control
+ * @param {Object} [options.fetchOptions] extra options merged into the `fetch` call
+ * @returns {Function} a `resolveAudiences(names, context)` implementation
+ */
+export function createRemoteAudienceResolver(options = {}) {
+  const { endpoint, timeout = 1000, fetchOptions = {} } = options;
+  const cache = new Map();
+  return (names, context) => {
+    const key = `${context && context.url ? context.url : ''}::${[...names].sort().join(',')}`;
+    if (!cache.has(key)) {
+      const controller = new AbortController();
+      const request = fetch(endpoint, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ names, context }),
+        signal: controller.signal,
+        ...fetchOptions,
+      })
+        .then((resp) => {
+          if (!resp.ok) {
+            throw new Error(`resolveAudiences endpoint returned ${resp.status}`);
+          }
+          return resp.json();
+        })
+        // Accept the contract envelope `{ audiences: {…} }` or a bare map.
+        .then((data) => data.audiences || data)
+        .catch((e) => {
+          debug('remote audience resolver failed; serving control', e);
+          return {};
+        });
+      // Time-box the request; on timeout, abort it and serve control.
+      const timedOut = new Promise((resolve) => {
+        setTimeout(() => {
+          controller.abort();
+          resolve({});
+        }, timeout);
+      });
+      cache.set(key, Promise.race([request, timedOut]));
+    }
+    return cache.get(key);
+  };
 }
 
 /**
@@ -467,7 +614,12 @@ function createModificationsHandler(
         return;
       }
       // eslint-disable-next-line no-await-in-loop
-      res = await replaceInner(new URL(url, window.location.origin).pathname, el);
+      res = await applyDecision(pluginOptions, el, {
+        type,
+        scope: el.tagName === 'MAIN' ? 'page' : 'section',
+        url,
+        config: ns.config,
+      });
     } else {
       res = url;
     }
@@ -560,7 +712,13 @@ function watchMutationsAndApplyFragments(
       let res;
       if (url && new URL(url, window.location.origin).pathname !== window.location.pathname) {
         // eslint-disable-next-line no-await-in-loop
-        res = await replaceInner(new URL(url, window.location.origin).pathname, el, entry.selector);
+        res = await applyDecision(pluginOptions, el, {
+          type: ns,
+          scope: 'fragment',
+          url,
+          selector: entry.selector,
+          config: fragmentNS.config,
+        });
         // eslint-disable-next-line no-await-in-loop
         await pluginOptions.decorateFunction(el);
       } else {
@@ -611,8 +769,12 @@ async function applyAllModifications(
 
   const configs = [];
 
-  // Full-page modifications
-  const pageMetadata = getAllMetadata(type);
+  // Full-page modifications. Experiments key their metadata by camelCased config
+  // props (`startDate`, `requiresConsent`, …); audiences/campaigns key by
+  // audience/campaign *name*, which must stay class-name to match the project
+  // config + resolution (as section- and fragment-level already do).
+  const keyFn = type === pluginOptions.experimentsMetaTagPrefix ? toCamelCase : toClassName;
+  const pageMetadata = getAllMetadata(type, keyFn);
   const pageNS = await modificationsHandler(
     document.querySelector('main'),
     pageMetadata,
@@ -676,6 +838,36 @@ function aggregateEntries(type, allowedMultiValuesProperties) {
     });
     return aggregator;
   }, {});
+}
+
+/**
+ * Asks an external engine for the experiment assignment, so the arm comes from
+ * the engine rather than the plugin's client-side randomization.
+ * @param {Object} pluginOptions the plugin options
+ * @param {Object} config the experiment config (needs `id`)
+ * @param {String[]} variantNames the known variant names for the experiment
+ * @returns {Promise<String|null>} the variant to serve, or `null` to let the
+ *   plugin self-bucket (the engine declined or errored)
+ */
+async function getExternalAssignment(pluginOptions, config, variantNames) {
+  try {
+    const variant = await pluginOptions.getAssignment(config.id, getDecisionContext());
+    // A falsy answer means the engine does not own this experiment — self-bucket.
+    if (!variant) {
+      return null;
+    }
+    const normalized = toClassName(variant);
+    if (variantNames.includes(normalized)) {
+      return normalized;
+    }
+    // The engine assigned an arm we can't render; serve control rather than
+    // re-randomizing against its intent.
+    debug(`getAssignment returned unknown variant "${variant}" for "${config.id}"; serving control`);
+    return 'control';
+  } catch (e) {
+    debug('getAssignment failed; falling back to self-bucketing', e);
+    return null;
+  }
 }
 
 /**
@@ -814,10 +1006,19 @@ async function getExperimentConfig(pluginOptions, metadata, overrides) {
   } else if (overrides.variant && variantNames.includes(overrides.variant)) {
     config.selectedVariant = toClassName(overrides.variant);
   } else {
-    // eslint-disable-next-line import/extensions
-    const { ued } = await import('./ued.js');
-    const decision = ued.evaluateDecisionPolicy(toDecisionPolicy(config), {});
-    config.selectedVariant = decision.items[0].id;
+    // Let an external engine own the assignment (skip randomization) before
+    // falling back to the plugin's own client-side bucketing.
+    const assigned = typeof pluginOptions.getAssignment === 'function'
+      ? await getExternalAssignment(pluginOptions, config, variantNames)
+      : null;
+    if (assigned) {
+      config.selectedVariant = assigned;
+    } else {
+      // eslint-disable-next-line import/extensions
+      const { ued } = await import('./ued.js');
+      const decision = ued.evaluateDecisionPolicy(toDecisionPolicy(config), {});
+      config.selectedVariant = decision.items[0].id;
+    }
   }
 
   return config;
@@ -923,11 +1124,15 @@ function parseCampaignManifest(entries) {
   ))
     .map(aggregateEntries('campaign', ['campaign', 'url']))
     .map((e) => {
-      const campaigns = e.campaign;
+      // A selector with a single campaign leaves `campaign`/`url` as scalars
+      // (aggregateEntries only builds arrays for multi-value selectors), so
+      // normalize to arrays before iterating.
+      const campaigns = [].concat(e.campaign);
+      const urls = [].concat(e.url);
       delete e.campaign;
       e.campaigns = {};
       campaigns.forEach((a, i) => {
-        e.campaigns[toClassName(a)] = e.url[i];
+        e.campaigns[toClassName(a)] = urls[i];
       });
       delete e.url;
       return e;
@@ -1003,11 +1208,15 @@ function parseAudienceManifest(entries) {
   ))
     .map(aggregateEntries('audience', ['audience', 'url']))
     .map((e) => {
-      const audiences = e.audience;
+      // A selector with a single audience leaves `audience`/`url` as scalars
+      // (aggregateEntries only builds arrays for multi-value selectors), so
+      // normalize to arrays before iterating.
+      const audiences = [].concat(e.audience);
+      const urls = [].concat(e.url);
       delete e.audience;
       e.audiences = {};
       audiences.forEach((a, i) => {
-        e.audiences[toClassName(a)] = e.url[i];
+        e.audiences[toClassName(a)] = urls[i];
       });
       delete e.url;
       return e;
@@ -1137,6 +1346,38 @@ function setupCommunicationLayer(options) {
   });
 }
 
+/**
+ * In preview/dev, enriches `body[data-audiences]` with the audiences advertised
+ * by an optional `listAudiences()` catalog, so the simulation panel can
+ * enumerate an engine's segments even when the project registers only a generic
+ * remote resolver (enumeration ≠ decision).
+ *
+ * Called from `loadLazy` (the panel phase), never the eager/LCP path, and
+ * invoked fire-and-forget so a slow catalog can't stall panel setup. Author-time
+ * only; opt-in and a no-op by default. See documentation/byo-decision-engine.md.
+ * @param {Document} doc the document
+ * @param {Object} pluginOptions the plugin options
+ */
+async function registerCatalogAudiences(doc, pluginOptions) {
+  if (typeof pluginOptions.listAudiences !== 'function') {
+    return;
+  }
+  try {
+    const catalog = await pluginOptions.listAudiences();
+    const names = (Array.isArray(catalog) ? catalog : [])
+      .map((entry) => (typeof entry === 'string' ? entry : entry?.name))
+      .filter(Boolean);
+    if (!names.length) {
+      return;
+    }
+    const existing = stringToArray(doc.body.dataset.audiences || '');
+    // De-dupe while preserving order (registered audiences first).
+    doc.body.dataset.audiences = [...new Set([...existing, ...names])].join(',');
+  } catch (e) {
+    debug('listAudiences failed; simulation panel will show only registered audiences', e);
+  }
+}
+
 export async function loadEager(document, options = {}) {
   const pluginOptions = { ...DEFAULT_OPTIONS, ...options };
   setDebugMode(window.location, pluginOptions);
@@ -1154,7 +1395,8 @@ export async function loadEager(document, options = {}) {
 
   // Register the (tiny, UI-less) simulation handshake as early as possible so
   // an eagerly-injected Sidekick bookmarklet doesn't race past it. Preview/dev
-  // only; the heavy panel UI is still deferred to loadLazy.
+  // only; the heavy panel UI — and the audience catalog it needs — are deferred
+  // to loadLazy so they never touch the eager/LCP path.
   if (isDebugEnabled) {
     setupCommunicationLayer(pluginOptions);
   }
@@ -1195,6 +1437,12 @@ export async function loadLazy(document, options = {}) {
   // Ensure the postMessage handshake is available even on preview pages that had
   // no experiment configured when loadEager ran. No-op if already registered.
   setupCommunicationLayer(pluginOptions);
+
+  // Advertise the engine's audience catalog to the panel's switcher. This only
+  // feeds the (lazily-opened) simulation UI, so it lives here — never in the
+  // eager/LCP path — and is fire-and-forget so a slow catalog can't stall the
+  // panel. registerCatalogAudiences swallows its own errors.
+  registerCatalogAudiences(document, pluginOptions);
 
   // Load the simulation/preview UI on demand so it never ships with the engine.
   // eslint-disable-next-line import/extensions
