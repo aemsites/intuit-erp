@@ -1,0 +1,14 @@
+{
+  "total": 6,
+  "offset": 0,
+  "limit": 6,
+  "data": [
+    { "page": "/drafts/pzn-cell-demo", "selector": ".pzn-hero", "audience": "retail", "url": "/drafts/fragments/pzn/hero-retail" },
+    { "page": "/drafts/pzn-cell-demo", "selector": ".pzn-hero", "audience": "hospitality", "url": "/drafts/fragments/pzn/hero-hospitality" },
+    { "page": "/drafts/pzn-cell-demo", "selector": ".pzn-hero", "audience": "default", "url": "/drafts/fragments/pzn/hero-default" },
+    { "page": "/drafts/pzn-cell-demo", "selector": ".pzn-offer", "audience": "retail", "url": "/drafts/fragments/pzn/offer-retail" },
+    { "page": "/drafts/pzn-cell-demo", "selector": ".pzn-offer", "audience": "hospitality", "url": "/drafts/fragments/pzn/offer-hospitality" },
+    { "page": "/drafts/pzn-cell-demo", "selector": ".pzn-offer", "audience": "default", "url": "/drafts/fragments/pzn/offer-default" }
+  ],
+  ":type": "sheet"
+}
