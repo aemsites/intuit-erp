@@ -7,6 +7,7 @@ import {
 import { recordPzn, recordPznPage } from './personalization/analytics.js';
 import { stampPzn } from './personalization/stamp.js';
 import { buildBatchBody, resolveIvid } from './personalization/attributes.js';
+import { getIntentProfile, buildIntentContext } from './of1-intent.js';
 
 // --- Marketing-profile (ZoomInfo) enrichment -------------------------------
 // Intuit's marketing-mesh GraphQL service returns firmographics for the visitor;
@@ -126,6 +127,16 @@ export function resetMarketingProfile() {
   profilePromise = undefined;
 }
 
+// The client attributes merged onto the pzn request: the ZoomInfo firmographics
+// (already cached in localStorage per ivid) plus, namespaced under `of1Intent`, the
+// visitor's stored behavior profile (interests/intent/entrySource) when one exists.
+function decisionAttributes(zoominfo) {
+  const attributes = { ...(zoominfo || {}) };
+  const of1Intent = buildIntentContext(getIntentProfile());
+  if (of1Intent) attributes.of1Intent = of1Intent;
+  return attributes;
+}
+
 // True when a section's data-pzn and data-exp aim at the SAME target — both whole-
 // section, or both the same named block. That's the case where IXP takes precedence
 // (Req 4); pzn and exp scoped to different blocks are independent and both run.
@@ -171,7 +182,7 @@ export async function runPersonalization(root = document.querySelector('main'), 
   const zoominfo = await getMarketingProfile();
   const response = await fetchDecision('pzn', {
     method: 'POST',
-    body: buildBatchBody(placements, undefined, zoominfo || {}),
+    body: buildBatchBody(placements, undefined, decisionAttributes(zoominfo)),
   });
   if (!response || typeof response !== 'object') return;
 
@@ -215,7 +226,7 @@ export async function runPersonalizationPage(doc = document) {
     const zoominfo = await getMarketingProfile();
     const response = await fetchDecision('pzn', {
       method: 'POST',
-      body: buildBatchBody([placement], undefined, zoominfo || {}),
+      body: buildBatchBody([placement], undefined, decisionAttributes(zoominfo)),
       signal: controller.signal,
     });
     if (!response || typeof response !== 'object') return;

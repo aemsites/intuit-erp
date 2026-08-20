@@ -11,3 +11,7 @@ const tealium = getTealium();
 if (tealium?.enabled) {
   tealium.delayed();
 }
+
+// OF1 intent tracking — observes on-page behavior and persists a per-domain intent
+// profile to localStorage (consumed by pzn). Delayed so it stays off the LCP path.
+import('./of1-intent.js').then(({ initOf1Intent }) => initOf1Intent());
