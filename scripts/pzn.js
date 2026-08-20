@@ -190,11 +190,19 @@ export async function runPersonalization(root = document.querySelector('main'), 
     // swap lands (stamp.js) for click attribution.
     slots
       .filter((s) => s.placement.toLowerCase() === key)
-      .forEach((slot) => applications.push(
-        applyFragment(slot.el, fragment).then((applied) => {
-          if (applied && record) stampPzn(slot.el, record);
-        }),
-      ));
+      .forEach((slot) => {
+        // OF1 opt-in: a section tagged `of1-personalization: enabled` asks the
+        // edge proxy to personalize the injected fragment. Signal it with an
+        // `__of1p` path suffix the proxy strips before fetching the real fragment.
+        const ref = slot.el.closest('[data-of1-personalization="enabled"]')
+          ? `${fragment}__of1p`
+          : fragment;
+        applications.push(
+          applyFragment(slot.el, ref).then((applied) => {
+            if (applied && record) stampPzn(slot.el, record);
+          }),
+        );
+      });
   });
   await Promise.all(applications);
 
