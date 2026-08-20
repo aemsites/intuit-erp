@@ -156,3 +156,9 @@
 @media (width >= 900px) {
   .section.form-container:has(.form.download):has(.default-content-wrapper) { grid-template-columns: 1fr 1fr; gap: 48px; }
 }
+
+/* Hide Google's reCAPTCHA v3 badge (bottom-right). The required attribution is
+   already rendered inline in the form disclaimer ("protected by reCAPTCHA…"), so
+   hiding the badge is compliant — and it suppresses grecaptcha's "invalid domain"
+   error badge on non-intuit.com preview origins where the site key isn't registered. */
+.grecaptcha-badge { visibility: hidden; }

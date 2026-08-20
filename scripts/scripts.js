@@ -89,10 +89,13 @@ export function getSiteConfig() {
       .then((json) => {
         const cfg = {};
         (json?.data || []).forEach(({ key, value }) => {
-          if (!key) return;
-          if (value === 'true') cfg[key] = true;
-          else if (value === 'false') cfg[key] = false;
-          else cfg[key] = value;
+          // Trim sheet whitespace once, here, so downstream consumers never have to.
+          const k = typeof key === 'string' ? key.trim() : key;
+          if (!k) return;
+          const v = typeof value === 'string' ? value.trim() : value;
+          if (v === 'true') cfg[k] = true;
+          else if (v === 'false') cfg[k] = false;
+          else cfg[k] = v;
         });
         return cfg;
       })
