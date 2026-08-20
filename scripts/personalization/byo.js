@@ -50,6 +50,12 @@ import { applyFragment, fetchDecision, fragmentPath } from './decision.js';
 import { buildBatchBody, resolveIvid, ixpParams } from './attributes.js';
 import { entryForSlot, recommendationOf, pznFragment } from './pzn-response.js';
 import { ixpContentPath } from './ixp-response.js';
+// Reuse the project's own marketing-profile enrichment (ZoomInfo firmographics
+// etc.) so the plugin-driven batch targets on the same attributes scripts/pzn.js
+// does — memoized + fail-open there, so this adds no second network call and a
+// miss just sends the batch unenriched.
+// eslint-disable-next-line import/no-cycle
+import { getMarketingProfile } from '../pzn.js';
 
 /**
  * Reads a cookie value.
@@ -213,9 +219,13 @@ let pznPlacementCache = null;
 async function resolvePznPlacementCache() {
   const placements = await loadManifestPlacements();
   if (!placements.length) return new Map();
+  // Enrich the batch attributes with the visitor's marketing profile (ZoomInfo
+  // firmographics etc.), exactly as scripts/pzn.js does, so the engine decides on
+  // the same inputs on both paths. Fail-open (null) → the batch goes unenriched.
+  const zoominfo = await getMarketingProfile();
   let response = await fetchDecision('pzn', {
     method: 'POST',
-    body: buildBatchBody(placements),
+    body: buildBatchBody(placements, undefined, zoominfo || {}),
   });
   if (!response && getMetadata('pzn-mock') === 'true') {
     response = mockPznBatchResponse(placements);
