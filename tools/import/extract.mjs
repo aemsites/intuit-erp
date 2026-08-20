@@ -95,7 +95,7 @@ function extractBlocks(container, out = []) {
     } else if (tag === 'blockquote') {
       const html = cleanInlineHtml(el);
       if (html) out.push({ type: 'blockquote', html });
-    } else if (tag === 'div' || tag === 'section') {
+    } else if (['div', 'section', 'left', 'font', 'article', 'main', 'aside'].includes(tag)) {
       extractBlocks(el, out);
     }
   });
@@ -113,19 +113,39 @@ function ytId(src) {
   return m ? m[1] : null;
 }
 
+/** textContent with <style>/<script> removed — distinguishes real callouts from style-only injections. */
+function textSansStyle(el) {
+  const c = el.cloneNode(true);
+  c.querySelectorAll('style,script').forEach((n) => n.remove());
+  return c.textContent.replace(/\s+/g, ' ').trim();
+}
+
 function classify(el) {
   const style = styleText(el);
   if (hasClass(el, /core-block-container/)) return 'cta';
-  if (/colored-box/.test(style) || hasClass(el, /TipBox-tip-box/)) return 'highlight';
+  // SnackableCards stat-band renders client-side (empty in SSR) — flag as a real
+  // gap, not silently dropped like chrome. Checked before the empty-skip below.
+  if (/snackable/i.test(el.className || '') || el.querySelector('[class*="Snackable" i]')) return 'unknown';
+  if (hasClass(el, /Separator/)) return 'skip'; // decorative rule (chrome)
   if (/quote-box/.test(style)) return 'quote';
   if (el.querySelector('iframe[src*="datawrapper"]')) return 'embed';
   if (hasClass(el, /Responsivetext_responsivetext/)) return 'prose';
+  if (/colored-box/.test(style) || hasClass(el, /TipBox-tip-box/)) return 'highlight';
+  // `.test-box` is a cyan feature-list box DA renders as plain heading+list (prose)
+  if (/test-box/.test(style)) return 'calloutprose';
+  // generic source callout wrapper (`.root > .innerhtml`): decide by content
+  if (hasClass(el, /(^|\s)root(\s|$)/) || el.querySelector(':scope > .innerhtml, :scope .innerhtml')) {
+    if (el.querySelector('iframe[src]')) return 'embed';
+    if (el.querySelector('img[src]')) return 'image';
+    return textSansStyle(el) ? 'highlight' : 'skip'; // empty => style-only injection
+  }
   const img = el.querySelector('img[src]');
   const heading = el.querySelector('h2,h3');
   const link = el.querySelector('a[href]');
   if (img && heading && link) return 'cta'; // image+heading+link promo (e.g. guide CTA)
   if (img) return 'image';
   if (el.querySelector('iframe[src]')) return 'embed';
+  if (!textSansStyle(el)) return 'skip'; // empty/style-only
   return 'unknown';
 }
 
@@ -340,14 +360,18 @@ export function extractPageFromDoc(doc, url) {
   [...body.children].forEach((child) => {
     if (/Spacer/.test(child.className || '')) return;
     const kind = classify(child);
+    if (kind === 'skip') return; // chrome / style-only injection — no content lost
     if (kind === 'cta') { flush(); sections.push([extractCta(child, warnings)]); return; }
     if (kind === 'unknown') {
-      const label = child.className?.toString().split(' ')[0] || child.tagName;
-      warnings.push(`skipped unrecognized block: ${label} (client-rendered or unsupported, e.g. SnackableCards/stat-band)`);
+      const snackable = /snackable/i.test(child.className || '') || child.querySelector('[class*="Snackable" i]');
+      warnings.push(snackable
+        ? 'stat-band (SnackableCards) is client-rendered from an external service — not in the page payload; author it manually'
+        : `skipped unrecognized block: ${child.className?.toString().split(' ')[0] || child.tagName}`);
       return;
     }
     let nodes = [];
     if (kind === 'prose') nodes = extractBlocks(child);
+    else if (kind === 'calloutprose') nodes = extractBlocks(child.querySelector('.test-box') || child);
     else if (kind === 'highlight') { const b = extractHighlight(child); if (b) nodes = [b]; }
     else if (kind === 'quote') nodes = extractQuote(child);
     else if (kind === 'image' || kind === 'video') { const n = extractImageOrVideo(child); if (n) nodes = [n]; }
