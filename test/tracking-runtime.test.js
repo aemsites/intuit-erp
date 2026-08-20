@@ -227,6 +227,27 @@ describe('Phase 3: video-link detection in the derive', () => {
   });
 });
 
+describe('Phase 3: icon-only link detection (link_icon)', () => {
+  beforeEach(() => { document.body.innerHTML = ''; resetTrackingState(); });
+
+  it('derives ui_object=link_icon for an icon/logo-only link (no visible text)', () => {
+    document.body.innerHTML = '<main><div class="footer-brand block tracking-1">'
+      + '<a href="https://turbotax.intuit.com/"><img src="/logo.svg" alt="TurboTax"></a></div></main>';
+    const a = document.querySelector('a');
+    stampInteraction({ target: a });
+    expect(a.getAttribute('data-ui-object')).toBe('link_icon');
+    expect(a.getAttribute('data-object')).toBe('content');
+  });
+
+  it('keeps a link with visible text as link/button even if it contains an icon', () => {
+    document.body.innerHTML = '<main><div class="c block tracking-1">'
+      + '<a href="#"><span class="icon icon-arrow"></span> Learn more</a></div></main>';
+    const a = document.querySelector('a');
+    stampInteraction({ target: a });
+    expect(a.getAttribute('data-ui-object')).toBe('link'); // has text -> not icon-only
+  });
+});
+
 describe('Phase 5: link_name page-host suffix', () => {
   beforeEach(() => { document.body.innerHTML = ''; });
 

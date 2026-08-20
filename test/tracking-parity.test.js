@@ -2,7 +2,7 @@ import {
   describe, it, expect, beforeEach, afterEach, vi,
 } from 'vitest';
 import {
-  stampTrail, stampInteraction, initTracking, resetTrackingState,
+  stampTrail, stampInteraction, initTracking, resetTrackingState, trackAs,
 } from '../scripts/tracking.js';
 import { computeTrackingPayload } from '../scripts/diff/tracker-replica.mjs';
 
@@ -84,5 +84,31 @@ describe('parity: sheet overlay reproduces authored variants', () => {
     // CTA 2 -> still the derived full-path payload
     expect(second.object).toBe('content');
     expect(second.ui_object_detail).toBe('Schedule a call');
+  });
+});
+
+describe('parity: trackAs multi-level trail (rw_cards_container|carousel|rw_card_N)', () => {
+  beforeEach(() => { document.head.innerHTML = ''; document.body.innerHTML = ''; resetTrackingState(); });
+
+  it('resolves the full 3-level trail via a broad itemSelector + branching itemLabel', () => {
+    document.body.innerHTML = '<main><div class="cards block">'
+      + '<div class="cards-track">'
+      + '<div class="card"><p class="button-container"><a class="button" href="#">One</a></p></div>'
+      + '<div class="card"><p class="button-container"><a class="button" href="#">Two</a></p></div>'
+      + '</div></div></main>';
+    const block = document.querySelector('.cards');
+    trackAs('rw_cards_container', block, {
+      itemSelector: '.cards-track, .cards-track > .card',
+      itemLabel: (i, el) => (el.classList.contains('cards-track') ? 'carousel' : `rw_card_${i}`),
+    });
+    expect(block.getAttribute('data-tracking')).toBe('rw_cards_container');
+    expect(block.querySelector('.cards-track').getAttribute('data-tracking')).toBe('carousel');
+    const cards = [...block.querySelectorAll('.card')];
+    expect(cards[0].getAttribute('data-tracking')).toBe('rw_card_1'); // wrapper is i=0, cards 1-based
+    expect(cards[1].getAttribute('data-tracking')).toBe('rw_card_2');
+    // JIT-stamp a CTA inside card 1; the computed trail includes all three levels (anchor skipped)
+    stampInteraction({ target: cards[0].querySelector('a') });
+    expect(computeTrackingPayload(cards[0].querySelector('a')).ui_access_point)
+      .toBe('rw_cards_container|carousel|rw_card_1');
   });
 });

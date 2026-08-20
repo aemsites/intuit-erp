@@ -78,13 +78,15 @@ export function blockAccessPoint(blockName) {
  * (the sacrificial data-tracking value) and `custom-properties` (merged later).
  * A video link derives object=video / ui_object=video_link / action=engaged.
  * @param {{tagName: string, label: string, blockName: string,
- *   isButtonStyled?: boolean, isVideo?: boolean, host?: string}} ctx
+ *   isButtonStyled?: boolean, isVideo?: boolean, isIcon?: boolean, host?: string}} ctx
  * @returns {Record<string, unknown>}
  */
 export function deriveBaseline({
-  tagName, label, blockName, isButtonStyled = true, isVideo = false, host = '',
+  tagName, label, blockName, isButtonStyled = true, isVideo = false, isIcon = false, host = '',
 }) {
-  const kind = isVideo ? 'video_link' : uiObject(tagName, isButtonStyled);
+  let kind = uiObject(tagName, isButtonStyled);
+  if (isVideo) kind = 'video_link';
+  else if (isIcon) kind = 'link_icon'; // an icon/logo-only link (no visible text)
   const detail = (label || '').trim();
   const custom = {};
   // The live tracker appends the page host to link_name (e.g. "... [erp.intuit.com]").
@@ -388,12 +390,17 @@ export function rowForIndex(rows, i) {
  * @returns {Record<string, unknown>}
  */
 export function deriveForCta(el, blockName, host = '') {
+  const isVideo = el.tagName === 'A' && isVideoLink(el.getAttribute('href'));
+  // A link/button whose visible content is an icon/logo (no text) reports
+  // ui_object=link_icon on prod (brand logos, social icons).
+  const isIcon = !isVideo && !(el.textContent || '').trim() && !!el.querySelector('img, svg, picture, .icon');
   return deriveBaseline({
     tagName: el.tagName,
     label: el.textContent,
     blockName,
     isButtonStyled: el.tagName === 'BUTTON' || el.classList.contains('button'),
-    isVideo: el.tagName === 'A' && isVideoLink(el.getAttribute('href')),
+    isVideo,
+    isIcon,
     host,
   });
 }
@@ -497,9 +504,21 @@ export function initTracking(scope = document) {
  *     itemLabel: (i, item) => `carousel_${i}`,
  *   });
  *
+ * Multi-level trails (e.g. rw_cards_container|carousel|rw_card_N): use a broad
+ * itemSelector that matches every contributing element and branch in itemLabel
+ * on the element (return a falsy value to skip one). Because querySelectorAll is
+ * in document order, a wrapper matches before its children, so the child index
+ * lines up 1-based:
+ *
+ *   return trackAs('rw_cards_container', block, {
+ *     itemSelector: '.cards-track, .cards-track > .card',
+ *     itemLabel: (i, el) => (el.classList.contains('cards-track') ? 'carousel' : `rw_card_${i}`),
+ *   });
+ *
  * @param {string} name the block's trail segment + opt-in key
  * @param {Element} block
  * @param {{itemSelector?: string, itemLabel?: (index: number, item: Element) => string}} [opts]
+ *   `index` is the querySelectorAll match order; return '' from itemLabel to skip an element.
  * @returns {Element} the block (so it can be the decorate return value)
  */
 export function trackAs(name, block, { itemSelector, itemLabel } = {}) {
