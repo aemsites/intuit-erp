@@ -62,8 +62,8 @@ function parseFooterLegal(doc) {
 
 function renderColumns(columns) {
   return columns.map((col) => `
-        <div class="footer-col">
-          <h2><button type="button" class="col-toggle" aria-expanded="false">${col.title}<i class="caret" aria-hidden="true"></i></button></h2>
+        <div class="footer-col open">
+          <h2><button type="button" class="col-toggle" aria-expanded="true">${col.title}<i class="caret" aria-hidden="true"></i></button></h2>
           <ul>
             ${col.listHtml}
           </ul>
