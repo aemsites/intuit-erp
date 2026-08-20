@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>IXP experiment-assignment demo</title>
+  <!--
+    Section-level native experiment authoring for the vendored aem-experimentation
+    plugin (plugins/experimentation/src/index.js): a `Section Metadata` block with
+    `Experiment` / `Experiment Variants` rows, read directly off the DOM by the
+    plugin's `applyAllModifications` (document.querySelectorAll('.section-metadata'))
+    BEFORE this page's own decorateMain runs — see scripts/scripts.js loadEager,
+    which calls runExperimentation(doc, ...) ahead of decorateMain(main).
+
+    Section-level was chosen over page-level: page-level `Experiment` /
+    `Experiment Variants` metadata is read from real `<head><meta>` tags (the
+    plugin's getAllMetadata), and a hand-authored "Metadata" block is NOT
+    converted into <meta> tags when served locally via
+    `aem up --html-folder drafts` (no pipeline step runs — the same finding the
+    PZN cell-resolution demo already documents, see pzn-cell-demo.html).
+    `.section-metadata`, by contrast, is read straight off the DOM as authored,
+    so it works locally with zero extra plumbing. Verified against the plugin's
+    own Playwright fixture
+    (plugins/experimentation/tests/fixtures/experiments/section-level.html),
+    which uses the identical raw-div shape authored below.
+
+    This page carries NO `audience-manifest` / `data-pzn` / `data-exp` marker —
+    it is IXP-only, exercising only the plugin's native experiment path via the
+    `getAssignment` BYO hook (scripts/personalization/byo.js), never Intuit's
+    existing pzn.js/exp.js path nor the cell-resolution manifest lane
+    (pzn-cell-demo.html).
+
+    A real decision engine would be wired via a `<meta name="ixp-endpoint"
+    content="https://...">` tag here (see getAssignment in byo.js) — omitted on
+    this demo page so it exercises the sticky mock instead.
+  -->
+  <style>
+    /* The `.section-metadata` block below is authoring configuration, not
+       visible copy. On the real aem.live pipeline this table is not part of a
+       section's rendered content; --html-folder serves this file verbatim (no
+       pipeline), so this demo-only rule reproduces that locally. */
+    .section-metadata { display: none; }
+  </style>
+  <script nonce="aem" src="/scripts/scripts.js" type="module"></script>
+  <link rel="stylesheet" href="/styles/styles.css">
+  <link rel="stylesheet" href="/styles/lazy-styles.css">
+</head>
+<body>
+  <header></header>
+  <main>
+    <div>
+      <h1>Experiment-assignment (IXP) demo</h1>
+      <p>This page wires Intuit's decision engine onto the vendored aem-experimentation
+      plugin's <code>getAssignment</code> hook (<code>scripts/personalization/byo.js</code>):
+      the engine owns the arm (bucketing/stickiness/exposure) for a
+      <strong>natively-authored</strong> experiment — a <code>Section Metadata</code> block
+      with <code>Experiment</code> / <code>Experiment Variants</code> rows, not a manifest
+      sheet — and the plugin renders whichever variant the engine (here, a sticky demo mock)
+      picked.</p>
+      <p>Try <code>?experiment=ixp-hero-test/challenger-1</code> or
+      <code>?experiment=ixp-hero-test/control</code> to force an arm (the plugin's own QA
+      override), or no parameter at all to see the sticky demo mock (persisted in an
+      <code>ixp-arm-ixp-hero-test</code> cookie) — reload a few times with no parameter and the
+      same arm keeps showing. Open devtools while loading to confirm there are no console
+      errors.</p>
+    </div>
+    <div>
+      <h2>Control — default hero copy</h2>
+      <p style="background:#f3f1f8;border-left:4px solid #5a3d99;padding:.5rem 1rem;">Run your
+      business your way — the steady, always-on hero experience shown until the engine assigns
+      a challenger arm.</p>
+      <div class="section-metadata">
+        <div>
+          <div>Experiment</div>
+          <div>ixp-hero-test</div>
+        </div>
+        <div>
+          <div>Experiment Variants</div>
+          <div><a href="/drafts/fragments/experiments/hero-challenger-1">Challenger 1</a></div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <h2>How this works</h2>
+      <p>The engine owns the arm (<code>getAssignment</code>), and the page's own
+      <code>Experiment Variants</code> metadata owns arm-to-content — there is no manifest
+      sheet involved here, unlike the cell-resolution demo (<code>pzn-cell-demo.html</code>).
+      This is a <strong>section-level</strong> experiment: the section above (the control
+      content plus its <code>Section Metadata</code> block) is the control arm, and
+      <code>drafts/fragments/experiments/hero-challenger-1</code> is the sole challenger.</p>
+      <p>See <code>documentation/experiments.md</code> in the vendored plugin for the native
+      authoring convention, and <code>documentation/byo-decision-engine.md</code> for the
+      <code>getAssignment</code> hook contract.</p>
+    </div>
+  </main>
+  <footer></footer>
+</body>
+</html>
