@@ -21,6 +21,7 @@
  * CSS: blocks/cards/cards.css
  */
 import { createOptimizedPicture } from '../../scripts/aem.js';
+import { trackAs } from '../../scripts/tracking.js';
 
 const SCROLL_SHAPE_CLASSES = ['carousel', 'boxed'];
 
@@ -230,4 +231,11 @@ export default function decorate(block) {
   if (block.classList.contains('carousel')) {
     attachFocusCursor(block);
   }
+  // Instrument for click tracking — prod trail: rw_cards_container|carousel|rw_card_N.
+  // The `carousel` middle exists only for scroll-shaped variants (enhanceScroll adds
+  // .cards-track); static grids resolve to rw_cards_container (confirm grid trail w/ golden).
+  return trackAs('rw_cards_container', block, {
+    itemSelector: '.cards-track, .cards-track > *',
+    itemLabel: (i, el) => (el.classList.contains('cards-track') ? 'carousel' : `rw_card_${i}`),
+  });
 }
