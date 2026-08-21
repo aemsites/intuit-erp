@@ -537,7 +537,7 @@ function extractOrphanHighlights(doc, body) {
  */
 function extractFaq(doc) {
   const head = [...doc.querySelectorAll('h2, h3')]
-    .find((h) => /frequently asked questions|^\s*faqs?\b/i.test(h.textContent || ''));
+    .find((h) => /frequently asked questions|\bfaqs?\b/i.test(h.textContent || ''));
   if (!head) return null;
   const accs = [...doc.querySelectorAll('[class*="ccordion_accordion__"]')];
   const acc = accs.find((a) => (head.compareDocumentPosition(a) & 4) !== 0) || accs[accs.length - 1];
