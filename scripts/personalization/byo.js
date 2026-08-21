@@ -53,17 +53,21 @@
 //
 // Demo mocks: `aem up --html-folder drafts` can't serve `/api/*`, so when the
 // real endpoint is absent (fetchDecision's fail-open `null`) AND the page
-// opts in via a `pzn-mock` / `ixp-mock` metadata, a canned response shaped
-// exactly like the real DE/PZN or IXP payload stands in — so the demo
-// exercises the REAL parse+apply path (pzn-response.js / ixp-response.js),
-// not a shortcut. Production pages never set that metadata, so none of this
-// runs there; a real endpoint, when present, always wins over the mock.
+// opts in via a `pzn-mock` / `ixp-mock` metadata, this file dynamically
+// `import()`s ./byo-mock.js for a canned response shaped exactly like the
+// real DE/PZN or IXP payload — so the demo exercises the REAL parse+apply
+// path (pzn-response.js / ixp-response.js), not a shortcut. Production pages
+// never set that metadata, so that `import()` is never reached there — the
+// mock module (and its cookie helpers) never even loads in production; a
+// real endpoint, when present, always wins over the mock regardless.
 
 import { getMetadata } from '../aem.js';
 // eslint-disable-next-line import/no-cycle
 import { applyFragment, fetchDecision, fragmentPath } from './decision.js';
-import { buildBatchBody, resolveIvid, ixpParams } from './attributes.js';
-import { entryForSlot, recommendationOf, pznFragment } from './pzn-response.js';
+import { buildBatchBody, ixpParams } from './attributes.js';
+import {
+  entryForSlot, recommendationOf, pznFragment, pznRecord,
+} from './pzn-response.js';
 import { ixpContentPath } from './ixp-response.js';
 // Reuse the project's own marketing-profile enrichment (ZoomInfo firmographics
 // etc.) so the plugin-driven batch targets on the same attributes scripts/pzn.js's
@@ -71,106 +75,41 @@ import { ixpContentPath } from './ixp-response.js';
 // network call and a miss just sends the batch unenriched.
 // eslint-disable-next-line import/no-cycle
 import { getMarketingProfile } from './marketing-profile.js';
-
-/**
- * Reads a cookie value.
- * @param {String} name the cookie name
- * @returns {String|null} the cookie value, or null when absent/unreadable
- */
-function readCookie(name) {
-  try {
-    const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${name}=([^;]*)`));
-    return match ? decodeURIComponent(match[1]) : null;
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Writes a cookie value (30 day expiry, site-wide path).
- * @param {String} name the cookie name
- * @param {String} value the cookie value
- * @returns {void}
- */
-function writeCookie(name, value) {
-  try {
-    const maxAge = 30 * 24 * 60 * 60;
-    document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${maxAge}; SameSite=Lax`;
-  } catch {
-    // demo mock only — a failed write just means the next resolution re-picks
-  }
-}
+import { registerRegionContext } from './tracking-context.js';
 
 // --- PZN (decisions-manifest → placement/fragment) lane ---------------------
 
-// Demo-only stand-ins for the DE/PZN batch endpoint: candidate fragment refs
-// per placement id (the manifest's `placement` column — see
-// drafts/pzn-manifest.json). The mock hands one back as `copyData.pznblock`,
-// sticky per placement/visitor
-// (see mockPznRecommendation), so a reload shows a consistent but swappable
-// "engine decision" per slot — the same UX the old sticky-cell mock had,
-// moved from the manifest layer to the mock-engine layer.
-const PZN_MOCK_CANDIDATES = {
-  'pzn-hero-slot': [
-    '/drafts/fragments/pzn/hero-retail',
-    '/drafts/fragments/pzn/hero-hospitality',
-  ],
-  'pzn-offer-slot': [
-    '/drafts/fragments/pzn/offer-retail',
-    '/drafts/fragments/pzn/offer-hospitality',
-  ],
-};
-
-const PZN_MOCK_COOKIE_PREFIX = 'pzn-mock-';
+// Populated by resolveDecisions, read by renderDecision: selector -> this
+// selector's click-attribution params (see pznTrackingParams below), captured
+// off the SAME recommendation that produced the fragment so the click channel
+// (region-context registry — see tracking-context.js) agrees with whatever
+// content actually got swapped in.
+const pznContextCache = new Map();
 
 /**
- * Picks (and sticks) one of a placement's mock candidate fragment refs and
- * wraps it as a recommendation object shaped like a real DE/PZN entry.
- * @param {String} placement the placement id
- * @returns {Object|null} a `recommendation[]` element (see the real payload
- *   shape in the header comment), or null when this placement has no mock
- *   candidates configured (mirrors a real 204/no-offer miss)
+ * Builds a selector's click-attribution params from its recommendation (the
+ * same object `resolveDecisions` already read the fragment off of), for the
+ * region-context registry (tracking-context.js) — never DOM attributes.
+ * Prefers the normalized pzn-response.js record (`pznRecord`) when the
+ * recommendation is a real personalized offer (its `accessPoint && id`
+ * guard); falls back to the raw fields otherwise, since the demo mock's
+ * recommendation (see byo-mock.js `mockPznRecommendation`) has neither and so
+ * never satisfies that guard.
+ * @param {Object} rec the recommendation object (see pzn-response.js), never
+ *   null — callers only invoke this once a fragment was resolved from it
+ * @param {String} placement this entry's own placement id (fallback for a
+ *   recommendation that doesn't echo its own `placement` field)
+ * @returns {Object} the tracking params for this selector
  */
-function mockPznRecommendation(placement) {
-  const candidates = PZN_MOCK_CANDIDATES[placement];
-  if (!candidates || !candidates.length) return null;
-  const cookieName = `${PZN_MOCK_COOKIE_PREFIX}${placement}`;
-  const sticky = readCookie(cookieName);
-  const pznblock = (sticky && candidates.includes(sticky))
-    ? sticky
-    : candidates[Math.floor(Math.random() * candidates.length)];
-  writeCookie(cookieName, pznblock);
+function pznTrackingParams(rec, placement) {
+  const record = pznRecord(rec);
+  if (record) return { ...record };
   return {
-    copyData: { pznblock, contentId: pznblock },
-    placement,
-    offerId: `mock-offer-${placement}`,
-    experimentId: 'mock-experiment',
-    treatmentId: 'mock-treatment',
+    offerId: rec.offerId,
+    experimentId: rec.experimentId,
+    treatmentId: rec.treatmentId,
+    placement: rec.placement || placement,
   };
-}
-
-/**
- * Builds a canned DE/PZN batch response for the given placements, keyed
- * `<experience>_<placement>_<locale>` exactly like the real endpoint (see
- * pzn-response.js's header comment), so the parse path
- * (entryForSlot/recommendationOf/pznFragment) is exercised identically
- * whether the answer came from the real engine or this demo stand-in. A
- * placement with no mock candidates is simply omitted (same as a real miss).
- * @param {String[]} placements the placement ids to answer for
- * @returns {Object} a batch response object
- */
-function mockPznBatchResponse(placements) {
-  return placements.reduce((response, placement) => {
-    const rec = mockPznRecommendation(placement);
-    if (rec) {
-      response[`marketing_${placement}_en-US`] = {
-        data: { recommendations: { recommendation: [rec] }, experimentAssignments: [] },
-        placement,
-        status: 200,
-      };
-    }
-    return response;
-  }, {});
 }
 
 /**
@@ -210,12 +149,17 @@ export async function resolveDecisions(entries) {
       body: buildBatchBody(placements, undefined, zoominfo || {}),
     });
     if (!response && getMetadata('pzn-mock') === 'true') {
+      const { mockPznBatchResponse } = await import('./byo-mock.js');
       response = mockPznBatchResponse(placements);
     }
     if (!response) return {};
     return entries.reduce((decisions, entry) => {
-      const fragment = pznFragment(recommendationOf(entryForSlot(response, entry.placement)));
-      if (fragment) decisions[entry.selector] = { url: fragment };
+      const rec = recommendationOf(entryForSlot(response, entry.placement));
+      const fragment = pznFragment(rec);
+      if (fragment) {
+        decisions[entry.selector] = { url: fragment };
+        pznContextCache.set(entry.selector, pznTrackingParams(rec, entry.placement));
+      }
       return decisions;
     }, {});
   } catch {
@@ -224,92 +168,6 @@ export async function resolveDecisions(entries) {
 }
 
 // --- IXP (experiment-assignment) lane ---------------------------------------
-
-// Demo-only stand-in variation content for the mock's challenger arm — reuses
-// the very fragment the native `Experiment Variants` authoring used to point
-// to directly; only its ROLE changed (the ENGINE's answer points to it now,
-// not the authored metadata — see ixp-demo.html).
-const IXP_MOCK_VARIANT_PATH = '/drafts/fragments/experiments/hero-challenger-1';
-const IXP_MOCK_COOKIE_PREFIX = 'ixp-mock-';
-
-/**
- * Reads the plugin's own `?experiment=<id>/<arm>` QA override (see
- * getExperimentConfig in plugins/experimentation/src/index.js) when it names
- * THIS experiment. That override still wins the PLUGIN's own arm selection,
- * but the plugin now also invokes getAssignment for its resolution
- * side-effect even under the override (so an engine that stashes content per
- * call still runs — see the header comment). Letting the mock ALSO read this
- * override keeps the demo meaningful and internally consistent: without it,
- * the mock could independently stick to a DIFFERENT arm than the one the
- * plugin selected, so `?experiment=<id>/challenger-1` would show the engine's
- * variation content only sometimes instead of deterministically. A real
- * engine has no notion of this browser-only override, of course — it would
- * answer whatever it always answers, which is an accepted, documented
- * characteristic of a real BYO integration (see
- * plugins/experimentation/documentation/byo-decision-engine.md).
- * @param {String} experimentId the experiment id
- * @returns {'control'|'challenger'|null} the forced arm, or null when no
- *   override names this experiment
- */
-function forcedIxpArm(experimentId) {
-  const raw = new URLSearchParams(window.location.search).get('experiment');
-  if (!raw) return null;
-  const [id, arm] = raw.split('/');
-  if (id !== experimentId) return null;
-  if (arm === 'control') return 'control';
-  if (arm === 'challenger-1') return 'challenger';
-  return null;
-}
-
-/**
- * Builds one canned assignment for an experiment, shaped exactly like a real
- * IXP `assignments[]` entry — REPLACE_WEB_CONTENT (section/block fidelity,
- * see ixp-response.js `isReplace`; a page-fidelity mock would instead use a
- * `REDIRECT` type with a `payload`, both already handled by `ixpContentPath`).
- * Sticky per experiment/visitor (cookie) when not overridden, mirroring the
- * old sticky-arm demo mock's UX.
- * @param {String} experimentId the experiment id
- * @returns {Object} an assignment record
- */
-function mockIxpAssignment(experimentId) {
-  const cookieName = `${IXP_MOCK_COOKIE_PREFIX}${experimentId}`;
-  const forced = forcedIxpArm(experimentId);
-  const sticky = readCookie(cookieName);
-  let control;
-  if (forced) {
-    control = forced === 'control';
-  } else if (sticky) {
-    control = sticky === 'control';
-  } else {
-    control = Math.random() < 0.5;
-  }
-  writeCookie(cookieName, control ? 'control' : 'challenger');
-  return {
-    experimentId,
-    experimentType: 'REPLACE_WEB_CONTENT',
-    control,
-    treatmentId: control ? 0 : 837766,
-    treatmentKey: control ? 'CONTROL' : 'IXP1_T_837766',
-    payload: null,
-    assetLocation: control ? null : IXP_MOCK_VARIANT_PATH,
-  };
-}
-
-/**
- * Builds a canned IXP response envelope for one experiment, shaped exactly
- * like the real `/ixp` endpoint (see the header comment) so ixp-response.js's
- * `isReplace`/`ixpContentPath` exercise the same parse path a real Intuit
- * answer would.
- * @param {String} experimentId the experiment id
- * @returns {{ivid: String, transactionId: String, assignments: Object[]}}
- */
-function mockIxpResponse(experimentId) {
-  return {
-    ivid: resolveIvid() || null,
-    transactionId: `mock-${Date.now()}`,
-    assignments: [mockIxpAssignment(experimentId)],
-  };
-}
 
 // Populated by getAssignment, read by renderDecision: experimentId -> the
 // engine's own variation content ref (`assetLocation`, or a redirect
@@ -322,6 +180,16 @@ function mockIxpResponse(experimentId) {
 // the first place, see createModificationsHandler), so renderDecision leaves
 // the control content in place.
 const ixpContentCache = new Map();
+
+// Populated by getAssignment, read by renderDecision: experimentId -> this
+// experiment's click-attribution identity, captured off the SAME assignment
+// that produced the stashed content above so the click channel (region-
+// context registry — see tracking-context.js) agrees with it. Unlike
+// ixpContentCache, this is set for BOTH arms (control included — exposure
+// still matters for a control region), even though renderDecision only ever
+// consumes it on the challenger path (see the "plugin never routes [control]
+// to renderDecision" note above).
+const ixpContextCache = new Map();
 
 // Memoized once per experiment id: resolves to the raw IXP assignment record
 // (or null). getAssignment is invoked once per metadata block that names an
@@ -346,6 +214,7 @@ function resolveIxpAssignment(experimentId) {
       try {
         let response = await fetchDecision(`ixp?${ixpParams(experimentId)}`);
         if (!response && getMetadata('ixp-mock') === 'true') {
+          const { mockIxpResponse } = await import('./byo-mock.js');
           response = mockIxpResponse(experimentId);
         }
         return response?.assignments?.[0] || null;
@@ -372,6 +241,10 @@ function resolveIxpAssignment(experimentId) {
  * Never throws — resolves `null` (self-bucket) on any failure, in which case
  * nothing is stashed either (see renderDecision's "no stashed content ->
  * leave control" behavior).
+ * Also captures the assignment's click-attribution identity into
+ * ixpContextCache (see its own comment above) for renderDecision to publish
+ * via registerRegionContext — same "always runs" reasoning applies, so this
+ * is populated by the time renderDecision runs too.
  * @param {String} experimentId the experiment id (the page/section
  *   `Experiment` metadata value)
  * @returns {Promise<String|null>} `control`/`challenger-1`, or `null` to let
@@ -388,6 +261,12 @@ export async function getAssignment(experimentId) {
     } else {
       ixpContentCache.delete(experimentId);
     }
+    ixpContextCache.set(experimentId, {
+      experimentId,
+      treatmentId: assignment.treatmentId,
+      treatmentKey: assignment.treatmentKey,
+      control: assignment.control,
+    });
     return assignment.control ? 'control' : 'challenger-1';
   } catch {
     return null;
@@ -449,16 +328,18 @@ async function applyRawFragment(el, ref) {
  * Never throws — a failed/missing lookup just leaves the target's existing
  * (default/control) content in place.
  *
- * KNOWN GAP: unlike the (kept) page-level pzn.js/exp.js paths, this hook does
- * NOT stamp `data-pzn`/`data-experiment` attributes or record
- * window.appVars entries for the applied content — section/block click
- * attribution is intentionally not wired here. It lands via the Option B
- * region-keyed tracking registry (see clicktrack-optionb) instead of DOM
- * data-attributes at rest; no stopgap DOM stamping is planned for this path.
+ * Unlike the (kept) page-level pzn.js/exp.js paths, this hook does NOT stamp
+ * `data-pzn`/`data-experiment` attributes or record window.appVars entries
+ * for the applied content — section/block click attribution is published to
+ * the region-context registry instead (registerRegionContext, see
+ * tracking-context.js), keyed off the element that content just landed on.
+ * The click-tracking runtime (Option B, clicktrack-optionb branch) resolves
+ * the nearest registered ancestor at interaction time and folds it into
+ * `custom_properties`; no DOM stamping happens on this path.
  * @param {HTMLElement} el the element to update (the matched selector's
  *   element, or the section/page root for an experiment)
- * @param {{url: String, scope: String, config: Object}} decision the resolved
- *   decision
+ * @param {{url: String, scope: String, config: Object, selector: String}}
+ *   decision the resolved decision
  * @returns {Promise<void>}
  */
 export async function renderDecision(el, decision) {
@@ -466,10 +347,16 @@ export async function renderDecision(el, decision) {
     if (decision?.scope === 'section' || decision?.scope === 'page') {
       const experimentId = decision?.config?.id;
       const contentPath = experimentId ? ixpContentCache.get(experimentId) : undefined;
-      if (contentPath) await applyRawFragment(el, contentPath);
+      if (contentPath && await applyRawFragment(el, contentPath)) {
+        const ctx = ixpContextCache.get(experimentId);
+        if (ctx) registerRegionContext(el, { source: 'ixp', ...ctx });
+      }
       return;
     }
-    if (decision?.url) await applyFragment(el, decision.url);
+    if (decision?.url && await applyFragment(el, decision.url)) {
+      const ctx = decision.selector ? pznContextCache.get(decision.selector) : null;
+      if (ctx) registerRegionContext(el, { source: 'pzn', ...ctx });
+    }
   } catch {
     // fail-open — leave the default/control content in place
   }
