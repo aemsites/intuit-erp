@@ -153,13 +153,13 @@
   gap: 24px;
 }
 
-@media (width >=769px) and (width <=899px) {
+@media (width >=769px) and (width <=1023px) {
   .media-text.cyan .media-row {
     margin-inline: -20px;
   }
 }
 
-@media (width >=900px) {
+@media (width >=1024px) {
   .media-text.cyan .media-row {
     padding-inline: 115px;
     gap: 116px;
@@ -527,7 +527,7 @@
   }
 }
 
-@media (width <=745px) {
+@media (width <=768px) {
   .media-text-container:has(.media-text.compare) .default-content-wrapper h2 {
     font-size: 28px;
   }

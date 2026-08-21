@@ -71,7 +71,7 @@
 
 @media (768px <= width <= 1023px) { .stat-band { --cards-per-view: 2; } }
 
-@media (1024px <= width <= 1279px) { .stat-band { --cards-per-view: 3; } }
+@media (1024px <= width <= 1199px) { .stat-band { --cards-per-view: 3; } }
 
 /* --- .stat-band.dark (pricing "Data-backed performance") --- */
 .section.stat-band-container:has(.stat-band.dark) { background: var(--navy); padding: 120px 0 100px; }

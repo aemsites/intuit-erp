@@ -53,6 +53,7 @@ import {
 } from '../../scripts/aem.js';
 import { hasAuthoredCaseStudyHeader } from './blog-detect.js';
 import { loadIndex } from '../../scripts/content-index.js';
+import { MQ_DESKTOP_UP } from '../../scripts/breakpoints.js';
 
 /**
  * Selects the article's main H2 sections only — excludes headings nested
@@ -295,7 +296,7 @@ export function buildShare() {
  * @param {(() => void)|null} placeDesktop inserts `share` at its desktop
  *   position — null when there's no TOC rail to move it into, in which case
  *   it stays at the mobile position at every width
- * @param {MediaQueryList} mq matchMedia('(min-width: 900px)')
+ * @param {MediaQueryList} mq matchMedia(MQ_DESKTOP_UP) (see scripts/breakpoints.js)
  */
 export function relocateShare(share, placeMobile, placeDesktop, mq) {
   const place = (isDesktop) => {
@@ -325,7 +326,7 @@ export { isBlogPage } from './blog-detect.js';
  * @param {HTMLElement} tocWrap the `.blog-toc-rail` wrapper (collapse target)
  * @param {HTMLElement} nav the `.blog-toc` nav returned by buildToc
  * @param {HTMLHeadingElement[]} headings the H2s the nav links to, in order
- * @param {MediaQueryList} mq matchMedia('(min-width: 900px)')
+ * @param {MediaQueryList} mq matchMedia(MQ_DESKTOP_UP) (see scripts/breakpoints.js)
  */
 function wireToc(tocWrap, nav, headings, mq) {
   const toggle = nav.querySelector('.blog-toc-toggle');
@@ -634,7 +635,7 @@ export function buildBlogTemplate(main) {
   // insert the toc-rail/right-rail wrappers — tocRailRowEnd needs this to
   // find which grid row the last TOC-eligible section lands in.
   const sections = [...main.querySelectorAll(':scope > div')];
-  const desktopMQ = window.matchMedia('(min-width: 900px)');
+  const desktopMQ = window.matchMedia(MQ_DESKTOP_UP);
 
   // 1. hero (section 1): eyebrow before the H1, byline meta after it, hero
   //    image left in place (last) — natural DOM order so mobile needs no
@@ -723,7 +724,8 @@ export function buildBlogTemplate(main) {
   }
 
   // 5. share widget — a single element relocated between the hero (mobile)
-  //    and the top of the TOC rail (desktop) as the viewport crosses 900px.
+  //    and the top of the TOC rail (desktop) as the viewport crosses the
+  //    desktop breakpoint (see scripts/breakpoints.js).
   const share = buildShare();
   relocateShare(
     share,

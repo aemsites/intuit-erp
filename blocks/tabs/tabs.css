@@ -24,7 +24,7 @@
   text-align: center;
 }
 
-@media (width >= 900px) {
+@media (width >= 1024px) {
   .tabs-container:has(.tabs:not(.vertical, .pill, .navy)) .default-content-wrapper h2 {
     font-size: 40px; line-height: 52px; font-weight: 500; text-align: center; margin: 0 0 40px;
   }
@@ -150,7 +150,7 @@
 .tabs .tab-quote blockquote::before { content: none; }
 .tabs .tab-quote cite { display: block; font-style: normal; font-size: 14px; color: #393a3d; opacity: 0.8; }
 
-@media (width >= 900px) {
+@media (width >= 1024px) {
   .tabs .tab-nav { display: none; }
 
   .tabs > .tab-bar > .tabs { overflow-x: visible; }
@@ -614,7 +614,7 @@
   }
 }
 
-@media (width >= 900px) {
+@media (width >= 1024px) {
   .tabs.pill .vt-panel.is-active {
     display: flex;
     gap: 48px;
@@ -667,7 +667,7 @@ main > .section.tabs-container:has(.tabs.navy) > div { padding: 0; }
   text-align: center; margin: 0 auto;
 }
 
-@media (width >= 600px) {
+@media (width >= 768px) {
   .tabs-container:has(.tabs.navy) .default-content-wrapper p { padding: 0 60px; }
 }
 
@@ -801,11 +801,11 @@ main > .section.tabs-container:has(.tabs.navy) > div { padding: 0; }
   opacity: 0.9;
 }
 
-@media (width >= 600px) {
+@media (width >= 768px) {
   main > .section.tabs-container:has(.tabs.navy) { padding-bottom: 60px; }
 }
 
-@media (width >= 900px) {
+@media (width >= 1024px) {
   main > .section.tabs-container:has(.tabs.navy) { padding: 120px 20px 60px; }
 
   .tabs-container:has(.tabs.navy) .default-content-wrapper h2 { font-size: 34px; line-height: 1.4; }

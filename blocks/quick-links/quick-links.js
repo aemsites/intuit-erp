@@ -13,10 +13,12 @@
  * CSS: blocks/quick-links/quick-links.css
  */
 
+import { MQ_TABLET_UP } from '../../scripts/breakpoints.js';
+
 // production chevron (viewBox/path copied verbatim)
 const CHEVRON = '<svg width="31" height="15" viewBox="0 0 31 15" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><path d="M2 2L12.7254 12.3282C14.2744 13.8198 16.7256 13.8198 18.2746 12.3282L29 2" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
-const DESKTOP = window.matchMedia('(min-width: 768px)');
+const DESKTOP = window.matchMedia(MQ_TABLET_UP);
 
 // unique suffix per block so multiple quick-links on one page don't collide
 let instance = 0;
