@@ -707,8 +707,8 @@ export function buildBlogTemplate(main) {
   // 3b. hear-from-our-customers + pricing-disclaimer — trailing full-width
   //     bands every article gets by default (same fragment autoblock loads
   //     them); see injectFragmentSection for the override/dedupe rules.
-  injectFragmentSection(main, 'hear-from-our-customers', '/fragments/hear-from-our-customers', ['full-bleed']);
-  injectFragmentSection(main, 'pricing-disclaimer', '/fragments/pricing-disclaimer');
+  injectFragmentSection(main, 'hear-from-our-customers', '/fragments/hear-from-our-customers', ['full-bleed', 'hear-from-our-customers']);
+  injectFragmentSection(main, 'pricing-disclaimer', '/fragments/pricing-disclaimer', ['full-bleed', 'pricing-disclaimer']);
 
   // 4. desktop sticky rails should unstick at the end of the article body,
   //    not overlap trailing appendix sections (e.g. "Recommended for you")

@@ -999,6 +999,10 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
 .blog-article > .section.full-bleed {
   grid-column: 1 / -1;
 
+  .default-content-wrapper {
+    margin: 0;
+  }
+
   .section > div {
     max-width: var(--container);
     margin: 0 auto;
