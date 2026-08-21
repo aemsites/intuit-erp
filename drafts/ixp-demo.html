@@ -23,7 +23,7 @@
     (plugins/experimentation/tests/fixtures/experiments/section-level.html),
     which uses the identical raw-div shape authored below.
 
-    This page carries NO `audience-manifest` / `data-pzn` / `data-exp` marker —
+    This page carries NO `decisions-manifest` / `data-pzn` / `data-exp` marker —
     it is IXP-only, exercising only the plugin's native experiment path via the
     `getAssignment` BYO hook (scripts/personalization/byo.js), never Intuit's
     existing pzn.js/exp.js path nor the placement-resolution manifest lane
@@ -71,7 +71,9 @@
       from the engine's own answer, never from that href.</p>
       <p>Try <code>?experiment=ixp-hero-test/challenger-1</code> or
       <code>?experiment=ixp-hero-test/control</code> to force an arm (the plugin's own QA
-      override, unchanged — upstream of getAssignment entirely), or no parameter at all to
+      override — it still wins the plugin's own arm selection/attribution, but now also
+      invokes <code>getAssignment</code> for its resolution side-effect, so the engine's
+      content is still available to render under a forced arm), or no parameter at all to
       see the mock engine's assignment (sticky per experiment — persisted in an
       <code>ixp-mock-ixp-hero-test</code> cookie) — reload a few times with no parameter and
       the same arm keeps showing. Open devtools while loading to confirm there are no

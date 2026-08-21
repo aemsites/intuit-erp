@@ -3,8 +3,8 @@
   "offset": 0,
   "limit": 2,
   "data": [
-    { "page": "/drafts/pzn-cell-demo", "selector": ".pzn-hero", "audience": "remote", "url": "pzn-hero-slot" },
-    { "page": "/drafts/pzn-cell-demo", "selector": ".pzn-offer", "audience": "remote", "url": "pzn-offer-slot" }
+    { "page": "/drafts/pzn-cell-demo", "selector": ".pzn-hero", "placement": "pzn-hero-slot" },
+    { "page": "/drafts/pzn-cell-demo", "selector": ".pzn-offer", "placement": "pzn-offer-slot" }
   ],
   ":type": "sheet"
 }

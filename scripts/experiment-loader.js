@@ -1,8 +1,11 @@
 /**
- * Checks if experimentation is enabled.
+ * Checks if experimentation is enabled. Includes the `decisions-manifest`
+ * metadata (see plugins/experimentation/src/index.js `serveDecisions`) so a
+ * page that uses ONLY the decisions-manifest lane — no experiment/campaign/
+ * audience metadata at all — still loads the plugin.
  * @returns {boolean} True if experimentation is enabled, false otherwise.
  */
-const isExperimentationEnabled = () => document.head.querySelector('[name^="experiment"],[name^="campaign-"],[name^="audience-"],[property^="campaign:"],[property^="audience:"]')
+const isExperimentationEnabled = () => document.head.querySelector('[name^="experiment"],[name^="campaign-"],[name^="audience-"],[name="decisions-manifest"],[property^="campaign:"],[property^="audience:"]')
   || [...document.querySelectorAll('.section-metadata div')].some((d) => d.textContent.match(/Experiment|Campaign|Audience/i));
 
 /**

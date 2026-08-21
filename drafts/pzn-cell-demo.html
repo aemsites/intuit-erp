@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <title>Personalization placement-resolution demo</title>
   <!--
-    `audience-manifest` normally comes from an authored "Metadata" block (a
+    `decisions-manifest` normally comes from an authored "Metadata" block (a
     name/value table) that the real CMS pipeline lifts into a <meta> tag here.
     Verified empirically that `aem up --html-folder drafts` serves static files
     verbatim (no pipeline step converts a Metadata block, and no .plain.html is
@@ -13,10 +13,10 @@
     is actually served locally (confirmed via curl: /drafts/parity-probe -> 200,
     /parity-probe -> 401).
   -->
-  <meta name="audience-manifest" content="/drafts/pzn-manifest.json">
+  <meta name="decisions-manifest" content="/drafts/pzn-manifest.json">
   <!--
     `aem up --html-folder drafts` can't serve a real /api/pzn, so this demo
-    opts in to byo.js's canned-response fallback (see resolvePznPlacementCache
+    opts in to byo.js's canned-response fallback (see resolveDecisions
     / mockPznBatchResponse in scripts/personalization/byo.js). A real
     deployment never sets this, and a real /api/pzn (or `pzn-api-base`
     override) always wins over the mock when present — see fetchDecision in
@@ -33,20 +33,24 @@
     <div>
       <h1>Placement-resolution personalization demo</h1>
       <p>This page wires Intuit's Decision Engine onto the vendored aem-experimentation
-      plugin's bring-your-own manifest mechanism, using the <strong>frozen-API</strong>
-      model: Intuit's <code>/pzn</code> endpoint returns CONTENT (a fragment ref, in
+      plugin's <code>decisions-manifest</code> lane — a first-class "engine returns content
+      per slot" mechanism, using the <strong>frozen-API</strong> model: Intuit's
+      <code>/pzn</code> endpoint returns CONTENT (a fragment ref, in
       <code>copyData.pznblock</code>), not a cell name for authoring to map. So the
       published manifest sheet below only declares a <strong>placement id</strong> per
       selector (a key into the Decision Engine's batch response, not a fragment path), and
-      <code>scripts/personalization/byo.js</code>'s <code>resolveAudiences</code> issues
-      ONE batched call for every placement on the page and caches what the engine hands
-      back; <code>renderDecision</code> applies THAT cached fragment, never the manifest's
-      own "url" directly.</p>
-      <p>Try <code>?audience=anything-else</code> to force the plugin's own upstream QA
-      override to a miss (deterministically shows the default content below, bypassing the
-      engine entirely), or no parameter at all to see the mock engine's pick for each slot
-      (sticky per placement — persisted in <code>pzn-mock-&lt;placement&gt;</code> cookies).
-      Open devtools while loading to confirm there are no console errors.</p>
+      <code>scripts/personalization/byo.js</code>'s <code>resolveDecisions</code> hook is
+      called ONCE with every row on the page, issues a single batched call for every
+      distinct placement, and returns the resolved fragment straight back to the plugin
+      (<code>{ [selector]: { url } }</code>) — the plugin applies it itself, no cache/lookup
+      needed on this lane.</p>
+      <p>This lane is off the audience system entirely, so there is no
+      <code>?audience=</code> override to try here (see the IXP demo for the
+      <code>?experiment=</code> override instead) — reload with no parameters to see the
+      mock engine's pick for each slot (sticky per placement — persisted in
+      <code>pzn-mock-&lt;placement&gt;</code> cookies); clear/flip those cookies (or just
+      reload enough times) to see the content change. Open devtools while loading to
+      confirm there are no console errors.</p>
     </div>
     <div>
       <div class="pzn-hero">
@@ -78,7 +82,7 @@
       Neither the hero nor the offer slot above carries a <code>data-pzn</code>,
       <code>data-exp</code>, or <code>personalization-id</code> marker, so this page never
       touches Intuit's existing pzn.js/exp.js path — it exercises only the plugin's own
-      audience-manifest mechanism.</p>
+      decisions-manifest mechanism.</p>
       <p>See <code>drafts/pzn-manifest.json</code> for the published sheet (selector -&gt;
       placement id), and <code>drafts/fragments/pzn/</code> for the candidate fragments the
       demo mock engine can return for each placement.</p>

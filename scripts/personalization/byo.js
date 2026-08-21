@@ -1,12 +1,15 @@
 // Bring-your-own decision engine hooks for the vendored aem-experimentation
 // plugin (plugins/experimentation/src/index.js). Two lanes share this file:
-// - PZN (personalization): a published manifest sheet (`audience-manifest`
-//   metadata) declares which selector maps to which PZN *placement* — the
-//   manifest's `url` column is a placement id, a key into the Decision
-//   Engine's batch response, NOT a fragment path. `resolveAudiences` issues
-//   ONE batched `/pzn` call for every placement declared on the page and
-//   caches each placement's returned fragment ref (`copyData.pznblock`);
-//   `renderDecision` applies whatever got cached for THAT placement.
+// - PZN (personalization): a published manifest sheet (`decisions-manifest`
+//   metadata) declares which selector maps to which PZN *placement* (a
+//   `placement` column — a key into the Decision Engine's batch response,
+//   NOT a fragment path). The plugin's own `serveDecisions` reads that
+//   manifest and calls `resolveDecisions` below ONCE for every row on the
+//   page; this hook issues ONE batched `/pzn` call for every distinct
+//   placement declared and returns `{ [selector]: { url: pznblock } }`
+//   directly — the plugin applies each selector's returned fragment itself
+//   (see `renderDecision`'s fragment branch below), no cache/lookup needed on
+//   this lane.
 // - IXP (experiment-assignment): a natively-authored `Experiment` /
 //   `Experiment Variants` block still owns *whether* an experiment runs, but
 //   the authored variant "url" is now just a placeholder key (see
@@ -17,18 +20,30 @@
 //
 // This is the frozen-API model: Intuit's decision APIs return CONTENT (a
 // fragment ref, or a variation asset/redirect path) rather than a cell/arm
-// name for authoring to map to content. So, compared to a naive BYO
-// integration where the engine only answers "which cell/arm" and authoring
-// owns "what content", this file inverts that:
-//   - resolveAudiences / getAssignment don't just answer a yes/no or an arm
-//     name — they make the real call and CACHE what the engine handed back.
-//   - renderDecision never applies `decision.url` verbatim (under this model
-//     it is only ever a placement id or a placeholder key, never markup) —
-//     it looks up what got cached above and applies THAT instead.
+// name for authoring to map to content. The IXP lane still needs the
+// inversion this implies (compared to a naive BYO integration where the
+// engine only answers "which cell/arm" and authoring owns "what content"):
+//   - getAssignment doesn't just answer an arm name — it makes the real call
+//     and CACHES what the engine handed back so renderDecision can apply it.
+//   - renderDecision never applies an IXP decision's `url` verbatim (it is
+//     only ever a placeholder key on that lane) — it looks up what got
+//     cached above and applies THAT instead.
+// The PZN lane needs no such inversion: `resolveDecisions` hands back the
+// real fragment ref directly (`{ [selector]: { url } }`), which is exactly
+// the shape the plugin's `serveDecisions` (and this file's `renderDecision`
+// fragment branch) already expect — see
+// plugins/experimentation/documentation/byo-decision-engine.md.
+//
 // The plugin still owns discovery (the manifest / `Experiment` metadata),
 // phase orchestration, exposure (rumTracking) and the QA overrides
-// (`?audience=`, `?experiment=<id>/<arm>`) exactly as before — none of that
-// changes here.
+// (`?audience=`, `?experiment=<id>/<arm>`) as before, with one addition: the
+// overrides now still invoke the configured hook for its resolution
+// side-effect even though the override itself wins the plugin's own
+// selection (see plugins/experimentation/src/index.js `getResolvedAudiences`
+// / `getExperimentConfig`) — so `getAssignment` always runs when configured,
+// and this file no longer needs a lazy fallback to resolve IXP content under
+// a forced arm (see renderDecision below). `resolveDecisions` has no
+// override to bypass, so the PZN lane is unaffected by this.
 //
 // All hooks are fail-open and must never throw out of the plugin's call site
 // (see plugins/experimentation/src/index.js `getResolvedAudiences` /
@@ -86,11 +101,12 @@ function writeCookie(name, value) {
   }
 }
 
-// --- PZN (placement/fragment) lane -----------------------------------------
+// --- PZN (decisions-manifest → placement/fragment) lane ---------------------
 
 // Demo-only stand-ins for the DE/PZN batch endpoint: candidate fragment refs
-// per placement id (the manifest's `url` column — see drafts/pzn-manifest.json).
-// The mock hands one back as `copyData.pznblock`, sticky per placement/visitor
+// per placement id (the manifest's `placement` column — see
+// drafts/pzn-manifest.json). The mock hands one back as `copyData.pznblock`,
+// sticky per placement/visitor
 // (see mockPznRecommendation), so a reload shows a consistent but swappable
 // "engine decision" per slot — the same UX the old sticky-cell mock had,
 // moved from the manifest layer to the mock-engine layer.
@@ -158,126 +174,49 @@ function mockPznBatchResponse(placements) {
 }
 
 /**
- * True when a manifest row applies to the current page: no `page`/`pages`
- * column at all (applies everywhere), or an exact match. Mirrors the
- * plugin's own page filter in `getManifestEntriesForCurrentPage`
- * (plugins/experimentation/src/index.js) since this hook re-reads the same
- * manifest independently (see loadManifestPlacements below) rather than
- * receiving the plugin's already-filtered/parsed entries.
- * @param {Object} row a raw manifest row
- * @returns {Boolean} true when the row applies to the current page
+ * BYO `resolveDecisions` hook: the plugin's decisions-manifest lane (see
+ * `serveDecisions` in plugins/experimentation/src/index.js) hands us every
+ * row declared for the current page in ONE call — each row carries this
+ * integration's own `placement` column (see drafts/pzn-manifest.json), a key
+ * into the Decision Engine's batch response, NOT a fragment path. This makes
+ * ONE batched Decision Engine call for every distinct placement across those
+ * rows (falling back to a canned mock when the real endpoint is absent and
+ * the page opts in via `pzn-mock`), then maps each row's OWN placement back
+ * to its fragment ref. Unlike the audience-manifest lane this replaces, the
+ * plugin applies the returned fragment itself — there is no cache for
+ * `renderDecision` to look up on this lane anymore (see its fragment branch
+ * below). The plugin also calls this with a second `context` argument; it is
+ * unused here for the same reason as the other hooks in this file — the
+ * batched call's attributes are already sourced from the page itself (see
+ * attributes.js buildPznAttributes). Never throws — resolves `{}` (no
+ * selector proceeds; every slot keeps its default authored content) on any
+ * failure.
+ * @param {Object[]} entries the decisions-manifest rows for this page, each
+ *   with at least `selector` and this integration's own `placement` column
+ * @returns {Promise<{[selector: string]: {url: String}}>} the resolved
+ *   fragment per selector, or `{}` on a miss/failure
  */
-function manifestRowAppliesToPage(row) {
-  const here = window.location.pathname;
-  return (!row.page && !row.pages) || row.page === here || row.pages === here;
-}
-
-/**
- * Reads the page's `audience-manifest` sheet and collects every placement id
- * declared for the current page — the manifest's `url` column (a placement
- * id, not a fragment ref; see the header comment). Every selector on the page
- * shares this one manifest, so the full placement set is gathered once here
- * and batched in a single Decision Engine call (see resolvePznPlacementCache).
- * @returns {Promise<String[]>} the de-duplicated placement ids for this page,
- *   or `[]` when no manifest is configured or it can't be read
- */
-async function loadManifestPlacements() {
-  const manifestUrl = getMetadata('audience-manifest');
-  if (!manifestUrl) return [];
+export async function resolveDecisions(entries) {
   try {
-    const url = new URL(manifestUrl, window.location.origin);
-    const res = await fetch(url.pathname);
-    if (!res.ok) return [];
-    const json = await res.json();
-    const rows = Array.isArray(json?.data) ? json.data : [];
-    return [...new Set(
-      rows.filter(manifestRowAppliesToPage).map((row) => row.url).filter(Boolean),
-    )];
-  } catch {
-    return [];
-  }
-}
-
-// Memoized once per page: resolves to a `Map<placement, pznblock>` built from
-// a SINGLE batched `/pzn` call covering every placement the manifest declares
-// for this page. Every selector's resolveAudiences call below awaits this
-// same promise instead of each re-fetching the manifest and re-issuing the
-// batch call (mirrors the one-call-per-page intent the prior per-endpoint
-// memoized resolver had).
-let pznPlacementCache = null;
-
-/**
- * Does the actual PZN resolution work: reads the manifest for this page's
- * placements, issues ONE batched Decision Engine call for all of them
- * (falling back to a canned mock when the real endpoint is absent and the
- * page opts in via `pzn-mock`), and caches each placement's fragment ref.
- * A single batch call is preferred (and sufficient here — `buildBatchBody`
- * already accepts arbitrarily many placements in one request); there is no
- * per-placement fallback because there is no structural reason to need one.
- * @returns {Promise<Map<String, String>>} placement id -> fragment ref
- */
-async function resolvePznPlacementCache() {
-  const placements = await loadManifestPlacements();
-  if (!placements.length) return new Map();
-  // Enrich the batch attributes with the visitor's marketing profile (ZoomInfo
-  // firmographics etc.), exactly as scripts/pzn.js does, so the engine decides on
-  // the same inputs on both paths. Fail-open (null) → the batch goes unenriched.
-  const zoominfo = await getMarketingProfile();
-  let response = await fetchDecision('pzn', {
-    method: 'POST',
-    body: buildBatchBody(placements, undefined, zoominfo || {}),
-  });
-  if (!response && getMetadata('pzn-mock') === 'true') {
-    response = mockPznBatchResponse(placements);
-  }
-  const cache = new Map();
-  if (response) {
-    placements.forEach((placement) => {
-      const fragment = pznFragment(recommendationOf(entryForSlot(response, placement)));
-      if (fragment) cache.set(placement, fragment);
+    if (!Array.isArray(entries) || !entries.length) return {};
+    const placements = [...new Set(entries.map((entry) => entry.placement).filter(Boolean))];
+    if (!placements.length) return {};
+    // Enrich the batch attributes with the visitor's marketing profile (ZoomInfo
+    // firmographics etc.), exactly as scripts/pzn.js does, so the engine decides on
+    // the same inputs on both paths. Fail-open (null) → the batch goes unenriched.
+    const zoominfo = await getMarketingProfile();
+    let response = await fetchDecision('pzn', {
+      method: 'POST',
+      body: buildBatchBody(placements, undefined, zoominfo || {}),
     });
-  }
-  return cache;
-}
-
-/**
- * BYO `resolveAudiences` hook. Despite the name (fixed by the plugin's call
- * site), this no longer resolves audience membership: under the frozen-API
- * model the Decision Engine returns CONTENT, not a cell name for a manifest
- * to map, so there is nothing to "resolve" per audience. Instead this makes
- * the one real decision (the batched `/pzn` call, memoized per page — see
- * resolvePznPlacementCache) and answers every requested `remote` name
- * truthily so the manifest's declared selectors proceed to renderDecision,
- * which applies whatever THAT SPECIFIC placement got back (or leaves the
- * default when it got nothing — see renderDecision below). Note that the
- * plugin's own `?audience=<name>` QA override (getResolvedAudiences in
- * plugins/experimentation/src/index.js) answers directly from the override
- * WITHOUT calling this hook when the override names a configured audience
- * (e.g. `?audience=remote`) — renderDecision lazily starts the very same
- * batched resolution in that case, so a placement still resolves real content
- * either way (see renderDecision below). The plugin also calls this with a
- * second `context` argument (the shared decision context); it is unused here
- * since the batched call's attributes are already sourced from the page
- * itself (see attributes.js buildPznAttributes). Never throws — resolves `{}`
- * (no selector proceeds) on any failure, same as a real audience miss.
- * @param {String[]} names the candidate names configured for the current
- *   selector — always `['remote']` for this manifest (see
- *   drafts/pzn-manifest.json): a fixed marker meaning "this selector's
- *   content comes from the live engine", not a real audience to test
- *   membership in
- * @returns {Promise<{[name]: Boolean}>} truthy for every requested `remote`
- *   name once the batched call has run and found at least one recommendation
- *   on the page, or `{}` on a miss/failure
- */
-export async function resolveAudiences(names) {
-  try {
-    if (!Array.isArray(names) || !names.length) return {};
-    if (!pznPlacementCache) pznPlacementCache = resolvePznPlacementCache();
-    const cache = await pznPlacementCache;
-    if (!cache.size) return {};
-    return names.reduce((resolved, name) => {
-      if (name === 'remote') resolved[name] = true;
-      return resolved;
+    if (!response && getMetadata('pzn-mock') === 'true') {
+      response = mockPznBatchResponse(placements);
+    }
+    if (!response) return {};
+    return entries.reduce((decisions, entry) => {
+      const fragment = pznFragment(recommendationOf(entryForSlot(response, entry.placement)));
+      if (fragment) decisions[entry.selector] = { url: fragment };
+      return decisions;
     }, {});
   } catch {
     return {};
@@ -296,16 +235,18 @@ const IXP_MOCK_COOKIE_PREFIX = 'ixp-mock-';
 /**
  * Reads the plugin's own `?experiment=<id>/<arm>` QA override (see
  * getExperimentConfig in plugins/experimentation/src/index.js) when it names
- * THIS experiment. That override forces which arm the PLUGIN selects, but it
- * bypasses getAssignment entirely (same "answer without calling the hook"
- * shape as the `?audience=` override above) — so under the frozen-API model,
- * where content only shows up when the ENGINE actually returns it for an
- * arm, a forced `challenger-1` would otherwise have no engine content to
- * render. Letting the mock also see this override keeps the demo meaningful:
- * `?experiment=<id>/challenger-1` deterministically shows the engine's
- * variation content instead of only flipping plugin-side dataset/RUM
- * attribution. A real engine has no notion of this browser-only override, of
- * course — it would answer whatever it always answers.
+ * THIS experiment. That override still wins the PLUGIN's own arm selection,
+ * but the plugin now also invokes getAssignment for its resolution
+ * side-effect even under the override (so an engine that stashes content per
+ * call still runs — see the header comment). Letting the mock ALSO read this
+ * override keeps the demo meaningful and internally consistent: without it,
+ * the mock could independently stick to a DIFFERENT arm than the one the
+ * plugin selected, so `?experiment=<id>/challenger-1` would show the engine's
+ * variation content only sometimes instead of deterministically. A real
+ * engine has no notion of this browser-only override, of course — it would
+ * answer whatever it always answers, which is an accepted, documented
+ * characteristic of a real BYO integration (see
+ * plugins/experimentation/documentation/byo-decision-engine.md).
  * @param {String} experimentId the experiment id
  * @returns {'control'|'challenger'|null} the forced arm, or null when no
  *   override names this experiment
@@ -370,21 +311,25 @@ function mockIxpResponse(experimentId) {
   };
 }
 
-// Populated by getAssignment (or renderDecision's fallback below), read by
-// renderDecision: experimentId -> the engine's own variation content ref
-// (`assetLocation`, or a redirect payload's path — see ixpContentPath). No
-// entry means the engine gave no content for this experiment (a failure, or
-// a genuine control arm — which the plugin never routes to renderDecision in
+// Populated by getAssignment, read by renderDecision: experimentId -> the
+// engine's own variation content ref (`assetLocation`, or a redirect
+// payload's path — see ixpContentPath). getAssignment always runs now — the
+// plugin invokes it even under a forced `?experiment=<id>/<arm>` override
+// (see plugins/experimentation/src/index.js and the header comment) — so
+// this cache is always populated by the time renderDecision runs. No entry
+// means the engine gave no content for this experiment (a failure, or a
+// genuine control arm — which the plugin never routes to renderDecision in
 // the first place, see createModificationsHandler), so renderDecision leaves
 // the control content in place.
 const ixpContentCache = new Map();
 
 // Memoized once per experiment id: resolves to the raw IXP assignment record
-// (or null). Shared by getAssignment and renderDecision's fallback (see
-// below) so an experiment whose arm was forced via the plugin's own
-// `?experiment=<id>/<arm>` override — which bypasses getAssignment entirely —
-// still gets exactly ONE real/mock call, made lazily from renderDecision
-// instead, rather than either double-calling or never calling at all.
+// (or null). getAssignment is invoked once per metadata block that names an
+// experiment id — page-level, each section-level block, and (since the
+// plugin's `?experiment=<id>/<arm>` override now still invokes the hook for
+// its resolution side-effect rather than bypassing it) even under a forced
+// arm — so this memoization keeps multiple blocks/invocations referencing the
+// SAME experiment id down to exactly ONE real/mock call.
 const ixpAssignmentCache = new Map();
 
 /**
@@ -416,10 +361,14 @@ function resolveIxpAssignment(experimentId) {
  * BYO `getAssignment` hook: resolves this experiment's assignment (memoized —
  * see resolveIxpAssignment), stashes the engine's OWN variation content so
  * renderDecision has something to apply (see the header comment on the
- * frozen-API inversion), and reports the arm. The plugin also calls this
- * with a second `context` argument; it is unused here since the frozen
- * `/ixp` contract is a GET keyed only by experimentId/label + ivid (see
- * attributes.js ixpParams), with no room for the page url/consent flag.
+ * frozen-API inversion), and reports the arm. Now called on EVERY invocation
+ * of getExperimentConfig for an experiment this hook is configured for —
+ * including when the plugin's own `?experiment=<id>/<arm>` override forces
+ * the arm — so content is stashed before renderDecision ever needs it,
+ * whether or not the override wins the plugin's own selection. The plugin
+ * also calls this with a second `context` argument; it is unused here since
+ * the frozen `/ixp` contract is a GET keyed only by experimentId/label + ivid
+ * (see attributes.js ixpParams), with no room for the page url/consent flag.
  * Never throws — resolves `null` (self-bucket) on any failure, in which case
  * nothing is stashed either (see renderDecision's "no stashed content ->
  * leave control" behavior).
@@ -478,53 +427,42 @@ async function applyRawFragment(el, ref) {
 
 /**
  * BYO `renderDecision` hook: applies the winning decision's ENGINE-provided
- * content — never `decision.url` verbatim, which under the frozen-API model
- * is only ever a KEY (a PZN placement id) or a placeholder (an IXP variant
- * href), not markup — see the header comment. Shared by both lanes; `scope`
- * (always one of `fragment` / `section` / `page`, see
- * plugins/experimentation/src/index.js `applyDecision`) still picks the swap
- * strategy, exactly as before — only the URL/content *source* changed:
- * - `fragment` (PZN, manifest-driven, applied post-decoration via a
- *   MutationObserver): `decision.url` is the placement id; look up its
- *   cached `pznblock` (populated by resolveAudiences's batched call above —
- *   lazily started here too, in case the plugin's own `?audience=<name>`
- *   override answered resolveAudiences without ever calling it) and apply it
- *   with `applyFragment` — the same fail-open fragment-swap helper the Intuit
- *   pzn.js/exp.js paths already use. No recommendation for this placement (a
- *   real miss) -> leave the default authored content in place.
+ * content. Shared by both lanes; `scope` (always one of `fragment` /
+ * `section` / `page`, see plugins/experimentation/src/index.js
+ * `applyDecision`) picks the swap strategy:
+ * - `fragment` (PZN, decisions-manifest-driven, applied post-decoration via a
+ *   MutationObserver): `decision.url` is now the real fragment ref that
+ *   `resolveDecisions` above already resolved for this selector — no
+ *   cache/lookup needed on this lane anymore (see the header comment) — so
+ *   apply it directly with `applyFragment`, the same fail-open fragment-swap
+ *   helper the Intuit pzn.js/exp.js paths already use. No `url` (a real
+ *   miss — `resolveDecisions` didn't answer for this selector) -> leave the
+ *   default authored content in place.
  * - `section` / `page` (IXP, native-authoring, applied pre-decoration): look
  *   up the content getAssignment stashed for `decision.config.id` (the
- *   experiment id), falling back to resolving it right here (memoized — see
- *   resolveIxpAssignment) when getAssignment was bypassed entirely (the
- *   plugin's own `?experiment=<id>/<arm>` override, or a metadata-forced
- *   variant), and apply it with `applyRawFragment` above (to avoid
- *   double-decorating — see its doc comment). No content either way (a real
- *   failure, or a genuine control answer) -> leave control.
+ *   experiment id) — getAssignment always runs now, even under the plugin's
+ *   own `?experiment=<id>/<arm>` override (see the header comment), so this
+ *   cache is always populated by the time renderDecision runs — and apply it
+ *   with `applyRawFragment` above (to avoid double-decorating — see its doc
+ *   comment). No content (a real failure, or a genuine control answer) ->
+ *   leave control.
  * Never throws — a failed/missing lookup just leaves the target's existing
  * (default/control) content in place.
  * @param {HTMLElement} el the element to update (the matched selector's
  *   element, or the section/page root for an experiment)
  * @param {{url: String, scope: String, config: Object}} decision the resolved
- *   decision; `url` is now a KEY (a placement id or a placeholder), never
- *   markup — see the header comment
+ *   decision
  * @returns {Promise<void>}
  */
 export async function renderDecision(el, decision) {
   try {
     if (decision?.scope === 'section' || decision?.scope === 'page') {
       const experimentId = decision?.config?.id;
-      let contentPath = experimentId ? ixpContentCache.get(experimentId) : undefined;
-      if (!contentPath && experimentId) {
-        const assignment = await resolveIxpAssignment(experimentId);
-        contentPath = assignment ? ixpContentPath(assignment) : null;
-      }
+      const contentPath = experimentId ? ixpContentCache.get(experimentId) : undefined;
       if (contentPath) await applyRawFragment(el, contentPath);
       return;
     }
-    if (!pznPlacementCache) pznPlacementCache = resolvePznPlacementCache();
-    const cache = await pznPlacementCache;
-    const pznblock = cache.get(decision?.url);
-    if (pznblock) await applyFragment(el, pznblock);
+    if (decision?.url) await applyFragment(el, decision.url);
   } catch {
     // fail-open — leave the default/control content in place
   }
