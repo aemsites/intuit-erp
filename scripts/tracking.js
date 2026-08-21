@@ -469,7 +469,9 @@ export function stampTrail(scope = document) {
 export function resolveTrackable(target) {
   if (!target || !target.closest) return null;
   const cta = target.closest(CTA_SELECTOR);
-  if (!cta) return null;
+  // Pure-UI controls a code-built block opted out of (hamburger, flyout-back,
+  // accordion/country toggles) carry data-track-skip and are never tracked.
+  if (!cta || cta.closest('[data-track-skip]')) return null;
   const block = cta.closest(`[class*="${PREFIX}"]`);
   if (!block || !trackingKey(block)) return null;
   return { cta, block };
@@ -559,15 +561,19 @@ export function initTracking(scope = document) {
  * @param {Element} block
  * @param {{key?: string, itemSelector?: string,
  *   itemLabel?: (index: number, item: Element) => string,
- *   action?: string, object?: string, uiObject?: string, linkName?: boolean}} [opts]
+ *   action?: string, object?: string, uiObject?: string, linkName?: boolean, skip?: string}} [opts]
  *   `key` = the tracking-<key> opt-in + sheet key (defaults to `name`); `action`/`object`/
- *   `uiObject` = code-built payload defaults; `linkName:false` drops the derived link_name.
+ *   `uiObject` = code-built payload defaults; `linkName:false` drops the derived link_name;
+ *   `skip` = a selector for pure-UI controls to exclude from tracking (hamburger, toggles).
  * @returns {Element} the block (so it can be the decorate return value)
  */
 export function trackAs(name, block, {
-  key = name, itemSelector, itemLabel, action, object, uiObject: uiObjectDefault, linkName,
+  key = name, itemSelector, itemLabel, action, object, uiObject: uiObjectDefault, linkName, skip,
 } = {}) {
   if (!block) return block;
+  // Exclude pure-UI controls (a code-built block opts them out): marks matching
+  // descendants data-track-skip so resolveTrackable ignores them.
+  if (skip) block.querySelectorAll(skip).forEach((el) => el.setAttribute('data-track-skip', ''));
   // Opt the block into click tracking (reuses the tracking-<key> machinery so
   // the delegated handler JIT-stamps its CTAs + the sheet is looked up by <key>-<n>);
   // an authored opt-in is left as-is. `key` is required when `name` is falsy.

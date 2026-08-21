@@ -89,14 +89,19 @@ describe('computeTrackingPayload (re-verified 2026-08-20 tracker contract)', () 
     expect(computeTrackingPayload(document.getElementById('b')).ui_access_point).toBe('cta_block');
   });
 
-  it('falls ui_access_point back to "page" when the trail is empty INSIDE <main>', () => {
+  it('falls ui_access_point back to "page" when the trail is empty in the body', () => {
     document.body.innerHTML = '<main><button id="b" data-object="content" data-ui-access-point="">x</button></main>';
     expect(computeTrackingPayload(document.getElementById('b')).ui_access_point).toBe('page');
   });
 
-  it('falls ui_access_point back to "" when the trail is empty OUTSIDE <main> (header/global-nav)', () => {
+  it('falls ui_access_point back to "" inside <header> (global-nav reports empty)', () => {
     document.body.innerHTML = '<header><button id="b" data-object="content" data-ui-access-point="">x</button></header>';
     expect(computeTrackingPayload(document.getElementById('b')).ui_access_point).toBe('');
+  });
+
+  it('falls ui_access_point back to "page" in the <footer> (not empty like the header)', () => {
+    document.body.innerHTML = '<footer><a id="b" href="/x" data-object="content" data-ui-access-point="">x</a></footer>';
+    expect(computeTrackingPayload(document.getElementById('b')).ui_access_point).toBe('page');
   });
 
   it('omits ui_access_point entirely when data-ui-access-point is absent (no opt-in)', () => {

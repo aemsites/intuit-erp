@@ -312,6 +312,13 @@ export default async function decorate(block) {
   // ui_object is derived (link / link_icon for logos). The per-link residue
   // (data-wa-link like ies-nav:capabilities, object_detail like nav|capabilities)
   // and the primary "Schedule a call" CTA's action=interacted are authored
-  // residue supplied by the tracking sheet, not derivable here.
-  trackAs(null, block, { key: 'nav', action: 'engaged', linkName: false });
+  // residue supplied by the tracking sheet, not derivable here. Pure-UI controls
+  // (hamburger, flyout Back, secondary-nav toggle) are skipped — prod doesn't
+  // track them.
+  trackAs(null, block, {
+    key: 'nav',
+    action: 'engaged',
+    linkName: false,
+    skip: '.nav-toggle, .flyout-back, .secondary-nav-toggle',
+  });
 }

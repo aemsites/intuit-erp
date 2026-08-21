@@ -3,7 +3,7 @@ import {
   describe, it, expect, beforeEach,
 } from 'vitest';
 import {
-  trackAs, stampTrail, stampInteraction, resetTrackingState,
+  trackAs, stampTrail, stampInteraction, resetTrackingState, resolveTrackable,
 } from '../scripts/tracking.js';
 import decorateFaq from '../blocks/faq/faq.js';
 import { computeTrackingPayload } from '../scripts/diff/tracker-replica.mjs';
@@ -126,25 +126,45 @@ describe('self-made golden oracle — code-built surfaces (header/footer/video)'
     expectMatchesGolden(p, g.derivable, ['ui_object']);
   });
 
+  // Mirror the footer block's actual wiring (opt-in + legal-tier trail root).
+  const wireFooter = (block) => {
+    trackAs(null, block, { key: 'footer', linkName: false, skip: '.col-toggle, .country-toggle' });
+    block.querySelector('.ftr-legal')?.setAttribute('data-tracking', 'footer');
+    block.querySelector('.brand-logos')?.setAttribute('data-tracking', 'products');
+    block.querySelectorAll('.legal-links, .legal-copy, .legal-nav').forEach((s) => s.setAttribute('data-tracking', 'footer_bottom'));
+  };
+
   it('footer corporate brand -> content:interacted, trail footer|products', () => {
     const g = eventOf('/', 'footer-corporate-row');
     const p = runOurs(() => {
       document.body.innerHTML = '<footer><div class="footer block"><div class="ftr-legal"><div class="legal-center">'
         + '<div class="brand-logos"><a class="ftr-brand" href="https://turbotax.intuit.com/" aria-label="TurboTax"><svg></svg></a></div>'
         + '</div></div></div></footer>';
-      trackAs('footer', document.querySelector('.footer'), {
-        key: 'footer',
-        linkName: false,
-        itemSelector: '.brand-logos, .legal-links, .legal-copy, .footer-sitemap',
-        itemLabel: (i, el) => {
-          if (el.classList.contains('brand-logos')) return 'products';
-          if (el.classList.contains('footer-sitemap')) return 'footer_sitemap';
-          return 'footer_bottom';
-        },
-      });
+      wireFooter(document.querySelector('.footer'));
     }, '.brand-logos a');
     // icon-only brand mark derives link_icon; prod authors link (sheet residue).
     expectMatchesGolden(p, g.derivable, ['ui_object']);
+  });
+
+  it('footer authored column link -> content:interacted, ap=page (not under the footer root)', () => {
+    const p = runOurs(() => {
+      document.body.innerHTML = '<footer><div class="footer block"><div class="ftr-main"><div class="footer-cols">'
+        + '<div class="footer-col"><ul><li><a href="/about">About Intuit</a></li></ul></div>'
+        + '</div></div><div class="ftr-legal"></div></div></footer>';
+      wireFooter(document.querySelector('.footer'));
+    }, '.footer-col a');
+    expect(p.ui_access_point).toBe('page'); // footer sits outside <header> -> page fallback
+    expect(p.event).toBe('content:interacted');
+  });
+
+  it('pure-UI toggles are skipped (col-toggle / flyout-back not tracked)', () => {
+    resetTrackingState();
+    document.body.innerHTML = '<footer><div class="footer block"><div class="footer-cols">'
+      + '<div class="footer-col"><h2><button type="button" class="col-toggle">Company</button></h2></div>'
+      + '</div></div></footer>';
+    const block = document.querySelector('.footer');
+    trackAs(null, block, { key: 'footer', linkName: false, skip: '.col-toggle, .country-toggle' });
+    expect(resolveTrackable(block.querySelector('.col-toggle'))).toBeNull();
   });
 
   it('video play control -> video:started, object=video, ui_object=button, ap=page', () => {

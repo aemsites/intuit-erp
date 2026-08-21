@@ -234,19 +234,20 @@ export default async function decorate(block) {
   wireFooterSearch(block);
 
   // Click tracking (code-built chrome): footer links report action=interacted
-  // (the derive default). The chrome sections carry a nested trail off the
-  // "footer" root — brand marks -> footer|products, legal links -> footer|
-  // footer_bottom, sitemap -> footer|footer_sitemap; authored column/legal-nav
-  // links fall under the "footer" root. link_name is suppressed (prod omits it on
-  // footer links); per-link wa-link/object_detail is sheet residue.
-  trackAs('footer', block, {
-    key: 'footer',
-    linkName: false,
-    itemSelector: '.brand-logos, .legal-links, .legal-copy, .footer-sitemap',
-    itemLabel: (i, el) => {
-      if (el.classList.contains('brand-logos')) return 'products';
-      if (el.classList.contains('footer-sitemap')) return 'footer_sitemap';
-      return 'footer_bottom'; // .legal-links + .legal-copy (cookie row)
-    },
+  // (the derive default); link_name is suppressed (prod omits it on footer
+  // links); per-link wa-link/object_detail is sheet residue. Opt in WITHOUT a
+  // block-root trail so the authored column links fall back to "page" (matching
+  // prod's featured footer links), and skip the pure-UI toggles.
+  trackAs(null, block, { key: 'footer', linkName: false, skip: '.col-toggle, .country-toggle' });
+  // The legal tier is the "footer" trail root; its chrome sections add a segment
+  // (brand marks -> footer|products, legal links/copy -> footer|footer_bottom).
+  // The sitemap sits in the top tier and keeps its own footer_sitemap segment.
+  const legalTier = block.querySelector('.ftr-legal');
+  if (legalTier && !legalTier.hasAttribute('data-tracking')) legalTier.setAttribute('data-tracking', 'footer');
+  const stampSeg = (sel, seg) => block.querySelectorAll(sel).forEach((el) => {
+    if (!el.hasAttribute('data-tracking')) el.setAttribute('data-tracking', seg);
   });
+  stampSeg('.brand-logos', 'products');
+  stampSeg('.legal-links, .legal-copy, .legal-nav', 'footer_bottom');
+  stampSeg('.footer-sitemap', 'footer_sitemap');
 }
