@@ -108,9 +108,20 @@ describe('resolveTrackable', () => {
     expect(hit.cta.tagName).toBe('A');
     expect(hit.block.classList.contains('tracking-demo')).toBe(true);
   });
-  it('returns null outside an opted-in block', () => {
+  it('resolves a CTA outside any declared block (track-by-default) with block=null', () => {
     document.body.innerHTML = '<main><div class="cta block"><a href="#">X</a></div></main>';
+    const hit = resolveTrackable(document.querySelector('a'));
+    expect(hit).not.toBeNull();
+    expect(hit.cta.tagName).toBe('A');
+    expect(hit.block).toBeNull(); // loose content CTA -> page bucket
+  });
+  it('returns null outside the content regions (injected chrome at the body root)', () => {
+    document.body.innerHTML = '<div class="cookie block"><a href="#">Accept</a></div>';
     expect(resolveTrackable(document.querySelector('a'))).toBeNull();
+  });
+  it('returns null for a data-track-skip control (pure UI)', () => {
+    document.body.innerHTML = '<main><button class="nav-toggle" data-track-skip>menu</button></main>';
+    expect(resolveTrackable(document.querySelector('button'))).toBeNull();
   });
   it('returns null when the target is not a CTA', () => {
     document.body.innerHTML = '<main><div class="cta block tracking-demo"><p>text</p></div></main>';
@@ -134,8 +145,17 @@ describe('stampInteraction (JIT stamp on interaction)', () => {
     expect(a.getAttribute('data-ui-access-point')).toBe(''); // opt-in by presence
   });
 
-  it('no-ops for a target outside an opted-in block', () => {
-    document.body.innerHTML = '<main><div class="cta block"><a href="#">X</a></div></main>';
+  it('stamps a block-less content CTA (track-by-default, page bucket)', () => {
+    document.body.innerHTML = '<main><div class="cta block"><a href="#">Read more</a></div></main>';
+    const a = document.querySelector('a');
+    stampInteraction({ target: a });
+    expect(a.getAttribute('data-object')).toBe('content'); // pure-derive default
+    expect(a.getAttribute('data-ui-object-detail')).toBe('Read more');
+    expect(a.getAttribute('data-ui-access-point')).toBe(''); // opt-in present -> trail computed to "page"
+  });
+
+  it('no-ops for a target outside the content regions', () => {
+    document.body.innerHTML = '<div class="cookie"><a href="#">Accept</a></div>';
     const a = document.querySelector('a');
     stampInteraction({ target: a });
     expect(a.hasAttribute('data-object')).toBe(false);
@@ -170,13 +190,21 @@ describe('initTracking (delegated capture-phase runtime)', () => {
     expect(btn.getAttribute('data-ui-object-detail')).toBe('Go');
   });
 
-  it('ignores a delegated pointerdown outside a tracking- block', () => {
+  it('JIT-stamps a block-less content CTA too (track-by-default)', () => {
     vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({ ok: false })));
-    document.body.innerHTML = '<main><div class="cta block"><a href="#">X</a></div></main>';
+    document.body.innerHTML = '<main><div class="cta block"><a href="#">Read more</a></div></main>';
     const main = document.querySelector('main');
     initTracking(main);
     main.querySelector('a').dispatchEvent(new Event('pointerdown', { bubbles: true }));
-    expect(main.querySelector('a').hasAttribute('data-object')).toBe(false);
+    expect(main.querySelector('a').getAttribute('data-object')).toBe('content');
+  });
+
+  it('ignores a delegated pointerdown outside the content regions', () => {
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({ ok: false })));
+    document.body.innerHTML = '<div class="cookie"><a href="#">Accept</a></div>';
+    initTracking(document);
+    document.querySelector('a').dispatchEvent(new Event('pointerdown', { bubbles: true }));
+    expect(document.querySelector('a').hasAttribute('data-object')).toBe(false);
   });
 
   it('overlays the sheet once it resolves (identity override, still derived label)', async () => {

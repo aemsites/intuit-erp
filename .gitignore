@@ -37,3 +37,5 @@ content
 # extracted prod tracking data — regenerate with scripts/diff/extract-tracking.mjs;
 # scraped prod data is never committed (it also trips secret-scanning)
 scripts/diff/fixtures/*.candidate.json
+# Local click-tracking golden + sheet (customer campaign codes — never commit)
+scripts/diff/fixtures/local/

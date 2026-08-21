@@ -1,8 +1,16 @@
 /**
  * Click-tracking decoration (single-file runtime).
  *
- * Opt-in: a block is tracked only when it carries a `tracking-<key>` variant
- * class. PREFIX is a single constant — change it here to re-map the trigger.
+ * Track-by-default: every CTA (a[href]/button/[role="button"]) inside a content
+ * region (<main>/<header>/<footer>) is tracked, matching the live tracker's
+ * delegated, document-wide model (it fires on any element with a data-object/
+ * data-wa-link ancestor; prod annotates ~all content links). A block MAY declare
+ * its trail segment + payload defaults via trackAs (the `tracking-<key>`
+ * machinery), but that is a DECLARATION, not a gate: a CTA in no such block still
+ * tracks, with pure-derive defaults (object=content) under the `page` key. Pure-UI
+ * controls (toggles, hamburger, cookie/consent) opt OUT via data-track-skip, and
+ * injected chrome (OneTrust, dev sidekick, body-root widgets) is excluded by the
+ * region gate. PREFIX names the declaration class.
  *
  * Loaded LAZILY from scripts.js (like pzn/exp): tracking is not render-critical,
  * so it never sits on the eager/LCP module graph. Option B (data-layer):
@@ -373,6 +381,15 @@ export function blockNameOf(block) {
 // (e.g. the video block's poster/play control is a <div role="button">).
 export const CTA_SELECTOR = 'a[href], button, [role="button"]';
 
+// Content regions we track. Track-by-default fires only inside these, so injected
+// chrome mounted at the body root (OneTrust consent, dev sidekick, third-party
+// widgets) is never tracked — matching what the live tracker effectively covers.
+export const TRACKED_REGIONS = 'main, header, footer';
+
+// The generic key + trail segment for CTAs that belong to no declared block —
+// loose content links the live tracker reports with ui_access_point "page".
+export const PAGE_KEY = 'page';
+
 /**
  * Trackable CTAs within a block, in DOM order.
  * @param {Element} block
@@ -380,6 +397,23 @@ export const CTA_SELECTOR = 'a[href], button, [role="button"]';
  */
 export function ctasIn(block) {
   return [...block.querySelectorAll(CTA_SELECTOR)];
+}
+
+/**
+ * Page-level CTAs: trackable CTAs in <main> that belong to NO declared
+ * (`tracking-`) block and are not skipped — the loose content links keyed
+ * `page`. In DOM order, so a CTA's index here is its stable `page-<n>` identity
+ * for the sheet. Header/footer CTAs are always inside their declared blocks, so
+ * this is scoped to <main>.
+ * @param {ParentNode} [root]
+ * @returns {Element[]}
+ */
+export function pageCtas(root = document) {
+  const main = (root && root.querySelector && root.querySelector('main')) || (typeof document !== 'undefined' && document.querySelector('main'));
+  if (!main) return [];
+  return [...main.querySelectorAll(CTA_SELECTOR)].filter(
+    (cta) => !cta.closest('[data-track-skip]') && !cta.closest(`[class*="${PREFIX}"]`),
+  );
 }
 
 /**
@@ -436,6 +470,23 @@ export function sheetRowFor(map, key, i, path) {
 }
 
 /**
+ * The label the live tracker reads for ui_object_detail + link_name: an element's
+ * accessible name — visible text, else an inner image's alt, else aria-label.
+ * Prod annotates text-less CTAs (icon/image/logo links) from their alt/aria-label,
+ * so a plain textContent read under-derives both fields.
+ * @param {Element} el
+ * @returns {string}
+ */
+export function labelFor(el) {
+  const text = (el.textContent || '').trim();
+  if (text) return text;
+  const img = el.querySelector('img[alt]');
+  const alt = img && (img.getAttribute('alt') || '').trim();
+  if (alt) return alt;
+  return (el.getAttribute('aria-label') || '').trim();
+}
+
+/**
  * Derive the baseline for a live element, detecting video links (YouTube/Vimeo)
  * so they map to object=video / ui_object=video_link. Exported so the Node dev
  * tools (harness, extractor) derive exactly as the runtime does.
@@ -451,7 +502,7 @@ export function deriveForCta(el, blockName, host = '') {
   const isIcon = !isVideo && !(el.textContent || '').trim() && !!el.querySelector('img, svg, picture, .icon');
   return deriveBaseline({
     tagName: el.tagName,
-    label: el.textContent,
+    label: labelFor(el),
     blockName,
     isButtonStyled: el.tagName === 'BUTTON' || el.classList.contains('button'),
     isVideo,
@@ -495,20 +546,24 @@ export function stampTrail(scope = document) {
 
 /**
  * From an interaction target, resolve the trackable CTA — the nearest
- * a[href]/button inside an opted-in `tracking-` block — plus that block. Null
- * when the target is untracked.
+ * a[href]/button/[role="button"] inside a content region — plus its declared
+ * block, if any. Track-by-default: a CTA outside every `tracking-` block still
+ * resolves (block=null, tracked under the `page` key). Null only when the target
+ * is not a CTA, is data-track-skip (pure-UI), or sits outside <main>/<header>/
+ * <footer> (injected chrome).
  * @param {EventTarget} target
- * @returns {{cta: Element, block: Element}|null}
+ * @returns {{cta: Element, block: Element|null}|null}
  */
 export function resolveTrackable(target) {
   if (!target || !target.closest) return null;
   const cta = target.closest(CTA_SELECTOR);
-  // Pure-UI controls a code-built block opted out of (hamburger, flyout-back,
-  // accordion/country toggles) carry data-track-skip and are never tracked.
+  // Pure-UI controls (hamburger, flyout-back, accordion/country toggles) carry
+  // data-track-skip and are never tracked.
   if (!cta || cta.closest('[data-track-skip]')) return null;
-  const block = cta.closest(`[class*="${PREFIX}"]`);
-  if (!block || !trackingKey(block)) return null;
-  return { cta, block };
+  // Region gate: only content regions, never body-root injected chrome.
+  if (!cta.closest(TRACKED_REGIONS)) return null;
+  const blk = cta.closest(`[class*="${PREFIX}"]`);
+  return { cta, block: (blk && trackingKey(blk)) ? blk : null };
 }
 
 // ===========================================================================
@@ -605,11 +660,15 @@ export function stampInteraction(e) {
   const hit = resolveTrackable(e.target);
   if (!hit) return;
   const { cta, block } = hit;
-  const blockName = blockNameOf(block);
-  const idx = ctasIn(block).indexOf(cta);
   const loc = (typeof window !== 'undefined' && window.location) || {};
   const host = loc.hostname || '';
-  const row = sheetRowFor(sheetMap, trackingKey(block), idx, loc.pathname);
+  // A declared block supplies its key (sheet lookup + index) and name (trail/
+  // access-point); a loose content CTA falls back to the `page` bucket, indexed
+  // among the page's block-less CTAs (its stable page-<n> identity).
+  const key = block ? trackingKey(block) : PAGE_KEY;
+  const blockName = block ? blockNameOf(block) : '';
+  const idx = block ? ctasIn(block).indexOf(cta) : pageCtas(document).indexOf(cta);
+  const row = sheetRowFor(sheetMap, key, idx, loc.pathname);
   const derived = applyBlockDefaults(deriveForCta(cta, blockName, host), block);
   const regionCtx = resolveRegionContext(cta);
   const context = regionCtx ? { customProperties: regionCustomProperties(regionCtx) } : {};
