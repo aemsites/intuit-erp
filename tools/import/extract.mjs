@@ -59,8 +59,12 @@ function unwrapAll(root, selector) {
 function iconToken(img) {
   const cls = img.getAttribute('class') || '';
   const base = (img.getAttribute('src') || '').split('?')[0].split('/').pop() || '';
-  if (!/(^|\s)icon(\s|$)/.test(cls) || !/\.svg$/i.test(base)) return null;
-  return base.replace(/\.svg$/i, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  if (!/\.svg$/i.test(base)) return null;
+  const name = base.replace(/\.svg$/i, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  // an "icon"-classed svg (incl. TipBox `...-icon-img...`, or a class-less callout
+  // glyph) or a known quick-answer lightbulb/exclamation graphic -> inline token
+  if (/icon/i.test(cls) || /^quick-answer-/.test(name)) return name;
+  return null;
 }
 
 /** Clone `el`, strip Quill/wrapper cruft, keep semantic inline tags -> innerHTML. */
@@ -178,6 +182,10 @@ function classify(el) {
   // generic source callout wrapper (`.root > .innerhtml`): decide by content
   if (hasClass(el, /(^|\s)root(\s|$)/) || el.querySelector(':scope > .innerhtml, :scope .innerhtml')) {
     if (el.querySelector('iframe[src]')) return 'embed';
+    // a callout painted the highlight cyan via an inline style attribute (which
+    // styleText's <style>-based check above misses) is a highlight, even when it
+    // also carries an icon <img> — otherwise the img wins and the copy is lost.
+    if (/#c2f5ff/i.test(el.innerHTML)) return 'highlight';
     if (el.querySelector('img[src]')) return 'image';
     return textSansStyle(el) ? 'highlight' : 'skip'; // empty => style-only injection
   }
@@ -226,6 +234,17 @@ function extractHighlight(el) {
   // "Quick answer" lightbulb/exclamation graphics), so they are kept.
   box.querySelectorAll('style, br').forEach((n) => n.remove());
   const content = mergeLeadingIcons(extractBlocks(box));
+  // TipBox-style callouts keep their icon in a sibling container outside the text
+  // box highlightBox() returns; if no icon token surfaced from the box, recover
+  // the callout icon and merge it into the copy (e.g. quick-answer lightbulb).
+  if (!content.some((n) => typeof n.html === 'string' && /:[a-z0-9-]+:/.test(n.html))) {
+    const name = [...el.querySelectorAll('img[src]')].map(iconToken).find(Boolean);
+    if (name) {
+      const firstP = content.find((n) => n.type === 'paragraph');
+      if (firstP) firstP.html = `:${name}: ${firstP.html}`.trim();
+      else content.unshift({ type: 'paragraph', html: `:${name}:` });
+    }
+  }
   if (!content.length) return null;
   return { type: 'block', name: 'highlight', variant: '', content };
 }
