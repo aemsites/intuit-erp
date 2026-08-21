@@ -205,6 +205,16 @@ async function setupRecaptcha(cfg, config, form) {
   run();
 }
 
+function disclaimerBelowFields(formEl) {
+  const buttonRow = formEl.querySelector('.mktoButtonRow');
+  if (!buttonRow) return false;
+  const fieldRows = [...formEl.querySelectorAll('.mktoFormRow')]
+    .filter((row) => row.querySelector('input:not([type="hidden"]), select, textarea'));
+  if (!fieldRows.length) return false;
+  const lastFieldTop = Math.max(...fieldRows.map((row) => row.getBoundingClientRect().top));
+  return buttonRow.getBoundingClientRect().top - lastFieldTop > 20;
+}
+
 async function embedMarketoForm(formEl, cfg, config, env) {
   // Munchkin for the active instance, falling back to the base (prod) key. The
   // Forms2 script URL is generated from it — one host per Marketo instance.
@@ -214,13 +224,16 @@ async function embedMarketoForm(formEl, cfg, config, env) {
   const forms2Src = `${host}/js/forms2/js/forms2.min.js`;
   await loadScript(forms2Src);
   window.MktoForms2.loadForm(host, munchkin, config.formId, (form) => {
-    // Upstream puts the disclaimer above the field row, not between the fields
-    // and the submit button. Inline markup (privacy/policy links) is preserved.
     if (config.disclaimer) {
       const el = document.createElement('div');
       el.className = 'form-disclaimer';
       el.innerHTML = config.disclaimer;
-      formEl.parentNode.insertBefore(el, formEl);
+      const buttonRow = formEl.querySelector('.mktoButtonRow');
+      if (buttonRow && disclaimerBelowFields(formEl)) {
+        formEl.insertBefore(el, buttonRow);
+      } else {
+        formEl.parentNode.insertBefore(el, formEl);
+      }
     }
     // Marketo forms ship with their own hardcoded button text (e.g. "Watch Now"
     // on a form template built for webinars); override it per-page when the
