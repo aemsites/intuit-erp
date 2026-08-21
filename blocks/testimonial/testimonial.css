@@ -553,7 +553,7 @@
   margin: 4px 0 0;
 }
 
-@media (min-width: 600px) {
+@media (min-width: 768px) {
   .testimonial.card {
     flex-flow: wrap;
   }
@@ -563,7 +563,7 @@
   }
 }
 
-@media (min-width: 900px) {
+@media (min-width: 1024px) {
   .testimonial .testimonial-card {
     flex: 1 1 calc(33.333% - 16px);
   }
@@ -667,7 +667,7 @@
 
 .testimonial.card.carousel .testimonial-arrow:disabled { background: #d3d9dd; cursor: default; }
 
-@media (min-width: 600px) {
+@media (min-width: 768px) {
   /* keep one-at-a-time even where the default .card grid would go multi-column */
   .testimonial.card.carousel .testimonial-card { flex: 0 0 100%; box-sizing: border-box; }
 }

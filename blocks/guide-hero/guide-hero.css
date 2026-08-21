@@ -131,7 +131,7 @@
   color: #fff;
 }
 
-@media (min-width: 900px) {
+@media (min-width: 1024px) {
   .section.guide-hero-container:has(.guide-hero:not(.no-media)) > .guide-hero-wrapper {
     padding: 0;
   }

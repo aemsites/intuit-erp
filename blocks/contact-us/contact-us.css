@@ -199,7 +199,7 @@
 }
 
 /* ============================ desktop ============================ */
-@media (min-width: 600px) {
+@media (min-width: 768px) {
   .contact-us {
     right: 40px;
     bottom: 20px;
