@@ -388,17 +388,42 @@ export function applyBlockDefaults(derived, block) {
 }
 
 /**
+ * Normalize the page path used to scope sheet keys: leading slash, no trailing
+ * slash (except root), query/hash stripped — matching the authored key form.
+ * @param {string} p
+ * @returns {string}
+ */
+export function normalizePath(p) {
+  const path = (p || '/').split(/[?#]/)[0];
+  return path.length > 1 ? path.replace(/\/+$/, '') : '/';
+}
+
+/**
  * Look up the sheet row for the CTA at index `i` in a block whose opt-in key is
- * `key`, using UNIQUE keys: `<key>-<n>` (1-based DOM order). A single-CTA block
- * may key its row just `<key>`, so the first CTA falls back to that.
+ * `key`, using UNIQUE keys (1-based DOM order). Body-content residue is PER-PAGE,
+ * so rows may be page-scoped `<path>|<key>-<n>`; site-wide chrome (nav/footer/
+ * widgets) stays `<key>-<n>`. Resolution order (most specific first):
+ *   <path>|<key>-<n>  ->  <path>|<key> (i=0)  ->  <key>-<n>  ->  <key> (i=0)
  * @param {Map<string, Record<string, unknown>>|null} map
  * @param {string|null} key the block's tracking-<key>
  * @param {number} i CTA index within the block
+ * @param {string} [path] the page path (defaults to '/')
  * @returns {Record<string, unknown>|null}
  */
-export function sheetRowFor(map, key, i) {
+export function sheetRowFor(map, key, i, path) {
   if (!map || !key) return null;
-  return map.get(`${key}-${i + 1}`) || (i === 0 ? map.get(key) : null) || null;
+  const n = i + 1;
+  const pp = normalizePath(path);
+  const candidates = [
+    `${pp}|${key}-${n}`,
+    i === 0 ? `${pp}|${key}` : null,
+    `${key}-${n}`,
+    i === 0 ? key : null,
+  ];
+  for (let c = 0; c < candidates.length; c += 1) {
+    if (candidates[c] && map.has(candidates[c])) return map.get(candidates[c]);
+  }
+  return null;
 }
 
 /**
@@ -573,8 +598,9 @@ export function stampInteraction(e) {
   const { cta, block } = hit;
   const blockName = blockNameOf(block);
   const idx = ctasIn(block).indexOf(cta);
-  const host = (typeof window !== 'undefined' && window.location && window.location.hostname) || '';
-  const row = sheetRowFor(sheetMap, trackingKey(block), idx);
+  const loc = (typeof window !== 'undefined' && window.location) || {};
+  const host = loc.hostname || '';
+  const row = sheetRowFor(sheetMap, trackingKey(block), idx, loc.pathname);
   const derived = applyBlockDefaults(deriveForCta(cta, blockName, host), block);
   const regionCtx = resolveRegionContext(cta);
   const context = regionCtx ? { customProperties: regionCustomProperties(regionCtx) } : {};

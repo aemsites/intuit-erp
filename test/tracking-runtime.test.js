@@ -48,6 +48,18 @@ describe('sheetRowFor (unique keys)', () => {
     expect(sheetRowFor(new Map(), 'x', 0)).toBe(null);
     expect(sheetRowFor(null, 'x', 0)).toBe(null);
   });
+  it('prefers a page-scoped row over the site-wide fallback', () => {
+    const map = new Map([['faq-3', { wa: 'site' }], ['/accounting/multi-entity|faq-3', { wa: 'page' }]]);
+    // trailing slash on the path is normalized away before matching
+    expect(sheetRowFor(map, 'faq', 2, '/accounting/multi-entity/').wa).toBe('page');
+    // a different page falls back to the site-wide row
+    expect(sheetRowFor(map, 'faq', 2, '/construction/').wa).toBe('site');
+  });
+  it('page-scoped single-CTA (<path>|<key>) resolves for the first CTA only', () => {
+    const map = new Map([['/pricing|cta', { wa: 'p' }]]);
+    expect(sheetRowFor(map, 'cta', 0, '/pricing/').wa).toBe('p');
+    expect(sheetRowFor(map, 'cta', 1, '/pricing/')).toBe(null);
+  });
 });
 
 describe('stampTrail (structural access-point trail — NOT per-CTA)', () => {
