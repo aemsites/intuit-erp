@@ -28,7 +28,8 @@ import {
 import { captureHtml } from './capture-html.mjs';
 import { computeTrackingPayload } from './tracker-replica.mjs';
 import {
-  PREFIX, deriveForCta, resolveCta, stampCta, blockNameOf, trackingKey, ctasIn,
+  PREFIX, CTA_SELECTOR, deriveForCta, resolveCta, stampCta, blockNameOf, trackingKey, ctasIn,
+  applyBlockDefaults,
 } from '../tracking.js';
 
 const PROD = 'https://erp.intuit.com';
@@ -58,19 +59,22 @@ export function simulateStamps(document, { forceTrackAll = false } = {}) {
   const mainEl = document.querySelector('main');
   const pageSeg = (document.head?.querySelector('meta[name="tracking"]')?.content || '').trim();
   if (mainEl && pageSeg && !mainEl.hasAttribute('data-tracking')) mainEl.setAttribute('data-tracking', pageSeg);
-  const stampOne = (el, blockName) => stampCta(el, resolveCta(deriveForCta(el, blockName), null));
+  const stampOne = (el, blockName, block) => stampCta(el, resolveCta(applyBlockDefaults(deriveForCta(el, blockName), block), null));
   const scoped = [...document.querySelectorAll(`[class*="${PREFIX}"]`)].filter((b) => trackingKey(b));
   (forceTrackAll ? [...document.querySelectorAll('.block')] : scoped).forEach((block) => {
     const blockName = blockNameOf(block);
-    // explicit authored data-tracking wins; else default to the block name
-    if (!block.hasAttribute('data-tracking') && blockName) block.setAttribute('data-tracking', blockName);
-    ctasIn(block).forEach((el) => stampOne(el, blockName));
+    // explicit authored data-tracking wins; a trackAs no-trail opt-in stays
+    // trail-less; else default to the block name.
+    if (!block.hasAttribute('data-tracking') && !block.hasAttribute('data-track-no-trail') && blockName) {
+      block.setAttribute('data-tracking', blockName);
+    }
+    ctasIn(block).forEach((el) => stampOne(el, blockName, block));
   });
   if (forceTrackAll) {
-    for (const el of document.querySelectorAll('a[href], button')) {
+    for (const el of document.querySelectorAll(CTA_SELECTOR)) {
       if (el.hasAttribute('data-object') || el.hasAttribute('data-wa-link')) continue;
       const block = el.closest('.block');
-      stampOne(el, block ? blockNameOf(block) : '');
+      stampOne(el, block ? blockNameOf(block) : '', block);
     }
   }
 }

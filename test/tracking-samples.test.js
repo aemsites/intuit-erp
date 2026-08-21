@@ -5,6 +5,7 @@ import {
 import { computeTrackingPayload } from '../scripts/diff/tracker-replica.mjs';
 import decorateFaq from '../blocks/faq/faq.js';
 import decorateCards from '../blocks/cards/cards.js';
+import decorateVideo from '../blocks/video/video.js';
 
 // Derive matrix — realistic CTA shapes observed across the reverse-engineered
 // reference pages (homepage, /pricing/, /accounting/multi-entity/, a /blog/
@@ -65,6 +66,19 @@ describe('block annotations stamp the right trail + opt-in key', () => {
     decorateCards(block);
     expect(block.getAttribute('data-tracking')).toBe('rw_cards_container');
     expect(trackingKey(block)).toBe('cards');
+  });
+
+  it('video -> opt-in key "video", code-built video:started defaults, no trail', () => {
+    document.body.innerHTML = '<main><div class="video block">'
+      + '<div><div><a href="https://youtu.be/abcd1234">Watch the tour (2:02)</a></div></div></div></main>';
+    const block = document.querySelector('.video');
+    decorateVideo(block);
+    expect(trackingKey(block)).toBe('video');
+    expect(block.getAttribute('data-track-object')).toBe('video');
+    expect(block.getAttribute('data-track-action')).toBe('started');
+    expect(block.getAttribute('data-track-ui-object')).toBe('button');
+    expect(block.hasAttribute('data-tracking')).toBe(false); // no trail segment (ap resolves to page)
+    expect(block.hasAttribute('data-track-no-trail')).toBe(true);
   });
 });
 

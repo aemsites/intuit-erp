@@ -30,7 +30,7 @@ function runOurs(setup, ctaSelector) {
   resetTrackingState();
   document.head.innerHTML = '';
   setup();
-  stampTrail(document.querySelector('main'));
+  stampTrail(document); // whole-doc scope: header/footer live outside <main>
   const cta = document.querySelector(ctaSelector);
   stampInteraction({ target: cta });
   return computeTrackingPayload(cta);
@@ -102,13 +102,69 @@ describe('self-made golden oracle — our runtime reproduces the derive-covered 
   });
 });
 
-describe('self-made golden oracle — coverage boundary is explicit', () => {
-  it('the fixture flags header/footer/nav as code-built (not generic derive)', () => {
-    const homepage = golden.pages.find((p) => p.path === '/');
-    const codeBuilt = homepage.events.filter((e) => e.coverage === 'code-built').map((e) => e.category);
-    // These are the surfaces that still need block-owned stamping (like pzn/exp).
-    expect(codeBuilt).toEqual(expect.arrayContaining(['cornerstone', 'main_nav', 'footer']));
-    const gaps = homepage.events.filter((e) => e.coverage === 'gap').map((e) => e.name);
-    expect(gaps).toContain('video-play-button'); // video:started not yet derived
+describe('self-made golden oracle — code-built surfaces (header/footer/video)', () => {
+  beforeEach(() => { document.body.innerHTML = ''; });
+
+  it('header cornerstone logo -> content:engaged, link_icon, empty ui_access_point', () => {
+    const g = eventOf('/', 'cornerstone-logo-intuit');
+    const p = runOurs(() => {
+      document.body.innerHTML = '<header><div class="header block"><div class="ies-topstrip">'
+        + '<a class="bs-logo" href="https://turbotax.intuit.com/" aria-label="TurboTax"><img alt=""></a></div></div></header>';
+      trackAs(null, document.querySelector('.header'), { key: 'nav', action: 'engaged', linkName: false });
+    }, '.bs-logo');
+    expectMatchesGolden(p, g.derivable); // action=engaged (block default), ap='' (outside main)
+  });
+
+  it('header nav toggle -> content:engaged, empty ui_access_point', () => {
+    const g = eventOf('/', 'main-nav-capabilities');
+    const p = runOurs(() => {
+      document.body.innerHTML = '<header><div class="header block"><nav class="nav-main">'
+        + '<div class="nav-item"><button type="button">Capabilities</button></div></nav></div></header>';
+      trackAs(null, document.querySelector('.header'), { key: 'nav', action: 'engaged', linkName: false });
+    }, '.nav-item button');
+    // our derive gives ui_object=button; prod authors ui_object=link (sheet residue).
+    expectMatchesGolden(p, g.derivable, ['ui_object']);
+  });
+
+  it('footer corporate brand -> content:interacted, trail footer|products', () => {
+    const g = eventOf('/', 'footer-corporate-row');
+    const p = runOurs(() => {
+      document.body.innerHTML = '<footer><div class="footer block"><div class="ftr-legal"><div class="legal-center">'
+        + '<div class="brand-logos"><a class="ftr-brand" href="https://turbotax.intuit.com/" aria-label="TurboTax"><svg></svg></a></div>'
+        + '</div></div></div></footer>';
+      trackAs('footer', document.querySelector('.footer'), {
+        key: 'footer',
+        linkName: false,
+        itemSelector: '.brand-logos, .legal-links, .legal-copy, .footer-sitemap',
+        itemLabel: (i, el) => {
+          if (el.classList.contains('brand-logos')) return 'products';
+          if (el.classList.contains('footer-sitemap')) return 'footer_sitemap';
+          return 'footer_bottom';
+        },
+      });
+    }, '.brand-logos a');
+    // icon-only brand mark derives link_icon; prod authors link (sheet residue).
+    expectMatchesGolden(p, g.derivable, ['ui_object']);
+  });
+
+  it('video play control -> video:started, object=video, ui_object=button, ap=page', () => {
+    const g = eventOf('/', 'video-play-button');
+    const p = runOurs(() => {
+      document.body.innerHTML = '<main><div class="video block">'
+        + '<div class="video-preview" role="button" tabindex="0" aria-label="Play video">'
+        + '<picture><img alt=""></picture><span class="video-play"></span></div>'
+        + '</div></main>';
+      trackAs(null, document.querySelector('.video'), {
+        key: 'video', object: 'video', action: 'started', uiObject: 'button', linkName: false,
+      });
+    }, '.video-preview');
+    expectMatchesGolden(p, g.derivable);
+  });
+});
+
+describe('self-made golden oracle — every event is covered', () => {
+  it('no coverage gaps remain in the golden (derive or code-built)', () => {
+    const all = golden.pages.flatMap((p) => p.events);
+    expect(all.every((e) => e.coverage === 'derive' || e.coverage === 'code-built')).toBe(true);
   });
 });

@@ -89,9 +89,14 @@ describe('computeTrackingPayload (re-verified 2026-08-20 tracker contract)', () 
     expect(computeTrackingPayload(document.getElementById('b')).ui_access_point).toBe('cta_block');
   });
 
-  it('falls ui_access_point back to "page" when the trail is empty', () => {
-    document.body.innerHTML = '<button id="b" data-object="content" data-ui-access-point="">x</button>';
+  it('falls ui_access_point back to "page" when the trail is empty INSIDE <main>', () => {
+    document.body.innerHTML = '<main><button id="b" data-object="content" data-ui-access-point="">x</button></main>';
     expect(computeTrackingPayload(document.getElementById('b')).ui_access_point).toBe('page');
+  });
+
+  it('falls ui_access_point back to "" when the trail is empty OUTSIDE <main> (header/global-nav)', () => {
+    document.body.innerHTML = '<header><button id="b" data-object="content" data-ui-access-point="">x</button></header>';
+    expect(computeTrackingPayload(document.getElementById('b')).ui_access_point).toBe('');
   });
 
   it('omits ui_access_point entirely when data-ui-access-point is absent (no opt-in)', () => {

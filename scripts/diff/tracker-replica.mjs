@@ -130,9 +130,12 @@ export function computeTrackingPayload(target, context = {}) {
   if (ds.uiObjectDetail != null) payload.ui_object_detail = ds.uiObjectDetail;
 
   // ui_access_point: opt-in by PRESENCE of data-ui-access-point (empty '' counts);
-  // value = the computed data-tracking trail, falling back to 'page'.
+  // value = the computed data-tracking trail. Fallback when no trail resolves:
+  // 'page' inside the tracked <main>, '' outside it (prod's header/global-nav
+  // links, which have no data-tracking ancestor, report an empty access point).
   if (el.closest('[data-ui-access-point]')) {
-    payload.ui_access_point = getTrackingAccessStructure(target) || 'page';
+    const inMain = !!(target.closest && target.closest('main'));
+    payload.ui_access_point = getTrackingAccessStructure(target) || (inMain ? 'page' : '');
   }
 
   const { waLink } = ds;

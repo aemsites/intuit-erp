@@ -349,13 +349,42 @@ export function blockNameOf(block) {
   return [...block.classList].find((c) => c !== 'block' && !c.startsWith(PREFIX)) || '';
 }
 
+// What counts as a clickable CTA: real links/buttons, plus role=button widgets
+// (e.g. the video block's poster/play control is a <div role="button">).
+export const CTA_SELECTOR = 'a[href], button, [role="button"]';
+
 /**
  * Trackable CTAs within a block, in DOM order.
  * @param {Element} block
  * @returns {Element[]}
  */
 export function ctasIn(block) {
-  return [...block.querySelectorAll('a[href], button')];
+  return [...block.querySelectorAll(CTA_SELECTOR)];
+}
+
+/**
+ * Apply a block's code-built payload defaults (stamped by trackAs) onto the
+ * derived baseline — the seam for CODE-BUILT surfaces (header nav = engaged,
+ * footer, video play = started) to override the generic derive without a sheet
+ * row. Precedence: derive < block defaults < sheet. `data-track-link-name="off"`
+ * drops the derived link_name (prod omits it where no custom-properties are
+ * authored, e.g. footer/nav links).
+ * @param {Record<string, unknown>} derived deriveBaseline() output (mutated)
+ * @param {Element} block the opted-in block
+ * @returns {Record<string, unknown>} derived
+ */
+export function applyBlockDefaults(derived, block) {
+  if (!block || !block.getAttribute) return derived;
+  const object = block.getAttribute('data-track-object');
+  const action = block.getAttribute('data-track-action');
+  const uiObj = block.getAttribute('data-track-ui-object');
+  if (object) derived.object = object;
+  if (action) derived.action = action;
+  if (uiObj) derived['ui-object'] = uiObj;
+  if (block.getAttribute('data-track-link-name') === 'off' && derived['custom-properties']) {
+    delete derived['custom-properties'].link_name;
+  }
+  return derived;
 }
 
 /**
@@ -419,7 +448,9 @@ export function stampTrail(scope = document) {
   if (main && pageSeg && !main.hasAttribute('data-tracking')) main.setAttribute('data-tracking', pageSeg);
 
   optedInBlocks(root).forEach((block) => {
-    if (block.hasAttribute('data-tracking')) return; // author's explicit value wins
+    // Author's explicit value wins; a trackAs no-trail opt-in (header/video)
+    // stays trail-less on purpose.
+    if (block.hasAttribute('data-tracking') || block.hasAttribute('data-track-no-trail')) return;
     // Default: the block name (dataset.blockName), falling back to its CSS class.
     // The trail is authored via markup data-tracking or trackAs; the sheet is
     // per-CTA identity only, so it no longer overrides the block trail.
@@ -437,7 +468,7 @@ export function stampTrail(scope = document) {
  */
 export function resolveTrackable(target) {
   if (!target || !target.closest) return null;
-  const cta = target.closest('a[href], button');
+  const cta = target.closest(CTA_SELECTOR);
   if (!cta) return null;
   const block = cta.closest(`[class*="${PREFIX}"]`);
   if (!block || !trackingKey(block)) return null;
@@ -459,7 +490,8 @@ export function stampInteraction(e) {
   const idx = ctasIn(block).indexOf(cta);
   const host = (typeof window !== 'undefined' && window.location && window.location.hostname) || '';
   const row = sheetRowFor(sheetMap, trackingKey(block), idx);
-  stampCta(cta, resolveCta(deriveForCta(cta, blockName, host), row));
+  const derived = applyBlockDefaults(deriveForCta(cta, blockName, host), block);
+  stampCta(cta, resolveCta(derived, row));
 }
 
 /**
@@ -513,22 +545,44 @@ export function initTracking(scope = document) {
  *
  *   return trackAs('rw2_hero', block, { key: 'hero' }); // trail rw2_hero, sheet key hero-<n>
  *
- * @param {string} name the block's trail segment (data-tracking value)
+ * CODE-BUILT surfaces (header nav, footer, video play) declare their payload
+ * defaults here so the runtime reproduces prod without a sheet row: `action`
+ * (nav -> engaged, video play -> started), `object` (video), `uiObject`, and
+ * `linkName: false` to suppress the derived link_name (prod omits it on
+ * footer/nav links). Pass a falsy `name` (with an explicit `key`) to opt a block
+ * in WITHOUT contributing a trail segment — e.g. the header, whose links have no
+ * data-tracking ancestor, so their trail resolves to '' (outside <main>).
+ *
+ *   return trackAs(null, block, { key: 'nav', action: 'engaged', linkName: false });
+ *
+ * @param {string|null} name the trail segment (data-tracking value), or falsy for opt-in only
  * @param {Element} block
  * @param {{key?: string, itemSelector?: string,
- *   itemLabel?: (index: number, item: Element) => string}} [opts]
- *   `key` = the tracking-<key> opt-in + sheet key (defaults to `name`); `index` is the
- *   querySelectorAll match order; return '' from itemLabel to skip an element.
+ *   itemLabel?: (index: number, item: Element) => string,
+ *   action?: string, object?: string, uiObject?: string, linkName?: boolean}} [opts]
+ *   `key` = the tracking-<key> opt-in + sheet key (defaults to `name`); `action`/`object`/
+ *   `uiObject` = code-built payload defaults; `linkName:false` drops the derived link_name.
  * @returns {Element} the block (so it can be the decorate return value)
  */
-export function trackAs(name, block, { key = name, itemSelector, itemLabel } = {}) {
+export function trackAs(name, block, {
+  key = name, itemSelector, itemLabel, action, object, uiObject: uiObjectDefault, linkName,
+} = {}) {
   if (!block) return block;
   // Opt the block into click tracking (reuses the tracking-<key> machinery so
   // the delegated handler JIT-stamps its CTAs + the sheet is looked up by <key>-<n>);
-  // an authored opt-in is left as-is.
-  if (!trackingKey(block)) block.classList.add(`${PREFIX}${key}`);
-  // Block trail segment — an explicit authored data-tracking wins.
+  // an authored opt-in is left as-is. `key` is required when `name` is falsy.
+  const optKey = key || name;
+  if (optKey && !trackingKey(block)) block.classList.add(`${PREFIX}${optKey}`);
+  // Block trail segment — an explicit authored data-tracking wins. A falsy `name`
+  // means "opt in but contribute NO trail segment" (header links -> '', video play
+  // -> 'page'); mark it so stampTrail's blockName default doesn't fill one in.
   if (name && !block.hasAttribute('data-tracking')) block.setAttribute('data-tracking', name);
+  else if (!name && !block.hasAttribute('data-tracking')) block.setAttribute('data-track-no-trail', '');
+  // Code-built payload defaults the runtime applies to this block's CTAs.
+  if (object) block.setAttribute('data-track-object', object);
+  if (action) block.setAttribute('data-track-action', action);
+  if (uiObjectDefault) block.setAttribute('data-track-ui-object', uiObjectDefault);
+  if (linkName === false) block.setAttribute('data-track-link-name', 'off');
   // Per-item trail segments for repeated children (carousel cards, accordion items…).
   if (itemSelector && typeof itemLabel === 'function') {
     block.querySelectorAll(itemSelector).forEach((item, idx) => {

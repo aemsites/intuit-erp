@@ -16,6 +16,7 @@
  */
 
 import { createOptimizedPicture } from '../../scripts/aem.js';
+import { trackAs } from '../../scripts/tracking.js';
 import { videoInfo, isVideoLink, posterFor } from './video-info.js';
 
 // re-exported so the unit tests (and any external importer) keep resolving the
@@ -113,4 +114,14 @@ export default function decorate(block) {
     nodes.push(caption);
   }
   block.replaceChildren(...nodes);
+
+  // Click tracking: the poster/play control (and caption) OPEN the player, so the
+  // prod tracker reports object=video / action=started (event video:started) with
+  // ui_object=button — distinct from a plain video LINK, which derives
+  // video:engaged / ui_object=video_link. No trail segment: the play control sits
+  // in the page body, so its ui_access_point resolves to "page" (like prod). The
+  // control is a [role="button"] div, which the runtime now treats as a CTA.
+  trackAs(null, block, {
+    key: 'video', object: 'video', action: 'started', uiObject: 'button', linkName: false,
+  });
 }

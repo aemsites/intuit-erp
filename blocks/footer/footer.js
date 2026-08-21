@@ -22,6 +22,7 @@ import {
 } from './brand-logos.js';
 import { LOGO_MAILCHIMP_ICON, LOGO_MAILCHIMP_WORD } from '../header/brand-logos.js';
 import { wireFooterSearch } from '../blog-search/search-utils.js';
+import { trackAs } from '../../scripts/tracking.js';
 
 // "Footer Columns" content model: one row per column, cell 1 = heading text,
 // cell 2 = a list of links. Authors add/remove/reorder rows to add/remove
@@ -231,4 +232,21 @@ export default async function decorate(block) {
   // Resource Center search (issue #60): the "Search this site" input submits
   // to /blog/search on Enter.
   wireFooterSearch(block);
+
+  // Click tracking (code-built chrome): footer links report action=interacted
+  // (the derive default). The chrome sections carry a nested trail off the
+  // "footer" root — brand marks -> footer|products, legal links -> footer|
+  // footer_bottom, sitemap -> footer|footer_sitemap; authored column/legal-nav
+  // links fall under the "footer" root. link_name is suppressed (prod omits it on
+  // footer links); per-link wa-link/object_detail is sheet residue.
+  trackAs('footer', block, {
+    key: 'footer',
+    linkName: false,
+    itemSelector: '.brand-logos, .legal-links, .legal-copy, .footer-sitemap',
+    itemLabel: (i, el) => {
+      if (el.classList.contains('brand-logos')) return 'products';
+      if (el.classList.contains('footer-sitemap')) return 'footer_sitemap';
+      return 'footer_bottom'; // .legal-links + .legal-copy (cookie row)
+    },
+  });
 }
