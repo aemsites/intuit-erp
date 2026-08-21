@@ -477,11 +477,94 @@ export function resolveTrackable(target) {
   return { cta, block };
 }
 
+// ===========================================================================
+// Region context (pzn/ixp) — Option B reads the personalization/experiment
+// region registry the decision-engine renderer publishes and folds the
+// winning region's identity into the interacted CTA's custom_properties. NO
+// DOM data-attributes are involved (unlike the data-pzn-*/data-experiment-*
+// walk in CLICK-TRACKING.md's "Personalization / experiment" section — that
+// is a separate, already-shipped mechanism this leaves untouched).
+//
+// The registry contract is `scripts/personalization/tracking-context.js` on
+// the pzn-exp-byo branch (PR #756, not present on this branch): byo.js's
+// `renderDecision` calls `registerRegionContext(el, ctx)` for the winning
+// PZN/IXP decision, publishing `window.__pznTrackingContext` as a
+// `WeakMap<Element, ctx>` so a separate module graph (this runtime, today on
+// its own branch) can resolve it without importing that exact specifier.
+// `ctx = { source: 'pzn'|'ixp', ...identity }` — PZN carries { offerId,
+// experimentId, treatmentId, placement }; IXP carries { experimentId,
+// treatmentId, treatmentKey, control }.
+//
+// `resolveRegionContext` below is a LOCAL reader that mirrors that module's
+// function of the same name by design (two separate branches today) — de-dupe
+// once both land on main.
+// ===========================================================================
+
+/**
+ * Walk from `fromEl` (inclusive) up to (not including) `document.body`,
+ * returning the nearest ancestor's registered region context. Null when the
+ * registry was never published (nothing upstream rendered a personalized/
+ * experiment region on this page) or when no ancestor is registered — fails
+ * open so a CTA outside any region resolves to no-op.
+ * @param {Element} fromEl the interaction target (the CTA) to resolve from
+ * @returns {{source: ('pzn'|'ixp')}|null} the nearest region's context, or null
+ */
+export function resolveRegionContext(fromEl) {
+  // eslint-disable-next-line no-underscore-dangle -- fixed global name, see section header comment
+  const registry = typeof window !== 'undefined' ? window.__pznTrackingContext : null;
+  if (!registry) return null;
+  for (let node = fromEl; node && node !== document.body; node = node.parentElement) {
+    if (registry.has(node)) return registry.get(node);
+  }
+  return null;
+}
+
+// Identity field -> custom-properties key, namespaced by ctx.source. Only
+// fields listed here are folded in; `source` itself is never emitted as a
+// bare key (deliberately excluded from both maps).
+const REGION_CUSTOM_PROPERTY_KEYS = {
+  pzn: {
+    offerId: 'pzn_offer',
+    experimentId: 'pzn_experiment',
+    treatmentId: 'pzn_treatment',
+    placement: 'pzn_placement',
+  },
+  ixp: {
+    experimentId: 'ixp_experiment',
+    treatmentId: 'ixp_treatment',
+    treatmentKey: 'ixp_treatment_key',
+    control: 'ixp_control',
+  },
+};
+
+/**
+ * Map a resolved region context's identity fields onto `custom-properties`
+ * keys namespaced by `ctx.source` (e.g. `offerId` -> `pzn_offer`; see
+ * REGION_CUSTOM_PROPERTY_KEYS). A falsy/unrecognized-source `ctx` yields {},
+ * so the result can be passed straight into resolveCta's
+ * `context.customProperties` unconditionally.
+ * @param {{source?: ('pzn'|'ixp')}|null} ctx resolveRegionContext() output
+ * @returns {Record<string, string>}
+ */
+export function regionCustomProperties(ctx) {
+  const keys = ctx && REGION_CUSTOM_PROPERTY_KEYS[ctx.source];
+  if (!keys) return {};
+  const out = {};
+  Object.entries(ctx).forEach(([k, v]) => {
+    if (k === 'source' || v == null || !keys[k]) return;
+    out[keys[k]] = String(v);
+  });
+  return out;
+}
+
 /**
  * JIT-stamp the resolved (derived + sheet) data-* onto the interacted CTA so the
  * injected clickstream tracker reads them on the ensuing click. This is the
  * Option B core: nothing is stamped at rest — only the element the user is about
- * to activate, on the pointerdown/keydown that precedes its click.
+ * to activate, on the pointerdown/keydown that precedes its click. When the CTA
+ * sits inside a registered pzn/ixp region, that region's identity is folded into
+ * custom_properties too (nearest region wins; see resolveRegionContext) — a CTA
+ * outside any region resolves an empty context, so its payload is unchanged.
  * @param {Event} e
  */
 export function stampInteraction(e) {
@@ -493,7 +576,9 @@ export function stampInteraction(e) {
   const host = (typeof window !== 'undefined' && window.location && window.location.hostname) || '';
   const row = sheetRowFor(sheetMap, trackingKey(block), idx);
   const derived = applyBlockDefaults(deriveForCta(cta, blockName, host), block);
-  stampCta(cta, resolveCta(derived, row));
+  const regionCtx = resolveRegionContext(cta);
+  const context = regionCtx ? { customProperties: regionCustomProperties(regionCtx) } : {};
+  stampCta(cta, resolveCta(derived, row, context));
 }
 
 /**
