@@ -31,10 +31,8 @@
 /* upstream underlines the Google policy links but not the Privacy Statement */
 .form .form-disclaimer a[href*="policies.google.com"] { text-decoration: underline; }
 
-/* Stacked/vertical layout: form.js moves the disclaimer inside the form, between
-   the fields and the submit button (matching erp.intuit.com). It becomes a direct
-   child of .mktoForm, so span the full row (harmless in a block form, forces its
-   own line in the ≥900px flex form) and sit snug above the button. */
+/* Stacked layout: form.js moves the disclaimer inside the form before the button;
+   span the full row (forces its own line in the flex layout) and sit above it. */
 .form .mktoForm > .form-disclaimer {
   flex: 1 0 100%;
   max-width: none;
