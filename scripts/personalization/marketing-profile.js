@@ -1,10 +1,5 @@
 import { getMetadata } from '../aem.js';
-// decision.js dynamically imports blocks/fragment/fragment.js, which imports
-// scripts.js for decorateMain — the same unavoidable cycle pzn.js/exp.js/byo.js
-// already carry this exact disable comment for; this import didn't create a new
-// cycle, it just moved an existing edge (pzn.js -> decision.js) to sit behind
-// this module instead (pzn.js -> marketing-profile.js -> decision.js).
-// eslint-disable-next-line import/no-cycle
+// eslint-disable-next-line import/no-cycle -- decision.js -> fragment.js -> scripts.js
 import { fetchDecision } from './decision.js';
 import { resolveIvid } from './attributes.js';
 

@@ -1,29 +1,19 @@
 /**
- * Checks if experimentation is enabled. Includes the `decisions-manifest`
- * metadata (see plugins/experimentation/src/index.js `serveDecisions`) so a
- * page that uses ONLY the decisions-manifest lane — no experiment/campaign/
- * audience metadata at all — still loads the plugin.
- * @returns {boolean} True if experimentation is enabled, false otherwise.
+ * True if experimentation is enabled. Includes `decisions-manifest` so a page using ONLY
+ * that lane (no experiment/campaign/audience metadata) still loads the plugin.
+ * @returns {boolean}
  */
 const isExperimentationEnabled = () => document.head.querySelector('[name^="experiment"],[name^="campaign-"],[name^="audience-"],[name="decisions-manifest"],[property^="campaign:"],[property^="audience:"]')
   || [...document.querySelectorAll('.section-metadata div')].some((d) => d.textContent.match(/Experiment|Campaign|Audience/i));
 
 /**
- * Loads the BYO decision-engine hooks (Intuit's cell-resolution wiring) that get
- * spread onto the plugin config. Loaded dynamically so it only ever loads
- * alongside the plugin itself, never on pages without experimentation/audiences.
- * Fails open (empty object) so a broken/missing hooks module never blocks the
- * plugin from loading with its default (no-BYO) behavior.
- * @returns {Promise<Object>} the `{ resolveAudiences, renderDecision, rumTracking }`
- *   hooks, or `{}` if they failed to load
+ * Loads the BYO decision-engine hooks spread onto the plugin config. Dynamic (loads only
+ * alongside the plugin) and fail-open ({} leaves the plugin's default no-BYO behavior).
+ * @returns {Promise<Object>} the hooks, or {} if they failed to load
  */
 async function loadByoHooks() {
   try {
-    // byo.js's renderDecision imports decision.js (which reaches back to
-    // scripts.js via fragment.js's decorateMain), the same unavoidable cycle
-    // pzn.js/exp.js/decision.js/fragment.js already carry this disable comment
-    // for.
-    // eslint-disable-next-line import/no-cycle
+    // eslint-disable-next-line import/no-cycle -- cycles back to scripts.js via fragment.js
     return await import('./personalization/byo.js');
   } catch (error) {
     // eslint-disable-next-line no-console
@@ -57,10 +47,8 @@ export async function runExperimentation(document, config) {
     // installed npm package, so this necessarily crosses a package.json boundary.
     // eslint-disable-next-line import/no-relative-packages
     const { loadEager } = await import('../plugins/experimentation/src/index.js');
-    // Bring-your-own decision engine hooks (see documentation/byo-decision-engine.md
-    // in the vendored plugin): resolveAudiences/renderDecision/rumTracking. Opt-in —
-    // spreading `{}` when they fail to load leaves the plugin's default behavior
-    // untouched.
+    // BYO decision-engine hooks (see the plugin's byo-decision-engine.md). Opt-in —
+    // spreading {} on failure leaves the plugin's default behavior untouched.
     const byoHooks = await loadByoHooks();
     return loadEager(document, { ...config, ...byoHooks });
   } catch (error) {
@@ -91,9 +79,7 @@ export async function runExperimentationLazy(document, config) {
   try {
     // eslint-disable-next-line import/no-relative-packages
     const { loadLazy } = await import('../plugins/experimentation/src/index.js');
-    // Same BYO hooks as the eager phase (see runExperimentation above), so the
-    // simulation panel/audience catalog stay consistent with the engine actually
-    // deciding cells.
+    // Same BYO hooks as eager, so the sim panel stays consistent with the engine.
     const byoHooks = await loadByoHooks();
     return loadLazy(document, { ...config, ...byoHooks });
   } catch (error) {

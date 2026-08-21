@@ -11,27 +11,16 @@ import {
   loadCSS,
   buildBlock,
   getMetadata,
+  readBlockConfig,
+  toCamelCase,
 } from './aem.js';
-// Section Metadata pzn/exp -> data-* conversion (the client-side decoration the trimmed
-// decorateSections does not do; produces what personalization/discover.js consumes).
-import decorateSectionMetadata from './personalization/section-metadata.js';
-// BYO decision-engine hooks (scripts/personalization/byo.js, dynamically imported
-// from experiment-loader.js) reuse decision.js's applyFragment, which itself
-// dynamically imports blocks/fragment/fragment.js — and that imports this very
-// file for decorateMain. Same unavoidable cycle pzn.js/exp.js/decision.js/
-// fragment.js already carry this exact disable comment for; this import didn't
-// change, it's just newly part of that cycle's graph.
-// eslint-disable-next-line import/no-cycle
+// eslint-disable-next-line import/no-cycle -- cycles back to scripts.js via fragment.js
 import { runExperimentation, runExperimentationLazy } from './experiment-loader.js';
-// exp.js / pzn.js are dynamically imported below only for page-level personalization/
-// experimentation (the experiment-id/experiment-label/personalization-id metadata
-// dispatch in loadEager) — pages without that metadata never load them. Section/block
-// pzn/exp is owned by byo.js's BYO decision-engine hooks via TWO discovery sources: the
-// vendored plugin's own `decisions-manifest` sheet (loaded via runExperimentation above,
-// for the demo), and this project's own `data-pzn`/`data-exp` authored Section Metadata
-// attributes (scripts/personalization/discover.js, dynamically imported by
-// runAuthoredExperiments/runAuthoredPersonalization below, for Intuit's real authoring —
-// see experience-workspace/skills/add-personalization-experimentation.md).
+// exp.js / pzn.js are imported dynamically below, only for PAGE-level pzn/exp (the
+// experiment-id / personalization-id metadata dispatch in loadEager). SECTION/block pzn/exp
+// is owned by byo.js's hooks via two discovery sources: the plugin's `decisions-manifest`
+// sheet (demo) and this project's authored data-pzn/data-exp (discover.js — see the skill
+// at experience-workspace/skills/add-personalization-experimentation.md).
 // Vendored via git subtree at plugins/martech (see its README), not an
 // installed npm package, so this necessarily crosses a package.json boundary.
 import {
@@ -414,6 +403,24 @@ function decorateButtons(main) {
   });
 }
 
+// Section Metadata pzn/exp rows are served as a raw `.section-metadata` block; this
+// project's trimmed decorateSections doesn't convert it, so lift the pzn/exp keys to
+// data-* here (before decorateMain + the discovery lanes read them) and drop the consumed
+// block. Blocks without a pzn/exp key (backgrounds, native Experiment) are left alone.
+const AUTHORED_TAG_KEYS = ['pzn', 'pzn-block', 'pzn-variants', 'exp', 'exp-block', 'exp-variants'];
+
+export function decorateSectionMetadata(main) {
+  main?.querySelectorAll('.section-metadata').forEach((meta) => {
+    const section = meta.closest('main > div');
+    if (!section) return;
+    const config = readBlockConfig(meta);
+    const tags = AUTHORED_TAG_KEYS.filter((k) => config[k]);
+    if (!tags.length) return;
+    tags.forEach((k) => { section.dataset[toCamelCase(k)] = config[k]; });
+    meta.remove();
+  });
+}
+
 const IMAGE_EXT_RE = /\.(jpe?g|png|gif|webp)(\?|$)/i;
 
 function decorateSectionBackgrounds(main) {
@@ -460,10 +467,9 @@ function redirectConstructionQToLlmAppCtx() {
 }
 
 /**
- * True when `attr` is present on `root` itself (unless `root` IS `skip`) or on any
- * descendant of `root` (excluding `skip`) — a cheap, import-free gate, mirroring the
- * deleted runExperienceLayer's own inline check, so a page carrying neither `data-pzn`
- * nor `data-exp` never even dynamically imports discover.js (and, transitively, byo.js).
+ * True when `attr` is on `root` (unless root IS skip) or any descendant (excluding skip)
+ * — a cheap, import-free gate so a page without data-pzn/data-exp never imports discover.js
+ * (or byo.js).
  * @param {Element} root
  * @param {String} attr e.g. 'data-pzn'
  * @param {Element} [skip]
@@ -475,45 +481,24 @@ function hasAuthoredMarker(root, attr, skip) {
 }
 
 /**
- * Authored `data-exp` (experimentation) discovery + dispatch for Intuit's real Section
- * Metadata authoring (`data-exp` / `data-exp-block` — see experience-workspace/skills/
- * add-personalization-experimentation.md), feeding byo.js's existing getAssignment/
- * renderDecision hooks via scripts/personalization/discover.js (loaded only when
- * `data-exp` is present, so a page without it never pays for either module).
- *
- * MUST be called BEFORE decorateMain: byo.js applies a section/page-scope IXP decision
- * as an UNDECORATED swap (see its applyRawFragment helper), relying on the page's own
- * upcoming decorateMain call to decorate the swapped-in content exactly once — the same
- * pre-decoration contract runExperimentation (above, for the plugin's own native
- * Experiment blocks) and the page-level exp.js/pzn.js swaps already rely on. Unlike
- * runAuthoredPersonalization below, this always covers the whole `root` in one pass:
- * decorateMain never runs a second time later in the page lifecycle, so there is no
- * later moment to defer a below-the-fold `data-exp` swap into (see
- * scripts/personalization/discover.js's header comment for the full reasoning).
+ * Discovers + dispatches authored `data-exp` (IXP) via discover.js (loaded only when
+ * present). MUST run BEFORE decorateMain: the swap is undecorated and relies on the page's
+ * own decorateMain to decorate it once (see discover.js). Whole `root`, one pass.
  * @param {Element} root always `<main>` in practice
  * @returns {Promise<void>}
  */
 async function runAuthoredExperiments(root) {
   if (!root || !hasAuthoredMarker(root, 'data-exp')) return;
-  // discover.js's static import of byo.js (which reaches back to scripts.js via
-  // decision.js -> fragment.js's decorateMain) is the same unavoidable cycle
-  // pzn.js/exp.js/decision.js/fragment.js already carry this exact disable comment for.
-  // eslint-disable-next-line import/no-cycle
+  // eslint-disable-next-line import/no-cycle -- discover.js -> byo.js -> ... -> scripts.js
   const { dispatchAuthoredExperiments } = await import('./personalization/discover.js');
   await dispatchAuthoredExperiments(root);
 }
 
 /**
- * Authored `data-pzn` (personalization) discovery + dispatch for Intuit's real Section
- * Metadata authoring (`data-pzn` / `data-pzn-block`), feeding byo.js's existing
- * resolveDecisions/renderDecision hooks via scripts/personalization/discover.js (loaded
- * only when `data-pzn` is present). Safe to call AFTER decorateMain — byo.js applies a
- * fragment-scope PZN decision via applyFragment, which decorates the fetched
- * replacement itself before splicing it in (see scripts/personalization/discover.js's
- * header comment). Skips the `skip` section (used to run the first/LCP section eagerly
- * and the rest lazily without double-processing), mirroring the deleted
- * runExperienceLayer.
- * @param {Element} root the section (LCP-eager call) or `<main>` (lazy call)
+ * Discovers + dispatches authored `data-pzn` (PZN) via discover.js (loaded only when
+ * present). Safe AFTER decorateMain — the fragment swap self-decorates (see discover.js).
+ * `skip` lets the first/LCP section run eagerly and the rest lazily without overlap.
+ * @param {Element} root the LCP section (eager) or `<main>` (lazy)
  * @param {{skip?: Element}} [opts]
  * @returns {Promise<void>}
  */
@@ -620,18 +605,12 @@ async function loadEager(doc) {
     if (isGuidePage()) {
       ({ default: buildGuideHeroAutoBlock } = await import('../blocks/guide-hero/guide-hero-autoblock.js'));
     }
-    // Personalization/experimentation authoring lives in Section Metadata, which the
-    // pipeline emits as a raw `.section-metadata` block (NOT data-* — this project runs a
-    // trimmed decorateSections that doesn't convert it). Do that conversion ourselves,
-    // before both the IXP lane and decorateMain read the resulting data-pzn/data-exp.
+    // Convert authored Section Metadata pzn/exp rows to data-* before the IXP lane and
+    // decorateMain read them (the pipeline serves a raw block; our decorateSections skips it).
     decorateSectionMetadata(main);
-    // Authored data-exp (IXP) — see runAuthoredExperiments's own doc comment for why
-    // this must run before decorateMain, whole-page, in one pass.
-    await runAuthoredExperiments(main);
+    await runAuthoredExperiments(main); // before decorateMain — see the fn
     decorateMain(main);
-    // Authored data-pzn (personalization): the first (LCP) section before reveal so the
-    // visitor sees final content with no flash. Sections below the fold are handled in
-    // loadLazy (post-LCP) so their swaps never block LCP.
+    // Eager PZN on the LCP section (no flash); the rest runs lazily in loadLazy.
     const firstSection = main.querySelector('.section');
     if (firstSection) await runAuthoredPersonalization(firstSection);
     document.body.classList.add('appear');
@@ -675,11 +654,8 @@ async function loadLazy(doc) {
   else loadHeader(headerEl);
 
   const main = doc.querySelector('main');
-  // Below-the-fold authored personalization: run the sections after the first (the LCP
-  // one, already handled eagerly in loadEager) now that LCP has painted. Not awaited —
-  // these swaps must never block reveal or the lazy pipeline. (Authored data-exp already
-  // ran, whole-page, in loadEager before decoration — see runAuthoredExperiments for why
-  // it has no lazy counterpart.)
+  // Below-the-fold authored PZN (skip the LCP section, already done eagerly). Not awaited —
+  // must not block reveal. (IXP has no lazy counterpart — it ran whole-page in loadEager.)
   if (main) runAuthoredPersonalization(main, { skip: main.querySelector('.section') }).catch(() => {});
   await loadSections(main);
 
