@@ -103,6 +103,22 @@ function renderBlock(b) {
       const paras = (b.paras || []).map((p) => `<p>${p}</p>`).join('');
       return `<div class="cta-band"><div><div>${b.heading ? `<h3>${b.heading}</h3>` : ''}${paras}${button(b.cta)}</div></div></div>`;
     }
+    case 'stat-band': {
+      let rows;
+      if (b.cards) {
+        // image-card variant: each card = optional picture + caption paragraph
+        rows = b.cards.map((c) => {
+          const pic = c.image ? picture(c.image) : '';
+          const cap = c.caption ? `<p>${esc(c.caption)}</p>` : '';
+          return `<div><div>${pic}${cap}</div></div>`;
+        }).join('');
+      } else {
+        rows = b.stats
+          .map((s) => `<div><div><p><strong>${esc(s.number)}</strong></p><p>${esc(s.label)}</p></div></div>`)
+          .join('');
+      }
+      return `<div class="${cls('stat-band', b.variant)}">${rows}</div>`;
+    }
     case 'blog-cards': {
       const row = (k, v) => `<div><div><p>${k}</p></div><div><p>${v}</p></div></div>`;
       let rows = row('category', b.category) + row('limit', b.limit ?? 3) + row('exclude', b.exclude ?? 'current');

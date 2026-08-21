@@ -123,9 +123,9 @@ function textSansStyle(el) {
 function classify(el) {
   const style = styleText(el);
   if (hasClass(el, /core-block-container/)) return 'cta';
-  // SnackableCards stat-band renders client-side (empty in SSR) — flag as a real
-  // gap, not silently dropped like chrome. Checked before the empty-skip below.
-  if (/snackable/i.test(el.className || '') || el.querySelector('[class*="Snackable" i]')) return 'unknown';
+  // SnackableCards stat-band renders client-side (empty in SSR); its data lives
+  // in __NEXT_DATA__ (see statBandFromBlocks). Checked before the empty-skip below.
+  if (/snackable/i.test(el.className || '') || el.querySelector('[class*="Snackable" i]')) return 'statband';
   if (hasClass(el, /Separator/)) return 'skip'; // decorative rule (chrome)
   if (/quote-box/.test(style)) return 'quote';
   if (el.querySelector('iframe[src*="datawrapper"]')) return 'embed';
@@ -245,6 +245,59 @@ function extractCta(el, warnings) {
   };
 }
 
+/* ------------------------------- stat-band -------------------------------- */
+
+/** Depth-first find of the first `mds-components/snackable-cards-slider` block. */
+function findSnackableSlider(blocks) {
+  let found = null;
+  (function walk(b) {
+    if (found) return;
+    if (Array.isArray(b)) { b.forEach(walk); return; }
+    if (!b || typeof b !== 'object') return;
+    if (b.blockName === 'mds-components/snackable-cards-slider') { found = b; return; }
+    if (b.innerBlocks) walk(b.innerBlocks);
+  }(blocks));
+  return found;
+}
+
+/** First image URL in an MDS image object (desktop original preferred). */
+function mdsImageUrl(image = {}) {
+  const keys = ['mediaDesktopUrl', 'desktopOriginalMediaUrl', 'mediaDesktopThumbnail',
+    'mobileOriginalMediaUrl', 'mediaMobileThumbnail'];
+  for (const k of keys) {
+    const v = image[k];
+    if (typeof v === 'string' && /oidam|\.(jpe?g|png|webp|svg)/i.test(v)) return v;
+  }
+  const any = Object.values(image).find((v) => typeof v === 'string' && /oidam.*\.(jpe?g|png|webp)/i.test(v));
+  return any || '';
+}
+
+/**
+ * Build a `stat-band cards` block from the page's snackable-cards-slider — a
+ * horizontal scroll of the source's stat graphics + captions. The card data
+ * renders client-side (empty in SSR), so it's read from __NEXT_DATA__: each
+ * card = image (mediaDesktopUrl, with the stat text as altText) + copy caption;
+ * the lead title-card is an image-less text card. Returns a block node or null.
+ */
+function statBandFromBlocks(blocks) {
+  const slider = findSnackableSlider(blocks);
+  if (!slider) return null;
+  const cards = [];
+  (slider.innerBlocks || []).forEach((it) => {
+    if (!/slider-item$/.test(it.blockName || '')) return;
+    const p = it.props || {};
+    const alt = (p.image?.altText || p.image?.alt || '').replace(/\s+/g, ' ').trim();
+    const caption = typeof p.copy === 'string' ? p.copy.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() : '';
+    const src = mdsImageUrl(p.image || {});
+    if (p.cardType === 'title-card') cards.push({ image: null, caption: caption || alt });
+    else if (src) cards.push({ image: { src, alt }, caption });
+  });
+  if (cards.length < 2) return null;
+  return {
+    type: 'block', name: 'stat-band', variant: 'cards', cards,
+  };
+}
+
 /* -------------------------------- metadata -------------------------------- */
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July',
@@ -336,7 +389,9 @@ function findBody(doc) {
  */
 export function extractPageFromDoc(doc, url) {
   const ndEl = doc.querySelector('#__NEXT_DATA__');
-  const md = ndEl ? JSON.parse(ndEl.textContent).props.pageProps.metaData || {} : {};
+  const pp = ndEl ? JSON.parse(ndEl.textContent).props.pageProps : {};
+  const md = pp.metaData || {};
+  const blocks = pp.blocks || [];
   const warnings = [];
 
   const template = /\/blog\/research\//.test(url) ? 'Research' : 'Blog Article';
@@ -362,11 +417,15 @@ export function extractPageFromDoc(doc, url) {
     const kind = classify(child);
     if (kind === 'skip') return; // chrome / style-only injection — no content lost
     if (kind === 'cta') { flush(); sections.push([extractCta(child, warnings)]); return; }
+    if (kind === 'statband') {
+      const b = statBandFromBlocks(blocks);
+      if (b) { flush(); sections.push([b]); } else {
+        warnings.push('stat-band (SnackableCards) present but no parseable figures in payload — author manually');
+      }
+      return;
+    }
     if (kind === 'unknown') {
-      const snackable = /snackable/i.test(child.className || '') || child.querySelector('[class*="Snackable" i]');
-      warnings.push(snackable
-        ? 'stat-band (SnackableCards) is client-rendered from an external service — not in the page payload; author it manually'
-        : `skipped unrecognized block: ${child.className?.toString().split(' ')[0] || child.tagName}`);
+      warnings.push(`skipped unrecognized block: ${child.className?.toString().split(' ')[0] || child.tagName}`);
       return;
     }
     let nodes = [];

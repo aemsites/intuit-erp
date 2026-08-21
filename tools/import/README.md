@@ -78,6 +78,7 @@ seed those files.
 | `.core-block-container` / image+heading+link CTA | `fragment` (media-promo, matched by image asset → heading), else inline `media-text` |
 | `datawrapper.dwcdn.net` iframe | `embed` |
 | poster `img` from `i.ytimg.com/vi/<id>/` | `video` link (`<a href><picture></a>`, upgraded by the video autoblock) |
+| MDS `snackable-cards-slider` (client-rendered; data in `__NEXT_DATA__`) | `stat-band cards` (horizontal image scroller: title card + stat graphics + captions) |
 | body `<img>` | `<picture>` (fully-qualified) |
 | — (appended) | `Recommended for you` + `blog-cards`, then pricing-disclaimer `fragment` |
 | nav / mega-nav / footer / social / ProductBanner / right-rail / AuthorBio / related grids / byline | **dropped** (the `blog-template` autoblock regenerates byline/TOC/right-rail) |
@@ -96,12 +97,9 @@ something confidently.
 
 ## Known limitations (warned, never fabricated)
 
-- **`stat-band` (SnackableCards)** figures are loaded client-side from an external service and
-  are **not in the page payload at all** — they're skipped with a warning; author them manually.
-  (Affects ~7 pages: product-update/what-is-intuit-enterprise-suite, research/business-solutions-
-  survey-2024, hr/what-is-employee-turnover, product-update/intuit-enterprise-suite-mid-market-
-  innovation, construction/automation-in-construction, construction/construction-material-cost,
-  construction/work-in-progress-accounting.)
+- **`stat-band` (SnackableCards)** render client-side (empty in SSR) but the card data (images,
+  alt-text stats, captions) is in `__NEXT_DATA__`, so it is auto-extracted into a `stat-band cards`
+  block (horizontal image scroller). If a page's slider has no parseable cards, it warns instead.
 - **Datawrapper** widgets (charts **and** tables) are emitted as `embed`, matching the DA
   convention (e.g. `/blog/financials/cash-flow-variance-analysis`).
 - **`ask-the-expert` Q&A / interview layout** is not the standard article layout (content is
