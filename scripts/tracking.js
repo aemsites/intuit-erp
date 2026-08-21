@@ -167,10 +167,25 @@ export function normalizeRow(row) {
 }
 
 /**
- * Index raw sheet rows into `key -> config`, with UNIQUE keys (one row per key).
- * A block with several CTAs uses `<blockKey>-<n>` keys (1-based DOM order), so no
- * `cta` column or DOM-order matching is needed. Rows without a `key` are skipped;
- * a duplicate key keeps the last row.
+ * Normalize the page path used to scope sheet keys: leading slash, no trailing
+ * slash (except root), query/hash stripped — matching the authored `path` column.
+ * @param {string} p
+ * @returns {string}
+ */
+export function normalizePath(p) {
+  const path = (p || '/').split(/[?#]/)[0];
+  return path.length > 1 ? path.replace(/\/+$/, '') : '/';
+}
+
+/**
+ * Index raw sheet rows into `composite -> config`. Authoring uses TWO columns:
+ *  - `path`: the page path for per-page body residue (e.g. /accounting/multi-entity),
+ *    or `*` / blank for site-wide chrome (nav/footer/widgets).
+ *  - `key`: `<blockKey>-<n>` (1-based DOM order), or a bare `<blockKey>` single-CTA.
+ * They compose to the internal key sheetRowFor resolves: `<path>|<key>` (page-scoped)
+ * or bare `<key>` (site-wide). A legacy composite `key` (already containing `|`) is
+ * kept as-is. Rows with no `key`, or with NO residue at all (every value blank), are
+ * skipped — an empty row overrides nothing. A duplicate composite keeps the last row.
  * @param {Array<Record<string, string>>} data
  * @returns {Map<string, Record<string, unknown>>}
  */
@@ -178,7 +193,12 @@ export function indexRows(data) {
   const byKey = new Map();
   (data || []).forEach((row) => {
     const key = (row.key ?? '').toString().trim();
-    if (key) byKey.set(key, normalizeRow(row));
+    if (!key) return;
+    const cfg = normalizeRow(row);
+    if (!Object.keys(cfg).length) return; // residue-less row = no-op; drop it
+    const p = (row.path ?? '').toString().trim();
+    const composite = (p && p !== '*') ? `${normalizePath(p)}|${key}` : key;
+    byKey.set(composite, cfg);
   });
   return byKey;
 }
@@ -385,17 +405,6 @@ export function applyBlockDefaults(derived, block) {
     delete derived['custom-properties'].link_name;
   }
   return derived;
-}
-
-/**
- * Normalize the page path used to scope sheet keys: leading slash, no trailing
- * slash (except root), query/hash stripped — matching the authored key form.
- * @param {string} p
- * @returns {string}
- */
-export function normalizePath(p) {
-  const path = (p || '/').split(/[?#]/)[0];
-  return path.length > 1 ? path.replace(/\/+$/, '') : '/';
 }
 
 /**

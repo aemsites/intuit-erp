@@ -53,4 +53,29 @@ describe('indexRows (unique keys)', () => {
     expect(indexRows([{ object: 'x' }]).size).toBe(0);
     expect(indexRows(undefined).size).toBe(0);
   });
+  it('composes path + key into the internal composite (per-page body)', () => {
+    const byKey = indexRows([
+      { path: '/accounting/multi-entity', key: 'faq-3', 'object-detail': 'faq|question_3' },
+      { path: '/pricing/', key: 'cta-1', 'wa-link': 'z' }, // trailing slash normalized
+    ]);
+    expect(byKey.get('/accounting/multi-entity|faq-3')['object-detail']).toBe('faq|question_3');
+    expect(byKey.get('/pricing|cta-1')['wa-link']).toBe('z');
+  });
+  it('treats * or blank path as site-wide (bare key)', () => {
+    const byKey = indexRows([
+      { path: '*', key: 'nav-1', 'wa-link': 'a' },
+      { path: '', key: 'footer-1', 'wa-link': 'b' },
+    ]);
+    expect(byKey.get('nav-1')['wa-link']).toBe('a');
+    expect(byKey.get('footer-1')['wa-link']).toBe('b');
+  });
+  it('drops residue-less rows (only a key, everything else blank)', () => {
+    const byKey = indexRows([
+      { path: '/x', key: 'page-1' }, // no residue -> no-op
+      { path: '/x', key: 'page-2', 'wa-link': 'keep' },
+    ]);
+    expect(byKey.has('/x|page-1')).toBe(false);
+    expect(byKey.get('/x|page-2')['wa-link']).toBe('keep');
+    expect(byKey.size).toBe(1);
+  });
 });
