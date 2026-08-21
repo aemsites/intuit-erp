@@ -59,7 +59,6 @@ The repository provides the basic structure, blocks, and configuration needed to
 - Maintain responsive design principles
   - Declare styles mobile first, use `min-width` media queries at 768px/1024px/1200px/1440px for tablet and desktop
   - Reuse the exact pixel values above for every new `@media` rule — do not introduce one-off breakpoints
-  - JS that needs to check viewport width should import the shared constants from `scripts/breakpoints.js` instead of hardcoding pixel values
 - Ensure all selectors are scoped to the block.
   - Bad: `.item-list`
   - Good: `.{blockname} .item-list`   
