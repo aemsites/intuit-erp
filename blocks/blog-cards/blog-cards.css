@@ -199,10 +199,7 @@
   body.category .blog-cards .blog-card:not(.featured) .blog-card-image { height: 376px; }
 }
 
-/* verified against erp.intuit.com/blog live: this component has a hard, exact
-   breakpoint at 1360px (title jumps 16px -> 28px there, not at 1200px) — kept
-   as-is per the same "matches a real measured source value" exception as
-   feature-grid.css's 1300px. Do not fold this into the 1200px tier. */
+/* carries the tablet type scale through 1200-1359px */
 @media (min-width: 1360px) {
   .blog-cards .blog-card .blog-card-body .blog-card-category { font-size: 16px; }
 
