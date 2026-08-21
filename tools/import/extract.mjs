@@ -166,6 +166,9 @@ function classify(el) {
   if (/snackable/i.test(el.className || '') || el.querySelector('[class*="Snackable" i]')) return 'statband';
   if (hasClass(el, /Separator/)) return 'skip'; // decorative rule (chrome)
   if (/quote-box/.test(style)) return 'quote';
+  // MDS Quote component: the quote-mark is a decorative data-URI <img>, so this
+  // MUST precede the `img => image` branch below or the quote is lost as an image.
+  if (hasClass(el, /Quote_quoteContainer/)) return 'quote';
   if (el.querySelector('iframe[src*="datawrapper"]')) return 'embed';
   if (hasClass(el, /Responsivetext_responsivetext/)) return 'prose';
   // Highlight = any callout box painted the brand bright-cyan (#C2F5FF). The
@@ -228,6 +231,21 @@ function extractHighlight(el) {
 }
 
 function extractQuote(el) {
+  // MDS Quote component (Quote_quoteContainer): a large pull-quote on the source
+  // (40px bold + block attribution line, verified on erp.intuit.com), so it maps
+  // to a default-content <blockquote> — matching styles.css `blockquote p`/`cite`
+  // — not the smaller `testimonial` block (which blog-template styles at 18px).
+  // Body and attribution live in dedicated divs (no <p>/<h>); the quote-mark is a
+  // decorative data-URI SVG and is dropped.
+  const qtEl = el.querySelector('[class*="Quote_quoteText"]');
+  if (qtEl) {
+    const quote = cleanText(qtEl.textContent);
+    if (!quote) return [];
+    const attribEl = el.querySelector('[class*="Quote_authorDetails"]');
+    const attrib = attribEl ? cleanText(attribEl.textContent).replace(/^[\s\-–—]+/, '') : '';
+    const html = `<p>${esc(quote)}</p>${attrib ? `<cite>${esc(attrib)}</cite>` : ''}`;
+    return [{ type: 'blockquote', html }];
+  }
   const box = el.querySelector('.quote-box') || el;
   const nodes = [];
   const h = box.querySelector('h2,h3');
