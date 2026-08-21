@@ -205,8 +205,6 @@ async function setupRecaptcha(cfg, config, form) {
   run();
 }
 
-// True when the submit button drops below the last field (stacked layout); false
-// when it shares the field row (single row) or the form isn't measurable.
 function disclaimerBelowFields(formEl) {
   const buttonRow = formEl.querySelector('.mktoButtonRow');
   if (!buttonRow) return false;
@@ -226,7 +224,6 @@ async function embedMarketoForm(formEl, cfg, config, env) {
   const forms2Src = `${host}/js/forms2/js/forms2.min.js`;
   await loadScript(forms2Src);
   window.MktoForms2.loadForm(host, munchkin, config.formId, (form) => {
-    // Above the form when horizontal, between fields and submit when stacked.
     if (config.disclaimer) {
       const el = document.createElement('div');
       el.className = 'form-disclaimer';
