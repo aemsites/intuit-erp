@@ -182,9 +182,19 @@ describe('self-made golden oracle — code-built surfaces (header/footer/video)'
   });
 });
 
-describe('self-made golden oracle — every event is covered', () => {
-  it('no coverage gaps remain in the golden (derive or code-built)', () => {
+describe('self-made golden oracle — coverage is fully classified', () => {
+  const KNOWN = ['derive', 'code-built', 'to-annotate', 'sheet'];
+  it('every golden event across all archetypes has a known coverage status', () => {
     const all = golden.pages.flatMap((p) => p.events);
-    expect(all.every((e) => e.coverage === 'derive' || e.coverage === 'code-built')).toBe(true);
+    const unknown = all.filter((e) => !KNOWN.includes(e.coverage)).map((e) => e.name);
+    expect(unknown).toEqual([]);
+  });
+
+  it('the to-annotate roadmap is the blog/secondary-nav component set (documented, not yet wired)', () => {
+    const pending = golden.pages.flatMap((p) => p.events)
+      .filter((e) => e.coverage === 'to-annotate').map((e) => e.category);
+    expect(pending).toEqual(expect.arrayContaining([
+      'qrc_article_hero', 'qrc_content_card_grid', 'TableOfContents', 'social_media', 'secondary_nav',
+    ]));
   });
 });

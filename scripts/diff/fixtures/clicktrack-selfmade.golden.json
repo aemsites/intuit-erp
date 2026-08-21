@@ -73,6 +73,44 @@
           "derivable": { "event": "video:engaged", "object": "video", "action": "engaged", "ui_object": "video_link", "ui_object_detail": "Watch Patrick's story (2:33)", "ui_action": "clicked", "ui_access_point": "page" },
           "residueKeys": [] }
       ]
+    },
+    {
+      "path": "/pricing/",
+      "template": "pricing (flat: page body + header/footer + talk_to_sales; NO rich components)",
+      "_note": "reverse-engineered 2026-08-21: 41 beacons, derive 10/10 exact. Plan/comparison CTAs resolve to ap=page. No new block annotation needed.",
+      "events": [
+        { "name": "pricing-content-link", "category": "content", "coverage": "derive",
+          "derivable": { "event": "content:interacted", "object": "content", "action": "interacted", "ui_object": "link", "ui_action": "clicked", "ui_access_point": "page" },
+          "residueKeys": ["ui_object_detail"] }
+      ]
+    },
+    {
+      "path": "/blog/case-study/*",
+      "template": "blog article (qrc_* component vocabulary; distinct from marketing rw_*)",
+      "_note": "reverse-engineered 2026-08-21: 78 beacons, derive 18/20 exact (2 misses = content-exploration links authored action=engaged). New components below need blog-block annotation.",
+      "events": [
+        { "name": "blog-content-link", "category": "content", "coverage": "derive",
+          "derivable": { "event": "content:interacted", "object": "content", "action": "interacted", "ui_object": "link", "ui_action": "clicked", "ui_access_point": "page" },
+          "residueKeys": ["ui_object_detail"] },
+        { "name": "blog-article-hero", "category": "qrc_article_hero", "coverage": "to-annotate", "block": "case-study-header / guide-hero",
+          "derivable": { "event": "content:interacted", "object": "content", "ui_access_point": "qrc_article_hero" },
+          "residueKeys": ["ui_object", "ui_object_detail", "object_detail", "data-wa-link"],
+          "note": "annotate the blog hero with trackAs('qrc_article_hero')" },
+        { "name": "blog-content-cards", "category": "qrc_content_card_grid", "coverage": "to-annotate", "block": "related-blogs / blog-cards",
+          "derivable": { "event": "content:engaged", "object": "content", "ui_access_point": "qrc_content_card_grid|qrc_content_card" },
+          "residueKeys": ["ui_object", "ui_object_detail", "data-wa-link"],
+          "note": "cards-analogue multi-level chain; skip the Load-more control; content links author action=engaged" },
+        { "name": "blog-toc", "category": "TableOfContents", "coverage": "to-annotate", "block": "case-study-header buildToc() / quick-links",
+          "derivable": { "event": "content:interacted", "object": "content", "ui_access_point": "TableOfContents" },
+          "residueKeys": ["ui_object_detail"] },
+        { "name": "blog-social-share", "category": "social_media", "coverage": "to-annotate", "block": "case-study-header shareRow()",
+          "derivable": { "event": "content:interacted", "object": "content", "ui_access_point": "social_media" },
+          "residueKeys": ["ui_object", "ui_object_detail", "data-wa-link"] },
+        { "name": "blog-secondary-nav", "category": "secondary_nav", "coverage": "to-annotate", "block": "header (secondaryNavHTML)",
+          "derivable": { "event": "content:engaged", "object": "content", "ui_access_point": "secondary_nav" },
+          "residueKeys": ["ui_object", "ui_object_detail", "data-wa-link"],
+          "note": "resource-center secondary nav is opted-in via the header block but resolves to '' — needs a secondary_nav trail segment stamped in header.js" }
+      ]
     }
   ]
 }
