@@ -95,7 +95,11 @@ function extractBlocks(container, out = []) {
     } else if (tag === 'blockquote') {
       const html = cleanInlineHtml(el);
       if (html) out.push({ type: 'blockquote', html });
-    } else if (['div', 'section', 'left', 'font', 'article', 'main', 'aside'].includes(tag)) {
+    } else if (['div', 'section', 'left', 'font', 'article', 'main', 'aside'].includes(tag)
+      || tag.includes('<')) {
+      // recurse into containers, including malformed Quill wrappers such as
+      // `<left<p>` (parsed as tagName `left<p`) that would otherwise drop the
+      // callout content nested inside them.
       extractBlocks(el, out);
     }
   });
@@ -370,6 +374,28 @@ function extractMetadata(doc, md, url) {
 
 /* --------------------------------- driver --------------------------------- */
 
+/** Wrappers that are page chrome, never article content. */
+const CHROME_RE = /SocialMedia|TalkToSales|ArticleRightRail|ArticleRelated|right-rail|left-rail|AuthorBio|Breadcrumb|Navigation|Footer|EventsBar|events-bar/i;
+
+/** A direct child that counts as an article content block (prose/image/CTA).
+ *  Bare `.root` is intentionally not counted — it is usually a style/script
+ *  injection (e.g. footer/search CSS) rather than real content. */
+function isContentChild(el) {
+  const c = (el.className || '').toString();
+  if (CHROME_RE.test(c)) return false;
+  if (/Responsivetext_responsivetext/.test(c)) return !!textSansStyle(el);
+  if (/core-block-container/.test(c)) return true;
+  if (/adaptive-img|Image_/.test(c)) return true;
+  return !!el.querySelector(':scope > picture img[src]:not([src^="data:"]), :scope > img[src]:not([src^="data:"])');
+}
+
+/**
+ * Locate the article body container. The standard layout keeps prose blocks as
+ * flat siblings, so the container with the most direct `.Responsivetext`
+ * children wins. Some layouts (e.g. `ask-the-expert`) scatter prose one block
+ * per wrapper; there we scope to the article main region (so global nav/footer
+ * chrome can't win) and pick the container with the most direct content blocks.
+ */
 function findBody(doc) {
   let body = null;
   let best = -1;
@@ -377,7 +403,37 @@ function findBody(doc) {
     const n = [...d.children].filter((c) => /Responsivetext_responsivetext/.test(c.className || '')).length;
     if (n > best) { best = n; body = d; }
   });
+  if (best >= 2) return body;
+  const scope = doc.querySelector('[class*="ArticleComponent-main-content"]')
+    || doc.querySelector('main') || doc.body;
+  body = null;
+  best = -1;
+  scope.querySelectorAll('div').forEach((d) => {
+    const n = [...d.children].filter(isContentChild).length;
+    if (n > best) { best = n; body = d; }
+  });
   return best >= 2 ? body : null;
+}
+
+/**
+ * Page-specific footnote disclaimers that live *outside* the article body (some
+ * ask-the-expert / product pages). Distinct from the generic pricing-disclaimer
+ * fragment already appended to every article — identified by numeric footnote
+ * markers (`[1]`) so the generic "Disclaimer: This content is for information
+ * purposes only" boilerplate (covered by that fragment) is never duplicated.
+ * @returns {Array|null} content nodes for a trailing disclaimers section, or null
+ */
+function extractDisclaimers(doc, body) {
+  const rts = [...doc.querySelectorAll('[class*="Responsivetext_responsivetext"]')];
+  for (const rt of rts) {
+    if (body && body.contains(rt)) continue;
+    const txt = textSansStyle(rt);
+    if (/^disclaimers?\b/i.test(txt) && /\[\d+\]/.test(txt)) {
+      const nodes = extractBlocks(rt);
+      if (nodes.length) return nodes;
+    }
+  }
+  return null;
 }
 
 /**
@@ -397,13 +453,33 @@ export function extractPageFromDoc(doc, url) {
   const template = /\/blog\/research\//.test(url) ? 'Research' : 'Blog Article';
   const { path } = pathParts(url);
 
-  const hero = doc.querySelector('[class*="QrcArticleHero"] img[src]')
+  const heroWrap = doc.querySelector('[class*="QrcArticleHero"]');
+  const heroImg = heroWrap?.querySelector('img[src]')
     || doc.querySelector('h1 ~ picture img, h1 + * img');
+  // ask-the-expert & other video-led articles use a YouTube poster as the hero;
+  // emit it as a video (link + poster) so blog-template upgrades it to a player.
+  const heroVid = ytId(heroImg?.getAttribute('src') || '')
+    || ytId(heroWrap?.querySelector('a[href*="youtu" i]')?.getAttribute('href') || '');
+  let hero = null;
+  if (heroVid) {
+    hero = {
+      type: 'video',
+      href: `https://www.youtube.com/watch?v=${heroVid}`,
+      poster: heroImg
+        ? { type: 'image', src: heroImg.getAttribute('src'), alt: heroImg.getAttribute('alt') || 'video thumbnail' }
+        : null,
+    };
+  } else if (heroImg) {
+    hero = { type: 'image', src: heroImg.getAttribute('src'), alt: heroImg.getAttribute('alt') || '' };
+  }
   const h1 = doc.querySelector('h1')?.textContent.trim() || md.seo_og_title || '';
 
   const metadata = extractMetadata(doc, md, url);
   // video-led pages have no seo_og_image; fall back to the hero (video poster)
-  if (!metadata.Image && hero) metadata.Image = hero.getAttribute('src');
+  if (!metadata.Image) {
+    const heroSrc = hero?.type === 'video' ? hero.poster?.src : hero?.src;
+    if (heroSrc) metadata.Image = heroSrc;
+  }
 
   const body = findBody(doc);
   if (!body) throw new Error(`could not locate article body for ${url} (not an article layout?)`);
@@ -442,6 +518,11 @@ export function extractPageFromDoc(doc, url) {
   });
   flush();
 
+  // page-specific footnote disclaimers (outside the body on some layouts) —
+  // a real content section, kept ahead of the trailing standard footer.
+  const disclaimers = extractDisclaimers(doc, body);
+  if (disclaimers) sections.push(disclaimers);
+
   // trailing standard footer: Recommended for you + pricing disclaimer
   const category = metadata.Category;
   sections.push([
@@ -457,7 +538,7 @@ export function extractPageFromDoc(doc, url) {
     template,
     metadata,
     h1,
-    hero: hero ? { src: hero.getAttribute('src'), alt: hero.getAttribute('alt') || '' } : null,
+    hero,
     sections,
     warnings,
   };

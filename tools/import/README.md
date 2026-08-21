@@ -72,7 +72,9 @@ seed those files.
 | URL (`/blog/research/*` → Research) | `metadata` Template |
 | synthesized breadcrumb from path | `metadata` json-ld |
 | `h1` + hero `<img>` | section-1 `<h1>` + `<picture>` (not a block) |
-| `.Responsivetext` prose (h2/h3/p/ul/ol) | headings/paragraphs/lists (Quill spans stripped, `<strong>`/`<em>`/links kept) |
+| `h1` + hero `Video_video` (YouTube poster) | section-1 `<h1>` + `video` link (`<a href><picture></a>`, upgraded to a player) |
+| `.Responsivetext` prose (h2/h3/p/ul/ol) | headings/paragraphs/lists (Quill spans stripped, `<strong>`/`<em>`/links kept; malformed Quill wrappers like `<left<p>` recursed) |
+| bottom `Disclaimer` block with footnote markers (`[1]`…) | trailing default-content section (distinct from the pricing-disclaimer fragment) |
 | `.root > .colored-box`, `.TipBox-tip-box` | `highlight` |
 | `.root > .quote-box` | heading + `testimonial` (name/role split on first comma) |
 | `.core-block-container` / image+heading+link CTA | `fragment` (media-promo, matched by image asset → heading), else inline `media-text` |
@@ -102,10 +104,12 @@ something confidently.
   block (horizontal image scroller). If a page's slider has no parseable cards, it warns instead.
 - **Datawrapper** widgets (charts **and** tables) are emitted as `embed`, matching the DA
   convention (e.g. `/blog/financials/cash-flow-variance-analysis`).
-- **`ask-the-expert` Q&A / interview layout** is not the standard article layout (content is
-  wrapped in nested containers, not a single article body) — the tool skips it with a clear
-  message; author it manually or add a dedicated extractor. (Affects `intuit-enterprise-suite-
-  gene-marks`.)
+- **`ask-the-expert` / video-led layouts** scatter prose across nested containers (max one
+  `.Responsivetext` per wrapper) instead of a single flat article body. `findBody` falls back to
+  the article main region (`ArticleComponent-main-content`) and picks the container with the most
+  direct content blocks, so these import cleanly (e.g. `intuit-enterprise-suite-gene-marks`).
+  Their video hero (a `Video_video` component with a YouTube poster) is emitted as a `video`, and
+  any bottom footnote `Disclaimers` block is captured as a trailing content section.
 - **Date** uses the deterministic `lastPublishedDate`. DA's own `Date` is inconsistent (some
   values are the migration date), so this may differ from a page's originally-displayed date;
   it's easy to review/adjust and does not affect byline/sort correctness.

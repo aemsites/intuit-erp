@@ -145,7 +145,7 @@ const renderSection = (nodes) => `<div>${nodes.map(renderNode).join('')}</div>`;
 export function renderMainInner(page) {
   const section0 = `<div>${renderMetadata(page.metadata)}`
     + (page.h1 ? `<h1>${page.h1}</h1>` : '')
-    + (page.hero ? picture(page.hero) : '')
+    + (page.hero ? renderNode(page.hero) : '')
     + `</div>`;
   return section0 + (page.sections || []).map(renderSection).join('');
 }
