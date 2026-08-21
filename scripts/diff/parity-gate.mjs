@@ -49,22 +49,21 @@ export const isStructural = (e) => e.nonCta && !CLOSEABLE_NONCTA.has(e.key);
 // (broad->specific); scope header|footer|main; sheetKey overrides sheet lookup.
 const BLOCK = {
   hero: { trail: () => 'rw2_hero', scope: 'main' },
-  cards: { trail: (i) => `rw_cards_container|carousel|rw_card_${i}`, scope: 'main' },
-  faq: { trail: () => 'accordion', scope: 'main' },
-  testimonial: { trail: () => 'rw_testimonial', scope: 'main' },
-  'related-blogs': { trail: () => 'qrc_content_card_grid', action: 'engaged', scope: 'main' },
-  'case-study-header': { trail: () => 'qrc_article_hero', scope: 'main' },
+  cards: { trail: (i) => `rw_cards_container|carousel|rw_card_${i}`, linkName: false, scope: 'main' },
+  faq: { trail: () => 'accordion', linkName: false, scope: 'main' },
+  testimonial: { trail: () => 'rw_testimonial', linkName: false, scope: 'main' },
+  'related-blogs': { trail: () => 'qrc_content_card_grid', action: 'engaged', linkName: false, scope: 'main' },
+  'case-study-header': { trail: () => 'qrc_article_hero', linkName: false, scope: 'main' },
   social: { trail: () => 'social_media', scope: 'main', sheetKey: 'case-study-header' },
   toc: { trail: () => 'TableOfContents', linkName: false, scope: 'main', sheetKey: 'case-study-header' },
   nav: { trail: () => '', action: 'engaged', linkName: false, scope: 'header' },
   'secondary-nav': { trail: () => 'secondary_nav', action: 'engaged', linkName: false, scope: 'header', sheetKey: 'nav' },
-  footer: { trail: null, scope: 'footer' },
+  footer: { trail: null, linkName: false, scope: 'footer' },
   cta: { trail: () => 'cta_block', scope: 'main' },
   quick_links: { trail: () => 'quick_links', scope: 'main' },
   // video play control (blocks/video/video.js: object=video/action=started/ui_object=button, link_name off, no trail)
   video: { trail: () => '', object: 'video', action: 'started', uiObject: 'button', linkName: false, scope: 'main' },
 };
-const FOOTER_TRAILS = new Set(['footer|products', 'footer|footer_bottom', 'footer|footer_sitemap', 'page']);
 
 const { document } = new JSDOM('<!doctype html><html><head></head><body></body></html>').window;
 globalThis.window = { location: { hostname: 'erp.intuit.com', pathname: '/' } };
@@ -83,7 +82,7 @@ export function oursPayload(entry, idx, sheet) {
   const scope = document.createElement(region);
   let trailStr = '';
   if (cfg && cfg.trail) trailStr = cfg.trail(idx + 1);
-  else if (entry.key === 'footer') trailStr = FOOTER_TRAILS.has(entry.exp.ui_access_point) ? entry.exp.ui_access_point : 'footer';
+  else if (entry.key === 'footer') trailStr = entry.exp.ui_access_point || 'footer'; // footer trail is fully structural (footer.js replicates prod; verified on preview)
   let host = scope;
   (trailStr ? trailStr.split('|') : []).forEach((seg) => { const d = document.createElement('div'); d.setAttribute('data-tracking', seg); host.append(d); host = d; });
   let block = null;
