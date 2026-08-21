@@ -23,6 +23,9 @@ const stripTags = (h) => (h || '').replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' 
 
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
+/** whitespace/punctuation-insensitive key for de-duping text across DOM shapes. */
+const alnum = (s) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
 const cleanText = (s) => (s || '').replace(/ /g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
 
 /** erp.intuit.com links -> site-relative; everything else untouched. */
@@ -47,10 +50,29 @@ function unwrapAll(root, selector) {
   }
 }
 
+/**
+ * For a content icon `<img>` (class="icon", an SVG), the EDS icon token name
+ * derived from its filename; null for regular content images. The SVGs are
+ * committed under `/icons/<name>.svg`, so emitting `:name:` renders them inline
+ * at icon size instead of as a full-size image.
+ */
+function iconToken(img) {
+  const cls = img.getAttribute('class') || '';
+  const base = (img.getAttribute('src') || '').split('?')[0].split('/').pop() || '';
+  if (!/(^|\s)icon(\s|$)/.test(cls) || !/\.svg$/i.test(base)) return null;
+  return base.replace(/\.svg$/i, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+}
+
 /** Clone `el`, strip Quill/wrapper cruft, keep semantic inline tags -> innerHTML. */
 function cleanInlineHtml(el) {
   const c = el.cloneNode(true);
   c.querySelectorAll('style,script').forEach((n) => n.remove());
+  // content icons (e.g. the "Quick answer" lightbulb/exclamation) -> inline
+  // `:name:` tokens rendered small from /icons/<name>.svg, not a huge <img>.
+  c.querySelectorAll('img').forEach((img) => {
+    const name = iconToken(img);
+    if (name) img.replaceWith(c.ownerDocument.createTextNode(` :${name}: `));
+  });
   unwrapAll(c, 'span,font,u,left,small,label');
   c.querySelectorAll('*').forEach((n) => {
     if (n.tagName === 'A') {
@@ -60,9 +82,14 @@ function cleanInlineHtml(el) {
     } else if (n.tagName === 'IMG') {
       const src = n.getAttribute('src');
       const alt = n.getAttribute('alt') || '';
+      const width = n.getAttribute('width');
+      const height = n.getAttribute('height');
       [...n.attributes].forEach((a) => n.removeAttribute(a.name));
       if (src) n.setAttribute('src', src);
       n.setAttribute('alt', alt);
+      // keep intrinsic dimensions so inline content icons render at their size
+      if (width) n.setAttribute('width', width);
+      if (height) n.setAttribute('height', height);
     } else {
       [...n.attributes].forEach((a) => n.removeAttribute(a.name));
     }
@@ -100,7 +127,14 @@ function extractBlocks(container, out = []) {
       // recurse into containers, including malformed Quill wrappers such as
       // `<left<p>` (parsed as tagName `left<p`) that would otherwise drop the
       // callout content nested inside them.
-      extractBlocks(el, out);
+      if (el.querySelector('h1, h2, h3, h4, h5, h6, p, ul, ol, blockquote, table')) {
+        extractBlocks(el, out);
+      } else {
+        // leaf container with only inline content (e.g. a callout's
+        // `.icon-wrap > span`) — emit it as one paragraph so the text/icon isn't lost.
+        const html = cleanInlineHtml(el);
+        if (stripTags(html) || /<img/.test(html)) out.push({ type: 'paragraph', html });
+      }
     }
   });
   return out;
@@ -134,9 +168,10 @@ function classify(el) {
   if (/quote-box/.test(style)) return 'quote';
   if (el.querySelector('iframe[src*="datawrapper"]')) return 'embed';
   if (hasClass(el, /Responsivetext_responsivetext/)) return 'prose';
-  if (/colored-box/.test(style) || hasClass(el, /TipBox-tip-box/)) return 'highlight';
-  // `.test-box` is a cyan feature-list box DA renders as plain heading+list (prose)
-  if (/test-box/.test(style)) return 'calloutprose';
+  // Highlight = any callout box painted the brand bright-cyan (#C2F5FF). The
+  // source uses several class names for it (`.colored-box`, `.test-box`, …); key
+  // off the colour so every variant maps to the `highlight` block, plus TipBox.
+  if (/#c2f5ff/i.test(style) || /colored-box/.test(style) || hasClass(el, /TipBox-tip-box/)) return 'highlight';
   // generic source callout wrapper (`.root > .innerhtml`): decide by content
   if (hasClass(el, /(^|\s)root(\s|$)/) || el.querySelector(':scope > .innerhtml, :scope .innerhtml')) {
     if (el.querySelector('iframe[src]')) return 'embed';
@@ -155,11 +190,39 @@ function classify(el) {
 
 /* ------------------------------- extractors ------------------------------- */
 
-function extractHighlight(el) {
-  const box = el.querySelector('.colored-box') || el.querySelector('[class*="TipBox-tip-box-content"]')
+/** Locate the callout's content box. Prefer the element whose `<style>` rule
+ *  paints it #C2F5FF (covers `.colored-box`, `.test-box`, and any other name),
+ *  then fall back to the known TipBox containers. */
+function highlightBox(el) {
+  const m = styleText(el).match(/\.([A-Za-z0-9_-]+)\s*\{[^}]*background(?:-color)?\s*:\s*#c2f5ff/i);
+  if (m) { const box = el.querySelector(`.${m[1]}`); if (box) return box; }
+  return el.querySelector('.colored-box')
+    || el.querySelector('[class*="TipBox-tip-box-content"]')
     || el.querySelector('[class*="TipBox-tip-box-body"]') || el;
-  box.querySelectorAll('img.icon, style, br').forEach((n) => n.remove());
-  const content = extractBlocks(box);
+}
+
+/** Merge an icon-only paragraph (just `:name:` tokens) into the following
+ *  paragraph so the icon sits inline with its text rather than on its own line. */
+const ICON_ONLY = /^\s*(?::[a-z0-9-]+:\s*)+$/;
+function mergeLeadingIcons(nodes) {
+  const out = [];
+  let pending = '';
+  nodes.forEach((n) => {
+    if (n.type === 'paragraph' && ICON_ONLY.test(n.html)) { pending += `${n.html.trim()} `; return; }
+    if (pending && n.type === 'paragraph') { out.push({ type: 'paragraph', html: (pending + n.html).trim() }); pending = ''; return; }
+    if (pending) { out.push({ type: 'paragraph', html: pending.trim() }); pending = ''; }
+    out.push(n);
+  });
+  if (pending) out.push({ type: 'paragraph', html: pending.trim() });
+  return out;
+}
+
+function extractHighlight(el) {
+  const box = highlightBox(el);
+  // strip only CSS/line-break cruft — images and icons are content (e.g. the
+  // "Quick answer" lightbulb/exclamation graphics), so they are kept.
+  box.querySelectorAll('style, br').forEach((n) => n.remove());
+  const content = mergeLeadingIcons(extractBlocks(box));
   if (!content.length) return null;
   return { type: 'block', name: 'highlight', variant: '', content };
 }
@@ -437,6 +500,65 @@ function extractDisclaimers(doc, body) {
 }
 
 /**
+ * Highlight callout boxes (#C2F5FF) that live *outside* the extracted body — most
+ * often a top-of-article "Key takeaways" summary that the source renders in its
+ * own container above the prose. The main loop only walks the body, so these are
+ * captured here: before-body boxes are prepended (top summary), after-body boxes
+ * appended. De-duped against the body so responsive desktop/mobile twins that are
+ * already captured are not emitted again.
+ * @returns {{before: object[], after: object[]}}
+ */
+function extractOrphanHighlights(doc, body) {
+  const before = [];
+  const after = [];
+  if (!body) return { before, after };
+  const bodyText = alnum(body.textContent);
+  const seen = new Set();
+  doc.querySelectorAll('.colored-box, .test-box, [class*="TipBox-tip-box"]').forEach((box) => {
+    if (body.contains(box)) return; // handled by the main loop
+    if (box.closest('[class*="Footer" i], [class*="Nav" i], [class*="RightRail" i], [class*="Related" i], [class*="AuthorBio" i]')) return;
+    const sig = alnum(textSansStyle(box)).slice(0, 60);
+    if (sig.length < 12 || seen.has(sig) || bodyText.includes(sig)) return;
+    seen.add(sig);
+    const b = extractHighlight(box.closest('.root') || box);
+    if (!b) return;
+    // eslint-disable-next-line no-bitwise
+    ((body.compareDocumentPosition(box) & 2) ? before : after).push(b);
+  });
+  return { before, after };
+}
+
+/**
+ * A "Frequently Asked Questions" accordion (MDS RwAccordion/Accordion), rendered
+ * client-side but with the Q/A text present in the SSR. Emitted as an `<h2>` +
+ * `faq` block, matching the DA authoring (e.g.
+ * /blog/product-update/what-is-intuit-enterprise-suite). Returns section nodes
+ * or null.
+ */
+function extractFaq(doc) {
+  const head = [...doc.querySelectorAll('h2, h3')]
+    .find((h) => /frequently asked questions|^\s*faqs?\b/i.test(h.textContent || ''));
+  if (!head) return null;
+  const accs = [...doc.querySelectorAll('[class*="ccordion_accordion__"]')];
+  const acc = accs.find((a) => (head.compareDocumentPosition(a) & 4) !== 0) || accs[accs.length - 1];
+  if (!acc) return null;
+  const items = [];
+  acc.querySelectorAll('[class*="AccordionItem_itemContainer"]').forEach((it) => {
+    const q = it.querySelector('button, [class*="itemHeading"], h3, h4');
+    const panel = it.querySelector('[class*="itemPanel"], [class*="panel"]');
+    if (!q || !panel) return;
+    const question = cleanText(q.textContent);
+    const answer = extractBlocks(panel);
+    if (question && answer.length) items.push({ q: esc(question), answer });
+  });
+  if (!items.length) return null;
+  return [
+    { type: 'heading', level: 2, html: esc(cleanText(head.textContent)) },
+    { type: 'block', name: 'faq', items },
+  ];
+}
+
+/**
  * Core extractor working on a live DOM `document` — shared by the Node CLI
  * (via extractPage) and the browser helix-importer-ui adapter (import.js).
  * @param {Document} doc source document
@@ -506,7 +628,6 @@ export function extractPageFromDoc(doc, url) {
     }
     let nodes = [];
     if (kind === 'prose') nodes = extractBlocks(child);
-    else if (kind === 'calloutprose') nodes = extractBlocks(child.querySelector('.test-box') || child);
     else if (kind === 'highlight') { const b = extractHighlight(child); if (b) nodes = [b]; }
     else if (kind === 'quote') nodes = extractQuote(child);
     else if (kind === 'image' || kind === 'video') { const n = extractImageOrVideo(child); if (n) nodes = [n]; }
@@ -517,6 +638,17 @@ export function extractPageFromDoc(doc, url) {
     });
   });
   flush();
+
+  // highlight callouts outside the body: prepend a top "Key takeaways" summary,
+  // append any that trail the prose.
+  const orphans = extractOrphanHighlights(doc, body);
+  [...orphans.before].reverse().forEach((b) => sections.unshift([b]));
+  orphans.after.forEach((b) => sections.push([b]));
+
+  // FAQ accordion (rendered client-side, Q/A present in SSR) — a real content
+  // section ahead of the trailing standard footer, matching the DA authoring.
+  const faq = extractFaq(doc);
+  if (faq) sections.push(faq);
 
   // page-specific footnote disclaimers (outside the body on some layouts) —
   // a real content section, kept ahead of the trailing standard footer.

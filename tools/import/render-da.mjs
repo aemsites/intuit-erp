@@ -7,8 +7,10 @@
  * `<picture>` elements (cross-origin images the pipeline does not optimize).
  *
  * Page model:
- *   { path, metadata: {label: value, ...}, h1: html, hero: {src, alt}|null,
- *     sections: Node[][] }   // sections AFTER section 0 (metadata+h1+hero)
+ *   { path, metadata: {label: value, ...}, h1: html,
+ *     hero: {type:'image',src,alt} | {type:'video',href,poster} | null,
+ *     sections: Node[][] }   // section 0 = h1+hero; metadata block is emitted at
+ *                            // the bottom, inside the last section (DA convention)
  * Node kinds (type):
  *   heading {level, html} | paragraph {html} | list {ordered, items:[html]}
  *   | image {src, alt} | blockquote {html} | video {href, poster:{src,alt}|null}
@@ -96,7 +98,14 @@ function renderBlock(b) {
       return `<div class="${cls('testimonial', b.variant)}"><div><div>${paras}</div></div></div>`;
     }
     case 'faq': {
-      const items = b.items.map((it) => `<div><div>${it.q}</div><div><p>${it.answerHtml}</p></div></div>`).join('');
+      const items = b.items.map((it) => {
+        // answer is a node list (multi-paragraph / lists supported); fall back to
+        // a single-paragraph answerHtml for legacy callers.
+        const ans = it.answer && it.answer.length
+          ? it.answer.map(renderNode).join('')
+          : `<p>${it.answerHtml || ''}</p>`;
+        return `<div><div>${it.q}</div><div>${ans}</div></div>`;
+      }).join('');
       return `<div class="faq">${items}</div>`;
     }
     case 'cta-band': {
@@ -141,13 +150,24 @@ export function renderMetadata(fields) {
 /** A single <main> section from its ordered nodes. */
 const renderSection = (nodes) => `<div>${nodes.map(renderNode).join('')}</div>`;
 
-/** The content that goes inside <main>: section 0 (metadata+h1+hero) + the rest. */
+/**
+ * The content that goes inside <main>: section 0 (h1 + hero), the article
+ * sections, and finally the `metadata` block — placed at the bottom, inside the
+ * last section (the DA convention, e.g. content/compare.html), not the top.
+ */
 export function renderMainInner(page) {
-  const section0 = `<div>${renderMetadata(page.metadata)}`
-    + (page.h1 ? `<h1>${page.h1}</h1>` : '')
+  const section0 = `<div>${page.h1 ? `<h1>${page.h1}</h1>` : ''}`
     + (page.hero ? renderNode(page.hero) : '')
     + `</div>`;
-  return section0 + (page.sections || []).map(renderSection).join('');
+  const sections = (page.sections || []).map(renderSection);
+  const metaHtml = renderMetadata(page.metadata);
+  if (sections.length) {
+    // append the metadata block inside the last section, before its closing tag
+    sections[sections.length - 1] = sections[sections.length - 1].replace(/<\/div>$/, `${metaHtml}</div>`);
+  } else {
+    sections.push(`<div>${metaHtml}</div>`);
+  }
+  return section0 + sections.join('');
 }
 
 /**

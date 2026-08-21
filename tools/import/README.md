@@ -75,14 +75,16 @@ seed those files.
 | `h1` + hero `Video_video` (YouTube poster) | section-1 `<h1>` + `video` link (`<a href><picture></a>`, upgraded to a player) |
 | `.Responsivetext` prose (h2/h3/p/ul/ol) | headings/paragraphs/lists (Quill spans stripped, `<strong>`/`<em>`/links kept; malformed Quill wrappers like `<left<p>` recursed) |
 | bottom `Disclaimer` block with footnote markers (`[1]`…) | trailing default-content section (distinct from the pricing-disclaimer fragment) |
-| `.root > .colored-box`, `.TipBox-tip-box` | `highlight` |
+| any callout box painted `#C2F5FF` (`.colored-box`, `.test-box`, `.TipBox-tip-box`, …) — keyed off the colour, incl. top-of-article "Key takeaways" boxes that sit outside the body | `highlight` |
+| content icon `<img class="icon">` (e.g. `Quick-answer-lightbulb-green.svg`) | inline `:name:` token + committed `/icons/<name>.svg` (renders 24×24, not a full image) |
+| FAQ accordion (`RwAccordion`/`AccordionItem`, client-rendered; Q/A in SSR) | `<h2>` + `faq` block |
 | `.root > .quote-box` | heading + `testimonial` (name/role split on first comma) |
 | `.core-block-container` / image+heading+link CTA | `fragment` (media-promo, matched by image asset → heading), else inline `media-text` |
 | `datawrapper.dwcdn.net` iframe | `embed` |
 | poster `img` from `i.ytimg.com/vi/<id>/` | `video` link (`<a href><picture></a>`, upgraded by the video autoblock) |
 | MDS `snackable-cards-slider` (client-rendered; data in `__NEXT_DATA__`) | `stat-band cards` (horizontal image scroller: title card + stat graphics + captions) |
 | body `<img>` | `<picture>` (fully-qualified) |
-| — (appended) | `Recommended for you` + `blog-cards`, then pricing-disclaimer `fragment` |
+| — (appended) | `metadata` block (bottom of the last section), `Recommended for you` + `blog-cards`, pricing-disclaimer `fragment` |
 | nav / mega-nav / footer / social / ProductBanner / right-rail / AuthorBio / related grids / byline | **dropped** (the `blog-template` autoblock regenerates byline/TOC/right-rail) |
 
 Links to `erp.intuit.com` are made site-relative; images stay fully-qualified. Byline, TOC and
