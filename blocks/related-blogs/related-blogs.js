@@ -11,6 +11,7 @@
  */
 
 import { readBlockConfig } from '../../scripts/aem.js';
+import { trackAs } from '../../scripts/tracking.js';
 
 const INDEX_URL = '/blog/query-index.json';
 const DEFAULT_LIMIT = 5;
@@ -106,4 +107,12 @@ export default async function decorate(block) {
 
     block.append(btn);
   }
+
+  // Click tracking (blog content card grid): each card is itself the <a>, so the
+  // trail resolves to the grid segment (prod's deeper qrc_content_card sub-level
+  // would need a card-container structure). Content-exploration cards report
+  // action=engaged; the "Load more" control is skipped; link_name suppressed.
+  trackAs('qrc_content_card_grid', block, {
+    key: 'related-blogs', linkName: false, action: 'engaged', skip: '.related-blogs-load-more',
+  });
 }

@@ -321,4 +321,7 @@ export default async function decorate(block) {
     linkName: false,
     skip: '.nav-toggle, .flyout-back, .secondary-nav-toggle',
   });
+  // The resource-center secondary nav is its own prod trail (secondary_nav),
+  // not the header's empty access point; give it a trail segment.
+  block.querySelector('.ies-secondary-nav')?.setAttribute('data-tracking', 'secondary_nav');
 }

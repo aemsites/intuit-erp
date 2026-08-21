@@ -28,6 +28,7 @@
  * CSS: blocks/case-study-header/case-study-header.css
  */
 import { toClassName } from '../../scripts/aem.js';
+import { trackAs } from '../../scripts/tracking.js';
 
 function shareRow() {
   const nav = document.createElement('div');
@@ -152,4 +153,15 @@ export default function decorate(block) {
   if (toc) wrap.append(toc);
 
   block.replaceChildren(wrap);
+
+  // Click tracking (blog article header). On prod these are THREE separate
+  // trails, not nested under one hero: eyebrow/byline links -> qrc_article_hero,
+  // the share row -> social_media, the ToC -> TableOfContents. Opt in with no
+  // block-root trail (so each sub-section resolves standalone); suppress link_name.
+  trackAs(null, block, { key: 'case-study-header', linkName: false });
+  block.querySelectorAll('.case-study-eyebrow, .case-study-byline').forEach((el) => {
+    if (!el.hasAttribute('data-tracking')) el.setAttribute('data-tracking', 'qrc_article_hero');
+  });
+  block.querySelector('.case-study-share')?.setAttribute('data-tracking', 'social_media');
+  block.querySelector('.case-study-toc')?.setAttribute('data-tracking', 'TableOfContents');
 }

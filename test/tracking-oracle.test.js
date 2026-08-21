@@ -190,11 +190,73 @@ describe('self-made golden oracle — coverage is fully classified', () => {
     expect(unknown).toEqual([]);
   });
 
-  it('the to-annotate roadmap is the blog/secondary-nav component set (documented, not yet wired)', () => {
-    const pending = golden.pages.flatMap((p) => p.events)
-      .filter((e) => e.coverage === 'to-annotate').map((e) => e.category);
-    expect(pending).toEqual(expect.arrayContaining([
-      'qrc_article_hero', 'qrc_content_card_grid', 'TableOfContents', 'social_media', 'secondary_nav',
+  it('the blog + secondary-nav + testimonial components are now wired (code-built)', () => {
+    const codeBuilt = golden.pages.flatMap((p) => p.events)
+      .filter((e) => e.coverage === 'code-built').map((e) => e.category);
+    expect(codeBuilt).toEqual(expect.arrayContaining([
+      'qrc_article_hero', 'qrc_content_card_grid', 'TableOfContents', 'social_media', 'secondary_nav', 'rw_testimonial',
     ]));
+  });
+});
+
+describe('self-made golden oracle — blog + testimonial code-built surfaces', () => {
+  beforeEach(() => { document.body.innerHTML = ''; });
+
+  it('blog share row -> social_media (content:interacted)', () => {
+    const p = runOurs(() => {
+      document.body.innerHTML = '<main><div class="case-study-header block"><div class="case-study-copy">'
+        + '<div class="case-study-share"><a href="https://www.linkedin.com/x" aria-label="Share on LinkedIn"><svg></svg></a></div>'
+        + '</div></div></main>';
+      const block = document.querySelector('.case-study-header');
+      trackAs(null, block, { key: 'case-study-header', linkName: false });
+      block.querySelector('.case-study-share').setAttribute('data-tracking', 'social_media');
+    }, '.case-study-share a');
+    expect(p.ui_access_point).toBe('social_media');
+    expect(p.event).toBe('content:interacted');
+  });
+
+  it('blog table of contents -> TableOfContents', () => {
+    const p = runOurs(() => {
+      document.body.innerHTML = '<main><div class="case-study-header block">'
+        + '<nav class="case-study-toc"><ol><li><a href="#s1">Section one</a></li></ol></nav></div></main>';
+      const block = document.querySelector('.case-study-header');
+      trackAs(null, block, { key: 'case-study-header', linkName: false });
+      block.querySelector('.case-study-toc').setAttribute('data-tracking', 'TableOfContents');
+    }, '.case-study-toc a');
+    expect(p.ui_access_point).toBe('TableOfContents');
+  });
+
+  it('resource-center secondary nav -> secondary_nav (content:engaged)', () => {
+    const p = runOurs(() => {
+      document.body.innerHTML = '<header><div class="header block">'
+        + '<nav class="ies-secondary-nav"><a class="secondary-nav-brand" href="/blog">Resource center</a></nav></div></header>';
+      const block = document.querySelector('.header');
+      trackAs(null, block, {
+        key: 'nav', action: 'engaged', linkName: false, skip: '.nav-toggle, .flyout-back, .secondary-nav-toggle',
+      });
+      block.querySelector('.ies-secondary-nav').setAttribute('data-tracking', 'secondary_nav');
+    }, '.ies-secondary-nav a');
+    expect(p.ui_access_point).toBe('secondary_nav');
+    expect(p.event).toBe('content:engaged');
+  });
+
+  it('related-blogs content card -> qrc_content_card_grid, action=engaged', () => {
+    const p = runOurs(() => {
+      document.body.innerHTML = '<main><div class="related-blogs block">'
+        + '<a class="related-blogs-card" href="/blog/x">Article title</a></div></main>';
+      trackAs('qrc_content_card_grid', document.querySelector('.related-blogs'), {
+        key: 'related-blogs', linkName: false, action: 'engaged', skip: '.related-blogs-load-more',
+      });
+    }, '.related-blogs-card');
+    expect(p.ui_access_point).toBe('qrc_content_card_grid');
+    expect(p.event).toBe('content:engaged'); // content-exploration cards report engaged
+  });
+
+  it('testimonial control -> rw_testimonial', () => {
+    const p = runOurs(() => {
+      document.body.innerHTML = '<main><div class="testimonial block"><a href="/story">See their story</a></div></main>';
+      trackAs('rw_testimonial', document.querySelector('.testimonial'), { key: 'testimonial', linkName: false });
+    }, '.testimonial a');
+    expect(p.ui_access_point).toBe('rw_testimonial');
   });
 });
