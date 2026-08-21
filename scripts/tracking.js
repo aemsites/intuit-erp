@@ -252,9 +252,6 @@ export function resolveCta(derived, sheet, context = {}) {
   const cfg = sheet || {};
   const attrs = {};
   const waLink = cfg['wa-link'];
-  // Faithful wa-link path: an authored wa-link with no object stays minimal — do
-  // NOT inject the derived object, which would flip the beacon shape.
-  const waLinkPath = !!waLink && !cfg.object;
 
   // The sacrificial anchor (always) + the opt-in switch ('' = compute the trail;
   // an explicit sheet value wins outright).
@@ -264,12 +261,10 @@ export function resolveCta(derived, sheet, context = {}) {
   const cp = mergeCustomProperties(context.customProperties, derived['custom-properties'], cfg['custom-properties']);
   const cpStr = assembleCustomProperties(cp);
 
-  if (waLinkPath) {
-    attrs['data-wa-link'] = waLink;
-    if (cpStr) attrs['data-custom-properties'] = cpStr;
-    return attrs;
-  }
-
+  // The re-verified tracker has NO separate wa-link path: object defaults to
+  // content and every authored field is read. A wa-link only ADDS data-wa-link
+  // (the tracker folds it into icom_user_action) — it never drops object-detail /
+  // ui-object, so a sheet row can carry wa-link + object-detail together.
   attrs['data-object'] = cfg.object ?? derived.object;
   if (cfg['object-detail'] != null) attrs['data-object-detail'] = cfg['object-detail'];
   attrs['data-action'] = cfg.action ?? derived.action;
@@ -512,17 +507,26 @@ export function initTracking(scope = document) {
  *     itemLabel: (i, el) => (el.classList.contains('cards-track') ? 'carousel' : `rw_card_${i}`),
  *   });
  *
- * @param {string} name the block's trail segment + opt-in key
+ * The trail segment (`name`) and the sheet/opt-in key are DECOUPLED: prod trail
+ * strings carry cruft (rw2_hero) but the sheet keys stay clean. Pass `key` to set
+ * the `tracking-<key>` opt-in class + the sheet lookup key; it defaults to `name`.
+ *
+ *   return trackAs('rw2_hero', block, { key: 'hero' }); // trail rw2_hero, sheet key hero-<n>
+ *
+ * @param {string} name the block's trail segment (data-tracking value)
  * @param {Element} block
- * @param {{itemSelector?: string, itemLabel?: (index: number, item: Element) => string}} [opts]
- *   `index` is the querySelectorAll match order; return '' from itemLabel to skip an element.
+ * @param {{key?: string, itemSelector?: string,
+ *   itemLabel?: (index: number, item: Element) => string}} [opts]
+ *   `key` = the tracking-<key> opt-in + sheet key (defaults to `name`); `index` is the
+ *   querySelectorAll match order; return '' from itemLabel to skip an element.
  * @returns {Element} the block (so it can be the decorate return value)
  */
-export function trackAs(name, block, { itemSelector, itemLabel } = {}) {
+export function trackAs(name, block, { key = name, itemSelector, itemLabel } = {}) {
   if (!block) return block;
   // Opt the block into click tracking (reuses the tracking-<key> machinery so
-  // the delegated handler JIT-stamps its CTAs); an authored opt-in is left as-is.
-  if (!trackingKey(block)) block.classList.add(`${PREFIX}${name}`);
+  // the delegated handler JIT-stamps its CTAs + the sheet is looked up by <key>-<n>);
+  // an authored opt-in is left as-is.
+  if (!trackingKey(block)) block.classList.add(`${PREFIX}${key}`);
   // Block trail segment — an explicit authored data-tracking wins.
   if (name && !block.hasAttribute('data-tracking')) block.setAttribute('data-tracking', name);
   // Per-item trail segments for repeated children (carousel cards, accordion items…).

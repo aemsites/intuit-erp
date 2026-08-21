@@ -319,4 +319,13 @@ describe('trackAs — declarative block opt-in from decorate()', () => {
     const block = document.querySelector('.hero');
     expect(trackAs('hero', block)).toBe(block);
   });
+
+  it('decouples the trail (name) from the sheet/opt-in key', () => {
+    document.body.innerHTML = '<main><div class="hero block"><a class="button" href="#">Go</a></div></main>';
+    const block = document.querySelector('.hero');
+    trackAs('rw2_hero', block, { key: 'hero' });
+    expect(block.getAttribute('data-tracking')).toBe('rw2_hero'); // trail = prod string
+    expect(trackingKey(block)).toBe('hero'); // opt-in + sheet key = clean
+    expect(block.classList.contains('tracking-hero')).toBe(true);
+  });
 });

@@ -235,6 +235,7 @@ export default function decorate(block) {
   // The `carousel` middle exists only for scroll-shaped variants (enhanceScroll adds
   // .cards-track); static grids resolve to rw_cards_container (confirm grid trail w/ golden).
   return trackAs('rw_cards_container', block, {
+    key: 'cards', // clean sheet/opt-in key (rows cards-1, cards-2, …); trail is rw_cards_container
     itemSelector: '.cards-track, .cards-track > *',
     itemLabel: (i, el) => (el.classList.contains('cards-track') ? 'carousel' : `rw_card_${i}`),
   });

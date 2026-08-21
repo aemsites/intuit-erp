@@ -79,5 +79,6 @@ export default function decorate(block) {
   block.replaceChildren(list);
   // Instrument the accordion for click tracking (prod trail = "accordion"; each
   // toggle is the sacrificial anchor, so the container segment is what ships).
-  return trackAs('accordion', block);
+  // Sheet/opt-in key is the clean "faq" (rows faq-1, faq-2, …).
+  return trackAs('accordion', block, { key: 'faq' });
 }

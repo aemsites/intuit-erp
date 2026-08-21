@@ -59,20 +59,31 @@ describe('resolveCta — full path', () => {
   });
 });
 
-describe('resolveCta — wa-link path (faithful)', () => {
-  it('stays minimal: wa-link, no injected object', () => {
+describe('resolveCta — wa-link (re-verified: no separate path)', () => {
+  it('defaults object=content and keeps deriving; wa-link is added, not exclusive', () => {
     const a = resolveCta(cta(), { 'wa-link': 'ies-nav:main-demo-cta' });
     expect(a['data-wa-link']).toBe('ies-nav:main-demo-cta');
-    expect(a['data-object']).toBeUndefined();
-    expect(a['data-ui-object']).toBeUndefined();
-    expect(a['data-action']).toBeUndefined();
-    expect(a['data-tracking']).toBe('button'); // anchor still present
+    expect(a['data-object']).toBe('content'); // derived default (no walink short-circuit)
+    expect(a['data-ui-object']).toBe('button'); // derived kind still applied
+    expect(a['data-tracking']).toBe('button'); // anchor
   });
 
-  it('takes the full path when the sheet also authors an object', () => {
-    const a = resolveCta(cta(), { 'wa-link': 'ies:demo', object: 'content' });
+  it('keeps object-detail / ui-object residue alongside a wa-link (live-sheet shape)', () => {
+    const a = resolveCta(cta(), {
+      'wa-link': 'hero-schedule-call-cta',
+      'object-detail': 'hero|schedule_call',
+      'ui-object': 'accordion_item_1',
+    });
+    expect(a['data-wa-link']).toBe('hero-schedule-call-cta');
+    expect(a['data-object-detail']).toBe('hero|schedule_call'); // NOT dropped
+    expect(a['data-ui-object']).toBe('accordion_item_1'); // sheet override, NOT dropped
     expect(a['data-object']).toBe('content');
-    expect(a['data-wa-link']).toBe('ies:demo'); // folds into custom_properties on full path
+  });
+
+  it('takes the sheet object when authored', () => {
+    const a = resolveCta(cta(), { 'wa-link': 'ies:demo', object: 'video' });
+    expect(a['data-object']).toBe('video');
+    expect(a['data-wa-link']).toBe('ies:demo');
   });
 });
 

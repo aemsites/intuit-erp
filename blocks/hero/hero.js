@@ -190,6 +190,7 @@ export default async function decorate(block) {
     figure.append(video, toggle);
     block.append(figure);
   }
-  // Instrument the hero for click tracking (prod trail segment = "rw2_hero").
-  return trackAs('rw2_hero', block);
+  // Instrument the hero for click tracking (prod trail segment = "rw2_hero";
+  // clean sheet/opt-in key "hero" -> rows hero-1, hero-2).
+  return trackAs('rw2_hero', block, { key: 'hero' });
 }

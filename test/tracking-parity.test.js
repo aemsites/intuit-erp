@@ -76,9 +76,12 @@ describe('parity: sheet overlay reproduces authored variants', () => {
     await new Promise((r) => { setTimeout(r, 0); });
     main.querySelectorAll('a.button').forEach((el) => stampInteraction({ target: el }));
     const [first, second] = [...main.querySelectorAll('a.button')].map((el) => computeTrackingPayload(el));
-    // CTA 1 -> wa-link, but object defaults to content (no walink path) + top-level data-wa-link
-    expect(first.event).toBe('content:engaged');
+    // CTA 1 -> wa-link added; object=content + the DERIVED action (interacted) —
+    // no walink short-circuit, so object-detail/action are kept. (nav CTAs that
+    // need action=engaged get it from the sheet or the code-built header.)
+    expect(first.event).toBe('content:interacted');
     expect(first.object).toBe('content');
+    expect(first.action).toBe('interacted');
     expect(first['data-wa-link']).toBe('ies-nav:main-demo-cta');
     expect(first.icom_user_action).toBe('ies-nav:main-demo-cta');
     // CTA 2 -> still the derived full-path payload
