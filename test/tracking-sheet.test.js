@@ -27,29 +27,27 @@ describe('normalizeRow', () => {
     });
     expect(cfg).toEqual({ object: 'content', 'wa-link': 'ies:demo' });
   });
-  it('parses custom-properties and survey to maps, coerces cta', () => {
+  it('parses custom-properties and survey to maps', () => {
     const cfg = normalizeRow({
-      key: 'k', cta: '2', 'custom-properties': 'campaign=x', survey: 'survey-name=nps',
+      key: 'k', 'custom-properties': 'campaign=x', survey: 'survey-name=nps',
     });
     expect(cfg['custom-properties']).toEqual({ campaign: 'x' });
     expect(cfg.survey).toEqual({ 'survey-name': 'nps' });
-    expect(cfg.cta).toBe(2);
-  });
-  it('omits cta when not a number', () => {
-    expect(normalizeRow({ key: 'k' }).cta).toBeUndefined();
   });
 });
 
-describe('indexRows', () => {
-  it('groups rows by key and orders by cta (blank cta last)', () => {
+describe('indexRows (unique keys)', () => {
+  it('maps each unique key to its row (duplicate key -> last wins)', () => {
     const byKey = indexRows([
-      { key: 'multi', cta: '2', object: 'b' },
-      { key: 'multi', object: 'z' },
-      { key: 'multi', cta: '1', object: 'a' },
+      { key: 'hero-1', object: 'a' },
+      { key: 'hero-2', object: 'b' },
       { key: 'solo', object: 'x' },
+      { key: 'hero-1', object: 'dup' },
     ]);
-    expect(byKey.get('multi').map((r) => r.object)).toEqual(['a', 'b', 'z']);
-    expect(byKey.get('solo')).toHaveLength(1);
+    expect(byKey.get('hero-1').object).toBe('dup');
+    expect(byKey.get('hero-2').object).toBe('b');
+    expect(byKey.get('solo').object).toBe('x');
+    expect(byKey.size).toBe(3);
   });
   it('skips rows without a key and handles empty input', () => {
     expect(indexRows([{ object: 'x' }]).size).toBe(0);

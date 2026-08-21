@@ -163,26 +163,23 @@ export function normalizeRow(row) {
   if (Object.keys(cp).length) cfg['custom-properties'] = cp;
   const survey = parseKeyValues(row.survey);
   if (Object.keys(survey).length) cfg.survey = survey;
-  const cta = parseInt(row.cta, 10);
-  if (Number.isFinite(cta)) cfg.cta = cta;
   return cfg;
 }
 
 /**
- * Index raw sheet rows into `key -> [config, ...]`, each key's configs ordered
- * by `cta` (rows without a `cta` sort last). Rows without a `key` are skipped.
+ * Index raw sheet rows into `key -> config`, with UNIQUE keys (one row per key).
+ * A block with several CTAs uses `<blockKey>-<n>` keys (1-based DOM order), so no
+ * `cta` column or DOM-order matching is needed. Rows without a `key` are skipped;
+ * a duplicate key keeps the last row.
  * @param {Array<Record<string, string>>} data
- * @returns {Map<string, Array<Record<string, unknown>>>}
+ * @returns {Map<string, Record<string, unknown>>}
  */
 export function indexRows(data) {
   const byKey = new Map();
   (data || []).forEach((row) => {
     const key = (row.key ?? '').toString().trim();
-    if (!key) return;
-    if (!byKey.has(key)) byKey.set(key, []);
-    byKey.get(key).push(normalizeRow(row));
+    if (key) byKey.set(key, normalizeRow(row));
   });
-  byKey.forEach((rows) => rows.sort((a, b) => (a.cta ?? Infinity) - (b.cta ?? Infinity)));
   return byKey;
 }
 
@@ -367,17 +364,17 @@ export function ctasIn(block) {
 }
 
 /**
- * Pick the sheet row for the CTA at index `i`: an explicit 1-based `cta` match
- * wins; otherwise the first CTA falls back to the single row without a `cta`.
- * @param {Array<Record<string, unknown>>} rows
- * @param {number} i
+ * Look up the sheet row for the CTA at index `i` in a block whose opt-in key is
+ * `key`, using UNIQUE keys: `<key>-<n>` (1-based DOM order). A single-CTA block
+ * may key its row just `<key>`, so the first CTA falls back to that.
+ * @param {Map<string, Record<string, unknown>>|null} map
+ * @param {string|null} key the block's tracking-<key>
+ * @param {number} i CTA index within the block
  * @returns {Record<string, unknown>|null}
  */
-export function rowForIndex(rows, i) {
-  const byCta = rows.find((r) => r.cta === i + 1);
-  if (byCta) return byCta;
-  if (i === 0) return rows.find((r) => r.cta == null) || null;
-  return null;
+export function sheetRowFor(map, key, i) {
+  if (!map || !key) return null;
+  return map.get(`${key}-${i + 1}`) || (i === 0 ? map.get(key) : null) || null;
 }
 
 /**
@@ -428,10 +425,10 @@ export function stampTrail(scope = document) {
 
   optedInBlocks(root).forEach((block) => {
     if (block.hasAttribute('data-tracking')) return; // author's explicit value wins
-    const rows = (sheetMap && sheetMap.get(trackingKey(block))) || [];
-    const apRow = rows.find((r) => r['access-point']);
     // Default: the block name (dataset.blockName), falling back to its CSS class.
-    const seg = apRow ? apRow['access-point'] : blockNameOf(block);
+    // The trail is authored via markup data-tracking or trackAs; the sheet is
+    // per-CTA identity only, so it no longer overrides the block trail.
+    const seg = blockNameOf(block);
     if (seg) block.setAttribute('data-tracking', seg);
   });
 }
@@ -464,10 +461,10 @@ export function stampInteraction(e) {
   if (!hit) return;
   const { cta, block } = hit;
   const blockName = blockNameOf(block);
-  const rows = (sheetMap && sheetMap.get(trackingKey(block))) || [];
   const idx = ctasIn(block).indexOf(cta);
   const host = (typeof window !== 'undefined' && window.location && window.location.hostname) || '';
-  stampCta(cta, resolveCta(deriveForCta(cta, blockName, host), rowForIndex(rows, idx)));
+  const row = sheetRowFor(sheetMap, trackingKey(block), idx);
+  stampCta(cta, resolveCta(deriveForCta(cta, blockName, host), row));
 }
 
 /**

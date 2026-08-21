@@ -68,8 +68,8 @@ describe('parity: sheet overlay reproduces authored variants', () => {
   beforeEach(() => { document.head.innerHTML = ''; document.body.innerHTML = MARKUP; resetTrackingState(); });
   afterEach(() => vi.unstubAllGlobals());
 
-  it('a wa-link row adds the wa-link fields to the first CTA', async () => {
-    const data = [{ key: 'demo', cta: '1', 'wa-link': 'ies-nav:main-demo-cta' }];
+  it('a wa-link row (unique key demo-1) adds the wa-link fields to the first CTA', async () => {
+    const data = [{ key: 'demo-1', 'wa-link': 'ies-nav:main-demo-cta' }];
     vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({ data }) })));
     const main = document.querySelector('main');
     initTracking(main); // pre-warms + caches the sheet map

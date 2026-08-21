@@ -2,7 +2,7 @@ import {
   describe, it, expect, beforeEach, afterEach, vi,
 } from 'vitest';
 import {
-  trackingKey, blockNameOf, rowForIndex, deriveForCta,
+  trackingKey, blockNameOf, sheetRowFor, deriveForCta,
   stampTrail, resolveTrackable, stampInteraction, initTracking, resetTrackingState, trackAs,
 } from '../scripts/tracking.js';
 
@@ -33,15 +33,20 @@ describe('blockNameOf', () => {
   });
 });
 
-describe('rowForIndex', () => {
-  it('matches an explicit 1-based cta index', () => {
-    const rows = [{ cta: 1, object: 'a' }, { cta: 2, object: 'b' }];
-    expect(rowForIndex(rows, 1).object).toBe('b');
+describe('sheetRowFor (unique keys)', () => {
+  it('looks up <key>-<n> by 1-based CTA index', () => {
+    const map = new Map([['hero-1', { object: 'a' }], ['hero-2', { object: 'b' }]]);
+    expect(sheetRowFor(map, 'hero', 0).object).toBe('a');
+    expect(sheetRowFor(map, 'hero', 1).object).toBe('b');
   });
-  it('falls the first CTA back to the row without a cta', () => {
-    const rows = [{ object: 'solo' }];
-    expect(rowForIndex(rows, 0).object).toBe('solo');
-    expect(rowForIndex(rows, 1)).toBe(null);
+  it('falls the first CTA back to a bare <key> (single-CTA block)', () => {
+    const map = new Map([['hero', { object: 'solo' }]]);
+    expect(sheetRowFor(map, 'hero', 0).object).toBe('solo');
+    expect(sheetRowFor(map, 'hero', 1)).toBe(null);
+  });
+  it('returns null for a missing key or map', () => {
+    expect(sheetRowFor(new Map(), 'x', 0)).toBe(null);
+    expect(sheetRowFor(null, 'x', 0)).toBe(null);
   });
 });
 
@@ -163,7 +168,7 @@ describe('initTracking (delegated capture-phase runtime)', () => {
   });
 
   it('overlays the sheet once it resolves (identity override, still derived label)', async () => {
-    const data = [{ key: 'demo', cta: '1', 'ui-object': 'input' }];
+    const data = [{ key: 'demo-1', 'ui-object': 'input' }]; // unique key: <blockKey>-<n>, no cta column
     vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({ data }) })));
     document.body.innerHTML = '<main><div class="cta block tracking-demo" data-block-name="cta">'
       + '<p><a class="button" href="#">Schedule a call</a></p></div></main>';
