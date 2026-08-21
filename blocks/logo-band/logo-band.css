@@ -75,7 +75,7 @@
   margin: 20px 20px 40px;
 }
 
-@media (min-width: 1400px) {
+@media (min-width: 1440px) {
   .section.logo-band-container:has(.logo-band:not(.marquee)) {
     margin-inline: auto;
   }

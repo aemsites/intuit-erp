@@ -199,8 +199,7 @@
   body.category .blog-cards .blog-card:not(.featured) .blog-card-image { height: 376px; }
 }
 
-/* carries the tablet type scale through 1200-1359px */
-@media (min-width: 1360px) {
+@media (min-width: 1200px) {
   .blog-cards .blog-card .blog-card-body .blog-card-category { font-size: 16px; }
 
   .blog-cards .blog-card .blog-card-body .blog-card-title {
