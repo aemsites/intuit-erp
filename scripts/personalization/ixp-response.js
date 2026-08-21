@@ -1,8 +1,10 @@
 // Reads the RAW IXP assignment response (returned verbatim by the worker's
 // `/api/ixp` passthrough): `{ ivid, transactionId, assignments: [...] }`. The DOM
 // swap and the analytics record both read the assignment directly — no intermediate
-// normalized decision object. Fidelity (page vs block) is owned by the caller
-// (`runExperiment` = page, `runBlockExperiments` = block), not read from here.
+// normalized decision object. Fidelity (page vs section/block) is owned by the caller
+// (exp.js `runExperiment` = page; the vendored aem-experimentation plugin's BYO
+// `getAssignment`/`renderDecision` in scripts/personalization/byo.js = section/block),
+// not read from here.
 
 const REDIRECT_TYPES = new Set(['REDIRECT', 'MAB_REDIRECT']);
 const REPLACE_TYPES = new Set(['REPLACE_WEB_CONTENT', 'MAB_WEB_CONTENT']);

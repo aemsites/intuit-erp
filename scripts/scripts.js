@@ -20,9 +20,11 @@ import {
 // change, it's just newly part of that cycle's graph.
 // eslint-disable-next-line import/no-cycle
 import { runExperimentation, runExperimentationLazy } from './experiment-loader.js';
-// exp.js / pzn.js are dynamically imported (via runExperienceLayer) only when a
-// `data-pzn` / `data-exp` section is present, so pages without personalization
-// never load them.
+// exp.js / pzn.js are dynamically imported below only for page-level personalization/
+// experimentation (the experiment-id/experiment-label/personalization-id metadata
+// dispatch in loadEager) — pages without that metadata never load them. Section/block
+// pzn/exp is now owned by the vendored aem-experimentation plugin's BYO decision-engine
+// hooks (scripts/personalization/byo.js), loaded via runExperimentation above instead.
 // Vendored via git subtree at plugins/martech (see its README), not an
 // installed npm package, so this necessarily crosses a package.json boundary.
 import {
@@ -450,31 +452,6 @@ function redirectConstructionQToLlmAppCtx() {
   window.location.replace(`${window.location.pathname}?${params.toString()}${window.location.hash}`);
 }
 
-/**
- * Personalization (`data-pzn`) + experimentation (`data-exp`) for a DOM scope.
- * Loads pzn.js / exp.js only when the corresponding marker is present in `root`
- * (which may itself carry the attribute), runs both concurrently under one
- * fail-open guard, and skips the `skip` section (used to run the first/LCP
- * section eagerly and the rest lazily without double-processing).
- * @param {Element} root
- * @param {{ skip?: Element }} [opts]
- */
-async function runExperienceLayer(root, { skip } = {}) {
-  if (!root) return;
-  const has = (attr) => (root.matches?.(`[${attr}]`) && root !== skip)
-    || [...root.querySelectorAll(`[${attr}]`)].some((el) => el !== skip);
-  const hasPzn = has('data-pzn');
-  const hasExp = has('data-exp');
-  if (!hasPzn && !hasExp) return;
-  const { withTimeout } = await import('./personalization/decision.js');
-  const tasks = [];
-  if (hasPzn) tasks.push(import('./pzn.js').then(({ runPersonalization }) => runPersonalization(root, { skip })));
-  if (hasExp) tasks.push(import('./exp.js').then(({ runBlockExperiments }) => runBlockExperiments(root, { skip })));
-  // 2000ms = the 1500ms decision budget + the 500ms marketing-profile enrichment that
-  // runs before pzn on a first-visit cache miss (0 on a cache hit).
-  await withTimeout(Promise.all(tasks), 2000);
-}
-
 async function loadEager(doc) {
   redirectConstructionQToLlmAppCtx();
   document.documentElement.lang = 'en';
@@ -572,11 +549,6 @@ async function loadEager(doc) {
       ({ default: buildGuideHeroAutoBlock } = await import('../blocks/guide-hero/guide-hero-autoblock.js'));
     }
     decorateMain(main);
-    // Personalize/experiment the first (LCP) section before reveal so the visitor
-    // sees final content with no flash. Sections below the fold are handled in
-    // loadLazy (post-LCP) so their pzn/exp swaps never block LCP.
-    const firstSection = main.querySelector('.section');
-    if (firstSection) await runExperienceLayer(firstSection);
     document.body.classList.add('appear');
     await Promise.all([
       martechLoadedPromise ? martechLoadedPromise.then(martechEager) : Promise.resolve(),
@@ -618,10 +590,6 @@ async function loadLazy(doc) {
   else loadHeader(headerEl);
 
   const main = doc.querySelector('main');
-  // Below-the-fold personalization/experimentation: run the sections after the
-  // first (the LCP one, already handled eagerly) now that LCP has painted. Not
-  // awaited — these swaps must never block reveal or the lazy pipeline.
-  if (main) runExperienceLayer(main, { skip: main.querySelector('.section') }).catch(() => {});
   await loadSections(main);
 
   const { hash } = window.location;

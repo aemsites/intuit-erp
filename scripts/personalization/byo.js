@@ -66,11 +66,11 @@ import { buildBatchBody, resolveIvid, ixpParams } from './attributes.js';
 import { entryForSlot, recommendationOf, pznFragment } from './pzn-response.js';
 import { ixpContentPath } from './ixp-response.js';
 // Reuse the project's own marketing-profile enrichment (ZoomInfo firmographics
-// etc.) so the plugin-driven batch targets on the same attributes scripts/pzn.js
-// does — memoized + fail-open there, so this adds no second network call and a
-// miss just sends the batch unenriched.
+// etc.) so the plugin-driven batch targets on the same attributes scripts/pzn.js's
+// runPersonalizationPage does — memoized + fail-open there, so this adds no second
+// network call and a miss just sends the batch unenriched.
 // eslint-disable-next-line import/no-cycle
-import { getMarketingProfile } from '../pzn.js';
+import { getMarketingProfile } from './marketing-profile.js';
 
 /**
  * Reads a cookie value.
@@ -448,6 +448,13 @@ async function applyRawFragment(el, ref) {
  *   leave control.
  * Never throws — a failed/missing lookup just leaves the target's existing
  * (default/control) content in place.
+ *
+ * KNOWN GAP: unlike the (kept) page-level pzn.js/exp.js paths, this hook does
+ * NOT stamp `data-pzn`/`data-experiment` attributes or record
+ * window.appVars entries for the applied content — section/block click
+ * attribution is intentionally not wired here. It lands via the Option B
+ * region-keyed tracking registry (see clicktrack-optionb) instead of DOM
+ * data-attributes at rest; no stopgap DOM stamping is planned for this path.
  * @param {HTMLElement} el the element to update (the matched selector's
  *   element, or the section/page root for an experiment)
  * @param {{url: String, scope: String, config: Object}} decision the resolved
