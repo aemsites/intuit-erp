@@ -13,6 +13,8 @@
  * CSS: blocks/quick-links/quick-links.css
  */
 
+import { trackAs } from '../../scripts/tracking.js';
+
 // production chevron (viewBox/path copied verbatim)
 const CHEVRON = '<svg width="31" height="15" viewBox="0 0 31 15" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><path d="M2 2L12.7254 12.3282C14.2744 13.8198 16.7256 13.8198 18.2746 12.3282L29 2" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
@@ -65,4 +67,8 @@ export default function decorate(block) {
     const expanded = block.classList.toggle('quick-links-expanded');
     toggle.setAttribute('aria-expanded', String(expanded));
   });
+
+  // Click tracking: prod reports these industry links under the `quick_links`
+  // trail (object=content/link). The mobile expand toggle is pure UI — skip it.
+  trackAs('quick_links', block, { key: 'quick_links', skip: '.quick-links-toggle' });
 }

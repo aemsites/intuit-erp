@@ -417,25 +417,29 @@ export function pageCtas(root = document) {
 }
 
 /**
- * Apply a block's code-built payload defaults (stamped by trackAs) onto the
- * derived baseline — the seam for CODE-BUILT surfaces (header nav = engaged,
- * footer, video play = started) to override the generic derive without a sheet
- * row. Precedence: derive < block defaults < sheet. `data-track-link-name="off"`
- * drops the derived link_name (prod omits it where no custom-properties are
- * authored, e.g. footer/nav links).
+ * Apply code-built payload defaults (stamped by trackAs) onto the derived
+ * baseline — the seam for CODE-BUILT surfaces (header nav = engaged, footer,
+ * video play = started) to override the generic derive without a sheet row.
+ * Resolves each `data-track-*` from the CTA's NEAREST ancestor that carries it
+ * (mirroring the tracker's own ancestor walk), so a block can set a default and
+ * a sub-section can refine it — e.g. case-study-header keeps link_name on its
+ * share row but sets `data-track-link-name="off"` on the ToC. Precedence:
+ * derive < nearest ancestor default < sheet. `data-track-link-name="off"` drops
+ * the derived link_name (prod omits it on navigation surfaces: nav, ToC, etc.).
  * @param {Record<string, unknown>} derived deriveBaseline() output (mutated)
- * @param {Element} block the opted-in block
+ * @param {Element} cta the interacted CTA (defaults are read from its ancestors)
  * @returns {Record<string, unknown>} derived
  */
-export function applyBlockDefaults(derived, block) {
-  if (!block || !block.getAttribute) return derived;
-  const object = block.getAttribute('data-track-object');
-  const action = block.getAttribute('data-track-action');
-  const uiObj = block.getAttribute('data-track-ui-object');
+export function applyBlockDefaults(derived, cta) {
+  if (!cta || !cta.closest) return derived;
+  const near = (attr) => { const el = cta.closest(`[${attr}]`); return el ? el.getAttribute(attr) : null; };
+  const object = near('data-track-object');
+  const action = near('data-track-action');
+  const uiObj = near('data-track-ui-object');
   if (object) derived.object = object;
   if (action) derived.action = action;
   if (uiObj) derived['ui-object'] = uiObj;
-  if (block.getAttribute('data-track-link-name') === 'off' && derived['custom-properties']) {
+  if (near('data-track-link-name') === 'off' && derived['custom-properties']) {
     delete derived['custom-properties'].link_name;
   }
   return derived;
@@ -669,7 +673,7 @@ export function stampInteraction(e) {
   const blockName = block ? blockNameOf(block) : '';
   const idx = block ? ctasIn(block).indexOf(cta) : pageCtas(document).indexOf(cta);
   const row = sheetRowFor(sheetMap, key, idx, loc.pathname);
-  const derived = applyBlockDefaults(deriveForCta(cta, blockName, host), block);
+  const derived = applyBlockDefaults(deriveForCta(cta, blockName, host), cta);
   const regionCtx = resolveRegionContext(cta);
   const context = regionCtx ? { customProperties: regionCustomProperties(regionCtx) } : {};
   stampCta(cta, resolveCta(derived, row, context));

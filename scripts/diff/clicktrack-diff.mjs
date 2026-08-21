@@ -59,7 +59,7 @@ export function simulateStamps(document, { forceTrackAll = false } = {}) {
   const mainEl = document.querySelector('main');
   const pageSeg = (document.head?.querySelector('meta[name="tracking"]')?.content || '').trim();
   if (mainEl && pageSeg && !mainEl.hasAttribute('data-tracking')) mainEl.setAttribute('data-tracking', pageSeg);
-  const stampOne = (el, blockName, block) => stampCta(el, resolveCta(applyBlockDefaults(deriveForCta(el, blockName), block), null));
+  const stampOne = (el, blockName) => stampCta(el, resolveCta(applyBlockDefaults(deriveForCta(el, blockName), el), null));
   const scoped = [...document.querySelectorAll(`[class*="${PREFIX}"]`)].filter((b) => trackingKey(b));
   (forceTrackAll ? [...document.querySelectorAll('.block')] : scoped).forEach((block) => {
     const blockName = blockNameOf(block);
@@ -68,13 +68,13 @@ export function simulateStamps(document, { forceTrackAll = false } = {}) {
     if (!block.hasAttribute('data-tracking') && !block.hasAttribute('data-track-no-trail') && blockName) {
       block.setAttribute('data-tracking', blockName);
     }
-    ctasIn(block).forEach((el) => stampOne(el, blockName, block));
+    ctasIn(block).forEach((el) => stampOne(el, blockName));
   });
   if (forceTrackAll) {
     for (const el of document.querySelectorAll(CTA_SELECTOR)) {
       if (el.hasAttribute('data-object') || el.hasAttribute('data-wa-link')) continue;
       const block = el.closest('.block');
-      stampOne(el, block ? blockNameOf(block) : '', block);
+      stampOne(el, block ? blockNameOf(block) : '');
     }
   }
 }
