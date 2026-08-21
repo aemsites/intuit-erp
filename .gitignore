@@ -20,6 +20,9 @@ content/
 tasks/
 docs/superpowers/
 drafts/
+# local-only pzn/exp demo blocks (targets for drafts/*.html)
+blocks/pzn-hero/
+blocks/pzn-offer/
 # local-only working folders (kept on disk, not tracked)
 stardust/
 .impeccable/
