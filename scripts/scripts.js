@@ -12,6 +12,9 @@ import {
   buildBlock,
   getMetadata,
 } from './aem.js';
+// Section Metadata pzn/exp -> data-* conversion (the client-side decoration the trimmed
+// decorateSections does not do; produces what personalization/discover.js consumes).
+import decorateSectionMetadata from './personalization/section-metadata.js';
 // BYO decision-engine hooks (scripts/personalization/byo.js, dynamically imported
 // from experiment-loader.js) reuse decision.js's applyFragment, which itself
 // dynamically imports blocks/fragment/fragment.js — and that imports this very
@@ -617,6 +620,11 @@ async function loadEager(doc) {
     if (isGuidePage()) {
       ({ default: buildGuideHeroAutoBlock } = await import('../blocks/guide-hero/guide-hero-autoblock.js'));
     }
+    // Personalization/experimentation authoring lives in Section Metadata, which the
+    // pipeline emits as a raw `.section-metadata` block (NOT data-* — this project runs a
+    // trimmed decorateSections that doesn't convert it). Do that conversion ourselves,
+    // before both the IXP lane and decorateMain read the resulting data-pzn/data-exp.
+    decorateSectionMetadata(main);
     // Authored data-exp (IXP) — see runAuthoredExperiments's own doc comment for why
     // this must run before decorateMain, whole-page, in one pass.
     await runAuthoredExperiments(main);

@@ -1,6 +1,6 @@
 ---
 name: add-personalization-experimentation
-description: Tag a page, section, or block for Personalization (pzn) or Experimentation (exp) by writing the right rows into the DA source — page-level experiment or personalization metadata, or Section Metadata keys that the aem.live pipeline turns into data-pzn / data-exp attributes on the section. Also records up to 5 content variants (fragments) so authors can preview each option on the page. Use when a marketer, author, or agent wants to mark an area of a page as personalized or experiment-targeted, without the DA panel — and whenever you have the variant fragments from the offer engine, write them too.
+description: Tag a page, section, or block for Personalization (pzn) or Experimentation (exp) by writing the right rows into the DA source — page-level experiment or personalization metadata, or Section Metadata keys that get decorated client-side into data-pzn / data-exp attributes on the section. Also records up to 5 content variants (fragments) so authors can preview each option on the page. Use when a marketer, author, or agent wants to mark an area of a page as personalized or experiment-targeted, without the DA panel — and whenever you have the variant fragments from the offer engine, write them too.
 version: 3
 status: approved
 ---
@@ -24,10 +24,13 @@ but authors lose that preview — so treat the variants as expected input, not a
 
 ## The model in one paragraph
 
-Everything is stored in **metadata blocks** so the aem.live **pipeline** emits it as `data-*` attributes on
-the section, with the value preserved **verbatim** (camelCase survives). Section/block tags live in the
-**Section Metadata** block; page-level experiments and personalization live in the page **Metadata**
-block. There are no CSS classes and no `Style` tokens involved.
+Everything is stored in **metadata blocks**. Page-level experiments and personalization live in the page
+**Metadata** block, which the aem.live **pipeline** lifts into `<head>` meta tags. Section/block tags live in
+a **Section Metadata** block, which the pipeline serves as a raw `.section-metadata` block; the **client**
+then decorates it into `data-*` attributes on the section, value preserved **verbatim** (camelCase survives).
+(Stock aem.js does this in `decorateSections`; this project runs a trimmed `decorateSections`, so
+`scripts/personalization/section-metadata.js` does it instead, before the discovery lanes run.) There are no
+CSS classes and no `Style` tokens involved.
 
 ## Where the id and variants come from — the offer engine
 
@@ -52,7 +55,7 @@ write a bare id when the variants are within reach.
 
 Page-level tags drive a whole-page swap before the page is revealed; section/block tags swap just that area. When a page (or the same section/block target) carries **both** an experiment and a personalization tag, the runtime runs **only the experiment** (IXP wins).
 
-Each Section Metadata key becomes a `data-<key>` attribute on the section via the pipeline:
+Each Section Metadata key becomes a `data-<key>` attribute on the section (client-side — see the model above):
 
 | Section Metadata key | Value | Resulting DOM attribute |
 |----------------------|-------|--------------------------|

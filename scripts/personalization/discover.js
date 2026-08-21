@@ -1,7 +1,10 @@
 // Authored-page discovery + dispatch for Intuit's REAL Section Metadata authoring —
 // `data-pzn` (personalization) and `data-exp` (experimentation) attributes on a section
-// (see experience-workspace/skills/add-personalization-experimentation.md) — as opposed
-// to the demo's `decisions-manifest` sheet, which the vendored plugin's own
+// (see experience-workspace/skills/add-personalization-experimentation.md). Those
+// attributes are NOT emitted by the aem.live pipeline (it serves a raw `.section-metadata`
+// block); scripts.js's decorateSectionMetadata converts the block to data-* client-side,
+// before both this module's lanes run — so by the time we query, they exist. This is as
+// opposed to the demo's `decisions-manifest` sheet, which the vendored plugin's own
 // `serveDecisions` (plugins/experimentation/src/index.js) still serves unchanged; this
 // module is a second, independent discovery source feeding the SAME byo.js hooks, not a
 // replacement for that one (see drafts/pzn-cell-demo.html, still exercising it).
