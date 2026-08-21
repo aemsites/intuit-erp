@@ -205,6 +205,26 @@ async function setupRecaptcha(cfg, config, form) {
   run();
 }
 
+// Where the disclaimer goes depends on the rendered layout, not the fragment:
+// erp.intuit.com puts it ABOVE the form on the single-row (horizontal) layout,
+// but BETWEEN the fields and the submit button on the stacked (vertical) layout
+// (hero card, schedule modal, narrow column, mobile). The same fragment renders
+// both ways depending on its container, so detect it geometrically at onRender:
+// when horizontal, the submit button shares the field row's top; when stacked, it
+// drops onto its own row well below the last field. Returns false (→ keep above)
+// when the form isn't measurable, so an unexpected shape never mis-moves the copy.
+function disclaimerBelowFields(formEl) {
+  const buttonRow = formEl.querySelector('.mktoButtonRow');
+  if (!buttonRow) return false;
+  const fieldRows = [...formEl.querySelectorAll('.mktoFormRow')]
+    .filter((row) => row.querySelector('input:not([type="hidden"]), select, textarea'));
+  if (!fieldRows.length) return false;
+  const lastFieldTop = Math.max(...fieldRows.map((row) => row.getBoundingClientRect().top));
+  // half a field height clears sub-pixel jitter on a shared row while staying well
+  // under the ~49px drop of a button on its own row.
+  return buttonRow.getBoundingClientRect().top - lastFieldTop > 20;
+}
+
 async function embedMarketoForm(formEl, cfg, config, env) {
   // Munchkin for the active instance, falling back to the base (prod) key. The
   // Forms2 script URL is generated from it — one host per Marketo instance.
@@ -214,13 +234,19 @@ async function embedMarketoForm(formEl, cfg, config, env) {
   const forms2Src = `${host}/js/forms2/js/forms2.min.js`;
   await loadScript(forms2Src);
   window.MktoForms2.loadForm(host, munchkin, config.formId, (form) => {
-    // Upstream puts the disclaimer above the field row, not between the fields
-    // and the submit button. Inline markup (privacy/policy links) is preserved.
+    // Place the disclaimer to match the rendered layout (see disclaimerBelowFields):
+    // above the whole form when horizontal, between the fields and submit when
+    // stacked. Inline markup (privacy/policy links) is preserved either way.
     if (config.disclaimer) {
       const el = document.createElement('div');
       el.className = 'form-disclaimer';
       el.innerHTML = config.disclaimer;
-      formEl.parentNode.insertBefore(el, formEl);
+      const buttonRow = formEl.querySelector('.mktoButtonRow');
+      if (buttonRow && disclaimerBelowFields(formEl)) {
+        formEl.insertBefore(el, buttonRow);
+      } else {
+        formEl.parentNode.insertBefore(el, formEl);
+      }
     }
     // Marketo forms ship with their own hardcoded button text (e.g. "Watch Now"
     // on a form template built for webinars); override it per-page when the

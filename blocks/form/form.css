@@ -31,6 +31,17 @@
 /* upstream underlines the Google policy links but not the Privacy Statement */
 .form .form-disclaimer a[href*="policies.google.com"] { text-decoration: underline; }
 
+/* Stacked/vertical layout: form.js moves the disclaimer inside the form, between
+   the fields and the submit button (matching erp.intuit.com). It becomes a direct
+   child of .mktoForm, so span the full row (harmless in a block form, forces its
+   own line in the ≥900px flex form) and sit snug above the button. */
+.form .mktoForm > .form-disclaimer {
+  flex: 1 0 100%;
+  max-width: none;
+  margin: 4px 0 16px;
+  text-align: left;
+}
+
 /* ---- Marketo form (.mktoForm) — Marketo sets inline widths, so full-width
    layout needs !important. Keep overrides minimal; inherit the site's font.
    Scoped `:not(.hero)` so these never touch the hero block (class "hero form"),
