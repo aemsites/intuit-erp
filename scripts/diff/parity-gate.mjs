@@ -129,7 +129,7 @@ export function runGate(sheet) {
     const idx = counters[ck] || 0; counters[ck] = idx + 1;
     const ours = oursPayload(e, idx, sheet);
     const perField = {};
-    const norm = (v) => (v === '' || v == null ? null : v); // empty string == no value
+    const norm = (v) => { const s = typeof v === 'string' ? v.trim() : v; return s === '' || s == null ? null : s; }; // trim + empty == no value (whitespace/newline diffs are matches)
     for (const f of DIFF_FIELDS) {
       let want = e.exp[f]; let got = ours ? ours[f] : undefined;
       if (f === 'icom_user_action' || f === 'link_name') { want = stripBc(want); got = stripBc(got); }

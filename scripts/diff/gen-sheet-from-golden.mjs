@@ -25,6 +25,11 @@ const DIR = 'scripts/diff/fixtures/local';
 const golden = JSON.parse(readFileSync(`${DIR}/clicktrack-golden.json`, 'utf8'));
 const EMPTY = new Map();
 
+// Trim strings before comparing/emitting: whitespace/newline diffs are matches,
+// and the sheet should carry clean values.
+const T = (v) => (typeof v === 'string' ? v.trim() : v);
+const ne = (a, b) => (T(a) || '') !== (T(b) || '');
+
 const rows = [];
 const counters = {};
 for (const e of golden.entries) {
@@ -34,15 +39,15 @@ for (const e of golden.entries) {
   const ours = oursPayload(e, idx, EMPTY) || {}; // no-sheet derive + block defaults
   const x = e.exp;
   const row = {};
-  if (x.object && x.object !== ours.object) row.object = x.object;
-  if (x.object_detail && x.object_detail !== ours.object_detail) row['object-detail'] = x.object_detail;
-  if (x['data-wa-link']) row['wa-link'] = x['data-wa-link'];
-  if (x.action && x.action !== ours.action) row.action = x.action;
-  if (x.ui_object && x.ui_object !== ours.ui_object) row['ui-object'] = x.ui_object;
-  if (x.ui_object_detail && x.ui_object_detail !== ours.ui_object_detail) row['ui-object-detail'] = x.ui_object_detail;
-  if (x.ui_action && x.ui_action !== ours.ui_action) row['ui-action'] = x.ui_action;
-  const wantLN = stripBc(x.link_name);
-  if (wantLN && wantLN !== stripBc(ours.link_name)) row['custom-properties'] = `link_name=${wantLN}`;
+  if (T(x.object) && ne(x.object, ours.object)) row.object = T(x.object);
+  if (T(x.object_detail) && ne(x.object_detail, ours.object_detail)) row['object-detail'] = T(x.object_detail);
+  if (T(x['data-wa-link'])) row['wa-link'] = T(x['data-wa-link']);
+  if (T(x.action) && ne(x.action, ours.action)) row.action = T(x.action);
+  if (T(x.ui_object) && ne(x.ui_object, ours.ui_object)) row['ui-object'] = T(x.ui_object);
+  if (T(x.ui_object_detail) && ne(x.ui_object_detail, ours.ui_object_detail)) row['ui-object-detail'] = T(x.ui_object_detail);
+  if (T(x.ui_action) && ne(x.ui_action, ours.ui_action)) row['ui-action'] = T(x.ui_action);
+  const wantLN = T(stripBc(x.link_name));
+  if (wantLN && wantLN !== T(stripBc(ours.link_name))) row['custom-properties'] = `link_name=${wantLN}`;
   if (Object.keys(row).length) {
     rows.push({ path: e.page === '*' ? '*' : e.page, key: `${sheetKeyOf(e)}-${idx + 1}`, ...row });
   }
