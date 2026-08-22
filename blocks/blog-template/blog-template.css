@@ -331,7 +331,7 @@
   margin: 40px 0;
 }
 
-@media (min-width: 1024px) {
+@media (width >= 1024px) {
   .blog-article > .blog-rail {
     margin: 0;
   }
@@ -342,7 +342,7 @@
   margin-top: 40px;
 }
 
-@media (min-width: 1024px) {
+@media (width >= 1024px) {
   .blog-article .blog-rail .default-content-wrapper > .section + .section {
     margin-top: 20px;
   }
@@ -402,7 +402,7 @@
    scripts/breakpoints.js, used for the share-widget relocation and the TOC's
    mobile/desktop defaults, so the two never disagree about what counts as
    "desktop"). */
-@media (min-width: 1024px) {
+@media (width >= 1024px) {
   .blog-article {
     display: grid;
 
@@ -840,7 +840,7 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
 
 /* rail h3 — compact on desktop (narrow rail column); full-size on mobile (full width).
    Beats the prose-reset rules above (same 0,3,1 specificity, later cascade) */
-@media (min-width: 1024px) {
+@media (width >= 1024px) {
   .blog-article > .blog-rail .default-content-wrapper h3 {
     font-family: var(--body-font-family);
     font-size: var(--body-font-size-xs);
@@ -937,7 +937,7 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
   margin-top: 8px;
 }
 
-@media (min-width: 1024px) {
+@media (width >= 1024px) {
   .blog-article > .blog-social-share,
   .blog-article > .blog-author-bio {
     grid-column: 2;
@@ -1067,7 +1067,7 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
       display: none;
     }
 
-    @media (min-width: 1024px) {
+    @media (width >= 1024px) {
       h2 {
         font-size: 48px;
       }
