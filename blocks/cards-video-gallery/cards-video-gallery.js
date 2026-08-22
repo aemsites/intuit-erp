@@ -104,8 +104,16 @@ function decorateCard(row) {
   const heading = bodyCell.querySelector('h1,h2,h3,h4,h5,h6');
   if (heading) title = heading.textContent.trim();
   else {
-    const p = [...bodyCell.querySelectorAll('p')].find((n) => n !== (em && em.closest('p')));
-    if (p) title = p.textContent.trim();
+    // Prefer a paragraph that isn't the category's own. Skip on `contains`, not
+    // identity: when the label and title share one paragraph ("_Customer_ Real
+    // title"), an identity check picks that paragraph for neither card — the
+    // title silently vanished. Falling back to the label's paragraph minus the
+    // label keeps a title in that case.
+    const paras = [...bodyCell.querySelectorAll('p')];
+    const own = em && em.closest('p');
+    const separate = paras.find((n) => !own || !n.contains(em));
+    if (separate) title = separate.textContent.trim();
+    else if (own) title = own.textContent.replace(em.textContent, '').trim();
   }
 
   // optional authored poster image in the row (used in preference to the
@@ -166,6 +174,12 @@ export default function decorate(block) {
   const pagination = document.createElement('div');
   pagination.className = 'cards-video-gallery-pagination';
 
+  // visually-hidden live region; see render()
+  const status = document.createElement('p');
+  status.className = 'cards-video-gallery-status';
+  status.setAttribute('role', 'status');
+  status.setAttribute('aria-live', 'polite');
+
   function visibleCards() {
     return cards
       .map(({ li }) => li)
@@ -190,6 +204,8 @@ export default function decorate(block) {
         b.type = 'button';
         b.className = 'cards-video-gallery-page-button';
         b.textContent = label;
+        if (opts.ariaLabel) b.setAttribute('aria-label', opts.ariaLabel);
+        if (opts.current) b.setAttribute('aria-current', 'true');
         if (opts.active) b.classList.add('active');
         if (opts.disabled) {
           b.classList.add('disabled');
@@ -201,10 +217,22 @@ export default function decorate(block) {
       };
       pagination.append(mkBtn('Previous', currentPage - 1, { disabled: currentPage <= 1 }));
       for (let p = 1; p <= totalPages; p += 1) {
-        pagination.append(mkBtn(`${p}`, p, { active: p === currentPage }));
+        pagination.append(mkBtn(`${p}`, p, {
+          active: p === currentPage,
+          // a bare "2" is meaningless out of context to a screen reader
+          ariaLabel: `Page ${p} of ${totalPages}`,
+          current: p === currentPage,
+        }));
       }
       pagination.append(mkBtn('Next', currentPage + 1, { disabled: currentPage >= totalPages }));
     }
+
+    // Announce the result count: filtering and paging both swap the grid's
+    // contents with no visible focus change, which is silent to assistive tech.
+    const shown = Math.min(PAGE_SIZE, Math.max(0, visible.length - start));
+    status.textContent = visible.length
+      ? `Showing ${shown} of ${visible.length} videos${totalPages > 1 ? `, page ${currentPage} of ${totalPages}` : ''}.`
+      : 'No videos match this filter.';
   }
 
   if (categories.length > 1) {
@@ -213,22 +241,30 @@ export default function decorate(block) {
       b.type = 'button';
       b.className = 'cards-video-gallery-filter-button';
       b.textContent = label;
+      // toggle state, not just a class — `active` alone is invisible to AT
+      b.setAttribute('aria-pressed', value === activeCategory ? 'true' : 'false');
       if (value === activeCategory) b.classList.add('active');
       b.addEventListener('click', () => {
         activeCategory = value;
         currentPage = 1;
-        [...filterBar.children].forEach((c) => c.classList.toggle('active', c === b));
+        [...filterBar.children].forEach((c) => {
+          c.classList.toggle('active', c === b);
+          c.setAttribute('aria-pressed', c === b ? 'true' : 'false');
+        });
         render();
       });
       return b;
     };
     filterBar.append(mkTab('All', 'all'));
     categories.forEach((c) => filterBar.append(mkTab(c, c.toLowerCase())));
+    filterBar.setAttribute('aria-label', 'Filter videos by category');
+    filterBar.setAttribute('role', 'group');
   }
 
   block.textContent = '';
   if (categories.length > 1) block.append(filterBar);
   block.append(ul);
+  block.append(status);
   block.append(pagination);
   render();
 }
