@@ -145,6 +145,10 @@
 .section.logo-band-container:has(.logo-band.marquee) { background: #00254a; overflow: hidden; }
 .logo-band.marquee { padding: 20px 0; }
 
+/* full-bleed: logos scroll the entire viewport width like upstream, not the
+   section wrapper's centered 1380px column */
+.logo-band-wrapper:has(.logo-band.marquee) { max-width: none; padding: 0; }
+
 .logo-band.marquee .logoband-viewport { overflow: hidden; width: 100%; }
 .logo-band.marquee .logoband-track { display: flex; flex-wrap: nowrap; align-items: center; width: max-content; }
 .logo-band.marquee .logoband-set { display: flex; flex-wrap: nowrap; align-items: center; gap: 24px; flex: 0 0 auto; padding-right: 24px; }
