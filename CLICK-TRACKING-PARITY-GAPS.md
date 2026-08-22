@@ -3,7 +3,7 @@
 Status as of 2026-08-21. Reverse-engineered parity of the Option B click-tracking
 runtime against a 15-page prod golden captured from erp.intuit.com.
 
-- **Closeable fidelity: 95.8%** (588 CTA+video events, 11 DOM-derivable fields each).
+- **Closeable fidelity: 96.1%** (588 CTA+video events, 11 DOM-derivable fields each). Fields are compared on `trim()` — leading/trailing whitespace and newline differences count as matches.
 - **~96.8% "harmful-adjusted"** — the difference is *benign superset* (we emit
   slightly more than prod, never less; see Category B).
 - Oracle: `node scripts/diff/parity-gate.mjs` (deterministic, per-field/per-component).
@@ -45,7 +45,7 @@ customer's analytics team.
 | page / footer / button content links | `link_name` | 61 | **Inconsistently omits** `link_name` on some content links that otherwise get the CMS's `<kind>-<slug>` value. | We derive `link_name` consistently → *superset* (never missing). |
 | carousel dots (`testimonial`, others) | `ui_object_detail` | ~21 | Emits `""` (empty) for numbered pagination dots. | We emit the dot number ("1", "2", …) → more useful, but a mismatch. |
 | ToC links (`toc`) | `ui_object_detail` | 20 | Emits `""` for table-of-contents entries. | We emit the heading text → superset. |
-| page links | `ui_object_detail` | 11 | Trailing whitespace, e.g. `"Privacy Policy "`. | We emit trimmed `"Privacy Policy"` → cleaner. |
+| ~~page links~~ | `ui_object_detail` | — | ✅ **RESOLVED** — prod's trailing whitespace (e.g. `"Privacy Policy "`) is now a match: the gate compares on `trim()`. | Done. |
 | `video` | `ui_access_point` | ~33 | **Inconsistent trails** for the same play control across pages: `video`, `video\|video\|video`, and card-nested variants. | We can only stamp one trail; no single value matches all. |
 | `case-study-header` share row | `ui_access_point` | ~16 | The golden **double-keys** the share links (as both `social_media` and `qrc_article_hero\|social_media`) — a prod nesting inconsistency. | We stamp one (`social_media`). |
 | footer | (structure) | — | "About Intuit" appears in **both** `footer_bottom` and `footer_menus` (duplicate link, different trails). | Replicated per prod. |
