@@ -75,7 +75,7 @@
   margin: 20px 20px 40px;
 }
 
-@media (min-width: 1440px) {
+@media (width >= 1440px) {
   .section.logo-band-container:has(.logo-band:not(.marquee)) {
     margin-inline: auto;
   }
@@ -96,7 +96,7 @@
   padding-top: 39px;
 }
 
-@media (min-width: 768px) {
+@media (width >= 768px) {
   .section.logo-band-container:has(.logo-band:not(.marquee)) { padding: 60px 0; }
 
   .logo-band .logoband-list {
@@ -104,7 +104,7 @@
   }
 }
 
-@media (min-width: 1024px) {
+@media (width >= 1024px) {
   .section.logo-band-container:has(.logo-band:not(.marquee)) { padding: 80px 0; }
 
   .section.logo-band-container:has(.logo-band:not(.marquee)) .default-content-wrapper h2,
@@ -129,7 +129,7 @@
   }
 }
 
-@media (min-width: 1200px) {
+@media (width >= 1200px) {
   .section.logo-band-container:has(.logo-band:not(.marquee)) .default-content-wrapper h2,
   .section.logo-band-container:has(.logo-band:not(.marquee)) .default-content-wrapper h4 {
     font-size: 40px;
@@ -173,7 +173,7 @@
   .logo-band.marquee .logoband-viewport { overflow-x: auto; }
 }
 
-@media (min-width: 768px) {
+@media (width >= 768px) {
   .logo-band.marquee img { height: 40px; }
 
   .logo-band.marquee .logoband-set { gap: 32px; padding-right: 32px; }
