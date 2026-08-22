@@ -149,7 +149,7 @@
 .stat-band.cards .stats-cards::-webkit-scrollbar-thumb { background: #cbd1d6; border-radius: 4px; }
 .stat-band.cards .stats-cards::-webkit-scrollbar-track { background: transparent; }
 
-@media (width <= 767px) {
+@media (width < 768px) {
   .stat-band.cards .stat-card { width: 78vw; max-width: 300px; }
 }
 
