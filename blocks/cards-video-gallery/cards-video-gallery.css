@@ -1,0 +1,197 @@
+/*
+ * cards-video-gallery — filterable grid of video cards (category tabs +
+ * YouTube embeds + pagination). Variant of the Block Collection `cards` block.
+ * Values match erp.intuit.com/blog/videos/customer-testimonials/ (extracted
+ * computed styles): navy rgb(13 51 63) pills, blue rgb(35 108 255) category
+ * label, 8px card radius + soft shadow, 20px grid gap. Mobile-first;
+ * 2-up at 600px, 3-up at 900px.
+ */
+
+.cards-video-gallery .cards-video-gallery-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+@media (min-width: 600px) {
+  .cards-video-gallery .cards-video-gallery-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 900px) {
+  .cards-video-gallery .cards-video-gallery-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.cards-video-gallery .cards-video-gallery-card {
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 4px 6px rgb(0 0 0 / 10%);
+}
+
+.cards-video-gallery .cards-video-gallery-card[hidden] {
+  display: none;
+}
+
+/* responsive 16:9 YouTube embed */
+.cards-video-gallery .cards-video-gallery-card-image {
+  line-height: 0;
+}
+
+.cards-video-gallery .cards-video-gallery-embed {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000;
+}
+
+.cards-video-gallery .cards-video-gallery-embed iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+/* facade: poster thumbnail + play button (live iframe swaps in on click) */
+.cards-video-gallery .cards-video-gallery-play {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: #000;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.cards-video-gallery .cards-video-gallery-poster,
+.cards-video-gallery .cards-video-gallery-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.cards-video-gallery .cards-video-gallery-play-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 68px;
+  height: 48px;
+  border-radius: 12px;
+  background: rgb(0 0 0 / 60%);
+  transition: background 0.15s ease;
+}
+
+.cards-video-gallery .cards-video-gallery-play-icon::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-40%, -50%);
+  border-style: solid;
+  border-width: 10px 0 10px 18px;
+  border-color: transparent transparent transparent #fff;
+}
+
+.cards-video-gallery .cards-video-gallery-play:hover .cards-video-gallery-play-icon,
+.cards-video-gallery .cards-video-gallery-play:focus-visible .cards-video-gallery-play-icon {
+  background: rgb(35 108 255);
+}
+
+.cards-video-gallery .cards-video-gallery-card-body {
+  padding: 15px;
+}
+
+/* category label pill — bright Intuit blue */
+.cards-video-gallery .cards-video-gallery-category {
+  display: inline-block;
+  padding: 4px 8px;
+  margin: 0 0 10px;
+  border-radius: 4px;
+  background: rgb(35 108 255);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+.cards-video-gallery .cards-video-gallery-title {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.6;
+  font-weight: 700;
+  color: var(--text-color, rgb(57 58 61));
+}
+
+/* filter tabs — centered row of dark navy pills */
+.cards-video-gallery .cards-video-gallery-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin: 0 0 20px;
+}
+
+.cards-video-gallery .cards-video-gallery-filter-button {
+  padding: 8px 16px;
+  border: 0;
+  border-radius: 4px;
+  background: rgb(13 51 63);
+  color: #fff;
+  font-size: 13.33px;
+  font-weight: 400;
+  cursor: pointer;
+  opacity: 0.75;
+  transition: opacity 0.15s ease;
+}
+
+.cards-video-gallery .cards-video-gallery-filter-button:hover {
+  opacity: 1;
+}
+
+.cards-video-gallery .cards-video-gallery-filter-button.active {
+  opacity: 1;
+}
+
+/* pagination — centered row of controls below the grid */
+.cards-video-gallery .cards-video-gallery-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin: 30px 0 0;
+}
+
+.cards-video-gallery .cards-video-gallery-page-button {
+  min-width: 40px;
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 4px;
+  background: rgb(13 51 63);
+  color: #fff;
+  font-size: 13.33px;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.cards-video-gallery .cards-video-gallery-page-button.active {
+  font-weight: 700;
+}
+
+.cards-video-gallery .cards-video-gallery-page-button.disabled {
+  background: rgb(204 204 204);
+  color: #fff;
+  cursor: default;
+}
