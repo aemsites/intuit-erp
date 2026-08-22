@@ -412,7 +412,7 @@
   }
 }
 
-@media (width <=768px) {
+@media (width <768px) {
   .testimonial-container .default-content-wrapper h2,
   .testimonial-container .default-content-wrapper h3 {
     font-size: 28px;

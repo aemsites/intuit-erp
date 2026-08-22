@@ -722,13 +722,13 @@ main:has(.event-cards)>.section:first-of-type p {
   }
 }
 
-@media (width <=1024px) {
+@media (width <1024px) {
   main:has(.event-cards)>.section:first-of-type {
     padding: 64px 0 56px;
   }
 }
 
-@media (width <=768px) {
+@media (width <768px) {
   main:has(.event-cards)>.section:first-of-type h1 {
     font-size: 36px;
   }
@@ -891,7 +891,7 @@ img {
   height: auto;
 }
 
-@media (width <=768px) {
+@media (width <768px) {
   :root {
     --section-y: 48px;
     --nav-height: 56px;

@@ -166,6 +166,6 @@
   .logo-band.marquee .logoband-viewport { overflow-x: auto; }
 }
 
-@media (width <= 768px) {
+@media (width < 768px) {
   .logo-band.marquee .logoband-set { gap: 22px; padding-right: 22px; }
 }
