@@ -57,9 +57,10 @@ The repository provides the basic structure, blocks, and configuration needed to
 - Follow Stylelint standard configuration
 - Use modern CSS features (CSS Grid, Flexbox, CSS Custom Properties)
 - Maintain responsive design principles
-  - Declare styles mobile first, use `min-width` media queries at 768px/1024px/1200px/1440px for tablet and desktop
+  - Declare styles mobile first, use range-syntax media queries at 768px/1024px/1200px/1440px for tablet and desktop — `width >= 768px` for the "up" side (the modern equivalent of `min-width: 768px`)
   - Reuse the exact pixel values above for every new `@media` rule — do not introduce one-off breakpoints
   - When a rule needs the "below" side of a breakpoint, use `width < 768px` (strict less-than), never `width <= 767px` or `max-width: 767px` — every breakpoint should only ever appear as one of the four exact values above, never as an off-by-one companion
+  - Prefer the range syntax (`width >= 768px` / `width < 768px`) over the older `min-width`/`max-width` prefix form. This is a convention, not lint-enforced: `.stylelintrc.json` disables `media-feature-range-notation`, so the prefix form still passes — new code should use the range form regardless
 - Ensure all selectors are scoped to the block.
   - Bad: `.item-list`
   - Good: `.{blockname} .item-list`   
