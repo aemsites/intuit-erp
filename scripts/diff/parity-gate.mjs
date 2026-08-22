@@ -61,6 +61,8 @@ const BLOCK = {
   footer: { trail: null, linkName: false, scope: 'footer' },
   cta: { trail: () => 'cta_block', scope: 'main' },
   quick_links: { trail: () => 'quick_links', scope: 'main' },
+  'talk-to-sales': { trail: () => 'talk_to_sales', linkName: false, scope: 'main' },
+  author_bio: { trail: () => 'author_bio', linkName: false, scope: 'main' },
   // video play control (blocks/video/video.js: object=video/action=started/ui_object=button, link_name off, no trail)
   video: { trail: () => '', object: 'video', action: 'started', uiObject: 'button', linkName: false, scope: 'main' },
 };

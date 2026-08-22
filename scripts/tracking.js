@@ -564,10 +564,14 @@ export function resolveTrackable(target) {
   // Pure-UI controls (hamburger, flyout-back, accordion/country toggles) carry
   // data-track-skip and are never tracked.
   if (!cta || cta.closest('[data-track-skip]')) return null;
-  // Region gate: only content regions, never body-root injected chrome.
-  if (!cta.closest(TRACKED_REGIONS)) return null;
   const blk = cta.closest(`[class*="${PREFIX}"]`);
-  return { cta, block: (blk && trackingKey(blk)) ? blk : null };
+  const block = (blk && trackingKey(blk)) ? blk : null;
+  // Track by default inside the content regions; a DECLARED tracking- block is
+  // also tracked wherever it mounts — e.g. the floating talk-to-sales widget the
+  // runtime appends to <body> — while undeclared body-root chrome (OneTrust,
+  // dev sidekick) stays untracked.
+  if (!cta.closest(TRACKED_REGIONS) && !block) return null;
+  return { cta, block };
 }
 
 // ===========================================================================

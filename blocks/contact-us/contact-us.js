@@ -16,6 +16,7 @@
  */
 // eslint-disable-next-line import/no-cycle
 import { openScheduleModal } from '../form/form.js';
+import { trackAs } from '../../scripts/tracking.js';
 
 // Contact info (sales phone, hours, support URL) is authored in DA — a
 // fragment table, not hardcoded here — so it can change without a code
@@ -180,6 +181,12 @@ export default async function initContactUs() {
       openScheduleModal();
     });
   }
+
+  // Click tracking: prod reports the floating sales widget under the
+  // `talk_to_sales` trail. It mounts in <body> (outside the content regions), so
+  // the declared tracking- block is what makes resolveTrackable pick it up; the
+  // close button is pure UI. link_name is suppressed (sheet provides has-cases).
+  trackAs('talk_to_sales', root, { key: 'talk-to-sales', linkName: false, skip: '.cu-close' });
 
   document.body.append(root);
 }

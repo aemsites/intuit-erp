@@ -46,6 +46,7 @@ import {
 } from '../../scripts/aem.js';
 import { hasAuthoredCaseStudyHeader } from './blog-detect.js';
 import { loadIndex } from '../../scripts/content-index.js';
+import { trackAs } from '../../scripts/tracking.js';
 
 /**
  * Selects the article's main H2 sections only — excludes headings nested
@@ -464,6 +465,9 @@ function insertAuthorBio(main, row, authorPath) {
   }
   inner.append(textWrap);
   wrap.append(inner);
+  // Click tracking: the author link reports under the `author_bio` trail; prod
+  // omits link_name here.
+  trackAs('author_bio', wrap, { key: 'author_bio', linkName: false });
   // Insert the bio immediately before the "Recommended for you" section
   // (the direct-child-of-main section that contains the blog-cards block).
   // This matches production order: article body → author-bio → recommended cards.
