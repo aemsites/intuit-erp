@@ -326,7 +326,7 @@
 .carousel.testimonial .carousel-prev:disabled,
 .carousel.testimonial .carousel-next:disabled { background: var(--testi-arrow-bg); opacity: 0.3; }
 
-@media (width >= 600px) {
+@media (width >= 768px) {
   .carousel.testimonial .testi-body { padding: 60px 30px; }
 
   .carousel.testimonial.has-title .testi-media:has(img) { padding: 0 30px 60px; }
@@ -643,7 +643,7 @@
    overlapping the photo's bottom edge (like desktop, but centred), then the
    LEFT-aligned quote below it (order: photo -> controls -> quote). The default
    control sizes also overflow the viewport, so shrink the arrows/thumbs/gaps. */
-@media (width <= 768px) {
+@media (width < 768px) {
   .carousel.testimonial.spotlight { position: relative; }
 
   .carousel.testimonial.spotlight .testi-media { max-width: 280px; margin: 0 auto; }
@@ -698,11 +698,11 @@
 
 .carousel.cards .carousel-slide p { margin: 0 22px 20px; font-size: 15px; line-height: 1.5; color: var(--text-muted); }
 
-@media (min-width: 600px) {
+@media (min-width: 768px) {
   .carousel.cards { --carousel-cards-per-view: 2; }
 }
 
-@media (min-width: 900px) {
+@media (min-width: 1024px) {
   .carousel.cards { --carousel-cards-per-view: 3; }
 }
 
@@ -803,7 +803,7 @@
 .carousel.feature .carousel-dot { background: rgb(0 0 0 / 25%); }
 .carousel.feature .carousel-dot.is-active { background: rgb(0 0 0 / 75%); }
 
-@media (width >= 900px) {
+@media (width >= 1024px) {
   /* photo/copy split is 35/65 upstream (441px / 822px of a 1263px slide) */
   .carousel.feature .carousel-slide {
     flex-direction: row;

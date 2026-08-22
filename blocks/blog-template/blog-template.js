@@ -24,6 +24,13 @@
  *   - a shared right-rail fragment link (`/fragments/<right-rail>`, default
  *     `/fragments/right-rail`) which the EXISTING fragment autoblock then loads —
  *     this is why buildBlogTemplate must run before that collection query
+ *   - two trailing full-width fragment links, same override pattern:
+ *     `/fragments/<hear-from-our-customers>` (default `/fragments/hear-from-our-customers`,
+ *     wrapped in a `full-bleed` section) and `/fragments/<pricing-disclaimer>`
+ *     (default `/fragments/pricing-disclaimer`). Each is skipped if the author
+ *     already linked that exact fragment path themselves — see
+ *     injectFragmentSection — so pages that migrated with it hand-authored
+ *     don't end up with two.
  *   - the 3-col article layout class on <main>
  *
  * The right-rail fragment (authored separately, Task 13) is what references the
@@ -47,6 +54,7 @@ import {
 import { hasAuthoredCaseStudyHeader } from './blog-detect.js';
 import { loadIndex } from '../../scripts/content-index.js';
 import { trackAs } from '../../scripts/tracking.js';
+import { MQ_DESKTOP_UP } from '../../scripts/breakpoints.js';
 
 /**
  * Selects the article's main H2 sections only — excludes headings nested
@@ -289,7 +297,7 @@ export function buildShare() {
  * @param {(() => void)|null} placeDesktop inserts `share` at its desktop
  *   position — null when there's no TOC rail to move it into, in which case
  *   it stays at the mobile position at every width
- * @param {MediaQueryList} mq matchMedia('(min-width: 900px)')
+ * @param {MediaQueryList} mq matchMedia(MQ_DESKTOP_UP) (see scripts/breakpoints.js)
  */
 export function relocateShare(share, placeMobile, placeDesktop, mq) {
   const place = (isDesktop) => {
@@ -319,7 +327,7 @@ export { isBlogPage } from './blog-detect.js';
  * @param {HTMLElement} tocWrap the `.blog-toc-rail` wrapper (collapse target)
  * @param {HTMLElement} nav the `.blog-toc` nav returned by buildToc
  * @param {HTMLHeadingElement[]} headings the H2s the nav links to, in order
- * @param {MediaQueryList} mq matchMedia('(min-width: 900px)')
+ * @param {MediaQueryList} mq matchMedia(MQ_DESKTOP_UP) (see scripts/breakpoints.js)
  */
 function wireToc(tocWrap, nav, headings, mq) {
   const toggle = nav.querySelector('.blog-toc-toggle');
@@ -551,12 +559,74 @@ async function appendAuthorBio(main) {
 }
 
 /**
+ * Resolves a metadata override to a `/fragments/...` path, same rule the
+ * right-rail link already uses: an absolute value is used as-is, a bare name
+ * is assumed to live under `/fragments/`, and an empty value falls back to
+ * defaultPath.
+ * @param {string} metaKey getMetadata() key an author can set to override
+ * @param {string} defaultPath fallback `/fragments/...` path
+ * @returns {string} resolved fragment path
+ */
+function resolveFragmentPath(metaKey, defaultPath) {
+  const value = getMetadata(metaKey) || defaultPath;
+  return value.startsWith('/') ? value : `/fragments/${value}`;
+}
+
+/**
+ * Appends a trailing full-width fragment section to `main` (a plain link the
+ * existing fragment autoblock then loads) — used for the hear-from-our-customers
+ * and pricing-disclaimer bands every article gets by default. Skipped if the
+ * author already linked that exact fragment path themselves, so migrated
+ * pages that hand-authored one of these don't end up with a duplicate.
+ * @param {Element} main the page's <main>
+ * @param {string} metaKey getMetadata() key an author can set to override
+ *   which fragment is used
+ * @param {string} defaultPath fallback `/fragments/...` path
+ * @param {string[]} [sectionClasses] extra classes for the wrapping section —
+ *   e.g. `full-bleed`, which section-metadata would add for authored content,
+ *   but this section never passes through that (client-injected, not authored)
+ */
+function injectFragmentSection(main, metaKey, defaultPath, sectionClasses = []) {
+  const path = resolveFragmentPath(metaKey, defaultPath);
+  if (main.querySelector(`a[href*="${path}"]`)) return; // already authored — don't duplicate
+  const section = document.createElement('div');
+  if (sectionClasses.length) section.classList.add(...sectionClasses);
+  const p = document.createElement('p');
+  const a = document.createElement('a');
+  a.href = path;
+  a.textContent = path;
+  p.append(a);
+  section.append(p);
+  main.append(section);
+}
+
+/**
  * Auto-block orchestrator. Called from scripts.js buildAutoBlocks() when
  * isBlogPage() is true, BEFORE the fragment-link collection runs. Every article
  * template it runs for (`Blog Article`, `Case Study`, `Research`) gets the same
  * hero band + TOC + rails treatment.
  * @param {Element} main the page's <main>
  */
+/**
+ * In-article pull-quotes (the MDS Quote component on the source) are authored as
+ * a <blockquote> with a quote <p> and an attribution line. The delivery pipeline
+ * flattens the authored <cite> to a plain <p>, which would then render at the
+ * full 28px quote size; re-wrap the last <p> of any multi-paragraph blockquote
+ * as a <cite> so the smaller attribution styling (styles.css `blockquote cite`)
+ * applies. Only these quotes yield multi-<p> blockquotes, so single-paragraph
+ * pull-quotes elsewhere are left untouched.
+ */
+export function decorateBlockquoteAttributions(main) {
+  main.querySelectorAll('blockquote').forEach((bq) => {
+    const paras = [...bq.children].filter((c) => c.tagName === 'P');
+    if (paras.length < 2) return;
+    const attribution = paras[paras.length - 1];
+    const cite = document.createElement('cite');
+    cite.innerHTML = attribution.innerHTML;
+    attribution.replaceWith(cite);
+  });
+}
+
 export function buildBlogTemplate(main) {
   // Three case studies author a `case-study-header` block in section 1 (its own
   // centred banner, share row and inline TOC). Bail out so those pages aren't
@@ -581,6 +651,9 @@ export function buildBlogTemplate(main) {
 
   main.classList.add('blog-article');
 
+  // restore in-article pull-quote attribution styling (pipeline drops <cite>)
+  decorateBlockquoteAttributions(main);
+
   // 0. load this autoblock's stylesheet — it is invoked directly (not via the
   //    block loader), so its CSS would otherwise never be fetched.
   loadCSS(`${window.hlx.codeBasePath}/blocks/blog-template/blog-template.css`);
@@ -589,7 +662,7 @@ export function buildBlogTemplate(main) {
   // insert the toc-rail/right-rail wrappers — tocRailRowEnd needs this to
   // find which grid row the last TOC-eligible section lands in.
   const sections = [...main.querySelectorAll(':scope > div')];
-  const desktopMQ = window.matchMedia('(min-width: 900px)');
+  const desktopMQ = window.matchMedia(MQ_DESKTOP_UP);
 
   // 1. hero (section 1): eyebrow before the H1, byline meta after it, hero
   //    image left in place (last) — natural DOM order so mobile needs no
@@ -659,6 +732,12 @@ export function buildBlogTemplate(main) {
   rail.append(railP);
   main.append(rail);
 
+  // 3b. hear-from-our-customers + pricing-disclaimer — trailing full-width
+  //     bands every article gets by default (same fragment autoblock loads
+  //     them); see injectFragmentSection for the override/dedupe rules.
+  injectFragmentSection(main, 'hear-from-our-customers', '/fragments/hear-from-our-customers', ['full-bleed', 'hear-from-our-customers']);
+  injectFragmentSection(main, 'pricing-disclaimer', '/fragments/pricing-disclaimer', ['full-bleed', 'pricing-disclaimer']);
+
   // 4. desktop sticky rails should unstick at the end of the article body,
   //    not overlap trailing appendix sections (e.g. "Recommended for you")
   //    or the footer — set an explicit grid-row-end on both rails so their
@@ -672,7 +751,8 @@ export function buildBlogTemplate(main) {
   }
 
   // 5. share widget — a single element relocated between the hero (mobile)
-  //    and the top of the TOC rail (desktop) as the viewport crosses 900px.
+  //    and the top of the TOC rail (desktop) as the viewport crosses the
+  //    desktop breakpoint (see scripts/breakpoints.js).
   const share = buildShare();
   relocateShare(
     share,

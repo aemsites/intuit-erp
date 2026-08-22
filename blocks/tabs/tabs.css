@@ -24,7 +24,7 @@
   text-align: center;
 }
 
-@media (width >= 900px) {
+@media (width >= 1024px) {
   .tabs-container:has(.tabs:not(.vertical, .pill, .navy)) .default-content-wrapper h2 {
     font-size: 40px; line-height: 52px; font-weight: 500; text-align: center; margin: 0 0 40px;
   }
@@ -150,7 +150,7 @@
 .tabs .tab-quote blockquote::before { content: none; }
 .tabs .tab-quote cite { display: block; font-style: normal; font-size: 14px; color: #393a3d; opacity: 0.8; }
 
-@media (width >= 900px) {
+@media (width >= 1024px) {
   .tabs .tab-nav { display: none; }
 
   .tabs > .tab-bar > .tabs { overflow-x: visible; }
@@ -614,7 +614,7 @@
   }
 }
 
-@media (width >= 900px) {
+@media (width >= 1024px) {
   .tabs.pill .vt-panel.is-active {
     display: flex;
     gap: 48px;
@@ -667,7 +667,7 @@ main > .section.tabs-container:has(.tabs.navy) > div { padding: 0; }
   text-align: center; margin: 0 auto;
 }
 
-@media (width >= 600px) {
+@media (width >= 768px) {
   .tabs-container:has(.tabs.navy) .default-content-wrapper p { padding: 0 60px; }
 }
 
@@ -801,11 +801,11 @@ main > .section.tabs-container:has(.tabs.navy) > div { padding: 0; }
   opacity: 0.9;
 }
 
-@media (width >= 600px) {
+@media (width >= 768px) {
   main > .section.tabs-container:has(.tabs.navy) { padding-bottom: 60px; }
 }
 
-@media (width >= 900px) {
+@media (width >= 1024px) {
   main > .section.tabs-container:has(.tabs.navy) { padding: 120px 20px 60px; }
 
   .tabs-container:has(.tabs.navy) .default-content-wrapper h2 { font-size: 34px; line-height: 1.4; }
@@ -852,4 +852,67 @@ main > .section.tabs-container:has(.tabs.navy) > div { padding: 0; }
 @media (width >= 1440px) {
   main > .section.tabs-container:has(.tabs.navy) { max-width: 1400px; }
   .tabs-container:has(.tabs.navy) .default-content-wrapper p { max-width: 66.7%; padding: 0 80px; }
+}
+
+/* #555 mobile: .tabs.pill on /migration — prod shows media (266x395 centered),
+   then a selector row where inactive options are icon-only and the active one
+   expands to show its label (click to switch, no scrolling), then the copy.
+   Scoped below the 768px desktop grid (desktop unchanged). */
+@media (width < 768px) {
+  .tabs.pill {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .tabs.pill .vt-panels,
+  .tabs.pill .vt-panel.is-active {
+    display: contents;
+  }
+
+  .tabs.pill .vt-panel:not(.is-active) {
+    display: none;
+  }
+
+  .tabs.pill .vt-media {
+    order: 0;
+    width: 266px;
+    max-width: 100%;
+    aspect-ratio: 266 / 395;
+    margin: 0 auto 16px;
+  }
+
+  .tabs.pill .vt-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* selector row: all options on one line, no scroll */
+  .tabs.pill .vt-nav {
+    order: 1;
+    flex-flow: row nowrap;
+    gap: 8px;
+    margin: 0 0 20px;
+  }
+
+  /* inactive options collapse to their icon; active expands to icon + label */
+  .tabs.pill .vt-tab {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 0;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .tabs.pill .vt-tab[aria-selected="false"] .vt-tab-label {
+    display: none;
+  }
+
+  .tabs.pill .vt-tab[aria-selected="true"] {
+    flex: 1 1 auto;
+  }
+
+  .tabs.pill .vt-copy {
+    order: 2;
+  }
 }

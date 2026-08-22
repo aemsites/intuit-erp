@@ -75,11 +75,11 @@ footer .footer .container { max-width: var(--container); margin: 0 auto; padding
 .footer .truste { display: inline-block; line-height: 0; }
 .footer .truste img { width: 142px; height: 45px; }
 
-/* ── mobile (< 900px): mirror erp.intuit.com — link columns collapse into
+/* ── mobile (< 1024px): mirror erp.intuit.com — link columns collapse into
    accordions, the country selector and search stack beneath them, sitemap +
    social share a row, and the legal tier regroups (logos on one line, About
    links beside the copyright). Uniform light-gray background throughout. ── */
-@media (width <= 900px) {
+@media (width < 1024px) {
   footer .footer .container { padding: 0 20px; }
 
   /* stack the top tier so DOM order (cols → country → search → sitemap) shows */

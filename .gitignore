@@ -33,6 +33,7 @@ content
 .wrangler
 *.html
 !tools/**/*.html
+!widgets/**/*.html
 
 # extracted prod tracking data — regenerate with scripts/diff/extract-tracking.mjs;
 # scraped prod data is never committed (it also trips secret-scanning)

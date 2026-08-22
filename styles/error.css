@@ -89,7 +89,7 @@ main.error ul .icon img {
   height: 24px;
 }
 
-@media (min-width: 900px) {
+@media (min-width: 1024px) {
   main.error ul {
     grid-template-columns: repeat(4, 1fr);
   }

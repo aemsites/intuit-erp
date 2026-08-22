@@ -35,8 +35,8 @@
   width: 100%;
 }
 
-/* logos draw at their intrinsic size, bounded by the column; 80px is the tallest
-   upstream draws */
+/* logos draw at their intrinsic size, bounded by the column; cap at 80px, the
+   tallest any logo should render */
 .logo-band .logoband-list li picture img,
 .logo-band .logoband-list li img {
   width: auto;
@@ -46,7 +46,7 @@
   object-fit: contain;
 }
 
-/* these arrive 96px tall from the pipeline; upstream ships them at 52px */
+/* these arrive 96px tall from the pipeline; render them at 52px */
 .logo-band .logoband-list li img[height="96"] {
   max-height: 52px;
 }
@@ -75,7 +75,7 @@
   margin: 20px 20px 40px;
 }
 
-@media (min-width: 1400px) {
+@media (width >= 1440px) {
   .section.logo-band-container:has(.logo-band:not(.marquee)) {
     margin-inline: auto;
   }
@@ -91,12 +91,12 @@
   text-align: center;
 }
 
-/* 32px upstream separation + the 7px the logo cell adds below the tallest logo */
+/* 32px intended separation + the 7px the logo cell adds below the tallest logo */
 .section.logo-band-container:has(.logo-band:not(.marquee)) .default-content-wrapper h4 {
   padding-top: 39px;
 }
 
-@media (min-width: 768px) {
+@media (width >= 768px) {
   .section.logo-band-container:has(.logo-band:not(.marquee)) { padding: 60px 0; }
 
   .logo-band .logoband-list {
@@ -104,7 +104,7 @@
   }
 }
 
-@media (min-width: 1024px) {
+@media (width >= 1024px) {
   .section.logo-band-container:has(.logo-band:not(.marquee)) { padding: 80px 0; }
 
   .section.logo-band-container:has(.logo-band:not(.marquee)) .default-content-wrapper h2,
@@ -129,7 +129,7 @@
   }
 }
 
-@media (min-width: 1200px) {
+@media (width >= 1200px) {
   .section.logo-band-container:has(.logo-band:not(.marquee)) .default-content-wrapper h2,
   .section.logo-band-container:has(.logo-band:not(.marquee)) .default-content-wrapper h4 {
     font-size: 40px;
@@ -138,16 +138,23 @@
   .logo-band .logoband-list { max-width: 1120px; }
 }
 
-/* logo-band.marquee — dark band, infinite scrolling logos.
-   Lifted from erp.intuit.com's #ies-slider marquee treatment. */
-.section.logo-band-container:has(.logo-band.marquee) { background: #00203f; overflow: hidden; }
-.logo-band.marquee { padding: 22px 0; }
+/* logo-band.marquee — dark band with infinite horizontally-scrolling logos.
+   Sizing: mobile = 32px logos / 24px gaps / 72px band; from 768px up =
+   40px / 32px / 80px. Band height is the logo height plus 20px of vertical
+   padding top and bottom. */
+.section.logo-band-container:has(.logo-band.marquee) { background: #00254a; overflow: hidden; }
+.logo-band.marquee { padding: 20px 0; }
+
+/* full-bleed: a scrolling marquee spans the whole viewport, so release the
+   section wrapper's centered column — same mechanism as cta-band.simple */
+main > .section.logo-band-container:has(.logo-band.marquee) > div { max-width: none; padding: 0; }
 
 .logo-band.marquee .logoband-viewport { overflow: hidden; width: 100%; }
 .logo-band.marquee .logoband-track { display: flex; flex-wrap: nowrap; align-items: center; width: max-content; }
-.logo-band.marquee .logoband-set { display: flex; flex-wrap: nowrap; align-items: center; gap: 30px; flex: 0 0 auto; padding-right: 30px; }
+.logo-band.marquee .logoband-set { display: flex; flex-wrap: nowrap; align-items: center; gap: 24px; flex: 0 0 auto; padding-right: 24px; }
 
-.logo-band.marquee img { height: 26px; width: auto; opacity: 0.9; filter: brightness(0) invert(1); flex: 0 0 auto; }
+/* the logo source images are colored; invert renders them white on the dark band */
+.logo-band.marquee img { height: 32px; width: auto; filter: brightness(0) invert(1); flex: 0 0 auto; }
 
 .logo-band.marquee.is-ready .logoband-track {
   animation-name: logoband-scroll;
@@ -166,6 +173,8 @@
   .logo-band.marquee .logoband-viewport { overflow-x: auto; }
 }
 
-@media (width <= 768px) {
-  .logo-band.marquee .logoband-set { gap: 22px; padding-right: 22px; }
+@media (width >= 768px) {
+  .logo-band.marquee img { height: 40px; }
+
+  .logo-band.marquee .logoband-set { gap: 32px; padding-right: 32px; }
 }
