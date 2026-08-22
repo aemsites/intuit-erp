@@ -643,7 +643,7 @@
    overlapping the photo's bottom edge (like desktop, but centred), then the
    LEFT-aligned quote below it (order: photo -> controls -> quote). The default
    control sizes also overflow the viewport, so shrink the arrows/thumbs/gaps. */
-@media (width <= 768px) {
+@media (width < 768px) {
   .carousel.testimonial.spotlight { position: relative; }
 
   .carousel.testimonial.spotlight .testi-media { max-width: 280px; margin: 0 auto; }

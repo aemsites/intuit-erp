@@ -26,7 +26,7 @@ import { BP_DESKTOP } from '../../scripts/breakpoints.js';
 const INDEX_PATH = '/events/query-index.json';
 
 function eventsPerView() {
-  return window.innerWidth <= BP_DESKTOP ? 1 : 3;
+  return window.innerWidth < BP_DESKTOP ? 1 : 3;
 }
 
 function buildCarousel(block, track) {

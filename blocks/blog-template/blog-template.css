@@ -36,7 +36,7 @@
   background: var(--blog-hero-bg);
 }
 
-@media (max-width: 1023px) {
+@media (width < 1024px) {
   .blog-article > .blog-hero {
     padding: 24px 0;
   }
@@ -767,7 +767,7 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
 }
 
 /* Hero byline font-size overrides — must beat the prose-reset rule above (0,3,1) */
-@media (max-width: 1023px) {
+@media (width < 1024px) {
   .blog-article > .blog-hero > .default-content-wrapper > .blog-byline-tag,
   .blog-article > .blog-hero > .default-content-wrapper > .blog-byline-meta {
     font-size: var(--body-font-size-xxs);

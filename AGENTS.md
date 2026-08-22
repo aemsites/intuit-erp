@@ -59,6 +59,7 @@ The repository provides the basic structure, blocks, and configuration needed to
 - Maintain responsive design principles
   - Declare styles mobile first, use `min-width` media queries at 768px/1024px/1200px/1440px for tablet and desktop
   - Reuse the exact pixel values above for every new `@media` rule — do not introduce one-off breakpoints
+  - When a rule needs the "below" side of a breakpoint, use `width < 768px` (strict less-than), never `width <= 767px` or `max-width: 767px` — every breakpoint should only ever appear as one of the four exact values above, never as an off-by-one companion
 - Ensure all selectors are scoped to the block.
   - Bad: `.item-list`
   - Good: `.{blockname} .item-list`   
