@@ -139,15 +139,18 @@
 }
 
 /* logo-band.marquee — dark band, infinite scrolling logos.
-   Lifted from erp.intuit.com's #ies-slider marquee treatment. */
-.section.logo-band-container:has(.logo-band.marquee) { background: #00203f; overflow: hidden; }
-.logo-band.marquee { padding: 22px 0; }
+   Lifted from erp.intuit.com's #ies-slider marquee treatment: mobile = 32px
+   logos / 24px gaps / 72px band; from 768px up = 40px / 32px / 80px. 20px
+   vertical padding + logo height gives the band height at both sizes. */
+.section.logo-band-container:has(.logo-band.marquee) { background: #00254a; overflow: hidden; }
+.logo-band.marquee { padding: 20px 0; }
 
 .logo-band.marquee .logoband-viewport { overflow: hidden; width: 100%; }
 .logo-band.marquee .logoband-track { display: flex; flex-wrap: nowrap; align-items: center; width: max-content; }
-.logo-band.marquee .logoband-set { display: flex; flex-wrap: nowrap; align-items: center; gap: 30px; flex: 0 0 auto; padding-right: 30px; }
+.logo-band.marquee .logoband-set { display: flex; flex-wrap: nowrap; align-items: center; gap: 24px; flex: 0 0 auto; padding-right: 24px; }
 
-.logo-band.marquee img { height: 26px; width: auto; opacity: 0.9; filter: brightness(0) invert(1); flex: 0 0 auto; }
+/* source logos are colored; invert whitens them to match upstream's white PNGs */
+.logo-band.marquee img { height: 32px; width: auto; filter: brightness(0) invert(1); flex: 0 0 auto; }
 
 .logo-band.marquee.is-ready .logoband-track {
   animation-name: logoband-scroll;
@@ -166,6 +169,8 @@
   .logo-band.marquee .logoband-viewport { overflow-x: auto; }
 }
 
-@media (width < 768px) {
-  .logo-band.marquee .logoband-set { gap: 22px; padding-right: 22px; }
+@media (min-width: 768px) {
+  .logo-band.marquee img { height: 40px; }
+
+  .logo-band.marquee .logoband-set { gap: 32px; padding-right: 32px; }
 }
