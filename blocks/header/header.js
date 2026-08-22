@@ -2,6 +2,7 @@ import { getMetadata } from '../../scripts/aem.js';
 import { openScheduleModal } from '../form/form.js';
 import { loadFragment } from '../fragment/fragment.js';
 import { enhanceSecondaryNavSearch } from '../blog-search/search-utils.js';
+import { trackAs } from '../../scripts/tracking.js';
 
 function isExternal(href) {
   return /^https?:\/\//.test(href);
@@ -302,5 +303,25 @@ export default async function decorate(block) {
 
   block.querySelectorAll('.nav-cta').forEach((btn) => {
     btn.addEventListener('click', () => openScheduleModal());
+  });
+
+  // Click tracking (code-built chrome): nav toggles, brand logos and mega-menu
+  // links report object=content / action=engaged (event content:engaged) with an
+  // EMPTY ui_access_point — the header sits outside <main>, so the data-tracking
+  // trail resolves to ''. link_name is suppressed (prod omits it on nav links).
+  // ui_object is derived (link / link_icon for logos). The per-link residue
+  // (data-wa-link like ies-nav:capabilities, object_detail like nav|capabilities)
+  // and the primary "Schedule a call" CTA's action=interacted are authored
+  // residue supplied by the tracking sheet, not derivable here. Pure-UI controls
+  // (hamburger, flyout Back, secondary-nav toggle) are skipped — prod doesn't
+  // track them.
+  // The resource-center secondary nav is its own prod trail (secondary_nav), not
+  // the header's empty access point; give it a trail segment via `segments`.
+  trackAs(null, block, {
+    key: 'nav',
+    action: 'engaged',
+    linkName: false,
+    skip: '.nav-toggle, .flyout-back, .secondary-nav-toggle',
+    segments: { '.ies-secondary-nav': 'secondary_nav' },
   });
 }

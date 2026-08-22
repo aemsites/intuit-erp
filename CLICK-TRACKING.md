@@ -1,141 +1,159 @@
-# Click tracking — authored `data-*` attributes
+# Click tracking
 
-Intuit's SBSEG tracker has **two independent channels**:
+Intuit's SBSEG analytics has **two independent channels**:
 
 - **Page view** — reads `window.appVars` (see `APPVARS.md`). Code-generated.
-- **Click** (this doc) — on every click, reads `data-*` attributes off the clicked element and its
-  DOM ancestors. **Authored per element**, not code-generated.
+- **Click** (this doc) — on every click, the injected tracker reads `data-*` attributes off the
+  clicked element and its ancestors and posts a Segment `content:<action>` beacon.
 
-On the current WordPress `erp.intuit.com`, these attributes are set per-CTA in a **"Tracking tab"**.
-Edge Delivery has no such tab, so **how authors attach these attributes to CTAs is an open decision**
-— see [The EDS authoring model](#the-eds-authoring-model-the-open-decision). This document is the
-reference for *what* the tracker reads, so whoever builds that mechanism knows the contract.
-
-> Scope: the attributes below are **authored content** except the personalization/experiment ones,
-> which are **code-stamped** by the pzn/experimentation layer (`scripts/pzn.js`, `scripts/exp.js`) and
-> wired separately. Nothing here is emitted by the current EDS build yet.
+This document is the reference for **what the injected tracker reads** (the contract) and **how our
+Edge Delivery build produces it** (the Option B runtime). The authoring model is no longer an open
+question — see [Option B](#option-b--the-implemented-model).
 
 ---
 
-## The gate — no `data-object` or `data-wa-link`, no event
+## The injected tracker (not in this repo)
 
-On click the tracker walks up **at most 5 ancestors** from the clicked element looking for either
-`data-object` or `data-wa-link`. If neither is found (or the walk reaches `<body>` first), the handler
-returns and **nothing is sent — silently, with no console error.** Which attribute is present decides
-the payload shape:
+The sender+reader is `uxfabric.intuitcdn.net/analytics/prod/track-event-lib*.min.js`, a **generic,
+delegated, DOM-driven click tracker injected via the `intuit/ies-erp` Tealium profile** — present on
+prod and stage, absent from the public `*.aem.page` preview (its martech chain is consent/VPN-gated).
+This repo never ships the tracker; it only produces the `data-*` the tracker reads. The beacon is a
+Segment `track` `content:<action>` POST to `eventbus.intuit.com`.
 
-| Present | Path | Result |
-| --- | --- | --- |
-| `data-wa-link` only | wa-link | Minimal "link clicked" signal. `object`/`ui_object` are hardcoded to `walink`, `action`/`ui_action` to `INTERACTED`. **Any `object`/`action` attributes on the element are discarded.** |
-| `data-object` | full | All fields below are read off the element and forwarded. |
+## The contract — what the tracker reads
 
-The 5-ancestor walk matters: a click usually lands on an inner `<span>`, and the tracked attributes
-live on the `<button>`/`<a>` one or more levels up.
+**The gate.** On click the tracker walks up **at most 5 ancestors** for `data-object` **or**
+`data-wa-link`. If neither is found, nothing is sent (silently). There is a single code path — a
+`data-wa-link` does **not** replace `object`/`action` (contrary to older notes); it only **adds**
+`data-wa-link` + `icom_user_action`.
 
-## Core payload fields (full path only)
+**Payload.** `event = ${object}:${action}`. Unauthored defaults: `object=content`, `action=engaged`,
+`ui_object=link`, `ui_action=clicked`.
 
 | Attribute | Payload field |
 | --- | --- |
-| `data-object` | `object` |
+| `data-object` | `object` (default `content`) |
 | `data-object-detail` | `object_detail` |
-| `data-action` | `action` |
-| `data-ui-object` | `ui_object` |
+| `data-action` | `action` (default `engaged`) |
+| `data-ui-object` | `ui_object` (default `link`) |
 | `data-ui-object-detail` | `ui_object_detail` |
-| `data-ui-action` | `ui_action` |
-| `data-ui-access-point` | `ui_access_point` — own value wins, else the computed trail (below) |
-| `data-custom-properties` | parsed `key\|value,key\|value` → `custom_properties` |
-| `data-wa-link` | folded into `custom_properties["data-wa-link"]` |
+| `data-ui-action` | `ui_action` (default `clicked`) |
+| `data-ui-access-point` | `ui_access_point` — see the trail below |
+| `data-custom-properties` | each `key\|value` pair expands to a **top-level** property (there is no `custom_properties` object) |
+| `data-wa-link` | top-level `data-wa-link` + `icom_user_action` (`<wa-link> [breadcrumb]`) |
 
-## The access-point trail
+**The access-point trail.** `ui_access_point` is the `data-tracking` chain, collected up the ancestor
+chain and joined with `|` (hyphens → underscores), **broad→specific, with the nearest/leaf
+`data-tracking` skipped** (the "sacrificial anchor"). It is computed **only if `data-ui-access-point`
+is present** on the element or an ancestor (presence, not value — an empty string still opts in). When
+no trail resolves, prod falls back to `""` inside the global nav/header and `page` elsewhere.
 
-Two attributes cooperate to produce `ui_access_point`, and the opt-in is easy to miss:
+**`link_name` is authored, not derived.** The tracker source contains **zero** references to
+`link_name` — it rides in `data-custom-properties` (prod's CMS emits `<ui_object>-<slug(label)>`).
 
-- **`data-tracking`** — collected up the *entire* ancestor chain and joined with `|` (hyphens become
-  underscores). Starts from the **parent** of the first match, so the clicked element's own
-  `data-tracking` is skipped. Falls back to `page` when no ancestor carries it.
-- **`data-ui-access-point`** — the opt-in switch. The trail is computed **only** if this key exists on
-  the element or an ancestor. **Presence, not value:** an empty `data-ui-access-point=""` still turns
-  the trail on; to disable it the attribute must be **absent**.
+**Survey.** Any `data-survey-*` is forwarded (`camelCase`→`snake_case`); `data-survey-answer-*` strips
+the prefix and coerces `"true"`/`"false"` to booleans.
 
-This is why a button typically reports the `data-tracking` of its surrounding **block** (e.g.
-`cta_block`), not anything on the button itself.
-
-## Personalization / experiment — code-stamped, not authored
-
-Triggered by `data-pzn-placement` on any ancestor (the walk runs all the way to `<body>`):
-
-| Attribute | Payload field |
-| --- | --- |
-| `data-pzn-placement` | `personalization_placement` |
-| `data-pzn-id` | `personalization_id` |
-| `data-experiment-id` | `experiment_id` |
-| `data-experiment-version` | `experiment_version` |
-| `data-treatment-id` | `experiment_treatment` |
-
-`personalization_action` / `personalization_workflow` are **tracker constants** (`im` / `marketing`),
-not attributes. A non-empty **`window.appVars.pznPageRecDetailsArr` overrides all of this on click** —
-the DOM-collected details are dropped in favour of the page-level array.
-
-These come from the personalization/experimentation engine, so they are **stamped by code**
-(`scripts/pzn.js` / `scripts/exp.js`), not by authors — tracked as a separate change.
-
-## Survey / questionnaire
-
-Any `data-survey-*` is forwarded automatically (`camelCase` → `snake_case`, no allowlist).
-`data-survey-answer-*` is special-cased: the `survey_answer_` prefix is stripped and `"true"`/`"false"`
-become real booleans. **Empty survey attributes still ship** as empty strings — `data-survey-name=""`
-lands on the payload, it is not omitted.
-
-## Don't bother authoring these — they never resolve
-
-The tracker looks a few fields up with **snake_case** dataset keys, but `dataset` only exposes
-camelCase, so they always come out `undefined` regardless of markup: `payroll_workers`,
-`*_feature_coverage`, `interested_in_*`, `search_term`, `search_query`, and anything with a colon
-(`questionnaire:*` — colons can't appear in a dataset key at all). Listed so nobody wastes time
-authoring them.
+**Personalization / experiment.** `data-pzn-*` / `data-experiment-*` / `data-treatment-id` are
+**code-stamped** by the pzn/IXP layer (`scripts/pzn.js` / `scripts/exp.js`), not authored here; the
+click runtime leaves them untouched so that parity is inherited.
 
 ---
 
-## Who sets what
+## Option B — the implemented model
 
-| Attribute(s) | Authored on | If left blank |
-| --- | --- | --- |
-| `data-object` | CTA | Falls to the wa-link path, or **untracked** if `data-wa-link` is also blank |
-| `data-wa-link` | CTA | No fallback; needs `data-object` to track |
-| `data-object-detail`, `data-ui-*`, `data-action` | CTA | Emitted as `""` (and ignored entirely on the wa-link path) |
-| `data-ui-access-point` | CTA | **Presence alone** enables the block trail |
-| `data-custom-properties` | CTA | No custom props beyond `data-wa-link` |
-| `data-tracking` | **Block**, not the CTA | Trail falls back through ancestors, ultimately `page` |
-| `data-survey-*` | CTA | Emitted as `""` and forwarded |
-| `data-pzn-*`, `data-experiment-*`, `data-treatment-id` | **Code** (pzn/IXP engine) | No personalization details collected |
+**Decision:** the EDS build does **not** author `data-*` per CTA at rest (no WordPress-style "Tracking
+tab"). Instead a single-file runtime (`scripts/tracking.js`) **derives** each CTA's identity from the
+element + block context and **JIT-stamps** the resolved `data-*` on `pointerdown`/`keydown` (capture
+phase), so the injected tracker reads them on the ensuing click. The DOM stays clean at rest; only the
+**structural trail** (`data-tracking`) is stamped up front so the tracker's ancestor walk resolves.
 
-## The EDS authoring model (the open decision)
+### Track-by-default
 
-**Owner: content-migration + AEM authoring.** On WordPress each CTA's attributes come from a per-CTA
-"Tracking tab." EDS has no equivalent, so a mechanism is needed for authors to attach the *authored*
-attributes above to CTAs. Options to weigh:
+Every CTA (`a[href]`, `button`, `[role="button"]`) inside a **content region** (`<main>`, `<header>`,
+`<footer>`) is tracked — matching the live tracker's document-wide model (prod annotates ~all content
+links). A CTA in **no** declared block is tracked under the `page` key with pure-derive defaults.
 
-- **Block/section metadata** the block code translates into `data-*` on the rendered CTA (fits the EDS
-  model; scales to per-block defaults like `data-tracking`).
-- **An authoring convention** (e.g. a tracking table/row alongside the CTA) read during decoration.
-- **Carried through content migration**, if the source WordPress attributes are exported with content.
+- **Opt out** pure-UI controls (hamburger, toggles, close) with `data-track-skip`.
+- A **declared `tracking-` block is tracked wherever it mounts** — even outside the content regions
+  (e.g. the floating talk-to-sales widget the runtime appends to `<body>`), while undeclared body-root
+  chrome (OneTrust, dev sidekick) stays untracked.
 
-Whatever is chosen has to account for the traps below — several forms of *silent* mis-authoring.
+### Three inputs, in precedence order
 
-## Authoring traps
+1. **Derive** (`deriveForCta`) — the ~majority of the payload from the element: `object` (`content`, or
+   `video` for a YouTube/Vimeo link), `ui_object` (`link`/`button`/`link_icon`/`video_link`),
+   `ui_object_detail` + `link_name` from the accessible name (text → `img[alt]` → `aria-label`),
+   `action` (`interacted`, `engaged` for video links), and the `data-tracking` sacrificial anchor.
+2. **Block defaults** (`trackAs`) — a block's `decorate()` **declares** its trail segment(s) and any
+   payload defaults (`object`/`action`/`uiObject`), `linkName:false` to suppress the derived
+   `link_name`, and `skip` selectors. It is a *declaration*, not a tracking gate. Defaults resolve
+   from the CTA's **nearest** ancestor carrying them, so a block can set a default and a sub-section
+   refine it.
+3. **Sheet residue** (`/tracking.json`) — the authored values the derive cannot know: `wa-link`
+   campaign codes, semantic `object_detail` / `ui_object`, non-default `action`, and authored
+   `link_name`. Two authoring columns: **`path`** (the page path, or `*`/blank for site-wide chrome)
+   and **`key`** (`<blockKey>-<n>`, 1-based CTA order). Blank cells defer to the derived value.
 
-1. **Filling the object fields but not `data-object` itself** → drops to the wa-link path and every
-   authored `object`/`action`/`ui-*` value is discarded. The tab looks complete; the payload isn't.
-2. **A `|` inside a `data-custom-properties` value** → it parses as `key|value` pairs split on commas;
-   any segment that isn't exactly two parts is dropped (e.g. `link_name|button-nav|schedule_demo`
-   silently never reaches the payload).
-3. **Clearing `data-ui-access-point` doesn't turn it off** — the check is key presence, so a
-   saved-but-empty field still switches the block trail on. To disable it, remove the attribute.
-4. **Blank `data-survey-*` still ship** as empty strings, which is different downstream from the field
-   never having been sent.
+Everything merges in `resolveCta` and is written by `stampCta`. See `scripts/tracking.js` for the
+canonical implementation (`initTracking` → delegated handler → `stampInteraction`).
+
+### Where trails come from
+
+A block declares its trail via `trackAs(name, block, …)` (the block's `data-tracking` segment). Nested
+trails come from two `trackAs` options: `itemSelector`+`itemLabel` for **indexed** repeated children
+(cards → `rw_cards_container|carousel|rw_card_N`) and `segments` (a selector → segment map) for
+**fixed** sub-sections (footer → `footer|footer_menus|footer_menu_section`, `footer|products`, …;
+article hero → share row / ToC). Explicit authored `data-tracking` in markup always wins.
+
+---
+
+## Parity harness
+
+Parity is measured deterministically against a golden captured from prod (`scripts/diff/`):
+
+- `tracker-replica.mjs` — a faithful replica of the live tracker's read logic (the oracle).
+- `parity-gate.mjs` — scores our pipeline vs the golden on the 11 DOM-derivable per-click fields;
+  prints per-field / per-component fidelity + a machine verdict. **Run: `node scripts/diff/parity-gate.mjs`.**
+- `gen-sheet-from-golden.mjs` — reverse-engineers the residue sheet from the golden, keyed to the
+  runtime's `(path, key, DOM-index)` (the customer's `/tracking.json` seed).
+- `coverage-matrix.mjs` — a readable component × field coverage matrix.
+
+Golden fixtures with customer campaign codes stay **local + gitignored**
+(`scripts/diff/fixtures/local/`); they are never committed.
 
 ## Status
 
-Documentation only — no site-visible change; nothing here is wired into the EDS build yet. The
-authoring mechanism is the open decision above (content/AEM). The `data-pzn-*` / `data-experiment-*`
-code-stamping is a separate change in `scripts/pzn.js` / `scripts/exp.js`.
+**Implemented and wired.** `scripts/tracking.js` is loaded lazily from `scripts.js`; blocks declare
+their tracking via `trackAs` (hero, cards, faq, testimonial, footer, header nav + secondary-nav,
+related-blogs, case-study-header, video, quick-links, cta-band, contact-us/talk-to-sales, blog-template
+author-bio). Current parity is **~96% of the DOM-derivable per-click fields** across a 15-page golden.
+
+Remaining gaps are tracked out-of-band and fall into three buckets: **(A)** markup-structure deltas in
+our ported blocks (e.g. blog cards tracked per-thumbnail on prod — issues #765, #769); **(B)** prod-side
+authoring inconsistencies where we emit a clean/superset value (inconsistent `link_name` omission,
+empty `ui_object_detail` on dots/ToC, inconsistent `video` trails); **(C)** a small tail of
+structurally-entangled trails on our end.
+
+## Authoring the residue sheet
+
+The residue lives in a dedicated DA sheet published to `/tracking.json`. Author only what the runtime
+cannot derive, one row per residue-bearing CTA:
+
+- **`path`** — the page path (e.g. `/accounting/multi-entity`) for per-page body residue, or `*`
+  (or blank) for site-wide chrome (nav, footer, widgets).
+- **`key`** — `<blockKey>-<n>` (the block's `tracking-<key>` and the CTA's 1-based DOM order), or a
+  bare `<blockKey>` for a single-CTA block.
+- Residue columns: `object`, `object-detail`, `action`, `ui-object`, `ui-object-detail`, `ui-action`,
+  `ui-access-point`, `wa-link`, `custom-properties` (`k=v` pairs), `survey`. Blank cells are dropped
+  and defer to the derived value.
+
+### Authoring traps
+
+1. **A `|` or `,` inside a `custom-properties` value** breaks the tracker's `k|v,k|v` parse — the pair
+   is dropped. The runtime refuses to emit such values rather than corrupt the string.
+2. **`data-ui-access-point` is presence-gated** — an empty value still turns the trail on; the runtime
+   manages this attribute, so authors don't set it directly.
+3. **Prod's authored codes are inconsistent** (see the (B) bucket above and
+   `scripts/diff/fixtures/local` notes). We replicate prod for parity; corrections belong in the sheet
+   + golden with the customer's sign-off, not in block code.

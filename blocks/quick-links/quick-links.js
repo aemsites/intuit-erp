@@ -13,6 +13,7 @@
  * CSS: blocks/quick-links/quick-links.css
  */
 
+import { trackAs } from '../../scripts/tracking.js';
 import { MQ_TABLET_UP } from '../../scripts/breakpoints.js';
 
 // production chevron (viewBox/path copied verbatim)
@@ -67,4 +68,8 @@ export default function decorate(block) {
     const expanded = block.classList.toggle('quick-links-expanded');
     toggle.setAttribute('aria-expanded', String(expanded));
   });
+
+  // Click tracking: prod reports these industry links under the `quick_links`
+  // trail (object=content/link). The mobile expand toggle is pure UI — skip it.
+  trackAs('quick_links', block, { key: 'quick_links', skip: '.quick-links-toggle' });
 }

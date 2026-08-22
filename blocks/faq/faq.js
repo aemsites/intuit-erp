@@ -11,6 +11,8 @@
  * button's [aria-expanded] state rather than native <details>.
  * CSS: blocks/faq/faq.css
  */
+import { trackAs } from '../../scripts/tracking.js';
+
 const CHEVRON = '<path d="M3.5 6L8 10.5L12.5 6" fill="none" stroke="currentColor" '
   + 'stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>';
 
@@ -75,4 +77,8 @@ export default function decorate(block) {
   });
 
   block.replaceChildren(list);
+  // Instrument the accordion for click tracking (prod trail = "accordion"; each
+  // toggle is the sacrificial anchor, so the container segment is what ships).
+  // Sheet/opt-in key is the clean "faq" (rows faq-1, faq-2, …).
+  return trackAs('accordion', block, { key: 'faq', linkName: false });
 }

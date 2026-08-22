@@ -22,6 +22,7 @@ import {
 } from './brand-logos.js';
 import { LOGO_MAILCHIMP_ICON, LOGO_MAILCHIMP_WORD } from '../header/brand-logos.js';
 import { wireFooterSearch } from '../blog-search/search-utils.js';
+import { trackAs } from '../../scripts/tracking.js';
 
 // "Footer Columns" content model: one row per column, cell 1 = heading text,
 // cell 2 = a list of links. Authors add/remove/reorder rows to add/remove
@@ -231,4 +232,24 @@ export default async function decorate(block) {
   // Resource Center search (issue #60): the "Search this site" input submits
   // to /blog/search on Enter.
   wireFooterSearch(block);
+
+  // Click tracking (code-built chrome): footer links report action=interacted (the
+  // derive default); link_name is suppressed (prod omits it on footer links);
+  // per-link wa-link/object_detail is sheet residue. The whole footer sits under a
+  // `footer` trail root, with sub-sections adding their segment beneath it (verified
+  // against prod erp.intuit.com 2026-08-21): menu columns ->
+  // footer|footer_menus|footer_menu_section, brand -> footer|products, legal ->
+  // footer|footer_bottom, sitemap -> footer|footer_sitemap, country selector -> footer.
+  trackAs('footer', block, {
+    key: 'footer',
+    linkName: false,
+    skip: '.col-toggle, .country-toggle',
+    segments: {
+      '.footer-cols': 'footer_menus',
+      '.footer-col': 'footer_menu_section',
+      '.brand-logos': 'products',
+      '.legal-links, .legal-copy, .legal-nav': 'footer_bottom',
+      '.footer-sitemap': 'footer_sitemap',
+    },
+  });
 }
