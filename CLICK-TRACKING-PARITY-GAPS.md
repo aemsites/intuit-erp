@@ -3,7 +3,7 @@
 Status as of 2026-08-21. Reverse-engineered parity of the Option B click-tracking
 runtime against a 15-page prod golden captured from erp.intuit.com.
 
-- **Closeable fidelity: 95.3%** (588 CTA+video events, 11 DOM-derivable fields each).
+- **Closeable fidelity: 95.8%** (588 CTA+video events, 11 DOM-derivable fields each).
 - **~96.8% "harmful-adjusted"** — the difference is *benign superset* (we emit
   slightly more than prod, never less; see Category B).
 - Oracle: `node scripts/diff/parity-gate.mjs` (deterministic, per-field/per-component).
@@ -32,7 +32,7 @@ Gaps are classified as:
 | blog cards (`dynamic_category_container`, `related-blogs`) | whole beacon (structural set) + `ui_access_point` | 135 structural + related-blogs 5 | Prod fires **per-element** on each card's `img`/`picture`/container `div` (nested `qrc_content_card_grid\|qrc_content_card\|…`); our EDS cards are a **single anchor**, so we emit one beacon per card where prod emits several. | Filed **#769**. Excluded from the closeable gate as a known structural delta. Decide: reproduce per-thumbnail tracking (markup change) or consolidate + accept the analytics delta. |
 | `case-study-header` (article hero) | eyebrow/byline links | (part of #765) | Prod linkifies the category eyebrow ("Case study") + author byline; our EDS renders them as **plain text**, so there is no CTA to track (`qrc_article_hero` no-ops). | Filed **#765** (assigned sdmcraft). |
 | `secondary-nav` (Resource Center sub-nav) | `ui_access_point` | 30 | Prod is a **link-based 3-level nav**: `secondary_nav > menu_item (category link) > menu_link (submenu link)`, plus a `site_search`. Ours is a **flyout with category *buttons*** (toggles, not links) and no in-nav search — a structural mismatch, not just a missing `data-tracking`. | Restructure secondary-nav to prod's link-based nesting (block change) if strict parity is required; otherwise accept. |
-| `talk-to-sales` (floating widget) | `ui_access_point` (+ coverage) | 20 | Prod tracks the floating "Talk to sales" widget under `talk_to_sales`. Ours is injected to the **document body** (delayed phase), which is **outside the `<main>/<header>/<footer>` region gate**, so it isn't tracked at all. | Either mount the widget inside a tracked region, or add a deliberate region exception (borderline C — see below). |
+| ~~`talk-to-sales` (floating widget)~~ | — | — | ✅ **RESOLVED** (was: injected to `<body>`, outside the region gate). `resolveTrackable` now tracks a declared `tracking-` block wherever it mounts; contact-us stamps `talk_to_sales`. Verified on preview. | Done. |
 
 ## (B) Likely bugs / inconsistencies on prod's end
 
@@ -54,16 +54,16 @@ customer's analytics team.
 
 ## (C) Genuine issues to fix on our end (fixable, no markup change)
 
-These are tracking-layer gaps our runtime can close; deferred only for time/verification.
+These are tracking-layer gaps our runtime can close. **✅ DONE** rows landed this session; the rest are structurally entangled and left as documented follow-ups.
 
-| Component | Field(s) | Cells | Fix |
+| Component | Field(s) | Cells | Status / Fix |
 |---|---|---|---|
-| `author_bio` | `ui_access_point` (+ `link_name`) | 4 | Wire the blog-template author-bio strip: stamp `data-tracking="author_bio"` + opt-in key `author_bio` (trail `author_bio`). Single-segment, verified prod trail. |
-| `product_banner` | `ui_access_point` | 4 | Wire the blog-template product banner: `data-tracking="product_banner"`, key `product_banner`. Single-segment. |
-| `disclaimer` | `ui_access_point` (+ `link_name`) | 17 | If our disclaimers render in the `disclosure` block: `trackAs('disclaimer', block, { key: 'disclaimer', linkName: false })`. **Verify** disclaimers are in a disclosure block first (may be default content on some pages). |
-| `faq` | `ui_access_point` | 13 | Confirm whether prod nests `accordion\|accordion_item_N`; if so, stamp per-item `accordion_item_N` (positional) like cards. Otherwise these are prod inconsistency (B). |
-| `talk-to-sales` | `ui_access_point` | 20 | Add a region exception so the floating widget is tracked (borderline A/C). Small runtime change to `resolveTrackable`'s region gate + a `data-tracking="talk_to_sales"` stamp on the widget. |
+| `talk-to-sales` | `ui_access_point` (+ coverage) | 20 | ✅ **DONE** — `resolveTrackable` tracks a declared `tracking-` block anywhere; contact-us stamps `talk_to_sales`. Verified on preview. |
+| `author_bio` | `ui_access_point` (+ `link_name`) | 4 | ✅ **DONE** — blog-template stamps `author_bio` (linkName off). Verified on preview. |
+| `faq` | `ui_access_point` | 13 | **Entangled.** 38 question-toggle CTAs already resolve to `accordion` ✓; the 13 fails are **answer-body content links** inside `.faq-answer`, which prod tracks as `page`. They're structurally inside the accordion block, so scoping them to `page` without breaking the 38 needs the accordion `data-tracking` off the answer body — deferred (risk vs 13-cell gain). |
 | `cards` (grid variant), `button` | `ui_access_point` | 5 + 9 | Trail-variant reconciliation (grid vs carousel nesting; generic buttons). Verify per rendered variant. |
+| `disclaimer` | `ui_access_point` | 17 | **Mostly (A).** The tracked entries are largely the "Important pricing details" **toggle**, which we render as `<summary>` (not a CTA) — a markup change. The body legal links (few) could be wired via the `disclosure` block. |
+| `product_banner` | `ui_access_point` | 4 | **(A)** — no `product-banner` block exists in our port; not reproducible without adding the component. |
 
 ### Already fixed this session (was C, now closed)
 - Coverage: opt-in `tracking-<key>` → **track-by-default** (was the biggest gap; +21%).
@@ -72,6 +72,7 @@ These are tracking-layer gaps our runtime can close; deferred only for time/veri
 - `link_name` derive suppression on inconsistent-presence blocks (sheet provides has-cases).
 - `labelFor` (alt/aria-label) so text-less CTAs derive `ui_object_detail`/`link_name`.
 - Wired `quick-links` (`quick_links`) + `cta-band` (`cta_block`) trails.
+- **talk-to-sales** (region exception for the `<body>`-mounted widget) + **author_bio** trails — verified on preview.
 
 ---
 
@@ -80,4 +81,4 @@ These are tracking-layer gaps our runtime can close; deferred only for time/veri
 1. **Ship** the current runtime + the generated residue sheet (customer authors the equivalent).
 2. **Customer analytics** to review Category B (decide keep-for-continuity vs correct).
 3. **Block owners** to pick up #765, #769, and (if strict parity is wanted) the secondary-nav restructure.
-4. A focused follow-up can close Category C (author_bio / product_banner / disclaimer / talk-to-sales / faq sub-trails) — each is a small block change + a preview verification, per the footer pattern.
+4. The remaining Category C (faq answer-body links, cards grid variant) is structurally entangled and low-yield; a focused follow-up can pick it up if strict 100% is required. disclaimer/product_banner are effectively (A).
