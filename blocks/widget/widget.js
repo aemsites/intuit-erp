@@ -63,10 +63,15 @@ export default async function decorate(widget) {
   try {
     applyWidgetShell(widget, source, widgetName, searchParams);
 
-    const resp = await fetch(widgetUrl(widgetPath, widgetName, 'html'));
-    widget.innerHTML = await resp.text();
+    // HTML and CSS are optional — a self-contained JS widget can ship with just
+    // a .js file. Replace the authored link with the widget HTML when present,
+    // otherwise clear it; load the CSS only when the file exists.
+    const htmlResp = await fetch(widgetUrl(widgetPath, widgetName, 'html'));
+    widget.innerHTML = htmlResp.ok ? await htmlResp.text() : '';
 
-    const cssLoaded = loadCSS(widgetUrl(widgetPath, widgetName, 'css'));
+    const cssUrl = widgetUrl(widgetPath, widgetName, 'css');
+    const cssLoaded = fetch(cssUrl, { method: 'HEAD' })
+      .then((resp) => (resp.ok ? loadCSS(cssUrl) : null));
     const decorationComplete = (async () => {
       const mod = await import(widgetUrl(widgetPath, widgetName, 'js'));
       if (mod.default) await mod.default(widget);
