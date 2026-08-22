@@ -8,12 +8,6 @@
   &.gradient {
     background: linear-gradient(135deg, #00254a 55%, #3f6fdd 75%, #b494d1 100%);
   }
-
-  &.gradient:has(.hero.form) {
-    background:
-      linear-gradient(to bottom, rgb(4 24 57 / 0%) 62%, #041839 100%),
-      conic-gradient(from 103deg at 28.36% 120.78%, #04193C 115.9615deg, #041F53 204.2308deg, #03339C 267.2082deg, #0F44AC 273.7572deg, #2B66D0 289.9528deg, #3875E0 324.4898deg, #BB95CD 329.7278deg, #DEBCB3 334.1040deg, #041839 359.1429deg);
-  }
 }
 
 .section.hero-container.light {
