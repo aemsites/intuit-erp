@@ -336,6 +336,21 @@ describe('trackAs — declarative block opt-in from decorate()', () => {
     expect(cards[1].getAttribute('data-tracking')).toBe('carousel_1');
   });
 
+  it('stamps fixed sub-section trail segments from a selector -> segment map', () => {
+    document.body.innerHTML = '<main><div class="footer block">'
+      + '<div class="cols"><div class="col"><a href="#">Link</a></div></div>'
+      + '<div class="brand" data-tracking="authored"></div></div></main>';
+    const block = document.querySelector('.footer');
+    trackAs('footer', block, {
+      key: 'footer',
+      segments: { '.cols': 'menus', '.col': 'menu_section', '.brand': 'products' },
+    });
+    expect(block.querySelector('.cols').getAttribute('data-tracking')).toBe('menus');
+    expect(block.querySelector('.col').getAttribute('data-tracking')).toBe('menu_section');
+    // authored data-tracking wins — the segment does not overwrite it
+    expect(block.querySelector('.brand').getAttribute('data-tracking')).toBe('authored');
+  });
+
   it('passes itemLabel (index, item) in that order', () => {
     document.body.innerHTML = '<main><div class="c block">'
       + '<span class="i" data-k="a"></span><span class="i" data-k="b"></span></div></main>';

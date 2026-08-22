@@ -154,14 +154,17 @@ export default function decorate(block) {
 
   block.replaceChildren(wrap);
 
-  // Click tracking (blog article header). On prod these are THREE separate
-  // trails, not nested under one hero: eyebrow/byline links -> qrc_article_hero,
-  // the share row -> social_media, the ToC -> TableOfContents. Opt in with no
-  // block-root trail (so each sub-section resolves standalone); suppress link_name.
-  trackAs(null, block, { key: 'case-study-header', linkName: false });
-  block.querySelectorAll('.case-study-eyebrow, .case-study-byline').forEach((el) => {
-    if (!el.hasAttribute('data-tracking')) el.setAttribute('data-tracking', 'qrc_article_hero');
+  // Click tracking (blog article header). On prod these are THREE separate trails,
+  // not nested under one hero: eyebrow/byline links -> qrc_article_hero, the share
+  // row -> social_media, the ToC -> TableOfContents. Opt in with no block-root trail
+  // (so each sub-section resolves standalone) and suppress link_name.
+  trackAs(null, block, {
+    key: 'case-study-header',
+    linkName: false,
+    segments: {
+      '.case-study-eyebrow, .case-study-byline': 'qrc_article_hero',
+      '.case-study-share': 'social_media',
+      '.case-study-toc': 'TableOfContents',
+    },
   });
-  block.querySelector('.case-study-share')?.setAttribute('data-tracking', 'social_media');
-  block.querySelector('.case-study-toc')?.setAttribute('data-tracking', 'TableOfContents');
 }

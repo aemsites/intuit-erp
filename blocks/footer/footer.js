@@ -233,26 +233,23 @@ export default async function decorate(block) {
   // to /blog/search on Enter.
   wireFooterSearch(block);
 
-  // Click tracking (code-built chrome): footer links report action=interacted
-  // (the derive default); link_name is suppressed (prod omits it on footer
-  // links); per-link wa-link/object_detail is sheet residue. Opt in WITHOUT a
-  // block-root trail so the authored column links fall back to "page" (matching
-  // prod's featured footer links), and skip the pure-UI toggles.
-  // The whole footer sits under a `footer` trail root (block-level), matching
-  // prod where every footer link resolves to footer|… Sub-sections add their
-  // segment beneath it (verified against prod erp.intuit.com 2026-08-21):
-  //   menu columns -> footer|footer_menus|footer_menu_section
-  //   brand marks  -> footer|products
-  //   legal row    -> footer|footer_bottom
-  //   sitemap      -> footer|footer_sitemap
-  //   country selector -> footer (root only)
-  trackAs('footer', block, { key: 'footer', linkName: false, skip: '.col-toggle, .country-toggle' });
-  const stampSeg = (sel, seg) => block.querySelectorAll(sel).forEach((el) => {
-    if (!el.hasAttribute('data-tracking')) el.setAttribute('data-tracking', seg);
+  // Click tracking (code-built chrome): footer links report action=interacted (the
+  // derive default); link_name is suppressed (prod omits it on footer links);
+  // per-link wa-link/object_detail is sheet residue. The whole footer sits under a
+  // `footer` trail root, with sub-sections adding their segment beneath it (verified
+  // against prod erp.intuit.com 2026-08-21): menu columns ->
+  // footer|footer_menus|footer_menu_section, brand -> footer|products, legal ->
+  // footer|footer_bottom, sitemap -> footer|footer_sitemap, country selector -> footer.
+  trackAs('footer', block, {
+    key: 'footer',
+    linkName: false,
+    skip: '.col-toggle, .country-toggle',
+    segments: {
+      '.footer-cols': 'footer_menus',
+      '.footer-col': 'footer_menu_section',
+      '.brand-logos': 'products',
+      '.legal-links, .legal-copy, .legal-nav': 'footer_bottom',
+      '.footer-sitemap': 'footer_sitemap',
+    },
   });
-  stampSeg('.footer-cols', 'footer_menus');
-  stampSeg('.footer-col', 'footer_menu_section');
-  stampSeg('.brand-logos', 'products');
-  stampSeg('.legal-links, .legal-copy, .legal-nav', 'footer_bottom');
-  stampSeg('.footer-sitemap', 'footer_sitemap');
 }

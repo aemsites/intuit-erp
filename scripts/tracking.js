@@ -744,18 +744,31 @@ export function initTracking(scope = document) {
  *
  *   return trackAs(null, block, { key: 'nav', action: 'engaged', linkName: false });
  *
+ * FIXED sub-section trails: when a block's trail nests non-repeating regions (the
+ * footer's menus/products/legal tiers, the article hero's share row + ToC), pass
+ * `segments` — a selector -> data-tracking map — instead of hand-writing
+ * querySelectorAll stamps. Authored data-tracking still wins.
+ *
+ *   return trackAs('footer', block, { key: 'footer', linkName: false, segments: {
+ *     '.footer-cols': 'footer_menus', '.footer-col': 'footer_menu_section',
+ *     '.brand-logos': 'products', '.footer-sitemap': 'footer_sitemap',
+ *   } });
+ *
  * @param {string|null} name the trail segment (data-tracking value), or falsy for opt-in only
  * @param {Element} block
  * @param {{key?: string, itemSelector?: string,
- *   itemLabel?: (index: number, item: Element) => string,
+ *   itemLabel?: (index: number, item: Element) => string, segments?: Record<string, string>,
  *   action?: string, object?: string, uiObject?: string, linkName?: boolean, skip?: string}} [opts]
  *   `key` = the tracking-<key> opt-in + sheet key (defaults to `name`); `action`/`object`/
  *   `uiObject` = code-built payload defaults; `linkName:false` drops the derived link_name;
- *   `skip` = a selector for pure-UI controls to exclude from tracking (hamburger, toggles).
+ *   `skip` = a selector for pure-UI controls to exclude from tracking (hamburger, toggles);
+ *   `segments` = a selector -> data-tracking map for fixed (non-indexed) sub-section trails;
+ *   `itemSelector`+`itemLabel` = per-item segments for repeated/indexed children.
  * @returns {Element} the block (so it can be the decorate return value)
  */
 export function trackAs(name, block, {
   key = name, itemSelector, itemLabel, action, object, uiObject: uiObjectDefault, linkName, skip,
+  segments,
 } = {}) {
   if (!block) return block;
   // Exclude pure-UI controls (a code-built block opts them out): marks matching
@@ -783,6 +796,14 @@ export function trackAs(name, block, {
       const seg = itemLabel(idx, item);
       if (seg) item.setAttribute('data-tracking', String(seg));
     });
+  }
+  // Fixed sub-section trail segments (selector -> data-tracking), for blocks whose
+  // trail nests non-repeating regions — footer menus/products/legal, the article
+  // hero's share row + ToC, the secondary nav. Explicit authored values win.
+  if (segments) {
+    Object.entries(segments).forEach(([sel, seg]) => block.querySelectorAll(sel).forEach((el) => {
+      if (seg && !el.hasAttribute('data-tracking')) el.setAttribute('data-tracking', String(seg));
+    }));
   }
   return block;
 }
