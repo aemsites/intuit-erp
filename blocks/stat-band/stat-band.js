@@ -18,6 +18,9 @@
  * .stat-band.glance (case study "Results at a glance"): number/description —
  *   rendered as a plain bulleted sentence per row ("{number} {description}"),
  *   matching erp.intuit.com's results box, not a number/caption grid.
+ * .stat-band.cards (research "Findings at a glance" snackable slider): each row
+ *   is an image card (stat graphic + caption) in a horizontal scroller; an
+ *   image-less row is the lead title card.
  * An optional trailing paragraph (foot/disclaimer) is authored as default content.
  * CSS: blocks/stat-band/stat-band.css
  */
@@ -190,6 +193,42 @@ export default function decorate(block) {
       list.append(li);
     });
     block.replaceChildren(list);
+    return;
+  }
+
+  if (block.classList.contains('cards')) {
+    // horizontal-scroll image cards (research "Findings at a glance" snackable
+    // slider): each row's cell holds a stat graphic + a caption; an image-less
+    // cell is the lead title card.
+    const track = document.createElement('div');
+    track.className = 'stats-cards';
+    rows.forEach((row) => {
+      const [cell] = [...row.children];
+      if (!cell) return;
+      const card = document.createElement('div');
+      card.className = 'stat-card';
+      const pic = cell.querySelector('picture, img');
+      if (pic) {
+        const media = document.createElement('div');
+        media.className = 'stat-card-media';
+        media.append(pic.closest('picture') || pic);
+        card.append(media);
+      } else {
+        card.classList.add('stat-card-title');
+      }
+      const copy = document.createElement('div');
+      copy.className = 'stat-card-copy';
+      const paras = [...cell.querySelectorAll('p')].filter((p) => p.textContent.trim());
+      if (paras.length) paras.forEach((p) => copy.append(p));
+      else if (!pic && cell.textContent.trim()) {
+        const t = document.createElement('p');
+        t.textContent = cell.textContent.trim();
+        copy.append(t);
+      }
+      if (copy.children.length) card.append(copy);
+      track.append(card);
+    });
+    block.replaceChildren(track);
     return;
   }
 

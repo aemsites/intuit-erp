@@ -914,3 +914,10 @@ body:not(.case-study, .blog-article) .section:not(:first-of-type)>.default-conte
   margin-top: 2rem;
   margin-bottom: 2rem;
 }
+
+/* #742 mobile overflow guard: no block should cause page-level horizontal
+   scroll on mobile. overflow-x: clip (not hidden) avoids creating a scroll
+   container, so it does not break position: sticky descendants. */
+@media (width < 768px) {
+  main { overflow-x: clip; }
+}

@@ -120,6 +120,39 @@
   .stat-band.plain .stat-line { font-size: 16px; }
 }
 
+/* --- .stat-band.cards (research "Findings at a glance") ---
+   erp.intuit.com renders these as a horizontal, scroll-snapping row of stat
+   graphics with a caption under each — the SnackableCards slider. */
+.section.stat-band-container:has(.stat-band.cards) { background: transparent; padding: 0; }
+
+.stat-band.cards .stats-cards {
+  display: flex; flex-direction: row; align-items: flex-start; gap: 16px;
+  overflow-x: auto; padding: 4px 0 16px;
+  scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
+}
+
+.stat-band.cards .stat-card {
+  flex: 0 0 auto; width: 240px; scroll-snap-align: start;
+  display: flex; flex-direction: column; gap: 12px;
+}
+
+.stat-band.cards .stat-card-media picture,
+.stat-band.cards .stat-card-media img { display: block; width: 100%; height: auto; border-radius: 16px; }
+.stat-band.cards .stat-card-copy p { font-size: 14px; line-height: 1.4; color: #404b52; margin: 0; }
+
+.stat-band.cards .stat-card-title {
+  justify-content: center; background: #c2f5ff; border-radius: 16px; padding: 24px; min-height: 180px;
+}
+.stat-band.cards .stat-card-title .stat-card-copy p { font-size: 22px; line-height: 1.3; font-weight: 600; color: #000; }
+
+.stat-band.cards .stats-cards::-webkit-scrollbar { height: 8px; }
+.stat-band.cards .stats-cards::-webkit-scrollbar-thumb { background: #cbd1d6; border-radius: 4px; }
+.stat-band.cards .stats-cards::-webkit-scrollbar-track { background: transparent; }
+
+@media (width <= 767px) {
+  .stat-band.cards .stat-card { width: 78vw; max-width: 300px; }
+}
+
 /* --- .stat-band.glance (research/guide stat list) ---
    erp.intuit.com renders these as a plain bulleted list in the article column
    — no colored band — with the whole sentence bold, not just the number. */

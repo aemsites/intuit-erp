@@ -603,6 +603,26 @@ function injectFragmentSection(main, metaKey, defaultPath, sectionClasses = []) 
  * hero band + TOC + rails treatment.
  * @param {Element} main the page's <main>
  */
+/**
+ * In-article pull-quotes (the MDS Quote component on the source) are authored as
+ * a <blockquote> with a quote <p> and an attribution line. The delivery pipeline
+ * flattens the authored <cite> to a plain <p>, which would then render at the
+ * full 28px quote size; re-wrap the last <p> of any multi-paragraph blockquote
+ * as a <cite> so the smaller attribution styling (styles.css `blockquote cite`)
+ * applies. Only these quotes yield multi-<p> blockquotes, so single-paragraph
+ * pull-quotes elsewhere are left untouched.
+ */
+export function decorateBlockquoteAttributions(main) {
+  main.querySelectorAll('blockquote').forEach((bq) => {
+    const paras = [...bq.children].filter((c) => c.tagName === 'P');
+    if (paras.length < 2) return;
+    const attribution = paras[paras.length - 1];
+    const cite = document.createElement('cite');
+    cite.innerHTML = attribution.innerHTML;
+    attribution.replaceWith(cite);
+  });
+}
+
 export function buildBlogTemplate(main) {
   // Three case studies author a `case-study-header` block in section 1 (its own
   // centred banner, share row and inline TOC). Bail out so those pages aren't
@@ -626,6 +646,9 @@ export function buildBlogTemplate(main) {
   if (hasAuthoredCaseStudyHeader(main)) return;
 
   main.classList.add('blog-article');
+
+  // restore in-article pull-quote attribution styling (pipeline drops <cite>)
+  decorateBlockquoteAttributions(main);
 
   // 0. load this autoblock's stylesheet — it is invoked directly (not via the
   //    block loader), so its CSS would otherwise never be fetched.

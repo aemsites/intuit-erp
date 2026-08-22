@@ -655,15 +655,13 @@
     padding: 40px;
   }
 
-  /* No `.blog-hero-image` in the band — collapse to a single column so the copy
-     uses the full width instead of leaving the media column as dead space.
-
+  /* No `.blog-hero-image` in the copy wrapper — collapse it to a single column.
      Two ways to get here: an article that authors no hero media at all, and one
-     whose hero media is a video-host link. In the second case the marker exists
-     only briefly — buildVideoAutoBlocks runs after buildBlogTemplate and
-     replaces the marked <p> with a `video` block, which lands in its own wrapper
-     below the copy (e.g. /blog/ask-the-expert/intuit-enterprise-suite-gene-marks).
-     Either way the band itself has no media column, which is what this matches. */
+     whose hero media is a video-host link. In the second case buildVideoAutoBlocks
+     (which runs after buildBlogTemplate) replaces the marked <p> with a `video`
+     block that lands in its own `.video-wrapper`, a sibling of this copy wrapper
+     — so the copy wrapper itself has no media column and fills col 1. The video
+     hero's 2-col layout is handled at the section level below. */
   .blog-article .blog-hero > .default-content-wrapper:not(:has(.blog-hero-image)) {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -704,6 +702,35 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+  }
+
+  /* Video hero: the video autoblock relocates the player into a `.video-wrapper`
+     sibling of the copy wrapper (an image hero, by contrast, keeps its <picture>
+     inside the copy wrapper as `.blog-hero-image`). Lay the band out as a
+     section-level 2-col grid so the copy sits left and the video right — matching
+     the source ask-the-expert layout (e.g. /blog/ask-the-expert/...-gene-marks). */
+  .blog-article .blog-hero.video-container {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: 48px;
+    align-items: center;
+    padding: 40px;
+  }
+
+  .blog-article .blog-hero.video-container > .default-content-wrapper {
+    grid-column: 1;
+    padding: 0;
+  }
+
+  .blog-article .blog-hero.video-container > .video-wrapper {
+    grid-column: 2;
+    align-self: center;
+    margin: 0;
+  }
+
+  .blog-article .blog-hero.video-container .video {
+    max-width: none;
+    margin: 0;
   }
 }
 
