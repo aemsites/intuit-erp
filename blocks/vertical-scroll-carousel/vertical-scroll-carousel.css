@@ -104,7 +104,7 @@
   padding-block: 60px;
 }
 
-@media (min-width: 900px) {
+@media (min-width: 1024px) {
   /* static two-column row: accordion left, shared media right, both centered */
   .vertical-scroll-carousel {
     display: grid;
@@ -211,7 +211,7 @@
 
   /* .reverse — opt-in mirror of the desktop layout: shared media on the left,
      copy on the right (matches the source's -reverse content row). Only affects
-     the ≥900px two-column grid; the stacked mobile layout is untouched. */
+     the ≥1024px two-column grid; the stacked mobile layout is untouched. */
   .vertical-scroll-carousel.reverse .vsc-stage {
     grid-column: 1;
     grid-row: 1;

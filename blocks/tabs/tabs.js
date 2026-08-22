@@ -1,3 +1,5 @@
+import { BP_TABLET, BP_DESKTOP } from '../../scripts/breakpoints.js';
+
 const CITE_PREFIX = /^<cite>\s*/i;
 const BLOCKISH = 'picture, img, h2, h3, h4, h5, h6, p, ul, ol, blockquote';
 
@@ -352,7 +354,7 @@ function renderPillTabs(block, items) {
 
 /* ---- .vertical: disclosure accordion, shared media column ----------------- */
 
-const VERTICAL_STACKED_QUERY = '(width < 768px)';
+const VERTICAL_STACKED_QUERY = `(width < ${BP_TABLET}px)`;
 
 function renderVerticalAccordion(block, items) {
   const acc = document.createElement('div');
@@ -479,7 +481,7 @@ function renderVerticalAccordion(block, items) {
 
 /* ---- .navy: dark rail (desktop) / accordion (mobile), full panel per item -- */
 
-const NAVY_DESKTOP_QUERY = '(min-width: 900px)';
+const NAVY_DESKTOP_QUERY = `(min-width: ${BP_DESKTOP}px)`;
 
 function buildNavyTab(item, index) {
   const btn = document.createElement('button');

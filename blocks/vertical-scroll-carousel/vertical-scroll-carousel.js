@@ -8,7 +8,7 @@
  * — and the shared media panel cross-fades to that item's media. There is no
  * scroll animation or pinning: the original is a static, click-operated tab set.
  *
- * Below 900px the accordion and shared stage both collapse: every body is
+ * Below 1024px the accordion and shared stage both collapse: every body is
  * expanded and each item's media renders inline beneath its own copy.
  *
  * Content model: each ROW = one item — cell0 = media (`<img>`/video link),
@@ -25,6 +25,8 @@
  *
  * CSS: blocks/vertical-scroll-carousel/vertical-scroll-carousel.css
  */
+
+import { MQ_DESKTOP_UP } from '../../scripts/breakpoints.js';
 
 const VIDEO_EXT_RE = /\.(mp4|webm|ogg)(\?.*)?$/i;
 
@@ -137,9 +139,9 @@ export default function decorate(block) {
 
   if (!items.length) return;
 
-  // below 900px every media is on screen at once, so all videos keep playing;
+  // below 1024px every media is on screen at once, so all videos keep playing;
   // above it they share one stage and only the visible one should run.
-  const sharedStage = window.matchMedia('(min-width: 900px)');
+  const sharedStage = window.matchMedia(MQ_DESKTOP_UP);
 
   const setActive = (index) => {
     activate(items, index);

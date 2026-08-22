@@ -1,7 +1,7 @@
 /*
  * blog-template — 3-col article layout applied to <main.blog-article>.
  * Mobile-first: everything stacks, the TOC defaults to a collapsed sticky
- * bar, and the share widget sits in the hero. At >=900px a single grid
+ * bar, and the share widget sits in the hero. At >=1024px a single grid
  * layout takes over: [toc rail] [prose] [right rail]. Tokens reused from
  * styles/styles.css (:22-74).
  */
@@ -10,8 +10,8 @@
    hero (section 1) — eyebrow, h1, byline meta, hero image, share widget.
    Natural DOM order (eyebrow -> h1 -> share -> meta -> image) is also the
    correct mobile stacking order, so mobile needs no layout rules beyond
-   image rounding; the 2-col band is added back in the >=900px section
-   below. `.blog-share` is relocated OUT of the hero at >=900px (see the
+   image rounding; the 2-col band is added back in the >=1024px section
+   below. `.blog-share` is relocated OUT of the hero at >=1024px (see the
    TOC-rail rules), so it never appears in both places at once.
    ============================================================ */
 .blog-article .blog-hero .blog-byline-tag {
@@ -36,7 +36,7 @@
   background: var(--blog-hero-bg);
 }
 
-@media (max-width: 1023px) {
+@media (width < 1024px) {
   .blog-article > .blog-hero {
     padding: 24px 0;
   }
@@ -331,7 +331,7 @@
   margin: 40px 0;
 }
 
-@media (min-width: 900px) {
+@media (width >= 1024px) {
   .blog-article > .blog-rail {
     margin: 0;
   }
@@ -342,7 +342,7 @@
   margin-top: 40px;
 }
 
-@media (min-width: 900px) {
+@media (width >= 1024px) {
   .blog-article .blog-rail .default-content-wrapper > .section + .section {
     margin-top: 20px;
   }
@@ -398,10 +398,11 @@
 }
 
 /* desktop: single 3-col grid — [toc rail] [prose] [right rail]. One
-   breakpoint (matches the JS's matchMedia('(min-width: 900px)') used for
-   the share-widget relocation and the TOC's mobile/desktop defaults, so the
-   two never disagree about what counts as "desktop"). */
-@media (min-width: 900px) {
+   breakpoint (matches the JS's matchMedia(MQ_DESKTOP_UP), see
+   scripts/breakpoints.js, used for the share-widget relocation and the TOC's
+   mobile/desktop defaults, so the two never disagree about what counts as
+   "desktop"). */
+@media (width >= 1024px) {
   .blog-article {
     display: grid;
 
@@ -793,7 +794,7 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
 }
 
 /* Hero byline font-size overrides — must beat the prose-reset rule above (0,3,1) */
-@media (max-width: 1023px) {
+@media (width < 1024px) {
   .blog-article > .blog-hero > .default-content-wrapper > .blog-byline-tag,
   .blog-article > .blog-hero > .default-content-wrapper > .blog-byline-meta {
     font-size: var(--body-font-size-xxs);
@@ -839,7 +840,7 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
 
 /* rail h3 — compact on desktop (narrow rail column); full-size on mobile (full width).
    Beats the prose-reset rules above (same 0,3,1 specificity, later cascade) */
-@media (min-width: 900px) {
+@media (width >= 1024px) {
   .blog-article > .blog-rail .default-content-wrapper h3 {
     font-family: var(--body-font-family);
     font-size: var(--body-font-size-xs);
@@ -866,7 +867,7 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
    treatment is a 2-up grid with a 24px pull-quote, so this is
    article-scoped. On mobile it stays within the column; the 40px-per-side
    breakout only applies once there IS a prose column to break out of (see
-   the >=900px rule below) — applying it here too pushed the panel past the
+   the >=1024px rule below) — applying it here too pushed the panel past the
    viewport's left edge and caused horizontal scroll. */
 :is(.blog-article, .case-study) .testimonial:not(.video) {
   box-sizing: border-box;
@@ -875,7 +876,7 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
   padding: 8px 20px 24px;
 }
 
-@media (width >= 900px) {
+@media (width >= 1024px) {
   :is(.blog-article, .case-study) .testimonial:not(.video) {
     width: calc(100% + 80px);
     margin: 32px -40px;
@@ -936,7 +937,7 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
   margin-top: 8px;
 }
 
-@media (min-width: 900px) {
+@media (width >= 1024px) {
   .blog-article > .blog-social-share,
   .blog-article > .blog-author-bio {
     grid-column: 2;
@@ -1066,7 +1067,7 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
       display: none;
     }
 
-    @media (min-width: 900px) {
+    @media (width >= 1024px) {
       h2 {
         font-size: 48px;
       }

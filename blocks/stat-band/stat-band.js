@@ -25,6 +25,8 @@
  * CSS: blocks/stat-band/stat-band.css
  */
 
+import { BP_TABLET, BP_DESKTOP, BP_WIDE } from '../../scripts/breakpoints.js';
+
 const ARROW_SVG = {
   prev: '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>',
   next: '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/></svg>',
@@ -70,9 +72,9 @@ function statText(row) {
 
 function cardsPerView() {
   const w = window.innerWidth;
-  if (w < 768) return 1;
-  if (w < 1024) return 2;
-  if (w < 1280) return 3;
+  if (w < BP_TABLET) return 1;
+  if (w < BP_DESKTOP) return 2;
+  if (w < BP_WIDE) return 3;
   return 4;
 }
 

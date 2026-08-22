@@ -59,7 +59,7 @@
 
 /* mobile: one card per view and, matching erp.intuit.com, dots only — the
    prev/next arrows are hidden (swipe/dots drive paging on small screens). */
-@media (width <= 767px) {
+@media (width < 768px) {
   .stat-band { --cards-per-view: 1; }
   .stat-band .stats-nav { display: none; }
   .section.stat-band-container { padding: 20px 0; }
@@ -69,9 +69,9 @@
   .stat-band .stats-controls { justify-content: center; padding: 20px; margin-top: 0; }
 }
 
-@media (768px <= width <= 1023px) { .stat-band { --cards-per-view: 2; } }
+@media (768px <= width < 1024px) { .stat-band { --cards-per-view: 2; } }
 
-@media (1024px <= width <= 1279px) { .stat-band { --cards-per-view: 3; } }
+@media (1024px <= width < 1200px) { .stat-band { --cards-per-view: 3; } }
 
 /* --- .stat-band.dark (pricing "Data-backed performance") --- */
 .section.stat-band-container:has(.stat-band.dark) { background: var(--navy); padding: 120px 0 100px; }
@@ -92,7 +92,7 @@
   font-size: 20px; line-height: 28px; color: #fff; width: 75%; margin: 0 auto 20px;
 }
 
-@media (width <= 768px) {
+@media (width < 768px) {
   .section.stat-band-container:has(.stat-band.dark) { padding: 80px 0 40px; }
   .stat-band-container:has(.stat-band.dark) .default-content-wrapper h2 { font-size: 34px; margin-bottom: 60px; }
   .stat-band.dark .stats-grid { grid-template-columns: 1fr; gap: 44px; }
@@ -115,7 +115,7 @@
 }
 .stat-band.plain .stat-line + .stat-line { margin-top: 18px; }
 
-@media (width <= 768px) {
+@media (width < 768px) {
   .stat-band.plain .stats-box { padding: 24px 20px; }
   .stat-band.plain .stat-line { font-size: 16px; }
 }
@@ -149,7 +149,7 @@
 .stat-band.cards .stats-cards::-webkit-scrollbar-thumb { background: #cbd1d6; border-radius: 4px; }
 .stat-band.cards .stats-cards::-webkit-scrollbar-track { background: transparent; }
 
-@media (width <= 767px) {
+@media (width < 768px) {
   .stat-band.cards .stat-card { width: 78vw; max-width: 300px; }
 }
 
@@ -168,7 +168,7 @@
 }
 .stat-band.glance .glance-list li:last-child { margin-bottom: 0; }
 
-@media (width <= 768px) {
+@media (width < 768px) {
   .stat-band.glance .glance-list { padding-left: 24px; }
   .stat-band.glance .glance-list li { font-size: 18px; line-height: 1.4; }
 }
