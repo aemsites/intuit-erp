@@ -100,9 +100,11 @@ canonical implementation (`initTracking` → delegated handler → `stampInterac
 
 ### Where trails come from
 
-A block declares its trail via `trackAs(name, block, …)` (the `data-tracking` segment), and multi-level
-trails via per-item stamps (e.g. cards → `rw_cards_container|carousel|rw_card_N`, footer →
-`footer|footer_menus|footer_menu_section`). Explicit authored `data-tracking` in markup always wins.
+A block declares its trail via `trackAs(name, block, …)` (the block's `data-tracking` segment). Nested
+trails come from two `trackAs` options: `itemSelector`+`itemLabel` for **indexed** repeated children
+(cards → `rw_cards_container|carousel|rw_card_N`) and `segments` (a selector → segment map) for
+**fixed** sub-sections (footer → `footer|footer_menus|footer_menu_section`, `footer|products`, …;
+article hero → share row / ToC). Explicit authored `data-tracking` in markup always wins.
 
 ---
 
