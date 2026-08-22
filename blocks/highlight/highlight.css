@@ -67,7 +67,7 @@
   }
 }
 
-@media (max-width: 1023px) {
+@media (width < 1024px) {
   /* mobile: figures stay stacked and centered, but production keeps each
      description in a ~75% centered column rather than full width */
   .highlight.dark .highlight-inner:has(h3 ~ h3) h3 + p { max-width: 16em; margin-inline: auto; }

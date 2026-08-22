@@ -286,7 +286,7 @@
   color: var(--text-muted);
 }
 
-@media (width <=768px) {
+@media (width <768px) {
   .hero .hero-grid {
     grid-template-columns: 1fr;
     gap: 28px;
@@ -413,7 +413,7 @@
   content: '\25B6';
 }
 
-@media (width <=1024px) {
+@media (width <1024px) {
   .hero.centered .hero-copy h1 {
     font-size: 40px;
   }

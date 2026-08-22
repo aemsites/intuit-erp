@@ -79,7 +79,7 @@ footer .footer .container { max-width: var(--container); margin: 0 auto; padding
    accordions, the country selector and search stack beneath them, sitemap +
    social share a row, and the legal tier regroups (logos on one line, About
    links beside the copyright). Uniform light-gray background throughout. ── */
-@media (width <= 1024px) {
+@media (width < 1024px) {
   footer .footer .container { padding: 0 20px; }
 
   /* stack the top tier so DOM order (cols → country → search → sitemap) shows */
