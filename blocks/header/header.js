@@ -290,7 +290,7 @@ export default async function decorate(block) {
   const secondaryNav = block.querySelector('.ies-secondary-nav');
   const secondaryToggle = block.querySelector('.secondary-nav-toggle');
   if (secondaryNav && secondaryToggle) {
-    const mobileAccordion = window.matchMedia('(max-width: 1299px)');
+    const mobileAccordion = window.matchMedia('(width < 1300px)');
     secondaryNav.addEventListener('click', (e) => {
       if (!mobileAccordion.matches) return;
       if (e.target.closest('.secondary-nav-items')) return;

@@ -131,7 +131,7 @@ export function enhanceSecondaryNavSearch(root) {
   // On mobile the field is always shown in the open accordion (see header.css),
   // so the magnifier just focuses it rather than toggling expand/collapse.
   const isMobileAccordion = () => typeof window.matchMedia === 'function'
-    && window.matchMedia('(max-width: 1299px)').matches;
+    && window.matchMedia('(width < 1300px)').matches;
   toggle.addEventListener('click', () => {
     if (isMobileAccordion()) { input.focus(); return; }
     setOpen(!widget.classList.contains('rc-search-open'));

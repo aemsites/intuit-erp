@@ -161,7 +161,7 @@ body.author header {
   min-height: 172px;
 }
 
-@media (width <=1299px) {
+@media (width <1300px) {
   body.blog-home header,
   body.blog-article header,
   body.category header,
@@ -178,7 +178,7 @@ body.has-events-bar header {
   min-height: 149px;
 }
 
-@media (width <=1299px) {
+@media (width <1300px) {
   body.has-events-bar header {
     min-height: 106px;
   }

@@ -128,6 +128,9 @@
    display: none;
 }
 
+/* 1300 documented exception — see header.css's top-of-file comment: real
+   erp.intuit.com nav breakpoint is content-driven (~1243px measured live),
+   not a fixed token; keep in sync with header.css/header.js. */
 @media (min-width: 1300px) {
    .header .nav-item {
       position: static;
@@ -163,7 +166,7 @@
    }
 }
 
-@media (width <=1299px) {
+@media (width <1300px) {
    .header .nav-item {
       position: static;
       display: block;

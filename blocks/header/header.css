@@ -111,6 +111,12 @@ body.nav-scroll-lock {
    margin-left: 10px;
 }
 
+/* 1300 is a documented exception to the 768/1024/1200/1440 ladder, not a
+   one-off oversight: erp.intuit.com's mega-nav/hamburger switch is
+   content-driven (measured ~1243px live, not a fixed breakpoint), and 1300
+   is closer to that than 1200 would be — folding it into 1200 would trigger
+   the mobile nav 43px too early vs. production. Keep in sync with
+   header.js's desktopMedia/mobileAccordion queries and navigation.css. */
 @media (min-width: 1300px) {
    .header .ies-nav .container {
       position: static;
@@ -329,7 +335,7 @@ body.nav-scroll-lock {
    }
 }
 
-@media (width <=1299px) {
+@media (width <1300px) {
    header {
       min-height: 60px;
    }
@@ -672,7 +678,7 @@ body.nav-scroll-lock {
    display: flex;
 }
 
-@media (width <=1299px) {
+@media (width <1300px) {
    .header .ies-secondary-nav .rc-search {
       display: none;
    }
