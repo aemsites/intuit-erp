@@ -136,27 +136,24 @@
 .form.card .form-header { font-size: var(--heading-font-size-m); margin: 0 0 8px; }
 
 /* ---- .download — gated-content split band (copy left, form card right).
-   Copy is authored as section default content; the block is the card. The band
-   colour is author-driven via Section Metadata (Style: super-blue → blue,
-   Style: grey → grey), so the copy text colour is left to the section theme
-   rather than hardcoded here. ---- */
-.section.form-container:has(.form.download) { padding: var(--section-y) 0; text-align: left; }
+   Copy is authored as section default content; the block is the card. ---- */
+.section.form-container:has(.form.download) { background: var(--navy); padding: var(--section-y) 0; text-align: left; }
 .section.form-container:has(.form.download) > div { max-width: var(--container); margin: 0 auto; }
 
 .section.form-container:has(.form.download):has(.default-content-wrapper) {
   display: grid; grid-template-columns: 1fr; gap: 32px; align-items: start;
 }
-.section.form-container:has(.form.download) .default-content-wrapper { text-align: left; }
+.section.form-container:has(.form.download) .default-content-wrapper { text-align: left; color: #d5e0ec; }
 
 .section.form-container:has(.form.download) .default-content-wrapper h2,
-.section.form-container:has(.form.download) .default-content-wrapper h3 { font-size: 32px; font-weight: 700; margin: 0 0 16px; }
+.section.form-container:has(.form.download) .default-content-wrapper h3 { color: #fff; font-size: 32px; font-weight: 700; margin: 0 0 16px; }
+.section.form-container:has(.form.download) .default-content-wrapper li strong { color: #fff; }
 
-/* white form card — square corners, matching erp.intuit.com; fixed width on
-   desktop (below) so it doesn't broaden with the viewport. */
 .form.download {
-  background: #fff; border-radius: 0; padding: 40px; max-width: none; width: 100%; box-sizing: border-box;
+  background: #fff; border-radius: var(--radius-card); padding: 32px; max-width: none;
+  box-shadow: 0 20px 50px rgb(0 0 0 / 25%);
 }
-.form.download .form-header { font-size: 40px; font-weight: 700; color: var(--heading); margin: 0 0 20px; }
+.form.download .form-header { font-size: 22px; font-weight: 700; color: var(--heading); margin: 0 0 20px; }
 
 /* Tablet+: standalone heading grows, the card regains its fixed centered width. */
 @media (width >= 768px) {
@@ -165,21 +162,18 @@
 }
 
 /* Desktop: the gated-download band splits into two columns — copy wider than the
-   form card (~1.4:1), matching erp.intuit.com so the card scales with the
-   container instead of being pinned to a fixed width. */
+   form card (~1.4:1, matching erp.intuit.com). The band stays full-width while the
+   grid content is capped + centred to --container, so the card scales with the
+   container (~553px @1900, ~486px @1280) instead of stretching across the viewport. */
 @media (width >= 1024px) {
   .section.form-container:has(.form.download):has(.default-content-wrapper) {
     grid-template-columns: 1.4fr 1fr;
     gap: 48px;
-
-    /* band stays full-width; cap + centre the grid content to --container so the
-       card scales like prod (~553px at 1900, ~486px at 1280) instead of the track
-       stretching across the whole viewport. */
     padding-inline: max(24px, calc((100% - var(--container)) / 2));
   }
 
-  /* the wrapper's 40px side padding gives mobile gutters; on desktop the grid
-     padding-inline handles the outer gutter, so let the card fill its track. */
+  /* the wrapper's side padding gives mobile gutters; on desktop the grid handles
+     the outer gutter, so let the card fill its track. */
   .section.form-container:has(.form.download) .form-wrapper { padding-inline: 0; }
 }
 
