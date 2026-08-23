@@ -31,6 +31,15 @@
 /* upstream underlines the Google policy links but not the Privacy Statement */
 .form .form-disclaimer a[href*="policies.google.com"] { text-decoration: underline; }
 
+/* Stacked layout: form.js moves the disclaimer inside the form before the button;
+   span the full row (forces its own line in the flex layout) and sit above it. */
+.form .mktoForm > .form-disclaimer {
+  flex: 1 0 100%;
+  max-width: none;
+  margin: 4px 0 16px;
+  text-align: left;
+}
+
 /* ---- Marketo form (.mktoForm) — Marketo sets inline widths, so full-width
    layout needs !important. Keep overrides minimal; inherit the site's font.
    Scoped `:not(.hero)` so these never touch the hero block (class "hero form"),
@@ -94,7 +103,7 @@
 /* Desktop: a standalone form (e.g. webinar registration) lays its fields out in
    one row, matching erp.intuit.com. The hero-embedded card, modal, and download
    variants stay stacked (reset below). */
-@media (width >= 900px) {
+@media (width >= 1024px) {
   .form:not(.hero) .mktoForm { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 16px; }
   .form:not(.hero) .mktoForm > .mktoFormRow { flex: 1 1 140px; width: auto !important; margin-bottom: 0; }
   .form:not(.hero) .mktoForm > .mktoButtonRow { flex: 0 0 auto; width: auto; margin: 0; }
@@ -153,7 +162,7 @@
 }
 
 /* Desktop: the gated-download band splits into two columns. */
-@media (width >= 900px) {
+@media (width >= 1024px) {
   .section.form-container:has(.form.download):has(.default-content-wrapper) { grid-template-columns: 1fr 1fr; gap: 48px; }
 }
 

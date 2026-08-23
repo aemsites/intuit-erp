@@ -59,7 +59,7 @@
 
 /* mobile: one card per view and, matching erp.intuit.com, dots only — the
    prev/next arrows are hidden (swipe/dots drive paging on small screens). */
-@media (width <= 767px) {
+@media (width < 768px) {
   .stat-band { --cards-per-view: 1; }
   .stat-band .stats-nav { display: none; }
   .section.stat-band-container { padding: 20px 0; }
@@ -69,9 +69,9 @@
   .stat-band .stats-controls { justify-content: center; padding: 20px; margin-top: 0; }
 }
 
-@media (768px <= width <= 1023px) { .stat-band { --cards-per-view: 2; } }
+@media (768px <= width < 1024px) { .stat-band { --cards-per-view: 2; } }
 
-@media (1024px <= width <= 1279px) { .stat-band { --cards-per-view: 3; } }
+@media (1024px <= width < 1200px) { .stat-band { --cards-per-view: 3; } }
 
 /* --- .stat-band.dark (pricing "Data-backed performance") --- */
 .section.stat-band-container:has(.stat-band.dark) { background: var(--navy); padding: 120px 0 100px; }
@@ -92,7 +92,7 @@
   font-size: 20px; line-height: 28px; color: #fff; width: 75%; margin: 0 auto 20px;
 }
 
-@media (width <= 768px) {
+@media (width < 768px) {
   .section.stat-band-container:has(.stat-band.dark) { padding: 80px 0 40px; }
   .stat-band-container:has(.stat-band.dark) .default-content-wrapper h2 { font-size: 34px; margin-bottom: 60px; }
   .stat-band.dark .stats-grid { grid-template-columns: 1fr; gap: 44px; }
@@ -115,9 +115,42 @@
 }
 .stat-band.plain .stat-line + .stat-line { margin-top: 18px; }
 
-@media (width <= 768px) {
+@media (width < 768px) {
   .stat-band.plain .stats-box { padding: 24px 20px; }
   .stat-band.plain .stat-line { font-size: 16px; }
+}
+
+/* --- .stat-band.cards (research "Findings at a glance") ---
+   erp.intuit.com renders these as a horizontal, scroll-snapping row of stat
+   graphics with a caption under each — the SnackableCards slider. */
+.section.stat-band-container:has(.stat-band.cards) { background: transparent; padding: 0; }
+
+.stat-band.cards .stats-cards {
+  display: flex; flex-direction: row; align-items: flex-start; gap: 16px;
+  overflow-x: auto; padding: 4px 0 16px;
+  scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
+}
+
+.stat-band.cards .stat-card {
+  flex: 0 0 auto; width: 240px; scroll-snap-align: start;
+  display: flex; flex-direction: column; gap: 12px;
+}
+
+.stat-band.cards .stat-card-media picture,
+.stat-band.cards .stat-card-media img { display: block; width: 100%; height: auto; border-radius: 16px; }
+.stat-band.cards .stat-card-copy p { font-size: 14px; line-height: 1.4; color: #404b52; margin: 0; }
+
+.stat-band.cards .stat-card-title {
+  justify-content: center; background: #c2f5ff; border-radius: 16px; padding: 24px; min-height: 180px;
+}
+.stat-band.cards .stat-card-title .stat-card-copy p { font-size: 22px; line-height: 1.3; font-weight: 600; color: #000; }
+
+.stat-band.cards .stats-cards::-webkit-scrollbar { height: 8px; }
+.stat-band.cards .stats-cards::-webkit-scrollbar-thumb { background: #cbd1d6; border-radius: 4px; }
+.stat-band.cards .stats-cards::-webkit-scrollbar-track { background: transparent; }
+
+@media (width < 768px) {
+  .stat-band.cards .stat-card { width: 78vw; max-width: 300px; }
 }
 
 /* --- .stat-band.glance (research/guide stat list) ---
@@ -135,7 +168,7 @@
 }
 .stat-band.glance .glance-list li:last-child { margin-bottom: 0; }
 
-@media (width <= 768px) {
+@media (width < 768px) {
   .stat-band.glance .glance-list { padding-left: 24px; }
   .stat-band.glance .glance-list li { font-size: 18px; line-height: 1.4; }
 }

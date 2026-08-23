@@ -412,7 +412,7 @@
   }
 }
 
-@media (width <=768px) {
+@media (width <768px) {
   .testimonial-container .default-content-wrapper h2,
   .testimonial-container .default-content-wrapper h3 {
     font-size: 28px;
@@ -553,7 +553,7 @@
   margin: 4px 0 0;
 }
 
-@media (min-width: 600px) {
+@media (min-width: 768px) {
   .testimonial.card {
     flex-flow: wrap;
   }
@@ -563,7 +563,7 @@
   }
 }
 
-@media (min-width: 900px) {
+@media (min-width: 1024px) {
   .testimonial .testimonial-card {
     flex: 1 1 calc(33.333% - 16px);
   }
@@ -667,7 +667,22 @@
 
 .testimonial.card.carousel .testimonial-arrow:disabled { background: #d3d9dd; cursor: default; }
 
-@media (min-width: 600px) {
+@media (min-width: 768px) {
   /* keep one-at-a-time even where the default .card grid would go multi-column */
   .testimonial.card.carousel .testimonial-card { flex: 0 0 100%; box-sizing: border-box; }
+}
+
+/* #742 mobile: video-split 2-col grid overflowed the viewport on
+   /professional-services. Stack to one column AND allow the grid items to
+   shrink below their intrinsic content width (grid items default to
+   min-width: auto, which was keeping .split-copy/.split-media at ~402px). */
+@media (width < 768px) {
+  .testimonial.video-split .split-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .testimonial.video-split .split-copy,
+  .testimonial.video-split .split-media {
+    min-width: 0;
+  }
 }

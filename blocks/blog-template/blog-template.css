@@ -1,7 +1,7 @@
 /*
  * blog-template — 3-col article layout applied to <main.blog-article>.
  * Mobile-first: everything stacks, the TOC defaults to a collapsed sticky
- * bar, and the share widget sits in the hero. At >=900px a single grid
+ * bar, and the share widget sits in the hero. At >=1024px a single grid
  * layout takes over: [toc rail] [prose] [right rail]. Tokens reused from
  * styles/styles.css (:22-74).
  */
@@ -10,8 +10,8 @@
    hero (section 1) — eyebrow, h1, byline meta, hero image, share widget.
    Natural DOM order (eyebrow -> h1 -> share -> meta -> image) is also the
    correct mobile stacking order, so mobile needs no layout rules beyond
-   image rounding; the 2-col band is added back in the >=900px section
-   below. `.blog-share` is relocated OUT of the hero at >=900px (see the
+   image rounding; the 2-col band is added back in the >=1024px section
+   below. `.blog-share` is relocated OUT of the hero at >=1024px (see the
    TOC-rail rules), so it never appears in both places at once.
    ============================================================ */
 .blog-article .blog-hero .blog-byline-tag {
@@ -36,7 +36,7 @@
   background: var(--blog-hero-bg);
 }
 
-@media (max-width: 1023px) {
+@media (width < 1024px) {
   .blog-article > .blog-hero {
     padding: 24px 0;
   }
@@ -331,7 +331,7 @@
   margin: 40px 0;
 }
 
-@media (min-width: 900px) {
+@media (width >= 1024px) {
   .blog-article > .blog-rail {
     margin: 0;
   }
@@ -342,7 +342,7 @@
   margin-top: 40px;
 }
 
-@media (min-width: 900px) {
+@media (width >= 1024px) {
   .blog-article .blog-rail .default-content-wrapper > .section + .section {
     margin-top: 20px;
   }
@@ -398,10 +398,11 @@
 }
 
 /* desktop: single 3-col grid — [toc rail] [prose] [right rail]. One
-   breakpoint (matches the JS's matchMedia('(min-width: 900px)') used for
-   the share-widget relocation and the TOC's mobile/desktop defaults, so the
-   two never disagree about what counts as "desktop"). */
-@media (min-width: 900px) {
+   breakpoint (matches the JS's matchMedia(MQ_DESKTOP_UP), see
+   scripts/breakpoints.js, used for the share-widget relocation and the TOC's
+   mobile/desktop defaults, so the two never disagree about what counts as
+   "desktop"). */
+@media (width >= 1024px) {
   .blog-article {
     display: grid;
 
@@ -654,15 +655,13 @@
     padding: 40px;
   }
 
-  /* No `.blog-hero-image` in the band — collapse to a single column so the copy
-     uses the full width instead of leaving the media column as dead space.
-
+  /* No `.blog-hero-image` in the copy wrapper — collapse it to a single column.
      Two ways to get here: an article that authors no hero media at all, and one
-     whose hero media is a video-host link. In the second case the marker exists
-     only briefly — buildVideoAutoBlocks runs after buildBlogTemplate and
-     replaces the marked <p> with a `video` block, which lands in its own wrapper
-     below the copy (e.g. /blog/ask-the-expert/intuit-enterprise-suite-gene-marks).
-     Either way the band itself has no media column, which is what this matches. */
+     whose hero media is a video-host link. In the second case buildVideoAutoBlocks
+     (which runs after buildBlogTemplate) replaces the marked <p> with a `video`
+     block that lands in its own `.video-wrapper`, a sibling of this copy wrapper
+     — so the copy wrapper itself has no media column and fills col 1. The video
+     hero's 2-col layout is handled at the section level below. */
   .blog-article .blog-hero > .default-content-wrapper:not(:has(.blog-hero-image)) {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -703,6 +702,35 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+  }
+
+  /* Video hero: the video autoblock relocates the player into a `.video-wrapper`
+     sibling of the copy wrapper (an image hero, by contrast, keeps its <picture>
+     inside the copy wrapper as `.blog-hero-image`). Lay the band out as a
+     section-level 2-col grid so the copy sits left and the video right — matching
+     the source ask-the-expert layout (e.g. /blog/ask-the-expert/...-gene-marks). */
+  .blog-article .blog-hero.video-container {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: 48px;
+    align-items: center;
+    padding: 40px;
+  }
+
+  .blog-article .blog-hero.video-container > .default-content-wrapper {
+    grid-column: 1;
+    padding: 0;
+  }
+
+  .blog-article .blog-hero.video-container > .video-wrapper {
+    grid-column: 2;
+    align-self: center;
+    margin: 0;
+  }
+
+  .blog-article .blog-hero.video-container .video {
+    max-width: none;
+    margin: 0;
   }
 }
 
@@ -766,7 +794,7 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
 }
 
 /* Hero byline font-size overrides — must beat the prose-reset rule above (0,3,1) */
-@media (max-width: 1023px) {
+@media (width < 1024px) {
   .blog-article > .blog-hero > .default-content-wrapper > .blog-byline-tag,
   .blog-article > .blog-hero > .default-content-wrapper > .blog-byline-meta {
     font-size: var(--body-font-size-xxs);
@@ -812,7 +840,7 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
 
 /* rail h3 — compact on desktop (narrow rail column); full-size on mobile (full width).
    Beats the prose-reset rules above (same 0,3,1 specificity, later cascade) */
-@media (min-width: 900px) {
+@media (width >= 1024px) {
   .blog-article > .blog-rail .default-content-wrapper h3 {
     font-family: var(--body-font-family);
     font-size: var(--body-font-size-xs);
@@ -839,7 +867,7 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
    treatment is a 2-up grid with a 24px pull-quote, so this is
    article-scoped. On mobile it stays within the column; the 40px-per-side
    breakout only applies once there IS a prose column to break out of (see
-   the >=900px rule below) — applying it here too pushed the panel past the
+   the >=1024px rule below) — applying it here too pushed the panel past the
    viewport's left edge and caused horizontal scroll. */
 :is(.blog-article, .case-study) .testimonial:not(.video) {
   box-sizing: border-box;
@@ -848,7 +876,7 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
   padding: 8px 20px 24px;
 }
 
-@media (width >= 900px) {
+@media (width >= 1024px) {
   :is(.blog-article, .case-study) .testimonial:not(.video) {
     width: calc(100% + 80px);
     margin: 32px -40px;
@@ -909,7 +937,7 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
   margin-top: 8px;
 }
 
-@media (min-width: 900px) {
+@media (width >= 1024px) {
   .blog-article > .blog-social-share,
   .blog-article > .blog-author-bio {
     grid-column: 2;
@@ -994,4 +1022,59 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
   font-size: var(--body-font-size-s, 14px);
   line-height: 1.6;
   color: var(--text-muted, #666);
+}
+
+.blog-article > .section.full-bleed {
+  grid-column: 1 / -1;
+
+  .default-content-wrapper {
+    margin: 0;
+  }
+
+  .section > div {
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: 0 40px;
+  }
+
+  .section.hear-customers {
+    padding: 40px 0;
+  }
+
+  .section.hear-customers .default-content-wrapper {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 40px;
+
+    a.button {
+      background-color: var(--navy);
+    }
+  
+    a.button:hover {
+      background-color: var(--navy-hover);
+    }
+  
+
+    h2 {
+      font-size: 34px;
+      font-weight: 700;
+    }
+
+    .button-wrapper {
+      display: none;
+    }
+
+    @media (width >= 1024px) {
+      h2 {
+        font-size: 48px;
+      }
+
+      .button-wrapper {
+        display: block;
+      }
+    }
+  }
 }

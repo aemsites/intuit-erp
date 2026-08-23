@@ -49,7 +49,7 @@
    body's gap guarantees breathing room when the copy is long enough to fill it */
 .event-card-body .button { margin-top: auto; min-height: 52px; }
 
-@media (width <= 900px) {
+@media (width < 1024px) {
   .event-grid { grid-template-columns: repeat(2, 1fr); }
   .event-card { grid-column: span 2; }
   .event-card-body { padding: 40px 20px; }
@@ -108,10 +108,10 @@
 .event-cards .events-arrow:disabled { background: #859299; opacity: 0.6; cursor: not-allowed; }
 
 /* Must follow the base control rules above — same specificity, so source order
-   decides. Upstream centres the controls below 900px and hides the arrows,
+   decides. Upstream centres the controls below 1024px and hides the arrows,
    relying on swipe; this block has no touch handler, so the arrows stay as the
    only reliable way to page, shrunk to a 44px minimum touch target. */
-@media (width <= 900px) {
+@media (width < 1024px) {
   .event-cards { --cards-per-view: 1; }
   .event-cards .events-controls { justify-content: center; gap: 20px; }
   .event-cards .events-nav { gap: 20px; }

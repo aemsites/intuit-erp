@@ -17,8 +17,9 @@
 .disclosure.light .disclosure-body { color: var(--navy); opacity: 1; }
 
 /* white variant — plain white bar, open by default (fragments/pricing-disclaimer) */
-.section.disclosure-container:has(.disclosure.white) { background: #fff; padding: 64px 24px; }
+.section.disclosure-container:has(.disclosure.white) { background: #fff; padding: 24px; }
 
-.disclosure.white .disclosure-item summary { color: var(--link-color); font-size: 14px; font-weight: 500; padding: 0 0 24px; }
+.disclosure.white .disclosure-item summary { color: var(--link-color); font-size: 14px; font-weight: 500; padding: 0; }
+.disclosure.white .disclosure-item[open] summary { padding: 0 0 24px; }
 .disclosure.white .disclosure-body { color: var(--text-color); font-size: 12px; text-align: left; opacity: 1; padding: 0; }
 .disclosure.white .disclosure-body p { margin: 0 0 16px; }

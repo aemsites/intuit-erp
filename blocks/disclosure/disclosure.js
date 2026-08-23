@@ -4,6 +4,8 @@
  * Row 1 = summary text. Row 2 = body (a cell of one or more paragraphs).
  * CSS: blocks/disclosure/disclosure.css
  */
+let disclosureSeq = 0;
+
 export default function decorate(block) {
   const rows = [...block.children];
   const summaryText = rows[0] ? rows[0].textContent.trim() : 'Important pricing details and product information';
@@ -16,6 +18,15 @@ export default function decorate(block) {
   const body = document.createElement('div');
   body.className = 'disclosure-body';
   if (bodyCell) body.innerHTML = bodyCell.innerHTML;
+
+  // Expose the expandable note as an ARIA disclosure region tied to its summary,
+  // matching production's landmark markup (role=region + aria-labelledby). See #685.
+  disclosureSeq += 1;
+  const summaryId = `disclosure-summary-${disclosureSeq}`;
+  summary.id = summaryId;
+  body.setAttribute('role', 'region');
+  body.setAttribute('aria-labelledby', summaryId);
+
   details.append(summary, body);
 
   block.replaceChildren(details);

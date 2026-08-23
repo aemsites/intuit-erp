@@ -153,13 +153,13 @@
   gap: 24px;
 }
 
-@media (width >=769px) and (width <=899px) {
+@media (width >=768px) and (width <1024px) {
   .media-text.cyan .media-row {
     margin-inline: -20px;
   }
 }
 
-@media (width >=900px) {
+@media (width >=1024px) {
   .media-text.cyan .media-row {
     padding-inline: 115px;
     gap: 116px;
@@ -521,7 +521,7 @@
   display: block;
 }
 
-@media (width <=1023px) {
+@media (width <1024px) {
   .media-text.compare .compare-grid {
     width: auto;
     max-width: none;
@@ -548,7 +548,7 @@
   }
 }
 
-@media (width <=745px) {
+@media (width <768px) {
   .media-text-container:has(.media-text.compare) .default-content-wrapper h2 {
     font-size: 28px;
   }
@@ -623,7 +623,7 @@
   border-radius: var(--radius-card);
 }
 
-@media (width <=768px) {
+@media (width <768px) {
   .media-text .media-row {
     grid-template-columns: 1fr;
     gap: 24px;
@@ -701,7 +701,7 @@
   }
 }
 
-@media (width >=769px) {
+@media (width >=768px) {
   .media-text.cards .mig-card {
     padding: 40px;
   }

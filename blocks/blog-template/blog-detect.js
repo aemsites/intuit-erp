@@ -52,6 +52,11 @@ export function hasAuthoredCaseStudyHeader(main) {
 export function isBlogPage() {
   const path = window.location.pathname;
   if (!path.startsWith('/blog/')) return false;
+  // The 404 page is served under the originally-requested /blog/... URL and
+  // authors `<main class="error">`. It is not an article, so it must not get
+  // the blog-template hero/rails or the auto-blocked "Hear from our customers"
+  // blog-cards band — otherwise an unpublished blog page's 404 shows blog cards.
+  if (document.querySelector('main.error')) return false;
   const template = getMetadata('template').trim().toLowerCase();
   // An explicitly authored template always decides — including one we don't
   // recognise, which must not then be guessed at from the path shape.
