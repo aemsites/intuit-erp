@@ -25,6 +25,7 @@
   /* colors — lifted from erp.intuit.com */
   --background-color: #fff;
   --light-color: #f7f8f3;
+  --grey-08: #f4f5f8;
 
   /* sand */
   --tofu: #f3f2ef;
@@ -472,6 +473,20 @@ main .section.super-blue :is(h1, h2, h3, h4, h5, h6) {
 main .section.super-blue.form-container:has(.form.download),
 main .section.super-blue.faq-container {
   background-color: var(--info);
+}
+
+/* Section Metadata "Style: grey" — the light-grey band (#f4f5f8) behind the
+   download form on guide pages that aren't super-blue (e.g. unlocking-business-growth). */
+main .section.grey.form-container:has(.form.download) {
+  background-color: var(--grey-08);
+}
+
+/* The download form is a white card, so its own copy stays dark even on the
+   coloured super-blue band (the generic super-blue heading rule would otherwise
+   turn the card heading white-on-white). */
+main .section.super-blue .form.download,
+main .section.super-blue .form.download :is(h1, h2, h3, h4, h5, h6) {
+  color: var(--heading);
 }
 
 main .section.super-blue .faq-toggle,

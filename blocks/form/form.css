@@ -136,24 +136,27 @@
 .form.card .form-header { font-size: var(--heading-font-size-m); margin: 0 0 8px; }
 
 /* ---- .download — gated-content split band (copy left, form card right).
-   Copy is authored as section default content; the block is the card. ---- */
-.section.form-container:has(.form.download) { background: var(--navy); padding: var(--section-y) 0; text-align: left; }
+   Copy is authored as section default content; the block is the card. The band
+   colour is author-driven via Section Metadata (Style: super-blue → blue,
+   Style: grey → grey), so the copy text colour is left to the section theme
+   rather than hardcoded here. ---- */
+.section.form-container:has(.form.download) { padding: var(--section-y) 0; text-align: left; }
 .section.form-container:has(.form.download) > div { max-width: var(--container); margin: 0 auto; }
 
 .section.form-container:has(.form.download):has(.default-content-wrapper) {
   display: grid; grid-template-columns: 1fr; gap: 32px; align-items: start;
 }
-.section.form-container:has(.form.download) .default-content-wrapper { text-align: left; color: #d5e0ec; }
+.section.form-container:has(.form.download) .default-content-wrapper { text-align: left; }
 
 .section.form-container:has(.form.download) .default-content-wrapper h2,
-.section.form-container:has(.form.download) .default-content-wrapper h3 { color: #fff; font-size: 32px; font-weight: 700; margin: 0 0 16px; }
-.section.form-container:has(.form.download) .default-content-wrapper li strong { color: #fff; }
+.section.form-container:has(.form.download) .default-content-wrapper h3 { font-size: 32px; font-weight: 700; margin: 0 0 16px; }
 
+/* white form card — square corners, matching erp.intuit.com; fixed width on
+   desktop (below) so it doesn't broaden with the viewport. */
 .form.download {
-  background: #fff; border-radius: var(--radius-card); padding: 32px; max-width: none;
-  box-shadow: 0 20px 50px rgb(0 0 0 / 25%);
+  background: #fff; border-radius: 0; padding: 40px; max-width: none; box-sizing: border-box;
 }
-.form.download .form-header { font-size: 22px; font-weight: 700; color: var(--heading); margin: 0 0 20px; }
+.form.download .form-header { font-size: 40px; font-weight: 700; color: var(--heading); margin: 0 0 20px; }
 
 /* Tablet+: standalone heading grows, the card regains its fixed centered width. */
 @media (width >= 768px) {
@@ -161,9 +164,11 @@
   .form.card { max-width: 420px; padding: 32px; }
 }
 
-/* Desktop: the gated-download band splits into two columns. */
+/* Desktop: the gated-download band splits into two columns, and the card takes a
+   fixed width aligned to the right of its column (matches erp.intuit.com). */
 @media (width >= 1024px) {
   .section.form-container:has(.form.download):has(.default-content-wrapper) { grid-template-columns: 1fr 1fr; gap: 48px; }
+  .form.download { max-width: 486px; margin-left: auto; }
 }
 
 /* Hide Google's reCAPTCHA v3 badge (bottom-right). The required attribution is
