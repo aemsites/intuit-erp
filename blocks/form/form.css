@@ -45,6 +45,9 @@
 .form.centered .form-subheader,
 .form.centered .mktoForm > .form-disclaimer { text-align: center; }
 
+/* .disclaimer-below — disclaimer sits under the submit button (form.js handles placement). */
+.form.disclaimer-below .mktoForm > .form-disclaimer { margin-top: 16px; }
+
 /* ---- Marketo form (.mktoForm) — Marketo sets inline widths, so full-width
    layout needs !important. Keep overrides minimal; inherit the site's font.
    Scoped `:not(.hero)` so these never touch the hero block (class "hero form"),
