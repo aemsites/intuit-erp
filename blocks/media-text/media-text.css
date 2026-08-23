@@ -313,6 +313,27 @@
   box-shadow: 0 3px 27px 7px rgb(124 188 255 / 25%);
 }
 
+/* icon variant — a media-text.cards grid whose cards carry a small icon image
+   (no mig-steps timeline) renders as compact cards with the icon centered on
+   top and the copy below, matching erp.intuit.com's guide "white paper" benefit
+   cards. Scoped with :not(:has(.mig-steps)) so the migration-steps timeline
+   treatment is untouched. Desktop column count is set in the media query below. */
+.media-text.cards .mig-grid:not(:has(.mig-steps)) .mig-card {
+  align-items: center;
+  text-align: center;
+}
+
+.media-text.cards .mig-grid:not(:has(.mig-steps)) .mig-visual {
+  order: -1;
+  margin: 0 0 24px;
+}
+
+.media-text.cards .mig-grid:not(:has(.mig-steps)) .mig-visual img {
+  width: 56px;
+  border-radius: 0;
+  box-shadow: none;
+}
+
 .media-text.cards .mig-visual:has(.mig-steps) {
   background: #fff;
   border-radius: 8px;
@@ -683,6 +704,12 @@
 @media (width >=768px) {
   .media-text.cards .mig-card {
     padding: 40px;
+  }
+
+  /* icon variant: 3-up on desktop (the steps treatment keeps its 2-up grid).
+     minmax(0, 1fr) caps the track so a wide token can't overflow the row. */
+  .media-text.cards .mig-grid:not(:has(.mig-steps)) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
