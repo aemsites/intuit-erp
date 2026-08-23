@@ -162,9 +162,9 @@
 }
 
 /* Desktop: the gated-download band splits into two columns — copy wider than the
-   form card (~1.4:1, matching erp.intuit.com). The band stays full-width while the
-   grid content is capped + centred to --container, so the card scales with the
-   container (~553px @1900, ~486px @1280) instead of stretching across the viewport. */
+   form card (~1.4:1). The band stays full-width while the grid content is capped +
+   centred to --container, so the card scales with the container instead of
+   stretching across the viewport. */
 @media (width >= 1024px) {
   .section.form-container:has(.form.download):has(.default-content-wrapper) {
     grid-template-columns: 1.4fr 1fr;
