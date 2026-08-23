@@ -1,15 +1,20 @@
 /**
- * cards-video-gallery — a filterable grid of video cards, migrated from
- * erp.intuit.com/blog/videos/customer-testimonials/. Each authored card row is
- * a YouTube video link plus a body cell holding a category label (an
+ * cards-video-gallery — a filterable grid of video cards. Each authored card row
+ * is a video link (YouTube/Vimeo) plus a body cell holding a category label (an
  * italic-only paragraph) and a title. The block:
- *   - embeds each video as a responsive YouTube iframe,
+ *   - renders each video as a click-to-play facade (poster + play button; the
+ *     provider iframe is injected on click, so a grid of cards costs no
+ *     third-party players until one is actually played),
  *   - derives category filter tabs from the distinct labels present
  *     (All + each category), filtering the grid client-side, and
  *   - paginates the (filtered) cards into fixed-size pages with
  *     Previous / numbered / Next controls.
  *
- * Variant of the vanilla `cards` block (Block Collection). YouTube URL parsing
+ * The link and the poster image are read independently of each other, so a row
+ * can author the poster inside the link or alongside it — either works; with no
+ * poster the provider thumbnail is used.
+ *
+ * Variant of the vanilla `cards` block (Block Collection). Video URL parsing
  * reuses the pure helpers in blocks/video/video-info.js.
  *
  * CSS: blocks/cards-video-gallery/cards-video-gallery.css

@@ -1,10 +1,10 @@
 /*
  * cards-video-gallery — filterable grid of video cards (category tabs +
- * YouTube embeds + pagination). Variant of the Block Collection `cards` block.
- * Values match erp.intuit.com/blog/videos/customer-testimonials/ (extracted
- * computed styles): navy rgb(13 51 63) pills, blue rgb(35 108 255) category
- * label, 8px card radius + soft shadow, 20px grid gap. Mobile-first;
- * 2-up at 600px, 3-up at 900px.
+ * click-to-play video facades + pagination). Variant of the Block Collection
+ * `cards` block. Navy rgb(13 51 63) filter/pagination pills, blue
+ * rgb(35 108 255) category label, 8px card radius + soft shadow, 20px grid gap.
+ * Mobile-first; the column count steps with the block's own width (see the
+ * container queries below), not the viewport's.
  */
 
 /* Column count follows the BLOCK's width, not the viewport's. On a blog article
