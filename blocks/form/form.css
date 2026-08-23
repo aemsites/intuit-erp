@@ -40,6 +40,11 @@
   text-align: left;
 }
 
+/* .centered — center the authored header/subheader/disclaimer (opt-in). */
+.form.centered .form-header,
+.form.centered .form-subheader,
+.form.centered .mktoForm > .form-disclaimer { text-align: center; }
+
 /* ---- Marketo form (.mktoForm) — Marketo sets inline widths, so full-width
    layout needs !important. Keep overrides minimal; inherit the site's font.
    Scoped `:not(.hero)` so these never touch the hero block (class "hero form"),
