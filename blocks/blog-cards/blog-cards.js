@@ -46,6 +46,12 @@ function normalizeTag(value) {
   return value.toLowerCase().replace(/-/g, ' ').trim();
 }
 
+// /blog/<folder>/<slug> -> "<folder>"; listing pages (fewer segments) have none.
+function folderSegment(path) {
+  const segments = (path || '').split('/').filter(Boolean);
+  return segments.length > 2 ? segments[1] : '';
+}
+
 /**
  * Pure filter/sort/limit over query-index entries. category/author/tags/
  * template are OR'd within a field, AND'd across fields, matched
@@ -65,8 +71,14 @@ export function filterEntries(entries, {
   }
   if (authors.length) out = out.filter((entry) => authors.includes(entry.author));
   if (requestedTags.length) {
-    out = out.filter((entry) => toList(entry.tags)
-      .some((t) => requestedTags.includes(normalizeTag(t))));
+    // A post's own folder counts as an implicit tag, so a landing page filtering
+    // `tags: <folder>` lists its home posts without every one needing that tag.
+    out = out.filter((entry) => {
+      const own = toList(entry.tags).map(normalizeTag);
+      const folder = normalizeTag(folderSegment(entry.path));
+      if (folder) own.push(folder);
+      return requestedTags.some((t) => own.includes(t));
+    });
   }
   if (templates.length) {
     out = out.filter((entry) => templates.includes((entry.template || '').trim().toLowerCase()));
@@ -79,9 +91,7 @@ export function filterEntries(entries, {
 
 // Eyebrow label: entry's own category, else the /blog/<category>/<slug> path segment.
 export function categoryLabel(entry) {
-  const segments = (entry.path || '').split('/').filter(Boolean);
-  const fromPath = segments.length > 2 ? segments[1] : '';
-  const primary = toList(entry.category)[0] || fromPath;
+  const primary = toList(entry.category)[0] || folderSegment(entry.path);
   return (primary || '').replace(/-/g, ' ');
 }
 

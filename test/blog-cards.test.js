@@ -78,6 +78,22 @@ describe('filterEntries', () => {
     ];
     expect(filterEntries(mixed, { tags: 'automation' }).map((e) => e.title)).toEqual(['X']);
   });
+  it('treats a post\'s own folder as an implicit tag (home posts need no explicit tag)', () => {
+    // A page filtering `tags: financials` lists /blog/financials/* without those posts
+    // carrying a redundant "financials" tag, plus any cross-folder post tagged financials.
+    const mixed = [
+      { path: '/blog/financials/home', title: 'Home', date: '2026-03-01' },
+      { path: '/blog/hr/cross', title: 'Cross', date: '2026-02-01', tags: 'financials' },
+      { path: '/blog/erp/other', title: 'Other', date: '2026-01-01', tags: 'automation' },
+    ];
+    expect(filterEntries(mixed, { tags: 'financials' }).map((e) => e.title)).toEqual(['Home', 'Cross']);
+  });
+  it('folder-as-tag matches across hyphen vs. space (slug folders)', () => {
+    const mixed = [
+      { path: '/blog/project-cost-estimation/x', title: 'X', date: '2026-01-01' },
+    ];
+    expect(filterEntries(mixed, { tags: 'project-cost-estimation' }).map((e) => e.title)).toEqual(['X']);
+  });
   it('matches tags across hyphen vs. space — tags are phrases, not slugs', () => {
     const mixed = [
       { path: '/blog/financials/y', title: 'Y', date: '2026-01-01', tags: ['Funding and ownership'] },
