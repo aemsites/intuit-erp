@@ -10,6 +10,7 @@
 .disclosure .disclosure-item[open] .disc-caret { transform: rotate(180deg); }
 .disclosure .disclosure-body { color: #fff; font-size: 14px; padding: 0 0 20px; line-height: 1.6; opacity: 0.95; }
 .disclosure .disclosure-body p { margin: 0 0 6px; }
+.disclosure .disclosure-body a { color: inherit; text-decoration: underline; }
 
 /* light variant — home page uses a pale blue-gray bar with dark text */
 .section.disclosure-container:has(.disclosure.light) { background: #eff4f9; }
