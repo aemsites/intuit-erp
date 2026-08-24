@@ -593,11 +593,25 @@ main .section.navy button.button.secondary {
   background-color: transparent;
 }
 
+main .section.super-blue a.button.secondary,
+main .section.super-blue button.button.secondary {
+  border-color: #fff;
+  color: #fff;
+  background-color: transparent;
+}
+
 main .section.navy a.button.secondary:hover,
 main .section.navy a.button.secondary:focus-visible {
   background-color: rgb(255 255 255 / 15%);
   border-color: #fff;
   color: #fff;
+}
+
+main .section.super-blue a.button.secondary:hover,
+main .section.super-blue a.button.secondary:focus-visible {
+  background-color: #fff;
+  border-color: #fff;
+  color: #000;
 }
 
 /* contained sections */
