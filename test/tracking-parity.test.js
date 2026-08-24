@@ -93,7 +93,7 @@ describe('parity: sheet overlay reproduces authored variants', () => {
 describe('parity: trackAs multi-level trail (rw_cards_container|carousel|rw_card_N)', () => {
   beforeEach(() => { document.head.innerHTML = ''; document.body.innerHTML = ''; resetTrackingState(); });
 
-  it('resolves the full 3-level trail via a broad itemSelector + branching itemLabel', () => {
+  it('resolves the full 3-level trail via a broad items selector + branching value fn', () => {
     document.body.innerHTML = '<main><div class="cards block">'
       + '<div class="cards-track">'
       + '<div class="card"><p class="button-container"><a class="button" href="#">One</a></p></div>'
@@ -101,8 +101,10 @@ describe('parity: trackAs multi-level trail (rw_cards_container|carousel|rw_card
       + '</div></div></main>';
     const block = document.querySelector('.cards');
     trackAs('rw_cards_container', block, {
-      itemSelector: '.cards-track, .cards-track > .card',
-      itemLabel: (i, el) => (el.classList.contains('cards-track') ? 'carousel' : `rw_card_${i}`),
+      items: {
+        '.cards-track, .cards-track > .card':
+          (i, el) => (el.classList.contains('cards-track') ? 'carousel' : `rw_card_${i}`),
+      },
     });
     expect(block.getAttribute('data-tracking')).toBe('rw_cards_container');
     expect(block.querySelector('.cards-track').getAttribute('data-tracking')).toBe('carousel');

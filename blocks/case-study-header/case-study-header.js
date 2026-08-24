@@ -161,7 +161,7 @@ export default function decorate(block) {
   trackAs(null, block, {
     key: 'case-study-header',
     linkName: false,
-    segments: {
+    items: {
       '.case-study-eyebrow, .case-study-byline': 'qrc_article_hero',
       '.case-study-share': 'social_media',
       '.case-study-toc': 'TableOfContents',

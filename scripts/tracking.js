@@ -706,27 +706,11 @@ export function initTracking(scope = document) {
 /**
  * Declarative opt-in for a block's own `decorate()` — the code-built counterpart
  * to the authored `tracking-<key>` class. Marks the block tracked and stamps its
- * access-point trail segment (+ optional per-item segments), the way prod's
+ * access-point trail segment (+ optional inner-slot segments), the way prod's
  * components emit their own `data-tracking`. Explicit authored values win.
  * Call it as the last statement of a block's decorate:
  *
  *   export default function decorate(block) { … return trackAs('hero', block); }
- *
- *   return trackAs('carousel', block, {
- *     itemSelector: '.carousel-card',
- *     itemLabel: (i, item) => `carousel_${i}`,
- *   });
- *
- * Multi-level trails (e.g. rw_cards_container|carousel|rw_card_N): use a broad
- * itemSelector that matches every contributing element and branch in itemLabel
- * on the element (return a falsy value to skip one). Because querySelectorAll is
- * in document order, a wrapper matches before its children, so the child index
- * lines up 1-based:
- *
- *   return trackAs('rw_cards_container', block, {
- *     itemSelector: '.cards-track, .cards-track > .card',
- *     itemLabel: (i, el) => (el.classList.contains('cards-track') ? 'carousel' : `rw_card_${i}`),
- *   });
  *
  * The trail segment (`name`) and the sheet/opt-in key are DECOUPLED: prod trail
  * strings carry cruft (rw2_hero) but the sheet keys stay clean. Pass `key` to set
@@ -744,31 +728,40 @@ export function initTracking(scope = document) {
  *
  *   return trackAs(null, block, { key: 'nav', action: 'engaged', linkName: false });
  *
- * FIXED sub-section trails: when a block's trail nests non-repeating regions (the
- * footer's menus/products/legal tiers, the article hero's share row + ToC), pass
- * `segments` — a selector -> data-tracking map — instead of hand-writing
- * querySelectorAll stamps. Authored data-tracking still wins.
+ * `items` — nested trail segments for the block's inner "slots", a selector ->
+ * segment map. A FIXED string labels non-repeating sub-sections; an
+ * (index, el) => string labels repeated/indexed children (querySelectorAll runs
+ * in document order, so a wrapper matches before its children and the child index
+ * lines up 1-based). Authored data-tracking still wins; a falsy return skips one.
  *
- *   return trackAs('footer', block, { key: 'footer', linkName: false, segments: {
+ *   return trackAs('footer', block, { key: 'footer', linkName: false, items: {
  *     '.footer-cols': 'footer_menus', '.footer-col': 'footer_menu_section',
  *     '.brand-logos': 'products', '.footer-sitemap': 'footer_sitemap',
  *   } });
  *
+ *   return trackAs('rw_cards_container', block, { key: 'cards', items: {
+ *     '.cards-track, .cards-track > .card':
+ *       (i, el) => (el.classList.contains('cards-track') ? 'carousel' : `rw_card_${i}`),
+ *   } });
+ *
+ * (Reserved for #769: `alsoTrack` — a selector -> ui_object map — will register
+ * non-CTA elements, e.g. a card's `img`/`picture`, as their OWN beacon sources.
+ * That is a different concept from `items` (which only stamps the trail) and is
+ * not implemented yet.)
+ *
  * @param {string|null} name the trail segment (data-tracking value), or falsy for opt-in only
  * @param {Element} block
- * @param {{key?: string, itemSelector?: string,
- *   itemLabel?: (index: number, item: Element) => string, segments?: Record<string, string>,
+ * @param {{key?: string, items?: Record<string, string | ((index: number, el: Element) => string)>,
  *   action?: string, object?: string, uiObject?: string, linkName?: boolean, skip?: string}} [opts]
  *   `key` = the tracking-<key> opt-in + sheet key (defaults to `name`); `action`/`object`/
  *   `uiObject` = code-built payload defaults; `linkName:false` drops the derived link_name;
  *   `skip` = a selector for pure-UI controls to exclude from tracking (hamburger, toggles);
- *   `segments` = a selector -> data-tracking map for fixed (non-indexed) sub-section trails;
- *   `itemSelector`+`itemLabel` = per-item segments for repeated/indexed children.
+ *   `items` = a selector -> trail-segment map (string for fixed slots, (index, el) => string
+ *   for repeated/indexed children).
  * @returns {Element} the block (so it can be the decorate return value)
  */
 export function trackAs(name, block, {
-  key = name, itemSelector, itemLabel, action, object, uiObject: uiObjectDefault, linkName, skip,
-  segments,
+  key = name, items, action, object, uiObject: uiObjectDefault, linkName, skip,
 } = {}) {
   if (!block) return block;
   // Exclude pure-UI controls (a code-built block opts them out): marks matching
@@ -789,21 +782,19 @@ export function trackAs(name, block, {
   if (action) block.setAttribute('data-track-action', action);
   if (uiObjectDefault) block.setAttribute('data-track-ui-object', uiObjectDefault);
   if (linkName === false) block.setAttribute('data-track-link-name', 'off');
-  // Per-item trail segments for repeated children (carousel cards, accordion items…).
-  if (itemSelector && typeof itemLabel === 'function') {
-    block.querySelectorAll(itemSelector).forEach((item, idx) => {
-      if (item.hasAttribute('data-tracking')) return; // respect explicit
-      const seg = itemLabel(idx, item);
-      if (seg) item.setAttribute('data-tracking', String(seg));
+  // Trail segments stamped on the block's inner "slots" — a selector -> segment
+  // map. The segment is a fixed string for non-repeating sub-sections (footer
+  // menus/products/legal, the article hero's share row + ToC, the secondary nav)
+  // or an (index, el) => string for repeated/indexed children (carousel cards ->
+  // rw_card_N). Authored data-tracking always wins.
+  if (items) {
+    Object.entries(items).forEach(([sel, label]) => {
+      block.querySelectorAll(sel).forEach((el, i) => {
+        if (el.hasAttribute('data-tracking')) return;
+        const seg = typeof label === 'function' ? label(i, el) : label;
+        if (seg) el.setAttribute('data-tracking', String(seg));
+      });
     });
-  }
-  // Fixed sub-section trail segments (selector -> data-tracking), for blocks whose
-  // trail nests non-repeating regions — footer menus/products/legal, the article
-  // hero's share row + ToC, the secondary nav. Explicit authored values win.
-  if (segments) {
-    Object.entries(segments).forEach(([sel, seg]) => block.querySelectorAll(sel).forEach((el) => {
-      if (seg && !el.hasAttribute('data-tracking')) el.setAttribute('data-tracking', String(seg));
-    }));
   }
   return block;
 }

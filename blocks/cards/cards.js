@@ -237,7 +237,10 @@ export default function decorate(block) {
   return trackAs('rw_cards_container', block, {
     key: 'cards', // clean sheet/opt-in key (rows cards-1, cards-2, …); trail is rw_cards_container
     linkName: false, // prod omits link_name on ~half the card CTAs; sheet fills the rest
-    itemSelector: '.cards-track, .cards-track > *',
-    itemLabel: (i, el) => (el.classList.contains('cards-track') ? 'carousel' : `rw_card_${i}`),
+    items: {
+      // one broad selector: the .cards-track wrapper -> carousel, its children -> rw_card_N
+      '.cards-track, .cards-track > *':
+        (i, el) => (el.classList.contains('cards-track') ? 'carousel' : `rw_card_${i}`),
+    },
   });
 }

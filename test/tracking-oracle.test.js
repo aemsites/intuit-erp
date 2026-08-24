@@ -67,8 +67,10 @@ describe('self-made golden oracle — our runtime reproduces the derive-covered 
         + '</div></div></main>';
       trackAs('rw_cards_container', document.querySelector('.cards'), {
         key: 'cards',
-        itemSelector: '.cards-track, .cards-track > .card',
-        itemLabel: (i, el) => (el.classList.contains('cards-track') ? 'carousel' : `rw_card_${i}`),
+        items: {
+          '.cards-track, .cards-track > .card':
+            (i, el) => (el.classList.contains('cards-track') ? 'carousel' : `rw_card_${i}`),
+        },
       });
     };
     const g1 = eventOf('/accounting/multi-entity/', 'card-link-explore-articles');

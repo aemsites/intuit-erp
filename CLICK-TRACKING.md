@@ -101,10 +101,15 @@ canonical implementation (`initTracking` → delegated handler → `stampInterac
 ### Where trails come from
 
 A block declares its trail via `trackAs(name, block, …)` (the block's `data-tracking` segment). Nested
-trails come from two `trackAs` options: `itemSelector`+`itemLabel` for **indexed** repeated children
-(cards → `rw_cards_container|carousel|rw_card_N`) and `segments` (a selector → segment map) for
-**fixed** sub-sections (footer → `footer|footer_menus|footer_menu_section`, `footer|products`, …;
-article hero → share row / ToC). Explicit authored `data-tracking` in markup always wins.
+trails come from one `trackAs` option — `items`, a selector → segment map for the block's inner
+"slots". The segment is a **fixed string** for non-repeating sub-sections (footer →
+`footer|footer_menus|footer_menu_section`, `footer|products`, …; article hero → share row / ToC) or an
+**`(index, el) => string`** for repeated/indexed children (cards → `rw_cards_container|carousel|rw_card_N`).
+Explicit authored `data-tracking` in markup always wins.
+
+`items` only stamps the **trail**. Making a non-CTA element (a card's `img`/`picture`) emit its **own
+beacon** is a separate, not-yet-built concept reserved as `alsoTrack` (a selector → `ui_object` map) —
+see #769.
 
 ---
 

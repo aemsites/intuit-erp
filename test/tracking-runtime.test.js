@@ -324,40 +324,40 @@ describe('trackAs — declarative block opt-in from decorate()', () => {
     expect(block.querySelector('a').getAttribute('data-ui-object-detail')).toBe('Go');
   });
 
-  it('stamps per-item trail segments for a container block', () => {
+  it('stamps indexed inner-slot trail segments (items with a function value)', () => {
     document.body.innerHTML = '<main><div class="carousel block">'
       + '<div class="carousel-card"><a class="button" href="#">One</a></div>'
       + '<div class="carousel-card"><a class="button" href="#">Two</a></div></div></main>';
     const block = document.querySelector('.carousel');
-    trackAs('carousel', block, { itemSelector: '.carousel-card', itemLabel: (i) => `carousel_${i}` });
+    trackAs('carousel', block, { items: { '.carousel-card': (i) => `carousel_${i}` } });
     const cards = [...block.querySelectorAll('.carousel-card')];
     expect(block.getAttribute('data-tracking')).toBe('carousel');
     expect(cards[0].getAttribute('data-tracking')).toBe('carousel_0');
     expect(cards[1].getAttribute('data-tracking')).toBe('carousel_1');
   });
 
-  it('stamps fixed sub-section trail segments from a selector -> segment map', () => {
+  it('stamps fixed inner-slot trail segments (items with string values)', () => {
     document.body.innerHTML = '<main><div class="footer block">'
       + '<div class="cols"><div class="col"><a href="#">Link</a></div></div>'
       + '<div class="brand" data-tracking="authored"></div></div></main>';
     const block = document.querySelector('.footer');
     trackAs('footer', block, {
       key: 'footer',
-      segments: { '.cols': 'menus', '.col': 'menu_section', '.brand': 'products' },
+      items: { '.cols': 'menus', '.col': 'menu_section', '.brand': 'products' },
     });
     expect(block.querySelector('.cols').getAttribute('data-tracking')).toBe('menus');
     expect(block.querySelector('.col').getAttribute('data-tracking')).toBe('menu_section');
-    // authored data-tracking wins — the segment does not overwrite it
+    // authored data-tracking wins — the item segment does not overwrite it
     expect(block.querySelector('.brand').getAttribute('data-tracking')).toBe('authored');
   });
 
-  it('passes itemLabel (index, item) in that order', () => {
+  it('passes (index, el) to an items function in that order', () => {
     document.body.innerHTML = '<main><div class="c block">'
       + '<span class="i" data-k="a"></span><span class="i" data-k="b"></span></div></main>';
-    trackAs('c', document.querySelector('.c'), { itemSelector: '.i', itemLabel: (i, item) => `${item.dataset.k}_${i}` });
-    const items = [...document.querySelectorAll('.i')];
-    expect(items[0].getAttribute('data-tracking')).toBe('a_0'); // index first, item second
-    expect(items[1].getAttribute('data-tracking')).toBe('b_1');
+    trackAs('c', document.querySelector('.c'), { items: { '.i': (i, el) => `${el.dataset.k}_${i}` } });
+    const els = [...document.querySelectorAll('.i')];
+    expect(els[0].getAttribute('data-tracking')).toBe('a_0'); // index first, el second
+    expect(els[1].getAttribute('data-tracking')).toBe('b_1');
   });
 
   it('respects an authored opt-in + explicit data-tracking (never overwrites)', () => {

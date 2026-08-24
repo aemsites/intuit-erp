@@ -316,12 +316,12 @@ export default async function decorate(block) {
   // (hamburger, flyout Back, secondary-nav toggle) are skipped — prod doesn't
   // track them.
   // The resource-center secondary nav is its own prod trail (secondary_nav), not
-  // the header's empty access point; give it a trail segment via `segments`.
+  // the header's empty access point; give it a trail segment via `items`.
   trackAs(null, block, {
     key: 'nav',
     action: 'engaged',
     linkName: false,
     skip: '.nav-toggle, .flyout-back, .secondary-nav-toggle',
-    segments: { '.ies-secondary-nav': 'secondary_nav' },
+    items: { '.ies-secondary-nav': 'secondary_nav' },
   });
 }

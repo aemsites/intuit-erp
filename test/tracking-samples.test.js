@@ -126,8 +126,10 @@ describe('prod-captured parity (erp.intuit.com 2026-08-20)', () => {
     const block = document.querySelector('.cards');
     trackAs('rw_cards_container', block, {
       key: 'cards',
-      itemSelector: '.cards-track, .cards-track > .card',
-      itemLabel: (i, el) => (el.classList.contains('cards-track') ? 'carousel' : `rw_card_${i}`),
+      items: {
+        '.cards-track, .cards-track > .card':
+          (i, el) => (el.classList.contains('cards-track') ? 'carousel' : `rw_card_${i}`),
+      },
     });
     const p = stampAndRead(block.querySelector('.card a'));
     expect(p).toMatchObject({

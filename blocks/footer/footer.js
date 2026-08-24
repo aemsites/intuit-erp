@@ -244,7 +244,7 @@ export default async function decorate(block) {
     key: 'footer',
     linkName: false,
     skip: '.col-toggle, .country-toggle',
-    segments: {
+    items: {
       '.footer-cols': 'footer_menus',
       '.footer-col': 'footer_menu_section',
       '.brand-logos': 'products',
