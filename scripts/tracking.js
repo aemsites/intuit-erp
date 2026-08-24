@@ -1,32 +1,11 @@
 /**
- * Click-tracking decoration (single-file runtime).
- *
- * Track-by-default: every CTA (a[href]/button/[role="button"]) inside a content
- * region (<main>/<header>/<footer>) is tracked, matching the live tracker's
- * delegated, document-wide model (it fires on any element with a data-object/
- * data-wa-link ancestor; prod annotates ~all content links). A block MAY declare
- * its trail segment + payload defaults via trackAs (the `tracking-<key>`
- * machinery), but that is a DECLARATION, not a gate: a CTA in no such block still
- * tracks, with pure-derive defaults (object=content) under the `page` key. Pure-UI
- * controls (toggles, hamburger) opt OUT via data-track-skip, and injected consent
- * chrome (the OneTrust banner/floating widget, dev sidekick, body-root widgets) is
- * excluded by the region gate. (The footer's own "Manage cookies" link lives in
- * <footer> and is tracked like any CTA — it is NOT opted out.) PREFIX names the
- * declaration class.
- *
- * Loaded LAZILY from scripts.js (like pzn/exp): tracking is not render-critical,
- * so it never sits on the eager/LCP module graph. Option B (data-layer):
- *  - initTracking(): register a delegated, capture-phase pointerdown/keydown
- *    handler and stamp the structural access-point trail.
- *  - stampInteraction(): on interaction, derive + JIT-stamp the CTA's data-* so
- *    the injected `ies-erp` clickstream tracker reads them on the ensuing click.
- * Nothing is stamped per-CTA at rest; the injected tracker attaches the ~47
- * context + consent and posts the batched `content:<action>` beacon.
- *
- * Everything the runtime needs lives here in one file (derive, sheet, resolve,
- * stamp, orchestration). The Node dev tools import the derive helpers from here
- * too — scripts/ is marked `type: module` so Node loads this ESM directly. See
- * CLICK-TRACKING.md ("The EDS authoring model").
+ * Click-tracking runtime (single file). Track-by-default: every CTA
+ * (a[href]/button/[role="button"]) in <main>/<header>/<footer> is tracked; pure-UI
+ * controls opt out via data-track-skip. A block MAY declare its trail + payload
+ * defaults + id scheme via trackAs. Nothing is stamped per-CTA at rest — on
+ * pointerdown/keydown (capture) stampInteraction JIT-stamps the resolved data-* for
+ * the injected ies-erp tracker to read. Loaded lazily from scripts.js; the Node dev
+ * tools import the derive/resolve helpers. Full model: CLICK-TRACKING.md.
  */
 
 import { isVideoLink } from '../blocks/video/video-info.js';
@@ -100,9 +79,7 @@ export function deriveBaseline({
   if (kindOverride) kind = kindOverride; // alsoTrack part: explicit ui_object (image, …)
   const detail = (label || '').trim();
   const custom = {};
-  // The live tracker appends the page host to link_name (e.g. "... [erp.intuit.com]").
-  // Host is supplied only at runtime (stampInteraction); the pure derive + the
-  // Node harness stay host-free, and the oracle normalizes the token.
+  // link_name = <kind>-<slug>; the tracker appends the page host at runtime.
   if (detail) custom.link_name = `${kind}-${slug(detail)}${host ? ` [${host}]` : ''}`;
   return {
     object: isVideo ? 'video' : DEFAULT_OBJECT,
@@ -117,16 +94,9 @@ export function deriveBaseline({
 }
 
 // ===========================================================================
-// Sheet — the authored residue + overrides.
-//
-// A dedicated multi-column DA sheet (not the flat site-config.json), fetched
-// once and cached. Rows are keyed by `key` (matches `tracking-<key>`); a block
-// with multiple CTAs uses one row per CTA with a 1-based `cta` column (DOM
-// order), else a single row applies to the first CTA. Blank cells mean "defer
-// to the derived value" and are dropped. Columns: key, cta, object,
-// object-detail, action, ui-object, ui-object-detail, ui-action, access-point,
-// ui-access-point, wa-link, custom-properties, survey. `custom-properties` and
-// `survey` are authored as `k=v` pairs separated by newlines or semicolons.
+// Sheet — authored residue, fetched once from a DA sheet and cached. Rows are
+// keyed by `path` + `id` (the CTA's data-track-id) — see indexRows. Blank cells
+// defer to the derived value; `custom-properties`/`survey` are `k=v` pairs.
 // ===========================================================================
 
 const SHEET_URL = '/tracking.json';
@@ -189,15 +159,11 @@ export function normalizePath(p) {
 }
 
 /**
- * Canonicalize an href into a stable sheet id (id-based keying): absolute URL,
- * lowercased host, query + hash + trailing slash stripped. Relative hrefs resolve
- * against the page origin so `/foo` and `https://host/foo` share one id. Returns
- * '' for non-navigational hrefs (``#``, `javascript:`, `mailto:`, `tel:`, empty)
- * so callers can skip minting an id from them. A link's destination is its
- * identity — this is the primary id for the ~all footer/chrome + authored links
- * that carry a real href; href-less controls get an explicit `data-track-id`.
- * @param {string} href raw href attribute
- * @returns {string} normalized id, or '' when the href is not id-worthy
+ * Canonicalize an href: absolute URL, query/hash/trailing-slash stripped, relative
+ * resolved against the page origin. '' for non-navigational hrefs (#, javascript:,
+ * mailto:, tel:, empty). The basis for hrefSlug.
+ * @param {string} href
+ * @returns {string}
  */
 export function normalizeHref(href) {
   const raw = (href || '').trim();
@@ -217,8 +183,7 @@ const OWN_HOSTS = new Set(['intuit.com', 'www.intuit.com']);
 
 /**
  * The distinctive host label for an id: a product subdomain, else the SLD.
- * `turbotax.intuit.com` -> `turbotax`, `www.intuit.com`/`intuit.com` -> `intuit`,
- * `mailchimp.com` -> `mailchimp`, `privacy.trustarc.com` -> `trustarc`.
+ * turbotax.intuit.com -> turbotax, www.intuit.com -> intuit, mailchimp.com -> mailchimp.
  * @param {string} href
  * @returns {string}
  */
@@ -233,14 +198,11 @@ export function hostLabel(href) {
 }
 
 /**
- * A short, readable slug derived from a CTA's href — the deterministic core the
- * block-supplied `trackId` builds on (see trackAs). Strips the `https://` +
- * own-host boilerplate: an own-site link reduces to its path
- * (`intuit.com/company` -> `company`), an external one keeps a leading host label
- * (`turbotax.intuit.com/` -> `turbotax`, `quickbooks.intuit.com/payroll` ->
- * `quickbooks-payroll`). '' for a non-navigational href, so the caller can key
- * off the accessible name instead.
- * @param {string} href raw href
+ * A short, readable id slug from a CTA's href — the deterministic core trackId
+ * builds on. Own-site links reduce to their path (intuit.com/company -> company);
+ * external ones keep a host label (turbotax.intuit.com/ -> turbotax). '' if not
+ * navigational.
+ * @param {string} href
  * @returns {string}
  */
 export function hrefSlug(href) {
@@ -257,12 +219,10 @@ export function hrefSlug(href) {
 }
 
 /**
- * The default `trackId` deriver used by trackAs: `<key>:<hrefSlug>` for a CTA with
- * a real href, else null (an href-less control — `#`/button — is left un-keyed for
- * the block's own `trackId(el)` to give a semantic id, as the footer does for
- * "Manage cookies"). Accepts an element or a raw href string.
+ * Default trackId deriver: `<key>:<hrefSlug>`, or null for an href-less control
+ * (the block's own trackId gives those a semantic id). Accepts an element or href.
  * @param {Element|string} el
- * @param {string} key the block's tracking key (id namespace)
+ * @param {string} key id namespace
  * @returns {string|null}
  */
 export function hrefTrackId(el, key) {
@@ -271,18 +231,10 @@ export function hrefTrackId(el, key) {
 }
 
 /**
- * Index raw sheet rows into `composite -> config`. Authoring uses TWO columns:
- *  - `path`: the page path for per-page body residue (e.g. /accounting/multi-entity),
- *    or `*` / blank for site-wide chrome (nav/footer/widgets).
- *  - `id`: the CTA's identity — its normalized href (see normalizeHref) or an
- *    explicit block-set `data-track-id` (e.g. `footer:cookie-manage`). Resolved by
- *    sheetRowById against the CTA's own `data-track-id`. A legacy `key`
- *    (`<blockKey>-<n>`, 1-based DOM order) is still read as a fallback for blocks
- *    not yet migrated to id-based keying (resolved positionally by sheetRowFor).
- * The id/key composes to `<path>|<id>` (page-scoped) or bare `<id>` (site-wide). A
- * legacy composite already containing `|` is kept as-is. Rows with neither `id` nor
- * `key`, or with NO residue at all (every value blank), are skipped — an empty row
- * overrides nothing. A duplicate composite keeps the last row.
+ * Index raw sheet rows into `composite -> config`. `path` (page path, or `*`/blank =
+ * site-wide) + `id` (the CTA's data-track-id) compose to `<path>|<id>` or bare `<id>`;
+ * a legacy positional `key` (`<blockKey>-<n>`) is read as an id fallback. Rows with no
+ * id/key or no residue are dropped; a duplicate composite keeps the last.
  * @param {Array<Record<string, string>>} data
  * @returns {Map<string, Record<string, unknown>>}
  */
@@ -378,10 +330,8 @@ export function resolveCta(derived, sheet, context = {}) {
   const cp = mergeCustomProperties(context.customProperties, derived['custom-properties'], cfg['custom-properties']);
   const cpStr = assembleCustomProperties(cp);
 
-  // The re-verified tracker has NO separate wa-link path: object defaults to
-  // content and every authored field is read. A wa-link only ADDS data-wa-link
-  // (the tracker folds it into icom_user_action) — it never drops object-detail /
-  // ui-object, so a sheet row can carry wa-link + object-detail together.
+  // No separate wa-link path: object defaults to content, every field is read, and
+  // a wa-link only ADDS data-wa-link (so a row can carry wa-link + object-detail).
   attrs['data-object'] = cfg.object ?? derived.object;
   if (cfg['object-detail'] != null) attrs['data-object-detail'] = cfg['object-detail'];
   attrs['data-action'] = cfg.action ?? derived.action;
@@ -456,11 +406,8 @@ export function trackingKey(block) {
 }
 
 /**
- * The CTA's stable identity for id-based sheet lookup: its explicit
- * `data-track-id` (block-stamped — a semantic id like `footer:manage-cookies`, or
- * a normalized href slug minted by its trackAs `trackId` deriver). Null when the block has not
- * stamped one, in which case the runtime falls back to positional keying. The
- * resolver reads ONLY this attribute — no href logic at resolution time.
+ * The CTA's data-track-id (its stable sheet key), or null when the block stamped
+ * none — the resolver reads only this attribute, never href.
  * @param {Element} el
  * @returns {string|null}
  */
@@ -502,11 +449,7 @@ export function ctasIn(block) {
 }
 
 /**
- * Page-level CTAs: trackable CTAs in <main> that belong to NO declared
- * (`tracking-`) block and are not skipped — the loose content links keyed
- * `page`. In DOM order, so a CTA's index here is its stable `page-<n>` identity
- * for the sheet. Header/footer CTAs are always inside their declared blocks, so
- * this is scoped to <main>.
+ * Loose content CTAs in <main> — in no declared block, not skipped — keyed `page`.
  * @param {ParentNode} [root]
  * @returns {Element[]}
  */
@@ -519,18 +462,13 @@ export function pageCtas(root = document) {
 }
 
 /**
- * Apply code-built payload defaults (stamped by trackAs) onto the derived
- * baseline — the seam for CODE-BUILT surfaces (header nav = engaged, footer,
- * video play = started) to override the generic derive without a sheet row.
- * Resolves each `data-track-*` from the CTA's NEAREST ancestor that carries it
- * (mirroring the tracker's own ancestor walk), so a block can set a default and
- * a sub-section can refine it — e.g. case-study-header keeps link_name on its
- * share row but sets `data-track-link-name="off"` on the ToC. Precedence:
- * derive < nearest ancestor default < sheet. `data-track-link-name="off"` drops
- * the derived link_name (prod omits it on navigation surfaces: nav, ToC, etc.).
- * @param {Record<string, unknown>} derived deriveBaseline() output (mutated)
- * @param {Element} cta the interacted CTA (defaults are read from its ancestors)
- * @returns {Record<string, unknown>} derived
+ * Apply a block's code-built payload defaults (data-track-object/-action/-ui-object/
+ * -link-name) onto the derived baseline, each read from the CTA's NEAREST ancestor
+ * carrying it (so a block sets a default and a sub-section refines it). Precedence:
+ * derive < ancestor default < sheet. `-link-name="off"` drops the derived link_name.
+ * @param {Record<string, unknown>} derived (mutated)
+ * @param {Element} cta
+ * @returns {Record<string, unknown>}
  */
 export function applyBlockDefaults(derived, cta) {
   if (!cta || !cta.closest) return derived;
@@ -639,12 +577,9 @@ export function partLabel(el) {
  * @returns {Record<string, unknown>}
  */
 export function deriveForCta(el, blockName, host = '') {
-  // An alsoTrack "part" (a non-CTA element a block registered as its own beacon
-  // source, e.g. a card thumbnail) carries data-track-as = its ui_object.
-  const partKind = el.getAttribute && el.getAttribute('data-track-as');
+  const partKind = el.getAttribute && el.getAttribute('data-track-as'); // alsoTrack part
   const isVideo = !partKind && el.tagName === 'A' && isVideoLink(el.getAttribute('href'));
-  // A link/button whose visible content is an icon/logo (no text) reports
-  // ui_object=link_icon on prod (brand logos, social icons).
+  // icon/logo-only link (no visible text) -> ui_object=link_icon
   const isIcon = !partKind && !isVideo && !(el.textContent || '').trim() && !!el.querySelector('img, svg, picture, .icon');
   return deriveBaseline({
     tagName: el.tagName,
@@ -663,85 +598,52 @@ function optedInBlocks(root) {
 }
 
 /**
- * Stamp the STRUCTURAL access-point trail (page + per-block segments) — a
- * handful of attributes, never per-CTA. This is the one thing that must exist
- * at rest so the injected clickstream tracker's ancestor-chain walk resolves a
- * trail (rather than falling back to `page`). Idempotent; consults the sheet
- * for a block access-point override once it has loaded.
+ * Stamp the structural access-point trail (page + per-block data-tracking segments)
+ * — the one thing stamped at rest, so the tracker's ancestor walk resolves a trail.
+ * Idempotent.
  * @param {ParentNode} [scope]
  */
 export function stampTrail(scope = document) {
   const root = scope.querySelectorAll ? scope : document;
   const main = document.querySelector('main');
   const pageSeg = (document.head?.querySelector('meta[name="tracking"]')?.content || '').trim();
-  // Explicit authored data-tracking ALWAYS wins — the customer can inject trail
-  // values on any parent (block, section, container) and the injected tracker
-  // walks them up the DOM. We only fill in a default where none was authored.
+  // Authored data-tracking always wins; fill a default only where none exists.
   if (main && pageSeg && !main.hasAttribute('data-tracking')) main.setAttribute('data-tracking', pageSeg);
 
   optedInBlocks(root).forEach((block) => {
-    // Author's explicit value wins; a trackAs no-trail opt-in (header/video)
-    // stays trail-less on purpose.
+    // Authored value or a no-trail opt-in wins; else default to the block name.
     if (block.hasAttribute('data-tracking') || block.hasAttribute('data-track-no-trail')) return;
-    // Default: the block name (dataset.blockName), falling back to its CSS class.
-    // The trail is authored via markup data-tracking or trackAs; the sheet is
-    // per-CTA identity only, so it no longer overrides the block trail.
     const seg = blockNameOf(block);
     if (seg) block.setAttribute('data-tracking', seg);
   });
 }
 
 /**
- * From an interaction target, resolve the trackable CTA — the nearest
- * a[href]/button/[role="button"] inside a content region — plus its declared
- * block, if any. Track-by-default: a CTA outside every `tracking-` block still
- * resolves (block=null, tracked under the `page` key). Null only when the target
- * is not a CTA, is data-track-skip (pure-UI), or sits outside <main>/<header>/
- * <footer> (injected chrome).
+ * Resolve the trackable CTA nearest an interaction target (or an alsoTrack part),
+ * plus its declared block if any. Null when the target isn't a CTA, is
+ * data-track-skip, or sits outside <main>/<header>/<footer> with no declared block.
  * @param {EventTarget} target
  * @returns {{cta: Element, block: Element|null}|null}
  */
 export function resolveTrackable(target) {
   if (!target || !target.closest) return null;
-  // The trackable element: a declared alsoTrack "part" (a non-CTA beacon source
-  // like a card thumbnail) when the click lands in one — nearer than the
-  // enclosing CTA, mirroring the tracker's nearest-ancestor walk — else the CTA.
+  // An alsoTrack part (nearest-wins over the enclosing CTA), else the CTA itself.
   const el = target.closest(`[data-track-as], ${CTA_SELECTOR}`);
-  // Pure-UI controls (hamburger, flyout-back, accordion/country toggles) carry
-  // data-track-skip and are never tracked.
-  if (!el || el.closest('[data-track-skip]')) return null;
+  if (!el || el.closest('[data-track-skip]')) return null; // pure-UI controls opt out
   const blk = el.closest(`[class*="${PREFIX}"]`);
   const block = (blk && trackingKey(blk)) ? blk : null;
-  // A part only tracks inside its declared block. A CTA tracks by default in the
-  // content regions, and a DECLARED tracking- block is tracked wherever it mounts
-  // (e.g. the floating talk-to-sales widget in <body>); undeclared body-root
-  // chrome (OneTrust, dev sidekick) stays untracked.
+  // A part tracks only inside its block; a declared block tracks anywhere it mounts.
   if (el.hasAttribute('data-track-as')) return block ? { cta: el, block } : null;
   if (!el.closest(TRACKED_REGIONS) && !block) return null;
   return { cta: el, block };
 }
 
 // ===========================================================================
-// Region context (pzn/ixp) — Option B reads the personalization/experiment
-// region registry the decision-engine renderer publishes and folds the
-// winning region's identity into the interacted CTA's custom_properties. NO
-// DOM data-attributes are involved (unlike the data-pzn-*/data-experiment-*
-// walk in CLICK-TRACKING.md's "Personalization / experiment" section — that
-// is a separate, already-shipped mechanism this leaves untouched).
-//
-// The registry contract is `scripts/personalization/tracking-context.js` on
-// the pzn-exp-byo branch (PR #756, not present on this branch): byo.js's
-// `renderDecision` calls `registerRegionContext(el, ctx)` for the winning
-// PZN/IXP decision, publishing `window.__pznTrackingContext` as a
-// `WeakMap<Element, ctx>` so a separate module graph (this runtime, today on
-// its own branch) can resolve it without importing that exact specifier.
-// `ctx = { source: 'pzn'|'ixp', ...identity }` — PZN carries { offerId,
-// experimentId, treatmentId, placement }; IXP carries { experimentId,
-// treatmentId, treatmentKey, control }.
-//
-// `resolveRegionContext` below is a LOCAL reader that mirrors that module's
-// function of the same name by design (two separate branches today) — de-dupe
-// once both land on main.
+// Region context (pzn/ixp) — fold the winning personalized/experiment region's
+// identity into the CTA's custom_properties. Reads window.__pznTrackingContext,
+// a WeakMap<Element, {source:'pzn'|'ixp', ...identity}> the decision-engine
+// renderer publishes (no DOM attributes). Separate from the data-pzn-*/
+// data-experiment-* walk in CLICK-TRACKING.md, which this leaves untouched.
 // ===========================================================================
 
 /**
@@ -802,13 +704,10 @@ export function regionCustomProperties(ctx) {
 }
 
 /**
- * JIT-stamp the resolved (derived + sheet) data-* onto the interacted CTA so the
- * injected clickstream tracker reads them on the ensuing click. This is the
- * Option B core: nothing is stamped at rest — only the element the user is about
- * to activate, on the pointerdown/keydown that precedes its click. When the CTA
- * sits inside a registered pzn/ixp region, that region's identity is folded into
- * custom_properties too (nearest region wins; see resolveRegionContext) — a CTA
- * outside any region resolves an empty context, so its payload is unchanged.
+ * JIT-stamp the resolved (derived + sheet + region context) data-* onto the
+ * interacted CTA so the injected tracker reads them on the ensuing click. Nothing
+ * is stamped at rest. Any enclosing pzn/ixp region's identity folds into
+ * custom_properties (nearest wins).
  * @param {Event} e
  */
 export function stampInteraction(e) {
@@ -817,10 +716,8 @@ export function stampInteraction(e) {
   const { cta, block } = hit;
   const loc = (typeof window !== 'undefined' && window.location) || {};
   const host = loc.hostname || '';
-  // A declared block supplies its key (sheet lookup + index) and name (trail/
-  // access-point); a loose content CTA falls back to the `page` bucket, indexed
-  // among the page's block-less CTAs (its stable page-<n> identity). An alsoTrack
-  // part (card thumbnail etc.) is pure-derive — no sheet residue.
+  // A declared block gives its key + name; a loose CTA falls to `page`. An
+  // alsoTrack part (card thumbnail) is pure-derive — no sheet residue.
   const isPart = cta.hasAttribute('data-track-as');
   const key = block ? trackingKey(block) : PAGE_KEY;
   const blockName = block ? blockNameOf(block) : '';
@@ -836,10 +733,8 @@ export function stampInteraction(e) {
       row = sheetRowFor(sheetMap, key, idx, loc.pathname);
     }
   }
-  // Parts are pure-derive (their ui_object is data-track-as); they do NOT inherit
-  // the block's CTA payload defaults (e.g. a card grid's action=engaged) — the one
-  // exception is link-name-off, which alsoTrack stamps on the part itself (prod
-  // omits link_name on image beacons but keeps it on content slots).
+  // Parts are pure-derive (no block payload defaults); the one exception is
+  // link-name-off, which alsoTrack stamps on the part itself.
   let derived = deriveForCta(cta, blockName, host);
   if (isPart) {
     if (cta.getAttribute('data-track-link-name') === 'off' && derived['custom-properties']) {
@@ -854,13 +749,11 @@ export function stampInteraction(e) {
 }
 
 /**
- * Option B runtime entry point: a delegated, capture-phase handler that derives
- * and JIT-stamps click-tracking data-* on interaction (pointerdown + keyboard
- * activation), feeding the injected `ies-erp` clickstream tracker without
- * cluttering the DOM at rest. Pre-warms the sheet and stamps the structural
- * trail up front (and re-stamps it once the sheet resolves).
+ * Runtime entry point: register the delegated capture-phase pointerdown/keydown
+ * handler, pre-warm the sheet, and stamp the structural trail (re-stamped once the
+ * sheet resolves).
  * @param {ParentNode} [scope]
- * @returns {(e: Event) => void} the bound handler (for teardown/tests)
+ * @returns {(e: Event) => void} the handler (for teardown/tests)
  */
 export function initTracking(scope = document) {
   const root = scope && scope.addEventListener ? scope : document;
@@ -874,116 +767,51 @@ export function initTracking(scope = document) {
 }
 
 /**
- * Declarative opt-in for a block's own `decorate()` — the code-built counterpart
- * to the authored `tracking-<key>` class. Marks the block tracked and stamps its
- * access-point trail segment (+ optional inner-slot segments), the way prod's
- * components emit their own `data-tracking`. Explicit authored values win.
- * Call it as the last statement of a block's decorate:
+ * Declarative click-tracking opt-in for a block's decorate() — the code-built
+ * counterpart to the authored `tracking-<key>` class. Marks the block tracked,
+ * stamps its trail segment(s), derives each CTA's data-track-id, and records
+ * payload defaults. Explicit authored values (data-tracking, data-track-id) win.
+ * Call it last: `return trackAs('hero', block, { key: 'hero' })`. Examples +
+ * rationale: CLICK-TRACKING.md.
  *
- *   export default function decorate(block) { … return trackAs('hero', block); }
- *
- * The trail segment (`name`) and the sheet/opt-in key are DECOUPLED: prod trail
- * strings carry cruft (rw2_hero) but the sheet keys stay clean. Pass `key` to set
- * the `tracking-<key>` opt-in class + the sheet lookup key; it defaults to `name`.
- *
- *   return trackAs('rw2_hero', block, { key: 'hero' }); // trail rw2_hero, sheet key hero-<n>
- *
- * CODE-BUILT surfaces (header nav, footer, video play) declare their payload
- * defaults here so the runtime reproduces prod without a sheet row: `action`
- * (nav -> engaged, video play -> started), `object` (video), `uiObject`, and
- * `linkName: false` to suppress the derived link_name (prod omits it on
- * footer/nav links). Pass a falsy `name` (with an explicit `key`) to opt a block
- * in WITHOUT contributing a trail segment — e.g. the header, whose links have no
- * data-tracking ancestor, so their trail resolves to '' (outside <main>).
- *
- *   return trackAs(null, block, { key: 'nav', action: 'engaged', linkName: false });
- *
- * `items` — nested trail segments for the block's inner "slots", a selector ->
- * segment map. A FIXED string labels non-repeating sub-sections; an
- * (index, el) => string labels repeated/indexed children (querySelectorAll runs
- * in document order, so a wrapper matches before its children and the child index
- * lines up 1-based). Authored data-tracking still wins; a falsy return skips one.
- *
- *   return trackAs('footer', block, { key: 'footer', linkName: false, items: {
- *     '.footer-cols': 'footer_menus', '.footer-col': 'footer_menu_section',
- *     '.brand-logos': 'products', '.footer-sitemap': 'footer_sitemap',
- *   } });
- *
- *   return trackAs('rw_cards_container', block, { key: 'cards', items: {
- *     '.cards-track, .cards-track > .card':
- *       (i, el) => (el.classList.contains('cards-track') ? 'carousel' : `rw_card_${i}`),
- *   } });
- *
- * `alsoTrack` — a selector -> ui_object map — registers non-CTA elements (e.g. a
- * card's thumbnail `img`) as their OWN beacon sources (#769): a click resolves to
- * the part (nearest-wins over the enclosing CTA) and derives object=content,
- * ui_object=<the map value>, and ui_object_detail from its accessible name (an
- * `img[alt]` carries the card title). Pure-derive — no sheet. Pair it with `items`
- * on a wrapper so the trail carries the slot leaf (…|qrc_content_card|image):
- *
- *   return trackAs('qrc_content_card_grid', block, { key: 'related-blogs',
- *     items: { '.related-blogs-card': 'qrc_content_card', '.related-blogs-image': 'image' },
- *     alsoTrack: { '.related-blogs-image img': 'button' } });
- *
- * @param {string|null} name the trail segment (data-tracking value), or falsy for opt-in only
+ * @param {string|null} name trail segment (data-tracking); falsy = opt in, no trail
  * @param {Element} block
- * `trackId` — id-based sheet keying: a `(el) => id` function the block supplies to
- * derive each CTA's stable `data-track-id` (replacing the fragile positional
- * `<key>-<n>`). It runs on every non-skipped CTA; return a falsy value to leave one
- * un-keyed (pure-derive). The block handles its own special cases directly —
- * semantic ids for chrome that collides on href (the footer's Intuit logo vs the US
- * country link are both `intuit.com/`) or is href-less (`#`) — composing the exported
- * helpers (`hrefSlug`, `hostLabel`, `hrefTrackId`). Omitted, it defaults to
- * `hrefTrackId(el, key)` = `<key>:<clean-href>`, so a block with no collisions needs
- * nothing extra:
- *
- *   return trackAs('footer', block, { key: 'footer', trackId: (el) => {
- *     if (el.matches('.footer-copy-btn')) return 'footer:manage-cookies';        // href-less
- *     if (el.matches('.country a')) return `footer:country-${countryOf(el)}`;    // dedupes m/d
- *     if (el.matches('.brand-logos a')) return `footer:brand-${hostLabel(el.href)}`;
- *     return hrefTrackId(el, 'footer');                    // the rest -> footer:<clean-href>
- *   } });
- *
- * An authored data-track-id in markup always wins; the runtime resolver keys purely
- * on data-track-id (never href).
- *
- * @param {{key?: string, items?: Record<string, string | ((index: number, el: Element) => string)>,
- *   trackId?: (el: Element) => (string | null | undefined), alsoTrack?: Record<string, string>,
- *   action?: string, object?: string, uiObject?: string, linkName?: boolean, skip?: string}} [opts]
- *   `key` = the tracking-<key> opt-in + legacy positional sheet key (defaults to `name`);
- *   `trackId` = a `(el) => id` deriver stamping data-track-id (defaults to `<key>:<clean-href>`);
- *   `action`/`object`/`uiObject` = code-built payload defaults; `linkName:false` drops the
- *   derived link_name; `skip` = a selector for pure-UI controls to exclude (hamburger, toggles);
- *   `items` = a selector -> trail-segment map (string for fixed slots, (index, el) => string for
- *   repeated children); `alsoTrack` = a selector -> ui_object map for non-CTA sources (#769).
- * @returns {Element} the block (so it can be the decorate return value)
+ * @param {object} [opts]
+ * @param {string} [opts.key] tracking-<key> opt-in + id namespace (defaults to name)
+ * @param {(el: Element) => (string|null)} [opts.trackId] per-CTA data-track-id deriver
+ *   (default `<key>:<hrefSlug>`); branch inside it for collisions / href-less controls
+ * @param {Record<string, string|((i:number, el:Element)=>string)>} [opts.items]
+ *   selector -> inner-slot trail segment (fixed string, or (index, el) => string)
+ * @param {Record<string, string|{as:string, linkName?:boolean}>} [opts.alsoTrack]
+ *   selector -> ui_object, registering non-CTA beacon sources (#769)
+ * @param {string} [opts.action]
+ * @param {string} [opts.object]
+ * @param {string} [opts.uiObject] code-built payload defaults
+ * @param {boolean} [opts.linkName] false drops the derived link_name
+ * @param {string} [opts.skip] selector for pure-UI controls to exclude
+ * @returns {Element} block
  */
 export function trackAs(name, block, {
   key = name, items, trackId, alsoTrack, action, object,
   uiObject: uiObjectDefault, linkName, skip,
 } = {}) {
   if (!block) return block;
-  // Exclude pure-UI controls (a code-built block opts them out): marks matching
-  // descendants data-track-skip so resolveTrackable ignores them.
+  // Opt pure-UI controls out (hamburger, toggles) via data-track-skip.
   if (skip) block.querySelectorAll(skip).forEach((el) => el.setAttribute('data-track-skip', ''));
-  // Id-based keying: stamp each non-skipped CTA's data-track-id — its identity for
-  // the sheet, order-independent. `trackId(el)` (block-supplied) returns the id, or
-  // falsy to leave a CTA pure-derive; the default is `<key>:<clean-href>` via
-  // hrefTrackId. An authored data-track-id in markup always wins.
+  // Stamp each non-skipped CTA's data-track-id (order-independent sheet key).
+  // trackId(el) returns the id or falsy (leave pure-derive); default <key>:<hrefSlug>.
+  // An authored data-track-id wins.
   const deriveId = typeof trackId === 'function' ? trackId : (el) => hrefTrackId(el, key || name);
   block.querySelectorAll(CTA_SELECTOR).forEach((el) => {
     if (el.hasAttribute('data-track-id') || el.closest('[data-track-skip]')) return;
     const v = deriveId(el);
     if (v) el.setAttribute('data-track-id', String(v));
   });
-  // Opt the block into click tracking (reuses the tracking-<key> machinery so
-  // the delegated handler JIT-stamps its CTAs + the sheet is looked up by <key>-<n>);
-  // an authored opt-in is left as-is. `key` is required when `name` is falsy.
+  // Opt the block in via the tracking-<key> class (authored opt-in left as-is).
   const optKey = key || name;
   if (optKey && !trackingKey(block)) block.classList.add(`${PREFIX}${optKey}`);
-  // Block trail segment — an explicit authored data-tracking wins. A falsy `name`
-  // means "opt in but contribute NO trail segment" (header links -> '', video play
-  // -> 'page'); mark it so stampTrail's blockName default doesn't fill one in.
+  // Block trail segment (authored data-tracking wins). Falsy `name` = opt in with
+  // NO trail; mark it so stampTrail's blockName default doesn't fill one in.
   if (name && !block.hasAttribute('data-tracking')) block.setAttribute('data-tracking', name);
   else if (!name && !block.hasAttribute('data-tracking')) block.setAttribute('data-track-no-trail', '');
   // Code-built payload defaults the runtime applies to this block's CTAs.
@@ -991,11 +819,8 @@ export function trackAs(name, block, {
   if (action) block.setAttribute('data-track-action', action);
   if (uiObjectDefault) block.setAttribute('data-track-ui-object', uiObjectDefault);
   if (linkName === false) block.setAttribute('data-track-link-name', 'off');
-  // Trail segments stamped on the block's inner "slots" — a selector -> segment
-  // map. The segment is a fixed string for non-repeating sub-sections (footer
-  // menus/products/legal, the article hero's share row + ToC, the secondary nav)
-  // or an (index, el) => string for repeated/indexed children (carousel cards ->
-  // rw_card_N). Authored data-tracking always wins.
+  // Inner-slot trail segments (selector -> fixed string | (index, el) => string).
+  // Authored data-tracking always wins.
   if (items) {
     Object.entries(items).forEach(([sel, label]) => {
       block.querySelectorAll(sel).forEach((el, i) => {
@@ -1005,14 +830,8 @@ export function trackAs(name, block, {
       });
     });
   }
-  // alsoTrack: register non-CTA elements as their OWN beacon sources (#769) — a
-  // selector -> ui_object map. Each match gets data-track-as=<ui_object> so the
-  // delegated handler resolves clicks to it (nearest-wins) and derives a beacon
-  // with that ui_object. Pure-derive; the trail comes from `items` on wrappers.
-  // A value can be a bare ui_object string, or `{ as, linkName }` — link_name is
-  // dropped by default (prod omits it on card thumbnails/image beacons), so a
-  // slot that DOES carry it (a content slot: button-<title>) opts back in with
-  // `linkName: true`.
+  // alsoTrack: register non-CTA elements as their OWN beacon sources (#769) via
+  // data-track-as=<ui_object>. Pure-derive; link_name dropped unless { linkName: true }.
   if (alsoTrack) {
     Object.entries(alsoTrack).forEach(([sel, val]) => {
       const as = typeof val === 'string' ? val : val && val.as;
