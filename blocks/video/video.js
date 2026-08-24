@@ -115,8 +115,18 @@ export default function decorate(block) {
   }
   block.replaceChildren(...nodes);
 
-  // Play control -> video:started / ui_object=button (a video LINK derives video:engaged).
+  // Play control -> video:started / ui_object=video (a video LINK derives video:engaged).
+  // Id off the video source (stable, per-video, authorable) since the control is a
+  // text-less role=button: `video:<provider>-<id>`. Both the poster and the caption
+  // open the same video, so they share the id. (Per-video wa-links are authored by
+  // this id; the prod golden's play beacons carry no source, so those rows are
+  // seeded/verified live, not from the golden.)
   trackAs(null, block, {
-    key: 'video', object: 'video', action: 'started', uiObject: 'button', linkName: false,
+    key: 'video',
+    object: 'video',
+    action: 'started',
+    uiObject: 'video',
+    linkName: false,
+    trackId: () => `video:${info.provider}-${info.id}`,
   });
 }

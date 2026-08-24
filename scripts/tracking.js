@@ -449,19 +449,6 @@ export function ctasIn(block) {
 }
 
 /**
- * Loose content CTAs in <main> — in no declared block, not skipped — keyed `page`.
- * @param {ParentNode} [root]
- * @returns {Element[]}
- */
-export function pageCtas(root = document) {
-  const main = (root && root.querySelector && root.querySelector('main')) || (typeof document !== 'undefined' && document.querySelector('main'));
-  if (!main) return [];
-  return [...main.querySelectorAll(CTA_SELECTOR)].filter(
-    (cta) => !cta.closest('[data-track-skip]') && !cta.closest(`[class*="${PREFIX}"]`),
-  );
-}
-
-/**
  * Apply a block's code-built payload defaults (data-track-object/-action/-ui-object/
  * -link-name) onto the derived baseline, each read from the CTA's NEAREST ancestor
  * carrying it (so a block sets a default and a sub-section refines it). Precedence:
@@ -486,40 +473,9 @@ export function applyBlockDefaults(derived, cta) {
 }
 
 /**
- * Look up the sheet row for the CTA at index `i` in a block whose opt-in key is
- * `key`, using UNIQUE keys (1-based DOM order). Body-content residue is PER-PAGE,
- * so rows may be page-scoped `<path>|<key>-<n>`; site-wide chrome (nav/footer/
- * widgets) stays `<key>-<n>`. Resolution order (most specific first):
- *   <path>|<key>-<n>  ->  <path>|<key> (i=0)  ->  <key>-<n>  ->  <key> (i=0)
- * @param {Map<string, Record<string, unknown>>|null} map
- * @param {string|null} key the block's tracking-<key>
- * @param {number} i CTA index within the block
- * @param {string} [path] the page path (defaults to '/')
- * @returns {Record<string, unknown>|null}
- */
-export function sheetRowFor(map, key, i, path) {
-  if (!map || !key) return null;
-  const n = i + 1;
-  const pp = normalizePath(path);
-  const candidates = [
-    `${pp}|${key}-${n}`,
-    i === 0 ? `${pp}|${key}` : null,
-    `${key}-${n}`,
-    i === 0 ? key : null,
-  ];
-  for (let c = 0; c < candidates.length; c += 1) {
-    if (candidates[c] && map.has(candidates[c])) return map.get(candidates[c]);
-  }
-  return null;
-}
-
-/**
- * Look up the sheet row for a CTA by its stable `id` (id-based keying) — the
- * CTA's normalized href or explicit `data-track-id`. Order-independent, unlike
- * sheetRowFor: identity, not DOM position, so it is immune to render-order drift
- * (skipped controls counted in the index, mobile/desktop duplicates, prod-vs-EDS
- * ordering). Page-scoped body residue tries `<path>|<id>` first, then the bare
- * site-wide `<id>` (nav/footer/widget chrome).
+ * Look up the sheet row for a CTA by its `data-track-id`. Identity, not DOM
+ * position, so it is immune to render-order drift. Page-scoped body residue tries
+ * `<path>|<id>` first, then the bare site-wide `<id>` (nav/footer/widget chrome).
  * @param {Map<string, Record<string, unknown>>|null} map
  * @param {string|null} id the CTA's data-track-id / normalized href
  * @param {string} [path] the page path (defaults to '/')
@@ -579,8 +535,9 @@ export function partLabel(el) {
 export function deriveForCta(el, blockName, host = '') {
   const partKind = el.getAttribute && el.getAttribute('data-track-as'); // alsoTrack part
   const isVideo = !partKind && el.tagName === 'A' && isVideoLink(el.getAttribute('href'));
-  // icon/logo-only link (no visible text) -> ui_object=link_icon
-  const isIcon = !partKind && !isVideo && !(el.textContent || '').trim() && !!el.querySelector('img, svg, picture, .icon');
+  // icon/logo-only LINK (an anchor with no visible text) -> ui_object=link_icon;
+  // a text-less button stays a button (prod reserves link_icon for icon anchors).
+  const isIcon = !partKind && !isVideo && el.tagName === 'A' && !(el.textContent || '').trim() && !!el.querySelector('img, svg, picture, .icon');
   return deriveBaseline({
     tagName: el.tagName,
     label: partKind ? partLabel(el) : labelFor(el),
@@ -716,22 +673,18 @@ export function stampInteraction(e) {
   const { cta, block } = hit;
   const loc = (typeof window !== 'undefined' && window.location) || {};
   const host = loc.hostname || '';
-  // A declared block gives its key + name; a loose CTA falls to `page`. An
+  // A declared block gives its name (trail/derive); a loose CTA falls to `page`. An
   // alsoTrack part (card thumbnail) is pure-derive — no sheet residue.
   const isPart = cta.hasAttribute('data-track-as');
-  const key = block ? trackingKey(block) : PAGE_KEY;
   const blockName = block ? blockNameOf(block) : '';
-  // Id-based keying first (identity, order-independent): the CTA's data-track-id
-  // (a block-set semantic id, or an href slug from its trackAs `trackId`). Positional
-  // `<key>-<n>` lookup is the migration fallback for blocks not yet stamping ids.
+  // Resolve the sheet row by the CTA's id (identity, order-independent). A block
+  // stamps data-track-id via trackAs; a loose content CTA derives its `page:<...>`
+  // id here (the block-less counterpart of the default deriver).
   let row = null;
   if (!isPart) {
-    const id = trackIdOf(cta);
+    let id = trackIdOf(cta);
+    if (!id && !block) id = hrefTrackId(cta, PAGE_KEY) || (labelFor(cta) ? `${PAGE_KEY}:${slug(labelFor(cta))}` : null);
     if (id) row = sheetRowById(sheetMap, id, loc.pathname);
-    if (!row) {
-      const idx = block ? ctasIn(block).indexOf(cta) : pageCtas(document).indexOf(cta);
-      row = sheetRowFor(sheetMap, key, idx, loc.pathname);
-    }
   }
   // Parts are pure-derive (no block payload defaults); the one exception is
   // link-name-off, which alsoTrack stamps on the part itself.

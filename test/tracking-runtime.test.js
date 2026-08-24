@@ -2,7 +2,7 @@ import {
   describe, it, expect, beforeEach, afterEach, vi,
 } from 'vitest';
 import {
-  trackingKey, blockNameOf, sheetRowFor, deriveForCta,
+  trackingKey, blockNameOf, deriveForCta,
   stampTrail, resolveTrackable, stampInteraction, initTracking, resetTrackingState, trackAs,
   partLabel,
 } from '../scripts/tracking.js';
@@ -32,35 +32,6 @@ describe('blockNameOf', () => {
     const d = document.createElement('div');
     d.className = 'cta block tracking-x';
     expect(blockNameOf(d)).toBe('cta');
-  });
-});
-
-describe('sheetRowFor (unique keys)', () => {
-  it('looks up <key>-<n> by 1-based CTA index', () => {
-    const map = new Map([['hero-1', { object: 'a' }], ['hero-2', { object: 'b' }]]);
-    expect(sheetRowFor(map, 'hero', 0).object).toBe('a');
-    expect(sheetRowFor(map, 'hero', 1).object).toBe('b');
-  });
-  it('falls the first CTA back to a bare <key> (single-CTA block)', () => {
-    const map = new Map([['hero', { object: 'solo' }]]);
-    expect(sheetRowFor(map, 'hero', 0).object).toBe('solo');
-    expect(sheetRowFor(map, 'hero', 1)).toBe(null);
-  });
-  it('returns null for a missing key or map', () => {
-    expect(sheetRowFor(new Map(), 'x', 0)).toBe(null);
-    expect(sheetRowFor(null, 'x', 0)).toBe(null);
-  });
-  it('prefers a page-scoped row over the site-wide fallback', () => {
-    const map = new Map([['faq-3', { wa: 'site' }], ['/accounting/multi-entity|faq-3', { wa: 'page' }]]);
-    // trailing slash on the path is normalized away before matching
-    expect(sheetRowFor(map, 'faq', 2, '/accounting/multi-entity/').wa).toBe('page');
-    // a different page falls back to the site-wide row
-    expect(sheetRowFor(map, 'faq', 2, '/construction/').wa).toBe('site');
-  });
-  it('page-scoped single-CTA (<path>|<key>) resolves for the first CTA only', () => {
-    const map = new Map([['/pricing|cta', { wa: 'p' }]]);
-    expect(sheetRowFor(map, 'cta', 0, '/pricing/').wa).toBe('p');
-    expect(sheetRowFor(map, 'cta', 1, '/pricing/')).toBe(null);
   });
 });
 
@@ -209,18 +180,31 @@ describe('initTracking (delegated capture-phase runtime)', () => {
     expect(document.querySelector('a').hasAttribute('data-object')).toBe(false);
   });
 
-  it('overlays the sheet once it resolves (identity override, still derived label)', async () => {
-    const data = [{ key: 'demo-1', 'ui-object': 'input' }]; // unique key: <blockKey>-<n>, no cta column
+  it('overlays the sheet once it resolves (id override, still derived label)', async () => {
+    const data = [{ id: 'demo:schedule-a-call', 'ui-object': 'input' }]; // keyed by the CTA's data-track-id
     vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({ data }) })));
-    document.body.innerHTML = '<main><div class="cta block tracking-demo" data-block-name="cta">'
+    document.body.innerHTML = '<main><div class="cta block" data-block-name="cta">'
       + '<p><a class="button" href="#">Schedule a call</a></p></div></main>';
     const main = document.querySelector('main');
+    trackAs('demo', main.querySelector('.block'), { key: 'demo' }); // stamps data-track-id=demo:schedule-a-call
     initTracking(main);
     await new Promise((r) => { setTimeout(r, 0); }); // let the sheet promise settle -> sheetMap
     const a = main.querySelector('a');
     a.dispatchEvent(new Event('pointerdown', { bubbles: true }));
-    expect(a.getAttribute('data-ui-object')).toBe('input'); // sheet override
+    expect(a.getAttribute('data-ui-object')).toBe('input'); // sheet override by id
     expect(a.getAttribute('data-ui-object-detail')).toBe('Schedule a call'); // still derived
+  });
+
+  it('resolves a loose <main> CTA (no block) by its derived page:<id>', async () => {
+    const data = [{ id: 'page:pricing', 'wa-link': 'wl-pricing' }];
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({ data }) })));
+    document.body.innerHTML = '<main><p><a class="button" href="/pricing">Pricing</a></p></main>';
+    const main = document.querySelector('main');
+    initTracking(main);
+    await new Promise((r) => { setTimeout(r, 0); });
+    const a = main.querySelector('a');
+    a.dispatchEvent(new Event('pointerdown', { bubbles: true })); // loose CTA -> page:pricing
+    expect(a.getAttribute('data-wa-link')).toBe('wl-pricing');
   });
 });
 

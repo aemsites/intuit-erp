@@ -22,7 +22,7 @@ describe('derive matrix — reference-page CTA shapes', () => {
     { name: 'youtu.be short video link', html: '<a href="https://youtu.be/abcdef">Watch story</a>', object: 'video', kind: 'video_link', action: 'engaged' },
     { name: 'Vimeo video link', html: '<a href="https://vimeo.com/123456789">Watch case study</a>', object: 'video', kind: 'video_link', action: 'engaged' },
     { name: 'icon-only logo link (footer brand)', html: '<a href="https://turbotax.intuit.com/"><img src="/tt.svg" alt="TurboTax"></a>', object: 'content', kind: 'link_icon', action: 'interacted' },
-    { name: 'icon-only button (social/close)', html: '<button aria-label="Close"><svg viewBox="0 0 10 10"></svg></button>', object: 'content', kind: 'link_icon', action: 'interacted' },
+    { name: 'icon-only button (a text-less button stays a button, not link_icon)', html: '<button aria-label="Close"><svg viewBox="0 0 10 10"></svg></button>', object: 'content', kind: 'button', action: 'interacted' },
   ];
 
   cases.forEach(({
@@ -76,9 +76,11 @@ describe('block annotations stamp the right trail + opt-in key', () => {
     expect(trackingKey(block)).toBe('video');
     expect(block.getAttribute('data-track-object')).toBe('video');
     expect(block.getAttribute('data-track-action')).toBe('started');
-    expect(block.getAttribute('data-track-ui-object')).toBe('button');
+    expect(block.getAttribute('data-track-ui-object')).toBe('video');
     expect(block.hasAttribute('data-tracking')).toBe(false); // no trail segment (ap resolves to page)
     expect(block.hasAttribute('data-track-no-trail')).toBe(true);
+    // play control id derives from the video source (stable, per-video, authorable)
+    expect(block.querySelector('[role="button"]').getAttribute('data-track-id')).toBe('video:youtube-abcd1234');
   });
 });
 

@@ -68,25 +68,26 @@ describe('parity: sheet overlay reproduces authored variants', () => {
   beforeEach(() => { document.head.innerHTML = ''; document.body.innerHTML = MARKUP; resetTrackingState(); });
   afterEach(() => vi.unstubAllGlobals());
 
-  it('a wa-link row (unique key demo-1) adds the wa-link fields to the first CTA', async () => {
-    const data = [{ key: 'demo-1', 'wa-link': 'ies-nav:main-demo-cta' }];
+  it('a wa-link row (keyed by data-track-id) adds the wa-link fields to that CTA', async () => {
+    const data = [{ id: 'demo:demo1', 'wa-link': 'ies-nav:main-demo-cta' }];
     vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({ data }) })));
     const main = document.querySelector('main');
+    trackAs('demo', main.querySelector('.block'), { key: 'demo' }); // stamps data-track-id per CTA: demo:demo1, demo:demo2
     initTracking(main); // pre-warms + caches the sheet map
     await new Promise((r) => { setTimeout(r, 0); });
     main.querySelectorAll('a.button').forEach((el) => stampInteraction({ target: el }));
     const [first, second] = [...main.querySelectorAll('a.button')].map((el) => computeTrackingPayload(el));
-    // CTA 1 -> wa-link added; object=content + the DERIVED action (interacted) —
-    // no walink short-circuit, so object-detail/action are kept. (nav CTAs that
-    // need action=engaged get it from the sheet or the code-built header.)
+    // CTA 1 (demo:demo1) -> wa-link added; object=content + the DERIVED action
+    // (interacted) — no walink short-circuit, so object-detail/action are kept.
     expect(first.event).toBe('content:interacted');
     expect(first.object).toBe('content');
     expect(first.action).toBe('interacted');
     expect(first['data-wa-link']).toBe('ies-nav:main-demo-cta');
     expect(first.icom_user_action).toBe('ies-nav:main-demo-cta');
-    // CTA 2 -> still the derived full-path payload
+    // CTA 2 (demo:demo2) -> no row, still the derived full-path payload
     expect(second.object).toBe('content');
     expect(second.ui_object_detail).toBe('Schedule a call');
+    expect(second['data-wa-link']).toBeUndefined();
   });
 });
 
