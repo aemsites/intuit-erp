@@ -11,11 +11,14 @@
  */
 /* eslint-disable import/extensions, no-restricted-syntax, no-continue, no-console, no-plusplus, max-len, object-curly-newline, object-property-newline, no-mixed-operators */
 import { readFileSync, writeFileSync } from 'node:fs';
-import { oursPayload, sheetKeyOf, isStructural, stripBc, DIFF_FIELDS } from './parity-gate.mjs';
+import {
+  oursPayload, sheetKeyOf, isStructural, stripBc, DIFF_FIELDS, assignIds,
+} from './parity-gate.mjs';
 import { indexRows } from '../tracking.js';
 
 const DIR = 'scripts/diff/fixtures/local';
 const golden = JSON.parse(readFileSync(`${DIR}/clicktrack-golden.json`, 'utf8'));
+assignIds(golden.entries); // assign each entry its id-based key (oursPayload resolves by it)
 const sheet = indexRows(JSON.parse(readFileSync(`${DIR}/tracking-sheet.json`, 'utf8')).data);
 const norm = (v) => { const s = typeof v === 'string' ? v.trim() : v; return s === '' || s == null ? null : s; };
 
