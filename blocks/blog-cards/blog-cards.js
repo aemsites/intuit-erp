@@ -23,6 +23,7 @@
  * CSS: blocks/blog-cards/blog-cards.css
  */
 import { readBlockConfig, loadCSS, createOptimizedPicture } from '../../scripts/aem.js';
+import { trackAs } from '../../scripts/tracking.js';
 import { loadIndex, formatDate } from '../../scripts/content-index.js';
 
 const DEFAULT_SOURCE = '/blog/query-index.json';
@@ -261,15 +262,27 @@ export default async function decorate(block) {
   const contentArea = document.createElement('div');
   contentArea.className = 'blog-cards-content';
 
-  const renderEntries = (activeEntries) => {
+  const renderEntries = async (activeEntries) => {
     const cards = activeEntries.map((entry, i) => cardEl(entry, isFeatured && i < 2));
     if (config.variant === 'carousel') {
-      renderCarousel(contentArea, cards);
+      await renderCarousel(contentArea, cards);
     } else if (isPaginated) {
       renderPaginatedGrid(contentArea, cards, limit || DEFAULT_PAGE_SIZE);
     } else {
       renderGrid(contentArea, cards);
     }
+    // (re)stamp on the freshly rendered cards (survives filter re-renders): the
+    // card = qrc_content_card, its thumbnail = a distinct `image` beacon (#769).
+    trackAs('dynamic_category_container', block, {
+      key: 'dynamic_category_container',
+      linkName: false,
+      items: {
+        '.blog-cards-grid, .carousel.cards': 'qrc_content_card_grid',
+        '.blog-card': 'qrc_content_card',
+        '.blog-card-image': 'image',
+      },
+      alsoTrack: { '.blog-card-image img': 'button' },
+    });
   };
 
   if (config.filter) {
@@ -278,5 +291,5 @@ export default async function decorate(block) {
   }
 
   block.append(contentArea);
-  renderEntries(filtered);
+  await renderEntries(filtered);
 }

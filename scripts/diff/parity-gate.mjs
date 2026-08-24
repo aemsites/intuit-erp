@@ -44,7 +44,7 @@ export const stripBc = (v) => (typeof v === 'string' ? v.replace(/ \[[^\]]*\]$/,
 // non-CTA keys our tracking layer owns (vs. structural markup deltas)
 const CLOSEABLE_NONCTA = new Set(['video']);
 // blocks wired with alsoTrack image beacons — their `…|image` parts are closeable
-const ALSO_TRACK_WIRED = new Set(['related-blogs']);
+const ALSO_TRACK_WIRED = new Set(['related-blogs', 'dynamic_category_container']);
 export const isImagePart = (e) => e.nonCta && /\|image$/.test(e.exp.ui_access_point || '') && ALSO_TRACK_WIRED.has(e.key);
 export const isStructural = (e) => e.nonCta && !CLOSEABLE_NONCTA.has(e.key) && !isImagePart(e);
 
