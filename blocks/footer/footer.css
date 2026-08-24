@@ -69,6 +69,9 @@ footer .footer .container { max-width: var(--container); margin: 0 auto; padding
    copy stay distinguishable for low-vision/color-blind readers (WCAG 1.4.1) */
 .footer .footer-copy a { color: inherit; text-decoration: underline; }
 .footer .footer-copy-btn { background: none; border: none; padding: 0; font: inherit; color: inherit; text-decoration: underline; cursor: pointer; }
+
+/* CCPA "Your Privacy Choices" opt-out icon (California geo label) — scaled to the text */
+.footer .footer-copy-btn .privacy-choices-icon { height: 0.85em; width: auto; vertical-align: middle; margin-left: 6px; }
 .footer .legal-right .legal-links { font-size: 14px; color: var(--text-muted); margin-bottom: 20px; white-space: nowrap; }
 .footer .legal-right .legal-links a { color: var(--text-muted); }
 .footer .legal-right .legal-links .legal-sep { margin: 0 4px; }

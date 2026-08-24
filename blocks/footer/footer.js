@@ -207,11 +207,40 @@ function wireCountry(block) {
   });
 }
 
+// Standardized CCPA/CPRA "Your Privacy Choices" opt-out icon, verbatim from
+// erp.intuit.com's California footer control.
+const PRIVACY_CHOICES_ICON = '<svg class="privacy-choices-icon" xmlns="http://www.w3.org/2000/svg" width="29" height="20" fill="none" viewBox="0 0 29 14"><path fill="#fff" fill-rule="evenodd" d="M6.952 12.8h6.753l3.08-11.6H6.951c-3.178 0-5.76 2.6-5.76 5.8 0 3.2 2.582 5.8 5.76 5.8Z" clip-rule="evenodd"></path><path fill="#06F" fill-rule="evenodd" d="M22.048 0H6.952C3.079 0 0 3.1 0 7s3.079 7 6.952 7h15.096C25.92 14 29 10.9 29 7s-3.178-7-6.952-7ZM1.192 7c0-3.2 2.582-5.8 5.76-5.8h9.832l-3.078 11.6H6.952c-3.178 0-5.76-2.6-5.76-5.8Z" clip-rule="evenodd"></path><path fill="#fff" d="M24.034 4c.199.2.199.6 0 .8L21.95 7l2.185 2.2c.198.2.198.6 0 .8-.199.2-.596.2-.795 0l-2.185-2.2L18.97 10c-.198.2-.596.2-.794 0-.199-.2-.199-.6 0-.8L20.26 7l-2.184-2.2c-.2-.2-.2-.6 0-.8.198-.2.595-.2.794 0l2.185 2.2L23.24 4c.199-.2.596-.2.794 0Z"></path><path fill="#06F" d="M12.216 4.1c.199.2.298.6.1.8L8.143 9.8c-.1.1-.199.2-.298.2-.199.1-.497.1-.695-.1L4.966 7.7c-.199-.2-.199-.6 0-.8.199-.2.596-.2.794 0l1.788 1.7 3.774-4.5c.199-.2.596-.2.894 0Z"></path></svg>';
+
+// California visitors must get the CCPA/CPRA-compliant "Your California Privacy Rights"
+// opt-out label + icon (production swaps it in by geolocation); everyone else sees
+// "Manage cookies". OneTrust reports the region asynchronously once its consent stack
+// loads, so poll briefly and swap once. Tracking identity stays "Manage cookies" via the
+// footer sheet override, so the geo label never reaches analytics. Non-CA visitors — and
+// hosts where OneTrust never loads — keep the default label.
+function applyCaliforniaPrivacyLabel(link) {
+  let tries = 0;
+  function check() {
+    const ot = window.OneTrust;
+    const geo = ot && typeof ot.getGeolocationData === 'function' ? ot.getGeolocationData() : null;
+    if (geo && geo.country) {
+      if (geo.country === 'US' && geo.state === 'CA') {
+        link.innerHTML = `Your California Privacy Rights${PRIVACY_CHOICES_ICON}`;
+      }
+      return; // region resolved; the default label is correct otherwise
+    }
+    tries += 1;
+    if (tries < 20) setTimeout(check, 500);
+  }
+  check();
+}
+
 // "Manage cookies" opens the OneTrust preference centre, mirroring production's
 // two-branch handler: OneTrust.ToggleInfoDisplay(), falling back to
 // intuit_gdpr.showCookiePreference() when the OneTrust SDK hasn't loaded (the consent
 // CDN is fail-open, so the control still works). A `javascript:` href can't be used —
 // the page enforces Trusted Types + strict-dynamic — so it is a real click handler.
+// We own the label now (no ot-sdk-show-settings hook), so applyCaliforniaPrivacyLabel
+// can set the geo-aware label with no MutationObserver fight.
 function wireCookiePreferences(block) {
   const link = block.querySelector('.footer-copy-btn');
   if (!link) return;
@@ -224,6 +253,7 @@ function wireCookiePreferences(block) {
       window.intuit_gdpr.showCookiePreference();
     }
   });
+  applyCaliforniaPrivacyLabel(link);
 }
 
 export default async function decorate(block) {
