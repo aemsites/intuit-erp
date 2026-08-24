@@ -798,14 +798,27 @@ export function trackAs(name, block, {
   if (!block) return block;
   // Opt pure-UI controls out (hamburger, toggles) via data-track-skip.
   if (skip) block.querySelectorAll(skip).forEach((el) => el.setAttribute('data-track-skip', ''));
-  // Stamp each non-skipped CTA's data-track-id (order-independent sheet key).
-  // trackId(el) returns the id or falsy (leave pure-derive); default <key>:<hrefSlug>.
-  // An authored data-track-id wins.
-  const deriveId = typeof trackId === 'function' ? trackId : (el) => hrefTrackId(el, key || name);
+  // Stamp each non-skipped CTA's data-track-id (order-independent sheet key). The
+  // default is `<key>:<hrefSlug>`, falling back to `<key>:<slug(label)>` for an
+  // href-less control; duplicates within the block get a stable -2/-3 suffix. A
+  // block passes its own trackId(el) to control ids (and its own dedupe — e.g. the
+  // footer's mobile/desktop country share one id) — no auto-suffix there. Returns
+  // falsy to leave a CTA pure-derive. An authored data-track-id wins.
+  const ns = key || name;
+  const custom = typeof trackId === 'function';
+  const deriveId = custom
+    ? trackId
+    : (el) => hrefTrackId(el, ns) || (labelFor(el) ? `${ns}:${slug(labelFor(el))}` : null);
+  const usedIds = new Set();
   block.querySelectorAll(CTA_SELECTOR).forEach((el) => {
     if (el.hasAttribute('data-track-id') || el.closest('[data-track-skip]')) return;
-    const v = deriveId(el);
-    if (v) el.setAttribute('data-track-id', String(v));
+    let v = deriveId(el);
+    if (!v) return;
+    if (!custom) {
+      if (usedIds.has(v)) { let n = 2; while (usedIds.has(`${v}-${n}`)) n += 1; v = `${v}-${n}`; }
+      usedIds.add(v);
+    }
+    el.setAttribute('data-track-id', String(v));
   });
   // Opt the block in via the tracking-<key> class (authored opt-in left as-is).
   const optKey = key || name;
