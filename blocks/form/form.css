@@ -7,14 +7,13 @@
 .section.form-container { background: #fff; padding: 20px 0 var(--section-y); text-align: center; }
 .form-container .default-content-wrapper { text-align: center; }
 .form-container.left .default-content-wrapper { text-align: left; }
-.form-container.center .default-content-wrapper { text-align: center; }
 
 /* Heading + copy above a standalone form (webinar pages) mirror erp.intuit.com:
    mobile-first 28px title stepping up to 40px on desktop, uniform 16px centered
    paragraphs. The hero-card and modal override these (blocks/hero, smaller card
    heading) so this only affects the standalone form-landing layout. */
 .form-container .default-content-wrapper h2 { font-size: 28px; line-height: 1.3; font-weight: 700; color: var(--heading); margin: 0 0 20px; }
-.form-container .default-content-wrapper p { font-size: 16px; color: var(--heading); max-width: 44em; margin: 0 auto 12px; line-height: 1.3; text-align: center; }
+.form-container .default-content-wrapper p { font-size: 16px; color: var(--heading); max-width: 44em; margin: 0 auto 12px; line-height: 1.3; }
 .form-container .default-content-wrapper p a { color: var(--primary); text-decoration: underline; }
 
 /* config-authored copy around the form (see parseFormConfig in form.js) */
