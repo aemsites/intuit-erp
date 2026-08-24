@@ -230,6 +230,50 @@ describe('decorate — live Marketo form', () => {
   });
 });
 
+describe('decorate — inside the shared "Schedule a call" modal', () => {
+  it('embeds immediately, without an IntersectionObserver, when the block is inside a <dialog>', async () => {
+    const IntersectionObserverSpy = vi.fn(global.IntersectionObserver);
+    global.IntersectionObserver = IntersectionObserverSpy;
+
+    const dialog = document.createElement('dialog'); // closed: no showModal() call, matches blocks/modal/modal.js's openModal() ordering
+    const block = make([['formId', '1058']]);
+    dialog.append(block);
+    document.body.append(dialog);
+
+    await decorate(block);
+    await flush();
+
+    expect(IntersectionObserverSpy).not.toHaveBeenCalled();
+    expect(window.MktoForms2.loadForm).toHaveBeenCalledWith(
+      '//743-rzm-619.mktoweb.com',
+      '743-RZM-619',
+      '1058',
+      expect.any(Function),
+    );
+    dialog.remove();
+  });
+
+  it('recovers the authored config on a forced re-decoration instead of wiping the block', async () => {
+    // blocks/modal/modal.js caches an already-decorated fragment (loadFragment() runs
+    // loadSections() once), then clones it and resets block/section status to force a
+    // second decorate() pass. By then the authored formId/header rows are gone —
+    // replaced by the <form> shell this same decorate() call created the first time.
+    const block = make([['formId', '1058'], ['header', 'Let’s connect']]);
+    await decorate(block); // first pass, as loadFragment() runs internally
+    await flush();
+    expect(block.querySelector('form#mktoForm_1058')).not.toBeNull();
+
+    const clone = block.cloneNode(true); // cloneNode keeps the dataset attribute the first pass stashed
+    document.body.append(clone);
+    await decorate(clone); // second pass, on markup that no longer has config rows
+    await flush();
+
+    expect(clone.querySelector('form#mktoForm_1058')).not.toBeNull();
+    expect(clone.querySelector('.form-header').textContent).toBe('Let’s connect');
+    clone.remove();
+  });
+});
+
 describe('decorate — reCAPTCHA v3 gate', () => {
   const settle = async () => { for (let i = 0; i < 6; i += 1) await flush(); };
 

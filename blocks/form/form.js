@@ -262,11 +262,24 @@ async function embedMarketoForm(formEl, cfg, config, env) {
 }
 
 export default async function decorate(block) {
-  const config = parseFormConfig(block);
+  // blocks/modal/modal.js caches a fragment's already-decorated markup (loadFragment()
+  // itself runs loadSections() once) and later clones + resets it back to 'initialized'
+  // to force a second decorate() pass (so blocks can rebind listeners cloneNode drops).
+  // By the second pass the authored formId/config rows are gone — replaced by the
+  // <form> shell this same function created the first time — so re-parsing would find
+  // nothing and wipe the block. Recover the config stashed on the first pass instead.
+  const stashedConfig = block.dataset.formConfig;
+  let config;
+  try {
+    config = stashedConfig ? JSON.parse(stashedConfig) : parseFormConfig(block);
+  } catch (e) {
+    config = parseFormConfig(block); // corrupt stash — fall back rather than throw
+  }
   if (!config.formId) {
     block.replaceChildren();
     return;
   }
+  if (!stashedConfig) block.dataset.formConfig = JSON.stringify(config);
   if (config.downloadUrl) block.classList.add('download');
 
   const children = [];
@@ -289,10 +302,26 @@ export default async function decorate(block) {
 
   const cfg = await siteConfig();
   const env = marketoEnv();
+
+  const embed = () => embedMarketoForm(form, cfg, config, env);
+
+  // Inside the shared "Schedule a call" modal (blocks/modal/modal.js), this block is
+  // decorated while its ancestor <dialog> is still closed — closed dialogs are
+  // display:none per the UA stylesheet, so an IntersectionObserver attached now never
+  // sees the block intersect once the dialog opens, and the form never loads. A modal
+  // is opened by explicit user action, so there's no below-the-fold benefit to gate on
+  // visibility here anyway — embed immediately instead. Scoped to a *closed* dialog
+  // ancestor specifically, so a block already inside an open dialog still gets the
+  // normal (working) viewport-based lazy load below.
+  if (block.closest('dialog:not([open])')) {
+    embed();
+    return;
+  }
+
   const observer = new IntersectionObserver((entries) => {
     if (entries.some((e) => e.isIntersecting)) {
       observer.disconnect();
-      embedMarketoForm(form, cfg, config, env);
+      embed();
     }
   });
   observer.observe(block);
