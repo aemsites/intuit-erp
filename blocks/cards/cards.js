@@ -231,14 +231,12 @@ export default function decorate(block) {
   if (block.classList.contains('carousel')) {
     attachFocusCursor(block);
   }
-  // Instrument for click tracking — prod trail: rw_cards_container|carousel|rw_card_N.
-  // The `carousel` middle exists only for scroll-shaped variants (enhanceScroll adds
-  // .cards-track); static grids resolve to rw_cards_container (confirm grid trail w/ golden).
+  // Trail: rw_cards_container|carousel|rw_card_N (the `carousel` middle only exists
+  // for scroll variants; static grids are rw_cards_container|rw_card_N).
   return trackAs('rw_cards_container', block, {
-    key: 'cards', // clean sheet/opt-in key (rows cards-1, cards-2, …); trail is rw_cards_container
-    linkName: false, // prod omits link_name on ~half the card CTAs; sheet fills the rest
+    key: 'cards',
+    linkName: false, // prod omits it on ~half the card CTAs; sheet fills the rest
     items: {
-      // one broad selector: the .cards-track wrapper -> carousel, its children -> rw_card_N
       '.cards-track, .cards-track > *':
         (i, el) => (el.classList.contains('cards-track') ? 'carousel' : `rw_card_${i}`),
     },

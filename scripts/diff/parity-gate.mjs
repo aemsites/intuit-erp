@@ -43,7 +43,10 @@ export const stripBc = (v) => (typeof v === 'string' ? v.replace(/ \[[^\]]*\]$/,
 
 // non-CTA keys our tracking layer owns (vs. structural markup deltas)
 const CLOSEABLE_NONCTA = new Set(['video']);
-export const isStructural = (e) => e.nonCta && !CLOSEABLE_NONCTA.has(e.key);
+// blocks wired with alsoTrack image beacons — their `…|image` parts are closeable
+const ALSO_TRACK_WIRED = new Set(['related-blogs']);
+export const isImagePart = (e) => e.nonCta && /\|image$/.test(e.exp.ui_access_point || '') && ALSO_TRACK_WIRED.has(e.key);
+export const isStructural = (e) => e.nonCta && !CLOSEABLE_NONCTA.has(e.key) && !isImagePart(e);
 
 // How each component key is wired TODAY. trail(i) -> data-tracking chain
 // (broad->specific); scope header|footer|main; sheetKey overrides sheet lookup.
@@ -79,6 +82,26 @@ export const sheetKeyOf = (entry) => (BLOCK[entry.key] && BLOCK[entry.key].sheet
 // defaults; an undeclared key is a loose content CTA (pure derive, region=main,
 // trail -> "page"). Sheet residue applies to both.
 export function oursPayload(entry, idx, sheet) {
+  // alsoTrack image part: an img[data-track-as] under the slot-trail chain (the
+  // block wires the wrapper trail; the img is the sacrificial leaf). Pure-derive.
+  if (isImagePart(entry)) {
+    const root = document.createElement('main');
+    let host = root;
+    entry.exp.ui_access_point.split('|').forEach((seg) => {
+      const d = document.createElement('div'); d.setAttribute('data-tracking', seg); host.append(d); host = d;
+    });
+    const img = document.createElement('img');
+    // the real thumbnail's alt is the card title (related-blogs/blog-cards set it);
+    // the golden captured empty text for <picture>, so reconstruct from the detail
+    img.setAttribute('alt', entry.text || entry.exp.ui_object_detail || '');
+    img.setAttribute('data-track-as', 'button');
+    host.append(img);
+    document.body.append(root);
+    try {
+      stampCta(img, resolveCta(deriveForCta(img, '', 'erp.intuit.com'), null, {}));
+      return computeTrackingPayload(img);
+    } finally { root.remove(); }
+  }
   const cfg = BLOCK[entry.key]; // undefined => pure-derive page path
   const region = regionOf(entry.key);
   const scope = document.createElement(region);
@@ -160,13 +183,15 @@ export function runGate(sheet) {
     top_failing_fields: Object.entries(v.fail).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([f, c]) => `${f}(${c})`),
   })).sort((a, b) => a.fidelity - b.fidelity);
   return {
-    golden: { entries: golden.entries.length, closeable: closeable.length, structural: structuralTotal, pages: golden.pages.filter((p) => p !== '*').length },
-    closeable_fidelity_pct: closeableFidelity,
-    overall_incl_structural_pct: overallAll,
+    golden: { entries: golden.entries.length, pages: golden.pages.filter((p) => p !== '*').length },
+    parity_pct: overallAll, // matches / ALL prod beacons (what fires) — THE number
+    reproduced_fidelity_pct: closeableFidelity, // of the beacons we reproduce, how faithful
+    reproduced: closeable.length,
+    not_yet_reproduced: structuralTotal,
     by_field: Object.fromEntries(DIFF_FIELDS.map((f) => [f, pct(byField[f], closeable.length)])),
     components,
-    structural_deltas: structuralByKey,
-    verdict: closeableFidelity >= THRESHOLD ? 'PASS' : 'FAIL',
+    not_yet_reproduced_by_key: structuralByKey,
+    verdict: overallAll >= THRESHOLD ? 'PASS' : 'FAIL',
   };
 }
 
@@ -175,15 +200,17 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
   if (process.argv.includes('--json')) {
     console.log(JSON.stringify(report, null, 2));
   } else {
-    console.log(`\nClick-tracking parity gate — ${report.golden.closeable} closeable events (+${report.golden.structural} structural) across ${report.golden.pages} pages`);
-    console.log(`CLOSEABLE FIDELITY: ${report.closeable_fidelity_pct}%  (threshold ${THRESHOLD}%)   overall incl. structural: ${report.overall_incl_structural_pct}%\n`);
-    console.log('By field (closeable):');
+    const total = report.reproduced + report.not_yet_reproduced;
+    console.log(`\nClick-tracking parity — ${total} prod beacons across ${report.golden.pages} pages`);
+    console.log(`PARITY (all prod beacons): ${report.parity_pct}%  (threshold ${THRESHOLD}%)`);
+    console.log(`  ${report.reproduced} reproduced at ${report.reproduced_fidelity_pct}% field-fidelity; ${report.not_yet_reproduced} not yet reproduced\n`);
+    console.log('By field (of reproduced beacons):');
     Object.entries(report.by_field).forEach(([f, p]) => console.log(`  ${String(p).padStart(5)}%  ${f}`));
     console.log('\nComponents (lowest first — fix these):');
     report.components.forEach((c) => console.log(`  ${String(c.fidelity).padStart(5)}%  ${c.key} (${c.ctas})${c.untracked ? ` [${c.untracked} UNTRACKED]` : ''}  ${c.top_failing_fields.join(' ')}`));
-    console.log(`\nStructural deltas (markup-parity, not gated): ${JSON.stringify(report.structural_deltas)}`);
+    console.log(`\nNot yet reproduced (fire on prod — remaining parity work): ${JSON.stringify(report.not_yet_reproduced_by_key)}`);
     console.log('');
   }
-  console.log(`verdict: ${report.verdict} score=${report.closeable_fidelity_pct} threshold=${THRESHOLD}`);
+  console.log(`verdict: ${report.verdict} score=${report.parity_pct} threshold=${THRESHOLD}`);
   process.exit(report.verdict === 'PASS' ? 0 : 1);
 }

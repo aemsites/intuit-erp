@@ -233,13 +233,8 @@ export default async function decorate(block) {
   // to /blog/search on Enter.
   wireFooterSearch(block);
 
-  // Click tracking (code-built chrome): footer links report action=interacted (the
-  // derive default); link_name is suppressed (prod omits it on footer links);
-  // per-link wa-link/object_detail is sheet residue. The whole footer sits under a
-  // `footer` trail root, with sub-sections adding their segment beneath it (verified
-  // against prod erp.intuit.com 2026-08-21): menu columns ->
-  // footer|footer_menus|footer_menu_section, brand -> footer|products, legal ->
-  // footer|footer_bottom, sitemap -> footer|footer_sitemap, country selector -> footer.
+  // Footer under a `footer` root; sub-sections add their segment (menus/products/
+  // footer_bottom/sitemap). link_name off; per-link wa-link/object_detail is sheet residue.
   trackAs('footer', block, {
     key: 'footer',
     linkName: false,

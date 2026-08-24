@@ -182,10 +182,7 @@ export default async function initContactUs() {
     });
   }
 
-  // Click tracking: prod reports the floating sales widget under the
-  // `talk_to_sales` trail. It mounts in <body> (outside the content regions), so
-  // the declared tracking- block is what makes resolveTrackable pick it up; the
-  // close button is pure UI. link_name is suppressed (sheet provides has-cases).
+  // Floating sales widget -> talk_to_sales (a declared block tracks in <body>); skip close.
   trackAs('talk_to_sales', root, { key: 'talk-to-sales', linkName: false, skip: '.cu-close' });
 
   document.body.append(root);

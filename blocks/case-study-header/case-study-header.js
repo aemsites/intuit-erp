@@ -154,10 +154,8 @@ export default function decorate(block) {
 
   block.replaceChildren(wrap);
 
-  // Click tracking (blog article header). On prod these are THREE separate trails,
-  // not nested under one hero: eyebrow/byline links -> qrc_article_hero, the share
-  // row -> social_media, the ToC -> TableOfContents. Opt in with no block-root trail
-  // (so each sub-section resolves standalone) and suppress link_name.
+  // Article header: eyebrow/byline -> qrc_article_hero, share -> social_media,
+  // ToC -> TableOfContents (three standalone trails, no block root); link_name off.
   trackAs(null, block, {
     key: 'case-study-header',
     linkName: false,

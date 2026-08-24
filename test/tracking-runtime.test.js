@@ -360,6 +360,31 @@ describe('trackAs — declarative block opt-in from decorate()', () => {
     expect(els[1].getAttribute('data-tracking')).toBe('b_1');
   });
 
+  it('alsoTrack: a click on a declared part resolves to the part (its own beacon)', () => {
+    document.body.innerHTML = '<main><div class="rb block">'
+      + '<a class="rb-card" href="#"><span class="rb-image"><img alt="Card Title"></span>'
+      + '<div class="rb-body">Body text</div></a></div></main>';
+    const block = document.querySelector('.rb');
+    trackAs('qrc_content_card_grid', block, {
+      key: 'rb',
+      action: 'engaged', // block CTA default — parts must NOT inherit it
+      items: { '.rb-card': 'qrc_content_card', '.rb-image': 'image' },
+      alsoTrack: { '.rb-image img': 'button' },
+    });
+    expect(block.querySelector('.rb-image').getAttribute('data-tracking')).toBe('image');
+    expect(block.querySelector('img').getAttribute('data-track-as')).toBe('button');
+    // clicking the thumbnail derives an image beacon (pure-derive: action=interacted)
+    const img = block.querySelector('img');
+    stampInteraction({ target: img });
+    expect(img.getAttribute('data-object')).toBe('content');
+    expect(img.getAttribute('data-ui-object')).toBe('button');
+    expect(img.getAttribute('data-ui-object-detail')).toBe('Card Title');
+    expect(img.getAttribute('data-action')).toBe('interacted'); // not the block's engaged
+    expect(img.getAttribute('data-tracking')).toBe('button'); // sacrificial leaf
+    // a click in the body resolves to the card anchor, not a part
+    expect(resolveTrackable(block.querySelector('.rb-body')).cta.tagName).toBe('A');
+  });
+
   it('respects an authored opt-in + explicit data-tracking (never overwrites)', () => {
     document.body.innerHTML = '<main><div class="hero block tracking-authored" data-tracking="custom"><a class="button" href="#">Go</a></div></main>';
     const block = document.querySelector('.hero');

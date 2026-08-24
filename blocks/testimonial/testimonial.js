@@ -573,10 +573,7 @@ function buildCardCarousel(figures) {
 }
 
 export default function decorate(block) {
-  // Click tracking (customer proof). Prod trail = rw_testimonial on product pages
-  // (the homepage variant is authored `page` — overridable). Card carousel dots/
-  // arrows resolve here; video play buttons stay content:interacted (prod authors
-  // video:started — residue). link_name suppressed.
+  // Customer proof -> rw_testimonial trail (homepage variant authored `page`); link_name off.
   const track = () => trackAs('rw_testimonial', block, { key: 'testimonial', linkName: false });
   if (block.classList.contains('card')) {
     const figures = [...block.querySelectorAll(':scope > div')].map(buildCard);

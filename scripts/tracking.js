@@ -90,11 +90,12 @@ export function blockAccessPoint(blockName) {
  * @returns {Record<string, unknown>}
  */
 export function deriveBaseline({
-  tagName, label, blockName, isButtonStyled = true, isVideo = false, isIcon = false, host = '',
+  tagName, label, blockName, isButtonStyled = true, isVideo = false, isIcon = false, host = '', kind: kindOverride,
 }) {
   let kind = uiObject(tagName, isButtonStyled);
   if (isVideo) kind = 'video_link';
   else if (isIcon) kind = 'link_icon'; // an icon/logo-only link (no visible text)
+  if (kindOverride) kind = kindOverride; // alsoTrack part: explicit ui_object (image, …)
   const detail = (label || '').trim();
   const custom = {};
   // The live tracker appends the page host to link_name (e.g. "... [erp.intuit.com]").
@@ -484,7 +485,7 @@ export function sheetRowFor(map, key, i, path) {
 export function labelFor(el) {
   const text = (el.textContent || '').trim();
   if (text) return text;
-  const img = el.querySelector('img[alt]');
+  const img = el.matches && el.matches('img[alt]') ? el : el.querySelector('img[alt]');
   const alt = img && (img.getAttribute('alt') || '').trim();
   if (alt) return alt;
   return (el.getAttribute('aria-label') || '').trim();
@@ -500,10 +501,13 @@ export function labelFor(el) {
  * @returns {Record<string, unknown>}
  */
 export function deriveForCta(el, blockName, host = '') {
-  const isVideo = el.tagName === 'A' && isVideoLink(el.getAttribute('href'));
+  // An alsoTrack "part" (a non-CTA element a block registered as its own beacon
+  // source, e.g. a card thumbnail) carries data-track-as = its ui_object.
+  const partKind = el.getAttribute && el.getAttribute('data-track-as');
+  const isVideo = !partKind && el.tagName === 'A' && isVideoLink(el.getAttribute('href'));
   // A link/button whose visible content is an icon/logo (no text) reports
   // ui_object=link_icon on prod (brand logos, social icons).
-  const isIcon = !isVideo && !(el.textContent || '').trim() && !!el.querySelector('img, svg, picture, .icon');
+  const isIcon = !partKind && !isVideo && !(el.textContent || '').trim() && !!el.querySelector('img, svg, picture, .icon');
   return deriveBaseline({
     tagName: el.tagName,
     label: labelFor(el),
@@ -512,6 +516,7 @@ export function deriveForCta(el, blockName, host = '') {
     isVideo,
     isIcon,
     host,
+    kind: partKind || undefined,
   });
 }
 
@@ -560,18 +565,22 @@ export function stampTrail(scope = document) {
  */
 export function resolveTrackable(target) {
   if (!target || !target.closest) return null;
-  const cta = target.closest(CTA_SELECTOR);
+  // The trackable element: a declared alsoTrack "part" (a non-CTA beacon source
+  // like a card thumbnail) when the click lands in one — nearer than the
+  // enclosing CTA, mirroring the tracker's nearest-ancestor walk — else the CTA.
+  const el = target.closest(`[data-track-as], ${CTA_SELECTOR}`);
   // Pure-UI controls (hamburger, flyout-back, accordion/country toggles) carry
   // data-track-skip and are never tracked.
-  if (!cta || cta.closest('[data-track-skip]')) return null;
-  const blk = cta.closest(`[class*="${PREFIX}"]`);
+  if (!el || el.closest('[data-track-skip]')) return null;
+  const blk = el.closest(`[class*="${PREFIX}"]`);
   const block = (blk && trackingKey(blk)) ? blk : null;
-  // Track by default inside the content regions; a DECLARED tracking- block is
-  // also tracked wherever it mounts — e.g. the floating talk-to-sales widget the
-  // runtime appends to <body> — while undeclared body-root chrome (OneTrust,
-  // dev sidekick) stays untracked.
-  if (!cta.closest(TRACKED_REGIONS) && !block) return null;
-  return { cta, block };
+  // A part only tracks inside its declared block. A CTA tracks by default in the
+  // content regions, and a DECLARED tracking- block is tracked wherever it mounts
+  // (e.g. the floating talk-to-sales widget in <body>); undeclared body-root
+  // chrome (OneTrust, dev sidekick) stays untracked.
+  if (el.hasAttribute('data-track-as')) return block ? { cta: el, block } : null;
+  if (!el.closest(TRACKED_REGIONS) && !block) return null;
+  return { cta: el, block };
 }
 
 // ===========================================================================
@@ -672,12 +681,19 @@ export function stampInteraction(e) {
   const host = loc.hostname || '';
   // A declared block supplies its key (sheet lookup + index) and name (trail/
   // access-point); a loose content CTA falls back to the `page` bucket, indexed
-  // among the page's block-less CTAs (its stable page-<n> identity).
+  // among the page's block-less CTAs (its stable page-<n> identity). An alsoTrack
+  // part (card thumbnail etc.) is pure-derive — no sheet residue.
+  const isPart = cta.hasAttribute('data-track-as');
   const key = block ? trackingKey(block) : PAGE_KEY;
   const blockName = block ? blockNameOf(block) : '';
-  const idx = block ? ctasIn(block).indexOf(cta) : pageCtas(document).indexOf(cta);
-  const row = sheetRowFor(sheetMap, key, idx, loc.pathname);
-  const derived = applyBlockDefaults(deriveForCta(cta, blockName, host), cta);
+  let idx = -1;
+  if (!isPart) idx = block ? ctasIn(block).indexOf(cta) : pageCtas(document).indexOf(cta);
+  const row = isPart ? null : sheetRowFor(sheetMap, key, idx, loc.pathname);
+  // Parts are pure-derive (their ui_object is data-track-as); they do NOT inherit
+  // the block's CTA payload defaults (e.g. a card grid's action=engaged).
+  const derived = isPart
+    ? deriveForCta(cta, blockName, host)
+    : applyBlockDefaults(deriveForCta(cta, blockName, host), cta);
   const regionCtx = resolveRegionContext(cta);
   const context = regionCtx ? { customProperties: regionCustomProperties(regionCtx) } : {};
   stampCta(cta, resolveCta(derived, row, context));
@@ -744,24 +760,32 @@ export function initTracking(scope = document) {
  *       (i, el) => (el.classList.contains('cards-track') ? 'carousel' : `rw_card_${i}`),
  *   } });
  *
- * (Reserved for #769: `alsoTrack` — a selector -> ui_object map — will register
- * non-CTA elements, e.g. a card's `img`/`picture`, as their OWN beacon sources.
- * That is a different concept from `items` (which only stamps the trail) and is
- * not implemented yet.)
+ * `alsoTrack` — a selector -> ui_object map — registers non-CTA elements (e.g. a
+ * card's thumbnail `img`) as their OWN beacon sources (#769): a click resolves to
+ * the part (nearest-wins over the enclosing CTA) and derives object=content,
+ * ui_object=<the map value>, and ui_object_detail from its accessible name (an
+ * `img[alt]` carries the card title). Pure-derive — no sheet. Pair it with `items`
+ * on a wrapper so the trail carries the slot leaf (…|qrc_content_card|image):
+ *
+ *   return trackAs('qrc_content_card_grid', block, { key: 'related-blogs',
+ *     items: { '.related-blogs-card': 'qrc_content_card', '.related-blogs-image': 'image' },
+ *     alsoTrack: { '.related-blogs-image img': 'button' } });
  *
  * @param {string|null} name the trail segment (data-tracking value), or falsy for opt-in only
  * @param {Element} block
  * @param {{key?: string, items?: Record<string, string | ((index: number, el: Element) => string)>,
+ *   alsoTrack?: Record<string, string>,
  *   action?: string, object?: string, uiObject?: string, linkName?: boolean, skip?: string}} [opts]
  *   `key` = the tracking-<key> opt-in + sheet key (defaults to `name`); `action`/`object`/
  *   `uiObject` = code-built payload defaults; `linkName:false` drops the derived link_name;
  *   `skip` = a selector for pure-UI controls to exclude from tracking (hamburger, toggles);
  *   `items` = a selector -> trail-segment map (string for fixed slots, (index, el) => string
- *   for repeated/indexed children).
+ *   for repeated/indexed children); `alsoTrack` = a selector -> ui_object map registering
+ *   non-CTA beacon sources (#769).
  * @returns {Element} the block (so it can be the decorate return value)
  */
 export function trackAs(name, block, {
-  key = name, items, action, object, uiObject: uiObjectDefault, linkName, skip,
+  key = name, items, alsoTrack, action, object, uiObject: uiObjectDefault, linkName, skip,
 } = {}) {
   if (!block) return block;
   // Exclude pure-UI controls (a code-built block opts them out): marks matching
@@ -793,6 +817,17 @@ export function trackAs(name, block, {
         if (el.hasAttribute('data-tracking')) return;
         const seg = typeof label === 'function' ? label(i, el) : label;
         if (seg) el.setAttribute('data-tracking', String(seg));
+      });
+    });
+  }
+  // alsoTrack: register non-CTA elements as their OWN beacon sources (#769) — a
+  // selector -> ui_object map. Each match gets data-track-as=<ui_object> so the
+  // delegated handler resolves clicks to it (nearest-wins) and derives a beacon
+  // with that ui_object. Pure-derive; the trail comes from `items` on wrappers.
+  if (alsoTrack) {
+    Object.entries(alsoTrack).forEach(([sel, uio]) => {
+      block.querySelectorAll(sel).forEach((el) => {
+        if (uio && !el.hasAttribute('data-track-as')) el.setAttribute('data-track-as', String(uio));
       });
     });
   }

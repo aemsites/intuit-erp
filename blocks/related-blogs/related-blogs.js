@@ -59,7 +59,12 @@ function buildCard({
     body.append(dateEl);
   }
 
-  a.append(img, body);
+  // thumbnail wrapper (display:contents — no layout change) carries the `image`
+  // trail slot so the thumbnail fires its own beacon (#769)
+  const imageWrap = document.createElement('span');
+  imageWrap.className = 'related-blogs-image';
+  imageWrap.append(img);
+  a.append(imageWrap, body);
 
   return a;
 }
@@ -108,11 +113,14 @@ export default async function decorate(block) {
     block.append(btn);
   }
 
-  // Click tracking (blog content card grid): each card is itself the <a>, so the
-  // trail resolves to the grid segment (prod's deeper qrc_content_card sub-level
-  // would need a card-container structure). Content-exploration cards report
-  // action=engaged; the "Load more" control is skipped; link_name suppressed.
+  // Click tracking: card = qrc_content_card, thumbnail = its own `image` beacon
+  // (#769); content links report engaged; "Load more" is skipped.
   trackAs('qrc_content_card_grid', block, {
-    key: 'related-blogs', linkName: false, action: 'engaged', skip: '.related-blogs-load-more',
+    key: 'related-blogs',
+    linkName: false,
+    action: 'engaged',
+    skip: '.related-blogs-load-more',
+    items: { '.related-blogs-card': 'qrc_content_card', '.related-blogs-image': 'image' },
+    alsoTrack: { '.related-blogs-image img': 'button' },
   });
 }

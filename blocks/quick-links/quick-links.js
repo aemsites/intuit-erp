@@ -69,7 +69,6 @@ export default function decorate(block) {
     toggle.setAttribute('aria-expanded', String(expanded));
   });
 
-  // Click tracking: prod reports these industry links under the `quick_links`
-  // trail (object=content/link). The mobile expand toggle is pure UI — skip it.
+  // Industry links -> quick_links trail; skip the mobile expand toggle.
   trackAs('quick_links', block, { key: 'quick_links', skip: '.quick-links-toggle' });
 }
