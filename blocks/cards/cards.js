@@ -176,16 +176,11 @@ export default function decorate(block) {
 
   [...block.children].forEach((row) => {
     [...row.children].forEach((cell) => {
-      // Regular pages get authored images auto-wrapped in <picture> by the
-      // rendering pipeline, but fragments don't — an image cell inside a
-      // fragment (e.g. the right-rail Download cards) arrives as a bare
-      // <img>. Accept either shape; only the cell's own child count (an
-      // image alone, no sibling text) decides if it's the image cell.
-      const img = cell.querySelector('img');
+      const img = cell.querySelector('picture > img');
       if (img && cell.children.length === 1) {
         cell.classList.add('cards-card-image');
         const width = isIcons ? '150' : '750';
-        (img.closest('picture') || img).replaceWith(createOptimizedPicture(img.src, img.alt, false, [{ width }]));
+        img.closest('picture').replaceWith(createOptimizedPicture(img.src, img.alt, false, [{ width }]));
       } else {
         cell.classList.add('cards-card-body');
         cell.querySelectorAll('p').forEach((p) => {
