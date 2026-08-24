@@ -567,6 +567,10 @@
   }
 }
 
+.cards.blog-rail .cards-card-body p {
+  margin: 0;
+}
+
 @media (width <=480px) {
   .cards.list>div {
     grid-template-columns: 166px 1fr;
