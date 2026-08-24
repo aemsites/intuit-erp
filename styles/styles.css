@@ -910,9 +910,9 @@ body.blog-home .section:not(:first-of-type)>.default-content-wrapper> :is(h1, h2
   margin-top: 6rem;
 }
 
-.section>.default-content-wrapper {
-  margin-top: 2rem;
-  margin-bottom: 2rem;
+.section > .default-content-wrapper {
+  padding-top: 2rem;
+  padding-bottom: 2rem;
 }
 
 @media (width < 768px) {
