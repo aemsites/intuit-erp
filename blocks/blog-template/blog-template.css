@@ -403,9 +403,6 @@
    mobile/desktop defaults, so the two never disagree about what counts as
    "desktop"). */
 @media (width >= 1024px) {
-  /* Scoped to main.blog-article, not bare .blog-article — body also carries
-     a `blog-article` class (decorateTemplateAndTheme), and the unscoped
-     selector was matching it too. */
   main.blog-article {
     display: grid;
 
