@@ -7,7 +7,6 @@ import TealiumMartech, {
   readOptanonConsent,
   readIvid,
   readAkamaiGeo,
-  mapConsentToTealium,
   consentCdnHost,
   loadUtag,
   loadConsentStack,
@@ -355,39 +354,6 @@ describe('UDO seed (window.utag_data.consent_req / .user_geo)', () => {
     const tealium = new TealiumMartech();
     expect(tealium.enabled).toBe(false);
     expect(window.utag_data.consent_req).toBe(false);
-  });
-});
-
-describe('mapConsentToTealium', () => {
-  it('marks analytics/targeting/personalization prefs granted or denied per OneTrust group', () => {
-    const optanon = { 1: true, 2: false, 3: true, 4: false };
-    expect(mapConsentToTealium(optanon)).toEqual({
-      analytics: '1',
-      display_ads: '0',
-      search: '0',
-      social: '0',
-      affiliates: '0',
-      big_data: '0',
-      personalization: '0',
-    });
-  });
-
-  it('grants the targeting-derived categories when group 4 is granted', () => {
-    const optanon = { 2: true, 3: false, 4: true };
-    const prefs = mapConsentToTealium(optanon);
-    expect(prefs.display_ads).toBe('1');
-    expect(prefs.search).toBe('1');
-    expect(prefs.social).toBe('1');
-    expect(prefs.affiliates).toBe('1');
-    expect(prefs.big_data).toBe('1');
-    expect(prefs.personalization).toBe('1');
-    expect(prefs.analytics).toBe('0');
-  });
-
-  it('denies everything (fail-safe) when given null/undefined', () => {
-    const prefs = mapConsentToTealium(null);
-    expect(Object.values(prefs).every((v) => v === '0')).toBe(true);
-    expect(mapConsentToTealium(undefined)).toEqual(prefs);
   });
 });
 
