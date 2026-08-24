@@ -230,35 +230,40 @@ function buildVideoAutoBlocks(main) {
 // elsewhere, which also serves as the "is this a blog page" gate below.
 let buildBlogTemplate;
 
-// The blog-template stylesheet's load promise, kicked off in resolveBlogTemplate
-// but deliberately NOT awaited there — see the comment on resolveBlogTemplate for
-// why reveal-gating moved to the hero's loadSection call in loadEager instead.
-// Stays undefined on non-blog pages, same as buildBlogTemplate.
-let blogTemplateCssPromise;
-
 // Same treatment for the Guide landing-page card: imported in loadEager only for
 // `template: Guide` pages, so the other ~335 pages in the sitemap never fetch or
 // parse it. Undefined elsewhere, which is the gate in buildAutoBlocks.
 let buildGuideHeroAutoBlock;
 
+// Longest the eager phase will hold the (hidden) page waiting for
+// blog-template.css before giving up and painting unstyled — see
+// resolveBlogTemplate.
+const BLOG_TEMPLATE_CSS_TIMEOUT = 2000;
+
 /**
  * Resolves the blog autoblock's builder for a blog article page, or `undefined`
  * for every other page — which is also what makes buildAutoBlocks skip it.
- * Keeps the ~21KB module off every non-blog page.
+ * Keeps the ~21KB module (and its stylesheet) off every non-blog page.
  *
- * Also kicks off (but does not await) blog-template.css here, stashing the
- * promise in blogTemplateCssPromise. The article layout lives in that
- * stylesheet, so painting the hero before it arrives means an unstyled
- * single-column flash that then reflows into the band (measured at 0.33 CLS on
+ * Loads the stylesheet alongside the module, rather than leaving it to the
+ * autoblock's own non-blocking loadCSS, because the article layout lives there:
+ * with nothing awaiting it, a slow response let the hero paint in the unstyled
+ * single-column flow and then reflow into the band (measured at 0.33 CLS on
  * desktop, on plain `Blog Article` pages too).
  *
- * Previously this awaited the CSS here, capped by a hand-rolled timeout, which
- * gated the WHOLE page's reveal (`body` is `display: none` until loadEager adds
- * `appear`) on one section's stylesheet. Now only the hero section itself waits
- * on blogTemplateCssPromise before it unhides (see the loadSection call in
- * loadEager) — a stalled request (no `load`/`error` ever fires) leaves just the
- * hero hidden instead of the entire page blank, a contained and acceptable
- * trade-off that no longer needs a timeout to bound.
+ * Fail-open in both directions, and that part isn't optional — `body` is
+ * `display: none` until loadEager adds `appear`:
+ *  - the CSS wait is capped, since loadCSS settles only on the link's
+ *    `load`/`error` events and a request that stalls without erroring fires
+ *    neither. Past the cap, painting unstyled beats never painting.
+ *  - a rejected `import()` is swallowed, or it would propagate out of loadEager
+ *    (loadPage doesn't catch it), `appear` would never be added, and the page
+ *    would stay blank permanently.
+ *
+ * The cap is hand-rolled rather than reusing withTimeout
+ * (scripts/personalization/decision.js): that helper has to be fetched with a
+ * dynamic import first, and a fetch that stalls while acquiring the timeout
+ * mechanism re-opens the very hole the cap closes.
  * @param {Element} main the page's <main>, before decoration
  * @returns {Promise<Function|undefined>} buildBlogTemplate, or undefined
  */
@@ -267,15 +272,23 @@ async function resolveBlogTemplate(main) {
   // neither the module nor the stylesheet — skip both instead of fetching them
   // onto the LCP path and throwing the result away.
   if (!isBlogPage() || hasAuthoredCaseStudyHeader(main)) return undefined;
-  // A definite load failure (404, CORS, etc.) resolves the same as success —
-  // there's nothing left to gate the hero's reveal on either way.
-  blogTemplateCssPromise = loadCSS(`${window.hlx.codeBasePath}/blocks/blog-template/blog-template.css`)
-    .catch(() => {});
+  let cssTimer;
   try {
-    const mod = await import('../blocks/blog-template/blog-template.js');
+    const [mod] = await Promise.all([
+      import('../blocks/blog-template/blog-template.js'),
+      Promise.race([
+        loadCSS(`${window.hlx.codeBasePath}/blocks/blog-template/blog-template.css`)
+          .catch(() => {}),
+        new Promise((resolve) => {
+          cssTimer = window.setTimeout(resolve, BLOG_TEMPLATE_CSS_TIMEOUT);
+        }),
+      ]),
+    ]);
     return mod.buildBlogTemplate;
   } catch (e) {
     return undefined; // render the article unstyled rather than not at all
+  } finally {
+    window.clearTimeout(cssTimer);
   }
 }
 
@@ -556,16 +569,9 @@ async function loadEager(doc) {
     const firstSection = main.querySelector('.section');
     if (firstSection) await runExperienceLayer(firstSection);
     document.body.classList.add('appear');
-    // On blog pages, hold the hero hidden until blog-template.css has actually
-    // applied (not just the DOM restructuring) so it never paints the unstyled
-    // single-column flow — see resolveBlogTemplate. Every other page keeps the
-    // original image-only gate.
-    const firstSectionReady = buildBlogTemplate
-      ? (section) => Promise.all([waitForFirstImage(section), blogTemplateCssPromise])
-      : waitForFirstImage;
     await Promise.all([
       martechLoadedPromise ? martechLoadedPromise.then(martechEager) : Promise.resolve(),
-      loadSection(main.querySelector('.section'), firstSectionReady),
+      loadSection(main.querySelector('.section'), waitForFirstImage),
     ]);
   }
 
