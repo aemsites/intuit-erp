@@ -114,7 +114,7 @@
   text-decoration: underline;
 }
 
-.cards.editorial>div {
+.cards.editorial:not(.carousel)>div {
   background: var(--agave-band);
   border-radius: var(--radius-card);
   padding: 32px 28px;
@@ -154,7 +154,6 @@
 }
 
 @media (width <=768px) {
-
   .cards.dark:not(.carousel, .boxed),
   .cards.accent:not(.carousel, .boxed) {
     grid-template-columns: 1fr;
@@ -183,6 +182,15 @@
   width: 56px;
   height: 56px;
   object-fit: contain;
+}
+
+.cards.icons.icons-sm .cards-card-image {
+  width: 32px;
+}
+
+.cards.icons.icons-sm .cards-card-image img {
+  width: 32px;
+  height: 32px;
 }
 
 .cards.icons .cards-eyebrow {
@@ -378,7 +386,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-
   .cards.carousel .cards-card-image,
   .cards.carousel .cards-card-body,
   .cards.carousel .cards-track>div::before {
@@ -514,7 +521,6 @@
 }
 
 @media (width <=768px) {
-
   .cards.carousel .cards-track>div,
   .cards.boxed .cards-track>div {
     flex-basis: 260px;
@@ -654,7 +660,6 @@
   }
 }
 
-/* whole card clickable: stretch the first link over the card (see cards.js) */
 .cards.minimal .cards-card-link::after {
   content: "";
   position: absolute;
@@ -664,10 +669,78 @@
 
 .cards.divider {
   >div {
-    border-right: 1px solid rgba(0, 0, 0, .2);
+    border-right: 1px solid rgb(0 0 0 / 20%);
 
     &:last-child {
       border-right: 0;
     }
+  }
+}
+
+.cards.editorial.carousel .cards-track>div {
+  box-sizing: border-box;
+  flex: 0 0 calc((100% - 64px) / 3);
+  background: #EFF4F9;
+  border-radius: var(--radius-card);
+  padding: 32px 28px;
+}
+
+.cards.editorial.carousel .cards-card-image {
+  position: static;
+  clip-path: none;
+  transition: none;
+}
+
+.cards.editorial.carousel .cards-track>div::before {
+  display: none;
+}
+
+.cards.editorial.carousel .cards-track>div:hover .cards-card-image,
+.cards.editorial.carousel .cards-track>div:focus-within .cards-card-image {
+  clip-path: none;
+}
+
+.cards.editorial.carousel .cards-track>div:hover .cards-card-body,
+.cards.editorial.carousel .cards-track>div:focus-within .cards-card-body {
+  padding-left: 0;
+}
+
+.cards.editorial.carousel .cards-controls {
+  justify-content: flex-end;
+}
+
+.cards.editorial.carousel .cards-nav {
+  background: var(--navy);
+  color: #fff;
+}
+
+.cards.editorial.carousel .cards-nav:not(:disabled):hover {
+  background: var(--navy-hover);
+}
+
+.cards-dots {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 10px;
+  margin-right: 8px;
+}
+
+.cards-dot {
+  width: 10px;
+  height: 10px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(0 37 74 / 20%);
+  cursor: pointer;
+}
+
+.cards-dot.is-active {
+  background: var(--navy);
+}
+
+@media (width <=768px) {
+  .cards.editorial.carousel .cards-track>div {
+    flex-basis: 82%;
   }
 }
