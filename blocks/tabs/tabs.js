@@ -479,11 +479,11 @@ function renderVerticalAccordion(block, items) {
   block.replaceChildren(acc, mediaCol);
 }
 
-/* ---- .navy: dark rail (desktop) / accordion (mobile), full panel per item -- */
+/* ---- .vertical-panel: dark rail (desktop) / accordion (mobile), full panel per item -- */
 
-const NAVY_DESKTOP_QUERY = `(min-width: ${BP_DESKTOP}px)`;
+const VP_DESKTOP_QUERY = `(min-width: ${BP_DESKTOP}px)`;
 
-function buildNavyTab(item, index) {
+function buildVpTab(item, index) {
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.className = 'it-tab';
@@ -507,7 +507,7 @@ function buildNavyTab(item, index) {
   return btn;
 }
 
-function buildNavyPanel(item, index) {
+function buildVpPanel(item, index) {
   const panel = document.createElement('div');
   panel.className = index === 0 ? 'it-panel is-active' : 'it-panel';
   panel.id = `it-panel-${index}`;
@@ -538,9 +538,9 @@ function buildNavyPanel(item, index) {
   return panel;
 }
 
-const isNavyDesktop = () => !!(window.matchMedia && window.matchMedia(NAVY_DESKTOP_QUERY).matches);
+const isVpDesktop = () => !!(window.matchMedia && window.matchMedia(VP_DESKTOP_QUERY).matches);
 
-function activateNavy(tabs, panels, index, focusIndex = index) {
+function activateVp(tabs, panels, index, focusIndex = index) {
   const roving = index === -1 ? focusIndex : index;
   tabs.forEach((tab, i) => {
     tab.setAttribute('aria-expanded', i === index ? 'true' : 'false');
@@ -549,9 +549,9 @@ function activateNavy(tabs, panels, index, focusIndex = index) {
   panels.forEach((panel, i) => panel.classList.toggle('is-active', i === index));
 }
 
-function renderNavyTabs(block, items) {
-  const tabs = items.map(buildNavyTab);
-  const panels = items.map(buildNavyPanel);
+function renderVerticalPanel(block, items) {
+  const tabs = items.map(buildVpTab);
+  const panels = items.map(buildVpPanel);
   tabs.forEach((tab, i) => tab.setAttribute('aria-controls', panels[i].id));
 
   const nav = document.createElement('div');
@@ -564,7 +564,7 @@ function renderNavyTabs(block, items) {
   });
 
   function syncHeight() {
-    if (!isNavyDesktop()) { block.style.minHeight = ''; return; }
+    if (!isVpDesktop()) { block.style.minHeight = ''; return; }
     const active = panels.find((p) => p.classList.contains('is-active'));
     if (active) block.style.minHeight = `${active.offsetHeight}px`;
   }
@@ -574,8 +574,8 @@ function renderNavyTabs(block, items) {
     if (!btn) return;
     const idx = tabs.indexOf(btn);
     if (idx === -1) return;
-    const collapse = !isNavyDesktop() && btn.getAttribute('aria-expanded') === 'true';
-    activateNavy(tabs, panels, collapse ? -1 : idx, idx);
+    const collapse = !isVpDesktop() && btn.getAttribute('aria-expanded') === 'true';
+    activateVp(tabs, panels, collapse ? -1 : idx, idx);
     syncHeight();
   });
 
@@ -589,7 +589,7 @@ function renderNavyTabs(block, items) {
     else if (e.key === 'End') next = tabs.length - 1;
     if (next === null) return;
     e.preventDefault();
-    activateNavy(tabs, panels, next);
+    activateVp(tabs, panels, next);
     tabs[next].focus();
     syncHeight();
   });
@@ -597,9 +597,9 @@ function renderNavyTabs(block, items) {
   block.replaceChildren(nav);
   syncHeight();
   window.addEventListener('resize', () => {
-    if (isNavyDesktop() && !panels.some((p) => p.classList.contains('is-active'))) {
+    if (isVpDesktop() && !panels.some((p) => p.classList.contains('is-active'))) {
       const focused = tabs.findIndex((t) => t.tabIndex === 0);
-      activateNavy(tabs, panels, focused === -1 ? 0 : focused);
+      activateVp(tabs, panels, focused === -1 ? 0 : focused);
     }
     syncHeight();
   });
@@ -617,6 +617,6 @@ export default function decorate(block) {
   const items = parseItems(block);
   if (block.classList.contains('pill')) renderPillTabs(block, items);
   else if (block.classList.contains('vertical')) renderVerticalAccordion(block, items);
-  else if (block.classList.contains('navy')) renderNavyTabs(block, items);
+  else if (block.classList.contains('vertical-panel') || block.classList.contains('navy')) renderVerticalPanel(block, items);
   else renderHorizontalTabs(block, items);
 }
