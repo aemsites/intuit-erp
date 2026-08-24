@@ -223,6 +223,16 @@ export default function decorate(block) {
     });
   }
 
+  if (block.classList.contains('minimal')) {
+    [...block.children].forEach((card) => {
+      const link = card.querySelector('a[href]');
+      if (!link) return;
+      link.classList.add('cards-card-link');
+      const title = card.querySelector('.cards-card-body h3');
+      if (title) link.setAttribute('aria-label', `${title.textContent.trim()}: ${link.textContent.trim()}`);
+    });
+  }
+
   if (SCROLL_SHAPE_CLASSES.some((c) => block.classList.contains(c))) {
     enhanceScroll(block);
   }

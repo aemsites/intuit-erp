@@ -108,35 +108,41 @@
   text-align: center;
 }
 
-.cards.accent:not(.carousel, .boxed) a { color: #fff; font-weight: 400; text-decoration: underline; }
-
-/* editorial variant — pale-blue icon-card boxes with dark copy, matching
-   erp.intuit.com's default RwCard treatment (e.g. multi-entity
-   Resources/Events/Support). Layers on .cards.icons: identical structure to
-   .accent but the pale --agave-band surface and dark text instead of the
-   vivid-blue/white scheme. Opt-in, so the .accent pages are untouched. */
-.cards.editorial > div {
-  background: var(--agave-band); border-radius: var(--radius-card); padding: 32px 28px;
+.cards.accent:not(.carousel, .boxed) a {
+  color: #fff;
+  font-weight: 400;
+  text-decoration: underline;
 }
-.cards.editorial .cards-card-body h3 { color: var(--heading); }
-.cards.editorial .cards-card-body p { color: var(--text); }
 
-/* dark full-bleed band (accountant "Resources for firms"; also used by the
-   .carousel/.boxed dark instances below) — .accent keeps the section's own
-   (white) background instead. */
-.section.cards-container:has(.cards.dark) { background: var(--navy); padding: var(--section-y) 0; }
-.cards-container:has(.cards.dark) .default-content-wrapper h2 { color: #fff; }
+.cards.editorial>div {
+  background: var(--agave-band);
+  border-radius: var(--radius-card);
+  padding: 32px 28px;
+}
 
-/* .boxed (oa) is the one instance whose section heading is centered rather
-   than left-aligned, matching erp.intuit.com's "All your entities. All in
-   one place." band. */
-.cards-container:has(.cards.boxed) .default-content-wrapper { text-align: center; }
+.cards.editorial .cards-card-body h3 {
+  color: var(--heading);
+}
 
-/* Bottom breathing room below the carousel controls, matching the source C05
-   section's padding-bottom (--spacing-xxxlarge on desktop). Without it the
-   progress bar/nav row butts straight up against the following section. Dark
-   carousels already get this from the .cards.dark section padding above, so
-   this only targets the accent/default (white-section) carousels. */
+.cards.editorial .cards-card-body p,
+.cards.editorial.icons .cards-card-body p {
+  color: var(--text);
+}
+
+
+.section.cards-container:has(.cards.dark) {
+  background: var(--navy);
+  padding: var(--section-y) 0;
+}
+
+.cards-container:has(.cards.dark) .default-content-wrapper h2 {
+  color: #fff;
+}
+
+.cards-container:has(.cards.boxed) .default-content-wrapper {
+  text-align: center;
+}
+
 .section.cards-container:has(.cards.carousel):not(:has(.cards.dark)) {
   padding-bottom: 60px;
 }
@@ -148,6 +154,7 @@
 }
 
 @media (width <=768px) {
+
   .cards.dark:not(.carousel, .boxed),
   .cards.accent:not(.carousel, .boxed) {
     grid-template-columns: 1fr;
@@ -198,6 +205,7 @@
   color: var(--text-muted);
   margin: 0;
 }
+
 
 @media (width <=768px) {
   .cards.icons {
@@ -370,6 +378,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   .cards.carousel .cards-card-image,
   .cards.carousel .cards-card-body,
   .cards.carousel .cards-track>div::before {
@@ -505,6 +514,7 @@
 }
 
 @media (width <=768px) {
+
   .cards.carousel .cards-track>div,
   .cards.boxed .cards-track>div {
     flex-basis: 260px;
@@ -620,23 +630,19 @@
   }
 }
 
-/* HIGH-1 fix (issue-574): /events accent carousel card titles match prod at
-18px — scoped to .accent.carousel so other carousel/cards variants are
-unaffected (plain .carousel stays at var(--heading-font-size-m) = 24px). */
-.cards.accent.carousel .cards-card-body h3 { font-size: var(--heading-font-size-xs); }
+.cards.accent.carousel .cards-card-body h3 {
+  font-size: var(--heading-font-size-xs);
+}
 
-/* HIGH-3 fix (issue-574): "Resources for growing businesses" section heading
-in the .cards-container that wraps the accent carousel — prod renders it at
-40px/700. Scoped with :has(.cards.accent.carousel) so the dark-carousel and
-icon-card sections on other pages are unaffected. */
 .section.cards-container:has(.cards.accent.carousel) .default-content-wrapper h2 {
-font-size: 40px;
-font-weight: 700;
+  font-size: 40px;
+  font-weight: 700;
 }
 
 
 .cards.minimal {
-  > div {
+  >div {
+    position: relative;
     flex-direction: row;
     justify-content: center;
     align-items: center;
@@ -648,9 +654,17 @@ font-weight: 700;
   }
 }
 
+/* whole card clickable: stretch the first link over the card (see cards.js) */
+.cards.minimal .cards-card-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+}
+
 .cards.divider {
-  > div {
-    border-right: 1px solid rgba(0,0,0,.2);
+  >div {
+    border-right: 1px solid rgba(0, 0, 0, .2);
 
     &:last-child {
       border-right: 0;

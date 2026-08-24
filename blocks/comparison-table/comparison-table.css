@@ -99,3 +99,81 @@
      edge so it never drifts out of view when scrolled fully right */
   .comparison-table .cmp-footnote td p { position: sticky; left: 0; max-width: calc(100vw - 60px); }
 }
+
+/* ---- .simple variant: logo headers above a rounded card; each cell is a
+   status icon (blue check / orange dot) stacked over centred copy, no
+   row-label column. See decorateSimple in comparison-table.js. ---- */
+.comparison-table .cmp-simple { max-width: 1134px; margin: 0 auto; }
+
+.comparison-table .cs-head {
+  display: grid;
+  grid-template-columns: repeat(var(--cs-cols, 2), 1fr);
+  align-items: center;
+  margin: 0 0 28px;
+}
+.comparison-table .cs-logo { display: flex; align-items: center; justify-content: center; }
+.comparison-table .cs-logo img { max-height: 44px; width: auto; }
+
+.comparison-table .cs-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.comparison-table .cs-band {
+  background: var(--info);
+  color: #fff;
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.4;
+  padding: 16px 32px;
+}
+
+.comparison-table .cs-row {
+  display: grid;
+  grid-template-columns: repeat(var(--cs-cols, 2), 1fr);
+}
+.comparison-table .cs-row + .cs-row { border-top: 1px solid var(--line); }
+
+.comparison-table .cs-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 28px 32px;
+  text-align: center;
+}
+
+.comparison-table .cs-cell p {
+  margin: 0;
+  max-width: 40ch;
+  font-size: 18px;
+  line-height: 1.4;
+  color: #000;
+}
+
+.comparison-table .cs-ic {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+}
+
+/* blue check — same border trick as .yes .ck, larger */
+.comparison-table .cs-check { position: relative; width: 22px; height: 22px; }
+
+.comparison-table .cs-check::after {
+  content: ""; position: absolute; left: 7px; top: 1px; width: 8px; height: 15px;
+  border: solid var(--info); border-width: 0 3px 3px 0; transform: rotate(45deg);
+}
+
+/* orange status dot */
+.comparison-table .cs-dot { width: 12px; height: 12px; border-radius: 50%; background: #ec8b2f; }
+
+@media (width <= 768px) {
+  .comparison-table .cs-band { font-size: 17px; padding: 14px 20px; }
+  .comparison-table .cs-cell { padding: 20px 16px; }
+  .comparison-table .cs-cell p { font-size: 15px; }
+  .comparison-table .cs-logo img { max-height: 32px; }
+}

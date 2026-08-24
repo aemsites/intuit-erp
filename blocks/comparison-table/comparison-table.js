@@ -166,7 +166,95 @@ function valueCell(cell) {
   return td;
 }
 
+/**
+ * Reads a leading status marker off a simple-variant cell and returns the icon
+ * type plus the remaining copy. Markers are a glyph (✓ ✔ / ● • · ○ / ✗ ✘) or a
+ * keyword (yes|check|included / no|partial|limited|x); anything else is plain
+ * text with no icon.
+ * @param {string} raw
+ * @returns {{icon: ('check'|'dot'|null), text: string}}
+ */
+function markerOf(raw) {
+  const t = (raw || '').trim();
+  if (!t) return { icon: null, text: '' };
+  const g = t[0];
+  if (g === '✓' || g === '✔') return { icon: 'check', text: t.slice(1).trim() };
+  if ('●•·○✗✘'.includes(g)) return { icon: 'dot', text: t.slice(1).trim() };
+  const word = t.split(/\s+/)[0].toLowerCase();
+  const sp = t.indexOf(' ');
+  const rest = sp === -1 ? '' : t.slice(sp + 1).trim();
+  if (['yes', 'check', 'included'].includes(word)) return { icon: 'check', text: rest };
+  if (['no', 'partial', 'limited', 'x'].includes(word)) return { icon: 'dot', text: rest };
+  return { icon: null, text: t };
+}
+
+/**
+ * `.simple` variant — logo column headers above a rounded card, one blue band
+ * header, then rows of centred icon-over-text cells (no row-label column).
+ * Row 1 = column headers (logos/images or text); a single-cell row is a band
+ * header; every other row is N value cells parsed by {@link markerOf}.
+ * @param {Element} block
+ */
+function decorateSimple(block) {
+  const rows = [...block.children];
+  if (!rows.length) return;
+
+  const headCells = [...rows[0].children];
+  const ncol = headCells.length;
+  block.style.setProperty('--cs-cols', ncol);
+
+  const head = document.createElement('div');
+  head.className = 'cs-head';
+  headCells.forEach((cell) => {
+    const logo = document.createElement('div');
+    logo.className = 'cs-logo';
+    logo.append(...cell.childNodes);
+    head.append(logo);
+  });
+
+  const card = document.createElement('div');
+  card.className = 'cs-card';
+
+  rows.slice(1).forEach((row) => {
+    const cells = [...row.children];
+    const nonEmpty = cells.filter((c) => c.textContent.trim());
+    if (cells.length === 1 || nonEmpty.length === 1) {
+      const band = document.createElement('div');
+      band.className = 'cs-band';
+      band.textContent = (nonEmpty[0] || cells[0]).textContent.trim();
+      card.append(band);
+      return;
+    }
+    const tr = document.createElement('div');
+    tr.className = 'cs-row';
+    cells.forEach((cell) => {
+      const { icon, text } = markerOf(cell.textContent);
+      const cellEl = document.createElement('div');
+      cellEl.className = 'cs-cell';
+      if (icon) {
+        const ic = document.createElement('span');
+        ic.className = `cs-ic cs-${icon}`;
+        cellEl.append(ic);
+      }
+      const p = document.createElement('p');
+      p.textContent = text;
+      cellEl.append(p);
+      tr.append(cellEl);
+    });
+    card.append(tr);
+  });
+
+  const wrap = document.createElement('div');
+  wrap.className = 'cmp-simple';
+  wrap.append(head, card);
+  block.replaceChildren(wrap);
+}
+
 export default function decorate(block) {
+  if (block.classList.contains('simple')) {
+    decorateSimple(block); return;
+  }
+
   const rows = [...block.children];
   if (!rows.length) return;
 

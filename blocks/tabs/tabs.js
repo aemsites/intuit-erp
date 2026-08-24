@@ -617,6 +617,6 @@ export default function decorate(block) {
   const items = parseItems(block);
   if (block.classList.contains('pill')) renderPillTabs(block, items);
   else if (block.classList.contains('vertical')) renderVerticalAccordion(block, items);
-  else if (block.classList.contains('vertical-panel') || block.classList.contains('navy')) renderVerticalPanel(block, items);
+  else if (block.classList.contains('vertical-panel')) renderVerticalPanel(block, items);
   else renderHorizontalTabs(block, items);
 }

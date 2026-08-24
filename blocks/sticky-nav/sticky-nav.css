@@ -5,6 +5,7 @@ main > .section:has(.sticky-nav) > div {
 .sticky-nav {
   background: #fff;
   border-bottom: 4px solid var(--line);
+  margin-bottom: 5rem;
 }
 
 .sticky-nav.is-fixed {
