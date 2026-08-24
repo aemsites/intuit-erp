@@ -229,7 +229,11 @@ async function embedMarketoForm(formEl, cfg, config, env) {
       el.className = 'form-disclaimer';
       el.innerHTML = config.disclaimer;
       const buttonRow = formEl.querySelector('.mktoButtonRow');
-      if (buttonRow && disclaimerBelowFields(formEl)) {
+      // `disclaimer-below` variant forces the disclaimer under the submit button
+      const below = formEl.closest('.form')?.classList.contains('disclaimer-below');
+      if (buttonRow && below) {
+        buttonRow.after(el);
+      } else if (buttonRow && disclaimerBelowFields(formEl)) {
         formEl.insertBefore(el, buttonRow);
       } else {
         formEl.parentNode.insertBefore(el, formEl);
