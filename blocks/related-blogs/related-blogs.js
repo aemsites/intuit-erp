@@ -59,12 +59,16 @@ function buildCard({
     body.append(dateEl);
   }
 
-  // thumbnail wrapper (display:contents — no layout change) carries the `image`
-  // trail slot so the thumbnail fires its own beacon (#769)
+  // thumbnail + body wrappers (display:contents — no layout change) carry the
+  // `image` / `qrc_content_card_content` trail slots so each fires its own beacon
+  // (#769): a click on the thumbnail vs. the body text reports a distinct slot.
   const imageWrap = document.createElement('span');
   imageWrap.className = 'related-blogs-image';
   imageWrap.append(img);
-  a.append(imageWrap, body);
+  const contentSlot = document.createElement('span');
+  contentSlot.className = 'related-blogs-content-slot';
+  contentSlot.append(body);
+  a.append(imageWrap, contentSlot);
 
   return a;
 }
@@ -113,14 +117,24 @@ export default async function decorate(block) {
     block.append(btn);
   }
 
-  // Click tracking: card = qrc_content_card, thumbnail = its own `image` beacon
-  // (#769); content links report engaged; "Load more" is skipped.
+  // Click tracking: card = qrc_content_card; thumbnail + body each fire their own
+  // beacon (#769) — the thumbnail an `image` (no link_name, as prod), the body a
+  // `qrc_content_card_content` slot (keeps link_name). "Load more" is skipped.
   trackAs('qrc_content_card_grid', block, {
     key: 'related-blogs',
     linkName: false,
     action: 'engaged',
     skip: '.related-blogs-load-more',
-    items: { '.related-blogs-card': 'qrc_content_card', '.related-blogs-image': 'image' },
-    alsoTrack: { '.related-blogs-image img': 'button' },
+    items: {
+      '.related-blogs-card': 'qrc_content_card',
+      '.related-blogs-image': 'image',
+      '.related-blogs-content-slot': 'qrc_content_card_content',
+    },
+    // the body slot keeps its link_name here (prod does on this rail — though prod
+    // truncates it to ~47 chars; we emit the full, richer value).
+    alsoTrack: {
+      '.related-blogs-image img': 'button',
+      '.related-blogs-body': { as: 'button', linkName: true },
+    },
   });
 }

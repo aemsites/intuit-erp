@@ -43,10 +43,23 @@ export const stripBc = (v) => (typeof v === 'string' ? v.replace(/ \[[^\]]*\]$/,
 
 // non-CTA keys our tracking layer owns (vs. structural markup deltas)
 const CLOSEABLE_NONCTA = new Set(['video']);
-// blocks wired with alsoTrack image beacons — their `…|image` parts are closeable
+// blocks wired with alsoTrack slot beacons — their `…|image` (thumbnail) and
+// `…|qrc_content_card_content` (body) parts are closeable
 const ALSO_TRACK_WIRED = new Set(['related-blogs', 'dynamic_category_container']);
 export const isImagePart = (e) => e.nonCta && /\|image$/.test(e.exp.ui_access_point || '') && ALSO_TRACK_WIRED.has(e.key);
-export const isStructural = (e) => e.nonCta && !CLOSEABLE_NONCTA.has(e.key) && !isImagePart(e);
+export const isContentPart = (e) => e.nonCta && /\|qrc_content_card_content$/.test(e.exp.ui_access_point || '') && ALSO_TRACK_WIRED.has(e.key);
+// blog-cards paginated "Load More" — prod's href-less <a>; ours a real <button>
+// under the …|oisp_loadmore|button trail.
+export const isLoadMore = (e) => e.nonCta && /\|oisp_loadmore\|button$/.test(e.exp.ui_access_point || '') && ALSO_TRACK_WIRED.has(e.key);
+export const isStructural = (e) => e.nonCta && !CLOSEABLE_NONCTA.has(e.key) && !isImagePart(e) && !isContentPart(e) && !isLoadMore(e);
+
+// A testimonial carousel dot/nav control (a button with no detail — the pager
+// dots and prev/next arrows live outside the story cards) — stays at the block
+// trail; story card/frame CTAs (video links, "View the results") get the
+// rw_testimonial_item slot.
+function isTestimonialDot(e) {
+  return e.exp.ui_object === 'button' && !(e.exp.ui_object_detail || '').trim();
+}
 
 // How each component key is wired TODAY. trail(i) -> data-tracking chain
 // (broad->specific); scope header|footer|main; sheetKey overrides sheet lookup.
@@ -54,7 +67,9 @@ const BLOCK = {
   hero: { trail: () => 'rw2_hero', scope: 'main' },
   cards: { trail: (i) => `rw_cards_container|carousel|rw_card_${i}`, linkName: false, scope: 'main' },
   faq: { trail: () => 'accordion', linkName: false, scope: 'main' },
-  testimonial: { trail: () => 'rw_testimonial', linkName: false, scope: 'main' },
+  // each story card/frame is an rw_testimonial_item slot; the carousel dots
+  // (button, empty detail, numeric label) stay at the block level.
+  testimonial: { trail: (i, e) => (isTestimonialDot(e) ? 'rw_testimonial' : 'rw_testimonial|rw_testimonial_item'), linkName: false, scope: 'main' },
   'related-blogs': { trail: () => 'qrc_content_card_grid', action: 'engaged', linkName: false, scope: 'main' },
   'case-study-header': { trail: () => 'qrc_article_hero', linkName: false, scope: 'main' },
   social: { trail: () => 'social_media', scope: 'main', sheetKey: 'case-study-header' },
@@ -91,22 +106,72 @@ export function oursPayload(entry, idx, sheet) {
       const d = document.createElement('div'); d.setAttribute('data-tracking', seg); host.append(d); host = d;
     });
     const img = document.createElement('img');
-    // the real thumbnail's alt is the card title (related-blogs/blog-cards set it);
-    // the golden captured empty text for <picture>, so reconstruct from the detail
-    img.setAttribute('alt', entry.text || entry.exp.ui_object_detail || '');
+    // our thumbnail's alt IS the card title (related-blogs/blog-cards pass title to
+    // createOptimizedPicture), which is what prod reports as the detail — not prod's
+    // own img alt (a headshot/image alt the golden captured in `text`).
+    img.setAttribute('alt', entry.exp.ui_object_detail || entry.text || '');
     img.setAttribute('data-track-as', 'button');
+    img.setAttribute('data-track-link-name', 'off'); // alsoTrack drops link_name on image beacons
     host.append(img);
     document.body.append(root);
     try {
-      stampCta(img, resolveCta(deriveForCta(img, '', 'erp.intuit.com'), null, {}));
+      const d = deriveForCta(img, '', 'erp.intuit.com');
+      delete d['custom-properties'].link_name;
+      stampCta(img, resolveCta(d, null, {}));
       return computeTrackingPayload(img);
+    } finally { root.remove(); }
+  }
+  // alsoTrack content-slot part: the card body under the …|qrc_content_card_content
+  // trail. Pure-derive, KEEPS link_name (prod authors button-<title> on the slot);
+  // detail comes from the body's title (partLabel prefers a heading/*-title).
+  if (isContentPart(entry)) {
+    const root = document.createElement('main');
+    let host = root;
+    entry.exp.ui_access_point.split('|').forEach((seg) => {
+      const d = document.createElement('div'); d.setAttribute('data-tracking', seg); host.append(d); host = d;
+    });
+    const body = document.createElement('div');
+    body.setAttribute('data-track-as', 'button');
+    const title = document.createElement('h3');
+    title.textContent = entry.exp.ui_object_detail || entry.text || '';
+    body.append(title);
+    // blog-index (dynamic_category_container) content slots omit link_name; the
+    // related-blogs rail keeps a (truncated) one — mirror each block's wiring.
+    const dropLinkName = entry.key === 'dynamic_category_container';
+    if (dropLinkName) body.setAttribute('data-track-link-name', 'off');
+    host.append(body);
+    document.body.append(root);
+    try {
+      const d = deriveForCta(body, '', 'erp.intuit.com');
+      if (dropLinkName) delete d['custom-properties'].link_name;
+      stampCta(body, resolveCta(d, null, {}));
+      return computeTrackingPayload(body);
+    } finally { root.remove(); }
+  }
+  // "Load More" button: a real <button> under the …|oisp_loadmore|button trail
+  // (the button's own data-tracking is the skipped leaf); block linkName is off.
+  if (isLoadMore(entry)) {
+    const root = document.createElement('main');
+    let host = root;
+    entry.exp.ui_access_point.split('|').forEach((seg) => {
+      const d = document.createElement('div'); d.setAttribute('data-tracking', seg); host.append(d); host = d;
+    });
+    const btn = document.createElement('button');
+    btn.textContent = entry.text || 'Load More';
+    host.append(btn);
+    document.body.append(root);
+    try {
+      const d = deriveForCta(btn, '', 'erp.intuit.com');
+      delete d['custom-properties'].link_name;
+      stampCta(btn, resolveCta(d, null, {}));
+      return computeTrackingPayload(btn);
     } finally { root.remove(); }
   }
   const cfg = BLOCK[entry.key]; // undefined => pure-derive page path
   const region = regionOf(entry.key);
   const scope = document.createElement(region);
   let trailStr = '';
-  if (cfg && cfg.trail) trailStr = cfg.trail(idx + 1);
+  if (cfg && cfg.trail) trailStr = cfg.trail(idx + 1, entry);
   else if (entry.key === 'footer') trailStr = entry.exp.ui_access_point || 'footer'; // footer trail is fully structural (footer.js replicates prod; verified on preview)
   let host = scope;
   (trailStr ? trailStr.split('|') : []).forEach((seg) => { const d = document.createElement('div'); d.setAttribute('data-tracking', seg); host.append(d); host = d; });

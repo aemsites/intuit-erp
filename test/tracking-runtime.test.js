@@ -4,7 +4,9 @@ import {
 import {
   trackingKey, blockNameOf, sheetRowFor, deriveForCta,
   stampTrail, resolveTrackable, stampInteraction, initTracking, resetTrackingState, trackAs,
+  partLabel,
 } from '../scripts/tracking.js';
+import { computeTrackingPayload } from '../scripts/diff/tracker-replica.mjs';
 
 describe('trackingKey', () => {
   it('extracts the key from a tracking-<key> class', () => {
@@ -293,6 +295,18 @@ describe('Phase 3: icon-only link detection (link_icon)', () => {
   });
 });
 
+describe('partLabel (a slot part is named by its title, not its flowing text)', () => {
+  it('prefers a heading / *-title element over the full text content', () => {
+    document.body.innerHTML = '<div class="body"><p>Product Update</p>'
+      + '<h3 class="card-title">The Real Title</h3><p>Jan 1, 2026</p></div>';
+    expect(partLabel(document.querySelector('.body'))).toBe('The Real Title');
+  });
+  it('falls back to labelFor (an image part reads its own alt) when there is no title', () => {
+    document.body.innerHTML = '<img alt="Thumbnail Alt">';
+    expect(partLabel(document.querySelector('img'))).toBe('Thumbnail Alt');
+  });
+});
+
 describe('Phase 5: link_name page-host suffix', () => {
   beforeEach(() => { document.body.innerHTML = ''; });
 
@@ -383,6 +397,62 @@ describe('trackAs — declarative block opt-in from decorate()', () => {
     expect(img.getAttribute('data-tracking')).toBe('button'); // sacrificial leaf
     // a click in the body resolves to the card anchor, not a part
     expect(resolveTrackable(block.querySelector('.rb-body')).cta.tagName).toBe('A');
+  });
+
+  it('alsoTrack: an image beacon omits link_name (prod does), a content slot keeps it', () => {
+    document.body.innerHTML = '<main><div class="rb block">'
+      + '<a class="rb-card" href="#"><span class="rb-image"><img alt="Card Title"></span>'
+      + '<span class="rb-slot"><div class="rb-body"><h3 class="rb-title">Card Title</h3>'
+      + '<p>Product Update</p></div></span></a></div></main>';
+    const block = document.querySelector('.rb');
+    trackAs('qrc_content_card_grid', block, {
+      key: 'rb',
+      items: {
+        '.rb-card': 'qrc_content_card', '.rb-image': 'image', '.rb-slot': 'qrc_content_card_content',
+      },
+      alsoTrack: {
+        '.rb-image img': 'button', // string => link_name OFF
+        '.rb-body': { as: 'button', linkName: true }, // content slot keeps it
+      },
+    });
+    const img = block.querySelector('img');
+    const body = block.querySelector('.rb-body');
+    expect(img.getAttribute('data-track-link-name')).toBe('off');
+    expect(body.hasAttribute('data-track-link-name')).toBe(false);
+
+    // image beacon: no link_name in custom-properties
+    stampInteraction({ target: img });
+    expect(img.getAttribute('data-custom-properties') || '').not.toMatch(/link_name/);
+    expect(computeTrackingPayload(img).ui_access_point)
+      .toBe('qrc_content_card_grid|qrc_content_card|image');
+
+    // content-slot beacon: detail = the title (not the flowing body text), trail
+    // ends qrc_content_card_content, link_name derived from the title
+    stampInteraction({ target: block.querySelector('.rb-title') });
+    expect(body.getAttribute('data-ui-object')).toBe('button');
+    expect(body.getAttribute('data-ui-object-detail')).toBe('Card Title');
+    expect(body.getAttribute('data-custom-properties')).toMatch(/link_name\|button-card-title/);
+    expect(computeTrackingPayload(block.querySelector('.rb-title')).ui_access_point)
+      .toBe('qrc_content_card_grid|qrc_content_card|qrc_content_card_content');
+  });
+
+  it('items + a display:contents button wrapper produce a …|oisp_loadmore|button trail', () => {
+    document.body.innerHTML = '<main><div class="bc block">'
+      + '<div class="lm"><span class="lm-btn"><button type="button">Load More</button></span></div>'
+      + '</div></main>';
+    const block = document.querySelector('.bc');
+    trackAs('dynamic_category_container', block, {
+      key: 'dynamic_category_container',
+      linkName: false,
+      items: { '.lm': 'oisp_loadmore', '.lm-btn': 'button' },
+    });
+    const btn = block.querySelector('button');
+    stampInteraction({ target: btn });
+    expect(btn.getAttribute('data-ui-object')).toBe('button');
+    expect(btn.getAttribute('data-ui-object-detail')).toBe('Load More');
+    expect(btn.getAttribute('data-custom-properties') || '').not.toMatch(/link_name/); // block linkName off
+    expect(computeTrackingPayload(btn).ui_access_point)
+      .toBe('dynamic_category_container|oisp_loadmore|button');
   });
 
   it('respects an authored opt-in + explicit data-tracking (never overwrites)', () => {

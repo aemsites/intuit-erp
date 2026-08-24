@@ -107,9 +107,15 @@ trails come from one `trackAs` option — `items`, a selector → segment map fo
 **`(index, el) => string`** for repeated/indexed children (cards → `rw_cards_container|carousel|rw_card_N`).
 Explicit authored `data-tracking` in markup always wins.
 
-`items` only stamps the **trail**. Making a non-CTA element (a card's `img`/`picture`) emit its **own
-beacon** is a separate, not-yet-built concept reserved as `alsoTrack` (a selector → `ui_object` map) —
-see #769.
+`items` only stamps the **trail**. Making a non-CTA element emit its **own beacon** is `alsoTrack`
+(#769) — a selector → `ui_object` map. Each match gets `data-track-as=<ui_object>` so a click resolves
+to it (nearest-wins over the enclosing CTA) and derives `object=content` + that `ui_object`; the
+detail comes from `partLabel` (an element's heading / `*-title`, else its `img[alt]` — the card title,
+matching prod). A part is **pure-derive** (no sheet) and **drops `link_name` by default** (prod omits
+it on thumbnails); a slot that authors one — the card **content slot** — opts back in with
+`{ as, linkName: true }`. Pair `alsoTrack` with `items` on a `display:contents` wrapper so the trail
+carries the slot leaf. Card blocks wire two such wrappers per card: the thumbnail
+(`…|qrc_content_card|image`, no link_name) and the body (`…|qrc_content_card|qrc_content_card_content`).
 
 ---
 
@@ -132,22 +138,26 @@ Golden fixtures with customer campaign codes stay **local + gitignored**
 **Implemented and wired.** `scripts/tracking.js` is loaded lazily from `scripts.js`; blocks declare
 their tracking via `trackAs` (hero, cards, faq, testimonial, footer, header nav + secondary-nav,
 related-blogs, case-study-header, video, quick-links, cta-band, contact-us/talk-to-sales, blog-template
-author-bio) and card thumbnails fire their own beacon via `alsoTrack` (related-blogs, blog-cards).
+author-bio). Card blocks (related-blogs, blog-cards) fire per-slot beacons via `alsoTrack`: the
+thumbnail (`…|image`) and the body content slot (`…|qrc_content_card_content`); the blog index also
+reproduces its paginated **Load More** (`…|oisp_loadmore|button`).
 
 **Parity is measured over every beacon prod fires** (`node scripts/diff/parity-gate.mjs`) — currently
-**87% of the 724 golden beacons** across 15 pages (664 reproduced; of those, ~95% field-fidelity). The
-remaining ~60 all *fire on prod* and are reproducible, but need markup/wrapper work we haven't done:
+**95.6% of the 724 golden beacons** across 15 pages (717 reproduced; ~96.5% field-fidelity). What
+remains (~4.4%) is **not** clean runtime work — see `CLICK-TRACKING-PATH-TO-100.md` for the full
+per-cell breakdown:
 
-- **card content slots** (~45) — the body-click beacon `…|qrc_content_card|qrc_content_card_content`.
-  Needs a body-slot wrapper per card block; reproduces prod's *redundant* text-vs-image split, so
-  deprioritized.
-- **load-more** (8, href-less `<a>` under `…|oisp_loadmore|button`), **secondary-nav sub-items** (6,
-  our flyout buttons vs prod's link nav + a search input), **pause-button** (1) — small, each needs a
-  wrapper/restructure.
-
-Separately, some reproduced beacons still miss a field for **prod-side reasons** (we emit a clean/
-superset value): inconsistent `link_name` omission + truncated/special-char format, empty
-`ui_object_detail` on dots/ToC, inconsistent `video` trails. Plus markup-structure deltas #765, #769.
+- **Bucket B — EDS markup limitation (~2.1%)**: secondary-nav (our button flyout vs prod's link nav +
+  search input + nested submenus), the disclaimer + product_banner components (not ported), the
+  case-study-header share/ToC nesting (#765), the video pause control, and the faq answer-body links
+  (would need a CSS restructure — the `.faq-toggle + .faq-panel` sibling selector blocks isolating the
+  toggle's `accordion` trail). A team call: restructure vs. accept.
+- **Bucket C — pure prod inconsistency (~1.9%)**: prod's `video` trail is stamped 1×/2×/3× for the
+  same control; `link_name` is authored inconsistently and truncated to ~47 chars on the related-blogs
+  rail; `ui_access_point` opt-in is uneven on loose CTAs. We emit the clean/superset value. A customer
+  call: fix prod, author the sheet, or accept the superset.
+- **Kept richer by choice (~0.5%)**: prod emits an empty `ui_object_detail` on carousel dots + ToC
+  entries; we keep the real label rather than blank a truthful value.
 
 ## Authoring the residue sheet
 

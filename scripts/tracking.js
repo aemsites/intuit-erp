@@ -492,6 +492,21 @@ export function labelFor(el) {
 }
 
 /**
+ * The accessible name for an alsoTrack "part" (a non-CTA beacon source like a
+ * card's body/thumbnail). A content container's name is its TITLE, not its full
+ * flowing text (category + title + date), so prefer a heading or a `*-title`
+ * element; falls back to labelFor (an image part's own alt, which we set to the
+ * card title). Matches prod, which reports the card title as a slot's detail.
+ * @param {Element} el
+ * @returns {string}
+ */
+export function partLabel(el) {
+  const title = el.querySelector && el.querySelector('h1, h2, h3, h4, h5, h6, [class$="-title"]');
+  const t = title && (title.textContent || '').trim();
+  return t || labelFor(el);
+}
+
+/**
  * Derive the baseline for a live element, detecting video links (YouTube/Vimeo)
  * so they map to object=video / ui_object=video_link. Exported so the Node dev
  * tools (harness, extractor) derive exactly as the runtime does.
@@ -510,7 +525,7 @@ export function deriveForCta(el, blockName, host = '') {
   const isIcon = !partKind && !isVideo && !(el.textContent || '').trim() && !!el.querySelector('img, svg, picture, .icon');
   return deriveBaseline({
     tagName: el.tagName,
-    label: labelFor(el),
+    label: partKind ? partLabel(el) : labelFor(el),
     blockName,
     isButtonStyled: el.tagName === 'BUTTON' || el.classList.contains('button'),
     isVideo,
@@ -690,10 +705,17 @@ export function stampInteraction(e) {
   if (!isPart) idx = block ? ctasIn(block).indexOf(cta) : pageCtas(document).indexOf(cta);
   const row = isPart ? null : sheetRowFor(sheetMap, key, idx, loc.pathname);
   // Parts are pure-derive (their ui_object is data-track-as); they do NOT inherit
-  // the block's CTA payload defaults (e.g. a card grid's action=engaged).
-  const derived = isPart
-    ? deriveForCta(cta, blockName, host)
-    : applyBlockDefaults(deriveForCta(cta, blockName, host), cta);
+  // the block's CTA payload defaults (e.g. a card grid's action=engaged) — the one
+  // exception is link-name-off, which alsoTrack stamps on the part itself (prod
+  // omits link_name on image beacons but keeps it on content slots).
+  let derived = deriveForCta(cta, blockName, host);
+  if (isPart) {
+    if (cta.getAttribute('data-track-link-name') === 'off' && derived['custom-properties']) {
+      delete derived['custom-properties'].link_name;
+    }
+  } else {
+    derived = applyBlockDefaults(derived, cta);
+  }
   const regionCtx = resolveRegionContext(cta);
   const context = regionCtx ? { customProperties: regionCustomProperties(regionCtx) } : {};
   stampCta(cta, resolveCta(derived, row, context));
@@ -824,10 +846,18 @@ export function trackAs(name, block, {
   // selector -> ui_object map. Each match gets data-track-as=<ui_object> so the
   // delegated handler resolves clicks to it (nearest-wins) and derives a beacon
   // with that ui_object. Pure-derive; the trail comes from `items` on wrappers.
+  // A value can be a bare ui_object string, or `{ as, linkName }` — link_name is
+  // dropped by default (prod omits it on card thumbnails/image beacons), so a
+  // slot that DOES carry it (a content slot: button-<title>) opts back in with
+  // `linkName: true`.
   if (alsoTrack) {
-    Object.entries(alsoTrack).forEach(([sel, uio]) => {
+    Object.entries(alsoTrack).forEach(([sel, val]) => {
+      const as = typeof val === 'string' ? val : val && val.as;
+      const keepLinkName = typeof val === 'object' && val.linkName === true;
       block.querySelectorAll(sel).forEach((el) => {
-        if (uio && !el.hasAttribute('data-track-as')) el.setAttribute('data-track-as', String(uio));
+        if (!as || el.hasAttribute('data-track-as')) return;
+        el.setAttribute('data-track-as', String(as));
+        if (!keepLinkName) el.setAttribute('data-track-link-name', 'off');
       });
     });
   }

@@ -573,8 +573,13 @@ function buildCardCarousel(figures) {
 }
 
 export default function decorate(block) {
-  // Customer proof -> rw_testimonial trail (homepage variant authored `page`); link_name off.
-  const track = () => trackAs('rw_testimonial', block, { key: 'testimonial', linkName: false });
+  // Customer proof -> rw_testimonial trail; each story card/frame is an
+  // rw_testimonial_item slot (the carousel dots stay at the block level). link_name off.
+  const track = () => trackAs('rw_testimonial', block, {
+    key: 'testimonial',
+    linkName: false,
+    items: { '.testimonial-card, .video-frame': 'rw_testimonial_item' },
+  });
   if (block.classList.contains('card')) {
     const figures = [...block.querySelectorAll(':scope > div')].map(buildCard);
     if (block.classList.contains('carousel')) {
