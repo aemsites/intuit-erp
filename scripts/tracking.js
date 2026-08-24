@@ -8,9 +8,11 @@
  * its trail segment + payload defaults via trackAs (the `tracking-<key>`
  * machinery), but that is a DECLARATION, not a gate: a CTA in no such block still
  * tracks, with pure-derive defaults (object=content) under the `page` key. Pure-UI
- * controls (toggles, hamburger, cookie/consent) opt OUT via data-track-skip, and
- * injected chrome (OneTrust, dev sidekick, body-root widgets) is excluded by the
- * region gate. PREFIX names the declaration class.
+ * controls (toggles, hamburger) opt OUT via data-track-skip, and injected consent
+ * chrome (the OneTrust banner/floating widget, dev sidekick, body-root widgets) is
+ * excluded by the region gate. (The footer's own "Manage cookies" link lives in
+ * <footer> and is tracked like any CTA — it is NOT opted out.) PREFIX names the
+ * declaration class.
  *
  * Loaded LAZILY from scripts.js (like pzn/exp): tracking is not render-critical,
  * so it never sits on the eager/LCP module graph. Option B (data-layer):

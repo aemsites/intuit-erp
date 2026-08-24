@@ -72,8 +72,11 @@ function renderColumns(columns) {
 }
 
 function renderLegalCopy(copyHtml) {
-  // Cookie preferences row is wired to the OneTrust widget, not authored.
-  const cookieRow = '<p class="footer-copy"><a href="https://security.intuit.com/index.php/intuit-cookie-policy/">About cookies</a> | <button type="button" class="ot-sdk-show-settings footer-copy-btn">Manage cookies</button></p>';
+  // Cookie-preferences row (not authored). "Manage cookies" is an anchor matching
+  // production — wireCookiePreferences() opens the OneTrust preference centre with an
+  // intuit_gdpr fallback. No `ot-sdk-show-settings` hook, so OneTrust neither binds the
+  // click nor overwrites the label.
+  const cookieRow = '<p class="footer-copy"><a href="https://security.intuit.com/index.php/intuit-cookie-policy/">About cookies</a> | <a href="#" class="footer-copy-btn">Manage cookies</a></p>';
   return `${copyHtml}\n            ${cookieRow}`;
 }
 
@@ -204,17 +207,23 @@ function wireCountry(block) {
   });
 }
 
-// The OneTrust widget (wired via the .ot-sdk-show-settings class) overwrites
-// this button's label from its own account config once it loads, clobbering
-// our "Manage cookies" casing (issue #79) — keep correcting it back rather
-// than fighting OneTrust for the click-wiring itself.
-function normalizeCookieLabel(block) {
-  const btn = block.querySelector('.ot-sdk-show-settings');
-  if (!btn) return;
-  const desired = 'Manage cookies';
-  const fix = () => { if (btn.textContent !== desired) btn.textContent = desired; };
-  fix();
-  new MutationObserver(fix).observe(btn, { childList: true, characterData: true, subtree: true });
+// "Manage cookies" opens the OneTrust preference centre, mirroring production's
+// two-branch handler: OneTrust.ToggleInfoDisplay(), falling back to
+// intuit_gdpr.showCookiePreference() when the OneTrust SDK hasn't loaded (the consent
+// CDN is fail-open, so the control still works). A `javascript:` href can't be used —
+// the page enforces Trusted Types + strict-dynamic — so it is a real click handler.
+function wireCookiePreferences(block) {
+  const link = block.querySelector('.footer-copy-btn');
+  if (!link) return;
+  link.addEventListener('click', (e) => {
+    e.preventDefault();
+    const ot = window.OneTrust;
+    if (ot && typeof ot.ToggleInfoDisplay === 'function') {
+      ot.ToggleInfoDisplay();
+    } else if (window.intuit_gdpr && typeof window.intuit_gdpr.showCookiePreference === 'function') {
+      window.intuit_gdpr.showCookiePreference();
+    }
+  });
 }
 
 export default async function decorate(block) {
@@ -228,7 +237,7 @@ export default async function decorate(block) {
   block.innerHTML = buildChrome(columns, legal);
   wireAccordions(block);
   wireCountry(block);
-  normalizeCookieLabel(block);
+  wireCookiePreferences(block);
   // Resource Center search (issue #60): the "Search this site" input submits
   // to /blog/search on Enter.
   wireFooterSearch(block);
