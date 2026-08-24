@@ -266,11 +266,20 @@ async function embedMarketoForm(formEl, cfg, config, env) {
 }
 
 export default async function decorate(block) {
-  const config = parseFormConfig(block);
+  // blocks/modal/modal.js clones + force-redecorates cached fragments, so this can run
+  // twice; the 2nd pass sees the <form> shell from the 1st, not the original config rows.
+  const stashedConfig = block.dataset.formConfig;
+  let config;
+  try {
+    config = stashedConfig ? JSON.parse(stashedConfig) : parseFormConfig(block);
+  } catch (e) {
+    config = parseFormConfig(block); // corrupt stash — fall back rather than throw
+  }
   if (!config.formId) {
     block.replaceChildren();
     return;
   }
+  if (!stashedConfig) block.dataset.formConfig = JSON.stringify(config);
   if (config.downloadUrl) block.classList.add('download');
 
   const children = [];
