@@ -20,6 +20,10 @@
   font-family: var(--body-font-family, "AvenirNext forINTUIT", helvetica, arial, sans-serif);
 }
 
+.contact-us:hover {
+    text-decoration: underline;
+}
+
 .contact-us button {
   margin: 0;
   font-family: inherit;
