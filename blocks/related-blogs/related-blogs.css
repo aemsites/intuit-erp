@@ -117,9 +117,9 @@
 
   .related-blogs.blog-rail .related-blogs-card img {
     flex-shrink: 0;
-    width: 80px;
-    height: 80px;
-    aspect-ratio: 1;
+    width: 84px;
+    height: 96px;
+    aspect-ratio: unset;
     border-radius: 8px;
   }
 
