@@ -263,6 +263,15 @@ button {
   font: inherit;
 }
 
+/* text alignment classes */
+.left {
+  text-align: left;
+}
+
+.center {
+  text-align: center;
+}
+
 /* links */
 a:any-link {
   color: var(--link-color);
@@ -447,8 +456,7 @@ main .section.super-blue :is(h1, h2, h3, h4, h5, h6) {
   color: #fff;
 }
 
-main .section.super-blue .default-content-wrapper p,
-main .section.super-blue .default-content-wrapper ul {
+main .section.super-blue .default-content-wrapper > * {
   color: #fff;
 }
 
