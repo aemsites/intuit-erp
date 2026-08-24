@@ -132,13 +132,22 @@ Golden fixtures with customer campaign codes stay **local + gitignored**
 **Implemented and wired.** `scripts/tracking.js` is loaded lazily from `scripts.js`; blocks declare
 their tracking via `trackAs` (hero, cards, faq, testimonial, footer, header nav + secondary-nav,
 related-blogs, case-study-header, video, quick-links, cta-band, contact-us/talk-to-sales, blog-template
-author-bio). Current parity is **~96% of the DOM-derivable per-click fields** across a 15-page golden.
+author-bio) and card thumbnails fire their own beacon via `alsoTrack` (related-blogs, blog-cards).
 
-Remaining gaps are tracked out-of-band and fall into three buckets: **(A)** markup-structure deltas in
-our ported blocks (e.g. blog cards tracked per-thumbnail on prod — issues #765, #769); **(B)** prod-side
-authoring inconsistencies where we emit a clean/superset value (inconsistent `link_name` omission,
-empty `ui_object_detail` on dots/ToC, inconsistent `video` trails); **(C)** a small tail of
-structurally-entangled trails on our end.
+**Parity is measured over every beacon prod fires** (`node scripts/diff/parity-gate.mjs`) — currently
+**87% of the 724 golden beacons** across 15 pages (664 reproduced; of those, ~95% field-fidelity). The
+remaining ~60 all *fire on prod* and are reproducible, but need markup/wrapper work we haven't done:
+
+- **card content slots** (~45) — the body-click beacon `…|qrc_content_card|qrc_content_card_content`.
+  Needs a body-slot wrapper per card block; reproduces prod's *redundant* text-vs-image split, so
+  deprioritized.
+- **load-more** (8, href-less `<a>` under `…|oisp_loadmore|button`), **secondary-nav sub-items** (6,
+  our flyout buttons vs prod's link nav + a search input), **pause-button** (1) — small, each needs a
+  wrapper/restructure.
+
+Separately, some reproduced beacons still miss a field for **prod-side reasons** (we emit a clean/
+superset value): inconsistent `link_name` omission + truncated/special-char format, empty
+`ui_object_detail` on dots/ToC, inconsistent `video` trails. Plus markup-structure deltas #765, #769.
 
 ## Authoring the residue sheet
 
