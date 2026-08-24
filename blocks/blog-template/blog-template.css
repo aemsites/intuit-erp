@@ -403,7 +403,14 @@
    mobile/desktop defaults, so the two never disagree about what counts as
    "desktop"). */
 @media (width >= 1024px) {
-  .blog-article {
+  /* Scoped to main.blog-article, NOT bare .blog-article: decorateTemplateAndTheme
+     (aem.js) also adds a `blog-article` class to <body> from the page's template
+     metadata, so an unscoped `.blog-article { display: grid }` here matches BOTH
+     elements — and being a class selector, it outranks `body { display: none }`
+     (styles.css) on specificity alone, exposing the whole page (as `display: grid`)
+     the instant this stylesheet loads, regardless of whether `body.appear` has
+     been added yet. main.blog-article matches only the intended element. */
+  main.blog-article {
     display: grid;
 
     /* Left rail widened 240px -> 332px so the article content column starts at
