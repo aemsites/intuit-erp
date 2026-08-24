@@ -176,10 +176,14 @@ export function normalizeHref(href) {
   return `${url.protocol}//${url.host}${path}`;
 }
 
-// Host apexes treated as "our own" and stripped from a derived id, so a corporate
-// link reads `company`, not `intuit-company`. The page's own host is added at
-// runtime. This is the site-specific knob for id derivation.
-const OWN_HOSTS = new Set(['intuit.com', 'www.intuit.com']);
+// Hosts treated as "our own" and stripped from a derived id, so a link reads
+// `company`, not `intuit-company`. Must include the canonical PROD host so ids are
+// deploy-independent: a relative link resolves to whatever host the runtime is on
+// (aem.page preview, stage, prod), but its id must be the same everywhere and match
+// the prod-golden-derived sheet. CANONICAL_HOST also labels own-host root links
+// (`/` -> `<key>:erp`, not the runtime host's label). Site-specific knob.
+const CANONICAL_HOST = 'erp.intuit.com';
+const OWN_HOSTS = new Set([CANONICAL_HOST, 'intuit.com', 'www.intuit.com']);
 
 /**
  * The distinctive host label for an id: a product subdomain, else the SLD.
@@ -215,7 +219,11 @@ export function hrefSlug(href) {
   const parts = [];
   if (!own) parts.push(hostLabel(norm));
   if (path) parts.push(path);
-  return slug(parts.join('/')) || hostLabel(norm);
+  if (parts.length) return slug(parts.join('/'));
+  // Own-host root link: a KNOWN own host keeps its own label (intuit.com -> intuit,
+  // erp.intuit.com -> erp); a relative link resolved to the RUNTIME deploy host
+  // (aem.page/stage) uses the canonical label so the id is deploy-independent.
+  return OWN_HOSTS.has(url.host) ? hostLabel(norm) : hostLabel(`https://${CANONICAL_HOST}`);
 }
 
 /**

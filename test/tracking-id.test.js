@@ -51,6 +51,16 @@ describe('hrefSlug (readable id core)', () => {
     expect(hrefSlug('#')).toBe('');
     expect(hrefSlug('javascript:void(0)')).toBe('');
   });
+
+  it('is deploy-independent: canonical prod host is own; roots use a fixed label', () => {
+    // erp.intuit.com is own regardless of the runtime host, so absolute prod links
+    // and relative ones (resolved to the deploy host, e.g. aem.page) key the same.
+    expect(hrefSlug('https://erp.intuit.com/accounting')).toBe('accounting');
+    expect(hrefSlug('/accounting')).toBe('accounting');
+    expect(hrefSlug('https://erp.intuit.com/')).toBe('erp'); // canonical root -> erp
+    expect(hrefSlug('/')).toBe('erp'); // relative root on any deploy host -> erp (not the host's label)
+    expect(hrefSlug('https://www.intuit.com/')).toBe('intuit'); // corporate root keeps its own label
+  });
 });
 
 describe('sheetRowById', () => {
