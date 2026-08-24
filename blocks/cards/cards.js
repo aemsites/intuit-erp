@@ -53,6 +53,10 @@ function enhanceScroll(block) {
   viewport.className = 'cards-viewport';
   viewport.append(track);
 
+  // content-card carousels (icons/editorial) page with dots; photo carousels
+  // keep the "X of Y" counter + progress bar
+  const useDots = block.classList.contains('editorial') || block.classList.contains('icons');
+
   const counter = document.createElement('p');
   counter.className = 'cards-counter';
 
@@ -62,6 +66,9 @@ function enhanceScroll(block) {
   barTrack.className = 'cards-progress-track';
   barTrack.append(barFill);
 
+  const dots = document.createElement('div');
+  dots.className = 'cards-dots';
+
   const prevBtn = buildNavButton('prev', 'Previous cards');
   const nextBtn = buildNavButton('next', 'Next cards');
   const buttons = document.createElement('div');
@@ -70,7 +77,8 @@ function enhanceScroll(block) {
 
   const controls = document.createElement('div');
   controls.className = 'cards-controls';
-  controls.append(counter, barTrack, buttons);
+  if (useDots) controls.append(dots, buttons);
+  else controls.append(counter, barTrack, buttons);
 
   block.append(viewport, controls);
 
@@ -82,8 +90,22 @@ function enhanceScroll(block) {
     if (!overflowing) return;
     const pages = Math.ceil(scrollWidth / clientWidth);
     const page = Math.min(pages, Math.round(scrollLeft / clientWidth) + 1);
-    counter.textContent = `${page} of ${pages}`;
-    barFill.style.width = `${(scrollLeft / maxScroll) * 100}%`;
+    if (useDots) {
+      if (dots.children.length !== pages) {
+        dots.replaceChildren(...Array.from({ length: pages }, (_, i) => {
+          const dot = document.createElement('button');
+          dot.type = 'button';
+          dot.className = 'cards-dot';
+          dot.setAttribute('aria-label', `Go to slide ${i + 1}`);
+          dot.addEventListener('click', () => viewport.scrollTo({ left: i * clientWidth, behavior: 'smooth' }));
+          return dot;
+        }));
+      }
+      [...dots.children].forEach((dot, i) => dot.classList.toggle('is-active', i === page - 1));
+    } else {
+      counter.textContent = `${page} of ${pages}`;
+      barFill.style.width = `${(scrollLeft / maxScroll) * 100}%`;
+    }
     prevBtn.disabled = scrollLeft <= 0;
     nextBtn.disabled = scrollLeft >= maxScroll - 1;
   };
@@ -222,11 +244,24 @@ export default function decorate(block) {
     });
   }
 
+  if (block.classList.contains('minimal')) {
+    [...block.children].forEach((card) => {
+      const link = card.querySelector('a[href]');
+      if (!link) return;
+      link.classList.add('cards-card-link');
+      const title = card.querySelector('.cards-card-body h3');
+      if (title) link.setAttribute('aria-label', `${title.textContent.trim()}: ${link.textContent.trim()}`);
+    });
+  }
+
   if (SCROLL_SHAPE_CLASSES.some((c) => block.classList.contains(c))) {
     enhanceScroll(block);
   }
 
-  if (block.classList.contains('carousel')) {
+  // the camera-focus cursor is for photo carousels only, not content cards
+  if (block.classList.contains('carousel')
+    && !block.classList.contains('editorial')
+    && !block.classList.contains('icons')) {
     attachFocusCursor(block);
   }
 }
