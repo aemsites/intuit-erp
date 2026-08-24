@@ -76,7 +76,7 @@ let config = { ...DEFAULT_CONFIG };
 export function resolveEnvironment() {
   const { hostname } = window.location;
   if (hostname === 'erp.intuit.com') return 'prod';
-  if (hostname === 'stage.erp.intuit.com') return 'dev';
+  if (hostname === 'stage.erp.intuit.com') return 'prod';
   if (hostname.endsWith('--intuit-erp--aemsites.aem.live')) return 'dev';
   if (hostname.endsWith('--intuit-erp--aemsites.aem.page')) return 'dev';
   if (hostname === 'localhost' || hostname === '127.0.0.1') return 'dev';
