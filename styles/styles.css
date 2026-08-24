@@ -447,6 +447,11 @@ main .section.super-blue :is(h1, h2, h3, h4, h5, h6) {
   color: #fff;
 }
 
+main .section.super-blue .default-content-wrapper p,
+main .section.super-blue .default-content-wrapper ul {
+  color: #fff;
+}
+
 main .section.super-blue.form-container:has(.form.download),
 main .section.super-blue.faq-container {
   background-color: var(--info);
