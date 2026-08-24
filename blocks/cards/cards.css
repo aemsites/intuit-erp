@@ -553,6 +553,24 @@
   font-weight: 700;
 }
 
+/* desktop (≥900px): fixed thumbnail size, matching the right-rail Customer
+   stories / More on... card images (blog-rail-case-study, related-blogs) */
+@media (min-width: 900px) {
+  .cards.blog-rail.list>div {
+    grid-template-columns: 84px 1fr;
+  }
+
+  .cards.blog-rail.list .cards-card-image img {
+    width: 84px;
+    height: 96px;
+    object-fit: cover;
+  }
+}
+
+.cards.blog-rail .cards-card-body p {
+  margin: 0;
+}
+
 @media (width <=480px) {
   .cards.list>div {
     grid-template-columns: 166px 1fr;

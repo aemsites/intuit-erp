@@ -179,9 +179,8 @@ export default function decorate(block) {
       const img = cell.querySelector('picture > img');
       if (img && cell.children.length === 1) {
         cell.classList.add('cards-card-image');
-        const picture = img.closest('picture');
         const width = isIcons ? '150' : '750';
-        picture.replaceWith(createOptimizedPicture(img.src, img.alt, false, [{ width }]));
+        img.closest('picture').replaceWith(createOptimizedPicture(img.src, img.alt, false, [{ width }]));
       } else {
         cell.classList.add('cards-card-body');
         cell.querySelectorAll('p').forEach((p) => {
