@@ -885,7 +885,7 @@ img {
 }
 
 body:not(.case-study, .blog-article) .section:not(:first-of-type)>.default-content-wrapper> :is(h1, h2, h3, h4, h5, h6) {
-  text-align: center;
+  margin-top: 6rem;
 }
 
 .section>.default-content-wrapper {
