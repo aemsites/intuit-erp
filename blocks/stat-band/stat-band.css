@@ -76,7 +76,7 @@
 /* --- .stat-band.dark (pricing "Data-backed performance") --- */
 .section.stat-band-container:has(.stat-band.dark) { background: var(--navy); padding: 120px 0 100px; }
 
-.stat-band-container:has(.stat-band.dark) .default-content-wrapper h2 {
+.stat-band-container:has(.stat-band.dark) .default-content-wrapper :is(h1, h2, h3, h4, h5, h6, p, ul, ol, li) {
   color: #fff; font-size: 48px; line-height: 1.4; font-weight: 500; margin: 0 0 80px;
 }
 

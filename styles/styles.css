@@ -924,3 +924,23 @@ main > .section .block.spacer-bottom-m { margin-bottom: 1.5rem; }
 main > .section .block.spacer-bottom-l { margin-bottom: 2.5rem; }
 main > .section .block.spacer-bottom-xl { margin-bottom: 4rem; }
 main > .section .block.spacer-bottom-xxl { margin-bottom: 6rem; }
+
+
+body.block-library > main > .section {
+  margin: 4rem 0;
+}
+
+body.block-library > main > .section > .default-content-wrapper > h1 {
+  font-size: 36px;
+  margin: 4rem 0;
+  text-align: left !important;
+}
+
+ body.block-library .library-metadata {
+  display: none;
+ }
+
+ body.block-library header,
+ body.block-library footer {
+  display: none;
+ }
