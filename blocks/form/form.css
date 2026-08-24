@@ -159,6 +159,12 @@
 .section.form-container:has(.form.download) .default-content-wrapper h3 { color: #fff; font-size: 32px; font-weight: 700; margin: 0 0 16px; }
 .section.form-container:has(.form.download) .default-content-wrapper li strong { color: #fff; }
 
+/* keep the copy heading left-aligned; a global rule centres headings in
+   non-first sections, so the extra :has() raises specificity to override it. */
+.section.form-container:has(.form.download):has(.default-content-wrapper) .default-content-wrapper :is(h1, h2, h3, h4, h5, h6) {
+  text-align: left;
+}
+
 .form.download {
   background: #fff; border-radius: var(--radius-card); padding: 32px; max-width: none;
   box-shadow: 0 20px 50px rgb(0 0 0 / 25%);
@@ -171,9 +177,20 @@
   .form.card { max-width: 420px; padding: 32px; }
 }
 
-/* Desktop: the gated-download band splits into two columns. */
+/* Desktop: the gated-download band splits into two columns — copy wider than the
+   form card (~1.4:1). The band stays full-width while the grid content is capped +
+   centred to --container, so the card scales with the container instead of
+   stretching across the viewport. */
 @media (width >= 1024px) {
-  .section.form-container:has(.form.download):has(.default-content-wrapper) { grid-template-columns: 1fr 1fr; gap: 48px; }
+  .section.form-container:has(.form.download):has(.default-content-wrapper) {
+    grid-template-columns: 1.4fr 1fr;
+    gap: 48px;
+    padding-inline: max(24px, calc((100% - var(--container)) / 2));
+  }
+
+  /* the wrapper's side padding gives mobile gutters; on desktop the grid handles
+     the outer gutter, so let the card fill its track. */
+  .section.form-container:has(.form.download) .form-wrapper { padding-inline: 0; }
 }
 
 /* Hide Google's reCAPTCHA v3 badge (bottom-right). The required attribution is
