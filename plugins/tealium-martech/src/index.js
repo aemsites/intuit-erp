@@ -32,8 +32,9 @@
  * while consent is unresolved (`getConsentState() === 0`). We avoid it three ways: load the
  * OneTrust consent stack before utag.js (`loadConsentStack`/`settleConsent`); `head.html` sets
  * `noview:true` to suppress utag's own auto-view; and every tracked call goes through
- * `whenConsentResolved`. This loader drives no `utag.gdpr.*` API (`readOptanonConsent`/
- * `mapConsentToTealium` are unused helpers kept for future profile wiring).
+ * `whenConsentResolved`. Per-category gating (Consent Mode) is owned by the profile, not here — so
+ * this loader only *reads* consent (`readOptanonConsent`) and never drives `utag.gdpr.*`.
+ * See MARTECH.md#consent.
  *
  * CSP: the page enforces Trusted Types + `strict-dynamic`, so utag.js and the consent stack are
  * only ever injected via `document.createElement('script')` (see `loadUtag`, `loadScriptOnce`) —
@@ -75,7 +76,7 @@ let config = { ...DEFAULT_CONFIG };
 export function resolveEnvironment() {
   const { hostname } = window.location;
   if (hostname === 'erp.intuit.com') return 'prod';
-  if (hostname === 'stage.erp.intuit.com') return 'dev';
+  if (hostname === 'stage.erp.intuit.com') return 'prod';
   if (hostname.endsWith('--intuit-erp--aemsites.aem.live')) return 'dev';
   if (hostname.endsWith('--intuit-erp--aemsites.aem.page')) return 'dev';
   if (hostname === 'localhost' || hostname === '127.0.0.1') return 'dev';
@@ -145,37 +146,6 @@ export function readAkamaiGeo() {
   } catch (err) {
     return match[1];
   }
-}
-
-// OneTrust group id -> Tealium consent category mapping. This is an open item pending the
-// Tealium profile setup — the category names below are Tealium's common defaults, not yet
-// confirmed against the "ies-erp" profile's actual consent categories.
-// TODO(profile): confirm exact OneTrust-group → Tealium-category mapping against the ies-erp
-// profile.
-const GROUP_TO_TEALIUM_CATEGORIES = {
-  2: ['personalization'], // OneTrust "Functional"
-  3: ['analytics'], // OneTrust "Performance/Analytics"
-  // OneTrust "Targeting/Advertising"
-  4: ['display_ads', 'search', 'social', 'affiliates', 'big_data'],
-};
-
-/**
- * Maps a parsed `OptanonConsent` groups map to a Tealium `utag.gdpr.setPreferencesValues` prefs
- * object. Granted categories are represented as `'1'`, denied (including unknown/missing groups)
- * as `'0'`.
- * @param {Object<String, Boolean>|null} optanon the parsed OptanonConsent groups (see
- *                                                `readOptanonConsent`), or null/undefined
- * @returns {Object<String, String>} the Tealium prefs object
- */
-export function mapConsentToTealium(optanon) {
-  const prefs = {};
-  Object.entries(GROUP_TO_TEALIUM_CATEGORIES).forEach(([groupId, categories]) => {
-    const granted = !!(optanon && optanon[groupId]);
-    categories.forEach((category) => {
-      prefs[category] = granted ? '1' : '0';
-    });
-  });
-  return prefs;
 }
 
 /**
@@ -278,8 +248,7 @@ export async function loadConsentStack(env, local = false) {
     src: local
       ? `${base}/stable/scripttemplates/otSDKStub.js`
       : `https://${cdnHost}/stable/scripttemplates/otSDKStub.js`,
-    // The e2e domain-script id is assumed identical to prod's (`74130b76…`) — confirm with Intuit
-    // if OneTrust does not initialize on e2e.
+    // Intuit's OneTrust domain-script id (same across prod + e2e).
     attrs: { 'data-domain-script': '74130b76-29e2-4d72-ab52-09f9ed5818fb', charset: 'UTF-8' },
   });
   await loadScriptOnce({

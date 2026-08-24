@@ -49,10 +49,27 @@
 
 /* icon + capitalised title pair (e.g. /accounting/business-forecasting) — icon
    sits inline before the title instead of stacking above it, matching source */
-.media-text .media-copy .media-eyebrow-row { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
-.media-text .media-copy .media-eyebrow-row .media-eyebrow { margin: 0; }
-.media-text .media-copy .media-eyebrow-icon { margin: 0; line-height: 0; }
-.media-text .media-copy .media-eyebrow-icon img { width: 32px; height: 32px; display: block; }
+.media-text .media-copy .media-eyebrow-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.media-text .media-copy .media-eyebrow-row .media-eyebrow {
+  margin: 0;
+}
+
+.media-text .media-copy .media-eyebrow-icon {
+  margin: 0;
+  line-height: 0;
+}
+
+.media-text .media-copy .media-eyebrow-icon img {
+  width: 32px;
+  height: 32px;
+  display: block;
+}
 
 .media-text .media-copy h2,
 .media-text .media-copy h3 {
@@ -106,7 +123,7 @@
   padding: var(--section-y) 0;
 }
 
-.media-text-container:has(.media-text.dark) .default-content-wrapper h2 {
+.media-text-container:has(.media-text.dark) .default-content-wrapper :is(h1, h2, h3, h4, h5, h6, p, ul, li) {
   color: #fff;
 }
 
@@ -133,7 +150,7 @@
 
 .media-text.dark .media-copy .button-wrapper a.button.secondary {
   border-color: #fff;
-  text-decoration:none;
+  text-decoration: none;
 
   &:hover {
     background: #fff;
@@ -311,6 +328,27 @@
   display: block;
   border-radius: 8px;
   box-shadow: 0 3px 27px 7px rgb(124 188 255 / 25%);
+}
+
+/* icon variant — a media-text.cards grid whose cards carry a small icon image
+   (no mig-steps timeline) renders as compact cards with the icon centered on
+   top and the copy below, matching erp.intuit.com's guide "white paper" benefit
+   cards. Scoped with :not(:has(.mig-steps)) so the migration-steps timeline
+   treatment is untouched. Desktop column count is set in the media query below. */
+.media-text.cards .mig-grid:not(:has(.mig-steps)) .mig-card {
+  align-items: center;
+  text-align: center;
+}
+
+.media-text.cards .mig-grid:not(:has(.mig-steps)) .mig-visual {
+  order: -1;
+  margin: 0 0 24px;
+}
+
+.media-text.cards .mig-grid:not(:has(.mig-steps)) .mig-visual img {
+  width: 56px;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .media-text.cards .mig-visual:has(.mig-steps) {
@@ -618,11 +656,15 @@
      style, NOT the shared `.reverse` variant, because that variant is also used by
      /accounting and /accountant whose rows are left-aligned + copy-first on prod
      (a blanket `.reverse` rule would regress them). */
-  .section.media-lead .media-text .media-row .media-visual { order: -1; }
+  .section.media-lead .media-text .media-row .media-visual {
+    order: -1;
+  }
 
   .section.media-lead .media-text .media-copy h2,
   .section.media-lead .media-text .media-copy h3,
-  .section.media-lead .media-text .media-copy .media-body { text-align: center; }
+  .section.media-lead .media-text .media-copy .media-body {
+    text-align: center;
+  }
 
   .media-text .media-copy h2,
   .media-text .media-copy h3 {
@@ -684,6 +726,12 @@
   .media-text.cards .mig-card {
     padding: 40px;
   }
+
+  /* icon variant: 3-up on desktop (the steps treatment keeps its 2-up grid).
+     minmax(0, 1fr) caps the track so a wide token can't overflow the row. */
+  .media-text.cards .mig-grid:not(:has(.mig-steps)) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 @media (width >=1024px) {
@@ -705,5 +753,58 @@
 @media (width >=1200px) {
   .media-text-container:has(.media-text.cards) .default-content-wrapper h2 {
     font-size: 48px;
+  }
+}
+
+.section.media-text-container.navy:has(.media-text.compare) {
+  background: var(--navy);
+  padding: 2rem 0;
+
+  >.default-content-wrapper :is(h2, h3, h4, h5, h6, p, li) {
+    color: #fff;
+  }
+
+  .media-text.compare .compare-card {
+    background: #fff;
+    margin-bottom: 3rem;
+
+
+    >ul {
+      padding-left: 0;
+
+      li {
+        font-size: 16px;
+        list-style: none;
+        position: relative;
+        padding-left: 32px;
+        margin-bottom: 1rem;
+
+        &::before {
+          content: "";
+          position: absolute;
+          left: 0;
+          top: 3px;
+          width: 24px;
+          height: 24px;
+          background-size: cover;
+        }
+      }
+    }
+
+    &:first-child ul li {
+      &::before {
+        background-image: url("/icons/icon-circle-check-fill-blue.svg");
+      }
+    }
+
+    &:last-child ul li {
+      &::before {
+        background-image: url("/icons/icon-circle-dash-fill-blueberry.svg");
+      }
+    }
+  }
+
+  .media-text.compare .compare-card h3 {
+    font-size: 32px;
   }
 }

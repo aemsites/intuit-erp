@@ -67,8 +67,13 @@ import {
 // diverge (they shouldn't, for a 1:1 rebuild).
 // --------------------------------------------------------------------------
 
+// GA4 + the advertising pixels that must fire on every content page (#136 Task 1).
+// Set from the prod capture (see martech.golden.json); `--assert` fails if the migrated
+// site drops any of them on a page below.
+const GA4_AND_ADS = ['ga4', 'gtm', 'google-ads', 'doubleclick', 'facebook', 'bing', 'linkedin'];
+
 const PAGES = [
-  { name: 'homepage', prod: '/', ours: '/' },
+  { name: 'homepage', prod: '/', ours: '/', mustFire: GA4_AND_ADS },
   // Qualtrics Site Intercept (ies-erp tag #35) is scoped to /blog/* by its Tealium load rule
   // (cond[2] = /^\/blog\//), riding the profile fan-out — no page code loads it (see #148/#620).
   // The assertions below verify the migrated site still gets it via the profile: it must fire on a
@@ -77,7 +82,12 @@ const PAGES = [
   // though the migrated /blog content is auth-gated. `prod` uses the real public pages.
   { name: 'blog-feedback', prod: '/blog/construction/', ours: '/blog/parity-probe', mustFire: ['qualtrics'] },
   { name: 'non-blog-scope', prod: '/', ours: '/parity-probe', mustNotFire: ['qualtrics'] },
-  // { name: '<tbd>', prod: '/<path>', ours: '/<path>' },   // customer-chosen
+  // Per-page goldens beyond homepage/blog (#136 Task 1). mustFire is set from what the
+  // prod capture actually fires (see the committed martech.golden.json), so `--assert`
+  // locks the migrated site to prod's per-page vendor set.
+  { name: 'pricing', prod: '/pricing', ours: '/pricing', mustFire: GA4_AND_ADS },
+  { name: 'accountant', prod: '/accountant', ours: '/accountant', mustFire: GA4_AND_ADS },
+  { name: 'case-study', prod: '/blog/case-study/aprio-intuit-enterprise-suite', ours: '/blog/case-study/aprio-intuit-enterprise-suite', mustFire: GA4_AND_ADS },
 ];
 
 const ENVS = [

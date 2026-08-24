@@ -17,6 +17,7 @@ qa-probe.mjs
 .agents/
 .superpowers/
 content/
+media/
 tasks/
 docs/superpowers/
 drafts/

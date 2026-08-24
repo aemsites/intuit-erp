@@ -135,21 +135,11 @@ header {
   height: var(--nav-height);
 }
 
-/* Gated conversion pages opt out of the global header/footer (hide-header /
-   hide-footer metadata → body class, set eagerly in scripts.js). Drop the
-   reserved header height up front so removing the header in the lazy phase does
-   not cause a post-LCP layout shift. */
 body.hide-header header {
   height: 0;
   min-height: 0;
 }
 
-/* Resource Center pages (/blog*) render a secondary nav below the primary one.
-   Reserve its height eagerly too — keyed on the body.<template> class those
-   pages already get from decorateTemplateAndTheme — so the lazily-loaded header
-   lands in its own reserved space instead of shoving content down (CLS). Values
-   are the header's actual rendered heights (desktop / ≤1299px). Add any new
-   /blog* template class here. */
 body.blog-home header,
 body.blog-article header,
 body.category header,
@@ -444,19 +434,10 @@ main .section.highlight {
   padding: 40px 0;
 }
 
-/* Section Metadata "Style: sky" — the light-blue band used behind the
-   "Let's connect" form section, letting a page request this background at
-   the section level without needing a form present. blocks/form/form.css
-   matches --sky-blue too for the nested-fragment case (.section.sky
-   wrapping a .section.form-container), so both stay the same shade. */
 main .section.sky {
   background-color: var(--sky-blue);
 }
 
-/* Section Metadata "Style: super-blue" — #236cff band with white text. The
-   theme is set generically on the section: the background and text color cascade
-   to default content and any block that inherits color. Headings set their own
-   color, so they are re-pointed. */
 main .section.super-blue {
   background-color: var(--info);
   color: #fff;
@@ -466,9 +447,6 @@ main .section.super-blue :is(h1, h2, h3, h4, h5, h6) {
   color: #fff;
 }
 
-/* The form (download) and faq blocks hardcode their OWN container background and
-   text colors, so a generic section rule can't reach them — override to inherit
-   the section theme. Any new block that doesn't hardcode colors needs nothing. */
 main .section.super-blue.form-container:has(.form.download),
 main .section.super-blue.faq-container {
   background-color: var(--info);
@@ -494,10 +472,6 @@ main .section.super-blue .faq-toggle:hover .faq-chevron {
   color: rgb(255 255 255 / 80%);
 }
 
-/* ============================================================
-   IES foundation additions (replica of erp.intuit.com)
-   ============================================================ */
-
 /* content width */
 main>.section>div {
   max-width: var(--container);
@@ -510,11 +484,11 @@ main .section.full-bleed>div {
   padding: 0;
 }
 
+
 main .section {
   padding: 0;
 }
 
-/* replica: colored section bands sit flush — no inter-section margin */
 main>.section {
   margin: 0;
 }
@@ -527,7 +501,6 @@ main .section:empty {
   display: none;
 }
 
-/* narrow container variant (prototype .container-narrow = 1180px) */
 main .section.narrow>div {
   max-width: 1180px;
 
@@ -545,32 +518,6 @@ main .section.center>div.default-content-wrapper {
   text-align: center;
 }
 
-main > .section.spacer-top-s { margin-top: 1rem; }
-main > .section.spacer-top-m { margin-top: 1.5rem; }
-main > .section.spacer-top-l { margin-top: 2.5rem; }
-main > .section.spacer-top-xl { margin-top: 4rem; }
-main > .section.spacer-top-xxl { margin-top: 6rem; }
-main > .section.spacer-bottom-s { margin-bottom: 1rem; }
-main > .section.spacer-bottom-m { margin-bottom: 1.5rem; }
-main > .section.spacer-bottom-l { margin-bottom: 2.5rem; }
-main > .section.spacer-bottom-xl { margin-bottom: 4rem; }
-main > .section.spacer-bottom-xxl { margin-bottom: 6rem; }
-
-main > .section .block.spacer-top-s { margin-top: 1rem; }
-main > .section .block.spacer-top-m { margin-top: 1.5rem; }
-main > .section .block.spacer-top-l { margin-top: 2.5rem; }
-main > .section .block.spacer-top-xl { margin-top: 4rem; }
-main > .section .block.spacer-top-xxl { margin-top: 6rem; }
-main > .section .block.spacer-bottom-s { margin-bottom: 1rem; }
-main > .section .block.spacer-bottom-m { margin-bottom: 1.5rem; }
-main > .section .block.spacer-bottom-l { margin-bottom: 2.5rem; }
-main > .section .block.spacer-bottom-xl { margin-bottom: 4rem; }
-main > .section .block.spacer-bottom-xxl { margin-bottom: 6rem; }
-
-/* navy — full-bleed dark band background only. Combine with Section
-   Metadata "Style: center" (main .section.center>div, above) for the
-   centered-copy layout used on production's dark CTA bands — this rule
-   intentionally doesn't handle alignment itself. See GH issue #515. */
 main .section.navy {
   background-color: var(--navy);
   margin: 0;
@@ -606,16 +553,9 @@ main .section.navy button.button.primary {
   gap: 10px;
 }
 
-/* Hover: white fill fades to a translucent overlay (navy shows through),
-   text flips to white to stay legible, and a chevron fades in — matches
-   erp.intuit.com's own dark-band CTA hover. No existing button-hover
-   pattern in the codebase matches this exact case (checked cards.css,
-   testimonial.css, video.css, of1-*.css — all use rgb(255 255 255 / X%)
-   for other purposes/opacities), so this stays a dedicated rule. */
 main .section.navy a.button.primary:hover {
-  background: rgb(255 255 255 / 30%);
+  background: rgb(255 255 255 / 90%);
   border-color: transparent;
-  color: #fff;
 }
 
 main .section.navy a.button.primary::after {
@@ -626,12 +566,21 @@ main .section.navy a.button.primary::after {
   background-color: currentcolor;
   mask: center / contain no-repeat url("/icons/chevron-right.svg");
   -webkit-mask: center / contain no-repeat url("/icons/chevron-right.svg");
-  opacity: 0;
   transition: opacity .15s ease;
 }
 
-main .section.navy a.button.primary:hover::after {
-  opacity: 1;
+main .section.navy a.button.secondary,
+main .section.navy button.button.secondary {
+  border-color: #fff;
+  color: #fff;
+  background-color: transparent;
+}
+
+main .section.navy a.button.secondary:hover,
+main .section.navy a.button.secondary:focus-visible {
+  background-color: rgb(255 255 255 / 15%);
+  border-color: #fff;
+  color: #fff;
 }
 
 /* contained sections */
@@ -716,18 +665,10 @@ body.blog-home main>.section:not(:first-of-type) h2 {
   }
 }
 
-/* search results page (Template: "Search" metadata -> body.search): give the
-   first section the same top breathing room below the nav as category pages */
 body.search main>.section:first-of-type {
   padding-top: 5rem;
 }
 
-/* events listing lead band (erp.intuit.com/events): a centred white heading on a
-   dark gradient. The page authors its intro as plain default content rather than
-   a hero block, so it is reached structurally via `main:has(.event-cards)`.
-   This MUST stay in eager CSS — it is above the fold, and living in the lazily
-   loaded blocks/event-cards/event-cards.css shifted the band 96px -> 328px after
-   first paint (0.28 CLS). */
 main:has(.event-cards)>.section:first-of-type {
   background: var(--navy);
   background-image: linear-gradient(135deg, #041839 0%, #041f53 45%, #03339c 100%);
@@ -845,7 +786,6 @@ blockquote cite {
   color: var(--text-muted);
 }
 
-/* buttons — EDS decorates <strong><a> -> .button.primary, <em><a> -> .button.secondary */
 a.button:any-link,
 button.button {
   display: inline-flex;
@@ -887,9 +827,6 @@ a.button.secondary:hover {
   background: rgb(0 37 74 / 6%);
 }
 
-/* on-dark secondary (hero bands) — matches erp.intuit.com's real qbmds
-   button component (Button_rwSecondary_White): hover is a full color
-   inversion (solid white fill, dark text), not a translucent white tint. */
 .section.dark a.button.secondary,
 .hero a.button.secondary {
   color: #fff;
@@ -951,14 +888,59 @@ body:not(.case-study, .blog-article) .section:not(:first-of-type)>.default-conte
   text-align: center;
 }
 
+body.blog-home .section:not(:first-of-type)>.default-content-wrapper> :is(h1, h2, h3, h4, h5, h6) {
+  text-align: left;
+  margin-top: 6rem;
+}
+
 .section>.default-content-wrapper {
   margin-top: 2rem;
   margin-bottom: 2rem;
 }
 
-/* #742 mobile overflow guard: no block should cause page-level horizontal
-   scroll on mobile. overflow-x: clip (not hidden) avoids creating a scroll
-   container, so it does not break position: sticky descendants. */
 @media (width < 768px) {
   main { overflow-x: clip; }
 }
+
+
+main > .section.spacer-top-s { margin-top: 1rem; }
+main > .section.spacer-top-m { margin-top: 1.5rem; }
+main > .section.spacer-top-l { margin-top: 2.5rem; }
+main > .section.spacer-top-xl { margin-top: 4rem; }
+main > .section.spacer-top-xxl { margin-top: 6rem; }
+main > .section.spacer-bottom-s { margin-bottom: 1rem; }
+main > .section.spacer-bottom-m { margin-bottom: 1.5rem; }
+main > .section.spacer-bottom-l { margin-bottom: 2.5rem; }
+main > .section.spacer-bottom-xl { margin-bottom: 4rem; }
+main > .section.spacer-bottom-xxl { margin-bottom: 6rem; }
+
+main > .section .block.spacer-top-s { margin-top: 1rem; }
+main > .section .block.spacer-top-m { margin-top: 1.5rem; }
+main > .section .block.spacer-top-l { margin-top: 2.5rem; }
+main > .section .block.spacer-top-xl { margin-top: 4rem; }
+main > .section .block.spacer-top-xxl { margin-top: 6rem; }
+main > .section .block.spacer-bottom-s { margin-bottom: 1rem; }
+main > .section .block.spacer-bottom-m { margin-bottom: 1.5rem; }
+main > .section .block.spacer-bottom-l { margin-bottom: 2.5rem; }
+main > .section .block.spacer-bottom-xl { margin-bottom: 4rem; }
+main > .section .block.spacer-bottom-xxl { margin-bottom: 6rem; }
+
+
+body.block-library > main > .section {
+  margin: 4rem 0;
+}
+
+body.block-library > main > .section > .default-content-wrapper > h1 {
+  font-size: 36px;
+  margin: 4rem 0;
+  text-align: left !important;
+}
+
+ body.block-library .library-metadata {
+  display: none;
+ }
+
+ body.block-library header,
+ body.block-library footer {
+  display: none;
+ }

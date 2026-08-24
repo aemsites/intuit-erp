@@ -55,7 +55,10 @@ function parseFooterLegal(doc) {
 
   const navHtml = (navRow?.querySelector('ul')?.innerHTML || '').trim();
   const copyHtml = (copyRow ? [...copyRow.querySelectorAll('p')].map((p) => `<p class="footer-copy">${p.innerHTML}</p>`).join('\n            ') : '');
-  const linksHtml = (linksRow?.querySelector('p')?.innerHTML || '').trim();
+  // The links row has a single cell, but authors have wrapped it in either a
+  // <p> or a bare <div> (issue #790) — read the cell itself rather than
+  // assuming its tag, so either shape parses.
+  const linksHtml = (linksRow?.firstElementChild?.innerHTML || linksRow?.innerHTML || '').trim();
 
   if (!navHtml && !copyHtml && !linksHtml) return null;
   return { navHtml, copyHtml, linksHtml };

@@ -16,6 +16,7 @@
  */
 // eslint-disable-next-line import/no-cycle
 import { openScheduleModal } from '../form/form.js';
+import { getMetadata } from '../../scripts/aem.js';
 import { trackAs } from '../../scripts/tracking.js';
 
 // Contact info (sales phone, hours, support URL) is authored in DA — a
@@ -92,21 +93,28 @@ function mobileBubble(label, blog, ballIcon) {
     </button>`;
 }
 
-/** Variant-specific panel body. */
-function panelBody(blog, contact) {
+/**
+ * Variant-specific panel body. When chatNow is set, appends the LivePerson placeholder div
+ * that the Tealium-loaded lpTag paints its "Chat now" button into (see initContactUs). The id
+ * is verbatim from erp.intuit.com because the LivePerson campaign targets it by id.
+ */
+function panelBody(blog, contact, chatNow) {
+  const chatCta = chatNow ? '<div id="ies-button-div" class="cu-chat-cta"></div>' : '';
   if (blog) {
     return `
       <div class="cu-headline cu-headline-blog">How can we help?</div>
       <div class="cu-subhead cu-mobile-only">Talk to sales</div>
       <button type="button" class="cu-btn cu-btn-secondary cu-schedule">Schedule a call</button>
       <div class="cu-support-label">Get product support</div>
-      <a class="cu-btn cu-btn-secondary cu-support" href="${contact.supportUrl}">Visit support page</a>`;
+      <a class="cu-btn cu-btn-secondary cu-support" href="${contact.supportUrl}">Visit support page</a>
+      ${chatCta}`;
   }
   return `
     <div class="cu-headline cu-headline-default">Questions about Intuit Enterprise Suite?</div>
     <div class="cu-subhead cu-desktop-only">Call us ${contact.phone}</div>
     <a class="cu-btn cu-btn-primary cu-call cu-mobile-only" href="tel:${contact.phone}">Call us ${contact.phone}</a>
-    <p class="cu-hours">${contact.hours}</p>`;
+    <p class="cu-hours">${contact.hours}</p>
+    ${chatCta}`;
 }
 
 /**
@@ -117,6 +125,12 @@ export default async function initContactUs() {
 
   const blog = isBlogVariant();
   const label = blog ? 'Talk to sales' : 'Contact us';
+
+  const chatNow = ['true', 'yes'].includes((getMetadata('chat-now') || '').trim().toLowerCase());
+  if (chatNow) {
+    window.lpSectionDesktop = 'iessales:ies-button-div';
+    window.lpSectionMobile = 'iessales:ies-button-div';
+  }
 
   const [phoneIcon, chatIcon, ballIcon, closeIcon, contact] = await Promise.all([
     loadIcon('cu-phone'),
@@ -134,13 +148,22 @@ export default async function initContactUs() {
     ${mobileBubble(label, blog, ballIcon)}
     <div class="cu-panel" role="dialog" aria-label="${label}" aria-modal="false" hidden>
       <button type="button" class="cu-close" aria-label="Close">${closeIcon}</button>
-      <div class="cu-panel-body">${panelBody(blog, contact)}</div>
+      <div class="cu-panel-body">${panelBody(blog, contact, chatNow)}</div>
     </div>`;
 
   const panel = root.querySelector('.cu-panel');
   const closeBtn = root.querySelector('.cu-close');
   const triggers = root.querySelectorAll('.cu-bubble, .cu-ball');
   let lastTrigger = null;
+  let lpPainted = false;
+
+  function paintLivePerson() {
+    if (!chatNow || lpPainted) return;
+    try {
+      window.lpTag?.newPage?.(window.location.href);
+    } catch (e) { /* non-fatal — chat button just won't paint */ }
+    lpPainted = true;
+  }
 
   function onKeydown(e) {
     // eslint-disable-next-line no-use-before-define
@@ -159,6 +182,7 @@ export default async function initContactUs() {
     closeBtn.focus();
     document.addEventListener('keydown', onKeydown);
     document.addEventListener('click', onOutside, true);
+    paintLivePerson();
   }
 
   function close() {

@@ -20,6 +20,10 @@
   font-family: var(--body-font-family, "AvenirNext forINTUIT", helvetica, arial, sans-serif);
 }
 
+.contact-us:hover {
+    text-decoration: underline;
+}
+
 .contact-us button {
   margin: 0;
   font-family: inherit;
@@ -191,6 +195,13 @@
 .contact-us .cu-schedule,
 .contact-us .cu-support {
   align-self: stretch;
+}
+
+/* LivePerson paints its own "Chat now" button into this container on chat-now:true pages
+   (loaded via Tealium on prod/stage); we only reserve layout — spacing + full width. */
+.contact-us .cu-chat-cta {
+  align-self: stretch;
+  margin-top: 12px;
 }
 
 /* open state hides the trigger */

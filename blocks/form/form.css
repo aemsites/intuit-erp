@@ -40,6 +40,14 @@
   text-align: left;
 }
 
+/* .centered — center the authored header/subheader/disclaimer (opt-in). */
+.form.centered .form-header,
+.form.centered .form-subheader,
+.form.centered .mktoForm > .form-disclaimer { text-align: center; }
+
+/* .disclaimer-below — disclaimer sits under the submit button (form.js handles placement). */
+.form.disclaimer-below .mktoForm > .form-disclaimer { margin-top: 16px; }
+
 /* ---- Marketo form (.mktoForm) — Marketo sets inline widths, so full-width
    layout needs !important. Keep overrides minimal; inherit the site's font.
    Scoped `:not(.hero)` so these never touch the hero block (class "hero form"),
@@ -79,8 +87,13 @@
 .form:not(.hero) .mktoForm select.mktoField:focus,
 .form:not(.hero) .mktoForm textarea.mktoField:focus { outline: none !important; border-bottom: 2px solid var(--primary) !important; }
 
-.form:not(.hero) .mktoForm .mktoButtonRow { width: 100%; margin-top: 8px; }
-.form:not(.hero) .mktoForm .mktoButtonWrap { margin-left: 0 !important; }
+/* All forms use a full-width, centered submit button (the stacked layout). */
+.form .mktoForm .mktoButtonRow { width: 100%; margin-top: 8px; }
+.form .mktoForm .mktoButtonWrap { display: block; margin-left: 0 !important; }
+.form .mktoForm .mktoButton { width: 100%; justify-content: center; }
+
+/* Download keeps an inline, content-width button (matches the content). */
+.form.download .mktoForm .mktoButton { width: auto; }
 
 .form:not(.hero) .mktoForm .mktoButton {
   height: 49px; padding: 0 30px !important; border: 0 !important; border-radius: var(--radius) !important;
@@ -90,32 +103,29 @@
 .form:not(.hero) .mktoForm .mktoButton:hover { background: var(--navy-hover) !important; }
 .form:not(.hero) .mktoForm .mktoError { color: #d2192a; font-size: 12px; }
 
-/* In the hero card and modal the form is stacked, so the button spans full width. */
-.hero-form .mktoForm .mktoButtonRow, .modal .mktoForm .mktoButtonRow,
-.hero-form .mktoForm .mktoButtonWrap, .modal .mktoForm .mktoButtonWrap { width: 100% !important; }
+/* Hero-card and modal forms sit a touch lower. */
 .hero-form .mktoForm .mktoButtonRow, .modal .mktoForm .mktoButtonRow { margin-top: 12px; }
-.hero-form .mktoForm .mktoButton, .modal .mktoForm .mktoButton { width: 100% !important; justify-content: center; }
 
 /* Space the disclaimer/reCAPTCHA copy (rendered below the form) from the button. */
 .hero-form .form-wrapper + .default-content-wrapper,
 .modal .form-wrapper + .default-content-wrapper { margin-top: 20px; }
 
-/* Desktop: a standalone form (e.g. webinar registration) lays its fields out in
-   one row, matching erp.intuit.com. The hero-embedded card, modal, and download
-   variants stay stacked (reset below). */
+/* Standalone vertical forms are boxed to a centered column, not edge-to-edge.
+   The full-width variants (horizontal row, download card) opt out. Hero/modal
+   forms live in their own containers (not .form-container), so they're untouched. */
+.form-container .form { max-width: 640px; margin-inline: auto; }
+
+.form-container .form.horizontal,
+.form-container .form.download { max-width: none; margin-inline: 0; }
+
+/* Vertical is the default — fields stay stacked at every width (mobile layout).
+   The .horizontal variant opts a form into a single desktop row (e.g. webinar
+   registration), matching erp.intuit.com. */
 @media (width >= 1024px) {
-  .form:not(.hero) .mktoForm { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 16px; }
-  .form:not(.hero) .mktoForm > .mktoFormRow { flex: 1 1 140px; width: auto !important; margin-bottom: 0; }
-  .form:not(.hero) .mktoForm > .mktoButtonRow { flex: 0 0 auto; width: auto; margin: 0; }
-
-  /* Card/modal/download forms stay stacked (not a single flex row). */
-  .hero-form .mktoForm,
-  .modal .mktoForm,
-  .form.download .mktoForm { display: block !important; }
-
-  .hero-form .mktoForm > .mktoFormRow,
-  .modal .mktoForm > .mktoFormRow,
-  .form.download .mktoForm > .mktoFormRow { width: 100% !important; margin-bottom: 16px !important; }
+  .form.horizontal .mktoForm { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 16px; }
+  .form.horizontal .mktoForm > .mktoFormRow { flex: 1 1 140px; width: auto !important; margin-bottom: 0; }
+  .form.horizontal .mktoForm > .mktoButtonRow { flex: 0 0 auto; width: auto; margin: 0; }
+  .form.horizontal .mktoForm .mktoButton { width: auto; }
 }
 
 /* ---- .info — bright-blue submit button (e.g. pricing) instead of the navy default ---- */
@@ -149,6 +159,12 @@
 .section.form-container:has(.form.download) .default-content-wrapper h3 { color: #fff; font-size: 32px; font-weight: 700; margin: 0 0 16px; }
 .section.form-container:has(.form.download) .default-content-wrapper li strong { color: #fff; }
 
+/* keep the copy heading left-aligned; a global rule centres headings in
+   non-first sections, so the extra :has() raises specificity to override it. */
+.section.form-container:has(.form.download):has(.default-content-wrapper) .default-content-wrapper :is(h1, h2, h3, h4, h5, h6) {
+  text-align: left;
+}
+
 .form.download {
   background: #fff; border-radius: var(--radius-card); padding: 32px; max-width: none;
   box-shadow: 0 20px 50px rgb(0 0 0 / 25%);
@@ -161,9 +177,20 @@
   .form.card { max-width: 420px; padding: 32px; }
 }
 
-/* Desktop: the gated-download band splits into two columns. */
+/* Desktop: the gated-download band splits into two columns — copy wider than the
+   form card (~1.4:1). The band stays full-width while the grid content is capped +
+   centred to --container, so the card scales with the container instead of
+   stretching across the viewport. */
 @media (width >= 1024px) {
-  .section.form-container:has(.form.download):has(.default-content-wrapper) { grid-template-columns: 1fr 1fr; gap: 48px; }
+  .section.form-container:has(.form.download):has(.default-content-wrapper) {
+    grid-template-columns: 1.4fr 1fr;
+    gap: 48px;
+    padding-inline: max(24px, calc((100% - var(--container)) / 2));
+  }
+
+  /* the wrapper's side padding gives mobile gutters; on desktop the grid handles
+     the outer gutter, so let the card fill its track. */
+  .section.form-container:has(.form.download) .form-wrapper { padding-inline: 0; }
 }
 
 /* Hide Google's reCAPTCHA v3 badge (bottom-right). The required attribution is

@@ -2,13 +2,14 @@
 
 This site reproduces the production `erp.intuit.com` martech stack: a single **Tealium iQ** tag
 manager (account `intuit`, profile `ies-erp`) that injects every downstream vendor at runtime,
-gated by **OneTrust** consent (US opt-out model). Client loader:
+gated by [**OneTrust** consent](#consent) (US opt-out model). Client loader:
 [`plugins/tealium-martech/src/index.js`](plugins/tealium-martech/src/index.js).
 
-Two things you'll want:
+Three things you'll want:
 
 1. [The `?martech` runtime flag](#the-martech-runtime-flag) — switch what loads, per environment.
-2. [Martech parity validation](#martech-parity-validation) — verify the rebuild fires the same
+2. [Consent](#consent) — how OneTrust + Consent Mode gate the tags, and who gates what.
+3. [Martech parity validation](#martech-parity-validation) — verify the rebuild fires the same
    martech as prod, page-for-page.
 
 ---
@@ -73,6 +74,76 @@ OneTrust's consent CDN (`privacy-cdn*.a.intuit.com`) only serves **`*.intuit.com
 
 When the consent CDN can't settle (non-`intuit.com` origin), utag resolves consent itself for the
 US opt-out posture, so tags still fire.
+
+---
+
+## Consent
+
+Consent uses **Intuit's own OneTrust account** (not a generic one), and the martech tags are gated
+**Consent Mode style** — but the per-category enforcement lives in the **Tealium profile**, not in
+this repo. Understanding that split is the whole point of this section.
+
+### The stack (Intuit's OneTrust)
+
+The loader loads Intuit's consent stack, in order, **before** `utag.js` (see `loadConsentStack`):
+
+1. `otSDKStub.js` with `data-domain-script=74130b76-29e2-4d72-ab52-09f9ed5818fb` (Intuit's OneTrust
+   domain script) from `privacy-cdn.a.intuit.com` (prod) / `privacy-cdn.e2e.a.intuit.com` (non-prod)
+2. Intuit's `cookies-consent-wrapper.min.js`
+3. `gdprUtilBundle.js` (`uxfabric.intuitcdn.net`)
+
+`head.html` preconnects both privacy CDNs. This is Intuit's real account — the same domain script
+prod serves — so consent state is shared with the rest of `*.intuit.com`.
+
+### Two-layer gating (who gates what)
+
+| Layer | Responsibility | Where |
+| --- | --- | --- |
+| **This repo** | Gate _"has consent resolved at all?"_ — never hand `utag` a tracked call while `getConsentState() === 0`. This is an **anti-recursion** guard, not category logic: the `ies-erp` consent extension stack-overflows (`processQueue` ↔ `setPreferencesValues`) if it gets a tracked call while consent is pending. | `whenConsentResolved` wraps every `utag.view`/`utag.link`; `head.html` sets `noview:true` to suppress utag's own auto-view. |
+| **The `ies-erp` profile** | Gate _"which category may fire?"_ — analytics vs. advertising vs. functional, i.e. the actual **Consent Mode** enforcement. | The profile reads OneTrust `OptanonConsent` and drives **Google Consent Mode v2**. |
+
+`whenConsentResolved` fires once consent is **resolved — granted _or_ declined** — never while
+pending. Firing the initial `utag.view` for a *declined* user is correct under Consent Mode: the
+profile then loads the tags in `denied` mode (cookieless pings), so nothing is set without consent.
+
+### Verified: the profile is the Consent Mode bridge
+
+Confirmed by inspecting the live prod profile
+(`tags.tiqcdn.com/utag/intuit/ies-erp/prod/utag.js`). The profile:
+
+- derives consent categories from OneTrust (`utag.gdpr.getCategories`, `consent_categories`,
+  `gdpr_cats`), reading the `OptanonConsent` cookie;
+- implements **Google Consent Mode v2** — `ad_storage`, `analytics_storage`, `ad_user_data`,
+  `ad_personalization`, **defaulting to `denied`**, then flipping to `granted`/`denied` on the
+  user's decision (`ta.gcm`, `google_*_consent`);
+- passes that consent state into every downstream gtag/ad tag it injects.
+
+So every ad/analytics vendor that fans out from the profile is already per-category consent-gated by
+the profile. **Issue #122's "gate martech tags (Consent Mode style)" is satisfied here.**
+
+### Why this repo does NOT map categories client-side
+
+`plugins/tealium-martech/src/index.js` deliberately carries **no** client-side OneTrust→Tealium
+category mapper. It only *reads* consent — `readOptanonConsent`, used by `settleConsent` to detect
+that consent has settled — and never mutates it. A client-side mapper is off-limits for two reasons:
+(1) it would have to call `utag.gdpr.setPreferencesValues`, itself an arm of the recursion above;
+and (2) it would double-map categories the profile already owns.
+
+### Footer "Manage cookies" → OneTrust Preference Center
+
+The footer renders a `<button class="ot-sdk-show-settings">Manage cookies</button>`
+(`blocks/footer/footer.js` → `renderLegalCopy`). `ot-sdk-show-settings` is OneTrust's canonical
+trigger class: once the SDK initializes it binds the click to open the Preference Center — no
+app-side click wiring needed. (`normalizeCookieLabel` re-asserts the "Manage cookies" label because
+OneTrust otherwise clobbers it from its own config — issue #79 — which also confirms OneTrust does
+bind to the button.) The button is fixed chrome, rendered unconditionally regardless of the authored
+fragment.
+
+### Testing the Preference Center
+
+The Preference-Center click-through can only be exercised on an `intuit.com` origin
+(`erp.intuit.com` / `stage.erp.intuit.com`) — the OneTrust CDN CloudFront-blocks every other origin,
+so the SDK never loads on `aem.page`/`aem.live`/`localhost` to bind the button there.
 
 ---
 
