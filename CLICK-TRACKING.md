@@ -93,7 +93,11 @@ links). A CTA in **no** declared block is tracked under the `page` key with pure
 3. **Sheet residue** (`/tracking.json`) — the authored values the derive cannot know: `wa-link`
    campaign codes, semantic `object_detail` / `ui_object`, non-default `action`, and authored
    `link_name`. Two authoring columns: **`path`** (the page path, or `*`/blank for site-wide chrome)
-   and **`key`** (`<blockKey>-<n>`, 1-based CTA order). Blank cells defer to the derived value.
+   and **`id`** — the CTA's `data-track-id`: a short, readable slug the block derives from the href
+   (`footer:company`, `footer:turbotax`), or a semantic id (`footer:country-us`,
+   `footer:manage-cookies`) for controls that collide on href or have none. Keyed by identity, not
+   DOM position, so render order never matters (see [Id-based keying](#id-based-keying)). Blank cells
+   defer to the derived value.
 
 Everything merges in `resolveCta` and is written by `stampCta`. See `scripts/tracking.js` for the
 canonical implementation (`initTracking` → delegated handler → `stampInteraction`).
@@ -117,6 +121,35 @@ it on thumbnails); a slot that authors one — the card **content slot** — opt
 carries the slot leaf. Card blocks wire two such wrappers per card: the thumbnail
 (`…|qrc_content_card|image`, no link_name) and the body (`…|qrc_content_card|qrc_content_card_content`).
 
+### Id-based keying
+
+Sheet residue is keyed by each CTA's **identity** (a short `data-track-id` the block stamps during
+decoration), not its DOM position. The runtime reads only `data-track-id` (`trackIdOf`) and resolves
+the row by `sheetRowById` — never by href at resolution time.
+
+Why identity, not order: the old positional key (`<blockKey>-<n>`, the CTA's index in
+`block.querySelectorAll`) was fragile and mis-keyed in practice. `ctasIn` counts `data-track-skip`
+controls (the footer's accordion + country toggles), the footer renders the country menu **twice**
+(mobile + desktop), and prod's capture order differs from our EDS render — so prod-ordered rows
+landed on the wrong CTAs. Id keying is immune to all three: skipped controls have no id, the two
+country copies share one id (correct dedupe), and content-derived ids don't depend on order.
+
+Each block supplies a **`trackId(el)`** deriver to `trackAs` (see `scripts/tracking.js`). The default
+is `hrefTrackId(el, key)` = `<key>:<hrefSlug>` — a short, readable slug that strips the `https://` +
+own-host boilerplate (`intuit.com/company` → `footer:company`) and labels external hosts
+(`turbotax.intuit.com/` → `footer:turbotax`). A block handles its special cases inline in that one
+function: the footer gives the country menu a locale id (`footer:country-us`, so the mobile + desktop
+copies dedupe and can't collide with the Intuit logo), the brand logos a `footer:brand-<host>` id
+(disambiguating the logo from the US country link and a brand from a same-host column link), and the
+href-less "Manage cookies" (`#`) a semantic `footer:manage-cookies`. The exported helpers `hrefSlug`,
+`hostLabel`, and `hrefTrackId` are the building blocks. `OWN_HOSTS` in `tracking.js` is the one
+site-specific knob (which apexes strip to a path).
+
+Migration is incremental: the **footer** is id-keyed today; other blocks keep the legacy positional
+`key` until migrated (the `ID_KEYED` set in `parity-gate.mjs`), and `sheetRowFor` stays as the
+positional fallback in the runtime. A sheet row carries either an `id` column (id-keyed) or a `key`
+column (legacy positional); `indexRows` reads whichever is present.
+
 ---
 
 ## Parity harness
@@ -126,8 +159,10 @@ Parity is measured deterministically against a golden captured from prod (`scrip
 - `tracker-replica.mjs` — a faithful replica of the live tracker's read logic (the oracle).
 - `parity-gate.mjs` — scores our pipeline vs the golden on the 11 DOM-derivable per-click fields;
   prints per-field / per-component fidelity + a machine verdict. **Run: `node scripts/diff/parity-gate.mjs`.**
-- `gen-sheet-from-golden.mjs` — reverse-engineers the residue sheet from the golden, keyed to the
-  runtime's `(path, key, DOM-index)` (the customer's `/tracking.json` seed).
+- `gen-sheet-from-golden.mjs` — reverse-engineers the residue sheet from the golden, keyed the way
+  the runtime resolves: by `id` for migrated blocks (footer — semantic ids by wa-link, else
+  normalized href; collisions are warned, not silently dropped), by legacy `(path, key, DOM-index)`
+  for the rest (the customer's `/tracking.json` seed).
 - `coverage-matrix.mjs` — a readable component × field coverage matrix.
 
 Golden fixtures with customer campaign codes stay **local + gitignored**
@@ -166,8 +201,12 @@ cannot derive, one row per residue-bearing CTA:
 
 - **`path`** — the page path (e.g. `/accounting/multi-entity`) for per-page body residue, or `*`
   (or blank) for site-wide chrome (nav, footer, widgets).
-- **`key`** — `<blockKey>-<n>` (the block's `tracking-<key>` and the CTA's 1-based DOM order), or a
-  bare `<blockKey>` for a single-CTA block.
+- **`id`** — the CTA's `data-track-id` (copy it from the rendered DOM): a readable href slug
+  (e.g. `footer:company`) or a semantic id (e.g. `footer:brand-intuit`). Preferred for migrated blocks (footer);
+  order-independent, so no re-keying when the render order shifts.
+- **`key`** (legacy) — `<blockKey>-<n>` (the block's `tracking-<key>` and the CTA's 1-based DOM
+  order), or a bare `<blockKey>` for a single-CTA block. Still read for blocks not yet migrated to
+  `id`; a row supplies `id` **or** `key`, not both.
 - Residue columns: `object`, `object-detail`, `action`, `ui-object`, `ui-object-detail`, `ui-action`,
   `ui-access-point`, `wa-link`, `custom-properties` (`k=v` pairs), `survey`. Blank cells are dropped
   and defer to the derived value.

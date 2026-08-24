@@ -189,21 +189,107 @@ export function normalizePath(p) {
 }
 
 /**
+ * Canonicalize an href into a stable sheet id (id-based keying): absolute URL,
+ * lowercased host, query + hash + trailing slash stripped. Relative hrefs resolve
+ * against the page origin so `/foo` and `https://host/foo` share one id. Returns
+ * '' for non-navigational hrefs (``#``, `javascript:`, `mailto:`, `tel:`, empty)
+ * so callers can skip minting an id from them. A link's destination is its
+ * identity — this is the primary id for the ~all footer/chrome + authored links
+ * that carry a real href; href-less controls get an explicit `data-track-id`.
+ * @param {string} href raw href attribute
+ * @returns {string} normalized id, or '' when the href is not id-worthy
+ */
+export function normalizeHref(href) {
+  const raw = (href || '').trim();
+  if (!raw || raw.startsWith('#')) return '';
+  const base = (typeof window !== 'undefined' && window.location && window.location.href) || 'https://localhost/';
+  let url;
+  try { url = new URL(raw, base); } catch { return ''; }
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') return '';
+  const path = url.pathname.replace(/\/+$/, '');
+  return `${url.protocol}//${url.host}${path}`;
+}
+
+// Host apexes treated as "our own" and stripped from a derived id, so a corporate
+// link reads `company`, not `intuit-company`. The page's own host is added at
+// runtime. This is the site-specific knob for id derivation.
+const OWN_HOSTS = new Set(['intuit.com', 'www.intuit.com']);
+
+/**
+ * The distinctive host label for an id: a product subdomain, else the SLD.
+ * `turbotax.intuit.com` -> `turbotax`, `www.intuit.com`/`intuit.com` -> `intuit`,
+ * `mailchimp.com` -> `mailchimp`, `privacy.trustarc.com` -> `trustarc`.
+ * @param {string} href
+ * @returns {string}
+ */
+export function hostLabel(href) {
+  const norm = normalizeHref(href);
+  if (!norm) return '';
+  const host = new URL(norm).host.replace(/^www\./, '');
+  if (host === 'intuit.com') return 'intuit';
+  if (host.endsWith('.intuit.com')) return host.slice(0, host.indexOf('.'));
+  const labels = host.split('.');
+  return labels.length > 2 ? labels[labels.length - 2] : labels[0];
+}
+
+/**
+ * A short, readable slug derived from a CTA's href — the deterministic core the
+ * block-supplied `trackId` builds on (see trackAs). Strips the `https://` +
+ * own-host boilerplate: an own-site link reduces to its path
+ * (`intuit.com/company` -> `company`), an external one keeps a leading host label
+ * (`turbotax.intuit.com/` -> `turbotax`, `quickbooks.intuit.com/payroll` ->
+ * `quickbooks-payroll`). '' for a non-navigational href, so the caller can key
+ * off the accessible name instead.
+ * @param {string} href raw href
+ * @returns {string}
+ */
+export function hrefSlug(href) {
+  const norm = normalizeHref(href);
+  if (!norm) return '';
+  const url = new URL(norm);
+  const pageHost = (typeof window !== 'undefined' && window.location && window.location.host) || '';
+  const own = url.host === pageHost || OWN_HOSTS.has(url.host);
+  const path = url.pathname.replace(/^\/+|\/+$/g, '');
+  const parts = [];
+  if (!own) parts.push(hostLabel(norm));
+  if (path) parts.push(path);
+  return slug(parts.join('/')) || hostLabel(norm);
+}
+
+/**
+ * The default `trackId` deriver used by trackAs: `<key>:<hrefSlug>` for a CTA with
+ * a real href, else null (an href-less control — `#`/button — is left un-keyed for
+ * the block's own `trackId(el)` to give a semantic id, as the footer does for
+ * "Manage cookies"). Accepts an element or a raw href string.
+ * @param {Element|string} el
+ * @param {string} key the block's tracking key (id namespace)
+ * @returns {string|null}
+ */
+export function hrefTrackId(el, key) {
+  const s = hrefSlug(el && el.getAttribute ? el.getAttribute('href') : el);
+  return s ? `${key}:${s}` : null;
+}
+
+/**
  * Index raw sheet rows into `composite -> config`. Authoring uses TWO columns:
  *  - `path`: the page path for per-page body residue (e.g. /accounting/multi-entity),
  *    or `*` / blank for site-wide chrome (nav/footer/widgets).
- *  - `key`: `<blockKey>-<n>` (1-based DOM order), or a bare `<blockKey>` single-CTA.
- * They compose to the internal key sheetRowFor resolves: `<path>|<key>` (page-scoped)
- * or bare `<key>` (site-wide). A legacy composite `key` (already containing `|`) is
- * kept as-is. Rows with no `key`, or with NO residue at all (every value blank), are
- * skipped — an empty row overrides nothing. A duplicate composite keeps the last row.
+ *  - `id`: the CTA's identity — its normalized href (see normalizeHref) or an
+ *    explicit block-set `data-track-id` (e.g. `footer:cookie-manage`). Resolved by
+ *    sheetRowById against the CTA's own `data-track-id`. A legacy `key`
+ *    (`<blockKey>-<n>`, 1-based DOM order) is still read as a fallback for blocks
+ *    not yet migrated to id-based keying (resolved positionally by sheetRowFor).
+ * The id/key composes to `<path>|<id>` (page-scoped) or bare `<id>` (site-wide). A
+ * legacy composite already containing `|` is kept as-is. Rows with neither `id` nor
+ * `key`, or with NO residue at all (every value blank), are skipped — an empty row
+ * overrides nothing. A duplicate composite keeps the last row.
  * @param {Array<Record<string, string>>} data
  * @returns {Map<string, Record<string, unknown>>}
  */
 export function indexRows(data) {
   const byKey = new Map();
   (data || []).forEach((row) => {
-    const key = (row.key ?? '').toString().trim();
+    const key = (row.id ?? row.key ?? '').toString().trim();
     if (!key) return;
     const cfg = normalizeRow(row);
     if (!Object.keys(cfg).length) return; // residue-less row = no-op; drop it
@@ -370,6 +456,19 @@ export function trackingKey(block) {
 }
 
 /**
+ * The CTA's stable identity for id-based sheet lookup: its explicit
+ * `data-track-id` (block-stamped — a semantic id like `footer:manage-cookies`, or
+ * a normalized href slug minted by its trackAs `trackId` deriver). Null when the block has not
+ * stamped one, in which case the runtime falls back to positional keying. The
+ * resolver reads ONLY this attribute — no href logic at resolution time.
+ * @param {Element} el
+ * @returns {string|null}
+ */
+export function trackIdOf(el) {
+  return (el && el.getAttribute && el.getAttribute('data-track-id')) || null;
+}
+
+/**
  * The block's name (its access-point base): dataset.blockName, else the first
  * non-structural class.
  * @param {Element} block
@@ -472,6 +571,28 @@ export function sheetRowFor(map, key, i, path) {
   ];
   for (let c = 0; c < candidates.length; c += 1) {
     if (candidates[c] && map.has(candidates[c])) return map.get(candidates[c]);
+  }
+  return null;
+}
+
+/**
+ * Look up the sheet row for a CTA by its stable `id` (id-based keying) — the
+ * CTA's normalized href or explicit `data-track-id`. Order-independent, unlike
+ * sheetRowFor: identity, not DOM position, so it is immune to render-order drift
+ * (skipped controls counted in the index, mobile/desktop duplicates, prod-vs-EDS
+ * ordering). Page-scoped body residue tries `<path>|<id>` first, then the bare
+ * site-wide `<id>` (nav/footer/widget chrome).
+ * @param {Map<string, Record<string, unknown>>|null} map
+ * @param {string|null} id the CTA's data-track-id / normalized href
+ * @param {string} [path] the page path (defaults to '/')
+ * @returns {Record<string, unknown>|null}
+ */
+export function sheetRowById(map, id, path) {
+  if (!map || !id) return null;
+  const pp = normalizePath(path);
+  const candidates = [`${pp}|${id}`, id];
+  for (let c = 0; c < candidates.length; c += 1) {
+    if (map.has(candidates[c])) return map.get(candidates[c]);
   }
   return null;
 }
@@ -703,9 +824,18 @@ export function stampInteraction(e) {
   const isPart = cta.hasAttribute('data-track-as');
   const key = block ? trackingKey(block) : PAGE_KEY;
   const blockName = block ? blockNameOf(block) : '';
-  let idx = -1;
-  if (!isPart) idx = block ? ctasIn(block).indexOf(cta) : pageCtas(document).indexOf(cta);
-  const row = isPart ? null : sheetRowFor(sheetMap, key, idx, loc.pathname);
+  // Id-based keying first (identity, order-independent): the CTA's data-track-id
+  // (a block-set semantic id, or an href slug from its trackAs `trackId`). Positional
+  // `<key>-<n>` lookup is the migration fallback for blocks not yet stamping ids.
+  let row = null;
+  if (!isPart) {
+    const id = trackIdOf(cta);
+    if (id) row = sheetRowById(sheetMap, id, loc.pathname);
+    if (!row) {
+      const idx = block ? ctasIn(block).indexOf(cta) : pageCtas(document).indexOf(cta);
+      row = sheetRowFor(sheetMap, key, idx, loc.pathname);
+    }
+  }
   // Parts are pure-derive (their ui_object is data-track-as); they do NOT inherit
   // the block's CTA payload defaults (e.g. a card grid's action=engaged) — the one
   // exception is link-name-off, which alsoTrack stamps on the part itself (prod
@@ -797,24 +927,55 @@ export function initTracking(scope = document) {
  *
  * @param {string|null} name the trail segment (data-tracking value), or falsy for opt-in only
  * @param {Element} block
+ * `trackId` — id-based sheet keying: a `(el) => id` function the block supplies to
+ * derive each CTA's stable `data-track-id` (replacing the fragile positional
+ * `<key>-<n>`). It runs on every non-skipped CTA; return a falsy value to leave one
+ * un-keyed (pure-derive). The block handles its own special cases directly —
+ * semantic ids for chrome that collides on href (the footer's Intuit logo vs the US
+ * country link are both `intuit.com/`) or is href-less (`#`) — composing the exported
+ * helpers (`hrefSlug`, `hostLabel`, `hrefTrackId`). Omitted, it defaults to
+ * `hrefTrackId(el, key)` = `<key>:<clean-href>`, so a block with no collisions needs
+ * nothing extra:
+ *
+ *   return trackAs('footer', block, { key: 'footer', trackId: (el) => {
+ *     if (el.matches('.footer-copy-btn')) return 'footer:manage-cookies';        // href-less
+ *     if (el.matches('.country a')) return `footer:country-${countryOf(el)}`;    // dedupes m/d
+ *     if (el.matches('.brand-logos a')) return `footer:brand-${hostLabel(el.href)}`;
+ *     return hrefTrackId(el, 'footer');                    // the rest -> footer:<clean-href>
+ *   } });
+ *
+ * An authored data-track-id in markup always wins; the runtime resolver keys purely
+ * on data-track-id (never href).
+ *
  * @param {{key?: string, items?: Record<string, string | ((index: number, el: Element) => string)>,
- *   alsoTrack?: Record<string, string>,
+ *   trackId?: (el: Element) => (string | null | undefined), alsoTrack?: Record<string, string>,
  *   action?: string, object?: string, uiObject?: string, linkName?: boolean, skip?: string}} [opts]
- *   `key` = the tracking-<key> opt-in + sheet key (defaults to `name`); `action`/`object`/
- *   `uiObject` = code-built payload defaults; `linkName:false` drops the derived link_name;
- *   `skip` = a selector for pure-UI controls to exclude from tracking (hamburger, toggles);
- *   `items` = a selector -> trail-segment map (string for fixed slots, (index, el) => string
- *   for repeated/indexed children); `alsoTrack` = a selector -> ui_object map registering
- *   non-CTA beacon sources (#769).
+ *   `key` = the tracking-<key> opt-in + legacy positional sheet key (defaults to `name`);
+ *   `trackId` = a `(el) => id` deriver stamping data-track-id (defaults to `<key>:<clean-href>`);
+ *   `action`/`object`/`uiObject` = code-built payload defaults; `linkName:false` drops the
+ *   derived link_name; `skip` = a selector for pure-UI controls to exclude (hamburger, toggles);
+ *   `items` = a selector -> trail-segment map (string for fixed slots, (index, el) => string for
+ *   repeated children); `alsoTrack` = a selector -> ui_object map for non-CTA sources (#769).
  * @returns {Element} the block (so it can be the decorate return value)
  */
 export function trackAs(name, block, {
-  key = name, items, alsoTrack, action, object, uiObject: uiObjectDefault, linkName, skip,
+  key = name, items, trackId, alsoTrack, action, object,
+  uiObject: uiObjectDefault, linkName, skip,
 } = {}) {
   if (!block) return block;
   // Exclude pure-UI controls (a code-built block opts them out): marks matching
   // descendants data-track-skip so resolveTrackable ignores them.
   if (skip) block.querySelectorAll(skip).forEach((el) => el.setAttribute('data-track-skip', ''));
+  // Id-based keying: stamp each non-skipped CTA's data-track-id — its identity for
+  // the sheet, order-independent. `trackId(el)` (block-supplied) returns the id, or
+  // falsy to leave a CTA pure-derive; the default is `<key>:<clean-href>` via
+  // hrefTrackId. An authored data-track-id in markup always wins.
+  const deriveId = typeof trackId === 'function' ? trackId : (el) => hrefTrackId(el, key || name);
+  block.querySelectorAll(CTA_SELECTOR).forEach((el) => {
+    if (el.hasAttribute('data-track-id') || el.closest('[data-track-skip]')) return;
+    const v = deriveId(el);
+    if (v) el.setAttribute('data-track-id', String(v));
+  });
   // Opt the block into click tracking (reuses the tracking-<key> machinery so
   // the delegated handler JIT-stamps its CTAs + the sheet is looked up by <key>-<n>);
   // an authored opt-in is left as-is. `key` is required when `name` is falsy.

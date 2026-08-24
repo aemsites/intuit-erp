@@ -22,7 +22,7 @@ import {
 } from './brand-logos.js';
 import { LOGO_MAILCHIMP_ICON, LOGO_MAILCHIMP_WORD } from '../header/brand-logos.js';
 import { wireFooterSearch } from '../blog-search/search-utils.js';
-import { trackAs } from '../../scripts/tracking.js';
+import { trackAs, hostLabel, hrefTrackId } from '../../scripts/tracking.js';
 
 // "Footer Columns" content model: one row per column, cell 1 = heading text,
 // cell 2 = a list of links. Authors add/remove/reorder rows to add/remove
@@ -274,10 +274,30 @@ export default async function decorate(block) {
 
   // Footer under a `footer` root; sub-sections add their segment (menus/products/
   // footer_bottom/sitemap). link_name off; per-link wa-link/object_detail is sheet residue.
+  // Id-based keying: `trackId` derives each CTA's data-track-id deterministically, so the
+  // sheet keys off identity (not DOM position — immune to the skipped toggles and the
+  // mobile/desktop country duplication). Most links fall to the readable href slug
+  // (`footer:company`, `footer:sitemap`). The few special cases the block handles inline:
+  //  - country menu -> `footer:country-<code>` derived from the locale path, so the mobile
+  //    and desktop copies share ONE id (correct dedupe) and it can't collide with the logo;
+  //  - brand logos + the Intuit logo -> `footer:brand-<host>`, disambiguating the logo from
+  //    the US country link (both intuit.com/) and a brand from a same-host column link;
+  //  - href-less "Manage cookies" (`#`) + the readable cookie/TRUSTe rows -> semantic ids.
   trackAs('footer', block, {
     key: 'footer',
     linkName: false,
     skip: '.col-toggle, .country-toggle',
+    trackId: (el) => {
+      if (el.matches('.footer-copy-btn')) return 'footer:manage-cookies';
+      if (el.matches('.footer-copy a[href*="cookie-policy"]')) return 'footer:cookie-about';
+      if (el.matches('.truste')) return 'footer:truste';
+      if (el.matches('.country a')) {
+        const path = new URL(el.href).pathname.replace(/^\/+|\/+$/g, '');
+        return `footer:country-${path ? path.replace(/[^a-z0-9]+/gi, '-').toLowerCase() : 'us'}`;
+      }
+      if (el.matches('.brand-logos a, .ftr-logo')) return `footer:brand-${hostLabel(el.getAttribute('href'))}`;
+      return hrefTrackId(el, 'footer');
+    },
     items: {
       '.footer-cols': 'footer_menus',
       '.footer-col': 'footer_menu_section',

@@ -28,7 +28,8 @@ import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { JSDOM } from 'jsdom';
 import {
-  deriveForCta, applyBlockDefaults, resolveCta, stampCta, indexRows, sheetRowFor,
+  deriveForCta, applyBlockDefaults, resolveCta, stampCta, indexRows, sheetRowFor, sheetRowById,
+  hostLabel, hrefSlug,
 } from '../tracking.js';
 import { computeTrackingPayload } from './tracker-replica.mjs';
 
@@ -86,12 +87,37 @@ const BLOCK = {
 };
 
 const { document } = new JSDOM('<!doctype html><html><head></head><body></body></html>').window;
-globalThis.window = { location: { hostname: 'erp.intuit.com', pathname: '/' } };
+// host is what hrefSlug reads to treat erp.intuit.com links as "own" (path-only
+// ids), matching the runtime on the deployed site.
+globalThis.window = { location: { hostname: 'erp.intuit.com', host: 'erp.intuit.com', href: 'https://erp.intuit.com/', pathname: '/' } };
 
 const HEADER_KEYS = new Set(['nav', 'secondary-nav']);
 const regionOf = (key) => (HEADER_KEYS.has(key) ? 'header' : key === 'footer' ? 'footer' : 'main');
 
 export const sheetKeyOf = (entry) => (BLOCK[entry.key] && BLOCK[entry.key].sheetKey) || entry.key;
+
+// Blocks migrated to id-based sheet keying (data-track-id, derived per block),
+// vs the legacy positional `<sheetKey>-<n>`. Footer is the first cut.
+export const ID_KEYED = new Set(['footer']);
+
+// The parallel of footer.js's `trackId` deriver, computed from the GOLDEN fields
+// (we can't run the block's DOM function over prod's DOM). It must produce the
+// SAME id footer.js stamps — the footer render test guards drift. Country locale
+// code by wa-link suffix, matching the block's path-derived code (enca -> ca).
+const COUNTRY_CODE = { enus: 'us', enca: 'ca', frca: 'fr-ca', enin: 'in' };
+export function footerIdOf(entry) {
+  const wa = entry.exp['data-wa-link'] || '';
+  const trail = entry.exp.ui_access_point || '';
+  const href = entry.href || '';
+  if (wa === 'ftr-corporate-managecookies') return 'footer:manage-cookies'; // href-less (#)
+  if (wa === 'ftr-corporate-aboutcookies') return 'footer:cookie-about';
+  if (wa === 'ftr-global-truste') return 'footer:truste';
+  const country = wa.match(/^ftr-corporate-country-(\w+)$/);
+  if (country) return `footer:country-${COUNTRY_CODE[country[1]] || country[1]}`;
+  if (/(^|\|)products$/.test(trail)) return `footer:brand-${hostLabel(href)}`; // brand logos
+  const s = hrefSlug(href); // authored columns/legal/sitemap/social -> readable href slug
+  return s ? `footer:${s}` : '';
+}
 
 // Model track-by-default: a declared block (in BLOCK) supplies trail + payload
 // defaults; an undeclared key is a loose content CTA (pure derive, region=main,
@@ -201,7 +227,13 @@ export function oursPayload(entry, idx, sheet) {
   document.body.append(scope);
   try {
     const derived = applyBlockDefaults(deriveForCta(cta, cfg ? entry.key : '', 'erp.intuit.com'), cta);
-    const row = sheetRowFor(sheet, (cfg && cfg.sheetKey) || entry.key, idx, entry.page === '*' ? '/' : entry.page);
+    const page = entry.page === '*' ? '/' : entry.page;
+    // Id-keyed blocks (footer) resolve residue by identity (data-track-id / href),
+    // not DOM position — the same lookup the runtime does, so the gate reflects
+    // the real render instead of golden order. Others stay positional (migration).
+    const row = ID_KEYED.has(entry.key)
+      ? sheetRowById(sheet, footerIdOf(entry), page)
+      : sheetRowFor(sheet, (cfg && cfg.sheetKey) || entry.key, idx, page);
     stampCta(cta, resolveCta(derived, row, {}));
     return computeTrackingPayload(cta);
   } finally { scope.remove(); }

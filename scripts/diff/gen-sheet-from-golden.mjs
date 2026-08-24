@@ -19,7 +19,9 @@
  */
 /* eslint-disable import/extensions, no-restricted-syntax, no-continue, no-console, no-plusplus, max-len, object-curly-newline */
 import { readFileSync, writeFileSync } from 'node:fs';
-import { oursPayload, sheetKeyOf, isStructural, stripBc } from './parity-gate.mjs';
+import {
+  oursPayload, sheetKeyOf, isStructural, stripBc, footerIdOf, ID_KEYED,
+} from './parity-gate.mjs';
 
 const DIR = 'scripts/diff/fixtures/local';
 const golden = JSON.parse(readFileSync(`${DIR}/clicktrack-golden.json`, 'utf8'));
@@ -30,7 +32,9 @@ const EMPTY = new Map();
 const T = (v) => (typeof v === 'string' ? v.trim() : v);
 const ne = (a, b) => (T(a) || '') !== (T(b) || '');
 
-const rows = [];
+const rows = []; // legacy positional rows (`key: <sheetKey>-<n>`)
+const footerRows = new Map(); // id -> row for id-keyed blocks; last wins
+const seenFooter = new Map(); // id -> residue JSON, to flag genuine collisions
 const counters = {};
 for (const e of golden.entries) {
   if (isStructural(e)) continue;
@@ -48,13 +52,28 @@ for (const e of golden.entries) {
   if (T(x.ui_action) && ne(x.ui_action, ours.ui_action)) row['ui-action'] = T(x.ui_action);
   const wantLN = T(stripBc(x.link_name));
   if (wantLN && wantLN !== T(stripBc(ours.link_name))) row['custom-properties'] = `link_name=${wantLN}`;
-  if (Object.keys(row).length) {
+  if (!Object.keys(row).length) continue;
+  // Id-keyed blocks (footer): key each row by the CTA's identity — its semantic
+  // data-track-id (chrome) or normalized href — matching what footer.js stamps and
+  // the runtime resolves. Order-independent, so it dedupes the mobile/desktop
+  // duplicates and is immune to render-order drift. Others stay positional.
+  if (ID_KEYED.has(e.key)) {
+    const id = e.key === 'footer' ? footerIdOf(e) : '';
+    if (!id) { console.warn(`  ⚠ unkeyable ${e.key} entry (no id): ${T(x['data-wa-link']) || e.href}`); continue; }
+    const rj = JSON.stringify(row);
+    if (seenFooter.has(id) && seenFooter.get(id) !== rj) {
+      console.warn(`  ⚠ id collision "${id}": ${seenFooter.get(id)} vs ${rj} — keeping last`);
+    }
+    seenFooter.set(id, rj);
+    footerRows.set(id, { path: '*', id, ...row });
+  } else {
     rows.push({ path: e.page === '*' ? '*' : e.page, key: `${sheetKeyOf(e)}-${idx + 1}`, ...row });
   }
 }
 
-writeFileSync(`${DIR}/tracking-sheet.json`, `${JSON.stringify({ data: rows })}\n`);
+const allRows = [...rows, ...footerRows.values()];
+writeFileSync(`${DIR}/tracking-sheet.json`, `${JSON.stringify({ data: allRows })}\n`);
 const cols = {};
-rows.forEach((r) => Object.keys(r).forEach((k) => { if (k !== 'path' && k !== 'key') cols[k] = (cols[k] || 0) + 1; }));
-console.log(`generated ${rows.length} residue rows -> ${DIR}/tracking-sheet.json`);
+allRows.forEach((r) => Object.keys(r).forEach((k) => { if (!['path', 'key', 'id'].includes(k)) cols[k] = (cols[k] || 0) + 1; }));
+console.log(`generated ${allRows.length} residue rows (${footerRows.size} id-keyed, ${rows.length} positional) -> ${DIR}/tracking-sheet.json`);
 console.log('by residue column:', JSON.stringify(cols));
