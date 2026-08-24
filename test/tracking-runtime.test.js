@@ -180,6 +180,23 @@ describe('initTracking (delegated capture-phase runtime)', () => {
     expect(document.querySelector('a').hasAttribute('data-object')).toBe(false);
   });
 
+  // Regression: the delegated handler must reach header + footer CTAs, which are
+  // SIBLINGS of <main> — a main-scoped handler never sees them, so the injected
+  // tracker's data-object gate fails and header/footer fire no beacons. scripts.js
+  // must init on `document`. (The synthetic parity gate can't see this — it calls
+  // stampInteraction directly, bypassing the delegated handler.)
+  it('the delegated handler covers header + footer CTAs (not just main)', () => {
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({ ok: false })));
+    document.body.innerHTML = '<header><a href="/nav">Nav</a></header><main></main><footer><a href="/foot">Foot</a></footer>';
+    initTracking(document);
+    const nav = document.querySelector('header a');
+    const foot = document.querySelector('footer a');
+    nav.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+    foot.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+    expect(nav.getAttribute('data-object')).toBe('content'); // handler reached <header>
+    expect(foot.getAttribute('data-object')).toBe('content'); // handler reached <footer>
+  });
+
   it('overlays the sheet once it resolves (id override, still derived label)', async () => {
     const data = [{ id: 'demo:schedule-a-call', 'ui-object': 'input' }]; // keyed by the CTA's data-track-id
     vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({ data }) })));

@@ -619,9 +619,12 @@ async function loadLazy(doc) {
   // loaded lazily here (like pzn/exp) — off the eager/LCP module graph entirely.
   // Option B: a delegated handler derives + JIT-stamps data-* on interaction so
   // the injected clickstream tracker reads them — nothing is stamped at rest.
+  // Scope it to `document`, not `main`: the tracked regions are main/header/footer
+  // (TRACKED_REGIONS), and header/footer are siblings of main, so a main-scoped
+  // handler would never see their clicks.
   if (main) {
     import('./tracking.js')
-      .then(({ initTracking }) => initTracking(main))
+      .then(({ initTracking }) => initTracking(document))
       .catch(() => {});
   }
 
