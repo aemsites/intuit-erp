@@ -6,6 +6,8 @@
 
 .section.form-container { background: #fff; padding: 20px 0 var(--section-y); text-align: center; }
 .form-container .default-content-wrapper { text-align: center; }
+.form-container.left .default-content-wrapper { text-align: left; }
+.form-container.center .default-content-wrapper { text-align: center; }
 
 /* Heading + copy above a standalone form (webinar pages) mirror erp.intuit.com:
    mobile-first 28px title stepping up to 40px on desktop, uniform 16px centered
