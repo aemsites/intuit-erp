@@ -28,6 +28,7 @@
  * CSS: blocks/case-study-header/case-study-header.css
  */
 import { toClassName } from '../../scripts/aem.js';
+import { trackAs } from '../../scripts/tracking.js';
 
 function shareRow() {
   const nav = document.createElement('div');
@@ -152,4 +153,16 @@ export default function decorate(block) {
   if (toc) wrap.append(toc);
 
   block.replaceChildren(wrap);
+
+  // Article header: eyebrow/byline -> qrc_article_hero, share -> social_media,
+  // ToC -> TableOfContents (three standalone trails, no block root); link_name off.
+  trackAs(null, block, {
+    key: 'case-study-header',
+    linkName: false,
+    items: {
+      '.case-study-eyebrow, .case-study-byline': 'qrc_article_hero',
+      '.case-study-share': 'social_media',
+      '.case-study-toc': 'TableOfContents',
+    },
+  });
 }

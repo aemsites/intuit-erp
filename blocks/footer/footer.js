@@ -22,6 +22,7 @@ import {
 } from './brand-logos.js';
 import { LOGO_MAILCHIMP_ICON, LOGO_MAILCHIMP_WORD } from '../header/brand-logos.js';
 import { wireFooterSearch } from '../blog-search/search-utils.js';
+import { trackAs, hostLabel, hrefTrackId } from '../../scripts/tracking.js';
 
 // "Footer Columns" content model: one row per column, cell 1 = heading text,
 // cell 2 = a list of links. Authors add/remove/reorder rows to add/remove
@@ -74,8 +75,11 @@ function renderColumns(columns) {
 }
 
 function renderLegalCopy(copyHtml) {
-  // Cookie preferences row is wired to the OneTrust widget, not authored.
-  const cookieRow = '<p class="footer-copy"><a href="https://security.intuit.com/index.php/intuit-cookie-policy/">About cookies</a> | <button type="button" class="ot-sdk-show-settings footer-copy-btn">Manage cookies</button></p>';
+  // Cookie-preferences row (not authored). "Manage cookies" is an anchor matching
+  // production — wireCookiePreferences() opens the OneTrust preference centre with an
+  // intuit_gdpr fallback. No `ot-sdk-show-settings` hook, so OneTrust neither binds the
+  // click nor overwrites the label.
+  const cookieRow = '<p class="footer-copy"><a href="https://security.intuit.com/index.php/intuit-cookie-policy/">About cookies</a> | <a href="#" class="footer-copy-btn">Manage cookies</a></p>';
   return `${copyHtml}\n            ${cookieRow}`;
 }
 
@@ -206,17 +210,53 @@ function wireCountry(block) {
   });
 }
 
-// The OneTrust widget (wired via the .ot-sdk-show-settings class) overwrites
-// this button's label from its own account config once it loads, clobbering
-// our "Manage cookies" casing (issue #79) — keep correcting it back rather
-// than fighting OneTrust for the click-wiring itself.
-function normalizeCookieLabel(block) {
-  const btn = block.querySelector('.ot-sdk-show-settings');
-  if (!btn) return;
-  const desired = 'Manage cookies';
-  const fix = () => { if (btn.textContent !== desired) btn.textContent = desired; };
-  fix();
-  new MutationObserver(fix).observe(btn, { childList: true, characterData: true, subtree: true });
+// Standardized CCPA/CPRA "Your Privacy Choices" opt-out icon, verbatim from
+// erp.intuit.com's California footer control.
+const PRIVACY_CHOICES_ICON = '<svg class="privacy-choices-icon" xmlns="http://www.w3.org/2000/svg" width="29" height="20" fill="none" viewBox="0 0 29 14"><path fill="#fff" fill-rule="evenodd" d="M6.952 12.8h6.753l3.08-11.6H6.951c-3.178 0-5.76 2.6-5.76 5.8 0 3.2 2.582 5.8 5.76 5.8Z" clip-rule="evenodd"></path><path fill="#06F" fill-rule="evenodd" d="M22.048 0H6.952C3.079 0 0 3.1 0 7s3.079 7 6.952 7h15.096C25.92 14 29 10.9 29 7s-3.178-7-6.952-7ZM1.192 7c0-3.2 2.582-5.8 5.76-5.8h9.832l-3.078 11.6H6.952c-3.178 0-5.76-2.6-5.76-5.8Z" clip-rule="evenodd"></path><path fill="#fff" d="M24.034 4c.199.2.199.6 0 .8L21.95 7l2.185 2.2c.198.2.198.6 0 .8-.199.2-.596.2-.795 0l-2.185-2.2L18.97 10c-.198.2-.596.2-.794 0-.199-.2-.199-.6 0-.8L20.26 7l-2.184-2.2c-.2-.2-.2-.6 0-.8.198-.2.595-.2.794 0l2.185 2.2L23.24 4c.199-.2.596-.2.794 0Z"></path><path fill="#06F" d="M12.216 4.1c.199.2.298.6.1.8L8.143 9.8c-.1.1-.199.2-.298.2-.199.1-.497.1-.695-.1L4.966 7.7c-.199-.2-.199-.6 0-.8.199-.2.596-.2.794 0l1.788 1.7 3.774-4.5c.199-.2.596-.2.894 0Z"></path></svg>';
+
+// California visitors must get the CCPA/CPRA-compliant "Your California Privacy Rights"
+// opt-out label + icon (production swaps it in by geolocation); everyone else sees
+// "Manage cookies". OneTrust reports the region asynchronously once its consent stack
+// loads, so poll briefly and swap once. Tracking identity stays "Manage cookies" via the
+// footer sheet override, so the geo label never reaches analytics. Non-CA visitors — and
+// hosts where OneTrust never loads — keep the default label.
+function applyCaliforniaPrivacyLabel(link) {
+  let tries = 0;
+  function check() {
+    const ot = window.OneTrust;
+    const geo = ot && typeof ot.getGeolocationData === 'function' ? ot.getGeolocationData() : null;
+    if (geo && geo.country) {
+      if (geo.country === 'US' && geo.state === 'CA') {
+        link.innerHTML = `Your California Privacy Rights${PRIVACY_CHOICES_ICON}`;
+      }
+      return; // region resolved; the default label is correct otherwise
+    }
+    tries += 1;
+    if (tries < 20) setTimeout(check, 500);
+  }
+  check();
+}
+
+// "Manage cookies" opens the OneTrust preference centre, mirroring production's
+// two-branch handler: OneTrust.ToggleInfoDisplay(), falling back to
+// intuit_gdpr.showCookiePreference() when the OneTrust SDK hasn't loaded (the consent
+// CDN is fail-open, so the control still works). A `javascript:` href can't be used —
+// the page enforces Trusted Types + strict-dynamic — so it is a real click handler.
+// We own the label now (no ot-sdk-show-settings hook), so applyCaliforniaPrivacyLabel
+// can set the geo-aware label with no MutationObserver fight.
+function wireCookiePreferences(block) {
+  const link = block.querySelector('.footer-copy-btn');
+  if (!link) return;
+  link.addEventListener('click', (e) => {
+    e.preventDefault();
+    const ot = window.OneTrust;
+    if (ot && typeof ot.ToggleInfoDisplay === 'function') {
+      ot.ToggleInfoDisplay();
+    } else if (window.intuit_gdpr && typeof window.intuit_gdpr.showCookiePreference === 'function') {
+      window.intuit_gdpr.showCookiePreference();
+    }
+  });
+  applyCaliforniaPrivacyLabel(link);
 }
 
 export default async function decorate(block) {
@@ -230,8 +270,43 @@ export default async function decorate(block) {
   block.innerHTML = buildChrome(columns, legal);
   wireAccordions(block);
   wireCountry(block);
-  normalizeCookieLabel(block);
+  wireCookiePreferences(block);
   // Resource Center search (issue #60): the "Search this site" input submits
   // to /blog/search on Enter.
   wireFooterSearch(block);
+
+  // Footer under a `footer` root; sub-sections add their segment (menus/products/
+  // footer_bottom/sitemap). link_name off; per-link wa-link/object_detail is sheet residue.
+  // Id-based keying: `trackId` derives each CTA's data-track-id deterministically, so the
+  // sheet keys off identity (not DOM position — immune to the skipped toggles and the
+  // mobile/desktop country duplication). Most links fall to the readable href slug
+  // (`footer:company`, `footer:sitemap`). The few special cases the block handles inline:
+  //  - country menu -> `footer:country-<code>` derived from the locale path, so the mobile
+  //    and desktop copies share ONE id (correct dedupe) and it can't collide with the logo;
+  //  - brand logos + the Intuit logo -> `footer:brand-<host>`, disambiguating the logo from
+  //    the US country link (both intuit.com/) and a brand from a same-host column link;
+  //  - href-less "Manage cookies" (`#`) + the readable cookie/TRUSTe rows -> semantic ids.
+  trackAs('footer', block, {
+    key: 'footer',
+    linkName: false,
+    skip: '.col-toggle, .country-toggle',
+    trackId: (el) => {
+      if (el.matches('.footer-copy-btn')) return 'footer:manage-cookies';
+      if (el.matches('.footer-copy a[href*="cookie-policy"]')) return 'footer:cookie-about';
+      if (el.matches('.truste')) return 'footer:truste';
+      if (el.matches('.country a')) {
+        const path = new URL(el.href).pathname.replace(/^\/+|\/+$/g, '');
+        return `footer:country-${path ? path.replace(/[^a-z0-9]+/gi, '-').toLowerCase() : 'us'}`;
+      }
+      if (el.matches('.brand-logos a, .ftr-logo')) return `footer:brand-${hostLabel(el.getAttribute('href'))}`;
+      return hrefTrackId(el, 'footer');
+    },
+    items: {
+      '.footer-cols': 'footer_menus',
+      '.footer-col': 'footer_menu_section',
+      '.brand-logos': 'products',
+      '.legal-links, .legal-copy, .legal-nav': 'footer_bottom',
+      '.footer-sitemap': 'footer_sitemap',
+    },
+  });
 }

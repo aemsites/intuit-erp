@@ -615,6 +615,19 @@ async function loadLazy(doc) {
   if (main) runExperienceLayer(main, { skip: main.querySelector('.section') }).catch(() => {});
   await loadSections(main);
 
+  // Click tracking (opt-in `tracking-` blocks) is not render-critical, so it's
+  // loaded lazily here (like pzn/exp) — off the eager/LCP module graph entirely.
+  // Option B: a delegated handler derives + JIT-stamps data-* on interaction so
+  // the injected clickstream tracker reads them — nothing is stamped at rest.
+  // Scope it to `document`, not `main`: the tracked regions are main/header/footer
+  // (TRACKED_REGIONS), and header/footer are siblings of main, so a main-scoped
+  // handler would never see their clicks.
+  if (main) {
+    import('./tracking.js')
+      .then(({ initTracking }) => initTracking(document))
+      .catch(() => {});
+  }
+
   const { hash } = window.location;
   const element = hash ? doc.getElementById(hash.substring(1)) : false;
   if (hash && element) element.scrollIntoView();

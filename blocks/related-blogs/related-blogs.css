@@ -22,6 +22,12 @@
   text-decoration: underline;
 }
 
+/* click-tracking slot wrappers — layout-transparent (carry the image / content trails) */
+.related-blogs .related-blogs-image,
+.related-blogs .related-blogs-content-slot {
+  display: contents;
+}
+
 .related-blogs .related-blogs-card img {
   width: 100%;
   aspect-ratio: 4 / 3;

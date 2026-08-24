@@ -1,4 +1,5 @@
 import { bindScheduleLinks } from '../form/form.js';
+import { trackAs } from '../../scripts/tracking.js';
 
 function text(el) {
   return el ? el.textContent.trim() : '';
@@ -86,4 +87,7 @@ export default function decorate(block) {
   grid.append(buildCard(hasStat ? rows[1] : rows[0]));
 
   block.replaceChildren(grid);
+
+  // Click tracking: prod reports the CTA band under the `cta_block` trail.
+  trackAs('cta_block', block, { key: 'cta' });
 }

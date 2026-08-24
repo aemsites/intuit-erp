@@ -11,6 +11,8 @@
  * button's [aria-expanded] state rather than native <details>.
  * CSS: blocks/faq/faq.css
  */
+import { trackAs } from '../../scripts/tracking.js';
+
 const CHEVRON = '<path d="M3.5 6L8 10.5L12.5 6" fill="none" stroke="currentColor" '
   + 'stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>';
 
@@ -75,4 +77,6 @@ export default function decorate(block) {
   });
 
   block.replaceChildren(list);
+  // Accordion -> "accordion" trail; sheet/opt-in key "faq".
+  return trackAs('accordion', block, { key: 'faq', linkName: false });
 }

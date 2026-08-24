@@ -1,5 +1,6 @@
 import { bindScheduleLinks } from '../form/form.js';
 import { loadFragment } from '../fragment/fragment.js';
+import { trackAs } from '../../scripts/tracking.js';
 
 const DEFAULT_FORM_FRAGMENT = '/fragments/schedule-call';
 const DASHBOARD_LOTTIE_PATHS = ['/', '/index'];
@@ -189,4 +190,6 @@ export default async function decorate(block) {
     figure.append(video, toggle);
     block.append(figure);
   }
+  // Hero -> "rw2_hero" trail; sheet/opt-in key "hero".
+  return trackAs('rw2_hero', block, { key: 'hero' });
 }

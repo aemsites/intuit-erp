@@ -1,0 +1,93 @@
+{
+  "_comment": "The FIXED backend contract Option B must preserve for the SBSEG click channel. Re-verified LIVE 2026-08-20 (real Chrome; fetch/XHR/sendBeacon patched to intercept+ABORT the eventbus /t POST — nothing delivered; batched flush forced via visibilitychange/pagehide; controlled dynamically-injected elements used for exact input->output). Not scraped PII: only field shapes + safe example values (campaign codes, experiment ids, labels). See memory intuit-erp-clickstream-beacon-contract.",
+  "capturedAt": "2026-08-20",
+  "verifiedOn": ["erp.intuit.com (WordPress/Next.js prod)", "stage.erp.intuit.com (EDS build — send layer present)"],
+
+  "endpoint": {
+    "url": "https://eventbus.intuit.com/v2/segment/intuit-general-clickstream/t",
+    "method": "POST",
+    "transport": "fetch",
+    "batched": true,
+    "flushOn": ["timer", "visibilitychange", "pagehide", "unload"],
+    "note": "Intuit first-party Segment proxy; /v2/segment/<source>/{t,p,i}=track/page/identify; source=intuit-general-clickstream. NOT sendBeacon, NOT an image pixel."
+  },
+
+  "sendLayer": {
+    "inRepo": false,
+    "libs": [
+      "uxfabric.intuitcdn.net/analytics/<ver>/track-event-lib.min.js  (beacon SENDER)",
+      "uxfabric.intuitcdn.net/analytics/prod/track-event-lib-init.min.js  (GENERIC delegated DOM-driven click tracker)",
+      "uxfabric.intuitcdn.net/analytics/<ver>/visitorapi.min.js  (Adobe ECID -> integrations['Adobe Analytics'])"
+    ],
+    "injectedVia": "intuit/ies-erp/prod Tealium profile (tags.tiqcdn.com/utag/intuit/ies-erp/prod/utag.js) — the SAME profile plugins/tealium-martech loads",
+    "presentOn": ["erp.intuit.com (prod)", "stage.erp.intuit.com (EDS)"],
+    "behavior": "One delegated click listener on document. On click, walks up from the target: GATE = data-object OR data-wa-link within 5 ancestors (else silent no-op). Applies defaults, expands custom-properties to top-level props, computes the ui_access_point trail, attaches the ~47 shared context + consent, posts the batched content:<action> beacon. Reads DYNAMICALLY-INJECTED data-* too (verified).",
+    "optionBFeed": "Option B does NOT reproduce this. It DERIVES per-CTA identity and JIT-STAMPS data-* on pointerdown / click-capture (before the tracker's handler) so the injected tracker reads them and posts. The ~47 context + consent + send + batching are inherited free."
+  },
+
+  "envelope": {
+    "type": "track",
+    "keys": ["timestamp", "integrations", "anonymousId", "event", "type", "properties", "context", "messageId", "writeKey", "userId", "sentAt", "_metadata"],
+    "integrations": ["Adobe Analytics"],
+    "eventNameRule": "event = `${object}:${action}` (content:engaged, content:interacted, video:started, video:engaged, ...). NOT a constant."
+  },
+
+  "perClickFields": {
+    "_note": "What Option B must derive. The Phase-6 oracle diffs THESE + the event name (both sides captured live at /t). Presence varies by element type.",
+    "always": {
+      "object": "data-object; DEFAULT 'content' when absent",
+      "action": "data-action; DEFAULT 'engaged' when absent. Varies by intent: nav->engaged, generic CTA->interacted, video-play->started, video-link->engaged",
+      "ui_object": "data-ui-object; DEFAULT 'link'",
+      "ui_object_detail": "data-ui-object-detail (the visible label)",
+      "ui_action": "data-ui-action; DEFAULT 'clicked'",
+      "site_section": "= org|purpose|scope = 'cmo|mktg|corp' (page-constant; effectively shared)",
+      "personalization_details": "ARRAY; [] unless the element is in a pzn placement (appVars.pznPageRecDetailsArr overrides DOM data-pzn-*)",
+      "experiment_ids": "STRING, PAGE-level, format id:version:treatment pipe-joined (e.g. '386879:1:840422|328776:4:718601')"
+    },
+    "conditional": {
+      "object_detail": "when data-object-detail authored",
+      "ui_access_point": "when data-ui-access-point KEY is present (opt-in; empty '' counts). VALUE = computed data-tracking trail broad->specific, hyphens->underscores, sacrificial-anchor skipped, fallback 'page'. Authored value does NOT verbatim-win (tracker-replica.mjs is WRONG on this).",
+      "data-wa-link": "when data-wa-link authored (literal hyphenated key)",
+      "icom_user_action": "when data-wa-link authored; = '<wa-link> [org|purpose|scope|scope_area|screen]'",
+      "link_name": "when authored via data-custom-properties (expanded to top-level)",
+      "<any-custom-prop>": "EVERY k|v in data-custom-properties is expanded to a TOP-LEVEL property. There is NO custom_properties object in the payload."
+    }
+  },
+
+  "sharedContext": {
+    "_note": "~47 keys the injected tracker attaches to EVERY event (page-view + click), byte-identical across clicks. Option B INHERITS these; does NOT derive them. Excluded from the oracle diff.",
+    "keys": ["org", "purpose", "scope", "scope_area", "screen", "top_scope_area", "top_screen", "platform", "env", "ecs_version", "write_key", "url", "url_clean", "url_host_name", "locale", "page_language", "page_geography", "akes_geo", "page_hierarchy", "page_hierarchy_extended", "page_name_parameter", "page_category_parameter", "page_cas_id", "project_asset_id", "page_load_id", "page_track_seq_num", "channel_cookie_90day", "ivid", "fbp", "event_sender_path", "loadAdobeVisitorApi", "segment_api_ts", "session_replay_id", "session_replay_url", "browser_width", "browser_height", "browser_encoding", "browser_plugins", "browser_java_enabled", "browser_cookies_enabled", "screen_color_depth"],
+    "safeValues": { "org": "cmo", "purpose": "mktg", "scope": "corp", "scope_area": "enterprise", "screen": "homepage", "platform": "web", "env": "prod", "ecs_version": "4.1", "locale": "en-US", "page_language": "en", "page_geography": "us" }
+  },
+
+  "consentFields": {
+    "_note": "Baked into every event by the injected tracker (OneTrust). Part of the shared block; confirm parity holds but not Option-B-derived.",
+    "keys": ["gpc_enabled", "privacy_essential", "privacy_advertising", "prefs_essential_ccpa", "prefs_essential_cpra", "prefs_advertising_ccpa", "prefs_advertising_cpra"],
+    "example": { "gpc_enabled": "0", "privacy_essential": "ccpa=1|cpra=1", "privacy_advertising": "ccpa=1|cpra=1", "prefs_essential_ccpa": 1, "prefs_essential_cpra": 1, "prefs_advertising_ccpa": 1, "prefs_advertising_cpra": 1 }
+  },
+
+  "examples": [
+    {
+      "_label": "CONTROLLED full-path content (dynamically-injected; exact input->output ground truth)",
+      "input": { "data-object": "content", "data-action": "interacted", "data-ui-object": "button", "data-ui-object-detail": "clddiag full", "data-ui-action": "clicked", "data-object-detail": "diag|full", "data-tracking": "button", "data-ui-access-point": "", "data-custom-properties": "link_name|button-clddiag-full,my_prop|xyz" },
+      "output": { "event": "content:interacted", "object": "content", "object_detail": "diag|full", "action": "interacted", "ui_object": "button", "ui_object_detail": "clddiag full", "ui_action": "clicked", "ui_access_point": "page", "link_name": "button-clddiag-full", "my_prop": "xyz", "site_section": "cmo|mktg|corp", "personalization_details": [], "experiment_ids": "386879:1:840422|328776:4:718601" }
+    },
+    {
+      "_label": "CONTROLLED wa-link-only (no data-object; proves defaults content/engaged/link — replica's walink/INTERACTED is outdated)",
+      "input": { "data-wa-link": "clddiag-wa-code", "data-tracking": "button" },
+      "output": { "event": "content:engaged", "object": "content", "action": "engaged", "ui_object": "link", "ui_action": "clicked", "data-wa-link": "clddiag-wa-code", "icom_user_action": "clddiag-wa-code [cmo|mktg|corp|enterprise|homepage]", "site_section": "cmo|mktg|corp", "personalization_details": [], "experiment_ids": "386879:1:840422|328776:4:718601" }
+    },
+    {
+      "_label": "REAL nav item 'Capabilities' (object=content + wa-link)",
+      "output": { "event": "content:engaged", "object": "content", "object_detail": "nav|capabilities", "action": "engaged", "ui_object": "link", "ui_object_detail": "nav|capabilities", "ui_action": "clicked", "data-wa-link": "ies-nav:capabilities", "icom_user_action": "ies-nav:capabilities [cmo|mktg|corp|enterprise|homepage]", "site_section": "cmo|mktg|corp", "personalization_details": [], "experiment_ids": "386879:1:840422|328776:4:718601" }
+    },
+    {
+      "_label": "REAL outcomes-carousel dot (object=content, custom-props link_name, trail->page)",
+      "output": { "event": "content:interacted", "object": "content", "action": "interacted", "ui_object": "button", "ui_object_detail": "0", "ui_action": "clicked", "ui_access_point": "page", "link_name": "button-0 [erp.intuit.com]", "site_section": "cmo|mktg|corp", "personalization_details": [], "experiment_ids": "386879:1:840422|328776:4:718601" }
+    },
+    {
+      "_label": "REAL video 'Watch product demo' (object=video, action=engaged -> event video:engaged)",
+      "output": { "event": "video:engaged", "object": "video", "action": "engaged", "ui_object": "video_link", "ui_object_detail": "Watch product demo", "ui_action": "clicked", "ui_access_point": "page", "link_name": "video_link-watch-product-demo [erp.intuit.com]", "site_section": "cmo|mktg|corp", "personalization_details": [], "experiment_ids": "386879:1:840422|328776:4:718601" }
+    }
+  ]
+}

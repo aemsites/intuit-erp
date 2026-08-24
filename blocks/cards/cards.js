@@ -21,6 +21,7 @@
  * CSS: blocks/cards/cards.css
  */
 import { createOptimizedPicture } from '../../scripts/aem.js';
+import { trackAs } from '../../scripts/tracking.js';
 
 const SCROLL_SHAPE_CLASSES = ['carousel', 'boxed'];
 
@@ -264,4 +265,14 @@ export default function decorate(block) {
     && !block.classList.contains('icons')) {
     attachFocusCursor(block);
   }
+  // Trail: rw_cards_container|carousel|rw_card_N (the `carousel` middle only exists
+  // for scroll variants; static grids are rw_cards_container|rw_card_N).
+  return trackAs('rw_cards_container', block, {
+    key: 'cards',
+    linkName: false, // prod omits it on ~half the card CTAs; sheet fills the rest
+    items: {
+      '.cards-track, .cards-track > *':
+        (i, el) => (el.classList.contains('cards-track') ? 'carousel' : `rw_card_${i}`),
+    },
+  });
 }

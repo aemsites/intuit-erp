@@ -17,6 +17,7 @@
 // eslint-disable-next-line import/no-cycle
 import { openScheduleModal } from '../form/form.js';
 import { getMetadata } from '../../scripts/aem.js';
+import { trackAs } from '../../scripts/tracking.js';
 
 // Contact info (sales phone, hours, support URL) is authored in DA — a
 // fragment table, not hardcoded here — so it can change without a code
@@ -204,6 +205,9 @@ export default async function initContactUs() {
       openScheduleModal();
     });
   }
+
+  // Floating sales widget -> talk_to_sales (a declared block tracks in <body>); skip close.
+  trackAs('talk_to_sales', root, { key: 'talk-to-sales', linkName: false, skip: '.cu-close' });
 
   document.body.append(root);
 }

@@ -47,6 +47,11 @@
   display: block;
 }
 
+/* click-tracking body wrapper — layout-transparent (carries the content-slot trail) */
+.blog-cards .blog-card-content-slot {
+  display: contents;
+}
+
 .blog-cards .blog-card-body {
   flex: 1;
   min-width: 0;
@@ -100,6 +105,9 @@
 }
 
 .blog-cards .blog-cards-load-more[hidden] { display: none; }
+
+/* click-tracking button wrapper — layout-transparent (carries the button trail leaf) */
+.blog-cards .blog-cards-load-more-btn { display: contents; }
 
 /* ---- filter pills ---- */
 .blog-cards .blog-cards-filter {

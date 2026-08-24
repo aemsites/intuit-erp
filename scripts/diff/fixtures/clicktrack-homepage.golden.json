@@ -1,0 +1,32 @@
+{
+  "_comment": "INTERIM golden for the Option B click-tracking oracle. Each event = a {name, locator} the Phase-6 harness resolves on BOTH prod (erp.intuit.com) and ours (feature preview / localhost), clicks, then intercepts+ABORTS the eventbus /t POST on both sides, forces the batched flush, and diffs the per-click fields + event name (the ~47 shared context is inherited from the injected tracker and excluded). `expected` is the pinned prod capture (2026-08-20) for offline/reference runs. Swap in the customer's ~50-page set Friday. Locators are text/role-based so they resolve across the WordPress prod DOM and the EDS DOM.",
+  "capturedAt": "2026-08-20",
+  "diffFields": ["event", "object", "object_detail", "action", "ui_object", "ui_object_detail", "ui_action", "ui_access_point", "data-wa-link", "icom_user_action", "link_name", "personalization_details", "experiment_ids"],
+  "ignoreFields": ["experiment_ids", "personalization_details", "site_section", "page_track_seq_num", "segment_api_ts", "page_load_id", "session_replay_id", "session_replay_url"],
+  "_ignoreNote": "experiment_ids/personalization_details are page/session-dependent (allow-list until the customer freezes experiments); site_section is page-constant context; the rest are per-event metadata that legitimately vary run-to-run.",
+  "pages": [
+    {
+      "path": "/",
+      "events": [
+        {
+          "name": "nav-capabilities",
+          "locator": { "role": "button", "text": "Capabilities", "nth": 0 },
+          "note": "top-nav mega-menu toggle; object=content + wa-link nav; safe (opens menu)",
+          "expected": { "event": "content:engaged", "object": "content", "object_detail": "nav|capabilities", "action": "engaged", "ui_object": "link", "ui_object_detail": "nav|capabilities", "ui_action": "clicked", "data-wa-link": "ies-nav:capabilities", "icom_user_action": "ies-nav:capabilities [cmo|mktg|corp|enterprise|homepage]" }
+        },
+        {
+          "name": "outcomes-carousel-dot",
+          "locator": { "role": "button", "selector": "[data-ui-access-point='outcomes_carousel:dot']", "nth": 0 },
+          "note": "in-page content button; custom-props link_name; trail falls back to 'page'; safe (advances carousel)",
+          "expected": { "event": "content:interacted", "object": "content", "action": "interacted", "ui_object": "button", "ui_object_detail": "0", "ui_action": "clicked", "ui_access_point": "page", "link_name": "button-0 [erp.intuit.com]" }
+        },
+        {
+          "name": "video-watch-product-demo",
+          "locator": { "role": "button", "text": "Watch product demo", "nth": 0 },
+          "note": "video object; action=engaged -> event video:engaged; opens a player modal in a real browser",
+          "expected": { "event": "video:engaged", "object": "video", "action": "engaged", "ui_object": "video_link", "ui_object_detail": "Watch product demo", "ui_action": "clicked", "ui_access_point": "page", "link_name": "video_link-watch-product-demo [erp.intuit.com]" }
+        }
+      ]
+    }
+  ]
+}

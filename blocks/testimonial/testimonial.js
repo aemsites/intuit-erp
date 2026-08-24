@@ -29,6 +29,8 @@
  * CSS: blocks/testimonial/testimonial.css
  */
 
+import { trackAs } from '../../scripts/tracking.js';
+
 function pic(cell) {
   if (!cell) return null;
   const p = cell.querySelector('picture, img');
@@ -571,6 +573,13 @@ function buildCardCarousel(figures) {
 }
 
 export default function decorate(block) {
+  // Customer proof -> rw_testimonial trail; each story card/frame is an
+  // rw_testimonial_item slot (the carousel dots stay at the block level). link_name off.
+  const track = () => trackAs('rw_testimonial', block, {
+    key: 'testimonial',
+    linkName: false,
+    items: { '.testimonial-card, .video-frame': 'rw_testimonial_item' },
+  });
   if (block.classList.contains('card')) {
     const figures = [...block.querySelectorAll(':scope > div')].map(buildCard);
     if (block.classList.contains('carousel')) {
@@ -578,6 +587,7 @@ export default function decorate(block) {
     } else {
       block.replaceChildren(...figures);
     }
+    track();
     return;
   }
 
@@ -585,6 +595,7 @@ export default function decorate(block) {
     const row = block.querySelector(':scope > div');
     if (!row) return;
     block.replaceChildren(buildVideoSplit([...row.children]));
+    track();
     return;
   }
 
@@ -592,6 +603,7 @@ export default function decorate(block) {
     const rows = [...block.querySelectorAll(':scope > div')];
     if (!rows.length) return;
     block.replaceChildren(buildVideoSection(rows));
+    track();
     return;
   }
 
@@ -626,4 +638,5 @@ export default function decorate(block) {
   if (headshot) media.append(headshot);
   grid.append(media);
   block.replaceChildren(grid);
+  track();
 }

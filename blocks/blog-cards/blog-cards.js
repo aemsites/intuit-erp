@@ -23,6 +23,7 @@
  * CSS: blocks/blog-cards/blog-cards.css
  */
 import { readBlockConfig, loadCSS, createOptimizedPicture } from '../../scripts/aem.js';
+import { trackAs } from '../../scripts/tracking.js';
 import { loadIndex, formatDate } from '../../scripts/content-index.js';
 
 const DEFAULT_SOURCE = '/blog/query-index.json';
@@ -133,7 +134,13 @@ export function cardEl(entry, featured = false) {
     body.append(date);
   }
 
-  card.append(imageWrap, body);
+  // body wrapper (display:contents — no layout change) carries the content-slot
+  // trail so a click on the card body fires its own beacon, distinct from the
+  // thumbnail (#769).
+  const contentSlot = document.createElement('span');
+  contentSlot.className = 'blog-card-content-slot';
+  contentSlot.append(body);
+  card.append(imageWrap, contentSlot);
   return card;
 }
 
@@ -191,7 +198,13 @@ function renderPaginatedGrid(container, cards, pageSize) {
   loadMoreBtn.type = 'button';
   loadMoreBtn.className = 'button secondary';
   loadMoreBtn.textContent = 'Load More';
-  loadMoreWrap.append(loadMoreBtn);
+  // display:contents wrapper carries the `button` trail leaf so the access point
+  // reads …|oisp_loadmore|button (the button's own data-tracking is the skipped
+  // sacrificial anchor).
+  const loadMoreBtnWrap = document.createElement('span');
+  loadMoreBtnWrap.className = 'blog-cards-load-more-btn';
+  loadMoreBtnWrap.append(loadMoreBtn);
+  loadMoreWrap.append(loadMoreBtnWrap);
 
   let shown = 0;
   const renderNext = () => {
@@ -271,15 +284,37 @@ export default async function decorate(block) {
   const contentArea = document.createElement('div');
   contentArea.className = 'blog-cards-content';
 
-  const renderEntries = (activeEntries) => {
+  const renderEntries = async (activeEntries) => {
     const cards = activeEntries.map((entry, i) => cardEl(entry, isFeatured && i < 2));
     if (config.variant === 'carousel') {
-      renderCarousel(contentArea, cards);
+      await renderCarousel(contentArea, cards);
     } else if (isPaginated) {
       renderPaginatedGrid(contentArea, cards, limit || DEFAULT_PAGE_SIZE);
     } else {
       renderGrid(contentArea, cards);
     }
+    // (re)stamp on the freshly rendered cards (survives filter re-renders): the
+    // card = qrc_content_card; its thumbnail fires a distinct `image` beacon (no
+    // link_name, as prod) and its body a `qrc_content_card_content` slot beacon
+    // (keeps link_name) (#769).
+    trackAs('dynamic_category_container', block, {
+      key: 'dynamic_category_container',
+      linkName: false,
+      items: {
+        '.blog-cards-grid, .carousel.cards': 'qrc_content_card_grid',
+        '.blog-card': 'qrc_content_card',
+        '.blog-card-image': 'image',
+        '.blog-card-content-slot': 'qrc_content_card_content',
+        '.blog-cards-load-more': 'oisp_loadmore',
+        '.blog-cards-load-more-btn': 'button',
+      },
+      // both slots omit link_name here — prod does on the blog index grid (it
+      // keeps a truncated one only on the related-blogs rail, see that block).
+      alsoTrack: {
+        '.blog-card-image img': 'button',
+        '.blog-card-body': 'button',
+      },
+    });
   };
 
   if (config.filter) {
@@ -288,5 +323,5 @@ export default async function decorate(block) {
   }
 
   block.append(contentArea);
-  renderEntries(filtered);
+  await renderEntries(filtered);
 }
