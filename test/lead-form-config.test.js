@@ -231,28 +231,6 @@ describe('decorate — live Marketo form', () => {
 });
 
 describe('decorate — inside the shared "Schedule a call" modal', () => {
-  it('embeds immediately, without an IntersectionObserver, when the block is inside a <dialog>', async () => {
-    const IntersectionObserverSpy = vi.fn(global.IntersectionObserver);
-    global.IntersectionObserver = IntersectionObserverSpy;
-
-    const dialog = document.createElement('dialog'); // closed: no showModal() call, matches blocks/modal/modal.js's openModal() ordering
-    const block = make([['formId', '1058']]);
-    dialog.append(block);
-    document.body.append(dialog);
-
-    await decorate(block);
-    await flush();
-
-    expect(IntersectionObserverSpy).not.toHaveBeenCalled();
-    expect(window.MktoForms2.loadForm).toHaveBeenCalledWith(
-      '//743-rzm-619.mktoweb.com',
-      '743-RZM-619',
-      '1058',
-      expect.any(Function),
-    );
-    dialog.remove();
-  });
-
   it('recovers the authored config on a forced re-decoration instead of wiping the block', async () => {
     // blocks/modal/modal.js caches an already-decorated fragment (loadFragment() runs
     // loadSections() once), then clones it and resets block/section status to force a

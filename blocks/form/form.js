@@ -298,20 +298,10 @@ export default async function decorate(block) {
 
   const cfg = await siteConfig();
   const env = marketoEnv();
-
-  const embed = () => embedMarketoForm(form, cfg, config, env);
-
-  // A closed <dialog> is display:none, so an observer attached now never fires once it
-  // opens (blocks/modal/modal.js decorates before showModal()) — embed immediately instead.
-  if (block.closest('dialog:not([open])')) {
-    embed();
-    return;
-  }
-
   const observer = new IntersectionObserver((entries) => {
     if (entries.some((e) => e.isIntersecting)) {
       observer.disconnect();
-      embed();
+      embedMarketoForm(form, cfg, config, env);
     }
   });
   observer.observe(block);
