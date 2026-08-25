@@ -627,6 +627,26 @@ export function decorateBlockquoteAttributions(main) {
   });
 }
 
+/**
+ * Opens links in the article body prose in a new tab, matching production
+ * (prod renders every rich-text body link with target="_blank"
+ * rel="noopener noreferrer"). Scoped to the authored content: in-page anchor
+ * links stay in the same tab, and the injected chrome (hero byline/eyebrow,
+ * TOC, share/social strips, author bio, rails) is left untouched — the byline
+ * author link is same-tab on prod too.
+ * @param {Element} main the page's <main> (already classed .blog-article, with
+ *   the hero/toc/rail wrappers in place so the skip selectors resolve)
+ */
+export function decorateBodyLinks(main) {
+  const SKIP = '.blog-hero, .blog-toc, .blog-toc-rail, .blog-share, .blog-social-share, .blog-author-bio, .blog-rail, header, footer';
+  main.querySelectorAll('a[href]').forEach((a) => {
+    if ((a.getAttribute('href') || '').startsWith('#')) return;
+    if (a.closest(SKIP)) return;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+  });
+}
+
 export function buildBlogTemplate(main) {
   // Three case studies author a `case-study-header` block in section 1 (its own
   // centred banner, share row and inline TOC). Bail out so those pages aren't
@@ -764,6 +784,10 @@ export function buildBlogTemplate(main) {
     toc ? () => toc.before(share) : null,
     desktopMQ,
   );
+
+  // article body prose links open in a new tab, matching production. Runs last
+  // so the skip selectors (hero/toc/share/rail classes added above) resolve.
+  decorateBodyLinks(main);
 
   // end-of-article author bio + social share, sourced from the query-index
   // (fire-and-forget so it never blocks the synchronous layout above)

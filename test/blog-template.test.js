@@ -4,7 +4,7 @@ import {
 import {
   buildToc, buildByline, buildEyebrow, buildBylineMeta,
   buildShare, relocateShare, tocRailRowEnd, isBlogPage,
-  buildBlogTemplate,
+  buildBlogTemplate, decorateBodyLinks,
 } from '../blocks/blog-template/blog-template.js';
 
 describe('buildToc', () => {
@@ -218,6 +218,33 @@ describe('tocRailRowEnd', () => {
     // hero = index 0 (row 1); "B"'s section = index 2 (row 3) -> end line 4,
     // leaving the trailing "Recommended for you" section (index 3) excluded.
     expect(tocRailRowEnd(sections, headings)).toBe(4);
+  });
+});
+
+describe('decorateBodyLinks', () => {
+  it('opens body prose links in a new tab but leaves anchors and chrome alone', () => {
+    const main = document.createElement('main');
+    main.innerHTML = `
+      <div class="blog-hero"><p class="blog-byline"><a href="/blog/author/x">Author</a></p></div>
+      <div class="blog-toc-rail"><nav class="blog-toc"><a href="#sec">Section</a></nav></div>
+      <div><p><a href="https://quickbooks.intuit.com/r/foo/">External</a>
+        <a href="/blog/strategy/other/">Cross-blog</a>
+        <a href="#anchor">In-page</a></p></div>
+      <div class="blog-rail"><p><a href="/fragments/right-rail">/fragments/right-rail</a></p></div>
+    `;
+
+    decorateBodyLinks(main);
+
+    const byHref = (h) => main.querySelector(`a[href="${h}"]`);
+    // body prose links -> new tab
+    ['https://quickbooks.intuit.com/r/foo/', '/blog/strategy/other/'].forEach((h) => {
+      expect(byHref(h).target).toBe('_blank');
+      expect(byHref(h).rel).toBe('noopener noreferrer');
+    });
+    // in-page anchor and injected chrome -> untouched (same tab)
+    ['#anchor', '#sec', '/blog/author/x', '/fragments/right-rail'].forEach((h) => {
+      expect(byHref(h).getAttribute('target')).toBeNull();
+    });
   });
 });
 
