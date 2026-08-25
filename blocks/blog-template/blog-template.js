@@ -437,7 +437,7 @@ async function fetchAuthorRow(slug) {
  * @param {object} row the author's query-index row
  * @param {string} authorPath /blog/author/<slug>
  */
-function insertAuthorBio(main, row, authorPath) {
+export function insertAuthorBio(main, row, authorPath) {
   const wrap = document.createElement('div');
   wrap.className = 'blog-author-bio';
   const inner = document.createElement('div');
@@ -476,14 +476,18 @@ function insertAuthorBio(main, row, authorPath) {
   // Click tracking: the author link reports under the `author_bio` trail; prod
   // omits link_name here.
   trackAs('author_bio', wrap, { key: 'author_bio', linkName: false });
-  // Insert the bio immediately before the "Recommended for you" section
-  // (the direct-child-of-main section that contains the blog-cards block).
-  // This matches production order: article body → author-bio → recommended cards.
-  // Fallback: if no blog-cards section exists (pages without a Recommended block),
-  // use the previous behavior (before the right-rail, or append to main).
+  // Production places the author bio right after the FAQ block. Some articles
+  // author "Recommended for you" BEFORE the FAQ (as this page does), so keying
+  // off the FAQ — not the recommended cards — is what keeps the bio after it.
+  // Fallbacks, in order: before the "Recommended for you" cards (pages with no
+  // FAQ), before the right-rail, else append.
+  const faqEl = main.querySelector('.faq');
+  const faqSection = faqEl && [...main.children].find((s) => s.contains(faqEl));
   const blogCardsEl = main.querySelector('.blog-cards');
   const recSection = blogCardsEl && [...main.children].find((s) => s.contains(blogCardsEl));
-  if (recSection) {
+  if (faqSection) {
+    faqSection.after(wrap);
+  } else if (recSection) {
     recSection.before(wrap);
   } else {
     const rail = main.querySelector(':scope > .blog-rail');

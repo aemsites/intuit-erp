@@ -4,7 +4,7 @@ import {
 import {
   buildToc, buildByline, buildEyebrow, buildBylineMeta,
   buildShare, relocateShare, tocRailRowEnd, isBlogPage,
-  buildBlogTemplate,
+  buildBlogTemplate, insertAuthorBio,
 } from '../blocks/blog-template/blog-template.js';
 
 describe('buildToc', () => {
@@ -218,6 +218,42 @@ describe('tocRailRowEnd', () => {
     // hero = index 0 (row 1); "B"'s section = index 2 (row 3) -> end line 4,
     // leaving the trailing "Recommended for you" section (index 3) excluded.
     expect(tocRailRowEnd(sections, headings)).toBe(4);
+  });
+});
+
+describe('insertAuthorBio', () => {
+  it('places the bio after the FAQ, even when Recommended is authored before it', () => {
+    window.hlx = { codeBasePath: '' };
+    const main = document.createElement('main');
+    main.innerHTML = `
+      <div><h2>Body</h2><p>a</p></div>
+      <div class="blog-cards-container"><h2>Recommended for you</h2><div class="blog-cards"></div></div>
+      <div class="faq-container"><h2>FAQ</h2><div class="faq"></div></div>
+    `;
+    const faqSection = main.querySelector('.faq').closest('main > div');
+
+    insertAuthorBio(main, { title: 'Jane Doe', description: 'bio text' }, '/blog/author/jane-doe');
+
+    const bio = main.querySelector(':scope > .blog-author-bio');
+    expect(bio).toBeTruthy();
+    // immediately after the FAQ section — and therefore after Recommended too
+    expect(faqSection.nextElementSibling).toBe(bio);
+    const idx = (el) => [...main.children].indexOf(el);
+    expect(idx(bio)).toBeGreaterThan(idx(main.querySelector('.blog-cards-container')));
+  });
+
+  it('falls back to before Recommended when there is no FAQ', () => {
+    window.hlx = { codeBasePath: '' };
+    const main = document.createElement('main');
+    main.innerHTML = `
+      <div><h2>Body</h2><p>a</p></div>
+      <div class="blog-cards-container"><h2>Recommended for you</h2><div class="blog-cards"></div></div>
+    `;
+    const rec = main.querySelector('.blog-cards-container');
+
+    insertAuthorBio(main, { title: 'Jane Doe', description: 'bio text' }, '/blog/author/jane-doe');
+
+    expect(rec.previousElementSibling).toBe(main.querySelector(':scope > .blog-author-bio'));
   });
 });
 
