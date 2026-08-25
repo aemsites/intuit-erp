@@ -427,9 +427,6 @@
   }
 }
 
-/* Lightbox modal for the video CTA — class names match video.js/testimonial.js's
-   own copies so all three behave identically; duplicated (not shared) to keep
-   hero self-contained. */
 .video-modal-overlay {
   position: fixed;
   inset: 0;
