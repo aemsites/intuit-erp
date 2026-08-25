@@ -223,6 +223,58 @@ function disclaimerBelowFields(formEl) {
   return buttonRow.getBoundingClientRect().top - lastFieldTop > 20;
 }
 
+// Broker for the single DOM id ("mktoForm_<formId>") Marketo's Forms2
+// requires per formId. It finds its render target purely via
+// `document.getElementById` on that id — no element reference is ever passed
+// to loadForm — so two *live* instances of the same formId collide: e.g. a
+// page authoring an inline schedule-call form, plus the nav's modal loading
+// the same formId (#821). decorate() no longer assigns this id up front
+// (previously done synchronously for every block at page-decoration time,
+// long before either instance's own — IntersectionObserver-gated — Marketo
+// load actually fires); instead each embed claims it here, right before
+// calling loadForm. A new claimant only takes the id once the current holder
+// either (a) has none (free), (b) is gone from the DOM (e.g. the modal was
+// closed), or (c) its own loadForm callback has already fired and released it
+// (releaseFormDomId below) — never mid-load, which would leave that instance
+// unable to find its own target and never render at all.
+const formIdClaims = new Map();
+
+function claimFormDomId(formDomId, formEl) {
+  return new Promise((resolve) => {
+    const take = () => {
+      formEl.id = formDomId;
+      formIdClaims.set(formDomId, { formEl, waiters: [] });
+      resolve();
+    };
+    const claim = formIdClaims.get(formDomId);
+    if (!claim || !document.contains(claim.formEl)) {
+      take();
+      return;
+    }
+    let settled = false;
+    claim.waiters.push(() => { if (!settled) { settled = true; take(); } });
+    // Safety net: don't wait forever if the current holder disappears without
+    // ever releasing (e.g. the modal closes mid-fetch, before its loadForm
+    // callback fires at all).
+    setTimeout(() => {
+      if (settled) return;
+      const current = formIdClaims.get(formDomId);
+      if (!current || !document.contains(current.formEl)) {
+        settled = true;
+        take();
+      }
+    }, 8000);
+  });
+}
+
+function releaseFormDomId(formDomId) {
+  const claim = formIdClaims.get(formDomId);
+  if (!claim) return;
+  const next = claim.waiters.shift();
+  if (next) next();
+  else formIdClaims.delete(formDomId);
+}
+
 async function embedMarketoForm(formEl, cfg, config, env) {
   // Munchkin for the active instance, falling back to the base (prod) key. The
   // Forms2 script URL is generated from it — one host per Marketo instance.
@@ -231,7 +283,10 @@ async function embedMarketoForm(formEl, cfg, config, env) {
   const host = `//${munchkin.toLowerCase()}.mktoweb.com`;
   const forms2Src = `${host}/js/forms2/js/forms2.min.js`;
   await loadScript(forms2Src);
+  const formDomId = `mktoForm_${config.formId}`;
+  await claimFormDomId(formDomId, formEl);
   window.MktoForms2.loadForm(host, munchkin, config.formId, (form) => {
+    releaseFormDomId(formDomId);
     if (config.disclaimer) {
       const el = document.createElement('div');
       el.className = 'form-disclaimer';
@@ -304,7 +359,6 @@ export default async function decorate(block) {
     children.push(el);
   }
   const form = document.createElement('form');
-  form.id = `mktoForm_${config.formId}`;
   children.push(form);
   block.replaceChildren(...children);
 
