@@ -498,21 +498,31 @@ body.nav-scroll-lock {
 
 
 
-   /* Pin the Resource Center secondary nav directly below the fixed 56px
-      primary nav so it stays visible while scrolling (the primary nav is
-      already fixed; only the secondary was left in flow and scrolled away).
-      It's now out of flow, so its spacer reserves the row height. */
+   /* Resource Center pages: on scroll the primary nav scrolls away and the
+      secondary "Resource center" nav slides up to take its place at the top
+      (its top is animated by the scroll handler in header.js), mirroring the
+      desktop behaviour above. Primary is relative so it scrolls off; secondary
+      is fixed; the spacer reserves the secondary's row height. */
+   .header.has-secondary-nav .ies-nav {
+      position: relative;
+      z-index: 52;
+   }
+
+   .header.has-secondary-nav .ies-nav-spacer {
+      height: auto;
+   }
+
    .header.has-secondary-nav .ies-secondary-nav {
       position: fixed;
-      top: 56px;
+      top: 0;
       left: 0;
       right: 0;
-      z-index: 49;
+      z-index: 51;
       background: #fff;
    }
 
    .header.has-secondary-nav .ies-secondary-nav-spacer {
-      height: 61px;
+      height: 60px;
    }
 
    .header .ies-secondary-nav .container {
