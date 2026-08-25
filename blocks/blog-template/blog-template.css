@@ -242,6 +242,24 @@
   }
 }
 
+/* Mobile: keep the bar pinned when expanded too. The sticky rule above only
+   covers the collapsed state, so tapping the toggle to open the list unpinned
+   the rail and it jumped back to its in-flow position up the page, out of view.
+   Pinning both states drops the list open in place; cap it and let it scroll so
+   a long TOC doesn't fill the screen. */
+@media (width < 1024px) {
+  .blog-article .blog-toc-rail {
+    position: sticky;
+    top: 117px;
+    z-index: 5;
+  }
+
+  .blog-article .blog-toc-rail:not(.blog-toc-collapsed) .blog-toc-list {
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+}
+
 /* the rail animates between its expanded card and collapsed tab widths */
 .blog-article .blog-toc {
   transition: width 0.3s ease;
