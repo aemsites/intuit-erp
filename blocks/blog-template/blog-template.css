@@ -714,7 +714,7 @@
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     column-gap: 48px;
     align-items: center;
-    padding: 40px;
+    padding: 40px max(40px, calc((100% - 1380px) / 2));
   }
 
   .blog-article .blog-hero.video-container > .default-content-wrapper {
