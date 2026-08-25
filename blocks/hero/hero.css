@@ -426,3 +426,47 @@
     border-radius: 10px;
   }
 }
+
+/* Lightbox modal for the video CTA — class names match video.js/testimonial.js's
+   own copies so all three behave identically; duplicated (not shared) to keep
+   hero self-contained. */
+.video-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgb(0 0 0 / 80%);
+}
+
+.video-modal { position: relative; width: min(960px, 100%); }
+
+.video-modal-frame { position: relative; width: 100%; aspect-ratio: 16 / 9; }
+
+.video-modal-frame iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: 8px;
+}
+
+.video-modal-close {
+  position: absolute;
+  top: -40px;
+  right: 0;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 15%);
+  color: #fff;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.video-modal-close:hover { background: rgb(255 255 255 / 28%); }

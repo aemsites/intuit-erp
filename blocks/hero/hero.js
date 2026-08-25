@@ -2,13 +2,42 @@ import { bindScheduleLinks } from '../form/form.js';
 import { loadFragment } from '../fragment/fragment.js';
 import { videoInfo } from '../video/video-info.js';
 import { trackAs } from '../../scripts/tracking.js';
-import { loadCSS } from '../../scripts/aem.js';
 
 const DEFAULT_FORM_FRAGMENT = '/fragments/schedule-call';
 const DASHBOARD_LOTTIE_PATHS = ['/', '/index'];
 const DASHBOARD_LOTTIE_JSON = '/blocks/hero/dashboard-animation.json';
 const LOTTIE_PLAYER_URL = 'https://cdn.jsdelivr.net/npm/lottie-web@5.12.2/build/player/lottie_light.min.js/+esm';
 const DASHBOARD_LOTTIE_DELAY = 3000;
+
+/**
+ * Opens the video in a dismissible lightbox modal (autoplay iframe). Self-contained
+ * (mirrors video.js/testimonial.js's own copy) so hero stays independent of the
+ * video block; see hero.css for the shared `.video-modal-*` styles.
+ * @param {string} embedUrl provider embed URL
+ * @param {string} [title] accessible iframe title
+ */
+function openVideoModal(embedUrl, title) {
+  const overlay = document.createElement('div');
+  overlay.className = 'video-modal-overlay';
+  overlay.innerHTML = `
+    <div class="video-modal">
+      <button type="button" class="video-modal-close" aria-label="Close video">×</button>
+      <div class="video-modal-frame">
+        <iframe src="${embedUrl}" title="${title || 'Video'}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>
+      </div>
+    </div>`;
+
+  function close() {
+    overlay.remove();
+    // eslint-disable-next-line no-use-before-define
+    document.removeEventListener('keydown', onKey);
+  }
+  function onKey(e) { if (e.key === 'Escape') close(); }
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+  overlay.querySelector('.video-modal-close').addEventListener('click', close);
+  document.addEventListener('keydown', onKey);
+  document.body.append(overlay);
+}
 
 async function leadCard(path) {
   const wrap = document.createElement('div');
@@ -129,12 +158,8 @@ export default async function decorate(block) {
         const info = videoInfo(a.href);
         if (info) {
           a.classList.add('icon-video');
-          a.addEventListener('click', async (e) => {
+          a.addEventListener('click', (e) => {
             e.preventDefault();
-            const [{ openVideoModal }] = await Promise.all([
-              import('../video/video.js'),
-              loadCSS(`${window.hlx.codeBasePath}/blocks/video/video.css`),
-            ]);
             openVideoModal(info.embedUrl, a.textContent.trim());
           });
         }

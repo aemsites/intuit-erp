@@ -1,22 +1,11 @@
 import {
-  describe, it, expect, beforeEach, afterEach, vi,
+  describe, it, expect, afterEach, vi,
 } from 'vitest';
-
-// jsdom never fires a real <link> load/error event, so the real loadCSS() would hang
-// forever; stub it, and stub the video block's modal so we assert the interaction
-// (what hero.js asks it to open) rather than depend on jsdom's CSS pipeline.
-vi.mock('../scripts/aem.js', async (importOriginal) => {
-  const actual = await importOriginal();
-  return { ...actual, loadCSS: vi.fn().mockResolvedValue(undefined) };
-});
 
 // hero.js -> fragment.js -> scripts.js, and scripts.js self-invokes loadPage() at
 // import time against the real `document` — stub it so importing hero.js in
 // isolation doesn't kick off the whole page-decoration pipeline.
 vi.mock('../scripts/scripts.js', () => ({ decorateMain: vi.fn() }));
-
-const openVideoModal = vi.fn();
-vi.mock('../blocks/video/video.js', () => ({ openVideoModal }));
 
 const { default: decorate } = await import('../blocks/hero/hero.js');
 
@@ -35,13 +24,8 @@ function makeHeroBlock() {
 }
 
 describe('hero — video CTA', () => {
-  beforeEach(() => {
-    window.hlx = { codeBasePath: '' };
-    openVideoModal.mockClear();
-  });
-
   afterEach(() => {
-    delete window.hlx;
+    document.querySelector('.video-modal-overlay')?.remove();
   });
 
   it('blocks navigation and opens the video lightbox when the YouTube CTA is clicked', async () => {
@@ -56,13 +40,9 @@ describe('hero — video CTA', () => {
     link.dispatchEvent(ev);
     expect(ev.defaultPrevented).toBe(true);
 
-    // the handler lazily imports the video block before opening the modal
-    await new Promise((resolve) => { setTimeout(resolve, 0); });
-
-    expect(openVideoModal).toHaveBeenCalledWith(
-      'https://www.youtube.com/embed/Lo798Iuj3N4?autoplay=1&rel=0',
-      'Watch product demo',
-    );
+    const overlay = document.querySelector('.video-modal-overlay');
+    expect(overlay).not.toBeNull();
+    expect(overlay.querySelector('iframe').src).toBe('https://www.youtube.com/embed/Lo798Iuj3N4?autoplay=1&rel=0');
   });
 
   it('leaves the non-video CTA alone', async () => {
@@ -72,6 +52,5 @@ describe('hero — video CTA', () => {
     const scheduleLink = block.querySelector('a[href="#schedule"]');
     expect(scheduleLink).not.toBeNull();
     expect(scheduleLink.classList.contains('icon-video')).toBe(false);
-    expect(openVideoModal).not.toHaveBeenCalled();
   });
 });
