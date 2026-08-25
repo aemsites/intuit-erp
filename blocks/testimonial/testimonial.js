@@ -78,6 +78,7 @@ function ytId(url) {
 // everything after is the role/title.
 function parseQuote(cell) {
   let name = '';
+  let cite = '';
   const quoteParas = [];
   const roleParas = [];
   if (cell) {
@@ -90,10 +91,17 @@ function parseQuote(cell) {
         name = text;
         return;
       }
+      // an italic-only line is the citation (the .simple variant renders it as <cite>)
+      if (!cite && only?.tagName === 'EM' && text === only.textContent.trim()) {
+        cite = text;
+        return;
+      }
       (name ? roleParas : quoteParas).push(node);
     });
   }
-  return { quoteParas, name, roleParas };
+  return {
+    quoteParas, name, roleParas, cite,
+  };
 }
 
 function buildCard(row) {
@@ -611,7 +619,9 @@ export default function decorate(block) {
   if (!row) return;
   const [contentCell, mediaCell] = [...row.children];
 
-  const { quoteParas, name, roleParas } = parseQuote(contentCell);
+  const {
+    quoteParas, name, roleParas, cite,
+  } = parseQuote(contentCell);
   const grid = document.createElement('div');
   grid.className = 'cmp-testi-grid';
   const card = document.createElement('div');
@@ -631,6 +641,12 @@ export default function decorate(block) {
   role.className = 'cmp-quote-role';
   role.textContent = roleParas.map((p) => p.textContent.trim()).filter(Boolean).join(', ');
   card.append(nameEl, role);
+  if (cite) {
+    const citeEl = document.createElement('cite');
+    citeEl.className = 'cmp-quote-cite';
+    citeEl.textContent = cite;
+    card.append(citeEl);
+  }
   grid.append(card);
   const media = document.createElement('div');
   media.className = 'cmp-testi-media';

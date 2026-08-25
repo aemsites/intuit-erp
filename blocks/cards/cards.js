@@ -24,6 +24,7 @@ import { createOptimizedPicture } from '../../scripts/aem.js';
 import { trackAs } from '../../scripts/tracking.js';
 
 const SCROLL_SHAPE_CLASSES = ['carousel', 'boxed'];
+const CARD_BG_COLORS = ['sky', 'agave', 'tofu', 'sky-blue', 'light-gray', 'wintermint', 'navy'];
 
 function buildNavButton(direction, label) {
   const btn = document.createElement('button');
@@ -253,6 +254,12 @@ export default function decorate(block) {
       const title = card.querySelector('.cards-card-body h3');
       if (title) link.setAttribute('aria-label', `${title.textContent.trim()}: ${link.textContent.trim()}`);
     });
+  }
+
+  const bgColor = CARD_BG_COLORS.find((c) => block.classList.contains(c));
+  if (bgColor) {
+    block.classList.add('colored-bg-cards');
+    block.style.setProperty('--cards-bg', `var(--${bgColor})`);
   }
 
   if (SCROLL_SHAPE_CLASSES.some((c) => block.classList.contains(c))) {

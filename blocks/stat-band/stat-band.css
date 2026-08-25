@@ -100,6 +100,37 @@
   .stat-band.dark .stat-desc { width: auto; }
 }
 
+/* --- .stat-band.simple: one bordered white box, columns split by dividers --- */
+.stat-band.simple .stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  background: #fff;
+  border: 1px solid #e6e8eb;
+  border-radius: 20px;
+  box-shadow: 0 2px 20px rgb(0 0 0 / 6%);
+  padding: 24px 0;
+}
+
+.stat-band.simple .stat {
+  background: none;
+  border-radius: 0;
+  padding: 24px 32px;
+  text-align: center;
+  display: block;
+}
+
+.stat-band.simple .stat + .stat { border-left: 1px solid #e6e8eb; }
+.stat-band.simple .stat-num { font-size: 64px; line-height: 1.1; font-weight: 700; color: #000; margin: 0 0 16px; }
+.stat-band.simple .stat-desc { font-size: 22px; line-height: 1.35; color: #000; margin: 0; }
+
+@media (width < 768px) {
+  .stat-band.simple .stats-grid { grid-template-columns: 1fr; padding: 8px 0; }
+  .stat-band.simple .stat + .stat { border-left: 0; border-top: 1px solid #e6e8eb; }
+  .stat-band.simple .stat-num { font-size: 52px; }
+  .stat-band.simple .stat-desc { font-size: 18px; }
+}
+
 /* --- .stat-band.plain (case-study inline stat callout) ---
    erp.intuit.com renders these as its `.colored-box`: a cyan band, wider than
    the body column, holding one centered bold sentence per authored row. */

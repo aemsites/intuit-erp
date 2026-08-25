@@ -30,6 +30,7 @@
   --tofu: #f3f2ef;
   --sky: #dbedee;
   --agave: #c2f5ff;
+  --light-gray: #f4f5f8;
 
   /* section/form "sky" style band fill — distinct from --sky above (same
      word, unrelated token; --sky is the sand-palette teal used by
@@ -263,6 +264,20 @@ button {
   font: inherit;
 }
 
+/* text alignment classes */
+.left {
+  text-align: left;
+}
+
+.center {
+  text-align: center;
+}
+
+.light-gray {
+  background: var(--light-gray);
+  color: black;
+}
+
 /* links */
 a:any-link {
   color: var(--link-color);
@@ -447,6 +462,10 @@ main .section.super-blue :is(h1, h2, h3, h4, h5, h6) {
   color: #fff;
 }
 
+main .section.super-blue .default-content-wrapper > * {
+  color: #fff;
+}
+
 main .section.super-blue.form-container:has(.form.download),
 main .section.super-blue.faq-container {
   background-color: var(--info);
@@ -580,11 +599,25 @@ main .section.navy button.button.secondary {
   background-color: transparent;
 }
 
+main .section.super-blue a.button.secondary,
+main .section.super-blue button.button.secondary {
+  border-color: #fff;
+  color: #fff;
+  background-color: transparent;
+}
+
 main .section.navy a.button.secondary:hover,
 main .section.navy a.button.secondary:focus-visible {
   background-color: rgb(255 255 255 / 15%);
   border-color: #fff;
   color: #fff;
+}
+
+main .section.super-blue a.button.secondary:hover,
+main .section.super-blue a.button.secondary:focus-visible {
+  background-color: #fff;
+  border-color: #fff;
+  color: #000;
 }
 
 /* contained sections */
@@ -897,9 +930,9 @@ body.blog-home .section:not(:first-of-type)>.default-content-wrapper> :is(h1, h2
   margin-top: 6rem;
 }
 
-.section>.default-content-wrapper {
-  margin-top: 2rem;
-  margin-bottom: 2rem;
+.section > .default-content-wrapper {
+  padding-top: 2rem;
+  padding-bottom: 2rem;
 }
 
 @media (width < 768px) {
@@ -917,6 +950,8 @@ main > .section.spacer-bottom-m { margin-bottom: 1.5rem; }
 main > .section.spacer-bottom-l { margin-bottom: 2.5rem; }
 main > .section.spacer-bottom-xl { margin-bottom: 4rem; }
 main > .section.spacer-bottom-xxl { margin-bottom: 6rem; }
+main > .section.spacer-bottom-xxxl { margin-bottom: 8rem; }
+main > .section.spacer-bottom-xxxxl { margin-bottom: 10rem; }
 
 main > .section .block.spacer-top-s { margin-top: 1rem; }
 main > .section .block.spacer-top-m { margin-top: 1.5rem; }
@@ -928,7 +963,79 @@ main > .section .block.spacer-bottom-m { margin-bottom: 1.5rem; }
 main > .section .block.spacer-bottom-l { margin-bottom: 2.5rem; }
 main > .section .block.spacer-bottom-xl { margin-bottom: 4rem; }
 main > .section .block.spacer-bottom-xxl { margin-bottom: 6rem; }
+main > .section .block.spacer-bottom-xxxl { margin-bottom: 8rem; }
+main > .section .block.spacer-bottom-xxxxl { margin-bottom: 10rem; }
 
+main > .section.padding-top-s { padding-top: 1rem; }
+main > .section.padding-top-m { padding-top: 1.5rem; }
+main > .section.padding-top-l { padding-top: 2.5rem; }
+main > .section.padding-top-xl { padding-top: 4rem; }
+main > .section.padding-top-xxl { padding-top: 6rem; }
+main > .section.padding-bottom-s { padding-bottom: 1rem; }
+main > .section.padding-bottom-m { padding-bottom: 1.5rem; }
+main > .section.padding-bottom-l { padding-bottom: 2.5rem; }
+main > .section.padding-bottom-xl { padding-bottom: 4rem; }
+main > .section.padding-bottom-xxl { padding-bottom: 6rem; }
+main > .section.padding-bottom-xxxl { padding-bottom: 8rem; }
+main > .section.padding-bottom-xxxxl { padding-bottom: 10rem; }
+
+main > .section .block.padding-top-s { padding-top: 1rem; }
+main > .section .block.padding-top-m { padding-top: 1.5rem; }
+main > .section .block.padding-top-l { padding-top: 2.5rem; }
+main > .section .block.padding-top-xl { padding-top: 4rem; }
+main > .section .block.padding-top-xxl { padding-top: 6rem; }
+main > .section .block.padding-bottom-s { padding-bottom: 1rem; }
+main > .section .block.padding-bottom-m { padding-bottom: 1.5rem; }
+main > .section .block.padding-bottom-l { padding-bottom: 2.5rem; }
+main > .section .block.padding-bottom-xl { padding-bottom: 4rem; }
+main > .section .block.padding-bottom-xxl { padding-bottom: 6rem; }
+main > .section .block.padding-bottom-xxxl { padding-bottom: 8rem; }
+main > .section .block.padding-bottom-xxxxl { padding-bottom: 10rem; }
+
+main > .section > .default-content-wrapper > .button-wrapper {
+  margin-top: 2rem;
+}
+
+main > .section.colored-background {
+  padding-top: 3rem;
+  padding-bottom: 3rem;
+
+  > div.default-content-wrapper, > .div.default-content-wrapper > :is(h1, h2, h3, h4, h5, h6) {
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-top: 0;
+  }
+}
+
+main > .section.blue-divider {
+  > .default-content-wrapper {
+    border-top: 2px solid var(--info);
+  }
+
+  &.narrow > .default-content-wrapper {
+    @media (width >= 1024px) {
+      padding-left: 0;
+      padding-right: 0;
+    }
+  }
+}
+
+.section.dark-background > .default-content-wrapper :is(h1, h2, h3, h4, h5, h6, ol, ul, li, p),
+.section.dark-background .block :is(h1, h2, h3, h4, h5, h6, ol, ul, li, p) { 
+  color: #fff !important; 
+}
+
+.section.light-background > .default-content-wrapper :is(h1, h2, h3, h4, h5, h6) {
+  color: var(--heading-color);
+}
+
+.section.light-background .block :is(ol, ul, li, p) { 
+  color: var(--text-color); 
+}
+
+.section.left > .default-content-wrapper :is(h2, h3, h4, h5, h6) {
+  text-align: left !important;
+}
 
 body.block-library > main > .section {
   margin: 4rem 0;

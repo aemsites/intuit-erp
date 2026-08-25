@@ -467,3 +467,16 @@
 }
 
 .video-modal-close:hover { background: rgb(255 255 255 / 28%); }
+
+main > .section.colored-background.hero-container {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+main > .section.light-background.hero-container .hero-copy :is(h1, h2, h3, h4, h5, h6) {
+  color: var(--heading-color);
+}
+
+main > .section.light-background.hero-container .hero-copy :is(ol, ul, li, p) {
+  color: var(--text-color);
+}
