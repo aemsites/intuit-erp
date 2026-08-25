@@ -180,12 +180,24 @@ export default async function decorate(block) {
           // A real <a href="youtube.com/..."> is exactly what 3rd-party martech
           // outbound-click handlers hook into (a[href*="youtube.com"] -> beacon,
           // then force location.href regardless of this handler's preventDefault()).
-          // Neutralize the href value itself so nothing else has a hook to catch —
-          // same "inert href, JS-driven action" pattern the Schedule-a-call CTA
-          // right next to this one already uses (a[href$="#schedule"]).
+          // Neutralize the href right at the moment of interaction instead of up
+          // front: scripts/tracking.js reads the real href on pointerdown/keydown
+          // (both capture-phase on document, so always run before this listener)
+          // to classify the click as object=video/ui_object=video_link — swapping
+          // the href here keeps that classification intact while still beating
+          // the martech's click-time read. Restored right after so a later click
+          // is classified correctly too.
           a.classList.add('icon-video');
-          a.setAttribute('href', '#');
           a.setAttribute('data-track-id', `hero:${info.provider}-${info.id}`);
+          const originalHref = a.getAttribute('href');
+          const neutralizeHref = () => {
+            a.setAttribute('href', '#');
+            setTimeout(() => a.setAttribute('href', originalHref), 0);
+          };
+          a.addEventListener('pointerdown', neutralizeHref);
+          a.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') neutralizeHref();
+          });
           a.addEventListener('click', (e) => {
             e.preventDefault();
             openVideoModal(info.embedUrl, a.textContent.trim());

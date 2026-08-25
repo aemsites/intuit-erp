@@ -32,13 +32,18 @@ describe('hero — video CTA', () => {
     const block = makeHeroBlock();
     await decorate(block);
 
-    // decorate() neutralizes the href (see hero.js) so 3rd-party outbound-click
-    // martech handlers keyed on a[href*="youtube.com"] have nothing to hook into —
-    // find the CTA by its stable data-track-id instead of the (now gone) href.
     const link = block.querySelector('a[data-track-id="hero:youtube-Lo798Iuj3N4"]');
     expect(link).not.toBeNull();
     expect(link.classList.contains('icon-video')).toBe(true);
-    expect(link.getAttribute('href')).not.toContain('youtube.com');
+    // href stays real until the moment of interaction, so scripts/tracking.js's
+    // pointerdown/keydown-time read (which happens before any click) still
+    // classifies this as a video link.
+    expect(link.getAttribute('href')).toBe('https://www.youtube.com/watch?v=Lo798Iuj3N4');
+
+    link.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+    // neutralized synchronously on pointerdown, strictly before 'click' — a 3rd-party
+    // outbound-click martech handler keyed on a[href*="youtube.com"] sees nothing.
+    expect(link.getAttribute('href')).toBe('#');
 
     const ev = new MouseEvent('click', { bubbles: true, cancelable: true });
     link.dispatchEvent(ev);
@@ -47,6 +52,10 @@ describe('hero — video CTA', () => {
     const overlay = document.querySelector('.video-modal-overlay');
     expect(overlay).not.toBeNull();
     expect(overlay.querySelector('iframe').src).toBe('https://www.youtube.com/embed/Lo798Iuj3N4?autoplay=1&rel=0');
+
+    // restored shortly after so a later interaction is classified correctly too
+    await new Promise((resolve) => { setTimeout(resolve, 0); });
+    expect(link.getAttribute('href')).toBe('https://www.youtube.com/watch?v=Lo798Iuj3N4');
   });
 
   it('leaves the non-video CTA alone', async () => {
