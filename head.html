@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <link rel="modulepreload" href="/scripts/experiment-loader.js"/>
 <!-- Pre-declare the Tealium data layer / config override globals before any script runs, so
-     they exist no matter which provider (Tealium/Adobe) loadEager selects. Inert on its own:
+     they exist before Tealium (the default provider) initializes. Inert on its own:
      Tealium (utag.js) itself only ever loads on hostnames resolveEnvironment recognizes
      (prod/qa/dev) — see plugins/tealium-martech/src/index.js `resolveEnvironment`. -->
 <script nonce="aem">window.utag_data=window.utag_data||{};window.utag_cfg_ovrd=Object.assign({noview:true},window.utag_cfg_ovrd||{});</script>
@@ -20,3 +20,6 @@
 <link rel="preconnect" href="https://privacy-cdn.e2e.a.intuit.com"/>
 <link rel="preconnect" href="https://privacy-cdn.a.intuit.com"/>
 <link rel="preconnect" href="https://uxfabric.intuitcdn.net"/>
+<!-- Uncomment to enable AEP (Adobe Web SDK) in parallel with Tealium. -->
+<!-- <link rel="modulepreload" href="/plugins/martech/src/index.js" nonce="aem"/> -->
+<!-- <link rel="preconnect" href="https://edge.adobedc.net"/> -->
