@@ -217,6 +217,23 @@ function wireFlyoutGroup(nav) {
     });
   });
 
+  // Resource Center secondary nav: on desktop the flyouts open on hover to
+  // match production. Mobile keeps the click/accordion behaviour above.
+  if (nav.closest('.ies-secondary-nav')) {
+    const desktop = window.matchMedia('(min-width: 1300px)');
+    items.forEach((item) => {
+      item.addEventListener('mouseenter', () => {
+        if (!desktop.matches) return;
+        closeAll(item);
+        setOpen(item, true);
+      });
+      item.addEventListener('mouseleave', () => {
+        if (!desktop.matches) return;
+        setOpen(item, false);
+      });
+    });
+  }
+
   nav.querySelectorAll('.flyout-back').forEach((backBtn) => {
     backBtn.addEventListener('click', () => closeAll());
   });

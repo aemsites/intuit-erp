@@ -288,6 +288,14 @@ body.nav-scroll-lock {
       margin: 0;
       padding: 0 24px;
    }
+
+   /* Resource Center nav: thicken the shared underline to 4px and colour it
+      blue on hover/open, matching production. The scaleX reveal animation is
+      inherited from the shared nav-underline rule in navigation.css. */
+   .header .ies-secondary-nav .nav-main button:not(.flyout-back)::after {
+      height: 4px;
+      background: var(--info);
+   }
 }
 
 .header .ies-events {
