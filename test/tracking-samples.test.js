@@ -156,6 +156,7 @@ describe('prod-captured parity (erp.intuit.com 2026-08-20)', () => {
       action: 'engaged',
       ui_object: 'video_link',
       ui_object_detail: 'Watch product demo',
+      ui_access_point: 'page', // video links track page-flat (no sacrificial anchor)
     });
   });
 });
