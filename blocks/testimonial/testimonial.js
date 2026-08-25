@@ -255,7 +255,7 @@ export function buildVideoFrame(cells, opts = {}) {
     cap.append(eb, q);
     const attr = document.createElement('p');
     attr.className = 'video-attr';
-    if (attribution) attr.innerHTML = attribution.innerHTML;
+    if (attribution) { attr.innerHTML = attribution.innerHTML; openAttrLinksInNewTab(attr); }
     cap.append(attr);
     parts.push(cap);
   }
@@ -265,6 +265,16 @@ export function buildVideoFrame(cells, opts = {}) {
     try { const p = bg.play(); if (p && p.catch) p.catch(() => {}); } catch { /* noop */ }
   }
   return frame;
+}
+
+// Story attribution links ("See their story") open in a new tab to match
+// production, where the case-study link on each testimonial carries
+// target="_blank". Applied wherever authored attribution HTML is injected.
+function openAttrLinksInNewTab(attrEl) {
+  attrEl.querySelectorAll("a[href]").forEach((a) => {
+    a.target = "_blank";
+    a.rel = "noopener";
+  });
 }
 
 // Per-story caption data for the shared switcher info bar.
@@ -304,6 +314,7 @@ function fillCaption(cap, d) {
   cap.querySelector('.video-eyebrow').textContent = d.eyebrow;
   cap.querySelector('.video-quote').textContent = d.quote;
   cap.querySelector('.video-attr').innerHTML = d.attrHtml;
+  openAttrLinksInNewTab(cap.querySelector('.video-attr'));
 }
 
 function buildThumb(row, index, frameId) {
