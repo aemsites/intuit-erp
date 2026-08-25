@@ -265,11 +265,6 @@
 }
 
 
-.section.media-text-container:has(.media-text.cards) {
-  background: #fff;
-  padding: var(--section-y) 0;
-}
-
 .media-text-container:has(.media-text.cards) .default-content-wrapper h2 {
   font-size: 34px;
   line-height: 1.4;
