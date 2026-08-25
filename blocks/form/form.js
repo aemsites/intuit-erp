@@ -44,7 +44,15 @@ const CONFIG_KEYS = [
 ];
 
 const CHILIPIPER_SRC_DEFAULT = '//js.chilipiper.com/marketing.js';
-const SCHEDULE_FRAGMENT = '/fragments/schedule-call';
+const SCHEDULE_FRAGMENT_DEFAULT = '/fragments/schedule-call-vertical';
+
+// A page can point the nav "Schedule a call" modal at a different fragment via
+// `schedule-fragment` metadata — same override convention as blog-template.js's
+// right-rail fragment (bare name resolves under /fragments/, absolute path used as-is).
+function scheduleFragmentPath() {
+  const value = getMetadata('schedule-fragment') || SCHEDULE_FRAGMENT_DEFAULT;
+  return value.startsWith('/') ? value : `/fragments/${value}`;
+}
 
 // Marketo instance selection, keyed by the `marketo` page metadata. Prod unless the
 // page opts in; hostname is deliberately not consulted.
@@ -316,7 +324,7 @@ export default async function decorate(block) {
 export async function openScheduleModal() {
   // eslint-disable-next-line import/no-cycle
   const { openModal } = await import('../modal/modal.js');
-  return openModal(SCHEDULE_FRAGMENT);
+  return openModal(scheduleFragmentPath());
 }
 
 // Any anchor whose href ends with #schedule opens the modal instead of
