@@ -289,7 +289,7 @@ export default async function decorate(block) {
   }
   if (!stashedConfig) block.dataset.formConfig = JSON.stringify(config);
   if (config.downloadUrl) block.classList.add('download');
-
+  const timeStamp = Date.now();
   const children = [];
   if (config.header) {
     const el = document.createElement('h3');
@@ -304,7 +304,7 @@ export default async function decorate(block) {
     children.push(el);
   }
   const form = document.createElement('form');
-  form.id = `mktoForm_${config.formId}`;
+  form.id = `mktoForm_${config.formId}_${timeStamp.toString()}`;
   children.push(form);
   block.replaceChildren(...children);
 
