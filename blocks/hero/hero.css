@@ -467,3 +467,8 @@
 }
 
 .video-modal-close:hover { background: rgb(255 255 255 / 28%); }
+
+main > .section.colored-background.hero-container {
+  padding-top: 0;
+  padding-bottom: 0;
+}

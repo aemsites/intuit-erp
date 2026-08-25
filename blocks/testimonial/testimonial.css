@@ -444,6 +444,14 @@
   filter: none;
 }
 
+.testimonial .cmp-quote-cite {
+  display: block;
+  margin: 24px 0 0;
+  font-style: normal;
+  font-size: 18px;
+  color: var(--text-muted);
+}
+
 @media (width <768px) {
   .testimonial-container .default-content-wrapper h2,
   .testimonial-container .default-content-wrapper h3 {

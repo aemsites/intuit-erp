@@ -387,6 +387,23 @@ function decorateButtons(main) {
 }
 
 const IMAGE_EXT_RE = /\.(jpe?g|png|gif|webp)(\?|$)/i;
+const HEX_RE = /^#?([\da-f]{3}|[\da-f]{6})$/i;
+
+// True when a #rgb/#rrggbb color is dark enough to want light text on it.
+// WCAG relative-luminance approximation; non-hex values return false (light).
+// ponytail: hex only — authors write hex here. If rgb()/hsl()/named backgrounds
+// ever get authored, normalize via getComputedStyle (costs one style recalc).
+function isDarkHex(color) {
+  const m = String(color).trim().match(HEX_RE);
+  if (!m) return false;
+  let hex = m[1];
+  if (hex.length === 3) hex = hex.split('').map((c) => c + c).join('');
+  const r = parseInt(hex.slice(0, 2), 16);
+  const g = parseInt(hex.slice(2, 4), 16);
+  const b = parseInt(hex.slice(4, 6), 16);
+  const lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+  return lum < 0.5;
+}
 
 function decorateSectionBackgrounds(main) {
   main.querySelectorAll('.section').forEach((section) => {
@@ -400,6 +417,7 @@ function decorateSectionBackgrounds(main) {
     } else {
       section.style.background = background;
       section.classList.add('colored-background');
+      section.classList.add(isDarkHex(background) ? 'dark-background' : 'light-background');
     }
   });
 }
