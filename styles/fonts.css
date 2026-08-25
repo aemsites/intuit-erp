@@ -95,7 +95,24 @@
   src: url("/styles/fonts/mulish-italic-variable.woff2") format("woff2-variations");
 }
 
-/* metric-matched fallback while the webfont loads */
+/* Metric-matched fallbacks (local Arial) shown while the webfonts download, so
+   font-display: swap barely shifts layout. Each is tuned to the font it stands
+   in for and they are not interchangeable. Overrides computed from the shipped
+   .woff2 faces vs. Arial (capsize width-weighted method): size-adjust matches
+   average glyph advance — the main CLS lever, since line box height is set by
+   explicit line-height — while ascent/descent match the vertical metrics. */
+
+/* stands in for "AvenirNext forINTUIT" (primary) — from avenir-400.woff2 */
+@font-face {
+  font-family: avenir-fallback;
+  size-adjust: 103.1%;
+  ascent-override: 91.7%;
+  descent-override: 24.3%;
+  line-gap-override: 0%;
+  src: local('Arial');
+}
+
+/* stands in for "Mulish Variable" (secondary) */
 @font-face {
   font-family: mulish-fallback;
   size-adjust: 98%;

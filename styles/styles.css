@@ -88,7 +88,7 @@
   --ink-teal: #0d333f;
 
   /* fonts */
-  --body-font-family: "AvenirNext forINTUIT", "Mulish Variable", mulish-fallback, arial, sans-serif;
+  --body-font-family: "AvenirNext forINTUIT", avenir-fallback, "Mulish Variable", mulish-fallback, arial, sans-serif;
   --heading-font-family: var(--body-font-family);
 
   /* body sizes */
