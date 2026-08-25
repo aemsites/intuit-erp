@@ -32,9 +32,13 @@ describe('hero — video CTA', () => {
     const block = makeHeroBlock();
     await decorate(block);
 
-    const link = block.querySelector('a[href*="youtube.com/watch"]');
+    // decorate() neutralizes the href (see hero.js) so 3rd-party outbound-click
+    // martech handlers keyed on a[href*="youtube.com"] have nothing to hook into —
+    // find the CTA by its stable data-track-id instead of the (now gone) href.
+    const link = block.querySelector('a[data-track-id="hero:youtube-Lo798Iuj3N4"]');
     expect(link).not.toBeNull();
     expect(link.classList.contains('icon-video')).toBe(true);
+    expect(link.getAttribute('href')).not.toContain('youtube.com');
 
     const ev = new MouseEvent('click', { bubbles: true, cancelable: true });
     link.dispatchEvent(ev);

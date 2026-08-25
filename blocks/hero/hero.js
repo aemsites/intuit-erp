@@ -11,17 +11,21 @@ const YOUTUBE_URL_RE = /(?:youtube(?:-nocookie)?\.com\/(?:watch\?(?:.*&)?v=|embe
 const VIMEO_URL_RE = /vimeo\.com\/(?:video\/)?(\d+)/;
 
 /**
- * Resolves a YouTube/Vimeo CTA link to its autoplay embed URL, or null if the
- * href isn't a recognized video link. Self-contained (not shared with the video
- * block) so hero stays independent of other blocks.
+ * Resolves a YouTube/Vimeo CTA link to its provider/id/autoplay-embed-URL, or
+ * null if the href isn't a recognized video link. Self-contained (not shared
+ * with the video block) so hero stays independent of other blocks.
  * @param {string} href
- * @returns {string|null}
+ * @returns {{provider:string,id:string,embedUrl:string}|null}
  */
-function videoEmbedUrl(href) {
+function parseVideoUrl(href) {
   const yt = href.match(YOUTUBE_URL_RE);
-  if (yt) return `https://www.youtube.com/embed/${yt[1]}?autoplay=1&rel=0`;
+  if (yt) {
+    return { provider: 'youtube', id: yt[1], embedUrl: `https://www.youtube.com/embed/${yt[1]}?autoplay=1&rel=0` };
+  }
   const vimeo = href.match(VIMEO_URL_RE);
-  if (vimeo) return `https://player.vimeo.com/video/${vimeo[1]}?autoplay=1`;
+  if (vimeo) {
+    return { provider: 'vimeo', id: vimeo[1], embedUrl: `https://player.vimeo.com/video/${vimeo[1]}?autoplay=1` };
+  }
   return null;
 }
 
@@ -171,12 +175,20 @@ export default async function decorate(block) {
     actions.className = 'button-wrapper hero-actions';
     ctas.forEach((p) => {
       p.querySelectorAll('a').forEach((a) => {
-        const embedUrl = videoEmbedUrl(a.href);
-        if (embedUrl) {
+        const info = parseVideoUrl(a.href);
+        if (info) {
+          // A real <a href="youtube.com/..."> is exactly what 3rd-party martech
+          // outbound-click handlers hook into (a[href*="youtube.com"] -> beacon,
+          // then force location.href regardless of this handler's preventDefault()).
+          // Neutralize the href value itself so nothing else has a hook to catch —
+          // same "inert href, JS-driven action" pattern the Schedule-a-call CTA
+          // right next to this one already uses (a[href$="#schedule"]).
           a.classList.add('icon-video');
+          a.setAttribute('href', '#');
+          a.setAttribute('data-track-id', `hero:${info.provider}-${info.id}`);
           a.addEventListener('click', (e) => {
             e.preventDefault();
-            openVideoModal(embedUrl, a.textContent.trim());
+            openVideoModal(info.embedUrl, a.textContent.trim());
           });
         }
         actions.append(a);
