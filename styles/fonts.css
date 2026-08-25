@@ -95,6 +95,15 @@
   src: url("/styles/fonts/mulish-italic-variable.woff2") format("woff2-variations");
 }
 
+@font-face {
+  font-family: avenir-fallback;
+  size-adjust: 101.82%;
+  ascent-override: 92.81%;
+  descent-override: 24.55%;
+  line-gap-override: 0%;
+  src: local('Arial');
+}
+
 /* metric-matched fallback while the webfont loads */
 @font-face {
   font-family: mulish-fallback;
