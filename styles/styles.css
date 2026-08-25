@@ -1025,12 +1025,12 @@ main > .section.blue-divider {
   color: #fff !important; 
 }
 
-.section.light-background > .default-content-wrapper :is(h1, h2, h3, h4, h5, h6, ol, ul, li) {
-  color: var(--heading-color) !important;
+.section.light-background > .default-content-wrapper :is(h1, h2, h3, h4, h5, h6) {
+  color: var(--heading-color);
 }
 
-.section.light-background .block :is(h1, h2, h3, h4, h5, h6, ol, ul, li, p) { 
-  color: var(--text-color) !important; 
+.section.light-background .block :is(ol, ul, li, p) { 
+  color: var(--text-color); 
 }
 
 .section.left > .default-content-wrapper :is(h2, h3, h4, h5, h6) {
