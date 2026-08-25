@@ -83,6 +83,26 @@
 
 .highlight .highlight-inner > :last-child { margin-bottom: 0; }
 
+/* Leading quick-answer icon: float it large beside the text (overriding the
+   24px inline .icon default) so the copy wraps in a column and flows below once
+   it runs past the icon. Scoped to quick-answer icons so icon-less highlights
+   are unaffected; flow-root keeps a tall icon from spilling past the padding. */
+.highlight .highlight-inner:has(> p .icon[class*="icon-quick-answer"]) { display: flow-root; }
+
+.highlight .highlight-inner .icon[class*="icon-quick-answer"] {
+  float: left;
+  width: 72px;
+  height: 72px;
+  margin: 0 18px 6px 0;
+}
+
+@media (width >= 768px) {
+  .highlight .highlight-inner .icon[class*="icon-quick-answer"] {
+    width: 100px;
+    height: 100px;
+  }
+}
+
 @media (min-width: 1024px) { .highlight .highlight-inner { padding: 3rem; } }
 
 /* HIGH-2 fix (issue-574): single-heading highlight.dark band ("How growing
