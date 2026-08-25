@@ -248,14 +248,17 @@ export default async function decorate(block) {
   const nav = block.querySelector('#iesNav, .ies-nav');
   const fixedSecondaryNav = block.querySelector('.ies-secondary-nav');
   if (nav) {
+    // Heights are constant per breakpoint — measure once (and on resize) rather
+    // than reading offsetHeight, which forces a layout, on every scroll frame.
+    let topstripH = topstrip ? topstrip.offsetHeight : 0;
+    let navH = nav.offsetHeight;
     let scrollTicking = false;
     const onScroll = () => {
-      const topstripH = topstrip ? topstrip.offsetHeight : 0;
       const y = window.scrollY;
       if (fixedSecondaryNav) {
         // Resource Center pages (all widths): the secondary nav slides up to
         // top:0 as the primary nav scrolls away, taking its place at the top.
-        fixedSecondaryNav.style.top = `${Math.max(0, (topstripH + nav.offsetHeight) - y)}px`;
+        fixedSecondaryNav.style.top = `${Math.max(0, (topstripH + navH) - y)}px`;
       } else {
         const offset = Math.max(0, topstripH - y);
         nav.style.top = `${offset}px`;
@@ -271,7 +274,11 @@ export default async function decorate(block) {
     };
     requestScrollTick();
     window.addEventListener('scroll', requestScrollTick, { passive: true });
-    window.addEventListener('resize', requestScrollTick, { passive: true });
+    window.addEventListener('resize', () => {
+      topstripH = topstrip ? topstrip.offsetHeight : 0;
+      navH = nav.offsetHeight;
+      requestScrollTick();
+    }, { passive: true });
   }
 
   wireFlyouts(block);

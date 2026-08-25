@@ -521,8 +521,16 @@ body.nav-scroll-lock {
       background: #fff;
    }
 
+   /* while the primary hamburger menu is open it (z-index 49) must cover the
+      pinned secondary nav, so drop the secondary below it for that state. */
+   .header.nav-open .ies-secondary-nav {
+      z-index: 48;
+   }
+
+   /* reserve the secondary nav's rendered height (min-height 60 + 1px border)
+      now that it's out of flow, so no content sits under its bottom edge. */
    .header.has-secondary-nav .ies-secondary-nav-spacer {
-      height: 60px;
+      height: 61px;
    }
 
    .header .ies-secondary-nav .container {

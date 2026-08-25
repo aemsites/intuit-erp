@@ -342,21 +342,22 @@ function wireToc(tocWrap, nav, headings, mq) {
     label.textContent = (showActiveSection && activeText) ? activeText : 'Table of contents';
   };
 
+  // Once the reader has clicked the toggle themselves, their choice wins — the
+  // resize re-default below and the auto-collapse further down both stop firing,
+  // so a rail the reader deliberately set is never overridden.
+  let userToggled = false;
+
   // Both mobile and desktop start expanded (the full list); the reader is then
   // auto-collapsed once they scroll into the article (below). Re-apply on
-  // breakpoint cross so a resized window lands back in the expanded default.
+  // breakpoint cross so a resized window lands back in the expanded default —
+  // unless the reader has already made their own choice.
   const applyDefaultState = () => {
     tocWrap.classList.remove('blog-toc-collapsed');
     toggle.setAttribute('aria-expanded', 'true');
     updateLabel();
   };
   applyDefaultState();
-  mq.addEventListener('change', applyDefaultState);
-
-  // Once the reader has clicked the toggle themselves, their choice wins and
-  // the auto-collapse below stops firing — matching the source, which never
-  // re-collapses a rail the reader has deliberately re-opened.
-  let userToggled = false;
+  mq.addEventListener('change', () => { if (!userToggled) applyDefaultState(); });
 
   toggle.addEventListener('click', () => {
     userToggled = true;
