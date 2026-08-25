@@ -17,6 +17,33 @@
  * erp.intuit.com's own font kit). Mulish (self-hosted, OFL) remains the
  * fallback for environments where the brand kit isn't available.
  */
+
+/* Metric-matched fallbacks (local Arial, zero network). These MUST stay in the
+   eager stylesheet: fonts.css loads lazily (post-LCP on mobile), so a fallback
+   defined there is absent at first paint and can't prevent the hero swap shift.
+   Values computed from the shipped .woff2 vs. Arial; tuned per font, not
+   interchangeable. size-adjust (avg glyph advance) is the main lever here since
+   line box height is governed by explicit line-height. */
+@font-face {
+  /* stands in for "AvenirNext forINTUIT" (primary) — from avenir-400.woff2 */
+  font-family: avenir-fallback;
+  size-adjust: 103.1%;
+  ascent-override: 91.7%;
+  descent-override: 24.3%;
+  line-gap-override: 0%;
+  src: local('Arial');
+}
+
+@font-face {
+  /* stands in for "Mulish Variable" (secondary) */
+  font-family: mulish-fallback;
+  size-adjust: 98%;
+  ascent-override: 96%;
+  descent-override: 24%;
+  line-gap-override: 0%;
+  src: local('Arial');
+}
+
 :root {
   /* matches erp.intuit.com's global :root rule (qbmds-components/styles/sbseg/fonts.css) */
   -webkit-font-smoothing: antialiased;
