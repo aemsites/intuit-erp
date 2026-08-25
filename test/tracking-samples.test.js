@@ -68,7 +68,7 @@ describe('block annotations stamp the right trail + opt-in key', () => {
     expect(trackingKey(block)).toBe('cards');
   });
 
-  it('video -> opt-in key "video", code-built video:started defaults, no trail', () => {
+  it('video -> opt-in key "video", code-built video:started defaults, "video" trail', () => {
     document.body.innerHTML = '<main><div class="video block">'
       + '<div><div><a href="https://youtu.be/abcd1234">Watch the tour (2:02)</a></div></div></div></main>';
     const block = document.querySelector('.video');
@@ -77,8 +77,7 @@ describe('block annotations stamp the right trail + opt-in key', () => {
     expect(block.getAttribute('data-track-object')).toBe('video');
     expect(block.getAttribute('data-track-action')).toBe('started');
     expect(block.getAttribute('data-track-ui-object')).toBe('video');
-    expect(block.hasAttribute('data-tracking')).toBe(false); // no trail segment (ap resolves to page)
-    expect(block.hasAttribute('data-track-no-trail')).toBe(true);
+    expect(block.getAttribute('data-tracking')).toBe('video'); // prod's access point for a video play control
     // play control id derives from the video source (stable, per-video, authorable)
     expect(block.querySelector('[role="button"]').getAttribute('data-track-id')).toBe('video:youtube-abcd1234');
   });
