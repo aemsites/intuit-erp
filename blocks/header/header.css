@@ -498,6 +498,23 @@ body.nav-scroll-lock {
 
 
 
+   /* Pin the Resource Center secondary nav directly below the fixed 56px
+      primary nav so it stays visible while scrolling (the primary nav is
+      already fixed; only the secondary was left in flow and scrolled away).
+      It's now out of flow, so its spacer reserves the row height. */
+   .header.has-secondary-nav .ies-secondary-nav {
+      position: fixed;
+      top: 56px;
+      left: 0;
+      right: 0;
+      z-index: 49;
+      background: #fff;
+   }
+
+   .header.has-secondary-nav .ies-secondary-nav-spacer {
+      height: 61px;
+   }
+
    .header .ies-secondary-nav .container {
       height: auto;
       min-height: 60px;
