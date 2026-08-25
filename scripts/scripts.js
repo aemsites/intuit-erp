@@ -399,6 +399,7 @@ function decorateSectionBackgrounds(main) {
       section.style.backgroundPosition = 'center';
     } else {
       section.style.background = background;
+      section.classList.add('colored-background');
     }
   });
 }

@@ -962,6 +962,21 @@ main > .section .block.spacer-bottom-l { margin-bottom: 2.5rem; }
 main > .section .block.spacer-bottom-xl { margin-bottom: 4rem; }
 main > .section .block.spacer-bottom-xxl { margin-bottom: 6rem; }
 
+main > .section > .default-content-wrapper > .button-wrapper {
+  margin-top: 2rem;
+}
+
+main > .section.colored-background {
+  padding-top: 3rem;
+  padding-bottom: 3rem;
+
+  > div.default-content-wrapper, > .div.default-content-wrapper > :is(h1, h2, h3, h4, h5, h6) {
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-top: 0;
+  }
+}
+
 
 body.block-library > main > .section {
   margin: 4rem 0;
