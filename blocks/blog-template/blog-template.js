@@ -332,7 +332,10 @@ export { isBlogPage } from './blog-detect.js';
 function wireToc(tocWrap, nav, headings, mq) {
   const toggle = nav.querySelector('.blog-toc-toggle');
   const label = nav.querySelector('.blog-toc-label');
-  let activeText = null;
+  // Seed with the first section so the collapsed mobile bar always names a
+  // section (never the generic "Table of contents"); the observer updates it to
+  // the section the reader is in as they scroll.
+  let activeText = headings[0]?.textContent || null;
 
   const updateLabel = () => {
     const showActiveSection = !mq.matches && tocWrap.classList.contains('blog-toc-collapsed');
