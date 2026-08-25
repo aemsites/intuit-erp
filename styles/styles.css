@@ -30,6 +30,7 @@
   --tofu: #f3f2ef;
   --sky: #dbedee;
   --agave: #c2f5ff;
+  --light-gray: #f4f5f8;
 
   /* section/form "sky" style band fill — distinct from --sky above (same
      word, unrelated token; --sky is the sand-palette teal used by
@@ -270,6 +271,11 @@ button {
 
 .center {
   text-align: center;
+}
+
+.light-gray {
+  background: var(--light-gray);
+  color: black;
 }
 
 /* links */

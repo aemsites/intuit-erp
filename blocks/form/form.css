@@ -158,7 +158,7 @@
 .section.form-container:has(.form.download) .default-content-wrapper { text-align: left; color: #d5e0ec; }
 
 .section.form-container:has(.form.download) .default-content-wrapper h2,
-.section.form-container:has(.form.download) .default-content-wrapper h3 { color: #fff; font-size: 32px; font-weight: 700; margin: 0 0 16px; }
+.section.form-container:has(.form.download) .default-content-wrapper h3 { font-size: 32px; font-weight: 700; margin: 0 0 16px; }
 .section.form-container:has(.form.download) .default-content-wrapper li strong { color: #fff; }
 
 /* keep the copy heading left-aligned; a global rule centres headings in
