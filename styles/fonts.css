@@ -79,28 +79,7 @@
     url("/styles/fonts/avenir-800.woff2") format("woff2"), url("/styles/fonts/avenir-800.woff") format("woff");
 }
 
-@font-face {
-  font-family: "Mulish Variable";
-  font-style: normal;
-  font-display: swap;
-  font-weight: 200 1000;
-  src: url("/styles/fonts/mulish-variable.woff2") format("woff2-variations");
-}
-
-@font-face {
-  font-family: "Mulish Variable";
-  font-style: italic;
-  font-display: swap;
-  font-weight: 200 1000;
-  src: url("/styles/fonts/mulish-italic-variable.woff2") format("woff2-variations");
-}
-
-/* metric-matched fallback while the webfont loads */
-@font-face {
-  font-family: mulish-fallback;
-  size-adjust: 98%;
-  ascent-override: 96%;
-  descent-override: 24%;
-  line-gap-override: 0%;
-  src: local('Arial');
-}
+/* The metric-matched fallback (avenir-fallback) lives in the eager styles.css,
+   not here: fonts.css loads lazily (post-LCP on mobile), so a fallback defined
+   here would not exist at first paint — exactly when it's needed, before the
+   webfont swaps in. Keep it eager. */

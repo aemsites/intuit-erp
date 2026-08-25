@@ -14,9 +14,25 @@
  * Intuit Enterprise Suite — replica of erp.intuit.com, EDS foundation.
  * Brand font "AvenirNext forINTUIT" is a licensed kit, self-hosted here under
  * Intuit's authorization for the AEM migration proof-of-concept (mirrored from
- * erp.intuit.com's own font kit). Mulish (self-hosted, OFL) remains the
- * fallback for environments where the brand kit isn't available.
+ * erp.intuit.com's own font kit). When it isn't available, text falls back to a
+ * metric-matched local Arial (avenir-fallback), then the system sans-serif.
  */
+
+/* Metric-matched fallback for the primary webfont (local Arial, zero network),
+   standing in for "AvenirNext forINTUIT" while it downloads. MUST stay in the
+   eager stylesheet: fonts.css loads lazily (post-LCP on mobile), so a fallback
+   defined there is absent at first paint and can't prevent the hero swap shift.
+   size-adjust (computed from avenir-400.woff2 vs. Arial) is the main lever since
+   line box height is set by explicit line-height; ascent/descent match Avenir. */
+@font-face {
+  font-family: avenir-fallback;
+  size-adjust: 103.1%;
+  ascent-override: 91.7%;
+  descent-override: 24.3%;
+  line-gap-override: 0%;
+  src: local('Arial');
+}
+
 :root {
   /* matches erp.intuit.com's global :root rule (qbmds-components/styles/sbseg/fonts.css) */
   -webkit-font-smoothing: antialiased;
@@ -89,7 +105,7 @@
   --ink-teal: #0d333f;
 
   /* fonts */
-  --body-font-family: "AvenirNext forINTUIT", "Mulish Variable", mulish-fallback, arial, sans-serif;
+  --body-font-family: "AvenirNext forINTUIT", avenir-fallback, arial, sans-serif;
   --heading-font-family: var(--body-font-family);
 
   /* body sizes */
