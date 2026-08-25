@@ -63,9 +63,10 @@ export function blockAccessPoint(blockName) {
 }
 
 /**
- * Derived baseline for one CTA (map keyed by tracking-field name), plus `anchor`
- * (the sacrificial data-tracking value) and `custom-properties` (merged later).
- * A video link derives object=video / ui_object=video_link / action=engaged.
+ * Derived baseline for one CTA (keyed by tracking-field name), plus `anchor` (the
+ * sacrificial data-tracking; null for a video link -> resolves flat to `page`) and
+ * `custom-properties` (merged later). A video link derives object=video /
+ * ui_object=video_link / action=engaged.
  * @param {{tagName: string, label: string, blockName: string,
  *   isButtonStyled?: boolean, isVideo?: boolean, isIcon?: boolean, host?: string}} ctx
  * @returns {Record<string, unknown>}
@@ -88,7 +89,7 @@ export function deriveBaseline({
     'ui-action': UI_ACTION,
     action: isVideo ? VIDEO_ACTION : ACTION,
     'access-point': blockAccessPoint(blockName),
-    anchor: kind,
+    anchor: isVideo ? null : kind,
     'custom-properties': custom,
   };
 }
@@ -330,9 +331,9 @@ export function resolveCta(derived, sheet, context = {}) {
   const attrs = {};
   const waLink = cfg['wa-link'];
 
-  // The sacrificial anchor (always) + the opt-in switch ('' = compute the trail;
-  // an explicit sheet value wins outright).
-  attrs['data-tracking'] = derived.anchor;
+  // Sacrificial anchor (null for a video link -> block trail consumed -> resolves
+  // flat to `page`, as prod does) + the opt-in switch ('' = compute the trail).
+  if (derived.anchor != null) attrs['data-tracking'] = derived.anchor;
   attrs['data-ui-access-point'] = cfg['ui-access-point'] ?? '';
 
   const cp = mergeCustomProperties(context.customProperties, derived['custom-properties'], cfg['custom-properties']);

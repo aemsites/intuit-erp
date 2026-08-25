@@ -7,6 +7,56 @@ const DASHBOARD_LOTTIE_PATHS = ['/', '/index'];
 const DASHBOARD_LOTTIE_JSON = '/blocks/hero/dashboard-animation.json';
 const LOTTIE_PLAYER_URL = 'https://cdn.jsdelivr.net/npm/lottie-web@5.12.2/build/player/lottie_light.min.js/+esm';
 const DASHBOARD_LOTTIE_DELAY = 3000;
+const YOUTUBE_URL_RE = /(?:youtube(?:-nocookie)?\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/;
+const VIMEO_URL_RE = /vimeo\.com\/(?:video\/)?(\d+)/;
+
+/**
+ * Resolves a YouTube/Vimeo CTA link to its provider/id/autoplay-embed-URL, or
+ * null if the href isn't a recognized video link.
+ * @param {string} href
+ * @returns {{provider:string,id:string,embedUrl:string}|null}
+ */
+function parseVideoUrl(href) {
+  const yt = href.match(YOUTUBE_URL_RE);
+  if (yt) {
+    return { provider: 'youtube', id: yt[1], embedUrl: `https://www.youtube.com/embed/${yt[1]}?autoplay=1&rel=0` };
+  }
+  const vimeo = href.match(VIMEO_URL_RE);
+  if (vimeo) {
+    return { provider: 'vimeo', id: vimeo[1], embedUrl: `https://player.vimeo.com/video/${vimeo[1]}?autoplay=1` };
+  }
+  return null;
+}
+
+/**
+ * Opens the video in a dismissible lightbox modal (autoplay iframe). Self-contained
+ * (mirrors video.js/testimonial.js's own copy) so hero stays independent of the
+ * video block; see hero.css for the shared `.video-modal-*` styles.
+ * @param {string} embedUrl provider embed URL
+ * @param {string} [title] accessible iframe title
+ */
+function openVideoModal(embedUrl, title) {
+  const overlay = document.createElement('div');
+  overlay.className = 'video-modal-overlay';
+  overlay.innerHTML = `
+    <div class="video-modal">
+      <button type="button" class="video-modal-close" aria-label="Close video">×</button>
+      <div class="video-modal-frame">
+        <iframe src="${embedUrl}" title="${title || 'Video'}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>
+      </div>
+    </div>`;
+
+  function close() {
+    overlay.remove();
+    // eslint-disable-next-line no-use-before-define
+    document.removeEventListener('keydown', onKey);
+  }
+  function onKey(e) { if (e.key === 'Escape') close(); }
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+  overlay.querySelector('.video-modal-close').addEventListener('click', close);
+  document.addEventListener('keydown', onKey);
+  document.body.append(overlay);
+}
 
 async function leadCard(path) {
   const wrap = document.createElement('div');
@@ -124,8 +174,23 @@ export default async function decorate(block) {
     actions.className = 'button-wrapper hero-actions';
     ctas.forEach((p) => {
       p.querySelectorAll('a').forEach((a) => {
-        if (/(?:youtube\.com|youtu\.be|vimeo\.com)/i.test(a.href)) {
+        const info = parseVideoUrl(a.href);
+        if (info) {
           a.classList.add('icon-video');
+          a.setAttribute('data-track-id', `hero:${info.provider}-${info.id}`);
+          const originalHref = a.getAttribute('href');
+          const neutralizeHref = () => {
+            a.setAttribute('href', '#');
+            setTimeout(() => a.setAttribute('href', originalHref), 0);
+          };
+          a.addEventListener('pointerdown', neutralizeHref);
+          a.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') neutralizeHref();
+          });
+          a.addEventListener('click', (e) => {
+            e.preventDefault();
+            openVideoModal(info.embedUrl, a.textContent.trim());
+          });
         }
         actions.append(a);
       });

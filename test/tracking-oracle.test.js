@@ -90,7 +90,7 @@ describe('self-made golden oracle — our runtime reproduces the derive-covered 
     expectMatchesGolden(p, g.derivable);
   });
 
-  it('video link (video:engaged) — derive fields; ap is authored-flat on prod', () => {
+  it('video link (video:engaged) — resolves flat to page even inside a component', () => {
     const g = eventOf('/accounting/multi-entity/', 'video-watch-patrick');
     const p = runOurs(() => {
       document.body.innerHTML = '<main><div class="hero block">'
@@ -98,9 +98,9 @@ describe('self-made golden oracle — our runtime reproduces the derive-covered 
         + '</div></main>';
       trackAs('rw2_hero', document.querySelector('.hero'), { key: 'hero' });
     }, '.hero a');
-    // prod authors the video CTA with ui_access_point=page even inside a component;
-    // our block-scoped trail gives the block name, so ap is a known authored-flat divergence.
-    expectMatchesGolden(p, g.derivable, ['ui_access_point']);
+    // page-flat: no sacrificial anchor, so the rw2_hero block trail is consumed
+    expectMatchesGolden(p, g.derivable);
+    expect(p.ui_access_point).toBe('page');
   });
 });
 
