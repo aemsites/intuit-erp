@@ -184,7 +184,8 @@
    centred to --container, so the card scales with the container instead of
    stretching across the viewport. */
 @media (width >= 1024px) {
-  .section.form-container:has(.form.download):has(.default-content-wrapper) {
+  .section.form-container:has(.form.download):has(.default-content-wrapper),
+  .section.form-container.two-col:has(.default-content-wrapper) {
     grid-template-columns: 1.4fr 1fr;
     gap: 48px;
     padding-inline: max(24px, calc((100% - var(--container)) / 2));
