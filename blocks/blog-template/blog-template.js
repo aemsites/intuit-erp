@@ -575,9 +575,16 @@ function resolveFragmentPath(metaKey, defaultPath) {
 /**
  * Appends a trailing full-width fragment section to `main` (a plain link the
  * existing fragment autoblock then loads) — used for the hear-from-our-customers
- * and pricing-disclaimer bands every article gets by default. Skipped if the
- * author already linked that exact fragment path themselves, so migrated
- * pages that hand-authored one of these don't end up with a duplicate.
+ * and pricing-disclaimer bands every article gets by default.
+ *
+ * When the author has already linked that exact fragment inline, we don't add a
+ * duplicate — but we DO relocate their section to the end and give it the same
+ * full-width classes an injected one gets. Otherwise a fragment authored mid-page
+ * (e.g. a pricing-disclaimer placed before the client-appended rail/customers
+ * bands) is stranded in the middle, in a narrow content column, instead of the
+ * full-bleed trailing band it is on production. Because this runs for
+ * hear-from-our-customers first and pricing-disclaimer second, the two always
+ * end up in that order at the very bottom, matching prod.
  * @param {Element} main the page's <main>
  * @param {string} metaKey getMetadata() key an author can set to override
  *   which fragment is used
@@ -588,7 +595,15 @@ function resolveFragmentPath(metaKey, defaultPath) {
  */
 function injectFragmentSection(main, metaKey, defaultPath, sectionClasses = []) {
   const path = resolveFragmentPath(metaKey, defaultPath);
-  if (main.querySelector(`a[href*="${path}"]`)) return; // already authored — don't duplicate
+  const authored = main.querySelector(`a[href*="${path}"]`);
+  if (authored) {
+    const authoredSection = [...main.children].find((child) => child.contains(authored));
+    if (authoredSection) {
+      if (sectionClasses.length) authoredSection.classList.add(...sectionClasses);
+      main.append(authoredSection); // move to the end (append relocates)
+    }
+    return;
+  }
   const section = document.createElement('div');
   if (sectionClasses.length) section.classList.add(...sectionClasses);
   const p = document.createElement('p');

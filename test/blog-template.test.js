@@ -391,4 +391,30 @@ describe('buildBlogTemplate', () => {
     expect(main.querySelector('.blog-toc-rail').style.gridRow).toBe('2 / 4');
     expect(main.querySelector('.blog-rail').style.gridRow).toBe('2 / 4');
   });
+
+  it('relocates an inline-authored pricing-disclaimer to the last section, full-bleed', () => {
+    window.hlx = { codeBasePath: '' };
+    window.matchMedia = () => ({ matches: false, addEventListener: () => {} });
+    // disclaimer authored mid-page (before the client-appended rail/customers
+    // bands) — must end up last and full-bleed, not stranded in the middle.
+    const main = mainWith(`
+      <div><h1>Headline</h1><p><picture><img src="hero.jpg"></picture></p></div>
+      <div><h2>One</h2><p>a</p></div>
+      <div><h2>Two</h2><p>b</p></div>
+      <div><p><a href="/fragments/pricing-disclaimer">/fragments/pricing-disclaimer</a></p></div>
+    `);
+
+    buildBlogTemplate(main);
+
+    const disclaimerLinks = main.querySelectorAll('a[href="/fragments/pricing-disclaimer"]');
+    expect(disclaimerLinks).toHaveLength(1); // not duplicated
+    const lastSection = main.children[main.children.length - 1];
+    expect(lastSection.contains(disclaimerLinks[0])).toBe(true); // moved to the end
+    expect(lastSection.classList.contains('full-bleed')).toBe(true);
+    expect(lastSection.classList.contains('pricing-disclaimer')).toBe(true);
+    // and it lands after the hear-from-our-customers band
+    const hearIdx = [...main.children].findIndex((c) => c.classList.contains('hear-from-our-customers'));
+    expect(hearIdx).toBeGreaterThan(-1);
+    expect([...main.children].indexOf(lastSection)).toBeGreaterThan(hearIdx);
+  });
 });
