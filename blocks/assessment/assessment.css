@@ -123,14 +123,14 @@ main .section .assessment a.button.assessment-cta {
   }
 }
 
-main .assessment a.button.assessment-cta:hover,
-main .assessment a.button.assessment-cta:focus-visible {
+main .section .assessment a.button.assessment-cta:hover,
+main .section .assessment a.button.assessment-cta:focus-visible {
   border-color: #2f5ad6;
   background-color: #2f5ad6;
   color: #fff;
 }
   
-main .assessment a.button.assessment-cta[aria-disabled="true"] {
+main .section .assessment a.button.assessment-cta[aria-disabled="true"] {
   border-color: #c3cad6;
   background-color: #c3cad6;
   color: #fff;
@@ -138,13 +138,13 @@ main .assessment a.button.assessment-cta[aria-disabled="true"] {
 }
 
 @media (width >= 1024px) {
-  main .assessment .assessment-panel {
+  main .section .assessment .assessment-panel {
     grid-template-columns: 4fr 6fr;
     gap: 48px;
     padding: 48px 56px;
   }
 
-  main .assessment .assessment-intro h2 {
+  main .section .assessment .assessment-intro h2 {
     font-size: 36px;
   }
 }
