@@ -176,16 +176,6 @@ export default async function decorate(block) {
       p.querySelectorAll('a').forEach((a) => {
         const info = parseVideoUrl(a.href);
         if (info) {
-          // A real <a href="youtube.com/..."> is exactly what 3rd-party martech
-          // outbound-click handlers hook into (a[href*="youtube.com"] -> beacon,
-          // then force location.href regardless of this handler's preventDefault()).
-          // Neutralize the href right at the moment of interaction instead of up
-          // front: scripts/tracking.js reads the real href on pointerdown/keydown
-          // (both capture-phase on document, so always run before this listener)
-          // to classify the click as object=video/ui_object=video_link — swapping
-          // the href here keeps that classification intact while still beating
-          // the martech's click-time read. Restored right after so a later click
-          // is classified correctly too.
           a.classList.add('icon-video');
           a.setAttribute('data-track-id', `hero:${info.provider}-${info.id}`);
           const originalHref = a.getAttribute('href');
