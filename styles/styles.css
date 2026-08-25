@@ -518,6 +518,10 @@ main .section.center>div.default-content-wrapper {
   text-align: center;
 }
 
+main .section.right>div.default-content-wrapper {
+  text-align: right;
+}
+
 main .section.navy {
   background-color: var(--navy);
   margin: 0;
