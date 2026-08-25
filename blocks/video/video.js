@@ -121,8 +121,10 @@ export default function decorate(block) {
   // open the same video, so they share the id. (Per-video wa-links are authored by
   // this id; the prod golden's play beacons carry no source, so those rows are
   // seeded/verified live, not from the golden.)
-  trackAs(null, block, {
-    key: 'video',
+  // Trail segment `video` (prod's access point for a standalone video play control;
+  // it emits `video` — prod's occasional video|video|video multi-stamp is its own
+  // inconsistency, not reproduced). `key` defaults to the `video` name.
+  trackAs('video', block, {
     object: 'video',
     action: 'started',
     uiObject: 'video',

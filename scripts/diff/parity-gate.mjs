@@ -83,7 +83,7 @@ const BLOCK = {
   'talk-to-sales': { trail: () => 'talk_to_sales', linkName: false, scope: 'main' },
   author_bio: { trail: () => 'author_bio', linkName: false, scope: 'main' },
   // video play control (blocks/video/video.js: object=video/action=started/ui_object=button, link_name off, no trail)
-  video: { trail: () => '', object: 'video', action: 'started', uiObject: 'video', linkName: false, scope: 'main' },
+  video: { trail: () => 'video', object: 'video', action: 'started', uiObject: 'video', linkName: false, scope: 'main' },
 };
 
 const { document } = new JSDOM('<!doctype html><html><head></head><body></body></html>').window;
