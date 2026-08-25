@@ -16,13 +16,10 @@ import { runExperimentation, runExperimentationLazy } from './experiment-loader.
 // exp.js / pzn.js are dynamically imported (via runExperienceLayer) only when a
 // `data-pzn` / `data-exp` section is present, so pages without personalization
 // never load them.
-// Vendored via git subtree at plugins/martech (see its README), not an
-// installed npm package, so this necessarily crosses a package.json boundary.
-import {
-  initMartech, martechEager, martechLazy, updateUserConsent,
-  // eslint-disable-next-line import/no-relative-packages
-} from '../plugins/martech/src/index.js';
-// Not a vendored subtree (unlike plugins/martech above) — project-owned code, but the relative
+// Adobe/Alloy (plugins/martech, a git subtree) is the OPT-IN provider (?martech=adobe); the
+// default path is Tealium. Imported dynamically at its gated call sites (loadEager / loadLazy)
+// so it never downloads on the default path — it used to be a static import loaded on every page.
+// The tealium plugin below is NOT a vendored subtree (project-owned code), but the relative
 // import still crosses into plugins/ so the disable comment mirrors the existing martech import.
 // eslint-disable-next-line import/no-relative-packages
 import TealiumMartech from '../plugins/tealium-martech/src/index.js';
@@ -510,8 +507,12 @@ async function loadEager(doc) {
   // a missing/placeholder datastream never initializes Alloy or hides the body.
   // Only runs on the opt-in Adobe provider path (`?martech=adobe`).
   let martechLoadedPromise = null;
+  let applyMartechEager = null;
   if (MARTECH_PROVIDER === 'adobe' && MARTECH_ENABLED) {
     try {
+      // eslint-disable-next-line import/no-relative-packages
+      const { initMartech, martechEager } = await import('../plugins/martech/src/index.js');
+      applyMartechEager = martechEager;
       martechLoadedPromise = initMartech(
         { datastreamId: AEP_DATASTREAM_ID, orgId: AEP_ORG_ID },
         { personalization: true },
@@ -570,7 +571,7 @@ async function loadEager(doc) {
     if (firstSection) await runExperienceLayer(firstSection);
     document.body.classList.add('appear');
     await Promise.all([
-      martechLoadedPromise ? martechLoadedPromise.then(martechEager) : Promise.resolve(),
+      martechLoadedPromise ? martechLoadedPromise.then(applyMartechEager) : Promise.resolve(),
       loadSection(main.querySelector('.section'), waitForFirstImage),
     ]);
   }
@@ -648,11 +649,15 @@ async function loadLazy(doc) {
   }
 
   if (MARTECH_PROVIDER === 'adobe' && MARTECH_ENABLED) {
-    try { await martechLazy(); } catch (e) { /* non-fatal */ }
-    // Demo posture: auto-grant collection consent (martech inits consent 'pending', which
-    // would otherwise drop sendEvent). Needed for blocks/form/form.js's lead-identity
-    // sendEvent call on this provider path. Fail-open — never blocks the page.
-    try { await updateUserConsent({ collect: true }); } catch (e) { /* non-fatal */ }
+    // eslint-disable-next-line import/no-relative-packages
+    const adobe = await import('../plugins/martech/src/index.js').catch(() => null);
+    if (adobe) {
+      try { await adobe.martechLazy(); } catch (e) { /* non-fatal */ }
+      // Demo posture: auto-grant collection consent (martech inits consent 'pending', which
+      // would otherwise drop sendEvent). Needed for blocks/form/form.js's lead-identity
+      // sendEvent call on this provider path. Fail-open — never blocks the page.
+      try { await adobe.updateUserConsent({ collect: true }); } catch (e) { /* non-fatal */ }
+    }
   } else if (MARTECH_PROVIDER === 'tealium') {
     // Loads utag.js for the resolved env (no-op on an inert host) and applies consent. Fail-open,
     // like the Adobe branch above — never block the page.
