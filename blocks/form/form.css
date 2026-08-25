@@ -151,7 +151,8 @@
 .section.form-container:has(.form.download) { background: var(--navy); padding: var(--section-y) 0; text-align: left; }
 .section.form-container:has(.form.download) > div { max-width: var(--container); margin: 0 auto; }
 
-.section.form-container:has(.form.download):has(.default-content-wrapper) {
+.section.form-container:has(.form.download):has(.default-content-wrapper),
+.section.form-container.two-col:has(.default-content-wrapper) {
   display: grid; grid-template-columns: 1fr; gap: 32px; align-items: start;
 }
 .section.form-container:has(.form.download) .default-content-wrapper { text-align: left; color: #d5e0ec; }
