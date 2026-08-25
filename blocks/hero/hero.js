@@ -12,8 +12,7 @@ const VIMEO_URL_RE = /vimeo\.com\/(?:video\/)?(\d+)/;
 
 /**
  * Resolves a YouTube/Vimeo CTA link to its provider/id/autoplay-embed-URL, or
- * null if the href isn't a recognized video link. Self-contained (not shared
- * with the video block) so hero stays independent of other blocks.
+ * null if the href isn't a recognized video link.
  * @param {string} href
  * @returns {{provider:string,id:string,embedUrl:string}|null}
  */
