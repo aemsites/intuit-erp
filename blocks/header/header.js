@@ -247,13 +247,14 @@ export default async function decorate(block) {
   const topstrip = block.querySelector('.ies-topstrip');
   const nav = block.querySelector('#iesNav, .ies-nav');
   const fixedSecondaryNav = block.querySelector('.ies-secondary-nav');
-  const desktopMedia = window.matchMedia('(min-width: 1300px)');
   if (nav) {
     let scrollTicking = false;
     const onScroll = () => {
       const topstripH = topstrip ? topstrip.offsetHeight : 0;
       const y = window.scrollY;
-      if (fixedSecondaryNav && desktopMedia.matches) {
+      if (fixedSecondaryNav) {
+        // Resource Center pages (all widths): the secondary nav slides up to
+        // top:0 as the primary nav scrolls away, taking its place at the top.
         fixedSecondaryNav.style.top = `${Math.max(0, (topstripH + nav.offsetHeight) - y)}px`;
       } else {
         const offset = Math.max(0, topstripH - y);
