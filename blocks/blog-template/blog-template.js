@@ -339,16 +339,16 @@ function wireToc(tocWrap, nav, headings, mq) {
     label.textContent = (showActiveSection && activeText) ? activeText : 'Table of contents';
   };
 
-  // mobile starts collapsed (a sticky bar whose label tracks the section the
-  // reader is in); desktop starts expanded (the full rail). Re-apply on
-  // breakpoint cross so a resized window lands in the right default.
-  const applyDefaultState = (isDesktop) => {
-    tocWrap.classList.toggle('blog-toc-collapsed', !isDesktop);
-    toggle.setAttribute('aria-expanded', String(isDesktop));
+  // Both mobile and desktop start expanded (the full list); the reader is then
+  // auto-collapsed once they scroll into the article (below). Re-apply on
+  // breakpoint cross so a resized window lands back in the expanded default.
+  const applyDefaultState = () => {
+    tocWrap.classList.remove('blog-toc-collapsed');
+    toggle.setAttribute('aria-expanded', 'true');
     updateLabel();
   };
-  applyDefaultState(mq.matches);
-  mq.addEventListener('change', (e) => applyDefaultState(e.matches));
+  applyDefaultState();
+  mq.addEventListener('change', applyDefaultState);
 
   // Once the reader has clicked the toggle themselves, their choice wins and
   // the auto-collapse below stops firing — matching the source, which never
@@ -362,10 +362,10 @@ function wireToc(tocWrap, nav, headings, mq) {
     updateLabel();
   });
 
-  // Desktop: collapse the rail to its narrow tab once the reader is properly
-  // into the article, so the prose gets the width back. One-way — scrolling
-  // back up does NOT re-expand it, and a reader who re-opens it manually keeps
-  // it open (both verified against the source).
+  // Collapse the rail (desktop: narrow tab; mobile: the bar) once the reader is
+  // properly into the article, so the content gets the space back. One-way —
+  // scrolling back up does NOT re-expand it, and a reader who re-opens it
+  // manually keeps it open.
   //
   // Triggers when the first article heading scrolls up out of the viewport,
   // which tracks the article's own layout instead of a hard-coded offset. The
@@ -376,7 +376,7 @@ function wireToc(tocWrap, nav, headings, mq) {
   const collapseTrigger = headings[0];
   if (collapseTrigger && typeof IntersectionObserver !== 'undefined') {
     const autoObserver = new IntersectionObserver(([entry]) => {
-      if (!mq.matches || userToggled || !entry) return;
+      if (userToggled || !entry) return;
       if (window.scrollY < window.innerHeight) return;
       if (entry.isIntersecting || entry.boundingClientRect.top > 0) return;
       if (tocWrap.classList.contains('blog-toc-collapsed')) return;
