@@ -13,7 +13,9 @@
 <script nonce="aem" src="/scripts/aem.js" type="module"></script>
 <script nonce="aem" src="/scripts/scripts.js" type="module"></script>
 <link rel="stylesheet" href="/styles/styles.css"/>
-<link rel="modulepreload" href="/plugins/martech/src/index.js" nonce="aem"/>
+<!-- Preload the active martech provider (Tealium) + the lazily-imported click-tracking runtime. -->
+<link rel="modulepreload" href="/plugins/tealium-martech/src/index.js" nonce="aem"/>
+<link rel="modulepreload" href="/scripts/tracking.js" nonce="aem"/>
 <link rel="preconnect" href="https://edge.adobedc.net"/>
 <link rel="preconnect" href="https://tags.tiqcdn.com"/>
 <link rel="preconnect" href="https://privacy-cdn.e2e.a.intuit.com"/>
