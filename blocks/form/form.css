@@ -355,7 +355,6 @@
 }
 
 @media (width >=1024px) {
-
   .section.form-container:has(.form.download):has(.default-content-wrapper),
   .section.form-container.two-col:has(.default-content-wrapper) {
     grid-template-columns: 1.4fr 1fr;

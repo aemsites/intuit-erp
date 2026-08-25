@@ -389,10 +389,6 @@ function decorateButtons(main) {
 const IMAGE_EXT_RE = /\.(jpe?g|png|gif|webp)(\?|$)/i;
 const HEX_RE = /^#?([\da-f]{3}|[\da-f]{6})$/i;
 
-// True when a #rgb/#rrggbb color is dark enough to want light text on it.
-// WCAG relative-luminance approximation; non-hex values return false (light).
-// ponytail: hex only — authors write hex here. If rgb()/hsl()/named backgrounds
-// ever get authored, normalize via getComputedStyle (costs one style recalc).
 function isDarkHex(color) {
   const m = String(color).trim().match(HEX_RE);
   if (!m) return false;
