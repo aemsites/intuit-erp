@@ -869,7 +869,7 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
    breakout only applies once there IS a prose column to break out of (see
    the >=1024px rule below) — applying it here too pushed the panel past the
    viewport's left edge and caused horizontal scroll. */
-:is(.blog-article, .case-study) .testimonial:not(.video) {
+:is(.blog-article, .case-study) .testimonial:not(.video, .simple) {
   box-sizing: border-box;
   margin: 32px 0;
   background: var(--tofu);
@@ -877,34 +877,35 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
 }
 
 @media (width >= 1024px) {
-  :is(.blog-article, .case-study) .testimonial:not(.video) {
+  :is(.blog-article, .case-study) .testimonial:not(.video, .simple) {
     width: calc(100% + 80px);
     margin: 32px -40px;
     padding: 8px 40px 24px;
   }
 }
 
-:is(.blog-article, .case-study) .testimonial:not(.video) .cmp-testi-grid {
+:is(.blog-article, .case-study) .testimonial:not(.video, .simple) .cmp-testi-grid {
   display: block;
   max-width: none;
-  margin: 0;
+  margin: 1rem 0;
 }
 
 /* the global blockquote treatment (styles.css) adds a 48px decorative “ glyph
    and a 44px indent to hang it in; upstream's in-article quote has neither —
    the quote marks are part of the authored text. */
-:is(.blog-article, .case-study) .testimonial:not(.video) .cmp-quote {
+:is(.blog-article, .case-study) .testimonial:not(.video, .simple) .cmp-quote {
   margin: 0 0 18px;
   padding: 0;
   font-size: 18px;
   line-height: 1.5;
   color: #000;
+  font-style: italic;
 }
 
-:is(.blog-article, .case-study) .testimonial:not(.video) .cmp-quote::before { content: none; }
+:is(.blog-article, .case-study) .testimonial:not(.video, .simple) .cmp-quote::before { content: none; }
 
-:is(.blog-article, .case-study) .testimonial:not(.video) .cmp-quote-name,
-:is(.blog-article, .case-study) .testimonial:not(.video) .cmp-quote-role {
+:is(.blog-article, .case-study) .testimonial:not(.video, .simple) .cmp-quote-name,
+:is(.blog-article, .case-study) .testimonial:not(.video, .simple) .cmp-quote-role {
   display: inline;
   font-size: 18px;
   font-weight: 400;
@@ -912,8 +913,8 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
 }
 
 /* upstream renders attribution as one "- Name, Role" line */
-:is(.blog-article, .case-study) .testimonial:not(.video) .cmp-quote-name::before { content: '- '; }
-:is(.blog-article, .case-study) .testimonial:not(.video) .cmp-quote-name::after { content: ', '; }
+:is(.blog-article, .case-study) .testimonial:not(.video, .simple) .cmp-quote-name::before { content: '- '; }
+:is(.blog-article, .case-study) .testimonial:not(.video, .simple) .cmp-quote-name::after { content: ', '; }
 
 /* related-cards category label: pink w400 on the blog index (which is what
    blog-cards styles by default and is correct there), but black w500 in the
