@@ -1,6 +1,8 @@
 import { bindScheduleLinks } from '../form/form.js';
 import { loadFragment } from '../fragment/fragment.js';
+import { videoInfo } from '../video/video-info.js';
 import { trackAs } from '../../scripts/tracking.js';
+import { loadCSS } from '../../scripts/aem.js';
 
 const DEFAULT_FORM_FRAGMENT = '/fragments/schedule-call';
 const DASHBOARD_LOTTIE_PATHS = ['/', '/index'];
@@ -124,8 +126,17 @@ export default async function decorate(block) {
     actions.className = 'button-wrapper hero-actions';
     ctas.forEach((p) => {
       p.querySelectorAll('a').forEach((a) => {
-        if (/(?:youtube\.com|youtu\.be|vimeo\.com)/i.test(a.href)) {
+        const info = videoInfo(a.href);
+        if (info) {
           a.classList.add('icon-video');
+          a.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const [{ openVideoModal }] = await Promise.all([
+              import('../video/video.js'),
+              loadCSS(`${window.hlx.codeBasePath}/blocks/video/video.css`),
+            ]);
+            openVideoModal(info.embedUrl, a.textContent.trim());
+          });
         }
         actions.append(a);
       });

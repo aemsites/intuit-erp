@@ -40,11 +40,13 @@ function buildPoster(src, alt) {
 }
 
 /**
- * Opens the video in a dismissible lightbox modal (autoplay iframe).
+ * Opens the video in a dismissible lightbox modal (autoplay iframe). Exported
+ * so other blocks (e.g. hero) can open the same lightbox for a video CTA link
+ * without duplicating it.
  * @param {string} embedUrl provider embed URL
  * @param {string} [title] accessible iframe title
  */
-function openVideoModal(embedUrl, title) {
+export function openVideoModal(embedUrl, title) {
   const overlay = document.createElement('div');
   overlay.className = 'video-modal-overlay';
   overlay.innerHTML = `
