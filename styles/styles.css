@@ -1022,7 +1022,7 @@ main > .section.blue-divider {
 
 .section.dark-background > .default-content-wrapper :is(h1, h2, h3, h4, h5, h6, ol, ul, li, p),
 .section.dark-background .block :is(h1, h2, h3, h4, h5, h6, ol, ul, li, p) { 
-  color: #fff !important; 
+  color: #fff; 
 }
 
 .section.light-background > .default-content-wrapper :is(h1, h2, h3, h4, h5, h6) {
