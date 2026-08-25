@@ -1,6 +1,5 @@
 import { bindScheduleLinks } from '../form/form.js';
 import { loadFragment } from '../fragment/fragment.js';
-import { videoInfo } from '../video/video-info.js';
 import { trackAs } from '../../scripts/tracking.js';
 
 const DEFAULT_FORM_FRAGMENT = '/fragments/schedule-call';
@@ -8,6 +7,23 @@ const DASHBOARD_LOTTIE_PATHS = ['/', '/index'];
 const DASHBOARD_LOTTIE_JSON = '/blocks/hero/dashboard-animation.json';
 const LOTTIE_PLAYER_URL = 'https://cdn.jsdelivr.net/npm/lottie-web@5.12.2/build/player/lottie_light.min.js/+esm';
 const DASHBOARD_LOTTIE_DELAY = 3000;
+const YOUTUBE_URL_RE = /(?:youtube(?:-nocookie)?\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/;
+const VIMEO_URL_RE = /vimeo\.com\/(?:video\/)?(\d+)/;
+
+/**
+ * Resolves a YouTube/Vimeo CTA link to its autoplay embed URL, or null if the
+ * href isn't a recognized video link. Self-contained (not shared with the video
+ * block) so hero stays independent of other blocks.
+ * @param {string} href
+ * @returns {string|null}
+ */
+function videoEmbedUrl(href) {
+  const yt = href.match(YOUTUBE_URL_RE);
+  if (yt) return `https://www.youtube.com/embed/${yt[1]}?autoplay=1&rel=0`;
+  const vimeo = href.match(VIMEO_URL_RE);
+  if (vimeo) return `https://player.vimeo.com/video/${vimeo[1]}?autoplay=1`;
+  return null;
+}
 
 /**
  * Opens the video in a dismissible lightbox modal (autoplay iframe). Self-contained
@@ -155,12 +171,12 @@ export default async function decorate(block) {
     actions.className = 'button-wrapper hero-actions';
     ctas.forEach((p) => {
       p.querySelectorAll('a').forEach((a) => {
-        const info = videoInfo(a.href);
-        if (info) {
+        const embedUrl = videoEmbedUrl(a.href);
+        if (embedUrl) {
           a.classList.add('icon-video');
           a.addEventListener('click', (e) => {
             e.preventDefault();
-            openVideoModal(info.embedUrl, a.textContent.trim());
+            openVideoModal(embedUrl, a.textContent.trim());
           });
         }
         actions.append(a);
