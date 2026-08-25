@@ -223,7 +223,6 @@
 .cards.icons .cards-card-body p {
   font-size: 15px;
   line-height: 1.55;
-  color: var(--text-muted);
   margin: 0;
 }
 
@@ -778,6 +777,10 @@
 
 .cards.colored-bg-cards.icons > div > .cards-card-head {
   margin-bottom: 0;
+}
+
+.cards.colored-bg-cards.icons > div > .cards-card-body > p:first-of-type {
+  margin-top: 1rem;
 }
 
 .cards.colored-bg-cards > div {
