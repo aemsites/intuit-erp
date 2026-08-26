@@ -1,20 +1,22 @@
 /**
  * Tealium iQ client-side loader.
  *
- * SAFETY: real Tealium (utag.js) — and the live ad pixels/analytics tags it can fire — must
- * NEVER load the prod environment off the real prod hostname. `resolveEnvironment` is the single
+ * SAFETY: real Tealium (utag.js) — and the live ad pixels/analytics tags it can fire — must only
+ * load prod on a real Intuit host (erp.intuit.com or the staging host), never on a preview host,
+ * localhost, or a lookalike. `resolveEnvironment` is the single
  * gate that maps the current `window.location.hostname` to a utag environment or `null` (inert);
  * first match wins:
  *
  *   erp.intuit.com                              -> 'prod'
- *   stage.erp.intuit.com                        -> 'dev'   (Intuit staging; consent CDN reachable)
+ *   stage.erp.intuit.com                        -> 'prod'  (Intuit staging; runs the prod profile)
  *   *--intuit-erp--aemsites.aem.live            -> 'dev'
  *   *--intuit-erp--aemsites.aem.page            -> 'dev'
  *   localhost, 127.0.0.1                        -> 'dev'
  *   anything else (e.g. *.preview.da.live)      -> null (inert)
  *
- * Only `erp.intuit.com` can ever resolve to `'prod'` — there is no override/config path that can
- * escalate a non-prod host to `'prod'`. CONSENT CAVEAT: the AEM preview hosts
+ * The two real Intuit hosts (`erp.intuit.com` and `stage.erp.intuit.com`) resolve to `'prod'` —
+ * there is no override/config path that can escalate any other host to `'prod'`.
+ * CONSENT CAVEAT: the AEM preview hosts
  * (`*--intuit-erp--aemsites.aem.page` / `.aem.live`) and `localhost` are NOT `intuit.com`
  * origins, so Intuit's OneTrust consent CDN (`privacy-cdn*.a.intuit.com`) CloudFront-blocks them
  * and the default (CDN) consent stack can't settle there — the profile's consent extension would
@@ -68,9 +70,9 @@ let config = { ...DEFAULT_CONFIG };
  * (any branch prefix). Lookalikes — `erp.intuit.com.evil.com`,
  * `x--intuit-erp--aemsites.aem.live.evil.com` — resolve to `null`, since the exact checks and the
  * suffix-must-be-at-the-end (`endsWith`) check both reject a trailing `.evil.com`.
- * SAFETY: only `erp.intuit.com` may ever resolve to `'prod'`; every other host resolves to
- * `'dev'` or `null` (inert) — there is no config/query-string override that can escalate a
- * non-prod host to `'prod'`.
+ * SAFETY: only `erp.intuit.com` and `stage.erp.intuit.com` resolve to `'prod'`; every other host
+ * resolves to `'dev'` or `null` (inert) — there is no config/query-string override that can
+ * escalate a preview/localhost/lookalike host to `'prod'`.
  * @returns {String|null} 'prod' | 'dev', or `null` to stay completely inert
  */
 export function resolveEnvironment() {

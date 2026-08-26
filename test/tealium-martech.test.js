@@ -74,10 +74,10 @@ describe('resolveEnvironment / isProdHost', () => {
     expect(isProdHost()).toBe(true);
   });
 
-  it('resolves "dev" on the Intuit staging host (stage.erp.intuit.com)', () => {
+  it('resolves "prod" on the Intuit staging host (stage.erp.intuit.com — runs the prod profile)', () => {
     stubLocation({ hostname: STAGE_HOST });
-    expect(resolveEnvironment()).toBe('dev');
-    expect(isProdHost()).toBe(false);
+    expect(resolveEnvironment()).toBe('prod');
+    expect(isProdHost()).toBe(true);
   });
 
   it('resolves "dev" on localhost', () => {
@@ -130,9 +130,8 @@ describe('resolveEnvironment / isProdHost', () => {
     });
   });
 
-  it('NEVER resolves "prod" for any host other than the exact erp.intuit.com hostname', () => {
+  it('resolves "prod" ONLY for the exact erp.intuit.com / stage.erp.intuit.com hostnames', () => {
     [
-      STAGE_HOST,
       DEV_HOST_LOCALHOST,
       '127.0.0.1',
       AEM_PAGE_HOST,
@@ -204,11 +203,13 @@ describe('TealiumMartech constructor', () => {
 });
 
 describe('utag_cfg_ovrd.utagdb (Tealium debug console) by resolved environment', () => {
-  it('sets utagdb=true for the dev environment (stage.erp.intuit.com host)', () => {
+  it('sets no utag_cfg_ovrd for the prod environment (stage.erp.intuit.com host)', () => {
     stubLocation({ hostname: STAGE_HOST });
     // eslint-disable-next-line no-new
     new TealiumMartech();
-    expect(window.utag_cfg_ovrd.utagdb).toBe(true);
+    // stage.erp.intuit.com runs the prod profile — prod parity: no utagdb, no noview.
+    expect(window.utag_cfg_ovrd?.utagdb).toBeFalsy();
+    expect(window.utag_cfg_ovrd?.noview).toBeFalsy();
   });
 
   it('sets utagdb=true for the dev environment (localhost)', () => {
@@ -536,7 +537,7 @@ describe('disabled instance (hostname resolveEnvironment does not recognize) —
 describe("enabled instance — lazy() loads the consent stack, settles consent, loads utag.js, then fires the CONSENT-GATED initial view", () => {
   it.each([
     ['prod', PROD_HOST, 'privacy-cdn.a.intuit.com'],
-    ['dev', STAGE_HOST, 'privacy-cdn.e2e.a.intuit.com'],
+    ['prod', STAGE_HOST, 'privacy-cdn.a.intuit.com'],
   ])('env "%s" (host %s): eager() does no network; lazy() loads the consent stack (CDN %s) before utag.js, then fires the initial view once consent is resolved', async (env, hostname, cdnHost) => {
     stubLocation({ hostname });
     // A pre-existing OptanonConsent cookie lets settleConsent() resolve as soon as it's invoked
