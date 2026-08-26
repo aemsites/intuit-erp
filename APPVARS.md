@@ -37,7 +37,7 @@ The tracker reads **only** `window.appVars` (no other `window.*` object), and on
   the three record arrays empty — so it always exists (all four keys) when a tracker reads it.
 - **Arrays fill in place.** Personalization/experiments resolve asynchronously on EDS. As decisions
   land across the eager (LCP section) and lazy (rest-of-page) phases,
-  [`scripts/personalization/analytics.js`](scripts/personalization/analytics.js) (`recordPzn` /
+  [`scripts/experience.js`](scripts/experience.js) (`recordPzn` /
   `recordIxp`) updates the arrays **on the same object reference** — so a tracker that captured
   `window.appVars` eagerly still sees the records. Record de-dup + the global write are deferred to an
   idle callback, off the LCP path.

@@ -229,9 +229,9 @@ describe('Phase 2: coexistence with the pzn/experiment layer', () => {
   beforeEach(() => { document.body.innerHTML = ''; resetTrackingState(); });
 
   // The injected tracker builds personalization_details / experiment_ids from
-  // appVars + the data-pzn-*/data-experiment-* stamps that scripts/pzn.js and
-  // scripts/exp.js write on landed treatments (PR #468). Option B's JIT stamp
-  // must leave those untouched so pzn/exp parity is inherited for free.
+  // appVars + the data-pzn-*/data-experiment-* stamps that scripts/experience.js
+  // writes on landed treatments. Option B's JIT stamp must leave those untouched
+  // so pzn/exp parity is inherited for free.
   it('JIT-stamps identity WITHOUT clobbering data-pzn-*/data-experiment-*', () => {
     document.body.innerHTML = '<main><div class="cta block tracking-demo">'
       + '<a class="button" href="#" data-pzn-placement="ALPHA" data-pzn-id="rec-1"'
