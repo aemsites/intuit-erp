@@ -1,0 +1,78 @@
+/*
+ * accolades — award badges in a centered row, split by vertical rules.
+ * Figma: 60px gap between awards, 16px between badge and label, badge up to
+ * 72px tall, 88px tall divider.
+ */
+.accolades .accolades-eyebrow {
+  margin: 0 0 40px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--heading);
+}
+
+.accolades .accolades-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 60px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.accolades .accolades-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 88px;
+}
+
+/* Divider sits before every item but the first, so it reads as a separator
+   rather than a trailing rule. */
+.accolades .accolades-item + .accolades-item::before {
+  content: "";
+  align-self: stretch;
+  width: 1px;
+  margin-right: 60px;
+  background: rgb(0 0 0 / 20%);
+}
+
+.accolades .accolades-badge {
+  line-height: 0;
+}
+
+.accolades .accolades-badge :is(img, picture, svg) {
+  display: block;
+  width: auto;
+  max-width: 176px;
+  max-height: 72px;
+}
+
+.accolades .accolades-label {
+  margin: 0;
+  font-size: var(--body-font-size-s);
+  line-height: 1.4;
+  color: var(--heading);
+  max-width: 12em;
+}
+
+@media (width < 768px) {
+  .accolades .accolades-list {
+    flex-direction: column;
+    gap: 32px;
+  }
+
+  /* Stacked layout: the vertical rule between items no longer applies. */
+  .accolades .accolades-item + .accolades-item::before {
+    display: none;
+  }
+
+  .accolades .accolades-item {
+    min-height: 0;
+    justify-content: center;
+  }
+}
