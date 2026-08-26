@@ -437,7 +437,7 @@ async function fetchAuthorRow(slug) {
  * @param {object} row the author's query-index row
  * @param {string} authorPath /blog/author/<slug>
  */
-function insertAuthorBio(main, row, authorPath) {
+export function insertAuthorBio(main, row, authorPath) {
   const wrap = document.createElement('div');
   wrap.className = 'blog-author-bio';
   const inner = document.createElement('div');
@@ -476,14 +476,18 @@ function insertAuthorBio(main, row, authorPath) {
   // Click tracking: the author link reports under the `author_bio` trail; prod
   // omits link_name here.
   trackAs('author_bio', wrap, { key: 'author_bio', linkName: false });
-  // Insert the bio immediately before the "Recommended for you" section
-  // (the direct-child-of-main section that contains the blog-cards block).
-  // This matches production order: article body → author-bio → recommended cards.
-  // Fallback: if no blog-cards section exists (pages without a Recommended block),
-  // use the previous behavior (before the right-rail, or append to main).
+  // Production places the author bio right after the FAQ block. Some articles
+  // author "Recommended for you" BEFORE the FAQ (as this page does), so keying
+  // off the FAQ — not the recommended cards — is what keeps the bio after it.
+  // Fallbacks, in order: before the "Recommended for you" cards (pages with no
+  // FAQ), before the right-rail, else append.
+  const faqEl = main.querySelector('.faq');
+  const faqSection = faqEl && [...main.children].find((s) => s.contains(faqEl));
   const blogCardsEl = main.querySelector('.blog-cards');
   const recSection = blogCardsEl && [...main.children].find((s) => s.contains(blogCardsEl));
-  if (recSection) {
+  if (faqSection) {
+    faqSection.after(wrap);
+  } else if (recSection) {
     recSection.before(wrap);
   } else {
     const rail = main.querySelector(':scope > .blog-rail');
@@ -575,9 +579,16 @@ function resolveFragmentPath(metaKey, defaultPath) {
 /**
  * Appends a trailing full-width fragment section to `main` (a plain link the
  * existing fragment autoblock then loads) — used for the hear-from-our-customers
- * and pricing-disclaimer bands every article gets by default. Skipped if the
- * author already linked that exact fragment path themselves, so migrated
- * pages that hand-authored one of these don't end up with a duplicate.
+ * and pricing-disclaimer bands every article gets by default.
+ *
+ * When the author has already linked that exact fragment inline, we don't add a
+ * duplicate — but we DO relocate their section to the end and give it the same
+ * full-width classes an injected one gets. Otherwise a fragment authored mid-page
+ * (e.g. a pricing-disclaimer placed before the client-appended rail/customers
+ * bands) is stranded in the middle, in a narrow content column, instead of the
+ * full-bleed trailing band it is on production. Because this runs for
+ * hear-from-our-customers first and pricing-disclaimer second, the two always
+ * end up in that order at the very bottom, matching prod.
  * @param {Element} main the page's <main>
  * @param {string} metaKey getMetadata() key an author can set to override
  *   which fragment is used
@@ -588,7 +599,15 @@ function resolveFragmentPath(metaKey, defaultPath) {
  */
 function injectFragmentSection(main, metaKey, defaultPath, sectionClasses = []) {
   const path = resolveFragmentPath(metaKey, defaultPath);
-  if (main.querySelector(`a[href*="${path}"]`)) return; // already authored — don't duplicate
+  const authored = main.querySelector(`a[href*="${path}"]`);
+  if (authored) {
+    const authoredSection = [...main.children].find((child) => child.contains(authored));
+    if (authoredSection) {
+      if (sectionClasses.length) authoredSection.classList.add(...sectionClasses);
+      main.append(authoredSection); // move to the end (append relocates)
+    }
+    return;
+  }
   const section = document.createElement('div');
   if (sectionClasses.length) section.classList.add(...sectionClasses);
   const p = document.createElement('p');
