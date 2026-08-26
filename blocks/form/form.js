@@ -154,16 +154,76 @@ function marketoValuesToLead(vals = {}) {
   };
 }
 
+// How long to wait for ChiliPiper's booking overlay to actually appear before
+// giving up and leaving the hosting modal open.
+const CHILIPIPER_OVERLAY_TIMEOUT_MS = 4000;
+
+// ChiliPiper injects its calendar into its own body-level overlay. Resolve once
+// that overlay exists, or to false if it never shows up within the timeout —
+// bounded, and always tears down its observer/timer so nothing leaks.
+function waitForChiliPiperOverlay(timeout = CHILIPIPER_OVERLAY_TIMEOUT_MS) {
+  const present = () => document.querySelector('.chilipiper-popup-window iframe.chilipiper-frame');
+  if (present()) return Promise.resolve(true);
+  return new Promise((resolve) => {
+    let timer;
+    const observer = new MutationObserver(() => {
+      if (!present()) return;
+      clearTimeout(timer);
+      observer.disconnect();
+      resolve(true);
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    timer = setTimeout(() => {
+      observer.disconnect();
+      resolve(false);
+    }, timeout);
+  });
+}
+
+// Visible last resort when the lead was captured but ChiliPiper never took over
+// (blocked script, router failure). Mirrors production's inline confirmation
+// wording rather than redirecting, and replaces the form so the visitor isn't
+// left looking at fields they already submitted.
+function showHandoffFallback(form) {
+  const formEl = form.getFormElem?.()?.[0] || document.getElementById(`mktoForm_${form.getId?.()}`);
+  if (!formEl || formEl.dataset.handoffFallback === 'true') return;
+  formEl.dataset.handoffFallback = 'true';
+  const note = document.createElement('div');
+  note.className = 'form-success';
+  note.setAttribute('role', 'status');
+  const heading = document.createElement('p');
+  heading.className = 'form-success-heading';
+  heading.textContent = 'Thank you';
+  const body = document.createElement('p');
+  body.textContent = 'An Intuit expert will be in touch with you shortly.';
+  note.append(heading, body);
+  formEl.replaceWith(note);
+}
+
 async function chiliPiperHandoff(cfg, router, form) {
   const subdomain = cfg['chilipiper.subdomain'];
   if (!router || !subdomain) return false;
   await loadScript(cfg['chilipiper.src'] || CHILIPIPER_SRC_DEFAULT);
-  window.ChiliPiper?.submit(subdomain, router, { map: true, lead: form.getValues() });
+  // The script can be blocked (ad-blocker, CSP, network failure) and
+  // `loadScript` still resolves, so confirm the API is really there before
+  // committing to the handoff — otherwise the caller must keep the form up.
+  if (typeof window.ChiliPiper?.submit !== 'function') return false;
+  window.ChiliPiper.submit(subdomain, router, { map: true, lead: form.getValues() });
   // ChiliPiper renders its booking calendar in its own top-level overlay, so
   // the schedule-call modal that hosted the form would otherwise stay open
-  // behind it. Dismiss that dialog once the handoff fires.
+  // behind it. Only dismiss that dialog once the overlay has actually taken
+  // over: `submit()` is fire-and-forget, so closing unconditionally would leave
+  // a visitor with no calendar, no form and no error when the handoff fails.
+  const tookOver = await waitForChiliPiperOverlay();
+  if (!tookOver) return false;
   const formEl = form.getFormElem?.()?.[0] || document.getElementById(`mktoForm_${form.getId?.()}`);
-  formEl?.closest('dialog')?.close();
+  const dialog = formEl?.closest('dialog');
+  if (dialog) {
+    // Distinct from a user-initiated close: skip the focus restore so we don't
+    // pull focus off ChiliPiper's overlay as it takes over (see modal.js).
+    dialog.dataset.suppressFocusRestore = 'true';
+    dialog.close();
+  }
   return true;
 }
 
@@ -266,7 +326,14 @@ async function embedMarketoForm(formEl, cfg, config, env) {
     const canHandoff = !!(config.chiliPiperRouter && cfg['chilipiper.subdomain']);
     form.onSuccess((vals) => {
       try { trackFormSubmit(marketoValuesToLead(vals)); } catch (e) { /* non-fatal */ }
-      if (canHandoff) chiliPiperHandoff(cfg, config.chiliPiperRouter, form);
+      // Fire-and-forget by necessity (onSuccess must return synchronously). If
+      // the handoff never took over, surface a fallback confirmation in place of
+      // the form so a blocked ChiliPiper doesn't leave the visitor with nothing.
+      if (canHandoff) {
+        chiliPiperHandoff(cfg, config.chiliPiperRouter, form).then((handedOff) => {
+          if (!handedOff) showHandoffFallback(form);
+        });
+      }
       if (config.downloadUrl) window.open(config.downloadUrl, '_blank', 'noopener');
       else if (config.successUrl && !canHandoff) window.location.href = config.successUrl;
       // Suppress Marketo's default redirect only when we provide our own feedback
