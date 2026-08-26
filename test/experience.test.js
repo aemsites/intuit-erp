@@ -311,6 +311,28 @@ describe('stamping', () => {
     stampPzn(el2, { personalization_placement: '', personalization_id: 'o2' });
     expect(el2.hasAttribute('data-pzn-placement')).toBe(false);
   });
+  it('stampPzn writes the full data-pzn-* set the click tracker walks (action/workflow/model)', () => {
+    const el = document.createElement('div');
+    stampPzn(el, {
+      personalization_placement: 'alpha',
+      personalization_id: 'o1',
+      personalization_action: 'im',
+      personalization_workflow: 'marketing',
+      model_name: 'm1',
+      model_version: 'v2',
+    });
+    expect(el.getAttribute('data-pzn-action')).toBe('im');
+    expect(el.getAttribute('data-pzn-workflow')).toBe('marketing');
+    expect(el.getAttribute('data-pzn-model-name')).toBe('m1');
+    expect(el.getAttribute('data-pzn-model-version')).toBe('v2');
+  });
+  it('stampPzn omits model/action attributes a record does not carry (matches prod)', () => {
+    const el = document.createElement('div');
+    stampPzn(el, { personalization_placement: 'alpha', personalization_id: 'o1' });
+    expect(el.hasAttribute('data-pzn-action')).toBe(false);
+    expect(el.hasAttribute('data-pzn-workflow')).toBe(false);
+    expect(el.hasAttribute('data-pzn-model-name')).toBe(false);
+  });
   it('stampExperiment writes id/version/treatment', () => {
     const el = document.createElement('div');
     stampExperiment(el, { experiment_id: '1', experiment_version: '2', experiment_treatment: 'T' });

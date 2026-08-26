@@ -73,7 +73,9 @@ import {
 const GA4_AND_ADS = ['ga4', 'gtm', 'google-ads', 'doubleclick', 'facebook', 'bing', 'linkedin'];
 
 const PAGES = [
-  { name: 'homepage', prod: '/', ours: '/', mustFire: GA4_AND_ADS },
+  // o11y-rum is prod-env-only → asserted via `mustFireProdMartech` (checked only on stage, never on
+  // a dev preview that legitimately doesn't load it).
+  { name: 'homepage', prod: '/', ours: '/', mustFire: GA4_AND_ADS, mustFireProdMartech: ['o11y-rum'] },
   // Qualtrics Site Intercept (ies-erp tag #35) is scoped to /blog/* by its Tealium load rule
   // (cond[2] = /^\/blog\//), riding the profile fan-out — no page code loads it (see #148/#620).
   // The assertions below verify the migrated site still gets it via the profile: it must fire on a
@@ -92,7 +94,9 @@ const PAGES = [
 
 const ENVS = [
   { name: 'prod', base: 'https://erp.intuit.com', role: 'baseline' },
-  { name: 'stage', base: 'https://stage.erp.intuit.com', vpn: true },
+  // stage runs the prod profile + o11y RUM; `prodMartech` = the env where prod-only vendors
+  // (o11y-rum) must fire, so `mustFireProdMartech` is asserted only here.
+  { name: 'stage', base: 'https://stage.erp.intuit.com', vpn: true, prodMartech: true },
   { name: 'preview', base: 'https://main--intuit-erp--aemsites.aem.page' },
   // Captures the site's NATURAL martech (dev-CDN Tealium, like preview/stage). To instead force
   // the local vendor copies, pass `--ours-path '/?martech=local'`. Auth for a gated homepage lives
@@ -523,14 +527,17 @@ function renderSamplingSummary(page, captures) {
 function evalAssertions(page, captures) {
   const mustFire = page.mustFire || [];
   const mustNotFire = page.mustNotFire || [];
-  if (!mustFire.length && !mustNotFire.length) return [];
+  const mustFireProdMartech = page.mustFireProdMartech || [];
+  if (!mustFire.length && !mustNotFire.length && !mustFireProdMartech.length) return [];
   const results = [];
   for (const env of ENVS) {
     if (env.role === 'baseline') continue;
     const cap = captures[env.name];
     if (!cap || cap.status !== 'OK') continue;
     const fired = new Set(cap.vendors || []);
-    const missing = mustFire.filter((v) => !fired.has(v));
+    // Prod-only vendors (o11y-rum) are required only on prodMartech envs (stage), not dev previews.
+    const expectFire = env.prodMartech ? [...mustFire, ...mustFireProdMartech] : mustFire;
+    const missing = expectFire.filter((v) => !fired.has(v));
     const present = mustNotFire.filter((v) => fired.has(v));
     results.push({ env: env.name, missing, present, ok: !missing.length && !present.length });
   }

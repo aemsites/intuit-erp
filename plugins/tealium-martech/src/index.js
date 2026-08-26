@@ -268,22 +268,57 @@ export async function loadConsentStack(env, local = false) {
   });
 }
 
-// Intuit Observability RUM: page-authored on prod (NOT Tealium tags), so the rebuild loads them.
+// Intuit Observability RUM: page-authored on prod (NOT Tealium tags). `config` mirrors
+// init-0.0.1.js (a PUBLIC client RUM key, not a secret); kept because that script starts the
+// reporter in a DOMContentLoaded listener that never fires on EDS's post-DCL load.
 const OBSERVABILITY_RUM = {
   bundle: 'https://uxfabric.intuitcdn.net/@cloud-monitoring/prod/o11y-rum-web.min.js',
   init: 'https://www.intuit.com/qbmds-components/scripts/o11y/init-0.0.1.js',
+  config: {
+    apiURL: 'https://rum.api.intuit.com/v1/rum/web',
+    apiHeaders: {
+      Authorization: 'Intuit_APIKey intuit_apikey=prdakyresoXBoSxKMxdAfzsr10ofy6haro7yOKaE, intuit_apkey_version=1.0',
+    },
+    reportNavigation: true,
+    reportResources: true,
+    reportWebVitals: true,
+    tags: {
+      webAppId: 'Intuit.gotomarket.expdelactiv.gwpobservabilityrumclient',
+      assetId: '8434133794755619141',
+      env: 'prod',
+    },
+    excludeFetchResources: [],
+  },
 };
 
 /**
- * Loads Intuit's Observability RUM, prod-only via the same `resolveEnvironment` gate as Tealium.
- * Fail-open; the bundle is awaited before `init`, which needs the `window.O11yRUM` it defines.
- * @param {String|null} env resolved utag environment (only `'prod'` loads o11y; else a no-op)
- * @returns {Promise<void>} resolves once both scripts settled (loaded or failed)
+ * Starts the RUM reporter when the document is past 'loading' — the case init-0.0.1.js's
+ * DOMContentLoaded listener misses on EDS. readyState-guarded so exactly one reporter starts.
+ * Fail-open.
+ */
+export function initObservabilityRum() {
+  if (typeof document === 'undefined' || document.readyState === 'loading') return;
+  const Reporter = window.O11yRUM && window.O11yRUM.RumReporter;
+  if (typeof Reporter !== 'function') return;
+  try {
+    // eslint-disable-next-line no-new -- RumReporter self-registers on construction; no ref needed
+    new Reporter({ ...OBSERVABILITY_RUM.config });
+  } catch (e) {
+    // fail-open — a RUM init failure must never break the page
+  }
+}
+
+/**
+ * Loads Intuit's Observability RUM (prod-only). Bundle awaited before init; then
+ * `initObservabilityRum` covers init-0.0.1.js's DCL-gated start. Fail-open.
+ * @param {String|null} env only `'prod'` loads o11y; else a no-op
+ * @returns {Promise<void>}
  */
 export async function loadObservabilityRum(env) {
   if (env !== 'prod') return;
   await loadScriptOnce({ id: 'o11y-rum-web', src: OBSERVABILITY_RUM.bundle });
   await loadScriptOnce({ id: 'o11y-rum-init', src: OBSERVABILITY_RUM.init });
+  initObservabilityRum();
 }
 
 /**
