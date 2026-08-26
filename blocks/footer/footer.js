@@ -240,19 +240,30 @@ function applyCaliforniaPrivacyLabel(link) {
 // Opening the OneTrust preference centre moves focus into the modal, which makes the
 // browser scroll the page to the top a frame or two after the click, so clicking
 // "Manage cookies" deep in the footer looked like it "navigated to top". preventDefault
-// stops the `#` anchor jump but not this focus-scroll, so pin the reader's scroll
-// position for a short window after opening, restoring it the instant anything scrolls
-// the page away. The listener removes itself, and the >1px guard keeps our own
-// scrollTo from re-triggering it.
-function pinScroll(durationMs = 1000) {
+// stops the `#` anchor jump but not this focus-scroll. Watch for focus actually landing
+// inside OneTrust's consent widget — that's the one event that triggers the browser's
+// scroll-into-view — and undo only the scroll that follows it, so a reader's own
+// scrolling is never touched. OneTrust's own scroll-into-view can land a frame or two
+// after the focusin fires, so recheck across a couple of animation frames before giving
+// up. Stays armed for armedMs since OneTrust opens the dialog (and moves focus into it)
+// asynchronously, not on the same tick as the click.
+function pinScroll(containerSelector = '#onetrust-consent-sdk', armedMs = 2000) {
   const { scrollX, scrollY } = window;
-  const restore = () => {
+  const restoreIfMoved = () => {
     if (Math.abs(window.scrollX - scrollX) > 1 || Math.abs(window.scrollY - scrollY) > 1) {
       window.scrollTo(scrollX, scrollY);
     }
   };
-  window.addEventListener('scroll', restore, { passive: true });
-  setTimeout(() => window.removeEventListener('scroll', restore), durationMs);
+  const onFocusIn = (e) => {
+    if (!e.target.closest(containerSelector)) return;
+    restoreIfMoved();
+    requestAnimationFrame(() => {
+      restoreIfMoved();
+      requestAnimationFrame(restoreIfMoved);
+    });
+  };
+  document.addEventListener('focusin', onFocusIn);
+  setTimeout(() => document.removeEventListener('focusin', onFocusIn), armedMs);
 }
 
 // "Manage cookies" opens the OneTrust preference centre, mirroring production's
