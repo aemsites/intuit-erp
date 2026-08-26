@@ -357,6 +357,21 @@
   padding: var(--section-y) 0;
 }
 
+/* optional heading (h1-h4) promoted from the content cell — see extractHeading
+   in testimonial.js. Rendered above the compare grid or the video frame. */
+.testimonial .testimonial-heading {
+  max-width: var(--container);
+  margin: 0 auto 20px;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--heading);
+}
+
+.testimonial.video .testimonial-heading {
+  margin: 0 auto 16px;
+}
+
 .testimonial:not(.video) .cmp-testi-grid {
   display: grid;
   gap: 48px;
@@ -452,10 +467,14 @@
   color: var(--text-muted);
 }
 
-@media (width <768px) {
+@media (width < 768px) {
   .testimonial-container .default-content-wrapper h2,
   .testimonial-container .default-content-wrapper h3 {
     font-size: 28px;
+  }
+
+  .testimonial .testimonial-heading {
+    font-size: 19px;
   }
 
   .testimonial.video .video-frame {
