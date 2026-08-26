@@ -118,13 +118,12 @@ describe('buildContext', () => {
     expect(Object.keys(ctx).some((k) => k.startsWith('zi_c_'))).toBe(false);
     expect(ctx).not.toHaveProperty('zoominfo');
   });
-  it('includes casId from metadata and ivid from the query override', () => {
+  it('includes casId from metadata and ivid from the cookie', () => {
     setMeta('cas-id', 'cas-123');
-    const spy = vi.spyOn(URLSearchParams.prototype, 'get').mockImplementation((k) => (k === 'ivid' ? 'q-ivid' : null));
+    document.cookie = 'ivid=cookie-ivid';
     const ctx = buildContext();
     expect(ctx.casId).toBe('cas-123');
-    expect(ctx.ivid).toBe('q-ivid');
-    spy.mockRestore();
+    expect(ctx.ivid).toBe('cookie-ivid');
   });
   it('includes of1Intent when a behavior profile exists', () => {
     const domain = window.location.hostname.replace(/^www\./, '');
@@ -146,10 +145,13 @@ describe('buildContext', () => {
 });
 
 describe('resolveIvid', () => {
-  it('prefers the ?ivid= override, else the cookie, else undefined', () => {
+  it('reads the ivid cookie, else undefined; ignores any ?ivid= param', () => {
     expect(resolveIvid()).toBeUndefined();
+    window.history.replaceState({}, '', '?ivid=url-xyz');
+    expect(resolveIvid()).toBeUndefined(); // URL param no longer honored
     document.cookie = 'ivid=cookie-abc';
-    expect(resolveIvid()).toBe('cookie-abc');
+    expect(resolveIvid()).toBe('cookie-abc'); // cookie is the only source
+    window.history.replaceState({}, '', window.location.pathname);
   });
 });
 
