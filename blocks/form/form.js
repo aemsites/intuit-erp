@@ -1,8 +1,8 @@
 /**
  * form — live lead-capture form: a Marketo Forms2 embed (fields rendered by
  * Marketo) followed by a ChiliPiper router handoff on success. Also owns the
- * shared "Schedule a call" modal (openScheduleModal/bindScheduleLinks) and the
- * ChiliPiper-only demo booking (bookDemo).
+ * ChiliPiper-only demo booking (bookDemo). The shared "Schedule a call" modal
+ * lives in scripts/schedule-modal.js.
  *
  * Per-page config rows (author): formId, chiliPiperRouter, downloadUrl,
  * successUrl, header, subheader, disclaimer, recaptcha (per-form v3 opt-in),
@@ -44,15 +44,6 @@ const CONFIG_KEYS = [
 ];
 
 const CHILIPIPER_SRC_DEFAULT = '//js.chilipiper.com/marketing.js';
-const SCHEDULE_FRAGMENT_DEFAULT = '/fragments/schedule-call-vertical';
-
-// A page can point the nav "Schedule a call" modal at a different fragment via
-// `schedule-fragment` metadata — same override convention as blog-template.js's
-// right-rail fragment (bare name resolves under /fragments/, absolute path used as-is).
-function scheduleFragmentPath() {
-  const value = getMetadata('schedule-fragment') || SCHEDULE_FRAGMENT_DEFAULT;
-  return value.startsWith('/') ? value : `/fragments/${value}`;
-}
 
 // Marketo instance selection, keyed by the `marketo` page metadata. Prod unless the
 // page opts in; hostname is deliberately not consulted.
@@ -317,25 +308,6 @@ export default async function decorate(block) {
     }
   });
   observer.observe(block);
-}
-
-// Shared "Schedule a call" modal — hosts the schedule-call fragment (which
-// authors its own form block) in the reusable modal block.
-export async function openScheduleModal() {
-  // eslint-disable-next-line import/no-cycle
-  const { openModal } = await import('../modal/modal.js');
-  return openModal(scheduleFragmentPath());
-}
-
-// Any anchor whose href ends with #schedule opens the modal instead of
-// navigating — covers both `#schedule` and stray absolute URLs ending in it.
-export function bindScheduleLinks(container) {
-  container.querySelectorAll('a[href$="#schedule"]').forEach((a) => {
-    a.addEventListener('click', (e) => {
-      e.preventDefault();
-      openScheduleModal();
-    });
-  });
 }
 
 // Book-a-demo: ChiliPiper scheduler directly (no Marketo form). Router is the

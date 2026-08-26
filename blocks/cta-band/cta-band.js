@@ -1,4 +1,3 @@
-import { bindScheduleLinks } from '../form/form.js';
 import { trackAs } from '../../scripts/tracking.js';
 
 function text(el) {
@@ -68,8 +67,6 @@ function buildCard(row) {
     bodyParas[0].before(body);
     bodyParas.forEach((p) => body.append(p));
   }
-
-  bindScheduleLinks(card);
 
   return card;
 }

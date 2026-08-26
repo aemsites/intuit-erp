@@ -3,6 +3,7 @@ import { loadFragment } from '../fragment/fragment.js';
 import {
   buildBlock, decorateBlock, loadBlock, loadCSS, loadSections,
 } from '../../scripts/aem.js';
+import { bindScheduleLinks } from '../../scripts/schedule-modal.js';
 
 // Fragments are fetched once and reused across opens; each open clones the
 // cached copy (loadFragment has no cache of its own).
@@ -99,5 +100,8 @@ export async function openModal(fragmentUrl) {
   block.querySelectorAll('[data-block-status]').forEach((b) => { b.dataset.blockStatus = 'initialized'; });
   block.querySelectorAll('.section[data-section-status]').forEach((s) => { s.dataset.sectionStatus = 'initialized'; });
   await loadSections(block);
+  // Modal content can itself contain a #schedule link (e.g. a nested CTA); the
+  // page-level bind (scripts.js) never sees content injected this late.
+  bindScheduleLinks(block);
   showModal();
 }

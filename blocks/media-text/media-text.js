@@ -25,7 +25,6 @@
  * CSS: blocks/media-text/media-text.css
  */
 import { buildBlock, loadBlock } from '../../scripts/aem.js';
-import { bindScheduleLinks } from '../form/form.js';
 import { videoInfo } from '../video/video-info.js';
 
 const SPLIT_RE = /^(\d{1,3})-(\d{1,3})$/;
@@ -101,7 +100,6 @@ export default function decorate(block) {
       }
       grid.append(card);
     });
-    bindScheduleLinks(grid);
     block.replaceChildren(grid);
     return;
   }
