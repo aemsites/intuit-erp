@@ -1,10 +1,13 @@
 /**
  * testimonial — customer proof (index video, compare quote).
- * Section head (h2) authored as default content before the block.
+ * Section head (h2) is normally authored as default content before the
+ * block. If instead a heading (h1-h4) is authored as the first element of
+ * the default/compare or .video variant's content cell, it's promoted and
+ * rendered above the block rather than being dropped.
  *
  * Default (compare) — 1-2 cells:
- *   1. content (required) — quote paragraph(s), a bold-only line for the
- *      name, then plain role paragraph(s)
+ *   1. content (required) — an optional leading heading, quote paragraph(s),
+ *      a bold-only line for the name, then plain role paragraph(s)
  *   2. headshot <img> (optional)
  * The quote-mark glyph is decorative and lives in CSS, not authored content.
  *
@@ -14,12 +17,13 @@
  *
  * Variant .video (index) — one or more rows, each row 1-2 cells:
  *   1. media — poster <img>, optionally a second image (customer logo)
- *   2. content (required) — an optional italic-only eyebrow line, quote
- *      paragraph(s), an attribution paragraph (may hold a trailing link to
- *      the case study), and the mp4/YouTube video source(s), each authored
- *      as its own link or bare URL/id, detected by pattern rather than
- *      position. Falls back to the Rhodes Companies story clip when no
- *      video source is authored at all.
+ *   2. content (required) — an optional leading heading (first row only),
+ *      an optional italic-only eyebrow line, quote paragraph(s), an
+ *      attribution paragraph (may hold a trailing link to the case study),
+ *      and the mp4/YouTube video source(s), each authored as its own link
+ *      or bare URL/id, detected by pattern rather than position. Falls back
+ *      to the Rhodes Companies story clip when no video source is authored
+ *      at all.
  *
  * Variant .video-split (professional-services) — copy left, video right on a
  * tinted band. One row, 3 cells:
@@ -35,6 +39,18 @@ function pic(cell) {
   if (!cell) return null;
   const p = cell.querySelector('picture, img');
   return p ? (p.closest('picture') || p) : null;
+}
+
+// Normalized to h3 regardless of the authored level so an author who picks
+// h1/h2 can't collide with the page's own heading hierarchy.
+function extractHeading(cell) {
+  const first = cell?.firstElementChild;
+  if (!first || !/^H[1-4]$/.test(first.tagName)) return null;
+  first.remove();
+  const h = document.createElement('h3');
+  h.className = 'testimonial-heading';
+  h.innerHTML = first.innerHTML;
+  return h;
 }
 
 // Rhodes Companies customer story — same cutdown clip + YouTube id erp.intuit.com plays.
@@ -610,7 +626,9 @@ export default function decorate(block) {
   if (block.classList.contains('video')) {
     const rows = [...block.querySelectorAll(':scope > div')];
     if (!rows.length) return;
-    block.replaceChildren(buildVideoSection(rows));
+    const heading = extractHeading(rows[0].children[1]);
+    const section = buildVideoSection(rows);
+    block.replaceChildren(...(heading ? [heading] : []), section);
     track();
     return;
   }
@@ -618,6 +636,7 @@ export default function decorate(block) {
   const row = block.querySelector(':scope > div');
   if (!row) return;
   const [contentCell, mediaCell] = [...row.children];
+  const heading = extractHeading(contentCell);
 
   const {
     quoteParas, name, roleParas, cite,
@@ -653,6 +672,6 @@ export default function decorate(block) {
   const headshot = pic(mediaCell);
   if (headshot) media.append(headshot);
   grid.append(media);
-  block.replaceChildren(grid);
+  block.replaceChildren(...(heading ? [heading] : []), grid);
   track();
 }

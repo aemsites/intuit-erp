@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildVideoFrame, buildVideoSection } from '../blocks/testimonial/testimonial.js';
+import decorate, { buildVideoFrame, buildVideoSection } from '../blocks/testimonial/testimonial.js';
 
 function cells(html) {
   const row = document.createElement('div');
@@ -99,5 +99,47 @@ describe('buildVideoSection (adaptive)', () => {
     el.querySelectorAll('.video-thumb')[2].click();
     expect(bar.querySelector('.video-quote').textContent).toBe('Quote 2');
     expect(bar.querySelector('.video-avatar').getAttribute('src')).toBe('/p2.jpg');
+  });
+});
+
+describe('.video heading promotion via decorate()', () => {
+  function makeVideoBlock({ heading = '', headingTag = 'h3' } = {}) {
+    const block = document.createElement('div');
+    block.className = 'testimonial video block';
+    block.innerHTML = `
+      <div>
+        <div><img src="/give-clean.jpg" alt="Give Clean customer story video"></div>
+        <div>
+          ${heading ? `<${headingTag}>${heading}</${headingTag}>` : ''}
+          <p>"I've seen our people come alive with ownership."</p>
+          <p>- Elaine Savell, Controller, Give Clean</p>
+        </div>
+      </div>`;
+    return block;
+  }
+
+  it('promotes a leading heading from the first row instead of dropping it', () => {
+    const block = makeVideoBlock({ heading: 'Intuit Enterprise Suite customers are saying' });
+    decorate(block);
+    const heading = block.querySelector('.testimonial-heading');
+    expect(heading).not.toBeNull();
+    expect(heading.tagName).toBe('H3');
+    expect(heading.textContent).toBe('Intuit Enterprise Suite customers are saying');
+    expect(block.firstElementChild).toBe(heading);
+    // the rest of the frame still renders normally
+    expect(block.querySelector('.video-frame')).not.toBeNull();
+  });
+
+  it('normalizes an authored h1/h2 heading down to h3', () => {
+    const block = makeVideoBlock({ heading: 'Customers are saying', headingTag: 'h2' });
+    decorate(block);
+    expect(block.querySelector('.testimonial-heading').tagName).toBe('H3');
+  });
+
+  it('does not add a heading element when none is authored (no regression)', () => {
+    const block = makeVideoBlock();
+    decorate(block);
+    expect(block.querySelector('.testimonial-heading')).toBeNull();
+    expect(block.querySelector('.video-frame')).not.toBeNull();
   });
 });
