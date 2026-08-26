@@ -1,26 +1,33 @@
 # OVERRIDES.md
 
 Every place site behavior can be toggled or configured **without a code change** — via page/section
-metadata, authored DOM attributes, or URL query parameters. Authors control the metadata/attributes;
-developers and QA use the URL params.
+metadata (per-page or in bulk via the root metadata sheet), authored DOM attributes, URL query
+parameters, or cookies. Authors control the metadata/attributes; developers and QA use the URL params.
 
 Related docs: [MARTECH.md](MARTECH.md) (analytics/consent loading), [CLICK-TRACKING.md](CLICK-TRACKING.md)
 (the `data-track-*` attribute contract), [APPVARS.md](APPVARS.md) (`window.appVars` for the tracker).
 
 > **Source of truth is the code.** File links below point at the readers. Values shown as
 > `true`/`yes` are matched case-insensitively after trimming.
+>
+> **Metadata key naming.** Authored keys are case-insensitive and space/hyphen-equivalent — the
+> pipeline lowercases the key and replaces spaces with hyphens to form the `<meta name>`. So
+> `Events Bar`, `events bar`, and `events-bar` all produce `<meta name="events-bar">`. Both forms
+> appear in current content; they behave identically.
 
 ---
 
 ## Page metadata
 
-Set in a page's **Metadata** table (authored as `key | value` rows, emitted as `<meta name="key">`).
+Set in a page's **Metadata** table (authored as `key | value` rows, emitted as `<meta name="key">`),
+or in bulk via the [metadata sheet](#bulk-metadata-metadatajson) (see below). The keys below are the
+ones this site's code actually reads.
 
 ### Layout & page chrome
 
 | Metadata | Controls | Values / default | Source |
 | --- | --- | --- | --- |
-| `template` | Adds template class(es) to `<body>`; drives blog/guide autoblocking & theming | any string (comma-separated → multiple classes); `blog` and `guide` are special | [scripts/aem.js](scripts/aem.js) |
+| `template` | Adds template class(es) to `<body>`; drives blog/guide autoblocking & theming | values in use: `Blog Article`, `Category`, `Case Study`, `Guide`, `Research`, `Author`, `Blog Home`, `block-library` (each `toClassName`-d, e.g. `blog-article`); mostly set in bulk via the metadata sheet, not per page | [scripts/aem.js](scripts/aem.js), [blocks/blog-template/blog-detect.js](blocks/blog-template/blog-detect.js), [blocks/guide-hero/guide-detect.js](blocks/guide-hero/guide-detect.js) |
 | `theme` | Adds theme class(es) to `<body>` | any string (comma-separated) | [scripts/aem.js](scripts/aem.js) |
 | `hide-header` | Removes the global header (gated conversion/landing pages) | `true` / `yes` / `hide` | [scripts/scripts.js](scripts/scripts.js) |
 | `hide-footer` | Removes the global footer | `true` / `yes` / `hide` | [scripts/scripts.js](scripts/scripts.js) |
@@ -47,11 +54,14 @@ Set in a page's **Metadata** table (authored as `key | value` rows, emitted as `
 | `experience-api-base` | Overrides the decision-API base URL for local/QA | URL/path (default `/api`; trailing slashes stripped) | [scripts/experience.js](scripts/experience.js) |
 
 > The orchestrator call only fires when the page has at least one experiment id or access-point name
-> (page metadata **or** the section tags below). With none present, no call is made.
+> (page metadata **or** the section tags below). `experiment-id` / `personalization-id` are **not
+> currently authored on any page**, so today no orchestrator call is made — these document available
+> capability, not live config.
 
 There is also the **aem-experimentation plugin** convention (loaded only when present): `experiment` /
-`experiment-*`, `campaign-*`, `audience-*` metadata, `campaign:` / `audience:` og-properties, and
-`instant-experiment`. See [scripts/experiment-loader.js](scripts/experiment-loader.js).
+`experiment-*` (e.g. `experiment-variants`), `campaign-*`, `audience-*` metadata, `campaign:` /
+`audience:` og-properties, and `instant-experiment`. Present today only on a couple of
+`experiments/` pages. See [scripts/experiment-loader.js](scripts/experiment-loader.js).
 
 ### Block-specific
 
@@ -73,19 +83,51 @@ Read by the blog autoblock in [blocks/blog-template/blog-template.js](blocks/blo
 
 ---
 
+## Bulk metadata (`metadata.json`)
+
+Metadata can be applied **in bulk** — to a whole section of the site or to every page — via the
+metadata sheet at the site root, `content/metadata.json` (authored as a spreadsheet in DA; `content/`
+is gitignored and deploys via `aem content push`, so it is not on GitHub). Each row has a **`URL`**
+glob plus one column per metadata
+field; a page inherits the fields of **every** row whose glob matches, with more-specific globs
+overriding broader ones. `**` targets the entire site. This is how blog pages get their template,
+category, footer, and right-rail with no per-page metadata at all. These fields resolve to the same
+`<meta>` names the readers above consume.
+
+Columns currently in the sheet and the rules in place today:
+
+| Column | Effect | Current rules |
+| --- | --- | --- |
+| `locale` | Page locale (`<html lang>` / `og:locale`) | `/en/**` → `en-US`, `/in/**` → `en-GB` |
+| `robots` | Search-engine indexing | `noindex,nofollow` for `/events/**`, `/webinar-*`(`/**`), `/accountant/free-consultation/ies`(`/**`), `/oa`, `/ibs`, `/drafts/**` |
+| `twitter:site` / `twitter:creator` | Social card meta | site-wide (`**`): `https://www.intuit.com/` / `@intuit` |
+| `footer` | Footer fragment (same as the `footer` page metadata) | `/blog` and `/blog/**` → `/footer-blog` |
+| `Template` | Template (same as the `template` page metadata) | `/blog/**` → `Blog Article`; `/blog/case-study/**` → `Case Study`; `/blog/guide/**` → `Guide`; `/blog/research/**` → `Research`; `/blog/author/**` → `Author` |
+| `Category` | Blog category (byline/eyebrow + query filtering) | per `/blog/<category>/**` (e.g. `financials`, `erp`, `construction`, `payroll`, …) |
+| `right-rail` | Right-rail fragment (same as the `right-rail` page metadata) | per blog category → `/fragments/right-rail/<id>` |
+
+> A per-page **Metadata** block overrides the sheet for that page. To change behavior for a whole
+> path prefix (e.g. all `/blog/**`), edit the sheet instead of touching each page.
+
+---
+
 ## Section metadata
 
-Authored in a **Section Metadata** block; emitted as `data-*` on the section. Consumed by
-[scripts/experience.js](scripts/experience.js) (personalization/experiments) and
-[scripts/scripts.js](scripts/scripts.js) (backgrounds).
+Authored in a **Section Metadata** block (`key | value` rows scoped to one section). The pipeline
+converts it to the section `<div>`: the **`Style`** key becomes space-separated CSS **classes** on the
+section, and **every other key** becomes a `data-<key>` attribute the client code reads.
 
-| Attribute (authored key) | Controls |
-| --- | --- |
-| `data-exp` | Section-scoped experiment id (numeric); section-level content swap |
-| `data-exp-block` | Scopes that experiment to the block whose `data-block-name` matches, instead of the whole section |
-| `data-pzn` | Section-scoped personalization access-point name |
-| `data-pzn-block` | Scopes personalization to a named block |
-| `data-background` | Section background: an image URL → optimized `background-image`; otherwise a CSS color/gradient plus `colored-background` and `dark-background`/`light-background` classes |
+| Authored key | Becomes | Controls |
+| --- | --- | --- |
+| `Style` | class(es) on the section | Section styling. Value is a comma-separated list of class names — **currently used across the site** (73×). Vocabulary in use: `narrow`, `center`, `contained`, `left`/`right`, `navy`, `sky`, `super-blue`, `blue-divider`, `teal-band`, `light`, `two-col`, `media-lead`, `feature-cards`, `product-cards`, `hear-customers`, and spacing `spacer-top-*` / `spacer-bottom-*` / `padding-bottom-*` (`l`/`xl`/`xxl`). Classes are defined in [styles/](styles/) and block CSS |
+| `Background` | `data-background` | Section background — **currently used** (values are hex colors, a `conic-gradient(...)`, `white`, or `none`). An image URL → optimized `background-image`; otherwise a CSS color/gradient plus `colored-background` and `dark-background`/`light-background` classes. Read by [scripts/scripts.js](scripts/scripts.js) |
+| `Exp` | `data-exp` | Section-scoped experiment id (numeric); section-level content swap |
+| `Exp Block` | `data-exp-block` | Scopes that experiment to the block whose `data-block-name` matches, instead of the whole section |
+| `Pzn` | `data-pzn` | Section-scoped personalization access-point name |
+| `Pzn Block` | `data-pzn-block` | Scopes personalization to a named block |
+
+The `Exp*` / `Pzn*` rows are read by [scripts/experience.js](scripts/experience.js) but are **not
+currently present in authored content** — only `Style` and `Background` are used today.
 
 > IXP/experiment wins over personalization when both target the same scope (whole-section, or the same
 > named block); scoped to different blocks, both run independently.
@@ -137,7 +179,15 @@ Defaults (this project passes no overrides), in [plugins/experimentation/src/ind
 
 ---
 
-## Not overrides (auto-derived — here to prevent confusion)
+## Not overrides (here to prevent confusion)
+
+- **Standard SEO / social metadata.** `title`, `description`, `image`, `json-ld`, `robots`,
+  `twitter:*`, `locale` are authored per page or in the sheet and consumed by the pipeline/head for
+  SEO — they don't toggle site behavior, so they're not listed above.
+
+- **Informational-only keys.** `pagetype` (`category` / `hub` / `search`) and `industry` appear in
+  authored content but are **not read by any site code** — they carry no behavior. (One page also has a
+  stray testimonial line mis-entered as a metadata key — an authoring typo, not an override.)
 
 - **Content identifier.** `window.appVars.externalContentIdentifier` (analytics) and the orchestrator's
   `context.casId` are both the page **pathname** (`window.location.pathname`) — automatically, with **no
