@@ -186,8 +186,7 @@ Defaults (this project passes no overrides), in [plugins/experimentation/src/ind
   SEO — they don't toggle site behavior, so they're not listed above.
 
 - **Informational-only keys.** `pagetype` (`category` / `hub` / `search`) and `industry` appear in
-  authored content but are **not read by any site code** — they carry no behavior. (One page also has a
-  stray testimonial line mis-entered as a metadata key — an authoring typo, not an override.)
+  authored content but are **not read by any site code** — they carry no behavior.
 
 - **Content identifier.** `window.appVars.externalContentIdentifier` (analytics) and the orchestrator's
   `context.casId` are both the page **pathname** (`window.location.pathname`) — automatically, with **no
