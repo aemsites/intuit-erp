@@ -243,7 +243,7 @@ function buildAutoBlocks(main) {
             const frag = await loadFragment(pathname);
             fragment.parentElement.replaceWith(...frag.children);
             // eslint-disable-next-line import/no-cycle
-            import('../blocks/form/form.js').then(({ bindScheduleLinks }) => bindScheduleLinks(main)).catch(() => {});
+            import('./schedule-modal.js').then(({ bindScheduleLinks }) => bindScheduleLinks(main)).catch(() => {});
           } catch (error) {
             // eslint-disable-next-line no-console
             console.error('Fragment loading failed', error);
@@ -510,9 +510,7 @@ async function loadLazy(doc) {
   // main (tabs panels, bare default content), not just blocks that opt in individually.
   if (main) {
     // eslint-disable-next-line import/no-cycle
-    import('../blocks/form/form.js')
-      .then(({ bindScheduleLinks }) => bindScheduleLinks(main))
-      .catch(() => {});
+    import('./schedule-modal.js').then(({ bindScheduleLinks }) => bindScheduleLinks(main)).catch(() => {});
   }
 
   // Click tracking (opt-in `tracking-` blocks) is not render-critical

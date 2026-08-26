@@ -1,5 +1,5 @@
 import { getMetadata } from '../../scripts/aem.js';
-import { openScheduleModal } from '../form/form.js';
+import { openScheduleModal } from '../../scripts/schedule-modal.js';
 import { loadFragment } from '../fragment/fragment.js';
 import { enhanceSecondaryNavSearch } from '../blog-search/search-utils.js';
 import { trackAs } from '../../scripts/tracking.js';
