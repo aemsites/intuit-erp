@@ -329,8 +329,12 @@ export async function openScheduleModal() {
 
 // Any anchor whose href ends with #schedule opens the modal instead of
 // navigating — covers both `#schedule` and stray absolute URLs ending in it.
+// Called from multiple content-injection points (initial page load, fragments,
+// modals), so it's idempotent: a `data-schedule-bound` flag skips anchors that
+// already have the listener rather than double-binding them.
 export function bindScheduleLinks(container) {
-  container.querySelectorAll('a[href$="#schedule"]').forEach((a) => {
+  container.querySelectorAll('a[href$="#schedule"]:not([data-schedule-bound])').forEach((a) => {
+    a.dataset.scheduleBound = 'true';
     a.addEventListener('click', (e) => {
       e.preventDefault();
       openScheduleModal();

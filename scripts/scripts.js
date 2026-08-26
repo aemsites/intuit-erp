@@ -242,6 +242,8 @@ function buildAutoBlocks(main) {
             const { pathname } = new URL(fragment.href);
             const frag = await loadFragment(pathname);
             fragment.parentElement.replaceWith(...frag.children);
+            // eslint-disable-next-line import/no-cycle
+            import('../blocks/form/form.js').then(({ bindScheduleLinks }) => bindScheduleLinks(main)).catch(() => {});
           } catch (error) {
             // eslint-disable-next-line no-console
             console.error('Fragment loading failed', error);
@@ -503,6 +505,15 @@ async function loadLazy(doc) {
       .catch(() => {});
   }
   await loadSections(main);
+
+  // Global "Schedule a call" trigger — covers any a[href$="#schedule"] anywhere in
+  // main (tabs panels, bare default content), not just blocks that opt in individually.
+  if (main) {
+    // eslint-disable-next-line import/no-cycle
+    import('../blocks/form/form.js')
+      .then(({ bindScheduleLinks }) => bindScheduleLinks(main))
+      .catch(() => {});
+  }
 
   // Click tracking (opt-in `tracking-` blocks) is not render-critical
   if (main) {

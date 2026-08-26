@@ -1,12 +1,33 @@
 // eslint-disable-next-line import/no-cycle
 import { loadFragment } from '../fragment/fragment.js';
 import {
-  buildBlock, decorateBlock, loadBlock, loadCSS, loadSections,
+  buildBlock, decorateBlock, getMetadata, loadBlock, loadCSS, loadSections,
 } from '../../scripts/aem.js';
 
 // Fragments are fetched once and reused across opens; each open clones the
 // cached copy (loadFragment has no cache of its own).
 const fragmentCache = new Map();
+
+// Duplicated from blocks/form/form.js rather than imported (blocks must not
+// import across folders): modal content can itself contain a #schedule link
+// (e.g. a nested CTA), which needs binding once it's loaded into the DOM.
+const SCHEDULE_FRAGMENT_DEFAULT = '/fragments/schedule-call-vertical';
+
+function scheduleFragmentPath() {
+  const value = getMetadata('schedule-fragment') || SCHEDULE_FRAGMENT_DEFAULT;
+  return value.startsWith('/') ? value : `/fragments/${value}`;
+}
+
+function bindScheduleLinks(container) {
+  container.querySelectorAll('a[href$="#schedule"]:not([data-schedule-bound])').forEach((a) => {
+    a.dataset.scheduleBound = 'true';
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      // eslint-disable-next-line no-use-before-define
+      openModal(scheduleFragmentPath());
+    });
+  });
+}
 
 // Not a decorated block: links to a /modals/ path are turned into modals, and
 // other code opens modals via createModal()/openModal(). Adapted from the AEM
@@ -99,5 +120,8 @@ export async function openModal(fragmentUrl) {
   block.querySelectorAll('[data-block-status]').forEach((b) => { b.dataset.blockStatus = 'initialized'; });
   block.querySelectorAll('.section[data-section-status]').forEach((s) => { s.dataset.sectionStatus = 'initialized'; });
   await loadSections(block);
+  // Modal content can itself contain a #schedule link (e.g. a nested CTA); the
+  // page-level bind (scripts.js) never sees content injected this late.
+  bindScheduleLinks(block);
   showModal();
 }
