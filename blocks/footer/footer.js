@@ -238,7 +238,7 @@ function applyCaliforniaPrivacyLabel(link) {
 }
 
 // Opening the OneTrust preference centre moves focus into the modal, which makes the
-// browser scroll the page to the top a frame or two after the click — so clicking
+// browser scroll the page to the top a frame or two after the click, so clicking
 // "Manage cookies" deep in the footer looked like it "navigated to top". preventDefault
 // stops the `#` anchor jump but not this focus-scroll, so pin the reader's scroll
 // position for a short window after opening, restoring it the instant anything scrolls
