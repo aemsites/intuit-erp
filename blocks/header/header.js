@@ -217,6 +217,23 @@ function wireFlyoutGroup(nav) {
     });
   });
 
+  // Resource Center secondary nav: on desktop the flyouts open on hover to
+  // match production. Mobile keeps the click/accordion behaviour above.
+  if (nav.closest('.ies-secondary-nav')) {
+    const desktop = window.matchMedia('(min-width: 1300px)');
+    items.forEach((item) => {
+      item.addEventListener('mouseenter', () => {
+        if (!desktop.matches) return;
+        closeAll(item);
+        setOpen(item, true);
+      });
+      item.addEventListener('mouseleave', () => {
+        if (!desktop.matches) return;
+        setOpen(item, false);
+      });
+    });
+  }
+
   nav.querySelectorAll('.flyout-back').forEach((backBtn) => {
     backBtn.addEventListener('click', () => closeAll());
   });
@@ -247,14 +264,18 @@ export default async function decorate(block) {
   const topstrip = block.querySelector('.ies-topstrip');
   const nav = block.querySelector('#iesNav, .ies-nav');
   const fixedSecondaryNav = block.querySelector('.ies-secondary-nav');
-  const desktopMedia = window.matchMedia('(min-width: 1300px)');
   if (nav) {
+    // Heights are constant per breakpoint — measure once (and on resize) rather
+    // than reading offsetHeight, which forces a layout, on every scroll frame.
+    let topstripH = topstrip ? topstrip.offsetHeight : 0;
+    let navH = nav.offsetHeight;
     let scrollTicking = false;
     const onScroll = () => {
-      const topstripH = topstrip ? topstrip.offsetHeight : 0;
       const y = window.scrollY;
-      if (fixedSecondaryNav && desktopMedia.matches) {
-        fixedSecondaryNav.style.top = `${Math.max(0, (topstripH + nav.offsetHeight) - y)}px`;
+      if (fixedSecondaryNav) {
+        // Resource Center pages (all widths): the secondary nav slides up to
+        // top:0 as the primary nav scrolls away, taking its place at the top.
+        fixedSecondaryNav.style.top = `${Math.max(0, (topstripH + navH) - y)}px`;
       } else {
         const offset = Math.max(0, topstripH - y);
         nav.style.top = `${offset}px`;
@@ -270,7 +291,11 @@ export default async function decorate(block) {
     };
     requestScrollTick();
     window.addEventListener('scroll', requestScrollTick, { passive: true });
-    window.addEventListener('resize', requestScrollTick, { passive: true });
+    window.addEventListener('resize', () => {
+      topstripH = topstrip ? topstrip.offsetHeight : 0;
+      navH = nav.offsetHeight;
+      requestScrollTick();
+    }, { passive: true });
   }
 
   wireFlyouts(block);

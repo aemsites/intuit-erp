@@ -221,24 +221,34 @@
   content: '\2304'; /* ⌄ — mobile, collapsed: tap to expand */
 }
 
-/* Collapsed mobile bar pins to the top of the screen as you scroll; expanded,
-   it's back in normal flow (no sense pinning the whole open panel to the
-   viewport).
-
-   The offset must clear the header's FULL height, which on /blog* is the
-   primary nav plus the Resource Center secondary nav — taller than
-   `--nav-height`, which only covers the primary one. With the smaller offset
-   the bar pinned underneath the header (z-index 50) and was invisible for the
-   whole scroll. Values match the header heights reserved in styles.css. */
+/* Once scrolled the header collapses to just the ~60px Resource Center
+   secondary nav (the primary nav scrolls away), so pin the bar beneath it. */
 .blog-article .blog-toc-rail.blog-toc-collapsed {
   position: sticky;
-  top: 117px;
+  top: 60px;
   z-index: 5;
 }
 
 @media (width >= 1300px) {
   .blog-article .blog-toc-rail.blog-toc-collapsed {
     top: 172px;
+  }
+}
+
+/* Mobile: pin the bar when expanded too (the collapsed rule above only covers
+   the collapsed state, so opening the list used to unpin the rail and it jumped
+   up the page out of view). Cap the open list and let it scroll so a long TOC
+   doesn't fill the screen. */
+@media (width < 1024px) {
+  .blog-article .blog-toc-rail:not(.blog-toc-collapsed) {
+    position: sticky;
+    top: 60px;
+    z-index: 5;
+  }
+
+  .blog-article .blog-toc-rail:not(.blog-toc-collapsed) .blog-toc-list {
+    max-height: 60vh;
+    overflow-y: auto;
   }
 }
 

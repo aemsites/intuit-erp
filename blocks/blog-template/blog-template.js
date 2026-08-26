@@ -332,28 +332,32 @@ export { isBlogPage } from './blog-detect.js';
 function wireToc(tocWrap, nav, headings, mq) {
   const toggle = nav.querySelector('.blog-toc-toggle');
   const label = nav.querySelector('.blog-toc-label');
-  let activeText = null;
+  // Seed with the first section so the collapsed mobile bar always names a
+  // section (never the generic "Table of contents"); the observer updates it to
+  // the section the reader is in as they scroll.
+  let activeText = headings[0]?.textContent || null;
 
   const updateLabel = () => {
     const showActiveSection = !mq.matches && tocWrap.classList.contains('blog-toc-collapsed');
     label.textContent = (showActiveSection && activeText) ? activeText : 'Table of contents';
   };
 
-  // mobile starts collapsed (a sticky bar whose label tracks the section the
-  // reader is in); desktop starts expanded (the full rail). Re-apply on
-  // breakpoint cross so a resized window lands in the right default.
-  const applyDefaultState = (isDesktop) => {
-    tocWrap.classList.toggle('blog-toc-collapsed', !isDesktop);
-    toggle.setAttribute('aria-expanded', String(isDesktop));
+  // Once the reader has clicked the toggle themselves, their choice wins — the
+  // resize re-default below and the auto-collapse further down both stop firing,
+  // so a rail the reader deliberately set is never overridden.
+  let userToggled = false;
+
+  // Both mobile and desktop start expanded (the full list); the reader is then
+  // auto-collapsed once they scroll into the article (below). Re-apply on
+  // breakpoint cross so a resized window lands back in the expanded default —
+  // unless the reader has already made their own choice.
+  const applyDefaultState = () => {
+    tocWrap.classList.remove('blog-toc-collapsed');
+    toggle.setAttribute('aria-expanded', 'true');
     updateLabel();
   };
-  applyDefaultState(mq.matches);
-  mq.addEventListener('change', (e) => applyDefaultState(e.matches));
-
-  // Once the reader has clicked the toggle themselves, their choice wins and
-  // the auto-collapse below stops firing — matching the source, which never
-  // re-collapses a rail the reader has deliberately re-opened.
-  let userToggled = false;
+  applyDefaultState();
+  mq.addEventListener('change', () => { if (!userToggled) applyDefaultState(); });
 
   toggle.addEventListener('click', () => {
     userToggled = true;
@@ -362,10 +366,10 @@ function wireToc(tocWrap, nav, headings, mq) {
     updateLabel();
   });
 
-  // Desktop: collapse the rail to its narrow tab once the reader is properly
-  // into the article, so the prose gets the width back. One-way — scrolling
-  // back up does NOT re-expand it, and a reader who re-opens it manually keeps
-  // it open (both verified against the source).
+  // Collapse the rail (desktop: narrow tab; mobile: the bar) once the reader is
+  // properly into the article, so the content gets the space back. One-way —
+  // scrolling back up does NOT re-expand it, and a reader who re-opens it
+  // manually keeps it open.
   //
   // Triggers when the first article heading scrolls up out of the viewport,
   // which tracks the article's own layout instead of a hard-coded offset. The
@@ -376,7 +380,7 @@ function wireToc(tocWrap, nav, headings, mq) {
   const collapseTrigger = headings[0];
   if (collapseTrigger && typeof IntersectionObserver !== 'undefined') {
     const autoObserver = new IntersectionObserver(([entry]) => {
-      if (!mq.matches || userToggled || !entry) return;
+      if (userToggled || !entry) return;
       if (window.scrollY < window.innerHeight) return;
       if (entry.isIntersecting || entry.boundingClientRect.top > 0) return;
       if (tocWrap.classList.contains('blog-toc-collapsed')) return;
@@ -437,7 +441,7 @@ async function fetchAuthorRow(slug) {
  * @param {object} row the author's query-index row
  * @param {string} authorPath /blog/author/<slug>
  */
-function insertAuthorBio(main, row, authorPath) {
+export function insertAuthorBio(main, row, authorPath) {
   const wrap = document.createElement('div');
   wrap.className = 'blog-author-bio';
   const inner = document.createElement('div');
@@ -476,14 +480,18 @@ function insertAuthorBio(main, row, authorPath) {
   // Click tracking: the author link reports under the `author_bio` trail; prod
   // omits link_name here.
   trackAs('author_bio', wrap, { key: 'author_bio', linkName: false });
-  // Insert the bio immediately before the "Recommended for you" section
-  // (the direct-child-of-main section that contains the blog-cards block).
-  // This matches production order: article body → author-bio → recommended cards.
-  // Fallback: if no blog-cards section exists (pages without a Recommended block),
-  // use the previous behavior (before the right-rail, or append to main).
+  // Production places the author bio right after the FAQ block. Some articles
+  // author "Recommended for you" BEFORE the FAQ (as this page does), so keying
+  // off the FAQ — not the recommended cards — is what keeps the bio after it.
+  // Fallbacks, in order: before the "Recommended for you" cards (pages with no
+  // FAQ), before the right-rail, else append.
+  const faqEl = main.querySelector('.faq');
+  const faqSection = faqEl && [...main.children].find((s) => s.contains(faqEl));
   const blogCardsEl = main.querySelector('.blog-cards');
   const recSection = blogCardsEl && [...main.children].find((s) => s.contains(blogCardsEl));
-  if (recSection) {
+  if (faqSection) {
+    faqSection.after(wrap);
+  } else if (recSection) {
     recSection.before(wrap);
   } else {
     const rail = main.querySelector(':scope > .blog-rail');
@@ -575,9 +583,16 @@ function resolveFragmentPath(metaKey, defaultPath) {
 /**
  * Appends a trailing full-width fragment section to `main` (a plain link the
  * existing fragment autoblock then loads) — used for the hear-from-our-customers
- * and pricing-disclaimer bands every article gets by default. Skipped if the
- * author already linked that exact fragment path themselves, so migrated
- * pages that hand-authored one of these don't end up with a duplicate.
+ * and pricing-disclaimer bands every article gets by default.
+ *
+ * When the author has already linked that exact fragment inline, we don't add a
+ * duplicate — but we DO relocate their section to the end and give it the same
+ * full-width classes an injected one gets. Otherwise a fragment authored mid-page
+ * (e.g. a pricing-disclaimer placed before the client-appended rail/customers
+ * bands) is stranded in the middle, in a narrow content column, instead of the
+ * full-bleed trailing band it is on production. Because this runs for
+ * hear-from-our-customers first and pricing-disclaimer second, the two always
+ * end up in that order at the very bottom, matching prod.
  * @param {Element} main the page's <main>
  * @param {string} metaKey getMetadata() key an author can set to override
  *   which fragment is used
@@ -588,7 +603,15 @@ function resolveFragmentPath(metaKey, defaultPath) {
  */
 function injectFragmentSection(main, metaKey, defaultPath, sectionClasses = []) {
   const path = resolveFragmentPath(metaKey, defaultPath);
-  if (main.querySelector(`a[href*="${path}"]`)) return; // already authored — don't duplicate
+  const authored = main.querySelector(`a[href*="${path}"]`);
+  if (authored) {
+    const authoredSection = [...main.children].find((child) => child.contains(authored));
+    if (authoredSection) {
+      if (sectionClasses.length) authoredSection.classList.add(...sectionClasses);
+      main.append(authoredSection); // move to the end (append relocates)
+    }
+    return;
+  }
   const section = document.createElement('div');
   if (sectionClasses.length) section.classList.add(...sectionClasses);
   const p = document.createElement('p');
