@@ -767,6 +767,42 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
   padding: 0;
 }
 
+/* Authors put every H2 in its own section (one section per TOC anchor), and
+   `main.blog-article` is a CSS grid at >=1024px (see the layout rules below)
+   — so each of those sections is a grid item. Grid items don't margin-collapse
+   with each other or with their own children, so the global 2rem top/bottom
+   `.default-content-wrapper` padding (styles.css) stacks on top of each
+   element's own margin at every section boundary instead of collapsing with
+   it, turning the ~40px gap a paragraph and the next H2 would otherwise have
+   into ~124px (20px p margin + 32px padding + 32px padding + 40px h2 margin).
+   Hero/TOC-rail/rail sections already carry their own explicit padding
+   (below), so exclude them and let ordinary body margins own the spacing. */
+.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail) > .default-content-wrapper {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+/* Even with the padding above removed, the same grid-item boundary still
+   stops the outgoing paragraph's margin-bottom (20px) from collapsing with
+   the incoming heading's margin-top (40px/32px) the way normal flow would —
+   so the gap would still sum to 60/52px instead of collapsing down to
+   whichever margin is larger, like it does everywhere else in the article.
+   Drop the trailing margin at the end of each section and let the next
+   section's leading heading margin alone own the gap, restoring the same
+   spacing a section break has today. */
+.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail) > .default-content-wrapper > :last-child {
+  margin-bottom: 0;
+}
+
+/* Same fix, one level deeper: a section can also end in an authored block
+   (highlight, testimonial, embed, …) rather than plain prose — e.g. a
+   `.highlight-wrapper` holding `.highlight.block` as the section's last
+   child instead of `.default-content-wrapper`. That block's own bottom
+   margin hits the identical grid-item boundary, so drop it the same way. */
+.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail) > :last-child > :last-child {
+  margin-bottom: 0;
+}
+
 /* download-form is the one in-article block whose section band is NOT
    decorative: it paints white copy (`.download-copy` and its <h2>/<strong>) that
    is only legible on the navy band, so the neutralisation above renders its
