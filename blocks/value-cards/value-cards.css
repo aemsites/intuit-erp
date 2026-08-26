@@ -1,0 +1,64 @@
+/*
+ * value-cards — 4-up boxed icon cards.
+ * Figma: card #eff4f9, 20px radius, 30px padding, 300px tall, 20px gap,
+ * 36px icon, 24px title.
+ */
+.value-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.value-cards .value-card {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  min-height: 300px;
+  padding: 30px;
+  background: #eff4f9;
+  border-radius: 20px;
+}
+
+.value-cards .value-card-icon {
+  margin-bottom: 20px;
+  line-height: 0;
+}
+
+/* Global `.icon` is 24px square and its <img> fills it, so the SPAN has to be
+   resized here — sizing only the <img> leaves it clamped by the span. */
+.value-cards .value-card-icon .icon,
+.value-cards .value-card-icon :is(img, svg) {
+  width: 36px;
+  height: 36px;
+}
+
+.value-cards .value-card-body :is(h2, h3, h4, h5) {
+  margin: 0;
+  font-size: var(--heading-font-size-m);
+  font-weight: 400;
+  line-height: 1.25;
+  color: var(--heading);
+}
+
+.value-cards .value-card-body p {
+  margin: 16px 0 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+@media (width < 1200px) {
+  .value-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (width < 768px) {
+  .value-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .value-cards .value-card {
+    min-height: 0;
+  }
+}
