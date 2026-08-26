@@ -119,7 +119,7 @@ function deviceType() {
 // The sibling `context` object: every front-end-derived signal plus the AOF1 intent
 // profile (of1Intent). NOT ZoomInfo firmographics — the orchestrator enriches those
 // server-side. IP-derived geo is left for Akamai to inject.
-export function buildContext(permalink = window.location.pathname) {
+export function buildContext(permalink = window.location.href) {
   const context = {
     permalink,
     locale: new URLSearchParams(window.location.search).get('locale') || navigator.language || 'en-US',
@@ -128,8 +128,7 @@ export function buildContext(permalink = window.location.pathname) {
   };
   const ivid = resolveIvid();
   if (ivid) context.ivid = ivid;
-  const casId = getMetadata('cas-id') || getMetadata('page-cas-id');
-  if (casId) context.casId = casId;
+  context.casId = new URL(permalink, window.location.origin).pathname;
   const { width, height } = (typeof window !== 'undefined' && window.screen) || {};
   if (width && height) context.screenResolution = `${width}x${height}`;
   const of1Intent = buildIntentContext(getIntentProfile());
