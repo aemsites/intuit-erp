@@ -10,8 +10,8 @@
 
     // ---- Config ----
     const API_KEY = IS_PREPROD_ENV
-      ? 'prdakyresA7MamH8ctx3V0wT0cBlPGamp1ZbRNeX'
-      : 'preprdakyresiJuTGrmMMaJq1Bx2fUAz97S5hEdP';
+      ? 'preprdakyresiJuTGrmMMaJq1Bx2fUAz97S5hEdP'
+      : 'prdakyresA7MamH8ctx3V0wT0cBlPGamp1ZbRNeX';
     const CS_LOGGING_APP_ID = 'Intuit.gotomarket.expdelactiv.raasclientlogging';
     const CS_LOG_KEY = `Intuit_APIKey intuit_apikey=${API_KEY}, intuit_apikey_version=1.0`;
     const PROD_LOGGING_ENDPOINT = 'https://logging.api.intuit.com/v2/log/message';
