@@ -12,7 +12,12 @@
 
 import { readBlockConfig } from '../../scripts/aem.js';
 
-const DEFAULT_INDEX = '/blog/case-study/query-index.json';
+// The blog query-index (all articles); case studies are selected by path below.
+// A dedicated /blog/case-study/query-index.json is not published, so pointing at
+// it left the block empty (fetch 404 → self-remove) and the rail's "Customer
+// stories" section disappeared. An authored `index` config still overrides this.
+const DEFAULT_INDEX = '/blog/query-index.json';
+const CASE_STUDY_PATH = '/blog/case-study/';
 const DEFAULT_LIMIT = 5;
 const PAGE_SIZE = 3;
 
@@ -85,6 +90,7 @@ export default async function decorate(block) {
   }
 
   const items = (data || [])
+    .filter((entry) => (entry.path || '').startsWith(CASE_STUDY_PATH))
     .filter((entry) => entry.image && entry.title && entry.path)
     .sort((a, b) => parseDate(b.date) - parseDate(a.date))
     .slice(0, limit);
