@@ -237,33 +237,30 @@ function applyCaliforniaPrivacyLabel(link) {
   check();
 }
 
-// Opening the OneTrust preference centre moves focus into the modal, which makes the
-// browser scroll the page to the top a frame or two after the click, so clicking
-// "Manage cookies" deep in the footer looked like it "navigated to top". preventDefault
-// stops the `#` anchor jump but not this focus-scroll. Watch for focus actually landing
-// inside OneTrust's consent widget — that's the one event that triggers the browser's
-// scroll-into-view — and undo only the scroll that follows it, so a reader's own
-// scrolling is never touched. OneTrust's own scroll-into-view can land a frame or two
-// after the focusin fires, so recheck across a couple of animation frames before giving
-// up. Stays armed for armedMs since OneTrust opens the dialog (and moves focus into it)
-// asynchronously, not on the same tick as the click.
-function pinScroll(containerSelector = '#onetrust-consent-sdk', armedMs = 2000) {
-  const { scrollX, scrollY } = window;
-  const restoreIfMoved = () => {
-    if (Math.abs(window.scrollX - scrollX) > 1 || Math.abs(window.scrollY - scrollY) > 1) {
-      window.scrollTo(scrollX, scrollY);
+// Opening the OneTrust preference centre makes the page jump to the top ~a third of a
+// second after the click, so clicking "Manage cookies" deep in the footer looked like it
+// "navigated to top". preventDefault stops the `#` anchor jump but not this one:
+// instrumenting the real stage build showed OneTrust performs a bare scrollTo(0) with no
+// focus change (focus stays on the link — it never lands in the consent widget, which is
+// why an earlier focusin-scoped guard never fired). So watch the scroll itself, and undo
+// the single jump that lands the page back at the very top — that is OneTrust's
+// signature; a reader's own scrolling is incremental and does not leap to 0, so it is
+// left untouched. Disarm after the one correction. Stays armed for armedMs since the jump
+// lands a few hundred ms after the click, not on the same tick.
+function pinScroll(armedMs = 2000) {
+  const startX = window.scrollX;
+  const startY = window.scrollY;
+  if (startY < 100) return; // already near the top — nothing to protect
+  let done = false;
+  const onScroll = () => {
+    if (done) return;
+    if (window.scrollY < 50) {
+      window.scrollTo(startX, startY);
+      done = true;
     }
   };
-  const onFocusIn = (e) => {
-    if (!e.target.closest(containerSelector)) return;
-    restoreIfMoved();
-    requestAnimationFrame(() => {
-      restoreIfMoved();
-      requestAnimationFrame(restoreIfMoved);
-    });
-  };
-  document.addEventListener('focusin', onFocusIn);
-  setTimeout(() => document.removeEventListener('focusin', onFocusIn), armedMs);
+  window.addEventListener('scroll', onScroll, { passive: true });
+  setTimeout(() => window.removeEventListener('scroll', onScroll), armedMs);
 }
 
 // "Manage cookies" opens the OneTrust preference centre, mirroring production's
