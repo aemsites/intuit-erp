@@ -159,6 +159,9 @@ function valueCell(cell) {
   } else if (t === '–' || t === '-' || t === '—' || t === '') {
     td.className = 'dash';
     td.innerHTML = '&ndash;';
+  } else if (low === 'add-on') {
+    td.className = 'addon';
+    td.innerHTML = `<span class="ck"></span><span class="addon-label">${t}</span>`;
   } else {
     td.className = 'txt';
     td.innerHTML = cell.innerHTML;
