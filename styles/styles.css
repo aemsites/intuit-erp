@@ -280,15 +280,6 @@ button {
   font: inherit;
 }
 
-/* text alignment classes */
-.left {
-  text-align: left;
-}
-
-.center {
-  text-align: center;
-}
-
 .light-gray {
   background: var(--light-gray);
   color: black;
