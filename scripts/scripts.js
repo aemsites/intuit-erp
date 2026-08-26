@@ -13,19 +13,11 @@ import {
   getMetadata,
 } from './aem.js';
 import { runExperimentation, runExperimentationLazy } from './experiment-loader.js';
-// exp.js / pzn.js are dynamically imported (via runExperienceLayer) only when a
-// `data-pzn` / `data-exp` section is present, so pages without personalization
-// never load them.
 // Adobe/Alloy (plugins/martech, a git subtree) is armed but commented out; Tealium is the default.
 // Uncomment the AEP blocks in loadEager / loadLazy to load it in parallel.
 // The tealium plugin below is NOT a vendored subtree (project-owned code), but the relative
-// import still crosses into plugins/ so the disable comment mirrors the existing martech import.
 // eslint-disable-next-line import/no-relative-packages
 import TealiumMartech from '../plugins/tealium-martech/src/index.js';
-// Cheap predicates only — the heavy blog-template / video blocks they belong to
-// are NOT pulled onto the eager critical path here. buildBlogTemplate is
-// dynamically imported in loadEager for blog pages only (see below); the full
-// video block loads lazily when a video is actually decorated.
 import { isBlogPage, hasAuthoredCaseStudyHeader } from '../blocks/blog-template/blog-detect.js';
 import { isVideoLink } from '../blocks/video/video-info.js';
 import { isGuidePage } from '../blocks/guide-hero/guide-detect.js';
@@ -66,10 +58,7 @@ export function getTealium() {
 
 let siteConfigPromise;
 
-// Site-wide integration values (Marketo/ChiliPiper/reCAPTCHA) live in the
-// ops-owned /site-config.json DA sheet, never in code or per-page authoring.
-// Fetched once; returns a flat key->value map ("true"/"false" coerced to
-// boolean), or {} when the sheet is unavailable (local/dev without it).
+// Site-wide configuration / integration values (Marketo/ChiliPiper/reCAPTCHA)
 export function getSiteConfig() {
   if (!siteConfigPromise) {
     siteConfigPromise = fetch('/site-config.json')
@@ -183,11 +172,7 @@ function isPosterOnly(el) {
  * Turns a section-level paragraph that is only a link to a video host
  * (YouTube/Vimeo) into a `video` block. The poster image may be authored inside
  * the link paragraph, or as a standalone <picture>/<img> in the immediately
- * preceding sibling — in the latter case it is absorbed into the block so the
- * video block owns a single poster (with play button) instead of leaving the
- * image orphaned and the block falling back to the provider thumbnail.
- * Skips inline prose links and links already inside a block cell (e.g.
- * testimonial.video), so only standalone thumbnail-links are upgraded.
+ * preceding sibling
  * @param {Element} main The container element
  */
 function buildVideoAutoBlocks(main) {
@@ -213,52 +198,11 @@ function buildVideoAutoBlocks(main) {
   });
 }
 
-// Populated in loadEager (via dynamic import) only on blog article pages, so the
-// ~21KB blog-template module never loads on other pages. Stays undefined
-// elsewhere, which also serves as the "is this a blog page" gate below.
 let buildBlogTemplate;
-
-// Same treatment for the Guide landing-page card: imported in loadEager only for
-// `template: Guide` pages, so the other ~335 pages in the sitemap never fetch or
-// parse it. Undefined elsewhere, which is the gate in buildAutoBlocks.
 let buildGuideHeroAutoBlock;
-
-// Longest the eager phase will hold the (hidden) page waiting for
-// blog-template.css before giving up and painting unstyled — see
-// resolveBlogTemplate.
 const BLOG_TEMPLATE_CSS_TIMEOUT = 2000;
 
-/**
- * Resolves the blog autoblock's builder for a blog article page, or `undefined`
- * for every other page — which is also what makes buildAutoBlocks skip it.
- * Keeps the ~21KB module (and its stylesheet) off every non-blog page.
- *
- * Loads the stylesheet alongside the module, rather than leaving it to the
- * autoblock's own non-blocking loadCSS, because the article layout lives there:
- * with nothing awaiting it, a slow response let the hero paint in the unstyled
- * single-column flow and then reflow into the band (measured at 0.33 CLS on
- * desktop, on plain `Blog Article` pages too).
- *
- * Fail-open in both directions, and that part isn't optional — `body` is
- * `display: none` until loadEager adds `appear`:
- *  - the CSS wait is capped, since loadCSS settles only on the link's
- *    `load`/`error` events and a request that stalls without erroring fires
- *    neither. Past the cap, painting unstyled beats never painting.
- *  - a rejected `import()` is swallowed, or it would propagate out of loadEager
- *    (loadPage doesn't catch it), `appear` would never be added, and the page
- *    would stay blank permanently.
- *
- * The cap is hand-rolled rather than reusing withTimeout
- * (scripts/personalization/decision.js): that helper has to be fetched with a
- * dynamic import first, and a fetch that stalls while acquiring the timeout
- * mechanism re-opens the very hole the cap closes.
- * @param {Element} main the page's <main>, before decoration
- * @returns {Promise<Function|undefined>} buildBlogTemplate, or undefined
- */
 async function resolveBlogTemplate(main) {
-  // Pages that author their own case-study-header own their header, so they use
-  // neither the module nor the stylesheet — skip both instead of fetching them
-  // onto the LCP path and throwing the result away.
   if (!isBlogPage() || hasAuthoredCaseStudyHeader(main)) return undefined;
   let cssTimer;
   try {
@@ -286,19 +230,7 @@ async function resolveBlogTemplate(main) {
  */
 function buildAutoBlocks(main) {
   try {
-    // Blog article autoblock — must run FIRST so the right-rail /fragments/ link
-    // it injects is present when the fragment collection below queries for it.
-    // Guard on main.isConnected: decorateMain also runs on the DETACHED main that
-    // loadFragment builds for the right-rail fragment. buildBlogTemplate is only
-    // set on blog pages (loadEager); the isConnected guard stops the autoblock
-    // from re-injecting a right-rail link into every loaded fragment (which
-    // buildAutoBlocks would then re-load — an infinite loop).
     if (buildBlogTemplate && main.isConnected) buildBlogTemplate(main);
-    // Guide landing pages get their own lead card instead. The isConnected guard
-    // matters as much here as above: loadFragment decorates a DETACHED main, and
-    // getMetadata reads the HOST page's head — so on a Guide page every loaded
-    // fragment would otherwise have its own first section wrapped in a second
-    // card (verified: 2 `.guide-hero` blocks, the fragment's heading inside one).
     if (buildGuideHeroAutoBlock && main.isConnected) buildGuideHeroAutoBlock(main);
     // auto load `*/fragments/*` references
     const fragments = [...main.querySelectorAll('a[href*="/fragments/"]')].filter((f) => !f.closest('.fragment'));
@@ -331,15 +263,7 @@ function buildAutoBlocks(main) {
  */
 function decorateButtons(main) {
   main.querySelectorAll('p').forEach((p) => {
-    // Decide per-paragraph up front (before any mutation): a paragraph may hold a
-    // single CTA (whose text must equal the paragraph's) OR multiple formatted CTA
-    // links sharing one line (e.g. primary <strong><a> + secondary <em><a>). In the
-    // multi-link case we buttonize each link and skip the whole-paragraph text guard.
     const formatted = [...p.querySelectorAll(':scope strong > a[href], :scope em > a[href]')];
-    // Only treat as a multi-CTA paragraph when the paragraph's ENTIRE visible text
-    // is just the formatted link texts (plus whitespace/separators) — i.e. a row of
-    // CTAs, not prose that happens to bold/italic-link two words. This mirrors the
-    // single-CTA "sole content" guard so buttonization stays scoped to real CTAs.
     const ctaOnly = formatted.length > 1 && (() => {
       let rest = p.textContent;
       formatted.forEach((a) => { rest = rest.replace(a.textContent, ''); });
@@ -450,42 +374,14 @@ function redirectConstructionQToLlmAppCtx() {
   window.location.replace(`${window.location.pathname}?${params.toString()}${window.location.hash}`);
 }
 
-/**
- * Personalization (`data-pzn`) + experimentation (`data-exp`) for a DOM scope.
- * Loads pzn.js / exp.js only when the corresponding marker is present in `root`
- * (which may itself carry the attribute), runs both concurrently under one
- * fail-open guard, and skips the `skip` section (used to run the first/LCP
- * section eagerly and the rest lazily without double-processing).
- * @param {Element} root
- * @param {{ skip?: Element }} [opts]
- */
-async function runExperienceLayer(root, { skip } = {}) {
-  if (!root) return;
-  const has = (attr) => (root.matches?.(`[${attr}]`) && root !== skip)
-    || [...root.querySelectorAll(`[${attr}]`)].some((el) => el !== skip);
-  const hasPzn = has('data-pzn');
-  const hasExp = has('data-exp');
-  if (!hasPzn && !hasExp) return;
-  const { withTimeout } = await import('./personalization/decision.js');
-  const tasks = [];
-  if (hasPzn) tasks.push(import('./pzn.js').then(({ runPersonalization }) => runPersonalization(root, { skip })));
-  if (hasExp) tasks.push(import('./exp.js').then(({ runBlockExperiments }) => runBlockExperiments(root, { skip })));
-  // 2000ms = the 1500ms decision budget + the 500ms marketing-profile enrichment that
-  // runs before pzn on a first-visit cache miss (0 on a cache hit).
-  await withTimeout(Promise.all(tasks), 2000);
-}
+const EXPERIENCE_DEADLINE_MS = 1500;
+const EXPERIENCE_APPLY_MS = 2000;
 
 async function loadEager(doc) {
   redirectConstructionQToLlmAppCtx();
   document.documentElement.lang = 'en';
   decorateTemplateAndTheme();
 
-  // The cyan events bar (blocks/header/header.js) is part of the header, which
-  // only renders in the lazy phase — so without an eager height hint the bar
-  // pops in later and shoves the page down (CLS). Mirror the per-page opt-in
-  // (events-bar metadata) onto <body> now, in the eager phase, so styles.css
-  // can reserve the taller header height up front. Keep the truthy test in sync
-  // with eventsBarHTML() in header.js.
   if (['true', 'yes'].includes((getMetadata('events-bar') || '').trim().toLowerCase())) {
     document.body.classList.add('has-events-bar');
   }
@@ -499,10 +395,7 @@ async function loadEager(doc) {
   appVars.ixpDetailsArr = appVars.ixpDetailsArr || [];
 
   // Gated conversion pages (e.g. /webinar-* form landings) opt out of the global
-  // header/footer via `hide-header` / `hide-footer` metadata, matching production
-  // which serves them chrome-less. Set the body classes eagerly (like has-events-bar)
-  // so styles.css can drop the reserved header height NOW and avoid a post-LCP
-  // layout shift when loadLazy skips loadHeader/loadFooter.
+  // header/footer via `hide-header` / `hide-footer` metadata
   if (['true', 'yes', 'hide'].includes((getMetadata('hide-header') || '').trim().toLowerCase())) {
     document.body.classList.add('hide-header');
   }
@@ -534,47 +427,39 @@ async function loadEager(doc) {
   // }
 
   await runExperimentation(doc, experimentationConfig);
-  // Intuit whole-page personalization/experimentation: swaps <main> before
-  // decoration. Metadata-gated (loaded only when enrolled) and phase-bounded so it
-  // never blocks reveal. IXP wins when a page carries both (Req 4). The one-shot
-  // guard means a swapped-in variant that itself carries page-level tags can never
-  // trigger a second full-page swap (Req 5 — no recursion).
   window.hlx = window.hlx || {};
   if (!window.hlx.pageExperienceApplied) {
     window.hlx.pageExperienceApplied = true;
-    const pageExp = getMetadata('experiment-id') || getMetadata('experiment-label');
-    const pagePzn = getMetadata('personalization-id');
-    if (pageExp) {
-      const [{ runExperiment }, { withTimeout }] = await Promise.all([
-        import('./exp.js'),
-        import('./personalization/decision.js'),
-      ]);
-      await withTimeout(runExperiment(doc), 1500);
-    } else if (pagePzn) {
-      const [{ runPersonalizationPage }, { withTimeout }] = await Promise.all([
-        import('./pzn.js'),
-        import('./personalization/decision.js'),
-      ]);
-      // 2000ms accommodates the 500ms marketing-profile enrichment that runs before the
-      // whole-page pzn decision on a first-visit cache miss (0 on a cache hit).
-      await withTimeout(runPersonalizationPage(doc), 2000);
+    const {
+      collectRequest, buildContext, fetchExperience, applyPage,
+    } = await import('./experience.js');
+    const request = collectRequest(doc);
+    if (request.experimentIds.length || request.accessPointNames.length) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), EXPERIENCE_DEADLINE_MS);
+      try {
+        const opts = { signal: controller.signal };
+        const response = await fetchExperience(request, buildContext(), opts);
+        window.hlx.experienceResponse = response;
+        if (response) await applyPage(doc, response, controller.signal);
+      } finally {
+        clearTimeout(timer);
+      }
     }
   }
   const main = doc.querySelector('main');
   if (main) {
     buildBlogTemplate = await resolveBlogTemplate(main);
-    // Guide landing pages: same shape, so the module is fetched only for the
-    // pages that use it. Gated on the `Guide` template alone — see guide-detect.js
-    // for why the path is deliberately not part of the test.
     if (isGuidePage()) {
       ({ default: buildGuideHeroAutoBlock } = await import('../blocks/guide-hero/guide-hero-autoblock.js'));
     }
     decorateMain(main);
-    // Personalize/experiment the first (LCP) section before reveal so the visitor
-    // sees final content with no flash. Sections below the fold are handled in
-    // loadLazy (post-LCP) so their pzn/exp swaps never block LCP.
     const firstSection = main.querySelector('.section');
-    if (firstSection) await runExperienceLayer(firstSection);
+    if (firstSection && window.hlx.experienceResponse) {
+      const { applyLayer, withTimeout } = await import('./experience.js');
+      const apply = applyLayer(firstSection, window.hlx.experienceResponse);
+      await withTimeout(apply, EXPERIENCE_APPLY_MS);
+    }
     document.body.classList.add('appear');
     await Promise.all([
       // Uncomment with the AEP block above (applies eager martech decisions).
@@ -593,12 +478,8 @@ async function loadEager(doc) {
   }
 }
 
-// Pages that already carry the full contact form (the live page and the
-// library stencil authors copy it from) suppress the site-wide floating
-// "Contact us" widget, matching production behavior.
 const CONTACT_WIDGET_EXCLUDED_PATHS = ['/contact', '/library/templates/contact'];
 
-/** True unless the current path opts out of the floating contact widget. */
 function shouldRenderContactUs() {
   return !CONTACT_WIDGET_EXCLUDED_PATHS.includes(window.location.pathname);
 }
@@ -608,28 +489,22 @@ function shouldRenderContactUs() {
  * @param {Element} doc The container element
  */
 async function loadLazy(doc) {
-  // Gated/conversion pages opt out of the global header/footer via the
-  // `hide-header` / `hide-footer` metadata, surfaced as body classes in the eager
-  // phase (see loadEager) so the reserved header height is dropped before LCP.
-  // Here we simply skip loading (and remove the empty element). Default: load both.
+  // opt out of the global header/footer via the `hide-header` / `hide-footer` metadata
   const headerEl = doc.querySelector('header');
   if (headerEl && document.body.classList.contains('hide-header')) headerEl.remove();
   else loadHeader(headerEl);
 
   const main = doc.querySelector('main');
-  // Below-the-fold personalization/experimentation: run the sections after the
-  // first (the LCP one, already handled eagerly) now that LCP has painted. Not
-  // awaited — these swaps must never block reveal or the lazy pipeline.
-  if (main) runExperienceLayer(main, { skip: main.querySelector('.section') }).catch(() => {});
+  // Below-the-fold personalization/experimentation
+  if (main && window.hlx.experienceResponse) {
+    const skip = { skip: main.querySelector('.section') };
+    import('./experience.js')
+      .then(({ applyLayer }) => applyLayer(main, window.hlx.experienceResponse, skip))
+      .catch(() => {});
+  }
   await loadSections(main);
 
-  // Click tracking (opt-in `tracking-` blocks) is not render-critical, so it's
-  // loaded lazily here (like pzn/exp) — off the eager/LCP module graph entirely.
-  // Option B: a delegated handler derives + JIT-stamps data-* on interaction so
-  // the injected clickstream tracker reads them — nothing is stamped at rest.
-  // Scope it to `document`, not `main`: the tracked regions are main/header/footer
-  // (TRACKED_REGIONS), and header/footer are siblings of main, so a main-scoped
-  // handler would never see their clicks.
+  // Click tracking (opt-in `tracking-` blocks) is not render-critical
   if (main) {
     import('./tracking.js')
       .then(({ initTracking }) => initTracking(document))
@@ -645,8 +520,6 @@ async function loadLazy(doc) {
   else loadFooter(footerEl);
 
   // Persistent bottom-right sales widget ("Contact us" / "Talk to sales"),
-  // present on every page except CONTACT_WIDGET_EXCLUDED_PATHS. Loaded here
-  // (lazy phase) so it never touches LCP.
   if (shouldRenderContactUs()) {
     loadCSS(`${window.hlx.codeBasePath}/blocks/contact-us/contact-us.css`);
     // eslint-disable-next-line import/no-cycle

@@ -4,7 +4,7 @@ import {
 import {
   buildToc, buildByline, buildEyebrow, buildBylineMeta,
   buildShare, relocateShare, tocRailRowEnd, isBlogPage,
-  buildBlogTemplate,
+  buildBlogTemplate, injectAuthorBioBlock,
 } from '../blocks/blog-template/blog-template.js';
 
 describe('buildToc', () => {
@@ -221,6 +221,45 @@ describe('tocRailRowEnd', () => {
   });
 });
 
+describe('injectAuthorBioBlock', () => {
+  // The bio is injected as a block wrapped in its own section div, so assertions
+  // target that section (the `.blog-author-bio` block's parent), not the block.
+  it('places the bio block after the FAQ, even when Recommended is authored before it', () => {
+    window.hlx = { codeBasePath: '' };
+    const main = document.createElement('main');
+    main.innerHTML = `
+      <div><h2>Body</h2><p>a</p></div>
+      <div class="blog-cards-container"><h2>Recommended for you</h2><div class="blog-cards"></div></div>
+      <div class="faq-container"><h2>FAQ</h2><div class="faq"></div></div>
+    `;
+    const faqSection = main.querySelector('.faq').closest('main > div');
+
+    injectAuthorBioBlock(main);
+
+    const bioSection = main.querySelector('.blog-author-bio').parentElement;
+    expect(bioSection.parentElement).toBe(main);
+    // immediately after the FAQ section — and therefore after Recommended too
+    expect(faqSection.nextElementSibling).toBe(bioSection);
+    const idx = (el) => [...main.children].indexOf(el);
+    expect(idx(bioSection)).toBeGreaterThan(idx(main.querySelector('.blog-cards-container')));
+  });
+
+  it('falls back to before Recommended when there is no FAQ', () => {
+    window.hlx = { codeBasePath: '' };
+    const main = document.createElement('main');
+    main.innerHTML = `
+      <div><h2>Body</h2><p>a</p></div>
+      <div class="blog-cards-container"><h2>Recommended for you</h2><div class="blog-cards"></div></div>
+    `;
+    const rec = main.querySelector('.blog-cards-container');
+
+    injectAuthorBioBlock(main);
+
+    const bioSection = main.querySelector('.blog-author-bio').parentElement;
+    expect(rec.previousElementSibling).toBe(bioSection);
+  });
+});
+
 describe('isBlogPage', () => {
   const setPage = (path, template) => {
     window.history.pushState({}, '', path);
@@ -390,5 +429,31 @@ describe('buildBlogTemplate', () => {
     // appendix then auto-places at row 4, after the rails rather than inside them
     expect(main.querySelector('.blog-toc-rail').style.gridRow).toBe('2 / 4');
     expect(main.querySelector('.blog-rail').style.gridRow).toBe('2 / 4');
+  });
+
+  it('relocates an inline-authored pricing-disclaimer to the last section, full-bleed', () => {
+    window.hlx = { codeBasePath: '' };
+    window.matchMedia = () => ({ matches: false, addEventListener: () => {} });
+    // disclaimer authored mid-page (before the client-appended rail/customers
+    // bands) — must end up last and full-bleed, not stranded in the middle.
+    const main = mainWith(`
+      <div><h1>Headline</h1><p><picture><img src="hero.jpg"></picture></p></div>
+      <div><h2>One</h2><p>a</p></div>
+      <div><h2>Two</h2><p>b</p></div>
+      <div><p><a href="/fragments/pricing-disclaimer">/fragments/pricing-disclaimer</a></p></div>
+    `);
+
+    buildBlogTemplate(main);
+
+    const disclaimerLinks = main.querySelectorAll('a[href="/fragments/pricing-disclaimer"]');
+    expect(disclaimerLinks).toHaveLength(1); // not duplicated
+    const lastSection = main.children[main.children.length - 1];
+    expect(lastSection.contains(disclaimerLinks[0])).toBe(true); // moved to the end
+    expect(lastSection.classList.contains('full-bleed')).toBe(true);
+    expect(lastSection.classList.contains('pricing-disclaimer')).toBe(true);
+    // and it lands after the hear-from-our-customers band
+    const hearIdx = [...main.children].findIndex((c) => c.classList.contains('hear-from-our-customers'));
+    expect(hearIdx).toBeGreaterThan(-1);
+    expect([...main.children].indexOf(lastSection)).toBeGreaterThan(hearIdx);
   });
 });

@@ -288,6 +288,14 @@ body.nav-scroll-lock {
       margin: 0;
       padding: 0 24px;
    }
+
+   /* Resource Center nav: thicken the shared underline to 4px and colour it
+      blue on hover/open, matching production. The scaleX reveal animation is
+      inherited from the shared nav-underline rule in navigation.css. */
+   .header .ies-secondary-nav .nav-main button:not(.flyout-back)::after {
+      height: 4px;
+      background: var(--info);
+   }
 }
 
 .header .ies-events {
@@ -497,6 +505,41 @@ body.nav-scroll-lock {
    }
 
 
+
+   /* Resource Center pages: on scroll the primary nav scrolls away and the
+      secondary "Resource center" nav slides up to take its place at the top
+      (its top is animated by the scroll handler in header.js), mirroring the
+      desktop behaviour above. Primary is relative so it scrolls off; secondary
+      is fixed; the spacer reserves the secondary's row height. */
+   .header.has-secondary-nav .ies-nav {
+      position: relative;
+      z-index: 52;
+   }
+
+   .header.has-secondary-nav .ies-nav-spacer {
+      height: auto;
+   }
+
+   .header.has-secondary-nav .ies-secondary-nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 51;
+      background: #fff;
+   }
+
+   /* while the primary hamburger menu is open it (z-index 49) must cover the
+      pinned secondary nav, so drop the secondary below it for that state. */
+   .header.nav-open .ies-secondary-nav {
+      z-index: 48;
+   }
+
+   /* reserve the secondary nav's rendered height (min-height 60 + 1px border)
+      now that it's out of flow, so no content sits under its bottom edge. */
+   .header.has-secondary-nav .ies-secondary-nav-spacer {
+      height: 61px;
+   }
 
    .header .ies-secondary-nav .container {
       height: auto;

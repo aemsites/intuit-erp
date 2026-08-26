@@ -55,7 +55,7 @@ no trail resolves, prod falls back to `""` inside the global nav/header and `pag
 the prefix and coerces `"true"`/`"false"` to booleans.
 
 **Personalization / experiment.** `data-pzn-*` / `data-experiment-*` / `data-treatment-id` are
-**code-stamped** by the pzn/IXP layer (`scripts/pzn.js` / `scripts/exp.js`), not authored here; the
+**code-stamped** by the experience layer (`scripts/experience.js`), not authored here; the
 click runtime leaves them untouched so that parity is inherited.
 
 ---

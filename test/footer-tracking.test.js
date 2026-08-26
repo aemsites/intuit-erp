@@ -152,3 +152,83 @@ describe('footer click-tracking — id-based keying', () => {
     });
   });
 });
+
+// Clicking "Manage cookies" must undo OneTrust's focus-into-modal scroll-to-top without
+// touching any scrolling the reader does themselves. jsdom stubs `window.scrollTo` as a
+// no-op, so scroll position is mocked here to observe what the handler actually calls it
+// with.
+function mockScrollPosition(x, y) {
+  const pos = { x, y };
+  Object.defineProperty(window, 'scrollX', { configurable: true, get: () => pos.x });
+  Object.defineProperty(window, 'scrollY', { configurable: true, get: () => pos.y });
+  const scrollTo = vi.fn((newX, newY) => { pos.x = newX; pos.y = newY; });
+  window.scrollTo = scrollTo;
+  return { setPos: (newX, newY) => { pos.x = newX; pos.y = newY; }, scrollTo };
+}
+
+// pinScroll rechecks across a couple of animation frames after the focusin it reacts to;
+// let those settle before a test ends, or they fire later against a torn-down mock.
+function flushFrames(n = 3) {
+  return new Promise((resolve) => {
+    let count = 0;
+    const step = () => { count += 1; if (count >= n) resolve(); else requestAnimationFrame(step); };
+    requestAnimationFrame(step);
+  });
+}
+
+describe('footer cookie preferences — scroll pinning', () => {
+  beforeEach(() => {
+    document.head.innerHTML = '';
+    document.body.innerHTML = '';
+    resetTrackingState();
+    window.OneTrust = { getGeolocationData: () => ({ country: 'US', state: 'TX' }) };
+    window.scrollTo = vi.fn();
+    stubFetch();
+  });
+  afterEach(() => { vi.unstubAllGlobals(); delete window.OneTrust; delete window.scrollTo; });
+
+  it('restores scroll when OneTrust moves focus into the preference centre', async () => {
+    const block = await buildFooter();
+    const { setPos, scrollTo } = mockScrollPosition(0, 3000);
+
+    const consent = document.createElement('div');
+    consent.id = 'onetrust-consent-sdk';
+    const closeBtn = document.createElement('button');
+    consent.append(closeBtn);
+    document.body.append(consent);
+
+    block.querySelector('.footer-copy-btn').dispatchEvent(new window.MouseEvent('click', { bubbles: true, cancelable: true }));
+    // OneTrust's own scroll-into-view jumping the page as focus lands in the modal.
+    setPos(0, 0);
+    closeBtn.focus();
+
+    expect(scrollTo).toHaveBeenCalledWith(0, 3000);
+    await flushFrames(); // let the deferred rechecks settle before teardown
+  });
+
+  it('does not fight a reader scroll that has nothing to do with OneTrust', async () => {
+    const block = await buildFooter();
+    const { setPos, scrollTo } = mockScrollPosition(0, 3000);
+
+    block.querySelector('.footer-copy-btn').dispatchEvent(new window.MouseEvent('click', { bubbles: true, cancelable: true }));
+    // The reader scrolls on their own; nothing ever focuses inside OneTrust's widget.
+    setPos(0, 500);
+    window.dispatchEvent(new window.Event('scroll'));
+
+    expect(scrollTo).not.toHaveBeenCalled();
+    expect(window.scrollY).toBe(500);
+  });
+
+  it('ignores focus moving to unrelated page controls', async () => {
+    const block = await buildFooter();
+    const { setPos, scrollTo } = mockScrollPosition(0, 3000);
+
+    block.querySelector('.footer-copy-btn').dispatchEvent(new window.MouseEvent('click', { bubbles: true, cancelable: true }));
+    setPos(0, 0);
+    const other = document.createElement('button');
+    document.body.append(other);
+    other.focus();
+
+    expect(scrollTo).not.toHaveBeenCalled();
+  });
+});

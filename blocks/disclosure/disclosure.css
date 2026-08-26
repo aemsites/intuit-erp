@@ -22,5 +22,6 @@
 
 .disclosure.white .disclosure-item summary { color: var(--link-color); font-size: 14px; font-weight: 500; padding: 0; }
 .disclosure.white .disclosure-item[open] summary { padding: 0 0 24px; }
+.disclosure.white .disc-caret { display: none; } /* no caret on this variant, matching prod */
 .disclosure.white .disclosure-body { color: var(--text-color); font-size: 12px; text-align: left; opacity: 1; padding: 0; }
 .disclosure.white .disclosure-body p { margin: 0 0 16px; }
