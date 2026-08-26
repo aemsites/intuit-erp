@@ -3,7 +3,6 @@ import { loadFragment } from '../fragment/fragment.js';
 import {
   buildBlock, decorateBlock, loadBlock, loadCSS, loadSections,
 } from '../../scripts/aem.js';
-// eslint-disable-next-line import/no-cycle
 import { bindScheduleLinks } from '../../scripts/schedule-modal.js';
 
 // Fragments are fetched once and reused across opens; each open clones the
