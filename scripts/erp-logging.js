@@ -1,8 +1,17 @@
 (function () {
   try {
-    // ---- Config ----
+    // Hostname-derived environment flags. Computed once at script load since
+    // location.hostname doesn't change during the page's lifetime.
+    var IS_DEV_ENV = window.location.hostname === 'localhost';
+    var IS_PREPROD_ENV = (function () {
+      var hostnamePrefix = window.location.hostname.split('.')[0];
+      var preprodPrefixes = ['e2e', 'qa', 'qal', 'stage', 'perfsp'];
+      return preprodPrefixes.indexOf(hostnamePrefix) > -1;
+    })();
+    // ---- Config ----prod: 
+    var API_KEY = IS_PREPROD_ENV ? "prdakyresA7MamH8ctx3V0wT0cBlPGamp1ZbRNeX" : "preprdakyresiJuTGrmMMaJq1Bx2fUAz97S5hEdP"
     var CS_LOGGING_APP_ID = "Intuit.gotomarket.expdelactiv.raasclientlogging";
-    var CS_LOG_KEY = "Intuit_APIKey intuit_apikey=__REPLACE_WITH_API_KEY__, intuit_apikey_version=1.0";
+    var CS_LOG_KEY = "Intuit_APIKey intuit_apikey=" + API_KEY + ", intuit_apikey_version=1.0";
     var PROD_LOGGING_ENDPOINT = "https://logging.api.intuit.com/v2/log/message";
     var E2E_LOGGING_ENDPOINT = "https://logging-e2e.api.intuit.com/v2/log/message";
     // ---- Helpers ----
@@ -15,14 +24,6 @@
         return '';
       }
     }
-    // Hostname-derived environment flags. Computed once at script load since
-    // location.hostname doesn't change during the page's lifetime.
-    var IS_DEV_ENV = window.location.hostname === 'localhost';
-    var IS_PREPROD_ENV = (function () {
-      var hostnamePrefix = window.location.hostname.split('.')[0];
-      var preprodPrefixes = ['e2e', 'qa', 'qal', 'stage', 'perfsp'];
-      return preprodPrefixes.indexOf(hostnamePrefix) > -1;
-    })();
     // ivid identifies the visitor; read once and reused everywhere below.
     var IVID = readCookie('ivid');
     // ---- Log dispatch ----
