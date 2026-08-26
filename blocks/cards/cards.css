@@ -599,6 +599,11 @@
   margin: 0;
 }
 
+/* download card shows no category eyebrow — hidden on prod (ArticleRightRailItem-category) */
+.cards.blog-rail .cards-eyebrow {
+  display: none;
+}
+
 @media (width <=480px) {
   .cards.list>div {
     grid-template-columns: 166px 1fr;

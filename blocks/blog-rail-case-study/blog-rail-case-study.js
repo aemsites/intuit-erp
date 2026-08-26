@@ -12,9 +12,24 @@
 
 import { readBlockConfig } from '../../scripts/aem.js';
 
-const DEFAULT_INDEX = '/blog/case-study/query-index.json';
+// The blog query-index (all articles); case studies are selected by the
+// `category` metadata below. A dedicated /blog/case-study/query-index.json is
+// not published, so pointing at it left the block empty (fetch 404 →
+// self-remove) and the rail's "Customer stories" section disappeared. An
+// authored `index` config still overrides this.
+const DEFAULT_INDEX = '/blog/query-index.json';
+const CASE_STUDY_CATEGORY = 'case-study';
 const DEFAULT_LIMIT = 5;
 const PAGE_SIZE = 3;
+
+// `category` may hold several comma-separated values (e.g. "case-study,
+// food-service"), so test for membership rather than an exact match.
+function hasCategory(entry, category) {
+  return (entry.category || '')
+    .toLowerCase()
+    .split(',')
+    .some((c) => c.trim() === category);
+}
 
 function parseDate(str) {
   const d = new Date(str);
@@ -85,6 +100,7 @@ export default async function decorate(block) {
   }
 
   const items = (data || [])
+    .filter((entry) => hasCategory(entry, CASE_STUDY_CATEGORY))
     .filter((entry) => entry.image && entry.title && entry.path)
     .sort((a, b) => parseDate(b.date) - parseDate(a.date))
     .slice(0, limit);
