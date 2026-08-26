@@ -237,6 +237,24 @@ function applyCaliforniaPrivacyLabel(link) {
   check();
 }
 
+// Opening the OneTrust preference centre moves focus into the modal, which makes the
+// browser scroll the page to the top a frame or two after the click — so clicking
+// "Manage cookies" deep in the footer looked like it "navigated to top". preventDefault
+// stops the `#` anchor jump but not this focus-scroll, so pin the reader's scroll
+// position for a short window after opening, restoring it the instant anything scrolls
+// the page away. The listener removes itself, and the >1px guard keeps our own
+// scrollTo from re-triggering it.
+function pinScroll(durationMs = 1000) {
+  const { scrollX, scrollY } = window;
+  const restore = () => {
+    if (Math.abs(window.scrollX - scrollX) > 1 || Math.abs(window.scrollY - scrollY) > 1) {
+      window.scrollTo(scrollX, scrollY);
+    }
+  };
+  window.addEventListener('scroll', restore, { passive: true });
+  setTimeout(() => window.removeEventListener('scroll', restore), durationMs);
+}
+
 // "Manage cookies" opens the OneTrust preference centre, mirroring production's
 // two-branch handler: OneTrust.ToggleInfoDisplay(), falling back to
 // intuit_gdpr.showCookiePreference() when the OneTrust SDK hasn't loaded (the consent
@@ -249,6 +267,7 @@ function wireCookiePreferences(block) {
   if (!link) return;
   link.addEventListener('click', (e) => {
     e.preventDefault();
+    pinScroll();
     const ot = window.OneTrust;
     if (ot && typeof ot.ToggleInfoDisplay === 'function') {
       ot.ToggleInfoDisplay();
