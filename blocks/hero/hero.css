@@ -192,6 +192,20 @@
   align-items: center;
 }
 
+/* CLS #519: reserve the row + top-pin the card so the Marketo form's late
+   field-render fills reserved space instead of growing the row (which
+   re-centers the lone headline and shoves the next section down). Desktop
+   only; mobile stacks the card below the fold. */
+@media (width >= 768px) {
+  .hero.form .hero-grid:has(.hero-copy > h1:only-child) {
+    min-height: 760px;
+  }
+
+  .hero.form .hero-grid:has(.hero-copy > h1:only-child) .hero-form {
+    align-self: start;
+  }
+}
+
 .hero.form .hero-copy h1 {
   font-size: 60px;
   margin-bottom: 0;
