@@ -225,7 +225,21 @@ export default function decorate(block) {
   if (isIcons) {
     [...block.children].forEach((card) => {
       const icon = card.querySelector(':scope > .cards-card-image');
-      const eyebrow = card.querySelector(':scope > .cards-card-body > .cards-eyebrow');
+      const body = card.querySelector(':scope > .cards-card-body');
+      let eyebrow = body?.querySelector(':scope > .cards-eyebrow');
+      // Production authors the label plain (not italic), so the italic-only
+      // detector above misses it. Fall back to a leading label paragraph — the
+      // body's first child when it's a <p> immediately followed by the heading
+      // (the icon-card's label → title shape) — so it groups inline with the
+      // icon instead of stacking above the title.
+      if (!eyebrow && body) {
+        const first = body.firstElementChild;
+        const next = first?.nextElementSibling;
+        if (first?.tagName === 'P' && next && /^H[2-6]$/.test(next.tagName)) {
+          first.classList.add('eyebrow', 'cards-eyebrow');
+          eyebrow = first;
+        }
+      }
       if (!icon) return;
       const head = document.createElement('div');
       head.className = 'cards-card-head';
