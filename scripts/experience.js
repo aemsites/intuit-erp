@@ -100,12 +100,10 @@ export async function applyFragment(targetEl, path, opts = {}) {
 
 // --- Request context (front-end signals) -----------------------------------
 
-// The visitor id: a `?ivid=` override (demo/QA) wins, else the first-party `ivid`
-// cookie. undefined when neither — Akamai injects it server-side when it's HttpOnly.
+// The visitor id: read from the first-party `ivid` cookie. undefined when absent —
+// Akamai injects it server-side when it's HttpOnly.
 export function resolveIvid() {
   try {
-    const fromQuery = new URLSearchParams(window.location.search).get('ivid');
-    if (fromQuery) return fromQuery;
     const m = document.cookie.match(/(?:^|;\s*)ivid=([^;]+)/);
     return m ? decodeURIComponent(m[1]) : undefined;
   } catch {
