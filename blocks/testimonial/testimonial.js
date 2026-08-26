@@ -41,11 +41,8 @@ function pic(cell) {
   return p ? (p.closest('picture') || p) : null;
 }
 
-// An optional leading heading (h1-h4) authored as the content cell's first
-// element is promoted above the block instead of being dropped by the
-// paragraph-only parsers below. Rebuilt as an h3 regardless of the authored
-// level (matching buildVideoSplit's normalization below) so an author who
-// picks h1/h2 can't collide with or duplicate the page's own heading levels.
+// Normalized to h3 regardless of the authored level so an author who picks
+// h1/h2 can't collide with the page's own heading hierarchy.
 function extractHeading(cell) {
   const first = cell?.firstElementChild;
   if (!first || !/^H[1-4]$/.test(first.tagName)) return null;

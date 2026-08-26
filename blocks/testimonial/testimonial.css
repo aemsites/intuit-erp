@@ -357,8 +357,7 @@
   padding: var(--section-y) 0;
 }
 
-/* optional heading (h1-h4) promoted from the content cell — see extractHeading
-   in testimonial.js. Rendered above the compare grid or the video frame. */
+/* built by extractHeading() in testimonial.js */
 .testimonial .testimonial-heading {
   max-width: var(--container);
   margin: 0 auto 20px;
