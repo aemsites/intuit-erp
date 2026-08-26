@@ -159,6 +159,11 @@ async function chiliPiperHandoff(cfg, router, form) {
   if (!router || !subdomain) return false;
   await loadScript(cfg['chilipiper.src'] || CHILIPIPER_SRC_DEFAULT);
   window.ChiliPiper?.submit(subdomain, router, { map: true, lead: form.getValues() });
+  // ChiliPiper renders its booking calendar in its own top-level overlay, so
+  // the schedule-call modal that hosted the form would otherwise stay open
+  // behind it. Dismiss that dialog once the handoff fires.
+  const formEl = form.getFormElem?.()?.[0] || document.getElementById(`mktoForm_${form.getId?.()}`);
+  formEl?.closest('dialog')?.close();
   return true;
 }
 
