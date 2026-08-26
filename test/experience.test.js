@@ -118,11 +118,11 @@ describe('buildContext', () => {
     expect(Object.keys(ctx).some((k) => k.startsWith('zi_c_'))).toBe(false);
     expect(ctx).not.toHaveProperty('zoominfo');
   });
-  it('includes casId from metadata and ivid from the cookie', () => {
-    setMeta('cas-id', 'cas-123');
+  it('sends the full URL as permalink and the pathname as casId, plus ivid from the cookie', () => {
     document.cookie = 'ivid=cookie-ivid';
-    const ctx = buildContext();
-    expect(ctx.casId).toBe('cas-123');
+    const ctx = buildContext('https://erp.intuit.com/products/enterprise-suite');
+    expect(ctx.permalink).toBe('https://erp.intuit.com/products/enterprise-suite');
+    expect(ctx.casId).toBe('/products/enterprise-suite');
     expect(ctx.ivid).toBe('cookie-ivid');
   });
   it('includes of1Intent when a behavior profile exists', () => {

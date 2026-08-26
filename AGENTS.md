@@ -8,6 +8,15 @@ This project is based on the https://github.com/adobe/aem-boilerplate/ project a
 
 The repository provides the basic structure, blocks, and configuration needed to run a complete site with `*.aem.live` as the backend.
 
+### Project Reference Docs
+
+Read these before changing related behavior — they document project-specific conventions:
+
+- [OVERRIDES.md](OVERRIDES.md) — every metadata, section-metadata, URL-param, and cookie override that toggles or configures site behavior without a code change.
+- [MARTECH.md](MARTECH.md) — analytics/consent (Tealium + OneTrust) loading and environment gating.
+- [CLICK-TRACKING.md](CLICK-TRACKING.md) — the `data-track-*` click-tracking attribute contract.
+- [APPVARS.md](APPVARS.md) — the `window.appVars` shape the tracker reads.
+
 ### Key Technologies
 - Edge Delivery Services for AEM Sites (documentation at https://www.aem.live/ – search with `site:www.aem.live` to restrict web search results)
 - Vanilla JavaScript (ES6+), no transpiling, no build steps

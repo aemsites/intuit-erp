@@ -388,9 +388,9 @@ async function loadEager(doc) {
   }
 
   // Seed window.appVars before martech so the tracker finds it; analytics.js fills the arrays.
+  // The page pathname is the content identifier (stable across localhost/preview/prod).
   const appVars = window.appVars || (window.appVars = {});
-  const casId = getMetadata('cas-id') || getMetadata('page-cas-id');
-  appVars.externalContentIdentifier = casId || appVars.externalContentIdentifier || '';
+  appVars.externalContentIdentifier = window.location.pathname;
   appVars.pznRecDetailsArr = appVars.pznRecDetailsArr || [];
   appVars.pznPageRecDetailsArr = appVars.pznPageRecDetailsArr || [];
   appVars.ixpDetailsArr = appVars.ixpDetailsArr || [];

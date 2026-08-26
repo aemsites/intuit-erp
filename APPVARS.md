@@ -20,7 +20,7 @@ The tracker reads **only** `window.appVars` (no other `window.*` object), and on
 
 | Field | Type | Source | Notes |
 | --- | --- | --- | --- |
-| `externalContentIdentifier` | **string** | page metadata (`cas-id`) | the CAS external content id (`page_cas_id`); `''` when a page has no CAS id yet |
+| `externalContentIdentifier` | **string** | page pathname (`window.location.pathname`) | the content identifier; stable across localhost/preview/prod |
 | `pznRecDetailsArr` | **array** | client pzn integration | section-level personalization records |
 | `pznPageRecDetailsArr` | **array** | client pzn integration | page-level personalization records (empty until whole-page pzn exists on EDS) |
 | `ixpDetailsArr` | **array** | client experiment integration | `[{experiment_id, experiment_version, experiment_treatment}, …]` |
@@ -129,6 +129,8 @@ local    CONTRACT ✓  appVars has the 4 fields, types ok
   attributes. Our personalization applies content but does not yet stamp those attributes, so the
   harness will report a `data-pzn channel GAP` on personalized pages until that's wired. Tracked
   separately.
-- **CAS ids on migrated pages.** `externalContentIdentifier` reads the `cas-id` (or `page-cas-id`)
-  page-metadata field; migrated pages must carry it, or it is `''`. Confirm the successor id with the
-  content/analytics team.
+- **Content identifier.** `externalContentIdentifier` is the page pathname
+  (`window.location.pathname`) — no page metadata required. The intuit-orchestrator gets the same
+  pathname as `context.casId`, plus the full URL as `context.permalink`. If the content/analytics
+  team ever standardizes on a different id scheme, change it in `loadEager` (`scripts/scripts.js`)
+  and `buildContext` (`scripts/experience.js`).
