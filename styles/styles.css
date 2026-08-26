@@ -112,7 +112,7 @@
   --heading-font-size-xs: 18px;
 
   /* layout */
-  --nav-height: 96px;
+  --nav-height: 92px;
   --container: 1380px;
   --radius: 4px;
   --radius-card: 12px;
@@ -127,7 +127,7 @@
    line box height is set by explicit line-height; ascent/descent match Avenir. */
 @font-face {
   font-family: avenir-fallback;
-  size-adjust: 105.1%;
+  size-adjust: 105.4%;
   ascent-override: 91.7%;
   descent-override: 24.3%;
   line-gap-override: 0%;
