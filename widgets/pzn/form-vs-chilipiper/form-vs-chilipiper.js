@@ -2,22 +2,57 @@
  * PZN treatment for the "Form vs ChiliPiper" access point
  * (SBSEGICOMMContentFormvschilipiperHero, /construction/).
  *
- * Treatment: clicking the "Schedule a call" CTA opens ChiliPiper directly instead of the
- * Marketo form. Reuses the shared ChiliPiper opener (scripts/chilipiper.js) — subdomain and
- * script URL come from /site-config.json. Control (the Marketo form) is the page baseline, so
- * there is no control fragment.
+ * Treatment: clicking the "Schedule a call" CTA opens a ChiliPiper round-robin scheduler in a
+ * modal instead of the Marketo form. Faithful port of the OICMS snippet — a first-party iframe to
+ * the round-robin URL carrying a freshly minted lead_xref_id (the id ChiliPiper/CRM correlates
+ * on) — rendered in the shared modal (blocks/modal/modal.js) rather than a hand-rolled overlay.
+ * Control (the Marketo form) is the page baseline, so there is no control fragment.
  *
  * Author config (widget href query params → widget.dataset):
- *   router  – ChiliPiper router (default: cal-first-construction)
+ *   base    – round-robin base URL (default: intuitsales cal-first-construction)
  *   trigger – CSS selector for the CTA (default: [data-wa-link="chilipiper-submit"])
  */
-import { openChiliPiper } from '../../../scripts/chilipiper.js';
+import { createModal } from '../../../blocks/modal/modal.js';
 
-const DEFAULT_ROUTER = 'cal-first-construction';
+const DEFAULT_BASE = 'https://intuitsales.chilipiper.com/round-robin/cal-first-construction';
 const DEFAULT_TRIGGER = '[data-wa-link="chilipiper-submit"]';
 
+// RFC4122 v4 UUID — native when available, else a Math.random fallback (matches the OICMS snippet).
+export function createUUID() {
+  if (window.crypto?.randomUUID) return window.crypto.randomUUID();
+  // eslint-disable-next-line no-bitwise
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    // eslint-disable-next-line no-bitwise
+    const r = (Math.random() * 16) | 0;
+    // eslint-disable-next-line no-bitwise
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
+// The round-robin URL for one booking, carrying a fresh lead_xref_id.
+export function buildChiliPiperUrl(base = DEFAULT_BASE) {
+  const leadXrefId = createUUID();
+  const sep = base.includes('?') ? '&' : '?';
+  return { url: `${base}${sep}lead_xref_id=${encodeURIComponent(leadXrefId)}`, leadXrefId };
+}
+
+async function openChiliPiperModal(base) {
+  const { url, leadXrefId } = buildChiliPiperUrl(base);
+  window.chilipiperLeadXrefId = leadXrefId;
+  const iframe = document.createElement('iframe');
+  iframe.className = 'chilipiper-embed';
+  iframe.title = 'Schedule a meeting';
+  iframe.src = url;
+  iframe.setAttribute('data-chilipiper', 'true');
+  iframe.setAttribute('allow', 'camera; microphone; fullscreen');
+  iframe.loading = 'eager';
+  const { showModal } = await createModal([iframe]);
+  showModal();
+}
+
 export default async function decorate(widget) {
-  const router = widget.dataset.router || DEFAULT_ROUTER;
+  const base = widget.dataset.base || DEFAULT_BASE;
   const trigger = widget.dataset.trigger || DEFAULT_TRIGGER;
 
   // One delegated click listener on the document — the CTA may render or be replaced later.
@@ -31,6 +66,6 @@ export default async function decorate(widget) {
   document.addEventListener('click', (e) => {
     if (!e.target.closest(trigger)) return;
     e.preventDefault();
-    openChiliPiper(router);
+    openChiliPiperModal(base);
   });
 }

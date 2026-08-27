@@ -8,7 +8,7 @@ vi.mock('../scripts/scripts.js', () => ({
 }));
 
 // eslint-disable-next-line import/first
-import { openChiliPiper, submitChiliPiper, leadXrefId } from '../scripts/chilipiper.js';
+import { openChiliPiper, submitChiliPiper } from '../scripts/chilipiper.js';
 // eslint-disable-next-line import/first
 import { getSiteConfig } from '../scripts/scripts.js';
 // eslint-disable-next-line import/first
@@ -23,19 +23,10 @@ beforeEach(() => {
   vi.clearAllMocks();
   getSiteConfig.mockResolvedValue(CFG);
   window.ChiliPiper = { scheduling: vi.fn(), submit: vi.fn() };
-  delete window.chilipiperLeadXrefId;
-});
-
-describe('leadXrefId', () => {
-  it('generates and publishes a correlation id on window', () => {
-    const id = leadXrefId();
-    expect(id).toBeTruthy();
-    expect(window.chilipiperLeadXrefId).toBe(id);
-  });
 });
 
 describe('openChiliPiper', () => {
-  it('loads the script and opens the scheduler for the router, setting a lead_xref_id', async () => {
+  it('loads the script and opens the scheduler for the router', async () => {
     const ok = await openChiliPiper('cal-first-construction');
     expect(ok).toBe(true);
     expect(loadScript).toHaveBeenCalledWith('//js.chilipiper.com/marketing.js');
@@ -44,7 +35,6 @@ describe('openChiliPiper', () => {
       'cal-first-construction',
       expect.objectContaining({ title: expect.any(String) }),
     );
-    expect(window.chilipiperLeadXrefId).toBeTruthy();
   });
 
   it('no-ops (false) without a router or subdomain', async () => {

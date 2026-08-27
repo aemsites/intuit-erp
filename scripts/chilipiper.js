@@ -24,25 +24,13 @@ async function ensureChiliPiper(cfg) {
   return window.ChiliPiper;
 }
 
-// A per-lead correlation id ChiliPiper/CRM can join on. Published on window for
-// downstream trackers (mirrors the OICMS snippet's window.chilipiperLeadXrefId).
-export function leadXrefId() {
-  const id = window.crypto?.randomUUID
-    ? window.crypto.randomUUID()
-    : `xref-${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`;
-  window.chilipiperLeadXrefId = id;
-  return id;
-}
-
-// Opens the ChiliPiper scheduler for `router` (no Marketo form). Sets a fresh
-// lead_xref_id on window for the page's trackers. Returns false when misconfigured.
+// Opens the ChiliPiper scheduler for `router` (no Marketo form). Returns false when misconfigured.
 export async function openChiliPiper(router, { title = document.title } = {}) {
   const cfg = await chilipiperConfig();
   const subdomain = cfg['chilipiper.subdomain'];
   if (!router || !subdomain) return false;
   const cp = await ensureChiliPiper(cfg);
   if (!cp?.scheduling) return false;
-  leadXrefId();
   cp.scheduling(subdomain, router, { title });
   return true;
 }

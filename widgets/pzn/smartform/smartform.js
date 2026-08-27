@@ -25,7 +25,7 @@ function log(message, level = 'info') {
 
 // Adds the "we found this business name" note under the company field once ZI returns a match —
 // unless the visitor already edited it or the note is already there. Clears it on edit.
-function appendDisclaimer(form) {
+export function appendDisclaimer(form) {
   const companyInput = form?.querySelector(`[name="${COMPANY_FIELD}"]`);
   if (!companyInput || form.querySelector('.zi-formcomplete-msg')) return;
   if (companyInput.dataset.hasusertyped) return;
