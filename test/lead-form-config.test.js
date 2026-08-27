@@ -234,6 +234,7 @@ describe('decorate — ChiliPiper handoff fallback', () => {
   afterEach(() => {
     vi.useRealTimers();
     loadScript.mockImplementation(() => Promise.resolve());
+    document.querySelectorAll('iframe[src*="chilipiper.com"]').forEach((el) => el.remove());
   });
 
   // Marketo's own button markup is injected directly (rather than relying on
@@ -261,7 +262,31 @@ describe('decorate — ChiliPiper handoff fallback', () => {
     expect(form.querySelector('.form-fallback-message').textContent).toMatch(/received your information/i);
   });
 
-  it('does not show the fallback message when the handoff resolves in time', async () => {
+  // Reproduces a real failure seen on the feature preview: the ChiliPiper script loads and
+  // submit() is called successfully, but ChiliPiper's own concierge-router backend 500s
+  // internally and never renders its iframe. window.ChiliPiper.submit is a bare stub here
+  // (see beforeEach) — it "succeeds" from our side but creates no iframe, same as that case.
+  it('shows a fallback message when the script loads but ChiliPiper never renders a widget', async () => {
+    const block = make([['formId', '1058'], ['chiliPiperRouter', 'mid-us-webform-managed-ies']]);
+    await decorate(block);
+    await flush();
+    const form = block.querySelector('form#mktoForm_1058');
+    withMktoButton(form);
+
+    vi.useFakeTimers();
+    onSuccessFn({ Email: 'controller@brightpathco.com', FirstName: 'Dana', Company: 'Bright Path' });
+    await vi.advanceTimersByTimeAsync(8000);
+
+    expect(form.querySelector('.mktoButton')).toBeNull();
+    expect(form.querySelector('.form-fallback-message')).not.toBeNull();
+  });
+
+  it('does not show the fallback message when the ChiliPiper widget actually renders', async () => {
+    window.ChiliPiper.submit = vi.fn(() => {
+      const iframe = document.createElement('iframe');
+      iframe.src = 'https://intuitsales.chilipiper.com/concierge-router/foo';
+      document.body.append(iframe);
+    });
     const block = make([['formId', '1058'], ['chiliPiperRouter', 'mid-us-webform-managed-ies']]);
     await decorate(block);
     await flush();

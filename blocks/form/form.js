@@ -169,6 +169,10 @@ function showChiliPiperFallback(formEl) {
   button.replaceWith(message);
 }
 
+function countChiliPiperIframes() {
+  return document.querySelectorAll('iframe[src*="chilipiper.com"]').length;
+}
+
 // reCAPTCHA v3, mirroring erp.intuit.com: on form load fetch a score token and
 // verify it via Intuit's siteverify proxy, then gate the Marketo submit on the
 // result (Marketo's own captcha is off; the token is never a form field). The
@@ -269,15 +273,17 @@ async function embedMarketoForm(formEl, cfg, config, env) {
     form.onSuccess((vals) => {
       try { trackFormSubmit(marketoValuesToLead(vals)); } catch (e) { /* non-fatal */ }
       if (canHandoff) {
-        // Track success on this specific handoff call (not global DOM state) so
-        // multiple ChiliPiper-enabled forms on one page (e.g. inline + modal)
-        // can't mistake each other's widget for their own.
-        let handedOff = false;
-        chiliPiperHandoff(cfg, config.chiliPiperRouter, form)
-          .then(() => { handedOff = true; })
-          .catch(() => {});
+        // window.ChiliPiper.submit() is fire-and-forget — it doesn't return a promise
+        // or expose a completion callback, so a successful script load + submit() call
+        // does NOT mean the widget actually rendered (e.g. ChiliPiper's own
+        // concierge-router backend can 500 after the script loads fine). The only
+        // reliable signal we have is whether its iframe actually shows up. Compare
+        // counts (not "any chilipiper iframe exists") so this doesn't get confused if
+        // another ChiliPiper-enabled form on the same page already has one open.
+        const iframesBefore = countChiliPiperIframes();
+        chiliPiperHandoff(cfg, config.chiliPiperRouter, form).catch(() => {});
         setTimeout(() => {
-          if (!handedOff) showChiliPiperFallback(formEl);
+          if (countChiliPiperIframes() <= iframesBefore) showChiliPiperFallback(formEl);
         }, CHILIPIPER_FALLBACK_MS);
       }
       if (config.downloadUrl) window.open(config.downloadUrl, '_blank', 'noopener');
