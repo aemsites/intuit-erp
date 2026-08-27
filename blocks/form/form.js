@@ -24,8 +24,10 @@ import { loadScript, getMetadata } from '../../scripts/aem.js';
 // installed npm package, so this necessarily crosses a package.json boundary.
 // eslint-disable-next-line import/no-relative-packages
 import { sendEvent } from '../../plugins/martech/src/index.js';
-// Shared ChiliPiper opener (also used by personalization widgets).
-import { openChiliPiper, submitChiliPiper } from '../../scripts/chilipiper.js';
+// Shared ChiliPiper opener (also used by personalization widgets) + lead-xref/track helpers.
+import {
+  openChiliPiper, submitChiliPiper, mintLeadXref, trackLeadCreated,
+} from '../../scripts/chilipiper.js';
 
 // Tenant-namespaced XDM location for lead-identity events. Object name `of1Signal` must
 // byte-match the AEP "Experience Event Schema" field group path (AEP console config) or
@@ -215,6 +217,13 @@ async function embedMarketoForm(formEl, cfg, config, env) {
   const forms2Src = `${host}/js/forms2/js/forms2.min.js`;
   await loadScript(forms2Src);
   window.MktoForms2.loadForm(host, munchkin, config.formId, (form) => {
+    // One lead-correlation id per form: stamp it into the Marketo hidden field up front (so it's
+    // persisted with the lead in SFDC), then reuse the same id for the ECS lead track and the
+    // ChiliPiper handoff on success. IVID__c is added when the ivid data-layer value is present.
+    const leadXref = mintLeadXref();
+    const hiddenFields = { Lead_XRef_ID__c: leadXref };
+    if (window.utag_data?.ivid) hiddenFields.IVID__c = window.utag_data.ivid;
+    form.addHiddenFields?.(hiddenFields);
     if (config.disclaimer) {
       const el = document.createElement('div');
       el.className = 'form-disclaimer';
@@ -244,7 +253,12 @@ async function embedMarketoForm(formEl, cfg, config, env) {
     const canHandoff = !!(config.chiliPiperRouter && cfg['chilipiper.subdomain']);
     form.onSuccess((vals) => {
       try { trackFormSubmit(marketoValuesToLead(vals)); } catch (e) { /* non-fatal */ }
-      if (canHandoff) submitChiliPiper(config.chiliPiperRouter, form.getValues());
+      // ECS lead track → IES_lead in the ies-erp container (IES_booking then fires from
+      // ChiliPiper's booking-confirmed postMessage). Same xref as the hidden field + handoff.
+      try {
+        trackLeadCreated({ leadXrefId: leadXref, formId: config.formId });
+      } catch (e) { /* non-fatal */ }
+      if (canHandoff) submitChiliPiper(config.chiliPiperRouter, form.getValues(), leadXref);
       if (config.downloadUrl) window.open(config.downloadUrl, '_blank', 'noopener');
       else if (config.successUrl && !canHandoff) window.location.href = config.successUrl;
       // Suppress Marketo's default redirect only when we provide our own feedback
