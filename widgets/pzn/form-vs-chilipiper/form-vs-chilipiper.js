@@ -38,8 +38,9 @@ export function buildChiliPiperUrl(base = DEFAULT_BASE) {
 }
 
 async function openChiliPiperModal(base) {
-  const { url, leadXrefId } = buildChiliPiperUrl(base);
-  window.chilipiperLeadXrefId = leadXrefId;
+  // The lead_xref_id rides in the iframe URL (below); the ies-erp container correlates on that,
+  // so there's no window global to publish.
+  const { url } = buildChiliPiperUrl(base);
   const iframe = document.createElement('iframe');
   iframe.className = 'chilipiper-embed';
   iframe.title = 'Schedule a meeting';
