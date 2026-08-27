@@ -281,6 +281,10 @@ export function fetchTrackingSheet() {
   return sheetPromise;
 }
 
+// Per-block JIT payload derivers (trackAs { payload }), read by stampInteraction for
+// per-item fields the element + sheet can't express (e.g. faq accordion_item_N).
+const PAYLOAD_DERIVERS = new WeakMap();
+
 /**
  * Reset cached sheet state — test isolation only (each test needs a fresh fetch
  * stub and an empty resolved map).
@@ -705,6 +709,11 @@ export function stampInteraction(e) {
   } else {
     derived = applyBlockDefaults(derived, cta);
   }
+  // Per-item payload deriver: a sheet-shaped cfg merged under any real sheet row (sheet wins).
+  if (block && !isPart) {
+    const derivePayload = PAYLOAD_DERIVERS.get(block);
+    if (derivePayload) { const ov = derivePayload(cta); if (ov) row = { ...ov, ...(row || {}) }; }
+  }
   const regionCtx = resolveRegionContext(cta);
   const context = regionCtx ? { customProperties: regionCustomProperties(regionCtx) } : {};
   stampCta(cta, resolveCta(derived, row, context));
@@ -746,6 +755,8 @@ export function initTracking(scope = document) {
  *   selector -> inner-slot trail segment (fixed string, or (index, el) => string)
  * @param {Record<string, string|{as:string, linkName?:boolean}>} [opts.alsoTrack]
  *   selector -> ui_object, registering non-CTA beacon sources (#769)
+ * @param {(el: Element) => (Record<string, unknown>|null)} [opts.payload] per-CTA JIT
+ *   deriver returning a partial sheet-shaped cfg (kebab keys); merged under any sheet row
  * @param {string} [opts.action]
  * @param {string} [opts.object]
  * @param {string} [opts.uiObject] code-built payload defaults
@@ -755,9 +766,11 @@ export function initTracking(scope = document) {
  */
 export function trackAs(name, block, {
   key = name, items, trackId, alsoTrack, action, object,
-  uiObject: uiObjectDefault, linkName, skip,
+  uiObject: uiObjectDefault, linkName, skip, payload,
 } = {}) {
   if (!block) return block;
+  // Register the per-item JIT payload deriver (read by stampInteraction).
+  if (payload) PAYLOAD_DERIVERS.set(block, payload);
   // Opt pure-UI controls out (hamburger, toggles) via data-track-skip.
   if (skip) block.querySelectorAll(skip).forEach((el) => el.setAttribute('data-track-skip', ''));
   // Stamp each non-skipped CTA's data-track-id (order-independent sheet key). The
