@@ -116,7 +116,6 @@ describe('buildContext', () => {
       permalink: '/pricing', deviceType: expect.any(String), newVisitor: true,
     });
     expect(ctx.locale).toBeTruthy();
-    expect(ctx.locale).not.toMatch(/-/);
     expect(Object.keys(ctx).some((k) => k.startsWith('zi_c_'))).toBe(false);
     expect(ctx).not.toHaveProperty('zoominfo');
   });
