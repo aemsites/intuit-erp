@@ -26,8 +26,31 @@
  */
 import { buildBlock, loadBlock } from '../../scripts/aem.js';
 import { videoInfo } from '../video/video-info.js';
+import { trackAs, slug, labelFor } from '../../scripts/tracking.js';
 
 const SPLIT_RE = /^(\d{1,3})-(\d{1,3})$/;
+
+// The AI-agents promo's primary CTA is the one media-text CTA prod tags with an authored
+// residue: the upstream `feature` component's `feature|<name>_cta` id + `feature-<name>-cta`
+// WA link (object_detail = ui_object_detail = the id; see CLICK-TRACKING.md — this is the
+// JS-derived counterpart of a single sheet row). It's keyed on the /ai-agents destination
+// (the promo's stable route) so the block's OTHER CTAs — "Refer a client", "Download the
+// study", etc. — stay generic loose-content derives. `<name>` is the button label's slug.
+const AI_AGENTS_RE = /\/ai-agents\/?(?:[?#].*)?$/;
+
+function featurePayload(el) {
+  if (el.tagName !== 'A' || !el.classList.contains('button')) return null;
+  if (!AI_AGENTS_RE.test(el.getAttribute('href') || '')) return null;
+  const base = slug(labelFor(el)); // "Explore agents" -> "explore-agents"
+  if (!base) return null;
+  const id = `feature|${base.replace(/-/g, '_')}_cta`; // -> feature|explore_agents_cta
+  return {
+    'object-detail': id,
+    'ui-object-detail': id,
+    'ui-object': 'button',
+    'wa-link': `feature-${base}-cta`, // -> feature-explore-agents-cta
+  };
+}
 
 function buildCopy(textCell) {
   const copy = document.createElement('div');
@@ -235,4 +258,10 @@ export default function decorate(block) {
     frag.append(rowEl);
   });
   block.replaceChildren(frag);
+
+  // Click tracking: media-text CTAs are generic loose `page` content links, so opt the block
+  // in with NO trail (prod emits no ui_access_point on them — keep the `page` superset) and let
+  // the per-CTA deriver stamp the AI-agents promo CTA's authored `feature|…` residue. Not
+  // returned: the variant paths above early-`return;` with no value (consistent-return).
+  trackAs(null, block, { key: 'media-text', payload: featurePayload });
 }

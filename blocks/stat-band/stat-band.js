@@ -28,11 +28,27 @@
  */
 
 import { BP_TABLET, BP_DESKTOP, BP_WIDE } from '../../scripts/breakpoints.js';
+import { trackAs } from '../../scripts/tracking.js';
 
 const ARROW_SVG = {
   prev: '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>',
   next: '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/></svg>',
 };
+
+// The outcomes carousel's paging arrows report prod's `scroll left`/`scroll right` detail (+
+// matching link_name), not the derived button + aria-label. Golden confirms `scroll right`
+// (next); `scroll left` (prev) is the symmetric pair (prod only captured the next click).
+function scrollArrowPayload(el) {
+  if (!el.classList || !el.classList.contains('stats-arrow')) return null;
+  let side = null;
+  if (el.classList.contains('prev')) side = 'left';
+  else if (el.classList.contains('next')) side = 'right';
+  if (!side) return null;
+  return {
+    'ui-object-detail': `scroll ${side}`,
+    'custom-properties': { link_name: `button-scroll-${side}` },
+  };
+}
 
 function parseStatRow(cell) {
   let numberText = '';
@@ -180,6 +196,10 @@ function buildCarousel(block, track) {
   buildDots();
   updateButtons();
   requestAnimationFrame(applyTransform);
+
+  // Click tracking: the paging arrows report prod's `scroll left`/`scroll right`; the outcomes
+  // stats aren't CTAs. No trail — prod emits ui_access_point=page on these controls.
+  trackAs(null, block, { key: 'stat-band', payload: scrollArrowPayload });
 }
 
 export default function decorate(block) {

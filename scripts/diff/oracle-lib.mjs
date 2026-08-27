@@ -48,7 +48,13 @@ const N = POLICY.normalize || {};
 export function normalizeValue(spec, v) {
   if (typeof v !== 'string') return v;
   let s = v;
-  if (spec.normalizeHost && N.host) for (const from of N.host.from) s = s.split(from).join(N.host.to);
+  if (spec.normalizeHost && N.host) {
+    for (const from of N.host.from) s = s.split(from).join(N.host.to);
+    // page-URL trailing-slash convention differs (prod emits ".../construction/", our EDS
+    // ".../construction"); the destination is identical, so strip a single trailing slash
+    // on host-bearing fields before compare. Documented, symmetric (applied to both sides).
+    s = s.replace(/\/(?=$|[?#])/, '');
+  }
   if (spec.normalizeEnv && N.env && N.env.map[s] != null) s = N.env.map[s];
   if (spec.normalizeTags || (N.stripTags || []).length) s = s.replace(/<[^>]*>/g, '');
   if (spec.stripBracket) s = s.replace(/ \[[^\]]*\]$/, '');
