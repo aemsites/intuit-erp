@@ -268,6 +268,12 @@ export function buildShare() {
   label.textContent = 'Share this article:';
   wrap.append(label);
 
+  // Links live in a display:contents span so the click-tracking trail nests as
+  // `…|social_media` (see the trackAs in buildBlogTemplate) without changing layout —
+  // .blog-share stays [label, link, link, …] in flow.
+  const links = document.createElement('span');
+  links.className = 'blog-share-links';
+  links.style.display = 'contents';
   buildShareLinks().forEach(({ label: name, href, icon }) => {
     const a = document.createElement('a');
     a.className = 'blog-share-link';
@@ -281,8 +287,9 @@ export function buildShare() {
     img.alt = '';
     img.loading = 'lazy';
     a.append(img);
-    wrap.append(a);
+    links.append(a);
   });
+  wrap.append(links);
 
   return wrap;
 }
@@ -777,6 +784,10 @@ export function buildBlogTemplate(main) {
   //    and the top of the TOC rail (desktop) as the viewport crosses the
   //    desktop breakpoint (see scripts/breakpoints.js).
   const share = buildShare();
+  // Click tracking: prod reports the article share row nested under the article hero →
+  // `qrc_article_hero|social_media`. The trail is self-contained on the widget (qrc_article_hero
+  // on the row, social_media on the links span) so it survives the mobile/desktop relocation.
+  trackAs('qrc_article_hero', share, { key: 'case-study-header', linkName: false, items: { '.blog-share-links': 'social_media' } });
   relocateShare(
     share,
     () => {
