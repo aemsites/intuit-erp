@@ -175,6 +175,8 @@ export function readConsentGroups() {
 }
 
 // QA override from the `experience-consent` URL param or metadata: 'granted' | 'denied' | null.
+// Only consulted on non-enforced hosts (see hasExperienceConsent) so it can never bypass the
+// real consent gate in prod/stage.
 function consentOverride() {
   const param = new URLSearchParams(window.location.search).get('experience-consent');
   const val = (param || getMetadata('experience-consent') || '').trim().toLowerCase();
@@ -193,13 +195,19 @@ export function consentEnforced() {
 
 // The gate for the orchestrator call: only personalize/experiment once the user has granted
 // the targeting group. Because OptanonConsent persists, this becomes true on the visit AFTER
-// they accept the banner. Fail-open on non-enforced hosts and via an explicit QA override.
+// they accept the banner.
 export function hasExperienceConsent() {
+  // Enforced hosts (*.intuit.com): the real OptanonConsent cookie is authoritative — the QA
+  // override is ignored here so it can never bypass the consent gate in prod/stage.
+  if (consentEnforced()) {
+    const groups = readConsentGroups();
+    return !!(groups && groups[experienceConsentGroup()] === true);
+  }
+  // Non-enforced hosts (aem.page/aem.live/localhost): no OneTrust cookie exists there, so honor
+  // the QA override, else default to enabled so pzn/ixp stays testable.
   const override = consentOverride();
   if (override) return override === 'granted';
-  if (!consentEnforced()) return true;
-  const groups = readConsentGroups();
-  return !!(groups && groups[experienceConsentGroup()] === true);
+  return true;
 }
 
 // --- Target collection ------------------------------------------------------

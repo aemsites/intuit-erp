@@ -564,11 +564,16 @@ describe('consent gate', () => {
     document.cookie = 'OptanonConsent=groups=C0004%3A0';
     expect(hasExperienceConsent()).toBe(false);
   });
-  it('the experience-consent override forces the decision regardless of host/cookie', () => {
+  it('the experience-consent override is honored only on non-enforced hosts', () => {
+    // Ignored on *.intuit.com — the real OptanonConsent cookie governs (none here → false),
+    // so the override can never bypass the gate in prod/stage.
     vi.stubGlobal('location', { hostname: 'erp.intuit.com', search: '?experience-consent=granted' });
-    expect(hasExperienceConsent()).toBe(true);
+    expect(hasExperienceConsent()).toBe(false);
+    // Honored on preview/localhost, both directions.
     vi.stubGlobal('location', { hostname: 'localhost', search: '?experience-consent=denied' });
     expect(hasExperienceConsent()).toBe(false);
+    vi.stubGlobal('location', { hostname: 'localhost', search: '?experience-consent=granted' });
+    expect(hasExperienceConsent()).toBe(true);
   });
 });
 
