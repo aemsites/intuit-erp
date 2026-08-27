@@ -53,6 +53,7 @@ import {
 } from '../../scripts/aem.js';
 import { hasAuthoredCaseStudyHeader } from './blog-detect.js';
 import { MQ_DESKTOP_UP } from '../../scripts/breakpoints.js';
+import { trackAs } from '../../scripts/tracking.js';
 
 /**
  * Selects the article's main H2 sections only — excludes headings nested
