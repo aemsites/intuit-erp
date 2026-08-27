@@ -431,6 +431,68 @@ describe('buildBlogTemplate', () => {
     expect(main.querySelector('.blog-rail').style.gridRow).toBe('2 / 4');
   });
 
+  it('treats a leading section without the H1 as a pre-hero band and decorates the H1 section as the hero', () => {
+    window.hlx = { codeBasePath: '' };
+    window.matchMedia = () => ({ matches: false, addEventListener: () => {} });
+    const main = mainWith(`
+      <div class="columns"><div><div><h2>299% ROI</h2></div></div></div>
+      <div><h1>Headline</h1><p><picture><img src="hero.jpg"></picture></p></div>
+      <div><h2>One</h2><p>a</p></div>
+      <div><h2>Two</h2><p>b</p></div>
+    `);
+
+    buildBlogTemplate(main);
+
+    const prehero = main.children[0];
+    const hero = main.querySelector('.blog-hero');
+    expect(prehero.classList.contains('blog-prehero')).toBe(true);
+    expect(prehero.classList.contains('blog-hero')).toBe(false);
+    expect(prehero.style.gridRow).toBe('1');
+    expect(hero).toBe(main.children[1]);
+    expect(hero.style.gridRow).toBe('2');
+    // eyebrow/byline land in the hero, never in the pre-hero band
+    expect(prehero.querySelector('.blog-byline-tag')).toBeNull();
+    // rails start below the pre-hero (row 3), last TOC section (index 3) ends at line 5
+    expect(main.querySelector('.blog-toc-rail').style.gridRow).toBe('3 / 5');
+    expect(main.querySelector('.blog-rail').style.gridRow).toBe('3 / 5');
+  });
+
+  it('hide-rails: true suppresses both rails and marks the article full-width', () => {
+    window.hlx = { codeBasePath: '' };
+    window.matchMedia = () => ({ matches: false, addEventListener: () => {} });
+    document.head.innerHTML = '<meta name="hide-rails" content="true">';
+    const main = mainWith(`
+      <div><h1>Headline</h1><p><picture><img src="hero.jpg"></picture></p></div>
+      <div><h2>One</h2><p>a</p></div>
+      <div><h2>Two</h2><p>b</p></div>
+    `);
+
+    buildBlogTemplate(main);
+
+    expect(main.classList.contains('blog-no-rails')).toBe(true);
+    expect(main.querySelector('.blog-hero')).toBeTruthy();
+    expect(main.querySelector('.blog-toc-rail')).toBeNull();
+    expect(main.querySelector('.blog-rail')).toBeNull();
+  });
+
+  it('hide-rails: right drops only the right rail and keeps the TOC (matches upstream research)', () => {
+    window.hlx = { codeBasePath: '' };
+    window.matchMedia = () => ({ matches: false, addEventListener: () => {} });
+    document.head.innerHTML = '<meta name="hide-rails" content="right">';
+    const main = mainWith(`
+      <div><h1>Headline</h1><p><picture><img src="hero.jpg"></picture></p></div>
+      <div><h2>One</h2><p>a</p></div>
+      <div><h2>Two</h2><p>b</p></div>
+    `);
+
+    buildBlogTemplate(main);
+
+    expect(main.classList.contains('blog-no-right-rail')).toBe(true);
+    expect(main.classList.contains('blog-no-rails')).toBe(false);
+    expect(main.querySelector('.blog-toc-rail')).toBeTruthy();
+    expect(main.querySelector('.blog-rail')).toBeNull();
+  });
+
   it('relocates an inline-authored pricing-disclaimer to the last section, full-bleed', () => {
     window.hlx = { codeBasePath: '' };
     window.matchMedia = () => ({ matches: false, addEventListener: () => {} });

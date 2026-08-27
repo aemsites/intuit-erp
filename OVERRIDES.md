@@ -78,6 +78,7 @@ There is also the **aem-experimentation plugin** convention (loaded only when pr
 Read by the blog autoblock in [blocks/blog-template/blog-template.js](blocks/blog-template/blog-template.js):
 
 - `author`, `category`, `tags`, `date`, `updated` — byline / eyebrow.
+- `hide-rails` — suppress the article side rails. `true`/`yes`/`hide`/`all` drops **both** the TOC and the right rail and lets the body flow full-width; `right` drops **only** the right rail and keeps the TOC (matches the upstream research layout). Absent/other → both rails as normal.
 - `right-rail` — right-rail fragment (bare name resolves under `/fragments/`; default `/fragments/right-rail`).
 - `hear-from-our-customers` — trailing customers band fragment (default `/fragments/hear-from-our-customers`).
 - `pricing-disclaimer` — trailing pricing-disclaimer fragment (default `/fragments/pricing-disclaimer`).

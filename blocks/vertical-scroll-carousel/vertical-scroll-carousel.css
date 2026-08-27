@@ -86,11 +86,11 @@
   margin: 0;
 }
 
-.vertical-scroll-carousel .vsc-body > :first-child {
+.vertical-scroll-carousel .vsc-body> :first-child {
   margin-top: 0;
 }
 
-.vertical-scroll-carousel .vsc-body > :last-child {
+.vertical-scroll-carousel .vsc-body> :last-child {
   margin-bottom: 0;
 }
 
@@ -250,5 +250,24 @@
      so the spacing between this block and the one above/below matches. */
   .vertical-scroll-carousel:has(.vsc-list .vsc-item:only-child) {
     padding-block: 120px;
+  }
+}
+
+
+.vertical-scroll-carousel.dark {
+  .vsc-item.is-active .vsc-heading,
+  .vsc-item:hover .vsc-heading,
+  .vsc-heading {
+    color: #fff;
+  }
+
+  @media (width >=1024px) {
+    .vsc-item:hover {
+      border: 1px solid #d6d6d6;
+    }
+
+    .vsc-item.is-active::before {
+      background: linear-gradient(180deg, #236CFF 0%, #00D0E0 42.63%)
+    }
   }
 }

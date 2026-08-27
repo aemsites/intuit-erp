@@ -64,7 +64,7 @@ import { trackAs } from '../../scripts/tracking.js';
  */
 function tocHeadings(main) {
   return [...main.querySelectorAll('h2')].filter((h) => !h.closest(
-    '.blog-cards,.highlight,.testimonial,.stat-band,.cta-band,.media-text,.download-form',
+    '.blog-prehero,.blog-cards,.highlight,.testimonial,.stat-band,.cta-band,.media-text,.download-form',
   ) && !(h.parentElement && h.parentElement.querySelector('.blog-cards')));
 }
 
@@ -548,6 +548,12 @@ export function buildBlogTemplate(main) {
 
   main.classList.add('blog-article');
 
+  const hideRails = getMetadata('hide-rails').trim().toLowerCase();
+  const hideBoth = ['true', 'yes', 'hide', 'all'].includes(hideRails);
+  const hideRight = hideBoth || hideRails === 'right';
+  if (hideBoth) main.classList.add('blog-no-rails');
+  else if (hideRight) main.classList.add('blog-no-right-rail');
+
   // restore in-article pull-quote attribution styling (pipeline drops <cite>)
   decorateBlockquoteAttributions(main);
 
@@ -565,11 +571,16 @@ export function buildBlogTemplate(main) {
   //    image left in place (last) — natural DOM order so mobile needs no
   //    special handling; the 2-col band is desktop-only CSS (grid-column: 2
   //    on the image, spanning every row of the text column beside it).
-  const firstSection = sections[0];
+  const heroSection = sections.find((s) => s.querySelector('h1')) || sections[0];
+  const heroIndex = sections.indexOf(heroSection);
   let h1;
   let meta;
-  if (firstSection) {
-    firstSection.classList.add('blog-hero');
+  if (heroSection) {
+    sections.slice(0, heroIndex).forEach((s, i) => {
+      s.classList.add('blog-prehero');
+      s.style.gridRow = `${i + 1}`;
+    });
+    heroSection.classList.add('blog-hero');
 
     // an article may carry several comma-separated categories; the byline shows
     // the primary (first) one.
@@ -581,17 +592,16 @@ export function buildBlogTemplate(main) {
       updated: getMetadata('updated'),
     });
 
-    h1 = firstSection.querySelector('h1');
+    h1 = heroSection.querySelector('h1');
     if (h1) {
       if (eyebrow) h1.before(eyebrow);
       if (meta.childElementCount) h1.after(meta);
     } else {
-      // no H1 authored — degrade gracefully, still put content at the top
-      if (meta.childElementCount) firstSection.prepend(meta);
-      if (eyebrow) firstSection.prepend(eyebrow);
+      if (meta.childElementCount) heroSection.prepend(meta);
+      if (eyebrow) heroSection.prepend(eyebrow);
     }
 
-    const heroImg = firstSection.querySelector('img');
+    const heroImg = heroSection.querySelector('img');
     heroImg?.closest('p')?.classList.add('blog-hero-image');
   }
 
@@ -599,14 +609,14 @@ export function buildBlogTemplate(main) {
   //    (section 1) so mobile stacks hero → toc panel → body naturally; CSS
   //    grid re-places it into the left rail on wide viewports regardless of
   //    DOM order.
-  const toc = buildToc(main);
+  const toc = hideBoth ? null : buildToc(main);
   let tocWrap;
   let headings = [];
   if (toc) {
     tocWrap = document.createElement('div');
     tocWrap.className = 'blog-toc-rail';
     tocWrap.append(toc);
-    if (firstSection) firstSection.after(tocWrap);
+    if (heroSection) heroSection.after(tocWrap);
     else main.prepend(tocWrap);
 
     headings = [...toc.querySelectorAll('.blog-toc-list a')]
@@ -617,17 +627,20 @@ export function buildBlogTemplate(main) {
 
   // 3. right-rail fragment link — the existing fragment autoblock (which runs
   //    AFTER this in buildAutoBlocks) picks it up and loads it.
-  const railName = getMetadata('right-rail') || '/fragments/right-rail';
-  const railPath = railName.startsWith('/') ? railName : `/fragments/${railName}`;
-  const rail = document.createElement('div');
-  rail.className = 'blog-rail';
-  const railLink = document.createElement('a');
-  railLink.href = railPath;
-  railLink.textContent = railPath;
-  const railP = document.createElement('p');
-  railP.append(railLink);
-  rail.append(railP);
-  main.append(rail);
+  let rail;
+  if (!hideRight) {
+    const railName = getMetadata('right-rail') || '/fragments/right-rail';
+    const railPath = railName.startsWith('/') ? railName : `/fragments/${railName}`;
+    rail = document.createElement('div');
+    rail.className = 'blog-rail';
+    const railLink = document.createElement('a');
+    railLink.href = railPath;
+    railLink.textContent = railPath;
+    const railP = document.createElement('p');
+    railP.append(railLink);
+    rail.append(railP);
+    main.append(rail);
+  }
 
   // 3b. hear-from-our-customers + pricing-disclaimer — trailing full-width
   //     bands every article gets by default (same fragment autoblock loads
@@ -641,10 +654,17 @@ export function buildBlogTemplate(main) {
   //    sticky containing block is exactly the article body's height. Falls
   //    back to the stylesheet's generous `span` default when it can't be
   //    computed (no TOC headings to anchor on).
-  const rowEnd = tocRailRowEnd(sections, headings);
-  if (rowEnd) {
-    if (tocWrap) tocWrap.style.gridRow = `2 / ${rowEnd}`;
-    rail.style.gridRow = `2 / ${rowEnd}`;
+  if (!hideBoth) {
+    const rowEnd = tocRailRowEnd(sections, headings);
+    const railStart = heroIndex + 2;
+    if (heroIndex > 0) heroSection.style.gridRow = `${heroIndex + 1}`;
+    if (rowEnd) {
+      if (tocWrap) tocWrap.style.gridRow = `${railStart} / ${rowEnd}`;
+      if (rail) rail.style.gridRow = `${railStart} / ${rowEnd}`;
+    } else if (heroIndex > 0) {
+      if (tocWrap) tocWrap.style.gridRow = `${railStart} / span 999`;
+      if (rail) rail.style.gridRow = `${railStart} / span 999`;
+    }
   }
 
   // 5. share widget — a single element relocated between the hero (mobile)
@@ -660,7 +680,7 @@ export function buildBlogTemplate(main) {
     () => {
       if (meta && meta.childElementCount) meta.before(share);
       else if (h1) h1.after(share);
-      else firstSection?.prepend(share);
+      else heroSection?.prepend(share);
     },
     toc ? () => toc.before(share) : null,
     desktopMQ,
