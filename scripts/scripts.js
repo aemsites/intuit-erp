@@ -486,14 +486,11 @@ async function loadEager(doc) {
 
 const CONTACT_WIDGET_EXCLUDED_PATHS = ['/contact', '/library/templates/contact'];
 
-// Standalone webinar landing/registration pages (all authored as /webinar-*,
-// distinct from /blog/... or /events/... webinar content) are focused,
-// single-CTA pages — same intent as their hide-header/hide-footer metadata —
-// so the persistent sales widget is skipped there too, matching production.
 function shouldRenderContactUs() {
-  const { pathname } = window.location;
-  if (pathname.startsWith('/webinar-')) return false;
-  return !CONTACT_WIDGET_EXCLUDED_PATHS.includes(pathname);
+  if (['true', 'yes', 'hide'].includes((getMetadata('hide-contact-widget') || '').trim().toLowerCase())) {
+    return false;
+  }
+  return !CONTACT_WIDGET_EXCLUDED_PATHS.includes(window.location.pathname);
 }
 
 /**
