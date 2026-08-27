@@ -103,7 +103,7 @@ Columns currently in the sheet and the rules in place today:
 | `robots` | Search-engine indexing | `noindex,nofollow` for `/events/**`, `/webinar-*`(`/**`), `/accountant/free-consultation/ies`(`/**`), `/oa`, `/ibs`, `/drafts/**` |
 | `twitter:site` / `twitter:creator` | Social card meta | site-wide (`**`): `https://www.intuit.com/` / `@intuit` |
 | `footer` | Footer fragment (same as the `footer` page metadata) | `/blog` and `/blog/**` → `/footer-blog` |
-| `hide-contact-widget` | Skips the contact-us widget (same as the `hide-contact-widget` page metadata) | `true` for `/webinar-*`(`/**`) |
+| `hide-contact-widget` | Skips the contact-us widget (same as the `hide-contact-widget` page metadata) | `true` for `/webinar-*`(`/**`); also needed on `/contact` and `/library/templates/contact` (previously hardcoded in code) |
 | `Template` | Template (same as the `template` page metadata) | `/blog/**` → `Blog Article`; `/blog/case-study/**` → `Case Study`; `/blog/guide/**` → `Guide`; `/blog/research/**` → `Research`; `/blog/author/**` → `Author` |
 | `Category` | Blog category (byline/eyebrow + query filtering) | per `/blog/<category>/**` (e.g. `financials`, `erp`, `construction`, `payroll`, …) |
 | `right-rail` | Right-rail fragment (same as the `right-rail` page metadata) | per blog category → `/fragments/right-rail/<id>` |

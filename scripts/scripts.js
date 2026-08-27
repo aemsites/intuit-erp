@@ -484,13 +484,8 @@ async function loadEager(doc) {
   }
 }
 
-const CONTACT_WIDGET_EXCLUDED_PATHS = ['/contact', '/library/templates/contact'];
-
 function shouldRenderContactUs() {
-  if (['true', 'yes', 'hide'].includes((getMetadata('hide-contact-widget') || '').trim().toLowerCase())) {
-    return false;
-  }
-  return !CONTACT_WIDGET_EXCLUDED_PATHS.includes(window.location.pathname);
+  return !['true', 'yes', 'hide'].includes((getMetadata('hide-contact-widget') || '').trim().toLowerCase());
 }
 
 /**
