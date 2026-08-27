@@ -17,6 +17,8 @@
  * toggling the card.
  * CSS: blocks/feature-grid/feature-grid.css
  */
+import { trackAs } from '../../scripts/tracking.js';
+
 function parseContent(cell) {
   let title = null;
   let tagText = '';
@@ -217,4 +219,8 @@ export default function decorate(block) {
   }
 
   block.replaceChildren(grid);
+
+  // Click tracking: prod reports feature-grid CTAs under the single-level `feature`
+  // trail (matches erp.intuit.com's #wp-custom-section). Sheet/opt-in key `feature`.
+  return trackAs('feature', block, { key: 'feature' });
 }

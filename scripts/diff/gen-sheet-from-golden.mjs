@@ -14,6 +14,14 @@
  *
  * Overwrites the LOCAL sheet (gitignored — campaign codes); hand it over as the seed:
  *   node scripts/diff/gen-sheet-from-golden.mjs
+ *   node scripts/diff/gen-sheet-from-golden.mjs \
+ *     --golden scripts/diff/fixtures/local/clicktrack-golden-customer.json \
+ *     --out scripts/diff/fixtures/local/tracking-sheet-customer.json
+ *
+ * The printed residue histogram is the AUTHORABLE-vs-STRUCTURAL split: columns it can
+ * emit (object-detail, wa-link, ui-object, ui-action, ui-object-detail, link_name) are
+ * authorable; what it CAN'T encode (event, ui_access_point trail — those come from block
+ * wiring) is where residual parity-gate gaps are truly structural.
  */
 /* eslint-disable import/extensions, no-restricted-syntax, no-continue, no-console, no-plusplus, max-len, object-curly-newline */
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -22,7 +30,10 @@ import {
 } from './parity-gate.mjs';
 
 const DIR = 'scripts/diff/fixtures/local';
-const golden = JSON.parse(readFileSync(`${DIR}/clicktrack-golden.json`, 'utf8'));
+const argOf = (flag) => { const i = process.argv.indexOf(flag); return i >= 0 ? process.argv[i + 1] : null; };
+const GOLDEN_PATH = argOf('--golden') || `${DIR}/clicktrack-golden.json`;
+const OUT_PATH = argOf('--out') || `${DIR}/tracking-sheet.json`;
+const golden = JSON.parse(readFileSync(GOLDEN_PATH, 'utf8'));
 assignIds(golden.entries);
 const EMPTY = new Map();
 
@@ -52,8 +63,8 @@ for (const e of golden.entries) {
   rows.push({ path: e.page === '*' ? '*' : e.page, id: e.trackId, ...row });
 }
 
-writeFileSync(`${DIR}/tracking-sheet.json`, `${JSON.stringify({ data: rows })}\n`);
+writeFileSync(OUT_PATH, `${JSON.stringify({ data: rows })}\n`);
 const cols = {};
 rows.forEach((r) => Object.keys(r).forEach((k) => { if (!['path', 'id'].includes(k)) cols[k] = (cols[k] || 0) + 1; }));
-console.log(`generated ${rows.length} id-keyed residue rows -> ${DIR}/tracking-sheet.json`);
+console.log(`generated ${rows.length} id-keyed residue rows -> ${OUT_PATH}`);
 console.log('by residue column:', JSON.stringify(cols));

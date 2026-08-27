@@ -1,0 +1,130 @@
+{
+  "_comment": "SINGLE SOURCE OF TRUTH for the customer-golden oracle's field taxonomy. Every field the customer's prod beacons carry is bucketed here so nothing can be silently dropped to game the score. GATED = must value-match ours vs prod (after documented normalization); PRESENCE = must be present + correct shape but is NOT value-matched, with a per-field REASON why it cannot match across two independent captures. The PRESENCE list is FROZEN: the loop reads it read-only; moving a field GATED->PRESENCE is a reviewed contract change, never something an iteration does. Buckets grounded in the empirical determinism analysis of the 161 payloads (all captured in ONE authenticated session). Ratified 2026-08-26 (freeze per-visit + browser-fingerprint + time-varying as present+shape).",
+  "threshold": 95,
+  "_thresholdNote": "PASS = MIN across every axis >= threshold: overall gated value-match, per-event-type, per-component, per-gated-field, AND coverage (reproduced/161); PLUS 100% present-and-shape on the frozen list. A blended mean is NOT allowed — the weakest axis is the score.",
+
+  "normalize": {
+    "host": { "from": ["stage.erp.intuit.com"], "to": "erp.intuit.com", "_note": "cross-env: our stage host is rewritten to the prod host before comparing any host-bearing value. Documented + reviewed — NOT silent stripping." },
+    "env": { "map": { "stage": "prod" }, "_note": "if our stage build reports env=stage, it is mapped to prod before compare; if it already reports prod, no-op. Confirm live which it emits." },
+    "trim": true,
+    "stripTags": ["ui_object_detail", "link_name"],
+    "_stripTagsNote": "prod authors HTML into these (e.g. faq questions wrapped in <span>); both sides are tag-stripped before compare. Fixed rule."
+  },
+
+  "gated": {
+    "_note": "value-match ours vs prod. Threshold applies per-field, per-event, per-component.",
+    "envelope": {
+      "type": { "expect": "track" },
+      "event": { "rule": "${object}:${action}", "_note": "must equal object:action AND match prod's event" },
+      "writeKey": { "kind": "account-const" },
+      "_metadata": { "kind": "account-const", "_note": "Segment integration-routing config (bundled/unbundled); deterministic for the account" }
+    },
+    "properties": {
+      "event": { "rule": "${object}:${action}", "_note": "echoed event name; same rule as envelope.event" },
+      "object": { "kind": "per-click" },
+      "object_detail": { "kind": "per-click" },
+      "action": { "kind": "per-click" },
+      "ui_object": { "kind": "per-click" },
+      "ui_object_detail": { "kind": "per-click", "normalizeTags": true },
+      "ui_action": { "kind": "per-click" },
+      "ui_access_point": { "kind": "per-click", "indexTolerant": true, "_note": "computed data-tracking trail — comes from block wiring, the sheet CANNOT fake it. indexTolerant: positional index segments (rw_card_N, accordion_item_N) are normalized before compare — the trail STRUCTURE must match, but card_1 vs card_2 is accepted (index shifts with our exact markup/payload order; what matters is that the beacon fires with the right shape)." },
+      "data-wa-link": { "kind": "per-click", "authored": true },
+      "icom_user_action": { "kind": "per-click", "authored": true, "stripBracket": true },
+      "link_name": { "kind": "per-click", "authored": true, "normalizeHost": true, "stripBracket": true, "indexTolerant": true, "_note": "may embed the positional ui_object (e.g. accordion_item_1) — index-normalized like ui_access_point (live-verified 2026-08-26: stage vs prod faq differ only by item index)" },
+      "link_href": { "kind": "per-click", "normalizeHost": true, "liveOnly": true, "_note": "navigation-derived — the offline synthetic replica can't observe it; value-matched only by the live gate" },
+      "link_href_domain": { "kind": "per-click", "normalizeHost": true, "liveOnly": true },
+      "site_section": { "kind": "page-const" },
+      "screen": { "kind": "page-identity" },
+      "scope_area": { "kind": "page-identity" },
+      "top_screen": { "kind": "page-identity" },
+      "top_scope_area": { "kind": "page-identity" },
+      "page_hierarchy": { "kind": "page-identity" },
+      "page_hierarchy_extended": { "kind": "page-identity" },
+      "page_name_parameter": { "kind": "page-identity" },
+      "page_category_parameter": { "kind": "page-identity" },
+      "page_geography": { "kind": "page-const" },
+      "url": { "kind": "page-identity", "normalizeHost": true },
+      "url_clean": { "kind": "page-identity", "normalizeHost": true },
+      "url_host_name": { "kind": "page-const", "normalizeHost": true },
+      "channel_cookie_90day": { "kind": "page-const", "normalizeHost": true },
+      "org": { "kind": "account-const" },
+      "purpose": { "kind": "account-const" },
+      "scope": { "kind": "account-const" },
+      "platform": { "kind": "account-const" },
+      "env": { "kind": "account-const", "normalizeEnv": true },
+      "ecs_version": { "kind": "account-const" },
+      "write_key": { "kind": "account-const" },
+      "page_language": { "kind": "page-const" },
+      "loadAdobeVisitorApi": { "kind": "account-const" },
+      "event_sender_path": { "kind": "page-identity" },
+      "gpc_enabled": { "kind": "consent", "_note": "deterministic given the accept-all consent our runner sets" },
+      "privacy_essential": { "kind": "consent" },
+      "privacy_advertising": { "kind": "consent" },
+      "prefs_essential_ccpa": { "kind": "consent" },
+      "prefs_essential_cpra": { "kind": "consent" },
+      "prefs_advertising_ccpa": { "kind": "consent" },
+      "prefs_advertising_cpra": { "kind": "consent" },
+      "page_cas_id": { "kind": "intuit-assigned", "_note": "Intuit CMS content id. GATED on purpose: if our EDS build does not emit the same id, that is a REAL gap to escalate, not to hide." },
+      "project_asset_id": { "kind": "intuit-assigned", "_note": "same — surfaced, not ignored" },
+      "personalization_details": { "kind": "pzn", "expectEmpty": true, "_note": "prod = [] on these pages; GATED so any pzn injection on our side shows as a real diff" }
+    },
+    "context": {
+      "ecs_version": { "kind": "account-const" },
+      "enriched_ecs_version": { "kind": "account-const" },
+      "tracking_library": { "kind": "account-const" },
+      "library": { "kind": "account-const" }
+    }
+  },
+
+  "presenceFrozen": {
+    "_note": "present + correct-shape ONLY. FROZEN — the loop cannot add to this. Each entry states WHY it cannot value-match across two independent captures.",
+    "envelope": {
+      "messageId": { "group": "per-visit", "reason": "per-event ajs-next UUID" },
+      "timestamp": { "group": "per-visit", "reason": "event wall-clock" },
+      "sentAt": { "group": "per-visit", "reason": "event wall-clock" },
+      "anonymousId": { "group": "per-visitor", "reason": "per-visitor UUID; ours != their session" },
+      "userId": { "group": "per-visitor", "reason": "authed user id (their capture = a real user)" }
+    },
+    "properties": {
+      "segment_api_ts": { "group": "per-visit", "reason": "event wall-clock" },
+      "page_load_id": { "group": "per-visit", "reason": "per-pageload UUID" },
+      "page_track_seq_num": { "group": "per-visit", "reason": "event sequence within the visit; depends on click order/count" },
+      "session_replay_id": { "group": "per-visit", "reason": "per-session FullStory id" },
+      "session_replay_url": { "group": "per-visit", "reason": "per-session FullStory url" },
+      "ivid": { "group": "per-visitor", "reason": "Intuit visitor id; session-locked to their capture" },
+      "pseudonym_id": { "group": "per-visitor", "reason": "identity token; 'null' unauth, else per-user" },
+      "fbp": { "group": "per-visitor", "reason": "Facebook browser id; per-browser first-touch" },
+      "akes_geo": { "group": "per-visitor", "reason": "visitor geo (their tester = US~WA); depends where the runner executes" },
+      "browser_width": { "group": "browser-fingerprint", "reason": "capture viewport width" },
+      "browser_height": { "group": "browser-fingerprint", "reason": "capture viewport height" },
+      "browser_plugins": { "group": "browser-fingerprint", "reason": "capture browser plugin list" },
+      "browser_encoding": { "group": "browser-fingerprint", "reason": "capture browser setting" },
+      "browser_java_enabled": { "group": "browser-fingerprint", "reason": "capture browser setting" },
+      "browser_cookies_enabled": { "group": "browser-fingerprint", "reason": "capture browser setting" },
+      "screen_color_depth": { "group": "browser-fingerprint", "reason": "capture display setting" },
+      "locale": { "group": "browser-fingerprint", "reason": "Accept-Language-derived; harness browser, not site" },
+      "experiment_ids": { "group": "time-varying", "reason": "live A/B assignments at capture time; change as experiments start/stop" }
+    },
+    "context": {
+      "auth_id": { "group": "per-visitor", "reason": "authed user id (their real user 9130…)" },
+      "ivid": { "group": "per-visitor", "reason": "visitor id" },
+      "pseudonym_id": { "group": "per-visitor", "reason": "identity token" },
+      "userAgent": { "group": "browser-fingerprint", "reason": "capture browser UA" },
+      "userAgentData": { "group": "browser-fingerprint", "reason": "capture browser UA-CH" },
+      "timezone": { "group": "browser-fingerprint", "reason": "capture tz (their tester = Asia/Calcutta)" },
+      "locale": { "group": "browser-fingerprint", "reason": "capture locale" },
+      "page": { "group": "host-bearing", "reason": "url/path echo; presence + shape (value covered by properties.url after host-normalize)" }
+    },
+    "integrations": {
+      "Adobe Analytics": { "group": "per-visitor", "reason": "marketingCloudVisitorId (ECID) + imsregion — per-visitor" },
+      "Actions Amplitude": { "group": "per-visit", "reason": "session_id — per-session" }
+    }
+  },
+
+  "structuralExceptions": {
+    "_comment": "FROZEN. Prod beacons our click-tracking genuinely cannot reproduce, each with a reason. Excluded from the gated axes but still ENUMERATED in coverage (never a silent drop). The loop CANNOT add here — if an iteration concludes something is unreproducible, it must STOP and emit the stuck-report for human review; a human ratifies any addition. Everything fixable (banner/feature not ported, faq accordion semantics, derive gaps) is NOT an exception and must be fixed.",
+    "byEvent": {
+      "chat:viewed": "passive chat-widget render impression (object=chat, ui_action=displayed) — fires when the widget displays, not on a click; there is no EDS click-tracking equivalent to reproduce it"
+    }
+  }
+}

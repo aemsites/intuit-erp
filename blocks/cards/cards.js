@@ -280,6 +280,9 @@ export default function decorate(block) {
     items: {
       '.cards-track, .cards-track > *':
         (i, el) => (el.classList.contains('cards-track') ? 'carousel' : `rw_card_${i}`),
+      // the prev/next arrows + dots live in .cards-controls (sibling of .cards-track);
+      // prod reports them at the carousel level -> rw_cards_container|carousel (not a card).
+      '.cards-controls': 'carousel',
     },
   });
 }
