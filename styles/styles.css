@@ -1041,7 +1041,7 @@ main > .section.dark-background > .default-content-wrapper > .button-wrapper a.b
   color: var(--navy);
 
   &:hover {
-    background: rgb(238, 244, 246);
+    background: rgb(238 244 246);
   }
 }
 
