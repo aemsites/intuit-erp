@@ -122,6 +122,25 @@
   box-shadow: 0 24px 60px rgb(0 0 0 / 35%);
 }
 
+.hero.image-glow .hero-dashboard-lottie {
+  overflow: initial;
+}
+
+.hero.image-glow .hero-dashboard-lottie::before,
+.hero.image-glow .hero-media img::before {
+    content: "";
+    position: absolute;
+    top: -20%;
+    bottom: -20%;
+    left: -20%;
+    right: -20%;
+    z-index: 0;
+    pointer-events: none;
+    backroradial-gradient(
+    ellipse 74% 68% at 50% 50%, #33b5ff 0%, #0099ff 10%, #0077ff 22%, #0060d4 36%, rgba(0, 80, 190, 0.72) 48%, rgba(0, 37, 74, 0.38) 62%, rgba(0, 37, 74, 0) 82%);
+    background: radial-gradient(ellipse 74% 68% at 50% 50%, #33b5ff 0%, #0099ff 10%, #0077ff 22%, #0060d4 36%, rgba(0, 80, 190, 0.72) 48%, rgba(0, 37, 74, 0.38) 62%, rgba(0, 37, 74, 0) 82%);
+}
+
 .hero .hero-dashboard-lottie svg {
   display: block;
   width: 100%;
