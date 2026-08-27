@@ -439,10 +439,16 @@ export function stampExperiment(el, rec) {
   setAttr(el, 'data-treatment-id', rec.experiment_treatment);
 }
 
+// Full data-pzn-* set the click tracker walks (Intuit's helix-common/pzn-container-block).
+// setAttr skips blanks, so records without model/action fields stamp only what they carry.
 export function stampPzn(el, rec) {
   if (!el || !rec) return;
   setAttr(el, 'data-pzn-placement', rec.personalization_placement);
   setAttr(el, 'data-pzn-id', rec.personalization_id);
+  setAttr(el, 'data-pzn-action', rec.personalization_action);
+  setAttr(el, 'data-pzn-workflow', rec.personalization_workflow);
+  setAttr(el, 'data-pzn-model-name', rec.model_name);
+  setAttr(el, 'data-pzn-model-version', rec.model_version);
 }
 
 // --- Applying the response --------------------------------------------------
