@@ -73,13 +73,17 @@ function isTestimonialDot(e) {
 // (broad->specific); scope header|footer|main; sheetKey overrides sheet lookup.
 const BLOCK = {
   hero: { trail: () => 'rw2_hero', scope: 'main' },
-  cards: { trail: (i) => `rw_cards_container|carousel|rw_card_${i}`, linkName: false, scope: 'main' },
+  // carousel controls (prev/next arrows, dots) sit at the carousel level, not in a card;
+  // real cards are rw_card_N. (blocks/cards/cards.js wires .cards-controls -> carousel.)
+  cards: { trail: (i, e) => (/^(arrow_|scroll)/i.test((e.text || '').trim()) ? 'rw_cards_container|carousel' : `rw_cards_container|carousel|rw_card_${i}`), linkName: false, scope: 'main' },
   faq: { trail: () => 'accordion', linkName: false, scope: 'main' },
   // each story card/frame is an rw_testimonial_item slot; the carousel dots
   // (button, empty detail, numeric label) stay at the block level.
   testimonial: { trail: (i, e) => (isTestimonialDot(e) ? 'rw_testimonial' : 'rw_testimonial|rw_testimonial_item'), linkName: false, scope: 'main' },
   'related-blogs': { trail: () => 'qrc_content_card_grid', action: 'engaged', linkName: false, scope: 'main' },
-  'case-study-header': { trail: () => 'qrc_article_hero', linkName: false, scope: 'main' },
+  // eyebrow/byline -> qrc_article_hero; the share row nests under it -> qrc_article_hero|social_media
+  // (blocks/case-study-header wires .case-study-copy=qrc_article_hero, .case-study-share=social_media).
+  'case-study-header': { trail: (i, e) => (/^(facebook|twitter|linkedin|youtube|x)$/i.test((e.text || '').trim()) ? 'qrc_article_hero|social_media' : 'qrc_article_hero'), linkName: false, scope: 'main' },
   social: { trail: () => 'social_media', scope: 'main', sheetKey: 'case-study-header' },
   toc: { trail: () => 'TableOfContents', linkName: false, scope: 'main', sheetKey: 'case-study-header' },
   nav: { trail: () => '', action: 'engaged', linkName: false, scope: 'header' },
