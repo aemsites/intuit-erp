@@ -209,6 +209,10 @@ describe('collectExperiments', () => {
     const m = main('<div data-exp="1"></div><div data-exp="2"></div>');
     expect(collectExperiments(m, m.querySelector('[data-exp]')).map((e) => e.id)).toEqual(['2']);
   });
+  it('carries append=true only when data-exp-mode is "append"', () => {
+    expect(collectExperiments(main('<div data-exp="1" data-exp-mode="append"></div>'))[0].append).toBe(true);
+    expect(collectExperiments(main('<div data-exp="1"></div>'))[0].append).toBe(false);
+  });
 });
 
 describe('collectSlots + sameTargetAsExp (IXP precedence)', () => {
@@ -225,6 +229,10 @@ describe('collectSlots + sameTargetAsExp (IXP precedence)', () => {
   it('keeps pzn when exp targets a different block', () => {
     const m = main('<div data-pzn="p" data-pzn-block="cards" data-exp="1" data-exp-block="hero"><div class="cards" data-block-name="cards"></div><div class="hero" data-block-name="hero"></div></div>');
     expect(collectSlots(m)).toHaveLength(1);
+  });
+  it('carries append=true only when data-pzn-mode is "append"', () => {
+    expect(collectSlots(main('<div data-pzn="a" data-pzn-mode="append"></div>'))[0].append).toBe(true);
+    expect(collectSlots(main('<div data-pzn="a"></div>'))[0].append).toBe(false);
   });
 });
 
@@ -500,6 +508,30 @@ describe('applyLayer (section/block swaps, from the cached response)', () => {
     const m = main('<div data-pzn="alpha"></div>');
     await applyLayer(m, null);
     expect(loadFragment).not.toHaveBeenCalled();
+  });
+
+  it('append mode (data-pzn-mode) appends the fragment, preserving existing content', async () => {
+    const m = main('<div data-pzn="alpha" data-pzn-mode="append"><p class="base">keep</p></div>');
+    await applyLayer(m, pznResp('alpha', { casId: '/frag' }));
+    const el = m.querySelector('[data-pzn]');
+    expect(el.querySelector('.base')).toBeTruthy(); // existing content preserved
+    expect(el.querySelector('[data-frag]')).toBeTruthy(); // fragment appended
+  });
+
+  it('append mode works for experiments too (data-exp-mode)', async () => {
+    const m = main('<div data-exp="376648" data-exp-mode="append"><p class="base">keep</p></div>');
+    await applyLayer(m, expResp('376648', { replacementCasId: '/frag' }));
+    const el = m.querySelector('[data-exp]');
+    expect(el.querySelector('.base')).toBeTruthy();
+    expect(el.querySelector('[data-frag]')).toBeTruthy();
+  });
+
+  it('default (swap) mode replaces existing content', async () => {
+    const m = main('<div data-pzn="alpha"><p class="base">gone</p></div>');
+    await applyLayer(m, pznResp('alpha', { casId: '/frag' }));
+    const el = m.querySelector('[data-pzn]');
+    expect(el.querySelector('.base')).toBeFalsy();
+    expect(el.querySelector('[data-frag]')).toBeTruthy();
   });
 });
 

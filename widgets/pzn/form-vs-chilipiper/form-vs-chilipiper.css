@@ -1,0 +1,12 @@
+/* Behavior-only widget block renders nothing; the scheduler lives in a modal. */
+.form-vs-chilipiper {
+  display: none;
+}
+
+/* ChiliPiper round-robin iframe inside the shared modal. */
+.chilipiper-embed {
+  display: block;
+  width: min(880px, 90vw);
+  height: min(640px, 85vh);
+  border: 0;
+}

@@ -1,0 +1,39 @@
+/*
+ * Treatment field order for the Marketo modal form: Business Email before Business Name
+ * (which ZoomInfo FormComplete derives from the email). Loaded globally by the widget; the
+ * rules target the Marketo form wherever it renders. Ported from the OICMS variant.
+ */
+
+/* Behavior-only widget block renders nothing itself. */
+.smartform {
+  display: none;
+}
+
+/* ZoomInfo "we found this business name" disclaimer. */
+.zi-formcomplete-msg {
+  font-size: 14px;
+  font-family: "Avenir Next forINTUIT", "Avenir Next", Futura, sans-serif;
+  color: #000;
+}
+
+/*
+ * Reorder the Marketo fields: First, Last, Email, Company (from ZI), Phone.
+ * Marketo owns these class/id names — external, not ours to kebab-case.
+ */
+/* stylelint-disable selector-class-pattern, selector-id-pattern */
+.mktoForm {
+  display: flex;
+  flex-direction: column;
+}
+
+.mktoForm > .mktoFormRow:has(#FirstName) { order: 1; }
+.mktoForm > .mktoFormRow:has(#LastName) { order: 2; }
+.mktoForm > .mktoFormRow:has(#Email) { order: 3; }
+.mktoForm > .mktoFormRow:has(#intuitCompanyName) { order: 4; }
+.mktoForm > .mktoFormRow:has(#Phone) { order: 5; }
+
+/* Hide empty rows; push everything else (buttons, hidden rows) to the end. */
+.mktoForm > .mktoFormRow:not(:has(input:not([type="hidden"]), select, textarea)) { display: none; }
+.mktoForm > :not(.mktoFormRow) { order: 10; }
+.mktoForm > .mktoFormRow:not(:has(#FirstName, #LastName, #Email, #intuitCompanyName, #Phone)) { order: 10; }
+/* stylelint-enable selector-class-pattern, selector-id-pattern */

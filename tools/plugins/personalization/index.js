@@ -144,11 +144,21 @@ function fieldError(input) {
   };
 }
 
-/** Section form for a chosen mode: id + scope + variants. */
+/** Section form for a chosen mode: id + scope + variants + append toggle. */
 function sectionForm(target, mode) {
   const cur = mode === 'pzn'
-    ? { id: target.pzn, block: target.pznBlock, variants: target.pznVariants }
-    : { id: target.exp, block: target.expBlock, variants: target.expVariants };
+    ? {
+      id: target.pzn,
+      block: target.pznBlock,
+      variants: target.pznVariants,
+      append: target.pznAppend,
+    }
+    : {
+      id: target.exp,
+      block: target.expBlock,
+      variants: target.expVariants,
+      append: target.expAppend,
+    };
 
   const idInput = el('input', {
     class: 'pzn-input',
@@ -170,6 +180,14 @@ function sectionForm(target, mode) {
     () => pickFragment(state.sdk, { placeholder: '/fragments/pzn/…' }),
   );
 
+  // Additive slot: append the fragment instead of swapping (for behavior/code widgets).
+  const appendInput = el('input', { attrs: { type: 'checkbox' } });
+  if (cur.append) appendInput.checked = true;
+  const appendLabel = el('label', { class: 'pzn-checkbox' }, [
+    appendInput,
+    el('span', { text: 'Append (add to the slot instead of replacing it)' }),
+  ]);
+
   const saveBtn = el('button', {
     class: 'pzn-save',
     text: 'Save',
@@ -177,7 +195,7 @@ function sectionForm(target, mode) {
       const id = idInput.value.trim();
       if (!id) { err.show(`${MODE_LABEL[mode]} ID is required`); return; }
       save(setSectionTag(state.source, target.sectionIndex, mode, {
-        id, block: scope.value, variants: variants.get(),
+        id, block: scope.value, variants: variants.get(), append: appendInput.checked,
       }));
     },
   });
@@ -190,6 +208,7 @@ function sectionForm(target, mode) {
     scope,
     el('label', { class: 'pzn-field-label', text: `Variants — fragments (max ${MAX_VARIANTS})` }),
     variants.element,
+    appendLabel,
     saveBtn,
   ]);
 }

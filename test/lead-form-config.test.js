@@ -209,7 +209,9 @@ describe('decorate — live Marketo form', () => {
     );
   });
 
-  it('hands off to ChiliPiper and tracks on Marketo success', async () => {
+  it('hands off to ChiliPiper (prod args + xref) and fires the ECS lead track on success', async () => {
+    const track = vi.fn();
+    window.intuit = { tracking: { ecs: { webAnalytics: { track } } } };
     const block = make([['formId', '1058'], ['chiliPiperRouter', 'mid-us-webform-managed-ies']]);
     await decorate(block);
     await flush();
@@ -222,11 +224,24 @@ describe('decorate — live Marketo form', () => {
     expect(window.ChiliPiper.submit).toHaveBeenCalledWith(
       'intuitsales',
       'mid-us-webform-managed-ies',
-      expect.objectContaining({ map: true }),
+      expect.objectContaining({
+        map: false,
+        disableRelation: true,
+        event: expect.objectContaining({ Lead_XRef_ID__c: expect.any(String) }),
+      }),
     );
+    // The same minted xref feeds the ECS lead track → IES_lead.
+    const xref = window.ChiliPiper.submit.mock.calls[0][2].event.Lead_XRef_ID__c;
+    expect(track).toHaveBeenCalledWith(expect.objectContaining({
+      object: 'lead',
+      action: 'create_submitted',
+      lead_xref_id: xref,
+      product_family_of_interest: 'Intuit Enterprise Suite',
+    }));
     // analytics preserved: with no Tealium, the Adobe identity event fires with mapped values
     expect(sendEvent).toHaveBeenCalledTimes(1);
     expect(sendEvent.mock.calls[0][0].xdm.identityMap.Email[0].id).toBe('controller@brightpathco.com');
+    delete window.intuit;
   });
 });
 

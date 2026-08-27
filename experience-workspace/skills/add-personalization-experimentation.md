@@ -1,7 +1,7 @@
 ---
 name: add-personalization-experimentation
-description: Tag a page, section, or block for Personalization (pzn) or Experimentation (exp) by writing the right rows into the DA source — page-level experiment or personalization metadata, or Section Metadata keys that the aem.live pipeline turns into data-pzn / data-exp attributes on the section. Also records up to 5 content variants (fragments) so authors can preview each option on the page. Use when a marketer, author, or agent wants to mark an area of a page as personalized or experiment-targeted, without the DA panel — and whenever you have the variant fragments from the offer engine, write them too.
-version: 3
+description: Tag a page, section, or block for Personalization (pzn) or Experimentation (exp) by writing the right rows into the DA source — page-level experiment or personalization metadata, or Section Metadata keys that the aem.live pipeline turns into data-pzn / data-exp attributes on the section. Also records up to 5 content variants (fragments) so authors can preview each option on the page, and supports code-only variants (widgets) with append mode. Use when a marketer, author, or agent wants to mark an area of a page as personalized or experiment-targeted, without the DA panel — and whenever you have the variant fragments from the offer engine, write them too.
+version: 4
 status: approved
 ---
 
@@ -59,6 +59,7 @@ Each Section Metadata key becomes a `data-<key>` attribute on the section via th
 | `pzn` / `exp` | the id, verbatim | `data-pzn` / `data-exp` |
 | `pzn-block` / `exp-block` | a block name (the block's `data-block-name`) — **only for block scope** | `data-pzn-block` / `data-exp-block` |
 | `pzn-variants` / `exp-variants` | up to 5 `/fragments/pzn/…` paths, comma-separated | `data-pzn-variants` / `data-exp-variants` |
+| `pzn-mode` / `exp-mode` | `append` to **add** the variant fragment to the slot instead of replacing it — for code-only widgets (see below). Omit for the default (swap). | `data-pzn-mode` / `data-exp-mode` |
 
 **Section vs block scope:** a section carries the tag. Add the `*-block` row (value = the target block's
 name) to scope the tag to that one block; omit it to target the whole section. **One tag per mode per
@@ -85,6 +86,45 @@ All are picked from the same DA fragment picker.
 
 Write variant references as **plain text** (not DA links) so the pipeline's data-attribute value stays clean
 and body `/fragments/` autoblocking is never triggered.
+
+## Code-only variants (widgets) + append mode
+
+Some personalizations aren't a content swap — they're a **snippet of code** that has to run on the page
+(a modal, a form integration, a third-party script). A fragment can't just contain a `<script>`: the
+runtime injects fragment HTML via `innerHTML`, which browsers never execute. The vehicle for code is the
+**`widget` block**, which dynamically imports a repo-stored ES module and runs it (it can inject real
+`<script>`/`<style>`). So a code personalization is: **a JS module under `/widgets/…` → referenced by a
+`widget` block inside a fragment → that fragment used as the variant.**
+
+Two things make this work:
+
+1. **The variant fragment is a widget fragment.** Its body is just a link to the widget code — a bare
+   `<a href="/widgets/<path>/<name>.html">` auto-blocks into a `widget` block (any `a[href*="/widgets/"]`
+   does), so the fragment page is a single link. Query params on the href become the widget's config, e.g.
+   `/widgets/pzn/form-vs-chilipiper/form-vs-chilipiper.html?router=cal-first-construction`. The widget code
+   ships via git (code origin); the fragment ships via DA (content origin) like any other fragment.
+
+2. **Tag the slot with `append` mode.** These widgets attach behavior and render nothing visible, so there
+   is nothing to swap — add `pzn-mode` / `exp-mode` = `append` so the runtime **appends** the widget
+   fragment to the slot instead of replacing its content. Point the slot at an empty mount (an empty section
+   is fine); its location only controls *when* the widget runs (first section = eager, later = lazy). Works
+   the same for `pzn` and `exp`.
+
+For a code variant there's usually just **one** treatment fragment — the control is the page as it already
+is, so you don't author a control fragment. Existing widget modules live under `widgets/pzn/…`.
+
+### Code-only widget variant (append mode)
+
+```html
+<div class="section-metadata">
+  <div><div>pzn</div><div>SBSEGICOMMContentIESWebSurveyModal</div></div>
+  <div><div>pzn-mode</div><div>append</div></div>
+  <div><div>pzn-variants</div><div>/fragments/pzn/web-survey/treatment</div></div>
+</div>
+```
+→ `data-pzn="SBSEGICOMMContentIESWebSurveyModal" data-pzn-mode="append" …` on the section. When the offer
+engine returns the treatment, its fragment (a `widget` block → `/widgets/pzn/web-survey/web-survey.js`) is
+appended to the section and runs.
 
 ## Markup — canonical div-class form
 
@@ -163,7 +203,7 @@ A save can conflict with a concurrently open live DA edit.
 
 ## Clearing a tag
 
-- **Section/block**: remove the `pzn`/`exp` row and its `*-block` / `*-variants` rows; drop the
+- **Section/block**: remove the `pzn`/`exp` row and its `*-block` / `*-variants` / `*-mode` rows; drop the
   `section-metadata` block if no rows remain.
 - **Page (experimentation)**: remove `experiment-id` / `experiment-label` / `experiment-variants`.
 - **Page (personalization)**: remove `personalization-id` / `personalization-variants`.

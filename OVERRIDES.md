@@ -128,6 +128,8 @@ section, and **every other key** becomes a `data-<key>` attribute the client cod
 | `Exp Block` | `data-exp-block` | Scopes that experiment to the block whose `data-block-name` matches, instead of the whole section |
 | `Pzn` | `data-pzn` | Section-scoped personalization access-point name |
 | `Pzn Block` | `data-pzn-block` | Scopes personalization to a named block |
+| `Exp Mode` | `data-exp-mode` | `append` = the experiment fragment is **appended** to the slot, not swapped in (additive behavior/code widgets). Any other value / absent = swap (default) |
+| `Pzn Mode` | `data-pzn-mode` | `append` = the personalization fragment is **appended** to the slot, not swapped in (additive behavior/code widgets). Any other value / absent = swap (default) |
 
 The `Exp*` / `Pzn*` rows are read by [scripts/experience.js](scripts/experience.js) but are **not
 currently present in authored content** — only `Style` and `Background` are used today.
