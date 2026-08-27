@@ -43,6 +43,20 @@
   margin: 0 0 8px;
 }
 
+/* Shown in place of the form when the lead was captured but the ChiliPiper
+   booking handoff never took over (blocked script / router failure). */
+.form .form-success {
+  text-align: center;
+}
+
+.form .form-success .form-success-heading {
+  font-size: 24px;
+  line-height: 1.2;
+  font-weight: 400;
+  color: var(--heading);
+  margin: 0 0 8px;
+}
+
 .form .form-subheader {
   font-size: 15px;
   color: var(--text-muted);

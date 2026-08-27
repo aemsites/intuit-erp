@@ -52,7 +52,13 @@ export async function createModal(contentNodes) {
   dialog.addEventListener('close', () => {
     document.body.classList.remove('modal-open');
     wrapper.remove();
-    // Restore focus to whatever opened the modal (a11y).
+    // Restore focus to whatever opened the modal (a11y) — but only for a
+    // user-initiated close (✕ / click-outside / Esc). A caller handing the
+    // visitor off to another surface (e.g. ChiliPiper's own full-screen
+    // booking overlay) sets `data-suppress-focus-restore` first: pulling focus
+    // back to the trigger button mid-handoff would yank keyboard and
+    // screen-reader users out of the surface that is taking over.
+    if (dialog.dataset.suppressFocusRestore === 'true') return;
     if (previouslyFocused?.focus) previouslyFocused.focus();
   });
 
