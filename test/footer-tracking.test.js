@@ -153,10 +153,12 @@ describe('footer click-tracking — id-based keying', () => {
   });
 });
 
-// Clicking "Manage cookies" must undo OneTrust's focus-into-modal scroll-to-top without
-// touching any scrolling the reader does themselves. jsdom stubs `window.scrollTo` as a
-// no-op, so scroll position is mocked here to observe what the handler actually calls it
-// with.
+// Clicking "Manage cookies" must undo the scroll-to-top OneTrust does when it opens the
+// preference centre, without touching any scrolling the reader does themselves. The real
+// stage build showed OneTrust jumps the page to the very top (scrollY 0) with no focus
+// change, so the handler keys on "landed back at the top", not on focus. jsdom stubs
+// `window.scrollTo` as a no-op, so scroll position is mocked here to observe what the
+// handler actually calls it with.
 function mockScrollPosition(x, y) {
   const pos = { x, y };
   Object.defineProperty(window, 'scrollX', { configurable: true, get: () => pos.x });
@@ -166,18 +168,15 @@ function mockScrollPosition(x, y) {
   return { setPos: (newX, newY) => { pos.x = newX; pos.y = newY; }, scrollTo };
 }
 
-// pinScroll rechecks across a couple of animation frames after the focusin it reacts to;
-// let those settle before a test ends, or they fire later against a torn-down mock.
-function flushFrames(n = 3) {
-  return new Promise((resolve) => {
-    let count = 0;
-    const step = () => { count += 1; if (count >= n) resolve(); else requestAnimationFrame(step); };
-    requestAnimationFrame(step);
-  });
-}
+const clickManageCookies = (block) => block.querySelector('.footer-copy-btn')
+  .dispatchEvent(new window.MouseEvent('click', { bubbles: true, cancelable: true }));
 
 describe('footer cookie preferences — scroll pinning', () => {
+  // pinScroll arms a window scroll listener that only self-removes after a 2s timeout,
+  // so fake timers let each test flush that disarm and not leak a still-armed listener
+  // into the next test (they share `window`).
   beforeEach(() => {
+    vi.useFakeTimers();
     document.head.innerHTML = '';
     document.body.innerHTML = '';
     resetTrackingState();
@@ -185,33 +184,33 @@ describe('footer cookie preferences — scroll pinning', () => {
     window.scrollTo = vi.fn();
     stubFetch();
   });
-  afterEach(() => { vi.unstubAllGlobals(); delete window.OneTrust; delete window.scrollTo; });
-
-  it('restores scroll when OneTrust moves focus into the preference centre', async () => {
-    const block = await buildFooter();
-    const { setPos, scrollTo } = mockScrollPosition(0, 3000);
-
-    const consent = document.createElement('div');
-    consent.id = 'onetrust-consent-sdk';
-    const closeBtn = document.createElement('button');
-    consent.append(closeBtn);
-    document.body.append(consent);
-
-    block.querySelector('.footer-copy-btn').dispatchEvent(new window.MouseEvent('click', { bubbles: true, cancelable: true }));
-    // OneTrust's own scroll-into-view jumping the page as focus lands in the modal.
-    setPos(0, 0);
-    closeBtn.focus();
-
-    expect(scrollTo).toHaveBeenCalledWith(0, 3000);
-    await flushFrames(); // let the deferred rechecks settle before teardown
+  afterEach(() => {
+    vi.runOnlyPendingTimers(); // fire pinScroll's disarm timeout -> removes its listener
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+    delete window.OneTrust;
+    delete window.scrollTo;
   });
 
-  it('does not fight a reader scroll that has nothing to do with OneTrust', async () => {
+  it('restores scroll when OneTrust jumps the page to the top', async () => {
     const block = await buildFooter();
     const { setPos, scrollTo } = mockScrollPosition(0, 3000);
 
-    block.querySelector('.footer-copy-btn').dispatchEvent(new window.MouseEvent('click', { bubbles: true, cancelable: true }));
-    // The reader scrolls on their own; nothing ever focuses inside OneTrust's widget.
+    clickManageCookies(block);
+    // OneTrust opens the preference centre and jumps the window to the top.
+    setPos(0, 0);
+    window.dispatchEvent(new window.Event('scroll'));
+
+    expect(scrollTo).toHaveBeenCalledWith(0, 3000);
+    expect(window.scrollY).toBe(3000);
+  });
+
+  it('does not fight a reader scroll that never reaches the top', async () => {
+    const block = await buildFooter();
+    const { setPos, scrollTo } = mockScrollPosition(0, 3000);
+
+    clickManageCookies(block);
+    // The reader scrolls up on their own but nowhere near the top.
     setPos(0, 500);
     window.dispatchEvent(new window.Event('scroll'));
 
@@ -219,15 +218,27 @@ describe('footer cookie preferences — scroll pinning', () => {
     expect(window.scrollY).toBe(500);
   });
 
-  it('ignores focus moving to unrelated page controls', async () => {
+  it('corrects the jump only once, then leaves the page alone', async () => {
     const block = await buildFooter();
     const { setPos, scrollTo } = mockScrollPosition(0, 3000);
 
-    block.querySelector('.footer-copy-btn').dispatchEvent(new window.MouseEvent('click', { bubbles: true, cancelable: true }));
+    clickManageCookies(block);
     setPos(0, 0);
-    const other = document.createElement('button');
-    document.body.append(other);
-    other.focus();
+    window.dispatchEvent(new window.Event('scroll')); // OneTrust's jump -> restored to 3000
+    // A later top-ward scroll (e.g. the reader themselves) is no longer touched.
+    setPos(0, 0);
+    window.dispatchEvent(new window.Event('scroll'));
+
+    expect(scrollTo).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not arm when the reader clicks from near the top of the page', async () => {
+    const block = await buildFooter();
+    const { setPos, scrollTo } = mockScrollPosition(0, 20);
+
+    clickManageCookies(block);
+    setPos(0, 0);
+    window.dispatchEvent(new window.Event('scroll'));
 
     expect(scrollTo).not.toHaveBeenCalled();
   });
