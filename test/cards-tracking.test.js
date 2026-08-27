@@ -47,4 +47,22 @@ describe('cards — carousel control tracking', () => {
     stampInteraction({ target: cta });
     expect(computeTrackingPayload(cta).ui_access_point).toMatch(/^rw_cards_container\|carousel\|rw_card_\d+$/);
   });
+
+  it('nav arrows report rw_carousel_control with an arrow_left/arrow_right detail + link_name', () => {
+    const block = setup();
+    const [prev, next] = block.querySelectorAll('.cards-nav-buttons button');
+    expect(prev).not.toBeNull();
+
+    stampInteraction({ target: prev });
+    let p = computeTrackingPayload(prev);
+    expect(p.ui_object).toBe('rw_carousel_control');
+    expect(p.ui_object_detail).toBe('arrow_left');
+    expect(p.link_name).toBe('rw_carousel_control-arrow_left');
+
+    stampInteraction({ target: next });
+    p = computeTrackingPayload(next);
+    expect(p.ui_object).toBe('rw_carousel_control');
+    expect(p.ui_object_detail).toBe('arrow_right');
+    expect(p.link_name).toBe('rw_carousel_control-arrow_right');
+  });
 });

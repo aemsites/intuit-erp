@@ -18,6 +18,7 @@
 
 import { loadCSS } from '../../scripts/aem.js';
 import { videoInfo } from '../video/video-info.js';
+import { trackAs } from '../../scripts/tracking.js';
 
 const SWIPE_THRESHOLD = 40; // px — minimum horizontal drag to change slides
 
@@ -388,4 +389,24 @@ export default function decorate(block) {
   window.addEventListener('resize', applyOffset);
 
   goTo(0);
+
+  // Click tracking: the spotlight testimonial's thumbnail-strip chevrons report prod's authored
+  // `testimonial|thumbnail_{side}_chevron` id + WA link (the glyph ‹/› is not a tracked label);
+  // slide CTAs and every other variant's controls stay generic loose derives. No trail — prod
+  // emits ui_access_point=page on these controls.
+  const chevronPayload = (el) => {
+    if (!isSpotlight || !el.classList) return null;
+    let side = null;
+    if (el.classList.contains('carousel-prev')) side = 'left';
+    else if (el.classList.contains('carousel-next')) side = 'right';
+    if (!side) return null;
+    const id = `testimonial|thumbnail_${side}_chevron`;
+    return {
+      'object-detail': id,
+      'ui-object-detail': id,
+      'ui-object': 'button',
+      'wa-link': `testimonial-thumbnail-${side}-chevron`,
+    };
+  };
+  trackAs(null, block, { key: 'carousel', payload: chevronPayload });
 }
