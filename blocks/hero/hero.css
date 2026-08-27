@@ -107,8 +107,7 @@
   position: relative;
   z-index: 1;
   width: 100%;
-  max-height: 420px;
-  object-fit: cover;
+  height: auto;
   border-radius: 12px;
 
   /* box-shadow: 0 24px 60px rgb(0 0 0 / 35%); */
@@ -121,6 +120,20 @@
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 24px 60px rgb(0 0 0 / 35%);
+}
+
+.hero.image-glow .hero-dashboard-lottie {
+  overflow: initial;
+}
+
+.hero.image-glow .hero-dashboard-lottie::before,
+.hero.image-glow .hero-media img::before {
+    content: "";
+    position: absolute;
+    inset: -20%;
+    z-index: 0;
+    pointer-events: none;
+    background: radial-gradient(ellipse 74% 68% at 50% 50%, #33b5ff 0%, #09f 10%, #07f 22%, #0060d4 36%, rgb(0 80 190 / 72%) 48%, rgb(0 37 74 / 38%) 62%, rgb(0 37 74 / 0%) 82%);
 }
 
 .hero .hero-dashboard-lottie svg {
@@ -218,6 +231,7 @@
 }
 
 .hero.form.gradient .hero-copy img {
+  width: 154px;
   height: auto;
 }
 
@@ -294,7 +308,8 @@
   margin: 0 0 12px;
 }
 
-.hero .hero-form .form .form-disclaimer {
+.hero .hero-form .form .form-disclaimer,
+.hero .hero-form .form .form-disclaimer p {
   text-align: left;
   font-size: 12px;
   color: var(--text-muted);

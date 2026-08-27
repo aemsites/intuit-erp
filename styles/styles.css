@@ -932,7 +932,7 @@ img {
   display: none;
 }
 
-body:not(.case-study, .blog-article) .section:not(:first-of-type)>.default-content-wrapper> :is(h1, h2, h3, h4, h5, h6) {
+body:not(.case-study, .blog-article, .research) .section:not(:first-of-type)>.default-content-wrapper> :is(h1, h2, h3, h4, h5, h6) {
   text-align: center;
 }
 
@@ -1034,6 +1034,15 @@ main > .section.blue-divider {
 .section.dark-background > .default-content-wrapper :is(h1, h2, h3, h4, h5, h6, ol, ul, li, p),
 .section.dark-background .block :is(h1, h2, h3, h4, h5, h6, ol, ul, li, p) { 
   color: #fff; 
+}
+
+main > .section.dark-background > .default-content-wrapper > .button-wrapper a.button {
+  background: #fff;
+  color: var(--navy);
+
+  &:hover {
+    background: rgb(238 244 246);
+  }
 }
 
 .section.light-background > .default-content-wrapper :is(h1, h2, h3, h4, h5, h6) {

@@ -24,7 +24,7 @@
  * closeable keys are treated as UNTRACKED (0 fidelity), which drives the loop.
  */
 /* eslint-disable import/no-extraneous-dependencies, import/extensions, no-restricted-syntax, no-continue, no-console, no-plusplus, max-len, object-curly-newline, no-nested-ternary, no-mixed-operators, no-undef */
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { JSDOM } from 'jsdom';
 import {
@@ -34,9 +34,16 @@ import {
 import { computeTrackingPayload } from './tracker-replica.mjs';
 
 const DIR = 'scripts/diff/fixtures/local';
-const golden = JSON.parse(readFileSync(`${DIR}/clicktrack-golden.json`, 'utf8'));
+// --golden <path> selects which golden to diff (default: our reverse-engineered one;
+// pass clicktrack-golden-customer.json for the customer's authoritative set). Kept
+// import-safe: a missing golden yields an empty set instead of throwing, so importers
+// (coverage-matrix, gen-sheet) that only pull oursPayload/helpers never crash.
+const argOf = (flag) => { const i = process.argv.indexOf(flag); return i >= 0 ? process.argv[i + 1] : null; };
+const GOLDEN_PATH = argOf('--golden') || `${DIR}/clicktrack-golden.json`;
+const SHEET_PATH = argOf('--sheet') || `${DIR}/tracking-sheet.json`;
+const golden = existsSync(GOLDEN_PATH) ? JSON.parse(readFileSync(GOLDEN_PATH, 'utf8')) : { entries: [], pages: [] };
 let sheetMap = new Map();
-try { sheetMap = indexRows(JSON.parse(readFileSync(`${DIR}/tracking-sheet.json`, 'utf8')).data); } catch { /* no sheet */ }
+try { sheetMap = indexRows(JSON.parse(readFileSync(SHEET_PATH, 'utf8')).data); } catch { /* no sheet */ }
 
 export const DIFF_FIELDS = ['event', 'object', 'object_detail', 'action', 'ui_object', 'ui_object_detail', 'ui_action', 'ui_access_point', 'data-wa-link', 'icom_user_action', 'link_name'];
 const THRESHOLD = 99;
@@ -66,13 +73,17 @@ function isTestimonialDot(e) {
 // (broad->specific); scope header|footer|main; sheetKey overrides sheet lookup.
 const BLOCK = {
   hero: { trail: () => 'rw2_hero', scope: 'main' },
-  cards: { trail: (i) => `rw_cards_container|carousel|rw_card_${i}`, linkName: false, scope: 'main' },
+  // carousel controls (prev/next arrows, dots) sit at the carousel level, not in a card;
+  // real cards are rw_card_N. (blocks/cards/cards.js wires .cards-controls -> carousel.)
+  cards: { trail: (i, e) => (/^(arrow_|scroll)/i.test((e.text || '').trim()) ? 'rw_cards_container|carousel' : `rw_cards_container|carousel|rw_card_${i}`), linkName: false, scope: 'main' },
   faq: { trail: () => 'accordion', linkName: false, scope: 'main' },
   // each story card/frame is an rw_testimonial_item slot; the carousel dots
   // (button, empty detail, numeric label) stay at the block level.
   testimonial: { trail: (i, e) => (isTestimonialDot(e) ? 'rw_testimonial' : 'rw_testimonial|rw_testimonial_item'), linkName: false, scope: 'main' },
   'related-blogs': { trail: () => 'qrc_content_card_grid', action: 'engaged', linkName: false, scope: 'main' },
-  'case-study-header': { trail: () => 'qrc_article_hero', linkName: false, scope: 'main' },
+  // eyebrow/byline -> qrc_article_hero; the share row nests under it -> qrc_article_hero|social_media
+  // (blocks/case-study-header wires .case-study-copy=qrc_article_hero, .case-study-share=social_media).
+  'case-study-header': { trail: (i, e) => (/^(facebook|twitter|linkedin|youtube|x)$/i.test((e.text || '').trim()) ? 'qrc_article_hero|social_media' : 'qrc_article_hero'), linkName: false, scope: 'main' },
   social: { trail: () => 'social_media', scope: 'main', sheetKey: 'case-study-header' },
   toc: { trail: () => 'TableOfContents', linkName: false, scope: 'main', sheetKey: 'case-study-header' },
   nav: { trail: () => '', action: 'engaged', linkName: false, scope: 'header' },
@@ -84,6 +95,12 @@ const BLOCK = {
   author_bio: { trail: () => 'author_bio', linkName: false, scope: 'main' },
   // video play control (blocks/video/video.js: object=video/action=started/ui_object=button, link_name off, no trail)
   video: { trail: () => 'video', object: 'video', action: 'started', uiObject: 'video', linkName: false, scope: 'main' },
+  // feature-grid CTAs -> single-level `feature` trail (blocks/feature-grid/feature-grid.js trackAs('feature'))
+  feature: { trail: () => 'feature', scope: 'main' },
+  // highlight callout (blocks/highlight/highlight.js): variant-dependent trail — the `dark`
+  // promo banner reports `rw_banner`, the default/light callout `product_banner`. Modeled from
+  // the entry's own trail (the block emits its variant's); the real-render test is the guard.
+  product_banner: { trail: (i, e) => (e.exp.ui_access_point === 'product_banner' ? 'product_banner' : 'rw_banner'), scope: 'main' },
 };
 
 const { document } = new JSDOM('<!doctype html><html><head></head><body></body></html>').window;

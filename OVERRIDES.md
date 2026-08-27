@@ -31,6 +31,7 @@ ones this site's code actually reads.
 | `theme` | Adds theme class(es) to `<body>` | any string (comma-separated) | [scripts/aem.js](scripts/aem.js) |
 | `hide-header` | Removes the global header (gated conversion/landing pages) | `true` / `yes` / `hide` | [scripts/scripts.js](scripts/scripts.js) |
 | `hide-footer` | Removes the global footer | `true` / `yes` / `hide` | [scripts/scripts.js](scripts/scripts.js) |
+| `hide-contact-widget` | Skips the persistent bottom-right "Contact us" sales widget | `true` / `yes` / `hide` | [scripts/scripts.js](scripts/scripts.js) |
 | `nav` | Path to the nav fragment | path (default `/nav`) | [blocks/header/header.js](blocks/header/header.js) |
 | `footer` | Path to the footer fragment | path (default `/footer`) | [blocks/footer/footer.js](blocks/footer/footer.js) |
 
@@ -84,6 +85,7 @@ There is also the **aem-experimentation plugin** convention (loaded only when pr
 Read by the blog autoblock in [blocks/blog-template/blog-template.js](blocks/blog-template/blog-template.js):
 
 - `author`, `category`, `tags`, `date`, `updated` — byline / eyebrow.
+- `hide-rails` — suppress the article side rails. `true`/`yes`/`hide`/`all` drops **both** the TOC and the right rail and lets the body flow full-width; `right` drops **only** the right rail and keeps the TOC (matches the upstream research layout). Absent/other → both rails as normal.
 - `right-rail` — right-rail fragment (bare name resolves under `/fragments/`; default `/fragments/right-rail`).
 - `hear-from-our-customers` — trailing customers band fragment (default `/fragments/hear-from-our-customers`).
 - `pricing-disclaimer` — trailing pricing-disclaimer fragment (default `/fragments/pricing-disclaimer`).
@@ -109,6 +111,7 @@ Columns currently in the sheet and the rules in place today:
 | `robots` | Search-engine indexing | `noindex,nofollow` for `/events/**`, `/webinar-*`(`/**`), `/accountant/free-consultation/ies`(`/**`), `/oa`, `/ibs`, `/drafts/**` |
 | `twitter:site` / `twitter:creator` | Social card meta | site-wide (`**`): `https://www.intuit.com/` / `@intuit` |
 | `footer` | Footer fragment (same as the `footer` page metadata) | `/blog` and `/blog/**` → `/footer-blog` |
+| `hide-contact-widget` | Skips the contact-us widget (same as the `hide-contact-widget` page metadata) | `true` for `/webinar-*`(`/**`); also needed on `/contact` and `/library/templates/contact` (previously hardcoded in code) |
 | `Template` | Template (same as the `template` page metadata) | `/blog/**` → `Blog Article`; `/blog/case-study/**` → `Case Study`; `/blog/guide/**` → `Guide`; `/blog/research/**` → `Research`; `/blog/author/**` → `Author` |
 | `Category` | Blog category (byline/eyebrow + query filtering) | per `/blog/<category>/**` (e.g. `financials`, `erp`, `construction`, `payroll`, …) |
 | `right-rail` | Right-rail fragment (same as the `right-rail` page metadata) | per blog category → `/fragments/right-rail/<id>` |
@@ -159,7 +162,7 @@ Per-element/per-block overrides for click tracking, authored as `data-track-*` a
 | `?martech=` | Martech loading | `off` = disable all martech (Tealium + Adobe inert); `local` = load utag.js + OneTrust from local `/scripts/martech/`; absent/other = CDN default | [scripts/scripts.js](scripts/scripts.js) — see [MARTECH.md](MARTECH.md) |
 | `?rum=` (alias `?optel=`) | RUM sampling rate | `on`→1, `off`→0, `high`→10, `low`→1000, else weight 100 | [scripts/aem.js](scripts/aem.js) |
 | `?lighthouse=on` | Sets `window.hlx.lighthouse = true` (perf-test mode) | `on` | [scripts/aem.js](scripts/aem.js) |
-| `?locale=` | Locale sent to the decision API | locale string (falls back to `navigator.language` → `en-US`) | [scripts/experience.js](scripts/experience.js) |
+| `?locale=` | Locale sent to the decision API | locale string, hyphen converted to underscore (falls back to `navigator.language` → `en_US`) | [scripts/experience.js](scripts/experience.js) |
 | `?search-term=` | Seeds/reads the blog search query | string | [blocks/blog-search/search-utils.js](blocks/blog-search/search-utils.js) |
 | `?q=` (only on `/construction`) | Rewritten into the `llm_app_ctx` param, then redirects | string | [scripts/scripts.js](scripts/scripts.js) |
 | widget href params | Any `key=value` on a widget's authored link is copied onto the widget as `data-<key>` (config into the widget) | author-defined | [blocks/widget/widget.js](blocks/widget/widget.js) |

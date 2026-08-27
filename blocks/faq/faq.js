@@ -11,7 +11,7 @@
  * button's [aria-expanded] state rather than native <details>.
  * CSS: blocks/faq/faq.css
  */
-import { trackAs } from '../../scripts/tracking.js';
+import { trackAs, slug } from '../../scripts/tracking.js';
 
 const CHEVRON = '<path d="M3.5 6L8 10.5L12.5 6" fill="none" stroke="currentColor" '
   + 'stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>';
@@ -77,6 +77,24 @@ export default function decorate(block) {
   });
 
   block.replaceChildren(list);
-  // Accordion -> "accordion" trail; sheet/opt-in key "faq".
-  return trackAs('accordion', block, { key: 'faq', linkName: false });
+
+  // Per-toggle structured payload prod records (accordion_item_N + faq|question_N by DOM
+  // order, displayed on expand / dismissed on collapse, link_name). object_detail is scored
+  // index-tolerant (prod's N is authored + scrambled). Non-toggles fall through to derive.
+  const payload = (el) => {
+    if (!el.matches || !el.matches('.faq-toggle')) return null;
+    const item = el.closest('.faq-item');
+    const n = item ? [...block.querySelectorAll('.faq-item')].indexOf(item) + 1 : 0;
+    if (n < 1) return null;
+    const q = (el.querySelector('.faq-question')?.textContent || '').trim();
+    // pointerdown precedes the toggle, so aria-expanded is still the pre-click state.
+    const willOpen = el.getAttribute('aria-expanded') !== 'true';
+    return {
+      'ui-object': `accordion_item_${n}`,
+      'object-detail': `faq|question_${n}`,
+      'ui-action': willOpen ? 'displayed' : 'dismissed',
+      'custom-properties': { link_name: `accordion_item_${n}-${slug(q)}` },
+    };
+  };
+  return trackAs('accordion', block, { key: 'faq', linkName: false, payload });
 }
