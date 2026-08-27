@@ -24,7 +24,7 @@
  * closeable keys are treated as UNTRACKED (0 fidelity), which drives the loop.
  */
 /* eslint-disable import/no-extraneous-dependencies, import/extensions, no-restricted-syntax, no-continue, no-console, no-plusplus, max-len, object-curly-newline, no-nested-ternary, no-mixed-operators, no-undef */
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { JSDOM } from 'jsdom';
 import {
@@ -34,9 +34,16 @@ import {
 import { computeTrackingPayload } from './tracker-replica.mjs';
 
 const DIR = 'scripts/diff/fixtures/local';
-const golden = JSON.parse(readFileSync(`${DIR}/clicktrack-golden.json`, 'utf8'));
+// --golden <path> selects which golden to diff (default: our reverse-engineered one;
+// pass clicktrack-golden-customer.json for the customer's authoritative set). Kept
+// import-safe: a missing golden yields an empty set instead of throwing, so importers
+// (coverage-matrix, gen-sheet) that only pull oursPayload/helpers never crash.
+const argOf = (flag) => { const i = process.argv.indexOf(flag); return i >= 0 ? process.argv[i + 1] : null; };
+const GOLDEN_PATH = argOf('--golden') || `${DIR}/clicktrack-golden.json`;
+const SHEET_PATH = argOf('--sheet') || `${DIR}/tracking-sheet.json`;
+const golden = existsSync(GOLDEN_PATH) ? JSON.parse(readFileSync(GOLDEN_PATH, 'utf8')) : { entries: [], pages: [] };
 let sheetMap = new Map();
-try { sheetMap = indexRows(JSON.parse(readFileSync(`${DIR}/tracking-sheet.json`, 'utf8')).data); } catch { /* no sheet */ }
+try { sheetMap = indexRows(JSON.parse(readFileSync(SHEET_PATH, 'utf8')).data); } catch { /* no sheet */ }
 
 export const DIFF_FIELDS = ['event', 'object', 'object_detail', 'action', 'ui_object', 'ui_object_detail', 'ui_action', 'ui_access_point', 'data-wa-link', 'icom_user_action', 'link_name'];
 const THRESHOLD = 99;
@@ -84,6 +91,8 @@ const BLOCK = {
   author_bio: { trail: () => 'author_bio', linkName: false, scope: 'main' },
   // video play control (blocks/video/video.js: object=video/action=started/ui_object=button, link_name off, no trail)
   video: { trail: () => 'video', object: 'video', action: 'started', uiObject: 'video', linkName: false, scope: 'main' },
+  // feature-grid CTAs -> single-level `feature` trail (blocks/feature-grid/feature-grid.js trackAs('feature'))
+  feature: { trail: () => 'feature', scope: 'main' },
 };
 
 const { document } = new JSDOM('<!doctype html><html><head></head><body></body></html>').window;

@@ -8,7 +8,15 @@
     "lint:js": "eslint .",
     "lint:css": "stylelint \"blocks/**/*.css\" \"styles/*.css\"",
     "lint": "npm run lint:js && npm run lint:css",
-    "lint:fix": "npm run lint:js -- --fix && npm run lint:css -- --fix"
+    "lint:fix": "npm run lint:js -- --fix && npm run lint:css -- --fix",
+    "golden:customer": "node scripts/diff/payloads-to-golden.mjs",
+    "contract:audit": "node scripts/diff/contract-audit.mjs",
+    "golden:crosscheck": "node scripts/diff/golden-crosscheck.mjs",
+    "sheet:customer": "node scripts/diff/gen-sheet-from-golden.mjs --golden scripts/diff/fixtures/local/clicktrack-golden-customer.json --out scripts/diff/fixtures/local/tracking-sheet-customer.json",
+    "oracle:customer": "npm run --silent sheet:customer && node scripts/diff/customer-oracle.mjs",
+    "oracle:customer:floor": "node scripts/diff/customer-oracle.mjs --sheet /nonexistent",
+    "coverage:customer": "node scripts/diff/coverage-matrix.mjs --golden scripts/diff/fixtures/local/clicktrack-golden-customer.json --sheet scripts/diff/fixtures/local/tracking-sheet-customer.json --out CLICK-TRACKING-COVERAGE-customer.md",
+    "stage:parity": "node scripts/diff/stage-parity.mjs"
   },
   "keywords": [],
   "author": "",
