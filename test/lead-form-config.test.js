@@ -1,5 +1,5 @@
 import {
-  describe, it, expect, vi, beforeEach,
+  describe, it, expect, vi, beforeEach, afterEach,
 } from 'vitest';
 // eslint-disable-next-line import/no-relative-packages
 import { sendEvent } from '../plugins/martech/src/index.js';
@@ -227,6 +227,53 @@ describe('decorate — live Marketo form', () => {
     // analytics preserved: with no Tealium, the Adobe identity event fires with mapped values
     expect(sendEvent).toHaveBeenCalledTimes(1);
     expect(sendEvent.mock.calls[0][0].xdm.identityMap.Email[0].id).toBe('controller@brightpathco.com');
+  });
+});
+
+describe('decorate — ChiliPiper handoff fallback', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+    loadScript.mockImplementation(() => Promise.resolve());
+  });
+
+  // Marketo's own button markup is injected directly (rather than relying on
+  // the loadForm mock's document.getElementById lookup) so this test targets
+  // only the fallback logic under test, not the mock's DOM-attachment plumbing.
+  function withMktoButton(form) {
+    form.innerHTML = '<div class="mktoButtonRow"><button class="mktoButton" type="submit">Schedule a call</button></div>';
+  }
+
+  it('shows a fallback message if the ChiliPiper script fails to load', async () => {
+    loadScript.mockImplementation((src) => (src.includes('chilipiper')
+      ? Promise.reject(new Error('blocked'))
+      : Promise.resolve()));
+    const block = make([['formId', '1058'], ['chiliPiperRouter', 'mid-us-webform-managed-ies']]);
+    await decorate(block);
+    await flush();
+    const form = block.querySelector('form#mktoForm_1058');
+    withMktoButton(form);
+
+    vi.useFakeTimers();
+    onSuccessFn({ Email: 'controller@brightpathco.com', FirstName: 'Dana', Company: 'Bright Path' });
+    await vi.advanceTimersByTimeAsync(8000);
+
+    expect(form.querySelector('.mktoButton')).toBeNull();
+    expect(form.querySelector('.form-fallback-message').textContent).toMatch(/received your information/i);
+  });
+
+  it('does not show the fallback message when the handoff resolves in time', async () => {
+    const block = make([['formId', '1058'], ['chiliPiperRouter', 'mid-us-webform-managed-ies']]);
+    await decorate(block);
+    await flush();
+    const form = block.querySelector('form#mktoForm_1058');
+    withMktoButton(form);
+
+    vi.useFakeTimers();
+    onSuccessFn({ Email: 'controller@brightpathco.com', FirstName: 'Dana', Company: 'Bright Path' });
+    await vi.advanceTimersByTimeAsync(8000);
+
+    expect(form.querySelector('.mktoButton')).not.toBeNull();
+    expect(form.querySelector('.form-fallback-message')).toBeNull();
   });
 });
 

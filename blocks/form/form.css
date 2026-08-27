@@ -50,6 +50,14 @@
   line-height: 1.5;
 }
 
+.form .form-fallback-message {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--heading);
+  text-align: center;
+  margin: 0;
+}
+
 .form .form-disclaimer {
   font-size: 12px;
   line-height: 16px;

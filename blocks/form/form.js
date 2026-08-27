@@ -44,6 +44,10 @@ const CONFIG_KEYS = [
 ];
 
 const CHILIPIPER_SRC_DEFAULT = '//js.chilipiper.com/marketing.js';
+// How long to wait for the ChiliPiper handoff (script load + submit call) to
+// resolve before assuming it failed (blocked script, network issue, CSP) and
+// unsticking the Marketo button ourselves.
+const CHILIPIPER_FALLBACK_MS = 8000;
 
 // Marketo instance selection, keyed by the `marketo` page metadata. Prod unless the
 // page opts in; hostname is deliberately not consulted.
@@ -153,6 +157,18 @@ async function chiliPiperHandoff(cfg, router, form) {
   return true;
 }
 
+// The lead is already captured by Marketo by the time this runs; ChiliPiper
+// failing (blocked script, network issue) shouldn't leave the visitor staring
+// at a disabled "Please Wait" button forever with no acknowledgement.
+function showChiliPiperFallback(formEl) {
+  const button = formEl.querySelector('.mktoButton');
+  if (!button) return;
+  const message = document.createElement('p');
+  message.className = 'form-fallback-message';
+  message.textContent = "Thanks! We've received your information and will be in touch soon.";
+  button.replaceWith(message);
+}
+
 // reCAPTCHA v3, mirroring erp.intuit.com: on form load fetch a score token and
 // verify it via Intuit's siteverify proxy, then gate the Marketo submit on the
 // result (Marketo's own captcha is off; the token is never a form field). The
@@ -252,7 +268,18 @@ async function embedMarketoForm(formEl, cfg, config, env) {
     const canHandoff = !!(config.chiliPiperRouter && cfg['chilipiper.subdomain']);
     form.onSuccess((vals) => {
       try { trackFormSubmit(marketoValuesToLead(vals)); } catch (e) { /* non-fatal */ }
-      if (canHandoff) chiliPiperHandoff(cfg, config.chiliPiperRouter, form);
+      if (canHandoff) {
+        // Track success on this specific handoff call (not global DOM state) so
+        // multiple ChiliPiper-enabled forms on one page (e.g. inline + modal)
+        // can't mistake each other's widget for their own.
+        let handedOff = false;
+        chiliPiperHandoff(cfg, config.chiliPiperRouter, form)
+          .then(() => { handedOff = true; })
+          .catch(() => {});
+        setTimeout(() => {
+          if (!handedOff) showChiliPiperFallback(formEl);
+        }, CHILIPIPER_FALLBACK_MS);
+      }
       if (config.downloadUrl) window.open(config.downloadUrl, '_blank', 'noopener');
       else if (config.successUrl && !canHandoff) window.location.href = config.successUrl;
       // Suppress Marketo's default redirect only when we provide our own feedback
