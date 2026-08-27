@@ -15,7 +15,6 @@ import {
   ensureAppVars, flushAppVars, recordPzn, recordPznPage, recordIxp, resetAnalytics,
   stampPzn, stampExperiment,
   fetchExperience, applyPage, applyLayer,
-  hasExperienceConsent, readConsentGroups, experienceConsentGroup, consentEnforced,
   whenFullStoryReady, notifyFullStory,
 } from '../scripts/experience.js';
 // eslint-disable-next-line import/first
@@ -533,54 +532,6 @@ describe('applyLayer (section/block swaps, from the cached response)', () => {
     const el = m.querySelector('[data-pzn]');
     expect(el.querySelector('.base')).toBeFalsy();
     expect(el.querySelector('[data-frag]')).toBeTruthy();
-  });
-});
-
-describe('consent gate', () => {
-  afterEach(() => {
-    vi.unstubAllGlobals();
-    document.cookie = 'OptanonConsent=; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-  });
-
-  it('readConsentGroups parses the OptanonConsent groups field (URL-encoded)', () => {
-    document.cookie = 'OptanonConsent=isGpcEnabled=0&groups=C0001%3A1%2CC0004%3A0';
-    expect(readConsentGroups()).toEqual({ C0001: true, C0004: false });
-  });
-  it('readConsentGroups returns null when the cookie is absent', () => {
-    expect(readConsentGroups()).toBeNull();
-  });
-  it('experienceConsentGroup defaults to C0004, overridable via metadata', () => {
-    expect(experienceConsentGroup()).toBe('C0004');
-    setMeta('experience-consent-group', 'C0002');
-    expect(experienceConsentGroup()).toBe('C0002');
-  });
-  it('bypasses (returns true) on a non-enforced host like localhost', () => {
-    vi.stubGlobal('location', { hostname: 'localhost', search: '' });
-    expect(consentEnforced()).toBe(false);
-    expect(hasExperienceConsent()).toBe(true);
-  });
-  it('enforces on *.intuit.com: false without consent, true once the group is granted', () => {
-    vi.stubGlobal('location', { hostname: 'erp.intuit.com', search: '' });
-    expect(consentEnforced()).toBe(true);
-    expect(hasExperienceConsent()).toBe(false); // first visit: no cookie yet
-    document.cookie = 'OptanonConsent=groups=C0004%3A1';
-    expect(hasExperienceConsent()).toBe(true); // after consent: group granted
-  });
-  it('denies on *.intuit.com when the group is present but not granted', () => {
-    vi.stubGlobal('location', { hostname: 'stage.erp.intuit.com', search: '' });
-    document.cookie = 'OptanonConsent=groups=C0004%3A0';
-    expect(hasExperienceConsent()).toBe(false);
-  });
-  it('the experience-consent override is honored only on non-enforced hosts', () => {
-    // Ignored on *.intuit.com — the real OptanonConsent cookie governs (none here → false),
-    // so the override can never bypass the gate in prod/stage.
-    vi.stubGlobal('location', { hostname: 'erp.intuit.com', search: '?experience-consent=granted' });
-    expect(hasExperienceConsent()).toBe(false);
-    // Honored on preview/localhost, both directions.
-    vi.stubGlobal('location', { hostname: 'localhost', search: '?experience-consent=denied' });
-    expect(hasExperienceConsent()).toBe(false);
-    vi.stubGlobal('location', { hostname: 'localhost', search: '?experience-consent=granted' });
-    expect(hasExperienceConsent()).toBe(true);
   });
 });
 

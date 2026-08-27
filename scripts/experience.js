@@ -11,7 +11,7 @@
 //
 // A slot flagged data-exp-mode / data-pzn-mode="append" is APPENDED to its target rather
 // than swapped in — the vehicle for additive behavior widgets that attach code without
-// replacing content. The call itself is gated on consent (hasExperienceConsent).
+// replacing content.
 
 import { getMetadata } from './aem.js';
 import { buildIntentContext, getIntentProfile } from './of1-intent.js';
@@ -149,73 +149,6 @@ export function buildContext(permalink = window.location.href) {
   const of1Intent = buildIntentContext(getIntentProfile());
   if (of1Intent) context.of1Intent = of1Intent;
   return context;
-}
-
-// --- Consent gate -----------------------------------------------------------
-
-// The OneTrust consent group that gates targeting/personalization — the same consent that
-// governs OF1 intent. Overridable per page via `experience-consent-group` metadata.
-const DEFAULT_CONSENT_GROUP = 'C0004';
-
-export function experienceConsentGroup() {
-  return (getMetadata('experience-consent-group') || DEFAULT_CONSENT_GROUP).trim();
-}
-
-// Parses the OneTrust `OptanonConsent` cookie's `groups=1:1,2:0,...` field into a
-// { groupId: granted } map, or null when absent/unparseable. Inlined here (it mirrors
-// readOptanonConsent in plugins/tealium-martech) so the eager experience path stays
-// self-contained and never pulls the martech loader into the pre-LCP graph.
-export function readConsentGroups() {
-  try {
-    const match = document.cookie.match(/(?:^|;\s*)OptanonConsent=([^;]+)/);
-    if (!match) return null;
-    const groupsMatch = decodeURIComponent(match[1]).match(/(?:^|&)groups=([^&]*)/);
-    if (!groupsMatch || !groupsMatch[1]) return null;
-    const groups = {};
-    groupsMatch[1].split(',').forEach((pair) => {
-      const [id, granted] = pair.split(':');
-      if (id) groups[id] = granted === '1';
-    });
-    return Object.keys(groups).length ? groups : null;
-  } catch {
-    return null;
-  }
-}
-
-// QA override from the `experience-consent` URL param or metadata: 'granted' | 'denied' | null.
-// Only consulted on non-enforced hosts (see hasExperienceConsent) so it can never bypass the
-// real consent gate in prod/stage.
-function consentOverride() {
-  const param = new URLSearchParams(window.location.search).get('experience-consent');
-  const val = (param || getMetadata('experience-consent') || '').trim().toLowerCase();
-  if (['granted', 'on', 'true'].includes(val)) return 'granted';
-  if (['denied', 'off', 'false'].includes(val)) return 'denied';
-  return null;
-}
-
-// Consent is enforced only where Intuit's OneTrust stack actually loads — the `*.intuit.com`
-// origins. On aem.page/aem.live/localhost the consent CDN is CloudFront-blocked and no
-// OptanonConsent cookie ever appears, so enforcing there would permanently suppress pzn/ixp;
-// we bypass so preview/local stays testable.
-export function consentEnforced() {
-  return /(?:^|\.)intuit\.com$/.test(window.location.hostname);
-}
-
-// The gate for the orchestrator call: only personalize/experiment once the user has granted
-// the targeting group. Because OptanonConsent persists, this becomes true on the visit AFTER
-// they accept the banner.
-export function hasExperienceConsent() {
-  // Enforced hosts (*.intuit.com): the real OptanonConsent cookie is authoritative — the QA
-  // override is ignored here so it can never bypass the consent gate in prod/stage.
-  if (consentEnforced()) {
-    const groups = readConsentGroups();
-    return !!(groups && groups[experienceConsentGroup()] === true);
-  }
-  // Non-enforced hosts (aem.page/aem.live/localhost): no OneTrust cookie exists there, so honor
-  // the QA override, else default to enabled so pzn/ixp stays testable.
-  const override = consentOverride();
-  if (override) return override === 'granted';
-  return true;
 }
 
 // --- Target collection ------------------------------------------------------

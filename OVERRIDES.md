@@ -53,18 +53,11 @@ ones this site's code actually reads.
 | `experiment-id` | Page-level IXP experiment (whole-page swap). **Wins over `personalization-id`** on the same target | digits only (`/^\d+$/`); non-numeric ignored | [scripts/experience.js](scripts/experience.js) |
 | `personalization-id` | Page-level personalization access-point name (whole-page swap) | any string | [scripts/experience.js](scripts/experience.js) |
 | `experience-api-base` | Overrides the decision-API base URL for local/QA | URL/path (default `/api`; trailing slashes stripped) | [scripts/experience.js](scripts/experience.js) |
-| `experience-consent` | QA override for the consent gate on the orchestrator call (also a URL param `?experience-consent=`). **Non-enforced hosts only** — ignored on `*.intuit.com`, where the real cookie governs | `granted`/`on`/`true` → force-run; `denied`/`off`/`false` → force-skip; absent → normal gate | [scripts/experience.js](scripts/experience.js) |
-| `experience-consent-group` | OneTrust group id that must be granted for the orchestrator call to fire (the group that gates OF1 intent) | group id (default `C0004`) | [scripts/experience.js](scripts/experience.js) |
 
 > The orchestrator call only fires when the page has at least one experiment id or access-point name
-> (page metadata **or** the section tags below) **and** consent has been granted. The consent gate reads
-> the OneTrust `OptanonConsent` cookie synchronously (`experience-consent-group`, default `C0004`), so it
-> effectively enables on the visit *after* the banner is accepted. It is enforced only on `*.intuit.com`
-> (where the OneTrust stack loads); on `*.aem.page`/`*.aem.live`/`localhost` it is bypassed so preview/local
-> stays testable. The `experience-consent=granted|denied` override is honored **only** on those
-> non-enforced hosts; on `*.intuit.com` it is ignored so it can't bypass the real consent gate.
-> `experiment-id` / `personalization-id` are **not currently authored on any page**, so today no
-> orchestrator call is made — these document available capability, not live config.
+> (page metadata **or** the section tags below). `experiment-id` / `personalization-id` are **not
+> currently authored on any page**, so today no orchestrator call is made — these document available
+> capability, not live config.
 
 There is also the **aem-experimentation plugin** convention (loaded only when present): `experiment` /
 `experiment-*` (e.g. `experiment-variants`), `campaign-*`, `audience-*` metadata, `campaign:` /

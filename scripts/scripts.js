@@ -425,11 +425,10 @@ async function loadEager(doc) {
   if (!window.hlx.pageExperienceApplied) {
     window.hlx.pageExperienceApplied = true;
     const {
-      collectRequest, buildContext, fetchExperience, applyPage, hasExperienceConsent,
+      collectRequest, buildContext, fetchExperience, applyPage,
     } = await import('./experience.js');
     const request = collectRequest(doc);
-    if ((request.experimentIds.length || request.accessPointNames.length)
-      && hasExperienceConsent()) {
+    if (request.experimentIds.length || request.accessPointNames.length) {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), EXPERIENCE_DEADLINE_MS);
       try {
