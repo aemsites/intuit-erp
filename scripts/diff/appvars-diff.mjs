@@ -10,7 +10,7 @@
  * (./live-session.mjs: Akamai/Cloudflare bot-management ladder) so a prod capture is
  * never silently measured as an "Access Denied" page.
  *
- * TWO TRUTH SOURCES (the data layer is delivered differently on prod vs EDS):
+ * THREE TRUTH SOURCES (the data layer is delivered differently on prod vs EDS):
  *
  *  1. window.appVars — the page-level object. On prod erp it is ABSENT
  *     (`app_vars_enabled` is off; erp uses `window.mktg_datalayer` instead), so there
@@ -26,6 +26,10 @@
  *     we diff the set of `data-pzn-*` attribute NAMES so the click-time DOM traversal
  *     keeps working. (mktg_datalayer keys are captured too, informational — we do NOT
  *     reproduce that object; the tracker was moved onto appVars only.)
+ *
+ *  3. page-view beacon — the `screen:viewed` POST the tracker sends. Sources 1–2 prove the data
+ *     LAYER exists, not that pzn/ixp reach the wire; when prod fires `personalization_details` on a
+ *     page, assert our build does too. Closes the appVars→beacon loop (the gap that shipped).
  *
  * ENV LADDER — captured best-effort; an env we cannot measure is SKIPPED with a reason,
  * never mistaken for parity (identical model to martech-diff):
@@ -174,6 +178,66 @@ function skipReason(e) {
 }
 
 // --------------------------------------------------------------------------
+// Page-view beacon capture: the clickstream "page" POST, to verify pzn/ixp reach the wire
+// (the appVars shape-check alone can't — that's the gap that shipped).
+// --------------------------------------------------------------------------
+const CLICKSTREAM_RE = /eventbus\.intuit\.com|api\.segment\.io|collect\.tealiumiq\.com/i;
+
+// Fills & returns an array of captured "page" events. Attach BEFORE navigation. Bodies may be a
+// single event or a batch.
+function attachPageBeaconCapture(pg) {
+  const events = [];
+  pg.on('request', (req) => {
+    try {
+      if (req.method() !== 'POST' || !CLICKSTREAM_RE.test(req.url())) return;
+      const body = req.postData();
+      if (!body) return;
+      let parsed;
+      try { parsed = JSON.parse(body); } catch { return; }
+      const list = Array.isArray(parsed) ? parsed : [parsed];
+      for (const ev of list) if (ev && ev.type === 'page') events.push(ev);
+    } catch { /* ignore a body we can't read */ }
+  });
+  return events;
+}
+
+// Reduce captured page events to names/shape/counts only (env-independent, golden-safe).
+function summarizePageBeacon(events) {
+  if (!events || !events.length) return { present: false };
+  const props = events[0].properties || {};
+  const pd = props.personalization_details;
+  let pdCount = -1; // -1 = present but not an array (unexpected)
+  if (Array.isArray(pd)) pdCount = pd.length;
+  else if (pd == null) pdCount = 0;
+  const pdRecordKeys = Array.isArray(pd) && pd[0] && typeof pd[0] === 'object' ? Object.keys(pd[0]).sort() : [];
+  return {
+    present: true,
+    count: events.length,
+    hasPdKey: Object.prototype.hasOwnProperty.call(props, 'personalization_details'),
+    pdCount,
+    pdRecordKeys,
+    hasExperimentIds: Object.prototype.hasOwnProperty.call(props, 'experiment_ids') && !!props.experiment_ids,
+  };
+}
+
+// Human-readable description of a captured beacon's personalization_details state.
+function describePd(pb) {
+  if (pb.pdCount > 0) return `${pb.pdCount} record(s) [${pb.pdRecordKeys.join(', ')}]`;
+  if (pb.hasPdKey) return 'present but empty';
+  return 'ABSENT';
+}
+
+// Parity vs prod: only meaningful when prod fires personalization_details on this page.
+function checkPageBeacon(cap, baseline) {
+  const base = baseline && baseline.status === 'OK' ? baseline.pageBeacon : null;
+  const prodHasPd = base && base.present && base.pdCount > 0;
+  if (!prodHasPd) return { relevant: false };
+  const ours = cap.pageBeacon;
+  const ok = !!(ours && ours.present && ours.hasPdKey && ours.pdCount > 0);
+  return { relevant: true, ok, prodPdCount: base.pdCount, oursPresent: !!(ours && ours.present), ours };
+}
+
+// --------------------------------------------------------------------------
 // Capture one env x page x scenario. Best-effort: any failure to MEASURE returns SKIPPED.
 // --------------------------------------------------------------------------
 
@@ -186,6 +250,8 @@ async function captureEnv({ browser, env, page, scenario, opts }) {
     if (cfg.AKES_GEO) await context.addCookies([{ name: 'AKES_GEO', value: cfg.AKES_GEO, url: env.base }]);
     if (opts.cookies.length) await context.addCookies(opts.cookies.map((c) => ({ ...c, url: env.base })));
     const pg = await context.newPage();
+    // Attach BEFORE navigation so the (late, consent-gated) initial page view is caught.
+    const pageEvents = attachPageBeaconCapture(pg);
 
     let resp;
     try {
@@ -203,7 +269,7 @@ async function captureEnv({ browser, env, page, scenario, opts }) {
     await pg.waitForTimeout(opts.settleMs);
     const state = await pg.evaluate(extractAppVarsState).catch(() => null);
     if (!state) return { status: 'SKIPPED', reason: 'could not read page state', url };
-    return { status: 'OK', url, ...state };
+    return { status: 'OK', url, ...state, pageBeacon: summarizePageBeacon(pageEvents) };
   } finally {
     await context.close().catch(() => {});
   }
@@ -226,6 +292,11 @@ function renderBaseline(cap) {
     : G('appVars absent (app_vars_enabled off — expected on erp)');
   lines.push(`${'baseline'.padEnd(8)} ${av}`);
   lines.push(`${' '.repeat(9)}${DIM(`data-pzn blocks: ${cap.pznBlocks.count} · attrs: [${cap.pznBlocks.attrNames.join(', ') || '(none)'}]`)}`);
+  const pb = cap.pageBeacon;
+  const pbStr = pb && pb.present
+    ? `page-view beacon: personalization_details ${describePd(pb)}${pb.hasExperimentIds ? ' · experiment_ids ✓' : ''}`
+    : 'page-view beacon: not captured';
+  lines.push(`${' '.repeat(9)}${DIM(pbStr)}`);
   lines.push(`${' '.repeat(9)}${DIM(`mktg_datalayer: ${cap.mktgDatalayer.present ? `${cap.mktgDatalayer.keys.length} keys (informational — not reproduced)` : 'absent'}`)}`);
   return lines;
 }
@@ -259,6 +330,19 @@ function renderOurs(env, cap, baseline, problems) {
     if (d.extra.length) lines.push(`${' '.repeat(9)}${Y(`extra data-pzn attrs: [${d.extra.join(', ')}]`)}`);
   } else {
     lines.push(`${' '.repeat(9)}${DIM(`data-pzn blocks: ${cap.pznBlocks.count} (no prod baseline attrs to diff)`)}`);
+  }
+  // 3. page-view beacon: does personalization_details actually REACH the screen:viewed event?
+  //    (appVars shape ✓ is necessary but not sufficient — this closes the loop to the beacon.)
+  const pv = checkPageBeacon(cap, baseline);
+  if (pv.relevant) {
+    if (pv.ok) {
+      lines.push(`${' '.repeat(9)}${G(`page-view pzn ✓ (personalization_details: ${pv.ours.pdCount} record(s))`)}`);
+    } else {
+      problems.push(`${env.name}: page-view beacon missing personalization_details (prod fires ${pv.prodPdCount})`);
+      let why = 'no page-view beacon captured';
+      if (pv.oursPresent) why = pv.ours.hasPdKey ? 'personalization_details present but empty' : 'personalization_details ABSENT from the event';
+      lines.push(`${' '.repeat(9)}${R(`page-view pzn GAP: prod fires ${pv.prodPdCount} personalization_details record(s), our page-view has none — ${why}`)}`);
+    }
   }
   return lines.join('\n');
 }
@@ -348,7 +432,7 @@ async function main() {
   if (opts.json) { writeFileSync(opts.json, JSON.stringify(report, null, 2)); process.stdout.write(`${DIM(`wrote ${opts.json}`)}\n`); }
 
   if (opts.assert && problems.length) {
-    process.stdout.write(`\n${R(`FAIL — appVars contract broke on a measured env: ${problems.join('; ')}`)}\n`);
+    process.stdout.write(`\n${R(`FAIL — data-layer parity broke on a measured env (appVars contract and/or page-view beacon): ${problems.join('; ')}`)}\n`);
     process.exit(1);
   }
   process.stdout.write(`\n${DIM('report-only (exit 0). Pass --assert to fail CI on a measured contract break.')}\n`);

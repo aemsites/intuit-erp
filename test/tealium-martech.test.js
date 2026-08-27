@@ -11,6 +11,7 @@ import TealiumMartech, {
   loadUtag,
   loadConsentStack,
   loadObservabilityRum,
+  initObservabilityRum,
   settleConsent,
 } from '../plugins/tealium-martech/src/index.js';
 
@@ -56,6 +57,7 @@ beforeEach(() => {
   delete window.utag;
   delete window.utag_data;
   delete window.utag_cfg_ovrd;
+  delete window.O11yRUM;
 });
 
 afterEach(() => {
@@ -503,6 +505,69 @@ describe('loadObservabilityRum (Intuit o11y RUM — page-authored on prod, prod-
     await settle();
     document.getElementById('o11y-rum-init').dispatchEvent(new Event('error'));
     await expect(promise).resolves.toBeUndefined();
+  });
+
+  it('starts the RUM reporter once the scripts load when the document is past "loading" '
+    + '(regression: init-0.0.1.js defers start to a DOMContentLoaded already fired under EDS)', async () => {
+    vi.spyOn(document, 'readyState', 'get').mockReturnValue('complete');
+    const RumReporter = vi.fn();
+    window.O11yRUM = { RumReporter };
+
+    const promise = loadObservabilityRum('prod');
+    document.getElementById('o11y-rum-web').dispatchEvent(new Event('load'));
+    await settle();
+    document.getElementById('o11y-rum-init').dispatchEvent(new Event('load'));
+    await promise;
+
+    // The bug was RumReporter never being constructed -> zero rum.api.intuit.com beacons.
+    expect(RumReporter).toHaveBeenCalledTimes(1);
+    const cfg = RumReporter.mock.calls[0][0];
+    expect(cfg.apiURL).toBe('https://rum.api.intuit.com/v1/rum/web');
+    expect(cfg.tags.env).toBe('prod');
+    expect(cfg.reportWebVitals).toBe(true);
+    vi.restoreAllMocks();
+  });
+});
+
+describe('initObservabilityRum (compensates for init-0.0.1.js DOMContentLoaded gating)', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('constructs the RumReporter with Intuit config when readyState is past "loading"', () => {
+    vi.spyOn(document, 'readyState', 'get').mockReturnValue('interactive');
+    const RumReporter = vi.fn();
+    window.O11yRUM = { RumReporter };
+
+    initObservabilityRum();
+
+    expect(RumReporter).toHaveBeenCalledTimes(1);
+    expect(RumReporter.mock.calls[0][0]).toMatchObject({
+      apiURL: 'https://rum.api.intuit.com/v1/rum/web',
+      reportNavigation: true,
+      reportResources: true,
+      reportWebVitals: true,
+      tags: { env: 'prod' },
+    });
+  });
+
+  it('defers to init-0.0.1.js while the document is still "loading" (no double init)', () => {
+    vi.spyOn(document, 'readyState', 'get').mockReturnValue('loading');
+    const RumReporter = vi.fn();
+    window.O11yRUM = { RumReporter };
+
+    initObservabilityRum();
+
+    expect(RumReporter).not.toHaveBeenCalled();
+  });
+
+  it('is a no-op when the bundle never defined window.O11yRUM (blocked/failed)', () => {
+    vi.spyOn(document, 'readyState', 'get').mockReturnValue('complete');
+    expect(() => initObservabilityRum()).not.toThrow();
+  });
+
+  it('fails open when the RumReporter constructor throws', () => {
+    vi.spyOn(document, 'readyState', 'get').mockReturnValue('complete');
+    window.O11yRUM = { RumReporter: vi.fn(() => { throw new Error('boom'); }) };
+    expect(() => initObservabilityRum()).not.toThrow();
   });
 });
 

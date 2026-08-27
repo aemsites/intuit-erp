@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 (() => {
   try {
     // Hostname-derived environment flags. Computed once at script load since
