@@ -12,7 +12,6 @@ import {
   buildBlock,
   getMetadata,
 } from './aem.js';
-import { runExperimentation, runExperimentationLazy } from './experiment-loader.js';
 // Adobe/Alloy (plugins/martech, a git subtree) is armed but commented out; Tealium is the default.
 // Uncomment the AEP blocks in loadEager / loadLazy to load it in parallel.
 // The tealium plugin below is NOT a vendored subtree (project-owned code), but the relative
@@ -81,16 +80,6 @@ export function getSiteConfig() {
   }
   return siteConfigPromise;
 }
-
-// no custom prod domain configured yet — treat only the .aem.live CDN as
-// prod (no pill overlay); .aem.page previews and localhost stay in debug mode.
-const experimentationConfig = {
-  isProd: () => window.location.hostname.endsWith('.aem.live'),
-  audiences: {
-    mobile: () => window.innerWidth < 600,
-    desktop: () => window.innerWidth >= 600,
-  },
-};
 
 if (window.trustedTypes && window.trustedTypes.createPolicy) {
   const innerTT = window.trustedTypes.createPolicy('tt-inner', {
@@ -432,7 +421,6 @@ async function loadEager(doc) {
   //   }
   // }
 
-  await runExperimentation(doc, experimentationConfig);
   window.hlx = window.hlx || {};
   if (!window.hlx.pageExperienceApplied) {
     window.hlx.pageExperienceApplied = true;
@@ -553,8 +541,6 @@ async function loadLazy(doc) {
   //     try { await adobe.updateUserConsent({ collect: true }); } catch (e) { /* non-fatal */ }
   //   }
   // }
-
-  await runExperimentationLazy(doc, experimentationConfig);
 
   loadCSS(`${window.hlx.codeBasePath}/styles/lazy-styles.css`);
   loadFonts();
