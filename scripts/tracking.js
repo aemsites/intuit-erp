@@ -281,6 +281,15 @@ export function fetchTrackingSheet() {
   return sheetPromise;
 }
 
+// Per-block JIT payload derivers registered via trackAs({ payload }). A block that
+// can't express its per-item identity through the element + sheet alone (e.g. the faq
+// accordion, whose ui_object=accordion_item_N / ui_action=displayed|dismissed depend on
+// DOM index + open/close state) supplies a function called at stamp time with the
+// resolved CTA; it returns a partial sheet-shaped cfg (same kebab keys resolveCta reads)
+// merged UNDER any real sheet row. WeakMap so entries GC with their block — no reset
+// needed. Precedent: the window.__pznTrackingContext registry (no DOM attributes).
+const PAYLOAD_DERIVERS = new WeakMap();
+
 /**
  * Reset cached sheet state — test isolation only (each test needs a fresh fetch
  * stub and an empty resolved map).
@@ -705,6 +714,14 @@ export function stampInteraction(e) {
   } else {
     derived = applyBlockDefaults(derived, cta);
   }
+  // A block's per-item JIT payload deriver (trackAs { payload }) supplies fields the
+  // element + sheet can't (faq accordion_item_N / object_detail / state-based ui_action /
+  // link_name). Its output is a sheet-shaped cfg merged UNDER any real sheet row (authored
+  // residue still wins), so resolveCta emits it with no change to the resolve pipeline.
+  if (block && !isPart) {
+    const derivePayload = PAYLOAD_DERIVERS.get(block);
+    if (derivePayload) { const ov = derivePayload(cta); if (ov) row = { ...ov, ...(row || {}) }; }
+  }
   const regionCtx = resolveRegionContext(cta);
   const context = regionCtx ? { customProperties: regionCustomProperties(regionCtx) } : {};
   stampCta(cta, resolveCta(derived, row, context));
@@ -746,6 +763,11 @@ export function initTracking(scope = document) {
  *   selector -> inner-slot trail segment (fixed string, or (index, el) => string)
  * @param {Record<string, string|{as:string, linkName?:boolean}>} [opts.alsoTrack]
  *   selector -> ui_object, registering non-CTA beacon sources (#769)
+ * @param {(el: Element) => (Record<string, unknown>|null)} [opts.payload] per-CTA JIT
+ *   payload deriver, called at stamp time with the resolved CTA; returns a partial
+ *   sheet-shaped cfg (kebab keys: `object-detail`/`ui-object`/`ui-action`/`wa-link`/
+ *   `custom-properties`…) for fields the element+sheet can't express (e.g. faq
+ *   accordion_item_N + open/close ui_action). Merged UNDER any real sheet row.
  * @param {string} [opts.action]
  * @param {string} [opts.object]
  * @param {string} [opts.uiObject] code-built payload defaults
@@ -755,9 +777,11 @@ export function initTracking(scope = document) {
  */
 export function trackAs(name, block, {
   key = name, items, trackId, alsoTrack, action, object,
-  uiObject: uiObjectDefault, linkName, skip,
+  uiObject: uiObjectDefault, linkName, skip, payload,
 } = {}) {
   if (!block) return block;
+  // Register the per-item JIT payload deriver (read by stampInteraction).
+  if (payload) PAYLOAD_DERIVERS.set(block, payload);
   // Opt pure-UI controls out (hamburger, toggles) via data-track-skip.
   if (skip) block.querySelectorAll(skip).forEach((el) => el.setAttribute('data-track-skip', ''));
   // Stamp each non-skipped CTA's data-track-id (order-independent sheet key). The

@@ -22,7 +22,7 @@
     "properties": {
       "event": { "rule": "${object}:${action}", "_note": "echoed event name; same rule as envelope.event" },
       "object": { "kind": "per-click" },
-      "object_detail": { "kind": "per-click" },
+      "object_detail": { "kind": "per-click", "indexTolerant": true, "_note": "positional index segments (faq|question_N) normalized before compare — prod's faq question numbers are AUTHORED + scrambled (don't track DOM order, and repeat: two questions share question_5), so the STRUCTURE faq|question_N must match but the exact number is not meaningful. Non-numeric object_detail (nav|schedule_demo, talktosales|open_widget, logo_nav|turbotax) is untouched by idxNorm." },
       "action": { "kind": "per-click" },
       "ui_object": { "kind": "per-click" },
       "ui_object_detail": { "kind": "per-click", "normalizeTags": true },
