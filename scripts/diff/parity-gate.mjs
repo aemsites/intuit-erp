@@ -93,6 +93,10 @@ const BLOCK = {
   video: { trail: () => 'video', object: 'video', action: 'started', uiObject: 'video', linkName: false, scope: 'main' },
   // feature-grid CTAs -> single-level `feature` trail (blocks/feature-grid/feature-grid.js trackAs('feature'))
   feature: { trail: () => 'feature', scope: 'main' },
+  // highlight callout (blocks/highlight/highlight.js): variant-dependent trail — the `dark`
+  // promo banner reports `rw_banner`, the default/light callout `product_banner`. Modeled from
+  // the entry's own trail (the block emits its variant's); the real-render test is the guard.
+  product_banner: { trail: (i, e) => (e.exp.ui_access_point === 'product_banner' ? 'product_banner' : 'rw_banner'), scope: 'main' },
 };
 
 const { document } = new JSDOM('<!doctype html><html><head></head><body></body></html>').window;
