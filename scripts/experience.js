@@ -116,13 +116,21 @@ function deviceType() {
   return /Mobi|Android|iPhone|iPad/i.test(ua) ? 'Mobile' : 'Desktop';
 }
 
+// Orchestrator context expects locale with underscore (en_US). Browsers and
+// `?locale=` often use BCP 47 with a hyphen (en-US).
+function underscoreLocale(value) {
+  return String(value || '').replace(/-/g, '_') || 'en_US';
+}
+
 // The sibling `context` object: every front-end-derived signal plus the AOF1 intent
 // profile (of1Intent). NOT ZoomInfo firmographics — the orchestrator enriches those
 // server-side. IP-derived geo is left for Akamai to inject.
 export function buildContext(permalink = window.location.href) {
   const context = {
     permalink,
-    locale: new URLSearchParams(window.location.search).get('locale') || navigator.language || 'en-US',
+    locale: underscoreLocale(
+      new URLSearchParams(window.location.search).get('locale') || navigator.language || 'en_US',
+    ),
     deviceType: deviceType(),
     newVisitor: true,
   };

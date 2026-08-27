@@ -116,6 +116,7 @@ describe('buildContext', () => {
       permalink: '/pricing', deviceType: expect.any(String), newVisitor: true,
     });
     expect(ctx.locale).toBeTruthy();
+    expect(ctx.locale).not.toMatch(/-/);
     expect(Object.keys(ctx).some((k) => k.startsWith('zi_c_'))).toBe(false);
     expect(ctx).not.toHaveProperty('zoominfo');
   });
@@ -125,6 +126,13 @@ describe('buildContext', () => {
     expect(ctx.permalink).toBe('https://erp.intuit.com/products/enterprise-suite');
     expect(ctx.casId).toBe('/products/enterprise-suite');
     expect(ctx.ivid).toBe('cookie-ivid');
+  });
+  it('sends locale with underscore (en_US), not BCP 47 hyphen (en-US)', () => {
+    const orig = window.location.href;
+    window.history.replaceState({}, '', `${orig.split('?')[0]}?locale=en-US`);
+    const ctx = buildContext('/pricing');
+    expect(ctx.locale).toBe('en_US');
+    window.history.replaceState({}, '', orig);
   });
   it('includes of1Intent when a behavior profile exists', () => {
     const domain = window.location.hostname.replace(/^www\./, '');
@@ -351,7 +359,7 @@ describe('fetchExperience', () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(JSON.stringify(payload), { status: 200, headers: { 'content-type': 'application/json' } }),
     );
-    const ctx = { locale: 'en-US' };
+    const ctx = { locale: 'en_US' };
     const res = await fetchExperience({ experimentIds: ['1'], accessPointNames: ['a'] }, ctx);
     expect(res).toEqual(payload);
 
@@ -362,7 +370,7 @@ describe('fetchExperience', () => {
     expect(opts.headers['content-type']).toBe('application/json');
     expect(opts.headers.intuit_tid).toMatch(/^rp-/);
     expect(JSON.parse(opts.body)).toEqual({
-      experimentIds: ['1'], accessPointName: ['a'], context: { locale: 'en-US' },
+      experimentIds: ['1'], accessPointName: ['a'], context: { locale: 'en_US' },
     });
   });
   it('honors the experience-api-base metadata override', async () => {
