@@ -4,7 +4,7 @@ import {
 import {
   buildToc, buildByline, buildEyebrow, buildBylineMeta,
   buildShare, relocateShare, tocRailRowEnd, isBlogPage,
-  buildBlogTemplate, insertAuthorBio,
+  buildBlogTemplate, injectAuthorBioBlock,
 } from '../blocks/blog-template/blog-template.js';
 
 describe('buildToc', () => {
@@ -221,8 +221,10 @@ describe('tocRailRowEnd', () => {
   });
 });
 
-describe('insertAuthorBio', () => {
-  it('places the bio after the FAQ, even when Recommended is authored before it', () => {
+describe('injectAuthorBioBlock', () => {
+  // The bio is injected as a block wrapped in its own section div, so assertions
+  // target that section (the `.blog-author-bio` block's parent), not the block.
+  it('places the bio block after the FAQ, even when Recommended is authored before it', () => {
     window.hlx = { codeBasePath: '' };
     const main = document.createElement('main');
     main.innerHTML = `
@@ -232,14 +234,14 @@ describe('insertAuthorBio', () => {
     `;
     const faqSection = main.querySelector('.faq').closest('main > div');
 
-    insertAuthorBio(main, { title: 'Jane Doe', description: 'bio text' }, '/blog/author/jane-doe');
+    injectAuthorBioBlock(main);
 
-    const bio = main.querySelector(':scope > .blog-author-bio');
-    expect(bio).toBeTruthy();
+    const bioSection = main.querySelector('.blog-author-bio').parentElement;
+    expect(bioSection.parentElement).toBe(main);
     // immediately after the FAQ section — and therefore after Recommended too
-    expect(faqSection.nextElementSibling).toBe(bio);
+    expect(faqSection.nextElementSibling).toBe(bioSection);
     const idx = (el) => [...main.children].indexOf(el);
-    expect(idx(bio)).toBeGreaterThan(idx(main.querySelector('.blog-cards-container')));
+    expect(idx(bioSection)).toBeGreaterThan(idx(main.querySelector('.blog-cards-container')));
   });
 
   it('falls back to before Recommended when there is no FAQ', () => {
@@ -251,9 +253,10 @@ describe('insertAuthorBio', () => {
     `;
     const rec = main.querySelector('.blog-cards-container');
 
-    insertAuthorBio(main, { title: 'Jane Doe', description: 'bio text' }, '/blog/author/jane-doe');
+    injectAuthorBioBlock(main);
 
-    expect(rec.previousElementSibling).toBe(main.querySelector(':scope > .blog-author-bio'));
+    const bioSection = main.querySelector('.blog-author-bio').parentElement;
+    expect(rec.previousElementSibling).toBe(bioSection);
   });
 });
 

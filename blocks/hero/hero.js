@@ -1,4 +1,3 @@
-import { bindScheduleLinks } from '../form/form.js';
 import { loadFragment } from '../fragment/fragment.js';
 import { trackAs } from '../../scripts/tracking.js';
 
@@ -198,8 +197,6 @@ export default async function decorate(block) {
     ctas[0].replaceWith(actions);
     ctas.slice(1).forEach((p) => p.remove());
   }
-
-  bindScheduleLinks(copy);
 
   const grid = document.createElement('div');
   grid.className = 'hero-grid';

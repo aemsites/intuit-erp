@@ -18,21 +18,6 @@
  * metric-matched local Arial (avenir-fallback), then the system sans-serif.
  */
 
-/* Metric-matched fallback for the primary webfont (local Arial, zero network),
-   standing in for "AvenirNext forINTUIT" while it downloads. MUST stay in the
-   eager stylesheet: fonts.css loads lazily (post-LCP on mobile), so a fallback
-   defined there is absent at first paint and can't prevent the hero swap shift.
-   size-adjust (computed from avenir-400.woff2 vs. Arial) is the main lever since
-   line box height is set by explicit line-height; ascent/descent match Avenir. */
-@font-face {
-  font-family: avenir-fallback;
-  size-adjust: 103.1%;
-  ascent-override: 91.7%;
-  descent-override: 24.3%;
-  line-gap-override: 0%;
-  src: local('Arial');
-}
-
 :root {
   /* matches erp.intuit.com's global :root rule (qbmds-components/styles/sbseg/fonts.css) */
   -webkit-font-smoothing: antialiased;
@@ -127,11 +112,30 @@
   --heading-font-size-xs: 18px;
 
   /* layout */
-  --nav-height: 96px;
+  --nav-height: 92px;
   --container: 1380px;
   --radius: 4px;
   --radius-card: 12px;
   --section-y: 80px;
+}
+
+/* Metric-matched fallback for the primary webfont (local Arial, zero network),
+   standing in for "AvenirNext forINTUIT" while it downloads. MUST stay in the
+   eager stylesheet: fonts.css loads lazily (post-LCP on mobile), so a fallback
+   defined there is absent at first paint and can't prevent the hero swap shift.
+   size-adjust (computed from avenir-400.woff2 vs. Arial) is the main lever since
+   line box height is set by explicit line-height; ascent/descent match Avenir. */
+@font-face {
+  font-family: avenir-fallback;
+  size-adjust: 105.4%;
+  ascent-override: 91.7%;
+  descent-override: 24.3%;
+  line-gap-override: 0%;
+  src: local('Arial');
+}
+
+html {
+  scrollbar-gutter: stable;
 }
 
 body {
@@ -1045,13 +1049,17 @@ main > .section.blue-divider {
 }
 
 body.block-library > main > .section {
-  margin: 4rem 0;
+  margin: 2rem 0;
 }
 
 body.block-library > main > .section > .default-content-wrapper > h1 {
   font-size: 36px;
-  margin: 4rem 0;
   text-align: left !important;
+  margin-top: 0;
+  background: var(--navy);
+  color: #fff;
+  padding: 1rem;
+  margin-bottom: 2rem;
 }
 
  body.block-library .library-metadata {
@@ -1062,3 +1070,7 @@ body.block-library > main > .section > .default-content-wrapper > h1 {
  body.block-library footer {
   display: none;
  }
+
+body.block-library .section > .default-content-wrapper {
+  padding:0
+}

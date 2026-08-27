@@ -49,11 +49,9 @@
  * CSS: blocks/blog-template/blog-template.css
  */
 import {
-  getMetadata, toClassName, loadCSS, createOptimizedPicture,
+  getMetadata, toClassName, loadCSS, buildBlock,
 } from '../../scripts/aem.js';
 import { hasAuthoredCaseStudyHeader } from './blog-detect.js';
-import { loadIndex } from '../../scripts/content-index.js';
-import { trackAs } from '../../scripts/tracking.js';
 import { MQ_DESKTOP_UP } from '../../scripts/breakpoints.js';
 
 /**
@@ -410,162 +408,6 @@ function wireToc(tocWrap, nav, headings, mq) {
   headings.forEach((h) => observer.observe(h));
 }
 
-const BLOG_INDEX = '/blog/query-index.json';
-
-/**
- * Fetches the blog query-index and returns the author row for the given slug,
- * or null if not found. The index is cached by content-index.js so multiple
- * blocks share a single fetch.
- * @param {string} slug author slug (e.g. "abigail-sims")
- * @returns {Promise<object|null>}
- */
-async function fetchAuthorRow(slug) {
-  try {
-    const entries = await loadIndex(BLOG_INDEX);
-    const authorPath = `/blog/author/${slug}`;
-    return entries.find((e) => e.path === authorPath) || null;
-  } catch (error) {
-    // eslint-disable-next-line no-console
-    console.debug(`author-bio: could not load author row for "${slug}"`, error);
-    return null;
-  }
-}
-
-/**
- * Builds and inserts the end-of-article author bio strip from the given
- * query-index row: circular headshot (row.image), author name linked to the
- * author page (row.title), and bio text (row.description). Placed in the prose
- * column. Untrusted feed values are assigned via textContent / img.src — never
- * innerHTML.
- * @param {Element} main the page's <main>
- * @param {object} row the author's query-index row
- * @param {string} authorPath /blog/author/<slug>
- */
-export function insertAuthorBio(main, row, authorPath) {
-  const wrap = document.createElement('div');
-  wrap.className = 'blog-author-bio';
-  const inner = document.createElement('div');
-  inner.className = 'blog-author-bio-inner';
-  if (row.image) {
-    const imgWrap = document.createElement('div');
-    imgWrap.className = 'blog-author-bio-avatar';
-    // Responsive <picture> via the site's media pipeline; lazy since the bio
-    // sits at the very bottom of the article (below the fold).
-    const picture = createOptimizedPicture(row.image, row.title || '', false, [{ width: '120' }]);
-    const img = picture.querySelector('img');
-    img.width = 120;
-    img.height = 120;
-    imgWrap.append(picture);
-    inner.append(imgWrap);
-  }
-  const textWrap = document.createElement('div');
-  textWrap.className = 'blog-author-bio-text';
-  if (row.title) {
-    const nameEl = document.createElement('p');
-    nameEl.className = 'blog-author-bio-name';
-    const nameLink = document.createElement('a');
-    nameLink.href = authorPath;
-    nameLink.textContent = row.title;
-    nameEl.append(nameLink);
-    textWrap.append(nameEl);
-  }
-  if (row.description) {
-    const bioEl = document.createElement('p');
-    bioEl.className = 'blog-author-bio-desc';
-    bioEl.textContent = row.description;
-    textWrap.append(bioEl);
-  }
-  inner.append(textWrap);
-  wrap.append(inner);
-  // Click tracking: the author link reports under the `author_bio` trail; prod
-  // omits link_name here.
-  trackAs('author_bio', wrap, { key: 'author_bio', linkName: false });
-  // Production places the author bio right after the FAQ block. Some articles
-  // author "Recommended for you" BEFORE the FAQ (as this page does), so keying
-  // off the FAQ — not the recommended cards — is what keeps the bio after it.
-  // Fallbacks, in order: before the "Recommended for you" cards (pages with no
-  // FAQ), before the right-rail, else append.
-  const faqEl = main.querySelector('.faq');
-  const faqSection = faqEl && [...main.children].find((s) => s.contains(faqEl));
-  const blogCardsEl = main.querySelector('.blog-cards');
-  const recSection = blogCardsEl && [...main.children].find((s) => s.contains(blogCardsEl));
-  if (faqSection) {
-    faqSection.after(wrap);
-  } else if (recSection) {
-    recSection.before(wrap);
-  } else {
-    const rail = main.querySelector(':scope > .blog-rail');
-    if (rail) rail.before(wrap);
-    else main.append(wrap);
-  }
-}
-
-/**
- * Builds the social-share strip (Facebook / X / LinkedIn) that production
- * renders just above the author bio, with a "Share" label. Share links carry
- * the current article URL. Icons are referenced from /icons/*.svg.
- * @param {Element} main the page's <main>
- */
-function insertSocialShare(main) {
-  if (main.querySelector(':scope > .blog-social-share')) return;
-  const enc = encodeURIComponent(window.location.href);
-  const NETWORKS = [
-    { name: 'facebook', label: 'Facebook', href: `https://www.facebook.com/sharer/sharer.php?u=${enc}` },
-    { name: 'x', label: 'X', href: `https://twitter.com/share?url=${enc}` },
-    { name: 'linkedin', label: 'LinkedIn', href: `https://www.linkedin.com/sharing/share-offsite/?url=${enc}` },
-  ];
-  const wrap = document.createElement('div');
-  wrap.className = 'blog-social-share';
-  const label = document.createElement('span');
-  label.className = 'blog-social-share-label';
-  label.textContent = 'Share';
-  wrap.append(label);
-  const list = document.createElement('ul');
-  list.className = 'blog-social-share-list';
-  NETWORKS.forEach((n) => {
-    const li = document.createElement('li');
-    const a = document.createElement('a');
-    a.className = `blog-social-share-icon blog-social-${n.name}`;
-    a.href = n.href;
-    a.target = '_blank';
-    a.rel = 'noopener noreferrer';
-    a.setAttribute('aria-label', `Share on ${n.label}`);
-    const icon = document.createElement('img');
-    icon.src = `${window.hlx.codeBasePath}/icons/${n.name}.svg`;
-    icon.alt = '';
-    icon.width = 16;
-    icon.height = 16;
-    icon.loading = 'lazy';
-    a.append(icon);
-    li.append(a);
-    list.append(li);
-  });
-  wrap.append(list);
-  const bio = main.querySelector(':scope > .blog-author-bio');
-  const rail = main.querySelector(':scope > .blog-rail');
-  if (bio) bio.before(wrap);
-  else if (rail) rail.before(wrap);
-  else main.append(wrap);
-}
-
-/**
- * Async: loads the author's query-index row and, if found, renders the bio
- * strip plus the social-share strip above it. Fire-and-forget from
- * buildBlogTemplate so the sync layout setup isn't delayed.
- * @param {Element} main the page's <main>
- */
-async function appendAuthorBio(main) {
-  const author = getMetadata('author');
-  if (!author) return;
-  const slug = toClassName(author);
-  if (!slug) return;
-  const authorPath = `/blog/author/${slug}`;
-  const row = await fetchAuthorRow(slug);
-  if (!row) return;
-  insertAuthorBio(main, row, authorPath);
-  insertSocialShare(main);
-}
-
 /**
  * Resolves a metadata override to a `/fragments/...` path, same rule the
  * right-rail link already uses: an absolute value is used as-is, a bare name
@@ -648,6 +490,30 @@ export function decorateBlockquoteAttributions(main) {
     cite.innerHTML = attribution.innerHTML;
     attribution.replaceWith(cite);
   });
+}
+
+/**
+ * Injects the blog-author-bio block section into `main`, positioned to match
+ * production: after the FAQ; else before "Recommended for you"; else before the
+ * right-rail; else appended. Runs before decorateSections so the block rides the
+ * section pipeline — hidden until its async render resolves, then revealed
+ * fully-formed below the fold (#519). Exported for tests.
+ * @param {Element} main the page's <main>
+ */
+export function injectAuthorBioBlock(main) {
+  const bioSection = document.createElement('div');
+  bioSection.append(buildBlock('blog-author-bio', ''));
+  const faqEl = main.querySelector('.faq');
+  const faqSection = faqEl && [...main.children].find((s) => s.contains(faqEl));
+  const blogCardsEl = main.querySelector('.blog-cards');
+  const recSection = blogCardsEl && [...main.children].find((s) => s.contains(blogCardsEl));
+  if (faqSection) faqSection.after(bioSection);
+  else if (recSection) recSection.before(bioSection);
+  else {
+    const railEl = main.querySelector(':scope > .blog-rail');
+    if (railEl) railEl.before(bioSection);
+    else main.append(bioSection);
+  }
 }
 
 export function buildBlogTemplate(main) {
@@ -788,9 +654,9 @@ export function buildBlogTemplate(main) {
     desktopMQ,
   );
 
-  // end-of-article author bio + social share, sourced from the query-index
-  // (fire-and-forget so it never blocks the synchronous layout above)
-  appendAuthorBio(main);
+  // end-of-article author bio + social share (block injected below). Author-
+  // gated; the block itself drops its section if the query-index row is missing.
+  if (getMetadata('author')) injectAuthorBioBlock(main);
 }
 
 /**

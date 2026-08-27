@@ -30,7 +30,7 @@ The intended data layer is `window.appVars`, with these four fields:
 
 | Field | Type | Source | Notes |
 | --- | --- | --- | --- |
-| `externalContentIdentifier` | **string** | page metadata (`cas-id`) | the CAS external content id (`page_cas_id`); `''` when a page has no CAS id yet |
+| `externalContentIdentifier` | **string** | page pathname (`window.location.pathname`) | the content identifier; stable across localhost/preview/prod |
 | `pznRecDetailsArr` | **array** | client pzn integration | section-level personalization records |
 | `pznPageRecDetailsArr` | **array** | client pzn integration | page-level personalization records (page-level wins over section-level) |
 | `ixpDetailsArr` | **array** | client experiment integration | `[{experiment_id, experiment_version, experiment_treatment}, …]` → joined into `window.ixp.xt` |
@@ -48,8 +48,8 @@ shape prod's `personalization_details` array carries.
 ### How it's built
 
 - **Eager, before martech.** `loadEager()` in [`scripts.js`](scripts/scripts.js) seeds
-  `window.appVars` **before** the martech/tracker loads — `externalContentIdentifier` from metadata,
-  the three record arrays empty — so all four keys always exist when a tracker reads it.
+  `window.appVars` **before** the martech/tracker loads — `externalContentIdentifier` from the URL
+  pathname, the three record arrays empty — so all four keys always exist when a tracker reads it.
 - **Arrays fill in place.** Decisions resolve asynchronously across the eager (LCP section) and lazy
   (rest-of-page) phases; `recordPzn` / `recordPznPage` / `recordIxp` update the arrays **on the same
   object reference**, so a tracker that captured `window.appVars` eagerly still sees the records.
@@ -185,6 +185,8 @@ local    CONTRACT ✓  appVars has the 4 fields, types ok
   then delete the shim. Confirm the shim's eager-phase trap catches the profile's bootstrap
   `trackPage` on a deployed prod-env host. See
   [above](#page-view-personalization--the-open-gap).
-- **CAS ids on migrated pages.** `externalContentIdentifier` reads the `cas-id` (or `page-cas-id`)
-  page-metadata field; migrated pages must carry it, or it is `''`. Confirm the successor id with the
-  content/analytics team.
+- **Content identifier.** `externalContentIdentifier` is the page pathname
+  (`window.location.pathname`) — no page metadata required. The intuit-orchestrator gets the same
+  pathname as `context.casId`, plus the full URL as `context.permalink`. If the content/analytics
+  team ever standardizes on a different id scheme, change it in `loadEager` (`scripts/scripts.js`)
+  and `buildContext` (`scripts/experience.js`).

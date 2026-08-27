@@ -243,6 +243,7 @@ function buildAutoBlocks(main) {
             const { pathname } = new URL(fragment.href);
             const frag = await loadFragment(pathname);
             fragment.parentElement.replaceWith(...frag.children);
+            import('./schedule-modal.js').then(({ bindScheduleLinks }) => bindScheduleLinks(main)).catch(() => {});
           } catch (error) {
             // eslint-disable-next-line no-console
             console.error('Fragment loading failed', error);
@@ -388,9 +389,9 @@ async function loadEager(doc) {
   }
 
   // Seed window.appVars before martech so the tracker finds it; analytics.js fills the arrays.
+  // The page pathname is the content identifier (stable across localhost/preview/prod).
   const appVars = window.appVars || (window.appVars = {});
-  const casId = getMetadata('cas-id') || getMetadata('page-cas-id');
-  appVars.externalContentIdentifier = casId || appVars.externalContentIdentifier || '';
+  appVars.externalContentIdentifier = window.location.pathname;
   appVars.pznRecDetailsArr = appVars.pznRecDetailsArr || [];
   appVars.pznPageRecDetailsArr = appVars.pznPageRecDetailsArr || [];
   appVars.ixpDetailsArr = appVars.ixpDetailsArr || [];
@@ -508,6 +509,12 @@ async function loadLazy(doc) {
       .catch(() => {});
   }
   await loadSections(main);
+
+  // Global "Schedule a call" trigger — covers any a[href$="#schedule"] anywhere in
+  // main (tabs panels, bare default content), not just blocks that opt in individually.
+  if (main) {
+    import('./schedule-modal.js').then(({ bindScheduleLinks }) => bindScheduleLinks(main)).catch(() => {});
+  }
 
   // Click tracking (opt-in `tracking-` blocks) is not render-critical
   if (main) {

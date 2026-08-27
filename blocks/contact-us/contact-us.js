@@ -15,7 +15,7 @@
  * CSS: blocks/contact-us/contact-us.css.
  */
 // eslint-disable-next-line import/no-cycle
-import { openScheduleModal } from '../form/form.js';
+import { openScheduleModal } from '../../scripts/schedule-modal.js';
 import { getMetadata } from '../../scripts/aem.js';
 import { trackAs } from '../../scripts/tracking.js';
 

@@ -15,6 +15,7 @@ import {
   ensureAppVars, flushAppVars, recordPzn, recordPznPage, recordIxp, resetAnalytics,
   stampPzn, stampExperiment,
   fetchExperience, applyPage, applyLayer,
+  whenFullStoryReady, notifyFullStory,
 } from '../scripts/experience.js';
 // eslint-disable-next-line import/first
 import { loadFragment } from '../blocks/fragment/fragment.js';
@@ -118,13 +119,12 @@ describe('buildContext', () => {
     expect(Object.keys(ctx).some((k) => k.startsWith('zi_c_'))).toBe(false);
     expect(ctx).not.toHaveProperty('zoominfo');
   });
-  it('includes casId from metadata and ivid from the query override', () => {
-    setMeta('cas-id', 'cas-123');
-    const spy = vi.spyOn(URLSearchParams.prototype, 'get').mockImplementation((k) => (k === 'ivid' ? 'q-ivid' : null));
-    const ctx = buildContext();
-    expect(ctx.casId).toBe('cas-123');
-    expect(ctx.ivid).toBe('q-ivid');
-    spy.mockRestore();
+  it('sends the full URL as permalink and the pathname as casId, plus ivid from the cookie', () => {
+    document.cookie = 'ivid=cookie-ivid';
+    const ctx = buildContext('https://erp.intuit.com/products/enterprise-suite');
+    expect(ctx.permalink).toBe('https://erp.intuit.com/products/enterprise-suite');
+    expect(ctx.casId).toBe('/products/enterprise-suite');
+    expect(ctx.ivid).toBe('cookie-ivid');
   });
   it('includes of1Intent when a behavior profile exists', () => {
     const domain = window.location.hostname.replace(/^www\./, '');
@@ -146,10 +146,13 @@ describe('buildContext', () => {
 });
 
 describe('resolveIvid', () => {
-  it('prefers the ?ivid= override, else the cookie, else undefined', () => {
+  it('reads the ivid cookie, else undefined; ignores any ?ivid= param', () => {
     expect(resolveIvid()).toBeUndefined();
+    window.history.replaceState({}, '', '?ivid=url-xyz');
+    expect(resolveIvid()).toBeUndefined(); // URL param no longer honored
     document.cookie = 'ivid=cookie-abc';
-    expect(resolveIvid()).toBe('cookie-abc');
+    expect(resolveIvid()).toBe('cookie-abc'); // cookie is the only source
+    window.history.replaceState({}, '', window.location.pathname);
   });
 });
 
@@ -490,5 +493,128 @@ describe('applyLayer (section/block swaps, from the cached response)', () => {
     const m = main('<div data-pzn="alpha"></div>');
     await applyLayer(m, null);
     expect(loadFragment).not.toHaveBeenCalled();
+  });
+});
+
+describe('FullStory swap notification', () => {
+  // FS's stub is a *function* with an .event method — the guard checks typeof === 'function'.
+  function stubFullStory() {
+    const event = vi.fn();
+    window.FS = Object.assign(function fs() {}, { event });
+    window._fs_namespace = 'FS';
+    return event;
+  }
+  // A macrotask flush so the fire-and-forget .then() (and any pending poll) settles.
+  const tick = () => new Promise((r) => { setTimeout(r, 0); });
+
+  afterEach(() => {
+    delete window.FS;
+    delete window._fs_namespace;
+  });
+
+  describe('whenFullStoryReady', () => {
+    it('is memoized — one poll per page', () => {
+      expect(whenFullStoryReady()).toBe(whenFullStoryReady());
+    });
+    it('resolves the FS function when present', async () => {
+      const event = stubFullStory();
+      const fs = await whenFullStoryReady();
+      expect(typeof fs).toBe('function');
+      expect(fs.event).toBe(event);
+    });
+    it('resolves null when FS never loads (fail-open timeout)', async () => {
+      expect(await whenFullStoryReady({ intervalMs: 5, timeoutMs: 20 })).toBeNull();
+    });
+  });
+
+  describe('notifyFullStory', () => {
+    it('fires the event with { id, name } when FS is present', async () => {
+      const event = stubFullStory();
+      notifyFullStory('Experiment Viewed', 't1', 'e1');
+      await tick();
+      expect(event).toHaveBeenCalledWith('Experiment Viewed', { id: 't1', name: 'e1' });
+    });
+    it('is a no-op when the id is falsy', async () => {
+      const event = stubFullStory();
+      notifyFullStory('Experiment Viewed', undefined, 'e1');
+      await tick();
+      expect(event).not.toHaveBeenCalled();
+    });
+    it('gives up after the timeout and does not fire for a late-loading FS', async () => {
+      notifyFullStory('Experiment Viewed', 't1', 'e1', { intervalMs: 5, timeoutMs: 20 });
+      await new Promise((r) => { setTimeout(r, 50); });
+      const event = stubFullStory(); // FS arrives only after the poll gave up
+      await tick();
+      expect(event).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('from applyPage', () => {
+    beforeEach(() => { document.body.innerHTML = '<main><div class="hero">BASE</div></main>'; });
+
+    it('fires "Experiment Viewed" {id:treatmentId, name:experimentId} on a page IXP swap', async () => {
+      const event = stubFullStory();
+      setMeta('experiment-id', '376648');
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+        new Response('<div>VARIATION</div>', { status: 200, headers: { 'content-type': 'text/html' } }),
+      );
+      await applyPage(document, expResp('376648', { treatmentId: 'T1', replacementCasId: '/fragments/exp/page' }));
+      await tick();
+      expect(event).toHaveBeenCalledWith('Experiment Viewed', { id: 'T1', name: '376648' });
+    });
+
+    it('fires "Personalization Viewed" {id:offerId, name:placement} on a page PZN swap', async () => {
+      const event = stubFullStory();
+      setMeta('personalization-id', 'HomeHero');
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+        new Response('<div>PZN</div>', { status: 200, headers: { 'content-type': 'text/html' } }),
+      );
+      await applyPage(document, pznResp('HomeHero', { casId: '/fragments/pzn/home', offerId: 'offer-1' }));
+      await tick();
+      expect(event).toHaveBeenCalledWith('Personalization Viewed', { id: 'offer-1', name: 'HomeHero' });
+    });
+
+    it('does NOT fire on a control arm (no swap)', async () => {
+      const event = stubFullStory();
+      setMeta('experiment-id', '376648');
+      await applyPage(document, expResp('376648', { originalCasId: '/same', replacementCasId: '/same' }));
+      await tick();
+      expect(event).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('from applyLayer', () => {
+    it('fires "Experiment Viewed" on a section IXP swap', async () => {
+      const event = stubFullStory();
+      const m = main('<div data-exp="376648"></div>');
+      await applyLayer(m, expResp('376648', { treatmentId: 'T1', replacementCasId: '/fragments/exp/a' }));
+      await tick();
+      expect(event).toHaveBeenCalledWith('Experiment Viewed', { id: 'T1', name: '376648' });
+    });
+
+    it('fires "Personalization Viewed" on a section PZN swap', async () => {
+      const event = stubFullStory();
+      const m = main('<div data-pzn="alpha"></div>');
+      await applyLayer(m, pznResp('alpha', { offerId: 'offer-1' }));
+      await tick();
+      expect(event).toHaveBeenCalledWith('Personalization Viewed', { id: 'offer-1', name: 'alpha' });
+    });
+
+    it('does NOT fire when the swap fails (loadFragment returns null)', async () => {
+      const event = stubFullStory();
+      loadFragment.mockResolvedValueOnce(null);
+      const m = main('<div data-pzn="alpha"></div>');
+      await applyLayer(m, pznResp('alpha'));
+      await tick();
+      expect(event).not.toHaveBeenCalled();
+    });
+
+    it('does NOT fire on a null response', async () => {
+      const event = stubFullStory();
+      const m = main('<div data-pzn="alpha"></div>');
+      await applyLayer(m, null);
+      await tick();
+      expect(event).not.toHaveBeenCalled();
+    });
   });
 });
