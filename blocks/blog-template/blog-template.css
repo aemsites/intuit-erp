@@ -480,10 +480,13 @@
      article body like ordinary content — verified on the source: the TOC holds
      a constant viewport offset while the right rail's offset keeps decreasing.
 
-     JS (tocRailRowEnd) sets a precise `grid-row` end inline once it knows
-     which row the article's last TOC-eligible section lands in, so the rail
-     unsticks there instead of running past the article body; the `span 999`
-     here is only the fallback for when there's no TOC (<2 headings).
+     JS (setRailRowEnd/tocRailRowEnd) sets a precise `grid-row` end inline once
+     it knows which row the article's last TOC-eligible section lands in, so the
+     rail unsticks there instead of running past the article body; the `span 999`
+     here is only the fallback for when there's no TOC (<2 headings). Rows are
+     positional, so that end is re-applied after the author-bio section is
+     injected — otherwise the rail ends a row short and its full height covers
+     the "Recommended for you" cards.
 
      The row end alone isn't enough, though: a sticky grid *item* resolves its
      containing block against the grid container, not its own area, so the

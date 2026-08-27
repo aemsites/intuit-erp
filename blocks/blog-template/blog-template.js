@@ -96,6 +96,27 @@ export function tocRailRowEnd(sections, headings) {
 }
 
 /**
+ * Applies the rails' grid-row end, resolved against `main`'s CURRENT children.
+ *
+ * Grid rows are positional, so any top-level section inserted after the rails
+ * were sized shifts the trailing appendix down a row while the rails still end
+ * a row short — and a sticky rail whose row ends early keeps its full height,
+ * so it slides over the full-width "Recommended for you" cards and swallows
+ * clicks on the left-hand card. The author-bio section is injected after this
+ * ran, so it re-applies (see buildBlogTemplate).
+ * @param {Element} main the page's <main>
+ * @param {HTMLHeadingElement[]} headings the TOC's headings, in order
+ * @param {Element|null} tocWrap the left (TOC) rail wrapper
+ * @param {Element|null} rail the right rail wrapper
+ */
+export function setRailRowEnd(main, headings, tocWrap, rail) {
+  const rowEnd = tocRailRowEnd([...main.querySelectorAll(':scope > div')], headings);
+  if (!rowEnd) return;
+  if (tocWrap) tocWrap.style.gridRow = `2 / ${rowEnd}`;
+  if (rail) rail.style.gridRow = `2 / ${rowEnd}`;
+}
+
+/**
  * Builds a numbered, collapsible table-of-contents nav from the article's H2
  * sections inside `main`. Assigns an id to any heading missing one so the
  * links resolve. The toggle button and active-section highlighting are wired
@@ -633,11 +654,7 @@ export function buildBlogTemplate(main) {
   //    sticky containing block is exactly the article body's height. Falls
   //    back to the stylesheet's generous `span` default when it can't be
   //    computed (no TOC headings to anchor on).
-  const rowEnd = tocRailRowEnd(sections, headings);
-  if (rowEnd) {
-    if (tocWrap) tocWrap.style.gridRow = `2 / ${rowEnd}`;
-    rail.style.gridRow = `2 / ${rowEnd}`;
-  }
+  setRailRowEnd(main, headings, tocWrap, rail);
 
   // 5. share widget — a single element relocated between the hero (mobile)
   //    and the top of the TOC rail (desktop) as the viewport crosses the
@@ -656,7 +673,13 @@ export function buildBlogTemplate(main) {
 
   // end-of-article author bio + social share (block injected below). Author-
   // gated; the block itself drops its section if the query-index row is missing.
-  if (getMetadata('author')) injectAuthorBioBlock(main);
+  if (getMetadata('author')) {
+    injectAuthorBioBlock(main);
+    // The bio is a new top-level section, so every section after it moved down
+    // a grid row — re-size the rails against the new order or the sticky TOC
+    // rail overruns into the 'Recommended for you' cards.
+    setRailRowEnd(main, headings, tocWrap, rail);
+  }
 }
 
 /**
