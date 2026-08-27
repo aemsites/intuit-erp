@@ -411,7 +411,8 @@ export default class TealiumMartech {
     this.env = resolveEnvironment();
     this.enabled = this.env !== null;
     window.utag_data = window.utag_data || {};
-    window.utag_cfg_ovrd = Object.assign({ noview:true }, window.utag_cfg_ovrd || {});
+    window.utag_cfg_ovrd = window.utag_cfg_ovrd || {};
+    window.utag_cfg_ovrd.noview = true;
     // Add Tealium's verbose logging on dev.
     if (DEBUG_ENVIRONMENTS.includes(this.env)) {
       // Tealium's own verbose console logging — dev only, set before utag.js loads in lazy().
