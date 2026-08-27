@@ -22,7 +22,7 @@
  */
 /* eslint-disable import/no-extraneous-dependencies, import/extensions, no-restricted-syntax, no-continue, no-console, no-plusplus, max-len, object-curly-newline, no-nested-ternary, no-await-in-loop */
 import { chromium } from 'playwright';
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import {
   launchStealthHeaded, newLiveContext, gotoLive, defaultWaitUntil, dismissOverlays,
@@ -35,12 +35,15 @@ const GOLDEN = 'scripts/diff/fixtures/local/clicktrack-golden-customer.json';
 
 const norm = (v) => normalizeValue({ normalizeTags: true }, v);
 const stripBc = (v) => (typeof v === 'string' ? v.replace(/ \[[^\]]*\]$/, '') : v);
-// content key stable across prod capture and our stage DOM: what the CTA is + its label.
-const contentKey = (p) => [p.object || '?', norm(p.object_detail) || '', norm(stripBc(p.ui_object_detail)) || ''].join('¦');
+// content key stable across prod capture and our stage DOM: what the CTA is + its VISIBLE
+// label. Deliberately excludes object_detail (e.g. faq|question_5) — its positional index
+// differs between our authored order and prod's, so keying on it mis-pairs faqs; instead we
+// score object_detail as a gated field. ui_object_detail is tag-stripped + bracket-stripped.
+const contentKey = (p) => [p.object || '?', norm(stripBc(p.ui_object_detail)) || ''].join('¦');
 const readField = (payload, loc, field) => (loc === 'envelope' ? payload[field] : (payload[loc] || {})[field]);
 
 function parseArgs(argv) {
-  const o = { base: 'https://stage.erp.intuit.com', page: null, headed: false, json: false, limit: 0 };
+  const o = { base: 'https://stage.erp.intuit.com', page: null, headed: false, json: false, limit: 0, captures: null, out: null };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--base') o.base = argv[++i];
@@ -48,6 +51,8 @@ function parseArgs(argv) {
     else if (a === '--headed') o.headed = true;
     else if (a === '--json') o.json = true;
     else if (a === '--limit') o.limit = +argv[++i];
+    else if (a === '--captures') o.captures = argv[++i]; // offline: diff pre-captured live beacons (from the authenticated work Chrome) instead of driving Playwright
+    else if (a === '--out') o.out = argv[++i]; // write the per-entry/per-field detail artifact (for the customer report)
   }
   return o;
 }
@@ -127,12 +132,90 @@ function buildResult(entry, env) {
   return { page: entry.page, component: entry.key || '(loose)', event: entry.event, reproduced: true, gated, presence };
 }
 
-async function main() {
-  const o = parseArgs(process.argv.slice(2));
-  if (!existsSync(GOLDEN)) { console.error(`Missing ${GOLDEN}. Run payloads-to-golden.mjs first.`); process.exit(2); }
-  const golden = JSON.parse(readFileSync(GOLDEN, 'utf8'));
-  assertIntegrity(golden); // hand-edited golden => throws
+// Per-field detail for the customer report: every field prod carried, with our LIVE value,
+// the match verdict, and its policy bucket. `got` is the sanitized capture (PII fields are
+// shape tokens; gated fields are raw), so nothing sensitive is echoed into the artifact.
+function buildDetail(entry, env) {
+  const g = entry.fullPayload;
+  const fields = [];
+  const show = (v) => (v === undefined ? '‹absent›' : (typeof v === 'object' ? JSON.stringify(v) : String(v)));
+  for (const loc of ['envelope', 'properties', 'context']) {
+    for (const [field, spec] of gatedSpecs(loc)) {
+      const want = readField(g, loc, field);
+      if (want == null || want === '') continue;
+      const got = env ? readField(env, loc, field) : undefined;
+      fields.push({
+        loc,
+        field,
+        bucket: 'gated',
+        kind: spec.kind || '',
+        expected: show(normalizeValue(spec, want)),
+        got: show(got === undefined ? undefined : normalizeValue(spec, got)),
+        match: env ? gatedMatch(spec, want, got) : false,
+      });
+    }
+  }
+  for (const loc of ['envelope', 'properties', 'context', 'integrations']) {
+    for (const [field, spec] of presenceSpecs(loc)) {
+      if (readField(g, loc, field) === undefined) continue;
+      const present = env ? readField(env, loc, field) !== undefined : false;
+      fields.push({
+        loc,
+        field,
+        bucket: 'frozen',
+        group: spec.group || '',
+        reason: spec.reason || '',
+        expected: '‹present›',
+        got: present ? '‹present›' : '‹MISSING›',
+        match: present,
+      });
+    }
+  }
+  return {
+    page: entry.page,
+    component: entry.key || '(loose)',
+    event: entry.event,
+    text: (entry.ctaLabel || entry.text || '').slice(0, 80),
+    href: (g.properties || {}).link_href || entry.href || '',
+    reproduced: !!env,
+    fields,
+  };
+}
 
+// Offline diff of pre-captured live beacons (from the authenticated work Chrome). Same
+// contentKey set-match + oracle scoring as the Playwright path — just no browser.
+function runFromCaptures(golden, o) {
+  const cap = JSON.parse(readFileSync(o.captures, 'utf8'));
+  const capPages = cap.pages || cap;
+  const byPage = new Map();
+  for (const e of golden.entries) {
+    if (o.page && e.page !== o.page) continue;
+    if (e.nonCta && isStructuralException(e.event)) continue;
+    e.contentKey = contentKey(e.fullPayload.properties || {});
+    if (!byPage.has(e.page)) byPage.set(e.page, []);
+    byPage.get(e.page).push(e);
+  }
+  const results = []; const details = []; const notMigrated = []; const pageLog = [];
+  for (const [page, entries] of byPage) {
+    const beacons = capPages[page];
+    if (beacons == null) { notMigrated.push({ page, status: 'not-captured', beacons: entries.length }); pageLog.push({ page, notCaptured: true }); for (const entry of entries) { results.push({ page, component: entry.key || '(loose)', event: entry.event, reproduced: false, gated: {}, presence: {} }); details.push(buildDetail(entry, null)); } continue; }
+    const real = beacons.filter((c) => c && c.event && String(c.event).includes(':'));
+    const capByKey = new Map();
+    for (const env of real) { const k = contentKey(env.properties || {}); if (!capByKey.has(k)) capByKey.set(k, []); capByKey.get(k).push(env); }
+    let matched = 0;
+    for (const entry of entries) {
+      const q = capByKey.get(entry.contentKey);
+      const env = q && q.length ? q.shift() : null;
+      if (env) matched++;
+      results.push(env ? buildResult(entry, env) : { page: entry.page, component: entry.key || '(loose)', event: entry.event, reproduced: false, gated: {}, presence: {} });
+      details.push(buildDetail(entry, env));
+    }
+    pageLog.push({ page, expected: entries.length, matched, missing: entries.length - matched });
+  }
+  return { results, details, notMigrated, pageLog };
+}
+
+function goldenByPage(golden, o) {
   const byPage = new Map();
   for (const e of golden.entries) {
     if (o.page && e.page !== o.page) continue;
@@ -141,11 +224,14 @@ async function main() {
     if (!byPage.has(e.page)) byPage.set(e.page, []);
     byPage.get(e.page).push(e);
   }
+  return byPage;
+}
 
+// Live path: drive Playwright against the base env, capturing the real eventbus POSTs.
+async function runFromPlaywright(golden, o) {
+  const byPage = goldenByPage(golden, o);
   const browser = o.headed ? await launchStealthHeaded(chromium) : await chromium.launch();
-  const results = [];
-  const notMigrated = [];
-  const pageLog = [];
+  const results = []; const details = []; const notMigrated = []; const pageLog = [];
   try {
     for (const [page, entries] of byPage) {
       const url = `${o.base}${page === '/' ? '/' : page}`;
@@ -155,18 +241,39 @@ async function main() {
         pageLog.push({ page, error: e.name || 'Error', message: (e.message || '').split('\n')[0] });
         continue;
       }
-      if (cap.status >= 400) { notMigrated.push({ page, status: cap.status, beacons: use.length }); pageLog.push({ page, notYetMigrated: true, status: cap.status }); continue; }
+      if (cap.status >= 400) { notMigrated.push({ page, status: cap.status, beacons: use.length }); pageLog.push({ page, notYetMigrated: true, status: cap.status }); for (const entry of use) details.push(buildDetail(entry, null)); continue; }
       const capByKey = new Map();
       for (const env of cap.captured) { const k = contentKey(env.properties || {}); if (!capByKey.has(k)) capByKey.set(k, []); capByKey.get(k).push(env); }
       let matched = 0;
       for (const entry of use) {
         const q = capByKey.get(entry.contentKey);
-        if (q && q.length) { results.push(buildResult(entry, q.shift())); matched++; } else { results.push({ page: entry.page, component: entry.key || '(loose)', event: entry.event, reproduced: false, gated: {}, presence: {} }); }
+        const env = q && q.length ? q.shift() : null;
+        if (env) matched++;
+        results.push(env ? buildResult(entry, env) : { page: entry.page, component: entry.key || '(loose)', event: entry.event, reproduced: false, gated: {}, presence: {} });
+        details.push(buildDetail(entry, env));
       }
       pageLog.push({ page, expected: use.length, matched, missing: use.length - matched });
     }
   } finally {
     await browser.close().catch(() => {});
+  }
+  return { results, details, notMigrated, pageLog };
+}
+
+async function main() {
+  const o = parseArgs(process.argv.slice(2));
+  if (!existsSync(GOLDEN)) { console.error(`Missing ${GOLDEN}. Run payloads-to-golden.mjs first.`); process.exit(2); }
+  const golden = JSON.parse(readFileSync(GOLDEN, 'utf8'));
+  assertIntegrity(golden); // hand-edited golden => throws
+
+  const { results, details, notMigrated, pageLog } = o.captures
+    ? runFromCaptures(golden, o)
+    : await runFromPlaywright(golden, o);
+
+  if (o.out) {
+    const captured = details.filter((d) => d.reproduced).length;
+    writeFileSync(o.out, JSON.stringify({ base: o.base, source: o.captures ? 'live-work-chrome' : 'playwright', generatedAt: new Date().toISOString(), captured, total: details.length, entries: details }, null, 2));
+    console.log(`wrote detail artifact ${o.out} — ${captured}/${details.length} entries reproduced`);
   }
 
   const report = verdict(results);
