@@ -294,7 +294,8 @@
   margin: 0 0 12px;
 }
 
-.hero .hero-form .form .form-disclaimer {
+.hero .hero-form .form .form-disclaimer,
+.hero .hero-form .form .form-disclaimer p {
   text-align: left;
   font-size: 12px;
   color: var(--text-muted);
