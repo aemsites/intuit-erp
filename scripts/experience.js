@@ -374,11 +374,54 @@ export function recordPzn(records) { bufferRecords(pznById, records, 'personaliz
 export function recordPznPage(records) { bufferRecords(pznPageById, records, 'personalization_id'); }
 export function recordIxp(records) { bufferRecords(ixpById, records, 'experiment_id'); }
 
+const FS_READY_TIMEOUT_MS = 10000;
+let fsReadyPromise;
+let fsReadyTimer;
+
+// Resolves the FS function once present, or null on timeout (dev/localhost never load FS).
+// Memoized: at most ONE interval runs per page; every caller awaits the same promise.
+export function whenFullStoryReady({ intervalMs = 200, timeoutMs = FS_READY_TIMEOUT_MS } = {}) {
+  if (fsReadyPromise) return fsReadyPromise;
+  const fsFn = () => {
+    // eslint-disable-next-line no-underscore-dangle -- FullStory's fixed global name
+    const ns = typeof window !== 'undefined' && window._fs_namespace;
+    return ns && typeof window[ns] === 'function' ? window[ns] : null;
+  };
+  fsReadyPromise = new Promise((resolve) => {
+    const ready = fsFn();
+    if (ready) { resolve(ready); return; }
+    const deadline = Date.now() + timeoutMs;
+    fsReadyTimer = setInterval(() => {
+      const fn = fsFn();
+      if (fn || Date.now() >= deadline) {
+        clearInterval(fsReadyTimer);
+        fsReadyTimer = undefined;
+        resolve(fn || null);
+      }
+    }, intervalMs);
+  });
+  return fsReadyPromise;
+}
+
+// Fires a FullStory custom event when swapped (treatment/offer) content is actually viewed.
+export function notifyFullStory(event, id, name, opts) {
+  if (typeof window === 'undefined' || !event || !id) return;
+  whenFullStoryReady(opts).then((fs) => {
+    if (fs) {
+      try {
+        fs.event(event, { id, name });
+      } catch { /* fail-open */ }
+    }
+  });
+}
+
 export function resetAnalytics() {
   pznById.clear();
   pznPageById.clear();
   ixpById.clear();
   flushScheduled = false;
+  if (fsReadyTimer) { clearInterval(fsReadyTimer); fsReadyTimer = undefined; }
+  fsReadyPromise = undefined;
 }
 
 // --- DOM stamping (block-level click channel) -------------------------------
@@ -416,7 +459,10 @@ export async function applyPage(doc, response, signal) {
     const rec = ixpRecord(d, window.location.pathname);
     if (d.replacementCasId && d.replacementCasId !== d.originalCasId) {
       const path = casToPath(d.replacementCasId);
-      if (path && await swapMain(doc, path, signal)) stampExperiment(doc.querySelector('main'), rec);
+      if (path && await swapMain(doc, path, signal)) {
+        stampExperiment(doc.querySelector('main'), rec);
+        notifyFullStory('Experiment Viewed', rec?.experiment_treatment, rec?.experiment_id);
+      }
     }
     if (rec) recordIxp([rec]);
     return;
@@ -428,7 +474,14 @@ export async function applyPage(doc, response, signal) {
     const rec = pznRecord(pagePzn, d);
     if (d.casId) {
       const path = casToPath(d.casId);
-      if (path && await swapMain(doc, path, signal)) stampPzn(doc.querySelector('main'), rec);
+      if (path && await swapMain(doc, path, signal)) {
+        stampPzn(doc.querySelector('main'), rec);
+        notifyFullStory(
+          'Personalization Viewed',
+          rec?.personalization_id,
+          rec?.personalization_placement,
+        );
+      }
     }
     if (rec) recordPznPage([rec]);
   }
@@ -447,7 +500,12 @@ export async function applyLayer(root, response, { skip } = {}) {
     if (d.replacementCasId && d.replacementCasId !== d.originalCasId) {
       const path = casToPath(d.replacementCasId);
       if (path) {
-        tasks.push(applyFragment(el, path).then((ok) => { if (ok) stampExperiment(el, rec); }));
+        tasks.push(applyFragment(el, path).then((ok) => {
+          if (ok) {
+            stampExperiment(el, rec);
+            notifyFullStory('Experiment Viewed', rec?.experiment_treatment, rec?.experiment_id);
+          }
+        }));
       }
     }
     if (rec) recordIxp([rec]);
@@ -460,7 +518,16 @@ export async function applyLayer(root, response, { skip } = {}) {
     if (d.casId) {
       const path = casToPath(d.casId);
       if (path) {
-        tasks.push(applyFragment(el, path).then((ok) => { if (ok) stampPzn(el, rec); }));
+        tasks.push(applyFragment(el, path).then((ok) => {
+          if (ok) {
+            stampPzn(el, rec);
+            notifyFullStory(
+              'Personalization Viewed',
+              rec?.personalization_id,
+              rec?.personalization_placement,
+            );
+          }
+        }));
       }
     }
     if (rec) recordPzn([rec]);
