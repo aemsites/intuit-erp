@@ -1,0 +1,4 @@
+/* Behavior-only widget: binds the Schedule-a-call CTA to ChiliPiper, renders nothing. */
+.form-vs-chilipiper {
+  display: none;
+}

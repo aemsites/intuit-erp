@@ -20,6 +20,8 @@
  *     `pzn-block` / `exp-block`     = block name        → data-pzn-block / …
  *                                     (present only when block-scoped)
  *     `pzn-variants` / `exp-variants` = up to 5 fragment paths, comma-joined
+ *     `pzn-mode` / `exp-mode`       = `append` for additive slots → data-pzn-mode / …
+ *                                     (present only when appending, not swapping)
  *   PAGE → rows in the page Metadata block:
  *     experimentation: `experiment-id`, `experiment-label` (opt), `experiment-variants`
  *     personalization:  `personalization-id`, `personalization-variants` (opt)
@@ -225,6 +227,8 @@ export function parseExperience(html) {
       expBlock: valueOf(smeta, 'exp-block'),
       pznVariants: splitList(valueOf(smeta, 'pzn-variants')),
       expVariants: splitList(valueOf(smeta, 'exp-variants')),
+      pznAppend: valueOf(smeta, 'pzn-mode') === 'append',
+      expAppend: valueOf(smeta, 'exp-mode') === 'append',
     };
   });
   return { page, sections };
@@ -234,13 +238,16 @@ export function parseExperience(html) {
 
 /**
  * Set/update a section's tag for a mode. Writes the `mode` id row, the
- * `mode-block` row (only when `block` is set — else removes it), and the
- * `mode-variants` row (only when non-empty). Creates the section-metadata block
- * when absent; preserves the other mode's rows. Empty id is a no-op (use
- * clearSectionTag to remove).
+ * `mode-block` row (only when `block` is set — else removes it), the
+ * `mode-variants` row (only when non-empty), and the `mode-mode=append` row (only
+ * when `append` is set — else removes it, defaulting to swap). Creates the
+ * section-metadata block when absent; preserves the other mode's rows. Empty id is
+ * a no-op (use clearSectionTag to remove).
  * @param {string} html
  */
-export function setSectionTag(html, sectionIndex, mode, { id, block, variants } = {}) {
+export function setSectionTag(html, sectionIndex, mode, {
+  id, block, variants, append,
+} = {}) {
   if (!MODES.includes(mode)) return html;
   const cleanId = (id == null ? '' : String(id)).trim();
   if (!cleanId) return html;
@@ -259,6 +266,10 @@ export function setSectionTag(html, sectionIndex, mode, { id, block, variants } 
   if (list) setRow(doc, meta, `${mode}-variants`, list);
   else removeRow(meta, `${mode}-variants`);
 
+  // Additive slot: fragment is appended, not swapped (behavior widgets).
+  if (append) setRow(doc, meta, `${mode}-mode`, 'append');
+  else removeRow(meta, `${mode}-mode`);
+
   return serialize(doc);
 }
 
@@ -276,6 +287,7 @@ export function clearSectionTag(html, sectionIndex, mode) {
   removeRow(meta, mode);
   removeRow(meta, `${mode}-block`);
   removeRow(meta, `${mode}-variants`);
+  removeRow(meta, `${mode}-mode`);
   if (meta.children.length === 0) meta.remove();
   return serialize(doc);
 }

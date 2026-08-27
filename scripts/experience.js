@@ -8,6 +8,10 @@
 // Fidelity is DOM-driven: page-level (experiment-id / personalization-id metadata) ⇒
 // whole-page swap; section (data-exp / data-pzn) ⇒ section swap; a -block scope ⇒
 // block swap. The response only supplies the replacement casId per id/name.
+//
+// A slot flagged data-exp-mode / data-pzn-mode="append" is APPENDED to its target rather
+// than swapped in — the vehicle for additive behavior widgets that attach code without
+// replacing content. The call itself is gated on consent (hasExperienceConsent).
 
 import { getMetadata } from './aem.js';
 import { buildIntentContext, getIntentProfile } from './of1-intent.js';
@@ -81,7 +85,9 @@ export async function swapMain(doc, path, signal) {
   }
 }
 
-// Loads a fragment and replaces `targetEl`'s children with it. Returns true when applied.
+// Loads a fragment and puts it into `targetEl` — replacing its children (default) or, with
+// `opts.append`, appending after existing content (additive behavior widgets). Returns true
+// when applied.
 export async function applyFragment(targetEl, path, opts = {}) {
   const p = fragmentPath(path);
   if (!targetEl || !p) return false;
@@ -91,7 +97,8 @@ export async function applyFragment(targetEl, path, opts = {}) {
       || (await import('../blocks/fragment/fragment.js')).loadFragment;
     const frag = await load(p);
     if (!frag) return false;
-    targetEl.replaceChildren(...frag.childNodes);
+    if (opts.append) targetEl.append(...frag.childNodes);
+    else targetEl.replaceChildren(...frag.childNodes);
     return true;
   } catch {
     return false;
@@ -136,6 +143,65 @@ export function buildContext(permalink = window.location.href) {
   return context;
 }
 
+// --- Consent gate -----------------------------------------------------------
+
+// The OneTrust consent group that gates targeting/personalization — the same consent that
+// governs OF1 intent. Overridable per page via `experience-consent-group` metadata.
+const DEFAULT_CONSENT_GROUP = 'C0004';
+
+export function experienceConsentGroup() {
+  return (getMetadata('experience-consent-group') || DEFAULT_CONSENT_GROUP).trim();
+}
+
+// Parses the OneTrust `OptanonConsent` cookie's `groups=1:1,2:0,...` field into a
+// { groupId: granted } map, or null when absent/unparseable. Inlined here (it mirrors
+// readOptanonConsent in plugins/tealium-martech) so the eager experience path stays
+// self-contained and never pulls the martech loader into the pre-LCP graph.
+export function readConsentGroups() {
+  try {
+    const match = document.cookie.match(/(?:^|;\s*)OptanonConsent=([^;]+)/);
+    if (!match) return null;
+    const groupsMatch = decodeURIComponent(match[1]).match(/(?:^|&)groups=([^&]*)/);
+    if (!groupsMatch || !groupsMatch[1]) return null;
+    const groups = {};
+    groupsMatch[1].split(',').forEach((pair) => {
+      const [id, granted] = pair.split(':');
+      if (id) groups[id] = granted === '1';
+    });
+    return Object.keys(groups).length ? groups : null;
+  } catch {
+    return null;
+  }
+}
+
+// QA override from the `experience-consent` URL param or metadata: 'granted' | 'denied' | null.
+function consentOverride() {
+  const param = new URLSearchParams(window.location.search).get('experience-consent');
+  const val = (param || getMetadata('experience-consent') || '').trim().toLowerCase();
+  if (['granted', 'on', 'true'].includes(val)) return 'granted';
+  if (['denied', 'off', 'false'].includes(val)) return 'denied';
+  return null;
+}
+
+// Consent is enforced only where Intuit's OneTrust stack actually loads — the `*.intuit.com`
+// origins. On aem.page/aem.live/localhost the consent CDN is CloudFront-blocked and no
+// OptanonConsent cookie ever appears, so enforcing there would permanently suppress pzn/ixp;
+// we bypass so preview/local stays testable.
+export function consentEnforced() {
+  return /(?:^|\.)intuit\.com$/.test(window.location.hostname);
+}
+
+// The gate for the orchestrator call: only personalize/experiment once the user has granted
+// the targeting group. Because OptanonConsent persists, this becomes true on the visit AFTER
+// they accept the banner. Fail-open on non-enforced hosts and via an explicit QA override.
+export function hasExperienceConsent() {
+  const override = consentOverride();
+  if (override) return override === 'granted';
+  if (!consentEnforced()) return true;
+  const groups = readConsentGroups();
+  return !!(groups && groups[experienceConsentGroup()] === true);
+}
+
 // --- Target collection ------------------------------------------------------
 
 // True when a section's data-pzn and data-exp aim at the SAME target (both whole-
@@ -162,7 +228,12 @@ export function collectExperiments(root, skip) {
     if (!id || !/^\d+$/.test(id)) return;
     const block = section.dataset.expBlock;
     const el = block ? section.querySelector(`[data-block-name="${block}"]`) : section;
-    if (el) experiments.push({ el, id, fidelity: block ? 'block' : 'section' });
+    const append = section.dataset.expMode === 'append';
+    if (el) {
+      experiments.push({
+        el, id, fidelity: block ? 'block' : 'section', append,
+      });
+    }
   });
   return experiments;
 }
@@ -183,7 +254,8 @@ export function collectSlots(root, skip) {
     if (section.dataset.exp && sameTargetAsExp(section)) return;
     const block = section.dataset.pznBlock;
     const el = block ? section.querySelector(`[data-block-name="${block}"]`) : section;
-    if (el) slots.push({ el, placement });
+    const append = section.dataset.pznMode === 'append';
+    if (el) slots.push({ el, placement, append });
   });
   return slots;
 }
@@ -440,27 +512,31 @@ export async function applyLayer(root, response, { skip } = {}) {
   if (!root || !response) return;
   const tasks = [];
 
-  collectExperiments(root, skip).forEach(({ el, id }) => {
+  collectExperiments(root, skip).forEach(({ el, id, append }) => {
     const d = experimentDecision(response, id);
     if (!d) return;
     const rec = ixpRecord(d, window.location.pathname);
     if (d.replacementCasId && d.replacementCasId !== d.originalCasId) {
       const path = casToPath(d.replacementCasId);
       if (path) {
-        tasks.push(applyFragment(el, path).then((ok) => { if (ok) stampExperiment(el, rec); }));
+        tasks.push(applyFragment(el, path, { append }).then((ok) => {
+          if (ok) stampExperiment(el, rec);
+        }));
       }
     }
     if (rec) recordIxp([rec]);
   });
 
-  collectSlots(root, skip).forEach(({ el, placement }) => {
+  collectSlots(root, skip).forEach(({ el, placement, append }) => {
     const d = pznDecision(response, placement);
     if (!d) return;
     const rec = pznRecord(placement, d);
     if (d.casId) {
       const path = casToPath(d.casId);
       if (path) {
-        tasks.push(applyFragment(el, path).then((ok) => { if (ok) stampPzn(el, rec); }));
+        tasks.push(applyFragment(el, path, { append }).then((ok) => {
+          if (ok) stampPzn(el, rec);
+        }));
       }
     }
     if (rec) recordPzn([rec]);

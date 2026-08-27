@@ -15,6 +15,7 @@ import {
   ensureAppVars, flushAppVars, recordPzn, recordPznPage, recordIxp, resetAnalytics,
   stampPzn, stampExperiment,
   fetchExperience, applyPage, applyLayer,
+  hasExperienceConsent, readConsentGroups, experienceConsentGroup, consentEnforced,
 } from '../scripts/experience.js';
 // eslint-disable-next-line import/first
 import { loadFragment } from '../blocks/fragment/fragment.js';
@@ -201,6 +202,10 @@ describe('collectExperiments', () => {
     const m = main('<div data-exp="1"></div><div data-exp="2"></div>');
     expect(collectExperiments(m, m.querySelector('[data-exp]')).map((e) => e.id)).toEqual(['2']);
   });
+  it('carries append=true only when data-exp-mode is "append"', () => {
+    expect(collectExperiments(main('<div data-exp="1" data-exp-mode="append"></div>'))[0].append).toBe(true);
+    expect(collectExperiments(main('<div data-exp="1"></div>'))[0].append).toBe(false);
+  });
 });
 
 describe('collectSlots + sameTargetAsExp (IXP precedence)', () => {
@@ -217,6 +222,10 @@ describe('collectSlots + sameTargetAsExp (IXP precedence)', () => {
   it('keeps pzn when exp targets a different block', () => {
     const m = main('<div data-pzn="p" data-pzn-block="cards" data-exp="1" data-exp-block="hero"><div class="cards" data-block-name="cards"></div><div class="hero" data-block-name="hero"></div></div>');
     expect(collectSlots(m)).toHaveLength(1);
+  });
+  it('carries append=true only when data-pzn-mode is "append"', () => {
+    expect(collectSlots(main('<div data-pzn="a" data-pzn-mode="append"></div>'))[0].append).toBe(true);
+    expect(collectSlots(main('<div data-pzn="a"></div>'))[0].append).toBe(false);
   });
 });
 
@@ -470,5 +479,72 @@ describe('applyLayer (section/block swaps, from the cached response)', () => {
     const m = main('<div data-pzn="alpha"></div>');
     await applyLayer(m, null);
     expect(loadFragment).not.toHaveBeenCalled();
+  });
+
+  it('append mode (data-pzn-mode) appends the fragment, preserving existing content', async () => {
+    const m = main('<div data-pzn="alpha" data-pzn-mode="append"><p class="base">keep</p></div>');
+    await applyLayer(m, pznResp('alpha', { casId: '/frag' }));
+    const el = m.querySelector('[data-pzn]');
+    expect(el.querySelector('.base')).toBeTruthy(); // existing content preserved
+    expect(el.querySelector('[data-frag]')).toBeTruthy(); // fragment appended
+  });
+
+  it('append mode works for experiments too (data-exp-mode)', async () => {
+    const m = main('<div data-exp="376648" data-exp-mode="append"><p class="base">keep</p></div>');
+    await applyLayer(m, expResp('376648', { replacementCasId: '/frag' }));
+    const el = m.querySelector('[data-exp]');
+    expect(el.querySelector('.base')).toBeTruthy();
+    expect(el.querySelector('[data-frag]')).toBeTruthy();
+  });
+
+  it('default (swap) mode replaces existing content', async () => {
+    const m = main('<div data-pzn="alpha"><p class="base">gone</p></div>');
+    await applyLayer(m, pznResp('alpha', { casId: '/frag' }));
+    const el = m.querySelector('[data-pzn]');
+    expect(el.querySelector('.base')).toBeFalsy();
+    expect(el.querySelector('[data-frag]')).toBeTruthy();
+  });
+});
+
+describe('consent gate', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    document.cookie = 'OptanonConsent=; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+  });
+
+  it('readConsentGroups parses the OptanonConsent groups field (URL-encoded)', () => {
+    document.cookie = 'OptanonConsent=isGpcEnabled=0&groups=C0001%3A1%2CC0004%3A0';
+    expect(readConsentGroups()).toEqual({ C0001: true, C0004: false });
+  });
+  it('readConsentGroups returns null when the cookie is absent', () => {
+    expect(readConsentGroups()).toBeNull();
+  });
+  it('experienceConsentGroup defaults to C0004, overridable via metadata', () => {
+    expect(experienceConsentGroup()).toBe('C0004');
+    setMeta('experience-consent-group', 'C0002');
+    expect(experienceConsentGroup()).toBe('C0002');
+  });
+  it('bypasses (returns true) on a non-enforced host like localhost', () => {
+    vi.stubGlobal('location', { hostname: 'localhost', search: '' });
+    expect(consentEnforced()).toBe(false);
+    expect(hasExperienceConsent()).toBe(true);
+  });
+  it('enforces on *.intuit.com: false without consent, true once the group is granted', () => {
+    vi.stubGlobal('location', { hostname: 'erp.intuit.com', search: '' });
+    expect(consentEnforced()).toBe(true);
+    expect(hasExperienceConsent()).toBe(false); // first visit: no cookie yet
+    document.cookie = 'OptanonConsent=groups=C0004%3A1';
+    expect(hasExperienceConsent()).toBe(true); // after consent: group granted
+  });
+  it('denies on *.intuit.com when the group is present but not granted', () => {
+    vi.stubGlobal('location', { hostname: 'stage.erp.intuit.com', search: '' });
+    document.cookie = 'OptanonConsent=groups=C0004%3A0';
+    expect(hasExperienceConsent()).toBe(false);
+  });
+  it('the experience-consent override forces the decision regardless of host/cookie', () => {
+    vi.stubGlobal('location', { hostname: 'erp.intuit.com', search: '?experience-consent=granted' });
+    expect(hasExperienceConsent()).toBe(true);
+    vi.stubGlobal('location', { hostname: 'localhost', search: '?experience-consent=denied' });
+    expect(hasExperienceConsent()).toBe(false);
   });
 });

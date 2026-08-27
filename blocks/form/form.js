@@ -24,6 +24,8 @@ import { loadScript, getMetadata } from '../../scripts/aem.js';
 // installed npm package, so this necessarily crosses a package.json boundary.
 // eslint-disable-next-line import/no-relative-packages
 import { sendEvent } from '../../plugins/martech/src/index.js';
+// Shared ChiliPiper opener (also used by personalization widgets).
+import { openChiliPiper, submitChiliPiper } from '../../scripts/chilipiper.js';
 
 // Tenant-namespaced XDM location for lead-identity events. Object name `of1Signal` must
 // byte-match the AEP "Experience Event Schema" field group path (AEP console config) or
@@ -42,8 +44,6 @@ const CONFIG_KEYS = [
   'recaptcha',
   'buttonLabel',
 ];
-
-const CHILIPIPER_SRC_DEFAULT = '//js.chilipiper.com/marketing.js';
 
 // Marketo instance selection, keyed by the `marketo` page metadata. Prod unless the
 // page opts in; hostname is deliberately not consulted.
@@ -145,14 +145,6 @@ function marketoValuesToLead(vals = {}) {
   };
 }
 
-async function chiliPiperHandoff(cfg, router, form) {
-  const subdomain = cfg['chilipiper.subdomain'];
-  if (!router || !subdomain) return false;
-  await loadScript(cfg['chilipiper.src'] || CHILIPIPER_SRC_DEFAULT);
-  window.ChiliPiper?.submit(subdomain, router, { map: true, lead: form.getValues() });
-  return true;
-}
-
 // reCAPTCHA v3, mirroring erp.intuit.com: on form load fetch a score token and
 // verify it via Intuit's siteverify proxy, then gate the Marketo submit on the
 // result (Marketo's own captcha is off; the token is never a form field). The
@@ -252,7 +244,7 @@ async function embedMarketoForm(formEl, cfg, config, env) {
     const canHandoff = !!(config.chiliPiperRouter && cfg['chilipiper.subdomain']);
     form.onSuccess((vals) => {
       try { trackFormSubmit(marketoValuesToLead(vals)); } catch (e) { /* non-fatal */ }
-      if (canHandoff) chiliPiperHandoff(cfg, config.chiliPiperRouter, form);
+      if (canHandoff) submitChiliPiper(config.chiliPiperRouter, form.getValues());
       if (config.downloadUrl) window.open(config.downloadUrl, '_blank', 'noopener');
       else if (config.successUrl && !canHandoff) window.location.href = config.successUrl;
       // Suppress Marketo's default redirect only when we provide our own feedback
@@ -313,9 +305,5 @@ export default async function decorate(block) {
 // Book-a-demo: ChiliPiper scheduler directly (no Marketo form). Router is the
 // only per-page value; subdomain/script come from /site-config.json.
 export async function bookDemo(router) {
-  const cfg = await siteConfig();
-  const subdomain = cfg['chilipiper.subdomain'];
-  if (!router || !subdomain) return;
-  await loadScript(cfg['chilipiper.src'] || CHILIPIPER_SRC_DEFAULT);
-  window.ChiliPiper?.scheduling(subdomain, router, { title: document.title });
+  await openChiliPiper(router);
 }

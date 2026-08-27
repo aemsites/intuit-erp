@@ -52,11 +52,17 @@ ones this site's code actually reads.
 | `experiment-id` | Page-level IXP experiment (whole-page swap). **Wins over `personalization-id`** on the same target | digits only (`/^\d+$/`); non-numeric ignored | [scripts/experience.js](scripts/experience.js) |
 | `personalization-id` | Page-level personalization access-point name (whole-page swap) | any string | [scripts/experience.js](scripts/experience.js) |
 | `experience-api-base` | Overrides the decision-API base URL for local/QA | URL/path (default `/api`; trailing slashes stripped) | [scripts/experience.js](scripts/experience.js) |
+| `experience-consent` | QA override for the consent gate on the orchestrator call (also a URL param `?experience-consent=`) | `granted`/`on`/`true` → force-run; `denied`/`off`/`false` → force-skip; absent → normal gate | [scripts/experience.js](scripts/experience.js) |
+| `experience-consent-group` | OneTrust group id that must be granted for the orchestrator call to fire (the group that gates OF1 intent) | group id (default `C0004`) | [scripts/experience.js](scripts/experience.js) |
 
 > The orchestrator call only fires when the page has at least one experiment id or access-point name
-> (page metadata **or** the section tags below). `experiment-id` / `personalization-id` are **not
-> currently authored on any page**, so today no orchestrator call is made — these document available
-> capability, not live config.
+> (page metadata **or** the section tags below) **and** consent has been granted. The consent gate reads
+> the OneTrust `OptanonConsent` cookie synchronously (`experience-consent-group`, default `C0004`), so it
+> effectively enables on the visit *after* the banner is accepted. It is enforced only on `*.intuit.com`
+> (where the OneTrust stack loads); on `*.aem.page`/`*.aem.live`/`localhost` it is bypassed so preview/local
+> stays testable, and `experience-consent=granted|denied` overrides either way.
+> `experiment-id` / `personalization-id` are **not currently authored on any page**, so today no
+> orchestrator call is made — these document available capability, not live config.
 
 There is also the **aem-experimentation plugin** convention (loaded only when present): `experiment` /
 `experiment-*` (e.g. `experiment-variants`), `campaign-*`, `audience-*` metadata, `campaign:` /
@@ -125,6 +131,8 @@ section, and **every other key** becomes a `data-<key>` attribute the client cod
 | `Exp Block` | `data-exp-block` | Scopes that experiment to the block whose `data-block-name` matches, instead of the whole section |
 | `Pzn` | `data-pzn` | Section-scoped personalization access-point name |
 | `Pzn Block` | `data-pzn-block` | Scopes personalization to a named block |
+| `Exp Mode` | `data-exp-mode` | `append` = the experiment fragment is **appended** to the slot, not swapped in (additive behavior/code widgets). Any other value / absent = swap (default) |
+| `Pzn Mode` | `data-pzn-mode` | `append` = the personalization fragment is **appended** to the slot, not swapped in (additive behavior/code widgets). Any other value / absent = swap (default) |
 
 The `Exp*` / `Pzn*` rows are read by [scripts/experience.js](scripts/experience.js) but are **not
 currently present in authored content** — only `Style` and `Background` are used today.
