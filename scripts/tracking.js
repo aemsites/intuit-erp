@@ -281,13 +281,8 @@ export function fetchTrackingSheet() {
   return sheetPromise;
 }
 
-// Per-block JIT payload derivers registered via trackAs({ payload }). A block that
-// can't express its per-item identity through the element + sheet alone (e.g. the faq
-// accordion, whose ui_object=accordion_item_N / ui_action=displayed|dismissed depend on
-// DOM index + open/close state) supplies a function called at stamp time with the
-// resolved CTA; it returns a partial sheet-shaped cfg (same kebab keys resolveCta reads)
-// merged UNDER any real sheet row. WeakMap so entries GC with their block — no reset
-// needed. Precedent: the window.__pznTrackingContext registry (no DOM attributes).
+// Per-block JIT payload derivers (trackAs { payload }), read by stampInteraction for
+// per-item fields the element + sheet can't express (e.g. faq accordion_item_N).
 const PAYLOAD_DERIVERS = new WeakMap();
 
 /**
@@ -714,10 +709,7 @@ export function stampInteraction(e) {
   } else {
     derived = applyBlockDefaults(derived, cta);
   }
-  // A block's per-item JIT payload deriver (trackAs { payload }) supplies fields the
-  // element + sheet can't (faq accordion_item_N / object_detail / state-based ui_action /
-  // link_name). Its output is a sheet-shaped cfg merged UNDER any real sheet row (authored
-  // residue still wins), so resolveCta emits it with no change to the resolve pipeline.
+  // Per-item payload deriver: a sheet-shaped cfg merged under any real sheet row (sheet wins).
   if (block && !isPart) {
     const derivePayload = PAYLOAD_DERIVERS.get(block);
     if (derivePayload) { const ov = derivePayload(cta); if (ov) row = { ...ov, ...(row || {}) }; }
@@ -764,10 +756,7 @@ export function initTracking(scope = document) {
  * @param {Record<string, string|{as:string, linkName?:boolean}>} [opts.alsoTrack]
  *   selector -> ui_object, registering non-CTA beacon sources (#769)
  * @param {(el: Element) => (Record<string, unknown>|null)} [opts.payload] per-CTA JIT
- *   payload deriver, called at stamp time with the resolved CTA; returns a partial
- *   sheet-shaped cfg (kebab keys: `object-detail`/`ui-object`/`ui-action`/`wa-link`/
- *   `custom-properties`…) for fields the element+sheet can't express (e.g. faq
- *   accordion_item_N + open/close ui_action). Merged UNDER any real sheet row.
+ *   deriver returning a partial sheet-shaped cfg (kebab keys); merged under any sheet row
  * @param {string} [opts.action]
  * @param {string} [opts.object]
  * @param {string} [opts.uiObject] code-built payload defaults

@@ -8,6 +8,10 @@
 // Fidelity is DOM-driven: page-level (experiment-id / personalization-id metadata) ⇒
 // whole-page swap; section (data-exp / data-pzn) ⇒ section swap; a -block scope ⇒
 // block swap. The response only supplies the replacement casId per id/name.
+//
+// A slot flagged data-exp-mode / data-pzn-mode="append" is APPENDED to its target rather
+// than swapped in — the vehicle for additive behavior widgets that attach code without
+// replacing content.
 
 import { getMetadata } from './aem.js';
 import { buildIntentContext, getIntentProfile } from './of1-intent.js';
@@ -81,7 +85,9 @@ export async function swapMain(doc, path, signal) {
   }
 }
 
-// Loads a fragment and replaces `targetEl`'s children with it. Returns true when applied.
+// Loads a fragment and puts it into `targetEl` — replacing its children (default) or, with
+// `opts.append`, appending after existing content (additive behavior widgets). Returns true
+// when applied.
 export async function applyFragment(targetEl, path, opts = {}) {
   const p = fragmentPath(path);
   if (!targetEl || !p) return false;
@@ -91,7 +97,8 @@ export async function applyFragment(targetEl, path, opts = {}) {
       || (await import('../blocks/fragment/fragment.js')).loadFragment;
     const frag = await load(p);
     if (!frag) return false;
-    targetEl.replaceChildren(...frag.childNodes);
+    if (opts.append) targetEl.append(...frag.childNodes);
+    else targetEl.replaceChildren(...frag.childNodes);
     return true;
   } catch {
     return false;
@@ -100,12 +107,10 @@ export async function applyFragment(targetEl, path, opts = {}) {
 
 // --- Request context (front-end signals) -----------------------------------
 
-// The visitor id: a `?ivid=` override (demo/QA) wins, else the first-party `ivid`
-// cookie. undefined when neither — Akamai injects it server-side when it's HttpOnly.
+// The visitor id: read from the first-party `ivid` cookie. undefined when absent —
+// Akamai injects it server-side when it's HttpOnly.
 export function resolveIvid() {
   try {
-    const fromQuery = new URLSearchParams(window.location.search).get('ivid');
-    if (fromQuery) return fromQuery;
     const m = document.cookie.match(/(?:^|;\s*)ivid=([^;]+)/);
     return m ? decodeURIComponent(m[1]) : undefined;
   } catch {
@@ -118,20 +123,27 @@ function deviceType() {
   return /Mobi|Android|iPhone|iPad/i.test(ua) ? 'Mobile' : 'Desktop';
 }
 
+// Orchestrator context expects locale with underscore (en_US). Browsers and
+// `?locale=` often use BCP 47 with a hyphen (en-US).
+function underscoreLocale(value) {
+  return String(value || '').replace(/-/g, '_') || 'en_US';
+}
+
 // The sibling `context` object: every front-end-derived signal plus the AOF1 intent
 // profile (of1Intent). NOT ZoomInfo firmographics — the orchestrator enriches those
 // server-side. IP-derived geo is left for Akamai to inject.
-export function buildContext(permalink = window.location.pathname) {
+export function buildContext(permalink = window.location.href) {
   const context = {
     permalink,
-    locale: new URLSearchParams(window.location.search).get('locale') || navigator.language || 'en-US',
+    locale: underscoreLocale(
+      new URLSearchParams(window.location.search).get('locale') || navigator.language || 'en_US',
+    ),
     deviceType: deviceType(),
     newVisitor: true,
   };
   const ivid = resolveIvid();
   if (ivid) context.ivid = ivid;
-  const casId = getMetadata('cas-id') || getMetadata('page-cas-id');
-  if (casId) context.casId = casId;
+  context.casId = new URL(permalink, window.location.origin).pathname;
   const { width, height } = (typeof window !== 'undefined' && window.screen) || {};
   if (width && height) context.screenResolution = `${width}x${height}`;
   const of1Intent = buildIntentContext(getIntentProfile());
@@ -165,7 +177,12 @@ export function collectExperiments(root, skip) {
     if (!id || !/^\d+$/.test(id)) return;
     const block = section.dataset.expBlock;
     const el = block ? section.querySelector(`[data-block-name="${block}"]`) : section;
-    if (el) experiments.push({ el, id, fidelity: block ? 'block' : 'section' });
+    const append = section.dataset.expMode === 'append';
+    if (el) {
+      experiments.push({
+        el, id, fidelity: block ? 'block' : 'section', append,
+      });
+    }
   });
   return experiments;
 }
@@ -186,7 +203,8 @@ export function collectSlots(root, skip) {
     if (section.dataset.exp && sameTargetAsExp(section)) return;
     const block = section.dataset.pznBlock;
     const el = block ? section.querySelector(`[data-block-name="${block}"]`) : section;
-    if (el) slots.push({ el, placement });
+    const append = section.dataset.pznMode === 'append';
+    if (el) slots.push({ el, placement, append });
   });
   return slots;
 }
@@ -377,11 +395,54 @@ export function recordPzn(records) { bufferRecords(pznById, records, 'personaliz
 export function recordPznPage(records) { bufferRecords(pznPageById, records, 'personalization_id'); }
 export function recordIxp(records) { bufferRecords(ixpById, records, 'experiment_id'); }
 
+const FS_READY_TIMEOUT_MS = 10000;
+let fsReadyPromise;
+let fsReadyTimer;
+
+// Resolves the FS function once present, or null on timeout (dev/localhost never load FS).
+// Memoized: at most ONE interval runs per page; every caller awaits the same promise.
+export function whenFullStoryReady({ intervalMs = 200, timeoutMs = FS_READY_TIMEOUT_MS } = {}) {
+  if (fsReadyPromise) return fsReadyPromise;
+  const fsFn = () => {
+    // eslint-disable-next-line no-underscore-dangle -- FullStory's fixed global name
+    const ns = typeof window !== 'undefined' && window._fs_namespace;
+    return ns && typeof window[ns] === 'function' ? window[ns] : null;
+  };
+  fsReadyPromise = new Promise((resolve) => {
+    const ready = fsFn();
+    if (ready) { resolve(ready); return; }
+    const deadline = Date.now() + timeoutMs;
+    fsReadyTimer = setInterval(() => {
+      const fn = fsFn();
+      if (fn || Date.now() >= deadline) {
+        clearInterval(fsReadyTimer);
+        fsReadyTimer = undefined;
+        resolve(fn || null);
+      }
+    }, intervalMs);
+  });
+  return fsReadyPromise;
+}
+
+// Fires a FullStory custom event when swapped (treatment/offer) content is actually viewed.
+export function notifyFullStory(event, id, name, opts) {
+  if (typeof window === 'undefined' || !event || !id) return;
+  whenFullStoryReady(opts).then((fs) => {
+    if (fs) {
+      try {
+        fs.event(event, { id, name });
+      } catch { /* fail-open */ }
+    }
+  });
+}
+
 export function resetAnalytics() {
   pznById.clear();
   pznPageById.clear();
   ixpById.clear();
   flushScheduled = false;
+  if (fsReadyTimer) { clearInterval(fsReadyTimer); fsReadyTimer = undefined; }
+  fsReadyPromise = undefined;
 }
 
 // --- DOM stamping (block-level click channel) -------------------------------
@@ -399,10 +460,16 @@ export function stampExperiment(el, rec) {
   setAttr(el, 'data-treatment-id', rec.experiment_treatment);
 }
 
+// Full data-pzn-* set the click tracker walks (Intuit's helix-common/pzn-container-block).
+// setAttr skips blanks, so records without model/action fields stamp only what they carry.
 export function stampPzn(el, rec) {
   if (!el || !rec) return;
   setAttr(el, 'data-pzn-placement', rec.personalization_placement);
   setAttr(el, 'data-pzn-id', rec.personalization_id);
+  setAttr(el, 'data-pzn-action', rec.personalization_action);
+  setAttr(el, 'data-pzn-workflow', rec.personalization_workflow);
+  setAttr(el, 'data-pzn-model-name', rec.model_name);
+  setAttr(el, 'data-pzn-model-version', rec.model_version);
 }
 
 // --- Applying the response --------------------------------------------------
@@ -419,7 +486,10 @@ export async function applyPage(doc, response, signal) {
     const rec = ixpRecord(d, window.location.pathname);
     if (d.replacementCasId && d.replacementCasId !== d.originalCasId) {
       const path = casToPath(d.replacementCasId);
-      if (path && await swapMain(doc, path, signal)) stampExperiment(doc.querySelector('main'), rec);
+      if (path && await swapMain(doc, path, signal)) {
+        stampExperiment(doc.querySelector('main'), rec);
+        notifyFullStory('Experiment Viewed', rec?.experiment_treatment, rec?.experiment_id);
+      }
     }
     if (rec) recordIxp([rec]);
     return;
@@ -431,7 +501,14 @@ export async function applyPage(doc, response, signal) {
     const rec = pznRecord(pagePzn, d);
     if (d.casId) {
       const path = casToPath(d.casId);
-      if (path && await swapMain(doc, path, signal)) stampPzn(doc.querySelector('main'), rec);
+      if (path && await swapMain(doc, path, signal)) {
+        stampPzn(doc.querySelector('main'), rec);
+        notifyFullStory(
+          'Personalization Viewed',
+          rec?.personalization_id,
+          rec?.personalization_placement,
+        );
+      }
     }
     if (rec) recordPznPage([rec]);
   }
@@ -443,27 +520,41 @@ export async function applyLayer(root, response, { skip } = {}) {
   if (!root || !response) return;
   const tasks = [];
 
-  collectExperiments(root, skip).forEach(({ el, id }) => {
+  collectExperiments(root, skip).forEach(({ el, id, append }) => {
     const d = experimentDecision(response, id);
     if (!d) return;
     const rec = ixpRecord(d, window.location.pathname);
     if (d.replacementCasId && d.replacementCasId !== d.originalCasId) {
       const path = casToPath(d.replacementCasId);
       if (path) {
-        tasks.push(applyFragment(el, path).then((ok) => { if (ok) stampExperiment(el, rec); }));
+        tasks.push(applyFragment(el, path, { append }).then((ok) => {
+          if (ok) {
+            stampExperiment(el, rec);
+            notifyFullStory('Experiment Viewed', rec?.experiment_treatment, rec?.experiment_id);
+          }
+        }));
       }
     }
     if (rec) recordIxp([rec]);
   });
 
-  collectSlots(root, skip).forEach(({ el, placement }) => {
+  collectSlots(root, skip).forEach(({ el, placement, append }) => {
     const d = pznDecision(response, placement);
     if (!d) return;
     const rec = pznRecord(placement, d);
     if (d.casId) {
       const path = casToPath(d.casId);
       if (path) {
-        tasks.push(applyFragment(el, path).then((ok) => { if (ok) stampPzn(el, rec); }));
+        tasks.push(applyFragment(el, path, { append }).then((ok) => {
+          if (ok) {
+            stampPzn(el, rec);
+            notifyFullStory(
+              'Personalization Viewed',
+              rec?.personalization_id,
+              rec?.personalization_placement,
+            );
+          }
+        }));
       }
     }
     if (rec) recordPzn([rec]);

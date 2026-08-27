@@ -15,6 +15,7 @@ import {
   ensureAppVars, flushAppVars, recordPzn, recordPznPage, recordIxp, resetAnalytics,
   stampPzn, stampExperiment,
   fetchExperience, applyPage, applyLayer,
+  whenFullStoryReady, notifyFullStory,
 } from '../scripts/experience.js';
 // eslint-disable-next-line import/first
 import { loadFragment } from '../blocks/fragment/fragment.js';
@@ -118,13 +119,19 @@ describe('buildContext', () => {
     expect(Object.keys(ctx).some((k) => k.startsWith('zi_c_'))).toBe(false);
     expect(ctx).not.toHaveProperty('zoominfo');
   });
-  it('includes casId from metadata and ivid from the query override', () => {
-    setMeta('cas-id', 'cas-123');
-    const spy = vi.spyOn(URLSearchParams.prototype, 'get').mockImplementation((k) => (k === 'ivid' ? 'q-ivid' : null));
-    const ctx = buildContext();
-    expect(ctx.casId).toBe('cas-123');
-    expect(ctx.ivid).toBe('q-ivid');
-    spy.mockRestore();
+  it('sends the full URL as permalink and the pathname as casId, plus ivid from the cookie', () => {
+    document.cookie = 'ivid=cookie-ivid';
+    const ctx = buildContext('https://erp.intuit.com/products/enterprise-suite');
+    expect(ctx.permalink).toBe('https://erp.intuit.com/products/enterprise-suite');
+    expect(ctx.casId).toBe('/products/enterprise-suite');
+    expect(ctx.ivid).toBe('cookie-ivid');
+  });
+  it('sends locale with underscore (en_US), not BCP 47 hyphen (en-US)', () => {
+    const orig = window.location.href;
+    window.history.replaceState({}, '', `${orig.split('?')[0]}?locale=en-US`);
+    const ctx = buildContext('/pricing');
+    expect(ctx.locale).toBe('en_US');
+    window.history.replaceState({}, '', orig);
   });
   it('includes of1Intent when a behavior profile exists', () => {
     const domain = window.location.hostname.replace(/^www\./, '');
@@ -146,10 +153,13 @@ describe('buildContext', () => {
 });
 
 describe('resolveIvid', () => {
-  it('prefers the ?ivid= override, else the cookie, else undefined', () => {
+  it('reads the ivid cookie, else undefined; ignores any ?ivid= param', () => {
     expect(resolveIvid()).toBeUndefined();
+    window.history.replaceState({}, '', '?ivid=url-xyz');
+    expect(resolveIvid()).toBeUndefined(); // URL param no longer honored
     document.cookie = 'ivid=cookie-abc';
-    expect(resolveIvid()).toBe('cookie-abc');
+    expect(resolveIvid()).toBe('cookie-abc'); // cookie is the only source
+    window.history.replaceState({}, '', window.location.pathname);
   });
 });
 
@@ -199,6 +209,10 @@ describe('collectExperiments', () => {
     const m = main('<div data-exp="1"></div><div data-exp="2"></div>');
     expect(collectExperiments(m, m.querySelector('[data-exp]')).map((e) => e.id)).toEqual(['2']);
   });
+  it('carries append=true only when data-exp-mode is "append"', () => {
+    expect(collectExperiments(main('<div data-exp="1" data-exp-mode="append"></div>'))[0].append).toBe(true);
+    expect(collectExperiments(main('<div data-exp="1"></div>'))[0].append).toBe(false);
+  });
 });
 
 describe('collectSlots + sameTargetAsExp (IXP precedence)', () => {
@@ -215,6 +229,10 @@ describe('collectSlots + sameTargetAsExp (IXP precedence)', () => {
   it('keeps pzn when exp targets a different block', () => {
     const m = main('<div data-pzn="p" data-pzn-block="cards" data-exp="1" data-exp-block="hero"><div class="cards" data-block-name="cards"></div><div class="hero" data-block-name="hero"></div></div>');
     expect(collectSlots(m)).toHaveLength(1);
+  });
+  it('carries append=true only when data-pzn-mode is "append"', () => {
+    expect(collectSlots(main('<div data-pzn="a" data-pzn-mode="append"></div>'))[0].append).toBe(true);
+    expect(collectSlots(main('<div data-pzn="a"></div>'))[0].append).toBe(false);
   });
 });
 
@@ -311,6 +329,28 @@ describe('stamping', () => {
     stampPzn(el2, { personalization_placement: '', personalization_id: 'o2' });
     expect(el2.hasAttribute('data-pzn-placement')).toBe(false);
   });
+  it('stampPzn writes the full data-pzn-* set the click tracker walks (action/workflow/model)', () => {
+    const el = document.createElement('div');
+    stampPzn(el, {
+      personalization_placement: 'alpha',
+      personalization_id: 'o1',
+      personalization_action: 'im',
+      personalization_workflow: 'marketing',
+      model_name: 'm1',
+      model_version: 'v2',
+    });
+    expect(el.getAttribute('data-pzn-action')).toBe('im');
+    expect(el.getAttribute('data-pzn-workflow')).toBe('marketing');
+    expect(el.getAttribute('data-pzn-model-name')).toBe('m1');
+    expect(el.getAttribute('data-pzn-model-version')).toBe('v2');
+  });
+  it('stampPzn omits model/action attributes a record does not carry (matches prod)', () => {
+    const el = document.createElement('div');
+    stampPzn(el, { personalization_placement: 'alpha', personalization_id: 'o1' });
+    expect(el.hasAttribute('data-pzn-action')).toBe(false);
+    expect(el.hasAttribute('data-pzn-workflow')).toBe(false);
+    expect(el.hasAttribute('data-pzn-model-name')).toBe(false);
+  });
   it('stampExperiment writes id/version/treatment', () => {
     const el = document.createElement('div');
     stampExperiment(el, { experiment_id: '1', experiment_version: '2', experiment_treatment: 'T' });
@@ -326,7 +366,7 @@ describe('fetchExperience', () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(JSON.stringify(payload), { status: 200, headers: { 'content-type': 'application/json' } }),
     );
-    const ctx = { locale: 'en-US' };
+    const ctx = { locale: 'en_US' };
     const res = await fetchExperience({ experimentIds: ['1'], accessPointNames: ['a'] }, ctx);
     expect(res).toEqual(payload);
 
@@ -337,7 +377,7 @@ describe('fetchExperience', () => {
     expect(opts.headers['content-type']).toBe('application/json');
     expect(opts.headers.intuit_tid).toMatch(/^rp-/);
     expect(JSON.parse(opts.body)).toEqual({
-      experimentIds: ['1'], accessPointName: ['a'], context: { locale: 'en-US' },
+      experimentIds: ['1'], accessPointName: ['a'], context: { locale: 'en_US' },
     });
   });
   it('honors the experience-api-base metadata override', async () => {
@@ -468,5 +508,152 @@ describe('applyLayer (section/block swaps, from the cached response)', () => {
     const m = main('<div data-pzn="alpha"></div>');
     await applyLayer(m, null);
     expect(loadFragment).not.toHaveBeenCalled();
+  });
+
+  it('append mode (data-pzn-mode) appends the fragment, preserving existing content', async () => {
+    const m = main('<div data-pzn="alpha" data-pzn-mode="append"><p class="base">keep</p></div>');
+    await applyLayer(m, pznResp('alpha', { casId: '/frag' }));
+    const el = m.querySelector('[data-pzn]');
+    expect(el.querySelector('.base')).toBeTruthy(); // existing content preserved
+    expect(el.querySelector('[data-frag]')).toBeTruthy(); // fragment appended
+  });
+
+  it('append mode works for experiments too (data-exp-mode)', async () => {
+    const m = main('<div data-exp="376648" data-exp-mode="append"><p class="base">keep</p></div>');
+    await applyLayer(m, expResp('376648', { replacementCasId: '/frag' }));
+    const el = m.querySelector('[data-exp]');
+    expect(el.querySelector('.base')).toBeTruthy();
+    expect(el.querySelector('[data-frag]')).toBeTruthy();
+  });
+
+  it('default (swap) mode replaces existing content', async () => {
+    const m = main('<div data-pzn="alpha"><p class="base">gone</p></div>');
+    await applyLayer(m, pznResp('alpha', { casId: '/frag' }));
+    const el = m.querySelector('[data-pzn]');
+    expect(el.querySelector('.base')).toBeFalsy();
+    expect(el.querySelector('[data-frag]')).toBeTruthy();
+  });
+});
+
+describe('FullStory swap notification', () => {
+  // FS's stub is a *function* with an .event method — the guard checks typeof === 'function'.
+  function stubFullStory() {
+    const event = vi.fn();
+    window.FS = Object.assign(function fs() {}, { event });
+    window._fs_namespace = 'FS';
+    return event;
+  }
+  // A macrotask flush so the fire-and-forget .then() (and any pending poll) settles.
+  const tick = () => new Promise((r) => { setTimeout(r, 0); });
+
+  afterEach(() => {
+    delete window.FS;
+    delete window._fs_namespace;
+  });
+
+  describe('whenFullStoryReady', () => {
+    it('is memoized — one poll per page', () => {
+      expect(whenFullStoryReady()).toBe(whenFullStoryReady());
+    });
+    it('resolves the FS function when present', async () => {
+      const event = stubFullStory();
+      const fs = await whenFullStoryReady();
+      expect(typeof fs).toBe('function');
+      expect(fs.event).toBe(event);
+    });
+    it('resolves null when FS never loads (fail-open timeout)', async () => {
+      expect(await whenFullStoryReady({ intervalMs: 5, timeoutMs: 20 })).toBeNull();
+    });
+  });
+
+  describe('notifyFullStory', () => {
+    it('fires the event with { id, name } when FS is present', async () => {
+      const event = stubFullStory();
+      notifyFullStory('Experiment Viewed', 't1', 'e1');
+      await tick();
+      expect(event).toHaveBeenCalledWith('Experiment Viewed', { id: 't1', name: 'e1' });
+    });
+    it('is a no-op when the id is falsy', async () => {
+      const event = stubFullStory();
+      notifyFullStory('Experiment Viewed', undefined, 'e1');
+      await tick();
+      expect(event).not.toHaveBeenCalled();
+    });
+    it('gives up after the timeout and does not fire for a late-loading FS', async () => {
+      notifyFullStory('Experiment Viewed', 't1', 'e1', { intervalMs: 5, timeoutMs: 20 });
+      await new Promise((r) => { setTimeout(r, 50); });
+      const event = stubFullStory(); // FS arrives only after the poll gave up
+      await tick();
+      expect(event).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('from applyPage', () => {
+    beforeEach(() => { document.body.innerHTML = '<main><div class="hero">BASE</div></main>'; });
+
+    it('fires "Experiment Viewed" {id:treatmentId, name:experimentId} on a page IXP swap', async () => {
+      const event = stubFullStory();
+      setMeta('experiment-id', '376648');
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+        new Response('<div>VARIATION</div>', { status: 200, headers: { 'content-type': 'text/html' } }),
+      );
+      await applyPage(document, expResp('376648', { treatmentId: 'T1', replacementCasId: '/fragments/exp/page' }));
+      await tick();
+      expect(event).toHaveBeenCalledWith('Experiment Viewed', { id: 'T1', name: '376648' });
+    });
+
+    it('fires "Personalization Viewed" {id:offerId, name:placement} on a page PZN swap', async () => {
+      const event = stubFullStory();
+      setMeta('personalization-id', 'HomeHero');
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+        new Response('<div>PZN</div>', { status: 200, headers: { 'content-type': 'text/html' } }),
+      );
+      await applyPage(document, pznResp('HomeHero', { casId: '/fragments/pzn/home', offerId: 'offer-1' }));
+      await tick();
+      expect(event).toHaveBeenCalledWith('Personalization Viewed', { id: 'offer-1', name: 'HomeHero' });
+    });
+
+    it('does NOT fire on a control arm (no swap)', async () => {
+      const event = stubFullStory();
+      setMeta('experiment-id', '376648');
+      await applyPage(document, expResp('376648', { originalCasId: '/same', replacementCasId: '/same' }));
+      await tick();
+      expect(event).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('from applyLayer', () => {
+    it('fires "Experiment Viewed" on a section IXP swap', async () => {
+      const event = stubFullStory();
+      const m = main('<div data-exp="376648"></div>');
+      await applyLayer(m, expResp('376648', { treatmentId: 'T1', replacementCasId: '/fragments/exp/a' }));
+      await tick();
+      expect(event).toHaveBeenCalledWith('Experiment Viewed', { id: 'T1', name: '376648' });
+    });
+
+    it('fires "Personalization Viewed" on a section PZN swap', async () => {
+      const event = stubFullStory();
+      const m = main('<div data-pzn="alpha"></div>');
+      await applyLayer(m, pznResp('alpha', { offerId: 'offer-1' }));
+      await tick();
+      expect(event).toHaveBeenCalledWith('Personalization Viewed', { id: 'offer-1', name: 'alpha' });
+    });
+
+    it('does NOT fire when the swap fails (loadFragment returns null)', async () => {
+      const event = stubFullStory();
+      loadFragment.mockResolvedValueOnce(null);
+      const m = main('<div data-pzn="alpha"></div>');
+      await applyLayer(m, pznResp('alpha'));
+      await tick();
+      expect(event).not.toHaveBeenCalled();
+    });
+
+    it('does NOT fire on a null response', async () => {
+      const event = stubFullStory();
+      const m = main('<div data-pzn="alpha"></div>');
+      await applyLayer(m, null);
+      await tick();
+      expect(event).not.toHaveBeenCalled();
+    });
   });
 });

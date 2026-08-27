@@ -1,12 +1,9 @@
 import {
   describe, it, expect, beforeEach,
 } from 'vitest';
-// Real-render wiring guard for the faq accordion's JIT payload deriver. Prod records each
-// toggle as the STRUCTURED accordion interaction (ui_object=accordion_item_N by DOM order,
-// object_detail=faq|question_N [authored+scrambled -> index-tolerant], ui_action=displayed
-// on expand / dismissed on collapse, link_name=accordion_item_N-<question>) — not the
-// generic button/clicked our block emitted before. All derived in JS at pointerdown via
-// trackAs({ payload }); nothing is stamped at rest. Answer-body links stay untouched.
+// Real-render guard for the faq accordion's JIT payload deriver: each toggle emits the
+// structured accordion beacon (accordion_item_N / faq|question_N / displayed|dismissed),
+// not the generic button/clicked; answer-body links stay on the normal derive.
 import { initTracking, resetTrackingState, stampInteraction } from '../scripts/tracking.js';
 import { computeTrackingPayload } from '../scripts/diff/tracker-replica.mjs';
 

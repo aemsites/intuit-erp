@@ -357,6 +357,14 @@ body {
   color: var(--pzn-muted);
 }
 
+.pzn-checkbox {
+  display: flex;
+  align-items: center;
+  gap: var(--s2-spacing-75);
+  font-size: var(--s2-body-size-s);
+  color: var(--pzn-fg);
+}
+
 .pzn-input {
   font: inherit;
   font-size: var(--s2-body-size-s);

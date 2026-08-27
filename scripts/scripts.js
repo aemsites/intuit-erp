@@ -12,12 +12,12 @@ import {
   buildBlock,
   getMetadata,
 } from './aem.js';
-import { runExperimentation, runExperimentationLazy } from './experiment-loader.js';
 // Adobe/Alloy (plugins/martech, a git subtree) is armed but commented out; Tealium is the default.
 // Uncomment the AEP blocks in loadEager / loadLazy to load it in parallel.
 // The tealium plugin below is NOT a vendored subtree (project-owned code), but the relative
 // eslint-disable-next-line import/no-relative-packages
 import TealiumMartech from '../plugins/tealium-martech/src/index.js';
+import installPznPageViewEnrich from './pzn-pageview-enrich.js';
 import { isBlogPage, hasAuthoredCaseStudyHeader } from '../blocks/blog-template/blog-detect.js';
 import { isVideoLink } from '../blocks/video/video-info.js';
 import { isGuidePage } from '../blocks/guide-hero/guide-detect.js';
@@ -80,16 +80,6 @@ export function getSiteConfig() {
   }
   return siteConfigPromise;
 }
-
-// no custom prod domain configured yet — treat only the .aem.live CDN as
-// prod (no pill overlay); .aem.page previews and localhost stay in debug mode.
-const experimentationConfig = {
-  isProd: () => window.location.hostname.endsWith('.aem.live'),
-  audiences: {
-    mobile: () => window.innerWidth < 600,
-    desktop: () => window.innerWidth >= 600,
-  },
-};
 
 if (window.trustedTypes && window.trustedTypes.createPolicy) {
   const innerTT = window.trustedTypes.createPolicy('tt-inner', {
@@ -388,12 +378,16 @@ async function loadEager(doc) {
   }
 
   // Seed window.appVars before martech so the tracker finds it; analytics.js fills the arrays.
+  // The page pathname is the content identifier (stable across localhost/preview/prod).
   const appVars = window.appVars || (window.appVars = {});
-  const casId = getMetadata('cas-id') || getMetadata('page-cas-id');
-  appVars.externalContentIdentifier = casId || appVars.externalContentIdentifier || '';
+  appVars.externalContentIdentifier = window.location.pathname;
   appVars.pznRecDetailsArr = appVars.pznRecDetailsArr || [];
   appVars.pznPageRecDetailsArr = appVars.pznPageRecDetailsArr || [];
   appVars.ixpDetailsArr = appVars.ixpDetailsArr || [];
+
+  // Enrich the profile's page-view with pzn/experiments from appVars (installs before utag loads).
+  // FIXME(pzn): remove once Intuit's profile page-init reads window.appVars directly (option C).
+  if (MARTECH_PROVIDER !== 'off') installPznPageViewEnrich();
 
   // Gated conversion pages (e.g. /webinar-* form landings) opt out of the global
   // header/footer via `hide-header` / `hide-footer` metadata
@@ -427,7 +421,6 @@ async function loadEager(doc) {
   //   }
   // }
 
-  await runExperimentation(doc, experimentationConfig);
   window.hlx = window.hlx || {};
   if (!window.hlx.pageExperienceApplied) {
     window.hlx.pageExperienceApplied = true;
@@ -479,10 +472,8 @@ async function loadEager(doc) {
   }
 }
 
-const CONTACT_WIDGET_EXCLUDED_PATHS = ['/contact', '/library/templates/contact'];
-
 function shouldRenderContactUs() {
-  return !CONTACT_WIDGET_EXCLUDED_PATHS.includes(window.location.pathname);
+  return !['true', 'yes', 'hide'].includes((getMetadata('hide-contact-widget') || '').trim().toLowerCase());
 }
 
 /**
@@ -550,8 +541,6 @@ async function loadLazy(doc) {
   //     try { await adobe.updateUserConsent({ collect: true }); } catch (e) { /* non-fatal */ }
   //   }
   // }
-
-  await runExperimentationLazy(doc, experimentationConfig);
 
   loadCSS(`${window.hlx.codeBasePath}/styles/lazy-styles.css`);
   loadFonts();

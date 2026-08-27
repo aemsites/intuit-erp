@@ -78,21 +78,16 @@ export default function decorate(block) {
 
   block.replaceChildren(list);
 
-  // Per-item JIT payload deriver: prod records each toggle as the structured accordion
-  // interaction (ui_object=accordion_item_N by DOM order, ui_action=displayed on expand /
-  // dismissed on collapse, link_name=accordion_item_N-<question>). object_detail=faq|
-  // question_N is authored + scrambled upstream (question numbers repeat / don't track
-  // DOM order), so we emit the DOM-order form and the oracle compares it index-tolerant.
-  // data-wa-link / icom_user_action stay authored residue (word-ordinal, not derivable).
-  // Answer-body links (not .faq-toggle) return null -> normal derive, left untouched.
+  // Per-toggle structured payload prod records (accordion_item_N + faq|question_N by DOM
+  // order, displayed on expand / dismissed on collapse, link_name). object_detail is scored
+  // index-tolerant (prod's N is authored + scrambled). Non-toggles fall through to derive.
   const payload = (el) => {
     if (!el.matches || !el.matches('.faq-toggle')) return null;
     const item = el.closest('.faq-item');
     const n = item ? [...block.querySelectorAll('.faq-item')].indexOf(item) + 1 : 0;
     if (n < 1) return null;
     const q = (el.querySelector('.faq-question')?.textContent || '').trim();
-    // pointerdown fires before the toggle flips aria-expanded, so the current value is
-    // the pre-click state: an expanded item is about to collapse, and vice-versa.
+    // pointerdown precedes the toggle, so aria-expanded is still the pre-click state.
     const willOpen = el.getAttribute('aria-expanded') !== 'true';
     return {
       'ui-object': `accordion_item_${n}`,
@@ -101,7 +96,5 @@ export default function decorate(block) {
       'custom-properties': { link_name: `accordion_item_${n}-${slug(q)}` },
     };
   };
-  // Accordion -> "accordion" trail; sheet/opt-in key "faq". linkName:false suppresses the
-  // generic derived button link_name; the deriver supplies the structured one per toggle.
   return trackAs('accordion', block, { key: 'faq', linkName: false, payload });
 }

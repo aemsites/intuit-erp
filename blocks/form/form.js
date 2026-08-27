@@ -24,6 +24,10 @@ import { loadScript, getMetadata } from '../../scripts/aem.js';
 // installed npm package, so this necessarily crosses a package.json boundary.
 // eslint-disable-next-line import/no-relative-packages
 import { sendEvent } from '../../plugins/martech/src/index.js';
+// Shared ChiliPiper opener (also used by personalization widgets) + lead-xref/track helpers.
+import {
+  openChiliPiper, submitChiliPiper, mintLeadXref, trackLeadCreated,
+} from '../../scripts/chilipiper.js';
 
 // Tenant-namespaced XDM location for lead-identity events. Object name `of1Signal` must
 // byte-match the AEP "Experience Event Schema" field group path (AEP console config) or
@@ -42,8 +46,6 @@ const CONFIG_KEYS = [
   'recaptcha',
   'buttonLabel',
 ];
-
-const CHILIPIPER_SRC_DEFAULT = '//js.chilipiper.com/marketing.js';
 
 // Marketo instance selection, keyed by the `marketo` page metadata. Prod unless the
 // page opts in; hostname is deliberately not consulted.
@@ -145,14 +147,73 @@ function marketoValuesToLead(vals = {}) {
   };
 }
 
-async function chiliPiperHandoff(cfg, router, form) {
-  const subdomain = cfg['chilipiper.subdomain'];
-  if (!router || !subdomain) return false;
-  await loadScript(cfg['chilipiper.src'] || CHILIPIPER_SRC_DEFAULT);
-  window.ChiliPiper?.submit(subdomain, router, { map: true, lead: form.getValues() });
-  return true;
+// How long to wait for ChiliPiper's booking overlay to actually appear before
+// giving up and leaving the hosting modal open.
+const CHILIPIPER_OVERLAY_TIMEOUT_MS = 4000;
+
+// ChiliPiper injects its calendar into its own body-level overlay. Resolve once
+// that overlay exists, or to false if it never shows up within the timeout —
+// bounded, and always tears down its observer/timer so nothing leaks.
+function waitForChiliPiperOverlay(timeout = CHILIPIPER_OVERLAY_TIMEOUT_MS) {
+  const present = () => document.querySelector('.chilipiper-popup-window iframe.chilipiper-frame');
+  if (present()) return Promise.resolve(true);
+  return new Promise((resolve) => {
+    let timer;
+    const observer = new MutationObserver(() => {
+      if (!present()) return;
+      clearTimeout(timer);
+      observer.disconnect();
+      resolve(true);
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    timer = setTimeout(() => {
+      observer.disconnect();
+      resolve(false);
+    }, timeout);
+  });
 }
 
+// Visible last resort when the lead was captured but ChiliPiper never took over
+// (blocked script, router failure). Mirrors production's inline confirmation
+// wording rather than redirecting, and replaces the form so the visitor isn't
+// left looking at fields they already submitted.
+function showHandoffFallback(form) {
+  const formEl = form.getFormElem?.()?.[0] || document.getElementById(`mktoForm_${form.getId?.()}`);
+  if (!formEl || formEl.dataset.handoffFallback === 'true') return;
+  formEl.dataset.handoffFallback = 'true';
+  const note = document.createElement('div');
+  note.className = 'form-success';
+  note.setAttribute('role', 'status');
+  const heading = document.createElement('p');
+  heading.className = 'form-success-heading';
+  heading.textContent = 'Thank you';
+  const body = document.createElement('p');
+  body.textContent = 'An Intuit expert will be in touch with you shortly.';
+  note.append(heading, body);
+  formEl.replaceWith(note);
+}
+
+// Post-Marketo handoff: submit the lead via the shared submitChiliPiper (prod-parity args +
+// the Lead_XRef_ID__c event), then only dismiss the hosting schedule-call modal once ChiliPiper's
+// own overlay has actually taken over. Returns false when the submit or the overlay never lands so
+// the caller can show a fallback rather than leaving the visitor with nothing.
+async function chiliPiperHandoff(router, form, xref) {
+  const submitted = await submitChiliPiper(router, form.getValues(), xref);
+  if (!submitted) return false;
+  // submitChiliPiper is fire-and-forget, so close the dialog only once the overlay is really up —
+  // closing unconditionally would leave a visitor with no calendar, no form and no error.
+  const tookOver = await waitForChiliPiperOverlay();
+  if (!tookOver) return false;
+  const formEl = form.getFormElem?.()?.[0] || document.getElementById(`mktoForm_${form.getId?.()}`);
+  const dialog = formEl?.closest('dialog');
+  if (dialog) {
+    // Distinct from a user-initiated close: skip the focus restore so we don't
+    // pull focus off ChiliPiper's overlay as it takes over (see modal.js).
+    dialog.dataset.suppressFocusRestore = 'true';
+    dialog.close();
+  }
+  return true;
+}
 // reCAPTCHA v3, mirroring erp.intuit.com: on form load fetch a score token and
 // verify it via Intuit's siteverify proxy, then gate the Marketo submit on the
 // result (Marketo's own captcha is off; the token is never a form field). The
@@ -223,6 +284,13 @@ async function embedMarketoForm(formEl, cfg, config, env) {
   const forms2Src = `${host}/js/forms2/js/forms2.min.js`;
   await loadScript(forms2Src);
   window.MktoForms2.loadForm(host, munchkin, config.formId, (form) => {
+    // One lead-correlation id per form: stamp it into the Marketo hidden field up front (so it's
+    // persisted with the lead in SFDC), then reuse the same id for the ECS lead track and the
+    // ChiliPiper handoff on success. IVID__c is added when the ivid data-layer value is present.
+    const leadXref = mintLeadXref();
+    const hiddenFields = { Lead_XRef_ID__c: leadXref };
+    if (window.utag_data?.ivid) hiddenFields.IVID__c = window.utag_data.ivid;
+    form.addHiddenFields?.(hiddenFields);
     if (config.disclaimer) {
       const el = document.createElement('div');
       el.className = 'form-disclaimer';
@@ -252,7 +320,19 @@ async function embedMarketoForm(formEl, cfg, config, env) {
     const canHandoff = !!(config.chiliPiperRouter && cfg['chilipiper.subdomain']);
     form.onSuccess((vals) => {
       try { trackFormSubmit(marketoValuesToLead(vals)); } catch (e) { /* non-fatal */ }
-      if (canHandoff) chiliPiperHandoff(cfg, config.chiliPiperRouter, form);
+      // ECS lead track → IES_lead in the ies-erp container (IES_booking then fires from
+      // ChiliPiper's booking-confirmed postMessage). Same xref as the hidden field + handoff.
+      try {
+        trackLeadCreated({ leadXrefId: leadXref, formId: config.formId });
+      } catch (e) { /* non-fatal */ }
+      // Fire-and-forget by necessity (onSuccess must return synchronously). If the handoff never
+      // took over, surface a fallback confirmation in place of the form so a blocked ChiliPiper
+      // doesn't leave the visitor with nothing.
+      if (canHandoff) {
+        chiliPiperHandoff(config.chiliPiperRouter, form, leadXref).then((handedOff) => {
+          if (!handedOff) showHandoffFallback(form);
+        });
+      }
       if (config.downloadUrl) window.open(config.downloadUrl, '_blank', 'noopener');
       else if (config.successUrl && !canHandoff) window.location.href = config.successUrl;
       // Suppress Marketo's default redirect only when we provide our own feedback
@@ -313,9 +393,5 @@ export default async function decorate(block) {
 // Book-a-demo: ChiliPiper scheduler directly (no Marketo form). Router is the
 // only per-page value; subdomain/script come from /site-config.json.
 export async function bookDemo(router) {
-  const cfg = await siteConfig();
-  const subdomain = cfg['chilipiper.subdomain'];
-  if (!router || !subdomain) return;
-  await loadScript(cfg['chilipiper.src'] || CHILIPIPER_SRC_DEFAULT);
-  window.ChiliPiper?.scheduling(subdomain, router, { title: document.title });
+  await openChiliPiper(router);
 }
