@@ -28,7 +28,7 @@ function classify(comp, f) {
   if (f.match) return { cat: f.bucket === 'frozen' ? 'inherited' : 'match', note: f.bucket === 'frozen' ? `present + shape (per-visit/${f.group || 'frozen'}, not value-matched)` : '' };
   if (f.bucket === 'frozen') return { cat: 'presence-gap', note: `prod carried ${f.field} but our beacon did not (${f.group || 'frozen'})` };
   // gated misses
-  if (f.field === 'page_cas_id') return { cat: 'real-gap', note: 'Intuit CMS content id — prod emits it on every beacon; our EDS build emits none (we send project_asset_id only). Real gap to escalate.' };
+  if (f.field === 'page_cas_id') return { cat: 'real-gap', note: `content id is now the page PATHNAME (OVERRIDES.md — externalContentIdentifier=window.location.pathname; no cas-id metadata). Expected the pathname "${f.expected}" but our beacon sent "${f.got}". Not the stale CMS id — fix is to emit page_cas_id = pathname.` };
   if (f.field === 'channel_cookie_90day') return { cat: 'investigate', note: `channel cookie differs: prod "${f.expected}" vs ours "${f.got}" — our build sets an ext channel code prod's capture lacked.` };
   if (['object_detail', 'data-wa-link', 'icom_user_action', 'link_name'].includes(f.field) || (f.field === 'ui_object' && /accordion_item/.test(String(f.expected)))) {
     if (/faq|accordion/i.test(comp) || String(f.expected).includes('faq|') || String(f.expected).includes('accordion_item')) return { cat: 'faq-block', note: `blocks/faq/faq.js under-tracks: prod "${f.expected}" vs ours "${f.got}". The faq block stamps only the accordion trail, not the per-item structured fields (needs per-question data-wa-link / accordion_item_N).` };
