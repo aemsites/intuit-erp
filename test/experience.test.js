@@ -386,6 +386,25 @@ describe('fetchExperience', () => {
     await fetchExperience({ experimentIds: ['1'], accessPointNames: [] }, {});
     expect(globalThis.fetch.mock.calls[0][0]).toBe('https://qa.example/svc/intuit-orchestrator');
   });
+  it('adds ?preview=true and previewParams as query params in preview mode', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('{}', { status: 200 }));
+    await fetchExperience({ experimentIds: ['1'], accessPointNames: [] }, {}, {
+      preview: true,
+      previewParams: { locale: 'fr_FR', topIntent: 'purchase' },
+    });
+    const url = new URL(globalThis.fetch.mock.calls[0][0], 'http://localhost');
+    expect(url.pathname).toBe('/api/intuit-orchestrator');
+    expect(url.searchParams.get('preview')).toBe('true');
+    expect(url.searchParams.get('locale')).toBe('fr_FR');
+    expect(url.searchParams.get('topIntent')).toBe('purchase');
+  });
+  it('honors opts.baseUrl and leaves the URL query-free without preview', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('{}', { status: 200 }));
+    await fetchExperience({ experimentIds: ['1'], accessPointNames: [] }, {}, {
+      baseUrl: 'https://preview.example/api/',
+    });
+    expect(globalThis.fetch.mock.calls[0][0]).toBe('https://preview.example/api/intuit-orchestrator');
+  });
   it('fails open (null) on a non-ok response and on a thrown error', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(new Response('', { status: 500 }));
     expect(await fetchExperience({ experimentIds: ['1'], accessPointNames: [] }, {})).toBeNull();
