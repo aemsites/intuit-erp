@@ -509,6 +509,14 @@ async function loadLazy(doc) {
       .catch(() => {});
   }
 
+  // Experience Preview engine — preview/dev hosts only, so it's inert on live/prod. Powers
+  // the "Experience Preview" sidekick palette;
+  const host = window.location.hostname;
+  if (/\.(aem|hlx)\.page$/.test(host) || host === 'localhost' || host === '127.0.0.1') {
+    // eslint-disable-next-line import/no-cycle
+    import('./experience-preview.js').then((m) => m.init()).catch(() => {});
+  }
+
   const { hash } = window.location;
   const element = hash ? doc.getElementById(hash.substring(1)) : false;
   if (hash && element) element.scrollIntoView();

@@ -249,7 +249,19 @@ export async function fetchExperience({ experimentIds, accessPointNames }, conte
       accessPointName: accessPointNames,
       context,
     };
-    const res = await fetch(`${apiBase()}/intuit-orchestrator`, {
+    // Preview seam (Experience Preview sidekick tool): keep the same endpoint but add
+    // ?preview=true so Akamai routes to its preview backend, plus modified context attrs
+    // as query params. `baseUrl` overrides the host. No preview opts => identical URL,
+    // so production is untouched.
+    let target = `${(opts.baseUrl || apiBase()).replace(/\/+$/, '')}/intuit-orchestrator`;
+    if (opts.preview) {
+      const params = new URLSearchParams({ preview: 'true' });
+      Object.entries(opts.previewParams || {}).forEach(([k, v]) => {
+        if (v !== undefined && v !== null) params.set(k, String(v));
+      });
+      target += `?${params.toString()}`;
+    }
+    const res = await fetch(target, {
       method: 'POST',
       credentials: 'include',
       headers: { intuit_tid: intuitTid(), 'content-type': 'application/json' },

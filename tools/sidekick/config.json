@@ -12,6 +12,20 @@
         "**.docx**"
       ],
       "event": "aem-experimentation-sidekick"
+    },
+    {
+      "id": "intuit-exp-preview",
+      "titleI18n": {
+        "en": "Experience Preview"
+      },
+      "url": "/tools/sidekick/plugins/intuit-exp-preview/index.html",
+      "isPalette": true,
+      "paletteRect": "top: 62px; right: 12px; width: 380px; height: calc(100vh - 84px);",
+      "environments": [
+        "preview"
+      ],
+      "passReferrer": true,
+      "pinned": true
     }
   ]
 }
