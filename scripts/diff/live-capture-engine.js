@@ -21,6 +21,12 @@
  * locating (nav|accountants, talktosales items lived in closed containers); settle-aware preload
  * for long lazy blog pages; horizontal scrollIntoView for off-screen carousel cards; and a
  * bounded reveal-and-retry on each locate miss.
+ *
+ * v3.1 (nav-away hardening): neutralize location.assign/replace + form submit so a CTA's JS
+ * navigation can't abort the run mid-capture (location.href= is [Unforgeable] — those still nav but
+ * are recoverable via the sessionStorage resume); and SCOPE reveal's disclosure-clicks to
+ * nav/header/footer + the sales/contact widget so it no longer clicks page content-accordions
+ * (which fired spurious non-target beacons).
  */
 /* eslint-disable no-restricted-syntax, no-continue, no-plusplus, max-len, no-underscore-dangle, object-curly-newline, no-nested-ternary, no-await-in-loop, no-empty, prefer-rest-params, func-names, no-restricted-globals */
 window.__mk = function () {
@@ -40,8 +46,15 @@ window.__mk = function () {
     XMLHttpRequest.prototype.open = function (m, u) { this.__u = u; return oo.apply(this, arguments); };
     XMLHttpRequest.prototype.send = function (b) { try { rec(this.__u, b); } catch (e) { /* */ } return oss.apply(this, arguments); };
     document.addEventListener('click', (e) => e.preventDefault(), true);
+    document.addEventListener('submit', (e) => e.preventDefault(), true);
     try { window.open = () => null; } catch (e) { /* */ }
     try { window.history.pushState = () => {}; window.history.replaceState = () => {}; } catch (e) { /* */ }
+    // v3.1: neutralize programmatic navigation so a CTA's JS handler (e.g. "Take the tour" ->
+    // navattic) can't nav the tab away mid-capture. location.assign/replace ARE overridable;
+    // location.href= is [Unforgeable] and cannot be blocked in-page — those still nav, but the
+    // beacon is captured before the nav and sessionStorage (__b/__p/__eng) survives the round-trip,
+    // so the drive resumes past the offending CTA on the way back.
+    try { window.location.assign = () => {}; window.location.replace = () => {}; } catch (e) { /* */ }
   }
 
   const sleep = (ms) => new Promise((r) => { setTimeout(r, ms); });
@@ -106,15 +119,18 @@ window.__mk = function () {
   }
 
   // v3: expose hidden targets before locating. Hover-opens CSS mega-nav flyouts (nav|accountants
-  // et al. live in a closed dropdown), clicks disclosure togglers (aria-expanded=false), and opens
-  // the floating sales/contact widget (its inner items — Visit support page, close — need it open).
+  // et al. live in a closed dropdown), clicks disclosure togglers, and opens the floating
+  // sales/contact widget (its inner items — Visit support page, close — need it open).
   // Bounded; the capture-time preventDefault neutralizes any navigation these fire, and re-firing a
   // toggle's own beacon is harmless (harvest matches by contentKey, not order).
+  // v3.1: disclosure-clicks are SCOPED to nav/header/footer + the sales/contact widget — NOT the
+  // whole page — so reveal no longer clicks page content-accordions (faq/feature tabs), which fired
+  // spurious non-target beacons and could trip a nav-away feature CTA.
   async function reveal() {
     const hover = [...document.querySelectorAll('header nav *, [class*="meganav"] *, nav [aria-haspopup], nav [aria-expanded], [class*="dropdown"] [class*="toggle"]')].filter(vis).slice(0, 40);
     for (const t of hover) { try { for (const ev of ['pointerover', 'mouseover', 'mouseenter']) t.dispatchEvent(new PointerEvent(ev, { bubbles: true })); } catch (e) { /* */ } }
     await sleep(180);
-    const openers = [...document.querySelectorAll('[aria-expanded="false"], [class*="talk"] button, [class*="sales"] button, [class*="contact-us"] button, [aria-label*="talk to" i], [aria-label*="sales" i], [aria-label*="chat" i]')].filter(vis).slice(0, 24);
+    const openers = [...document.querySelectorAll('header [aria-expanded="false"], nav [aria-expanded="false"], footer [aria-expanded="false"], [class*="talk"] button, [class*="sales"] button, [class*="contact-us"] button, [aria-label*="talk to" i], [aria-label*="sales" i], [aria-label*="chat" i]')].filter(vis).slice(0, 24);
     for (const o of openers) { try { o.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); o.click(); } catch (e) { /* */ } await sleep(110); }
   }
 
