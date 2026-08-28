@@ -223,6 +223,43 @@ describe('initTracking (delegated capture-phase runtime)', () => {
     a.dispatchEvent(new Event('pointerdown', { bubbles: true })); // loose CTA -> page:pricing
     expect(a.getAttribute('data-wa-link')).toBe('wl-pricing');
   });
+
+  // Regression (live-confirmed on stage /accounting/multi-entity): prod rendered the
+  // hero CTA href-less (a button), so the sheet keys it by label (hero:take-the-tour);
+  // our build renders it as an EXTERNAL link, so trackAs stamps an HREF-based id
+  // (hero:navattic-srk05sa) that misses the sheet -> authored object-detail/wa-link
+  // never landed. The label fallback resolves the residue across that divergence.
+  it('resolves the sheet by <ns>:<slug(label)> when our build gave the CTA an href-based id', async () => {
+    const data = [{ id: 'hero:take-the-tour', 'object-detail': 'hero|for_accountants', 'wa-link': 'hero-for-accountants-cta' }];
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({ data }) })));
+    document.body.innerHTML = '<main><div class="hero block"><p class="button-container">'
+      + '<a class="button" href="https://intuit.navattic.com/srk05sa">Take the tour</a></p></div></main>';
+    const main = document.querySelector('main');
+    trackAs('rw2_hero', main.querySelector('.block'), { key: 'hero' });
+    initTracking(main);
+    await new Promise((r) => { setTimeout(r, 0); });
+    const a = main.querySelector('a');
+    expect(a.getAttribute('data-track-id')).toBe('hero:navattic-srk05sa'); // precondition: href-based id (misses sheet)
+    a.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+    expect(a.getAttribute('data-wa-link')).toBe('hero-for-accountants-cta'); // fallback resolved the residue
+    expect(a.getAttribute('data-object-detail')).toBe('hero|for_accountants');
+  });
+
+  // The fallback must NOT hijack a CTA whose href-based id is genuinely absent from
+  // the sheet (different content), i.e. it only fills in when a label row exists.
+  it('does not fabricate a row when neither the href-id nor the label-id is in the sheet', async () => {
+    const data = [{ id: 'cards:erp', 'wa-link': 'schedule-meeting' }]; // a DIFFERENT card
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({ data }) })));
+    document.body.innerHTML = '<main><div class="cards block"><p class="button-container">'
+      + '<a class="button" href="https://quickbooks.intuit.com/r/enterprise/">Explore articles</a></p></div></main>';
+    const main = document.querySelector('main');
+    trackAs('rw_cards_container', main.querySelector('.block'), { key: 'cards' });
+    initTracking(main);
+    await new Promise((r) => { setTimeout(r, 0); });
+    const a = main.querySelector('a');
+    a.dispatchEvent(new Event('pointerdown', { bubbles: true })); // id cards:quickbooks-r-enterprise; label cards:explore-articles
+    expect(a.hasAttribute('data-wa-link')).toBe(false); // no matching row -> pure derive, no authored residue
+  });
 });
 
 describe('Phase 2: coexistence with the pzn/experiment layer', () => {

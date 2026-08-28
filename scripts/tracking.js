@@ -697,7 +697,23 @@ export function stampInteraction(e) {
   if (!isPart) {
     let id = trackIdOf(cta);
     if (!id && !block) id = hrefTrackId(cta, PAGE_KEY) || (labelFor(cta) ? `${PAGE_KEY}:${slug(labelFor(cta))}` : null);
-    if (id) row = sheetRowById(sheetMap, id, loc.pathname);
+    if (id) {
+      row = sheetRowById(sheetMap, id, loc.pathname);
+      // Our build may give a CTA an href-based id (e.g. hero:navattic-srk05sa) where
+      // the sheet keys it by label (hero:take-the-tour) — prod rendered that CTA
+      // href-less (a button), so gen-sheet used the label. Retry with
+      // <namespace>:<slug(label)> so authored residue still resolves across that
+      // button-vs-link divergence. Only fires when the primary (href) id misses.
+      if (!row) {
+        const label = labelFor(cta);
+        const sep = id.indexOf(':');
+        const ns = sep > 0 ? id.slice(0, sep) : '';
+        if (ns && label) {
+          const labelId = `${ns}:${slug(label)}`;
+          if (labelId !== id) row = sheetRowById(sheetMap, labelId, loc.pathname);
+        }
+      }
+    }
   }
   // Parts are pure-derive (no block payload defaults); the one exception is
   // link-name-off, which alsoTrack stamps on the part itself.
