@@ -7,7 +7,8 @@
 //
 // Fidelity is DOM-driven: page-level (experiment-id / personalization-id metadata) ⇒
 // whole-page swap; section (data-exp / data-pzn) ⇒ section swap; a -block scope ⇒
-// block swap. The response only supplies the replacement casId per id/name.
+// block swap. The response only supplies the replacement content ref per id/name
+// (experiments: payload.replacementCasId; pzn: payload.contentId).
 //
 // A slot flagged data-exp-mode / data-pzn-mode="append" is APPENDED to its target rather
 // than swapped in — the vehicle for additive behavior widgets that attach code without
@@ -309,7 +310,9 @@ export function experimentDecision(response, id) {
 
 // The personalization decision for an access-point name (case-insensitive match; the
 // contract spells the map `personalisation`, tolerate `personalization` too): the
-// replacement casId + offerId, or null when the name isn't in the response.
+// replacement contentId + offerId, or null when the name isn't in the response. The
+// payload is an object carrying the fragment path in `contentId` (a legacy raw-string
+// payload is still accepted as the path directly).
 export function pznDecision(response, name) {
   const map = response?.personalisation || response?.personalization;
   if (!map || typeof map !== 'object') return null;
@@ -320,22 +323,26 @@ export function pznDecision(response, name) {
     entry = key ? map[key] : null;
   }
   if (!entry) return null;
-  return { casId: entry.payload || null, offerId: entry.trackingAttributes?.offerId };
+  const { payload } = entry;
+  const contentId = (payload && typeof payload === 'object')
+    ? (payload.contentId || null)
+    : (payload || null);
+  return { contentId, offerId: entry.trackingAttributes?.offerId };
 }
 
 // --- Analytics records (ECS snake_case, published on window.appVars) ---------
 
 // Normalized pzn record, or null when there's no offer. `content_id` /
-// externalContentIdentifier carry the replacement casId.
+// externalContentIdentifier carry the replacement contentId.
 export function pznRecord(placement, decision) {
-  if (!decision || (!decision.offerId && !decision.casId)) return null;
+  if (!decision || (!decision.offerId && !decision.contentId)) return null;
   return {
     personalization_placement: placement,
     personalization_id: decision.offerId,
     personalization_action: 'im',
     personalization_workflow: 'marketing',
-    content_id: decision.casId,
-    externalContentIdentifier: decision.casId,
+    content_id: decision.contentId,
+    externalContentIdentifier: decision.contentId,
   };
 }
 
@@ -511,8 +518,8 @@ export async function applyPage(doc, response, signal) {
     const d = pznDecision(response, pagePzn);
     if (!d) return;
     const rec = pznRecord(pagePzn, d);
-    if (d.casId) {
-      const path = casToPath(d.casId);
+    if (d.contentId) {
+      const path = casToPath(d.contentId);
       if (path && await swapMain(doc, path, signal)) {
         stampPzn(doc.querySelector('main'), rec);
         notifyFullStory(
@@ -554,8 +561,8 @@ export async function applyLayer(root, response, { skip } = {}) {
     const d = pznDecision(response, placement);
     if (!d) return;
     const rec = pznRecord(placement, d);
-    if (d.casId) {
-      const path = casToPath(d.casId);
+    if (d.contentId) {
+      const path = casToPath(d.contentId);
       if (path) {
         tasks.push(applyFragment(el, path, { append }).then((ok) => {
           if (ok) {

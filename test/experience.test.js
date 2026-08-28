@@ -47,8 +47,15 @@ function expResp(id, {
     },
   };
 }
-function pznResp(name, { casId = '/fragments/pzn/a', offerId = 'offer-1' } = {}) {
-  return { personalisation: { [name]: { payload: casId, trackingAttributes: { offerId } } } };
+function pznResp(name, { contentId = '/fragments/pzn/a', offerId = 'offer-1' } = {}) {
+  return {
+    personalisation: {
+      [name]: {
+        payload: { template: 'content', contentId },
+        trackingAttributes: { offerId },
+      },
+    },
+  };
 }
 
 beforeEach(() => {
@@ -251,13 +258,30 @@ describe('experimentDecision / pznDecision', () => {
     expect(experimentDecision(expResp('1'), '2')).toBeNull();
     expect(experimentDecision({}, '1')).toBeNull();
   });
-  it('reads the pzn casId + offerId case-insensitively', () => {
+  it('reads the pzn contentId (from payload.contentId) + offerId case-insensitively', () => {
     const d = pznDecision(pznResp('SBSEG_Modal'), 'sbseg_modal');
-    expect(d).toEqual({ casId: '/fragments/pzn/a', offerId: 'offer-1' });
+    expect(d).toEqual({ contentId: '/fragments/pzn/a', offerId: 'offer-1' });
   });
-  it('tolerates the American spelling `personalization`', () => {
+  it('reads the fragment path from an object payload contentId', () => {
+    const resp = {
+      personalisation: {
+        x: {
+          payload: { template: 'content', contentId: 'fragments/pzn/slot1-hospitality' },
+          trackingAttributes: { offerId: 'o' },
+        },
+      },
+    };
+    expect(pznDecision(resp, 'x')).toEqual({ contentId: 'fragments/pzn/slot1-hospitality', offerId: 'o' });
+  });
+  it('yields a null contentId when an object payload omits contentId (offer still returned)', () => {
+    const resp = {
+      personalisation: { x: { payload: { template: 'content' }, trackingAttributes: { offerId: 'o' } } },
+    };
+    expect(pznDecision(resp, 'x')).toEqual({ contentId: null, offerId: 'o' });
+  });
+  it('tolerates a legacy raw-string payload and the American spelling `personalization`', () => {
     const resp = { personalization: { x: { payload: '/p', trackingAttributes: { offerId: 'o' } } } };
-    expect(pznDecision(resp, 'x')).toEqual({ casId: '/p', offerId: 'o' });
+    expect(pznDecision(resp, 'x')).toEqual({ contentId: '/p', offerId: 'o' });
   });
   it('returns null for a name absent from the response', () => {
     expect(pznDecision(pznResp('a'), 'b')).toBeNull();
@@ -266,8 +290,8 @@ describe('experimentDecision / pznDecision', () => {
 });
 
 describe('record shapes', () => {
-  it('pznRecord: ECS keys with the replacement casId as content id', () => {
-    expect(pznRecord('alpha', { casId: '/frag', offerId: 'o1' })).toEqual({
+  it('pznRecord: ECS keys with the replacement contentId as content id', () => {
+    expect(pznRecord('alpha', { contentId: '/frag', offerId: 'o1' })).toEqual({
       personalization_placement: 'alpha',
       personalization_id: 'o1',
       personalization_action: 'im',
@@ -277,7 +301,7 @@ describe('record shapes', () => {
     });
   });
   it('pznRecord: null when there is no offer', () => {
-    expect(pznRecord('alpha', { casId: null, offerId: undefined })).toBeNull();
+    expect(pznRecord('alpha', { contentId: null, offerId: undefined })).toBeNull();
   });
   it('ixpRecord: treatment carries a replacement; control does not', () => {
     const treat = ixpRecord({
@@ -443,7 +467,7 @@ describe('applyPage (whole-page swap, before decorate)', () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response('<div>PZN</div>', { status: 200, headers: { 'content-type': 'text/html' } }),
     );
-    await applyPage(document, pznResp('HomeHero', { casId: '/fragments/pzn/home' }));
+    await applyPage(document, pznResp('HomeHero', { contentId: '/fragments/pzn/home' }));
     expect(document.querySelector('main').innerHTML).toContain('PZN');
     expect(document.querySelector('main').getAttribute('data-pzn-id')).toBe('offer-1');
     expect(window.appVars.pznPageRecDetailsArr[0]).toMatchObject({ personalization_placement: 'HomeHero' });
@@ -475,9 +499,9 @@ describe('applyLayer (section/block swaps, from the cached response)', () => {
     expect(window.appVars.ixpDetailsArr).toHaveLength(1);
   });
 
-  it('resolves a bare casId through casToPath before loading', async () => {
+  it('resolves a bare contentId through casToPath before loading', async () => {
     const m = main('<div data-pzn="alpha"></div>');
-    await applyLayer(m, pznResp('alpha', { casId: 'c7EfF7rYM' }));
+    await applyLayer(m, pznResp('alpha', { contentId: 'c7EfF7rYM' }));
     expect(loadFragment).toHaveBeenCalledWith('/c7EfF7rYM');
   });
 
@@ -510,7 +534,7 @@ describe('applyLayer (section/block swaps, from the cached response)', () => {
 
   it('IXP precedence: a target with both exp and pzn gets only the experiment swap', async () => {
     const m = main('<div data-exp="376648" data-pzn="alpha"></div>');
-    const resp = { ...expResp('376648', { replacementCasId: '/exp' }), ...pznResp('alpha', { casId: '/pzn' }) };
+    const resp = { ...expResp('376648', { replacementCasId: '/exp' }), ...pznResp('alpha', { contentId: '/pzn' }) };
     await applyLayer(m, resp);
     expect(loadFragment).toHaveBeenCalledTimes(1);
     expect(loadFragment).toHaveBeenCalledWith('/exp');
@@ -531,7 +555,7 @@ describe('applyLayer (section/block swaps, from the cached response)', () => {
 
   it('append mode (data-pzn-mode) appends the fragment, preserving existing content', async () => {
     const m = main('<div data-pzn="alpha" data-pzn-mode="append"><p class="base">keep</p></div>');
-    await applyLayer(m, pznResp('alpha', { casId: '/frag' }));
+    await applyLayer(m, pznResp('alpha', { contentId: '/frag' }));
     const el = m.querySelector('[data-pzn]');
     expect(el.querySelector('.base')).toBeTruthy(); // existing content preserved
     expect(el.querySelector('[data-frag]')).toBeTruthy(); // fragment appended
@@ -547,7 +571,7 @@ describe('applyLayer (section/block swaps, from the cached response)', () => {
 
   it('default (swap) mode replaces existing content', async () => {
     const m = main('<div data-pzn="alpha"><p class="base">gone</p></div>');
-    await applyLayer(m, pznResp('alpha', { casId: '/frag' }));
+    await applyLayer(m, pznResp('alpha', { contentId: '/frag' }));
     const el = m.querySelector('[data-pzn]');
     expect(el.querySelector('.base')).toBeFalsy();
     expect(el.querySelector('[data-frag]')).toBeTruthy();
@@ -627,7 +651,7 @@ describe('FullStory swap notification', () => {
       vi.spyOn(globalThis, 'fetch').mockResolvedValue(
         new Response('<div>PZN</div>', { status: 200, headers: { 'content-type': 'text/html' } }),
       );
-      await applyPage(document, pznResp('HomeHero', { casId: '/fragments/pzn/home', offerId: 'offer-1' }));
+      await applyPage(document, pznResp('HomeHero', { contentId: '/fragments/pzn/home', offerId: 'offer-1' }));
       await tick();
       expect(event).toHaveBeenCalledWith('Personalization Viewed', { id: 'offer-1', name: 'HomeHero' });
     });

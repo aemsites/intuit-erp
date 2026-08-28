@@ -273,7 +273,7 @@ function pageWillSwap(response) {
   const pagePzn = (getMetadata('personalization-id') || '').trim();
   if (pagePzn) {
     const d = pznDecision(response, pagePzn);
-    return !!(d && d.casId);
+    return !!(d && d.contentId);
   }
   return false;
 }
@@ -293,7 +293,7 @@ function summarizeResponse(response) {
     const d = pznDecision(response, name);
     if (d) {
       out.push({
-        kind: 'pzn', id: name, replacement: d.casId, offer: d.offerId,
+        kind: 'pzn', id: name, replacement: d.contentId, offer: d.offerId,
       });
     }
   });
