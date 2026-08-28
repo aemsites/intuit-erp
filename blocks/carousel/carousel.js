@@ -414,9 +414,18 @@ export default function decorate(block) {
 
   goTo(0);
 
-  // Click tracking: the spotlight testimonial's thumbnail-strip chevrons report prod's authored
-  // `testimonial|thumbnail_{side}_chevron` id + WA link (the glyph ‹/› is not a tracked label);
-  // slide CTAs and every other variant's controls stay generic loose derives. No trail — prod
-  // emits ui_access_point=page on these controls (chevronPayload is exported for the harness).
-  trackAs(null, block, { key: 'carousel', payload: (el) => chevronPayload(el, isSpotlight) });
+  // Click tracking. A .testimonial carousel IS prod's rw_testimonial component: slide CTAs report
+  // rw_testimonial|rw_testimonial_item and key off `testimonial:<id>` (the sheet fills link_name),
+  // matching blocks/testimonial. Every other variant stays a generic loose derive with NO trail
+  // (prod emits ui_access_point=page there). Spotlight thumbnail chevrons keep chevronPayload.
+  if (isTestimonial) {
+    trackAs('rw_testimonial', block, {
+      key: 'testimonial',
+      linkName: false,
+      items: { '.carousel-slide': 'rw_testimonial_item' },
+      payload: (el) => chevronPayload(el, isSpotlight),
+    });
+  } else {
+    trackAs(null, block, { key: 'carousel', payload: (el) => chevronPayload(el, isSpotlight) });
+  }
 }
