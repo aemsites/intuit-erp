@@ -210,18 +210,17 @@ export async function resetToBaseline() {
 }
 
 // loadFragment/swapMain swallow the HTTP status, so on failure re-check the variant's
-// .plain.html to give the author an actionable reason instead of a bare "apply-failed" —
-// the common case is a variant that isn't served on this host (404, or 401 when localhost
-// proxies it to the auth-gated preview).
+// .plain.html to give the author an actionable reason instead of a bare "apply-failed".
 async function describeFragmentFailure(p) {
   try {
     const resp = await fetch(`${p}.plain.html`, { cache: 'no-store' });
-    if (resp.status === 404) return `Variant not found (404): ${p}`;
-    if (resp.status === 401 || resp.status === 403) return `Variant isn’t served here (${resp.status}): ${p} — preview/publish it, or run “aem up --html-folder drafts” for local drafts`;
-    if (!resp.ok) return `Variant failed to load (${resp.status}): ${p}`;
-    return `Variant loaded but could not be applied: ${p}`;
+    if (resp.status === 404) return `Fragment not found (404): ${p}`;
+    if (resp.status === 401) return `Not signed in (401) — sign in to the preview site to view this fragment: ${p}`;
+    if (resp.status === 403) return `No permission (403) — you don’t have access to view this fragment: ${p}`;
+    if (!resp.ok) return `Fragment failed to load (${resp.status}): ${p}`;
+    return `Fragment loaded but could not be applied: ${p}`;
   } catch {
-    return `Could not fetch variant: ${p}`;
+    return `Could not fetch fragment: ${p}`;
   }
 }
 
