@@ -17,8 +17,7 @@ import {
 // The tealium plugin below is NOT a vendored subtree (project-owned code), but the relative
 // eslint-disable-next-line import/no-relative-packages
 import TealiumMartech from '../plugins/tealium-martech/src/index.js';
-import installPznPageViewEnrich from './pzn-pageview-enrich.js';
-import installCasIdEnrich from './cas-id-enrich.js';
+import installEcsEnrich from './ecs-enrich.js';
 import { isBlogPage, hasAuthoredCaseStudyHeader } from '../blocks/blog-template/blog-detect.js';
 import { isVideoLink } from '../blocks/video/video-info.js';
 import { isGuidePage } from '../blocks/guide-hero/guide-detect.js';
@@ -386,13 +385,10 @@ async function loadEager(doc) {
   appVars.pznPageRecDetailsArr = appVars.pznPageRecDetailsArr || [];
   appVars.ixpDetailsArr = appVars.ixpDetailsArr || [];
 
-  // Enrich the profile's page-view with pzn/experiments from appVars (installs before utag loads).
-  // FIXME(pzn): remove once Intuit's profile page-init reads window.appVars directly (option C).
-  if (MARTECH_PROVIDER !== 'off') installPznPageViewEnrich();
-
-  // Fill page_cas_id = pathname on click beacons (the profile's SSR source is gone on EDS).
-  // FIXME(cas-id): remove once the profile derives it at runtime. See cas-id-enrich.js.
-  if (MARTECH_PROVIDER !== 'off') installCasIdEnrich();
+  // Enrich the ECS profile's beacons with EDS-derived values it lost from SSR: page-view
+  // pzn/experiments (from appVars) + click page_cas_id (= pathname). Installs before utag loads.
+  // FIXME: remove once the profile reads appVars / the runtime pathname. See ecs-enrich.js.
+  if (MARTECH_PROVIDER !== 'off') installEcsEnrich();
 
   // Gated conversion pages (e.g. /webinar-* form landings) opt out of the global
   // header/footer via `hide-header` / `hide-footer` metadata

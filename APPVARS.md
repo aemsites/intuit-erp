@@ -89,7 +89,7 @@ The page-view is fired **once** by the profile at bootstrap (not re-triggered by
 ECS libs expose **no page-view opt-out flag**, and `utag.view` is load-bearing for every Tealium
 vendor tag (GA4/ads/Marketo/…) — so we can't cleanly suppress just the ECS page-view client-side.
 
-- **Shipped now — enrich ([`scripts/pzn-pageview-enrich.js`](scripts/pzn-pageview-enrich.js)).** A
+- **Shipped now — enrich ([`scripts/ecs-enrich.js`](scripts/ecs-enrich.js)).** A
   temporary client-side shim (**on by default**; skipped only with `?martech=off`): it **wraps** the
   profile's own `webAnalytics.trackPage` and fills `personalization_details` / `experiment_ids` from
   `window.appVars`, only where the profile left them empty. One enriched `screen:viewed`, vendor tags
@@ -126,7 +126,7 @@ bot-management so prod is never silently measured as an "Access Denied" page).
 
 The array typing + record/stamp shapes are also unit-gated in
 [`test/experience.test.js`](test/experience.test.js) and
-[`test/pzn-pageview-enrich.test.js`](test/pzn-pageview-enrich.test.js) (`npm test`).
+[`test/ecs-enrich.test.js`](test/ecs-enrich.test.js) (`npm test`).
 
 ### Running it
 
@@ -181,7 +181,7 @@ local    CONTRACT ✓  appVars has the 4 fields, types ok
 ### Known open items
 
 - **Page-view `personalization_details` / `experiment_ids`.** Enriched client-side by the
-  `pzn-pageview-enrich.js` shim (on by default). Land option C (profile reads `appVars` directly),
+  `ecs-enrich.js` shim (on by default). Land option C (profile reads `appVars` directly),
   then delete the shim. Confirm the shim's eager-phase trap catches the profile's bootstrap
   `trackPage` on a deployed prod-env host. See
   [above](#page-view-personalization--the-open-gap).
