@@ -22,12 +22,16 @@ body {
   flex-direction: column;
 }
 
-/* the header from the imported stylesheet sits at the top; #app scrolls under it */
 #app {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
   padding: var(--s2-spacing-200);
+
+  /* The Sidekick palette clips the bottom of the iframe (its header + a 20px container
+     pad, ~64px) since the iframe is height:100% under an in-container header. Reserve a
+     safe area so the footer/last content never lands in that clipped zone. */
+  padding-bottom: 84px;
   display: flex;
   flex-direction: column;
   gap: var(--s2-spacing-100);
@@ -245,17 +249,15 @@ body {
   font-size: var(--s2-body-size-xs);
 }
 
-/* sticky footer */
+/* footer — flows right after the content (not pinned to the bottom, which the Sidekick
+   clips); the #app safe-area padding keeps it clear of the clipped zone when scrolled. */
 .iep-footer {
-  position: sticky;
-  bottom: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--s2-spacing-100);
-  margin-top: auto;
-  padding: var(--s2-spacing-100) var(--s2-spacing-200);
-  background: light-dark(#fff, var(--s2-gray-25));
+  margin-top: var(--s2-spacing-100);
+  padding: var(--s2-spacing-200) var(--s2-spacing-100) 0;
   border-top: 1px solid var(--s2-gray-200);
 }
 
