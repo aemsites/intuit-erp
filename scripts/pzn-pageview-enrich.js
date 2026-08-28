@@ -10,6 +10,9 @@
 
 // Marks an already-wrapped trackPage (Symbol → no collision, hidden from JSON/keys).
 const ENRICHED = Symbol('pznEnriched');
+// Marks our whenAssigned accessor's getter with its pending-callback list, so multiple traps on
+// one key chain (and a re-trap after `delete` is seen via the live descriptor, not stale state).
+const WA_CBS = Symbol('waCbs');
 
 // The tracker treats null/undefined, '', or [] as "no personalization".
 function isEmpty(v) {
@@ -70,16 +73,26 @@ export function wrapTrackPage(wa) {
   wa[ENRICHED] = true;
 }
 
-/** Runs `cb(obj[key])` now if set, else on assignment via a one-shot accessor trap (race-free). */
+/**
+ * Runs `cb(obj[key])` now if set, else on assignment via an accessor trap (race-free).
+ * Chain-safe: multiple callers trapping the same property share one accessor and each cb fires
+ * (so the pzn and cas-id enrichers can both wait on `…ecs.webAnalytics` without clobbering).
+ */
 export function whenAssigned(obj, key, cb) {
   if (obj[key] != null) { cb(obj[key]); return; }
+  const desc = Object.getOwnPropertyDescriptor(obj, key);
+  // already trapped by an earlier caller → chain this cb onto the same accessor
+  if (desc && desc.get && desc.get[WA_CBS]) { desc.get[WA_CBS].push(cb); return; }
+  const cbs = [cb];
   let stored;
+  const getter = () => stored;
+  getter[WA_CBS] = cbs;
   try {
     Object.defineProperty(obj, key, {
       configurable: true,
       enumerable: true,
-      get() { return stored; },
-      set(v) { stored = v; try { cb(v); } catch (e) { /* fail-open */ } },
+      get: getter,
+      set(v) { stored = v; cbs.forEach((f) => { try { f(v); } catch (e) { /* fail-open */ } }); },
     });
   } catch (e) {
     // non-configurable — cannot trap; best-effort no-op
