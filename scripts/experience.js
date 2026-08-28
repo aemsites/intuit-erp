@@ -488,8 +488,11 @@ export function stampPzn(el, rec) {
 
 // Whole-page swap from the cached response, run BEFORE decorateMain. IXP wins when a
 // page carries both experiment-id and personalization-id. Caller owns the one-shot
-// guard (window.hlx.pageExperienceApplied) and the shared deadline (signal).
-export async function applyPage(doc, response, signal) {
+// guard (window.hlx.pageExperienceApplied) and the shared deadline (signal). `track`
+// (default true) gates every analytics side effect — FullStory events, appVars records,
+// and click-tracker stamps — so a preview/simulation can swap content read-only, without
+// biasing the very experiment data it's measuring.
+export async function applyPage(doc, response, signal, { track = true } = {}) {
   if (!doc || !response) return;
   const pageExp = getMetadata('experiment-id');
   if (pageExp && /^\d+$/.test(pageExp)) {
@@ -498,12 +501,12 @@ export async function applyPage(doc, response, signal) {
     const rec = ixpRecord(d, window.location.pathname);
     if (d.replacementCasId && d.replacementCasId !== d.originalCasId) {
       const path = casToPath(d.replacementCasId);
-      if (path && await swapMain(doc, path, signal)) {
+      if (path && await swapMain(doc, path, signal) && track) {
         stampExperiment(doc.querySelector('main'), rec);
         notifyFullStory('Experiment Viewed', rec?.experiment_treatment, rec?.experiment_id);
       }
     }
-    if (rec) recordIxp([rec]);
+    if (rec && track) recordIxp([rec]);
     return;
   }
   const pagePzn = getMetadata('personalization-id');
@@ -513,7 +516,7 @@ export async function applyPage(doc, response, signal) {
     const rec = pznRecord(pagePzn, d);
     if (d.casId) {
       const path = casToPath(d.casId);
-      if (path && await swapMain(doc, path, signal)) {
+      if (path && await swapMain(doc, path, signal) && track) {
         stampPzn(doc.querySelector('main'), rec);
         notifyFullStory(
           'Personalization Viewed',
@@ -522,13 +525,13 @@ export async function applyPage(doc, response, signal) {
         );
       }
     }
-    if (rec) recordPznPage([rec]);
+    if (rec && track) recordPznPage([rec]);
   }
 }
 
 // Section/block swaps for `root` from the cached response (no network call). Used
 // eagerly for the first/LCP section (awaited) and lazily for the rest (skip = first).
-export async function applyLayer(root, response, { skip } = {}) {
+export async function applyLayer(root, response, { skip, track = true } = {}) {
   if (!root || !response) return;
   const tasks = [];
 
@@ -540,14 +543,14 @@ export async function applyLayer(root, response, { skip } = {}) {
       const path = casToPath(d.replacementCasId);
       if (path) {
         tasks.push(applyFragment(el, path, { append }).then((ok) => {
-          if (ok) {
+          if (ok && track) {
             stampExperiment(el, rec);
             notifyFullStory('Experiment Viewed', rec?.experiment_treatment, rec?.experiment_id);
           }
         }));
       }
     }
-    if (rec) recordIxp([rec]);
+    if (rec && track) recordIxp([rec]);
   });
 
   collectSlots(root, skip).forEach(({ el, placement, append }) => {
@@ -558,7 +561,7 @@ export async function applyLayer(root, response, { skip } = {}) {
       const path = casToPath(d.casId);
       if (path) {
         tasks.push(applyFragment(el, path, { append }).then((ok) => {
-          if (ok) {
+          if (ok && track) {
             stampPzn(el, rec);
             notifyFullStory(
               'Personalization Viewed',
@@ -569,7 +572,7 @@ export async function applyLayer(root, response, { skip } = {}) {
         }));
       }
     }
-    if (rec) recordPzn([rec]);
+    if (rec && track) recordPzn([rec]);
   });
 
   await Promise.all(tasks);
