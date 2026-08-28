@@ -5,9 +5,6 @@
  */
 @import url('/tools/plugins/personalization/index.css');
 
-/* Pre-JS default: dark (the Sidekick's own default). index.js then reads the Sidekick's
-   ?theme=dark|light param and sets color-scheme on <html>, which is what the light-dark()
-   tokens resolve against. */
 :root {
   color-scheme: dark;
 }
@@ -27,10 +24,6 @@ body {
   min-height: 0;
   overflow-y: auto;
   padding: var(--s2-spacing-200);
-
-  /* The Sidekick palette clips the bottom of the iframe (its header + a 20px container
-     pad, ~64px) since the iframe is height:100% under an in-container header. Reserve a
-     safe area so the footer/last content never lands in that clipped zone. */
   padding-bottom: 84px;
   display: flex;
   flex-direction: column;
@@ -43,8 +36,6 @@ body {
   margin-bottom: var(--s2-spacing-50);
 }
 
-/* Let the location title truncate so the colored kind chip always gets its full width
-   on one line (the shared .pzn-chip wraps its text otherwise). */
 .pzn-section-head .pzn-section-title {
   flex: 1 1 auto;
   min-width: 0;
@@ -249,8 +240,6 @@ body {
   font-size: var(--s2-body-size-xs);
 }
 
-/* footer — flows right after the content (not pinned to the bottom, which the Sidekick
-   clips); the #app safe-area padding keeps it clear of the clipped zone when scrolled. */
 .iep-footer {
   display: flex;
   align-items: center;
