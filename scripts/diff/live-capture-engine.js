@@ -14,6 +14,13 @@
  * duplicate labels (Register, Find out more) click distinct nodes; per-page cas-id /
  * appVars diagnostic. PII is sanitized in-page (KEEP allowlist raw, everything else a
  * shape token) so nothing sensitive leaves the browser.
+ *
+ * v3 (capture-completeness, ~91 uncaught): rect+style visibility (fixes position:fixed floating
+ * widget / sticky nav wrongly skipped by offsetParent); a reveal() phase that hover-opens CSS
+ * mega-nav flyouts, clicks aria-expanded disclosures, and opens the sales/contact widget before
+ * locating (nav|accountants, talktosales items lived in closed containers); settle-aware preload
+ * for long lazy blog pages; horizontal scrollIntoView for off-screen carousel cards; and a
+ * bounded reveal-and-retry on each locate miss.
  */
 /* eslint-disable no-restricted-syntax, no-continue, no-plusplus, max-len, no-underscore-dangle, object-curly-newline, no-nested-ternary, no-await-in-loop, no-empty, prefer-rest-params, func-names, no-restricted-globals */
 window.__mk = function () {
@@ -39,7 +46,16 @@ window.__mk = function () {
 
   const sleep = (ms) => new Promise((r) => { setTimeout(r, ms); });
   const norm = (s) => (s || '').replace(/\s+/g, ' ').trim().toLowerCase();
-  const vis = (el) => !!(el && el.offsetParent !== null);
+  // v3: rect+style visibility (offsetParent is null for position:fixed, so the old check
+  // wrongly skipped the floating talk-to-sales widget and sticky nav). Accepts below-fold
+  // elements (they have a rect; we scroll to them) but rejects display:none/hidden/0-size.
+  const vis = (el) => {
+    if (!el || !el.getBoundingClientRect) return false;
+    const r = el.getBoundingClientRect();
+    if (r.width < 1 || r.height < 1) return false;
+    const s = getComputedStyle(el);
+    return s.visibility !== 'hidden' && s.display !== 'none' && s.pointerEvents !== 'none' && +s.opacity !== 0;
+  };
   const nohost = (h) => (h || '').replace(/^https?:\/\/[^/]+/, '').replace(/[?#].*$/, '').replace(/\/$/, '');
   // external destination host (not our own stage/prod host), else '' — used to match out-nav CTAs.
   const extHost = (h) => { try { const u = new URL(h, window.location.href); return /(^|\.)erp\.intuit\.com$/.test(u.host) ? '' : u.host; } catch (e) { return ''; } };
@@ -66,7 +82,8 @@ window.__mk = function () {
   }
 
   async function clickEl(el) {
-    try { el.scrollIntoView({ block: 'center' }); } catch (e) { /* */ }
+    try { el.scrollIntoView({ block: 'center', inline: 'center' }); } catch (e) { /* */ } // inline: bring horizontally-scrolled carousel cards into view
+    await sleep(60);
     try { el.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); } catch (e) { /* */ }
     await sleep(45);
     try { el.click(); } catch (e) { /* */ }
@@ -77,9 +94,28 @@ window.__mk = function () {
   // / footer exist before we click. BOUNDED: viewport-sized steps, capped iterations (a
   // growing/huge scrollHeight otherwise makes this grind), then jump to bottom + back to top.
   async function preload() {
-    for (const f of [0.2, 0.4, 0.6, 0.8, 1]) { window.scrollTo(0, document.body.scrollHeight * f); await sleep(220); }
-    window.scrollTo(0, document.body.scrollHeight); await sleep(300);
-    window.scrollTo(0, 0); await sleep(400);
+    // v3: finer, settle-aware scroll — long blog pages (/blog/construction had 33 uncaught)
+    // lazy-render many sections; step in 1/12ths and stop early once scrollHeight stabilizes.
+    let last = -1;
+    for (let i = 1; i <= 12; i++) {
+      window.scrollTo(0, (i / 12) * document.body.scrollHeight); await sleep(240);
+      const h = document.body.scrollHeight; if (h === last && i >= 6) break; last = h;
+    }
+    window.scrollTo(0, document.body.scrollHeight); await sleep(350);
+    window.scrollTo(0, 0); await sleep(350);
+  }
+
+  // v3: expose hidden targets before locating. Hover-opens CSS mega-nav flyouts (nav|accountants
+  // et al. live in a closed dropdown), clicks disclosure togglers (aria-expanded=false), and opens
+  // the floating sales/contact widget (its inner items — Visit support page, close — need it open).
+  // Bounded; the capture-time preventDefault neutralizes any navigation these fire, and re-firing a
+  // toggle's own beacon is harmless (harvest matches by contentKey, not order).
+  async function reveal() {
+    const hover = [...document.querySelectorAll('header nav *, [class*="meganav"] *, nav [aria-haspopup], nav [aria-expanded], [class*="dropdown"] [class*="toggle"]')].filter(vis).slice(0, 40);
+    for (const t of hover) { try { for (const ev of ['pointerover', 'mouseover', 'mouseenter']) t.dispatchEvent(new PointerEvent(ev, { bubbles: true })); } catch (e) { /* */ } }
+    await sleep(180);
+    const openers = [...document.querySelectorAll('[aria-expanded="false"], [class*="talk"] button, [class*="sales"] button, [class*="contact-us"] button, [aria-label*="talk to" i], [aria-label*="sales" i], [aria-label*="chat" i]')].filter(vis).slice(0, 24);
+    for (const o of openers) { try { o.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); o.click(); } catch (e) { /* */ } await sleep(110); }
   }
 
   function diag() {
@@ -95,12 +131,16 @@ window.__mk = function () {
   window.__capStep = async () => {
     for (let k = 0; k < 40 && typeof window.utag === 'undefined'; k++) await sleep(250);
     await preload();
+    await reveal();
     const targets = JSON.parse(S.getItem('__t') || '[]');
     const clicked = new Set();
     let prog = +(S.getItem('__p') || '0');
+    let reReveals = 0;
     for (; prog < targets.length; prog++) {
       S.setItem('__p', String(prog + 1)); // mark done BEFORE click so a nav-away resumes past it
-      const el = locate(targets[prog], clicked);
+      let el = locate(targets[prog], clicked);
+      // a miss is often a collapsed flyout/widget/carousel — reveal & retry once (bounded total).
+      if (!el && reReveals < 10) { reReveals++; await reveal(); el = locate(targets[prog], clicked); }
       if (el) { clicked.add(el); await clickEl(el); }
     }
     try { S.setItem('__diag', JSON.stringify(diag())); } catch (e) { /* */ }
