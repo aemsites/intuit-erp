@@ -239,6 +239,30 @@ function normalizeTestimonial(slide) {
   return !!title;
 }
 
+/**
+ * JIT payload deriver for a spotlight testimonial thumbnail-strip chevron: prod's authored
+ * `testimonial|thumbnail_{side}_chevron` id + WA link (the ‹/› glyph is not a tracked label).
+ * Non-spotlight variants / non-chevron elements return null → normal derive. Exported so the
+ * offline parity harness (parity-gate `oursPayload`) derives it identically.
+ * @param {Element} el clicked element
+ * @param {boolean} isSpotlight whether this is the .spotlight testimonial carousel
+ * @returns {Record<string, string>|null}
+ */
+export function chevronPayload(el, isSpotlight) {
+  if (!isSpotlight || !el.classList) return null;
+  let side = null;
+  if (el.classList.contains('carousel-prev')) side = 'left';
+  else if (el.classList.contains('carousel-next')) side = 'right';
+  if (!side) return null;
+  const id = `testimonial|thumbnail_${side}_chevron`;
+  return {
+    'object-detail': id,
+    'ui-object-detail': id,
+    'ui-object': 'button',
+    'wa-link': `testimonial-thumbnail-${side}-chevron`,
+  };
+}
+
 export default function decorate(block) {
   const slides = [...block.querySelectorAll(':scope > div')];
   if (!slides.length) return;
@@ -393,20 +417,6 @@ export default function decorate(block) {
   // Click tracking: the spotlight testimonial's thumbnail-strip chevrons report prod's authored
   // `testimonial|thumbnail_{side}_chevron` id + WA link (the glyph ‹/› is not a tracked label);
   // slide CTAs and every other variant's controls stay generic loose derives. No trail — prod
-  // emits ui_access_point=page on these controls.
-  const chevronPayload = (el) => {
-    if (!isSpotlight || !el.classList) return null;
-    let side = null;
-    if (el.classList.contains('carousel-prev')) side = 'left';
-    else if (el.classList.contains('carousel-next')) side = 'right';
-    if (!side) return null;
-    const id = `testimonial|thumbnail_${side}_chevron`;
-    return {
-      'object-detail': id,
-      'ui-object-detail': id,
-      'ui-object': 'button',
-      'wa-link': `testimonial-thumbnail-${side}-chevron`,
-    };
-  };
-  trackAs(null, block, { key: 'carousel', payload: chevronPayload });
+  // emits ui_access_point=page on these controls (chevronPayload is exported for the harness).
+  trackAs(null, block, { key: 'carousel', payload: (el) => chevronPayload(el, isSpotlight) });
 }

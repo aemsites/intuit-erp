@@ -38,7 +38,7 @@ const ARROW_SVG = {
 // The outcomes carousel's paging arrows report prod's `scroll left`/`scroll right` detail (+
 // matching link_name), not the derived button + aria-label. Golden confirms `scroll right`
 // (next); `scroll left` (prev) is the symmetric pair (prod only captured the next click).
-function scrollArrowPayload(el) {
+export function scrollArrowPayload(el) {
   if (!el.classList || !el.classList.contains('stats-arrow')) return null;
   let side = null;
   if (el.classList.contains('prev')) side = 'left';

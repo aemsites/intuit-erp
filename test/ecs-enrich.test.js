@@ -1,13 +1,16 @@
 import {
   describe, it, expect, vi, beforeEach, afterEach,
 } from 'vitest';
-import installPznPageViewEnrich, {
+import installEcsEnrich, {
   personalizationDetails,
   experimentTrackString,
   enrichPagePayload,
   wrapTrackPage,
   whenAssigned,
-} from '../scripts/pzn-pageview-enrich.js';
+  pageCasId,
+  enrichEventPayload,
+  wrapTrack,
+} from '../scripts/ecs-enrich.js';
 
 beforeEach(() => {
   delete window.ixp;
@@ -108,6 +111,50 @@ describe('wrapTrackPage', () => {
   });
 });
 
+describe('pageCasId', () => {
+  it('is the page pathname', () => {
+    expect(pageCasId()).toBe(window.location.pathname);
+  });
+});
+
+describe('enrichEventPayload', () => {
+  it('fills page_cas_id from the pathname when absent or empty', () => {
+    expect(enrichEventPayload({ object: 'content' }).page_cas_id).toBe(window.location.pathname);
+    expect(enrichEventPayload({ page_cas_id: '' }).page_cas_id).toBe(window.location.pathname);
+  });
+  it('does NOT clobber a value the profile already set', () => {
+    expect(enrichEventPayload({ page_cas_id: 'c14O6fD4y' }).page_cas_id).toBe('c14O6fD4y');
+  });
+  it('tolerates a non-object', () => {
+    expect(() => enrichEventPayload(null)).not.toThrow();
+  });
+});
+
+describe('wrapTrack', () => {
+  it('enriches the payload before the original track fires', () => {
+    const original = vi.fn();
+    const wa = { track: original };
+    wrapTrack(wa);
+    wa.track({ object: 'content', action: 'interacted' });
+    expect(original.mock.calls[0][0].page_cas_id).toBe(window.location.pathname);
+  });
+  it('is idempotent — a second wrap does not double-invoke the original', () => {
+    const original = vi.fn();
+    const wa = { track: original };
+    wrapTrack(wa);
+    wrapTrack(wa);
+    wa.track({});
+    expect(original).toHaveBeenCalledTimes(1);
+  });
+  it('fails open — a bad payload still lets the original through', () => {
+    const original = vi.fn();
+    const wa = { track: original };
+    wrapTrack(wa);
+    expect(() => wa.track(null)).not.toThrow();
+    expect(original).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe('whenAssigned', () => {
   it('invokes immediately when already present', () => {
     const cb = vi.fn();
@@ -125,25 +172,33 @@ describe('whenAssigned', () => {
   });
 });
 
-describe('installPznPageViewEnrich', () => {
-  it('wraps trackPage when the chain is built incrementally after install', () => {
+describe('installEcsEnrich', () => {
+  it('wraps trackPage + track when the chain is built incrementally after install', () => {
     window.appVars = { pznPageRecDetailsArr: [{ personalization_placement: 'HomeHero', personalization_id: 'o1' }] };
-    installPznPageViewEnrich();
-    const original = vi.fn();
+    installEcsEnrich();
+    const trackPage = vi.fn();
+    const track = vi.fn();
     window.intuit = {};
     window.intuit.tracking = {};
     window.intuit.tracking.ecs = {};
-    window.intuit.tracking.ecs.webAnalytics = { trackPage: original };
-    window.intuit.tracking.ecs.webAnalytics.trackPage({ personalization_details: null });
-    expect(original.mock.calls[0][0].personalization_details).toHaveLength(1);
+    window.intuit.tracking.ecs.webAnalytics = { trackPage, track };
+    const wa = window.intuit.tracking.ecs.webAnalytics;
+    wa.trackPage({ personalization_details: null });
+    wa.track({ object: 'content' });
+    expect(trackPage.mock.calls[0][0].personalization_details).toHaveLength(1);
+    expect(track.mock.calls[0][0].page_cas_id).toBe(window.location.pathname);
   });
 
-  it('wraps trackPage when the whole chain is assigned as one literal after install', () => {
+  it('wraps both when the whole chain is assigned as one literal after install', () => {
     window.appVars = { pznPageRecDetailsArr: [{ personalization_placement: 'HomeHero', personalization_id: 'o1' }] };
-    installPznPageViewEnrich();
-    const original = vi.fn();
-    window.intuit = { tracking: { ecs: { webAnalytics: { trackPage: original } } } };
-    window.intuit.tracking.ecs.webAnalytics.trackPage({ personalization_details: [] });
-    expect(original.mock.calls[0][0].personalization_details).toHaveLength(1);
+    installEcsEnrich();
+    const trackPage = vi.fn();
+    const track = vi.fn();
+    window.intuit = { tracking: { ecs: { webAnalytics: { trackPage, track } } } };
+    const wa = window.intuit.tracking.ecs.webAnalytics;
+    wa.trackPage({ personalization_details: [] });
+    wa.track({ object: 'content' });
+    expect(trackPage.mock.calls[0][0].personalization_details).toHaveLength(1);
+    expect(track.mock.calls[0][0].page_cas_id).toBe(window.location.pathname);
   });
 });
