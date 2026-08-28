@@ -5,6 +5,11 @@
 // and swaps content from it — whole-page + first section before reveal (pre-LCP),
 // the rest after LCP. ZoomInfo enrichment is done server-side by the orchestrator.
 //
+// A whole-page swap (page-level experiment/personalization) may inject content that
+// carries its OWN section/block slots. Those trigger at most ONE additional call
+// (resolveSwappedSlots) for the freshly-revealed section/block ids — never another
+// whole-page swap, so it can't recurse. Section/block-only pages stay strictly single-call.
+//
 // Fidelity is DOM-driven: page-level (experiment-id / personalization-id metadata) ⇒
 // whole-page swap; section (data-exp / data-pzn) ⇒ section swap; a -block scope ⇒
 // block swap. The response only supplies the replacement content ref per id/name
@@ -163,9 +168,13 @@ export function sameTargetAsExp(section) {
   return !!pznBlock && pznBlock === expBlock;
 }
 
+export function resolveBlock(section, block) {
+  return section.querySelector(`[data-block-name="${block}"], [class~="${block}"]`);
+}
+
 // Sections tagged `data-exp` within `root` (root itself may match), minus `skip`.
 // The experiment id is the verbatim numeric `data-exp` value; a `data-exp-block`
-// scopes to the block whose data-block-name matches (block fidelity), else the whole
+// scopes to that named block (block fidelity, resolved via resolveBlock), else the whole
 // section. Non-numeric ids are dropped (labels are no longer supported).
 export function collectExperiments(root, skip) {
   const sections = [];
@@ -177,7 +186,7 @@ export function collectExperiments(root, skip) {
     const id = section.dataset.exp;
     if (!id || !/^\d+$/.test(id)) return;
     const block = section.dataset.expBlock;
-    const el = block ? section.querySelector(`[data-block-name="${block}"]`) : section;
+    const el = block ? resolveBlock(section, block) : section;
     const append = section.dataset.expMode === 'append';
     if (el) {
       experiments.push({
@@ -203,7 +212,7 @@ export function collectSlots(root, skip) {
     if (!placement) return;
     if (section.dataset.exp && sameTargetAsExp(section)) return;
     const block = section.dataset.pznBlock;
-    const el = block ? section.querySelector(`[data-block-name="${block}"]`) : section;
+    const el = block ? resolveBlock(section, block) : section;
     const append = section.dataset.pznMode === 'append';
     if (el) slots.push({ el, placement, append });
   });
@@ -493,91 +502,176 @@ export function stampPzn(el, rec) {
 
 // --- Applying the response --------------------------------------------------
 
-// Whole-page swap from the cached response, run BEFORE decorateMain. IXP wins when a
-// page carries both experiment-id and personalization-id. Caller owns the one-shot
-// guard (window.hlx.pageExperienceApplied) and the shared deadline (signal).
-export async function applyPage(doc, response, signal) {
-  if (!doc || !response) return;
-  const pageExp = getMetadata('experiment-id');
-  if (pageExp && /^\d+$/.test(pageExp)) {
-    const d = experimentDecision(response, pageExp);
-    if (!d) return;
-    const rec = ixpRecord(d, window.location.pathname);
-    if (d.replacementCasId && d.replacementCasId !== d.originalCasId) {
-      const path = casToPath(d.replacementCasId);
-      if (path && await swapMain(doc, path, signal)) {
-        stampExperiment(doc.querySelector('main'), rec);
-        notifyFullStory('Experiment Viewed', rec?.experiment_treatment, rec?.experiment_id);
-      }
-    }
-    if (rec) recordIxp([rec]);
-    return;
-  }
-  const pagePzn = getMetadata('personalization-id');
-  if (pagePzn) {
-    const d = pznDecision(response, pagePzn);
-    if (!d) return;
-    const rec = pznRecord(pagePzn, d);
-    if (d.contentId) {
-      const path = casToPath(d.contentId);
-      if (path && await swapMain(doc, path, signal)) {
-        stampPzn(doc.querySelector('main'), rec);
-        notifyFullStory(
-          'Personalization Viewed',
-          rec?.personalization_id,
-          rec?.personalization_placement,
-        );
-      }
-    }
-    if (rec) recordPznPage([rec]);
-  }
+// The two helpers below are the ONE place each apply-shape lives: look up the decision,
+// record exposure, then (only when there's replacement content) resolve the path, apply it
+// via `applyContent(path) => Promise<bool>`, and on success stamp + notify. applyPage feeds
+// them swapMain (whole page); applyLayer feeds them applyFragment (a section/block element).
+
+async function applyExperiment(response, id, stampTarget, applyContent, record) {
+  const d = experimentDecision(response, id);
+  if (!d) return false;
+  const rec = ixpRecord(d, window.location.pathname);
+  if (rec) record([rec]);
+  if (!d.replacementCasId || d.replacementCasId === d.originalCasId) return false;
+  const path = casToPath(d.replacementCasId);
+  if (!path || !(await applyContent(path))) return false;
+  stampExperiment(stampTarget, rec);
+  notifyFullStory('Experiment Viewed', rec?.experiment_treatment, rec?.experiment_id);
+  return true;
 }
 
-// Section/block swaps for `root` from the cached response (no network call). Used
-// eagerly for the first/LCP section (awaited) and lazily for the rest (skip = first).
+async function applyPznSlot(response, placement, stampTarget, applyContent, record) {
+  const d = pznDecision(response, placement);
+  if (!d) return false;
+  const rec = pznRecord(placement, d);
+  if (rec) record([rec]);
+  if (!d.contentId) return false;
+  const path = casToPath(d.contentId);
+  if (!path || !(await applyContent(path))) return false;
+  stampPzn(stampTarget, rec);
+  notifyFullStory('Personalization Viewed', rec?.personalization_id, rec?.personalization_placement);
+  return true;
+}
+
+// Whole-page swap from the cached response, run BEFORE decorateMain. IXP wins when a page
+// carries both experiment-id and personalization-id. Returns whether a swap landed. Caller
+// owns the one-shot guard (window.hlx.pageExperienceApplied) and the shared deadline (signal).
+export async function applyPage(doc, response, signal) {
+  if (!doc || !response) return false;
+  const target = doc.querySelector('main');
+  const swap = (p) => swapMain(doc, p, signal);
+  const pageExp = getMetadata('experiment-id');
+  if (pageExp && /^\d+$/.test(pageExp)) {
+    return applyExperiment(response, pageExp, target, swap, recordIxp);
+  }
+  const pagePzn = getMetadata('personalization-id');
+  if (pagePzn) return applyPznSlot(response, pagePzn, target, swap, recordPznPage);
+  return false;
+}
+
+// Section/block swaps for `root` from the cached response (no network call). Used eagerly for
+// the first/LCP section (awaited) and lazily for the rest (skip = first).
 export async function applyLayer(root, response, { skip } = {}) {
   if (!root || !response) return;
   const tasks = [];
-
   collectExperiments(root, skip).forEach(({ el, id, append }) => {
-    const d = experimentDecision(response, id);
-    if (!d) return;
-    const rec = ixpRecord(d, window.location.pathname);
-    if (d.replacementCasId && d.replacementCasId !== d.originalCasId) {
-      const path = casToPath(d.replacementCasId);
-      if (path) {
-        tasks.push(applyFragment(el, path, { append }).then((ok) => {
-          if (ok) {
-            stampExperiment(el, rec);
-            notifyFullStory('Experiment Viewed', rec?.experiment_treatment, rec?.experiment_id);
-          }
-        }));
-      }
-    }
-    if (rec) recordIxp([rec]);
+    const apply = (p) => applyFragment(el, p, { append });
+    tasks.push(applyExperiment(response, id, el, apply, recordIxp));
   });
-
   collectSlots(root, skip).forEach(({ el, placement, append }) => {
-    const d = pznDecision(response, placement);
-    if (!d) return;
-    const rec = pznRecord(placement, d);
-    if (d.contentId) {
-      const path = casToPath(d.contentId);
-      if (path) {
-        tasks.push(applyFragment(el, path, { append }).then((ok) => {
-          if (ok) {
-            stampPzn(el, rec);
-            notifyFullStory(
-              'Personalization Viewed',
-              rec?.personalization_id,
-              rec?.personalization_placement,
-            );
-          }
-        }));
-      }
-    }
-    if (rec) recordPzn([rec]);
+    const apply = (p) => applyFragment(el, p, { append });
+    tasks.push(applyPznSlot(response, placement, el, apply, recordPzn));
   });
-
   await Promise.all(tasks);
+}
+
+// --- Post-swap resolution (the at-most-one SECOND call) ---------------------
+
+// Merges a follow-up decision response into the base one: the experiments + pzn maps are
+// unioned, with the follow-up winning on key collisions. Tolerates both the `personalisation`
+// and `personalization` spelling (pznDecision reads `personalisation` first).
+export function mergeExperience(base, extra) {
+  if (!extra) return base || null;
+  if (!base) return extra;
+  return {
+    ...base,
+    experiments: { ...(base.experiments || {}), ...(extra.experiments || {}) },
+    personalisation: {
+      ...(base.personalisation || base.personalization || {}),
+      ...(extra.personalisation || extra.personalization || {}),
+    },
+  };
+}
+
+// A section/block-ONLY request for `root` (NO page-level experiment-id / personalization-id
+// metadata). This omission is what makes the post-swap call recursion-safe: a full-page
+// variation's own page-level tags are never collected, so the whole-page swap happens once.
+export function collectSwapRequest(root) {
+  const experimentIds = new Set();
+  const accessPointNames = new Set();
+  if (root) {
+    collectExperiments(root).forEach(({ id }) => experimentIds.add(id));
+    collectSlots(root).forEach(({ placement }) => accessPointNames.add(placement));
+  }
+  return { experimentIds: [...experimentIds], accessPointNames: [...accessPointNames] };
+}
+
+// After a whole-page swap — and AFTER decorateMain, so block-scoped slots resolve via
+// data-block-name — the swapped-in content may carry its OWN section/block pzn/exp. Collect
+// a FRESH set from the new <main>; if non-empty, make ONE more orchestrator call and merge
+// the result into window.hlx.experienceResponse so both the eager and lazy applyLayer passes
+// pick it up. Never re-swaps the page (recursion-safe). Returns { firstSectionAffected, done }:
+// `done` is the self-bounded, fail-open merge promise; `firstSectionAffected` is true only
+// when the FIRST section carries new slots — the sole case the caller should block paint on.
+export function resolveSwappedSlots(doc, { timeoutMs = 1500 } = {}) {
+  const main = doc?.querySelector('main');
+  const noop = { firstSectionAffected: false, done: Promise.resolve() };
+  if (!main) return noop;
+  const req = collectSwapRequest(main);
+  if (!req.experimentIds.length && !req.accessPointNames.length) return noop;
+  const firstReq = collectSwapRequest(main.querySelector('.section'));
+  const firstSectionAffected = !!(
+    firstReq.experimentIds.length || firstReq.accessPointNames.length
+  );
+  const done = (async () => {
+    try {
+      const extra = await fetchExperience(req, buildContext(), { timeoutMs });
+      if (extra && typeof window !== 'undefined') {
+        window.hlx = window.hlx || {};
+        window.hlx.experienceResponse = mergeExperience(window.hlx.experienceResponse, extra);
+      }
+    } catch { /* fail-open — baseline stays */ }
+  })();
+  return { firstSectionAffected, done };
+}
+
+// --- Phase entry points (the experience surface scripts.js drives) ----------
+
+const EAGER_DEADLINE_MS = 1500; // network budget: the consolidated call + optional 2nd call
+const EAGER_APPLY_MS = 2000; // budget for swapping the first/LCP section before reveal
+
+// EAGER, before decorateMain: the single consolidated call + whole-page swap. Runs once
+// (guarded), caches the decision on window.hlx.experienceResponse, and returns whether a
+// whole-page swap landed (so the caller resolves the swapped-in content's own slots next).
+export async function applyPageExperience(doc) {
+  window.hlx = window.hlx || {};
+  if (window.hlx.pageExperienceApplied) return false;
+  window.hlx.pageExperienceApplied = true;
+  const request = collectRequest(doc);
+  if (!request.experimentIds.length && !request.accessPointNames.length) return false;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), EAGER_DEADLINE_MS);
+  try {
+    const response = await fetchExperience(request, buildContext(), { signal: controller.signal });
+    window.hlx.experienceResponse = response;
+    return response ? applyPage(doc, response, controller.signal) : false;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// EAGER, after decorateMain: when a page swap landed, resolve the swapped-in content's own
+// section/block slots (the at-most-one 2nd call) — blocking reveal only if the first section
+// is affected — then swap the first/LCP section. Both happen before reveal. No-op without a
+// cached response.
+export async function applyEagerLayers(doc, pageSwapped) {
+  const main = doc.querySelector('main');
+  if (!main || !window.hlx?.experienceResponse) return;
+  if (pageSwapped) {
+    const swap = resolveSwappedSlots(doc, { timeoutMs: EAGER_DEADLINE_MS });
+    window.hlx.experienceSwapResolved = swap.done;
+    if (swap.firstSectionAffected) await swap.done;
+  }
+  const firstSection = main.querySelector('.section');
+  if (firstSection) {
+    await withTimeout(applyLayer(firstSection, window.hlx.experienceResponse), EAGER_APPLY_MS);
+  }
+}
+
+// LAZY: swap every remaining (below-the-fold) section, after any 2nd-call merge has landed.
+export async function applyLazyLayers(doc) {
+  const main = doc.querySelector('main');
+  if (!main || !window.hlx?.experienceResponse) return;
+  if (window.hlx.experienceSwapResolved) await window.hlx.experienceSwapResolved;
+  await applyLayer(main, window.hlx.experienceResponse, { skip: main.querySelector('.section') });
 }
