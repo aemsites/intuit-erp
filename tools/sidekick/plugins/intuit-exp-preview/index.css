@@ -5,9 +5,6 @@
  */
 @import url('/tools/plugins/personalization/index.css');
 
-/* Pre-JS default: dark (the Sidekick's own default). index.js then reads the Sidekick's
-   ?theme=dark|light param and sets color-scheme on <html>, which is what the light-dark()
-   tokens resolve against. */
 :root {
   color-scheme: dark;
 }
@@ -22,12 +19,12 @@ body {
   flex-direction: column;
 }
 
-/* the header from the imported stylesheet sits at the top; #app scrolls under it */
 #app {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
   padding: var(--s2-spacing-200);
+  padding-bottom: 84px;
   display: flex;
   flex-direction: column;
   gap: var(--s2-spacing-100);
@@ -39,8 +36,6 @@ body {
   margin-bottom: var(--s2-spacing-50);
 }
 
-/* Let the location title truncate so the colored kind chip always gets its full width
-   on one line (the shared .pzn-chip wraps its text otherwise). */
 .pzn-section-head .pzn-section-title {
   flex: 1 1 auto;
   min-width: 0;
@@ -245,17 +240,13 @@ body {
   font-size: var(--s2-body-size-xs);
 }
 
-/* sticky footer */
 .iep-footer {
-  position: sticky;
-  bottom: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--s2-spacing-100);
-  margin-top: auto;
-  padding: var(--s2-spacing-100) var(--s2-spacing-200);
-  background: light-dark(#fff, var(--s2-gray-25));
+  margin-top: var(--s2-spacing-100);
+  padding: var(--s2-spacing-200) var(--s2-spacing-100) 0;
   border-top: 1px solid var(--s2-gray-200);
 }
 
