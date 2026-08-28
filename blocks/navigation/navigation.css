@@ -12,7 +12,7 @@
    border: 0;
    padding: 2px 0;
    font-size: 16px;
-   font-weight: 400;
+   font-weight: 500;
    color: var(--heading);
    display: inline-flex;
    align-items: center;
@@ -38,11 +38,12 @@
 }
 
 .header .nav-main .caret {
-   width: 7px;
-   height: 7px;
-   border-right: 1.5px solid currentcolor;
-   border-bottom: 1.5px solid currentcolor;
+   width: 4px;
+   height: 4px;
+   border-right: 2px solid currentcolor;
+   border-bottom: 2px solid currentcolor;
    transform: rotate(45deg);
+   border-radius: 1px;
    margin-top: -4px;
    transition: transform 0.3s cubic-bezier(0.35, 0, 0.5, 1);
 }

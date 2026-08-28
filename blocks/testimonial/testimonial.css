@@ -182,8 +182,8 @@
 }
 
 .testimonial.video .video-thumb {
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 60px;
   padding: 0;
   border: 2px solid transparent;
   border-radius: 8px;
@@ -627,9 +627,6 @@
   }
 }
 
-/* .carousel — opt-in single-view slider with dot pagination + prev/next arrows,
-   matching production. Overrides the side-by-side card grid above so exactly
-   one card shows at a time; scoped so the default .card layout is unaffected. */
 .testimonial.card.carousel { display: block; max-width: var(--container); }
 .testimonial.card.carousel .testimonial-carousel-viewport { overflow: hidden; }
 
@@ -639,9 +636,6 @@
 }
 .testimonial.card.carousel .testimonial-card { flex: 0 0 100%; box-sizing: border-box; padding: 56px 48px; }
 
-/* card content — production's single-view treatment: a large centered quote
-   (no decorative blockquote glyph) and a single-line "Name, Title" attribution.
-   Scoped to .carousel so the default stacked .card keeps its compact style. */
 .testimonial.card.carousel .testimonial-card blockquote {
   margin: 0 0 24px;
   padding: 0;
@@ -711,9 +705,6 @@
   cursor: pointer;
 }
 
-/* chevron glyph from /icons/*.svg, masked so the button `color` tints it. The
-   --tc-chevron url is set in testimonial.js with window.hlx.codeBasePath, since
-   EDS deployments aren't guaranteed to be served from the document root. */
 .testimonial.card.carousel .testimonial-arrow::before {
   content: "";
   width: 18px;
@@ -726,14 +717,9 @@
 .testimonial.card.carousel .testimonial-arrow:disabled { background: #d3d9dd; cursor: default; }
 
 @media (min-width: 768px) {
-  /* keep one-at-a-time even where the default .card grid would go multi-column */
   .testimonial.card.carousel .testimonial-card { flex: 0 0 100%; box-sizing: border-box; }
 }
 
-/* #742 mobile: video-split 2-col grid overflowed the viewport on
-   /professional-services. Stack to one column AND allow the grid items to
-   shrink below their intrinsic content width (grid items default to
-   min-width: auto, which was keeping .split-copy/.split-media at ~402px). */
 @media (width < 768px) {
   .testimonial.video-split .split-grid {
     grid-template-columns: 1fr;

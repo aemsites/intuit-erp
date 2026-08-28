@@ -126,14 +126,13 @@
   overflow: initial;
 }
 
-.hero.image-glow .hero-dashboard-lottie::before,
-.hero.image-glow .hero-media img::before {
-    content: "";
-    position: absolute;
-    inset: -20%;
-    z-index: 0;
-    pointer-events: none;
-    background: radial-gradient(ellipse 74% 68% at 50% 50%, #33b5ff 0%, #09f 10%, #07f 22%, #0060d4 36%, rgb(0 80 190 / 72%) 48%, rgb(0 37 74 / 38%) 62%, rgb(0 37 74 / 0%) 82%);
+.hero.image-glow .hero-media::before {
+  content: "";
+  position: absolute;
+  inset: -20%;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse 74% 68% at 50% 50%, #33b5ff 0%, #09f 10%, #07f 22%, #0060d4 36%, rgb(0 80 190 / 72%) 48%, rgb(0 37 74 / 38%) 62%, rgb(0 37 74 / 0%) 82%);
 }
 
 .hero .hero-dashboard-lottie svg {
@@ -209,7 +208,7 @@
    field-render fills reserved space instead of growing the row (which
    re-centers the lone headline and shoves the next section down). Desktop
    only; mobile stacks the card below the fold. */
-@media (width >= 768px) {
+@media (width >=768px) {
   .hero.form .hero-grid:has(.hero-copy > h1:only-child) {
     min-height: 760px;
   }
@@ -467,9 +466,16 @@
   background: rgb(0 0 0 / 80%);
 }
 
-.video-modal { position: relative; width: min(960px, 100%); }
+.video-modal {
+  position: relative;
+  width: min(960px, 100%);
+}
 
-.video-modal-frame { position: relative; width: 100%; aspect-ratio: 16 / 9; }
+.video-modal-frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+}
 
 .video-modal-frame iframe {
   position: absolute;
@@ -495,17 +501,19 @@
   cursor: pointer;
 }
 
-.video-modal-close:hover { background: rgb(255 255 255 / 28%); }
+.video-modal-close:hover {
+  background: rgb(255 255 255 / 28%);
+}
 
-main > .section.colored-background.hero-container {
+main>.section.colored-background.hero-container {
   padding-top: 0;
   padding-bottom: 0;
 }
 
-main > .section.light-background.hero-container .hero-copy :is(h1, h2, h3, h4, h5, h6) {
+main>.section.light-background.hero-container .hero-copy :is(h1, h2, h3, h4, h5, h6) {
   color: var(--heading-color);
 }
 
-main > .section.light-background.hero-container .hero-copy :is(ol, ul, li, p) {
+main>.section.light-background.hero-container .hero-copy :is(ol, ul, li, p) {
   color: var(--text-color);
 }
