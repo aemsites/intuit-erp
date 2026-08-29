@@ -51,12 +51,15 @@ describe('carousel — spotlight testimonial chevron tracking (JIT-derived)', ()
     expect(p.action).toBe('interacted');
     expect(p.ui_action).toBe('clicked');
     expect(p['data-wa-link']).toBe('testimonial-thumbnail-left-chevron');
+    // controls report `page` — the rw_testimonial trail rides the slide track, not the block
+    expect(p.ui_access_point).toBe('page');
 
     stampInteraction({ target: next });
     p = computeTrackingPayload(next);
     expect(p.object_detail).toBe('testimonial|thumbnail_right_chevron');
     expect(p.ui_object_detail).toBe('testimonial|thumbnail_right_chevron');
     expect(p['data-wa-link']).toBe('testimonial-thumbnail-right-chevron');
+    expect(p.ui_access_point).toBe('page');
   });
 
   it('non-spotlight carousel controls stay generic derives (deriver is spotlight-scoped)', () => {
