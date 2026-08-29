@@ -674,6 +674,27 @@ export function regionCustomProperties(ctx) {
 }
 
 /**
+ * Carry an authored `ui-access-point` as a data-tracking trail segment on a dedicated
+ * display:contents wrapper around the CTA, so the injected tracker's ancestor-walk reports it
+ * (the CTA's own segment is the skipped sacrificial anchor; the ignored data-ui-access-point value
+ * only opts the field in). Idempotent + layout-neutral — reuses its own wrapper on re-interaction.
+ * @param {Element} cta
+ * @param {string} ap
+ */
+function stampAccessPoint(cta, ap) {
+  let wrap = cta.parentElement;
+  if (!wrap || !wrap.hasAttribute('data-track-ap')) {
+    if (!cta.parentNode) return;
+    wrap = document.createElement('span');
+    wrap.style.display = 'contents';
+    wrap.setAttribute('data-track-ap', '');
+    cta.parentNode.insertBefore(wrap, cta);
+    wrap.appendChild(cta);
+  }
+  wrap.setAttribute('data-tracking', ap);
+}
+
+/**
  * JIT-stamp the resolved (derived + sheet + region context) data-* onto the
  * interacted CTA so the injected tracker reads them on the ensuing click. Nothing
  * is stamped at rest. Any enclosing pzn/ixp region's identity folds into
@@ -733,6 +754,10 @@ export function stampInteraction(e) {
   const regionCtx = resolveRegionContext(cta);
   const context = regionCtx ? { customProperties: regionCustomProperties(regionCtx) } : {};
   stampCta(cta, resolveCta(derived, row, context));
+  // A sheet `ui-access-point` overrides the emitted access point. The tracker derives it from the
+  // data-tracking ancestor chain (not the attribute value), so we carry it as a trail segment — a
+  // clean override for an untrailed CTA, else <blockTrail>|<value> for one in a block trail.
+  if (row && row['ui-access-point']) stampAccessPoint(cta, String(row['ui-access-point']));
 }
 
 /**

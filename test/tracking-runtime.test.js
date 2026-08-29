@@ -262,6 +262,65 @@ describe('initTracking (delegated capture-phase runtime)', () => {
   });
 });
 
+describe('sheet ui-access-point override (authored exception)', () => {
+  beforeEach(() => { document.head.innerHTML = ''; document.body.innerHTML = ''; resetTrackingState(); });
+  afterEach(() => vi.unstubAllGlobals());
+
+  // The injected tracker derives ui_access_point from the data-tracking ancestor chain, never the
+  // data-ui-access-point value — so a sheet override is carried as a data-tracking trail segment.
+  it('overrides an untrailed CTA to exactly the sheet value (was page)', async () => {
+    const data = [{ id: 'page:pricing', 'ui-access-point': 'feature' }];
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({ data }) })));
+    document.body.innerHTML = '<main><p><a class="button" href="/pricing">Pricing</a></p></main>';
+    const main = document.querySelector('main');
+    initTracking(main);
+    await new Promise((r) => { setTimeout(r, 0); });
+    const a = main.querySelector('a');
+    a.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+    expect(computeTrackingPayload(a).ui_access_point).toBe('feature');
+  });
+
+  it('is idempotent — one reused wrapper across repeated interactions', async () => {
+    const data = [{ id: 'page:pricing', 'ui-access-point': 'feature' }];
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({ data }) })));
+    document.body.innerHTML = '<main><p><a class="button" href="/pricing">Pricing</a></p></main>';
+    const main = document.querySelector('main');
+    initTracking(main);
+    await new Promise((r) => { setTimeout(r, 0); });
+    const a = main.querySelector('a');
+    a.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+    a.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+    expect(main.querySelectorAll('[data-track-ap]').length).toBe(1);
+    expect(computeTrackingPayload(a).ui_access_point).toBe('feature');
+  });
+
+  it('composes above an existing block trail (blockTrail|value)', async () => {
+    const data = [{ id: 'demo:go', 'ui-access-point': 'feature' }];
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({ data }) })));
+    document.body.innerHTML = '<main><div class="cta block"><p><a class="button" href="/go">Go</a></p></div></main>';
+    const main = document.querySelector('main');
+    trackAs('demo', main.querySelector('.block'), { key: 'demo' });
+    initTracking(main);
+    await new Promise((r) => { setTimeout(r, 0); });
+    const a = main.querySelector('a');
+    a.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+    expect(computeTrackingPayload(a).ui_access_point).toBe('demo|feature');
+  });
+
+  it('leaves the trail untouched when no ui-access-point is authored (no wrapper)', async () => {
+    const data = [{ id: 'page:pricing', 'wa-link': 'wl-pricing' }];
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({ data }) })));
+    document.body.innerHTML = '<main><p><a class="button" href="/pricing">Pricing</a></p></main>';
+    const main = document.querySelector('main');
+    initTracking(main);
+    await new Promise((r) => { setTimeout(r, 0); });
+    const a = main.querySelector('a');
+    a.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+    expect(main.querySelector('[data-track-ap]')).toBeNull();
+    expect(computeTrackingPayload(a).ui_access_point).toBe('page');
+  });
+});
+
 describe('Phase 2: coexistence with the pzn/experiment layer', () => {
   beforeEach(() => { document.body.innerHTML = ''; resetTrackingState(); });
 

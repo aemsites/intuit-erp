@@ -48,6 +48,15 @@ chain and joined with `|` (hyphens → underscores), **broad→specific, with th
 is present** on the element or an ancestor (presence, not value — an empty string still opts in). When
 no trail resolves, prod falls back to `""` inside the global nav/header and `page` elsewhere.
 
+**Overriding it from the sheet.** Because the tracker computes the trail (and ignores the
+`data-ui-access-point` *value*), a sheet **`ui-access-point`** cell can't set it directly — instead the
+runtime carries the authored value as a `data-tracking` **trail segment** on a wrapper around the CTA
+(`stampAccessPoint`). This is a clean full override for an **untrailed** CTA (loose/generic blocks like
+`media-text`, whose trail is otherwise `page`); for a CTA already inside a block trail it composes as
+`<blockTrail>|<value>` (the block's ancestor segments remain — reshaping those is a block-wiring fix,
+not a sheet exception). Use it to author the rare exceptions prod tracks under a component our markup
+doesn't emit (e.g. an `/events` promo that should report `feature`).
+
 **`link_name` is authored, not derived.** The tracker source contains **zero** references to
 `link_name` — it rides in `data-custom-properties` (prod's CMS emits `<ui_object>-<slug(label)>`).
 
