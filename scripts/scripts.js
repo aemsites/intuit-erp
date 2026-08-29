@@ -365,9 +365,6 @@ function redirectConstructionQToLlmAppCtx() {
   window.location.replace(`${window.location.pathname}?${params.toString()}${window.location.hash}`);
 }
 
-const EXPERIENCE_DEADLINE_MS = 1500;
-const EXPERIENCE_APPLY_MS = 2000;
-
 async function loadEager(doc) {
   redirectConstructionQToLlmAppCtx();
   document.documentElement.lang = 'en';
@@ -422,26 +419,9 @@ async function loadEager(doc) {
   //   }
   // }
 
-  window.hlx = window.hlx || {};
-  if (!window.hlx.pageExperienceApplied) {
-    window.hlx.pageExperienceApplied = true;
-    const {
-      collectRequest, buildContext, fetchExperience, applyPage,
-    } = await import('./experience.js');
-    const request = collectRequest(doc);
-    if (request.experimentIds.length || request.accessPointNames.length) {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), EXPERIENCE_DEADLINE_MS);
-      try {
-        const opts = { signal: controller.signal };
-        const response = await fetchExperience(request, buildContext(), opts);
-        window.hlx.experienceResponse = response;
-        if (response) await applyPage(doc, response, controller.signal);
-      } finally {
-        clearTimeout(timer);
-      }
-    }
-  }
+  // EAGER experience — the single consolidated call + any whole-page swap, BEFORE decorateMain.
+  const { applyPageExperience, applyEagerLayers } = await import('./experience.js');
+  const pageSwapped = await applyPageExperience(doc);
   const main = doc.querySelector('main');
   if (main) {
     buildBlogTemplate = await resolveBlogTemplate(main);
@@ -449,12 +429,9 @@ async function loadEager(doc) {
       ({ default: buildGuideHeroAutoBlock } = await import('../blocks/guide-hero/guide-hero-autoblock.js'));
     }
     decorateMain(main);
-    const firstSection = main.querySelector('.section');
-    if (firstSection && window.hlx.experienceResponse) {
-      const { applyLayer, withTimeout } = await import('./experience.js');
-      const apply = applyLayer(firstSection, window.hlx.experienceResponse);
-      await withTimeout(apply, EXPERIENCE_APPLY_MS);
-    }
+    // AFTER decorateMain: resolve a swapped page's own section/block slots (recursion-safe)
+    // and swap the first/LCP section — both before reveal. No-op without an experience response.
+    await applyEagerLayers(doc, pageSwapped);
     document.body.classList.add('appear');
     await Promise.all([
       // Uncomment with the AEP block above (applies eager martech decisions).
@@ -489,11 +466,8 @@ async function loadLazy(doc) {
 
   const main = doc.querySelector('main');
   // Below-the-fold personalization/experimentation
-  if (main && window.hlx.experienceResponse) {
-    const skip = { skip: main.querySelector('.section') };
-    import('./experience.js')
-      .then(({ applyLayer }) => applyLayer(main, window.hlx.experienceResponse, skip))
-      .catch(() => {});
+  if (window.hlx?.experienceResponse) {
+    import('./experience.js').then(({ applyLazyLayers }) => applyLazyLayers(doc)).catch(() => {});
   }
   await loadSections(main);
 

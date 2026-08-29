@@ -15,6 +15,8 @@ import {
   ensureAppVars, flushAppVars, recordPzn, recordPznPage, recordIxp, resetAnalytics,
   stampPzn, stampExperiment,
   fetchExperience, applyPage, applyLayer,
+  mergeExperience, collectSwapRequest, resolveSwappedSlots,
+  applyPageExperience, applyEagerLayers, applyLazyLayers,
   whenFullStoryReady, notifyFullStory,
 } from '../scripts/experience.js';
 // eslint-disable-next-line import/first
@@ -195,6 +197,18 @@ describe('collectRequest', () => {
     document.body.appendChild(main('<div class="hero"></div>'));
     expect(collectRequest(document)).toEqual({ experimentIds: [], accessPointNames: [] });
   });
+  it('includes a block-scoped slot whose block has only a class, not yet data-block-name (regression)', () => {
+    // Exactly the pipeline payload shape: the section carries data-pzn + data-pzn-block and
+    // the block is <div class="cards"> — data-block-name is not stamped until decorateMain,
+    // which runs AFTER collectRequest. The id/name must still reach the orchestrator.
+    document.body.appendChild(main(
+      '<div data-pzn="SBSEGQBMContentAemPznIxpTest" data-pzn-block="cards"><div class="cards"></div></div>'
+      + '<div data-exp="385944" data-exp-block="cards"><div class="cards"></div></div>',
+    ));
+    const req = collectRequest(document);
+    expect(req.accessPointNames).toContain('SBSEGQBMContentAemPznIxpTest');
+    expect(req.experimentIds).toContain('385944');
+  });
 });
 
 describe('collectExperiments', () => {
@@ -210,6 +224,14 @@ describe('collectExperiments', () => {
     const exps = collectExperiments(m);
     expect(exps[0].fidelity).toBe('block');
     expect(exps[0].el).toBe(m.querySelector('[data-block-name="cards"]'));
+  });
+  it('resolves a block-scoped target by CLASS when data-block-name is absent (pre-decorate timing)', () => {
+    // Pipeline HTML before decorateMain: the block is <div class="cards"> with no data-block-name.
+    const m = main('<div data-exp="385944" data-exp-block="cards"><div class="cards"></div></div>');
+    const exps = collectExperiments(m);
+    expect(exps).toHaveLength(1);
+    expect(exps[0]).toMatchObject({ id: '385944', fidelity: 'block' });
+    expect(exps[0].el).toBe(m.querySelector('.cards'));
   });
   it('drops non-numeric ids (labels no longer supported) and honors { skip }', () => {
     expect(collectExperiments(main('<div data-exp="Homepage_Hero"></div>'))).toEqual([]);
@@ -236,6 +258,13 @@ describe('collectSlots + sameTargetAsExp (IXP precedence)', () => {
   it('keeps pzn when exp targets a different block', () => {
     const m = main('<div data-pzn="p" data-pzn-block="cards" data-exp="1" data-exp-block="hero"><div class="cards" data-block-name="cards"></div><div class="hero" data-block-name="hero"></div></div>');
     expect(collectSlots(m)).toHaveLength(1);
+  });
+  it('resolves a block-scoped pzn target by CLASS when data-block-name is absent (pre-decorate timing)', () => {
+    const m = main('<div data-pzn="AemPznIxpTest" data-pzn-block="cards"><div class="cards"></div></div>');
+    const slots = collectSlots(m);
+    expect(slots).toHaveLength(1);
+    expect(slots[0].placement).toBe('AemPznIxpTest');
+    expect(slots[0].el).toBe(m.querySelector('.cards'));
   });
   it('carries append=true only when data-pzn-mode is "append"', () => {
     expect(collectSlots(main('<div data-pzn="a" data-pzn-mode="append"></div>'))[0].append).toBe(true);
@@ -484,6 +513,132 @@ describe('applyPage (whole-page swap, before decorate)', () => {
     expect(window.appVars.ixpDetailsArr).toHaveLength(1);
     expect(window.appVars.pznPageRecDetailsArr).toEqual([]);
   });
+
+  it('returns true when a whole-page swap actually lands', async () => {
+    setMeta('experiment-id', '376648');
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response('<div class="hero">V</div>', { status: 200, headers: { 'content-type': 'text/html' } }),
+    );
+    expect(await applyPage(document, expResp('376648', { replacementCasId: '/fragments/exp/page' }))).toBe(true);
+  });
+
+  it('returns false when nothing swaps (control arm, missing decision, no page tag)', async () => {
+    setMeta('experiment-id', '376648');
+    expect(await applyPage(document, expResp('376648', { originalCasId: '/same', replacementCasId: '/same' }))).toBe(false);
+    expect(await applyPage(document, {})).toBe(false); // id absent from response
+    document.head.innerHTML = '';
+    expect(await applyPage(document, expResp('376648'))).toBe(false); // no page-level tag
+  });
+});
+
+describe('mergeExperience', () => {
+  it('unions the experiments + pzn maps, follow-up winning on collisions', () => {
+    const base = { experiments: { 1: 'a', 2: 'a' }, personalisation: { X: 'x' }, other: 1 };
+    const extra = { experiments: { 2: 'b', 3: 'b' }, personalisation: { Y: 'y' } };
+    expect(mergeExperience(base, extra)).toEqual({
+      experiments: { 1: 'a', 2: 'b', 3: 'b' }, personalisation: { X: 'x', Y: 'y' }, other: 1,
+    });
+  });
+  it('tolerates the `personalization` spelling in the base', () => {
+    const merged = mergeExperience({ personalization: { X: 'x' } }, { personalisation: { Y: 'y' } });
+    expect(merged.personalisation).toEqual({ X: 'x', Y: 'y' });
+  });
+  it('returns the present side when the other is missing', () => {
+    const base = { experiments: {} };
+    expect(mergeExperience(base, null)).toBe(base);
+    expect(mergeExperience(null, { experiments: {} })).toEqual({ experiments: {} });
+  });
+});
+
+describe('collectSwapRequest', () => {
+  it('collects section + block slots but NEVER page-level metadata (recursion guard)', () => {
+    setMeta('experiment-id', '111'); // page-level — must be ignored
+    setMeta('personalization-id', 'PagePzn'); // page-level — must be ignored
+    const m = main(
+      '<div data-exp="222" class="section"></div>'
+      + '<div data-pzn="alpha" class="section"></div>'
+      + '<div data-pzn="beta" data-pzn-block="hero" class="section"><div data-block-name="hero" class="hero"></div></div>',
+    );
+    const req = collectSwapRequest(m);
+    expect(req.experimentIds.sort()).toEqual(['222']);
+    expect(req.accessPointNames.sort()).toEqual(['alpha', 'beta']);
+  });
+  it('returns empty lists for a null root or a slot-free root', () => {
+    expect(collectSwapRequest(null)).toEqual({ experimentIds: [], accessPointNames: [] });
+    expect(collectSwapRequest(main('<div class="section"></div>')))
+      .toEqual({ experimentIds: [], accessPointNames: [] });
+  });
+});
+
+describe('resolveSwappedSlots (post-swap second call)', () => {
+  beforeEach(() => { window.hlx = { experienceResponse: expResp('999') }; });
+  afterEach(() => { delete window.hlx; });
+
+  it('is a no-op with no fetch when the swapped content has no section/block slots', async () => {
+    document.body.innerHTML = '<main><div class="section"><div data-block-name="hero" class="hero"></div></div></main>';
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+    const { firstSectionAffected, done } = resolveSwappedSlots(document);
+    await done;
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(firstSectionAffected).toBe(false);
+    expect(window.hlx.experienceResponse).toEqual(expResp('999'));
+  });
+
+  it('makes ONE more call for the fresh slots and merges into experienceResponse', async () => {
+    document.body.innerHTML = '<main>'
+      + '<div data-exp="222" class="section"></div>' // first section ⇒ affected
+      + '<div data-pzn="alpha" class="section"></div>'
+      + '</main>';
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({ ...expResp('222'), ...pznResp('alpha') }), {
+        status: 200, headers: { 'content-type': 'application/json' },
+      }),
+    );
+    const { firstSectionAffected, done } = resolveSwappedSlots(document);
+    expect(firstSectionAffected).toBe(true);
+    await done;
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+    const body = JSON.parse(globalThis.fetch.mock.calls[0][1].body);
+    expect(body.experimentIds.sort()).toEqual(['222']);
+    expect(body.accessPointName.sort()).toEqual(['alpha']);
+    // base 999 kept, new 222 + alpha merged in
+    expect(window.hlx.experienceResponse.experiments['999']).toBeTruthy();
+    expect(window.hlx.experienceResponse.experiments['222']).toBeTruthy();
+    expect(window.hlx.experienceResponse.personalisation.alpha).toBeTruthy();
+  });
+
+  it('reports firstSectionAffected=false when only below-the-fold sections carry slots', async () => {
+    document.body.innerHTML = '<main>'
+      + '<div class="section"><div data-block-name="hero" class="hero"></div></div>' // first: no slots
+      + '<div data-pzn="beta" class="section"></div>' // below-fold slot
+      + '</main>';
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify(pznResp('beta')), { status: 200, headers: { 'content-type': 'application/json' } }),
+    );
+    const { firstSectionAffected, done } = resolveSwappedSlots(document);
+    await done;
+    expect(firstSectionAffected).toBe(false);
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+    expect(window.hlx.experienceResponse.personalisation.beta).toBeTruthy();
+  });
+
+  it('fails open (keeps baseline) when the second call errors', async () => {
+    document.body.innerHTML = '<main><div data-exp="222" class="section"></div></main>';
+    vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('network'));
+    const base = window.hlx.experienceResponse;
+    const { done } = resolveSwappedSlots(document);
+    await done;
+    expect(window.hlx.experienceResponse).toBe(base);
+  });
+
+  it('returns a no-op for a document with no main', async () => {
+    document.body.innerHTML = '';
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+    const { firstSectionAffected, done } = resolveSwappedSlots(document);
+    await done;
+    expect(firstSectionAffected).toBe(false);
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
 });
 
 describe('applyLayer (section/block swaps, from the cached response)', () => {
@@ -698,5 +853,87 @@ describe('FullStory swap notification', () => {
       await tick();
       expect(event).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe('phase entry points (applyPageExperience / applyEagerLayers / applyLazyLayers)', () => {
+  beforeEach(() => { delete window.hlx; document.body.innerHTML = '<main></main>'; });
+  afterEach(() => { delete window.hlx; });
+
+  it('applyPageExperience: no tags ⇒ false, no fetch, but still guards', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+    expect(await applyPageExperience(document)).toBe(false);
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(window.hlx.pageExperienceApplied).toBe(true);
+  });
+
+  it('applyPageExperience: runs once — a second call never fetches (guard)', async () => {
+    setMeta('personalization-id', 'HomeHero');
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify(pznResp('HomeHero', { contentId: null })), {
+        status: 200, headers: { 'content-type': 'application/json' },
+      }),
+    );
+    await applyPageExperience(document);
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+    await applyPageExperience(document);
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('applyPageExperience: page experiment ⇒ caches response, swaps <main>, returns true', async () => {
+    setMeta('experiment-id', '376648');
+    vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(new Response(
+        JSON.stringify(expResp('376648', { replacementCasId: '/fragments/exp/page' })),
+        { status: 200, headers: { 'content-type': 'application/json' } },
+      ))
+      .mockResolvedValueOnce(new Response(
+        '<div class="hero">V</div>',
+        { status: 200, headers: { 'content-type': 'text/html' } },
+      ));
+    expect(await applyPageExperience(document)).toBe(true);
+    expect(window.hlx.experienceResponse).toBeTruthy();
+    expect(document.querySelector('main').innerHTML).toContain('V');
+  });
+
+  it('applyEagerLayers: no-op without a cached response', async () => {
+    window.hlx = {};
+    await expect(applyEagerLayers(document, false)).resolves.toBeUndefined();
+  });
+
+  it('applyEagerLayers: swaps the first section from the cached response', async () => {
+    window.hlx = { experienceResponse: pznResp('alpha', { contentId: '/fragments/pzn/a' }) };
+    document.body.innerHTML = '<main><div class="section" data-pzn="alpha"></div></main>';
+    await applyEagerLayers(document, false);
+    expect(loadFragment).toHaveBeenCalledWith('/fragments/pzn/a');
+  });
+
+  it('applyEagerLayers: pageSwapped ⇒ 2nd call resolves swapped-in slots, merges, applies first section', async () => {
+    window.hlx = { experienceResponse: expResp('999') };
+    document.body.innerHTML = '<main><div class="section" data-pzn="beta"></div></main>';
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify(pznResp('beta', { contentId: '/fragments/pzn/b' })), {
+        status: 200, headers: { 'content-type': 'application/json' },
+      }),
+    );
+    await applyEagerLayers(document, true);
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+    expect(window.hlx.experienceResponse.personalisation.beta).toBeTruthy();
+    expect(loadFragment).toHaveBeenCalledWith('/fragments/pzn/b');
+  });
+
+  it('applyLazyLayers: swaps below-the-fold sections, skipping the first', async () => {
+    window.hlx = { experienceResponse: pznResp('gamma', { contentId: '/fragments/pzn/g' }) };
+    document.body.innerHTML = '<main>'
+      + '<div class="section"></div>'
+      + '<div class="section" data-pzn="gamma"></div>'
+      + '</main>';
+    await applyLazyLayers(document);
+    expect(loadFragment).toHaveBeenCalledWith('/fragments/pzn/g');
+  });
+
+  it('applyLazyLayers: no-op without a cached response', async () => {
+    window.hlx = {};
+    await expect(applyLazyLayers(document)).resolves.toBeUndefined();
   });
 });

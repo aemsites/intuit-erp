@@ -1,37 +1,21 @@
-// The experience layer: ONE consolidated call per page to /api/intuit-orchestrator
-// for both experimentation (IXP) and personalization (PZN). It collects every
-// experiment id + access-point name on the page, sends one request (with a sibling
-// `context` carrying the front-end signals incl. AOF1/of1Intent), caches the response,
-// and swaps content from it — whole-page + first section before reveal (pre-LCP),
-// the rest after LCP. ZoomInfo enrichment is done server-side by the orchestrator.
-//
-// Fidelity is DOM-driven: page-level (experiment-id / personalization-id metadata) ⇒
-// whole-page swap; section (data-exp / data-pzn) ⇒ section swap; a -block scope ⇒
-// block swap. The response only supplies the replacement content ref per id/name
-// (experiments: payload.replacementCasId; pzn: payload.contentId).
-//
-// A slot flagged data-exp-mode / data-pzn-mode="append" is APPENDED to its target rather
-// than swapped in — the vehicle for additive behavior widgets that attach code without
-// replacing content.
+// The experience layer: ONE consolidated /api/intuit-orchestrator call per page for both
+// experimentation (IXP) and personalization (PZN) — collect ids/names, fetch, cache, swap
+// (whole-page + first section pre-LCP, rest after). A whole-page swap may trigger one more
+// call for the swapped-in content's own section/block slots (recursion-safe).
 
 import { getMetadata } from './aem.js';
 import { buildIntentContext, getIntentProfile } from './of1-intent.js';
 
 // --- Endpoint + fetch primitives -------------------------------------------
 
-// Base for the API: `experience-api-base` metadata (local/QA override) or same-origin
-// `/api`. Akamai fronts /api in prod/stage, injecting the API key + IP-derived geo.
+// API base: `experience-api-base` metadata override, else same-origin /api (Akamai-fronted).
 export function apiBase() {
   return (getMetadata('experience-api-base') || '/api').replace(/\/+$/, '');
 }
 
-// Normalizes an UNTRUSTED content ref (it comes from the decision response) to a SAFE,
-// same-origin, root-absolute path — or null when it isn't usable. Security: resolve the
-// ref with the URL parser against our own origin and keep ONLY the pathname. This
-// discards the ref's host/scheme (we always fetch same-origin, so a protocol-relative
-// `//evil.com/x` or absolute `https://evil.com/x` can't redirect the fetch off-origin)
-// and its query/hash, and returns the parser's percent-encoded/normalized path. Non-http(s)
-// schemes (javascript:, data:, …) and a bare-root `/` are rejected.
+// Normalizes an UNTRUSTED response ref to a SAFE same-origin root-absolute path (or null).
+// Keeps ONLY the URL pathname so a cross-origin/protocol-relative ref can't redirect the
+// fetch off-origin; rejects non-http(s) schemes and bare `/`.
 export function fragmentPath(ref) {
   if (!ref || typeof ref !== 'string') return null;
   let url;
@@ -45,9 +29,7 @@ export function fragmentPath(ref) {
   return pathname && pathname !== '/' ? pathname : null;
 }
 
-// A returned casId points to a content path today, so it resolves through the same safe
-// normalization. Single seam: swap this for an index/service lookup if raw casIds ever
-// stop being paths.
+// A casId is a content path today, so reuse the same safe normalization (single seam).
 export function casToPath(cas) {
   return fragmentPath(cas);
 }
@@ -60,8 +42,7 @@ function intuitTid() {
   return `rp-${rand}`;
 }
 
-// Resolves to the promise's value, or undefined if it doesn't settle within ms
-// (fail-open) — bounds a whole phase even when something inside can't be aborted.
+// Resolves to the promise's value, or undefined after ms (fail-open phase bound).
 export function withTimeout(promise, ms) {
   return new Promise((resolve) => {
     const timer = setTimeout(() => resolve(undefined), ms);
@@ -69,9 +50,8 @@ export function withTimeout(promise, ms) {
   });
 }
 
-// Replaces <main>'s raw content with a variation page's plain.html so the caller's
-// decorateMain decorates it. Bound by the caller's signal (fail-open) so a late/aborted
-// swap can't clobber already-decorated content. Returns true when the swap lands.
+// Replaces <main>'s content with a variation's plain.html for the caller to decorate.
+// Signal-bound + fail-open; returns true when the swap lands.
 export async function swapMain(doc, path, signal) {
   const main = doc.querySelector('main');
   const p = fragmentPath(path);
@@ -86,9 +66,8 @@ export async function swapMain(doc, path, signal) {
   }
 }
 
-// Loads a fragment and puts it into `targetEl` — replacing its children (default) or, with
-// `opts.append`, appending after existing content (additive behavior widgets). Returns true
-// when applied.
+// Loads a fragment into `targetEl` — replacing children, or appending with opts.append.
+// Returns true when applied.
 export async function applyFragment(targetEl, path, opts = {}) {
   const p = fragmentPath(path);
   if (!targetEl || !p) return false;
@@ -108,8 +87,7 @@ export async function applyFragment(targetEl, path, opts = {}) {
 
 // --- Request context (front-end signals) -----------------------------------
 
-// The visitor id: read from the first-party `ivid` cookie. undefined when absent —
-// Akamai injects it server-side when it's HttpOnly.
+// Visitor id from the first-party `ivid` cookie (Akamai injects it server-side if HttpOnly).
 export function resolveIvid() {
   try {
     const m = document.cookie.match(/(?:^|;\s*)ivid=([^;]+)/);
@@ -124,15 +102,13 @@ function deviceType() {
   return /Mobi|Android|iPhone|iPad/i.test(ua) ? 'Mobile' : 'Desktop';
 }
 
-// Orchestrator context expects locale with underscore (en_US). Browsers and
-// `?locale=` often use BCP 47 with a hyphen (en-US).
+// Orchestrator wants underscore locale (en_US), not BCP 47 hyphen (en-US).
 function underscoreLocale(value) {
   return String(value || '').replace(/-/g, '_') || 'en_US';
 }
 
-// The sibling `context` object: every front-end-derived signal plus the AOF1 intent
-// profile (of1Intent). NOT ZoomInfo firmographics — the orchestrator enriches those
-// server-side. IP-derived geo is left for Akamai to inject.
+// The sibling `context`: front-end signals + AOF1 intent. NOT ZoomInfo (orchestrator
+// enriches server-side) and NOT geo (Akamai injects it).
 export function buildContext(permalink = window.location.href) {
   const context = {
     permalink,
@@ -154,19 +130,22 @@ export function buildContext(permalink = window.location.href) {
 
 // --- Target collection ------------------------------------------------------
 
-// True when a section's data-pzn and data-exp aim at the SAME target (both whole-
-// section, or both the same named block). That's the case where IXP takes precedence;
-// pzn and exp scoped to different blocks are independent and both run.
+// True when data-pzn and data-exp aim at the SAME target (whole-section or same block) —
+// the case where IXP wins; different blocks run independently.
 export function sameTargetAsExp(section) {
   const { pznBlock, expBlock } = section.dataset;
   if (!pznBlock && !expBlock) return true;
   return !!pznBlock && pznBlock === expBlock;
 }
 
-// Sections tagged `data-exp` within `root` (root itself may match), minus `skip`.
-// The experiment id is the verbatim numeric `data-exp` value; a `data-exp-block`
-// scopes to the block whose data-block-name matches (block fidelity), else the whole
-// section. Non-numeric ids are dropped (labels are no longer supported).
+// Finds a named block by data-block-name (post-decorate) OR class (pipeline-emitted), so
+// block scope resolves in any decoration phase.
+export function resolveBlock(section, block) {
+  return section.querySelector(`[data-block-name="${block}"], [class~="${block}"]`);
+}
+
+// Numeric data-exp sections under `root` (minus `skip`); a data-exp-block scopes to that
+// block, else the whole section. Non-numeric ids dropped.
 export function collectExperiments(root, skip) {
   const sections = [];
   if (root.matches?.('[data-exp]') && root !== skip) sections.push(root);
@@ -177,7 +156,7 @@ export function collectExperiments(root, skip) {
     const id = section.dataset.exp;
     if (!id || !/^\d+$/.test(id)) return;
     const block = section.dataset.expBlock;
-    const el = block ? section.querySelector(`[data-block-name="${block}"]`) : section;
+    const el = block ? resolveBlock(section, block) : section;
     const append = section.dataset.expMode === 'append';
     if (el) {
       experiments.push({
@@ -188,10 +167,8 @@ export function collectExperiments(root, skip) {
   return experiments;
 }
 
-// Sections tagged `data-pzn` within `root` (root itself may match), minus `skip`. The
-// access-point name is the verbatim `data-pzn` value; a `data-pzn-block` scopes to the
-// named block, else the whole section. When the same target also carries an experiment,
-// IXP wins and the pzn slot is dropped.
+// data-pzn sections under `root` (minus `skip`); data-pzn-block scopes to that block.
+// Dropped when the same target also carries an experiment (IXP wins).
 export function collectSlots(root, skip) {
   const sections = [];
   if (root.matches?.('[data-pzn]') && root !== skip) sections.push(root);
@@ -203,15 +180,14 @@ export function collectSlots(root, skip) {
     if (!placement) return;
     if (section.dataset.exp && sameTargetAsExp(section)) return;
     const block = section.dataset.pznBlock;
-    const el = block ? section.querySelector(`[data-block-name="${block}"]`) : section;
+    const el = block ? resolveBlock(section, block) : section;
     const append = section.dataset.pznMode === 'append';
     if (el) slots.push({ el, placement, append });
   });
   return slots;
 }
 
-// The full request lists for the single call: every numeric experiment id and every
-// access-point name on the page (page-level metadata + all sections), de-duped, with
+// The single call's lists: page metadata + all section/block ids/names, de-duped,
 // IXP-over-PZN precedence applied.
 export function collectRequest(doc = document) {
   const experimentIds = new Set();
@@ -232,9 +208,8 @@ export function collectRequest(doc = document) {
 
 // --- The single call --------------------------------------------------------
 
-// POSTs the consolidated request and returns the parsed response, or null on any
-// non-ok/timeout/parse failure (fail-open — the caller shows the baseline). When
-// `signal` is given the caller owns the deadline; else a `timeoutMs` controller is used.
+// POSTs the request; returns the parsed response or null (fail-open) on any failure.
+// With `signal` the caller owns the deadline, else `timeoutMs` applies.
 export async function fetchExperience({ experimentIds, accessPointNames }, context, opts = {}) {
   const { signal: externalSignal, timeoutMs = 1500 } = opts;
   let signal = externalSignal;
@@ -250,10 +225,8 @@ export async function fetchExperience({ experimentIds, accessPointNames }, conte
       accessPointName: accessPointNames,
       context,
     };
-    // Preview seam (Experience Preview sidekick tool): keep the same endpoint but add
-    // ?preview=true so Akamai routes to its preview backend, plus modified context attrs
-    // as query params. `baseUrl` overrides the host. No preview opts => identical URL,
-    // so production is untouched.
+    // Preview seam: opts.preview adds ?preview=true (+ edited attrs) so Akamai routes to the
+    // preview backend; baseUrl overrides the host. No preview opts ⇒ identical prod URL.
     let target = `${(opts.baseUrl || apiBase()).replace(/\/+$/, '')}/intuit-orchestrator`;
     if (opts.preview) {
       const params = new URLSearchParams({ preview: 'true' });
@@ -291,9 +264,8 @@ function parseJson(value) {
   }
 }
 
-// The experiment decision for an id: the parsed payload (originalCasId/replacementCasId)
-// plus the tracking attributes, or null when the id isn't in the response. A missing or
-// unchanged replacementCasId is a control arm (no swap) — the caller still records it.
+// The experiment decision for an id (or null if absent). A missing/unchanged
+// replacementCasId is a control arm — recorded but not swapped.
 export function experimentDecision(response, id) {
   const entry = response?.experiments?.[id];
   if (!entry) return null;
@@ -308,11 +280,9 @@ export function experimentDecision(response, id) {
   };
 }
 
-// The personalization decision for an access-point name (case-insensitive match; the
-// contract spells the map `personalisation`, tolerate `personalization` too): the
-// replacement contentId + offerId, or null when the name isn't in the response. The
-// payload is an object carrying the fragment path in `contentId` (a legacy raw-string
-// payload is still accepted as the path directly).
+// The pzn decision for an access-point name (case-insensitive; map spelled `personalisation`
+// or `personalization`), or null if absent. contentId holds the fragment path (a legacy
+// raw-string payload is accepted as the path too).
 export function pznDecision(response, name) {
   const map = response?.personalisation || response?.personalization;
   if (!map || typeof map !== 'object') return null;
@@ -332,8 +302,7 @@ export function pznDecision(response, name) {
 
 // --- Analytics records (ECS snake_case, published on window.appVars) ---------
 
-// Normalized pzn record, or null when there's no offer. `content_id` /
-// externalContentIdentifier carry the replacement contentId.
+// Normalized pzn record, or null when there's no offer/content.
 export function pznRecord(placement, decision) {
   if (!decision || (!decision.offerId && !decision.contentId)) return null;
   return {
@@ -346,8 +315,8 @@ export function pznRecord(placement, decision) {
   };
 }
 
-// Normalized ixp record, or null when the decision lacks experiment identity. Control
-// arms still emit a record (exposure) — they just have no replacement_content_id.
+// Normalized ixp record, or null without experiment identity. Control arms still emit a
+// record (exposure) — just without replacement_content_id.
 export function ixpRecord(decision, path) {
   if (!decision || !decision.experimentId || !decision.treatmentId) return null;
   const record = {
@@ -356,16 +325,15 @@ export function ixpRecord(decision, path) {
     experiment_treatment: decision.treatmentId,
     original_content_id: decision.originalCasId || path,
   };
-  // A replacement that differs from the original is a treatment (a real swap); an
-  // absent/identical one is a control arm — recorded for exposure, no replacement.
+  // Treatment (real swap) carries a replacement; control/identical does not.
   if (decision.replacementCasId && decision.replacementCasId !== decision.originalCasId) {
     record.replacement_content_id = decision.replacementCasId;
   }
   return record;
 }
 
-// Deduped buffers (survive across the eager + lazy phases), flushed to window.appVars
-// on idle so recording never delays the DOM swap or LCP.
+// Deduped buffers (survive eager + lazy), flushed to window.appVars on idle so recording
+// never delays the DOM swap or LCP.
 const pznById = new Map(); // key: personalization_id (block/section pzn)
 const pznPageById = new Map(); // key: personalization_id (whole-page pzn)
 const ixpById = new Map(); // key: experiment_id
@@ -479,8 +447,8 @@ export function stampExperiment(el, rec) {
   setAttr(el, 'data-treatment-id', rec.experiment_treatment);
 }
 
-// Full data-pzn-* set the click tracker walks (Intuit's helix-common/pzn-container-block).
-// setAttr skips blanks, so records without model/action fields stamp only what they carry.
+// The full data-pzn-* set the click tracker walks; setAttr skips blanks, so a record stamps
+// only what it carries.
 export function stampPzn(el, rec) {
   if (!el || !rec) return;
   setAttr(el, 'data-pzn-placement', rec.personalization_placement);
@@ -493,91 +461,165 @@ export function stampPzn(el, rec) {
 
 // --- Applying the response --------------------------------------------------
 
-// Whole-page swap from the cached response, run BEFORE decorateMain. IXP wins when a
-// page carries both experiment-id and personalization-id. Caller owns the one-shot
-// guard (window.hlx.pageExperienceApplied) and the shared deadline (signal).
-export async function applyPage(doc, response, signal) {
-  if (!doc || !response) return;
-  const pageExp = getMetadata('experiment-id');
-  if (pageExp && /^\d+$/.test(pageExp)) {
-    const d = experimentDecision(response, pageExp);
-    if (!d) return;
-    const rec = ixpRecord(d, window.location.pathname);
-    if (d.replacementCasId && d.replacementCasId !== d.originalCasId) {
-      const path = casToPath(d.replacementCasId);
-      if (path && await swapMain(doc, path, signal)) {
-        stampExperiment(doc.querySelector('main'), rec);
-        notifyFullStory('Experiment Viewed', rec?.experiment_treatment, rec?.experiment_id);
-      }
-    }
-    if (rec) recordIxp([rec]);
-    return;
-  }
-  const pagePzn = getMetadata('personalization-id');
-  if (pagePzn) {
-    const d = pznDecision(response, pagePzn);
-    if (!d) return;
-    const rec = pznRecord(pagePzn, d);
-    if (d.contentId) {
-      const path = casToPath(d.contentId);
-      if (path && await swapMain(doc, path, signal)) {
-        stampPzn(doc.querySelector('main'), rec);
-        notifyFullStory(
-          'Personalization Viewed',
-          rec?.personalization_id,
-          rec?.personalization_placement,
-        );
-      }
-    }
-    if (rec) recordPznPage([rec]);
-  }
+// Two helpers = the ONE place each apply-shape lives: decision → record exposure → (if
+// there's content) resolve path, apply via applyContent(path), stamp + notify. applyPage
+// feeds them swapMain (whole page); applyLayer feeds applyFragment (an element).
+
+async function applyExperiment(response, id, stampTarget, applyContent, record) {
+  const d = experimentDecision(response, id);
+  if (!d) return false;
+  const rec = ixpRecord(d, window.location.pathname);
+  if (rec) record([rec]);
+  if (!d.replacementCasId || d.replacementCasId === d.originalCasId) return false;
+  const path = casToPath(d.replacementCasId);
+  if (!path || !(await applyContent(path))) return false;
+  stampExperiment(stampTarget, rec);
+  notifyFullStory('Experiment Viewed', rec?.experiment_treatment, rec?.experiment_id);
+  return true;
 }
 
-// Section/block swaps for `root` from the cached response (no network call). Used
-// eagerly for the first/LCP section (awaited) and lazily for the rest (skip = first).
+async function applyPznSlot(response, placement, stampTarget, applyContent, record) {
+  const d = pznDecision(response, placement);
+  if (!d) return false;
+  const rec = pznRecord(placement, d);
+  if (rec) record([rec]);
+  if (!d.contentId) return false;
+  const path = casToPath(d.contentId);
+  if (!path || !(await applyContent(path))) return false;
+  stampPzn(stampTarget, rec);
+  notifyFullStory('Personalization Viewed', rec?.personalization_id, rec?.personalization_placement);
+  return true;
+}
+
+// Whole-page swap from the cached response, BEFORE decorateMain. IXP wins over PZN.
+// Returns whether a swap landed.
+export async function applyPage(doc, response, signal) {
+  if (!doc || !response) return false;
+  const target = doc.querySelector('main');
+  const swap = (p) => swapMain(doc, p, signal);
+  const pageExp = getMetadata('experiment-id');
+  if (pageExp && /^\d+$/.test(pageExp)) {
+    return applyExperiment(response, pageExp, target, swap, recordIxp);
+  }
+  const pagePzn = getMetadata('personalization-id');
+  if (pagePzn) return applyPznSlot(response, pagePzn, target, swap, recordPznPage);
+  return false;
+}
+
+// Section/block swaps for `root` from the cached response (no network call). Eager for the
+// first/LCP section (awaited), lazy for the rest (skip = first).
 export async function applyLayer(root, response, { skip } = {}) {
   if (!root || !response) return;
   const tasks = [];
-
   collectExperiments(root, skip).forEach(({ el, id, append }) => {
-    const d = experimentDecision(response, id);
-    if (!d) return;
-    const rec = ixpRecord(d, window.location.pathname);
-    if (d.replacementCasId && d.replacementCasId !== d.originalCasId) {
-      const path = casToPath(d.replacementCasId);
-      if (path) {
-        tasks.push(applyFragment(el, path, { append }).then((ok) => {
-          if (ok) {
-            stampExperiment(el, rec);
-            notifyFullStory('Experiment Viewed', rec?.experiment_treatment, rec?.experiment_id);
-          }
-        }));
-      }
-    }
-    if (rec) recordIxp([rec]);
+    const apply = (p) => applyFragment(el, p, { append });
+    tasks.push(applyExperiment(response, id, el, apply, recordIxp));
   });
-
   collectSlots(root, skip).forEach(({ el, placement, append }) => {
-    const d = pznDecision(response, placement);
-    if (!d) return;
-    const rec = pznRecord(placement, d);
-    if (d.contentId) {
-      const path = casToPath(d.contentId);
-      if (path) {
-        tasks.push(applyFragment(el, path, { append }).then((ok) => {
-          if (ok) {
-            stampPzn(el, rec);
-            notifyFullStory(
-              'Personalization Viewed',
-              rec?.personalization_id,
-              rec?.personalization_placement,
-            );
-          }
-        }));
-      }
-    }
-    if (rec) recordPzn([rec]);
+    const apply = (p) => applyFragment(el, p, { append });
+    tasks.push(applyPznSlot(response, placement, el, apply, recordPzn));
   });
-
   await Promise.all(tasks);
+}
+
+// --- Post-swap resolution (the at-most-one SECOND call) ---------------------
+
+// Unions a follow-up response into the base (follow-up wins). Tolerates both
+// `personalisation` / `personalization` spellings.
+export function mergeExperience(base, extra) {
+  if (!extra) return base || null;
+  if (!base) return extra;
+  return {
+    ...base,
+    experiments: { ...(base.experiments || {}), ...(extra.experiments || {}) },
+    personalisation: {
+      ...(base.personalisation || base.personalization || {}),
+      ...(extra.personalisation || extra.personalization || {}),
+    },
+  };
+}
+
+// Section/block-ONLY request for `root` (no page-level metadata) — the omission keeps the
+// post-swap call recursion-safe: a variation's page-level tags are never re-collected.
+export function collectSwapRequest(root) {
+  const experimentIds = new Set();
+  const accessPointNames = new Set();
+  if (root) {
+    collectExperiments(root).forEach(({ id }) => experimentIds.add(id));
+    collectSlots(root).forEach(({ placement }) => accessPointNames.add(placement));
+  }
+  return { experimentIds: [...experimentIds], accessPointNames: [...accessPointNames] };
+}
+
+// After a whole-page swap (post-decorateMain): collect the swapped-in content's OWN
+// section/block slots and, if any, make ONE more call merged into experienceResponse.
+// Returns { firstSectionAffected, done }; caller blocks paint only if the first is affected.
+export function resolveSwappedSlots(doc, { timeoutMs = 1500 } = {}) {
+  const main = doc?.querySelector('main');
+  const noop = { firstSectionAffected: false, done: Promise.resolve() };
+  if (!main) return noop;
+  const req = collectSwapRequest(main);
+  if (!req.experimentIds.length && !req.accessPointNames.length) return noop;
+  const firstReq = collectSwapRequest(main.querySelector('.section'));
+  const firstSectionAffected = !!(
+    firstReq.experimentIds.length || firstReq.accessPointNames.length
+  );
+  const done = (async () => {
+    try {
+      const extra = await fetchExperience(req, buildContext(), { timeoutMs });
+      if (extra && typeof window !== 'undefined') {
+        window.hlx = window.hlx || {};
+        window.hlx.experienceResponse = mergeExperience(window.hlx.experienceResponse, extra);
+      }
+    } catch { /* fail-open — baseline stays */ }
+  })();
+  return { firstSectionAffected, done };
+}
+
+// --- Phase entry points (the experience surface scripts.js drives) ----------
+
+const EAGER_DEADLINE_MS = 1500; // network budget: the consolidated call + optional 2nd call
+const EAGER_APPLY_MS = 2000; // budget for swapping the first/LCP section before reveal
+
+// EAGER, before decorateMain: the one consolidated call + whole-page swap (runs once).
+// Caches the decision; returns whether a page swap landed.
+export async function applyPageExperience(doc) {
+  window.hlx = window.hlx || {};
+  if (window.hlx.pageExperienceApplied) return false;
+  window.hlx.pageExperienceApplied = true;
+  const request = collectRequest(doc);
+  if (!request.experimentIds.length && !request.accessPointNames.length) return false;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), EAGER_DEADLINE_MS);
+  try {
+    const response = await fetchExperience(request, buildContext(), { signal: controller.signal });
+    window.hlx.experienceResponse = response;
+    return response ? applyPage(doc, response, controller.signal) : false;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// EAGER, after decorateMain: on a page swap, resolve the swapped-in content's own slots
+// (blocking paint only if the first section is affected), then swap the first/LCP section.
+export async function applyEagerLayers(doc, pageSwapped) {
+  const main = doc.querySelector('main');
+  if (!main || !window.hlx?.experienceResponse) return;
+  if (pageSwapped) {
+    const swap = resolveSwappedSlots(doc, { timeoutMs: EAGER_DEADLINE_MS });
+    window.hlx.experienceSwapResolved = swap.done;
+    if (swap.firstSectionAffected) await swap.done;
+  }
+  const firstSection = main.querySelector('.section');
+  if (firstSection) {
+    await withTimeout(applyLayer(firstSection, window.hlx.experienceResponse), EAGER_APPLY_MS);
+  }
+}
+
+// LAZY: swap every remaining (below-the-fold) section, after any 2nd-call merge has landed.
+export async function applyLazyLayers(doc) {
+  const main = doc.querySelector('main');
+  if (!main || !window.hlx?.experienceResponse) return;
+  if (window.hlx.experienceSwapResolved) await window.hlx.experienceSwapResolved;
+  await applyLayer(main, window.hlx.experienceResponse, { skip: main.querySelector('.section') });
 }
