@@ -416,13 +416,15 @@ export default function decorate(block) {
 
   // Click tracking. A .testimonial carousel IS prod's rw_testimonial component: slide CTAs report
   // rw_testimonial|rw_testimonial_item and key off `testimonial:<id>` (the sheet fills link_name),
-  // matching blocks/testimonial. Every other variant stays a generic loose derive with NO trail
-  // (prod emits ui_access_point=page there). Spotlight thumbnail chevrons keep chevronPayload.
+  // matching blocks/testimonial. The trail rides the SLIDE TRACK, not the block, so the controls
+  // (chevrons/dots, siblings of the viewport) fall back to `page` as prod does — only the slides
+  // carry rw_testimonial. Spotlight thumbnail chevrons still report chevronPayload. Every other
+  // variant stays a generic loose derive with NO trail.
   if (isTestimonial) {
-    trackAs('rw_testimonial', block, {
+    trackAs(null, block, {
       key: 'testimonial',
       linkName: false,
-      items: { '.carousel-slide': 'rw_testimonial_item' },
+      items: { '.carousel-track': 'rw_testimonial', '.carousel-slide': 'rw_testimonial_item' },
       payload: (el) => chevronPayload(el, isSpotlight),
     });
   } else {
