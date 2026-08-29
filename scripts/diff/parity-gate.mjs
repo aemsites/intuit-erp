@@ -23,15 +23,23 @@
  * loop edits blocks/runtime/sheet, updates BLOCK to match, and re-runs; un-mapped
  * closeable keys are treated as UNTRACKED (0 fidelity), which drives the loop.
  */
-/* eslint-disable import/no-extraneous-dependencies, import/extensions, no-restricted-syntax, no-continue, no-console, no-plusplus, max-len, object-curly-newline, no-nested-ternary, no-mixed-operators, no-undef */
+/* eslint-disable import/no-extraneous-dependencies, import/extensions, import/order, no-restricted-syntax, no-continue, no-console, no-plusplus, max-len, object-curly-newline, no-nested-ternary, no-mixed-operators, no-undef */
 import { readFileSync, existsSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
-import { JSDOM } from 'jsdom';
+// dom-globals installs a global window/document as a SIDE EFFECT — must evaluate before the block
+// imports below (which pull scripts/aem.js, referencing window at module-eval). Order is load-bearing.
+import document from './dom-globals.mjs';
 import {
   deriveForCta, applyBlockDefaults, resolveCta, stampCta, indexRows, sheetRowById,
   hostLabel, hrefSlug, slug,
 } from '../tracking.js';
 import { computeTrackingPayload } from './tracker-replica.mjs';
+// The blocks' JIT payload derivers, run so oursPayload models what the runtime emits per element
+// (else these structural fields are miscounted as sheet residue). Import after dom-globals.
+import { faqTogglePayload } from '../../blocks/faq/faq.js';
+import { navArrowPayload } from '../../blocks/cards/cards.js';
+import { chevronPayload } from '../../blocks/carousel/carousel.js';
+import { scrollArrowPayload } from '../../blocks/stat-band/stat-band.js';
 
 const DIR = 'scripts/diff/fixtures/local';
 // --golden <path> selects which golden to diff (default: our reverse-engineered one;
@@ -103,7 +111,6 @@ const BLOCK = {
   product_banner: { trail: (i, e) => (e.exp.ui_access_point === 'product_banner' ? 'product_banner' : 'rw_banner'), scope: 'main' },
 };
 
-const { document } = new JSDOM('<!doctype html><html><head></head><body></body></html>').window;
 // host is what hrefSlug reads to treat erp.intuit.com links as "own" (path-only
 // ids), matching the runtime on the deployed site.
 globalThis.window = { location: { hostname: 'erp.intuit.com', host: 'erp.intuit.com', href: 'https://erp.intuit.com/', pathname: '/' } };
@@ -161,6 +168,29 @@ export function assignIds(entries) {
   return entries;
 }
 assignIds(golden.entries);
+
+// Run the block's real JIT payload deriver on the reconstructed element, so oursPayload models
+// what the runtime emits per item (the derivers are imported straight from the blocks — one source
+// of truth). Detected by ui_object_detail so it also covers loose (page-key) carousel/stat-band
+// arrows; the arrow classes are added here to match each block's control markup. Returns the
+// deriver's sheet-shaped cfg (kebab keys) or null. faq needs the block for its DOM-order index.
+function jitDeriver(entry, cta, block) {
+  if (entry.key === 'faq') return faqTogglePayload(cta, block);
+  const uiod = (entry.exp.ui_object_detail || '').trim();
+  if (/^arrow_(left|right)$/.test(uiod)) {
+    cta.classList.add(uiod.endsWith('left') ? 'cards-nav-prev' : 'cards-nav-next');
+    return navArrowPayload(cta);
+  }
+  if (/^scroll (left|right)$/.test(uiod)) {
+    cta.classList.add('stats-arrow', uiod.endsWith('left') ? 'prev' : 'next');
+    return scrollArrowPayload(cta);
+  }
+  if (/thumbnail_(left|right)_chevron/.test(uiod)) {
+    cta.classList.add(/left/.test(uiod) ? 'carousel-prev' : 'carousel-next');
+    return chevronPayload(cta, true);
+  }
+  return null;
+}
 
 // Model track-by-default: a declared block (in BLOCK) supplies trail + payload
 // defaults; an undeclared key is a loose content CTA (pure derive, region=main,
@@ -259,21 +289,47 @@ export function oursPayload(entry, idx, sheet) {
   // modal/disclaimer/accordion_item_N) are left plain so they still surface as
   // real residue gaps. ui_object's derive matrix is unit-tested separately.
   const uio = entry.exp.ui_object;
-  const href = uio === 'video_link' ? 'https://www.youtube.com/watch?v=x' : entry.href;
-  const cta = document.createElement(href ? 'a' : 'button');
-  if (href) cta.setAttribute('href', href);
-  if (uio === 'button') cta.classList.add('button');
-  if (uio === 'link_icon') cta.append(document.createElement('img')); // icon-only (no text)
-  else if (entry.text) cta.textContent = entry.text;
-  else cta.append(document.createElement('img'));
-  host.append(cta);
+  let cta;
+  if (entry.key === 'faq') {
+    // faq toggle: reconstruct the accordion structure so faqTogglePayload derives
+    // accordion_item_N / faq|question_N / ui_action / link_name from it (N=1, index-tolerant).
+    const item = document.createElement('div'); item.className = 'faq-item';
+    cta = document.createElement('button'); cta.type = 'button'; cta.className = 'faq-toggle';
+    // marketing pages open the accordion (click -> dismissed); blog/compare start collapsed
+    // (click -> displayed) — mirror blocks/faq/faq.js so ui_action matches prod's captured state.
+    const collapsed = /^\/blog\//.test(entry.page) || entry.page === '/compare';
+    cta.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+    const q = document.createElement('span'); q.className = 'faq-question'; q.textContent = entry.text || '';
+    cta.append(q);
+    item.append(cta);
+    host.append(item);
+  } else {
+    const href = uio === 'video_link' ? 'https://www.youtube.com/watch?v=x' : entry.href;
+    cta = document.createElement(href ? 'a' : 'button');
+    if (href) cta.setAttribute('href', href);
+    if (uio === 'button') cta.classList.add('button');
+    if (uio === 'link_icon' || !entry.text) {
+      // icon-only: prod derives the label from the inner img alt / aria-label (labelFor), so
+      // reconstruct it from entry.text (the captured accessible name) — else link_name/detail under-derive.
+      const im = document.createElement('img');
+      if (entry.text) im.setAttribute('alt', entry.text);
+      cta.append(im);
+    } else {
+      cta.textContent = entry.text;
+    }
+    host.append(cta);
+  }
   document.body.append(scope);
   try {
     const derived = applyBlockDefaults(deriveForCta(cta, cfg ? entry.key : '', 'erp.intuit.com'), cta);
     const page = entry.page === '*' ? '/' : entry.page;
     // Resolve residue by the entry's assigned id (identity, not DOM position) — the
     // same lookup the runtime does, so the gate reflects the real render.
-    const row = sheetRowById(sheet, entry.trackId, page);
+    let row = sheetRowById(sheet, entry.trackId, page);
+    // Apply the block's JIT payload deriver exactly as stampInteraction does (sheet wins), so the
+    // structural fields it produces (faq accordion_item_N, arrow ids) aren't miscounted as residue.
+    const ov = jitDeriver(entry, cta, block);
+    if (ov) row = { ...ov, ...(row || {}) };
     stampCta(cta, resolveCta(derived, row, {}));
     return computeTrackingPayload(cta);
   } finally { scope.remove(); }

@@ -5,7 +5,9 @@ import {
 // tags the ‹/› controls with the authored id testimonial|thumbnail_{left,right}_chevron (+ a
 // matching WA link), not the derived button/glyph. JIT-derived at pointerdown via
 // trackAs({ payload }); only the .spotlight testimonial variant's chevrons are tagged.
-import { initTracking, resetTrackingState, stampInteraction } from '../scripts/tracking.js';
+import {
+  initTracking, resetTrackingState, stampInteraction, trackIdOf,
+} from '../scripts/tracking.js';
 import { computeTrackingPayload } from '../scripts/diff/tracker-replica.mjs';
 
 const { default: decorate } = await import('../blocks/carousel/carousel.js');
@@ -64,5 +66,51 @@ describe('carousel — spotlight testimonial chevron tracking (JIT-derived)', ()
     stampInteraction({ target: prev });
     expect(prev.getAttribute('data-object-detail')).toBeNull();
     expect(prev.getAttribute('data-wa-link')).toBeNull();
+  });
+});
+
+// A .testimonial carousel IS prod's rw_testimonial component (customer proof): slide CTAs report
+// rw_testimonial|rw_testimonial_item and key off testimonial:<id> so the sheet's authored link_name
+// resolves. Every other variant stays a generic loose derive (ui_access_point=page on its controls).
+function makeCtaCarousel(variant) {
+  const block = document.createElement('div');
+  block.className = `carousel ${variant} block`;
+  block.setAttribute('data-block-name', 'carousel');
+  block.innerHTML = `
+    <div><div><h3>Customer one</h3><p>Great results.</p><p class="button-container"><a class="button" href="/case-one">View the results</a></p></div></div>
+    <div><div><h3>Customer two</h3><p>More results.</p><p class="button-container"><a class="button" href="/case-two">View the results</a></p></div></div>`;
+  return block;
+}
+
+function setupCta(variant) {
+  document.head.innerHTML = ''; document.body.innerHTML = ''; resetTrackingState();
+  const main = document.createElement('main');
+  const block = makeCtaCarousel(variant);
+  main.append(block); document.body.append(main);
+  decorate(block);
+  initTracking(document);
+  return block;
+}
+
+describe('carousel — testimonial variant slide-CTA trail (rw_testimonial)', () => {
+  beforeEach(() => { document.head.innerHTML = ''; document.body.innerHTML = ''; resetTrackingState(); });
+
+  it('a testimonial slide CTA resolves rw_testimonial|rw_testimonial_item + keys off testimonial:<id>', () => {
+    const block = setupCta('carousel testimonial');
+    const cta = block.querySelector('.carousel-slide a.button');
+    expect(cta).not.toBeNull();
+    stampInteraction({ target: cta });
+    expect(computeTrackingPayload(cta).ui_access_point).toBe('rw_testimonial|rw_testimonial_item');
+    // href-based id; the label fallback resolves the sheet's testimonial:view-the-results row
+    expect(trackIdOf(cta).startsWith('testimonial:')).toBe(true);
+  });
+
+  it('a non-testimonial carousel stays a generic loose derive (no trail -> page)', () => {
+    const block = setupCta('carousel');
+    const cta = block.querySelector('.carousel-slide a.button');
+    expect(cta).not.toBeNull();
+    stampInteraction({ target: cta });
+    expect(computeTrackingPayload(cta).ui_access_point).toBe('page');
+    expect(trackIdOf(cta).startsWith('carousel:')).toBe(true);
   });
 });

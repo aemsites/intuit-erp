@@ -30,7 +30,7 @@ const CARD_BG_COLORS = ['sky', 'agave', 'tofu', 'sky-blue', 'light-gray', 'winte
 // semantic `arrow_left`/`arrow_right` detail + matching link_name — not the derived button +
 // aria-label. Keyed on the nav-button classes; every other CTA derives normally. The block's
 // linkName:false drops the derived link_name, so the arrow supplies its own (prod authors it).
-function navArrowPayload(el) {
+export function navArrowPayload(el) {
   if (!el.classList) return null;
   let side = null;
   if (el.classList.contains('cards-nav-prev')) side = 'left';

@@ -28,7 +28,7 @@ import {
   launchStealthHeaded, newLiveContext, gotoLive, defaultWaitUntil, dismissOverlays,
 } from './live-session.mjs';
 import {
-  assertIntegrity, verdict, gatedSpecs, presenceSpecs, gatedMatch, normalizeValue, isStructuralException,
+  assertIntegrity, verdict, gatedSpecs, presenceSpecs, gatedMatch, resolveWant, normalizeValue, isStructuralException,
 } from './oracle-lib.mjs';
 
 const GOLDEN = 'scripts/diff/fixtures/local/clicktrack-golden-customer.json';
@@ -118,8 +118,9 @@ function buildResult(entry, env) {
   const gated = {}; const presence = {};
   for (const loc of ['envelope', 'properties', 'context']) {
     for (const [field, spec] of gatedSpecs(loc)) {
-      const want = readField(g, loc, field);
-      if (want == null || want === '') continue; // only gate fields prod populated
+      const rawWant = readField(g, loc, field);
+      if (rawWant == null || rawWant === '') continue; // only gate fields prod populated
+      const want = resolveWant(spec, entry.page, rawWant); // page_cas_id: expect the pathname, not the stale golden CMS id
       gated[`${loc}.${field}`] = gatedMatch(spec, want, readField(env, loc, field));
     }
   }
@@ -141,8 +142,9 @@ function buildDetail(entry, env) {
   const show = (v) => (v === undefined ? '‹absent›' : (typeof v === 'object' ? JSON.stringify(v) : String(v)));
   for (const loc of ['envelope', 'properties', 'context']) {
     for (const [field, spec] of gatedSpecs(loc)) {
-      const want = readField(g, loc, field);
-      if (want == null || want === '') continue;
+      const rawWant = readField(g, loc, field);
+      if (rawWant == null || rawWant === '') continue;
+      const want = resolveWant(spec, entry.page, rawWant); // page_cas_id: expect the pathname
       const got = env ? readField(env, loc, field) : undefined;
       fields.push({
         loc,

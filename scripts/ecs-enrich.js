@@ -1,20 +1,29 @@
 /**
- * Page-view personalization ENRICH. Wraps the profile's own webAnalytics.trackPage and fills
- * personalization_details / experiment_ids from window.appVars — one enriched screen:viewed, no
- * double-fire, no profile change. Must install in the eager phase (before utag.js loads).
- * See APPVARS.md#page-view-personalization.
+ * ECS beacon ENRICH — one eager shim that backfills the values the injected `ies-erp` profile
+ * used to get from Next.js SSR (`__NEXT_DATA__`), which does not exist on Edge Delivery. It traps
+ * `window.intuit.tracking.ecs.webAnalytics` once (before utag.js loads) and wraps both calls:
  *
- * FIXME(pzn): temporary client-side shim. Remove once Intuit's profile page-init reads
- * window.appVars directly (option C) — then this enrichment is redundant.
+ *   - trackPage (screen:viewed) — fills personalization_details / experiment_ids from appVars.
+ *   - track (content:* clicks)  — fills page_cas_id = window.location.pathname.
+ *
+ * One module, one trap, no double-fire, no profile change. Kept together (same bucket, one fetch on
+ * the LCP path). Install in the eager phase; skipped with ?martech=off.
+ *
+ * FIXME: temporary client-side shim. Remove once Intuit's profile page-init reads window.appVars /
+ * the runtime pathname directly (option C) — then this enrichment is redundant.
  */
 
-// Marks an already-wrapped trackPage (Symbol → no collision, hidden from JSON/keys).
-const ENRICHED = Symbol('pznEnriched');
+// Per-method wrap markers (Symbols → no collision, hidden from JSON/keys); each wrap is
+// independently idempotent, so installing (wraps both) and standalone use each no-op on a re-wrap.
+const WRAPPED_PAGE = Symbol('ecsWrappedPage');
+const WRAPPED_EVENT = Symbol('ecsWrappedEvent');
 
-// The tracker treats null/undefined, '', or [] as "no personalization".
+// The tracker treats null/undefined, '', or [] as "no value".
 function isEmpty(v) {
   return v == null || v === '' || (Array.isArray(v) && v.length === 0);
 }
+
+// ---- page-view (trackPage): personalization_details / experiment_ids ------------------------
 
 /** Page-level personalization_details: page recs win over section, else `[]` (never null). */
 export function personalizationDetails(appVars = {}) {
@@ -57,7 +66,7 @@ export function enrichPagePayload(payload, appVars = {}) {
 
 /** Wraps `wa.trackPage` to enrich each call (idempotent, reads appVars live, fail-open). */
 export function wrapTrackPage(wa) {
-  if (!wa || typeof wa.trackPage !== 'function' || wa[ENRICHED]) return;
+  if (!wa || typeof wa.trackPage !== 'function' || wa[WRAPPED_PAGE]) return;
   const original = wa.trackPage.bind(wa);
   wa.trackPage = function enrichedTrackPage(payload, ...rest) {
     try {
@@ -67,8 +76,37 @@ export function wrapTrackPage(wa) {
     }
     return original(payload, ...rest);
   };
-  wa[ENRICHED] = true;
+  wa[WRAPPED_PAGE] = true;
 }
+
+// ---- click (track): page_cas_id -----------------------------------------------------------
+
+/** The content identifier: the page pathname (OVERRIDES.md — no cas-id metadata anymore). */
+export const pageCasId = () => (typeof window !== 'undefined' ? window.location.pathname : '');
+
+/** Fills `page_cas_id` from the pathname where the profile left it empty. Mutates + returns. */
+export function enrichEventPayload(payload) {
+  if (!payload || typeof payload !== 'object') return payload;
+  if (isEmpty(payload.page_cas_id)) payload.page_cas_id = pageCasId();
+  return payload;
+}
+
+/** Wraps `wa.track` to enrich each event/click payload (idempotent, fail-open). */
+export function wrapTrack(wa) {
+  if (!wa || typeof wa.track !== 'function' || wa[WRAPPED_EVENT]) return;
+  const original = wa.track.bind(wa);
+  wa.track = function enrichedTrack(payload, ...rest) {
+    try {
+      enrichEventPayload(payload);
+    } catch (e) {
+      // fail-open — enrichment must never block the real beacon
+    }
+    return original(payload, ...rest);
+  };
+  wa[WRAPPED_EVENT] = true;
+}
+
+// ---- install --------------------------------------------------------------------------------
 
 /** Runs `cb(obj[key])` now if set, else on assignment via a one-shot accessor trap (race-free). */
 export function whenAssigned(obj, key, cb) {
@@ -86,8 +124,11 @@ export function whenAssigned(obj, key, cb) {
   }
 }
 
-/** Traps window.intuit.tracking.ecs.webAnalytics and wraps trackPage. Call in the eager phase. */
-export default function installPznPageViewEnrich() {
+/**
+ * Traps window.intuit.tracking.ecs.webAnalytics and wraps trackPage + track (each independently
+ * idempotent). Call in the eager phase, before utag.js loads.
+ */
+export default function installEcsEnrich() {
   if (typeof window === 'undefined') return;
   whenAssigned(window, 'intuit', (intuit) => {
     if (!intuit || typeof intuit !== 'object') return;
@@ -95,7 +136,7 @@ export default function installPznPageViewEnrich() {
       if (!tracking || typeof tracking !== 'object') return;
       whenAssigned(tracking, 'ecs', (ecs) => {
         if (!ecs || typeof ecs !== 'object') return;
-        whenAssigned(ecs, 'webAnalytics', (wa) => wrapTrackPage(wa));
+        whenAssigned(ecs, 'webAnalytics', (wa) => { wrapTrack(wa); wrapTrackPage(wa); });
       });
     });
   });
