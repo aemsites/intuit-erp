@@ -9,7 +9,7 @@ import {
   mkdirSync, readFileSync, writeFileSync,
 } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { dirname } from 'node:path';
+import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
   THRESHOLD, assertIntegrity, gatedMatch, gatedSpecs, normalizeValue, presenceSpecs, resolveWant,
@@ -20,6 +20,14 @@ const DEFAULT_MAX_CAPTURE_AGE_MS = 24 * 60 * 60 * 1000;
 const DEFAULT_FUTURE_SKEW_MS = 5 * 60 * 1000;
 const TRACKER_POLICY_VERSION = '1';
 const TEALIUM_PROFILE_URL = 'https://tags.tiqcdn.com/utag/intuit/ies-erp/prod/utag.js';
+const currentHarnessSourceHashes = () => Object.fromEntries([
+  ['live-replay-harness.mjs', resolve('scripts/diff/live-replay-harness.mjs')],
+  ['live-replay-runner.mjs', resolve('scripts/diff/live-replay-runner.mjs')],
+  ['clicktrack-qualification-scenario.json', resolve('scripts/diff/fixtures/clicktrack-qualification-scenario.json')],
+].map(([name, path]) => [name, `sha256:${createHash('sha256').update(readFileSync(path)).digest('hex')}`]));
+const currentQualificationScenario = () => JSON.parse(readFileSync(
+  resolve('scripts/diff/fixtures/clicktrack-qualification-scenario.json'), 'utf8',
+));
 
 const GLOBAL_FIELD_RULES = [
   ['capturedAt', 'timestamp'],
@@ -351,7 +359,22 @@ function actualField(payload, loc, field) {
   return loc === 'envelope' ? payload[field] : payload[loc]?.[field];
 }
 
+function shapeTokenMatches(rawValue, actualValue) {
+  if (typeof actualValue !== 'string') return null;
+  if (actualValue === 'NULL') return rawValue === null;
+  if (actualValue === 'NUM') return typeof rawValue === 'number';
+  if (actualValue === 'BOOL') return typeof rawValue === 'boolean';
+  const stringToken = /^STR:(\d+)$/.exec(actualValue);
+  if (stringToken) {
+    return typeof rawValue === 'string'
+      && (rawValue.trim() === '' ? Number(stringToken[1]) === 0 : Number(stringToken[1]) > 0);
+  }
+  return null;
+}
+
 function recursiveShapeMatches(rawValue, actualValue) {
+  const tokenMatch = shapeTokenMatches(rawValue, actualValue);
+  if (tokenMatch !== null) return tokenMatch;
   if (Array.isArray(rawValue)) {
     if (!Array.isArray(actualValue)) return false;
     if (!rawValue.length) return true;
@@ -363,30 +386,41 @@ function recursiveShapeMatches(rawValue, actualValue) {
     return Object.entries(rawValue).every(([key, value]) => Object.hasOwn(actualValue, key)
       && recursiveShapeMatches(value, actualValue[key]));
   }
-  if (typeof rawValue === 'string') return typeof actualValue === 'string' && actualValue.trim() !== '';
+  if (typeof rawValue === 'string') {
+    return typeof actualValue === 'string'
+      && (rawValue.trim() === '' ? actualValue.trim() === '' : actualValue.trim() !== '');
+  }
   if (rawValue === null) return actualValue === null;
   return typeof actualValue === typeof rawValue;
 }
 
-function recursivelyPopulated(value) {
-  if (value === undefined || value === null) return false;
-  if (typeof value === 'string') return value.trim() !== '';
-  if (Array.isArray(value)) return value.length > 0 && value.every(recursivelyPopulated);
-  if (isRecord(value)) {
-    const values = Object.values(value);
-    return values.length > 0 && values.every(recursivelyPopulated);
+function populatedAgainst(rawValue, actualValue) {
+  const tokenMatch = shapeTokenMatches(rawValue, actualValue);
+  if (tokenMatch !== null) return tokenMatch;
+  if (Array.isArray(rawValue)) {
+    return Array.isArray(actualValue) && actualValue.length > 0
+      && actualValue.every((item) => rawValue.some((sample) => populatedAgainst(sample, item)));
   }
-  return true;
+  if (isRecord(rawValue)) {
+    return isRecord(actualValue) && Object.keys(actualValue).length > 0
+      && Object.entries(rawValue).every(([key, child]) => Object.hasOwn(actualValue, key)
+        && populatedAgainst(child, actualValue[key]));
+  }
+  if (typeof rawValue === 'string') {
+    return typeof actualValue === 'string'
+      && (rawValue.trim() === '' ? actualValue.trim() === '' : actualValue.trim() !== '');
+  }
+  if (rawValue === null) return actualValue === null;
+  return actualValue !== undefined && actualValue !== null;
 }
 
 function populatedForPresence(value, spec, rawValue) {
   if (value === undefined || value === null || (typeof value === 'string' && value.trim() === '')) return false;
   const allowEmpty = spec.allowEmpty === true || spec.expectEmpty === true;
-  const populated = allowEmpty && ((Array.isArray(value) && value.length === 0)
-    || (isRecord(value) && Object.keys(value).length === 0))
-    ? true
-    : recursivelyPopulated(value);
-  return populated && recursiveShapeMatches(rawValue, value);
+  const emptyAllowed = allowEmpty && ((Array.isArray(value) && value.length === 0)
+    || (isRecord(value) && Object.keys(value).length === 0));
+  return (emptyAllowed || populatedAgainst(rawValue, value))
+    && recursiveShapeMatches(rawValue, value);
 }
 
 function compareFields(entry, capturedPayload) {
@@ -428,6 +462,83 @@ function addRefusal(refusals, refusal) {
   if (!refusals.some((item) => fingerprint(item) === fingerprint(refusal))) refusals.push(refusal);
 }
 
+function validateReplayQualification(capture, global, { expectedOrigin, nowMs }) {
+  if ((capture.captureFormat || capture.source) !== 'authenticated-one-page-replay') return [];
+  const { qualification } = capture;
+  if (!isRecord(qualification)) return ['qualification'];
+  const invalid = [];
+  const requiredText = [
+    'qualifiedAt', 'expiresAt', 'runId', 'mode', 'profileId', 'chromeVersion', 'harnessVersion',
+    'lineagePolicyVersion', 'origin', 'consentState', 'authorizationRef', 'targetId', 'transportPolicy',
+    'scenarioId', 'scenarioDefinitionHash',
+  ];
+  requiredText.forEach((field) => {
+    if (!present(qualification[field]) || typeof qualification[field] !== 'string') invalid.push(`qualification.${field}`);
+  });
+  const qualifiedAt = Date.parse(qualification.qualifiedAt);
+  const expiresAt = Date.parse(qualification.expiresAt);
+  if (Number.isNaN(qualifiedAt) || Number.isNaN(expiresAt) || expiresAt <= qualifiedAt
+    || expiresAt - qualifiedAt > 24 * 60 * 60 * 1000 || nowMs > expiresAt) invalid.push('qualification.validity');
+  if (qualification.mode !== 'dedicated') invalid.push('qualification.mode');
+  if (qualification.lineagePolicyVersion !== 'message-id-v1') invalid.push('qualification.lineagePolicyVersion');
+  if (qualification.origin !== expectedOrigin) invalid.push('qualification.origin');
+  if (qualification.consentState !== 'resolved') invalid.push('qualification.consentState');
+  if (!['observe', 'abort', 'test-sink'].includes(qualification.transportPolicy)) invalid.push('qualification.transportPolicy');
+  if (qualification.runId !== global.runId) invalid.push('qualification.runId');
+  if (qualification.profileId !== global.browser?.profileId) invalid.push('qualification.profileId');
+  if (qualification.chromeVersion !== global.browser?.version) invalid.push('qualification.chromeVersion');
+  if (qualification.harnessVersion !== global.harness?.version) invalid.push('qualification.harnessVersion');
+  if (!isRecord(qualification.sourceHashes) || !isRecord(global.harness?.sourceHashes)
+    || fingerprint(qualification.sourceHashes) !== fingerprint(global.harness?.sourceHashes)) {
+    invalid.push('qualification.sourceHashes');
+  } else {
+    for (const [name, hash] of Object.entries(qualification.sourceHashes)) {
+      if (!name || !isCanonicalHash(hash)) invalid.push('qualification.sourceHashes');
+    }
+    if (fingerprint(qualification.sourceHashes) !== fingerprint(currentHarnessSourceHashes())) {
+      invalid.push('qualification.sourceHashes');
+    }
+  }
+  const scenarioPolicy = currentQualificationScenario();
+  if (qualification.scenarioId !== scenarioPolicy.scenarioId
+    || qualification.scenarioId !== capture.golden?.scenarioId
+    || qualification.scenarioDefinitionHash !== qualification.sourceHashes?.['clicktrack-qualification-scenario.json']) {
+    invalid.push('qualification.scenarioDefinition');
+  }
+  if (!isRecord(qualification.runtimeHashes)) invalid.push('qualification.runtimeHashes');
+  else {
+    const expectedRuntime = [
+      [`${global.origin}/scripts/scripts.js`, global.deployedHashes?.['scripts.js']],
+      [`${global.origin}/scripts/tracking.js`, global.deployedHashes?.['tracking.js']],
+      [`${global.origin}/scripts/ecs-enrich.js`, global.deployedHashes?.['ecs-enrich.js']],
+      [`${global.origin}/tracking.json`, global.deployedHashes?.['tracking.json']],
+      [global.tealium?.profileUrl, global.tealium?.contentHash],
+      ...(global.trackerResources?.resources || []).map((resource) => [resource.url, resource.contentHash]),
+      ...(Array.isArray(capture.pages) ? capture.pages : Object.values(capture.pages || {}))
+        .flatMap((page) => (page.provenance?.sameOriginScripts || [])
+        .map((resource) => [resource.url, resource.contentHash])),
+    ];
+    const expectedRuntimeMap = Object.fromEntries(expectedRuntime);
+    const pageRuntimeMap = Object.fromEntries((Array.isArray(capture.pages) ? capture.pages : Object.values(capture.pages || {}))
+      .flatMap((page) => (page.provenance?.sameOriginScripts || []).map((resource) => [resource.url, resource.contentHash])));
+    (scenarioPolicy.runtimeAssets || []).forEach((path) => {
+      const url = new URL(path, expectedOrigin).href;
+      if (!pageRuntimeMap[url]) invalid.push('qualification.runtimeHashes');
+    });
+    if (fingerprint(qualification.runtimeHashes) !== fingerprint(expectedRuntimeMap)) {
+      invalid.push('qualification.runtimeHashes');
+    }
+  }
+  if (!isRecord(qualification.disconnectCleanup) || qualification.disconnectCleanup.verified !== true
+    || qualification.disconnectCleanup.targetId !== qualification.targetId
+    || qualification.targetId !== global.browser?.targetId
+    || !Number.isFinite(qualification.disconnectCleanup.leaseMs)
+    || qualification.disconnectCleanup.leaseMs <= 0 || qualification.disconnectCleanup.leaseMs > 10000) {
+    invalid.push('qualification.disconnectCleanup');
+  }
+  return [...new Set(invalid)];
+}
+
 function inspectProvenance(captures, mode, {
   expectedOrigin, nowMs, maxCaptureAgeMs, maxFutureSkewMs,
 }) {
@@ -445,6 +556,12 @@ function inspectProvenance(captures, mode, {
     if (validation.invalid.length) {
       addRefusal(refusals, {
         code: 'INVALID_GLOBAL_PROVENANCE', sourceCapture, invalid: validation.invalid,
+      });
+    }
+    const qualificationInvalid = validateReplayQualification(capture, global, { expectedOrigin, nowMs });
+    if (qualificationInvalid.length) {
+      addRefusal(refusals, {
+        code: 'INVALID_QUALIFICATION', sourceCapture, invalid: qualificationInvalid,
       });
     }
     if (!Array.isArray(capture.pages) && !isRecord(capture.pages)) {
@@ -1046,10 +1163,10 @@ export function runCli(argv) {
   const options = parseArgs(argv);
   const golden = JSON.parse(readFileSync(options.golden, 'utf8'));
   const identityLock = JSON.parse(readFileSync(options.identityLock, 'utf8'));
-  const captures = options.captures.map((path) => ({
-    ...JSON.parse(readFileSync(path, 'utf8')),
-    source: path,
-  }));
+  const captures = options.captures.map((path) => {
+    const capture = JSON.parse(readFileSync(path, 'utf8'));
+    return { ...capture, captureFormat: capture.source, source: path };
+  });
   const result = evaluateOfflineVerdict({
     golden,
     captures,

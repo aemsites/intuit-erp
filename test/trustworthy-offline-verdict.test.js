@@ -118,6 +118,55 @@ const withIntegrity = (golden) => ({
   },
 });
 const identityLockFor = (golden) => offlineVerdict.createGoldenIdentityLock(golden);
+const liveSourceHashes = () => Object.fromEntries([
+  ['live-replay-harness.mjs', resolve('scripts/diff/live-replay-harness.mjs')],
+  ['live-replay-runner.mjs', resolve('scripts/diff/live-replay-runner.mjs')],
+  ['clicktrack-qualification-scenario.json', resolve('scripts/diff/fixtures/clicktrack-qualification-scenario.json')],
+].map(([name, path]) => [name, `sha256:${createHash('sha256').update(readFileSync(path)).digest('hex')}`]));
+
+function authenticatedCapture() {
+  const replay = capture({ events: [event('hero-primary')] });
+  replay.source = 'authenticated-one-page-replay';
+  const sourceHashes = liveSourceHashes();
+  replay.provenance.global.harness.sourceHashes = sourceHashes;
+  replay.provenance.global.browser.targetId = 'target-001';
+  replay.golden = { scenarioId: 'customer-workforce-faq-third-party-apps' };
+  replay.pages[0].provenance.sameOriginScripts.push({
+    url: 'https://stage.erp.intuit.com/blocks/faq/faq.js', contentHash: sha256('4'),
+  });
+  const runtimeHashes = {
+    'https://stage.erp.intuit.com/scripts/scripts.js': replay.provenance.global.deployedHashes['scripts.js'],
+    'https://stage.erp.intuit.com/scripts/tracking.js': replay.provenance.global.deployedHashes['tracking.js'],
+    'https://stage.erp.intuit.com/scripts/ecs-enrich.js': replay.provenance.global.deployedHashes['ecs-enrich.js'],
+    'https://stage.erp.intuit.com/tracking.json': replay.provenance.global.deployedHashes['tracking.json'],
+    [replay.provenance.global.tealium.profileUrl]: replay.provenance.global.tealium.contentHash,
+    ...Object.fromEntries(replay.provenance.global.trackerResources.resources
+      .map((resource) => [resource.url, resource.contentHash])),
+    ...Object.fromEntries(replay.pages[0].provenance.sameOriginScripts
+      .map((resource) => [resource.url, resource.contentHash])),
+  };
+  replay.qualification = {
+    qualifiedAt: new Date(Date.now() - 60_000).toISOString(),
+    expiresAt: new Date(Date.now() + 60 * 60_000).toISOString(),
+    runId: replay.provenance.global.runId,
+    mode: 'dedicated',
+    profileId: replay.provenance.global.browser.profileId,
+    chromeVersion: replay.provenance.global.browser.version,
+    harnessVersion: replay.provenance.global.harness.version,
+    lineagePolicyVersion: 'message-id-v1',
+    origin: replay.provenance.global.origin,
+    consentState: 'resolved',
+    authorizationRef: 'customer-approved Adobe Migration Test',
+    targetId: replay.provenance.global.browser.targetId,
+    transportPolicy: 'observe',
+    runtimeHashes,
+    sourceHashes,
+    scenarioId: replay.golden.scenarioId,
+    scenarioDefinitionHash: sourceHashes['clicktrack-qualification-scenario.json'],
+    disconnectCleanup: { verified: true, leaseMs: 10000, targetId: 'target-001' },
+  };
+  return replay;
+}
 
 function productionModulePaths() {
   const roots = [resolve('scripts'), resolve('blocks')];
@@ -790,6 +839,77 @@ describe('trustworthy offline verdict', () => {
     expect(field.policyEqual).toBe(false);
     expect(result.gates.presence).toMatchObject({ pass: false, failed: 1 });
     expect(result.verdict).toBe('FAIL');
+  });
+
+  it('accepts privacy-safe shape tokens for frozen presence fields', () => {
+    const golden = goldenEntry('hero-primary');
+    golden.fullPayload.messageId = 'production-message-id';
+    golden.fullPayload.properties.page_track_seq_num = 7;
+    golden.fullPayload.context = { userAgentData: { brands: ['Chrome'] } };
+    golden.fullPayload.integrations = { 'Adobe Analytics': { marketingCloudVisitorId: 'prod-id' } };
+    const captured = event('hero-primary');
+    captured.payload.messageId = 'STR:41';
+    captured.payload.properties.page_track_seq_num = 'NUM';
+    captured.payload.context = { userAgentData: { brands: ['STR:6'] } };
+    captured.payload.integrations = { 'Adobe Analytics': { marketingCloudVisitorId: 'STR:36' } };
+
+    const result = evaluateOfflineVerdict({
+      golden: { entries: [golden] },
+      captures: [capture({ events: [captured] })],
+    });
+
+    expect(result.gates.presence).toMatchObject({ pass: true, failed: 0 });
+  });
+
+  it('rejects opaque object tokens that hide frozen nested shape', () => {
+    const golden = goldenEntry('hero-primary');
+    golden.fullPayload.context = { userAgentData: { brands: ['Chrome'] } };
+    const captured = event('hero-primary');
+    captured.payload.context = { userAgentData: 'OBJ' };
+    const result = evaluateOfflineVerdict({
+      golden: { entries: [golden] }, captures: [capture({ events: [captured] })],
+    });
+    expect(result.gates.presence).toMatchObject({ pass: false, failed: 1 });
+  });
+
+  it('refuses authenticated replay evidence when its qualification binding is missing', () => {
+    const replay = capture({ events: [event('hero-primary')] });
+    replay.source = 'authenticated-one-page-replay';
+    const result = evaluateOfflineVerdict({
+      golden: { entries: [goldenEntry('hero-primary')] }, captures: [replay],
+    });
+    expect(result.refusals).toContainEqual(expect.objectContaining({ code: 'INVALID_QUALIFICATION' }));
+    expect(result.verdict).toBe('REFUSED');
+  });
+
+  it('accepts a fully bound authenticated replay qualification', () => {
+    const result = evaluateOfflineVerdict({
+      golden: { entries: [goldenEntry('hero-primary')] }, captures: [authenticatedCapture()],
+    });
+    expect(result.refusals).toEqual([]);
+  });
+
+  it('refuses changed source, exact runtime URL, cleanup lease, or independent target bindings', () => {
+    const mutations = [
+      (replay) => { replay.qualification.sourceHashes['live-replay-harness.mjs'] = sha256('9'); },
+      (replay) => { delete replay.qualification.runtimeHashes['https://stage.erp.intuit.com/blocks/hero/hero.js']; },
+      (replay) => { replay.qualification.runtimeHashes['https://stage.erp.intuit.com/unobserved.js'] = sha256('8'); },
+      (replay) => {
+        delete replay.qualification.runtimeHashes['https://stage.erp.intuit.com/blocks/faq/faq.js'];
+        replay.pages[0].provenance.sameOriginScripts = replay.pages[0].provenance.sameOriginScripts
+          .filter(({ url }) => !url.endsWith('/blocks/faq/faq.js'));
+      },
+      (replay) => { replay.qualification.disconnectCleanup.leaseMs = 10001; },
+      (replay) => { replay.provenance.global.browser.targetId = 'replacement-target'; },
+    ];
+    mutations.forEach((mutate) => {
+      const replay = authenticatedCapture();
+      mutate(replay);
+      const result = evaluateOfflineVerdict({
+        golden: { entries: [goldenEntry('hero-primary')] }, captures: [replay],
+      });
+      expect(result.refusals).toContainEqual(expect.objectContaining({ code: 'INVALID_QUALIFICATION' }));
+    });
   });
 
   it('requires arrays and objects in frozen presence fields to retain their broad golden shape', () => {
