@@ -322,14 +322,16 @@ export async function simulateContext(context, opts = {}) {
   if (!response) return { applied: false, reason: 'no-response' };
 
   try {
+    // track:false — this is a read-only preview, so suppress ALL analytics (FullStory
+    // events, appVars pzn/ixp records, click-tracker stamps).
     const willSwap = pageWillSwap(response);
-    await applyPage(document, response, signal);
+    await applyPage(document, response, signal, { track: false });
     const main = document.querySelector('main');
     if (willSwap) {
       decorateMain(main);
       await loadSections(main);
     }
-    await applyLayer(main, response);
+    await applyLayer(main, response, { track: false });
   } finally {
     if (window.hlx) window.hlx.experienceResponse = prev; // don't disturb the runtime cache
   }

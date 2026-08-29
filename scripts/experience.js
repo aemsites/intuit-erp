@@ -463,61 +463,68 @@ export function stampPzn(el, rec) {
 
 // Two helpers = the ONE place each apply-shape lives: decision → record exposure → (if
 // there's content) resolve path, apply via applyContent(path), stamp + notify. applyPage
-// feeds them swapMain (whole page); applyLayer feeds applyFragment (an element).
+// feeds them swapMain (whole page); applyLayer feeds applyFragment (an element). `track`
+// (default true at the public entry points) gates EVERY analytics side effect — appVars
+// records, click-tracker stamps, and FullStory events — so a preview/simulation can swap
+// content read-only, without biasing the very experiment data it's measuring.
 
-async function applyExperiment(response, id, stampTarget, applyContent, record) {
+async function applyExperiment(response, id, stampTarget, applyContent, record, track) {
   const d = experimentDecision(response, id);
   if (!d) return false;
   const rec = ixpRecord(d, window.location.pathname);
-  if (rec) record([rec]);
+  if (rec && track) record([rec]);
   if (!d.replacementCasId || d.replacementCasId === d.originalCasId) return false;
   const path = casToPath(d.replacementCasId);
   if (!path || !(await applyContent(path))) return false;
-  stampExperiment(stampTarget, rec);
-  notifyFullStory('Experiment Viewed', rec?.experiment_treatment, rec?.experiment_id);
+  if (track) {
+    stampExperiment(stampTarget, rec);
+    notifyFullStory('Experiment Viewed', rec?.experiment_treatment, rec?.experiment_id);
+  }
   return true;
 }
 
-async function applyPznSlot(response, placement, stampTarget, applyContent, record) {
+async function applyPznSlot(response, placement, stampTarget, applyContent, record, track) {
   const d = pznDecision(response, placement);
   if (!d) return false;
   const rec = pznRecord(placement, d);
-  if (rec) record([rec]);
+  if (rec && track) record([rec]);
   if (!d.contentId) return false;
   const path = casToPath(d.contentId);
   if (!path || !(await applyContent(path))) return false;
-  stampPzn(stampTarget, rec);
-  notifyFullStory('Personalization Viewed', rec?.personalization_id, rec?.personalization_placement);
+  if (track) {
+    stampPzn(stampTarget, rec);
+    notifyFullStory('Personalization Viewed', rec?.personalization_id, rec?.personalization_placement);
+  }
   return true;
 }
 
 // Whole-page swap from the cached response, BEFORE decorateMain. IXP wins over PZN.
-// Returns whether a swap landed.
-export async function applyPage(doc, response, signal) {
+// Returns whether a swap landed. `track:false` swaps content without any analytics.
+export async function applyPage(doc, response, signal, { track = true } = {}) {
   if (!doc || !response) return false;
   const target = doc.querySelector('main');
   const swap = (p) => swapMain(doc, p, signal);
   const pageExp = getMetadata('experiment-id');
   if (pageExp && /^\d+$/.test(pageExp)) {
-    return applyExperiment(response, pageExp, target, swap, recordIxp);
+    return applyExperiment(response, pageExp, target, swap, recordIxp, track);
   }
   const pagePzn = getMetadata('personalization-id');
-  if (pagePzn) return applyPznSlot(response, pagePzn, target, swap, recordPznPage);
+  if (pagePzn) return applyPznSlot(response, pagePzn, target, swap, recordPznPage, track);
   return false;
 }
 
 // Section/block swaps for `root` from the cached response (no network call). Eager for the
-// first/LCP section (awaited), lazy for the rest (skip = first).
-export async function applyLayer(root, response, { skip } = {}) {
+// first/LCP section (awaited), lazy for the rest (skip = first). `track:false` = read-only.
+export async function applyLayer(root, response, { skip, track = true } = {}) {
   if (!root || !response) return;
   const tasks = [];
   collectExperiments(root, skip).forEach(({ el, id, append }) => {
     const apply = (p) => applyFragment(el, p, { append });
-    tasks.push(applyExperiment(response, id, el, apply, recordIxp));
+    tasks.push(applyExperiment(response, id, el, apply, recordIxp, track));
   });
   collectSlots(root, skip).forEach(({ el, placement, append }) => {
     const apply = (p) => applyFragment(el, p, { append });
-    tasks.push(applyPznSlot(response, placement, el, apply, recordPzn));
+    tasks.push(applyPznSlot(response, placement, el, apply, recordPzn, track));
   });
   await Promise.all(tasks);
 }

@@ -514,6 +514,18 @@ describe('applyPage (whole-page swap, before decorate)', () => {
     expect(window.appVars.pznPageRecDetailsArr).toEqual([]);
   });
 
+  it('track:false swaps <main> but emits no analytics (read-only preview)', async () => {
+    setMeta('experiment-id', '376648');
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response('<div class="hero">VARIATION</div>', { status: 200, headers: { 'content-type': 'text/html' } }),
+    );
+    await applyPage(document, expResp('376648', { replacementCasId: '/fragments/exp/page' }), undefined, { track: false });
+    const el = document.querySelector('main');
+    expect(el.innerHTML).toContain('VARIATION'); // the swap still happens
+    expect(el.hasAttribute('data-treatment-id')).toBe(false); // no click-tracker stamp
+    expect(window.appVars).toBeUndefined(); // no appVars records buffered/flushed
+  });
+
   it('returns true when a whole-page swap actually lands', async () => {
     setMeta('experiment-id', '376648');
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
@@ -700,6 +712,15 @@ describe('applyLayer (section/block swaps, from the cached response)', () => {
     const m = main('<div data-pzn="alpha"></div>');
     await applyLayer(m, pznResp('alpha'));
     expect(m.querySelector('[data-pzn]').hasAttribute('data-pzn-id')).toBe(false);
+  });
+
+  it('track:false swaps the section but emits no analytics (read-only preview)', async () => {
+    const m = main('<div data-exp="376648"></div>');
+    await applyLayer(m, expResp('376648', { replacementCasId: '/fragments/exp/a' }), { track: false });
+    const el = m.querySelector('[data-exp]');
+    expect(el.querySelector('[data-frag]')).toBeTruthy(); // the swap still happens
+    expect(el.hasAttribute('data-treatment-id')).toBe(false); // no click-tracker stamp
+    expect(window.appVars).toBeUndefined(); // no appVars records buffered/flushed
   });
 
   it('is a no-op on a null response', async () => {
