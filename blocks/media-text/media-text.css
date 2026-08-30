@@ -7,6 +7,15 @@
   background: var(--tofu);
 }
 
+/* row-alternating text+image sections sit narrower than the site's default
+   1380px container, with a fixed 155px side gutter at desktop widths (the
+   nonprofit page's "Multi-dimensional tracking" style sections) */
+@media (width >= 1024px) {
+  .section.media-text-container:not(:has(.media-text.cards, .media-text.compare, .media-text.power)) > div {
+    padding-inline: 155px;
+  }
+}
+
 .media-text-container .default-content-wrapper h2 {
   font-size: 38px;
   line-height: 1.15;
@@ -30,7 +39,10 @@
   grid-template-columns: var(--split, 1fr 1fr);
   gap: 60px;
   align-items: center;
-  padding: 44px 0;
+}
+
+.media-text .media-row + .media-row {
+  margin-top: 44px;
 }
 
 .media-text .media-row.row-reverse .media-visual {
