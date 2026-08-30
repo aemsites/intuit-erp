@@ -197,6 +197,25 @@
 
 .carousel.testimonial.has-title .testi-media img { border-radius: var(--radius-card); }
 
+/* .logo-panel — customer logo sits in a clean white card instead of a
+   full-bleed cropped photo (nonprofit "real results" testimonial style). */
+.carousel.testimonial.has-title.logo-panel .testi-media {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border-radius: var(--radius-card);
+  padding: 40px;
+}
+
+.carousel.testimonial.has-title.logo-panel .testi-media img {
+  width: 100%;
+  height: auto;
+  max-height: 160px;
+  object-fit: contain;
+  border-radius: 0;
+}
+
 .carousel.testimonial .testi-body {
   display: flex;
   flex-direction: column;
