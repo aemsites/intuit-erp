@@ -71,6 +71,30 @@
   display: block;
 }
 
+.media-text .media-copy .media-callout {
+  background: var(--wintermint);
+  border-left: 4px solid var(--primary);
+  border-radius: 4px;
+  padding: 20px;
+  margin-top: 24px;
+}
+
+.media-text .media-copy .media-callout-label {
+  margin: 0 0 16px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--heading);
+}
+
+.media-text .media-copy .media-callout-body {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--text);
+}
+
 .media-text .media-copy h2,
 .media-text .media-copy h3 {
   font-size: 34px;
