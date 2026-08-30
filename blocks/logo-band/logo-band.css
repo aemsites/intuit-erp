@@ -138,27 +138,41 @@
   .logo-band .logoband-list { max-width: 1120px; }
 }
 
-/* logo-band.marquee — dark band with infinite horizontally-scrolling logos.
+/* logo-band.marquee — infinite horizontally-scrolling logo band, two themes:
+   default = dark navy band, white-inverted logos (erp.intuit.com #ies-slider)
+   .light  = white band, grayscale (not inverted) logos, dark heading text
+             (nonprofit "Connect donor and payment tools")
    Sizing: mobile = 32px logos / 24px gaps / 72px band; from 768px up =
    40px / 32px / 80px. Band height is the logo height plus 20px of vertical
    padding top and bottom. */
-.section.logo-band-container:has(.logo-band.marquee) { background: #00254a; overflow: hidden; }
+.section.logo-band-container:has(.logo-band.marquee) { overflow: hidden; }
+.section.logo-band-container:has(.logo-band.marquee:not(.light)) { background: #00254a; }
+.section.logo-band-container:has(.logo-band.marquee.light) { background: #fff; }
 .logo-band.marquee { padding: 20px 0; }
 
 /* a heading/intro authored as default content above the marquee sits on the
-   same navy band, so it needs the light-on-dark treatment normally reserved
-   for the logos themselves */
+   same band, so it needs a text color matching that band's background —
+   light-on-dark for the default navy theme, the normal dark heading color
+   for .light */
 .section.logo-band-container:has(.logo-band.marquee) .default-content-wrapper {
   padding: 40px 24px 0;
   text-align: center;
 }
 
-.section.logo-band-container:has(.logo-band.marquee) .default-content-wrapper :is(h1, h2, h3, h4, h5, h6) {
+.section.logo-band-container:has(.logo-band.marquee:not(.light)) .default-content-wrapper :is(h1, h2, h3, h4, h5, h6) {
   color: #fff;
 }
 
-.section.logo-band-container:has(.logo-band.marquee) .default-content-wrapper p {
+.section.logo-band-container:has(.logo-band.marquee:not(.light)) .default-content-wrapper p {
   color: rgb(255 255 255 / 80%);
+}
+
+.section.logo-band-container:has(.logo-band.marquee.light) .default-content-wrapper :is(h1, h2, h3, h4, h5, h6) {
+  color: var(--heading);
+}
+
+.section.logo-band-container:has(.logo-band.marquee.light) .default-content-wrapper p {
+  color: var(--text-muted);
 }
 
 /* full-bleed: a scrolling marquee spans the whole viewport, so release the
@@ -169,8 +183,11 @@ main > .section.logo-band-container:has(.logo-band.marquee) > div { max-width: n
 .logo-band.marquee .logoband-track { display: flex; flex-wrap: nowrap; align-items: center; width: max-content; }
 .logo-band.marquee .logoband-set { display: flex; flex-wrap: nowrap; align-items: center; gap: 24px; flex: 0 0 auto; padding-right: 24px; }
 
-/* the logo source images are colored; invert renders them white on the dark band */
+/* the logo source images are colored; invert renders them white on the dark
+   band. .light keeps the band white, so desaturate to grayscale instead of
+   inverting to white-on-white. */
 .logo-band.marquee img { height: 32px; width: auto; filter: brightness(0) invert(1); flex: 0 0 auto; }
+.logo-band.marquee.light img { filter: grayscale(1) opacity(60%); }
 
 .logo-band.marquee.is-ready .logoband-track {
   animation-name: logoband-scroll;
