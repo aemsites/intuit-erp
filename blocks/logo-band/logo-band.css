@@ -148,14 +148,15 @@
 .section.logo-band-container:has(.logo-band.marquee) { overflow: hidden; }
 .section.logo-band-container:has(.logo-band.marquee:not(.light)) { background: #00254a; }
 .section.logo-band-container:has(.logo-band.marquee.light) { background: #fff; }
-.logo-band.marquee { padding: 20px 0; }
+.logo-band.marquee { padding: 36px 0; }
 
 /* a heading/intro authored as default content above the marquee sits on the
    same band, so it needs a text color matching that band's background —
    light-on-dark for the default navy theme, the normal dark heading color
-   for .light */
+   for .light. 60px below separates it from the logo row (nonprofit
+   "Connect donor and payment tools" spec). */
 .section.logo-band-container:has(.logo-band.marquee) .default-content-wrapper {
-  padding: 40px 24px 0;
+  padding: 60px 24px;
   text-align: center;
 }
 
