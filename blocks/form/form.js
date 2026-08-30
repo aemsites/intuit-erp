@@ -381,12 +381,26 @@ export default async function decorate(block) {
 
   const cfg = await siteConfig();
   const env = marketoEnv();
+  // Deferred until the block is near the viewport, but the placeholder `<form>`
+  // is empty and therefore zero-height, and an IntersectionObserver never
+  // reports a zero-area target as intersecting. That deadlocks a form already on
+  // screen: no area means no callback, and no callback means no fields to give
+  // it area. So embed straight away when the block is within a viewport of the
+  // fold, and keep the observer for the below-the-fold case.
+  const nearViewport = () => block.getBoundingClientRect().top < window.innerHeight * 2;
+  if (nearViewport()) {
+    embedMarketoForm(form, cfg, config, env);
+    return;
+  }
+  // `rootMargin` is what makes this work for a zero-height target: the inflated
+  // root still crosses the block's zero-height box as it scrolls through that
+  // margin, so the callback fires before the visitor reaches it.
   const observer = new IntersectionObserver((entries) => {
     if (entries.some((e) => e.isIntersecting)) {
       observer.disconnect();
       embedMarketoForm(form, cfg, config, env);
     }
-  });
+  }, { rootMargin: '400px 0px' });
   observer.observe(block);
 }
 
