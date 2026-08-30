@@ -8,11 +8,18 @@
 }
 
 /* row-alternating text+image sections sit narrower than the site's default
-   1380px container, with a fixed 155px side gutter at desktop widths (the
-   nonprofit page's "Multi-dimensional tracking" style sections) */
+   1380px container: a fixed 1130px content box with a 155px side gutter at
+   desktop widths (the nonprofit page's "Multi-dimensional tracking" style
+   sections) */
 @media (width >= 1024px) {
   .section.media-text-container:not(:has(.media-text.cards, .media-text.compare, .media-text.power)) > div {
+    max-width: 1440px;
     padding-inline: 155px;
+  }
+
+  .section.media-text-container:not(:has(.media-text.cards, .media-text.compare, .media-text.power)) .media-row {
+    max-width: 1130px;
+    margin-inline: auto;
   }
 }
 
