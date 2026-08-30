@@ -145,6 +145,22 @@
 .section.logo-band-container:has(.logo-band.marquee) { background: #00254a; overflow: hidden; }
 .logo-band.marquee { padding: 20px 0; }
 
+/* a heading/intro authored as default content above the marquee sits on the
+   same navy band, so it needs the light-on-dark treatment normally reserved
+   for the logos themselves */
+.section.logo-band-container:has(.logo-band.marquee) .default-content-wrapper {
+  padding: 40px 24px 0;
+  text-align: center;
+}
+
+.section.logo-band-container:has(.logo-band.marquee) .default-content-wrapper :is(h1, h2, h3, h4, h5, h6) {
+  color: #fff;
+}
+
+.section.logo-band-container:has(.logo-band.marquee) .default-content-wrapper p {
+  color: rgb(255 255 255 / 80%);
+}
+
 /* full-bleed: a scrolling marquee spans the whole viewport, so release the
    section wrapper's centered column — same mechanism as cta-band.simple */
 main > .section.logo-band-container:has(.logo-band.marquee) > div { max-width: none; padding: 0; }
