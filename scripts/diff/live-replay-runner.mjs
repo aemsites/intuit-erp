@@ -518,13 +518,16 @@ function qualificationLocatorCss(locator) {
 function qualificationHrefSelector(tag, href) {
   const values = [String(href)];
   let sameOrigin = false;
+  let queryPrefix = '';
   try {
     const url = new URL(href);
     sameOrigin = url.origin === DEFAULT_ORIGIN;
     if (sameOrigin) values.push(`${url.pathname}${url.search}`);
+    else if (!url.search && !url.hash) queryPrefix = `${url.href}?`;
   } catch { /* Locator review validates href identity before replay. */ }
   const escaped = [...new Set(values)].map((value) => value.replace(/\\/g, '\\\\').replace(/"/g, '\\"'));
   const selectors = escaped.map((value) => `${tag}[href="${value}"]`);
+  if (queryPrefix) selectors.push(`${tag}[href^="${queryPrefix.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"]`);
   if (sameOrigin) selectors.push(`${tag}[href="#"]`);
   return `:is(${selectors.join(',')})`;
 }

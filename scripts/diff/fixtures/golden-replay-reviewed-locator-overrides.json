@@ -37,15 +37,20 @@
     {
       "scenarioId": "customer-events-7efa0bd38349",
       "page": "/events",
-      "candidateIdentity": { "dataTrackId": "media-text:intuitconnect", "accessibleName": "Register", "tag": "A", "role": "link", "region": "main", "href": "https://www.intuit.com/intuitconnect/", "block": "media-text" },
+      "candidateIdentity": { "dataTrackId": "media-text:intuitconnect", "accessibleName": "Register", "tag": "A", "role": "link", "region": "main", "block": "media-text" },
       "locator": { "block": "media-text" },
-      "rationale": "The feature access point maps to the media-text Register link, not the event-card duplicate."
+      "rationale": "The feature access point maps to the media-text Register link, not the event-card duplicate; campaign query parameters are not target identity."
     },
     {
       "scenarioId": "customer-events-170319f758b0",
       "page": "/events",
       "candidateIdentity": { "accessibleName": "Previous events", "tag": "BUTTON", "role": "button", "region": "main", "block": "event-cards" },
       "locator": { "block": "event-cards" },
+      "setupSteps": [{
+        "type": "click",
+        "locator": { "trackId": "cards:next-events", "region": "main", "role": "button", "name": "Next events", "exact": true, "block": "event-cards" },
+        "expect": { "state": "visible", "locator": { "trackId": "cards:previous-events", "region": "main", "role": "button", "name": "Previous events", "exact": true, "block": "event-cards" } }
+      }],
       "rationale": "The current Previous events control is the reviewed arrow_left replacement."
     },
     {
@@ -60,6 +65,11 @@
       "page": "/events",
       "candidateIdentity": { "accessibleName": "Previous events", "tag": "BUTTON", "role": "button", "region": "main", "block": "event-cards" },
       "locator": { "block": "event-cards" },
+      "setupSteps": [{
+        "type": "click",
+        "locator": { "trackId": "cards:next-events", "region": "main", "role": "button", "name": "Next events", "exact": true, "block": "event-cards" },
+        "expect": { "state": "visible", "locator": { "trackId": "cards:previous-events", "region": "main", "role": "button", "name": "Previous events", "exact": true, "block": "event-cards" } }
+      }],
       "duplicateOf": "customer-events-170319f758b0",
       "rationale": "This duplicate golden event deliberately replays the same reviewed Previous events target."
     },
@@ -140,9 +150,9 @@
     {
       "scenarioId": "customer-blog-construction-automation-in-cons-f31673a3238c",
       "page": "/blog/construction/automation-in-construction",
-      "candidateIdentity": { "dataTrackId": "case-study-header:twitter-share", "accessibleName": "X", "tag": "A", "role": "link", "region": "main", "href": "https://twitter.com/share", "block": "" },
+      "candidateIdentity": { "dataTrackId": "case-study-header:twitter-share", "accessibleName": "X", "tag": "A", "role": "link", "region": "main", "block": "" },
       "locator": { "block": "", "requireNoBlock": true },
-      "rationale": "The visible X control preserves the reviewed Twitter-share identity."
+      "rationale": "The visible X control preserves the reviewed Twitter-share identity; its generated share query is not target identity."
     },
     {
       "scenarioId": "customer-blog-construction-automation-in-cons-da834311dd4d",

@@ -350,6 +350,25 @@ describe('live replay harness contracts', () => {
     );
   });
 
+  it('allows reviewed external links to add volatile query parameters', () => {
+    const combined = {};
+    const constrained = { and: vi.fn().mockReturnValue(combined) };
+    const semantic = {};
+    const region = {
+      getByRole: vi.fn().mockReturnValue(semantic),
+      locator: vi.fn().mockReturnValue(constrained),
+    };
+    const page = { locator: vi.fn().mockReturnValue(region) };
+
+    expect(qualificationLocator(page, {
+      region: 'main', tag: 'A', role: 'link', name: 'Register', exact: true,
+      href: 'https://www.intuit.com/intuitconnect/',
+    })).toBe(combined);
+    expect(region.locator).toHaveBeenCalledWith(
+      ':is(a[href="https://www.intuit.com/intuitconnect/"],a[href^="https://www.intuit.com/intuitconnect/?"])',
+    );
+  });
+
   it('locates native summary controls without assuming an ARIA button role', () => {
     const filtered = {};
     const summaries = { filter: vi.fn().mockReturnValue(filtered) };
