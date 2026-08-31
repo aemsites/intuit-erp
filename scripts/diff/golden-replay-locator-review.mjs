@@ -4,7 +4,7 @@
  * firing events. The result is a bounded locator proposal set, never an
  * automatic qualification: equal-best candidates remain ambiguous.
  */
-/* eslint-disable import/extensions, no-console, no-restricted-syntax, max-len, no-plusplus */
+/* eslint-disable import/extensions, no-console, no-restricted-syntax, max-len, no-plusplus, no-continue */
 import {
   chmodSync, mkdirSync, readFileSync, renameSync, writeFileSync,
 } from 'node:fs';
@@ -21,6 +21,10 @@ const EXACT_ORIGIN = 'https://stage.erp.intuit.com';
 const DEFAULT_MANIFEST = 'scripts/diff/fixtures/local/clicktrack-golden-replay-manifest.json';
 const DEFAULT_INVENTORY = 'scripts/diff/fixtures/local/clicktrack-golden-stage-inventory.json';
 const DEFAULT_OUT = 'scripts/diff/fixtures/local/clicktrack-golden-locator-review.json';
+const DEFAULT_REVIEWED_OVERRIDES = 'scripts/diff/fixtures/golden-replay-reviewed-locator-overrides.json';
+const CANDIDATE_IDENTITY_KEYS = new Set([
+  'dataTrackId', 'accessibleName', 'tag', 'role', 'region', 'href', 'block', 'heading', 'ariaExpanded',
+]);
 
 const sha256 = (value) => `sha256:${createHash('sha256').update(value).digest('hex')}`;
 const normalizePath = (value) => {
@@ -63,16 +67,54 @@ function candidateEvidence(ranked) {
   }));
 }
 
-function locatorFor(candidate) {
-  if (candidate.dataTrackId) return { strategy: 'data-track-id', value: candidate.dataTrackId };
+function locatorFor(candidate, constraints = {}) {
   return {
-    strategy: 'semantic',
+    ...(candidate.dataTrackId ? { strategy: 'data-track-id', value: candidate.dataTrackId } : { strategy: 'semantic' }),
     region: candidate.region,
     role: candidate.role,
     accessibleName: candidate.accessibleName,
+    tag: candidate.tag,
     href: candidate.href,
     block: candidate.block,
+    ...constraints,
   };
+}
+
+function parseReviewedOverrides(bytes) {
+  if (!bytes) return null;
+  let parsed;
+  try { parsed = JSON.parse(bytes.toString('utf8')); } catch { throw new Error('reviewed locator overrides are not valid JSON'); }
+  if (parsed.schemaVersion !== 1 || !parsed.reviewId || !parsed.evidenceRef || !Array.isArray(parsed.decisions)) {
+    throw new Error('reviewed locator overrides schema is invalid');
+  }
+  const seen = new Set();
+  for (const decision of parsed.decisions) {
+    if (!decision.scenarioId || seen.has(decision.scenarioId)) throw new Error('reviewed locator scenario identity is duplicate or missing');
+    seen.add(decision.scenarioId);
+    if (!decision.page || !decision.rationale) throw new Error(`reviewed locator decision is incomplete: ${decision.scenarioId}`);
+    const identityKeys = Object.keys(decision.candidateIdentity || {});
+    if (!identityKeys.length || identityKeys.every((key) => key === 'candidateId')
+      || identityKeys.some((key) => !CANDIDATE_IDENTITY_KEYS.has(key))) {
+      throw new Error(`reviewed locator lacks stable candidate identity: ${decision.scenarioId}`);
+    }
+  }
+  return parsed;
+}
+
+function reviewedCandidate(page, scenario, overrides) {
+  if (!overrides) return null;
+  const decision = overrides.decisions.find(({ scenarioId }) => scenarioId === scenario.scenarioId);
+  if (!decision) return null;
+  if (decision.page !== scenario.page || page.pathname !== scenario.page) {
+    throw new Error(`reviewed locator page does not match scenario: ${scenario.scenarioId}`);
+  }
+  const entries = Object.entries(decision.candidateIdentity);
+  const matches = (page.candidates || []).filter((candidate) => entries
+    .every(([key, expected]) => String(candidate[key] ?? '') === String(expected ?? '')));
+  if (matches.length !== 1) {
+    throw new Error(`reviewed locator candidate identity resolved ${matches.length} candidates: ${scenario.scenarioId}`);
+  }
+  return { decision, candidate: matches[0] };
 }
 
 function trackingSheetRefsFor(rows, scenario) {
@@ -131,7 +173,7 @@ function diagnoseProposedConflict(match, scenario, rows) {
 }
 
 export function createLocatorReview({
-  manifest, inventory, inventoryBytes, trackingSheetBytes,
+  manifest, inventory, inventoryBytes, trackingSheetBytes, reviewedOverridesBytes,
 }) {
   if (inventory.origin !== EXACT_ORIGIN) throw new Error('inventory exact stage origin is invalid');
   if (inventory.manifest?.schemaVersion !== manifest.schemaVersion
@@ -140,6 +182,12 @@ export function createLocatorReview({
     throw new Error('inventory manifest binding does not match');
   }
   const rows = parseTrackingSheet(trackingSheetBytes);
+  const reviewedOverrides = parseReviewedOverrides(reviewedOverridesBytes);
+  if (reviewedOverrides) {
+    const scenarioIds = new Set(manifest.scenarios.map(({ scenarioId }) => scenarioId));
+    const unknown = reviewedOverrides.decisions.find(({ scenarioId }) => !scenarioIds.has(scenarioId));
+    if (unknown) throw new Error(`reviewed locator scenario is not in manifest: ${unknown.scenarioId}`);
+  }
   const trackingSheet = indexTrackingSheet(rows);
   const scenarioById = new Map(manifest.scenarios.map((scenario) => [scenario.scenarioId, scenario]));
   const reviewed = [];
@@ -155,6 +203,28 @@ export function createLocatorReview({
           scenarioId, page: page.pathname, status: 'blocked', reason: page.reason || 'page blocked',
         });
       } else {
+        const override = reviewedCandidate(page, scenario, reviewedOverrides);
+        if (override) {
+          reviewed.push({
+            scenarioId,
+            page: page.pathname,
+            status: 'proposed',
+            locator: locatorFor(override.candidate, override.decision.locator),
+            setupSteps: override.decision.setupSteps || [],
+            evidence: {
+              reasons: ['reviewed-override'],
+              candidate: candidateEvidence([{ candidate: override.candidate, score: null, reasons: ['reviewed-override'] }])[0],
+              reviewedDecision: {
+                reviewId: reviewedOverrides.reviewId,
+                evidenceRef: reviewedOverrides.evidenceRef,
+                candidateIdentity: override.decision.candidateIdentity,
+                rationale: override.decision.rationale,
+                duplicateOf: override.decision.duplicateOf || null,
+              },
+            },
+          });
+          continue;
+        }
         const match = matchScenarioToInventory(scenario, page.candidates || [], { trackingSheet });
         const result = { scenarioId, page: page.pathname, status: match.status };
         const conflict = diagnoseProposedConflict(match, scenario, rows);
@@ -200,6 +270,7 @@ export function createLocatorReview({
       inventorySha256: sha256(inventoryBytes),
       trackingSheetSha256: sha256(trackingSheetBytes),
       trackingSheetRows: rows.length,
+      reviewedOverridesSha256: reviewedOverridesBytes ? sha256(reviewedOverridesBytes) : null,
     },
     pageCasId: {
       total: (inventory.pages || []).length,
@@ -244,6 +315,7 @@ export function applyLocatorReviewToManifest(manifest, review) {
     };
     return {
       ...scenario,
+      ...(reviewed.setupSteps ? { setupSteps: reviewed.setupSteps } : {}),
       locator: reviewed.status === 'proposed'
         ? { status: 'proposed', ...reviewed.locator, evidence }
         : { status: reviewed.status, evidence },
@@ -269,6 +341,7 @@ function parseArgs(argv) {
     inventory: DEFAULT_INVENTORY,
     sheet: `${EXACT_ORIGIN}/tracking.json`,
     out: DEFAULT_OUT,
+    reviewedOverrides: DEFAULT_REVIEWED_OVERRIDES,
     applyManifest: false,
   };
   for (let index = 0; index < argv.length; index += 1) {
@@ -276,6 +349,7 @@ function parseArgs(argv) {
     else if (argv[index] === '--inventory') options.inventory = argv[++index];
     else if (argv[index] === '--sheet') options.sheet = argv[++index];
     else if (argv[index] === '--out') options.out = argv[++index];
+    else if (argv[index] === '--reviewed-overrides') options.reviewedOverrides = argv[++index];
     else if (argv[index] === '--apply-manifest') options.applyManifest = true;
     else throw new Error(`unknown argument: ${argv[index]}`);
   }
@@ -300,8 +374,9 @@ export async function main(argv = process.argv.slice(2)) {
   const response = await fetch(options.sheet, { redirect: 'error' });
   if (!response.ok) throw new Error(`tracking sheet returned ${response.status}`);
   const trackingSheetBytes = Buffer.from(await response.arrayBuffer());
+  const reviewedOverridesBytes = options.reviewedOverrides ? readFileSync(options.reviewedOverrides) : null;
   const review = createLocatorReview({
-    manifest, inventory, inventoryBytes, trackingSheetBytes,
+    manifest, inventory, inventoryBytes, trackingSheetBytes, reviewedOverridesBytes,
   });
   atomicWrite(options.out, review);
   if (options.applyManifest) atomicWrite(options.manifest, applyLocatorReviewToManifest(manifest, review));

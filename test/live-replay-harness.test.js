@@ -14,7 +14,9 @@ import {
 } from '../scripts/diff/live-replay-harness.mjs';
 import {
   activationEvidence, assertCanonicalScenarioPath, assertCleanReuseState, assertPreflight, assertRuntimeHashes, createRunJournal, createTargetGuard, deriveAllowlist, goldenScenario,
-  browserPreflight, clickReplayTarget, hashUrl, launchArguments, portAvailable, purgeEvidence, qualificationLocator, qualificationLocatorCss, selectDedicatedOriginPage, selectDedicatedPage,
+  browserPreflight, clickReplayTarget, executeSetupSteps, hashUrl, interactionSequence,
+  launchArguments, portAvailable, purgeEvidence, qualificationLocator, qualificationLocatorCss,
+  selectDedicatedOriginPage, selectDedicatedPage, validateLineageQualification,
   waitForUniqueQualificationLocator,
   shouldAbortReplayNavigation,
 } from '../scripts/diff/live-replay-runner.mjs';
@@ -329,6 +331,112 @@ describe('live replay harness contracts', () => {
     expect(page.locator).toHaveBeenCalledWith('main');
   });
 
+  it('matches normalized same-origin hrefs against relative authored attributes', () => {
+    const combined = {};
+    const constrained = { and: vi.fn().mockReturnValue(combined) };
+    const semantic = {};
+    const region = {
+      getByRole: vi.fn().mockReturnValue(semantic),
+      locator: vi.fn().mockReturnValue(constrained),
+    };
+    const page = { locator: vi.fn().mockReturnValue(region) };
+
+    expect(qualificationLocator(page, {
+      region: 'main', tag: 'A', role: 'link', name: 'Schedule a call', exact: true,
+      href: 'https://stage.erp.intuit.com/',
+    })).toBe(combined);
+    expect(region.locator).toHaveBeenCalledWith(
+      ':is(a[href="https://stage.erp.intuit.com/"],a[href="/"],a[href="#"])',
+    );
+  });
+
+  it('locates native summary controls without assuming an ARIA button role', () => {
+    const filtered = {};
+    const summaries = { filter: vi.fn().mockReturnValue(filtered) };
+    const block = { locator: vi.fn().mockReturnValue(summaries) };
+    const main = { locator: vi.fn().mockReturnValue(block) };
+    const page = { locator: vi.fn().mockReturnValue(main) };
+    expect(qualificationLocator(page, {
+      region: 'main', tag: 'SUMMARY', role: 'button', name: 'Important pricing details',
+      block: 'disclosure', exact: true,
+    })).toBe(filtered);
+    expect(page.locator).toHaveBeenCalledWith('main');
+    expect(main.locator).toHaveBeenCalledWith('.disclosure.block');
+    expect(block.locator).toHaveBeenCalledWith('summary');
+    expect(summaries.filter).toHaveBeenCalledWith({
+      hasText: /^\s*Important\s+pricing\s+details\s*$/u,
+    });
+  });
+
+  it('uses reviewed widget constraints and refuses order-only occurrences', () => {
+    const second = {};
+    const semantic = { nth: vi.fn().mockReturnValue(second) };
+    const widget = { getByRole: vi.fn().mockReturnValue(semantic) };
+    const page = { locator: vi.fn().mockReturnValue(widget) };
+    expect(qualificationLocator(page, {
+      region: 'widget', role: 'link', name: 'Visit support page', exact: true,
+      occurrence: 2, occurrenceEvidence: { stableConstraint: 'reviewed duplicate controls' },
+    })).toBe(second);
+    expect(page.locator).toHaveBeenCalledWith('#contact-us');
+    expect(semantic.nth).toHaveBeenCalledWith(1);
+    expect(() => qualificationLocator(page, {
+      region: 'widget', role: 'link', name: 'Visit support page', exact: true, occurrence: 2,
+    })).toThrow(/stable occurrence evidence/i);
+  });
+
+  it('opens setup UI before resolving the scoped replay target', async () => {
+    const opener = { count: vi.fn().mockResolvedValue(1), click: vi.fn().mockResolvedValue() };
+    const target = { waitFor: vi.fn().mockResolvedValue() };
+    const page = { waitForTimeout: vi.fn() };
+    const locate = vi.fn().mockReturnValueOnce(opener).mockReturnValueOnce(target);
+    await executeSetupSteps(page, [{
+      type: 'click',
+      locator: { trackId: 'talk-to-sales:talk-to-sales', role: 'button', name: 'Talk to sales' },
+      expect: {
+        state: 'visible',
+        locator: { trackId: 'talk-to-sales:schedule-a-call', role: 'button', name: 'Schedule a call' },
+      },
+    }], { locate });
+    expect(opener.click).toHaveBeenCalledOnce();
+    expect(target.waitFor).toHaveBeenCalledWith({ state: 'visible', timeout: 8000 });
+  });
+
+  it('uses three interactions only for the one-time lineage proof and one for scenario capture', () => {
+    expect(interactionSequence('proof').filter(({ type }) => type === 'click')).toHaveLength(3);
+    expect(interactionSequence('capture')).toEqual([
+      { type: 'activate' }, { type: 'click' }, { type: 'wait-linked' }, { type: 'deactivate' },
+    ]);
+  });
+
+  it('binds a reusable lineage proof to the same deployment, browser target, and manifest', () => {
+    const binding = {
+      origin: 'https://stage.erp.intuit.com', profileId: 'profile', chromeVersion: '151',
+      mode: 'dedicated', harnessVersion: '0.2.0', consentState: 'resolved',
+      targetId: 'target', authorizationRef: 'Adobe Migration Test', lineagePolicyVersion: 'message-id-v1',
+      runtimeHashes: { tracking: 'sha256:tracking' },
+      sourceHashes: { 'live-replay-runner.mjs': 'sha256:runner', 'clicktrack-qualification-scenario.json': 'sha256:capture' },
+      completeGoldenManifest: { contentHash: 'sha256:manifest', mappingHash: 'sha256:mapping' },
+    };
+    const proof = { qualification: {
+      ...binding,
+      lineageMode: 'proof',
+      expiresAt: new Date(Date.now() + 60_000).toISOString(),
+      sourceHashes: { ...binding.sourceHashes, 'clicktrack-qualification-scenario.json': 'sha256:proof' },
+    } };
+    expect(validateLineageQualification(proof, binding, Buffer.from('proof'))).toMatchObject({
+      artifactSha256: expect.stringMatching(/^sha256:/), targetId: 'target', lineagePolicyVersion: 'message-id-v1',
+    });
+    proof.qualification.targetId = 'other';
+    expect(() => validateLineageQualification(proof, binding, Buffer.from('proof')))
+      .toThrow(/lineage qualification binding/i);
+    proof.qualification.targetId = binding.targetId;
+    ['mode', 'harnessVersion', 'consentState'].forEach((key) => {
+      const changed = { ...binding, [key]: `${binding[key]}-changed` };
+      expect(() => validateLineageQualification(proof, changed, Buffer.from('proof')))
+        .toThrow(/lineage qualification binding/i);
+    });
+  });
+
   it('waits for a replay target to stabilize to exactly one element', async () => {
     const locator = { count: vi.fn().mockResolvedValueOnce(0).mockResolvedValueOnce(2).mockResolvedValueOnce(1) };
     const page = { waitForTimeout: vi.fn().mockResolvedValue() };
@@ -500,8 +608,9 @@ describe('live replay harness contracts', () => {
     const evidence = await hook.snapshot();
 
     expect(sent).toHaveLength(2);
-    expect(evidence.serialized.map((entry) => entry.status)).toEqual(['unlinked', 'linked']);
-    expect(evidence.serialized[1]).toMatchObject({
+    expect(evidence.serialized.map((entry) => entry.status).sort()).toEqual(['linked', 'unlinked']);
+    const linked = evidence.serialized.find((entry) => entry.status === 'linked');
+    expect(linked).toMatchObject({
       scenarioId: scenario.scenarioId,
       messageId: { redacted: true, type: 'string', length: 16 },
     });
@@ -513,22 +622,22 @@ describe('live replay harness contracts', () => {
     expect(serialized).not.toContain('raw-intuit-visitor-id');
     expect(serialized).not.toContain('raw-ecid');
     expect(serialized).not.toContain('private@example.com');
-    expect(evidence.serialized[1].payload.messageId).toBe('STR:16');
-    expect(evidence.serialized[1].payload.anonymousId).toBe('STR:14');
-    expect(evidence.serialized[1].payload.properties.ivid).toBe('STR:21');
-    expect(evidence.serialized[1].payload.integrations['Adobe Analytics']).toEqual({
+    expect(linked.payload.messageId).toBe('STR:16');
+    expect(linked.payload.anonymousId).toBe('STR:14');
+    expect(linked.payload.properties.ivid).toBe('STR:21');
+    expect(linked.payload.integrations['Adobe Analytics']).toEqual({
       marketingCloudVisitorId: 'STR:8',
     });
-    expect(evidence.serialized[1].payload.properties.url).toBe('https://stage.erp.intuit.com/workforce-automation');
-    expect(evidence.serialized[1].payload.properties.url_clean).toBe('stage.erp.intuit.com/workforce-automation');
-    expect(evidence.serialized[1].payload.properties.url_host_name).toBe('stage.erp.intuit.com');
-    expect(evidence.serialized[1].payload.properties.safe_object.nested.email).toMatchObject({ redacted: true });
-    expect(evidence.serialized[1].payload.properties.unknown_customer_value).toMatchObject({
+    expect(linked.payload.properties.url).toBe('https://stage.erp.intuit.com/workforce-automation');
+    expect(linked.payload.properties.url_clean).toBe('stage.erp.intuit.com/workforce-automation');
+    expect(linked.payload.properties.url_host_name).toBe('stage.erp.intuit.com');
+    expect(linked.payload.properties.safe_object.nested.email).toMatchObject({ redacted: true });
+    expect(linked.payload.properties.unknown_customer_value).toMatchObject({
       redacted: true,
       type: 'string',
       length: 16,
     });
-    expect(evidence.serialized[1].payload.properties.unknown_customer_value.hmac).toMatch(/^[0-9a-f]{64}$/);
+    expect(linked.payload.properties.unknown_customer_value.hmac).toMatch(/^[0-9a-f]{64}$/);
     await hook.teardown('test-complete');
   });
 

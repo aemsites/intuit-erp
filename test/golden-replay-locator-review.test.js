@@ -1,6 +1,7 @@
 import {
   describe, expect, it,
 } from 'vitest';
+import { readFileSync } from 'node:fs';
 import {
   applyLocatorReviewToManifest, createLocatorReview,
 } from '../scripts/diff/golden-replay-locator-review.mjs';
@@ -201,5 +202,108 @@ describe('golden replay locator review', () => {
       'sheet-semantic-conflict': 1,
       'semantic-residue-conflict': 2,
     });
+  });
+
+  it('applies reviewed decisions only through exact scenario, page, and stable candidate identity', () => {
+    const reviewedOverrides = {
+      schemaVersion: 1,
+      reviewId: 'review-2026-08-31',
+      evidenceRef: '.jig/click-tracking-harness/evidence/v31-noncaptured-gap-audit.md',
+      decisions: [{
+        scenarioId: 'two',
+        page: '/events',
+        candidateIdentity: {
+          dataTrackId: 'duplicate:b', accessibleName: 'Duplicate', role: 'link', region: 'main', block: '',
+        },
+        locator: { requireNoBlock: true },
+        rationale: 'reviewed duplicate target',
+      }],
+    };
+    const create = (overrides) => createLocatorReview({
+      manifest: manifest(), inventory: inventory(), inventoryBytes: Buffer.from('inventory'),
+      trackingSheetBytes: Buffer.from('{"data":[]}'),
+      reviewedOverridesBytes: Buffer.from(JSON.stringify(overrides)),
+    });
+    const review = create(reviewedOverrides);
+
+    expect(review.scenarios[1]).toMatchObject({
+      scenarioId: 'two', status: 'proposed',
+      locator: {
+        strategy: 'data-track-id', value: 'duplicate:b', region: 'main', role: 'link',
+        accessibleName: 'Duplicate', block: '', requireNoBlock: true,
+      },
+      evidence: {
+        reviewedDecision: {
+          reviewId: 'review-2026-08-31',
+          evidenceRef: '.jig/click-tracking-harness/evidence/v31-noncaptured-gap-audit.md',
+          candidateIdentity: reviewedOverrides.decisions[0].candidateIdentity,
+        },
+      },
+    });
+    expect(review.inputs.reviewedOverridesSha256).toMatch(/^sha256:[a-f0-9]{64}$/);
+
+    const wrongPage = structuredClone(reviewedOverrides);
+    wrongPage.decisions[0].page = '/wrong';
+    expect(() => create(wrongPage)).toThrow(/reviewed locator page/i);
+
+    const unstableIdentity = structuredClone(reviewedOverrides);
+    unstableIdentity.decisions[0].candidateIdentity = { candidateId: 'duplicate-b' };
+    expect(() => create(unstableIdentity)).toThrow(/stable candidate identity/i);
+  });
+
+  it('carries reviewed setup and duplicate-target decisions into the replay manifest', () => {
+    const testManifest = manifest();
+    const testInventory = inventory();
+    const reviewedOverrides = {
+      schemaVersion: 1,
+      reviewId: 'review-2026-08-31',
+      evidenceRef: 'audit.md',
+      decisions: ['one', 'two'].map((scenarioId) => ({
+        scenarioId,
+        page: '/events',
+        candidateIdentity: {
+          dataTrackId: 'event-cards:register', accessibleName: 'Register', role: 'link', region: 'main', block: 'event-cards',
+        },
+        locator: { block: 'event-cards' },
+        setupSteps: [{
+          type: 'click',
+          locator: { trackId: 'widget:open', role: 'button', name: 'Open', region: 'widget', exact: true },
+          expect: { state: 'visible' },
+        }],
+        duplicateOf: scenarioId === 'two' ? 'one' : null,
+        rationale: 'reviewed target',
+      })),
+    };
+    const review = createLocatorReview({
+      manifest: testManifest, inventory: testInventory, inventoryBytes: Buffer.from('inventory'),
+      trackingSheetBytes: Buffer.from('{"data":[]}'),
+      reviewedOverridesBytes: Buffer.from(JSON.stringify(reviewedOverrides)),
+    });
+    const updated = applyLocatorReviewToManifest(testManifest, review);
+    expect(updated.scenarios[0].setupSteps).toHaveLength(1);
+    expect(updated.scenarios[1]).toMatchObject({
+      locator: { status: 'proposed', value: 'event-cards:register' },
+      setupSteps: [{ type: 'click' }],
+    });
+    expect(updated.scenarios[1].locator.evidence.reviewedDecision.duplicateOf).toBe('one');
+  });
+
+  it('ships exactly the 20 harness-owned decisions without closing owner-owned gaps', () => {
+    const artifact = JSON.parse(readFileSync(
+      'scripts/diff/fixtures/golden-replay-reviewed-locator-overrides.json', 'utf8',
+    ));
+    expect(artifact.decisions).toHaveLength(20);
+    expect(new Set(artifact.decisions.map(({ scenarioId }) => scenarioId)).size).toBe(20);
+    expect(artifact.decisions.map(({ scenarioId }) => scenarioId)).not.toContain(
+      'customer-blog-construction-automation-in-cons-e622b3154851',
+    );
+    for (const decision of artifact.decisions) {
+      expect(decision).toMatchObject({
+        scenarioId: expect.stringMatching(/^customer-/),
+        page: expect.stringMatching(/^\//),
+        rationale: expect.any(String),
+      });
+      expect(Object.keys(decision.candidateIdentity).some((key) => key !== 'candidateId')).toBe(true);
+    }
   });
 });

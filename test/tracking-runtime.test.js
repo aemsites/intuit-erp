@@ -88,6 +88,14 @@ describe('resolveTrackable', () => {
     expect(hit.cta.tagName).toBe('A');
     expect(hit.block).toBeNull(); // loose content CTA -> page bucket
   });
+  it('resolves a native summary disclosure as a trackable control', () => {
+    document.body.innerHTML = '<main><div class="disclosure block"><details>'
+      + '<summary>Important pricing details</summary></details></div></main>';
+    const hit = resolveTrackable(document.querySelector('summary'));
+    expect(hit).not.toBeNull();
+    expect(hit.cta.tagName).toBe('SUMMARY');
+    expect(hit.block).toBeNull();
+  });
   it('returns null outside the content regions (injected chrome at the body root)', () => {
     document.body.innerHTML = '<div class="cookie block"><a href="#">Accept</a></div>';
     expect(resolveTrackable(document.querySelector('a'))).toBeNull();

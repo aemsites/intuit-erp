@@ -3,8 +3,10 @@ import {
 } from 'vitest';
 import { EventEmitter } from 'node:events';
 import {
-  buildQualificationScenario, captureDeploymentFingerprint, disposeUnreplayableScenarios,
-  qualificationFailureReason, recoveryTargetUrl, replayReadiness, runQualificationProcess, shouldRetryQualification,
+  buildQualificationScenario, captureDeploymentFingerprint, capturePageFingerprint,
+  disposeUnreplayableScenarios, isRunBindingDrift, parseArgs,
+  qualificationFailureReason, recoveryTargetUrl, replayReadiness, runQualificationProcess,
+  selectLineageQualificationScenario, shouldRetryQualification,
   validateQualificationCapture,
 } from '../scripts/diff/golden-replay-scheduler.mjs';
 import { createReplayRunState } from '../scripts/diff/golden-replay-run-state.mjs';
@@ -64,14 +66,46 @@ describe('complete golden replay scheduler', () => {
     expect(() => buildQualificationScenario(manifest().scenarios[2])).toThrow(/not proposed/i);
   });
 
+  it('carries stable block, occurrence, setup, and lineage-proof constraints into a one-click capture', () => {
+    const reviewed = scenario('reviewed', 'proposed', {
+      strategy: 'semantic', region: 'widget', role: 'link', accessibleName: 'Visit support page',
+      block: '', requireNoBlock: true, occurrence: 2,
+      occurrenceEvidence: { stableConstraint: 'two identical authored controls in widget' },
+    });
+    reviewed.setupSteps = [{ type: 'click', locator: { trackId: 'talk-to-sales:talk-to-sales' } }];
+    const built = buildQualificationScenario(reviewed, {
+      lineageMode: 'capture', lineageQualification: '/tmp/lineage-proof.json',
+    });
+    expect(built).toMatchObject({
+      locator: {
+        region: 'widget', role: 'link', name: 'Visit support page', block: '', requireNoBlock: true,
+        occurrence: 2, occurrenceEvidence: { stableConstraint: expect.any(String) },
+      },
+      setupSteps: [{ type: 'click' }],
+      lineage: { mode: 'capture', qualificationArtifact: '/tmp/lineage-proof.json' },
+      interaction: { activationCount: 1 },
+    });
+  });
+
+  it('chooses a stateless reviewed link for one-time lineage qualification', () => {
+    const source = manifest();
+    source.scenarios[0].setupSteps = [{ type: 'click' }];
+    source.scenarios[1].locator.role = 'link';
+    source.scenarios[1].locator.accessibleName = 'Watch now';
+    expect(selectLineageQualificationScenario(source)).toMatchObject({ scenarioId: 'semantic' });
+    source.scenarios[1].locator.role = 'button';
+    expect(() => selectLineageQualificationScenario(source)).toThrow(/stateless reviewed link/i);
+  });
+
   it('checkpoints missing and ambiguous dispositions without shrinking the denominator', () => {
     const source = manifest();
+    source.scenarios.push(scenario('blocked-page', 'blocked', { evidence: { diagnosis: 'page authentication failed' } }));
     const initial = createReplayRunState(source, binding);
     const state = disposeUnreplayableScenarios(initial, source);
     expect(state.outcomes.map(({ status }) => status)).toEqual([
-      'pending', 'pending', 'missing', 'unreproducible', 'passive',
+      'pending', 'pending', 'missing', 'unreproducible', 'passive', 'blocked',
     ]);
-    expect(state.coverage).toMatchObject({ total: 5, pending: 2, missing: 1, unreproducible: 1, passive: 1 });
+    expect(state.coverage).toMatchObject({ total: 6, pending: 2, blocked: 1, missing: 1, unreproducible: 1, passive: 1 });
   });
 
   it('extracts one linked payload and fingerprints only uniform deployment identity', () => {
@@ -102,9 +136,47 @@ describe('complete golden replay scheduler', () => {
     capture.provenance.global.runId = 'child-two';
     capture.provenance.global.harness.sourceHashes.scenario = 'changed';
     expect(captureDeploymentFingerprint(capture)).toBe(first);
+    const firstPage = capturePageFingerprint(capture);
+    capture.pages[0].provenance = {
+      document: { contentHash: 'sha256:document-two' },
+      interactionInventoryHash: 'sha256:inventory-two',
+      sameOriginScripts: [
+        { url: '/scripts/tracking.js', contentHash: 'sha256:tracking-two' },
+        { url: '/blocks/cards/cards.js', contentHash: 'sha256:cards-two' },
+      ],
+    };
+    expect(captureDeploymentFingerprint(capture)).toBe(first);
+    expect(capturePageFingerprint(capture)).not.toBe(firstPage);
+    const pageFingerprint = capturePageFingerprint(capture);
+    capture.pages[0].provenance.sameOriginScripts.reverse();
+    expect(capturePageFingerprint(capture)).toBe(pageFingerprint);
     capture.pages[0].events[0].payload.properties.page_cas_id = '/wrong';
     expect(() => validateQualificationCapture(capture, sourceScenario, binding.authorizationRef))
       .toThrow(/page_cas_id/i);
+  });
+
+  it('requires every scenario capture to cite the one bound lineage-proof artifact', () => {
+    const sourceScenario = manifest().scenarios[0];
+    const capture = {
+      status: 'complete',
+      golden: { scenarioId: 'tracked', payloadFile: 'payloads/tracked.json' },
+      qualification: {
+        transportPolicy: 'observe', authorizationRef: binding.authorizationRef,
+        lineageMode: 'capture', lineageQualification: { artifactSha256: 'sha256:proof' },
+      },
+      pages: [{
+        pathname: '/events',
+        events: [{ scenarioId: 'tracked', payload: { properties: { page_cas_id: '/events' } } }],
+        outcomes: [{ scenarioId: 'tracked', status: 'captured', messageId: 'message', invocationId: 'invoke' }],
+      }],
+    };
+    expect(validateQualificationCapture(
+      capture, sourceScenario, binding.authorizationRef, null, { sha256: 'sha256:proof' },
+    )).toMatchObject({ messageId: 'message' });
+    capture.qualification.lineageQualification.artifactSha256 = 'sha256:other';
+    expect(() => validateQualificationCapture(
+      capture, sourceScenario, binding.authorizationRef, null, { sha256: 'sha256:proof' },
+    )).toThrow(/lineage qualification/i);
   });
 
   it('terminates a stuck one-page qualification at the scenario deadline', async () => {
@@ -159,6 +231,18 @@ describe('complete golden replay scheduler', () => {
     expect(shouldRetryQualification('scenario qualification timed out after 120000ms')).toBe(true);
     expect(shouldRetryQualification('scenario locator resolved 0 elements')).toBe(false);
     expect(shouldRetryQualification('scenario locator resolved 2 elements')).toBe(false);
+  });
+
+  it('treats proof or deployment drift as a run-level refusal', () => {
+    expect(isRunBindingDrift('lineage qualification binding does not match capture deployment/browser/session')).toBe(true);
+    expect(isRunBindingDrift('uniform deployment identity changed during the complete-golden run')).toBe(true);
+    expect(isRunBindingDrift('uniform page deployment identity changed during the complete-golden run')).toBe(true);
+    expect(isRunBindingDrift('scenario locator resolved 0 elements')).toBe(false);
+  });
+
+  it('accepts explicit repeatable completed-scenario rerun requests', () => {
+    expect(parseArgs(['--authorization-ref', 'Adobe Migration Test', '--rerun-scenario', 'one', '--rerun-scenario', 'two']))
+      .toMatchObject({ rerunScenarioIds: ['one', 'two'] });
   });
 
   it('does not release a scenario until consent and every tracker layer are ready', () => {
