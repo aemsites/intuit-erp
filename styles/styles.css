@@ -932,7 +932,7 @@ img {
   display: none;
 }
 
-body:not(.case-study, .blog-article, .research) .section:not(:first-of-type)>.default-content-wrapper> :is(h1, h2, h3, h4, h5, h6) {
+body:not(.case-study, .blog-article, .research) .section:not(:first-of-type)>.default-content-wrapper> :is(h1, h2, h3, h4, h5, h6, p) {
   text-align: center;
 }
 
@@ -1082,4 +1082,12 @@ body.block-library > main > .section > .default-content-wrapper > h1 {
 
 body.block-library .section > .default-content-wrapper {
   padding:0
+}
+
+body.author-guide > main > .section > .default-content-wrapper :is(h1, h2, h3, h4, h5, h6, p, ul, li) {
+  text-align: left !important;
+}
+
+body.author-guide > main > .section:not(:first-of-type) > div {
+  max-width: 1024px;
 }

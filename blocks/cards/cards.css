@@ -36,7 +36,7 @@
   margin-top: 32px;
 }
 
-.cards .cards-card-body a {
+.cards .cards-card-body a:not(.button) {
   color: var(--info);
   font-weight: 400;
 }
@@ -691,6 +691,10 @@
 
     .cards-card-body p:has(a) {
       margin-top: 0;
+    }
+
+    .cards-card-body a:hover {
+      text-decoration: none;
     }
   }
 }

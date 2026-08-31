@@ -517,3 +517,15 @@ main>.section.light-background.hero-container .hero-copy :is(h1, h2, h3, h4, h5,
 main>.section.light-background.hero-container .hero-copy :is(ol, ul, li, p) {
   color: var(--text-color);
 }
+
+body.author-guide .hero .hero-media img {
+  max-width: 500px;
+}
+
+body.author-guide .hero .hero-media {
+  justify-self: end;
+}
+
+body.author-guide .hero .hero-grid {
+  align-items: center;
+}
