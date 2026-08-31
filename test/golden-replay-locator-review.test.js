@@ -126,7 +126,7 @@ describe('golden replay locator review', () => {
     })).toThrow(/duplicate tracking sheet identity/);
   });
 
-  it('quarantines sheet-selected and partial-name locators that conflict with visible identity', () => {
+  it('quarantines semantic conflicts but preserves the runtime label fallback', () => {
     const testManifest = manifest();
     testManifest.scenarios.push(
       {
@@ -143,15 +143,31 @@ describe('golden replay locator review', () => {
         },
         runtimeAssets: ['/blocks/event-cards/event-cards.js'],
       },
+      {
+        scenarioId: 'seven', page: '/events', classification: { interaction: 'interactive' },
+        targetSignature: {
+          region: 'main', uiObjectDetail: 'Intuit Enterprise Suite', waLink: 'footer-company-profile', href: '',
+        },
+        runtimeAssets: [],
+      },
+      {
+        scenarioId: 'eight', page: '/events', classification: { interaction: 'interactive' },
+        targetSignature: {
+          region: 'main', uiObjectDetail: 'Take the tour', waLink: 'hero-tour', href: '',
+        },
+        runtimeAssets: [],
+      },
     );
     const testInventory = inventory();
-    testInventory.pages[0].expectedScenarioIds.push('five', 'six');
+    testInventory.pages[0].expectedScenarioIds.push('five', 'six', 'seven', 'eight');
     testInventory.pages[0].candidates.push(
       candidate('capabilities', 'Capabilities', 'nav:capabilities'),
       candidate('logo', 'Intuit Enterprise Suite', 'nav:erp'),
       candidate('resources', 'Resources', 'nav:resources'),
+      candidate('tour', 'Take the tour', 'hero:navattic-srk05sa'),
     );
-    testInventory.pages[0].candidates.at(-1).block = 'event-cards';
+    testInventory.pages[0].candidates.at(-2).block = 'event-cards';
+    testInventory.pages[0].candidates.at(-1).block = 'hero';
     const review = createLocatorReview({
       manifest: testManifest,
       inventory: testInventory,
@@ -160,6 +176,8 @@ describe('golden replay locator review', () => {
         { path: '/events', id: 'event-cards:register', 'wa-link': 'event-register' },
         { path: '/events', id: 'nav:erp', 'wa-link': 'nav-capabilities' },
         { path: '/events', id: 'nav:erp-4', 'wa-link': 'nav-thought-leadership' },
+        { path: '/events', id: 'footer:company', 'wa-link': 'footer-company-profile' },
+        { path: '/events', id: 'hero:take-the-tour', 'wa-link': 'hero-tour' },
       ] })),
     });
 
@@ -171,9 +189,17 @@ describe('golden replay locator review', () => {
       scenarioId: 'six', status: 'ambiguous', diagnosis: 'semantic-residue-conflict',
       trackingSheetRefs: [{ path: '/events', id: 'nav:erp-4' }],
     });
+    expect(review.scenarios[6]).toMatchObject({
+      scenarioId: 'seven', status: 'ambiguous', diagnosis: 'semantic-residue-conflict',
+      trackingSheetRefs: [{ path: '/events', id: 'footer:company' }],
+    });
+    expect(review.scenarios[7]).toMatchObject({
+      scenarioId: 'eight', status: 'proposed',
+      locator: { strategy: 'data-track-id', value: 'hero:navattic-srk05sa' },
+    });
     expect(review.unresolvedCauses).toMatchObject({
       'sheet-semantic-conflict': 1,
-      'semantic-residue-conflict': 1,
+      'semantic-residue-conflict': 2,
     });
   });
 });

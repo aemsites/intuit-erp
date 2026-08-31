@@ -58,9 +58,8 @@ export function recoveryTargetUrl(currentUrl, origin, pathname) {
   if (target.origin !== EXACT_ORIGIN || target.pathname !== pathname) {
     throw new Error(`reviewed stage pathname is invalid: ${pathname}`);
   }
-  let current;
-  try { current = new URL(currentUrl); } catch { return target.href; }
-  return current.href === target.href ? null : target.href;
+  try { new URL(currentUrl); } catch { return target.href; }
+  return target.href;
 }
 
 export function qualificationFailureReason(error, journal, scenarioId) {
@@ -156,6 +155,7 @@ export function buildQualificationScenario(scenario) {
     goldenRef: scenario.goldenRef,
     locator: {
       ...(scenario.locator.strategy === 'data-track-id' ? { trackId: scenario.locator.value } : {}),
+      ...((scenario.locator.region || candidate.region) ? { region: scenario.locator.region || candidate.region } : {}),
       role,
       name,
       exact: true,

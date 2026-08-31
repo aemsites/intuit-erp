@@ -14,7 +14,8 @@ import {
 } from '../scripts/diff/live-replay-harness.mjs';
 import {
   activationEvidence, assertCanonicalScenarioPath, assertCleanReuseState, assertPreflight, assertRuntimeHashes, createRunJournal, createTargetGuard, deriveAllowlist, goldenScenario,
-  browserPreflight, clickReplayTarget, hashUrl, launchArguments, portAvailable, purgeEvidence, qualificationLocatorCss, selectDedicatedOriginPage, selectDedicatedPage,
+  browserPreflight, clickReplayTarget, hashUrl, launchArguments, portAvailable, purgeEvidence, qualificationLocator, qualificationLocatorCss, selectDedicatedOriginPage, selectDedicatedPage,
+  waitForUniqueQualificationLocator,
   shouldAbortReplayNavigation,
 } from '../scripts/diff/live-replay-runner.mjs';
 
@@ -303,6 +304,44 @@ describe('live replay harness contracts', () => {
     expect(qualificationLocatorCss({ trackId: 'faq:question[one]"two' }))
       .toBe('[data-track-id="faq:question[one]\\"two"]:visible');
     expect(qualificationLocatorCss({ role: 'button' })).toBeNull();
+  });
+
+  it('intersects a tracking id with its reviewed role and accessible name', () => {
+    const combined = {};
+    const tracked = { and: vi.fn().mockReturnValue(combined) };
+    const semantic = {};
+    const page = {
+      locator: vi.fn().mockReturnValue(tracked),
+      getByRole: vi.fn().mockReturnValue(semantic),
+    };
+    const locator = { trackId: 'video:youtube', role: 'button', name: 'See how it works', exact: true };
+    expect(qualificationLocator(page, locator)).toBe(combined);
+    expect(tracked.and).toHaveBeenCalledWith(semantic);
+  });
+
+  it('scopes a semantic locator to its reviewed page region', () => {
+    const semantic = {};
+    const region = { getByRole: vi.fn().mockReturnValue(semantic) };
+    const page = { locator: vi.fn().mockReturnValue(region) };
+    expect(qualificationLocator(page, {
+      region: 'main', role: 'link', name: 'Intuit Enterprise Suite', exact: true,
+    })).toBe(semantic);
+    expect(page.locator).toHaveBeenCalledWith('main');
+  });
+
+  it('waits for a replay target to stabilize to exactly one element', async () => {
+    const locator = { count: vi.fn().mockResolvedValueOnce(0).mockResolvedValueOnce(2).mockResolvedValueOnce(1) };
+    const page = { waitForTimeout: vi.fn().mockResolvedValue() };
+    await expect(waitForUniqueQualificationLocator(page, locator, 500, 250)).resolves.toBe(locator);
+    expect(locator.count).toHaveBeenCalledTimes(3);
+    expect(page.waitForTimeout).toHaveBeenCalledTimes(2);
+  });
+
+  it('still refuses a locator that remains ambiguous', async () => {
+    const locator = { count: vi.fn().mockResolvedValue(2) };
+    const page = { waitForTimeout: vi.fn().mockResolvedValue() };
+    await expect(waitForUniqueQualificationLocator(page, locator, 500, 250))
+      .rejects.toThrow('scenario locator resolved 2 elements');
   });
 
   it('refuses target reuse when a lease marker, callback, or wrapper survived disconnect', () => {

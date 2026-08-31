@@ -15,6 +15,7 @@ import {
   indexTrackingSheet, matchScenarioToInventory,
 } from './golden-replay-stage-inventory.mjs';
 import { manifestContentHash } from './golden-replay-manifest.mjs';
+import { slug } from '../tracking.js';
 
 const EXACT_ORIGIN = 'https://stage.erp.intuit.com';
 const DEFAULT_MANIFEST = 'scripts/diff/fixtures/local/clicktrack-golden-replay-manifest.json';
@@ -84,6 +85,14 @@ function trackingSheetRefsFor(rows, scenario) {
     .filter(({ id }) => id);
 }
 
+function hasRuntimeLabelFallback(candidate, refs) {
+  const id = String(candidate?.dataTrackId || '');
+  const separator = id.indexOf(':');
+  if (separator <= 0 || !candidate?.accessibleName) return false;
+  const fallback = `${id.slice(0, separator)}:${slug(candidate.accessibleName)}`;
+  return refs.some(({ id: refId }) => refId === fallback);
+}
+
 function diagnoseUnresolved(match, scenario, rows, candidates) {
   if (match.status !== 'ambiguous' && match.status !== 'missing') return null;
   const refs = trackingSheetRefsFor(rows, scenario);
@@ -115,7 +124,7 @@ function diagnoseProposedConflict(match, scenario, rows) {
     return { cause: 'sheet-semantic-conflict', trackingSheetRefs: refs };
   }
   if (scenario.targetSignature?.waLink && refs.length && !hasResidueIdentity
-    && reasons.has('name-partial') && !reasons.has('href')) {
+    && hasNameIdentity && !reasons.has('href') && !hasRuntimeLabelFallback(match.candidate, refs)) {
     return { cause: 'semantic-residue-conflict', trackingSheetRefs: refs };
   }
   return null;
