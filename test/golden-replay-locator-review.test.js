@@ -305,5 +305,16 @@ describe('golden replay locator review', () => {
       });
       expect(Object.keys(decision.candidateIdentity).some((key) => key !== 'candidateId')).toBe(true);
     }
+    for (const scenarioId of ['customer-events-170319f758b0', 'customer-events-03760052fa48']) {
+      expect(artifact.decisions.find((decision) => decision.scenarioId === scenarioId)?.setupSteps)
+        .toMatchObject([{ locator: { trackId: 'cards:next-events' } }]);
+    }
+    for (const scenarioId of [
+      'customer-events-7efa0bd38349',
+      'customer-blog-construction-automation-in-cons-f31673a3238c',
+    ]) {
+      expect(artifact.decisions.find((decision) => decision.scenarioId === scenarioId)?.candidateIdentity)
+        .not.toHaveProperty('href');
+    }
   });
 });
