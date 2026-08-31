@@ -63,6 +63,8 @@ describe('complete golden replay report', () => {
       adjudication('url', 'normalized-equivalence'),
     );
     const report = buildGoldenReplayReport({ golden, manifest, state: bind(manifest, state), deviations });
+    expect(report.schemaVersion).toBe(2);
+    expect(report.summary.parity).toEqual(report.summary.metadataParity);
     expect(report.summary.pageCasId).toMatchObject({ captured: 1, exactPathname: 1, percent: 100, verdict: 'PASS' });
     expect(report.fields.find((row) => row.scenarioId === 'one' && row.field === 'page_cas_id'))
       .toMatchObject({
@@ -80,9 +82,45 @@ describe('complete golden replay report', () => {
       .toMatchObject({ category: 'stage-bug', match: false, expected: 'link', got: 'button' });
     expect(report.events.find((row) => row.scenarioId === 'two'))
       .toMatchObject({ category: 'capture-state', status: 'missing', reason: 'sheet-target-not-rendered' });
+    expect(report.summary.metadataParity).toEqual({
+      totalFields: 7,
+      exact: { fields: 4, percent: 57.1 },
+      accepted: {
+        fields: 2,
+        percent: 28.6,
+        byClassification: {
+          'expected-migration': 2,
+          'production-data-quality': 0,
+          'approved-golden-correction': 0,
+        },
+        byPolicy: { 'normalized-equivalence': 1, 'pathname-policy': 1 },
+      },
+      adjusted: { fields: 6, percent: 85.7 },
+      bugs: { fields: 1, percent: 14.3 },
+      investigations: { fields: 0, percent: 0 },
+      events: {
+        captured: 1,
+        exact: 0,
+        accepted: 0,
+        failing: 1,
+        unscored: 0,
+        exactPercent: 0,
+        adjustedPercent: 0,
+      },
+      verdict: 'FAIL',
+    });
+    expect(report.events.find((row) => row.scenarioId === 'one')).toMatchObject({
+      metadataTotal: 7,
+      metadataExact: 4,
+      metadataAccepted: 2,
+      metadataBugs: 1,
+      metadataInvestigations: 0,
+      metadataParityBasis: 'failing',
+    });
     const html = renderGoldenReplayHtml(report);
-    expect(html).toContain('Raw exact score');
-    expect(html).toContain('Policy-adjusted score');
+    expect(html).toContain('Exact metadata parity');
+    expect(html).toContain('Accepted metadata deviations');
+    expect(html).toContain('Adjusted pass (exact + accepted)');
     expect(html).toContain('Actionable bugs');
     expect(html).toContain('Open investigations');
     expect(html).toContain('Context presence');
@@ -90,6 +128,7 @@ describe('complete golden replay report', () => {
     expect(html).toContain('Raw equality');
     expect(html).toContain('Policy equality');
     expect(html).toContain('Presence');
+    expect(html).toContain('Parity basis');
   });
 
   it('keeps environment attribution and fragment-limited URL evidence out of confirmed bugs', () => {
