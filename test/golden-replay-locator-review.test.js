@@ -143,9 +143,16 @@ describe('golden replay locator review', () => {
         },
         runtimeAssets: ['/blocks/event-cards/event-cards.js'],
       },
+      {
+        scenarioId: 'seven', page: '/events', classification: { interaction: 'interactive' },
+        targetSignature: {
+          region: 'main', uiObjectDetail: 'Intuit Enterprise Suite', waLink: 'footer-company-profile', href: '',
+        },
+        runtimeAssets: [],
+      },
     );
     const testInventory = inventory();
-    testInventory.pages[0].expectedScenarioIds.push('five', 'six');
+    testInventory.pages[0].expectedScenarioIds.push('five', 'six', 'seven');
     testInventory.pages[0].candidates.push(
       candidate('capabilities', 'Capabilities', 'nav:capabilities'),
       candidate('logo', 'Intuit Enterprise Suite', 'nav:erp'),
@@ -160,6 +167,7 @@ describe('golden replay locator review', () => {
         { path: '/events', id: 'event-cards:register', 'wa-link': 'event-register' },
         { path: '/events', id: 'nav:erp', 'wa-link': 'nav-capabilities' },
         { path: '/events', id: 'nav:erp-4', 'wa-link': 'nav-thought-leadership' },
+        { path: '/events', id: 'footer:company', 'wa-link': 'footer-company-profile' },
       ] })),
     });
 
@@ -171,9 +179,13 @@ describe('golden replay locator review', () => {
       scenarioId: 'six', status: 'ambiguous', diagnosis: 'semantic-residue-conflict',
       trackingSheetRefs: [{ path: '/events', id: 'nav:erp-4' }],
     });
+    expect(review.scenarios[6]).toMatchObject({
+      scenarioId: 'seven', status: 'ambiguous', diagnosis: 'semantic-residue-conflict',
+      trackingSheetRefs: [{ path: '/events', id: 'footer:company' }],
+    });
     expect(review.unresolvedCauses).toMatchObject({
       'sheet-semantic-conflict': 1,
-      'semantic-residue-conflict': 1,
+      'semantic-residue-conflict': 2,
     });
   });
 });

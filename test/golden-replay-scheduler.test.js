@@ -42,7 +42,7 @@ const manifest = () => ({
       evidence: { candidate: { role: 'link', accessibleName: 'Register' } },
     }),
     scenario('semantic', 'proposed', {
-      strategy: 'semantic', role: 'button', accessibleName: 'Watch now',
+      strategy: 'semantic', region: 'main', role: 'button', accessibleName: 'Watch now',
     }),
     scenario('missing', 'missing', { evidence: { diagnosis: 'sheet-target-not-rendered' } }),
     scenario('ambiguous', 'ambiguous', { evidence: { diagnosis: 'semantic-duplicate' } }),
@@ -59,7 +59,7 @@ describe('complete golden replay scheduler', () => {
       interaction: { testText: 'Adobe Migration Test', preventNavigation: true },
     });
     expect(buildQualificationScenario(semantic)).toMatchObject({
-      locator: { role: 'button', name: 'Watch now', exact: true },
+      locator: { region: 'main', role: 'button', name: 'Watch now', exact: true },
     });
     expect(() => buildQualificationScenario(manifest().scenarios[2])).toThrow(/not proposed/i);
   });
@@ -125,11 +125,12 @@ describe('complete golden replay scheduler', () => {
     })).rejects.toThrow(/scenario qualification timed out after 5ms/i);
   });
 
-  it('recovers a poisoned target only by navigating to the exact reviewed stage page', () => {
+  it('resets every scenario by navigating to the exact reviewed stage page', () => {
     const origin = 'https://stage.erp.intuit.com';
     expect(recoveryTargetUrl('https://quickbooks.intuit.com/', origin, '/events'))
       .toBe('https://stage.erp.intuit.com/events');
-    expect(recoveryTargetUrl('https://stage.erp.intuit.com/events', origin, '/events')).toBeNull();
+    expect(recoveryTargetUrl('https://stage.erp.intuit.com/events', origin, '/events'))
+      .toBe('https://stage.erp.intuit.com/events');
     expect(recoveryTargetUrl('https://stage.erp.intuit.com/events#schedule', origin, '/events'))
       .toBe('https://stage.erp.intuit.com/events');
     expect(recoveryTargetUrl('https://stage.erp.intuit.com/events?source=test', origin, '/events'))

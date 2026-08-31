@@ -19,7 +19,7 @@ import {
 } from './live-replay-harness.mjs';
 import { POLICY } from './oracle-lib.mjs';
 
-const HARNESS_VERSION = '0.2.1';
+const HARNESS_VERSION = '0.2.4';
 const LINEAGE_POLICY_VERSION = 'message-id-v1';
 const TRACKER_POLICY_VERSION = '1';
 const EVIDENCE_FETCH_TIMEOUT_MS = 15000;
@@ -510,6 +510,23 @@ function qualificationLocatorCss(locator) {
   return `[data-track-id="${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"]:visible`;
 }
 
+function qualificationLocator(page, locator) {
+  const root = ['main', 'header', 'footer'].includes(locator.region) ? page.locator(locator.region) : page;
+  const semantic = root.getByRole(locator.role, { name: locator.name, exact: locator.exact });
+  const selector = qualificationLocatorCss(locator);
+  return selector ? page.locator(selector).and(semantic) : semantic;
+}
+
+async function waitForUniqueQualificationLocator(page, locator, timeoutMs = 8000, intervalMs = 250) {
+  let count = await locator.count();
+  for (let elapsed = 0; count !== 1 && elapsed < timeoutMs; elapsed += intervalMs) {
+    await page.waitForTimeout(intervalMs);
+    count = await locator.count();
+  }
+  if (count !== 1) throw new Error(`scenario locator resolved ${count} elements`);
+  return locator;
+}
+
 function shouldAbortReplayNavigation(request, page) {
   return request.isNavigationRequest() && request.frame() === page.mainFrame();
 }
@@ -544,13 +561,8 @@ async function clickReplayTarget(locator, scenario, clickOptions) {
 
 async function exerciseQualification(page, scenario) {
   const clickOptions = { force: true, noWaitAfter: true, timeout: 8000 };
-  const selector = qualificationLocatorCss(scenario.locator);
-  const locator = selector ? page.locator(selector) : page.getByRole(scenario.locator.role, {
-    name: scenario.locator.name,
-    exact: scenario.locator.exact,
-  });
-  const count = await locator.count();
-  if (count !== 1) throw new Error(`scenario locator resolved ${count} elements`);
+  const locator = qualificationLocator(page, scenario.locator);
+  await waitForUniqueQualificationLocator(page, locator);
   const expectedExpanded = scenario.preconditions?.attributes?.['aria-expanded'];
   if (expectedExpanded != null && await locator.getAttribute('aria-expanded') !== expectedExpanded) {
     await clickReplayTarget(locator, scenario, clickOptions);
@@ -881,6 +893,6 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
 
 export {
   activationEvidence, assertCanonicalScenarioPath, assertCleanReuseState, assertPreflight, assertRuntimeHashes, businessIdentity, createRunJournal, deriveAllowlist, goldenScenario, launchArguments,
-  browserPreflight, clickReplayTarget, createTargetGuard, hashUrl, portAvailable, purgeEvidence, qualificationLocatorCss, selectDedicatedOriginPage, selectDedicatedPage,
-  shouldAbortReplayNavigation,
+  browserPreflight, clickReplayTarget, createTargetGuard, hashUrl, portAvailable, purgeEvidence, qualificationLocator, qualificationLocatorCss, selectDedicatedOriginPage, selectDedicatedPage,
+  shouldAbortReplayNavigation, waitForUniqueQualificationLocator,
 };

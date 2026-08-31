@@ -115,7 +115,7 @@ function diagnoseProposedConflict(match, scenario, rows) {
     return { cause: 'sheet-semantic-conflict', trackingSheetRefs: refs };
   }
   if (scenario.targetSignature?.waLink && refs.length && !hasResidueIdentity
-    && reasons.has('name-partial') && !reasons.has('href')) {
+    && hasNameIdentity && !reasons.has('href')) {
     return { cause: 'semantic-residue-conflict', trackingSheetRefs: refs };
   }
   return null;
