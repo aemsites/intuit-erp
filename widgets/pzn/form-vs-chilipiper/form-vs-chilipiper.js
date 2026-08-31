@@ -1,6 +1,6 @@
 /**
  * PZN treatment for the "Form vs ChiliPiper" access point
- * (SBSEGICOMMContentFormvschilipiperHero, /construction/).
+ * (SBSEGICOMMCRFormvschilipiperHero, /construction/).
  *
  * Treatment: clicking the "Schedule a call" CTA opens a ChiliPiper round-robin scheduler in a
  * modal instead of the Marketo form. Faithful port of the OICMS snippet — a first-party iframe to
@@ -10,12 +10,12 @@
  *
  * Author config (widget href query params → widget.dataset):
  *   base    – round-robin base URL (default: intuitsales cal-first-construction)
- *   trigger – CSS selector for the CTA (default: [data-wa-link="chilipiper-submit"])
+ *   trigger – CSS selector for the CTA (default: construction hero schedule link)
  */
 import { createModal } from '../../../blocks/modal/modal.js';
 
 const DEFAULT_BASE = 'https://intuitsales.chilipiper.com/round-robin/cal-first-construction';
-const DEFAULT_TRIGGER = '[data-wa-link="chilipiper-submit"]';
+const DEFAULT_TRIGGER = '.hero a[href$="#schedule"]';
 
 // RFC4122 v4 UUID — native when available, else a Math.random fallback (matches the OICMS snippet).
 export function createUUID() {
@@ -56,7 +56,11 @@ export default async function decorate(widget) {
   const base = widget.dataset.base || DEFAULT_BASE;
   const trigger = widget.dataset.trigger || DEFAULT_TRIGGER;
 
-  // One delegated click listener on the document — the CTA may render or be replaced later.
+  document.querySelectorAll(trigger).forEach((cta) => {
+    cta.dataset.chilipiperTrigger = 'true';
+  });
+
+  // Capture before the baseline schedule handler; the CTA may render or be replaced later.
   // Idempotent per trigger selector so a re-run of the widget can't double-bind.
   const key = `chilipiper:${trigger}`;
   const bound = (document.documentElement.dataset.chilipiperBound || '').split('|').filter(Boolean);
@@ -65,8 +69,10 @@ export default async function decorate(widget) {
   document.documentElement.dataset.chilipiperBound = bound.join('|');
 
   document.addEventListener('click', (e) => {
-    if (!e.target.closest(trigger)) return;
+    const cta = e.target.closest(trigger);
+    if (!cta) return;
+    cta.dataset.chilipiperTrigger = 'true';
     e.preventDefault();
     openChiliPiperModal(base);
-  });
+  }, true);
 }

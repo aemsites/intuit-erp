@@ -466,8 +466,13 @@ async function loadLazy(doc) {
 
   const main = doc.querySelector('main');
   // Below-the-fold personalization/experimentation
-  if (window.hlx?.experienceResponse) {
-    import('./experience.js').then(({ applyLazyLayers }) => applyLazyLayers(doc)).catch(() => {});
+  let experienceTracking;
+  if (window.hlx?.experienceResponse || window.hlx?.experienceResponsePromise) {
+    const experienceModule = import('./experience.js');
+    experienceModule.then(({ applyLazyLayers }) => applyLazyLayers(doc)).catch(() => {});
+    experienceTracking = experienceModule
+      .then(({ prepareExperienceTracking }) => prepareExperienceTracking(doc))
+      .catch(() => {});
   }
   await loadSections(main);
 
@@ -511,6 +516,7 @@ async function loadLazy(doc) {
 
   // Tealium (default): load utag.js for the resolved env + apply consent. Fail-open.
   if (MARTECH_PROVIDER === 'tealium') {
+    if (experienceTracking) await experienceTracking;
     try { await tealium.lazy(); } catch (e) { /* non-fatal */ }
   }
 

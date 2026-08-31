@@ -16,7 +16,7 @@ import {
   stampPzn, stampExperiment,
   fetchExperience, applyPage, applyLayer,
   mergeExperience, collectSwapRequest, resolveSwappedSlots,
-  applyPageExperience, applyEagerLayers, applyLazyLayers,
+  applyPageExperience, applyEagerLayers, applyLazyLayers, prepareExperienceTracking,
   whenFullStoryReady, notifyFullStory,
 } from '../scripts/experience.js';
 // eslint-disable-next-line import/first
@@ -951,6 +951,126 @@ describe('phase entry points (applyPageExperience / applyEagerLayers / applyLazy
       + '</main>';
     await applyLazyLayers(document);
     expect(loadFragment).toHaveBeenCalledWith('/fragments/pzn/g');
+  });
+
+  it('records late page and first-section decisions without waiting for DOM swaps', async () => {
+    setMeta('personalization-id', 'HomeHero');
+    document.body.innerHTML = '<main>'
+      + '<div class="section" data-exp="376648"></div>'
+      + '<div class="section" data-pzn="gamma"></div>'
+      + '</main>';
+    window.requestIdleCallback = vi.fn(() => 1);
+    const response = mergeExperience(
+      mergeExperience(
+        pznResp('HomeHero', { contentId: '/fragments/pzn/page' }),
+        expResp('376648', { replacementCasId: '/fragments/exp/hero' }),
+      ),
+      pznResp('gamma', { contentId: '/fragments/pzn/g' }),
+    );
+    window.hlx = { experienceResponsePromise: Promise.resolve(response) };
+    loadFragment.mockImplementation(() => new Promise(() => {}));
+
+    let visualSettled = false;
+    applyLazyLayers(document).then(() => { visualSettled = true; });
+    await prepareExperienceTracking(document);
+    await new Promise((resolve) => { setTimeout(resolve, 0); });
+
+    expect(window.appVars.pznPageRecDetailsArr[0]).toMatchObject({
+      personalization_placement: 'HomeHero',
+      personalization_id: 'offer-1',
+    });
+    expect(window.appVars.ixpDetailsArr[0]).toMatchObject({
+      experiment_id: '376648',
+      experiment_treatment: 'T1',
+    });
+    expect(loadFragment).toHaveBeenCalledWith('/fragments/pzn/g');
+    expect(visualSettled).toBe(false);
+  });
+
+  it('uses decisions merged while lazy layers wait for a swapped page', async () => {
+    let finishSwap;
+    window.hlx = {
+      experienceResponse: expResp('999', { replacementCasId: null }),
+      experienceSwapResolved: new Promise((resolve) => { finishSwap = resolve; }),
+    };
+    document.body.innerHTML = '<main>'
+      + '<div class="section"></div>'
+      + '<div class="section" data-pzn="gamma"></div>'
+      + '</main>';
+
+    const lazy = applyLazyLayers(document);
+    window.hlx.experienceResponse = mergeExperience(
+      window.hlx.experienceResponse,
+      pznResp('gamma', { contentId: '/fragments/pzn/g' }),
+    );
+    finishSwap();
+    await lazy;
+
+    expect(loadFragment).toHaveBeenCalledWith('/fragments/pzn/g');
+  });
+
+  it('preserves the eager visual budget while retaining a late decision for tracking', async () => {
+    vi.useFakeTimers();
+    try {
+      document.body.innerHTML = '<main><div class="section" data-pzn="gamma"></div></main>';
+      window.requestIdleCallback = vi.fn(() => 1);
+      let resolveDecision;
+      vi.spyOn(globalThis, 'fetch').mockImplementationOnce((_url, { signal }) => new Promise((resolve, reject) => {
+        resolveDecision = resolve;
+        signal.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));
+      }));
+
+      const eager = applyPageExperience(document);
+      await vi.advanceTimersByTimeAsync(1500);
+      expect(await eager).toBe(false);
+
+      resolveDecision(new Response(JSON.stringify(pznResp('gamma', { contentId: null })), {
+        status: 200, headers: { 'content-type': 'application/json' },
+      }));
+      await prepareExperienceTracking(document);
+
+      expect(window.appVars.pznRecDetailsArr[0]).toMatchObject({
+        personalization_placement: 'gamma',
+        personalization_id: 'offer-1',
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('aborts a stalled page fragment at the eager visual deadline', async () => {
+    vi.useFakeTimers();
+    let resolveFragment;
+    try {
+      setMeta('personalization-id', 'HomeHero');
+      document.body.innerHTML = '<main><p>Baseline</p></main>';
+      vi.spyOn(globalThis, 'fetch')
+        .mockResolvedValueOnce(new Response(
+          JSON.stringify(pznResp('HomeHero', { contentId: '/fragments/pzn/page' })),
+          { status: 200, headers: { 'content-type': 'application/json' } },
+        ))
+        .mockImplementationOnce((_url, { signal }) => new Promise((resolve, reject) => {
+          resolveFragment = resolve;
+          signal.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));
+        }));
+
+      let settled = false;
+      let result;
+      const eager = applyPageExperience(document).then((value) => {
+        settled = true;
+        result = value;
+      });
+      await vi.advanceTimersByTimeAsync(1500);
+
+      expect(settled).toBe(true);
+      expect(result).toBe(false);
+      expect(document.querySelector('main').textContent).toContain('Baseline');
+      await eager;
+    } finally {
+      resolveFragment?.(new Response('<p>Late</p>', { status: 200 }));
+      await vi.runAllTimersAsync();
+      vi.useRealTimers();
+    }
   });
 
   it('applyLazyLayers: no-op without a cached response', async () => {

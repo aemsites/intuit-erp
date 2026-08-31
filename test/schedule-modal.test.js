@@ -103,4 +103,24 @@ describe('bindScheduleLinks', () => {
     bindScheduleLinks(container);
     expect(container.querySelector('a').dataset.scheduleBound).toBe('true');
   });
+
+  it('leaves claimed ChiliPiper links to the widget without stopping bubbling', async () => {
+    const container = makeContainer('#schedule');
+    const link = container.querySelector('a');
+    link.dataset.chilipiperTrigger = 'true';
+    document.body.append(container);
+    const tracking = vi.fn();
+    document.addEventListener('click', tracking, { once: true });
+    bindScheduleLinks(container);
+
+    const event = new MouseEvent('click', { bubbles: true, cancelable: true });
+    const preventDefault = vi.spyOn(event, 'preventDefault');
+    link.dispatchEvent(event);
+    await flush();
+
+    expect(openModal).not.toHaveBeenCalled();
+    expect(preventDefault).not.toHaveBeenCalled();
+    expect(tracking).toHaveBeenCalledTimes(1);
+    container.remove();
+  });
 });

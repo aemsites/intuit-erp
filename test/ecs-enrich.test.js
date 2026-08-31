@@ -125,18 +125,30 @@ describe('enrichEventPayload', () => {
   it('does NOT clobber a value the profile already set', () => {
     expect(enrichEventPayload({ page_cas_id: 'c14O6fD4y' }).page_cas_id).toBe('c14O6fD4y');
   });
+  it('fills global experiment_ids without clobbering Martech', () => {
+    const appVars = {
+      ixpDetailsArr: [{ experiment_id: '111', experiment_version: '2', experiment_treatment: '333' }],
+    };
+    expect(enrichEventPayload({}, appVars).experiment_ids).toBe('111:2:333');
+    expect(enrichEventPayload({ experiment_ids: '999:1:888' }, appVars).experiment_ids)
+      .toBe('999:1:888');
+  });
   it('tolerates a non-object', () => {
     expect(() => enrichEventPayload(null)).not.toThrow();
   });
 });
 
 describe('wrapTrack', () => {
-  it('enriches the payload before the original track fires', () => {
+  it('reads live appVars and enriches before the original track fires', () => {
     const original = vi.fn();
     const wa = { track: original };
     wrapTrack(wa);
+    window.appVars = {
+      ixpDetailsArr: [{ experiment_id: '111', experiment_version: '2', experiment_treatment: '333' }],
+    };
     wa.track({ object: 'content', action: 'interacted' });
     expect(original.mock.calls[0][0].page_cas_id).toBe(window.location.pathname);
+    expect(original.mock.calls[0][0].experiment_ids).toBe('111:2:333');
   });
   it('is idempotent — a second wrap does not double-invoke the original', () => {
     const original = vi.fn();
