@@ -1084,10 +1084,10 @@ body.block-library .section > .default-content-wrapper {
   padding:0
 }
 
-/* body.author-guide > main > .section > .default-content-wrapper :is(h1, h2, h3, h4, h5, h6, p, ul, li) {
+body.author-guide > main > .section > .default-content-wrapper :is(h1, h2, h3, h4, h5, h6, p, ul, li) {
   text-align: left !important;
-} */
+}
 
-/* body.author-guide > main > .section:not(:first-of-type) > div {
+body.author-guide > main > .section:not(:first-of-type) > div {
   max-width: 1024px;
-} */
+}
