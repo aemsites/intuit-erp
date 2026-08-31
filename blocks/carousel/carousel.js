@@ -295,6 +295,9 @@ export default function decorate(block) {
 
   const prevBtn = buildArrow('prev', 'Previous slide', '‹');
   const nextBtn = buildArrow('next', 'Next slide', '›');
+  const trackingKey = isTestimonial ? 'testimonial' : 'carousel';
+  prevBtn.dataset.trackId = `${trackingKey}:previous-slide`;
+  nextBtn.dataset.trackId = `${trackingKey}:next-slide`;
 
   // .spotlight navigates with photo thumbnails + a counter; every other variant
   // uses the dot strip. Only one set is built, so goTo below updates whichever
