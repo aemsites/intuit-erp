@@ -31,6 +31,7 @@ export function bindScheduleLinks(container) {
   container.querySelectorAll('a[href$="#schedule"]:not([data-schedule-bound])').forEach((a) => {
     a.dataset.scheduleBound = 'true';
     a.addEventListener('click', (e) => {
+      if (a.dataset.chilipiperTrigger === 'true') return;
       e.preventDefault();
       openScheduleModal();
     });
