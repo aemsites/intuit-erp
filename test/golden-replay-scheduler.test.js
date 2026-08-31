@@ -89,9 +89,13 @@ describe('complete golden replay scheduler', () => {
 
   it('chooses a stateless reviewed link for one-time lineage qualification', () => {
     const source = manifest();
-    source.scenarios[0].setupSteps = [{ type: 'click' }];
+    source.scenarios[0].locator.href = 'https://stage.erp.intuit.com/';
     source.scenarios[1].locator.role = 'link';
     source.scenarios[1].locator.accessibleName = 'Watch now';
+    source.scenarios[1].locator.href = 'https://www.intuit.com/';
+    expect(selectLineageQualificationScenario(source)).toMatchObject({ scenarioId: 'semantic' });
+
+    source.scenarios[0].setupSteps = [{ type: 'click' }];
     expect(selectLineageQualificationScenario(source)).toMatchObject({ scenarioId: 'semantic' });
     source.scenarios[1].locator.role = 'button';
     expect(() => selectLineageQualificationScenario(source)).toThrow(/stateless reviewed link/i);

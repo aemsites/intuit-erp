@@ -186,10 +186,13 @@ export function buildQualificationScenario(scenario, {
 }
 
 export function selectLineageQualificationScenario(manifest) {
-  const selected = manifest.scenarios.find((scenario) => scenario.locator?.status === 'proposed'
+  const candidates = manifest.scenarios.filter((scenario) => scenario.locator?.status === 'proposed'
     && (scenario.locator.role || scenario.locator.evidence?.candidate?.role) === 'link'
     && !(scenario.setupSteps || []).length
     && !Object.keys(scenario.preconditions || {}).length);
+  const selected = candidates.find((scenario) => {
+    try { return new URL(scenario.locator.href).origin !== EXACT_ORIGIN; } catch { return false; }
+  }) || candidates[0];
   if (!selected) throw new Error('complete replay has no stateless reviewed link for lineage qualification');
   return selected;
 }
