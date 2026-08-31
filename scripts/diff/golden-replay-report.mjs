@@ -124,7 +124,8 @@ function matchPolicy(scenario, location, field, spec, goldenValue, expected, got
   if (spec.equalsPathname && !same(goldenNormalized, expectedNormalized)) {
     policy = 'pathname-policy';
   } else if (spec.indexTolerant) policy = 'index-tolerant';
-  else if (spec.normalizeHost || spec.normalizeEnv || spec.normalizeTags || spec.stripBracket) policy = 'normalized-equivalence';
+  else if (spec.normalizeHost || spec.normalizeEnv || spec.normalizeTags
+    || spec.normalizeTypography || spec.stripBracket) policy = 'normalized-equivalence';
   const adjudication = findAdjudication(registry, scenario, location, field, policy);
   return adjudication
     ? { category: adjudication.classification, policy, adjudication }

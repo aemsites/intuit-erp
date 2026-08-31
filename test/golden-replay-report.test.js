@@ -177,6 +177,36 @@ describe('complete golden replay report', () => {
     ]));
   });
 
+  it('treats smart and straight quotation marks as equivalent after markup sanitization', () => {
+    const page = '/accountant';
+    const golden = { entries: [entry('payloads/faq.json', page, {
+      object: 'content', action: 'interacted',
+      ui_object_detail: '<span>What’s included in IES, and what\'s optional?</span>',
+      page_cas_id: 'legacy-cas-id',
+    })] };
+    const manifest = { scenarios: [{
+      scenarioId: 'faq-smart-punctuation', page, goldenRef: { payloadFile: 'payloads/faq.json' },
+    }] };
+    const state = bind(manifest, {
+      status: 'complete', coverage: { total: 1, pending: 0 }, resume: { nextScenarioId: null },
+      outcomes: [{
+        scenarioId: 'faq-smart-punctuation', status: 'captured',
+        payload: { type: 'track', event: 'content:interacted', properties: {
+          object: 'content', action: 'interacted',
+          ui_object_detail: 'What\'s included in IES, and what’s optional?',
+          page_cas_id: page,
+        } },
+      }],
+    });
+    const report = buildTestReport({
+      golden, manifest, state, deviations: canonicalDeviationRegistry,
+    });
+    expect(report.fields.find(({ field }) => field === 'ui_object_detail')).toMatchObject({
+      category: 'expected-migration', policy: 'normalized-equivalence', match: true,
+      expected: "What's included in IES, and what's optional?",
+    });
+  });
+
   it('requires at least 160 of the immutable 161 scenarios for 99% closure', () => {
     const passing = buildGoldenReplayReport(scenarioSet(161, 160));
     expect(passing.summary.scenarioClosure).toMatchObject({
