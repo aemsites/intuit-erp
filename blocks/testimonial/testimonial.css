@@ -505,9 +505,8 @@
   }
 
   /* Switcher: the info bar stacks below the video in a dark card rather than
-     overlaying it, matching the mobile treatment on erp.intuit.com. Overlaid,
-     the bar grew tall enough on narrow screens to cover the centred play
-     button completely and swallow its clicks. */
+     overlaying it. Overlaid, the bar grew tall enough on narrow screens to
+     cover the centred play button completely and swallow its clicks. */
   .testimonial.video .video-switcher {
     background: rgb(28 28 30);
     border-radius: 24px;
@@ -540,7 +539,7 @@
   }
 
   /* hoists the eyebrow/quote/attribution into the grid so the avatar can sit
-     beside the attribution line, as it does on the original */
+     beside the attribution line */
   .testimonial.video .video-caption-text {
     display: contents;
   }
