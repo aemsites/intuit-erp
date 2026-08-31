@@ -70,7 +70,7 @@ phase), so the injected tracker reads them on the ensuing click. The DOM stays c
 
 ### Track-by-default
 
-Every CTA (`a[href]`, `button`, `[role="button"]`) inside a **content region** (`<main>`, `<header>`,
+Every CTA (`a[href]`, `button`, `summary`, `[role="button"]`) inside a **content region** (`<main>`, `<header>`,
 `<footer>`) is tracked — matching the live tracker's document-wide model (prod annotates ~all content
 links). A CTA in **no** declared block is tracked under the `page` key with pure-derive defaults.
 
@@ -222,7 +222,7 @@ remains (~4.4%) is **not** clean runtime work — see `CLICK-TRACKING-PATH-TO-10
 per-cell breakdown:
 
 - **Bucket B — EDS markup limitation (~2.1%)**: secondary-nav (our button flyout vs prod's link nav +
-  search input + nested submenus), the disclaimer + product_banner components (not ported), the
+  search input + nested submenus), the product_banner component (not ported), the
   case-study-header share/ToC nesting (#765), the video pause control, and the faq answer-body links
   (would need a CSS restructure — the `.faq-toggle + .faq-panel` sibling selector blocks isolating the
   toggle's `accordion` trail). A team call: restructure vs. accept.

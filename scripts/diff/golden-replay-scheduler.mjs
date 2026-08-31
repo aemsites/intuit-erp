@@ -17,7 +17,7 @@ import { validateCdpEndpoint } from './live-replay-harness.mjs';
 import { validateGoldenReplayManifest } from './golden-replay-manifest.mjs';
 import {
   createReplayRunState, nextReplayScenario, recordScenarioOutcome,
-  validateReplayResume, writeReplayCheckpoint,
+  requestScenarioReruns, validateReplayResume, writeReplayCheckpoint,
 } from './golden-replay-run-state.mjs';
 
 const EXACT_ORIGIN = 'https://stage.erp.intuit.com';
@@ -58,7 +58,7 @@ export function recoveryTargetUrl(currentUrl, origin, pathname) {
   if (target.origin !== EXACT_ORIGIN || target.pathname !== pathname) {
     throw new Error(`reviewed stage pathname is invalid: ${pathname}`);
   }
-  try { new URL(currentUrl); } catch { return target.href; }
+  if (typeof currentUrl !== 'string') return target.href;
   return target.href;
 }
 
@@ -74,6 +74,11 @@ export function qualificationFailureReason(error, journal, scenarioId) {
 
 export function shouldRetryQualification(reason) {
   return /bound target must be|preflight refused: (?:consent|utag|webAnalytics\.track|analytics\._dispatch)|authenticated stage browser preflight failed|timed out waiting for serialized lineage|scenario qualification timed out|page\.waitForFunction: Timeout|target (?:origin|preparation)|unexpected cross-origin navigation|cleanup/i.test(String(reason || ''));
+}
+
+export function isRunBindingDrift(reason) {
+  return /lineage qualification binding does not match|uniform (?:page )?deployment identity changed/i
+    .test(String(reason || ''));
 }
 
 export function replayReadiness(scope) {
@@ -141,7 +146,9 @@ export function runQualificationProcess(args, {
   });
 }
 
-export function buildQualificationScenario(scenario) {
+export function buildQualificationScenario(scenario, {
+  lineageMode = 'capture', lineageQualification = '',
+} = {}) {
   if (scenario.locator?.status !== 'proposed') throw new Error(`scenario locator is not proposed: ${scenario.scenarioId}`);
   const candidate = scenario.locator.evidence?.candidate || {};
   const role = scenario.locator.role || candidate.role || (candidate.tag === 'A' ? 'link' : 'button');
@@ -159,6 +166,9 @@ export function buildQualificationScenario(scenario) {
       role,
       name,
       exact: true,
+      ...(['tag', 'href', 'block', 'requireNoBlock', 'occurrence', 'occurrenceEvidence']
+        .reduce((fields, key) => (Object.hasOwn(scenario.locator, key)
+          ? { ...fields, [key]: scenario.locator[key] } : fields), {})),
     },
     preconditions: scenario.preconditions || {},
     setupSteps: scenario.setupSteps || [],
@@ -166,8 +176,25 @@ export function buildQualificationScenario(scenario) {
       type: 'click',
       preventNavigation: scenario.interaction?.preventNavigation !== false,
       testText: 'Adobe Migration Test',
+      activationCount: lineageMode === 'capture' ? 1 : 3,
+    },
+    lineage: {
+      mode: lineageMode,
+      ...(lineageQualification ? { qualificationArtifact: lineageQualification } : {}),
     },
   };
+}
+
+export function selectLineageQualificationScenario(manifest) {
+  const candidates = manifest.scenarios.filter((scenario) => scenario.locator?.status === 'proposed'
+    && (scenario.locator.role || scenario.locator.evidence?.candidate?.role) === 'link'
+    && !(scenario.setupSteps || []).length
+    && !Object.keys(scenario.preconditions || {}).length);
+  const selected = candidates.find((scenario) => {
+    try { return new URL(scenario.locator.href).origin !== EXACT_ORIGIN; } catch { return false; }
+  }) || candidates[0];
+  if (!selected) throw new Error('complete replay has no stateless reviewed link for lineage qualification');
+  return selected;
 }
 
 export function disposeUnreplayableScenarios(initial, manifest) {
@@ -184,6 +211,11 @@ export function disposeUnreplayableScenarios(initial, manifest) {
         state = recordScenarioOutcome(state, manifest, scenario.scenarioId, {
           status: 'unreproducible',
           reason: scenario.locator.evidence?.diagnosis || 'reviewed stage locator is ambiguous',
+        });
+      } else if (scenario.locator?.status === 'blocked') {
+        state = recordScenarioOutcome(state, manifest, scenario.scenarioId, {
+          status: 'blocked',
+          reason: scenario.locator.evidence?.diagnosis || 'reviewed stage page is blocked',
         });
       }
     }
@@ -203,10 +235,28 @@ export function captureDeploymentFingerprint(capture) {
   return sha256(JSON.stringify(canonical(identity)));
 }
 
-export function validateQualificationCapture(capture, scenario, authorizationRef, manifestBinding) {
+export function capturePageFingerprint(capture) {
+  const page = capture.pages?.[0] || {};
+  const sameOriginScripts = [...(page.provenance?.sameOriginScripts || [])]
+    .sort((left, right) => JSON.stringify(canonical(left)).localeCompare(JSON.stringify(canonical(right))));
+  const identity = {
+    pathname: page.pathname,
+    document: page.provenance?.document,
+    interactionInventoryHash: page.provenance?.interactionInventoryHash,
+    sameOriginScripts,
+  };
+  return sha256(JSON.stringify(canonical(identity)));
+}
+
+export function validateQualificationCapture(capture, scenario, authorizationRef, manifestBinding, lineageQualification) {
   const page = capture.pages?.[0];
   const event = page?.events?.find((candidate) => candidate.scenarioId === scenario.scenarioId);
   const outcome = page?.outcomes?.find((candidate) => candidate.scenarioId === scenario.scenarioId);
+  if (lineageQualification
+    && (capture.qualification?.lineageMode !== 'capture'
+      || capture.qualification?.lineageQualification?.artifactSha256 !== lineageQualification.sha256)) {
+    throw new Error(`qualification lineage qualification is invalid: ${scenario.scenarioId}`);
+  }
   if (capture.status !== 'complete' || capture.golden?.scenarioId !== scenario.scenarioId
     || capture.golden?.payloadFile !== scenario.goldenRef.payloadFile
     || capture.qualification?.transportPolicy !== 'observe'
@@ -224,6 +274,26 @@ export function validateQualificationCapture(capture, scenario, authorizationRef
     messageId: outcome.messageId,
     invocationId: outcome.invocationId,
     locator: outcome.locator,
+  };
+}
+
+function validateLineageProofCapture(capture, scenario, authorizationRef, manifestBinding, bytes) {
+  if (capture.status !== 'complete' || capture.qualification?.lineageMode !== 'proof'
+    || capture.qualification?.authorizationRef !== authorizationRef
+    || capture.qualification?.completeGoldenManifest?.contentHash !== manifestBinding.contentHash
+    || capture.qualification?.completeGoldenManifest?.mappingHash !== manifestBinding.mappingHash) {
+    throw new Error('lineage qualification capture is invalid');
+  }
+  validateQualificationCapture(capture, scenario, authorizationRef, manifestBinding);
+  return {
+    scenarioId: scenario.scenarioId,
+    artifact: { path: '', sha256: sha256(bytes) },
+    targetId: capture.qualification.targetId,
+    profileId: capture.qualification.profileId,
+    chromeVersion: capture.qualification.chromeVersion,
+    qualifiedAt: capture.qualification.qualifiedAt,
+    expiresAt: capture.qualification.expiresAt,
+    deploymentFingerprint: captureDeploymentFingerprint(capture),
   };
 }
 
@@ -295,7 +365,7 @@ async function prepareTarget(options, pathname) {
   }
 }
 
-function parseArgs(argv) {
+export function parseArgs(argv) {
   const options = {
     cdp: DEFAULT_CDP,
     origin: EXACT_ORIGIN,
@@ -308,6 +378,7 @@ function parseArgs(argv) {
     authorizationRef: '',
     maxScenarios: Infinity,
     retentionDays: 30,
+    rerunScenarioIds: [],
   };
   for (let index = 0; index < argv.length; index += 1) {
     if (argv[index] === '--cdp') options.cdp = argv[++index];
@@ -321,6 +392,7 @@ function parseArgs(argv) {
     else if (argv[index] === '--authorization-ref') options.authorizationRef = argv[++index];
     else if (argv[index] === '--max-scenarios') options.maxScenarios = Number(argv[++index]);
     else if (argv[index] === '--retention-days') options.retentionDays = Number(argv[++index]);
+    else if (argv[index] === '--rerun-scenario') options.rerunScenarioIds.push(argv[++index]);
     else throw new Error(`unknown argument: ${argv[index]}`);
   }
   return options;
@@ -345,12 +417,60 @@ export async function main(argv = process.argv.slice(2)) {
   } else {
     state = createReplayRunState(manifest, binding);
   }
+  if (options.rerunScenarioIds.length) {
+    state = requestScenarioReruns(state, manifest, options.rerunScenarioIds);
+  }
   state = disposeUnreplayableScenarios(state, manifest);
   writeReplayCheckpoint(options.out, state);
+  const pendingReplay = nextReplayScenario(state, manifest);
+  const lineagePath = resolve(options.evidenceDir, 'live-replay-lineage-qualification.json');
+  if (pendingReplay && !state.lineageQualification) {
+    const proofScenario = selectLineageQualificationScenario(manifest);
+    const proofDefinition = buildQualificationScenario(proofScenario, { lineageMode: 'proof' });
+    const proofScenarioPath = resolve(options.evidenceDir, `scenario-${proofScenario.scenarioId}.json`);
+    atomicWrite(proofScenarioPath, proofDefinition);
+    await prepareTarget(options, proofScenario.page);
+    await runQualificationProcess([
+      'qualify', '--cdp', options.cdp, '--origin', options.origin,
+      '--profile-id', options.profileId, '--scenario', proofScenarioPath,
+      '--scenario-root', resolve(options.evidenceDir),
+      '--manifest-content-hash', manifest.manifestContentHash,
+      '--golden-mapping-hash', manifest.goldenMappingHash,
+      '--golden', resolve(options.golden), '--out', lineagePath,
+      '--transport', 'observe', '--authorization-ref', options.authorizationRef,
+      '--evidence-dir', resolve(options.evidenceDir), '--retention-days', String(options.retentionDays),
+      '--lineage-mode', 'proof',
+    ]);
+    const proofBytes = readFileSync(lineagePath);
+    const qualification = validateLineageProofCapture(
+      JSON.parse(proofBytes.toString('utf8')),
+      proofScenario,
+      options.authorizationRef,
+      { contentHash: manifest.manifestContentHash, mappingHash: manifest.goldenMappingHash },
+      proofBytes,
+    );
+    qualification.artifact.path = lineagePath;
+    state = {
+      ...state,
+      lineageQualification: qualification,
+      deployment: {
+        fingerprint: qualification.deploymentFingerprint,
+        establishedByScenarioId: `lineage-proof:${proofScenario.scenarioId}`,
+      },
+    };
+    writeReplayCheckpoint(options.out, state);
+  } else if (pendingReplay) {
+    const proofBytes = readFileSync(state.lineageQualification.artifact.path);
+    if (sha256(proofBytes) !== state.lineageQualification.artifact.sha256) {
+      throw new Error('lineage qualification artifact changed during resume');
+    }
+  }
   let attempted = 0;
   while (nextReplayScenario(state, manifest) && attempted < options.maxScenarios) {
     const scenario = nextReplayScenario(state, manifest);
-    const qualificationScenario = buildQualificationScenario(scenario);
+    const qualificationScenario = buildQualificationScenario(scenario, {
+      lineageMode: 'capture', lineageQualification: state.lineageQualification.artifact.path,
+    });
     const scenarioPath = resolve(options.evidenceDir, `scenario-${scenario.scenarioId}.json`);
     const capturePath = resolve(options.evidenceDir, `live-replay-${scenario.scenarioId}.json`);
     atomicWrite(scenarioPath, qualificationScenario);
@@ -367,13 +487,14 @@ export async function main(argv = process.argv.slice(2)) {
           '--golden', resolve(options.golden), '--out', capturePath,
           '--transport', 'observe', '--authorization-ref', options.authorizationRef,
           '--evidence-dir', resolve(options.evidenceDir), '--retention-days', String(options.retentionDays),
+          '--lineage-mode', 'capture', '--lineage-qualification', state.lineageQualification.artifact.path,
         ]);
         const captureBytes = readFileSync(capturePath);
         const capture = JSON.parse(captureBytes.toString('utf8'));
         const linked = validateQualificationCapture(capture, scenario, options.authorizationRef, {
           contentHash: manifest.manifestContentHash,
           mappingHash: manifest.goldenMappingHash,
-        });
+        }, state.lineageQualification.artifact);
         const deploymentFingerprint = captureDeploymentFingerprint(capture);
         if (state.deployment?.fingerprint && state.deployment.fingerprint !== deploymentFingerprint) {
           throw new Error('uniform deployment identity changed during the complete-golden run');
@@ -387,22 +508,36 @@ export async function main(argv = process.argv.slice(2)) {
             },
           };
         }
+        const pageDeploymentFingerprint = capturePageFingerprint(capture);
+        const previousPageFingerprint = state.pageDeployments?.[scenario.page];
+        if (previousPageFingerprint && previousPageFingerprint !== pageDeploymentFingerprint) {
+          throw new Error('uniform page deployment identity changed during the complete-golden run');
+        }
+        state = {
+          ...state,
+          pageDeployments: { ...(state.pageDeployments || {}), [scenario.page]: pageDeploymentFingerprint },
+        };
         terminalResult = {
           status: 'captured',
           attempts: qualificationAttempt,
           ...linked,
           artifact: { path: capturePath, sha256: sha256(captureBytes) },
           deploymentFingerprint,
+          pageDeploymentFingerprint,
         };
         break;
       } catch (error) {
-        if (/uniform deployment identity changed/.test(error.message)) {
+        if (isRunBindingDrift(error.message)) {
           writeReplayCheckpoint(options.out, state);
           throw error;
         }
         let refusalJournal = null;
         try { refusalJournal = JSON.parse(readFileSync(capturePath, 'utf8')); } catch { /* fallback below */ }
         const reason = qualificationFailureReason(error, refusalJournal, scenario.scenarioId);
+        if (isRunBindingDrift(reason)) {
+          writeReplayCheckpoint(options.out, state);
+          throw new Error(reason);
+        }
         const retry = qualificationAttempt < MAX_QUALIFICATION_ATTEMPTS && shouldRetryQualification(reason);
         if (!retry) {
           terminalResult = { status: 'blocked', reason, attempts: qualificationAttempt };

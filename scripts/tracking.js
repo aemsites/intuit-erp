@@ -439,9 +439,9 @@ export function blockNameOf(block) {
   return [...block.classList].find((c) => c !== 'block' && !c.startsWith(PREFIX)) || '';
 }
 
-// What counts as a clickable CTA: real links/buttons, plus role=button widgets
-// (e.g. the video block's poster/play control is a <div role="button">).
-export const CTA_SELECTOR = 'a[href], button, [role="button"]';
+// What counts as a clickable CTA: native links/buttons/disclosures, plus
+// role=button widgets (e.g. the video block's poster/play control).
+export const CTA_SELECTOR = 'a[href], button, summary, [role="button"]';
 
 // Content regions we track. Track-by-default fires only inside these, so injected
 // chrome mounted at the body root (OneTrust consent, dev sidekick, third-party

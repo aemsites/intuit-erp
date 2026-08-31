@@ -1,6 +1,19 @@
-import { describe, expect, it } from 'vitest';
+import {
+  describe, expect, it, vi,
+} from 'vitest';
 import { JSDOM } from 'jsdom';
-import { buildGoldenReplayReport, renderGoldenReplayHtml } from '../scripts/diff/golden-replay-report.mjs';
+import { spawnSync } from 'node:child_process';
+import {
+  existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync,
+} from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import {
+  buildGoldenReplayReport, main, renderGoldenReplayHtml,
+} from '../scripts/diff/golden-replay-report.mjs';
+import { createGoldenReplayManifest } from '../scripts/diff/golden-replay-manifest.mjs';
+import { goldenHash } from '../scripts/diff/oracle-lib.mjs';
+import { createGoldenIdentityLock } from '../scripts/diff/trustworthy-offline-verdict.mjs';
 
 const entry = (payloadFile, page, properties) => ({
   page,
@@ -22,6 +35,10 @@ const adjudication = (field, policy, classification = 'expected-migration') => (
 });
 
 const registry = (...entries) => ({ schemaVersion: 1, entries });
+const canonicalDeviationRegistry = JSON.parse(readFileSync(
+  'scripts/diff/fixtures/clicktrack-deviation-registry.json',
+  'utf8',
+));
 const bind = (manifest, state) => {
   manifest.manifestContentHash = 'manifest-content';
   manifest.goldenMappingHash = 'golden-mapping';
@@ -31,7 +48,246 @@ const bind = (manifest, state) => {
   };
 };
 
+const scenarioSet = (total, reproducedPassing) => {
+  const ids = Array.from({ length: total }, (_, index) => `scenario-${String(index + 1).padStart(3, '0')}`);
+  const golden = { entries: ids.map((scenarioId) => entry(
+    `payloads/${scenarioId}.json`, `/${scenarioId}`,
+    { object: 'content', action: 'interacted', page_cas_id: `/${scenarioId}` },
+  )) };
+  const manifest = { scenarios: ids.map((scenarioId) => ({
+    scenarioId,
+    page: `/${scenarioId}`,
+    goldenRef: { payloadFile: `payloads/${scenarioId}.json` },
+  })) };
+  const state = bind(manifest, {
+    status: 'complete', coverage: { total, pending: 0 }, resume: { nextScenarioId: null },
+    outcomes: ids.map((scenarioId, index) => (index < reproducedPassing ? {
+      scenarioId,
+      status: 'captured',
+      payload: {
+        type: 'track', event: 'content:interacted',
+        properties: { object: 'content', action: 'interacted', page_cas_id: `/${scenarioId}` },
+      },
+    } : { scenarioId, status: 'missing', reason: 'not-reproduced' })),
+  });
+  return { golden, manifest, state };
+};
+
+const buildTestReport = (inputs) => buildGoldenReplayReport({
+  ...inputs,
+  expectedScenarioTotal: inputs.manifest.scenarios.length,
+});
+
+const writeCliFixture = (directory) => {
+  const cliEntry = (payloadFile, page) => ({
+    page,
+    payloadFile,
+    event: 'content:interacted',
+    fullPayload: {
+      type: 'track',
+      event: 'content:interacted',
+      properties: { object: 'content', action: 'interacted', page_cas_id: page },
+      context: { page: { path: page, url: `https://erp.intuit.com${page}` } },
+    },
+  });
+  const golden = { entries: Array.from({ length: 161 }, (_, index) => {
+    const id = `scenario-${String(index + 1).padStart(3, '0')}`;
+    return cliEntry(`payloads/${id}.json`, `/${id}`);
+  }) };
+  golden.integrity = { payloads: golden.entries.length, sha256: goldenHash(golden) };
+  const identityLock = createGoldenIdentityLock(golden);
+  const manifest = createGoldenReplayManifest(golden, identityLock);
+  const state = {
+    status: 'complete',
+    coverage: { total: 161, pending: 0 },
+    resume: { nextScenarioId: null },
+    binding: {
+      manifest: {
+        contentHash: manifest.manifestContentHash,
+        mappingHash: manifest.goldenMappingHash,
+      },
+    },
+    outcomes: manifest.scenarios.map((scenario, index) => (index < 159 ? {
+      scenarioId: scenario.scenarioId,
+      status: 'captured',
+      payload: golden.entries[index].fullPayload,
+    } : { scenarioId: scenario.scenarioId, status: 'missing', reason: 'not-reproduced' })),
+  };
+  const paths = Object.fromEntries(['golden', 'manifest', 'identityLock', 'deviations', 'state']
+    .map((name) => [name, join(directory, `${name}.json`)]));
+  writeFileSync(paths.golden, JSON.stringify(golden));
+  writeFileSync(paths.manifest, JSON.stringify(manifest));
+  writeFileSync(paths.identityLock, JSON.stringify(identityLock));
+  writeFileSync(paths.deviations, JSON.stringify(registry()));
+  writeFileSync(paths.state, JSON.stringify(state));
+  return paths;
+};
+
 describe('complete golden replay report', () => {
+  it('rejects non-canonical default denominators, including 160 and zero scenarios', () => {
+    expect(() => buildGoldenReplayReport(scenarioSet(160, 160)))
+      .toThrow('canonical customer denominator must contain exactly 161 scenarios');
+    expect(() => buildGoldenReplayReport(scenarioSet(0, 0)))
+      .toThrow('canonical customer denominator must contain exactly 161 scenarios');
+  });
+
+  it('fails customer scenario closure when captured-field parity hides a missing scenario', () => {
+    const golden = { entries: [
+      entry('payloads/captured.json', '/captured', {
+        object: 'content', action: 'interacted', page_cas_id: '/captured',
+      }),
+      entry('payloads/missing.json', '/missing', {
+        object: 'content', action: 'interacted', page_cas_id: '/missing',
+      }),
+    ] };
+    const manifest = { scenarios: [
+      { scenarioId: 'captured', page: '/captured', goldenRef: { payloadFile: 'payloads/captured.json' } },
+      { scenarioId: 'missing', page: '/missing', goldenRef: { payloadFile: 'payloads/missing.json' } },
+    ] };
+    const state = bind(manifest, {
+      status: 'complete', coverage: { total: 2, pending: 0 }, resume: { nextScenarioId: null },
+      outcomes: [
+        {
+          scenarioId: 'captured', status: 'captured',
+          payload: {
+            type: 'track', event: 'content:interacted',
+            properties: { object: 'content', action: 'interacted', page_cas_id: '/captured' },
+          },
+        },
+        { scenarioId: 'missing', status: 'missing', reason: 'sheet-target-not-rendered' },
+      ],
+    });
+
+    const report = buildTestReport({ golden, manifest, state });
+    expect(report.summary.metadataParity.adjusted.percent).toBe(100);
+    expect(report.summary.scenarioClosure).toEqual({
+      total: 2,
+      reproducedPassing: 1,
+      unresolved: 1,
+      required: 2,
+      percent: 50,
+      threshold: 99,
+      verdict: 'FAIL',
+      unresolvedScenarioIds: ['missing'],
+    });
+    expect(report.summary.closureVerdict).toBe('FAIL');
+    expect(report.events).toEqual(expect.arrayContaining([
+      expect.objectContaining({ scenarioId: 'captured', scenarioClosureStatus: 'reproduced-passing' }),
+      expect.objectContaining({ scenarioId: 'missing', scenarioClosureStatus: 'unresolved' }),
+    ]));
+  });
+
+  it('requires at least 160 of the immutable 161 scenarios for 99% closure', () => {
+    const passing = buildGoldenReplayReport(scenarioSet(161, 160));
+    expect(passing.summary.scenarioClosure).toMatchObject({
+      total: 161, reproducedPassing: 160, required: 160, percent: 99.4, threshold: 99, verdict: 'PASS',
+    });
+
+    const failing = buildGoldenReplayReport(scenarioSet(161, 159));
+    expect(failing.summary.scenarioClosure).toMatchObject({
+      total: 161, reproducedPassing: 159, required: 160, percent: 98.8, threshold: 99, verdict: 'FAIL',
+    });
+  });
+
+  it('keeps captured-field diagnostics from independently deciding customer closure', () => {
+    const inputs = scenarioSet(161, 160);
+    const unresolved = inputs.manifest.scenarios[160];
+    inputs.golden.entries[160].fullPayload.properties.project_asset_id = 'asset-only-in-golden';
+    inputs.state.outcomes[160] = {
+      scenarioId: unresolved.scenarioId,
+      status: 'captured',
+      payload: {
+        type: 'track', event: 'content:interacted',
+        properties: {
+          object: 'content', action: 'interacted', page_cas_id: unresolved.page,
+        },
+      },
+    };
+
+    const report = buildGoldenReplayReport(inputs);
+    expect(report.summary.scenarioClosure).toMatchObject({
+      reproducedPassing: 160, unresolved: 1, verdict: 'PASS',
+    });
+    expect(report.summary.capturedFieldDiagnostics).toMatchObject({ score: 0 });
+    expect(report.summary.capturedFieldDiagnostics).not.toHaveProperty('verdict');
+    expect(report.summary.metadataParity).not.toHaveProperty('verdict');
+    expect(report.summary).not.toHaveProperty('policyAdjusted');
+    expect(report.summary.closureVerdict).toBe('PASS');
+    expect(renderGoldenReplayHtml(report)).toContain('Captured-field diagnostic');
+  });
+
+  it('labels captured-field metrics separately from customer scenario closure', () => {
+    const report = buildTestReport(scenarioSet(2, 1));
+    expect(report.summary.coverage).not.toHaveProperty('replayablePercent');
+    expect(report.summary).not.toHaveProperty('replayableCapturePercent');
+
+    const html = renderGoldenReplayHtml(report);
+    expect(html).toContain('Customer scenario closure 1/2');
+    expect(html).toContain('Captured-field exact metadata parity');
+    expect(html).toContain('Captured-field accepted metadata deviations');
+    expect(html).toContain('Captured-field diagnostic (exact + accepted)');
+    expect(html).not.toContain('replayablePercent');
+    expect(html).not.toContain('replayableCapturePercent');
+  });
+
+  it('prioritizes the largest unresolved capture and parity gaps in the concise summary', () => {
+    const inputs = scenarioSet(3, 1);
+    [1, 2].forEach((index) => {
+      inputs.golden.entries[index].page = '/shared-gap';
+      inputs.manifest.scenarios[index].page = '/shared-gap';
+      inputs.state.outcomes[index].reason = 'target-not-proven';
+    });
+
+    const report = buildTestReport(inputs);
+    expect(report.summary.nextGaps[0]).toEqual({
+      kind: 'capture',
+      page: '/shared-gap',
+      status: 'missing',
+      count: 2,
+      scenarioIds: ['scenario-002', 'scenario-003'],
+    });
+    expect(renderGoldenReplayHtml(report)).toContain('Next highest-impact gaps');
+    expect(renderGoldenReplayHtml(report)).toContain('/shared-gap · missing · 2');
+  });
+
+  it('writes CLI evidence before returning nonzero for a failing closure', () => {
+    const outputDirectory = mkdtempSync(join(tmpdir(), 'golden-replay-report-'));
+    const jsonOutput = join(outputDirectory, 'report.json');
+    const htmlOutput = join(outputDirectory, 'report.html');
+    try {
+      const paths = writeCliFixture(outputDirectory);
+      const args = [
+        '--golden', paths.golden,
+        '--manifest', paths.manifest,
+        '--identity-lock', paths.identityLock,
+        '--deviations', paths.deviations,
+        '--state', paths.state,
+        '--json-out', jsonOutput,
+        '--html-out', htmlOutput,
+      ];
+      const result = spawnSync(process.execPath, [
+        'scripts/diff/golden-replay-report.mjs',
+        ...args,
+      ], { cwd: process.cwd(), encoding: 'utf8' });
+      expect(result.status).toBe(1);
+      expect(existsSync(jsonOutput)).toBe(true);
+      expect(existsSync(htmlOutput)).toBe(true);
+      expect(JSON.parse(readFileSync(jsonOutput, 'utf8')).summary.closureVerdict).not.toBe('PASS');
+
+      const originalExitCode = process.exitCode;
+      const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+      try {
+        const report = main(args);
+        expect(report.summary.closureVerdict).not.toBe('PASS');
+        expect(process.exitCode).toBe(originalExitCode);
+      } finally {
+        log.mockRestore();
+      }
+    } finally {
+      rmSync(outputDirectory, { recursive: true, force: true });
+    }
+  });
+
   it('separates exact, expected-policy, bug, and coverage deviations by scenario identity', () => {
     const golden = { entries: [
       entry('payloads/one.json', '/events', {
@@ -62,9 +318,9 @@ describe('complete golden replay report', () => {
       adjudication('page_cas_id', 'pathname-policy'),
       adjudication('url', 'normalized-equivalence'),
     );
-    const report = buildGoldenReplayReport({ golden, manifest, state: bind(manifest, state), deviations });
-    expect(report.schemaVersion).toBe(2);
-    expect(report.summary.parity).toEqual(report.summary.metadataParity);
+    const report = buildTestReport({ golden, manifest, state: bind(manifest, state), deviations });
+    expect(report.schemaVersion).toBe(3);
+    expect(report.summary).not.toHaveProperty('parity');
     expect(report.summary.pageCasId).toMatchObject({ captured: 1, exactPathname: 1, percent: 100, verdict: 'PASS' });
     expect(report.fields.find((row) => row.scenarioId === 'one' && row.field === 'page_cas_id'))
       .toMatchObject({
@@ -107,7 +363,6 @@ describe('complete golden replay report', () => {
         exactPercent: 0,
         adjustedPercent: 0,
       },
-      verdict: 'FAIL',
     });
     expect(report.events.find((row) => row.scenarioId === 'one')).toMatchObject({
       metadataTotal: 7,
@@ -118,13 +373,13 @@ describe('complete golden replay report', () => {
       metadataParityBasis: 'failing',
     });
     const html = renderGoldenReplayHtml(report);
-    expect(html).toContain('Exact metadata parity');
-    expect(html).toContain('Accepted metadata deviations');
-    expect(html).toContain('Adjusted pass (exact + accepted)');
+    expect(html).toContain('Captured-field exact metadata parity');
+    expect(html).toContain('Captured-field accepted metadata deviations');
+    expect(html).toContain('Captured-field diagnostic (exact + accepted)');
     expect(html).toContain('Actionable bugs');
     expect(html).toContain('Open investigations');
     expect(html).toContain('Context presence');
-    expect(html).toContain('Scenario coverage');
+    expect(html).toContain('Captured scenario coverage');
     expect(html).toContain('Raw equality');
     expect(html).toContain('Policy equality');
     expect(html).toContain('Presence');
@@ -152,15 +407,97 @@ describe('complete golden replay report', () => {
       }],
     };
 
-    const report = buildGoldenReplayReport({ golden, manifest, state: bind(manifest, state) });
+    const report = buildTestReport({ golden, manifest, state: bind(manifest, state) });
     expect(report.fields.find((row) => row.field === 'url'))
       .toMatchObject({ category: 'open-investigation', policy: 'url-fragment-evidence-limited', match: false });
     expect(report.fields.find((row) => row.field === 'channel_cookie_90day'))
       .toMatchObject({ category: 'environment-session-context', policy: 'environment-attribution', match: false });
     expect(report.summary.fieldCounts).toMatchObject({ 'open-investigation': 1, 'stage-bug': 0 });
-    expect(report.summary.policyAdjusted).toMatchObject({
-      score: 100, verdict: 'BLOCKED', investigations: 1,
+    expect(report.summary.capturedFieldDiagnostics).toMatchObject({
+      score: 100, openInvestigations: 1,
     });
+    expect(report.summary.closureVerdict).toBe('FAIL');
+  });
+
+  it('accepts empty-fragment normalization only for the four adjudicated scenario fields', () => {
+    const acceptedCases = [
+      ['customer-accounting-business-intelligence-rep-1012e0719631', 'link_href'],
+      ['customer-accounting-business-intelligence-rep-0c6dcf41ec48', 'url'],
+      ['customer-accounting-business-intelligence-rep-602d8ad063b8', 'url'],
+      ['customer-accounting-business-intelligence-rep-13bc3a301b0d', 'url'],
+    ];
+    const unrelatedCase = ['customer-accounting-business-intelligence-rep-unrelated', 'url'];
+    const page = '/accounting/business-intelligence-reports';
+    const goldenUrl = 'https://erp.intuit.com/accounting/business-intelligence-reports/#';
+    const stageUrl = 'https://stage.erp.intuit.com/accounting/business-intelligence-reports';
+    const fixture = (cases) => {
+      const golden = { entries: cases.map(([scenarioId, field]) => entry(
+        `payloads/${scenarioId}.json`, page,
+        {
+          object: 'content', action: 'interacted', page_cas_id: page, [field]: goldenUrl,
+        },
+      )) };
+      const manifest = { scenarios: cases.map(([scenarioId]) => ({
+        scenarioId,
+        page,
+        goldenRef: { payloadFile: `payloads/${scenarioId}.json` },
+      })) };
+      const state = bind(manifest, {
+        status: 'complete', coverage: { total: cases.length, pending: 0 }, resume: { nextScenarioId: null },
+        outcomes: cases.map(([scenarioId, field]) => ({
+          scenarioId,
+          pathname: page,
+          status: 'captured',
+          pageCasId: page,
+          payload: {
+            type: 'track',
+            event: 'content:interacted',
+            properties: {
+              object: 'content', action: 'interacted', page_cas_id: page, [field]: stageUrl,
+            },
+          },
+        })),
+      });
+      return { golden, manifest, state };
+    };
+
+    const unadjudicated = buildTestReport({
+      ...fixture(acceptedCases),
+      deviations: registry(),
+    });
+    expect(unadjudicated.fields.filter(({ policy }) => policy === 'url-fragment-evidence-limited'))
+      .toHaveLength(4);
+    expect(unadjudicated.fields.filter(({ policy }) => policy === 'url-fragment-evidence-limited'))
+      .toSatisfy((rows) => rows.every(({ category }) => category === 'open-investigation'));
+    expect(unadjudicated.events)
+      .toSatisfy((events) => events.every(({ metadataParityBasis }) => metadataParityBasis === 'failing'));
+
+    const adjudicated = buildTestReport({
+      ...fixture([...acceptedCases, unrelatedCase]),
+      deviations: canonicalDeviationRegistry,
+    });
+    acceptedCases.forEach(([scenarioId, field]) => {
+      expect(adjudicated.fields.find((row) => row.scenarioId === scenarioId && row.field === field))
+        .toMatchObject({
+          category: 'expected-migration',
+          policy: 'url-fragment-evidence-limited',
+          adjudication: expect.objectContaining({ reviewDate: '2026-08-31' }),
+        });
+      expect(adjudicated.events.find((event) => event.scenarioId === scenarioId))
+        .toMatchObject({
+          metadataParityBasis: 'accepted-deviations',
+          scenarioClosureStatus: 'reproduced-passing',
+        });
+    });
+    expect(adjudicated.fields.find((row) => row.scenarioId === unrelatedCase[0] && row.field === 'url'))
+      .toMatchObject({ category: 'open-investigation', policy: 'url-fragment-evidence-limited' });
+
+    const wrongField = buildTestReport({
+      ...fixture([[acceptedCases[0][0], 'url']]),
+      deviations: canonicalDeviationRegistry,
+    });
+    expect(wrongField.fields.find((row) => row.field === 'url'))
+      .toMatchObject({ category: 'open-investigation', policy: 'url-fragment-evidence-limited' });
   });
 
   it('lists immutable raw equality, policy equality, and frozen presence separately', () => {
@@ -192,7 +529,7 @@ describe('complete golden replay report', () => {
     };
 
     const deviations = registry(adjudication('page_cas_id', 'pathname-policy'));
-    const report = buildGoldenReplayReport({ golden, manifest, state: bind(manifest, state), deviations });
+    const report = buildTestReport({ golden, manifest, state: bind(manifest, state), deviations });
     expect(report.fields.find((row) => row.field === 'page_cas_id')).toMatchObject({
       golden: 'CMSabc123', expected: '/events', got: '/events', rawMatch: false, policyMatch: true,
     });
@@ -235,13 +572,13 @@ describe('complete golden replay report', () => {
     };
 
     const deviations = registry(adjudication('page_cas_id', 'pathname-policy'));
-    const report = buildGoldenReplayReport({ golden, manifest, state: bind(manifest, state), deviations });
+    const report = buildTestReport({ golden, manifest, state: bind(manifest, state), deviations });
     expect(report.summary.rawExact).toMatchObject({
       score: 0,
       axes: { page: { score: 66.7 }, event: { score: 75 }, component: { score: 75 }, field: { score: 0 } },
     });
-    expect(report.summary.policyAdjusted).toMatchObject({
-      score: 50, verdict: 'FAIL', weakest: 'field=50%',
+    expect(report.summary.capturedFieldDiagnostics).toMatchObject({
+      score: 50, weakest: 'field=50%',
       axes: { page: { score: 83.3 }, event: { score: 91.7 }, component: { score: 91.7 }, field: { score: 50 } },
     });
   });
@@ -269,11 +606,11 @@ describe('complete golden replay report', () => {
     };
 
     const deviations = registry(adjudication('page_cas_id', 'pathname-policy'));
-    const report = buildGoldenReplayReport({ golden, manifest, state: bind(manifest, state), deviations });
+    const report = buildTestReport({ golden, manifest, state: bind(manifest, state), deviations });
     expect(report.summary.presence).toEqual({ present: 0, total: 1, gaps: 1, percent: 0, verdict: 'FAIL' });
     expect(report.summary.context).toMatchObject({ rows: 1, differences: 1, missingPresence: 1 });
     expect(report.summary.fieldCounts).toMatchObject({ 'environment-session-context': 1, 'stage-bug': 0 });
-    expect(report.summary.policyAdjusted).toMatchObject({ score: 100, verdict: 'PASS' });
+    expect(report.summary.capturedFieldDiagnostics).toMatchObject({ score: 100 });
     expect(report.summary.closureVerdict).toBe('FAIL');
   });
 
@@ -300,12 +637,12 @@ describe('complete golden replay report', () => {
     };
 
     const deviations = registry(adjudication('page_cas_id', 'pathname-policy'));
-    const report = buildGoldenReplayReport({ golden, manifest, state: bind(manifest, state), deviations });
+    const report = buildTestReport({ golden, manifest, state: bind(manifest, state), deviations });
     expect(report.summary.pageCasId).toMatchObject({
       captured: 1, exactPathname: 0, percent: 0, verdict: 'FAIL', failures: ['one'],
     });
-    expect(report.summary.policyAdjusted.investigations).toBe(1);
-    expect(report.summary.policyAdjusted.verdict).toBe('BLOCKED');
+    expect(report.summary.capturedFieldDiagnostics.openInvestigations).toBe(1);
+    expect(report.summary.capturedFieldDiagnostics).not.toHaveProperty('verdict');
     expect(report.summary.closureVerdict).toBe('FAIL');
   });
 
@@ -330,7 +667,7 @@ describe('complete golden replay report', () => {
       }],
     };
 
-    const report = buildGoldenReplayReport({
+    const report = buildTestReport({
       golden, manifest, state: bind(manifest, state), deviations: registry(adjudication('page_cas_id', 'pathname-policy')),
     });
     expect(report.fields.find((row) => row.field === 'project_asset_id')).toMatchObject({
@@ -367,7 +704,7 @@ describe('complete golden replay report', () => {
       },
     );
 
-    const report = buildGoldenReplayReport({ golden, manifest, state: bind(manifest, state), deviations });
+    const report = buildTestReport({ golden, manifest, state: bind(manifest, state), deviations });
     expect(report.fields.find((row) => row.field === 'ui_object')).toMatchObject({
       golden: 'link', got: 'button', rawMatch: false, policyMatch: true,
       category: 'approved-golden-correction',
@@ -386,7 +723,7 @@ describe('complete golden replay report', () => {
       status: 'complete', coverage: { pending: 0 }, resume: { nextScenarioId: null },
       outcomes: [{ scenarioId: 'one', status: 'captured', payload: { properties: {} } }],
     };
-    expect(() => buildGoldenReplayReport({ golden, manifest, state }))
+    expect(() => buildTestReport({ golden, manifest, state }))
       .toThrow('complete replay binding is required');
   });
 
@@ -406,7 +743,7 @@ describe('complete golden replay report', () => {
         },
       }],
     });
-    const report = buildGoldenReplayReport({
+    const report = buildTestReport({
       golden, manifest, state, deviations: registry(adjudication('page_cas_id', 'pathname-policy')),
     });
     const dom = new JSDOM(renderGoldenReplayHtml(report), { runScripts: 'dangerously' });

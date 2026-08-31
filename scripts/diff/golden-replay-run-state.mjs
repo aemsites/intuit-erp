@@ -135,6 +135,28 @@ export function recordScenarioOutcome(state, manifest, scenarioId, result, { rer
   return refreshState(updated, manifest);
 }
 
+export function requestScenarioReruns(state, manifest, scenarioIds) {
+  const requested = [...new Set(scenarioIds || [])];
+  const updated = clone(state);
+  requested.forEach((scenarioId) => {
+    const scenario = manifest.scenarios.find((candidate) => candidate.scenarioId === scenarioId);
+    if (!scenario) throw new Error(`unknown rerun scenario: ${scenarioId}`);
+    const index = updated.outcomes.findIndex((outcome) => outcome.scenarioId === scenarioId);
+    const previous = updated.outcomes[index];
+    if (previous.status === 'passive') throw new Error(`passive scenario cannot be rerun: ${scenarioId}`);
+    if (!TERMINAL.has(previous.status)) throw new Error(`scenario is not completed: ${scenarioId}`);
+    updated.outcomes[index] = {
+      scenarioId,
+      pathname: scenario.page,
+      status: 'pending',
+      attempts: previous.attempts,
+      classification: previous.classification,
+      rerunOf: { status: previous.status, recordedAt: previous.recordedAt || null },
+    };
+  });
+  return refreshState(updated, manifest);
+}
+
 export function recordPageFailure(state, manifest, pathname, reason) {
   const updated = clone(state);
   updated.pageFailures.push({ pathname, reason: String(reason), recordedAt: new Date().toISOString() });

@@ -8,7 +8,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import {
   createReplayRunState, nextReplayScenario, recordPageFailure, recordScenarioOutcome,
-  replayCoverageSummary, validateReplayResume, writeReplayCheckpoint,
+  replayCoverageSummary, requestScenarioReruns, validateReplayResume, writeReplayCheckpoint,
 } from '../scripts/diff/golden-replay-run-state.mjs';
 
 const scenario = (scenarioId, page, classification = {}) => ({
@@ -63,6 +63,20 @@ describe('complete golden replay run state', () => {
     expect(() => recordScenarioOutcome(state, source, 'hero', { status: 'captured' })).toThrow(/already completed/i);
     expect(recordScenarioOutcome(state, source, 'hero', { status: 'captured' }, { rerun: true }))
       .toMatchObject({ outcomes: expect.arrayContaining([expect.objectContaining({ scenarioId: 'hero', attempts: 2 })]) });
+  });
+
+  it('reopens only explicitly requested completed scenarios', () => {
+    const source = manifest();
+    let state = createReplayRunState(source, binding());
+    state = recordScenarioOutcome(state, source, 'hero', { status: 'captured', artifact: { path: '/tmp/old' } });
+    state = requestScenarioReruns(state, source, ['hero']);
+    expect(state.outcomes.find(({ scenarioId }) => scenarioId === 'hero')).toMatchObject({
+      status: 'pending', attempts: 1, rerunOf: { status: 'captured' },
+    });
+    expect(state.outcomes.find(({ scenarioId }) => scenarioId === 'hero')).not.toHaveProperty('artifact');
+    expect(nextReplayScenario(state, source)).toMatchObject({ scenarioId: 'hero' });
+    expect(() => requestScenarioReruns(state, source, ['chat'])).toThrow(/passive/i);
+    expect(() => requestScenarioReruns(state, source, ['unknown'])).toThrow(/unknown/i);
   });
 
   it('records the actual number of qualification attempts for a terminal outcome', () => {

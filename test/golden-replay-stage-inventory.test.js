@@ -1,8 +1,8 @@
 import {
-  describe, expect, it,
+  describe, expect, it, vi,
 } from 'vitest';
 import {
-  indexTrackingSheet, matchScenarioToInventory, retryTransientInventoryPage,
+  captureDocumentBody, indexTrackingSheet, matchScenarioToInventory, retryTransientInventoryPage,
   safeInventoryResourceUrl, summarizeStageInventory,
 } from '../scripts/diff/golden-replay-stage-inventory.mjs';
 
@@ -134,5 +134,13 @@ describe('authenticated stage locator inventory', () => {
       throw new Error('bound target must use exact origin');
     })).rejects.toThrow(/exact origin/);
     expect(attempts).toBe(1);
+  });
+
+  it('refuses inventory evidence when CDP has evicted the navigation body', async () => {
+    const response = { body: async () => { throw new Error('No resource with given identifier found'); } };
+    const page = { content: vi.fn() };
+
+    await expect(captureDocumentBody(response, page)).rejects.toThrow(/navigation response body/i);
+    expect(page.content).not.toHaveBeenCalled();
   });
 });

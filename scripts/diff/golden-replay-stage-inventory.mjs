@@ -213,6 +213,15 @@ async function hashUrl(url) {
   return sha256(Buffer.from(await response.arrayBuffer()));
 }
 
+export async function captureDocumentBody(response) {
+  if (!response) throw new Error('navigation response body is unavailable');
+  try {
+    return await response.body();
+  } catch (error) {
+    throw new Error(`navigation response body is unavailable: ${error.message}`);
+  }
+}
+
 async function collectPageEvidence(page, origin) {
   return page.evaluate((expectedOrigin) => {
     const clean = (value) => String(value || '').replace(/\s+/g, ' ').trim().slice(0, 180);
@@ -341,6 +350,7 @@ async function run(options) {
         const result = await retryTransientInventoryPage(async (attempt) => {
           if (attempt > 1) await page.waitForTimeout(500);
           const response = await page.goto(`${options.origin}${manifestPage.pathname}`, { waitUntil: 'domcontentloaded' });
+          const documentBody = await captureDocumentBody(response, page);
           context.pages().forEach((candidate) => guard.observePage(candidate));
           guard.assert();
           await page.waitForFunction(() => {
@@ -359,7 +369,7 @@ async function run(options) {
           const resources = [...new Set([...evidence.resourceUrls, ...explicitResources]
             .map((url) => safeInventoryResourceUrl(url, options.origin)).filter(Boolean))].sort();
           const runtimeHashes = Object.fromEntries(await Promise.all(resources.map(async (url) => [url, await hashUrl(url)])));
-          const documentHash = response ? sha256(Buffer.from(await response.body())) : null;
+          const documentHash = sha256(documentBody);
           return {
             pathname: manifestPage.pathname,
             status: 'inventoried',

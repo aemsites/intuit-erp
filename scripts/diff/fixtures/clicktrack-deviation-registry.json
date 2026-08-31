@@ -380,6 +380,46 @@
       "evidence": "complete-golden-replay-v31 capture; customer accepted 2026-08-31",
       "owner": "Adobe Migration Test",
       "reviewDate": "2026-08-31"
+    },
+    {
+      "id": "migration-bi-hero-empty-fragment-link",
+      "classification": "expected-migration",
+      "scope": { "location": "properties", "field": "link_href", "scenarioId": "customer-accounting-business-intelligence-rep-1012e0719631" },
+      "policy": "url-fragment-evidence-limited",
+      "rationale": "The production Schedule a call destination ends in an empty fragment (/#); Stage emits the same host-normalized page destination without that non-identifying fragment.",
+      "evidence": "complete-golden-replay-v31 capture; immutable golden payload sha256:c26e779fc0056af902f0dc59020fbaa97118356b36d86ff3aab4495d33006188",
+      "owner": "Adobe Migration Test",
+      "reviewDate": "2026-08-31"
+    },
+    {
+      "id": "migration-bi-sitemap-empty-fragment-url",
+      "classification": "expected-migration",
+      "scope": { "location": "properties", "field": "url", "scenarioId": "customer-accounting-business-intelligence-rep-0c6dcf41ec48" },
+      "policy": "url-fragment-evidence-limited",
+      "rationale": "The production page URL for the Sitemap click ends in an empty fragment (/#); Stage emits the same host-normalized page URL without that non-identifying fragment.",
+      "evidence": "complete-golden-replay-v31 capture; immutable golden payload sha256:f45a5cde07d0b4a164061c7319d1aabfa1466b6881425af1a521866490698bef",
+      "owner": "Adobe Migration Test",
+      "reviewDate": "2026-08-31"
+    },
+    {
+      "id": "migration-bi-intuit-empty-fragment-url",
+      "classification": "expected-migration",
+      "scope": { "location": "properties", "field": "url", "scenarioId": "customer-accounting-business-intelligence-rep-602d8ad063b8" },
+      "policy": "url-fragment-evidence-limited",
+      "rationale": "The production page URL for the Intuit footer click ends in an empty fragment (/#); Stage emits the same host-normalized page URL without that non-identifying fragment.",
+      "evidence": "complete-golden-replay-v31 capture; immutable golden payload sha256:0da7a43de452887d0141cbf3363045438fd0b7d2fe503e93c1425b1bdc46a654",
+      "owner": "Adobe Migration Test",
+      "reviewDate": "2026-08-31"
+    },
+    {
+      "id": "migration-bi-about-cookies-empty-fragment-url",
+      "classification": "expected-migration",
+      "scope": { "location": "properties", "field": "url", "scenarioId": "customer-accounting-business-intelligence-rep-13bc3a301b0d" },
+      "policy": "url-fragment-evidence-limited",
+      "rationale": "The production page URL for the About cookies click ends in an empty fragment (/#); Stage emits the same host-normalized page URL without that non-identifying fragment.",
+      "evidence": "complete-golden-replay-v31 capture; immutable golden payload sha256:4c6eaca7943c375126b7453dc393c15d35758688744e057ba83398045f2f0735",
+      "owner": "Adobe Migration Test",
+      "reviewDate": "2026-08-31"
     }
   ]
 }

@@ -73,6 +73,8 @@ function parseArgs(argv) {
     print: false,
     evidenceDir: dirname(DEFAULT_OUT),
     retentionDays: 30,
+    lineageMode: '',
+    lineageQualification: '',
   };
   const start = options.command === 'qualify' && argv[0]?.startsWith('--') ? 0 : 1;
   for (let index = start; index < argv.length; index += 1) {
@@ -95,6 +97,8 @@ function parseArgs(argv) {
     else if (argument === '--print') options.print = true;
     else if (argument === '--evidence-dir') options.evidenceDir = resolve(argv[++index]);
     else if (argument === '--retention-days') options.retentionDays = Number(argv[++index]);
+    else if (argument === '--lineage-mode') options.lineageMode = argv[++index];
+    else if (argument === '--lineage-qualification') options.lineageQualification = resolve(argv[++index]);
     else throw new Error(`unknown argument: ${argument}`);
   }
   return options;
@@ -354,9 +358,9 @@ async function browserPreflight(page, origin, timeoutMs = EVIDENCE_FETCH_TIMEOUT
     const visible = (element) => element && getComputedStyle(element).display !== 'none'
       && getComputedStyle(element).visibility !== 'hidden';
     const ctaSelector = [
-      'main a[href]', 'main button', 'main [role="button"]',
-      'header a[href]', 'header button', 'header [role="button"]',
-      'footer a[href]', 'footer button', 'footer [role="button"]',
+      'main a[href]', 'main button', 'main summary', 'main [role="button"]',
+      'header a[href]', 'header button', 'header summary', 'header [role="button"]',
+      'footer a[href]', 'footer button', 'footer summary', 'footer [role="button"]',
     ].join(', ');
     const trackables = [...document.querySelectorAll(ctaSelector)]
       .filter((element) => !element.closest('[data-track-skip]'))
@@ -481,6 +485,7 @@ function qualificationBinding({
     } : null,
     targetId,
     transportPolicy: options.transport,
+    lineageMode: scenario.lineage?.mode || options.lineageMode || 'proof',
   };
 }
 
@@ -510,11 +515,61 @@ function qualificationLocatorCss(locator) {
   return `[data-track-id="${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"]:visible`;
 }
 
+function qualificationHrefSelector(tag, href) {
+  const values = [String(href)];
+  let sameOrigin = false;
+  let queryPrefix = '';
+  try {
+    const url = new URL(href);
+    sameOrigin = url.origin === DEFAULT_ORIGIN;
+    if (sameOrigin) values.push(`${url.pathname}${url.search}`);
+    else if (!url.search && !url.hash) queryPrefix = `${url.href}?`;
+  } catch { /* Locator review validates href identity before replay. */ }
+  const escaped = [...new Set(values)].map((value) => value.replace(/\\/g, '\\\\').replace(/"/g, '\\"'));
+  const selectors = escaped.map((value) => `${tag}[href="${value}"]`);
+  if (queryPrefix) selectors.push(`${tag}[href^="${queryPrefix.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"]`);
+  if (sameOrigin) selectors.push(`${tag}[href="#"]`);
+  return `:is(${selectors.join(',')})`;
+}
+
+function exactTextPattern(value) {
+  const words = String(value || '').trim().split(/\s+/)
+    .map((word) => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  return new RegExp(`^\\s*${words.join('\\s+')}\\s*$`, 'u');
+}
+
 function qualificationLocator(page, locator) {
-  const root = ['main', 'header', 'footer'].includes(locator.region) ? page.locator(locator.region) : page;
-  const semantic = root.getByRole(locator.role, { name: locator.name, exact: locator.exact });
+  const regionSelector = {
+    main: 'main', header: 'header', footer: 'footer', widget: '#contact-us',
+  }[locator.region];
+  let root = regionSelector ? page.locator(regionSelector) : page;
+  if (locator.block) {
+    if (!/^[a-z0-9-]+$/.test(locator.block)) throw new Error('scenario block constraint is invalid');
+    root = root.locator(`.${locator.block}.block`);
+  }
+  let semantic;
+  if (String(locator.tag || '').toUpperCase() === 'SUMMARY') {
+    semantic = root.locator('summary').filter({ hasText: exactTextPattern(locator.name) });
+  } else {
+    semantic = root.getByRole(locator.role, { name: locator.name, exact: locator.exact });
+    if (locator.tag || locator.requireNoBlock || locator.href) {
+      const tag = String(locator.tag || (locator.role === 'link' ? 'a' : '*')).toLowerCase();
+      if (!/^(?:a|button|div|summary|\*)$/.test(tag)) throw new Error('scenario tag constraint is invalid');
+      const noBlock = locator.requireNoBlock ? ':not(.block *)' : '';
+      const target = locator.href ? qualificationHrefSelector(tag, locator.href) : tag;
+      semantic = root.locator(`${target}${noBlock}`).and(semantic);
+    }
+  }
   const selector = qualificationLocatorCss(locator);
-  return selector ? page.locator(selector).and(semantic) : semantic;
+  let result = selector ? page.locator(selector).and(semantic) : semantic;
+  if (locator.occurrence != null) {
+    if (!Number.isInteger(locator.occurrence) || locator.occurrence < 1
+      || !locator.occurrenceEvidence?.stableConstraint) {
+      throw new Error('scenario occurrence requires stable occurrence evidence');
+    }
+    result = result.nth(locator.occurrence - 1);
+  }
+  return result;
 }
 
 async function waitForUniqueQualificationLocator(page, locator, timeoutMs = 8000, intervalMs = 250) {
@@ -559,8 +614,67 @@ async function clickReplayTarget(locator, scenario, clickOptions) {
   return locator.click(clickOptions);
 }
 
-async function exerciseQualification(page, scenario) {
+async function executeSetupSteps(page, steps = [], { locate = qualificationLocator } = {}) {
   const clickOptions = { force: true, noWaitAfter: true, timeout: 8000 };
+  for (const step of steps) {
+    if (step.type !== 'click' || !step.locator) throw new Error('unsupported replay setup step');
+    const target = locate(page, step.locator);
+    await waitForUniqueQualificationLocator(page, target);
+    await target.click(clickOptions);
+    if (step.expect?.locator) {
+      const expected = locate(page, step.expect.locator);
+      await expected.waitFor({ state: step.expect.state || 'visible', timeout: 8000 });
+    }
+  }
+}
+
+function interactionSequence(mode) {
+  if (mode === 'proof') {
+    return [
+      { type: 'hold-transport' }, { type: 'click' }, { type: 'wait-held' }, { type: 'click' },
+      { type: 'activate' }, { type: 'release-held' }, { type: 'click' }, { type: 'wait-linked' },
+      { type: 'deactivate' },
+    ];
+  }
+  if (mode === 'capture') {
+    return [{ type: 'activate' }, { type: 'click' }, { type: 'wait-linked' }, { type: 'deactivate' }];
+  }
+  throw new Error(`unknown lineage mode: ${mode}`);
+}
+
+function validateLineageQualification(proof, binding, bytes, now = Date.now()) {
+  const qualified = proof?.qualification || {};
+  const comparableSources = (sources) => Object.fromEntries(Object.entries(sources || {})
+    .filter(([key]) => key !== 'clicktrack-qualification-scenario.json'));
+  const comparableRuntime = (hashes) => Object.fromEntries(Object.entries(hashes || {})
+    .filter(([url]) => /(?:\/scripts\/(?:scripts|tracking|ecs-enrich)\.js|\/tracking\.json|\/utag\.js|\/track-event-lib(?:-init)?\.min\.js)$/.test(url)));
+  const exact = (value) => JSON.stringify(Object.keys(value || {}).sort()
+    .reduce((out, key) => ({ ...out, [key]: value[key] }), {}));
+  const same = qualified.lineageMode === 'proof'
+    && new Date(qualified.expiresAt).getTime() > now
+    && [
+      'mode', 'profileId', 'chromeVersion', 'harnessVersion', 'lineagePolicyVersion',
+      'origin', 'consentState', 'authorizationRef', 'targetId',
+    ]
+      .every((key) => qualified[key] === binding[key])
+    && exact(comparableRuntime(qualified.runtimeHashes)) === exact(comparableRuntime(binding.runtimeHashes))
+    && exact(comparableSources(qualified.sourceHashes)) === exact(comparableSources(binding.sourceHashes))
+    && exact(qualified.completeGoldenManifest) === exact(binding.completeGoldenManifest);
+  if (!same) throw new Error('lineage qualification binding does not match capture deployment/browser/session');
+  return {
+    artifactSha256: sha256(bytes),
+    qualifiedAt: qualified.qualifiedAt,
+    expiresAt: qualified.expiresAt,
+    targetId: qualified.targetId,
+    profileId: qualified.profileId,
+    chromeVersion: qualified.chromeVersion,
+    lineagePolicyVersion: qualified.lineagePolicyVersion,
+  };
+}
+
+async function exerciseQualification(page, scenario, requestedLineageMode) {
+  const clickOptions = { force: true, noWaitAfter: true, timeout: 8000 };
+  await executeSetupSteps(page, scenario.setupSteps);
   const locator = qualificationLocator(page, scenario.locator);
   await waitForUniqueQualificationLocator(page, locator);
   const expectedExpanded = scenario.preconditions?.attributes?.['aria-expanded'];
@@ -578,10 +692,29 @@ async function exerciseQualification(page, scenario) {
     text: (element.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 160),
   }));
 
-  // Stale dismissal, state restore, then the active dismissal. The first and
-  // third interactions have the same business meaning but distinct messageIds.
-  // Hold the stale request inside the page until after activation so arrival
-  // within the active window cannot establish lineage.
+  const lineageMode = requestedLineageMode || scenario.lineage?.mode || 'proof';
+  interactionSequence(lineageMode);
+  if (lineageMode === 'capture') {
+    await page.evaluate((activeScenario) => window.__adobeMigrationReplay.activate(activeScenario), {
+      scenarioId: scenario.scenarioId,
+      page: scenario.page,
+    });
+    await clickReplayTarget(locator, scenario, clickOptions);
+    await waitForSerialized(page, scenario.scenarioId);
+    await page.waitForTimeout(250);
+    const evidence = await page.evaluate(async () => window.__adobeMigrationReplay.snapshot());
+    await page.evaluate(() => window.__adobeMigrationReplay.deactivate());
+    const linked = evidence.serialized.filter((entry) => entry.status === 'linked' && entry.scenarioId === scenario.scenarioId);
+    if (linked.length !== 1) throw new Error(`capture expected one linked event, got ${linked.length}`);
+    if (evidence.dispatches.some((entry) => entry.status === 'ambiguous')
+      || evidence.serialized.some((entry) => entry.status === 'ambiguous')) {
+      throw new Error('capture found ambiguous invocation or serialization lineage');
+    }
+    return { evidence, linked: linked[0], locatorEvidence };
+  }
+
+  // The one-time proof establishes that a business-identical stale request
+  // cannot be linked to the active scenario window.
   await page.evaluate(() => window.__adobeMigrationReplay.holdNextTransport());
   await clickReplayTarget(locator, scenario, clickOptions);
   await page.waitForFunction(() => window.__adobeMigrationReplay.hasHeldTransport(), null, { timeout: 8000 });
@@ -763,6 +896,21 @@ async function qualify(options) {
       runId,
       scenario,
     });
+    const lineageMode = scenario.lineage?.mode || options.lineageMode || 'proof';
+    if (!['proof', 'capture'].includes(lineageMode)) throw new Error('lineage mode must be proof or capture');
+    if (scenario.lineage?.mode && options.lineageMode && scenario.lineage.mode !== options.lineageMode) {
+      throw new Error('scenario lineage mode does not match command');
+    }
+    if (lineageMode === 'capture') {
+      const proofPath = scenario.lineage?.qualificationArtifact || options.lineageQualification;
+      if (!proofPath || !existsSync(proofPath)) throw new Error('capture requires a bound lineage qualification artifact');
+      const proofBytes = readFileSync(proofPath);
+      binding.lineageQualification = validateLineageQualification(
+        JSON.parse(proofBytes.toString('utf8')),
+        binding,
+        proofBytes,
+      );
+    }
     validateQualification(binding, binding);
     const targetMarker = `adobe-migration-test:${runId}:${targetInfo.targetInfo.targetId}`;
     await page.evaluate(installReplayPageHook, {
@@ -793,7 +941,7 @@ async function qualify(options) {
       void page.evaluate(() => window.__adobeMigrationReplay?.heartbeat()).catch(() => {});
     }, 1000);
     page.setDefaultTimeout(8000);
-    const replay = await exerciseQualification(page, scenario);
+    const replay = await exerciseQualification(page, scenario, lineageMode);
     targetGuard.assert();
     if (replay.linked.payload?.properties?.page_cas_id !== scenario.page) {
       throw new Error(`page_cas_id gate failed: ${replay.linked.payload?.properties?.page_cas_id || 'missing'}`);
@@ -893,6 +1041,8 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
 
 export {
   activationEvidence, assertCanonicalScenarioPath, assertCleanReuseState, assertPreflight, assertRuntimeHashes, businessIdentity, createRunJournal, deriveAllowlist, goldenScenario, launchArguments,
-  browserPreflight, clickReplayTarget, createTargetGuard, hashUrl, portAvailable, purgeEvidence, qualificationLocator, qualificationLocatorCss, selectDedicatedOriginPage, selectDedicatedPage,
+  browserPreflight, clickReplayTarget, createTargetGuard, executeSetupSteps, hashUrl, interactionSequence,
+  portAvailable, purgeEvidence, qualificationLocator, qualificationLocatorCss, selectDedicatedOriginPage,
+  selectDedicatedPage, validateLineageQualification,
   shouldAbortReplayNavigation, waitForUniqueQualificationLocator,
 };
