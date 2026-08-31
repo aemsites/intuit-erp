@@ -52,6 +52,8 @@ describe('event-cards — carousel tracking (rw_cards_container)', () => {
     const prev = block.querySelector('.events-arrow.prev');
     const next = block.querySelector('.events-arrow.next');
     expect(prev).not.toBeNull();
+    expect(trackIdOf(prev)).toBe('cards:previous-events');
+    expect(trackIdOf(next)).toBe('cards:next-events');
 
     stampInteraction({ target: prev });
     let p = computeTrackingPayload(prev);

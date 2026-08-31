@@ -58,11 +58,13 @@ function buildCarousel(block, track) {
   prevBtn.type = 'button';
   prevBtn.className = 'events-arrow prev';
   prevBtn.setAttribute('aria-label', 'Previous events');
+  prevBtn.dataset.trackId = 'cards:previous-events';
   prevBtn.textContent = '‹';
   const nextBtn = document.createElement('button');
   nextBtn.type = 'button';
   nextBtn.className = 'events-arrow next';
   nextBtn.setAttribute('aria-label', 'Next events');
+  nextBtn.dataset.trackId = 'cards:next-events';
   nextBtn.textContent = '›';
   const nav = document.createElement('div');
   nav.className = 'events-nav';

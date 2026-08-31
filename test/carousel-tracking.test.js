@@ -41,6 +41,8 @@ describe('carousel — spotlight testimonial chevron tracking (JIT-derived)', ()
     const prev = block.querySelector('.carousel-prev');
     const next = block.querySelector('.carousel-next');
     expect(prev).not.toBeNull();
+    expect(trackIdOf(prev)).toBe('testimonial:previous-slide');
+    expect(trackIdOf(next)).toBe('testimonial:next-slide');
 
     stampInteraction({ target: prev });
     let p = computeTrackingPayload(prev);
