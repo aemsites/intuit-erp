@@ -48,6 +48,13 @@ function makeCompareMediaText() {
     + '    <p class="button-wrapper"><a class="button primary" href="/">Schedule a consultation</a></p>'
     + '  </div>'
     + '  <div><img src="/payroll.png" alt="Payroll"></div>'
+    + '</div>'
+    + '<div>'
+    + '  <div>'
+    + '    <h2>Payments</h2>'
+    + '    <p class="button-wrapper"><a class="button primary" href="https://quickbooks.intuit.com/desktop/enterprise/">Find out more</a></p>'
+    + '  </div>'
+    + '  <div><img src="/payments.png" alt="Payments"></div>'
     + '</div>';
   return block;
 }
@@ -133,5 +140,12 @@ describe('media-text — AI-agents feature CTA tracking (JIT-derived)', () => {
       expect(cta.getAttribute('data-action')).toBe('goto');
       expect(cta.getAttribute('data-wa-link')).toBe('see-plans-payroll');
     });
+
+    expect(computeTrackingPayload(cta).ui_access_point)
+      .toBe('rw_cards_container|carousel|rw_card_1');
+    const payments = block.querySelectorAll('a.button')[1];
+    stampInteraction({ target: payments });
+    expect(computeTrackingPayload(payments).ui_access_point)
+      .toBe('rw_cards_container|carousel|rw_card_2');
   });
 });

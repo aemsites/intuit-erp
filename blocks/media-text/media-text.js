@@ -124,7 +124,18 @@ export default function decorate(block) {
       grid.append(card);
     });
     block.replaceChildren(grid);
-    trackAs(null, block, { key: 'cards', payload: featurePayload });
+    // The compare presentation is the migrated two-card carousel. Preserve
+    // that structural identity even though EDS renders the slots as static
+    // cards: the sheet already keys their residue under `cards:*`, and prod's
+    // click trail is rw_cards_container|carousel|rw_card_N.
+    trackAs('rw_cards_container', block, {
+      key: 'cards',
+      payload: featurePayload,
+      items: {
+        '.compare-grid': 'carousel',
+        '.compare-card': (i) => `rw_card_${i + 1}`,
+      },
+    });
     return;
   }
 

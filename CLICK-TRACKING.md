@@ -117,6 +117,10 @@ block: `blog-template` stamps `qrc_article_hero` on the generated hero section s
 links stay at the flat article-hero access point. Its relocatable share widget remains self-contained
 as `qrc_article_hero|social_media`.
 
+The static EDS rendering of `media-text compare` keeps the migrated carousel identity as
+`rw_cards_container|carousel|rw_card_N`; visual carousel behavior is not required for the legacy
+card-slot trail to remain stable.
+
 `items` only stamps the **trail**. Making a non-CTA element emit its **own beacon** is `alsoTrack`
 (#769) — a selector → `ui_object` map. Each match gets `data-track-as=<ui_object>` so a click resolves
 to it (nearest-wins over the enclosing CTA) and derives `object=content` + that `ui_object`; the
