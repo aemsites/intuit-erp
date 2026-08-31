@@ -37,9 +37,9 @@ function makeMediaText() {
   return block;
 }
 
-function makeCardsMediaText() {
+function makeCompareMediaText() {
   const block = document.createElement('div');
-  block.className = 'media-text cards block';
+  block.className = 'media-text compare block';
   block.setAttribute('data-block-name', 'media-text');
   block.innerHTML = ''
     + '<div>'
@@ -107,7 +107,7 @@ describe('media-text — AI-agents feature CTA tracking (JIT-derived)', () => {
     expect(other.getAttribute('data-ui-object-detail')).toBe('Refer a client');
   });
 
-  it('the cards variant resolves its authored sheet row through the cards namespace', async () => {
+  it('the compare variant resolves its authored sheet row through the cards namespace', async () => {
     window.history.replaceState({}, '', '/erp-solutions');
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
       ok: true,
@@ -120,7 +120,7 @@ describe('media-text — AI-agents feature CTA tracking (JIT-derived)', () => {
       }] }),
     }));
     const main = document.createElement('main');
-    const block = makeCardsMediaText();
+    const block = makeCompareMediaText();
     main.append(block); document.body.append(main);
     decorate(block);
     initTracking(document);

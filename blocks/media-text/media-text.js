@@ -124,6 +124,7 @@ export default function decorate(block) {
       grid.append(card);
     });
     block.replaceChildren(grid);
+    trackAs(null, block, { key: 'cards', payload: featurePayload });
     return;
   }
 
@@ -189,7 +190,6 @@ export default function decorate(block) {
       grid.append(card);
     });
     block.replaceChildren(grid);
-    trackAs(null, block, { key: 'cards', payload: featurePayload });
     return;
   }
 
