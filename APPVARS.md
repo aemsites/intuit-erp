@@ -51,9 +51,11 @@ shape prod's `personalization_details` array carries.
   `window.appVars` **before** the martech/tracker loads — `externalContentIdentifier` from the URL
   pathname, the three record arrays empty — so all four keys always exist when a tracker reads it.
 - **Decisions and visuals have separate deadlines.** The baseline is revealed after 1.5 seconds,
-  while the decision request may continue for up to 5 seconds. Assigned decisions are recorded and
-  flushed synchronously before Tealium starts; below-the-fold DOM swaps continue independently and
-  cannot block the page-view beacon.
+  while the decision request may continue for up to 5 seconds so late decisions can still apply to
+  below-the-fold regions. Treatment context is recorded only after replacement content lands;
+  control context is recorded when its corresponding apply phase runs. A late page or first-section
+  assignment that misses the paint budget is not reported as an exposure. The page-view waits within
+  the same 5 second bound for successful below-the-fold applications, then proceeds fail-open.
 
 ### Two channels
 

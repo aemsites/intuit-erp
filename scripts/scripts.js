@@ -469,9 +469,8 @@ async function loadLazy(doc) {
   let experienceTracking;
   if (window.hlx?.experienceResponse || window.hlx?.experienceResponsePromise) {
     const experienceModule = import('./experience.js');
-    experienceModule.then(({ applyLazyLayers }) => applyLazyLayers(doc)).catch(() => {});
     experienceTracking = experienceModule
-      .then(({ prepareExperienceTracking }) => prepareExperienceTracking(doc))
+      .then(({ applyLazyExperience }) => applyLazyExperience(doc))
       .catch(() => {});
   }
   await loadSections(main);

@@ -16,7 +16,8 @@ import {
   stampPzn, stampExperiment,
   fetchExperience, applyPage, applyLayer,
   mergeExperience, collectSwapRequest, resolveSwappedSlots,
-  applyPageExperience, applyEagerLayers, applyLazyLayers, prepareExperienceTracking,
+  applyPageExperience, applyEagerLayers, applyLazyLayers, applyLazyExperience,
+  prepareExperienceTracking,
   whenFullStoryReady, notifyFullStory,
 } from '../scripts/experience.js';
 // eslint-disable-next-line import/first
@@ -482,6 +483,17 @@ describe('applyPage (whole-page swap, before decorate)', () => {
     expect(window.appVars.ixpDetailsArr[0]).toMatchObject({ experiment_id: '376648', replacement_content_id: '/fragments/exp/page' });
   });
 
+  it('does not record treatment exposure when the page swap fails', async () => {
+    setMeta('experiment-id', '376648');
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('', { status: 500 }));
+
+    expect(await applyPage(
+      document,
+      expResp('376648', { replacementCasId: '/fragments/exp/page' }),
+    )).toBe(false);
+    expect(window.appVars).toBeUndefined();
+  });
+
   it('leaves the baseline but records exposure on a control arm (replacement == original)', async () => {
     setMeta('experiment-id', '376648');
     const fetchSpy = vi.spyOn(globalThis, 'fetch');
@@ -664,6 +676,15 @@ describe('applyLayer (section/block swaps, from the cached response)', () => {
     expect(el.getAttribute('data-treatment-id')).toBe('T1');
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(window.appVars.ixpDetailsArr).toHaveLength(1);
+  });
+
+  it('does not record personalization exposure when its fragment fails to load', async () => {
+    loadFragment.mockResolvedValue(null);
+    const m = main('<div data-pzn="alpha"></div>');
+
+    await applyLayer(m, pznResp('alpha', { contentId: '/fragments/pzn/a' }));
+
+    expect(window.appVars).toBeUndefined();
   });
 
   it('resolves a bare contentId through casToPath before loading', async () => {
@@ -943,6 +964,70 @@ describe('phase entry points (applyPageExperience / applyEagerLayers / applyLazy
     expect(loadFragment).toHaveBeenCalledWith('/fragments/pzn/b');
   });
 
+  it('retains a slow post-swap decision for lazy regions without blocking eager paint', async () => {
+    vi.useFakeTimers();
+    try {
+      window.hlx = { experienceResponse: expResp('999') };
+      document.body.innerHTML = '<main>'
+        + '<div class="section"></div>'
+        + '<div class="section" data-pzn="beta"></div>'
+        + '</main>';
+      let resolveDecision;
+      vi.spyOn(globalThis, 'fetch').mockImplementationOnce((_url, { signal }) => new Promise((resolve, reject) => {
+        resolveDecision = () => resolve(new Response(
+          JSON.stringify(pznResp('beta', { contentId: '/fragments/pzn/b' })),
+          { status: 200, headers: { 'content-type': 'application/json' } },
+        ));
+        signal.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));
+      }));
+
+      await applyEagerLayers(document, true);
+      await vi.advanceTimersByTimeAsync(3000);
+      resolveDecision();
+      await window.hlx.experienceSwapResolved;
+      await applyLazyLayers(document);
+
+      expect(window.hlx.experienceResponse.personalisation.beta).toBeTruthy();
+      expect(loadFragment).toHaveBeenCalledWith('/fragments/pzn/b');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('does not report a slow post-swap first-section decision that missed the paint budget', async () => {
+    vi.useFakeTimers();
+    try {
+      window.requestIdleCallback = vi.fn(() => 1);
+      window.hlx = { experienceResponse: expResp('999') };
+      document.body.innerHTML = '<main><div class="section" data-pzn="beta"></div></main>';
+      let resolveDecision;
+      vi.spyOn(globalThis, 'fetch').mockImplementationOnce((_url, { signal }) => new Promise((resolve, reject) => {
+        resolveDecision = () => resolve(new Response(
+          JSON.stringify(pznResp('beta', { contentId: '/fragments/pzn/b' })),
+          { status: 200, headers: { 'content-type': 'application/json' } },
+        ));
+        signal.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));
+      }));
+
+      let eagerSettled = false;
+      const eager = applyEagerLayers(document, true).then(() => { eagerSettled = true; });
+      await vi.advanceTimersByTimeAsync(1500);
+      expect(eagerSettled).toBe(true);
+
+      await vi.advanceTimersByTimeAsync(1500);
+      resolveDecision();
+      await window.hlx.experienceSwapResolved;
+      await eager;
+      prepareExperienceTracking();
+
+      expect(window.hlx.experienceResponse.personalisation.beta).toBeTruthy();
+      expect(loadFragment).not.toHaveBeenCalledWith('/fragments/pzn/b');
+      expect(window.appVars.pznRecDetailsArr).toEqual([]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('applyLazyLayers: swaps below-the-fold sections, skipping the first', async () => {
     window.hlx = { experienceResponse: pznResp('gamma', { contentId: '/fragments/pzn/g' }) };
     document.body.innerHTML = '<main>'
@@ -951,9 +1036,64 @@ describe('phase entry points (applyPageExperience / applyEagerLayers / applyLazy
       + '</main>';
     await applyLazyLayers(document);
     expect(loadFragment).toHaveBeenCalledWith('/fragments/pzn/g');
+    expect(window.appVars.pznRecDetailsArr[0]).toMatchObject({
+      personalization_placement: 'gamma',
+      personalization_id: 'offer-1',
+    });
   });
 
-  it('records late page and first-section decisions without waiting for DOM swaps', async () => {
+  it('flushes a successful late lazy exposure before tracking proceeds', async () => {
+    window.requestIdleCallback = vi.fn(() => 1);
+    window.hlx = { experienceResponse: pznResp('gamma', { contentId: '/fragments/pzn/g' }) };
+    document.body.innerHTML = '<main>'
+      + '<div class="section"></div>'
+      + '<div class="section" data-pzn="gamma"></div>'
+      + '</main>';
+    let resolveFragment;
+    loadFragment.mockImplementation(() => new Promise((resolve) => {
+      resolveFragment = () => {
+        const m = document.createElement('main');
+        m.innerHTML = '<div>late treatment</div>';
+        resolve(m);
+      };
+    }));
+
+    const tracking = applyLazyExperience(document);
+    await new Promise((resolve) => { setTimeout(resolve, 0); });
+    resolveFragment();
+    await tracking;
+
+    expect(window.appVars.pznRecDetailsArr[0]).toMatchObject({
+      personalization_placement: 'gamma',
+      personalization_id: 'offer-1',
+    });
+  });
+
+  it('bounds the tracking wait when lazy application never settles', async () => {
+    vi.useFakeTimers();
+    try {
+      window.hlx = { experienceResponse: pznResp('gamma', { contentId: '/fragments/pzn/g' }) };
+      document.body.innerHTML = '<main>'
+        + '<div class="section"></div>'
+        + '<div class="section" data-pzn="gamma"></div>'
+        + '</main>';
+      loadFragment.mockImplementation(() => new Promise(() => {}));
+      let trackingSettled = false;
+      const tracking = applyLazyExperience(document)
+        .then(() => { trackingSettled = true; });
+
+      await vi.advanceTimersByTimeAsync(4999);
+      expect(trackingSettled).toBe(false);
+      await vi.advanceTimersByTimeAsync(1);
+      expect(trackingSettled).toBe(true);
+      expect(window.appVars.pznRecDetailsArr).toEqual([]);
+      await tracking;
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('does not record late decisions for page regions that never rendered', async () => {
     setMeta('personalization-id', 'HomeHero');
     document.body.innerHTML = '<main>'
       + '<div class="section" data-exp="376648"></div>'
@@ -972,17 +1112,12 @@ describe('phase entry points (applyPageExperience / applyEagerLayers / applyLazy
 
     let visualSettled = false;
     applyLazyLayers(document).then(() => { visualSettled = true; });
-    await prepareExperienceTracking(document);
+    await prepareExperienceTracking();
     await new Promise((resolve) => { setTimeout(resolve, 0); });
 
-    expect(window.appVars.pznPageRecDetailsArr[0]).toMatchObject({
-      personalization_placement: 'HomeHero',
-      personalization_id: 'offer-1',
-    });
-    expect(window.appVars.ixpDetailsArr[0]).toMatchObject({
-      experiment_id: '376648',
-      experiment_treatment: 'T1',
-    });
+    expect(window.appVars.pznPageRecDetailsArr).toEqual([]);
+    expect(window.appVars.ixpDetailsArr).toEqual([]);
+    expect(window.appVars.pznRecDetailsArr).toEqual([]);
     expect(loadFragment).toHaveBeenCalledWith('/fragments/pzn/g');
     expect(visualSettled).toBe(false);
   });
@@ -1009,7 +1144,7 @@ describe('phase entry points (applyPageExperience / applyEagerLayers / applyLazy
     expect(loadFragment).toHaveBeenCalledWith('/fragments/pzn/g');
   });
 
-  it('preserves the eager visual budget while retaining a late decision for tracking', async () => {
+  it('preserves the eager visual budget without reporting an unrendered late decision', async () => {
     vi.useFakeTimers();
     try {
       document.body.innerHTML = '<main><div class="section" data-pzn="gamma"></div></main>';
@@ -1027,12 +1162,9 @@ describe('phase entry points (applyPageExperience / applyEagerLayers / applyLazy
       resolveDecision(new Response(JSON.stringify(pznResp('gamma', { contentId: null })), {
         status: 200, headers: { 'content-type': 'application/json' },
       }));
-      await prepareExperienceTracking(document);
+      await prepareExperienceTracking();
 
-      expect(window.appVars.pznRecDetailsArr[0]).toMatchObject({
-        personalization_placement: 'gamma',
-        personalization_id: 'offer-1',
-      });
+      expect(window.appVars.pznRecDetailsArr).toEqual([]);
     } finally {
       vi.useRealTimers();
     }
