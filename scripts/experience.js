@@ -216,20 +216,24 @@ export function collectRequest(doc = document) {
 
 // --- The single call --------------------------------------------------------
 
-// Query string for /intuit-orchestrator when preview mode is active: forwards the page URL
-// query when ?preview=true, else opts.previewQuery / opts.preview (Experience Preview tool).
+// Query string for /intuit-orchestrator when preview mode is active. opts.preview (the
+// Experience Preview tool) wins so an edited context is never shadowed by a stale page URL;
+// else a page loaded with ?preview=true forwards ONLY preview + previewContext (never the
+// rest of the page query — utm_*/gclid etc. stay off the orchestrator URL).
 function previewOrchestratorQuery(opts, context) {
-  if (opts.previewQuery) {
-    return String(opts.previewQuery).replace(/^\?/, '');
-  }
-  if (typeof window !== 'undefined') {
-    const page = new URLSearchParams(window.location.search);
-    if (page.get('preview') === 'true') return page.toString();
-  }
   if (opts.preview) {
     const params = new URLSearchParams({ preview: 'true' });
     if (context) params.set('previewContext', JSON.stringify(context));
     return params.toString();
+  }
+  if (typeof window !== 'undefined') {
+    const page = new URLSearchParams(window.location.search);
+    if (page.get('preview') === 'true') {
+      const params = new URLSearchParams({ preview: 'true' });
+      const previewContext = page.get('previewContext');
+      if (previewContext) params.set('previewContext', previewContext);
+      return params.toString();
+    }
   }
   return '';
 }
@@ -251,11 +255,12 @@ export async function fetchExperience({ experimentIds, accessPointNames }, conte
       accessPointName: accessPointNames,
       context,
     };
-    // Preview seam: when ?preview=true, the full query rides on the target URL (page URL,
-    // opts.previewQuery, or opts.preview + context). baseUrl overrides the host.
+    // Preview seam: opts.preview or a page-level ?preview=true adds preview=true +
+    // previewContext to the target URL so Akamai routes to the preview backend. baseUrl
+    // overrides the host. No preview ⇒ identical prod URL.
     const apiRoot = (opts.baseUrl || apiBase()).replace(/\/+$/, '');
     const previewQs = previewOrchestratorQuery(opts, context);
-    let target = `${apiRoot}/intuit-orchestrator${previewQs ? `?${previewQs}` : ''}`;
+    const target = `${apiRoot}/intuit-orchestrator${previewQs ? `?${previewQs}` : ''}`;
     const res = await fetch(target, {
       method: 'POST',
       credentials: 'include',

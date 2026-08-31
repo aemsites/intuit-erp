@@ -161,12 +161,15 @@ describe('buildContext', () => {
   });
   it('strips preview query params from the default permalink', () => {
     const orig = window.location.href;
-    window.history.replaceState({}, '', `${orig.split('?')[0]}?preview=true&previewContext=%7B%7D&locale=en-US`);
-    const ctx = buildContext();
-    expect(ctx.permalink).not.toContain('preview=true');
-    expect(ctx.permalink).not.toContain('previewContext');
-    expect(ctx.permalink).toContain('locale=en-US');
-    window.history.replaceState({}, '', orig);
+    try {
+      window.history.replaceState({}, '', `${orig.split('?')[0]}?preview=true&previewContext=%7B%7D&locale=en-US`);
+      const ctx = buildContext();
+      expect(ctx.permalink).not.toContain('preview=true');
+      expect(ctx.permalink).not.toContain('previewContext');
+      expect(ctx.permalink).toContain('locale=en-US');
+    } finally {
+      window.history.replaceState({}, '', orig);
+    }
   });
 });
 
@@ -457,27 +460,36 @@ describe('fetchExperience', () => {
     expect(url.searchParams.get('preview')).toBe('true');
     expect(JSON.parse(url.searchParams.get('previewContext'))).toEqual(ctx);
   });
-  it('forwards opts.previewQuery verbatim in preview mode', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('{}', { status: 200 }));
-    const previewContext = JSON.stringify({ locale: 'en_US' });
-    await fetchExperience({ experimentIds: ['1'], accessPointNames: [] }, {}, {
-      preview: true,
-      previewQuery: `previewContext=${encodeURIComponent(previewContext)}&preview=true`,
-    });
-    const url = new URL(globalThis.fetch.mock.calls[0][0], 'http://localhost');
-    expect(url.searchParams.get('preview')).toBe('true');
-    expect(url.searchParams.get('previewContext')).toBe(previewContext);
-  });
-  it('forwards the page URL query when ?preview=true is on the page', async () => {
+  it('lets opts.preview win over a stale ?preview=true page query', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('{}', { status: 200 }));
     const orig = window.location.href;
-    const previewContext = JSON.stringify({ permalink: '/drafts/amol/accounting' });
-    window.history.replaceState({}, '', `${orig.split('?')[0]}?preview=true&previewContext=${encodeURIComponent(previewContext)}`);
-    await fetchExperience({ experimentIds: ['1'], accessPointNames: [] }, { locale: 'en_US' });
-    const url = new URL(globalThis.fetch.mock.calls[0][0], 'http://localhost');
-    expect(url.searchParams.get('preview')).toBe('true');
-    expect(url.searchParams.get('previewContext')).toBe(previewContext);
-    window.history.replaceState({}, '', orig);
+    try {
+      const stale = encodeURIComponent(JSON.stringify({ locale: 'de_DE' }));
+      window.history.replaceState({}, '', `${orig.split('?')[0]}?preview=true&previewContext=${stale}`);
+      const edited = { locale: 'fr_FR' };
+      await fetchExperience({ experimentIds: ['1'], accessPointNames: [] }, edited, { preview: true });
+      const url = new URL(globalThis.fetch.mock.calls[0][0], 'http://localhost');
+      expect(url.searchParams.get('preview')).toBe('true');
+      expect(JSON.parse(url.searchParams.get('previewContext'))).toEqual(edited);
+    } finally {
+      window.history.replaceState({}, '', orig);
+    }
+  });
+  it('forwards only preview + previewContext from a ?preview=true page query', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('{}', { status: 200 }));
+    const orig = window.location.href;
+    try {
+      const previewContext = JSON.stringify({ permalink: '/drafts/amol/accounting' });
+      window.history.replaceState({}, '', `${orig.split('?')[0]}?preview=true&previewContext=${encodeURIComponent(previewContext)}&utm_source=email&gclid=abc`);
+      await fetchExperience({ experimentIds: ['1'], accessPointNames: [] }, { locale: 'en_US' });
+      const url = new URL(globalThis.fetch.mock.calls[0][0], 'http://localhost');
+      expect(url.searchParams.get('preview')).toBe('true');
+      expect(url.searchParams.get('previewContext')).toBe(previewContext);
+      expect(url.searchParams.has('utm_source')).toBe(false);
+      expect(url.searchParams.has('gclid')).toBe(false);
+    } finally {
+      window.history.replaceState({}, '', orig);
+    }
   });
   it('honors opts.baseUrl and leaves the URL query-free without preview', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('{}', { status: 200 }));

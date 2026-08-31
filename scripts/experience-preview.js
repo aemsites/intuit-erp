@@ -315,7 +315,6 @@ export async function simulateContext(context, opts = {}) {
   const response = await fetchExperience(request, context || buildContext(), {
     signal,
     preview: true, // always on for the preview tool; change here if that ever flips
-    previewQuery: opts.previewQuery,
     baseUrl: opts.baseUrl,
     timeoutMs: SIMULATE_TIMEOUT_MS,
   });
@@ -371,7 +370,6 @@ async function handle(type, payload) {
     case 'simulateContext': {
       const r = await simulateContext(payload.context, {
         preview: payload.preview,
-        previewQuery: payload.previewQuery,
         baseUrl: payload.baseUrl,
       });
       return { type: 'applied', ...r, ok: r.applied };
