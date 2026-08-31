@@ -4,7 +4,7 @@
  * `window.intuit.tracking.ecs.webAnalytics` once (before utag.js loads) and wraps both calls:
  *
  *   - trackPage (screen:viewed) — fills personalization_details / experiment_ids from appVars.
- *   - track (content:* clicks)  — fills page_cas_id = window.location.pathname.
+ *   - track (content:* clicks)  — fills page_cas_id + global experiment_ids.
  *
  * One module, one trap, no double-fire, no profile change. Kept together (same bucket, one fetch on
  * the LCP path). Install in the eager phase; skipped with ?martech=off.
@@ -79,15 +79,19 @@ export function wrapTrackPage(wa) {
   wa[WRAPPED_PAGE] = true;
 }
 
-// ---- click (track): page_cas_id -----------------------------------------------------------
+// ---- click (track): page_cas_id + global experiment_ids ----------------------------------
 
 /** The content identifier: the page pathname (OVERRIDES.md — no cas-id metadata anymore). */
 export const pageCasId = () => (typeof window !== 'undefined' ? window.location.pathname : '');
 
-/** Fills `page_cas_id` from the pathname where the profile left it empty. Mutates + returns. */
-export function enrichEventPayload(payload) {
+/** Fills page context where the profile left it empty. Mutates + returns. */
+export function enrichEventPayload(payload, appVars = {}) {
   if (!payload || typeof payload !== 'object') return payload;
   if (isEmpty(payload.page_cas_id)) payload.page_cas_id = pageCasId();
+  if (isEmpty(payload.experiment_ids)) {
+    const xt = experimentTrackString(appVars.ixpDetailsArr);
+    if (xt) payload.experiment_ids = xt;
+  }
   return payload;
 }
 
@@ -97,7 +101,7 @@ export function wrapTrack(wa) {
   const original = wa.track.bind(wa);
   wa.track = function enrichedTrack(payload, ...rest) {
     try {
-      enrichEventPayload(payload);
+      enrichEventPayload(payload, (typeof window !== 'undefined' && window.appVars) || {});
     } catch (e) {
       // fail-open — enrichment must never block the real beacon
     }

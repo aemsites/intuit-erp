@@ -50,23 +50,23 @@ shape prod's `personalization_details` array carries.
 - **Eager, before martech.** `loadEager()` in [`scripts.js`](scripts/scripts.js) seeds
   `window.appVars` **before** the martech/tracker loads — `externalContentIdentifier` from the URL
   pathname, the three record arrays empty — so all four keys always exist when a tracker reads it.
-- **Arrays fill in place.** Decisions resolve asynchronously across the eager (LCP section) and lazy
-  (rest-of-page) phases; `recordPzn` / `recordPznPage` / `recordIxp` update the arrays **on the same
-  object reference**, so a tracker that captured `window.appVars` eagerly still sees the records.
-  De-dup + the global write are deferred to an idle callback, off the LCP path. (If a page-view
-  tracker ever reads `appVars` synchronously at load, this idle deferral must be flushed first —
-  tracked with the page-view work below.)
+- **Decisions and visuals have separate deadlines.** The baseline is revealed after 1.5 seconds,
+  while the decision request may continue for up to 5 seconds. Assigned decisions are recorded and
+  flushed synchronously before Tealium starts; below-the-fold DOM swaps continue independently and
+  cannot block the page-view beacon.
 
 ### Two channels
 
 1. **Page-level — `window.appVars`.** *Intended* to feed page-view beacons
    (`personalization_details`, `experiment_ids`). See the open gap below — the deployed tracker does
    not yet consume it.
-2. **Block-level — `data-pzn-*` DOM attributes** on personalized blocks. The tracker rebuilds a
+2. **Click-level — DOM PZN plus global IXP.** `data-pzn-*` attributes let the tracker rebuild a
    record **per click** by walking the DOM up from the clicked element, so personalized blocks must
    carry these. `stampPzn` ([`scripts/experience.js`](scripts/experience.js)) writes the full set
    Intuit's `helix-common/pzn-container-block` uses — `data-pzn-placement` / `-id` / `-action` /
    `-workflow` / `-model-name` / `-model-version` (+ `data-experiment-*` via `stampExperiment`).
+   The ECS enrichment shim also fills global `experiment_ids` from `appVars` when the profile leaves
+   the click payload empty.
 
 ---
 

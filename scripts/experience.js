@@ -382,6 +382,27 @@ export function recordPzn(records) { bufferRecords(pznById, records, 'personaliz
 export function recordPznPage(records) { bufferRecords(pznPageById, records, 'personalization_id'); }
 export function recordIxp(records) { bufferRecords(ixpById, records, 'experiment_id'); }
 
+// Records every assigned decision independently from whether its visual swap meets LCP timing.
+export function recordExperience(doc, response) {
+  if (!doc || !response) return;
+  const pageExp = getMetadata('experiment-id');
+  const pagePzn = getMetadata('personalization-id');
+  if (pageExp && /^\d+$/.test(pageExp)) {
+    recordIxp([ixpRecord(experimentDecision(response, pageExp), window.location.pathname)]);
+  } else if (pagePzn) {
+    recordPznPage([pznRecord(pagePzn, pznDecision(response, pagePzn))]);
+  }
+
+  const main = doc.querySelector('main');
+  if (!main) return;
+  collectExperiments(main).forEach(({ id }) => {
+    recordIxp([ixpRecord(experimentDecision(response, id), window.location.pathname)]);
+  });
+  collectSlots(main).forEach(({ placement }) => {
+    recordPzn([pznRecord(placement, pznDecision(response, placement))]);
+  });
+}
+
 const FS_READY_TIMEOUT_MS = 10000;
 let fsReadyPromise;
 let fsReadyTimer;
@@ -585,8 +606,9 @@ export function resolveSwappedSlots(doc, { timeoutMs = 1500 } = {}) {
 
 // --- Phase entry points (the experience surface scripts.js drives) ----------
 
-const EAGER_DEADLINE_MS = 1500; // network budget: the consolidated call + optional 2nd call
+const EAGER_DEADLINE_MS = 1500; // visual decision budget before baseline reveal
 const EAGER_APPLY_MS = 2000; // budget for swapping the first/LCP section before reveal
+const DECISION_DEADLINE_MS = 5000; // lets late decisions reach analytics and lazy regions
 
 // EAGER, before decorateMain: the one consolidated call + whole-page swap (runs once).
 // Caches the decision; returns whether a page swap landed.
@@ -596,14 +618,25 @@ export async function applyPageExperience(doc) {
   window.hlx.pageExperienceApplied = true;
   const request = collectRequest(doc);
   if (!request.experimentIds.length && !request.accessPointNames.length) return false;
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), EAGER_DEADLINE_MS);
-  try {
-    const response = await fetchExperience(request, buildContext(), { signal: controller.signal });
+  const decisionController = new AbortController();
+  const decisionTimer = setTimeout(() => decisionController.abort(), DECISION_DEADLINE_MS);
+  const responsePromise = fetchExperience(request, buildContext(), {
+    signal: decisionController.signal,
+  }).then((response) => {
     window.hlx.experienceResponse = response;
-    return response ? applyPage(doc, response, controller.signal) : false;
+    return response;
+  }).finally(() => clearTimeout(decisionTimer));
+  window.hlx.experienceResponsePromise = responsePromise;
+
+  const eagerController = new AbortController();
+  const eagerTimer = setTimeout(() => eagerController.abort(), EAGER_DEADLINE_MS);
+  try {
+    const response = await withTimeout(responsePromise, EAGER_DEADLINE_MS);
+    if (!response) return false;
+    const applied = await applyPage(doc, response, eagerController.signal);
+    return applied;
   } finally {
-    clearTimeout(timer);
+    clearTimeout(eagerTimer);
   }
 }
 
@@ -623,10 +656,27 @@ export async function applyEagerLayers(doc, pageSwapped) {
   }
 }
 
+async function latestExperienceResponse() {
+  const initial = window.hlx?.experienceResponse
+    || await window.hlx?.experienceResponsePromise;
+  if (!initial) return null;
+  if (window.hlx.experienceSwapResolved) await window.hlx.experienceSwapResolved;
+  return window.hlx?.experienceResponse || initial;
+}
+
+// Populates appVars synchronously once the bounded decision work is complete.
+export async function prepareExperienceTracking(doc) {
+  const response = await latestExperienceResponse();
+  if (!response) return;
+  recordExperience(doc, response);
+  flushAppVars();
+}
+
 // LAZY: swap every remaining (below-the-fold) section, after any 2nd-call merge has landed.
 export async function applyLazyLayers(doc) {
   const main = doc.querySelector('main');
-  if (!main || !window.hlx?.experienceResponse) return;
-  if (window.hlx.experienceSwapResolved) await window.hlx.experienceSwapResolved;
-  await applyLayer(main, window.hlx.experienceResponse, { skip: main.querySelector('.section') });
+  if (!main) return;
+  const response = await latestExperienceResponse();
+  if (!response) return;
+  await applyLayer(main, response, { skip: main.querySelector('.section') });
 }
