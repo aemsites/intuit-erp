@@ -111,6 +111,11 @@ trails come from one `trackAs` option — `items`, a selector → segment map fo
 **`(index, el) => string`** for repeated/indexed children (cards → `rw_cards_container|carousel|rw_card_N`).
 Explicit authored `data-tracking` in markup always wins.
 
+Auto-built article structure follows the same trail contract without pretending the section is a
+block: `blog-template` stamps `qrc_article_hero` on the generated hero section so eyebrow and byline
+links stay at the flat article-hero access point. Its relocatable share widget remains self-contained
+as `qrc_article_hero|social_media`.
+
 `items` only stamps the **trail**. Making a non-CTA element emit its **own beacon** is `alsoTrack`
 (#769) — a selector → `ui_object` map. Each match gets `data-track-as=<ui_object>` so a click resolves
 to it (nearest-wins over the enclosing CTA) and derives `object=content` + that `ui_object`; the
@@ -212,7 +217,7 @@ node scripts/diff/live-replay-runner.mjs purge \
 **Implemented and wired.** `scripts/tracking.js` is loaded lazily from `scripts.js`; blocks declare
 their tracking via `trackAs` (hero, cards, faq, testimonial, footer, header nav + secondary-nav,
 related-blogs, case-study-header, video, quick-links, cta-band, contact-us/talk-to-sales, blog-template
-author-bio). Card blocks (related-blogs, blog-cards) fire per-slot beacons via `alsoTrack`: the
+article hero/share and author-bio). Card blocks (related-blogs, blog-cards) fire per-slot beacons via `alsoTrack`: the
 thumbnail (`…|image`) and the body content slot (`…|qrc_content_card_content`); the blog index also
 reproduces its paginated **Load More** (`…|oisp_loadmore|button`).
 
