@@ -127,21 +127,18 @@ footer .footer .container { max-width: var(--container); margin: 0 auto; padding
   .footer .legal-grid {
     grid-template-columns: max-content 1fr;
     grid-template-areas:
-      "logo   brand"
-      "nav    copy"
-      "links  links"
-      "truste truste";
+      "logo brand"
+      "nav  copy"
+      "nav  truste"
+      "nav  links";
     gap: 24px 28px;
   }
   .footer .legal-grid .ftr-logo { grid-area: logo; margin: 0; align-self: center; }
-  .footer .legal-grid .brand-logos { grid-area: brand; margin: 0; flex-direction: column; align-items: flex-start; gap: 27px; }
-  .footer .legal-grid .legal-nav { grid-area: nav; margin: 0; display: flex; flex-wrap: wrap; padding: 0; }
-  .footer .legal-grid .legal-nav a { display: inline; line-height: 1.8; }
-  .footer .legal-grid .legal-nav li:not(:first-child)::before { content: "|"; margin: 0 6px; color: var(--text-muted); }
+  .footer .legal-grid .brand-logos { grid-area: brand; margin: 0; align-self: center; }
+  .footer .legal-grid .legal-nav { grid-area: nav; margin: 0; padding: 0; align-self: start; }
   .footer .legal-grid .legal-copy { grid-area: copy; }
-  .footer .legal-grid .truste { grid-area: truste; }
+  .footer .legal-grid .truste { grid-area: truste; align-self: start; }
   .footer .legal-grid .legal-links { grid-area: links; margin: 0; }
-  .footer .legal-right .legal-links .legal-sep { margin: 0 6px; }
 }
 
 @media (width < 768px) {
@@ -152,8 +149,8 @@ footer .footer .container { max-width: var(--container); margin: 0 auto; padding
       "brand"
       "nav"
       "copy"
-      "links"
-      "truste";
+      "truste"
+      "links";
     row-gap: 20px;
   }
 }
