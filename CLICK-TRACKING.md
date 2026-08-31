@@ -89,7 +89,8 @@ links). A CTA in **no** declared block is tracked under the `page` key with pure
    payload defaults (`object`/`action`/`uiObject`), `linkName:false` to suppress the derived
    `link_name`, and `skip` selectors. It is a *declaration*, not a tracking gate. Defaults resolve
    from the CTA's **nearest** ancestor carrying them, so a block can set a default and a sub-section
-   refine it.
+   refine it. The floating talk-to-sales widget uses this for `ui_object=button`, including its
+   support destination: it is an anchor semantically, but is presented and tracked as a CTA button.
 3. **Sheet residue** (`/tracking.json`) — the authored values the derive cannot know: `wa-link`
    campaign codes, semantic `object_detail` / `ui_object`, non-default `action`, and authored
    `link_name`. Two authoring columns: **`path`** (the page path, or `*`/blank for site-wide chrome)
