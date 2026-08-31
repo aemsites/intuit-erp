@@ -144,8 +144,7 @@ footer .footer .container { max-width: var(--container); margin: 0 auto; padding
   .footer .legal-right .legal-links .legal-sep { margin: 0 6px; }
 }
 
-@media (width <= 599px) {
-  /* very narrow: give the copyright its own full-width column below the links */
+@media (width < 768px) {
   .footer .legal-grid {
     grid-template-columns: 1fr;
     grid-template-areas:
