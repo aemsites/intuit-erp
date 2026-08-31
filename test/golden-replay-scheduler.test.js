@@ -5,7 +5,7 @@ import { EventEmitter } from 'node:events';
 import {
   buildQualificationScenario, captureDeploymentFingerprint, capturePageFingerprint,
   disposeUnreplayableScenarios, isRunBindingDrift, parseArgs,
-  qualificationFailureReason, recoveryTargetUrl, replayReadiness, runQualificationProcess,
+  nextSelectedReplayScenario, qualificationFailureReason, recoveryTargetUrl, replayReadiness, runQualificationProcess,
   selectLineageQualificationScenario, shouldRetryQualification,
   validateQualificationCapture,
 } from '../scripts/diff/golden-replay-scheduler.mjs';
@@ -247,6 +247,18 @@ describe('complete golden replay scheduler', () => {
   it('accepts explicit repeatable completed-scenario rerun requests', () => {
     expect(parseArgs(['--authorization-ref', 'Adobe Migration Test', '--rerun-scenario', 'one', '--rerun-scenario', 'two']))
       .toMatchObject({ rerunScenarioIds: ['one', 'two'] });
+  });
+
+  it('can bound a replay run to explicitly selected scenario ids', () => {
+    const source = manifest();
+    const state = disposeUnreplayableScenarios(createReplayRunState(source, binding), source);
+    expect(parseArgs(['--authorization-ref', 'Adobe Migration Test', '--only-scenario', 'semantic']))
+      .toMatchObject({ selectedScenarioIds: ['semantic'] });
+    expect(nextSelectedReplayScenario(state, source, ['semantic']))
+      .toMatchObject({ scenarioId: 'semantic' });
+    expect(nextSelectedReplayScenario(state, source, [])).toMatchObject({ scenarioId: 'tracked' });
+    expect(() => nextSelectedReplayScenario(state, source, ['not-in-manifest']))
+      .toThrow(/selected scenario is not in manifest/i);
   });
 
   it('does not release a scenario until consent and every tracker layer are ready', () => {

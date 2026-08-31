@@ -20,10 +20,19 @@ const normalizePath = (href) => {
   try { return new URL(href, 'https://erp.intuit.com').pathname.replace(/\/$/, '') || '/'; } catch { return String(href || '').replace(/\/$/, ''); }
 };
 
-function matchCta(entry, ctas, used) {
+function matchCta(entry, ctas, used, reviewedTrackId = '') {
   const expectedLabel = normalizeLabel(entry.exp?.ui_object_detail || entry.text);
   const expectedPath = entry.href ? normalizePath(entry.href) : '';
   const indexed = ctas.map((candidate, index) => ({ ...candidate, index }));
+  if (reviewedTrackId) {
+    const matches = indexed.filter(({ tid }) => tid === reviewedTrackId);
+    if (matches.length > 1) return { status: 'ambiguous', candidates: matches, reviewed: true };
+    if (matches.length === 1) {
+      used.add(matches[0].index);
+      return { status: 'matched', candidate: matches[0], reviewed: true };
+    }
+    return { status: 'absent', candidates: [], reviewed: true };
+  }
   const tiers = [
     expectedLabel && indexed.filter((candidate) => candidate.p && normalizeLabel(candidate.p.ui_object_detail) === expectedLabel),
     expectedLabel && indexed.filter((candidate) => normalizeLabel(candidate.label) === expectedLabel),
@@ -56,10 +65,14 @@ function residueFor(expected, actual) {
   return row;
 }
 
-export function generateSheetFromBuild(goldenInput, oursInput) {
+export function generateSheetFromBuild(goldenInput, oursInput, reviewedManifest = null) {
   const golden = structuredClone(goldenInput);
   assignIds(golden.entries);
   const ours = oursInput.pages || {};
+  const reviewedTrackIds = new Map((reviewedManifest?.scenarios || [])
+    .filter(({ goldenRef, locator }) => goldenRef?.payloadFile
+      && locator?.status === 'proposed' && locator?.strategy === 'data-track-id' && locator?.value)
+    .map(({ goldenRef, locator }) => [goldenRef.payloadFile, locator.value]));
   const rows = [];
   const report = {
     emitted: 0,
@@ -68,6 +81,8 @@ export function generateSheetFromBuild(goldenInput, oursInput) {
     acceptedUiAccessPointOnly: [],
     idKept: 0,
     idRemapped: 0,
+    reviewedMatches: 0,
+    reviewedTargetAbsent: [],
   };
   const usedByPage = {};
 
@@ -76,7 +91,8 @@ export function generateSheetFromBuild(goldenInput, oursInput) {
     const page = entry.page === '*' ? '*' : entry.page;
     const ctas = ours[entry.page] || ours[page] || [];
     if (!usedByPage[entry.page]) usedByPage[entry.page] = new Set();
-    const match = matchCta(entry, ctas, usedByPage[entry.page]);
+    const reviewedTrackId = reviewedTrackIds.get(entry.payloadFile) || '';
+    const match = matchCta(entry, ctas, usedByPage[entry.page], reviewedTrackId);
     if (match.status === 'ambiguous') {
       report.ambiguous.push({
         page: entry.page,
@@ -87,9 +103,13 @@ export function generateSheetFromBuild(goldenInput, oursInput) {
     }
     const cta = match.candidate;
     if (!cta?.tid) {
+      if (match.reviewed) report.reviewedTargetAbsent.push({
+        page: entry.page, payloadFile: entry.payloadFile, reviewedTrackId,
+      });
       report.absent.push(`${entry.page} [${entry.key || 'loose'}] ${(entry.text || '').slice(0, 40)}`);
       continue;
     }
+    if (match.reviewed) report.reviewedMatches += 1;
     const expected = entry.exp || {};
     const actual = cta.p || {};
     const row = residueFor(expected, actual);
@@ -115,15 +135,18 @@ function argumentValue(argv, flag) {
 export function main(argv = process.argv.slice(2)) {
   const goldenPath = argumentValue(argv, '--golden') || `${DIR}/clicktrack-golden-customer.json`;
   const oursPath = argumentValue(argv, '--ours');
+  const manifestPath = argumentValue(argv, '--manifest');
   const outPath = argumentValue(argv, '--out') || `${DIR}/tracking-sheet-from-build.json`;
   if (!oursPath) throw new Error('need --ours <scan.json> (aggregated beacon-free output under {pages})');
   const golden = JSON.parse(readFileSync(goldenPath, 'utf8'));
   const ours = JSON.parse(readFileSync(oursPath, 'utf8'));
-  const { sheet, report } = generateSheetFromBuild(golden, ours);
+  const reviewedManifest = manifestPath ? JSON.parse(readFileSync(manifestPath, 'utf8')) : null;
+  const { sheet, report } = generateSheetFromBuild(golden, ours, reviewedManifest);
   writeFileSync(outPath, `${JSON.stringify(sheet, null, 2)}\n`);
   console.log(`emitted ${report.emitted} residue rows keyed by Stage runtime ids -> ${outPath}`);
   console.log(`  remapped ids: ${report.idRemapped}   kept: ${report.idKept}`);
   console.log(`  ambiguous identity matches (not emitted): ${report.ambiguous.length}`);
+  console.log(`  reviewed identity matches: ${report.reviewedMatches}   absent: ${report.reviewedTargetAbsent.length}`);
   console.log(`  accepted ui_access_point-only differences (not emitted): ${report.acceptedUiAccessPointOnly.length}`);
   console.log(`  golden entries with no matching Stage control: ${report.absent.length}`);
   return { sheet, report };

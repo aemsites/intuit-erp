@@ -223,6 +223,19 @@ export function disposeUnreplayableScenarios(initial, manifest) {
   return state;
 }
 
+export function nextSelectedReplayScenario(state, manifest, selectedScenarioIds = []) {
+  if (!selectedScenarioIds.length) return nextReplayScenario(state, manifest);
+  const scenarios = new Map(manifest.scenarios.map((scenario) => [scenario.scenarioId, scenario]));
+  for (const scenarioId of selectedScenarioIds) {
+    if (!scenarios.has(scenarioId)) throw new Error(`selected scenario is not in manifest: ${scenarioId}`);
+  }
+  const pending = new Set(state.outcomes
+    .filter(({ status }) => status === 'pending')
+    .map(({ scenarioId }) => scenarioId));
+  const selected = new Set(selectedScenarioIds);
+  return manifest.scenarios.find(({ scenarioId }) => selected.has(scenarioId) && pending.has(scenarioId)) || null;
+}
+
 export function captureDeploymentFingerprint(capture) {
   const global = capture.provenance?.global || {};
   const identity = {
@@ -379,6 +392,7 @@ export function parseArgs(argv) {
     maxScenarios: Infinity,
     retentionDays: 30,
     rerunScenarioIds: [],
+    selectedScenarioIds: [],
   };
   for (let index = 0; index < argv.length; index += 1) {
     if (argv[index] === '--cdp') options.cdp = argv[++index];
@@ -393,6 +407,7 @@ export function parseArgs(argv) {
     else if (argv[index] === '--max-scenarios') options.maxScenarios = Number(argv[++index]);
     else if (argv[index] === '--retention-days') options.retentionDays = Number(argv[++index]);
     else if (argv[index] === '--rerun-scenario') options.rerunScenarioIds.push(argv[++index]);
+    else if (argv[index] === '--only-scenario') options.selectedScenarioIds.push(argv[++index]);
     else throw new Error(`unknown argument: ${argv[index]}`);
   }
   return options;
@@ -422,7 +437,7 @@ export async function main(argv = process.argv.slice(2)) {
   }
   state = disposeUnreplayableScenarios(state, manifest);
   writeReplayCheckpoint(options.out, state);
-  const pendingReplay = nextReplayScenario(state, manifest);
+  const pendingReplay = nextSelectedReplayScenario(state, manifest, options.selectedScenarioIds);
   const lineagePath = resolve(options.evidenceDir, 'live-replay-lineage-qualification.json');
   if (pendingReplay && !state.lineageQualification) {
     const proofScenario = selectLineageQualificationScenario(manifest);
@@ -466,8 +481,9 @@ export async function main(argv = process.argv.slice(2)) {
     }
   }
   let attempted = 0;
-  while (nextReplayScenario(state, manifest) && attempted < options.maxScenarios) {
-    const scenario = nextReplayScenario(state, manifest);
+  while (nextSelectedReplayScenario(state, manifest, options.selectedScenarioIds)
+    && attempted < options.maxScenarios) {
+    const scenario = nextSelectedReplayScenario(state, manifest, options.selectedScenarioIds);
     const qualificationScenario = buildQualificationScenario(scenario, {
       lineageMode: 'capture', lineageQualification: state.lineageQualification.artifact.path,
     });

@@ -175,6 +175,9 @@ Parity is measured deterministically against a golden captured from prod (`scrip
 - `gen-sheet-from-golden.mjs` — reverse-engineers the residue sheet from the golden, keyed by `id`
   the way the runtime resolves (`idOf`/`assignIds`: per-block special ids, else `<key>:<hrefSlug |
   slug(label)>`, deduped per page#block). The customer's `/tracking.json` seed.
+- `sheet-from-our-build.mjs` — rekeys that residue to current Stage `data-track-id` values. Pass the
+  reviewed replay manifest with `--manifest` so an explicitly reviewed target wins when migrated
+  copy or destinations no longer match the frozen production DOM.
 - `coverage-matrix.mjs` — a readable component × field coverage matrix.
 
 Golden fixtures with customer campaign codes stay **local + gitignored**
@@ -216,6 +219,10 @@ node scripts/diff/live-replay-runner.mjs purge \
   --evidence-dir scripts/diff/fixtures/local \
   --retention-days 30
 ```
+
+For bounded follow-up validation, the complete replay scheduler accepts repeatable
+`--only-scenario <scenario-id>` arguments. After the required one-time lineage-proof interaction,
+it activates only the selected reviewed customer interactions; all other scenarios remain pending.
 
 ## Status
 

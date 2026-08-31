@@ -288,12 +288,22 @@ describe('golden replay locator review', () => {
     expect(updated.scenarios[1].locator.evidence.reviewedDecision.duplicateOf).toBe('one');
   });
 
-  it('ships exactly the 20 harness-owned decisions without closing owner-owned gaps', () => {
+  it('ships the reviewed harness-owned decisions without closing ambiguous owner-owned gaps', () => {
     const artifact = JSON.parse(readFileSync(
       'scripts/diff/fixtures/golden-replay-reviewed-locator-overrides.json', 'utf8',
     ));
-    expect(artifact.decisions).toHaveLength(20);
-    expect(new Set(artifact.decisions.map(({ scenarioId }) => scenarioId)).size).toBe(20);
+    expect(artifact.decisions).toHaveLength(21);
+    expect(new Set(artifact.decisions.map(({ scenarioId }) => scenarioId)).size).toBe(21);
+    expect(artifact.decisions.find(({ scenarioId }) => (
+      scenarioId === 'customer-professional-services-aa56645bc6c8'
+    ))).toMatchObject({
+      candidateIdentity: {
+        dataTrackId: 'cards:quickbooks-r-enterprise-intuit-enterprise-suite-professional-service-business',
+        accessibleName: 'Intuit Enterprise Suite for professional service firms: Read more',
+        href: 'https://quickbooks.intuit.com/r/enterprise/intuit-enterprise-suite-professional-service-business/',
+      },
+      locator: { block: 'cards' },
+    });
     expect(artifact.decisions.map(({ scenarioId }) => scenarioId)).not.toContain(
       'customer-blog-construction-automation-in-cons-e622b3154851',
     );
