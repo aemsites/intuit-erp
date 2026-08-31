@@ -301,46 +301,46 @@ export async function installReplayPageHook(config, injectedScope) {
   const observeSerialized = (event, requestUrl) => {
     if (!installed) return Promise.resolve();
     return trackPromise((async () => {
-    const messageId = typeof event?.messageId === 'string' ? event.messageId : null;
-    const poisoned = messageId ? ambiguousMessageIds.has(messageId) : false;
-    const linked = messageId && !poisoned ? byMessageId.get(messageId) : null;
-    const count = messageId ? (serializedCounts.get(messageId) || 0) + 1 : 0;
-    if (messageId) serializedCounts.set(messageId, count);
-    let status = 'unlinked';
-    let reason = 'no-invocation-lineage';
-    if (poisoned) {
-      status = 'ambiguous';
-      reason = 'duplicate-message-id';
-    } else if (linked) {
-      status = 'linked';
-      reason = null;
-    }
-    if (linked && count > 1) {
-      status = 'ambiguous';
-      reason = 'duplicate-serialization';
-    }
-    const record = {
-      status,
-      reason,
-      scenarioId: linked?.scenarioId || null,
-      invocationId: linked?.invocationId || null,
-      activeScenarioIdAtSerialization: active?.scenarioId || null,
-      messageId: messageId ? await redactedValue(messageId) : null,
-      requestUrl: cleanUrl(requestUrl),
-      payload: await sanitizePayload(event),
-    };
-    if (!installed) return;
-    if (messageId && ambiguousMessageIds.has(messageId)) {
-      record.status = 'ambiguous';
-      record.reason = 'duplicate-message-id';
-      record.scenarioId = null;
-      record.invocationId = null;
-    }
-    serialized.push(record);
-    if (messageId) {
-      if (!serializedByMessageId.has(messageId)) serializedByMessageId.set(messageId, []);
-      serializedByMessageId.get(messageId).push(record);
-    }
+      const messageId = typeof event?.messageId === 'string' ? event.messageId : null;
+      const poisoned = messageId ? ambiguousMessageIds.has(messageId) : false;
+      const linked = messageId && !poisoned ? byMessageId.get(messageId) : null;
+      const count = messageId ? (serializedCounts.get(messageId) || 0) + 1 : 0;
+      if (messageId) serializedCounts.set(messageId, count);
+      let status = 'unlinked';
+      let reason = 'no-invocation-lineage';
+      if (poisoned) {
+        status = 'ambiguous';
+        reason = 'duplicate-message-id';
+      } else if (linked) {
+        status = 'linked';
+        reason = null;
+      }
+      if (linked && count > 1) {
+        status = 'ambiguous';
+        reason = 'duplicate-serialization';
+      }
+      const record = {
+        status,
+        reason,
+        scenarioId: linked?.scenarioId || null,
+        invocationId: linked?.invocationId || null,
+        activeScenarioIdAtSerialization: active?.scenarioId || null,
+        messageId: messageId ? await redactedValue(messageId) : null,
+        requestUrl: cleanUrl(requestUrl),
+        payload: await sanitizePayload(event),
+      };
+      if (!installed) return;
+      if (messageId && ambiguousMessageIds.has(messageId)) {
+        record.status = 'ambiguous';
+        record.reason = 'duplicate-message-id';
+        record.scenarioId = null;
+        record.invocationId = null;
+      }
+      serialized.push(record);
+      if (messageId) {
+        if (!serializedByMessageId.has(messageId)) serializedByMessageId.set(messageId, []);
+        serializedByMessageId.get(messageId).push(record);
+      }
     })());
   };
 
@@ -457,12 +457,14 @@ export async function installReplayPageHook(config, injectedScope) {
 
   const pagehide = () => { void teardown('pagehide'); };
   const preventNavigation = (event) => {
-    if (!active || config.preventNavigation === false) return;
+    if ((!active && !config.qualificationMode) || config.preventNavigation === false) return;
     const target = event?.target?.closest?.('a[href], button, input[type="submit"]');
-    if (target?.matches?.('a[href], input[type="submit"], button[type="submit"]')) event.preventDefault();
+    if (target?.matches?.('a[href], input[type="submit"], button[type="submit"]')) {
+      event.preventDefault();
+    }
   };
   const preventSubmit = (event) => {
-    if (active && config.preventNavigation !== false) event.preventDefault();
+    if ((active || config.qualificationMode) && config.preventNavigation !== false) event.preventDefault();
   };
   scope.addEventListener?.('pagehide', pagehide, { once: true });
   scope.document?.addEventListener?.('click', preventNavigation, true);

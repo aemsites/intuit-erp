@@ -14,7 +14,8 @@ import {
 } from '../scripts/diff/live-replay-harness.mjs';
 import {
   activationEvidence, assertCanonicalScenarioPath, assertCleanReuseState, assertPreflight, assertRuntimeHashes, createRunJournal, createTargetGuard, deriveAllowlist, goldenScenario,
-  launchArguments, portAvailable, purgeEvidence, selectDedicatedPage,
+  browserPreflight, clickReplayTarget, hashUrl, launchArguments, portAvailable, purgeEvidence, qualificationLocatorCss, selectDedicatedOriginPage, selectDedicatedPage,
+  shouldAbortReplayNavigation,
 } from '../scripts/diff/live-replay-runner.mjs';
 
 const scenario = {
@@ -61,6 +62,7 @@ const shapeOnly = {
 
 function fakeScope({ transportPolicy = 'observe' } = {}) {
   const sent = [];
+  const documentListeners = {};
   const analytics = {
     _dispatch(event) { return Promise.resolve(event); },
   };
@@ -89,6 +91,14 @@ function fakeScope({ transportPolicy = 'observe' } = {}) {
     clearInterval,
     addEventListener: vi.fn(),
     removeEventListener: vi.fn(),
+    document: {
+      addEventListener: vi.fn((type, listener, capture) => {
+        documentListeners[`${type}:${capture ? 'capture' : 'bubble'}`] = listener;
+      }),
+      removeEventListener: vi.fn((type, listener, capture) => {
+        delete documentListeners[`${type}:${capture ? 'capture' : 'bubble'}`];
+      }),
+    },
     fetch: vi.fn(async (url, options) => {
       sent.push({ url, body: options?.body });
       return { ok: true, status: 200 };
@@ -111,7 +121,9 @@ function fakeScope({ transportPolicy = 'observe' } = {}) {
       sent.push({ transport: 'xhr', url: this.url, body });
     }
   };
-  return { scope, sent, transportPolicy };
+  return {
+    scope, sent, transportPolicy, documentListeners,
+  };
 }
 
 describe('live replay harness contracts', () => {
@@ -131,6 +143,24 @@ describe('live replay harness contracts', () => {
     expect(assertCanonicalScenarioPath('scripts/diff/fixtures/clicktrack-qualification-scenario.json'))
       .toEqual(expect.stringContaining('clicktrack-qualification-scenario.json'));
     expect(() => assertCanonicalScenarioPath('/tmp/copied-scenario.json')).toThrow(/reviewed canonical/i);
+
+    const directory = mkdtempSync(join(tmpdir(), 'reviewed-scenarios-'));
+    try {
+      const generated = join(directory, 'scenario-customer-reviewed.json');
+      writeFileSync(generated, '{}');
+      expect(assertCanonicalScenarioPath(generated, {
+        scenarioRoot: directory,
+        manifestContentHash: `sha256:${'a'.repeat(64)}`,
+        goldenMappingHash: `sha256:${'b'.repeat(64)}`,
+      })).toBe(generated);
+      expect(() => assertCanonicalScenarioPath(join(directory, '../scenario-customer-escape.json'), {
+        scenarioRoot: directory,
+        manifestContentHash: `sha256:${'a'.repeat(64)}`,
+        goldenMappingHash: `sha256:${'b'.repeat(64)}`,
+      })).toThrow(/reviewed canonical/i);
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
   });
 
   it('derives the exact evidence allowlist from the customer golden envelope', () => {
@@ -178,9 +208,41 @@ describe('live replay harness contracts', () => {
     expect(() => assertRuntimeHashes(preflight, hashes, origin)).toThrow(/missing runtime hashes/i);
   });
 
-  it('prohibits host-side request interception as a replay evidence source', () => {
+  it('bounds document and runtime-asset evidence fetches before any click', async () => {
+    const never = () => new Promise(() => {});
+    await expect(browserPreflight({ evaluate: never }, 'https://stage.erp.intuit.com', 5))
+      .rejects.toThrow(/document preflight timed out after 5ms/i);
+    await expect(hashUrl('https://stage.erp.intuit.com/scripts/tracking.js', {
+      fetchImpl: never,
+      timeoutMs: 5,
+    })).rejects.toThrow(/asset hash fetch timed out after 5ms/i);
+    await expect(hashUrl('https://stage.erp.intuit.com/scripts/tracking.js', {
+      fetchImpl: async () => ({ ok: true, arrayBuffer: never }),
+      timeoutMs: 5,
+    })).rejects.toThrow(/asset hash fetch timed out after 5ms/i);
+  });
+
+  it('prohibits host-side request evidence while allowing top-frame navigation containment', () => {
     const source = readFileSync('scripts/diff/live-replay-runner.mjs', 'utf8');
-    expect(source).not.toMatch(/\.route\s*\(|\.on\(\s*['"]request|(?:Network|Fetch)\.enable/);
+    expect(source).not.toMatch(/\.on\(\s*['"]request|(?:Network|Fetch)\.enable/);
+    expect(source).not.toMatch(/page\.goto\(`\$\{options\.origin\}\$\{scenario\.page\}`/);
+    const containment = source.indexOf("await routedPage.route('**/*', navigationRoute)");
+    const disconnect = source.indexOf('await browser.close();', containment);
+    expect(source.indexOf("await routedPage.unroute('**/*', navigationRoute)", containment)).toBeGreaterThan(disconnect);
+    const page = { mainFrame: () => 'main-frame' };
+    expect(shouldAbortReplayNavigation({ isNavigationRequest: () => true, frame: () => 'main-frame' }, page)).toBe(true);
+    expect(shouldAbortReplayNavigation({ isNavigationRequest: () => false, frame: () => 'main-frame' }, page)).toBe(false);
+    expect(shouldAbortReplayNavigation({ isNavigationRequest: () => true, frame: () => 'iframe' }, page)).toBe(false);
+  });
+
+  it('pre-cancels link clicks without rewriting href metadata', async () => {
+    const locator = { evaluate: vi.fn(), click: vi.fn() };
+    await clickReplayTarget(locator, { locator: { role: 'link' }, interaction: { preventNavigation: true } }, {});
+    expect(locator.evaluate).toHaveBeenCalledOnce();
+    expect(locator.click).not.toHaveBeenCalled();
+
+    await clickReplayTarget(locator, { locator: { role: 'button' }, interaction: { preventNavigation: true } }, {});
+    expect(locator.click).toHaveBeenCalledOnce();
   });
 
   it('normalizes Tealium and vendor activation evidence for page provenance', () => {
@@ -222,7 +284,10 @@ describe('live replay harness contracts', () => {
 
   it('requires exactly one bound stage target and continuously poisons target violations', () => {
     const page = { url: () => 'https://stage.erp.intuit.com/workforce-automation' };
+    const navigated = { url: () => 'https://stage.erp.intuit.com/' };
     expect(selectDedicatedPage([page], 'https://stage.erp.intuit.com', '/workforce-automation')).toBe(page);
+    expect(selectDedicatedOriginPage([navigated], 'https://stage.erp.intuit.com')).toBe(navigated);
+    expect(() => selectDedicatedOriginPage([{ url: () => 'https://erp.intuit.com/' }], 'https://stage.erp.intuit.com')).toThrow(/bound target/i);
     expect(() => selectDedicatedPage([page, { url: () => 'about:blank' }], 'https://stage.erp.intuit.com', '/workforce-automation')).toThrow(/exactly one target/i);
     expect(() => selectDedicatedPage([{ url: () => 'https://erp.intuit.com/workforce-automation' }], 'https://stage.erp.intuit.com', '/workforce-automation')).toThrow(/bound target/i);
     const guard = createTargetGuard(page, 'https://stage.erp.intuit.com');
@@ -232,6 +297,12 @@ describe('live replay harness contracts', () => {
     navigationGuard.observeNavigation('https://erp.intuit.com/workforce-automation?code=secret#state');
     expect(() => navigationGuard.assert()).toThrow(/cross-origin/i);
     expect(navigationGuard.snapshot().join(' ')).not.toMatch(/secret|state|\?/);
+  });
+
+  it('builds an exact visible data-track-id locator without treating the id as CSS', () => {
+    expect(qualificationLocatorCss({ trackId: 'faq:question[one]"two' }))
+      .toBe('[data-track-id="faq:question[one]\\"two"]:visible');
+    expect(qualificationLocatorCss({ role: 'button' })).toBeNull();
   });
 
   it('refuses target reuse when a lease marker, callback, or wrapper survived disconnect', () => {
@@ -473,12 +544,33 @@ describe('live replay harness contracts', () => {
       messageId: 'ajs-next-current', properties: trackerEvent('x').properties,
     });
     const evidence = await hook.snapshot();
-    expect(evidence.serialized.map(({ status }) => status)).toEqual(['unlinked', 'linked']);
-    expect(evidence.serialized[0]).toMatchObject({
+    expect(evidence.serialized.map(({ status }) => status).sort()).toEqual(['linked', 'unlinked']);
+    expect(evidence.serialized.find(({ status }) => status === 'unlinked')).toMatchObject({
       scenarioId: null,
       activeScenarioIdAtSerialization: scenario.scenarioId,
       reason: 'no-invocation-lineage',
     });
+    await hook.teardown('test-complete');
+  });
+
+  it('prevents link navigation before activation only during the qualification proof window', async () => {
+    const { scope, documentListeners } = fakeScope();
+    const hook = await installReplayPageHook({
+      origin: 'https://stage.erp.intuit.com',
+      transportPolicy: 'observe',
+      observeAuthorizationRef: 'customer-approved parity exercise 2026-08-29',
+      targetMarker: 'test-target',
+      qualificationMode: true,
+      preventNavigation: true,
+      allowlist,
+      shapeOnly,
+      leaseMs: 1000,
+      heartbeatMs: 100,
+    }, scope);
+    const preventDefault = vi.fn();
+    const anchor = { matches: (selector) => selector.includes('a[href]') };
+    documentListeners['click:capture']({ target: { closest: () => anchor }, preventDefault });
+    expect(preventDefault).toHaveBeenCalledOnce();
     await hook.teardown('test-complete');
   });
 

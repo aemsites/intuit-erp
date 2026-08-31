@@ -6,7 +6,7 @@
 /* eslint-disable import/no-extraneous-dependencies, import/extensions, no-console, no-restricted-syntax, no-restricted-globals, no-underscore-dangle, no-await-in-loop, no-plusplus, no-continue, no-void, consistent-return, max-len */
 import { chromium } from 'playwright';
 import {
-  existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, unlinkSync, writeFileSync,
+  existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, realpathSync, unlinkSync, writeFileSync,
 } from 'node:fs';
 import { spawn } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
@@ -22,6 +22,7 @@ import { POLICY } from './oracle-lib.mjs';
 const HARNESS_VERSION = '0.2.1';
 const LINEAGE_POLICY_VERSION = 'message-id-v1';
 const TRACKER_POLICY_VERSION = '1';
+const EVIDENCE_FETCH_TIMEOUT_MS = 15000;
 const DEFAULT_ORIGIN = 'https://stage.erp.intuit.com';
 const DEFAULT_CDP = 'http://127.0.0.1:9229';
 const DEFAULT_PROFILE = resolve(homedir(), '.intuit-erp-clicktrack', 'chrome-profile');
@@ -45,7 +46,10 @@ const cleanUrl = (value) => {
   const url = new URL(value);
   return `${url.origin}${url.pathname}`;
 };
-const harnessSourceHashes = () => Object.fromEntries(Object.entries(HARNESS_SOURCE_FILES)
+const harnessSourceHashes = (scenarioPath = DEFAULT_SCENARIO) => Object.fromEntries(Object.entries({
+  ...HARNESS_SOURCE_FILES,
+  'clicktrack-qualification-scenario.json': resolve(scenarioPath),
+})
   .map(([name, path]) => [name, sha256(readFileSync(path))]));
 
 function parseArgs(argv) {
@@ -56,6 +60,9 @@ function parseArgs(argv) {
     profileDir: DEFAULT_PROFILE,
     profileId: 'intuit-erp-clicktrack',
     scenario: DEFAULT_SCENARIO,
+    scenarioRoot: '',
+    manifestContentHash: '',
+    goldenMappingHash: '',
     golden: DEFAULT_GOLDEN,
     out: DEFAULT_OUT,
     transport: 'observe',
@@ -75,6 +82,9 @@ function parseArgs(argv) {
     else if (argument === '--profile-dir') options.profileDir = resolve(argv[++index]);
     else if (argument === '--profile-id') options.profileId = argv[++index];
     else if (argument === '--scenario') options.scenario = argv[++index];
+    else if (argument === '--scenario-root') options.scenarioRoot = resolve(argv[++index]);
+    else if (argument === '--manifest-content-hash') options.manifestContentHash = argv[++index];
+    else if (argument === '--golden-mapping-hash') options.goldenMappingHash = argv[++index];
     else if (argument === '--golden') options.golden = argv[++index];
     else if (argument === '--out') options.out = argv[++index];
     else if (argument === '--transport') options.transport = argv[++index];
@@ -144,12 +154,19 @@ function launchArguments(options) {
   ];
 }
 
-function selectDedicatedPage(pages, origin, pathname) {
+function selectDedicatedOriginPage(pages, origin) {
   if (pages.length !== 1) throw new Error(`dedicated CDP expected exactly one target, got ${pages.length}`);
   const page = pages[0];
   let url;
   try { url = new URL(page.url()); } catch { throw new Error('bound target URL is invalid'); }
-  if (url.origin !== origin || url.pathname !== pathname) {
+  if (url.origin !== origin) throw new Error(`bound target must remain on ${origin}`);
+  return page;
+}
+
+function selectDedicatedPage(pages, origin, pathname) {
+  const page = selectDedicatedOriginPage(pages, origin);
+  const url = new URL(page.url());
+  if (url.pathname !== pathname) {
     throw new Error(`bound target must be ${origin}${pathname}`);
   }
   return page;
@@ -232,12 +249,24 @@ function goldenScenario(golden, scenario) {
   return matches[0];
 }
 
-function assertCanonicalScenarioPath(path) {
+function assertCanonicalScenarioPath(path, approval = {}) {
   const canonical = resolve(DEFAULT_SCENARIO);
-  if (resolve(path) !== canonical) {
-    throw new Error(`qualification scenario must be the reviewed canonical file: ${canonical}`);
+  const candidate = resolve(path);
+  if (candidate === canonical) return canonical;
+  const approvedHash = /^sha256:[a-f0-9]{64}$/;
+  const approvedRoot = approval.scenarioRoot ? resolve(approval.scenarioRoot) : '';
+  let generatedApproved = false;
+  if (approvedRoot && dirname(candidate) === approvedRoot
+    && /^scenario-customer-[a-z0-9-]+\.json$/.test(candidate.slice(approvedRoot.length + 1))
+    && approvedHash.test(approval.manifestContentHash || '')
+    && approvedHash.test(approval.goldenMappingHash || '')
+    && existsSync(candidate)) {
+    const stat = lstatSync(candidate);
+    generatedApproved = stat.isFile() && !stat.isSymbolicLink()
+      && dirname(realpathSync(candidate)) === realpathSync(approvedRoot);
   }
-  return canonical;
+  if (!generatedApproved) throw new Error(`qualification scenario must be the reviewed canonical file: ${canonical}`);
+  return candidate;
 }
 
 function deriveAllowlist(payload, policy = POLICY) {
@@ -277,14 +306,42 @@ function activationEvidence(preflight, replay) {
   return { tealiumTagUids, resources, vendorCalls };
 }
 
-async function hashUrl(url) {
-  const response = await fetch(url, { redirect: 'follow' });
-  if (!response.ok) throw new Error(`asset hash fetch failed ${response.status}: ${cleanUrl(url)}`);
-  return sha256(Buffer.from(await response.arrayBuffer()));
+async function withDeadline(task, timeoutMs, label, onTimeout = () => {}) {
+  let timer;
+  const deadline = new Promise((_, reject) => {
+    timer = setTimeout(() => {
+      onTimeout();
+      reject(new Error(`${label} timed out after ${timeoutMs}ms`));
+    }, timeoutMs);
+  });
+  try {
+    return await Promise.race([Promise.resolve().then(task), deadline]);
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
-async function browserPreflight(page, origin) {
-  return page.evaluate(async (expectedOrigin) => {
+async function hashUrl(url, { fetchImpl = fetch, timeoutMs = EVIDENCE_FETCH_TIMEOUT_MS } = {}) {
+  const controller = new AbortController();
+  try {
+    const bytes = await withDeadline(
+      async () => {
+        const response = await fetchImpl(url, { redirect: 'follow', signal: controller.signal });
+        if (!response.ok) throw new Error(`asset hash fetch failed ${response.status}: ${cleanUrl(url)}`);
+        return response.arrayBuffer();
+      },
+      timeoutMs,
+      'asset hash fetch',
+      () => controller.abort(),
+    );
+    return sha256(Buffer.from(bytes));
+  } finally {
+    controller.abort();
+  }
+}
+
+async function browserPreflight(page, origin, timeoutMs = EVIDENCE_FETCH_TIMEOUT_MS) {
+  return withDeadline(() => page.evaluate(async ({ expectedOrigin, fetchTimeoutMs }) => {
     const digest = async (value) => {
       const bytes = new TextEncoder().encode(value);
       const hash = await crypto.subtle.digest('SHA-256', bytes);
@@ -318,7 +375,16 @@ async function browserPreflight(page, origin) {
     const analytics = window.intuit?.tracking?.ecs?.analytics || window.analytics;
     const loginUi = document.querySelector('input[type="password"], form[action*="login" i]');
     const consentBanner = [...document.querySelectorAll('#onetrust-banner-sdk, [id*="onetrust-banner" i]')].find(visible);
-    const responseText = await fetch(location.href, { credentials: 'include', cache: 'no-store' }).then((response) => response.text());
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), fetchTimeoutMs);
+    let responseText;
+    try {
+      responseText = await fetch(location.href, {
+        credentials: 'include', cache: 'no-store', signal: controller.signal,
+      }).then((response) => response.text());
+    } finally {
+      clearTimeout(timer);
+    }
     return {
       origin: location.origin,
       pathname: location.pathname,
@@ -339,7 +405,7 @@ async function browserPreflight(page, origin) {
       pageCasId: window.appVars?.externalContentIdentifier || '',
       title: document.title,
     };
-  }, origin);
+  }, { expectedOrigin: origin, fetchTimeoutMs: timeoutMs }), timeoutMs, 'document preflight');
 }
 
 function assertPreflight(preflight, origin, pagePath) {
@@ -409,6 +475,10 @@ function qualificationBinding({
     sourceHashes,
     scenarioId: scenario.scenarioId,
     scenarioDefinitionHash: sourceHashes['clicktrack-qualification-scenario.json'],
+    completeGoldenManifest: options.manifestContentHash ? {
+      contentHash: options.manifestContentHash,
+      mappingHash: options.goldenMappingHash,
+    } : null,
     targetId,
     transportPolicy: options.transport,
   };
@@ -431,8 +501,51 @@ async function waitForSerialized(page, scenarioId, timeoutMs = 12000) {
   throw new Error(`timed out waiting for serialized lineage: ${scenarioId}`);
 }
 
+function qualificationLocatorCss(locator) {
+  if (!locator?.trackId) return null;
+  const value = String(locator.trackId);
+  if ([...value].some((character) => character.codePointAt(0) <= 31 || character.codePointAt(0) === 127)) {
+    throw new Error('scenario track id contains control characters');
+  }
+  return `[data-track-id="${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"]:visible`;
+}
+
+function shouldAbortReplayNavigation(request, page) {
+  return request.isNavigationRequest() && request.frame() === page.mainFrame();
+}
+
+async function clickReplayTarget(locator, scenario, clickOptions) {
+  if (scenario.locator?.role === 'link' && scenario.interaction?.preventNavigation !== false) {
+    // Preserve href-derived metadata while removing the native navigation default.
+    return locator.evaluate((element) => {
+      const nativeGet = Element.prototype.getAttribute;
+      const nativeSet = Element.prototype.setAttribute;
+      const originalHref = nativeGet.call(element, 'href');
+      const originalUrl = window.location.href;
+      nativeSet.call(element, 'href', '#adobe-migration-test');
+      Object.defineProperty(element, 'getAttribute', {
+        configurable: true,
+        value(name) { return String(name).toLowerCase() === 'href' ? originalHref : nativeGet.call(this, name); },
+      });
+      try {
+        element.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, pointerType: 'mouse' }));
+        const event = new MouseEvent('click', { bubbles: true, cancelable: true, view: window });
+        event.preventDefault();
+        return element.dispatchEvent(event);
+      } finally {
+        delete element.getAttribute;
+        nativeSet.call(element, 'href', originalHref);
+        if (window.location.href !== originalUrl) window.history.replaceState(null, '', originalUrl);
+      }
+    });
+  }
+  return locator.click(clickOptions);
+}
+
 async function exerciseQualification(page, scenario) {
-  const locator = page.getByRole(scenario.locator.role, {
+  const clickOptions = { force: true, noWaitAfter: true, timeout: 8000 };
+  const selector = qualificationLocatorCss(scenario.locator);
+  const locator = selector ? page.locator(selector) : page.getByRole(scenario.locator.role, {
     name: scenario.locator.name,
     exact: scenario.locator.exact,
   });
@@ -440,7 +553,11 @@ async function exerciseQualification(page, scenario) {
   if (count !== 1) throw new Error(`scenario locator resolved ${count} elements`);
   const expectedExpanded = scenario.preconditions?.attributes?.['aria-expanded'];
   if (expectedExpanded != null && await locator.getAttribute('aria-expanded') !== expectedExpanded) {
-    throw new Error(`scenario precondition failed: aria-expanded=${expectedExpanded}`);
+    await clickReplayTarget(locator, scenario, clickOptions);
+    await page.waitForTimeout(250);
+    if (await locator.getAttribute('aria-expanded') !== expectedExpanded) {
+      throw new Error(`scenario precondition failed: aria-expanded=${expectedExpanded}`);
+    }
   }
   const locatorEvidence = await locator.evaluate((element) => ({
     tag: element.tagName,
@@ -454,15 +571,15 @@ async function exerciseQualification(page, scenario) {
   // Hold the stale request inside the page until after activation so arrival
   // within the active window cannot establish lineage.
   await page.evaluate(() => window.__adobeMigrationReplay.holdNextTransport());
-  await locator.click();
-  await page.waitForFunction(() => window.__adobeMigrationReplay.hasHeldTransport());
-  await locator.click();
+  await clickReplayTarget(locator, scenario, clickOptions);
+  await page.waitForFunction(() => window.__adobeMigrationReplay.hasHeldTransport(), null, { timeout: 8000 });
+  await clickReplayTarget(locator, scenario, clickOptions);
   await page.evaluate((activeScenario) => window.__adobeMigrationReplay.activate(activeScenario), {
     scenarioId: scenario.scenarioId,
     page: scenario.page,
   });
   await page.evaluate(() => window.__adobeMigrationReplay.releaseHeldTransport());
-  await locator.click();
+  await clickReplayTarget(locator, scenario, clickOptions);
   await waitForSerialized(page, scenario.scenarioId);
   await page.waitForTimeout(250);
   const evidence = await page.evaluate(async () => window.__adobeMigrationReplay.snapshot());
@@ -569,7 +686,7 @@ function buildCapture({
 async function qualify(options) {
   if (options.origin !== DEFAULT_ORIGIN) throw new Error(`exact stage origin is required: ${DEFAULT_ORIGIN}`);
   if (!options.authorizationRef) throw new Error('--authorization-ref is required for observe-mode qualification');
-  assertCanonicalScenarioPath(options.scenario);
+  assertCanonicalScenarioPath(options.scenario, options);
   const endpoint = validateCdpEndpoint(options.cdp);
   const scenario = readJson(options.scenario);
   const golden = readJson(options.golden);
@@ -582,6 +699,8 @@ async function qualify(options) {
   let page;
   let heartbeat;
   let targetListeners;
+  let navigationRoute;
+  let routedPage;
   try {
     browser = await chromium.connectOverCDP(endpoint);
     const contexts = browser.contexts();
@@ -602,7 +721,6 @@ async function qualify(options) {
       page?.off('framenavigated', onNavigation);
       page?.off('close', onClose);
     };
-    await page.goto(`${options.origin}${scenario.page}`, { waitUntil: 'domcontentloaded' });
     context.pages().forEach((candidate) => targetGuard.observePage(candidate));
     targetGuard.assert();
     await page.waitForFunction(() => {
@@ -622,10 +740,16 @@ async function qualify(options) {
     await cdp.detach();
     const { runId } = journal;
     const browserVersion = await browser.version();
-    const sourceHashes = harnessSourceHashes();
+    const sourceHashes = harnessSourceHashes(options.scenario);
     const binding = qualificationBinding({
-      options, browserVersion, preflight, runtimeHashes, sourceHashes,
-      targetId: targetInfo.targetInfo.targetId, runId, scenario,
+      options,
+      browserVersion,
+      preflight,
+      runtimeHashes,
+      sourceHashes,
+      targetId: targetInfo.targetInfo.targetId,
+      runId,
+      scenario,
     });
     validateQualification(binding, binding);
     const targetMarker = `adobe-migration-test:${runId}:${targetInfo.targetInfo.targetId}`;
@@ -641,9 +765,22 @@ async function qualify(options) {
       leaseMs: 10000,
       heartbeatMs: 2000,
     });
+    if (scenario.interaction?.preventNavigation !== false && scenario.locator?.role === 'link') {
+      routedPage = page;
+      navigationRoute = async (route) => {
+        const request = route.request();
+        if (shouldAbortReplayNavigation(request, routedPage)) {
+          await route.abort('aborted');
+        } else {
+          await route.continue();
+        }
+      };
+      await routedPage.route('**/*', navigationRoute);
+    }
     heartbeat = setInterval(() => {
       void page.evaluate(() => window.__adobeMigrationReplay?.heartbeat()).catch(() => {});
     }, 1000);
+    page.setDefaultTimeout(8000);
     const replay = await exerciseQualification(page, scenario);
     targetGuard.assert();
     if (replay.linked.payload?.properties?.page_cas_id !== scenario.page) {
@@ -659,12 +796,14 @@ async function qualify(options) {
     targetListeners = null;
     const expectedTargetId = targetInfo.targetInfo.targetId;
     await browser.close();
+    navigationRoute = null;
+    routedPage = null;
     browser = null;
     page = null;
     await new Promise((accept) => { setTimeout(accept, 12000); });
     browser = await chromium.connectOverCDP(endpoint);
     const cleanupContext = browser.contexts()[0];
-    page = selectDedicatedPage(cleanupContext.pages(), options.origin, scenario.page);
+    page = selectDedicatedOriginPage(cleanupContext.pages(), options.origin);
     const cleanupCdp = await cleanupContext.newCDPSession(page);
     const cleanupTarget = await cleanupCdp.send('Target.getTargetInfo');
     await cleanupCdp.detach();
@@ -715,6 +854,7 @@ async function qualify(options) {
   } finally {
     if (heartbeat) clearInterval(heartbeat);
     if (targetListeners) targetListeners();
+    if (navigationRoute && routedPage) await routedPage.unroute('**/*', navigationRoute).catch(() => {});
     if (page) await page.evaluate(() => window.__adobeMigrationReplay?.teardown('runner-complete')).catch(() => {});
     if (browser) await browser.close().catch(() => {});
   }
@@ -741,5 +881,6 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
 
 export {
   activationEvidence, assertCanonicalScenarioPath, assertCleanReuseState, assertPreflight, assertRuntimeHashes, businessIdentity, createRunJournal, deriveAllowlist, goldenScenario, launchArguments,
-  createTargetGuard, portAvailable, purgeEvidence, selectDedicatedPage,
+  browserPreflight, clickReplayTarget, createTargetGuard, hashUrl, portAvailable, purgeEvidence, qualificationLocatorCss, selectDedicatedOriginPage, selectDedicatedPage,
+  shouldAbortReplayNavigation,
 };
