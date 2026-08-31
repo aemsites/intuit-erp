@@ -1,13 +1,14 @@
 import {
   describe, it, expect, vi, beforeEach,
 } from 'vitest';
-// eslint-disable-next-line import/no-relative-packages
-import { sendEvent } from '../plugins/martech/src/index.js';
 import decorate, { parseFormConfig } from '../blocks/form/form.js';
 
-vi.mock('../plugins/martech/src/index.js', () => ({
-  sendEvent: vi.fn(() => Promise.resolve()),
-}));
+// Uncomment with the AEP/WebSDK integration in scripts/scripts.js and blocks/form/form.js.
+// // eslint-disable-next-line import/no-relative-packages
+// import { sendEvent } from '../plugins/martech/src/index.js';
+// vi.mock('../plugins/martech/src/index.js', () => ({
+//   sendEvent: vi.fn(() => Promise.resolve()),
+// }));
 vi.mock('../scripts/aem.js', () => ({
   loadScript: vi.fn(() => Promise.resolve()),
   getMetadata: vi.fn(() => ''),
@@ -40,7 +41,8 @@ beforeEach(() => {
   onSuccessFn = null;
   onValidateFn = null;
   submittable = vi.fn();
-  sendEvent.mockClear();
+  // Uncomment with the AEP/WebSDK integration in scripts/scripts.js and blocks/form/form.js.
+  // sendEvent.mockClear();
   getSiteConfig.mockResolvedValue({
     'marketo.munchkin': '743-RZM-619',
     'chilipiper.subdomain': 'intuitsales',
@@ -238,9 +240,10 @@ describe('decorate — live Marketo form', () => {
       lead_xref_id: xref,
       product_family_of_interest: 'Intuit Enterprise Suite',
     }));
-    // analytics preserved: with no Tealium, the Adobe identity event fires with mapped values
-    expect(sendEvent).toHaveBeenCalledTimes(1);
-    expect(sendEvent.mock.calls[0][0].xdm.identityMap.Email[0].id).toBe('controller@brightpathco.com');
+    // Uncomment with the AEP/WebSDK integration in scripts/scripts.js and blocks/form/form.js.
+    // expect(sendEvent).toHaveBeenCalledTimes(1);
+    // expect(sendEvent.mock.calls[0][0].xdm.identityMap.Email[0].id)
+    //   .toBe('controller@brightpathco.com');
     delete window.intuit;
   });
 });

@@ -21,20 +21,22 @@
  */
 import { loadScript, getMetadata, decorateIcons } from '../../scripts/aem.js';
 import { fetchPlaceholders } from '../../scripts/placeholders.js';
-// Vendored via git subtree at plugins/martech (see its README), not an
-// installed npm package, so this necessarily crosses a package.json boundary.
-// eslint-disable-next-line import/no-relative-packages
-import { sendEvent } from '../../plugins/martech/src/index.js';
+// Uncomment with the AEP/WebSDK integration in scripts/scripts.js.
+// // Vendored via git subtree at plugins/martech (see its README), not an
+// // installed npm package, so this necessarily crosses a package.json boundary.
+// // eslint-disable-next-line import/no-relative-packages
+// import { sendEvent } from '../../plugins/martech/src/index.js';
 // Shared ChiliPiper opener (also used by personalization widgets) + lead-xref/track helpers.
 import {
   openChiliPiper, submitChiliPiper, mintLeadXref, trackLeadCreated,
 } from '../../scripts/chilipiper.js';
 
-// Tenant-namespaced XDM location for lead-identity events. Object name `of1Signal` must
-// byte-match the AEP "Experience Event Schema" field group path (AEP console config) or
-// ingestion silently drops it. Independent of the (removed) OF1 generative-page feature,
-// which used to write interest/intent data to this same object.
-export const LEAD_XDM_TARGET = { prefix: '_sapphiredemo1', object: 'of1Signal' };
+// Uncomment with the AEP/WebSDK integration in scripts/scripts.js.
+// // Tenant-namespaced XDM location for lead-identity events. Object name `of1Signal` must
+// // byte-match the AEP "Experience Event Schema" field group path (AEP console config) or
+// // ingestion silently drops it. Independent of the (removed) OF1 generative-page feature,
+// // which used to write interest/intent data to this same object.
+// export const LEAD_XDM_TARGET = { prefix: '<prefix>', object: 'of1Signal' };
 
 const CONFIG_KEYS = [
   'formId',
@@ -101,24 +103,24 @@ export function parseFormConfig(block) {
   };
 }
 
-// Maps lead fields → an identity sendEvent XDM. Email goes in identityMap as
-// 'ambiguous' (unverified). Pure — no DOM/network.
-export function buildIdentityXdm(fields) {
-  return {
-    eventType: 'web.formFilledOut',
-    identityMap: {
-      Email: [{ id: fields.email, primary: true, authenticatedState: 'ambiguous' }],
-    },
-    [LEAD_XDM_TARGET.prefix]: {
-      [LEAD_XDM_TARGET.object]: { lead: { ...fields }, capturedAt: new Date().toISOString() },
-    },
-  };
-}
+// Uncomment with the AEP/WebSDK integration in scripts/scripts.js.
+// // Maps lead fields → an identity sendEvent XDM. Email goes in identityMap as
+// // 'ambiguous' (unverified). Pure — no DOM/network.
+// export function buildIdentityXdm(fields) {
+//   return {
+//     eventType: 'web.formFilledOut',
+//     identityMap: {
+//       Email: [{ id: fields.email, primary: true, authenticatedState: 'ambiguous' }],
+//     },
+//     [LEAD_XDM_TARGET.prefix]: {
+//       [LEAD_XDM_TARGET.object]: { lead: { ...fields }, capturedAt: new Date().toISOString() },
+//     },
+//   };
+// }
 
-// Provider-aware submit tracking. `window.utag` only ever exists when scripts/scripts.js chose
-// the Tealium provider (the default) AND that instance is enabled — i.e. the hostname resolves
-// to a utag environment (see plugins/tealium-martech/src/index.js `resolveEnvironment`). The
-// Adobe path below only runs when the opt-in `?martech=adobe` override is used, unchanged.
+// Submit tracking. `window.utag` only ever exists when scripts/scripts.js chose the Tealium
+// provider (the default) AND that instance is enabled — i.e. the hostname resolves to a utag
+// environment (see plugins/tealium-martech/src/index.js `resolveEnvironment`).
 export function trackFormSubmit(fields) {
   if (window.utag?.link) {
     // Consent-gate, like the loader's whenConsentResolved: a link fired while getConsentState()===0
@@ -131,13 +133,13 @@ export function trackFormSubmit(fields) {
       ...fields,
       ivid: window.utag_data?.ivid,
     });
-    return;
   }
-  sendEvent({ xdm: buildIdentityXdm(fields) }).catch(() => {});
+  // Uncomment with the AEP/WebSDK integration in scripts/scripts.js.
+  // if (!window.utag?.link) sendEvent({ xdm: buildIdentityXdm(fields) }).catch(() => {});
 }
 
 // Marketo field names → the lower-cased lead shape trackFormSubmit expects, so
-// the same analytics events fire on a live submit as on the former mock.
+// the Tealium analytics event fires on a live submit as on the former mock.
 function marketoValuesToLead(vals = {}) {
   return {
     email: vals.Email || '',
