@@ -52,10 +52,21 @@ function featurePayload(el) {
   };
 }
 
-// A trailing paragraph whose own bold lead-in reads "Why it matters" (optionally
-// followed by a <br> and supporting copy) is a highlighted callout, not plain
-// body text (e.g. the nonprofit page's grant/entity/reporting explainers).
-const WHY_IT_MATTERS_RE = /^why it matters$/i;
+// A paragraph shaped as a short bold lead-in immediately followed by a <br>
+// and supporting copy is a highlighted callout, not plain body text (e.g. the
+// nonprofit page's "Why it matters" grant/entity/reporting explainers). This
+// is a structural match — a bold label line, a break, then body copy — not a
+// match on what the label says, so any label wording gets the treatment.
+const CALLOUT_LABEL_MAX_WORDS = 4;
+
+function calloutLead(p) {
+  const first = p.firstElementChild;
+  if (!first || first.tagName !== 'STRONG') return null;
+  if (first.nextSibling?.nodeName !== 'BR') return null;
+  const label = first.textContent.trim();
+  if (!label || label.split(/\s+/).length > CALLOUT_LABEL_MAX_WORDS) return null;
+  return first;
+}
 
 function buildCopy(textCell) {
   const copy = document.createElement('div');
@@ -67,8 +78,8 @@ function buildCopy(textCell) {
   [...copy.querySelectorAll('p')].forEach((p) => {
     if (p.classList.contains('button-wrapper')) return;
     if (p.querySelector('a')) return;
-    const lead = p.querySelector('strong');
-    if (lead && WHY_IT_MATTERS_RE.test(lead.textContent.trim())) {
+    const lead = calloutLead(p);
+    if (lead) {
       const callout = document.createElement('div');
       callout.className = 'media-callout';
       const label = document.createElement('p');
@@ -76,7 +87,7 @@ function buildCopy(textCell) {
       label.textContent = lead.textContent.trim();
       const body = document.createElement('p');
       body.className = 'media-callout-body';
-      // drop the leading "Why it matters" run and its trailing <br>, keep the rest
+      // drop the leading label run and its trailing <br>, keep the rest
       [...p.childNodes].forEach((n) => { if (n !== lead) body.append(n); });
       while (body.firstChild && body.firstChild.nodeName === 'BR') body.firstChild.remove();
       callout.append(label, body);
