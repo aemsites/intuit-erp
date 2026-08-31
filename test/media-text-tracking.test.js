@@ -1,5 +1,5 @@
 import {
-  describe, it, expect, beforeEach,
+  describe, it, expect, beforeEach, afterEach, vi,
 } from 'vitest';
 // Real-render wiring guard for media-text's AI-agents promo CTA. On /accounting the "Explore
 // agents" button is a loose media-text CTA that prod tags with the upstream `feature` component's
@@ -37,6 +37,21 @@ function makeMediaText() {
   return block;
 }
 
+function makeCardsMediaText() {
+  const block = document.createElement('div');
+  block.className = 'media-text cards block';
+  block.setAttribute('data-block-name', 'media-text');
+  block.innerHTML = ''
+    + '<div>'
+    + '  <div>'
+    + '    <h2>Payroll</h2>'
+    + '    <p class="button-wrapper"><a class="button primary" href="/">Schedule a consultation</a></p>'
+    + '  </div>'
+    + '  <div><img src="/payroll.png" alt="Payroll"></div>'
+    + '</div>';
+  return block;
+}
+
 function setup() {
   document.head.innerHTML = ''; document.body.innerHTML = ''; resetTrackingState();
   const main = document.createElement('main');
@@ -48,7 +63,11 @@ function setup() {
 }
 
 describe('media-text — AI-agents feature CTA tracking (JIT-derived)', () => {
-  beforeEach(() => { document.head.innerHTML = ''; document.body.innerHTML = ''; resetTrackingState(); });
+  beforeEach(() => {
+    document.head.innerHTML = ''; document.body.innerHTML = ''; resetTrackingState();
+    window.history.replaceState({}, '', '/');
+  });
+  afterEach(() => { vi.unstubAllGlobals(); });
 
   it('the /ai-agents promo CTA JIT-stamps the authored feature|explore_agents_cta residue', () => {
     const block = setup();
@@ -86,5 +105,33 @@ describe('media-text — AI-agents feature CTA tracking (JIT-derived)', () => {
     expect(other.getAttribute('data-object-detail')).toBeNull();
     expect(other.getAttribute('data-wa-link')).toBeNull();
     expect(other.getAttribute('data-ui-object-detail')).toBe('Refer a client');
+  });
+
+  it('the cards variant resolves its authored sheet row through the cards namespace', async () => {
+    window.history.replaceState({}, '', '/erp-solutions');
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: [{
+        path: '/erp-solutions',
+        id: 'cards:schedule-a-consultation',
+        'object-detail': 'payroll card',
+        action: 'goto',
+        'wa-link': 'see-plans-payroll',
+      }] }),
+    }));
+    const main = document.createElement('main');
+    const block = makeCardsMediaText();
+    main.append(block); document.body.append(main);
+    decorate(block);
+    initTracking(document);
+    const cta = block.querySelector('a.button');
+
+    await vi.waitFor(() => {
+      stampInteraction({ target: cta });
+      expect(cta.getAttribute('data-track-id')).toBe('cards:erp');
+      expect(cta.getAttribute('data-object-detail')).toBe('payroll card');
+      expect(cta.getAttribute('data-action')).toBe('goto');
+      expect(cta.getAttribute('data-wa-link')).toBe('see-plans-payroll');
+    });
   });
 });
