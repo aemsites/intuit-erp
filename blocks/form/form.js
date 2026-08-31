@@ -36,7 +36,7 @@ import {
 // // byte-match the AEP "Experience Event Schema" field group path (AEP console config) or
 // // ingestion silently drops it. Independent of the (removed) OF1 generative-page feature,
 // // which used to write interest/intent data to this same object.
-// export const LEAD_XDM_TARGET = { prefix: '_sapphiredemo1', object: 'of1Signal' };
+// export const LEAD_XDM_TARGET = { prefix: '<prefix>', object: 'of1Signal' };
 
 const CONFIG_KEYS = [
   'formId',
