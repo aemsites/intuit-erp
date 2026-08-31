@@ -170,6 +170,43 @@ Parity is measured deterministically against a golden captured from prod (`scrip
 Golden fixtures with customer campaign codes stay **local + gitignored**
 (`scripts/diff/fixtures/local/`); they are never committed.
 
+### Authenticated stage replay (workstation only)
+
+The authenticated runner is deliberately limited to the exact `https://stage.erp.intuit.com`
+origin, a dedicated Chrome profile, one browser target, and one explicit customer-golden scenario.
+Observe mode sends the customer-authorized analytics click; use `Adobe Migration Test` in the
+authorization reference. Captures are privacy-sanitized before leaving the page and written mode
+`0600` under the gitignored local fixture directory.
+
+```sh
+node scripts/diff/live-replay-runner.mjs launch \
+  --port 9339 \
+  --profile-dir "$HOME/.intuit-erp-clicktrack/chrome-profile-cdp"
+```
+
+After connecting VPN and authenticating the opened stage page, qualify the explicit scenario:
+
+```sh
+node scripts/diff/live-replay-runner.mjs qualify \
+  --cdp http://127.0.0.1:9339 \
+  --profile-dir "$HOME/.intuit-erp-clicktrack/chrome-profile-cdp" \
+  --golden /absolute/path/to/clicktrack-golden-customer.json \
+  --scenario scripts/diff/fixtures/clicktrack-qualification-scenario.json \
+  --out scripts/diff/fixtures/local/live-replay-qualification.json \
+  --authorization-ref "customer-authorized Adobe Migration Test parity exercise YYYY-MM-DD"
+```
+
+The command refuses before clicking if authentication, consent, Tealium, tracker readiness,
+runtime hashes, target isolation, or authorization is missing. The current qualification scenario
+exercises only the customer golden FAQ click on `/workforce-automation`; it is not complete-golden
+coverage. Remove expired local replay evidence with:
+
+```sh
+node scripts/diff/live-replay-runner.mjs purge \
+  --evidence-dir scripts/diff/fixtures/local \
+  --retention-days 30
+```
+
 ## Status
 
 **Implemented and wired.** `scripts/tracking.js` is loaded lazily from `scripts.js`; blocks declare

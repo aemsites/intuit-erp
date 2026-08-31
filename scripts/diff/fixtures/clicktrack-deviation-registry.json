@@ -1,0 +1,205 @@
+{
+  "schemaVersion": 1,
+  "entries": [
+    {
+      "id": "migration-page-cas-pathname",
+      "classification": "expected-migration",
+      "scope": { "location": "properties", "field": "page_cas_id", "scenarioId": "*" },
+      "policy": "pathname-policy",
+      "rationale": "Stage intentionally replaces the legacy authored CAS code with the event page pathname.",
+      "evidence": "APPVARS.md and CLICK-TRACKING.md",
+      "owner": "Adobe Migration Test",
+      "reviewDate": "2026-08-30"
+    },
+    {
+      "id": "migration-object-detail-index",
+      "classification": "expected-migration",
+      "scope": { "location": "properties", "field": "object_detail", "scenarioId": "*" },
+      "policy": "index-tolerant",
+      "rationale": "Authored production positions do not consistently represent rendered order; structural identity remains stable.",
+      "evidence": "scripts/diff/fixtures/field-policy.json object_detail policy",
+      "owner": "Adobe Migration Test",
+      "reviewDate": "2026-08-30"
+    },
+    {
+      "id": "migration-link-name-index",
+      "classification": "expected-migration",
+      "scope": { "location": "properties", "field": "link_name", "scenarioId": "*" },
+      "policy": "index-tolerant",
+      "rationale": "Rendered component indices may shift while the normalized link structure remains equivalent.",
+      "evidence": "scripts/diff/fixtures/field-policy.json link_name policy",
+      "owner": "Adobe Migration Test",
+      "reviewDate": "2026-08-30"
+    },
+    {
+      "id": "migration-ui-detail-sanitization",
+      "classification": "expected-migration",
+      "scope": { "location": "properties", "field": "ui_object_detail", "scenarioId": "*" },
+      "policy": "normalized-equivalence",
+      "rationale": "Stage deterministically strips authored markup while preserving the customer-visible label.",
+      "evidence": "scripts/diff/fixtures/field-policy.json ui_object_detail policy",
+      "owner": "Adobe Migration Test",
+      "reviewDate": "2026-08-30"
+    },
+    {
+      "id": "migration-link-domain-host",
+      "classification": "expected-migration",
+      "scope": { "location": "properties", "field": "link_href_domain", "scenarioId": "*" },
+      "policy": "normalized-equivalence",
+      "rationale": "The environment host differs while the normalized destination domain is equivalent.",
+      "evidence": "scripts/diff/fixtures/field-policy.json host normalization",
+      "owner": "Adobe Migration Test",
+      "reviewDate": "2026-08-30"
+    },
+    {
+      "id": "migration-url-host",
+      "classification": "expected-migration",
+      "scope": { "location": "properties", "field": "url", "scenarioId": "*" },
+      "policy": "normalized-equivalence",
+      "rationale": "The stage host and trailing-slash convention differ while the normalized page URL is equivalent.",
+      "evidence": "scripts/diff/fixtures/field-policy.json host normalization",
+      "owner": "Adobe Migration Test",
+      "reviewDate": "2026-08-30"
+    },
+    {
+      "id": "migration-url-clean-host",
+      "classification": "expected-migration",
+      "scope": { "location": "properties", "field": "url_clean", "scenarioId": "*" },
+      "policy": "normalized-equivalence",
+      "rationale": "The stage host differs while the normalized clean URL is equivalent.",
+      "evidence": "scripts/diff/fixtures/field-policy.json host normalization",
+      "owner": "Adobe Migration Test",
+      "reviewDate": "2026-08-30"
+    },
+    {
+      "id": "migration-url-host-name",
+      "classification": "expected-migration",
+      "scope": { "location": "properties", "field": "url_host_name", "scenarioId": "*" },
+      "policy": "normalized-equivalence",
+      "rationale": "The stage hostname is normalized to the production hostname for environment parity.",
+      "evidence": "scripts/diff/fixtures/field-policy.json host normalization",
+      "owner": "Adobe Migration Test",
+      "reviewDate": "2026-08-30"
+    },
+    {
+      "id": "migration-personalization-empty",
+      "classification": "expected-migration",
+      "scope": { "location": "properties", "field": "personalization_details", "scenarioId": "*" },
+      "policy": "policy-equivalence",
+      "rationale": "Stage does not reproduce time-bound production personalization assignments; the reviewed policy requires an empty value.",
+      "evidence": "scripts/diff/fixtures/field-policy.json personalization_details policy",
+      "owner": "Adobe Migration Test",
+      "reviewDate": "2026-08-30"
+    },
+    {
+      "id": "migration-accountant-video-card-access-point",
+      "classification": "expected-migration",
+      "scope": { "location": "properties", "field": "ui_access_point", "scenarioId": "customer-accountant-cfa1c3d4e33d" },
+      "policy": "value-mismatch",
+      "rationale": "Stage renders the video link inside the cards component, so the tracker reports the cards ancestor trail instead of production's page-level context.",
+      "evidence": "CLICK-TRACKING.md access-point trail contract and complete-golden-replay-v24 capture",
+      "owner": "Adobe Migration Test",
+      "reviewDate": "2026-08-30"
+    },
+    {
+      "id": "migration-bi-footer-access-point",
+      "classification": "expected-migration",
+      "scope": { "location": "properties", "field": "ui_access_point", "scenarioId": "customer-accounting-business-intelligence-rep-602d8ad063b8" },
+      "policy": "value-mismatch",
+      "rationale": "The EDS footer ancestor structure differs from production while the same Intuit link and semantic action are preserved.",
+      "evidence": "CLICK-TRACKING.md access-point trail contract and complete-golden-replay-v24 capture",
+      "owner": "Adobe Migration Test",
+      "reviewDate": "2026-08-30"
+    },
+    {
+      "id": "migration-multi-entity-card-access-point",
+      "classification": "expected-migration",
+      "scope": { "location": "properties", "field": "ui_access_point", "scenarioId": "customer-accounting-multi-entity-dab61d7ee9ef" },
+      "policy": "value-mismatch",
+      "rationale": "The EDS card ancestor structure differs from production while the same CTA and semantic action are preserved.",
+      "evidence": "CLICK-TRACKING.md access-point trail contract and complete-golden-replay-v24 capture",
+      "owner": "Adobe Migration Test",
+      "reviewDate": "2026-08-30"
+    },
+    {
+      "id": "migration-construction-hero-primary-access-point",
+      "classification": "expected-migration",
+      "scope": { "location": "properties", "field": "ui_access_point", "scenarioId": "customer-construction-a921927121e1" },
+      "policy": "value-mismatch",
+      "rationale": "The EDS hero ancestor structure differs from production while the same CTA and semantic action are preserved.",
+      "evidence": "CLICK-TRACKING.md access-point trail contract and complete-golden-replay-v24 capture",
+      "owner": "Adobe Migration Test",
+      "reviewDate": "2026-08-30"
+    },
+    {
+      "id": "migration-construction-hero-secondary-access-point",
+      "classification": "expected-migration",
+      "scope": { "location": "properties", "field": "ui_access_point", "scenarioId": "customer-construction-78e09a34899e" },
+      "policy": "value-mismatch",
+      "rationale": "The EDS hero ancestor structure differs from production while the same CTA and semantic action are preserved.",
+      "evidence": "CLICK-TRACKING.md access-point trail contract and complete-golden-replay-v24 capture",
+      "owner": "Adobe Migration Test",
+      "reviewDate": "2026-08-30"
+    },
+    {
+      "id": "migration-accountant-hero-access-point",
+      "classification": "expected-migration",
+      "scope": { "location": "properties", "field": "ui_access_point", "scenarioId": "customer-accountant-1a518ca49280" },
+      "policy": "value-mismatch",
+      "rationale": "The EDS hero ancestor structure differs from production while the same product-tour CTA and semantic action are preserved.",
+      "evidence": "CLICK-TRACKING.md access-point trail contract and complete-golden-replay-v24 capture",
+      "owner": "Adobe Migration Test",
+      "reviewDate": "2026-08-30"
+    },
+    {
+      "id": "migration-erp-solutions-card-access-point",
+      "classification": "expected-migration",
+      "scope": { "location": "properties", "field": "ui_access_point", "scenarioId": "customer-erp-solutions-d8e8e928cbe3" },
+      "policy": "value-mismatch",
+      "rationale": "The EDS card ancestor structure differs from production while the same CTA and semantic action are preserved.",
+      "evidence": "CLICK-TRACKING.md access-point trail contract and complete-golden-replay-v24 capture",
+      "owner": "Adobe Migration Test",
+      "reviewDate": "2026-08-30"
+    },
+    {
+      "id": "migration-ai-agents-hero-access-point",
+      "classification": "expected-migration",
+      "scope": { "location": "properties", "field": "ui_access_point", "scenarioId": "customer-ai-agents-d1c230c268c0" },
+      "policy": "value-mismatch",
+      "rationale": "The EDS hero ancestor structure differs from production while the same accountants CTA and semantic action are preserved.",
+      "evidence": "CLICK-TRACKING.md access-point trail contract and complete-golden-replay-v24 capture",
+      "owner": "Adobe Migration Test",
+      "reviewDate": "2026-08-30"
+    },
+    {
+      "id": "migration-construction-blog-footer-access-point-first",
+      "classification": "expected-migration",
+      "scope": { "location": "properties", "field": "ui_access_point", "scenarioId": "customer-blog-construction-automation-in-cons-f9282cf7664f" },
+      "policy": "value-mismatch",
+      "rationale": "The EDS footer ancestor structure differs from production while the same Intuit link and semantic action are preserved.",
+      "evidence": "CLICK-TRACKING.md access-point trail contract and complete-golden-replay-v24 capture",
+      "owner": "Adobe Migration Test",
+      "reviewDate": "2026-08-30"
+    },
+    {
+      "id": "migration-construction-blog-footer-access-point-second",
+      "classification": "expected-migration",
+      "scope": { "location": "properties", "field": "ui_access_point", "scenarioId": "customer-blog-construction-automation-in-cons-0cf87d6a9e10" },
+      "policy": "value-mismatch",
+      "rationale": "The EDS footer ancestor structure differs from production while the same Intuit link and semantic action are preserved.",
+      "evidence": "CLICK-TRACKING.md access-point trail contract and complete-golden-replay-v24 capture",
+      "owner": "Adobe Migration Test",
+      "reviewDate": "2026-08-30"
+    },
+    {
+      "id": "migration-hcm-article-hero-access-point",
+      "classification": "expected-migration",
+      "scope": { "location": "properties", "field": "ui_access_point", "scenarioId": "customer-blog-hr-human-capital-management-0b09223a5846" },
+      "policy": "value-mismatch",
+      "rationale": "The EDS article-header ancestor structure differs from production while the same link and semantic action are preserved.",
+      "evidence": "CLICK-TRACKING.md access-point trail contract and complete-golden-replay-v24 capture",
+      "owner": "Adobe Migration Test",
+      "reviewDate": "2026-08-30"
+    }
+  ]
+}
