@@ -157,6 +157,11 @@ Loose content CTAs in no block are keyed `page:<…>` at interaction time. The e
 `hrefSlug`, `hostLabel`, and `hrefTrackId` are the building blocks; `OWN_HOSTS` in `tracking.js` is the
 one site-specific knob (which apexes strip to a path).
 
+Two repeated-fragment cases use semantic ids instead of the shared `#schedule` destination:
+unclaimed loose schedule anchors receive `page:<slug(label)>`, and authored tabs CTAs receive
+`tabs:<slug(panel-label)>-<slug(cta-label)>`. This keeps the QuickBooks Desktop, QuickBooks Online,
+and non-Intuit migration CTAs independently addressable even though all three open the same modal.
+
 **Positional keying is retired.** Every block is id-keyed and the sheet has a single `id` column — no
 `<blockKey>-<n>` and no DOM-index resolution (`sheetRowFor`/`pageCtas` are gone). `indexRows` still
 tolerates a stray legacy `key` column so an un-republished sheet fails open, but nothing resolves by

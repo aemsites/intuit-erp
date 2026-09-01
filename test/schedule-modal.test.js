@@ -104,6 +104,24 @@ describe('bindScheduleLinks', () => {
     expect(container.querySelector('a').dataset.scheduleBound).toBe('true');
   });
 
+  it('gives an unclaimed loose schedule anchor a semantic sheet identity', () => {
+    const container = document.createElement('main');
+    container.innerHTML = '<p><a href="#schedule">Schedule a consultation</a></p>';
+    bindScheduleLinks(container);
+    expect(container.querySelector('a').dataset.trackId).toBe('page:schedule-a-consultation');
+  });
+
+  it('preserves block-owned and explicit schedule identities', () => {
+    const container = document.createElement('main');
+    container.innerHTML = `
+      <div class="tabs block"><a href="#schedule">Schedule a call</a></div>
+      <p><a href="#schedule" data-track-id="custom:schedule">Schedule a demo</a></p>`;
+    bindScheduleLinks(container);
+    const [blockOwned, explicit] = container.querySelectorAll('a');
+    expect(blockOwned.hasAttribute('data-track-id')).toBe(false);
+    expect(explicit.dataset.trackId).toBe('custom:schedule');
+  });
+
   it('leaves claimed ChiliPiper links to the widget without stopping bubbling', async () => {
     const container = makeContainer('#schedule');
     const link = container.querySelector('a');

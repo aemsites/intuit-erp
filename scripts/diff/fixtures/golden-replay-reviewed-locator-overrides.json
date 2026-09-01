@@ -32,6 +32,16 @@
       "inventoryRef": "scripts/diff/fixtures/local/clicktrack-golden-stage-inventory-v32.json",
       "inventorySha256": "sha256:5abfc8d5606bb070df701f8ca0c6ba2ccfa83ea457be0ce3125183c80e976a1a",
       "method": "The current header replacements preserve the prod destinations and interaction intent while using renamed customer-visible labels."
+    }, {
+      "scenarioIds": [
+        "customer-accountant-a977351edbd2",
+        "customer-migration-5a4d66ef88d4"
+      ],
+      "capturedAt": "2026-09-01T02:31:29.445Z",
+      "completedAt": "2026-09-01T02:39:38.123Z",
+      "inventoryRef": "scripts/diff/fixtures/local/clicktrack-golden-stage-inventory-v43.json",
+      "inventorySha256": "sha256:da7dcbeca2448090e8789be3d311cb6da20525aff1d54e3e18a46d66c898b130",
+      "method": "The current accountant anchor preserves the bottom-banner scheduling intent, while the first authored migration panel uniquely identifies the QuickBooks Desktop scheduling CTA among three same-label links."
     }]
   },
   "decisions": [
@@ -100,6 +110,20 @@
       "candidateIdentity": { "dataTrackId": "nav:schedule-a-call-2", "accessibleName": "Schedule a call", "tag": "BUTTON", "role": "button", "region": "header", "block": "header" },
       "locator": { "block": "header" },
       "rationale": "The visible primary Schedule a call control preserves the prod header scheduling interaction after the Schedule demo copy change."
+    },
+    {
+      "scenarioId": "customer-accountant-a977351edbd2",
+      "page": "/accountant",
+      "candidateIdentity": { "accessibleName": "Schedule a consultation", "tag": "A", "role": "link", "region": "main", "href": "https://stage.erp.intuit.com/", "block": "" },
+      "locator": { "block": "", "requireNoBlock": true, "href": "" },
+      "rationale": "The visible Schedule a consultation anchor preserves the prod bottom-banner scheduling intent and scrolls to the detailed-demo form; the separate Schedule now form submit is not the reviewed target."
+    },
+    {
+      "scenarioId": "customer-migration-5a4d66ef88d4",
+      "page": "/migration",
+      "candidateIdentity": { "accessibleName": "Schedule a call", "tag": "A", "role": "link", "region": "main", "href": "https://stage.erp.intuit.com/", "block": "tabs" },
+      "locator": { "block": "tabs", "href": "", "occurrence": 1, "occurrenceEvidence": { "stableConstraint": "The authored migration panel order is QuickBooks Desktop, QuickBooks Online, then non-Intuit solution; the first same-label CTA belongs to the QuickBooks Desktop panel." } },
+      "rationale": "The first authored tabs CTA is in the visible From QuickBooks Desktop panel and preserves the prod qb_desktop_migration scheduling interaction; the other same-label panel CTAs remain hidden."
     },
     {
       "scenarioId": "customer-financial-services-9d04cc0e326f",

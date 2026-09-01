@@ -251,6 +251,55 @@ describe('golden replay locator review', () => {
     expect(() => create(unstableIdentity)).toThrow(/stable candidate identity/i);
   });
 
+  it('uses reviewed occurrence evidence to disambiguate identical authored targets', () => {
+    const testInventory = inventory();
+    testInventory.pages[0].candidates = [
+      candidate('duplicate-a', 'Schedule a call', ''),
+      candidate('duplicate-b', 'Schedule a call', ''),
+      candidate('duplicate-c', 'Schedule a call', ''),
+    ];
+    const reviewedOverrides = {
+      schemaVersion: 1,
+      reviewId: 'review-2026-09-01',
+      evidenceRef: 'audit.md',
+      decisions: [{
+        scenarioId: 'two',
+        page: '/events',
+        candidateIdentity: {
+          dataTrackId: '', accessibleName: 'Schedule a call', tag: 'A', role: 'link', region: 'main', block: '',
+        },
+        locator: {
+          requireNoBlock: true,
+          occurrence: 2,
+          occurrenceEvidence: { stableConstraint: 'authored panel order' },
+        },
+        rationale: 'the reviewed target is in the second authored panel',
+      }],
+    };
+
+    const review = createLocatorReview({
+      manifest: manifest(), inventory: testInventory, inventoryBytes: Buffer.from('inventory'),
+      trackingSheetBytes: Buffer.from('{"data":[]}'),
+      reviewedOverridesBytes: Buffer.from(JSON.stringify(reviewedOverrides)),
+    });
+
+    expect(review.scenarios[1]).toMatchObject({
+      status: 'proposed',
+      locator: {
+        strategy: 'semantic', occurrence: 2,
+        occurrenceEvidence: { stableConstraint: 'authored panel order' },
+      },
+      evidence: { candidate: { candidateId: 'duplicate-b' } },
+    });
+
+    delete reviewedOverrides.decisions[0].locator.occurrenceEvidence;
+    expect(() => createLocatorReview({
+      manifest: manifest(), inventory: testInventory, inventoryBytes: Buffer.from('inventory'),
+      trackingSheetBytes: Buffer.from('{"data":[]}'),
+      reviewedOverridesBytes: Buffer.from(JSON.stringify(reviewedOverrides)),
+    })).toThrow(/occurrence lacks stable evidence/i);
+  });
+
   it('carries reviewed setup and duplicate-target decisions into the replay manifest', () => {
     const testManifest = manifest();
     const testInventory = inventory();
@@ -292,8 +341,8 @@ describe('golden replay locator review', () => {
     const artifact = JSON.parse(readFileSync(
       'scripts/diff/fixtures/golden-replay-reviewed-locator-overrides.json', 'utf8',
     ));
-    expect(artifact.decisions).toHaveLength(29);
-    expect(new Set(artifact.decisions.map(({ scenarioId }) => scenarioId)).size).toBe(29);
+    expect(artifact.decisions).toHaveLength(31);
+    expect(new Set(artifact.decisions.map(({ scenarioId }) => scenarioId)).size).toBe(31);
     expect(artifact.decisions.find(({ scenarioId }) => (
       scenarioId === 'customer-professional-services-aa56645bc6c8'
     ))).toMatchObject({
@@ -328,6 +377,22 @@ describe('golden replay locator review', () => {
       expect(artifact.decisions.find((decision) => decision.scenarioId === scenarioId)?.setupSteps)
         .toMatchObject([{ locator: { trackId: 'nav:capabilities' } }]);
     }
+    expect(artifact.decisions.find(({ scenarioId }) => (
+      scenarioId === 'customer-accountant-a977351edbd2'
+    ))).toMatchObject({
+      candidateIdentity: {
+        accessibleName: 'Schedule a consultation', role: 'link', region: 'main', block: '',
+      },
+      locator: { requireNoBlock: true, href: '' },
+    });
+    expect(artifact.decisions.find(({ scenarioId }) => (
+      scenarioId === 'customer-migration-5a4d66ef88d4'
+    ))).toMatchObject({
+      candidateIdentity: { accessibleName: 'Schedule a call', role: 'link', block: 'tabs' },
+      locator: {
+        href: '', occurrence: 1, occurrenceEvidence: { stableConstraint: expect.any(String) },
+      },
+    });
     for (const decision of artifact.decisions) {
       expect(decision).toMatchObject({
         scenarioId: expect.stringMatching(/^customer-/),

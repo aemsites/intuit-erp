@@ -1,4 +1,5 @@
 import { BP_TABLET, BP_DESKTOP } from '../../scripts/breakpoints.js';
+import { slug } from '../../scripts/tracking.js';
 
 const CITE_PREFIX = /^<cite>\s*/i;
 const BLOCKISH = 'picture, img, h2, h3, h4, h5, h6, p, ul, ol, blockquote';
@@ -101,6 +102,8 @@ function buildCta(item, className) {
   a.className = className;
   a.href = item.cta.href;
   a.textContent = item.cta.text;
+  const identity = [slug(item.label), slug(item.cta.text)].filter(Boolean).join('-');
+  if (identity) a.dataset.trackId = `tabs:${identity}`;
   return a;
 }
 
