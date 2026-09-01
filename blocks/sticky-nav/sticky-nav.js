@@ -10,10 +10,15 @@ function targetFor(a) {
 // would be scrolled past if the heading's own top were the landing point.
 // Extend the scroll margin to also clear any such immediately-preceding
 // sibling, so the anchor lands at the section's true visual top either way.
+// Measured as the gap between the two elements' BORDER-BOX tops (not the
+// eyebrow's own height) because getBoundingClientRect() excludes margins —
+// using height alone undercounts by the eyebrow's margin-top and still lets
+// a fixed nav bar cover part of it.
 function scrollMarginFor(target) {
   const prev = target.previousElementSibling;
   const coversEyebrow = prev && prev.tagName === 'P' && !prev.querySelector('a, img, picture');
-  return coversEyebrow ? prev.getBoundingClientRect().height : 0;
+  if (!coversEyebrow) return 0;
+  return target.getBoundingClientRect().top - prev.getBoundingClientRect().top;
 }
 
 export default function decorate(block) {
