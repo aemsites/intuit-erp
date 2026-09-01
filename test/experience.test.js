@@ -330,6 +330,14 @@ describe('record shapes', () => {
       externalContentIdentifier: '/frag',
     });
   });
+  it('pznRecord: offer-only controls omit content identifiers', () => {
+    expect(pznRecord('alpha', { contentId: null, offerId: 'o1' })).toEqual({
+      personalization_placement: 'alpha',
+      personalization_id: 'o1',
+      personalization_action: 'im',
+      personalization_workflow: 'marketing',
+    });
+  });
   it('pznRecord: null when there is no offer', () => {
     expect(pznRecord('alpha', { contentId: null, offerId: undefined })).toBeNull();
   });
@@ -718,6 +726,19 @@ describe('applyLayer (section/block swaps, from the cached response)', () => {
     await applyLayer(m, expResp('376648', { originalCasId: '/x', replacementCasId: '/x' }));
     expect(loadFragment).not.toHaveBeenCalled();
     expect(window.appVars.ixpDetailsArr).toHaveLength(1);
+  });
+
+  it('records exposure but does not swap an offer-only personalization control', async () => {
+    const m = main('<div data-pzn="alpha"></div>');
+    await applyLayer(m, pznResp('alpha', { contentId: null, offerId: 'offer-1' }));
+    expect(loadFragment).not.toHaveBeenCalled();
+    expect(window.appVars.pznRecDetailsArr).toEqual([{
+      personalization_placement: 'alpha',
+      personalization_id: 'offer-1',
+      personalization_action: 'im',
+      personalization_workflow: 'marketing',
+    }]);
+    expect(m.querySelector('[data-pzn]').hasAttribute('data-pzn-id')).toBe(false);
   });
 
   it('IXP precedence: a target with both exp and pzn gets only the experiment swap', async () => {

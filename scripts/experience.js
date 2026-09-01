@@ -305,14 +305,17 @@ export function pznDecision(response, name) {
 // Normalized pzn record, or null when there's no offer/content.
 export function pznRecord(placement, decision) {
   if (!decision || (!decision.offerId && !decision.contentId)) return null;
-  return {
+  const record = {
     personalization_placement: placement,
     personalization_id: decision.offerId,
     personalization_action: 'im',
     personalization_workflow: 'marketing',
-    content_id: decision.contentId,
-    externalContentIdentifier: decision.contentId,
   };
+  if (decision.contentId) {
+    record.content_id = decision.contentId;
+    record.externalContentIdentifier = decision.contentId;
+  }
+  return record;
 }
 
 // Normalized ixp record, or null without experiment identity. Control arms still emit a
@@ -490,7 +493,10 @@ async function applyPznSlot(response, placement, stampTarget, applyContent, reco
   const d = pznDecision(response, placement);
   if (!d) return false;
   const rec = pznRecord(placement, d);
-  if (!d.contentId) return false;
+  if (!d.contentId) {
+    if (rec && track) record([rec]);
+    return false;
+  }
   const path = casToPath(d.contentId);
   if (!path || !(await applyContent(path))) return false;
   if (track) {
