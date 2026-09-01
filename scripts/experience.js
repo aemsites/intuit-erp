@@ -443,16 +443,17 @@ function parseJson(value) {
   }
 }
 
-// The experiment decision for an id (or null if absent). A missing/unchanged
-// replacementCasId is a control arm — recorded but not swapped.
+// The experiment decision for an id (or null if absent). A missing or blank contentId
+// is a control arm — recorded but not swapped.
 export function experimentDecision(response, id) {
   const entry = response?.experiments?.[id];
   if (!entry) return null;
   const payload = parseJson(entry.payload) || {};
   const ta = entry.trackingAttributes || {};
   return {
-    originalCasId: payload.originalCasId || null,
-    replacementCasId: payload.replacementCasId || null,
+    // Trimmed so a whitespace-only contentId reads as control, not as a treatment whose
+    // swap silently fails downstream in fragmentPath().
+    contentId: (typeof payload.contentId === 'string' ? payload.contentId.trim() : '') || null,
     treatmentId: ta.treatmentId,
     experimentId: ta.experimentId || id,
     experimentIdVersion: ta.experimentIdVersion,
@@ -505,11 +506,11 @@ export function ixpRecord(decision, path) {
     experiment_id: decision.experimentId,
     experiment_version: decision.experimentIdVersion,
     experiment_treatment: decision.treatmentId,
-    original_content_id: decision.originalCasId || path,
+    original_content_id: path,
   };
-  // Treatment (real swap) carries a replacement; control/identical does not.
-  if (decision.replacementCasId && decision.replacementCasId !== decision.originalCasId) {
-    record.replacement_content_id = decision.replacementCasId;
+  // Treatment (real swap) carries content; control does not.
+  if (decision.contentId) {
+    record.replacement_content_id = decision.contentId;
   }
   return record;
 }
@@ -654,11 +655,11 @@ async function applyExperiment(response, id, stampTarget, applyContent, record, 
   const d = experimentDecision(response, id);
   if (!d) return false;
   const rec = ixpRecord(d, window.location.pathname);
-  if (!d.replacementCasId || d.replacementCasId === d.originalCasId) {
+  if (!d.contentId) {
     if (rec && track) record([rec]);
     return false;
   }
-  const path = casToPath(d.replacementCasId);
+  const path = casToPath(d.contentId);
   if (!path || !(await applyContent(path))) return false;
   if (track) {
     if (rec) record([rec]);
