@@ -51,8 +51,7 @@ if (PERF_ON) {
 
   window.hlx = window.hlx || {};
   window.hlx.experiencePerf = { report };
-  // Report once the page has settled (lazy swaps + final LCP are in by then).
-  window.addEventListener('load', () => { setTimeout(report, 3000); }, { once: true });
+  setTimeout(report, 6000);
 }
 
 // --- Endpoint + fetch primitives -------------------------------------------
