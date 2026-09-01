@@ -3,17 +3,19 @@ function targetFor(a) {
   return id ? document.getElementById(id) : null;
 }
 
-// Extra breathing room below the nav bar when a target has an eyebrow above it.
-const EYEBROW_LANDING_GAP = 60;
-
 // Extends the scroll margin to also clear a preceding eyebrow paragraph, so
 // the anchor doesn't land with the eyebrow hidden under the fixed nav bar.
+// The extra breathing room below the eyebrow scales with its own line-height
+// (2 lines' worth) instead of a fixed pixel guess, so it still looks right
+// wherever this pattern is reused with a different eyebrow type scale.
 function scrollMarginFor(target) {
   const prev = target.previousElementSibling;
   const coversEyebrow = prev && prev.tagName === 'P' && !prev.querySelector('a, img, picture');
   if (!coversEyebrow) return 0;
   const gap = target.getBoundingClientRect().top - prev.getBoundingClientRect().top;
-  return gap + EYEBROW_LANDING_GAP;
+  const computedLineHeight = parseFloat(getComputedStyle(prev).lineHeight);
+  const lineHeight = computedLineHeight || prev.getBoundingClientRect().height;
+  return gap + (lineHeight * 2);
 }
 
 export default function decorate(block) {
