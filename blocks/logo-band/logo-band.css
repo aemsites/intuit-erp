@@ -142,40 +142,49 @@
    default = dark navy band, white-inverted logos (erp.intuit.com #ies-slider)
    .light  = white band, grayscale (not inverted) logos, dark heading text
              (nonprofit "Connect donor and payment tools")
+   Theme colors are set once via custom properties; every rule below just
+   reads them, so the two themes differ only where these are declared.
    Sizing: mobile = 32px logos / 24px gaps / 72px band; from 768px up =
    40px / 32px / 80px. Band height is the logo height plus 20px of vertical
-   padding top and bottom. */
-.section.logo-band-container:has(.logo-band.marquee) { overflow: hidden; }
-.section.logo-band-container:has(.logo-band.marquee:not(.light)) { background: #00254a; }
-.section.logo-band-container:has(.logo-band.marquee.light) { background: #fff; }
+   padding top and bottom. A heading/intro authored as default content above
+   the marquee sits on the same band and picks up the same theme colors; a
+   60px gap separates it from the logo row (nonprofit spec). No bottom
+   padding on the wrapper — the marquee's own closing padding provides the
+   section's bottom space instead, so the two don't stack. */
 .logo-band.marquee { padding: 36px 0 var(--section-y); }
 
-/* a heading/intro authored as default content above the marquee sits on the
-   same band, so it needs a text color matching that band's background —
-   light-on-dark for the default navy theme, the normal dark heading color
-   for .light. 60px below separates it from the logo row (nonprofit
-   "Connect donor and payment tools" spec); no bottom padding here — the
-   marquee's own closing padding (above) provides the section's bottom
-   space instead, so the two don't stack. */
+/* theme variables live on the SECTION (not the block) so both the section's
+   own background and the block's descendant rules (logo filter, heading/body
+   color) can read the same values — a custom property set on the block
+   itself would be invisible to its ancestor section. */
+.section.logo-band-container:has(.logo-band.marquee) {
+  --marquee-bg: #00254a;
+  --marquee-heading: #fff;
+  --marquee-body: rgb(255 255 255 / 80%);
+  --marquee-logo-filter: brightness(0) invert(1);
+
+  background: var(--marquee-bg);
+  overflow: hidden;
+}
+
+.section.logo-band-container:has(.logo-band.marquee.light) {
+  --marquee-bg: #fff;
+  --marquee-heading: var(--heading);
+  --marquee-body: var(--text-muted);
+  --marquee-logo-filter: grayscale(1) opacity(60%);
+}
+
 .section.logo-band-container:has(.logo-band.marquee) .default-content-wrapper {
   padding: 60px 24px 0;
   text-align: center;
 }
 
-.section.logo-band-container:has(.logo-band.marquee:not(.light)) .default-content-wrapper :is(h1, h2, h3, h4, h5, h6) {
-  color: #fff;
+.section.logo-band-container:has(.logo-band.marquee) .default-content-wrapper :is(h1, h2, h3, h4, h5, h6) {
+  color: var(--marquee-heading);
 }
 
-.section.logo-band-container:has(.logo-band.marquee:not(.light)) .default-content-wrapper p {
-  color: rgb(255 255 255 / 80%);
-}
-
-.section.logo-band-container:has(.logo-band.marquee.light) .default-content-wrapper :is(h1, h2, h3, h4, h5, h6) {
-  color: var(--heading);
-}
-
-.section.logo-band-container:has(.logo-band.marquee.light) .default-content-wrapper p {
-  color: var(--text-muted);
+.section.logo-band-container:has(.logo-band.marquee) .default-content-wrapper p {
+  color: var(--marquee-body);
 }
 
 /* full-bleed: a scrolling marquee spans the whole viewport, so release the
@@ -187,10 +196,8 @@ main > .section.logo-band-container:has(.logo-band.marquee) > div { max-width: n
 .logo-band.marquee .logoband-set { display: flex; flex-wrap: nowrap; align-items: center; gap: 24px; flex: 0 0 auto; padding-right: 24px; }
 
 /* the logo source images are colored; invert renders them white on the dark
-   band. .light keeps the band white, so desaturate to grayscale instead of
-   inverting to white-on-white. */
-.logo-band.marquee img { height: 32px; width: auto; filter: brightness(0) invert(1); flex: 0 0 auto; }
-.logo-band.marquee.light img { filter: grayscale(1) opacity(60%); }
+   band, or desaturate to grayscale on the .light band (avoids white-on-white) */
+.logo-band.marquee img { height: 32px; width: auto; filter: var(--marquee-logo-filter); flex: 0 0 auto; }
 
 .logo-band.marquee.is-ready .logoband-track {
   animation-name: logoband-scroll;
