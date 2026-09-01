@@ -5,6 +5,7 @@ import {
   collectTrackingInventory,
   describeTrackingTarget,
   indexRows,
+  isTrackingInspectorPreview,
   trackAs,
 } from '../scripts/tracking.js';
 
@@ -18,6 +19,21 @@ describe('tracking inspector', () => {
       + '<p><a href="/contact">Contact us</a></p>'
       + '</main>';
     trackAs('cta_block', document.querySelector('.cta'), { key: 'cta' });
+  });
+
+  it('allows an explicitly requested inspector on DA branch-preview origins', () => {
+    expect(isTrackingInspectorPreview({
+      hostname: 'codex-tracking-editor-poc--intuit-erp--aemsites.preview.da.live',
+      search: '?tracking-editor=1&martech=off',
+    })).toBe(true);
+    expect(isTrackingInspectorPreview({
+      hostname: 'codex-tracking-editor-poc--intuit-erp--aemsites.preview.da.live',
+      search: '?martech=off',
+    })).toBe(false);
+    expect(isTrackingInspectorPreview({
+      hostname: 'erp.intuit.com',
+      search: '?tracking-editor=1',
+    })).toBe(false);
   });
 
   it('describes automatic, override, and effective values without stamping the CTA', () => {

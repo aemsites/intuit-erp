@@ -646,11 +646,22 @@ export function stampInteraction(e) {
   stampCta(resolved.cta, resolved.effectiveAttrs);
 }
 
+/**
+ * Whether the branch-only inspector may be exposed for this location.
+ * DA apps render branch code on preview.da.live rather than aem.page.
+ * @param {{hostname?: string, search?: string}} location browser location
+ * @returns {boolean}
+ */
+export function isTrackingInspectorPreview(location = {}) {
+  const host = location.hostname || '';
+  const previewHost = /\.(aem|hlx)\.page$/.test(host)
+    || /\.preview\.da\.live$/.test(host)
+    || ['localhost', '127.0.0.1'].includes(host);
+  return previewHost && new URLSearchParams(location.search || '').get('tracking-editor') === '1';
+}
+
 function exposeTrackingInspector() {
-  if (typeof window === 'undefined') return;
-  const previewHost = /\.(aem|hlx)\.page$/.test(window.location.hostname)
-    || ['localhost', '127.0.0.1'].includes(window.location.hostname);
-  if (!previewHost || new URLSearchParams(window.location.search).get('tracking-editor') !== '1') return;
+  if (typeof window === 'undefined' || !isTrackingInspectorPreview(window.location)) return;
   window.hlx = window.hlx || {};
   window.hlx.trackingInspector = {
     collect: (rows = []) => collectTrackingInventory(document, rows, window.location),
