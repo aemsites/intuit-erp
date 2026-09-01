@@ -62,4 +62,51 @@ describe('sheet from our build', () => {
       candidateTrackIds: ['hero:find-out-more', 'cards:find-out-more'],
     }]);
   });
+
+  it('uses a reviewed replay identity when migrated copy and destination no longer match prod', () => {
+    const payloadFile = 'payloads/professional-services-article.json';
+    const golden = entry({
+      page: '/professional-services',
+      payloadFile,
+      text: 'articles|ies_for_proservices_link',
+      href: 'https://erp.intuit.com/',
+      exp: {
+        object: 'content', action: 'engaged', ui_object: 'link',
+        ui_object_detail: 'articles|ies_for_proservices_link', ui_action: 'clicked',
+        object_detail: 'articles|ies_for_proservices_link',
+        'data-wa-link': 'articles-ies-for-proservices-link',
+      },
+    });
+    const current = candidate({
+      label: 'Intuit Enterprise Suite for professional service firms: Read more',
+      href: 'https://quickbooks.intuit.com/r/enterprise/intuit-enterprise-suite-professional-service-business/',
+      tid: 'cards:quickbooks-r-enterprise-intuit-enterprise-suite-professional-service-business',
+      p: {
+        object: 'content', action: 'interacted', ui_object: 'link',
+        ui_object_detail: 'Read more', ui_action: 'clicked',
+      },
+    });
+    const reviewedManifest = { scenarios: [{
+      goldenRef: { payloadFile },
+      locator: {
+        status: 'proposed', strategy: 'data-track-id', value: current.tid,
+      },
+    }] };
+
+    const result = generateSheetFromBuild(
+      { entries: [golden] },
+      { pages: { '/professional-services': [current] } },
+      reviewedManifest,
+    );
+
+    expect(result.sheet.data).toEqual([{
+      path: '/professional-services',
+      id: current.tid,
+      'object-detail': 'articles|ies_for_proservices_link',
+      action: 'engaged',
+      'ui-object-detail': 'articles|ies_for_proservices_link',
+      'wa-link': 'articles-ies-for-proservices-link',
+    }]);
+    expect(result.report).toMatchObject({ reviewedMatches: 1, reviewedTargetAbsent: [] });
+  });
 });

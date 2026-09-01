@@ -207,7 +207,13 @@ export default async function initContactUs() {
   }
 
   // Floating sales widget -> talk_to_sales (a declared block tracks in <body>).
-  trackAs('talk_to_sales', root, { key: 'talk-to-sales', linkName: false });
+  // Every interactive item in this widget is presented as a CTA button,
+  // including the support destination rendered as an <a>. Keep that visual
+  // contract in the payload instead of letting the generic anchor derive
+  // `ui_object=link` for the support CTA.
+  trackAs('talk_to_sales', root, {
+    key: 'talk-to-sales', linkName: false, uiObject: 'button',
+  });
 
   document.body.append(root);
 }

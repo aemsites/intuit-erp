@@ -137,6 +137,40 @@ describe('offline golden replay analysis', () => {
     ]));
   });
 
+  it('drafts changed as well as missing sheet residue for an explicitly reviewed target', () => {
+    const golden = { entries: [{
+      page: '/professional-services', payloadFile: 'payloads/article.json', event: 'content:engaged', key: 'cards',
+      fullPayload: payload({
+        object: 'content', action: 'engaged', object_detail: 'articles|ies_for_proservices_link',
+        ui_object: 'link', ui_object_detail: 'articles|ies_for_proservices_link',
+        'data-wa-link': 'articles-ies-for-proservices-link', page_cas_id: 'legacy-cas',
+      }),
+    }] };
+    const manifest = { scenarios: [{
+      scenarioId: 'article', page: '/professional-services', goldenRef: { payloadFile: 'payloads/article.json' },
+      locator: { evidence: { reviewedDecision: { reviewId: 'reviewed-target' } } },
+    }] };
+    const state = bind(manifest, {
+      coverage: { total: 1, captured: 1 },
+      outcomes: [{
+        scenarioId: 'article', pathname: '/professional-services', status: 'captured',
+        locator: { trackId: 'cards:current-article' },
+        payload: payload({
+          object: 'content', action: 'interacted', ui_object: 'link',
+          ui_object_detail: 'Read more', page_cas_id: '/professional-services',
+        }),
+      }],
+    });
+
+    const analysis = buildOfflineGoldenReplayAnalysis({ golden, manifest, state, deviations });
+    expect(analysis.sheetCorrectionDraft).toEqual([{
+      path: '/professional-services', id: 'cards:current-article',
+      'object-detail': 'articles|ies_for_proservices_link', action: 'engaged',
+      'ui-object-detail': 'articles|ies_for_proservices_link',
+      'wa-link': 'articles-ies-for-proservices-link',
+    }]);
+  });
+
   it('rejects duplicate outcomes that omit a manifest scenario', () => {
     const golden = { entries: [
       { page: '/one', payloadFile: 'one.json', event: 'content:interacted', fullPayload: payload({ object: 'content', action: 'interacted' }) },

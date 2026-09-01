@@ -251,6 +251,55 @@ describe('golden replay locator review', () => {
     expect(() => create(unstableIdentity)).toThrow(/stable candidate identity/i);
   });
 
+  it('uses reviewed occurrence evidence to disambiguate identical authored targets', () => {
+    const testInventory = inventory();
+    testInventory.pages[0].candidates = [
+      candidate('duplicate-a', 'Schedule a call', ''),
+      candidate('duplicate-b', 'Schedule a call', ''),
+      candidate('duplicate-c', 'Schedule a call', ''),
+    ];
+    const reviewedOverrides = {
+      schemaVersion: 1,
+      reviewId: 'review-2026-09-01',
+      evidenceRef: 'audit.md',
+      decisions: [{
+        scenarioId: 'two',
+        page: '/events',
+        candidateIdentity: {
+          dataTrackId: '', accessibleName: 'Schedule a call', tag: 'A', role: 'link', region: 'main', block: '',
+        },
+        locator: {
+          requireNoBlock: true,
+          occurrence: 2,
+          occurrenceEvidence: { stableConstraint: 'authored panel order' },
+        },
+        rationale: 'the reviewed target is in the second authored panel',
+      }],
+    };
+
+    const review = createLocatorReview({
+      manifest: manifest(), inventory: testInventory, inventoryBytes: Buffer.from('inventory'),
+      trackingSheetBytes: Buffer.from('{"data":[]}'),
+      reviewedOverridesBytes: Buffer.from(JSON.stringify(reviewedOverrides)),
+    });
+
+    expect(review.scenarios[1]).toMatchObject({
+      status: 'proposed',
+      locator: {
+        strategy: 'semantic', occurrence: 2,
+        occurrenceEvidence: { stableConstraint: 'authored panel order' },
+      },
+      evidence: { candidate: { candidateId: 'duplicate-b' } },
+    });
+
+    delete reviewedOverrides.decisions[0].locator.occurrenceEvidence;
+    expect(() => createLocatorReview({
+      manifest: manifest(), inventory: testInventory, inventoryBytes: Buffer.from('inventory'),
+      trackingSheetBytes: Buffer.from('{"data":[]}'),
+      reviewedOverridesBytes: Buffer.from(JSON.stringify(reviewedOverrides)),
+    })).toThrow(/occurrence lacks stable evidence/i);
+  });
+
   it('carries reviewed setup and duplicate-target decisions into the replay manifest', () => {
     const testManifest = manifest();
     const testInventory = inventory();
@@ -288,15 +337,72 @@ describe('golden replay locator review', () => {
     expect(updated.scenarios[1].locator.evidence.reviewedDecision.duplicateOf).toBe('one');
   });
 
-  it('ships exactly the 20 harness-owned decisions without closing owner-owned gaps', () => {
+  it('ships the reviewed harness-owned decisions without closing ambiguous owner-owned gaps', () => {
     const artifact = JSON.parse(readFileSync(
       'scripts/diff/fixtures/golden-replay-reviewed-locator-overrides.json', 'utf8',
     ));
-    expect(artifact.decisions).toHaveLength(20);
-    expect(new Set(artifact.decisions.map(({ scenarioId }) => scenarioId)).size).toBe(20);
+    expect(artifact.decisions).toHaveLength(32);
+    expect(new Set(artifact.decisions.map(({ scenarioId }) => scenarioId)).size).toBe(32);
+    expect(artifact.decisions.find(({ scenarioId }) => (
+      scenarioId === 'customer-professional-services-aa56645bc6c8'
+    ))).toMatchObject({
+      candidateIdentity: {
+        dataTrackId: 'cards:quickbooks-r-enterprise-intuit-enterprise-suite-professional-service-business',
+        accessibleName: 'Intuit Enterprise Suite for professional service firms: Read more',
+        href: 'https://quickbooks.intuit.com/r/enterprise/intuit-enterprise-suite-professional-service-business/',
+      },
+      locator: { block: 'cards' },
+    });
     expect(artifact.decisions.map(({ scenarioId }) => scenarioId)).not.toContain(
       'customer-blog-construction-automation-in-cons-e622b3154851',
     );
+    const headerReplacements = {
+      'customer-accounting-business-intelligence-rep-f5394eada35a': 'nav:schedule-a-call-2',
+      'customer-accounting-business-intelligence-rep-59676cca353e': 'nav:accountant',
+      'customer-accounting-business-intelligence-rep-da515b45f064': 'nav:accounting',
+      'customer-home-f1a7df4ec339': 'nav:schedule-a-call-2',
+      'customer-compare-70f348c74e9d': 'nav:accountant',
+      'customer-blog-construction-automation-in-cons-0e10ba8ddb3e': 'nav:accountant',
+      'customer-blog-construction-automation-in-cons-7b3473b467b0': 'nav:accounting',
+      'customer-blog-construction-automation-in-cons-67db829b55cf': 'nav:schedule-a-call-2',
+    };
+    for (const [scenarioId, dataTrackId] of Object.entries(headerReplacements)) {
+      expect(artifact.decisions.find((decision) => decision.scenarioId === scenarioId))
+        .toMatchObject({ candidateIdentity: { dataTrackId, region: 'header', block: 'header' } });
+    }
+    for (const scenarioId of [
+      'customer-accounting-business-intelligence-rep-da515b45f064',
+      'customer-blog-construction-automation-in-cons-7b3473b467b0',
+    ]) {
+      expect(artifact.decisions.find((decision) => decision.scenarioId === scenarioId)?.setupSteps)
+        .toMatchObject([{ locator: { trackId: 'nav:capabilities' } }]);
+    }
+    expect(artifact.decisions.find(({ scenarioId }) => (
+      scenarioId === 'customer-accountant-a977351edbd2'
+    ))).toMatchObject({
+      candidateIdentity: {
+        accessibleName: 'Schedule a consultation', role: 'link', region: 'main', block: '',
+      },
+      locator: { requireNoBlock: true, href: '' },
+    });
+    expect(artifact.decisions.find(({ scenarioId }) => (
+      scenarioId === 'customer-migration-5a4d66ef88d4'
+    ))).toMatchObject({
+      candidateIdentity: { accessibleName: 'Schedule a call', role: 'link', block: 'tabs' },
+      locator: {
+        href: '', occurrence: 1, occurrenceEvidence: { stableConstraint: expect.any(String) },
+      },
+    });
+    expect(artifact.decisions.find(({ scenarioId }) => (
+      scenarioId === 'customer-events-ea3f92116675'
+    ))).toMatchObject({
+      candidateIdentity: {
+        dataTrackId: 'cards:quickbooks-r-midsize-business-what-is-cloud-erp-benefits-examples',
+        accessibleName: 'What is cloud ERP? How it works, benefits, and tips: Read more',
+        block: 'cards',
+      },
+      locator: { block: 'cards' },
+    });
     for (const decision of artifact.decisions) {
       expect(decision).toMatchObject({
         scenarioId: expect.stringMatching(/^customer-/),

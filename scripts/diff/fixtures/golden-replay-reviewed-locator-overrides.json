@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "reviewId": "v31-gap-audit-2026-08-31",
+  "reviewId": "v40-gap-audit-2026-08-31",
   "evidenceRef": "scripts/diff/fixtures/golden-replay-reviewed-locator-overrides.json#reviewEvidence",
   "reviewEvidence": {
     "exactOrigin": "https://stage.erp.intuit.com",
@@ -10,9 +10,122 @@
     "locatorReviewSha256": "sha256:1941a4efa72e5872913e7b695072a15f3a7bfb79aaae289f5a98d00f67bea4b9",
     "manifestContentHash": "sha256:387991b92b1a8dead1593d964d57f666d8660b2b1e5361163634634f9c8974d5",
     "goldenMappingHash": "sha256:51a2f49275364b5e7d7506182dd58fd1b40a9a1b12aed4be234bf3aab3fa7911",
-    "method": "Authenticated Stage inventory followed by unique stable-identity review; each decision below preserves the reviewed candidate identity and rationale."
+    "method": "Authenticated Stage inventory followed by unique stable-identity review; each decision below preserves the reviewed candidate identity and rationale.",
+    "supplementalEvidence": [{
+      "scenarioId": "customer-professional-services-aa56645bc6c8",
+      "capturedAt": "2026-08-31T13:22:26.629Z",
+      "inventoryRef": "scripts/diff/fixtures/local/clicktrack-golden-stage-inventory-v32.json",
+      "inventorySha256": "sha256:5abfc8d5606bb070df701f8ca0c6ba2ccfa83ea457be0ce3125183c80e976a1a",
+      "method": "The visible cards CTA has the exact article title and QuickBooks destination represented by the prod semantic campaign identity."
+    }, {
+      "scenarioIds": [
+        "customer-accounting-business-intelligence-rep-f5394eada35a",
+        "customer-accounting-business-intelligence-rep-59676cca353e",
+        "customer-accounting-business-intelligence-rep-da515b45f064",
+        "customer-home-f1a7df4ec339",
+        "customer-compare-70f348c74e9d",
+        "customer-blog-construction-automation-in-cons-0e10ba8ddb3e",
+        "customer-blog-construction-automation-in-cons-7b3473b467b0",
+        "customer-blog-construction-automation-in-cons-67db829b55cf"
+      ],
+      "capturedAt": "2026-08-31T13:22:26.629Z",
+      "inventoryRef": "scripts/diff/fixtures/local/clicktrack-golden-stage-inventory-v32.json",
+      "inventorySha256": "sha256:5abfc8d5606bb070df701f8ca0c6ba2ccfa83ea457be0ce3125183c80e976a1a",
+      "method": "The current header replacements preserve the prod destinations and interaction intent while using renamed customer-visible labels."
+    }, {
+      "scenarioIds": [
+        "customer-accountant-a977351edbd2",
+        "customer-migration-5a4d66ef88d4",
+        "customer-events-ea3f92116675"
+      ],
+      "capturedAt": "2026-09-01T02:31:29.445Z",
+      "completedAt": "2026-09-01T02:39:38.123Z",
+      "inventoryRef": "scripts/diff/fixtures/local/clicktrack-golden-stage-inventory-v43.json",
+      "inventorySha256": "sha256:da7dcbeca2448090e8789be3d311cb6da20525aff1d54e3e18a46d66c898b130",
+      "method": "The current accountant anchor preserves the bottom-banner scheduling intent; the first authored migration panel uniquely identifies the QuickBooks Desktop scheduling CTA among three same-label links; and the cloud-ERP article preserves the reviewed article subject and exact destination."
+    }]
   },
   "decisions": [
+    {
+      "scenarioId": "customer-accounting-business-intelligence-rep-f5394eada35a",
+      "page": "/accounting/business-intelligence-reports",
+      "candidateIdentity": { "dataTrackId": "nav:schedule-a-call-2", "accessibleName": "Schedule a call", "tag": "BUTTON", "role": "button", "region": "header", "block": "header" },
+      "locator": { "block": "header" },
+      "rationale": "The visible primary Schedule a call control preserves the prod header scheduling interaction after the Schedule demo copy change."
+    },
+    {
+      "scenarioId": "customer-accounting-business-intelligence-rep-59676cca353e",
+      "page": "/accounting/business-intelligence-reports",
+      "candidateIdentity": { "dataTrackId": "nav:accountant", "accessibleName": "For accounting firms", "tag": "A", "role": "link", "region": "header", "href": "https://stage.erp.intuit.com/accountant", "block": "header" },
+      "locator": { "block": "header" },
+      "rationale": "For accounting firms preserves the prod Accountants destination and header navigation intent."
+    },
+    {
+      "scenarioId": "customer-accounting-business-intelligence-rep-da515b45f064",
+      "page": "/accounting/business-intelligence-reports",
+      "candidateIdentity": { "dataTrackId": "nav:accounting", "accessibleName": "Overview", "tag": "A", "role": "link", "region": "header", "href": "https://stage.erp.intuit.com/accounting", "block": "header" },
+      "locator": { "block": "header" },
+      "setupSteps": [{
+        "type": "click",
+        "locator": { "trackId": "nav:capabilities", "region": "header", "role": "button", "name": "Capabilities", "exact": true, "block": "header" },
+        "expect": { "state": "visible", "locator": { "trackId": "nav:accounting", "region": "header", "role": "link", "name": "Overview", "exact": true, "block": "header" } }
+      }],
+      "rationale": "The Accounting Overview link preserves the prod Financial management overview destination under the renamed Capabilities hierarchy."
+    },
+    {
+      "scenarioId": "customer-home-f1a7df4ec339",
+      "page": "/",
+      "candidateIdentity": { "dataTrackId": "nav:schedule-a-call-2", "accessibleName": "Schedule a call", "tag": "BUTTON", "role": "button", "region": "header", "block": "header" },
+      "locator": { "block": "header" },
+      "rationale": "The visible primary Schedule a call control preserves the prod header scheduling interaction after the Schedule demo copy change."
+    },
+    {
+      "scenarioId": "customer-compare-70f348c74e9d",
+      "page": "/compare",
+      "candidateIdentity": { "dataTrackId": "nav:accountant", "accessibleName": "For accounting firms", "tag": "A", "role": "link", "region": "header", "href": "https://stage.erp.intuit.com/accountant", "block": "header" },
+      "locator": { "block": "header" },
+      "rationale": "For accounting firms preserves the prod Accountants destination and header navigation intent."
+    },
+    {
+      "scenarioId": "customer-blog-construction-automation-in-cons-0e10ba8ddb3e",
+      "page": "/blog/construction/automation-in-construction",
+      "candidateIdentity": { "dataTrackId": "nav:accountant", "accessibleName": "For accounting firms", "tag": "A", "role": "link", "region": "header", "href": "https://stage.erp.intuit.com/accountant", "block": "header" },
+      "locator": { "block": "header" },
+      "rationale": "For accounting firms preserves the prod Accountants destination and header navigation intent."
+    },
+    {
+      "scenarioId": "customer-blog-construction-automation-in-cons-7b3473b467b0",
+      "page": "/blog/construction/automation-in-construction",
+      "candidateIdentity": { "dataTrackId": "nav:accounting", "accessibleName": "Overview", "tag": "A", "role": "link", "region": "header", "href": "https://stage.erp.intuit.com/accounting", "block": "header" },
+      "locator": { "block": "header" },
+      "setupSteps": [{
+        "type": "click",
+        "locator": { "trackId": "nav:capabilities", "region": "header", "role": "button", "name": "Capabilities", "exact": true, "block": "header" },
+        "expect": { "state": "visible", "locator": { "trackId": "nav:accounting", "region": "header", "role": "link", "name": "Overview", "exact": true, "block": "header" } }
+      }],
+      "rationale": "The Accounting Overview link preserves the prod Financial management overview destination under the renamed Capabilities hierarchy."
+    },
+    {
+      "scenarioId": "customer-blog-construction-automation-in-cons-67db829b55cf",
+      "page": "/blog/construction/automation-in-construction",
+      "candidateIdentity": { "dataTrackId": "nav:schedule-a-call-2", "accessibleName": "Schedule a call", "tag": "BUTTON", "role": "button", "region": "header", "block": "header" },
+      "locator": { "block": "header" },
+      "rationale": "The visible primary Schedule a call control preserves the prod header scheduling interaction after the Schedule demo copy change."
+    },
+    {
+      "scenarioId": "customer-accountant-a977351edbd2",
+      "page": "/accountant",
+      "candidateIdentity": { "accessibleName": "Schedule a consultation", "tag": "A", "role": "link", "region": "main", "href": "https://stage.erp.intuit.com/", "block": "" },
+      "locator": { "block": "", "requireNoBlock": true, "href": "" },
+      "rationale": "The visible Schedule a consultation anchor preserves the prod bottom-banner scheduling intent and scrolls to the detailed-demo form; the separate Schedule now form submit is not the reviewed target."
+    },
+    {
+      "scenarioId": "customer-migration-5a4d66ef88d4",
+      "page": "/migration",
+      "candidateIdentity": { "accessibleName": "Schedule a call", "tag": "A", "role": "link", "region": "main", "href": "https://stage.erp.intuit.com/", "block": "tabs" },
+      "locator": { "block": "tabs", "href": "", "occurrence": 1, "occurrenceEvidence": { "stableConstraint": "The authored migration panel order is QuickBooks Desktop, QuickBooks Online, then non-Intuit solution; the first same-label CTA belongs to the QuickBooks Desktop panel." } },
+      "rationale": "The first authored tabs CTA is in the visible From QuickBooks Desktop panel and preserves the prod qb_desktop_migration scheduling interaction; the other same-label panel CTAs remain hidden."
+    },
     {
       "scenarioId": "customer-financial-services-9d04cc0e326f",
       "page": "/financial-services",
@@ -40,6 +153,13 @@
       "candidateIdentity": { "dataTrackId": "media-text:intuitconnect", "accessibleName": "Register", "tag": "A", "role": "link", "region": "main", "block": "media-text" },
       "locator": { "block": "media-text" },
       "rationale": "The feature access point maps to the media-text Register link, not the event-card duplicate; campaign query parameters are not target identity."
+    },
+    {
+      "scenarioId": "customer-events-ea3f92116675",
+      "page": "/events",
+      "candidateIdentity": { "dataTrackId": "cards:quickbooks-r-midsize-business-what-is-cloud-erp-benefits-examples", "accessibleName": "What is cloud ERP? How it works, benefits, and tips: Read more", "tag": "A", "role": "link", "region": "main", "href": "https://quickbooks.intuit.com/r/midsize-business/what-is-cloud-erp-benefits-examples/", "block": "cards" },
+      "locator": { "block": "cards" },
+      "rationale": "The current cards article preserves the prod What is cloud ERP subject and resolves to its exact QuickBooks midsize-business article destination."
     },
     {
       "scenarioId": "customer-events-170319f758b0",
@@ -139,6 +259,13 @@
       "candidateIdentity": { "dataTrackId": "", "accessibleName": "Marshall Hargrave", "tag": "A", "role": "link", "region": "main", "href": "https://stage.erp.intuit.com/blog/author/marshall-hargrave", "block": "" },
       "locator": { "block": "", "requireNoBlock": true },
       "rationale": "The block-less article byline is distinct from the author-bio link."
+    },
+    {
+      "scenarioId": "customer-professional-services-aa56645bc6c8",
+      "page": "/professional-services",
+      "candidateIdentity": { "dataTrackId": "cards:quickbooks-r-enterprise-intuit-enterprise-suite-professional-service-business", "accessibleName": "Intuit Enterprise Suite for professional service firms: Read more", "tag": "A", "role": "link", "region": "main", "href": "https://quickbooks.intuit.com/r/enterprise/intuit-enterprise-suite-professional-service-business/", "block": "cards" },
+      "locator": { "block": "cards" },
+      "rationale": "The visible cards CTA carries the exact IES professional-services article title and destination represented by the prod semantic campaign identity."
     },
     {
       "scenarioId": "customer-blog-construction-automation-in-cons-8643c8a7dd86",

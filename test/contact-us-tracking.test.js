@@ -36,4 +36,14 @@ describe('contact-us tracking', () => {
     stampInteraction({ target: close });
     expect(close.getAttribute('data-ui-action')).toBe('clicked');
   });
+
+  it('reports the blog support CTA as a button, matching its widget presentation', async () => {
+    window.history.replaceState(null, '', '/blog/construction/automation-in-construction');
+    await initContactUs();
+    const support = document.querySelector('.cu-support');
+
+    stampInteraction({ target: support });
+
+    expect(support.getAttribute('data-ui-object')).toBe('button');
+  });
 });

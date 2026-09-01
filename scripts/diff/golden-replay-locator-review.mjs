@@ -92,6 +92,11 @@ function parseReviewedOverrides(bytes) {
     if (!decision.scenarioId || seen.has(decision.scenarioId)) throw new Error('reviewed locator scenario identity is duplicate or missing');
     seen.add(decision.scenarioId);
     if (!decision.page || !decision.rationale) throw new Error(`reviewed locator decision is incomplete: ${decision.scenarioId}`);
+    if (decision.locator?.occurrence != null
+      && (!Number.isInteger(decision.locator.occurrence) || decision.locator.occurrence < 1
+        || !decision.locator.occurrenceEvidence?.stableConstraint)) {
+      throw new Error(`reviewed locator occurrence lacks stable evidence: ${decision.scenarioId}`);
+    }
     const identityKeys = Object.keys(decision.candidateIdentity || {});
     if (!identityKeys.length || identityKeys.every((key) => key === 'candidateId')
       || identityKeys.some((key) => !CANDIDATE_IDENTITY_KEYS.has(key))) {
@@ -111,6 +116,10 @@ function reviewedCandidate(page, scenario, overrides) {
   const entries = Object.entries(decision.candidateIdentity);
   const matches = (page.candidates || []).filter((candidate) => entries
     .every(([key, expected]) => String(candidate[key] ?? '') === String(expected ?? '')));
+  const occurrence = decision.locator?.occurrence;
+  if (matches.length > 1 && occurrence != null && occurrence <= matches.length) {
+    return { decision, candidate: matches[occurrence - 1] };
+  }
   if (matches.length !== 1) {
     throw new Error(`reviewed locator candidate identity resolved ${matches.length} candidates: ${scenario.scenarioId}`);
   }
