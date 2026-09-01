@@ -209,8 +209,7 @@ function wireFlyoutGroup(nav) {
   items.forEach((item) => {
     const btn = item.querySelector('button');
     if (!btn) return;
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
+    btn.addEventListener('click', () => {
       const willOpen = !item.classList.contains('open');
       closeAll(item);
       setOpen(item, willOpen);

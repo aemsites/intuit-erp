@@ -104,4 +104,16 @@ describe('header/nav click-tracking — id-based keying (real render)', () => {
     expect(capabilities.getAttribute('data-object-detail')).toBe('nav|capabilities');
     expect(capabilities.getAttribute('data-action')).toBe('engaged'); // nav block default
   });
+
+  it('lets flyout button clicks reach the delegated document tracker', async () => {
+    const block = await buildHeader();
+    const capabilities = [...block.querySelectorAll('.nav-item > button')]
+      .find((button) => button.textContent.trim() === 'Capabilities');
+    const delegatedTracker = vi.fn();
+    document.addEventListener('click', delegatedTracker, { once: true });
+
+    capabilities.click();
+
+    expect(delegatedTracker).toHaveBeenCalledOnce();
+  });
 });
