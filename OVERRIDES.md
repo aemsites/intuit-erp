@@ -148,6 +148,18 @@ Per-element/per-block overrides for click tracking, authored as `data-track-*` a
 
 ---
 
+## Fragment-rendered content
+
+Not an authored toggle — behavior that follows from **where** content lives. The `fragment` block
+marks the detached `<main>` it builds with `data-fragment="true"` while its blocks are decorated
+([blocks/fragment/fragment.js](blocks/fragment/fragment.js)); `media-text` reads that ancestor and
+gives its CTAs (`.button-wrapper a`) `target="_blank"` + `rel="noopener"`, because fragment content is
+shared boilerplate reused across many pages
+([blocks/media-text/media-text.js](blocks/media-text/media-text.js)). A `media-text` authored directly
+on a page keeps its CTAs in the same tab.
+
+---
+
 ## URL parameters
 
 | Param | Controls | Values | Source |

@@ -88,3 +88,39 @@ describe('media-text — AI-agents feature CTA tracking (JIT-derived)', () => {
     expect(other.getAttribute('data-ui-object-detail')).toBe('Refer a client');
   });
 });
+
+// media-text CTAs inside content rendered by the `fragment` block open in a new tab (see
+// OVERRIDES.md "Fragment-rendered content"). fragment.js marks the detached <main> it builds
+// with data-fragment="true" before decorating it, so the block sees the attribute on an
+// ancestor — never a `.fragment` class, the markup isn't in the page yet at that point.
+function setupInFragment() {
+  document.head.innerHTML = ''; document.body.innerHTML = ''; resetTrackingState();
+  const main = document.createElement('main');
+  main.dataset.fragment = 'true';
+  const block = makeMediaText();
+  main.append(block); document.body.append(main);
+  decorate(block);
+  return block;
+}
+
+describe('media-text — fragment-rendered CTAs open in a new tab', () => {
+  beforeEach(() => { document.head.innerHTML = ''; document.body.innerHTML = ''; resetTrackingState(); });
+
+  it('gives every .button-wrapper CTA target=_blank + rel=noopener under [data-fragment]', () => {
+    const ctas = [...setupInFragment().querySelectorAll('.media-copy .button-wrapper a')];
+    expect(ctas).toHaveLength(2);
+    ctas.forEach((cta) => {
+      expect(cta.getAttribute('target')).toBe('_blank');
+      expect(cta.getAttribute('rel')).toBe('noopener');
+    });
+  });
+
+  it('leaves page-authored CTAs in the same tab (no [data-fragment] ancestor)', () => {
+    const ctas = [...setup().querySelectorAll('.media-copy .button-wrapper a')];
+    expect(ctas).toHaveLength(2);
+    ctas.forEach((cta) => {
+      expect(cta.getAttribute('target')).toBeNull();
+      expect(cta.getAttribute('rel')).toBeNull();
+    });
+  });
+});
