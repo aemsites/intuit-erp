@@ -69,12 +69,13 @@ function candidateEvidence(ranked) {
 
 function locatorFor(candidate, constraints = {}) {
   return {
-    ...(candidate.dataTrackId ? { strategy: 'data-track-id', value: candidate.dataTrackId } : { strategy: 'semantic' }),
+    ...(candidate.dataTrackId
+      ? { strategy: 'data-track-id', value: candidate.dataTrackId }
+      : { strategy: 'semantic', href: candidate.href }),
     region: candidate.region,
     role: candidate.role,
     accessibleName: candidate.accessibleName,
     tag: candidate.tag,
-    href: candidate.href,
     block: candidate.block,
     ...constraints,
   };
