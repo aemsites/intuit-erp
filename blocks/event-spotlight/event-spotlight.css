@@ -1,0 +1,89 @@
+/* event-spotlight — single personalized event detail, query-index driven */
+.event-spotlight {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 32px;
+  align-items: start;
+  margin-block: var(--section-y);
+}
+
+/* image */
+.event-spotlight .event-spotlight-image {
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  background: var(--sand);
+}
+
+.event-spotlight .event-spotlight-image picture,
+.event-spotlight .event-spotlight-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* body */
+.event-spotlight .event-spotlight-body { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; }
+
+.event-spotlight .event-spotlight-type {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.event-spotlight .event-spotlight-title {
+  font-size: var(--heading-font-size-l);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--heading);
+  margin: 0;
+}
+
+.event-spotlight .event-spotlight-description {
+  font-size: var(--body-font-size-m);
+  line-height: 1.6;
+  color: var(--text-color);
+  margin: 0;
+}
+
+.event-spotlight .event-spotlight-fields { display: flex; flex-direction: column; gap: 10px; }
+
+.event-spotlight .event-spotlight-field {
+  font-size: var(--body-font-size-s);
+  line-height: 1.5;
+  color: var(--text-color);
+  margin: 0;
+}
+
+.event-spotlight .event-spotlight-field strong { font-weight: 700; color: var(--heading); }
+
+.event-spotlight .event-spotlight-body .button {
+  background: var(--navy);
+  color: #fff;
+  border-color: var(--navy);
+  padding: 14px 32px;
+  font-size: var(--body-font-size-m);
+  font-weight: 600;
+  border-radius: var(--radius-card);
+  margin-top: 8px;
+}
+
+.event-spotlight .event-spotlight-body .button:hover { background: var(--navy-hover); border-color: var(--navy-hover); }
+
+/* side-by-side at tablet and up */
+@media (width >= 768px) {
+  .event-spotlight {
+    grid-template-columns: 45fr 55fr;
+    gap: 48px;
+  }
+}
+
+@media (width >= 1024px) {
+  .event-spotlight { gap: 64px; }
+
+  .event-spotlight .event-spotlight-title { font-size: var(--heading-font-size-xl); }
+}
