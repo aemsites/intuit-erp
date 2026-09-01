@@ -16,33 +16,39 @@ const PERF_ON = (() => {
 })();
 
 if (PERF_ON) {
+  // Capture entries with a PerformanceObserver into private arrays as they fire: observer delivery
+  // is independent of the shared timeline, so another script's performance.clear*() (martech/RUM
+  // buffer cleanup) can't evict our data before we report.
   let lcpEntry;
+  const measures = [];
+  const orchestrator = [];
   const round = (n) => Math.round(n * 10) / 10;
+  const observe = (type, onEntry) => {
+    try {
+      new PerformanceObserver((list) => list.getEntries().forEach(onEntry))
+        .observe({ type, buffered: true });
+    } catch { /* entry type unsupported — ignore */ }
+  };
+  observe('largest-contentful-paint', (e) => { lcpEntry = e; });
+  observe('measure', (e) => { if (e.name.startsWith('exp:')) measures.push(e); });
+  // The 1st decision call and any 2nd resolveSwappedSlots call each get their own entry.
+  observe('resource', (e) => { if (e.name.includes('intuit-orchestrator')) orchestrator.push(e); });
+
   const report = () => {
     const rows = {};
-    performance.getEntriesByType('measure')
-      .filter((e) => e.name.startsWith('exp:'))
-      .forEach((e) => { rows[e.name] = { ms: round(e.duration) }; });
-    // The 1st decision call and any 2nd resolveSwappedSlots call each get their own entry.
-    performance.getEntriesByType('resource')
-      .filter((e) => e.name.includes('intuit-orchestrator'))
-      .forEach((e, i) => {
-        rows[`orchestrator-call[${i}]`] = {
-          ms: round(e.responseEnd - e.startTime),
-          ttfb: round(e.responseStart - e.requestStart),
-        };
-      });
+    measures.forEach((e) => { rows[e.name] = { ms: round(e.duration) }; });
+    orchestrator.forEach((e, i) => {
+      rows[`orchestrator-call[${i}]`] = {
+        ms: round(e.responseEnd - e.startTime),
+        ttfb: round(e.responseStart - e.requestStart),
+      };
+    });
     if (lcpEntry) rows['LCP (browser)'] = { ms: round(lcpEntry.startTime) };
     // eslint-disable-next-line no-console
     console.table(rows);
     return rows;
   };
-  try {
-    new PerformanceObserver((list) => {
-      const entries = list.getEntries();
-      lcpEntry = entries[entries.length - 1] || lcpEntry;
-    }).observe({ type: 'largest-contentful-paint', buffered: true });
-  } catch { /* LCP observer unsupported — measures still work */ }
+
   window.hlx = window.hlx || {};
   window.hlx.experiencePerf = { report };
   // Report once the page has settled (lazy swaps + final LCP are in by then).
