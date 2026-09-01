@@ -6,7 +6,8 @@
 import { getMetadata } from './aem.js';
 import { buildIntentContext, getIntentProfile } from './of1-intent.js';
 
-// Opt-in perf instrumentation (`?perf=on`)
+// Perf telemetry is sampled before any observers/marks/measures are installed, keeping
+// unsampled views off the LCP path. `?perf=on` forces instrumentation and console output.
 const PERF_ON = (() => {
   try {
     return new URLSearchParams(window.location.search).get('perf') === 'on';
@@ -15,14 +16,90 @@ const PERF_ON = (() => {
   }
 })();
 
-if (PERF_ON) {
+// Fraction of page views that send the experience-perf log to Splunk (1 = every view).
+const PERF_SAMPLE_RATE = 0.1;
+// How long after load to let LCP/lazy layers settle before reporting.
+const PERF_REPORT_DELAY_MS = 6000;
+const PERF_ENABLED = PERF_ON || Math.random() < PERF_SAMPLE_RATE;
+
+const round1 = (n) => Math.round(n * 10) / 10;
+
+// Mark/measure that can never throw (measure raises if its start mark is missing —
+// possible when phases run standalone, e.g. in tests or partial page flows).
+function perfMark(name) {
+  if (!PERF_ENABLED) return;
+  try { performance.mark(name); } catch { /* ignore */ }
+}
+function perfMeasure(name, start, end) {
+  if (!PERF_ENABLED) return;
+  try { performance.measure(name, start, end); } catch { /* ignore */ }
+}
+
+// exp:* measure name → flat Splunk field.
+const PERF_MEASURE_FIELDS = {
+  'exp:eager-decision': 'eagerDecisionMs',
+  'exp:page-swap': 'pageSwapMs',
+  'exp:first-section-swap': 'firstSectionSwapMs',
+  'exp:eager-total': 'eagerTotalMs',
+  'exp:lazy-layers': 'lazyLayersMs',
+};
+
+// Flattens the captured entries + page details into ONE flat object (stable `event` key,
+// numeric *Ms fields, absent metrics omitted — never null/0 placeholders) so Splunk
+// spath/stats queries stay trivial. Pure: everything visible from the args + DOM reads.
+export function buildPerfPayload({
+  measures = [], orchestrator = [], lcp, fcp, nav,
+} = {}) {
+  const payload = {
+    event: 'experience-perf',
+    pageUrl: window.location.href,
+    pagePath: window.location.pathname,
+    viewportWidth: window.innerWidth,
+  };
+  // Page details (omitted when absent).
+  if (document.referrer) payload.pageReferrer = document.referrer;
+  if (document.documentElement.lang) payload.pageLocale = document.documentElement.lang;
+  const template = getMetadata('template');
+  if (template) payload.pageTemplate = template;
+  const pageExp = getMetadata('experiment-id');
+  if (pageExp) payload.pageExperimentId = pageExp;
+  const pagePzn = getMetadata('personalization-id');
+  if (pagePzn) payload.pagePersonalizationId = pagePzn;
+  const connection = navigator.connection?.effectiveType;
+  if (connection) payload.connectionType = connection;
+  // Stitching phases.
+  measures.forEach((e) => {
+    const field = PERF_MEASURE_FIELDS[e.name];
+    if (field) payload[field] = round1(e.duration);
+  });
+  // Orchestrator calls: 1st = decision call, 2nd = resolveSwappedSlots follow-up.
+  payload.orchestratorCalls = orchestrator.length;
+  orchestrator.slice(0, 2).forEach((e, i) => {
+    const prefix = i === 0 ? 'orchestrator' : `orchestrator${i + 1}`;
+    payload[`${prefix}Ms`] = round1(e.responseEnd - e.startTime);
+    payload[`${prefix}TtfbMs`] = round1(e.responseStart - e.requestStart);
+  });
+  // Overall page performance.
+  if (lcp) payload.lcpMs = round1(lcp.startTime);
+  if (fcp) payload.fcpMs = round1(fcp.startTime);
+  if (nav) {
+    payload.ttfbMs = round1(nav.responseStart);
+    payload.domContentLoadedMs = round1(nav.domContentLoadedEventEnd);
+    if (nav.loadEventEnd > 0) payload.loadMs = round1(nav.loadEventEnd);
+  }
+  return payload;
+}
+
+(() => {
+  if (!PERF_ENABLED) return;
+  if (typeof window === 'undefined' || typeof PerformanceObserver === 'undefined') return;
   // Capture entries with a PerformanceObserver into private arrays as they fire: observer delivery
   // is independent of the shared timeline, so another script's performance.clear*() (martech/RUM
   // buffer cleanup) can't evict our data before we report.
   let lcpEntry;
+  let fcpEntry;
   const measures = [];
   const orchestrator = [];
-  const round = (n) => Math.round(n * 10) / 10;
   const observe = (type, onEntry) => {
     try {
       new PerformanceObserver((list) => list.getEntries().forEach(onEntry))
@@ -30,29 +107,57 @@ if (PERF_ON) {
     } catch { /* entry type unsupported — ignore */ }
   };
   observe('largest-contentful-paint', (e) => { lcpEntry = e; });
+  observe('paint', (e) => { if (e.name === 'first-contentful-paint') fcpEntry = e; });
   observe('measure', (e) => { if (e.name.startsWith('exp:')) measures.push(e); });
   // The 1st decision call and any 2nd resolveSwappedSlots call each get their own entry.
   observe('resource', (e) => { if (e.name.includes('intuit-orchestrator')) orchestrator.push(e); });
 
+  const collect = () => buildPerfPayload({
+    measures,
+    orchestrator,
+    lcp: lcpEntry,
+    fcp: fcpEntry,
+    nav: performance.getEntriesByType?.('navigation')?.[0],
+  });
+
+  // Console report (opt-in) — same numbers, table form.
   const report = () => {
     const rows = {};
-    measures.forEach((e) => { rows[e.name] = { ms: round(e.duration) }; });
+    measures.forEach((e) => { rows[e.name] = { ms: round1(e.duration) }; });
     orchestrator.forEach((e, i) => {
       rows[`orchestrator-call[${i}]`] = {
-        ms: round(e.responseEnd - e.startTime),
-        ttfb: round(e.responseStart - e.requestStart),
+        ms: round1(e.responseEnd - e.startTime),
+        ttfb: round1(e.responseStart - e.requestStart),
       };
     });
-    if (lcpEntry) rows['LCP (browser)'] = { ms: round(lcpEntry.startTime) };
+    if (lcpEntry) rows['LCP (browser)'] = { ms: round1(lcpEntry.startTime) };
     // eslint-disable-next-line no-console
     console.table(rows);
     return rows;
   };
 
+  // One Splunk-bound log per sampled view, via the erp-logging bridge (head.html). Logger
+  // absent (script blocked/failed) ⇒ silent no-op. Fires once.
+  let sent = false;
+  const sendPerfLog = () => {
+    if (sent) return;
+    const logger = window.coreServiceAdapter?.logger;
+    if (!logger?.info) return;
+    sent = true;
+    const payload = collect();
+    payload.sampleRate = PERF_ON ? 1 : PERF_SAMPLE_RATE;
+    try {
+      logger.info('experience-perf', payload);
+    } catch { /* logging must never break the page */ }
+  };
+
   window.hlx = window.hlx || {};
-  window.hlx.experiencePerf = { report };
-  setTimeout(report, 6000);
-}
+  window.hlx.experiencePerf = { report, collect };
+  setTimeout(() => {
+    if (PERF_ON) report();
+    sendPerfLog();
+  }, PERF_REPORT_DELAY_MS);
+})();
 
 // --- Endpoint + fetch primitives -------------------------------------------
 
@@ -678,7 +783,7 @@ export async function applyPageExperience(doc) {
   window.hlx = window.hlx || {};
   if (window.hlx.pageExperienceApplied) return false;
   window.hlx.pageExperienceApplied = true;
-  if (PERF_ON) performance.mark('exp:eager-start');
+  perfMark('exp:eager-start');
   const request = collectRequest(doc);
   if (!request.experimentIds.length && !request.accessPointNames.length) return false;
   const decisionController = new AbortController();
@@ -695,17 +800,13 @@ export async function applyPageExperience(doc) {
   const eagerTimer = setTimeout(() => eagerController.abort(), EAGER_DEADLINE_MS);
   try {
     const response = await withTimeout(responsePromise, EAGER_DEADLINE_MS);
-    if (PERF_ON) {
-      performance.mark('exp:decision-ready');
-      performance.measure('exp:eager-decision', 'exp:eager-start', 'exp:decision-ready');
-    }
+    perfMark('exp:decision-ready');
+    perfMeasure('exp:eager-decision', 'exp:eager-start', 'exp:decision-ready');
     if (!response) return false;
-    if (PERF_ON) performance.mark('exp:page-swap:start');
+    perfMark('exp:page-swap:start');
     const applied = await applyPage(doc, response, eagerController.signal);
-    if (PERF_ON) {
-      performance.mark('exp:page-swap:end');
-      performance.measure('exp:page-swap', 'exp:page-swap:start', 'exp:page-swap:end');
-    }
+    perfMark('exp:page-swap:end');
+    perfMeasure('exp:page-swap', 'exp:page-swap:start', 'exp:page-swap:end');
     return applied;
   } finally {
     clearTimeout(eagerTimer);
@@ -724,17 +825,13 @@ export async function applyEagerLayers(doc, pageSwapped) {
   }
   const firstSection = main.querySelector('.section');
   if (firstSection) {
-    if (PERF_ON) performance.mark('exp:first-section-swap:start');
+    perfMark('exp:first-section-swap:start');
     await withTimeout(applyLayer(firstSection, window.hlx.experienceResponse), EAGER_APPLY_MS);
-    if (PERF_ON) {
-      performance.mark('exp:first-section-swap:end');
-      performance.measure('exp:first-section-swap', 'exp:first-section-swap:start', 'exp:first-section-swap:end');
-    }
+    perfMark('exp:first-section-swap:end');
+    perfMeasure('exp:first-section-swap', 'exp:first-section-swap:start', 'exp:first-section-swap:end');
   }
-  if (PERF_ON) {
-    performance.mark('exp:eager-layers-end');
-    performance.measure('exp:eager-total', 'exp:eager-start', 'exp:eager-layers-end');
-  }
+  perfMark('exp:eager-layers-end');
+  perfMeasure('exp:eager-total', 'exp:eager-start', 'exp:eager-layers-end');
 }
 
 async function latestExperienceResponse() {
@@ -758,12 +855,10 @@ export async function applyLazyLayers(doc) {
   if (!main) return;
   const response = await latestExperienceResponse();
   if (!response) return;
-  if (PERF_ON) performance.mark('exp:lazy-layers:start');
+  perfMark('exp:lazy-layers:start');
   await applyLayer(main, response, { skip: main.querySelector('.section') });
-  if (PERF_ON) {
-    performance.mark('exp:lazy-layers:end');
-    performance.measure('exp:lazy-layers', 'exp:lazy-layers:start', 'exp:lazy-layers:end');
-  }
+  perfMark('exp:lazy-layers:end');
+  perfMeasure('exp:lazy-layers', 'exp:lazy-layers:start', 'exp:lazy-layers:end');
 }
 
 // Starts lazy application immediately and gives its real exposures the bounded opportunity to

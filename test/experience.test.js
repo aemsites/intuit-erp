@@ -17,7 +17,7 @@ import {
   fetchExperience, applyPage, applyLayer,
   mergeExperience, collectSwapRequest, resolveSwappedSlots,
   applyPageExperience, applyEagerLayers, applyLazyLayers, applyLazyExperience,
-  prepareExperienceTracking,
+  prepareExperienceTracking, buildPerfPayload,
   whenFullStoryReady, notifyFullStory,
 } from '../scripts/experience.js';
 // eslint-disable-next-line import/first
@@ -1269,5 +1269,79 @@ describe('phase entry points (applyPageExperience / applyEagerLayers / applyLazy
   it('applyLazyLayers: no-op without a cached response', async () => {
     window.hlx = {};
     await expect(applyLazyLayers(document)).resolves.toBeUndefined();
+  });
+});
+
+describe('buildPerfPayload', () => {
+  const measure = (name, duration) => ({ name, duration });
+  const resource = (startTime, requestStart, responseStart, responseEnd) => ({
+    startTime, requestStart, responseStart, responseEnd,
+  });
+
+  it('flattens measures, orchestrator calls, paint and nav timing into Splunk-friendly keys', () => {
+    const payload = buildPerfPayload({
+      measures: [
+        measure('exp:eager-decision', 412.34),
+        measure('exp:page-swap', 88.06),
+        measure('exp:first-section-swap', 51.9),
+        measure('exp:eager-total', 640.21),
+        measure('exp:lazy-layers', 120.55),
+      ],
+      orchestrator: [resource(10, 12, 400.2, 422.5), resource(900, 902, 1100, 1150)],
+      lcp: { startTime: 1234.56 },
+      fcp: { startTime: 800.12 },
+      nav: { responseStart: 55.5, domContentLoadedEventEnd: 700.7, loadEventEnd: 1500.9 },
+    });
+    expect(payload).toMatchObject({
+      event: 'experience-perf',
+      eagerDecisionMs: 412.3,
+      pageSwapMs: 88.1,
+      firstSectionSwapMs: 51.9,
+      eagerTotalMs: 640.2,
+      lazyLayersMs: 120.6,
+      orchestratorCalls: 2,
+      orchestratorMs: 412.5,
+      orchestratorTtfbMs: 388.2,
+      orchestrator2Ms: 250,
+      orchestrator2TtfbMs: 198,
+      lcpMs: 1234.6,
+      fcpMs: 800.1,
+      ttfbMs: 55.5,
+      domContentLoadedMs: 700.7,
+      loadMs: 1500.9,
+    });
+  });
+
+  it('includes page details', () => {
+    document.head.innerHTML = `
+      <meta name="template" content="blog-page">
+      <meta name="experiment-id" content="42">
+      <meta name="personalization-id" content="hero-slot">
+    `;
+    document.documentElement.lang = 'en';
+    const payload = buildPerfPayload({});
+    expect(payload.pageUrl).toBe(window.location.href);
+    expect(payload.pagePath).toBe(window.location.pathname);
+    expect(payload.pageTemplate).toBe('blog-page');
+    expect(payload.pageExperimentId).toBe('42');
+    expect(payload.pagePersonalizationId).toBe('hero-slot');
+    expect(payload.pageLocale).toBe('en');
+    expect(payload.viewportWidth).toBe(window.innerWidth);
+  });
+
+  it('omits absent metrics instead of sending nulls/zeros', () => {
+    document.head.innerHTML = '';
+    const payload = buildPerfPayload({
+      nav: { responseStart: 40, domContentLoadedEventEnd: 300, loadEventEnd: 0 },
+    });
+    expect(payload.orchestratorCalls).toBe(0);
+    expect(payload).not.toHaveProperty('orchestratorMs');
+    expect(payload).not.toHaveProperty('lcpMs');
+    expect(payload).not.toHaveProperty('fcpMs');
+    expect(payload).not.toHaveProperty('loadMs'); // loadEventEnd 0 = not fired yet
+    expect(payload).not.toHaveProperty('pageTemplate');
+    expect(payload).not.toHaveProperty('pageExperimentId');
+    expect(payload.ttfbMs).toBe(40);
+    expect(payload.domContentLoadedMs).toBe(300);
   });
 });
