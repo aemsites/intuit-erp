@@ -161,6 +161,8 @@ export async function installReplayPageHook(config, injectedScope) {
     xhrSend: scope.XMLHttpRequest?.prototype?.send,
   };
   let active = null;
+  let interactionDispatchActive = false;
+  let interactionDispatchSequence = 0;
   let holdNextTransport = false;
   let heldTransport = null;
   let invocationCounter = 0;
@@ -345,7 +347,7 @@ export async function installReplayPageHook(config, injectedScope) {
   };
 
   const trackWrapper = async function replayTrackWrapper(...args) {
-    if (!installed || !active) return original.track.apply(this, args);
+    if (!installed || !active || !interactionDispatchActive) return original.track.apply(this, args);
     if (active.invocationPending) throw new Error('concurrent tracker invocation is ambiguous');
     const invocationId = `${active.scenarioId}:${++invocationCounter}`;
     active.invocationPending = invocationId;
@@ -456,6 +458,14 @@ export async function installReplayPageHook(config, injectedScope) {
   }
 
   const pagehide = () => { void teardown('pagehide'); };
+  const beginInteractionDispatch = () => {
+    if (!installed || !active) return;
+    const sequence = ++interactionDispatchSequence;
+    interactionDispatchActive = true;
+    (scope.setTimeout || setTimeout)(() => {
+      if (interactionDispatchSequence === sequence) interactionDispatchActive = false;
+    }, 0);
+  };
   const preventNavigation = (event) => {
     if ((!active && !config.qualificationMode) || config.preventNavigation === false) return;
     const target = event?.target?.closest?.('a[href], button, input[type="submit"]');
@@ -467,6 +477,7 @@ export async function installReplayPageHook(config, injectedScope) {
     if ((active || config.qualificationMode) && config.preventNavigation !== false) event.preventDefault();
   };
   scope.addEventListener?.('pagehide', pagehide, { once: true });
+  scope.addEventListener?.('click', beginInteractionDispatch, true);
   scope.document?.addEventListener?.('click', preventNavigation, true);
   scope.document?.addEventListener?.('submit', preventSubmit, true);
   const heartbeatInterval = config.heartbeatMs || 2000;
@@ -481,8 +492,11 @@ export async function installReplayPageHook(config, injectedScope) {
     heldTransport = null;
     installed = false;
     active = null;
+    interactionDispatchSequence += 1;
+    interactionDispatchActive = false;
     scope.clearInterval(timer);
     scope.removeEventListener?.('pagehide', pagehide);
+    scope.removeEventListener?.('click', beginInteractionDispatch, true);
     scope.document?.removeEventListener?.('click', preventNavigation, true);
     scope.document?.removeEventListener?.('submit', preventSubmit, true);
     if (webAnalytics.track === trackWrapper) webAnalytics.track = original.track;

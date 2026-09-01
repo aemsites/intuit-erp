@@ -153,7 +153,7 @@ function authenticatedCapture() {
     profileId: replay.provenance.global.browser.profileId,
     chromeVersion: replay.provenance.global.browser.version,
     harnessVersion: replay.provenance.global.harness.version,
-    lineagePolicyVersion: 'message-id-v1',
+    lineagePolicyVersion: 'click-message-id-v2',
     origin: replay.provenance.global.origin,
     consentState: 'resolved',
     authorizationRef: 'customer-approved Adobe Migration Test',

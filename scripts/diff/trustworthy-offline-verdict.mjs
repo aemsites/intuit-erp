@@ -480,7 +480,7 @@ function validateReplayQualification(capture, global, { expectedOrigin, nowMs })
   if (Number.isNaN(qualifiedAt) || Number.isNaN(expiresAt) || expiresAt <= qualifiedAt
     || expiresAt - qualifiedAt > 24 * 60 * 60 * 1000 || nowMs > expiresAt) invalid.push('qualification.validity');
   if (qualification.mode !== 'dedicated') invalid.push('qualification.mode');
-  if (qualification.lineagePolicyVersion !== 'message-id-v1') invalid.push('qualification.lineagePolicyVersion');
+  if (qualification.lineagePolicyVersion !== 'click-message-id-v2') invalid.push('qualification.lineagePolicyVersion');
   if (qualification.origin !== expectedOrigin) invalid.push('qualification.origin');
   if (qualification.consentState !== 'resolved') invalid.push('qualification.consentState');
   if (!['observe', 'abort', 'test-sink'].includes(qualification.transportPolicy)) invalid.push('qualification.transportPolicy');
