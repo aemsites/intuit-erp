@@ -25,9 +25,20 @@ export default function decorate(block) {
   const navH = block.offsetHeight;
   document.body.style.setProperty('--sticky-nav-h', `${navH}px`);
 
+  // decorate() runs while its own CSS may still be loading (loadBlock races
+  // the two), so an immediate offsetHeight/getBoundingClientRect read here
+  // can catch the sticky-nav bar and/or the eyebrow paragraph before they
+  // have their real, styled layout — silently producing a 0px scroll margin.
+  // A double rAF pushes the read past that window, after styles have applied.
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    links.forEach((a) => {
+      const target = targetFor(a);
+      if (target) target.style.scrollMarginTop = `${navH + scrollMarginFor(target)}px`;
+    });
+  }));
+
   links.forEach((a) => {
     const target = targetFor(a);
-    if (target) target.style.scrollMarginTop = `${navH + scrollMarginFor(target)}px`;
     a.addEventListener('click', (e) => {
       if (!target) return;
       e.preventDefault();
