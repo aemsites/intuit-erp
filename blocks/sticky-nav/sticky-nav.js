@@ -3,22 +3,27 @@ function targetFor(a) {
   return id ? document.getElementById(id) : null;
 }
 
+// Extra breathing room below the nav bar when landing on a target that has
+// an eyebrow above it, so the eyebrow isn't left flush against the bar.
+const EYEBROW_LANDING_GAP = 20;
+
 // Only headings get an auto-generated id (see decorateMain), so a target is
 // always a heading — but that heading isn't always the first visible thing in
 // its section. An eyebrow paragraph authored immediately before it (e.g. the
 // media-text content model: eyebrow, then h2) sits above the heading and
 // would be scrolled past if the heading's own top were the landing point.
 // Extend the scroll margin to also clear any such immediately-preceding
-// sibling, so the anchor lands at the section's true visual top either way.
-// Measured as the gap between the two elements' BORDER-BOX tops (not the
-// eyebrow's own height) because getBoundingClientRect() excludes margins —
-// using height alone undercounts by the eyebrow's margin-top and still lets
-// a fixed nav bar cover part of it.
+// sibling, plus a fixed landing gap, so the anchor lands just below the
+// section's true visual top either way. Measured as the gap between the two
+// elements' BORDER-BOX tops (not the eyebrow's own height) because
+// getBoundingClientRect() excludes margins — using height alone undercounts
+// by the eyebrow's margin-top and still lets a fixed nav bar cover part of it.
 function scrollMarginFor(target) {
   const prev = target.previousElementSibling;
   const coversEyebrow = prev && prev.tagName === 'P' && !prev.querySelector('a, img, picture');
   if (!coversEyebrow) return 0;
-  return target.getBoundingClientRect().top - prev.getBoundingClientRect().top;
+  const gap = target.getBoundingClientRect().top - prev.getBoundingClientRect().top;
+  return gap + EYEBROW_LANDING_GAP;
 }
 
 export default function decorate(block) {
