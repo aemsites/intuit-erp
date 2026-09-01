@@ -52,11 +52,8 @@ function featurePayload(el) {
   };
 }
 
-// A paragraph shaped as a short bold lead-in immediately followed by a <br>
-// and supporting copy is a highlighted callout, not plain body text (e.g. the
-// nonprofit page's "Why it matters" grant/entity/reporting explainers). This
-// is a structural match — a bold label line, a break, then body copy — not a
-// match on what the label says, so any label wording gets the treatment.
+// A short bold lead-in immediately followed by a <br> and body copy is a
+// highlighted callout (matched by shape, not by what the label says).
 const CALLOUT_LABEL_MAX_WORDS = 4;
 
 function calloutLead(p) {

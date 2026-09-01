@@ -7,10 +7,7 @@
   background: var(--tofu);
 }
 
-/* row-alternating text+image sections sit narrower than the site's default
-   1380px container: a fixed 1130px content box with a 155px side gutter at
-   desktop widths (the nonprofit page's "Multi-dimensional tracking" style
-   sections) */
+/* row-alternating sections cap at a 1130px content box with 155px side gutters */
 @media (width >= 1024px) {
   .section.media-text-container:not(:has(.media-text.cards, .media-text.compare, .media-text.power)) > div {
     max-width: 1440px;

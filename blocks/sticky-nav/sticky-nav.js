@@ -3,21 +3,11 @@ function targetFor(a) {
   return id ? document.getElementById(id) : null;
 }
 
-// Extra breathing room below the nav bar when landing on a target that has
-// an eyebrow above it, so the eyebrow isn't left flush against the bar.
+// Extra breathing room below the nav bar when a target has an eyebrow above it.
 const EYEBROW_LANDING_GAP = 60;
 
-// Only headings get an auto-generated id (see decorateMain), so a target is
-// always a heading — but that heading isn't always the first visible thing in
-// its section. An eyebrow paragraph authored immediately before it (e.g. the
-// media-text content model: eyebrow, then h2) sits above the heading and
-// would be scrolled past if the heading's own top were the landing point.
-// Extend the scroll margin to also clear any such immediately-preceding
-// sibling, plus a fixed landing gap, so the anchor lands just below the
-// section's true visual top either way. Measured as the gap between the two
-// elements' BORDER-BOX tops (not the eyebrow's own height) because
-// getBoundingClientRect() excludes margins — using height alone undercounts
-// by the eyebrow's margin-top and still lets a fixed nav bar cover part of it.
+// Extends the scroll margin to also clear a preceding eyebrow paragraph, so
+// the anchor doesn't land with the eyebrow hidden under the fixed nav bar.
 function scrollMarginFor(target) {
   const prev = target.previousElementSibling;
   const coversEyebrow = prev && prev.tagName === 'P' && !prev.querySelector('a, img, picture');
@@ -59,13 +49,8 @@ export default function decorate(block) {
 
   if (links[0]) links[0].classList.add('active');
 
-  // decorate() runs while its own CSS may still be loading (loadBlock races
-  // the two), so an immediate offsetHeight/getBoundingClientRect read here
-  // can catch the sticky-nav bar and/or a target's eyebrow paragraph before
-  // they have their real, styled layout — silently computing 0 for measurements
-  // that depend on it (the --sticky-nav-h spacer var, each target's scroll
-  // margin, and the scrollspy's rootMargin). A double rAF pushes every one of
-  // those reads past that window, after styles have applied.
+  // defer past decorate()'s own CSS load so offsetHeight/getBoundingClientRect
+  // reads reflect real, styled layout instead of 0
   requestAnimationFrame(() => requestAnimationFrame(() => {
     const navH = block.offsetHeight;
     document.body.style.setProperty('--sticky-nav-h', `${navH}px`);

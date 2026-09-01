@@ -138,25 +138,12 @@
   .logo-band .logoband-list { max-width: 1120px; }
 }
 
-/* logo-band.marquee — infinite horizontally-scrolling logo band, two themes:
-   default = dark navy band, white-inverted logos (erp.intuit.com #ies-slider)
-   .light  = white band, grayscale (not inverted) logos, dark heading text
-             (nonprofit "Connect donor and payment tools")
-   Theme colors are set once via custom properties; every rule below just
-   reads them, so the two themes differ only where these are declared.
-   Sizing: mobile = 32px logos / 24px gaps / 72px band; from 768px up =
-   40px / 32px / 80px. Band height is the logo height plus 20px of vertical
-   padding top and bottom. A heading/intro authored as default content above
-   the marquee sits on the same band and picks up the same theme colors; a
-   60px gap separates it from the logo row (nonprofit spec). No bottom
-   padding on the wrapper — the marquee's own closing padding provides the
-   section's bottom space instead, so the two don't stack. */
+/* logo-band.marquee — infinite scrolling logo band. .light swaps it to a
+   white band with grayscale logos instead of the default navy/inverted. */
 .logo-band.marquee { padding: 36px 0 var(--section-y); }
 
-/* theme variables live on the SECTION (not the block) so both the section's
-   own background and the block's descendant rules (logo filter, heading/body
-   color) can read the same values — a custom property set on the block
-   itself would be invisible to its ancestor section. */
+/* variables live on the section, not the block, so both the section's own
+   background and the block's descendant rules can read them */
 .section.logo-band-container:has(.logo-band.marquee) {
   --marquee-bg: #00254a;
   --marquee-heading: #fff;
@@ -187,16 +174,13 @@
   color: var(--marquee-body);
 }
 
-/* full-bleed: a scrolling marquee spans the whole viewport, so release the
-   section wrapper's centered column — same mechanism as cta-band.simple */
+/* full-bleed: release the section wrapper's centered column */
 main > .section.logo-band-container:has(.logo-band.marquee) > div { max-width: none; padding: 0; }
 
 .logo-band.marquee .logoband-viewport { overflow: hidden; width: 100%; }
 .logo-band.marquee .logoband-track { display: flex; flex-wrap: nowrap; align-items: center; width: max-content; }
 .logo-band.marquee .logoband-set { display: flex; flex-wrap: nowrap; align-items: center; gap: 24px; flex: 0 0 auto; padding-right: 24px; }
 
-/* the logo source images are colored; invert renders them white on the dark
-   band, or desaturate to grayscale on the .light band (avoids white-on-white) */
 .logo-band.marquee img { height: 32px; width: auto; filter: var(--marquee-logo-filter); flex: 0 0 auto; }
 
 .logo-band.marquee.is-ready .logoband-track {
