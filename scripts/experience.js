@@ -680,7 +680,7 @@ async function applyExperiment(response, id, stampTarget, applyContent, record, 
 // content-personalisation placement, stamp this hardcoded event instead of no-op'ing, so
 // the block always has something to show while the real access-point is still being
 // wired up server-side. Remove once the orchestrator reliably resolves this.
-const CONTENT_PERSONALISATION_FALLBACK_ID = '/events/personalized-pick';
+const CONTENT_PERSONALISATION_FALLBACK_ID = '/events/multi-entity-financial-control';
 
 // A slot opts out of the fragment-swap apply-shape when its section declares
 // data-pzn-block-type="content-personalisation" (see collectSlots) — the resolved
