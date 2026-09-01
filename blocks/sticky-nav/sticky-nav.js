@@ -3,6 +3,19 @@ function targetFor(a) {
   return id ? document.getElementById(id) : null;
 }
 
+// Only headings get an auto-generated id (see decorateMain), so a target is
+// always a heading — but that heading isn't always the first visible thing in
+// its section. An eyebrow paragraph authored immediately before it (e.g. the
+// media-text content model: eyebrow, then h2) sits above the heading and
+// would be scrolled past if the heading's own top were the landing point.
+// Extend the scroll margin to also clear any such immediately-preceding
+// sibling, so the anchor lands at the section's true visual top either way.
+function scrollMarginFor(target) {
+  const prev = target.previousElementSibling;
+  const coversEyebrow = prev && prev.tagName === 'P' && !prev.querySelector('a, img, picture');
+  return coversEyebrow ? prev.getBoundingClientRect().height : 0;
+}
+
 export default function decorate(block) {
   const ul = block.querySelector('ul');
   if (!ul) return;
@@ -14,7 +27,7 @@ export default function decorate(block) {
 
   links.forEach((a) => {
     const target = targetFor(a);
-    if (target) target.style.scrollMarginTop = `${navH}px`;
+    if (target) target.style.scrollMarginTop = `${navH + scrollMarginFor(target)}px`;
     a.addEventListener('click', (e) => {
       if (!target) return;
       e.preventDefault();
