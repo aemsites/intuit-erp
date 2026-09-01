@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   applyOverride,
+  comparisonRows,
   mergeOverride,
   validateOverride,
 } from '../tools/plugins/tracking/model.js';
@@ -15,6 +16,31 @@ const SHEET = {
 };
 
 describe('tracking editor sheet model', () => {
+  it('builds one automatic/effective comparison and marks only changed fields', () => {
+    expect(comparisonRows({
+      object: 'content',
+      action: 'interacted',
+      'custom-properties': { link_name: 'button-pricing', audience: 'small-business' },
+    }, {
+      object: 'content',
+      action: 'engaged',
+      'custom-properties': { audience: 'small-business', link_name: 'button-pricing' },
+    }, ['object', 'action', 'custom-properties'])).toEqual([
+      {
+        field: 'object', automatic: 'content', effective: 'content', changed: false,
+      },
+      {
+        field: 'action', automatic: 'interacted', effective: 'engaged', changed: true,
+      },
+      {
+        field: 'custom-properties',
+        automatic: { link_name: 'button-pricing', audience: 'small-business' },
+        effective: { audience: 'small-business', link_name: 'button-pricing' },
+        changed: false,
+      },
+    ]);
+  });
+
   it('creates a sparse page-scoped row and preserves unrelated rows and columns', () => {
     const out = applyOverride(SHEET, {
       path: '/accounting',

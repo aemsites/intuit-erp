@@ -7,6 +7,7 @@ import {
   OVERRIDE_FIELDS,
   applyOverride,
   buildSheetFormData,
+  comparisonRows,
   findOverride,
   mergeOverride,
   validateOverride,
@@ -28,6 +29,18 @@ const FIELD_LABELS = {
   'custom-properties': 'Custom properties',
   survey: 'Survey properties',
 };
+
+const COMPARISON_FIELDS = [
+  'object',
+  'object-detail',
+  'action',
+  'ui-object',
+  'ui-object-detail',
+  'ui-action',
+  'ui-access-point',
+  'wa-link',
+  'custom-properties',
+];
 
 const app = document.getElementById('app');
 const state = {
@@ -220,12 +233,18 @@ async function loadPreview(path) {
 let listRoot;
 let editorRoot;
 let searchInput;
+let inventoryCount;
 
 function renderTargetList() {
   if (!listRoot) return;
   const query = (searchInput?.value || '').trim().toLowerCase();
   const visible = state.inventory.filter((item) => [item.label, item.id, item.href, item.block]
     .some((value) => String(value || '').toLowerCase().includes(query)));
+  if (inventoryCount) {
+    inventoryCount.textContent = query
+      ? `${visible.length} of ${state.inventory.length}`
+      : `${state.inventory.length} interactions`;
+  }
   listRoot.replaceChildren();
   if (!visible.length) {
     listRoot.appendChild(el('p', { class: 'tracking-empty', text: 'No matching targets.' }));
@@ -255,13 +274,37 @@ function directRowValues(path, id) {
   return Object.fromEntries(OVERRIDE_FIELDS.map((field) => [field, pairsToText(row[field])]));
 }
 
-function valueRows(title, values, fields) {
-  return el('section', { class: 'tracking-values' }, [
-    el('h3', { text: title }),
-    ...fields.map((field) => el('div', { class: 'tracking-value-row' }, [
-      el('span', { class: 'tracking-value-name', text: FIELD_LABELS[field] || field }),
-      el('span', { class: 'tracking-value', text: displayValue(values[field]) }),
-    ])),
+function comparisonFields(automatic, effective) {
+  const surveys = [...new Set([...Object.keys(automatic || {}), ...Object.keys(effective || {})]
+    .filter((field) => field.startsWith('survey-')))];
+  return [...COMPARISON_FIELDS, ...surveys];
+}
+
+function comparisonTable(automatic, effective) {
+  const rows = comparisonRows(automatic, effective, comparisonFields(automatic, effective));
+  const body = el('tbody', {}, rows.map((row) => el('tr', {}, [
+    el('th', { text: FIELD_LABELS[row.field] || row.field, attrs: { scope: 'row' } }),
+    el('td', { class: 'tracking-automatic', text: displayValue(row.automatic) }),
+    el('td', {
+      class: `tracking-effective${row.changed ? ' is-changed' : ''}`,
+      text: displayValue(row.effective),
+    }),
+  ])));
+  return el('section', { class: 'tracking-comparison' }, [
+    el('div', { class: 'tracking-section-heading' }, [
+      el('h3', { text: 'Resolved tracking values' }),
+      el('p', { text: 'Effective values include applicable overrides. Changes are highlighted.' }),
+    ]),
+    el('div', { class: 'tracking-table-wrap' }, [
+      el('table', { class: 'tracking-comparison-table' }, [
+        el('thead', {}, [el('tr', {}, [
+          el('th', { text: 'Field', attrs: { scope: 'col' } }),
+          el('th', { text: 'Automatic', attrs: { scope: 'col' } }),
+          el('th', { text: 'Effective', attrs: { scope: 'col' } }),
+        ])]),
+        body,
+      ]),
+    ]),
   ]);
 }
 
@@ -302,7 +345,7 @@ function renderEditor(item) {
   editorRoot.appendChild(identity);
 
   if (!item.editable) {
-    editorRoot.appendChild(valueRows('Automatic values', item.automatic, OVERRIDE_FIELDS));
+    editorRoot.appendChild(comparisonTable(item.automatic, item.effective));
     editorRoot.appendChild(el('p', {
       class: 'tracking-note',
       text: 'This interaction is intentionally pure-derived and has no sheet identity.',
@@ -353,17 +396,17 @@ function renderEditor(item) {
     ]));
   });
 
-  const effectiveRoot = el('div');
+  const comparisonRoot = el('div');
   const updateEffective = () => {
     const values = Object.fromEntries(OVERRIDE_FIELDS
       .map((field) => [field, controls[field].value.trim()]));
     const simulated = applyOverride(state.sheet, { path: state.scope, id: overrideId, values });
     const refreshed = state.inspector.collect(simulated.data)
       .find((candidate) => candidate.id === item.id && candidate.label === item.label);
-    effectiveRoot.replaceChildren(valueRows('Simulated effective values', refreshed?.effective || item.effective, [
-      'object', 'object-detail', 'action', 'ui-object', 'ui-object-detail',
-      'ui-action', 'ui-access-point', 'wa-link', 'custom-properties',
-    ]));
+    comparisonRoot.replaceChildren(comparisonTable(
+      item.automatic,
+      refreshed?.effective || item.effective,
+    ));
   };
 
   Object.values(controls).forEach((control) => control.addEventListener('input', updateEffective));
@@ -432,12 +475,8 @@ function renderEditor(item) {
 
   setFormValues();
   editorRoot.append(
-    valueRows('Automatic values', item.automatic, [
-      'object', 'object-detail', 'action', 'ui-object', 'ui-object-detail',
-      'ui-action', 'ui-access-point', 'custom-properties',
-    ]),
+    comparisonRoot,
     form,
-    effectiveRoot,
   );
   updateEffective();
 }
@@ -467,9 +506,9 @@ function renderShell() {
     if (event.key === 'Enter') loadButton.click();
   });
 
-  const toolbar = el('div', { class: 'tracking-toolbar' }, [
+  const toolbar = el('div', { class: 'tracking-canvas-toolbar' }, [
     el('div', { class: 'tracking-path-group' }, [pathInput, loadButton]),
-    el('p', { text: `Reads ${LIVE_SOURCE}; writes only ${SANDBOX_SOURCE}.` }),
+    el('p', { class: 'tracking-toolbar-note', text: 'Rendered branch preview' }),
   ]);
 
   state.frame = el('iframe', {
@@ -482,18 +521,41 @@ function renderShell() {
   });
   searchInput.addEventListener('input', renderTargetList);
   listRoot = el('div', { class: 'tracking-targets' });
-  editorRoot = el('aside', { class: 'tracking-editor' });
+  inventoryCount = el('span', { class: 'tracking-count', text: '0 interactions' });
+  editorRoot = el('div', { class: 'tracking-editor' });
   renderEditor(null);
 
   const inventory = el('section', { class: 'tracking-inventory' }, [
-    el('div', { class: 'tracking-inventory-head' }, [el('h2', { text: 'Interactions' }), searchInput]),
+    el('div', { class: 'tracking-inventory-head' }, [
+      el('h2', { text: 'Interactions' }),
+      inventoryCount,
+    ]),
+    searchInput,
     listRoot,
   ]);
-  const workspace = el('div', { class: 'tracking-workspace' }, [
-    el('section', { class: 'tracking-canvas' }, [state.frame, inventory]),
-    editorRoot,
+  const railHeader = el('header', { class: 'tracking-rail-header' }, [
+    el('div', {}, [
+      el('p', { class: 'tracking-eyebrow', text: 'Branch-only proof of concept' }),
+      el('h1', { text: 'Tracking Inspector' }),
+    ]),
+    el('span', { class: 'tracking-sandbox', text: 'Sandbox storage' }),
   ]);
-  app.append(statusEl, toolbar, workspace);
+  const canvas = el('section', { class: 'tracking-canvas' }, [toolbar, state.frame]);
+  const rail = el('aside', { class: 'tracking-rail' }, [
+    railHeader,
+    statusEl,
+    inventory,
+    editorRoot,
+    el('p', {
+      class: 'tracking-storage-note',
+      text: `Reads ${LIVE_SOURCE}; writes only ${SANDBOX_SOURCE}.`,
+    }),
+  ]);
+  const workspace = el('div', { class: 'tracking-workspace' }, [
+    canvas,
+    rail,
+  ]);
+  app.append(workspace);
 }
 
 async function loadInitialSheet() {

@@ -13,6 +13,27 @@ export const OVERRIDE_FIELDS = [
 const STRUCTURAL_FIELDS = new Set(['path', 'id']);
 const EDITOR_FIELDS = new Set(OVERRIDE_FIELDS);
 
+function comparableValue(value) {
+  if (!value || typeof value !== 'object') return value ?? '';
+  return Object.fromEntries(Object.entries(value)
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([key, item]) => [key, comparableValue(item)]));
+}
+
+export function comparisonRows(automatic = {}, effective = {}, fields = []) {
+  return fields.map((field) => {
+    const automaticValue = automatic[field];
+    const effectiveValue = effective[field];
+    return {
+      field,
+      automatic: automaticValue,
+      effective: effectiveValue,
+      changed: JSON.stringify(comparableValue(automaticValue))
+        !== JSON.stringify(comparableValue(effectiveValue)),
+    };
+  });
+}
+
 function cleanPath(path) {
   const value = String(path || '*').trim();
   if (!value || value === '*') return '*';

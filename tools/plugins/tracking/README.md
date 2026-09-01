@@ -16,9 +16,10 @@ customer's DA configuration.
 ## POC capabilities
 
 - Loads a rendered page from the same branch as the app.
+- Keeps the rendered page as the primary canvas with a bounded inspector rail on desktop.
 - Inventories block-scoped, loose-page, and pure-derived tracking targets.
 - Selects targets from the list or by clicking the embedded preview.
-- Shows automatic and effective values without stamping the target DOM.
+- Compares automatic and effective values in one table and highlights only differences.
 - Edits page-scoped or global sparse overrides.
 - Validates `custom-properties` and survey key/value syntax.
 - Detects same-field concurrent edits before updating the sandbox.
