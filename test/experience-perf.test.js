@@ -2,9 +2,8 @@ import {
   describe, it, expect, afterEach, vi,
 } from 'vitest';
 
-// Collection is always on; `?perf=on` (PERF_ON, read from location.search at module load)
-// only adds the console.table report + forces the Splunk send — so stub the search string,
-// then import a fresh copy.
+// PERF_ON and sampling are decided at module load, so stub location/random before
+// importing a fresh copy.
 const ORIGINAL_LOCATION = window.location;
 
 function stubLocation(search) {
@@ -36,6 +35,7 @@ afterEach(() => {
 describe('experience perf reporter', () => {
   it('captures exp: measures via observer and dumps them via console.table when ?perf=on', async () => {
     stubLocation('?perf=on');
+    vi.spyOn(Math, 'random').mockReturnValue(0.9);
     performance.clearMarks?.();
     performance.clearMeasures?.();
     const table = vi.spyOn(console, 'table').mockImplementation(() => {});
@@ -73,15 +73,23 @@ describe('experience perf reporter', () => {
     expect(table).toHaveBeenCalled();
   });
 
-  it('still collects without the flag but never console-reports on its own', async () => {
+  it('collects without the flag when the page view is sampled', async () => {
     stubLocation('');
+    vi.spyOn(Math, 'random').mockReturnValue(0.05);
     const table = vi.spyOn(console, 'table').mockImplementation(() => {});
     await import('../scripts/experience.js');
-    // Collection is always on: the helpers exist and produce a payload…
     expect(typeof window.hlx.experiencePerf.report).toBe('function');
     expect(typeof window.hlx.experiencePerf.collect).toBe('function');
     expect(window.hlx.experiencePerf.collect()).toMatchObject({ event: 'experience-perf' });
-    // …but nothing hits the console without ?perf=on.
+    expect(table).not.toHaveBeenCalled();
+  });
+
+  it('does not install perf collection without the flag when the page view is unsampled', async () => {
+    stubLocation('');
+    vi.spyOn(Math, 'random').mockReturnValue(0.9);
+    const table = vi.spyOn(console, 'table').mockImplementation(() => {});
+    await import('../scripts/experience.js');
+    expect(window.hlx?.experiencePerf).toBeUndefined();
     expect(table).not.toHaveBeenCalled();
   });
 });

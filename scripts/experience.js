@@ -6,9 +6,8 @@
 import { getMetadata } from './aem.js';
 import { buildIntentContext, getIntentProfile } from './of1-intent.js';
 
-// Perf telemetry: collection is ALWAYS on (PerformanceObserver — near-zero cost). A single
-// Splunk-friendly log per sampled page view goes out via erp-logging (see PERF_SAMPLE_RATE).
-// `?perf=on` additionally prints a console.table report and forces the Splunk send.
+// Perf telemetry is sampled before any observers/marks/measures are installed, keeping
+// unsampled views off the LCP path. `?perf=on` forces instrumentation and console output.
 const PERF_ON = (() => {
   try {
     return new URLSearchParams(window.location.search).get('perf') === 'on';
@@ -21,15 +20,18 @@ const PERF_ON = (() => {
 const PERF_SAMPLE_RATE = 0.1;
 // How long after load to let LCP/lazy layers settle before reporting.
 const PERF_REPORT_DELAY_MS = 6000;
+const PERF_ENABLED = PERF_ON || Math.random() < PERF_SAMPLE_RATE;
 
 const round1 = (n) => Math.round(n * 10) / 10;
 
 // Mark/measure that can never throw (measure raises if its start mark is missing —
 // possible when phases run standalone, e.g. in tests or partial page flows).
 function perfMark(name) {
+  if (!PERF_ENABLED) return;
   try { performance.mark(name); } catch { /* ignore */ }
 }
 function perfMeasure(name, start, end) {
+  if (!PERF_ENABLED) return;
   try { performance.measure(name, start, end); } catch { /* ignore */ }
 }
 
@@ -89,6 +91,7 @@ export function buildPerfPayload({
 }
 
 (() => {
+  if (!PERF_ENABLED) return;
   if (typeof window === 'undefined' || typeof PerformanceObserver === 'undefined') return;
   // Capture entries with a PerformanceObserver into private arrays as they fire: observer delivery
   // is independent of the shared timeline, so another script's performance.clear*() (martech/RUM
@@ -134,13 +137,12 @@ export function buildPerfPayload({
   };
 
   // One Splunk-bound log per sampled view, via the erp-logging bridge (head.html). Logger
-  // absent (script blocked/failed) or unsampled ⇒ silent no-op. Fires once.
+  // absent (script blocked/failed) ⇒ silent no-op. Fires once.
   let sent = false;
   const sendPerfLog = () => {
     if (sent) return;
     const logger = window.coreServiceAdapter?.logger;
     if (!logger?.info) return;
-    if (!PERF_ON && Math.random() >= PERF_SAMPLE_RATE) { sent = true; return; }
     sent = true;
     const payload = collect();
     payload.sampleRate = PERF_ON ? 1 : PERF_SAMPLE_RATE;
