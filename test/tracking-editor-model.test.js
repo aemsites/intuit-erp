@@ -79,6 +79,30 @@ describe('tracking editor sheet model', () => {
     expect(out.data.some((row) => row.id === 'cta:pricing')).toBe(false);
   });
 
+  it('removes a row when DA normalized its other blank cells to empty strings', () => {
+    const normalized = {
+      ':type': 'sheet',
+      total: 1,
+      data: [{
+        path: '/accounting',
+        id: 'cta:pricing',
+        object: 'poc-value',
+        action: '',
+        'wa-link': '',
+        legacy: '',
+      }],
+    };
+
+    const out = applyOverride(normalized, {
+      path: '/accounting',
+      id: 'cta:pricing',
+      values: { object: '' },
+    });
+
+    expect(out.total).toBe(0);
+    expect(out.data).toEqual([]);
+  });
+
   it('preserves non-editor columns when clearing supported values', () => {
     const out = applyOverride(SHEET, {
       path: '*',

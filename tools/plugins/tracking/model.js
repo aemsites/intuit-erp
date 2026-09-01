@@ -57,7 +57,8 @@ export function findOverride(sheet, path, id) {
 }
 
 function hasStoredValue(row) {
-  return Object.keys(row).some((key) => !STRUCTURAL_FIELDS.has(key));
+  return Object.entries(row).some(([key, value]) => !STRUCTURAL_FIELDS.has(key)
+    && cleanValue(value));
 }
 
 function cloneSheet(sheet) {
