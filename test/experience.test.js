@@ -531,6 +531,15 @@ describe('applyPage (whole-page swap, before decorate)', () => {
     expect(window.appVars.ixpDetailsArr[0]).toMatchObject({ experiment_id: '376648', replacement_content_id: '/fragments/exp/page' });
   });
 
+  it('maps a trailing-slash variation path to /index for the .plain.html fetch', async () => {
+    setMeta('experiment-id', '376648');
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response('<div class="hero">V</div>', { status: 200, headers: { 'content-type': 'text/html' } }),
+    );
+    await applyPage(document, expResp('376648', { replacementCasId: '/experiments/foo/' }));
+    expect(globalThis.fetch).toHaveBeenCalledWith('/experiments/foo/index.plain.html', expect.anything());
+  });
+
   it('does not record treatment exposure when the page swap fails', async () => {
     setMeta('experiment-id', '376648');
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('', { status: 500 }));

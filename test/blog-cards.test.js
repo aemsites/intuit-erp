@@ -29,6 +29,14 @@ describe('filterEntries', () => {
     const out = filterEntries(data, { category: 'financials', excludePath: '/blog/financials/a' });
     expect(out.map((e) => e.title)).toEqual(['C']);
   });
+  it('excludes the current path despite a trailing-slash mismatch', () => {
+    // post-folderization the live pathname carries a trailing slash; the feed/author value may not
+    const slashedExclude = filterEntries(data, { category: 'financials', excludePath: '/blog/financials/a/' });
+    expect(slashedExclude.map((e) => e.title)).toEqual(['C']);
+    const slashedFeed = data.map((e) => ({ ...e, path: `${e.path}/` }));
+    const out = filterEntries(slashedFeed, { category: 'financials', excludePath: '/blog/financials/a' });
+    expect(out.map((e) => e.title)).toEqual(['C']);
+  });
   it('excludes listing pages by their template metadata, not their path', () => {
     const mixed = [
       { path: '/blog', title: 'Blog | Intuit Enterprise Suite', template: 'Blog Home', date: '2026-04-01' },
