@@ -268,7 +268,7 @@ function pageWillSwap(response) {
   const pageExp = (getMetadata('experiment-id') || '').trim();
   if (/^\d+$/.test(pageExp)) {
     const d = experimentDecision(response, pageExp);
-    return !!(d && d.replacementCasId && d.replacementCasId !== d.originalCasId);
+    return !!(d && d.contentId);
   }
   const pagePzn = (getMetadata('personalization-id') || '').trim();
   if (pagePzn) {
@@ -285,7 +285,7 @@ function summarizeResponse(response) {
     const d = experimentDecision(response, id);
     if (d) {
       out.push({
-        kind: 'exp', id, replacement: d.replacementCasId, treatment: d.treatmentId,
+        kind: 'exp', id, replacement: d.contentId, treatment: d.treatmentId,
       });
     }
   });
