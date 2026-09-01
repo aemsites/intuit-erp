@@ -112,7 +112,7 @@ describe('complete golden replay scheduler', () => {
     expect(state.coverage).toMatchObject({ total: 6, pending: 2, blocked: 1, missing: 1, unreproducible: 1, passive: 1 });
   });
 
-  it('extracts one linked payload and fingerprints only uniform deployment identity', () => {
+  it('extracts one linked payload and fingerprints only immutable deployment identity', () => {
     const sourceScenario = manifest().scenarios[0];
     const capture = {
       status: 'complete',
@@ -159,6 +159,8 @@ describe('complete golden replay scheduler', () => {
     ];
     expect(capturePageFingerprint(capture)).toBe(pageFingerprint);
     capture.pages[0].provenance.interactionInventoryHash = 'sha256:inventory-three';
+    expect(capturePageFingerprint(capture)).toBe(pageFingerprint);
+    capture.pages[0].provenance.document.contentHash = 'sha256:document-three';
     expect(capturePageFingerprint(capture)).not.toBe(pageFingerprint);
     capture.pages[0].events[0].payload.properties.page_cas_id = '/wrong';
     expect(() => validateQualificationCapture(capture, sourceScenario, binding.authorizationRef))

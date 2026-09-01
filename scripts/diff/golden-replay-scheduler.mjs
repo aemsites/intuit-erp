@@ -250,13 +250,13 @@ export function captureDeploymentFingerprint(capture) {
 
 export function capturePageFingerprint(capture) {
   const page = capture.pages?.[0] || {};
-  // Lazy block modules race normal AEM loading and differ by scenario even on an
-  // unchanged page. They remain in capture provenance for audit, while uniform
-  // executable identity is enforced by the lineage proof's core runtime hashes.
+  // Lazy AEM blocks and chrome decorate asynchronously, so both the loaded-module
+  // set and interaction inventory can differ across captures of an unchanged page.
+  // Keep them in capture provenance for audit; deployment identity is the served
+  // document plus the core runtime hashes enforced by captureDeploymentFingerprint.
   const identity = {
     pathname: page.pathname,
     document: page.provenance?.document,
-    interactionInventoryHash: page.provenance?.interactionInventoryHash,
   };
   return sha256(JSON.stringify(canonical(identity)));
 }

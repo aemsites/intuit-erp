@@ -66,6 +66,7 @@ const shapeOnly = {
 function fakeScope({ transportPolicy = 'observe' } = {}) {
   const sent = [];
   const documentListeners = {};
+  const scopeListeners = {};
   const analytics = {
     _dispatch(event) { return Promise.resolve(event); },
   };
@@ -92,8 +93,12 @@ function fakeScope({ transportPolicy = 'observe' } = {}) {
     crypto: globalThis.crypto,
     setInterval,
     clearInterval,
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
+    addEventListener: vi.fn((type, listener, capture) => {
+      scopeListeners[`${type}:${capture ? 'capture' : 'bubble'}`] = listener;
+    }),
+    removeEventListener: vi.fn((type, listener, capture) => {
+      delete scopeListeners[`${type}:${capture ? 'capture' : 'bubble'}`];
+    }),
     document: {
       addEventListener: vi.fn((type, listener, capture) => {
         documentListeners[`${type}:${capture ? 'capture' : 'bubble'}`] = listener;
@@ -125,7 +130,11 @@ function fakeScope({ transportPolicy = 'observe' } = {}) {
     }
   };
   return {
-    scope, sent, transportPolicy, documentListeners,
+    scope, sent, transportPolicy, documentListeners, scopeListeners,
+    dispatchClick: (callback) => {
+      scopeListeners['click:capture']?.({ target: null });
+      return callback();
+    },
   };
 }
 
@@ -603,7 +612,7 @@ describe('live replay harness contracts', () => {
   });
 
   it('captures one observed click, rejects a business-identical stale event, and sanitizes before snapshot', async () => {
-    const { scope, sent } = fakeScope();
+    const { scope, sent, dispatchClick } = fakeScope();
     const hook = await installReplayPageHook({
       origin: 'https://stage.erp.intuit.com',
       transportPolicy: 'observe',
@@ -620,9 +629,9 @@ describe('live replay harness contracts', () => {
       body: JSON.stringify({ batch: [trackerEvent('ajs-next-stale')] }),
     });
     hook.activate(scenario);
-    await scope.intuit.tracking.ecs.webAnalytics.track({
+    await dispatchClick(() => scope.intuit.tracking.ecs.webAnalytics.track({
       messageId: 'ajs-next-current', properties: trackerEvent('x').properties,
-    });
+    }));
     hook.deactivate();
     const evidence = await hook.snapshot();
 
@@ -661,7 +670,7 @@ describe('live replay harness contracts', () => {
   });
 
   it('poisons duplicate messageId lineage instead of linking the first dispatch', async () => {
-    const { scope } = fakeScope();
+    const { scope, dispatchClick } = fakeScope();
     const hook = await installReplayPageHook({
       origin: 'https://stage.erp.intuit.com',
       transportPolicy: 'observe',
@@ -673,12 +682,12 @@ describe('live replay harness contracts', () => {
       heartbeatMs: 100,
     }, scope);
     hook.activate(scenario);
-    await scope.intuit.tracking.ecs.webAnalytics.track({
+    await dispatchClick(() => scope.intuit.tracking.ecs.webAnalytics.track({
       messageId: 'duplicate-message-id', properties: trackerEvent('x').properties,
-    });
-    await scope.intuit.tracking.ecs.webAnalytics.track({
+    }));
+    await dispatchClick(() => scope.intuit.tracking.ecs.webAnalytics.track({
       messageId: 'duplicate-message-id', properties: trackerEvent('x').properties,
-    });
+    }));
     const evidence = await hook.snapshot();
     expect(evidence.dispatches.map(({ status }) => status)).toEqual(['ambiguous', 'ambiguous']);
     expect(evidence.serialized.every((entry) => entry.status === 'ambiguous'
@@ -687,7 +696,7 @@ describe('live replay harness contracts', () => {
   });
 
   it('keeps a pre-scenario transport unlinked when it arrives during the active window', async () => {
-    const { scope } = fakeScope();
+    const { scope, dispatchClick } = fakeScope();
     const hook = await installReplayPageHook({
       origin: 'https://stage.erp.intuit.com',
       transportPolicy: 'observe',
@@ -707,15 +716,44 @@ describe('live replay harness contracts', () => {
     hook.activate(scenario);
     await hook.releaseHeldTransport();
     await stale;
-    await scope.intuit.tracking.ecs.webAnalytics.track({
+    await dispatchClick(() => scope.intuit.tracking.ecs.webAnalytics.track({
       messageId: 'ajs-next-current', properties: trackerEvent('x').properties,
-    });
+    }));
     const evidence = await hook.snapshot();
     expect(evidence.serialized.map(({ status }) => status).sort()).toEqual(['linked', 'unlinked']);
     expect(evidence.serialized.find(({ status }) => status === 'unlinked')).toMatchObject({
       scenarioId: null,
       activeScenarioIdAtSerialization: scenario.scenarioId,
       reason: 'no-invocation-lineage',
+    });
+    await hook.teardown('test-complete');
+  });
+
+  it('links only tracker invocations caused by the active click dispatch', async () => {
+    const { scope, dispatchClick } = fakeScope();
+    const hook = await installReplayPageHook({
+      origin: 'https://stage.erp.intuit.com',
+      transportPolicy: 'observe',
+      observeAuthorizationRef: 'customer-approved parity exercise 2026-08-29',
+      targetMarker: 'test-target',
+      allowlist,
+      shapeOnly,
+      leaseMs: 1000,
+      heartbeatMs: 100,
+    }, scope);
+    hook.activate(scenario);
+    await scope.intuit.tracking.ecs.webAnalytics.track({
+      messageId: 'background-chat',
+      properties: { ...trackerEvent('x').properties, object: 'chat', action: 'viewed' },
+    });
+    await dispatchClick(() => scope.intuit.tracking.ecs.webAnalytics.track({
+      messageId: 'clicked-control', properties: trackerEvent('x').properties,
+    }));
+    const evidence = await hook.snapshot();
+    expect(evidence.serialized.map(({ status }) => status)).toEqual(['unlinked', 'linked']);
+    expect(evidence.serialized[1]).toMatchObject({
+      scenarioId: scenario.scenarioId,
+      invocationId: `${scenario.scenarioId}:1`,
     });
     await hook.teardown('test-complete');
   });
@@ -742,7 +780,7 @@ describe('live replay harness contracts', () => {
   });
 
   it.each(['beacon', 'xhr'])('captures and restores the %s eventbus transport', async (transport) => {
-    const { scope, sent } = fakeScope();
+    const { scope, sent, dispatchClick } = fakeScope();
     const originalBeacon = scope.navigator.sendBeacon;
     const originalOpen = scope.XMLHttpRequest.prototype.open;
     const originalSend = scope.XMLHttpRequest.prototype.send;
@@ -758,9 +796,9 @@ describe('live replay harness contracts', () => {
     }, scope);
     hook.activate(scenario);
     scope.__testTransport = transport;
-    await scope.intuit.tracking.ecs.webAnalytics.track({
+    await dispatchClick(() => scope.intuit.tracking.ecs.webAnalytics.track({
       messageId: `ajs-next-${transport}`, properties: trackerEvent('x').properties,
-    });
+    }));
     const evidence = await hook.snapshot();
     expect(evidence.serialized[0].status).toBe('linked');
     expect(sent.some((entry) => entry.transport === transport)).toBe(true);
@@ -772,7 +810,7 @@ describe('live replay harness contracts', () => {
 
   it('replays deterministic approved fields across independent runs', async () => {
     const captureOnce = async (targetMarker) => {
-      const { scope } = fakeScope();
+      const { scope, dispatchClick } = fakeScope();
       const hook = await installReplayPageHook({
         origin: 'https://stage.erp.intuit.com',
         transportPolicy: 'observe',
@@ -784,9 +822,9 @@ describe('live replay harness contracts', () => {
         heartbeatMs: 100,
       }, scope);
       hook.activate(scenario);
-      await scope.intuit.tracking.ecs.webAnalytics.track({
+      await dispatchClick(() => scope.intuit.tracking.ecs.webAnalytics.track({
         messageId: 'per-visit-id', properties: trackerEvent('x').properties,
-      });
+      }));
       const payload = (await hook.snapshot()).serialized[0].payload;
       await hook.teardown('test-complete');
       return Object.fromEntries(['object', 'ui_object_detail', 'page_cas_id', 'url', 'url_clean', 'url_host_name']
@@ -817,17 +855,17 @@ describe('live replay harness contracts', () => {
       heartbeatMs: 100,
     }, second.scope);
     hook.activate(scenario);
-    await second.scope.intuit.tracking.ecs.webAnalytics.track({
+    await second.dispatchClick(() => second.scope.intuit.tracking.ecs.webAnalytics.track({
       messageId: 'ajs-next-abort', properties: trackerEvent('x').properties,
-    });
+    }));
     second.scope.__testTransport = 'beacon';
-    await second.scope.intuit.tracking.ecs.webAnalytics.track({
+    await second.dispatchClick(() => second.scope.intuit.tracking.ecs.webAnalytics.track({
       messageId: 'ajs-next-abort-beacon', properties: trackerEvent('x').properties,
-    });
+    }));
     second.scope.__testTransport = 'xhr';
-    await second.scope.intuit.tracking.ecs.webAnalytics.track({
+    await second.dispatchClick(() => second.scope.intuit.tracking.ecs.webAnalytics.track({
       messageId: 'ajs-next-abort-xhr', properties: trackerEvent('x').properties,
-    });
+    }));
     expect(second.sent).toHaveLength(0);
     expect((await hook.snapshot()).serialized.every((entry) => entry.status === 'linked')).toBe(true);
     await hook.teardown('test-complete');
