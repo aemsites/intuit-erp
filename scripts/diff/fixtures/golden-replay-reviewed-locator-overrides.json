@@ -17,9 +17,90 @@
       "inventoryRef": "scripts/diff/fixtures/local/clicktrack-golden-stage-inventory-v32.json",
       "inventorySha256": "sha256:5abfc8d5606bb070df701f8ca0c6ba2ccfa83ea457be0ce3125183c80e976a1a",
       "method": "The visible cards CTA has the exact article title and QuickBooks destination represented by the prod semantic campaign identity."
+    }, {
+      "scenarioIds": [
+        "customer-accounting-business-intelligence-rep-f5394eada35a",
+        "customer-accounting-business-intelligence-rep-59676cca353e",
+        "customer-accounting-business-intelligence-rep-da515b45f064",
+        "customer-home-f1a7df4ec339",
+        "customer-compare-70f348c74e9d",
+        "customer-blog-construction-automation-in-cons-0e10ba8ddb3e",
+        "customer-blog-construction-automation-in-cons-7b3473b467b0",
+        "customer-blog-construction-automation-in-cons-67db829b55cf"
+      ],
+      "capturedAt": "2026-08-31T13:22:26.629Z",
+      "inventoryRef": "scripts/diff/fixtures/local/clicktrack-golden-stage-inventory-v32.json",
+      "inventorySha256": "sha256:5abfc8d5606bb070df701f8ca0c6ba2ccfa83ea457be0ce3125183c80e976a1a",
+      "method": "The current header replacements preserve the prod destinations and interaction intent while using renamed customer-visible labels."
     }]
   },
   "decisions": [
+    {
+      "scenarioId": "customer-accounting-business-intelligence-rep-f5394eada35a",
+      "page": "/accounting/business-intelligence-reports",
+      "candidateIdentity": { "dataTrackId": "nav:schedule-a-call-2", "accessibleName": "Schedule a call", "tag": "BUTTON", "role": "button", "region": "header", "block": "header" },
+      "locator": { "block": "header" },
+      "rationale": "The visible primary Schedule a call control preserves the prod header scheduling interaction after the Schedule demo copy change."
+    },
+    {
+      "scenarioId": "customer-accounting-business-intelligence-rep-59676cca353e",
+      "page": "/accounting/business-intelligence-reports",
+      "candidateIdentity": { "dataTrackId": "nav:accountant", "accessibleName": "For accounting firms", "tag": "A", "role": "link", "region": "header", "href": "https://stage.erp.intuit.com/accountant", "block": "header" },
+      "locator": { "block": "header" },
+      "rationale": "For accounting firms preserves the prod Accountants destination and header navigation intent."
+    },
+    {
+      "scenarioId": "customer-accounting-business-intelligence-rep-da515b45f064",
+      "page": "/accounting/business-intelligence-reports",
+      "candidateIdentity": { "dataTrackId": "nav:accounting", "accessibleName": "Overview", "tag": "A", "role": "link", "region": "header", "href": "https://stage.erp.intuit.com/accounting", "block": "header" },
+      "locator": { "block": "header" },
+      "setupSteps": [{
+        "type": "click",
+        "locator": { "trackId": "nav:capabilities", "region": "header", "role": "button", "name": "Capabilities", "exact": true, "block": "header" },
+        "expect": { "state": "visible", "locator": { "trackId": "nav:accounting", "region": "header", "role": "link", "name": "Overview", "exact": true, "block": "header" } }
+      }],
+      "rationale": "The Accounting Overview link preserves the prod Financial management overview destination under the renamed Capabilities hierarchy."
+    },
+    {
+      "scenarioId": "customer-home-f1a7df4ec339",
+      "page": "/",
+      "candidateIdentity": { "dataTrackId": "nav:schedule-a-call-2", "accessibleName": "Schedule a call", "tag": "BUTTON", "role": "button", "region": "header", "block": "header" },
+      "locator": { "block": "header" },
+      "rationale": "The visible primary Schedule a call control preserves the prod header scheduling interaction after the Schedule demo copy change."
+    },
+    {
+      "scenarioId": "customer-compare-70f348c74e9d",
+      "page": "/compare",
+      "candidateIdentity": { "dataTrackId": "nav:accountant", "accessibleName": "For accounting firms", "tag": "A", "role": "link", "region": "header", "href": "https://stage.erp.intuit.com/accountant", "block": "header" },
+      "locator": { "block": "header" },
+      "rationale": "For accounting firms preserves the prod Accountants destination and header navigation intent."
+    },
+    {
+      "scenarioId": "customer-blog-construction-automation-in-cons-0e10ba8ddb3e",
+      "page": "/blog/construction/automation-in-construction",
+      "candidateIdentity": { "dataTrackId": "nav:accountant", "accessibleName": "For accounting firms", "tag": "A", "role": "link", "region": "header", "href": "https://stage.erp.intuit.com/accountant", "block": "header" },
+      "locator": { "block": "header" },
+      "rationale": "For accounting firms preserves the prod Accountants destination and header navigation intent."
+    },
+    {
+      "scenarioId": "customer-blog-construction-automation-in-cons-7b3473b467b0",
+      "page": "/blog/construction/automation-in-construction",
+      "candidateIdentity": { "dataTrackId": "nav:accounting", "accessibleName": "Overview", "tag": "A", "role": "link", "region": "header", "href": "https://stage.erp.intuit.com/accounting", "block": "header" },
+      "locator": { "block": "header" },
+      "setupSteps": [{
+        "type": "click",
+        "locator": { "trackId": "nav:capabilities", "region": "header", "role": "button", "name": "Capabilities", "exact": true, "block": "header" },
+        "expect": { "state": "visible", "locator": { "trackId": "nav:accounting", "region": "header", "role": "link", "name": "Overview", "exact": true, "block": "header" } }
+      }],
+      "rationale": "The Accounting Overview link preserves the prod Financial management overview destination under the renamed Capabilities hierarchy."
+    },
+    {
+      "scenarioId": "customer-blog-construction-automation-in-cons-67db829b55cf",
+      "page": "/blog/construction/automation-in-construction",
+      "candidateIdentity": { "dataTrackId": "nav:schedule-a-call-2", "accessibleName": "Schedule a call", "tag": "BUTTON", "role": "button", "region": "header", "block": "header" },
+      "locator": { "block": "header" },
+      "rationale": "The visible primary Schedule a call control preserves the prod header scheduling interaction after the Schedule demo copy change."
+    },
     {
       "scenarioId": "customer-financial-services-9d04cc0e326f",
       "page": "/financial-services",

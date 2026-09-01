@@ -154,6 +154,12 @@ describe('complete golden replay scheduler', () => {
     const pageFingerprint = capturePageFingerprint(capture);
     capture.pages[0].provenance.sameOriginScripts.reverse();
     expect(capturePageFingerprint(capture)).toBe(pageFingerprint);
+    capture.pages[0].provenance.sameOriginScripts = [
+      { url: '/blocks/footer/footer.js', contentHash: 'sha256:footer-lazy' },
+    ];
+    expect(capturePageFingerprint(capture)).toBe(pageFingerprint);
+    capture.pages[0].provenance.interactionInventoryHash = 'sha256:inventory-three';
+    expect(capturePageFingerprint(capture)).not.toBe(pageFingerprint);
     capture.pages[0].events[0].payload.properties.page_cas_id = '/wrong';
     expect(() => validateQualificationCapture(capture, sourceScenario, binding.authorizationRef))
       .toThrow(/page_cas_id/i);

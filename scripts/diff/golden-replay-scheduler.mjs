@@ -250,13 +250,13 @@ export function captureDeploymentFingerprint(capture) {
 
 export function capturePageFingerprint(capture) {
   const page = capture.pages?.[0] || {};
-  const sameOriginScripts = [...(page.provenance?.sameOriginScripts || [])]
-    .sort((left, right) => JSON.stringify(canonical(left)).localeCompare(JSON.stringify(canonical(right))));
+  // Lazy block modules race normal AEM loading and differ by scenario even on an
+  // unchanged page. They remain in capture provenance for audit, while uniform
+  // executable identity is enforced by the lineage proof's core runtime hashes.
   const identity = {
     pathname: page.pathname,
     document: page.provenance?.document,
     interactionInventoryHash: page.provenance?.interactionInventoryHash,
-    sameOriginScripts,
   };
   return sha256(JSON.stringify(canonical(identity)));
 }

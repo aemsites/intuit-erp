@@ -117,7 +117,8 @@ export function buildOfflineGoldenReplayAnalysis({ golden, manifest, state, devi
       reviewItems.push(item);
       const column = row.location === 'properties' ? SHEET_COLUMNS[row.field] : null;
       const trackId = outcome.locator?.trackId;
-      if (!column || !trackId || row.got !== '‹absent›') continue;
+      const reviewedTarget = Boolean(scenario.locator?.evidence?.reviewedDecision);
+      if (!column || !trackId || (row.got !== '‹absent›' && !reviewedTarget)) continue;
       const goldenValue = valueAt(entry.fullPayload, row.location, row.field);
       if (goldenValue == null || goldenValue === '') continue;
       const key = `${scenario.page}|${trackId}`;
@@ -144,7 +145,7 @@ export function buildOfflineGoldenReplayAnalysis({ golden, manifest, state, devi
     .map(({ scenarioId, pathname }) => ({ scenarioId, page: pathname }));
   return {
     schemaVersion: 1,
-    source: 'customer-golden-v23-offline-analysis',
+    source: 'customer-golden-offline-analysis',
     generatedAt: new Date().toISOString(),
     binding: state.binding,
     summary: {
@@ -176,7 +177,7 @@ export function renderOfflineAnalysisMarkdown(analysis) {
   const correctionRows = analysis.sheetCorrectionDraft.map((row) => `| ${esc(row.path)} | ${esc(row.id)} | ${esc(JSON.stringify(Object.fromEntries(Object.entries(row).filter(([key]) => !['path', 'id'].includes(key)))))} |`).join('\n');
   const semanticRows = analysis.semanticOverrideDraft.map((row) => `| ${esc(row.path)} | ${esc(row.id)} | ${esc(JSON.stringify(Object.fromEntries(Object.entries(row).filter(([key]) => !['path', 'id'].includes(key)))))} |`).join('\n');
   const reviewRows = analysis.reviewItems.map((row) => `| ${esc(row.category)} | ${esc(row.page)} | ${esc(row.scenarioId)} | ${esc(row.field)} | ${esc(row.golden)} | ${esc(row.got)} |`).join('\n');
-  return `# Customer golden v23 offline triage
+  return `# Customer golden offline triage
 
 Generated ${analysis.generatedAt}. This is evidence and a non-applying correction draft.
 

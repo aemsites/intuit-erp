@@ -292,8 +292,8 @@ describe('golden replay locator review', () => {
     const artifact = JSON.parse(readFileSync(
       'scripts/diff/fixtures/golden-replay-reviewed-locator-overrides.json', 'utf8',
     ));
-    expect(artifact.decisions).toHaveLength(21);
-    expect(new Set(artifact.decisions.map(({ scenarioId }) => scenarioId)).size).toBe(21);
+    expect(artifact.decisions).toHaveLength(29);
+    expect(new Set(artifact.decisions.map(({ scenarioId }) => scenarioId)).size).toBe(29);
     expect(artifact.decisions.find(({ scenarioId }) => (
       scenarioId === 'customer-professional-services-aa56645bc6c8'
     ))).toMatchObject({
@@ -307,6 +307,27 @@ describe('golden replay locator review', () => {
     expect(artifact.decisions.map(({ scenarioId }) => scenarioId)).not.toContain(
       'customer-blog-construction-automation-in-cons-e622b3154851',
     );
+    const headerReplacements = {
+      'customer-accounting-business-intelligence-rep-f5394eada35a': 'nav:schedule-a-call-2',
+      'customer-accounting-business-intelligence-rep-59676cca353e': 'nav:accountant',
+      'customer-accounting-business-intelligence-rep-da515b45f064': 'nav:accounting',
+      'customer-home-f1a7df4ec339': 'nav:schedule-a-call-2',
+      'customer-compare-70f348c74e9d': 'nav:accountant',
+      'customer-blog-construction-automation-in-cons-0e10ba8ddb3e': 'nav:accountant',
+      'customer-blog-construction-automation-in-cons-7b3473b467b0': 'nav:accounting',
+      'customer-blog-construction-automation-in-cons-67db829b55cf': 'nav:schedule-a-call-2',
+    };
+    for (const [scenarioId, dataTrackId] of Object.entries(headerReplacements)) {
+      expect(artifact.decisions.find((decision) => decision.scenarioId === scenarioId))
+        .toMatchObject({ candidateIdentity: { dataTrackId, region: 'header', block: 'header' } });
+    }
+    for (const scenarioId of [
+      'customer-accounting-business-intelligence-rep-da515b45f064',
+      'customer-blog-construction-automation-in-cons-7b3473b467b0',
+    ]) {
+      expect(artifact.decisions.find((decision) => decision.scenarioId === scenarioId)?.setupSteps)
+        .toMatchObject([{ locator: { trackId: 'nav:capabilities' } }]);
+    }
     for (const decision of artifact.decisions) {
       expect(decision).toMatchObject({
         scenarioId: expect.stringMatching(/^customer-/),
