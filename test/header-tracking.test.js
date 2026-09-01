@@ -54,11 +54,14 @@ async function buildHeader() {
 }
 
 const idOf = (el) => el.getAttribute('data-track-id');
+const buttonNamed = (block, name) => [...block.querySelectorAll('.nav-item > button')]
+  .find((button) => button.textContent.trim() === name);
 
 describe('header/nav click-tracking — id-based keying (real render)', () => {
   beforeEach(() => {
     document.head.innerHTML = '';
     document.body.innerHTML = '';
+    document.body.className = '';
     resetTrackingState();
     loadFragment.mockResolvedValue(navFragment());
     // decorate() touches a couple of browser APIs jsdom lacks.
@@ -107,13 +110,74 @@ describe('header/nav click-tracking — id-based keying (real render)', () => {
 
   it('lets flyout button clicks reach the delegated document tracker', async () => {
     const block = await buildHeader();
-    const capabilities = [...block.querySelectorAll('.nav-item > button')]
-      .find((button) => button.textContent.trim() === 'Capabilities');
+    const capabilities = buttonNamed(block, 'Capabilities');
     const delegatedTracker = vi.fn();
     document.addEventListener('click', delegatedTracker, { once: true });
 
     capabilities.click();
 
     expect(delegatedTracker).toHaveBeenCalledOnce();
+  });
+
+  it('keeps a bubbled flyout click open and toggles it closed on the next click', async () => {
+    const block = await buildHeader();
+    const capabilities = buttonNamed(block, 'Capabilities');
+    const item = capabilities.closest('.nav-item');
+    const panel = item.querySelector('.flyout');
+    const panelLink = panel.querySelector('a');
+
+    capabilities.click();
+    expect(item.classList.contains('open')).toBe(true);
+    expect(item.closest('.nav-main').classList.contains('has-open')).toBe(true);
+    expect(capabilities.getAttribute('aria-expanded')).toBe('true');
+    expect(panel.getAttribute('aria-hidden')).toBe('false');
+    expect(panelLink.hasAttribute('tabindex')).toBe(false);
+
+    capabilities.click();
+    expect(item.classList.contains('open')).toBe(false);
+    expect(item.closest('.nav-main').classList.contains('has-open')).toBe(false);
+    expect(capabilities.getAttribute('aria-expanded')).toBe('false');
+    expect(panel.getAttribute('aria-hidden')).toBe('true');
+    expect(panelLink.getAttribute('tabindex')).toBe('-1');
+  });
+
+  it('switches flyouts and closes the active flyout on an outside click', async () => {
+    const block = await buildHeader();
+    const capabilities = buttonNamed(block, 'Capabilities');
+    const resources = buttonNamed(block, 'Resources');
+
+    capabilities.click();
+    resources.click();
+    expect(capabilities.getAttribute('aria-expanded')).toBe('false');
+    expect(resources.getAttribute('aria-expanded')).toBe('true');
+    expect(block.querySelectorAll('.nav-item.open')).toHaveLength(1);
+
+    document.body.click();
+    expect(resources.getAttribute('aria-expanded')).toBe('false');
+    expect(block.querySelectorAll('.nav-item.open')).toHaveLength(0);
+  });
+
+  it('closes the active flyout on Escape', async () => {
+    const block = await buildHeader();
+    const capabilities = buttonNamed(block, 'Capabilities');
+    capabilities.click();
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+
+    expect(capabilities.getAttribute('aria-expanded')).toBe('false');
+    expect(block.querySelectorAll('.nav-item.open')).toHaveLength(0);
+  });
+
+  it('preserves the mobile menu and scroll lock when a flyout click bubbles', async () => {
+    const block = await buildHeader();
+    const menuToggle = block.querySelector('.nav-toggle');
+    const capabilities = buttonNamed(block, 'Capabilities');
+    menuToggle.click();
+
+    capabilities.click();
+
+    expect(block.classList.contains('nav-open')).toBe(true);
+    expect(menuToggle.getAttribute('aria-expanded')).toBe('true');
+    expect(document.body.classList.contains('nav-scroll-lock')).toBe(true);
   });
 });
