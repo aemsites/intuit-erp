@@ -6,6 +6,54 @@
 import { getMetadata } from './aem.js';
 import { buildIntentContext, getIntentProfile } from './of1-intent.js';
 
+// Opt-in perf instrumentation (`?perf=on`)
+const PERF_ON = (() => {
+  try {
+    return new URLSearchParams(window.location.search).get('perf') === 'on';
+  } catch {
+    return false;
+  }
+})();
+
+if (PERF_ON) {
+  // Capture entries with a PerformanceObserver into private arrays as they fire: observer delivery
+  // is independent of the shared timeline, so another script's performance.clear*() (martech/RUM
+  // buffer cleanup) can't evict our data before we report.
+  let lcpEntry;
+  const measures = [];
+  const orchestrator = [];
+  const round = (n) => Math.round(n * 10) / 10;
+  const observe = (type, onEntry) => {
+    try {
+      new PerformanceObserver((list) => list.getEntries().forEach(onEntry))
+        .observe({ type, buffered: true });
+    } catch { /* entry type unsupported — ignore */ }
+  };
+  observe('largest-contentful-paint', (e) => { lcpEntry = e; });
+  observe('measure', (e) => { if (e.name.startsWith('exp:')) measures.push(e); });
+  // The 1st decision call and any 2nd resolveSwappedSlots call each get their own entry.
+  observe('resource', (e) => { if (e.name.includes('intuit-orchestrator')) orchestrator.push(e); });
+
+  const report = () => {
+    const rows = {};
+    measures.forEach((e) => { rows[e.name] = { ms: round(e.duration) }; });
+    orchestrator.forEach((e, i) => {
+      rows[`orchestrator-call[${i}]`] = {
+        ms: round(e.responseEnd - e.startTime),
+        ttfb: round(e.responseStart - e.requestStart),
+      };
+    });
+    if (lcpEntry) rows['LCP (browser)'] = { ms: round(lcpEntry.startTime) };
+    // eslint-disable-next-line no-console
+    console.table(rows);
+    return rows;
+  };
+
+  window.hlx = window.hlx || {};
+  window.hlx.experiencePerf = { report };
+  setTimeout(report, 6000);
+}
+
 // --- Endpoint + fetch primitives -------------------------------------------
 
 // API base: `experience-api-base` metadata override, else same-origin /api (Akamai-fronted).
@@ -616,6 +664,7 @@ export async function applyPageExperience(doc) {
   window.hlx = window.hlx || {};
   if (window.hlx.pageExperienceApplied) return false;
   window.hlx.pageExperienceApplied = true;
+  if (PERF_ON) performance.mark('exp:eager-start');
   const request = collectRequest(doc);
   if (!request.experimentIds.length && !request.accessPointNames.length) return false;
   const decisionController = new AbortController();
@@ -632,8 +681,17 @@ export async function applyPageExperience(doc) {
   const eagerTimer = setTimeout(() => eagerController.abort(), EAGER_DEADLINE_MS);
   try {
     const response = await withTimeout(responsePromise, EAGER_DEADLINE_MS);
+    if (PERF_ON) {
+      performance.mark('exp:decision-ready');
+      performance.measure('exp:eager-decision', 'exp:eager-start', 'exp:decision-ready');
+    }
     if (!response) return false;
+    if (PERF_ON) performance.mark('exp:page-swap:start');
     const applied = await applyPage(doc, response, eagerController.signal);
+    if (PERF_ON) {
+      performance.mark('exp:page-swap:end');
+      performance.measure('exp:page-swap', 'exp:page-swap:start', 'exp:page-swap:end');
+    }
     return applied;
   } finally {
     clearTimeout(eagerTimer);
@@ -652,7 +710,16 @@ export async function applyEagerLayers(doc, pageSwapped) {
   }
   const firstSection = main.querySelector('.section');
   if (firstSection) {
+    if (PERF_ON) performance.mark('exp:first-section-swap:start');
     await withTimeout(applyLayer(firstSection, window.hlx.experienceResponse), EAGER_APPLY_MS);
+    if (PERF_ON) {
+      performance.mark('exp:first-section-swap:end');
+      performance.measure('exp:first-section-swap', 'exp:first-section-swap:start', 'exp:first-section-swap:end');
+    }
+  }
+  if (PERF_ON) {
+    performance.mark('exp:eager-layers-end');
+    performance.measure('exp:eager-total', 'exp:eager-start', 'exp:eager-layers-end');
   }
 }
 
@@ -678,5 +745,10 @@ export async function applyLazyLayers(doc) {
   if (!main) return;
   const response = await latestExperienceResponse();
   if (!response) return;
+  if (PERF_ON) performance.mark('exp:lazy-layers:start');
   await applyLayer(main, response, { skip: main.querySelector('.section') });
+  if (PERF_ON) {
+    performance.mark('exp:lazy-layers:end');
+    performance.measure('exp:lazy-layers', 'exp:lazy-layers:start', 'exp:lazy-layers:end');
+  }
 }
