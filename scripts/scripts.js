@@ -355,18 +355,7 @@ export function decorateMain(main) {
  * Loads everything needed to get to LCP.
  * @param {Element} doc The container element
  */
-function redirectConstructionQToLlmAppCtx() {
-  if (window.location.pathname !== '/construction') return;
-  const params = new URLSearchParams(window.location.search);
-  const q = params.get('q');
-  if (!q) return;
-  params.delete('q');
-  params.set('llm_app_ctx', q);
-  window.location.replace(`${window.location.pathname}?${params.toString()}${window.location.hash}`);
-}
-
 async function loadEager(doc) {
-  redirectConstructionQToLlmAppCtx();
   document.documentElement.lang = 'en';
   decorateTemplateAndTheme();
 
