@@ -379,14 +379,17 @@ export function pznDecision(response, name) {
 // Normalized pzn record, or null when there's no offer/content.
 export function pznRecord(placement, decision) {
   if (!decision || (!decision.offerId && !decision.contentId)) return null;
-  return {
+  const record = {
     personalization_placement: placement,
     personalization_id: decision.offerId,
     personalization_action: 'im',
     personalization_workflow: 'marketing',
-    content_id: decision.contentId,
-    externalContentIdentifier: decision.contentId,
   };
+  if (decision.contentId) {
+    record.content_id = decision.contentId;
+    record.externalContentIdentifier = decision.contentId;
+  }
+  return record;
 }
 
 // Normalized ixp record, or null without experiment identity. Control arms still emit a
@@ -455,27 +458,6 @@ function bufferRecords(map, records, keyField) {
 export function recordPzn(records) { bufferRecords(pznById, records, 'personalization_id'); }
 export function recordPznPage(records) { bufferRecords(pznPageById, records, 'personalization_id'); }
 export function recordIxp(records) { bufferRecords(ixpById, records, 'experiment_id'); }
-
-// Records every assigned decision independently from whether its visual swap meets LCP timing.
-export function recordExperience(doc, response) {
-  if (!doc || !response) return;
-  const pageExp = getMetadata('experiment-id');
-  const pagePzn = getMetadata('personalization-id');
-  if (pageExp && /^\d+$/.test(pageExp)) {
-    recordIxp([ixpRecord(experimentDecision(response, pageExp), window.location.pathname)]);
-  } else if (pagePzn) {
-    recordPznPage([pznRecord(pagePzn, pznDecision(response, pagePzn))]);
-  }
-
-  const main = doc.querySelector('main');
-  if (!main) return;
-  collectExperiments(main).forEach(({ id }) => {
-    recordIxp([ixpRecord(experimentDecision(response, id), window.location.pathname)]);
-  });
-  collectSlots(main).forEach(({ placement }) => {
-    recordPzn([pznRecord(placement, pznDecision(response, placement))]);
-  });
-}
 
 const FS_READY_TIMEOUT_MS = 10000;
 let fsReadyPromise;
@@ -556,9 +538,9 @@ export function stampPzn(el, rec) {
 
 // --- Applying the response --------------------------------------------------
 
-// Two helpers = the ONE place each apply-shape lives: decision → record exposure → (if
-// there's content) resolve path, apply via applyContent(path), stamp + notify. applyPage
-// feeds them swapMain (whole page); applyLayer feeds applyFragment (an element). `track`
+// Two helpers = the ONE place each apply-shape lives: decision → apply treatment content →
+// record exposure, stamp + notify. Control experiments are exposed when their apply phase runs.
+// applyPage feeds them swapMain (whole page); applyLayer feeds applyFragment (an element). `track`
 // (default true at the public entry points) gates EVERY analytics side effect — appVars
 // records, click-tracker stamps, and FullStory events — so a preview/simulation can swap
 // content read-only, without biasing the very experiment data it's measuring.
@@ -567,11 +549,14 @@ async function applyExperiment(response, id, stampTarget, applyContent, record, 
   const d = experimentDecision(response, id);
   if (!d) return false;
   const rec = ixpRecord(d, window.location.pathname);
-  if (rec && track) record([rec]);
-  if (!d.replacementCasId || d.replacementCasId === d.originalCasId) return false;
+  if (!d.replacementCasId || d.replacementCasId === d.originalCasId) {
+    if (rec && track) record([rec]);
+    return false;
+  }
   const path = casToPath(d.replacementCasId);
   if (!path || !(await applyContent(path))) return false;
   if (track) {
+    if (rec) record([rec]);
     stampExperiment(stampTarget, rec);
     notifyFullStory('Experiment Viewed', rec?.experiment_treatment, rec?.experiment_id);
   }
@@ -582,11 +567,14 @@ async function applyPznSlot(response, placement, stampTarget, applyContent, reco
   const d = pznDecision(response, placement);
   if (!d) return false;
   const rec = pznRecord(placement, d);
-  if (rec && track) record([rec]);
-  if (!d.contentId) return false;
+  if (!d.contentId) {
+    if (rec && track) record([rec]);
+    return false;
+  }
   const path = casToPath(d.contentId);
   if (!path || !(await applyContent(path))) return false;
   if (track) {
+    if (rec) record([rec]);
     stampPzn(stampTarget, rec);
     notifyFullStory('Personalization Viewed', rec?.personalization_id, rec?.personalization_placement);
   }
@@ -682,7 +670,7 @@ export function resolveSwappedSlots(doc, { timeoutMs = 1500 } = {}) {
 
 const EAGER_DEADLINE_MS = 1500; // visual decision budget before baseline reveal
 const EAGER_APPLY_MS = 2000; // budget for swapping the first/LCP section before reveal
-const DECISION_DEADLINE_MS = 5000; // lets late decisions reach analytics and lazy regions
+const DECISION_DEADLINE_MS = 5000; // lets late decisions reach lazy regions without delaying paint
 
 // EAGER, before decorateMain: the one consolidated call + whole-page swap (runs once).
 // Caches the decision; returns whether a page swap landed.
@@ -730,9 +718,9 @@ export async function applyEagerLayers(doc, pageSwapped) {
   const main = doc.querySelector('main');
   if (!main || !window.hlx?.experienceResponse) return;
   if (pageSwapped) {
-    const swap = resolveSwappedSlots(doc, { timeoutMs: EAGER_DEADLINE_MS });
+    const swap = resolveSwappedSlots(doc, { timeoutMs: DECISION_DEADLINE_MS });
     window.hlx.experienceSwapResolved = swap.done;
-    if (swap.firstSectionAffected) await swap.done;
+    if (swap.firstSectionAffected) await withTimeout(swap.done, EAGER_DEADLINE_MS);
   }
   const firstSection = main.querySelector('.section');
   if (firstSection) {
@@ -757,11 +745,10 @@ async function latestExperienceResponse() {
   return window.hlx?.experienceResponse || initial;
 }
 
-// Populates appVars synchronously once the bounded decision work is complete.
-export async function prepareExperienceTracking(doc) {
-  const response = await latestExperienceResponse();
-  if (!response) return;
-  recordExperience(doc, response);
+// Gives successful lazy applications the bounded decision window to record exposure before the
+// one-shot page view. A late assignment that never renders contributes no treatment context.
+export async function prepareExperienceTracking(application) {
+  if (application) await withTimeout(application, DECISION_DEADLINE_MS);
   flushAppVars();
 }
 
@@ -777,4 +764,11 @@ export async function applyLazyLayers(doc) {
     performance.mark('exp:lazy-layers:end');
     performance.measure('exp:lazy-layers', 'exp:lazy-layers:start', 'exp:lazy-layers:end');
   }
+}
+
+// Starts lazy application immediately and gives its real exposures the bounded opportunity to
+// reach the one-shot page view. Keeping this wiring here makes the ordering contract testable.
+export async function applyLazyExperience(doc) {
+  const application = applyLazyLayers(doc);
+  await prepareExperienceTracking(application);
 }
