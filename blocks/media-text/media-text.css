@@ -9,12 +9,12 @@
 
 /* row-alternating sections cap at a 1130px content box with 155px side gutters */
 @media (width >= 1024px) {
-  .section.media-text-container:not(:has(.media-text.cards, .media-text.compare, .media-text.power)) > div {
+  .section.media-text-container:not(:has(.media-text.cards, .media-text.compare)) > div {
     max-width: 1440px;
     padding-inline: 155px;
   }
 
-  .section.media-text-container:not(:has(.media-text.cards, .media-text.compare, .media-text.power)) .media-row {
+  .section.media-text-container:not(:has(.media-text.cards, .media-text.compare)) .media-row {
     max-width: 1130px;
     margin-inline: auto;
   }
