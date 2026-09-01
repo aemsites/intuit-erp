@@ -8,8 +8,8 @@
  * img.src, never innerHTML.
  */
 import { getMetadata, toClassName, createOptimizedPicture } from '../../scripts/aem.js';
-import { loadIndex } from '../../scripts/content-index.js';
-import { trackAs, normalizePath } from '../../scripts/tracking.js';
+import { loadIndex, normalizePath } from '../../scripts/content-index.js';
+import { trackAs } from '../../scripts/tracking.js';
 
 const BLOG_INDEX = '/blog/query-index.json';
 

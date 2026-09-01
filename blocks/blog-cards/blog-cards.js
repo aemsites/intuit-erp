@@ -23,8 +23,8 @@
  * CSS: blocks/blog-cards/blog-cards.css
  */
 import { readBlockConfig, loadCSS, createOptimizedPicture } from '../../scripts/aem.js';
-import { trackAs, normalizePath } from '../../scripts/tracking.js';
-import { loadIndex, formatDate } from '../../scripts/content-index.js';
+import { trackAs } from '../../scripts/tracking.js';
+import { loadIndex, formatDate, normalizePath } from '../../scripts/content-index.js';
 
 const DEFAULT_SOURCE = '/blog/query-index.json';
 const DEFAULT_PAGE_SIZE = 6;
