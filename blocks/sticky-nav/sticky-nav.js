@@ -5,7 +5,7 @@ function targetFor(a) {
 
 // Extra breathing room below the nav bar when landing on a target that has
 // an eyebrow above it, so the eyebrow isn't left flush against the bar.
-const EYEBROW_LANDING_GAP = 20;
+const EYEBROW_LANDING_GAP = 40;
 
 // Only headings get an auto-generated id (see decorateMain), so a target is
 // always a heading — but that heading isn't always the first visible thing in
