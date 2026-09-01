@@ -24,6 +24,19 @@ const PERF_ENABLED = PERF_ON || Math.random() < PERF_SAMPLE_RATE;
 
 const round1 = (n) => Math.round(n * 10) / 10;
 
+// Per-call orchestrator outcomes (intuit_tid + ok/status/error) for perf payload + error logs.
+const orchestratorCallLog = [];
+
+function experienceLog(level, message, fields = {}) {
+  try {
+    window.coreServiceAdapter?.logger?.[level]?.(message, fields);
+  } catch { /* logging must never break the page */ }
+}
+
+function recordOrchestratorCall(meta) {
+  orchestratorCallLog.push(meta);
+}
+
 // Mark/measure that can never throw (measure raises if its start mark is missing —
 // possible when phases run standalone, e.g. in tests or partial page flows).
 function perfMark(name) {
@@ -48,7 +61,7 @@ const PERF_MEASURE_FIELDS = {
 // numeric *Ms fields, absent metrics omitted — never null/0 placeholders) so Splunk
 // spath/stats queries stay trivial. Pure: everything visible from the args + DOM reads.
 export function buildPerfPayload({
-  measures = [], orchestrator = [], lcp, fcp, nav,
+  measures = [], orchestrator = [], callMeta = [], lcp, fcp, nav,
 } = {}) {
   const payload = {
     event: 'experience-perf',
@@ -78,6 +91,16 @@ export function buildPerfPayload({
     const prefix = i === 0 ? 'orchestrator' : `orchestrator${i + 1}`;
     payload[`${prefix}Ms`] = round1(e.responseEnd - e.startTime);
     payload[`${prefix}TtfbMs`] = round1(e.responseStart - e.requestStart);
+  });
+  callMeta.slice(0, 2).forEach((meta, i) => {
+    const prefix = i === 0 ? 'orchestrator' : `orchestrator${i + 1}`;
+    if (meta.intuitTid) payload[`${prefix}IntuitTid`] = meta.intuitTid;
+    if (meta.ok === false) {
+      payload[`${prefix}Ok`] = false;
+      if (meta.status) payload[`${prefix}Status`] = meta.status;
+      if (meta.reason) payload[`${prefix}Reason`] = meta.reason;
+      if (meta.error) payload[`${prefix}Error`] = meta.error;
+    }
   });
   // Overall page performance.
   if (lcp) payload.lcpMs = round1(lcp.startTime);
@@ -115,6 +138,7 @@ export function buildPerfPayload({
   const collect = () => buildPerfPayload({
     measures,
     orchestrator,
+    callMeta: orchestratorCallLog,
     lcp: lcpEntry,
     fcp: fcpEntry,
     nav: performance.getEntriesByType?.('navigation')?.[0],
@@ -397,6 +421,7 @@ export async function fetchExperience({ experimentIds, accessPointNames }, conte
   const { signal: externalSignal, timeoutMs = 1500 } = opts;
   let signal = externalSignal;
   let timer;
+  const tid = intuitTid();
   if (!signal) {
     const controller = new AbortController();
     signal = controller.signal;
@@ -417,13 +442,51 @@ export async function fetchExperience({ experimentIds, accessPointNames }, conte
     const res = await fetch(target, {
       method: 'POST',
       credentials: 'include',
-      headers: { intuit_tid: intuitTid(), 'content-type': 'application/json' },
+      headers: { intuit_tid: tid, 'content-type': 'application/json' },
       body: JSON.stringify(body),
       signal,
     });
-    if (!res.ok) return null;
-    return await res.json();
-  } catch {
+    if (!res.ok) {
+      const failure = {
+        intuitTid: tid, ok: false, status: res.status, reason: 'http-error',
+      };
+      recordOrchestratorCall(failure);
+      experienceLog('error', 'experience-orchestrator-failed', {
+        event: 'experience-orchestrator-failed',
+        ...failure,
+        target,
+      });
+      return null;
+    }
+    try {
+      const data = await res.json();
+      recordOrchestratorCall({ intuitTid: tid, ok: true, status: res.status });
+      return data;
+    } catch {
+      const failure = {
+        intuitTid: tid, ok: false, status: res.status, reason: 'invalid-json',
+      };
+      recordOrchestratorCall(failure);
+      experienceLog('error', 'experience-orchestrator-failed', {
+        event: 'experience-orchestrator-failed',
+        ...failure,
+        target,
+      });
+      return null;
+    }
+  } catch (err) {
+    const reason = signal?.aborted ? 'aborted' : 'network-error';
+    const failure = {
+      intuitTid: tid,
+      ok: false,
+      reason,
+      error: err?.name || String(err),
+    };
+    recordOrchestratorCall(failure);
+    experienceLog('error', 'experience-orchestrator-failed', {
+      event: 'experience-orchestrator-failed',
+      ...failure,
+    });
     return null;
   } finally {
     if (timer) clearTimeout(timer);
