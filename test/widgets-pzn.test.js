@@ -21,7 +21,7 @@ import { bindScheduleLinks } from '../scripts/schedule-modal.js';
 // eslint-disable-next-line import/first
 import { alreadyHandled, surveyUrl } from '../widgets/pzn/web-survey/web-survey.js';
 // eslint-disable-next-line import/first
-import { appendDisclaimer } from '../widgets/pzn/smartform/smartform.js';
+import decorateSmartform, { appendDisclaimer } from '../widgets/pzn/smartform/smartform.js';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -32,6 +32,9 @@ afterEach(() => {
   ['wsp_accepted', 'wsp_declined', 'wsp_displayed'].forEach((c) => {
     document.cookie = `${c}=; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
   });
+  delete window.ziFcInstalled;
+  delete window.ZIProjectKey;
+  delete window.zi__fc;
 });
 
 describe('form-vs-chilipiper: createUUID / buildChiliPiperUrl', () => {
@@ -112,5 +115,34 @@ describe('smartform: appendDisclaimer', () => {
     const form = document.createElement('form');
     expect(() => appendDisclaimer(form)).not.toThrow();
     expect(form.querySelector('.zi-formcomplete-msg')).toBeNull();
+  });
+});
+
+describe('smartform: decorate defers ZoomInfo until the Marketo form is present', () => {
+  const addMktoForm = () => {
+    const form = document.createElement('form');
+    form.className = 'mktoForm';
+    form.innerHTML = '<input name="Email" type="email">';
+    document.body.append(form);
+    return form;
+  };
+
+  it('does not load ZoomInfo while no .mktoForm exists, then loads it once one appears', async () => {
+    await decorateSmartform();
+    expect(window.ziFcInstalled).toBeFalsy();
+    expect(document.querySelector('script[src*="zi-tag"]')).toBeNull();
+
+    addMktoForm();
+    await new Promise((resolve) => { setTimeout(resolve, 0); });
+
+    expect(window.ziFcInstalled).toBe(true);
+    expect(document.querySelector('script[src*="zi-tag"]')).toBeTruthy();
+  });
+
+  it('loads ZoomInfo immediately when the form is already present', async () => {
+    addMktoForm();
+    await decorateSmartform();
+    expect(window.ziFcInstalled).toBe(true);
+    expect(document.querySelector('script[src*="zi-tag"]')).toBeTruthy();
   });
 });
