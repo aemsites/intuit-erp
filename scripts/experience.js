@@ -157,7 +157,15 @@ function underscoreLocale(value) {
 
 // The sibling `context`: front-end signals + AOF1 intent. NOT ZoomInfo (orchestrator
 // enriches server-side) and NOT geo (Akamai injects it).
-export function buildContext(permalink = window.location.href) {
+function defaultPermalink() {
+  if (typeof window === 'undefined') return '';
+  const url = new URL(window.location.href);
+  url.searchParams.delete('preview');
+  url.searchParams.delete('previewContext');
+  return url.toString();
+}
+
+export function buildContext(permalink = defaultPermalink()) {
   const context = {
     permalink,
     locale: underscoreLocale(
@@ -256,6 +264,28 @@ export function collectRequest(doc = document) {
 
 // --- The single call --------------------------------------------------------
 
+// Query string for /intuit-orchestrator when preview mode is active. opts.preview (the
+// Experience Preview tool) wins so an edited context is never shadowed by a stale page URL;
+// else a page loaded with ?preview=true forwards ONLY preview + previewContext (never the
+// rest of the page query — utm_*/gclid etc. stay off the orchestrator URL).
+function previewOrchestratorQuery(opts, context) {
+  if (opts.preview) {
+    const params = new URLSearchParams({ preview: 'true' });
+    if (context) params.set('previewContext', JSON.stringify(context));
+    return params.toString();
+  }
+  if (typeof window !== 'undefined') {
+    const page = new URLSearchParams(window.location.search);
+    if (page.get('preview') === 'true') {
+      const params = new URLSearchParams({ preview: 'true' });
+      const previewContext = page.get('previewContext');
+      if (previewContext) params.set('previewContext', previewContext);
+      return params.toString();
+    }
+  }
+  return '';
+}
+
 // POSTs the request; returns the parsed response or null (fail-open) on any failure.
 // With `signal` the caller owns the deadline, else `timeoutMs` applies.
 export async function fetchExperience({ experimentIds, accessPointNames }, context, opts = {}) {
@@ -273,16 +303,12 @@ export async function fetchExperience({ experimentIds, accessPointNames }, conte
       accessPointName: accessPointNames,
       context,
     };
-    // Preview seam: opts.preview adds ?preview=true (+ edited attrs) so Akamai routes to the
-    // preview backend; baseUrl overrides the host. No preview opts ⇒ identical prod URL.
-    let target = `${(opts.baseUrl || apiBase()).replace(/\/+$/, '')}/intuit-orchestrator`;
-    if (opts.preview) {
-      const params = new URLSearchParams({ preview: 'true' });
-      Object.entries(opts.previewParams || {}).forEach(([k, v]) => {
-        if (v !== undefined && v !== null) params.set(k, String(v));
-      });
-      target += `?${params.toString()}`;
-    }
+    // Preview seam: opts.preview or a page-level ?preview=true adds preview=true +
+    // previewContext to the target URL so Akamai routes to the preview backend. baseUrl
+    // overrides the host. No preview ⇒ identical prod URL.
+    const apiRoot = (opts.baseUrl || apiBase()).replace(/\/+$/, '');
+    const previewQs = previewOrchestratorQuery(opts, context);
+    const target = `${apiRoot}/intuit-orchestrator${previewQs ? `?${previewQs}` : ''}`;
     const res = await fetch(target, {
       method: 'POST',
       credentials: 'include',
