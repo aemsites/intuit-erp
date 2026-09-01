@@ -19,7 +19,7 @@ import {
 } from './live-replay-harness.mjs';
 import { POLICY } from './oracle-lib.mjs';
 
-const HARNESS_VERSION = '0.2.5';
+const HARNESS_VERSION = '0.2.6';
 const LINEAGE_POLICY_VERSION = 'click-message-id-v2';
 const TRACKER_POLICY_VERSION = '1';
 const EVIDENCE_FETCH_TIMEOUT_MS = 15000;

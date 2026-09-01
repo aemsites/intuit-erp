@@ -162,6 +162,7 @@ export async function installReplayPageHook(config, injectedScope) {
   };
   let active = null;
   let interactionDispatchActive = false;
+  let interactionDispatchSequence = 0;
   let holdNextTransport = false;
   let heldTransport = null;
   let invocationCounter = 0;
@@ -459,8 +460,11 @@ export async function installReplayPageHook(config, injectedScope) {
   const pagehide = () => { void teardown('pagehide'); };
   const beginInteractionDispatch = () => {
     if (!installed || !active) return;
+    const sequence = ++interactionDispatchSequence;
     interactionDispatchActive = true;
-    Promise.resolve().then(() => { interactionDispatchActive = false; });
+    (scope.setTimeout || setTimeout)(() => {
+      if (interactionDispatchSequence === sequence) interactionDispatchActive = false;
+    }, 0);
   };
   const preventNavigation = (event) => {
     if ((!active && !config.qualificationMode) || config.preventNavigation === false) return;
@@ -488,6 +492,7 @@ export async function installReplayPageHook(config, injectedScope) {
     heldTransport = null;
     installed = false;
     active = null;
+    interactionDispatchSequence += 1;
     interactionDispatchActive = false;
     scope.clearInterval(timer);
     scope.removeEventListener?.('pagehide', pagehide);

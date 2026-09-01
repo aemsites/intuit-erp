@@ -758,6 +758,35 @@ describe('live replay harness contracts', () => {
     await hook.teardown('test-complete');
   });
 
+  it('links click microtasks but excludes tracker calls from the next browser task', async () => {
+    const { scope, dispatchClick } = fakeScope();
+    const hook = await installReplayPageHook({
+      origin: 'https://stage.erp.intuit.com',
+      transportPolicy: 'observe',
+      observeAuthorizationRef: 'customer-approved parity exercise 2026-08-29',
+      targetMarker: 'test-target',
+      allowlist,
+      shapeOnly,
+      leaseMs: 1000,
+      heartbeatMs: 100,
+    }, scope);
+    hook.activate(scenario);
+    await dispatchClick(async () => {
+      await Promise.resolve();
+      return scope.intuit.tracking.ecs.webAnalytics.track({
+        messageId: 'clicked-microtask', properties: trackerEvent('x').properties,
+      });
+    });
+    await new Promise((resolve) => { setTimeout(resolve, 0); });
+    await scope.intuit.tracking.ecs.webAnalytics.track({
+      messageId: 'next-task-chat',
+      properties: { ...trackerEvent('x').properties, object: 'chat', action: 'viewed' },
+    });
+    const evidence = await hook.snapshot();
+    expect(evidence.serialized.map(({ status }) => status)).toEqual(['linked', 'unlinked']);
+    await hook.teardown('test-complete');
+  });
+
   it('prevents link navigation before activation only during the qualification proof window', async () => {
     const { scope, documentListeners } = fakeScope();
     const hook = await installReplayPageHook({
