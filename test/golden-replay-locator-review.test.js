@@ -341,8 +341,8 @@ describe('golden replay locator review', () => {
     const artifact = JSON.parse(readFileSync(
       'scripts/diff/fixtures/golden-replay-reviewed-locator-overrides.json', 'utf8',
     ));
-    expect(artifact.decisions).toHaveLength(31);
-    expect(new Set(artifact.decisions.map(({ scenarioId }) => scenarioId)).size).toBe(31);
+    expect(artifact.decisions).toHaveLength(32);
+    expect(new Set(artifact.decisions.map(({ scenarioId }) => scenarioId)).size).toBe(32);
     expect(artifact.decisions.find(({ scenarioId }) => (
       scenarioId === 'customer-professional-services-aa56645bc6c8'
     ))).toMatchObject({
@@ -392,6 +392,16 @@ describe('golden replay locator review', () => {
       locator: {
         href: '', occurrence: 1, occurrenceEvidence: { stableConstraint: expect.any(String) },
       },
+    });
+    expect(artifact.decisions.find(({ scenarioId }) => (
+      scenarioId === 'customer-events-ea3f92116675'
+    ))).toMatchObject({
+      candidateIdentity: {
+        dataTrackId: 'cards:quickbooks-r-midsize-business-what-is-cloud-erp-benefits-examples',
+        accessibleName: 'What is cloud ERP? How it works, benefits, and tips: Read more',
+        block: 'cards',
+      },
+      locator: { block: 'cards' },
     });
     for (const decision of artifact.decisions) {
       expect(decision).toMatchObject({

@@ -35,13 +35,14 @@
     }, {
       "scenarioIds": [
         "customer-accountant-a977351edbd2",
-        "customer-migration-5a4d66ef88d4"
+        "customer-migration-5a4d66ef88d4",
+        "customer-events-ea3f92116675"
       ],
       "capturedAt": "2026-09-01T02:31:29.445Z",
       "completedAt": "2026-09-01T02:39:38.123Z",
       "inventoryRef": "scripts/diff/fixtures/local/clicktrack-golden-stage-inventory-v43.json",
       "inventorySha256": "sha256:da7dcbeca2448090e8789be3d311cb6da20525aff1d54e3e18a46d66c898b130",
-      "method": "The current accountant anchor preserves the bottom-banner scheduling intent, while the first authored migration panel uniquely identifies the QuickBooks Desktop scheduling CTA among three same-label links."
+      "method": "The current accountant anchor preserves the bottom-banner scheduling intent; the first authored migration panel uniquely identifies the QuickBooks Desktop scheduling CTA among three same-label links; and the cloud-ERP article preserves the reviewed article subject and exact destination."
     }]
   },
   "decisions": [
@@ -152,6 +153,13 @@
       "candidateIdentity": { "dataTrackId": "media-text:intuitconnect", "accessibleName": "Register", "tag": "A", "role": "link", "region": "main", "block": "media-text" },
       "locator": { "block": "media-text" },
       "rationale": "The feature access point maps to the media-text Register link, not the event-card duplicate; campaign query parameters are not target identity."
+    },
+    {
+      "scenarioId": "customer-events-ea3f92116675",
+      "page": "/events",
+      "candidateIdentity": { "dataTrackId": "cards:quickbooks-r-midsize-business-what-is-cloud-erp-benefits-examples", "accessibleName": "What is cloud ERP? How it works, benefits, and tips: Read more", "tag": "A", "role": "link", "region": "main", "href": "https://quickbooks.intuit.com/r/midsize-business/what-is-cloud-erp-benefits-examples/", "block": "cards" },
+      "locator": { "block": "cards" },
+      "rationale": "The current cards article preserves the prod What is cloud ERP subject and resolves to its exact QuickBooks midsize-business article destination."
     },
     {
       "scenarioId": "customer-events-170319f758b0",
