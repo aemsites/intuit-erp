@@ -117,6 +117,28 @@ describe('golden replay locator review', () => {
     })).toThrow(/inventory manifest binding/);
   });
 
+  it('does not freeze mutable hrefs into explicit tracking-id locators', () => {
+    const testInventory = inventory();
+    testInventory.pages[0].candidates[0].href = 'https://stage.erp.intuit.com/old-target';
+
+    const review = createLocatorReview({
+      manifest: manifest(),
+      inventory: testInventory,
+      inventoryBytes: Buffer.from('inventory'),
+      trackingSheetBytes: Buffer.from(JSON.stringify({ data: [
+        { path: '/events', id: 'event-cards:register', 'wa-link': 'event-register' },
+      ] })),
+    });
+
+    expect(review.scenarios[0]).toMatchObject({
+      status: 'proposed',
+      locator: { strategy: 'data-track-id', value: 'event-cards:register' },
+    });
+    expect(review.scenarios[0].locator).not.toHaveProperty('href');
+    expect(review.scenarios[0].evidence.candidate.href)
+      .toBe('https://stage.erp.intuit.com/old-target');
+  });
+
   it('refuses duplicate live sheet identities instead of inheriting last-row-wins ambiguity', () => {
     expect(() => createLocatorReview({
       manifest: manifest(), inventory: inventory(), inventoryBytes: Buffer.from('inventory'),
