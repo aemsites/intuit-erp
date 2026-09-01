@@ -22,20 +22,6 @@ export default function decorate(block) {
   block.replaceChildren(ul);
 
   const links = [...ul.querySelectorAll('a')];
-  const navH = block.offsetHeight;
-  document.body.style.setProperty('--sticky-nav-h', `${navH}px`);
-
-  // decorate() runs while its own CSS may still be loading (loadBlock races
-  // the two), so an immediate offsetHeight/getBoundingClientRect read here
-  // can catch the sticky-nav bar and/or the eyebrow paragraph before they
-  // have their real, styled layout — silently producing a 0px scroll margin.
-  // A double rAF pushes the read past that window, after styles have applied.
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    links.forEach((a) => {
-      const target = targetFor(a);
-      if (target) target.style.scrollMarginTop = `${navH + scrollMarginFor(target)}px`;
-    });
-  }));
 
   links.forEach((a) => {
     const target = targetFor(a);
@@ -61,12 +47,30 @@ export default function decorate(block) {
     document.body.classList.toggle('sticky-nav-active', stuck);
   }, { threshold: 0 }).observe(sentinel);
 
-  // scrollspy: activate the link whose section is under the bar
   if (links[0]) links[0].classList.add('active');
-  const spy = new IntersectionObserver((entries) => {
-    entries.filter((en) => en.isIntersecting).forEach((en) => {
-      links.forEach((a) => a.classList.toggle('active', a.getAttribute('href') === `#${en.target.id}`));
+
+  // decorate() runs while its own CSS may still be loading (loadBlock races
+  // the two), so an immediate offsetHeight/getBoundingClientRect read here
+  // can catch the sticky-nav bar and/or a target's eyebrow paragraph before
+  // they have their real, styled layout — silently computing 0 for measurements
+  // that depend on it (the --sticky-nav-h spacer var, each target's scroll
+  // margin, and the scrollspy's rootMargin). A double rAF pushes every one of
+  // those reads past that window, after styles have applied.
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    const navH = block.offsetHeight;
+    document.body.style.setProperty('--sticky-nav-h', `${navH}px`);
+
+    links.forEach((a) => {
+      const target = targetFor(a);
+      if (target) target.style.scrollMarginTop = `${navH + scrollMarginFor(target)}px`;
     });
-  }, { rootMargin: `-${navH}px 0px -70% 0px`, threshold: 0 });
-  links.map(targetFor).filter(Boolean).forEach((t) => spy.observe(t));
+
+    // scrollspy: activate the link whose section is under the bar
+    const spy = new IntersectionObserver((entries) => {
+      entries.filter((en) => en.isIntersecting).forEach((en) => {
+        links.forEach((a) => a.classList.toggle('active', a.getAttribute('href') === `#${en.target.id}`));
+      });
+    }, { rootMargin: `-${navH}px 0px -70% 0px`, threshold: 0 });
+    links.map(targetFor).filter(Boolean).forEach((t) => spy.observe(t));
+  }));
 }
