@@ -38,13 +38,13 @@ function setMeta(name, content) {
 
 // A consolidated-response builder: experiments keyed by id, personalisation by name.
 function expResp(id, {
-  originalCasId = '/orig', replacementCasId = '/fragments/exp/a',
+  contentId = '/fragments/exp/a',
   treatmentId = 'T1', experimentId = id, experimentIdVersion = '2',
 } = {}) {
   return {
     experiments: {
       [id]: {
-        payload: JSON.stringify({ originalCasId, replacementCasId }),
+        payload: JSON.stringify({ contentId }),
         trackingAttributes: { treatmentId, experimentId, experimentIdVersion },
       },
     },
@@ -289,11 +289,15 @@ describe('experimentDecision / pznDecision', () => {
   it('parses the experiment payload JSON + tracking attributes', () => {
     const d = experimentDecision(expResp('376648'), '376648');
     expect(d).toEqual({
-      originalCasId: '/orig',
-      replacementCasId: '/fragments/exp/a',
+      contentId: '/fragments/exp/a',
       treatmentId: 'T1',
       experimentId: '376648',
       experimentIdVersion: '2',
+    });
+  });
+  it('treats a blank or whitespace-only contentId as a control arm', () => {
+    ['', '   ', null].forEach((contentId) => {
+      expect(experimentDecision(expResp('376648', { contentId }), '376648').contentId).toBeNull();
     });
   });
   it('returns null for an id absent from the response', () => {
@@ -356,23 +360,23 @@ describe('record shapes', () => {
   it('ixpRecord: treatment carries a replacement; control does not', () => {
     const treat = ixpRecord({
       experimentId: '376648', experimentIdVersion: '2', treatmentId: 'T1',
-      originalCasId: '/orig', replacementCasId: '/rep',
+      contentId: '/rep',
     }, '/page');
     expect(treat).toEqual({
       experiment_id: '376648',
       experiment_version: '2',
       experiment_treatment: 'T1',
-      original_content_id: '/orig',
+      original_content_id: '/page',
       replacement_content_id: '/rep',
     });
     const control = ixpRecord({
-      experimentId: '376648', experimentIdVersion: '2', treatmentId: 'T1', originalCasId: null, replacementCasId: null,
+      experimentId: '376648', experimentIdVersion: '2', treatmentId: 'T1', contentId: null,
     }, '/page');
     expect(control).not.toHaveProperty('replacement_content_id');
     expect(control.original_content_id).toBe('/page');
   });
   it('ixpRecord: null without experiment identity', () => {
-    expect(ixpRecord({ replacementCasId: '/r' }, '/p')).toBeNull();
+    expect(ixpRecord({ contentId: '/r' }, '/p')).toBeNull();
   });
 });
 
@@ -523,7 +527,7 @@ describe('applyPage (whole-page swap, before decorate)', () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response('<div class="hero">VARIATION</div>', { status: 200, headers: { 'content-type': 'text/html' } }),
     );
-    await applyPage(document, expResp('376648', { replacementCasId: '/fragments/exp/page' }));
+    await applyPage(document, expResp('376648', { contentId: '/fragments/exp/page' }));
 
     expect(globalThis.fetch).toHaveBeenCalledWith('/fragments/exp/page.plain.html', expect.anything());
     expect(document.querySelector('main').innerHTML).toContain('VARIATION');
@@ -537,7 +541,7 @@ describe('applyPage (whole-page swap, before decorate)', () => {
 
     expect(await applyPage(
       document,
-      expResp('376648', { replacementCasId: '/fragments/exp/page' }),
+      expResp('376648', { contentId: '/fragments/exp/page' }),
     )).toBe(false);
     expect(window.appVars).toBeUndefined();
   });
@@ -545,7 +549,7 @@ describe('applyPage (whole-page swap, before decorate)', () => {
   it('leaves the baseline but records exposure on a control arm (replacement == original)', async () => {
     setMeta('experiment-id', '376648');
     const fetchSpy = vi.spyOn(globalThis, 'fetch');
-    await applyPage(document, expResp('376648', { originalCasId: '/same', replacementCasId: '/same' }));
+    await applyPage(document, expResp('376648', { contentId: '' }));
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(document.querySelector('main').innerHTML).toContain('BASE');
     expect(window.appVars.ixpDetailsArr[0]).not.toHaveProperty('replacement_content_id');
@@ -579,7 +583,7 @@ describe('applyPage (whole-page swap, before decorate)', () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response('<div class="hero">VARIATION</div>', { status: 200, headers: { 'content-type': 'text/html' } }),
     );
-    await applyPage(document, expResp('376648', { replacementCasId: '/fragments/exp/page' }), undefined, { track: false });
+    await applyPage(document, expResp('376648', { contentId: '/fragments/exp/page' }), undefined, { track: false });
     const el = document.querySelector('main');
     expect(el.innerHTML).toContain('VARIATION'); // the swap still happens
     expect(el.hasAttribute('data-treatment-id')).toBe(false); // no click-tracker stamp
@@ -591,12 +595,12 @@ describe('applyPage (whole-page swap, before decorate)', () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response('<div class="hero">V</div>', { status: 200, headers: { 'content-type': 'text/html' } }),
     );
-    expect(await applyPage(document, expResp('376648', { replacementCasId: '/fragments/exp/page' }))).toBe(true);
+    expect(await applyPage(document, expResp('376648', { contentId: '/fragments/exp/page' }))).toBe(true);
   });
 
   it('returns false when nothing swaps (control arm, missing decision, no page tag)', async () => {
     setMeta('experiment-id', '376648');
-    expect(await applyPage(document, expResp('376648', { originalCasId: '/same', replacementCasId: '/same' }))).toBe(false);
+    expect(await applyPage(document, expResp('376648', { contentId: '' }))).toBe(false);
     expect(await applyPage(document, {})).toBe(false); // id absent from response
     document.head.innerHTML = '';
     expect(await applyPage(document, expResp('376648'))).toBe(false); // no page-level tag
@@ -717,7 +721,7 @@ describe('applyLayer (section/block swaps, from the cached response)', () => {
   it('replaces a section experiment target and stamps it; no network call', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch');
     const m = main('<div data-exp="376648"></div>');
-    await applyLayer(m, expResp('376648', { replacementCasId: '/fragments/exp/a' }));
+    await applyLayer(m, expResp('376648', { contentId: '/fragments/exp/a' }));
     expect(loadFragment).toHaveBeenCalledWith('/fragments/exp/a');
     const el = m.querySelector('[data-exp]');
     expect(el.querySelector('[data-frag]')).toBeTruthy();
@@ -763,7 +767,7 @@ describe('applyLayer (section/block swaps, from the cached response)', () => {
 
   it('records exposure but does not swap a control experiment (no replacement)', async () => {
     const m = main('<div data-exp="376648"></div>');
-    await applyLayer(m, expResp('376648', { originalCasId: '/x', replacementCasId: '/x' }));
+    await applyLayer(m, expResp('376648', { contentId: '' }));
     expect(loadFragment).not.toHaveBeenCalled();
     expect(window.appVars.ixpDetailsArr).toHaveLength(1);
   });
@@ -783,7 +787,7 @@ describe('applyLayer (section/block swaps, from the cached response)', () => {
 
   it('IXP precedence: a target with both exp and pzn gets only the experiment swap', async () => {
     const m = main('<div data-exp="376648" data-pzn="alpha"></div>');
-    const resp = { ...expResp('376648', { replacementCasId: '/exp' }), ...pznResp('alpha', { contentId: '/pzn' }) };
+    const resp = { ...expResp('376648', { contentId: '/exp' }), ...pznResp('alpha', { contentId: '/pzn' }) };
     await applyLayer(m, resp);
     expect(loadFragment).toHaveBeenCalledTimes(1);
     expect(loadFragment).toHaveBeenCalledWith('/exp');
@@ -798,7 +802,7 @@ describe('applyLayer (section/block swaps, from the cached response)', () => {
 
   it('track:false swaps the section but emits no analytics (read-only preview)', async () => {
     const m = main('<div data-exp="376648"></div>');
-    await applyLayer(m, expResp('376648', { replacementCasId: '/fragments/exp/a' }), { track: false });
+    await applyLayer(m, expResp('376648', { contentId: '/fragments/exp/a' }), { track: false });
     const el = m.querySelector('[data-exp]');
     expect(el.querySelector('[data-frag]')).toBeTruthy(); // the swap still happens
     expect(el.hasAttribute('data-treatment-id')).toBe(false); // no click-tracker stamp
@@ -821,7 +825,7 @@ describe('applyLayer (section/block swaps, from the cached response)', () => {
 
   it('append mode works for experiments too (data-exp-mode)', async () => {
     const m = main('<div data-exp="376648" data-exp-mode="append"><p class="base">keep</p></div>');
-    await applyLayer(m, expResp('376648', { replacementCasId: '/frag' }));
+    await applyLayer(m, expResp('376648', { contentId: '/frag' }));
     const el = m.querySelector('[data-exp]');
     expect(el.querySelector('.base')).toBeTruthy();
     expect(el.querySelector('[data-frag]')).toBeTruthy();
@@ -898,7 +902,7 @@ describe('FullStory swap notification', () => {
       vi.spyOn(globalThis, 'fetch').mockResolvedValue(
         new Response('<div>VARIATION</div>', { status: 200, headers: { 'content-type': 'text/html' } }),
       );
-      await applyPage(document, expResp('376648', { treatmentId: 'T1', replacementCasId: '/fragments/exp/page' }));
+      await applyPage(document, expResp('376648', { treatmentId: 'T1', contentId: '/fragments/exp/page' }));
       await tick();
       expect(event).toHaveBeenCalledWith('Experiment Viewed', { id: 'T1', name: '376648' });
     });
@@ -917,7 +921,7 @@ describe('FullStory swap notification', () => {
     it('does NOT fire on a control arm (no swap)', async () => {
       const event = stubFullStory();
       setMeta('experiment-id', '376648');
-      await applyPage(document, expResp('376648', { originalCasId: '/same', replacementCasId: '/same' }));
+      await applyPage(document, expResp('376648', { contentId: '' }));
       await tick();
       expect(event).not.toHaveBeenCalled();
     });
@@ -927,7 +931,7 @@ describe('FullStory swap notification', () => {
     it('fires "Experiment Viewed" on a section IXP swap', async () => {
       const event = stubFullStory();
       const m = main('<div data-exp="376648"></div>');
-      await applyLayer(m, expResp('376648', { treatmentId: 'T1', replacementCasId: '/fragments/exp/a' }));
+      await applyLayer(m, expResp('376648', { treatmentId: 'T1', contentId: '/fragments/exp/a' }));
       await tick();
       expect(event).toHaveBeenCalledWith('Experiment Viewed', { id: 'T1', name: '376648' });
     });
@@ -987,7 +991,7 @@ describe('phase entry points (applyPageExperience / applyEagerLayers / applyLazy
     setMeta('experiment-id', '376648');
     vi.spyOn(globalThis, 'fetch')
       .mockResolvedValueOnce(new Response(
-        JSON.stringify(expResp('376648', { replacementCasId: '/fragments/exp/page' })),
+        JSON.stringify(expResp('376648', { contentId: '/fragments/exp/page' })),
         { status: 200, headers: { 'content-type': 'application/json' } },
       ))
       .mockResolvedValueOnce(new Response(
@@ -1164,7 +1168,7 @@ describe('phase entry points (applyPageExperience / applyEagerLayers / applyLazy
     const response = mergeExperience(
       mergeExperience(
         pznResp('HomeHero', { contentId: '/fragments/pzn/page' }),
-        expResp('376648', { replacementCasId: '/fragments/exp/hero' }),
+        expResp('376648', { contentId: '/fragments/exp/hero' }),
       ),
       pznResp('gamma', { contentId: '/fragments/pzn/g' }),
     );
@@ -1186,7 +1190,7 @@ describe('phase entry points (applyPageExperience / applyEagerLayers / applyLazy
   it('uses decisions merged while lazy layers wait for a swapped page', async () => {
     let finishSwap;
     window.hlx = {
-      experienceResponse: expResp('999', { replacementCasId: null }),
+      experienceResponse: expResp('999', { contentId: null }),
       experienceSwapResolved: new Promise((resolve) => { finishSwap = resolve; }),
     };
     document.body.innerHTML = '<main>'
