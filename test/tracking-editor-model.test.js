@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+  DA_SOURCE_WRITE_METHOD,
   applyOverride,
   comparisonRows,
   mergeOverride,
@@ -16,6 +17,10 @@ const SHEET = {
 };
 
 describe('tracking editor sheet model', () => {
+  it('uses POST when replacing an existing DA Source JSON file', () => {
+    expect(DA_SOURCE_WRITE_METHOD).toBe('POST');
+  });
+
   it('builds one automatic/effective comparison and marks only changed fields', () => {
     expect(comparisonRows({
       object: 'content',

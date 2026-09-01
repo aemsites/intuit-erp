@@ -4,6 +4,7 @@
 // eslint-disable-next-line import/no-unresolved
 import DA_SDK from 'https://da.live/nx/utils/sdk.js';
 import {
+  DA_SOURCE_WRITE_METHOD,
   OVERRIDE_FIELDS,
   applyOverride,
   buildSheetFormData,
@@ -101,9 +102,9 @@ async function fetchSheet(path) {
   }
 }
 
-async function putSheet(sheet, exists) {
+async function putSheet(sheet) {
   const response = await fetch(sourceUrl(SANDBOX_SOURCE), {
-    method: exists ? 'PUT' : 'POST',
+    method: DA_SOURCE_WRITE_METHOD,
     headers: { Authorization: `Bearer ${state.sdk.token}` },
     body: buildSheetFormData(sheet),
   });
@@ -458,7 +459,7 @@ function renderEditor(item) {
         setStatus(`Save stopped: ${result.conflicts.join(', ')} changed in another session. Refresh and review it.`, 'error');
         return;
       }
-      await putSheet(result.sheet, !!latestSource);
+      await putSheet(result.sheet);
       const saved = await fetchSheet(SANDBOX_SOURCE);
       state.sheet = saved.json;
       state.base = saved.json;

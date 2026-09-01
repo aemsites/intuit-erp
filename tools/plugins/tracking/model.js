@@ -10,6 +10,8 @@ export const OVERRIDE_FIELDS = [
   'survey',
 ];
 
+export const DA_SOURCE_WRITE_METHOD = 'POST';
+
 const STRUCTURAL_FIELDS = new Set(['path', 'id']);
 const EDITOR_FIELDS = new Set(OVERRIDE_FIELDS);
 
