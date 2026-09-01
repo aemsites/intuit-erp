@@ -33,21 +33,42 @@ afterEach(() => {
 });
 
 describe('experience perf reporter', () => {
-  it('exposes window.hlx.experiencePerf.report() that dumps exp: measures when ?perf=on', async () => {
+  it('captures exp: measures via observer and dumps them via console.table when ?perf=on', async () => {
     stubLocation('?perf=on');
     performance.clearMarks?.();
     performance.clearMeasures?.();
+    const table = vi.spyOn(console, 'table').mockImplementation(() => {});
+
+    // Import registers the observers; create the measure afterwards so the LIVE observer captures
+    // it, then let the async observer callback flush before reporting.
+    await import('../scripts/experience.js');
     performance.mark('exp:demo:start');
     performance.mark('exp:demo:end');
     performance.measure('exp:demo', 'exp:demo:start', 'exp:demo:end');
-    const table = vi.spyOn(console, 'table').mockImplementation(() => {});
-
-    await import('../scripts/experience.js');
+    await new Promise((r) => { setTimeout(r, 20); });
 
     expect(typeof window.hlx.experiencePerf.report).toBe('function');
     const rows = window.hlx.experiencePerf.report();
     expect(rows).toHaveProperty('exp:demo');
     expect(rows['exp:demo']).toHaveProperty('ms');
+    expect(table).toHaveBeenCalled();
+  });
+
+  it('survives a resource-timing buffer clear (data captured live, not read from the buffer)', async () => {
+    stubLocation('?perf=on');
+    const table = vi.spyOn(console, 'table').mockImplementation(() => {});
+
+    await import('../scripts/experience.js');
+    performance.mark('exp:kept:start');
+    performance.mark('exp:kept:end');
+    performance.measure('exp:kept', 'exp:kept:start', 'exp:kept:end');
+    await new Promise((r) => { setTimeout(r, 20); });
+    // Simulate a martech/RUM script wiping the shared timeline after our entry fired.
+    performance.clearMeasures?.();
+    performance.clearMarks?.();
+
+    const rows = window.hlx.experiencePerf.report();
+    expect(rows).toHaveProperty('exp:kept'); // still present — captured live, not re-read
     expect(table).toHaveBeenCalled();
   });
 
