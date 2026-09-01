@@ -529,3 +529,8 @@ body.author-guide .hero .hero-media {
 body.author-guide .hero .hero-grid {
   align-items: center;
 }
+
+body.author-guide .hero .hero-copy h1,
+body.author-guide .hero .hero-copy .hero-lede {
+  max-width: initial;
+}

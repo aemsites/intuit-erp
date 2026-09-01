@@ -98,11 +98,14 @@ function eventsBarHTML() {
 }
 
 function chromeHTML(topstripHTML, logoHTML, navMainHTML, eventsHTML, secondaryNavHtml) {
-  return `
+  const topstrip = topstripHTML.trim()
+    ? `
 <div class="ies-topstrip">
   <div class="container">${topstripHTML}
   </div>
-</div>
+</div>`
+    : '';
+  return `${topstrip}
 <div class="ies-nav-spacer">
   <div class="ies-nav" id="iesNav">
     <div class="container">

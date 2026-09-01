@@ -151,3 +151,8 @@ font-weight: 700;
     }
   }
 }
+
+body.author-guide .highlight .highlight-inner {
+  padding: 1.5rem;
+}
+

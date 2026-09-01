@@ -224,6 +224,10 @@
   font-size: 15px;
   line-height: 1.55;
   margin: 0;
+
+  &.button-wrapper {
+    margin-top: 2rem;
+  }
 }
 
 
@@ -827,4 +831,9 @@
   :is(h2, h3, h4, h5, h6, p, ul, ol, li) {
     color: #fff;
   }
+}
+
+
+body.author-guide .cards.icons.icons-sm .cards-card-image img {
+  filter: invert(1);
 }
