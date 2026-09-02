@@ -128,6 +128,8 @@ font-weight: 700;
   & > p:not(.button-wrapper) {
     max-width: 30rem;
     margin: 0 auto 8px;
+    font-size: 20px;
+    line-height: 28px;
   }
 
   & > p.button-wrapper {
@@ -139,11 +141,6 @@ font-weight: 700;
 
   @media (width >= 1024px) {
     padding: 60px 0;
-
-    & > p:not(.button-wrapper) {
-      font-size: 20px;
-      line-height: 28px;
-    }
 
     & > p.button-wrapper {
       gap: 40px;
