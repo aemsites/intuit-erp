@@ -676,12 +676,6 @@ async function applyExperiment(response, id, stampTarget, applyContent, record, 
   return true;
 }
 
-// TEMP FALLBACK — when the orchestrator has no decision (or no contentId) for a
-// content-personalisation placement, stamp this hardcoded event instead of no-op'ing, so
-// the block always has something to show while the real access-point is still being
-// wired up server-side. Remove once the orchestrator reliably resolves this.
-const CONTENT_PERSONALISATION_FALLBACK_ID = '/events/multi-entity-financial-control';
-
 // A slot opts out of the fragment-swap apply-shape when its section declares
 // data-pzn-block-type="content-personalisation" (see collectSlots) — the resolved
 // decision is stamped as data-pzn-resolved-id onto the resolved block element
@@ -689,19 +683,20 @@ const CONTENT_PERSONALISATION_FALLBACK_ID = '/events/multi-entity-financial-cont
 // flag lives on the SECTION, never the block itself, since an AEM block's content
 // schema may not pass through arbitrary authored attributes. Generic hand-off: no
 // block-name/content awareness here. `isCp` = collectSlots' contentPersonalisation.
+//
+// No decision (orchestrator null/errored/no entry for this placement) or no contentId on
+// an existing decision ⇒ no stamp at all — the consuming block's own decorate() sees no
+// data-pzn-resolved-id and falls back to its own default content, same as any other
+// no-decision case. No hardcoded fallback id here.
 async function applyPznSlot(response, placement, stampTarget, applyContent, record, track, isCp) {
   const d = pznDecision(response, placement);
-  if (!d) {
-    if (!isCp) return false;
-    setAttr(stampTarget, 'data-pzn-resolved-id', CONTENT_PERSONALISATION_FALLBACK_ID);
-    return true;
-  }
+  if (!d) return false;
   const rec = pznRecord(placement, d);
 
   if (isCp) {
-    const contentId = d.contentId || CONTENT_PERSONALISATION_FALLBACK_ID;
     if (rec && track) record([rec]);
-    setAttr(stampTarget, 'data-pzn-resolved-id', contentId);
+    if (!d.contentId) return false;
+    setAttr(stampTarget, 'data-pzn-resolved-id', d.contentId);
     if (track) stampPzn(stampTarget, rec);
     return true;
   }
@@ -737,26 +732,16 @@ export async function applyPage(doc, response, signal, { track = true } = {}) {
 
 // Section/block swaps for `root` from the cached response (no network call). Eager for the
 // first/LCP section (awaited), lazy for the rest (skip = first). `track:false` = read-only.
-//
-// A null `response` (orchestrator unreachable/errored/timed out — e.g. a 405, a network
-// failure, an aborted request) still needs to run for content-personalisation slots, so
-// their hardcoded fallback (see applyPznSlot) can stamp data-pzn-resolved-id even though
-// there's no decision at all. Every other apply-shape (experiments, ordinary pzn swaps)
-// has no such fallback and is skipped outright when there's no response — a null decision
-// there fails open with no visible change, just as before.
 export async function applyLayer(root, response, { skip, track = true } = {}) {
-  if (!root) return;
+  if (!root || !response) return;
   const tasks = [];
-  if (response) {
-    collectExperiments(root, skip).forEach(({ el, id, append }) => {
-      const apply = (p) => applyFragment(el, p, { append });
-      tasks.push(applyExperiment(response, id, el, apply, recordIxp, track));
-    });
-  }
+  collectExperiments(root, skip).forEach(({ el, id, append }) => {
+    const apply = (p) => applyFragment(el, p, { append });
+    tasks.push(applyExperiment(response, id, el, apply, recordIxp, track));
+  });
   collectSlots(root, skip).forEach(({
     el, placement, append, contentPersonalisation,
   }) => {
-    if (!response && !contentPersonalisation) return;
     const apply = (p) => applyFragment(el, p, { append });
     tasks.push(
       applyPznSlot(response, placement, el, apply, recordPzn, track, contentPersonalisation),
@@ -863,15 +848,10 @@ export async function applyPageExperience(doc) {
 
 // EAGER, after decorateMain: on a page swap, resolve the swapped-in content's own slots
 // (blocking paint only if the first section is affected), then swap the first/LCP section.
-//
-// Still runs when experienceResponse is null/missing (orchestrator errored, e.g. a 405, a
-// timeout, a network failure) — applyLayer's content-personalisation slots have a
-// hardcoded fallback that needs to run even without a response; every other apply-shape
-// safely no-ops on a null response (see applyLayer).
 export async function applyEagerLayers(doc, pageSwapped) {
   const main = doc.querySelector('main');
-  if (!main) return;
-  if (pageSwapped && window.hlx?.experienceResponse) {
+  if (!main || !window.hlx?.experienceResponse) return;
+  if (pageSwapped) {
     const swap = resolveSwappedSlots(doc, { timeoutMs: DECISION_DEADLINE_MS });
     window.hlx.experienceSwapResolved = swap.done;
     if (swap.firstSectionAffected) await withTimeout(swap.done, EAGER_DEADLINE_MS);
@@ -879,7 +859,7 @@ export async function applyEagerLayers(doc, pageSwapped) {
   const firstSection = main.querySelector('.section');
   if (firstSection) {
     perfMark('exp:first-section-swap:start');
-    await withTimeout(applyLayer(firstSection, window.hlx?.experienceResponse), EAGER_APPLY_MS);
+    await withTimeout(applyLayer(firstSection, window.hlx.experienceResponse), EAGER_APPLY_MS);
     perfMark('exp:first-section-swap:end');
     perfMeasure('exp:first-section-swap', 'exp:first-section-swap:start', 'exp:first-section-swap:end');
   }
@@ -887,13 +867,12 @@ export async function applyEagerLayers(doc, pageSwapped) {
   perfMeasure('exp:eager-total', 'exp:eager-start', 'exp:eager-layers-end');
 }
 
-// Resolves even when there was never a response (still awaits the settled promise, then
-// returns whatever landed — null included) so applyLazyLayers can still run applyLayer for
-// content-personalisation's fallback instead of bailing on a falsy response.
 async function latestExperienceResponse() {
-  if (window.hlx?.experienceResponsePromise) await window.hlx.experienceResponsePromise;
-  if (window.hlx?.experienceSwapResolved) await window.hlx.experienceSwapResolved;
-  return window.hlx?.experienceResponse ?? null;
+  const initial = window.hlx?.experienceResponse
+    || await window.hlx?.experienceResponsePromise;
+  if (!initial) return null;
+  if (window.hlx.experienceSwapResolved) await window.hlx.experienceSwapResolved;
+  return window.hlx?.experienceResponse || initial;
 }
 
 // Gives successful lazy applications the bounded decision window to record exposure before the
@@ -904,11 +883,11 @@ export async function prepareExperienceTracking(application) {
 }
 
 // LAZY: swap every remaining (below-the-fold) section, after any 2nd-call merge has landed.
-// Same null-response tolerance as applyEagerLayers above.
 export async function applyLazyLayers(doc) {
   const main = doc.querySelector('main');
   if (!main) return;
   const response = await latestExperienceResponse();
+  if (!response) return;
   perfMark('exp:lazy-layers:start');
   await applyLayer(main, response, { skip: main.querySelector('.section') });
   perfMark('exp:lazy-layers:end');
