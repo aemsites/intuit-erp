@@ -2,8 +2,7 @@ import {
   describe, it, expect, afterEach, vi,
 } from 'vitest';
 
-// PERF_ON and sampling are decided at module load, so stub location/random before
-// importing a fresh copy.
+// PERF_ON is decided at module load, so stub location before importing a fresh copy.
 const ORIGINAL_LOCATION = window.location;
 
 function stubLocation(search) {
@@ -23,11 +22,54 @@ function stubLocation(search) {
   });
 }
 
+// jsdom has no PerformanceObserver — stub so the reporter IIFE can register.
+function installPerformanceObserverMock() {
+  if (globalThis.PerformanceObserver?.__experiencePerfMock) return;
+  const observers = [];
+  globalThis.PerformanceObserver = class {
+    static __experiencePerfMock = true;
+
+    constructor(callback) {
+      this.callback = callback;
+      this.types = [];
+      observers.push(this);
+    }
+
+    observe({ type } = {}) {
+      if (type) this.types.push(type);
+    }
+
+    disconnect() { /* no-op */ }
+
+    static notify(type, entry) {
+      observers.forEach((o) => {
+        if (o.types.includes(type)) o.callback({ getEntries: () => [entry] });
+      });
+    }
+  };
+}
+
+function hookMeasureObserver() {
+  const orig = performance.measure.bind(performance);
+  vi.spyOn(performance, 'measure').mockImplementation((name, ...args) => {
+    const entry = orig(name, ...args);
+    globalThis.PerformanceObserver.notify('measure', entry);
+    return entry;
+  });
+}
+
+// PERF_ENABLED is decided at module load via Math.random() < PERF_SAMPLE_RATE.
+function stubSampled(sampled = true) {
+  vi.spyOn(Math, 'random').mockReturnValue(sampled ? 0 : 0.99);
+}
+
 afterEach(() => {
   Object.defineProperty(window, 'location', {
     value: ORIGINAL_LOCATION, configurable: true, writable: true,
   });
   if (window.hlx) delete window.hlx.experiencePerf;
+  delete window.coreServiceAdapter;
+  delete globalThis.PerformanceObserver;
   vi.restoreAllMocks();
   vi.resetModules();
 });
@@ -35,7 +77,7 @@ afterEach(() => {
 describe('experience perf reporter', () => {
   it('captures exp: measures via observer and dumps them via console.table when ?perf=on', async () => {
     stubLocation('?perf=on');
-    vi.spyOn(Math, 'random').mockReturnValue(0.9);
+    installPerformanceObserverMock();
     performance.clearMarks?.();
     performance.clearMeasures?.();
     const table = vi.spyOn(console, 'table').mockImplementation(() => {});
@@ -43,6 +85,7 @@ describe('experience perf reporter', () => {
     // Import registers the observers; create the measure afterwards so the LIVE observer captures
     // it, then let the async observer callback flush before reporting.
     await import('../scripts/experience.js');
+    hookMeasureObserver();
     performance.mark('exp:demo:start');
     performance.mark('exp:demo:end');
     performance.measure('exp:demo', 'exp:demo:start', 'exp:demo:end');
@@ -57,9 +100,11 @@ describe('experience perf reporter', () => {
 
   it('survives a resource-timing buffer clear (data captured live, not read from the buffer)', async () => {
     stubLocation('?perf=on');
+    installPerformanceObserverMock();
     const table = vi.spyOn(console, 'table').mockImplementation(() => {});
 
     await import('../scripts/experience.js');
+    hookMeasureObserver();
     performance.mark('exp:kept:start');
     performance.mark('exp:kept:end');
     performance.measure('exp:kept', 'exp:kept:start', 'exp:kept:end');
@@ -73,9 +118,10 @@ describe('experience perf reporter', () => {
     expect(table).toHaveBeenCalled();
   });
 
-  it('collects without the flag when the page view is sampled', async () => {
+  it('installs collection on sampled page views (console report remains ?perf=on only)', async () => {
     stubLocation('');
-    vi.spyOn(Math, 'random').mockReturnValue(0.05);
+    stubSampled(true);
+    installPerformanceObserverMock();
     const table = vi.spyOn(console, 'table').mockImplementation(() => {});
     await import('../scripts/experience.js');
     expect(typeof window.hlx.experiencePerf.report).toBe('function');
@@ -84,12 +130,27 @@ describe('experience perf reporter', () => {
     expect(table).not.toHaveBeenCalled();
   });
 
-  it('does not install perf collection without the flag when the page view is unsampled', async () => {
+  it('skips collection on unsampled page views', async () => {
     stubLocation('');
-    vi.spyOn(Math, 'random').mockReturnValue(0.9);
-    const table = vi.spyOn(console, 'table').mockImplementation(() => {});
+    stubSampled(false);
+    installPerformanceObserverMock();
     await import('../scripts/experience.js');
     expect(window.hlx?.experiencePerf).toBeUndefined();
-    expect(table).not.toHaveBeenCalled();
+  });
+
+  it('sends experience-perf to Splunk on sampled page views', async () => {
+    vi.useFakeTimers();
+    stubLocation('');
+    stubSampled(true);
+    installPerformanceObserverMock();
+    const info = vi.fn();
+    window.coreServiceAdapter = { logger: { info } };
+    await import('../scripts/experience.js');
+    await vi.advanceTimersByTimeAsync(6000);
+    expect(info).toHaveBeenCalledWith('experience-perf', expect.objectContaining({
+      event: 'experience-perf',
+      sampleRate: 0.1,
+    }));
+    vi.useRealTimers();
   });
 });

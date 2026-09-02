@@ -80,6 +80,7 @@ beforeEach(() => {
 afterEach(() => {
   vi.restoreAllMocks();
   delete window.requestIdleCallback;
+  delete window.coreServiceAdapter;
   resetAnalytics();
   delete window.appVars;
   window.localStorage.clear();
@@ -512,10 +513,20 @@ describe('fetchExperience', () => {
     expect(globalThis.fetch.mock.calls[0][0]).toBe('https://preview.example/api/intuit-orchestrator');
   });
   it('fails open (null) on a non-ok response and on a thrown error', async () => {
+    const error = vi.fn();
+    window.coreServiceAdapter = { logger: { error } };
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(new Response('', { status: 500 }));
     expect(await fetchExperience({ experimentIds: ['1'], accessPointNames: [] }, {})).toBeNull();
+    expect(error).toHaveBeenCalledWith(
+      'experience-orchestrator-failed',
+      expect.objectContaining({ intuitTid: expect.stringMatching(/^rp-/), reason: 'http-error', status: 500 }),
+    );
     globalThis.fetch.mockRejectedValueOnce(new Error('network'));
     expect(await fetchExperience({ experimentIds: ['1'], accessPointNames: [] }, {})).toBeNull();
+    expect(error).toHaveBeenCalledWith(
+      'experience-orchestrator-failed',
+      expect.objectContaining({ intuitTid: expect.stringMatching(/^rp-/), reason: 'network-error' }),
+    );
   });
 });
 
@@ -1356,5 +1367,24 @@ describe('buildPerfPayload', () => {
     expect(payload).not.toHaveProperty('pageExperimentId');
     expect(payload.ttfbMs).toBe(40);
     expect(payload.domContentLoadedMs).toBe(300);
+  });
+
+  it('includes intuit_tid and failure details from callMeta', () => {
+    const payload = buildPerfPayload({
+      callMeta: [
+        { intuitTid: 'rp-aaa', ok: true, status: 200 },
+        {
+          intuitTid: 'rp-bbb', ok: false, status: 504, reason: 'http-error',
+        },
+      ],
+    });
+    expect(payload).toMatchObject({
+      orchestratorIntuitTid: 'rp-aaa',
+      orchestrator2IntuitTid: 'rp-bbb',
+      orchestrator2Ok: false,
+      orchestrator2Status: 504,
+      orchestrator2Reason: 'http-error',
+    });
+    expect(payload).not.toHaveProperty('orchestratorOk');
   });
 });

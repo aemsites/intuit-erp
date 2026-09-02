@@ -24,6 +24,21 @@ const PERF_ENABLED = PERF_ON || Math.random() < PERF_SAMPLE_RATE;
 
 const round1 = (n) => Math.round(n * 10) / 10;
 
+// Per-call orchestrator outcomes (intuit_tid + ok/status/error) for perf payload + error logs.
+const orchestratorCallLog = [];
+
+function experienceLog(level, message, fields = {}) {
+  try {
+    window.coreServiceAdapter?.logger?.[level]?.(message, fields);
+  } catch { /* logging must never break the page */ }
+}
+
+function recordOrchestratorCall(meta) {
+  // Only the perf reporter reads this, and it bails when !PERF_ENABLED — skip the work
+  // (and the unbounded growth across preview re-runs) on unsampled views.
+  if (PERF_ENABLED) orchestratorCallLog.push(meta);
+}
+
 // Mark/measure that can never throw (measure raises if its start mark is missing —
 // possible when phases run standalone, e.g. in tests or partial page flows).
 function perfMark(name) {
@@ -48,7 +63,7 @@ const PERF_MEASURE_FIELDS = {
 // numeric *Ms fields, absent metrics omitted — never null/0 placeholders) so Splunk
 // spath/stats queries stay trivial. Pure: everything visible from the args + DOM reads.
 export function buildPerfPayload({
-  measures = [], orchestrator = [], lcp, fcp, nav,
+  measures = [], orchestrator = [], callMeta = [], lcp, fcp, nav,
 } = {}) {
   const payload = {
     event: 'experience-perf',
@@ -73,11 +88,22 @@ export function buildPerfPayload({
     if (field) payload[field] = round1(e.duration);
   });
   // Orchestrator calls: 1st = decision call, 2nd = resolveSwappedSlots follow-up.
-  payload.orchestratorCalls = orchestrator.length;
+  // Resource timings can be absent on a network-error/abort — callMeta still has the call.
+  payload.orchestratorCalls = Math.max(orchestrator.length, callMeta.length);
   orchestrator.slice(0, 2).forEach((e, i) => {
     const prefix = i === 0 ? 'orchestrator' : `orchestrator${i + 1}`;
     payload[`${prefix}Ms`] = round1(e.responseEnd - e.startTime);
     payload[`${prefix}TtfbMs`] = round1(e.responseStart - e.requestStart);
+  });
+  callMeta.slice(0, 2).forEach((meta, i) => {
+    const prefix = i === 0 ? 'orchestrator' : `orchestrator${i + 1}`;
+    if (meta.intuitTid) payload[`${prefix}IntuitTid`] = meta.intuitTid;
+    if (meta.ok === false) {
+      payload[`${prefix}Ok`] = false;
+      if (meta.status) payload[`${prefix}Status`] = meta.status;
+      if (meta.reason) payload[`${prefix}Reason`] = meta.reason;
+      if (meta.error) payload[`${prefix}Error`] = meta.error;
+    }
   });
   // Overall page performance.
   if (lcp) payload.lcpMs = round1(lcp.startTime);
@@ -115,6 +141,7 @@ export function buildPerfPayload({
   const collect = () => buildPerfPayload({
     measures,
     orchestrator,
+    callMeta: orchestratorCallLog,
     lcp: lcpEntry,
     fcp: fcpEntry,
     nav: performance.getEntriesByType?.('navigation')?.[0],
@@ -399,6 +426,20 @@ export async function fetchExperience({ experimentIds, accessPointNames }, conte
   const { signal: externalSignal, timeoutMs = 1500 } = opts;
   let signal = externalSignal;
   let timer;
+  const tid = intuitTid();
+  // One seam for every failure branch: record for the perf payload + log to Splunk.
+  // Deadline aborts are expected fail-open behavior (the phase budget), so they log at
+  // warn, not error — a slow backend must not flood error dashboards.
+  const fail = (fields) => {
+    const failure = { intuitTid: tid, ok: false, ...fields };
+    recordOrchestratorCall(failure);
+    experienceLog(
+      failure.reason === 'aborted' ? 'warn' : 'error',
+      'experience-orchestrator-failed',
+      { event: 'experience-orchestrator-failed', ...failure },
+    );
+    return null;
+  };
   if (!signal) {
     const controller = new AbortController();
     signal = controller.signal;
@@ -419,14 +460,26 @@ export async function fetchExperience({ experimentIds, accessPointNames }, conte
     const res = await fetch(target, {
       method: 'POST',
       credentials: 'include',
-      headers: { intuit_tid: intuitTid(), 'content-type': 'application/json' },
+      headers: { intuit_tid: tid, 'content-type': 'application/json' },
       body: JSON.stringify(body),
       signal,
     });
-    if (!res.ok) return null;
-    return await res.json();
-  } catch {
-    return null;
+    if (!res.ok) {
+      return fail({ status: res.status, reason: 'http-error', target });
+    }
+    try {
+      const data = await res.json();
+      recordOrchestratorCall({ intuitTid: tid, ok: true, status: res.status });
+      return data;
+    } catch {
+      return fail({ status: res.status, reason: 'invalid-json', target });
+    }
+  } catch (err) {
+    // `target` is try-scoped; the tid still correlates this log with the request.
+    return fail({
+      reason: signal?.aborted ? 'aborted' : 'network-error',
+      error: err?.message || err?.name || String(err),
+    });
   } finally {
     if (timer) clearTimeout(timer);
   }
