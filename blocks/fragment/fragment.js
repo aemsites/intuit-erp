@@ -27,6 +27,12 @@ export async function loadFragment(path) {
       const main = document.createElement('main');
       main.innerHTML = await resp.text();
 
+      // Mark this subtree as fragment content while it's decorated (still detached
+      // from the consuming page at this point) so blocks within it — e.g.
+      // media-text — can tell fragment-authored content, reused across many
+      // pages, apart from content authored directly on the page.
+      main.dataset.fragment = 'true';
+
       // reset base path for media to fragment base
       const resetAttributeBase = (tag, attr) => {
         main.querySelectorAll(`${tag}[${attr}^="./media_"]`).forEach((elem) => {

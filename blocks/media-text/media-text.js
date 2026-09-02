@@ -52,10 +52,20 @@ function featurePayload(el) {
   };
 }
 
-function buildCopy(textCell) {
+function buildCopy(textCell, { newTabCta = false } = {}) {
   const copy = document.createElement('div');
   copy.className = 'media-copy';
   if (textCell) [...textCell.childNodes].forEach((n) => copy.append(n));
+  // CTAs inside a media-text rendered by the `fragment` block — a DA content
+  // fragment reused across many pages — open in a new tab so a reader doesn't
+  // lose their place in the article they're on. CTAs authored directly on a page
+  // are left alone.
+  if (newTabCta) {
+    copy.querySelectorAll('.button-wrapper a').forEach((a) => {
+      a.target = '_blank';
+      a.rel = 'noopener';
+    });
+  }
   const heading = copy.querySelector('h2, h3, h4');
   // eyebrow = a paragraph that precedes the heading and is not a button/link
   const eyebrowPs = [];
@@ -98,9 +108,14 @@ export default function decorate(block) {
   const isPower = block.classList.contains('power');
   const isCenter = block.classList.contains('center');
   const rows = [...block.children];
+  // True when this media-text arrived via the `fragment` block (see
+  // fragment.js). Checked here, while the fragment's markup is still inside the
+  // detached `main[data-fragment]` it builds, so `.closest('.fragment')` is
+  // not yet usable.
+  const insideFragment = !!block.closest('[data-fragment]');
 
   if (isCenter) {
-    const copy = buildCopy(rows[0] && rows[0].firstElementChild);
+    const copy = buildCopy(rows[0] && rows[0].firstElementChild, { newTabCta: insideFragment });
     copy.classList.add('media-center');
     block.replaceChildren(copy);
     return;
@@ -113,7 +128,7 @@ export default function decorate(block) {
       const cells = [...row.children];
       const card = document.createElement('article');
       card.className = `compare-card ${i % 2 === 0 ? 'compare-blue' : 'compare-sand'}`;
-      const copy = buildCopy(cells[0]);
+      const copy = buildCopy(cells[0], { newTabCta: insideFragment });
       [...copy.children].forEach((el) => card.append(el));
       if (cells[1]) {
         const vis = document.createElement('div');
@@ -146,7 +161,7 @@ export default function decorate(block) {
       const cells = [...row.children];
       const card = document.createElement('article');
       card.className = 'mig-card';
-      const copy = buildCopy(cells[0]);
+      const copy = buildCopy(cells[0], { newTabCta: insideFragment });
       [...copy.children].forEach((el) => card.append(el));
       if (cells[1]) {
         const vis = document.createElement('div');
@@ -260,7 +275,7 @@ export default function decorate(block) {
       ? (i % 2 === 0)
       : (mediaAuthoredFirst || i % 2 === 1);
     if (rowReverse) rowEl.classList.add('row-reverse');
-    rowEl.append(buildCopy(textCell));
+    rowEl.append(buildCopy(textCell, { newTabCta: insideFragment }));
     if (mediaCell) {
       const vis = document.createElement('div');
       vis.className = 'media-visual';
