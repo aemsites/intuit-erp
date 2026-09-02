@@ -86,24 +86,46 @@ describe('web-survey: alreadyHandled / surveyUrl', () => {
 });
 
 describe('smartform: appendDisclaimer', () => {
-  const formWithCompany = () => {
+  // Mirrors the real Marketo markup: input nested in .mktoFieldWrap beside a floated label.
+  const formWithCompany = (value = 'Acme Inc') => {
     const form = document.createElement('form');
-    form.innerHTML = '<input name="intuitCompanyName" id="intuitCompanyName">';
+    form.className = 'mktoForm';
+    form.innerHTML = `
+      <div class="mktoFormRow"><div class="mktoFieldDescriptor mktoFormCol">
+        <div class="mktoOffset"></div>
+        <div class="mktoFieldWrap">
+          <label for="intuitCompanyName">Business Name:</label>
+          <div class="mktoGutter"></div>
+          <input id="intuitCompanyName" name="intuitCompanyName" class="mktoField mktoValid"
+            value="${value}" data-zi-input-enriched="true">
+          <span class="mktoInstruction"></span>
+          <div class="mktoClear"></div>
+        </div>
+        <div class="mktoClear"></div>
+      </div></div>`;
     return form;
   };
 
-  it('inserts the note right after the company field', () => {
+  it('drops the note below the field wrap, clear of the floated input', () => {
     const form = formWithCompany();
     appendDisclaimer(form);
     const msg = form.querySelector('.zi-formcomplete-msg');
     expect(msg).toBeTruthy();
-    expect(form.querySelector('[name="intuitCompanyName"]').nextElementSibling).toBe(msg);
+    expect(form.querySelector('.mktoFieldWrap').nextElementSibling).toBe(msg);
   });
   it('does not double-insert', () => {
     const form = formWithCompany();
     appendDisclaimer(form);
     appendDisclaimer(form);
     expect(form.querySelectorAll('.zi-formcomplete-msg')).toHaveLength(1);
+  });
+  it('survives the synthetic change/input events fired by ZI autofill and Marketo validation', () => {
+    const form = formWithCompany();
+    appendDisclaimer(form);
+    const input = form.querySelector('[name="intuitCompanyName"]');
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    expect(form.querySelector('.zi-formcomplete-msg')).toBeTruthy();
   });
   it('skips when the visitor already typed the company name', () => {
     const form = formWithCompany();
