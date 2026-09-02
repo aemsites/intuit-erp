@@ -977,11 +977,13 @@ main > .section .block.spacer-bottom-xxl { margin-bottom: 6rem; }
 main > .section .block.spacer-bottom-xxxl { margin-bottom: 8rem; }
 main > .section .block.spacer-bottom-xxxxl { margin-bottom: 10rem; }
 
+main > .section.padding-top-none { padding-top: 0; }
 main > .section.padding-top-s { padding-top: 1rem; }
 main > .section.padding-top-m { padding-top: 1.5rem; }
 main > .section.padding-top-l { padding-top: 2.5rem; }
 main > .section.padding-top-xl { padding-top: 4rem; }
 main > .section.padding-top-xxl { padding-top: 6rem; }
+main > .section.padding-bottom-none { padding-bottom: 0; }
 main > .section.padding-bottom-s { padding-bottom: 1rem; }
 main > .section.padding-bottom-m { padding-bottom: 1.5rem; }
 main > .section.padding-bottom-l { padding-bottom: 2.5rem; }
@@ -990,11 +992,13 @@ main > .section.padding-bottom-xxl { padding-bottom: 6rem; }
 main > .section.padding-bottom-xxxl { padding-bottom: 8rem; }
 main > .section.padding-bottom-xxxxl { padding-bottom: 10rem; }
 
+main > .section .block.padding-top-none { padding-top: 0; }
 main > .section .block.padding-top-s { padding-top: 1rem; }
 main > .section .block.padding-top-m { padding-top: 1.5rem; }
 main > .section .block.padding-top-l { padding-top: 2.5rem; }
 main > .section .block.padding-top-xl { padding-top: 4rem; }
 main > .section .block.padding-top-xxl { padding-top: 6rem; }
+main > .section .block.padding-bottom-none { padding-bottom: 0; }
 main > .section .block.padding-bottom-s { padding-bottom: 1rem; }
 main > .section .block.padding-bottom-m { padding-bottom: 1.5rem; }
 main > .section .block.padding-bottom-l { padding-bottom: 2.5rem; }

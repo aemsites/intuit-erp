@@ -122,7 +122,7 @@ section, and **every other key** becomes a `data-<key>` attribute the client cod
 
 | Authored key | Becomes | Controls |
 | --- | --- | --- |
-| `Style` | class(es) on the section | Section styling. Value is a comma-separated list of class names — **currently used across the site** (73×). Vocabulary in use: `narrow`, `center`, `contained`, `left`/`right`, `navy`, `sky`, `super-blue`, `blue-divider`, `teal-band`, `light`, `two-col`, `media-lead`, `feature-cards`, `product-cards`, `hear-customers`, and spacing `spacer-top-*` / `spacer-bottom-*` / `padding-bottom-*` (`l`/`xl`/`xxl`). Classes are defined in [styles/](styles/) and block CSS |
+| `Style` | class(es) on the section | Section styling. Value is a comma-separated list of class names — **currently used across the site** (73×). Vocabulary in use: `narrow`, `center`, `contained`, `left`/`right`, `navy`, `sky`, `super-blue`, `blue-divider`, `teal-band`, `light`, `two-col`, `media-lead`, `feature-cards`, `product-cards`, `hear-customers`, and spacing `spacer-top-*` / `spacer-bottom-*` / `padding-top-*` / `padding-bottom-*` (`none`/`s`/`m`/`l`/`xl`/`xxl`/`xxxl`/`xxxxl`). Classes are defined in [styles/](styles/) and block CSS |
 | `Background` | `data-background` | Section background — **currently used** (values are hex colors, a `conic-gradient(...)`, `white`, or `none`). An image URL → optimized `background-image`; otherwise a CSS color/gradient plus `colored-background` and `dark-background`/`light-background` classes. Read by [scripts/scripts.js](scripts/scripts.js) |
 | `Exp` | `data-exp` | Section-scoped experiment id (numeric); section-level content swap |
 | `Exp Block` | `data-exp-block` | Scopes that experiment to the block whose `data-block-name` matches, instead of the whole section |
