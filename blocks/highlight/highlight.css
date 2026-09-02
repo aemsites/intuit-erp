@@ -126,7 +126,7 @@ font-weight: 700;
   }
 
   & > p:not(.button-wrapper) {
-    max-width: 30rem;
+    max-width: 570px;
     margin: 0 auto 8px;
     font-size: 20px;
     line-height: 28px;
