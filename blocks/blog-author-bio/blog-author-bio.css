@@ -88,3 +88,8 @@
   line-height: 1.6;
   color: var(--text-muted, #666);
 }
+
+/* multi-paragraph bios: space the stacked paragraphs, block stays flush */
+.blog-author-bio .blog-author-bio-desc + .blog-author-bio-desc {
+  margin-top: 12px;
+}
