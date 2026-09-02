@@ -20,11 +20,15 @@
  * `template`, never by URL shape. Results are always newest-first.
  * .carousel delegates to blocks/carousel/carousel.js, CSS loaded on demand.
  *
+ * A post whose hero is a video (`hero-video-url` in the index) renders a play
+ * badge on its thumbnail and plays it in this block's own lightbox.
+ *
  * CSS: blocks/blog-cards/blog-cards.css
  */
 import { readBlockConfig, loadCSS, createOptimizedPicture } from '../../scripts/aem.js';
 import { trackAs } from '../../scripts/tracking.js';
 import { loadIndex, formatDate, normalizePath } from '../../scripts/content-index.js';
+import { videoInfo, posterFor } from '../video/video-info.js';
 
 const DEFAULT_SOURCE = '/blog/query-index.json';
 const DEFAULT_PAGE_SIZE = 6;
@@ -99,18 +103,107 @@ export function categoryLabel(entry) {
   return (primary || '').replace(/-/g, ' ');
 }
 
+/**
+ * The listing player's URL. videoInfo's embedUrl already carries autoplay+rel;
+ * the source listing adds modestbranding + enablejsapi, which are YouTube-only
+ * params, so a Vimeo card keeps its own embed URL unchanged.
+ * @param {{provider:string, embedUrl:string}} info videoInfo() result
+ * @returns {string}
+ */
+function playerUrl(info) {
+  if (info.provider !== 'youtube') return info.embedUrl;
+  return `${info.embedUrl}&modestbranding=1&enablejsapi=1`;
+}
+
+/**
+ * Opens a card's video in a dismissible lightbox (fixed, centered, dimmed page,
+ * autoplay iframe), matching the source listing's modal. Escape and a click on
+ * the backdrop close it; focus moves to the close button and returns to the
+ * opener on dismiss.
+ *
+ * Deliberately block-local rather than imported from blocks/video: a block owns
+ * its own behaviour *and* its stylesheet, and importing another block's module
+ * does not load that block's CSS (the overlay rendered unstyled). The markup is
+ * small, so blog-cards carries its own copy — same call as carousel.js makes.
+ * @param {string} src provider embed URL (autoplay)
+ * @param {string} title accessible iframe title
+ */
+function openVideoLightbox(src, title) {
+  // guard against a double-click stacking two overlays
+  if (document.querySelector('.blog-card-video-overlay')) return;
+  const overlay = document.createElement('div');
+  overlay.className = 'blog-card-video-overlay';
+
+  const iframe = document.createElement('iframe');
+  iframe.src = src;
+  iframe.title = title || 'Video';
+  // the source player's permission set
+  iframe.allow = 'accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture';
+  iframe.allowFullscreen = true;
+  const frame = document.createElement('div');
+  frame.className = 'blog-card-video-frame';
+  frame.append(iframe);
+
+  const close = document.createElement('button');
+  close.type = 'button';
+  close.className = 'blog-card-video-close';
+  close.setAttribute('aria-label', 'Close');
+  close.textContent = '×';
+
+  const modal = document.createElement('div');
+  modal.className = 'blog-card-video-modal';
+  modal.append(close, frame);
+  overlay.append(modal);
+
+  const opener = document.activeElement;
+  function dismiss() {
+    overlay.remove();
+    // eslint-disable-next-line no-use-before-define
+    document.removeEventListener('keydown', onKey);
+    if (opener && opener.focus) opener.focus();
+  }
+  function onKey(e) { if (e.key === 'Escape') dismiss(); }
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) dismiss(); });
+  close.addEventListener('click', dismiss);
+  document.addEventListener('keydown', onKey);
+  document.body.append(overlay);
+  close.focus();
+}
+
 // Card: image, category, title, date. Untrusted feed data — no innerHTML.
 export function cardEl(entry, featured = false) {
-  const card = document.createElement('a');
+  // Posts whose hero is a video carry `hero-video-url` in the query index
+  // (indexed off the authored hero link): the thumbnail gets a play badge and
+  // opens the video in a lightbox, matching the source listing.
+  const info = videoInfo((entry['hero-video-url'] || '').trim());
+
+  // A video card mirrors the source listing's structure: the thumbnail is the
+  // play control and only the body links to the article, so the control is a
+  // *sibling* of the link — a focusable control nested in an <a> is invalid and
+  // unreachable by keyboard. A normal card stays one <a> around everything.
+  const card = document.createElement(info ? 'div' : 'a');
   card.className = featured ? 'blog-card featured' : 'blog-card';
-  card.href = entry.path || '#';
+  if (info) card.classList.add('has-video');
+  else card.href = entry.path || '#';
 
   const imageWrap = document.createElement('div');
   imageWrap.className = 'blog-card-image';
-  if (entry.image) {
-    imageWrap.append(createOptimizedPicture(entry.image, entry.title || '', false, [
+  // a video post with no authored image falls back to the provider thumbnail
+  const poster = info ? posterFor(info, entry.image) : entry.image;
+  if (poster) {
+    imageWrap.append(createOptimizedPicture(poster, entry.title || '', false, [
       { width: featured ? '750' : '400' },
     ]));
+  }
+
+  if (info) {
+    imageWrap.setAttribute('role', 'button');
+    imageWrap.setAttribute('tabindex', '0');
+    imageWrap.setAttribute('aria-label', entry.title ? `Play video: ${entry.title}` : 'Play video');
+    const play = document.createElement('span');
+    play.className = 'blog-card-play';
+    play.setAttribute('aria-hidden', 'true');
+    imageWrap.append(play);
   }
 
   const body = document.createElement('div');
@@ -142,9 +235,54 @@ export function cardEl(entry, featured = false) {
   // thumbnail (#769).
   const contentSlot = document.createElement('span');
   contentSlot.className = 'blog-card-content-slot';
-  contentSlot.append(body);
+  if (info) {
+    // video card: the article link wraps the body only (the thumbnail plays the
+    // video), so it takes the body's place in the card's flex layout.
+    const link = document.createElement('a');
+    link.className = 'blog-card-link';
+    link.href = entry.path || '#';
+    link.append(body);
+    contentSlot.append(link);
+  } else {
+    contentSlot.append(body);
+  }
   card.append(imageWrap, contentSlot);
+
+  // The play control sits outside the article link, so opening the lightbox
+  // needs neither preventDefault (there is no navigation to cancel) nor
+  // stopPropagation — the click keeps bubbling to document, which is where the
+  // injected click tracker listens (CLICK-TRACKING.md). Keyboard: Enter/Space on
+  // the control plays; the card link still reaches the article.
+  if (info) {
+    const openPlayer = () => openVideoLightbox(playerUrl(info), entry.title || '');
+    imageWrap.addEventListener('click', openPlayer);
+    imageWrap.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault(); // Space would scroll the listing
+        openPlayer();
+      }
+    });
+  }
   return card;
+}
+
+/**
+ * JIT tracking payload for a video card's play control: prod reports a play as
+ * video/started (ui_object=video, empty ui_object_detail), not the generic
+ * content/interacted a thumbnail derives, so the tracker emits `video:started`.
+ * Null for every other CTA in the block, leaving ordinary cards pure-derive.
+ * @param {Element} el the resolved CTA
+ * @returns {Record<string, string>|null} sheet-shaped cfg (kebab keys), or null
+ */
+function blogCardPayload(el) {
+  if (!el.matches('.blog-card.has-video .blog-card-image')) return null;
+  return {
+    object: 'video',
+    action: 'started',
+    'ui-object': 'video',
+    'ui-object-detail': '',
+    'ui-action': 'clicked',
+  };
 }
 
 function emptyStateEl() {
@@ -313,10 +451,14 @@ export default async function decorate(block) {
       },
       // both slots omit link_name here — prod does on the blog index grid (it
       // keeps a truncated one only on the related-blogs rail, see that block).
+      // A video card's poster is deliberately NOT a part: payload derivers don't
+      // run for parts, so the click must resolve to the role=button wrapper for
+      // blogCardPayload to stamp video/started.
       alsoTrack: {
-        '.blog-card-image img': 'button',
+        '.blog-card:not(.has-video) .blog-card-image img': 'button',
         '.blog-card-body': 'button',
       },
+      payload: blogCardPayload,
     });
   };
 
