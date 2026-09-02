@@ -192,7 +192,8 @@ export function cardEl(entry, featured = false) {
   const poster = info ? posterFor(info, entry.image) : entry.image;
   if (poster) {
     imageWrap.append(createOptimizedPicture(poster, entry.title || '', false, [
-      { width: featured ? '750' : '400' },
+      { media: '(min-width: 768px)', width: '2000' },
+      { width: '750' },
     ]));
   }
 
