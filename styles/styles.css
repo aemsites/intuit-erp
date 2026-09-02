@@ -540,6 +540,15 @@ main .section.narrow>div {
   }
 }
 
+/* narrow-1130: a 1130px content box with 155px side gutters (desktop only) */
+@media (width >= 1024px) {
+  main .section.narrow-1130>div {
+    max-width: 1440px;
+    padding-inline: 155px;
+    margin-inline: auto;
+  }
+}
+
 main > .section > .default-content-wrapper > h2 {
   font-size: 48px;
 }
