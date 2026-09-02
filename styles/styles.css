@@ -920,7 +920,7 @@ img {
 @media (width <768px) {
   :root {
     --section-y: 48px;
-    --nav-height: 56px;
+    --nav-height: 60px;
   }
 
   main>.section>div {
