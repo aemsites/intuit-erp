@@ -8,7 +8,7 @@
  * img.src, never innerHTML.
  */
 import { getMetadata, toClassName, createOptimizedPicture } from '../../scripts/aem.js';
-import { loadIndex } from '../../scripts/content-index.js';
+import { loadIndex, normalizePath } from '../../scripts/content-index.js';
 import { trackAs } from '../../scripts/tracking.js';
 
 const BLOG_INDEX = '/blog/query-index.json';
@@ -22,7 +22,7 @@ const BLOG_INDEX = '/blog/query-index.json';
 async function fetchAuthorRow(slug) {
   try {
     const entries = await loadIndex(BLOG_INDEX);
-    return entries.find((e) => e.path === `/blog/author/${slug}`) || null;
+    return entries.find((e) => normalizePath(e.path) === `/blog/author/${slug}`) || null;
   } catch (error) {
     // eslint-disable-next-line no-console
     console.debug(`author-bio: could not load author row for "${slug}"`, error);
@@ -126,7 +126,8 @@ export default async function decorate(block) {
     block.closest('.section')?.remove();
     return;
   }
-  block.replaceChildren(buildSocialShare(), buildBio(row, `/blog/author/${slug}`));
+  // link to the author page via the matched row's own path (the canonical served form)
+  block.replaceChildren(buildSocialShare(), buildBio(row, row.path));
   // author link reports under the `author_bio` trail (prod omits link_name)
   trackAs('author_bio', block, { key: 'author_bio', linkName: false });
 }

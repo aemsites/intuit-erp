@@ -24,7 +24,7 @@
  */
 import { readBlockConfig, loadCSS, createOptimizedPicture } from '../../scripts/aem.js';
 import { trackAs } from '../../scripts/tracking.js';
-import { loadIndex, formatDate } from '../../scripts/content-index.js';
+import { loadIndex, formatDate, normalizePath } from '../../scripts/content-index.js';
 
 const DEFAULT_SOURCE = '/blog/query-index.json';
 const DEFAULT_PAGE_SIZE = 6;
@@ -84,7 +84,10 @@ export function filterEntries(entries, {
   if (templates.length) {
     out = out.filter((entry) => templates.includes((entry.template || '').trim().toLowerCase()));
   }
-  if (excludePath) out = out.filter((entry) => entry.path !== excludePath);
+  if (excludePath) {
+    const exclude = normalizePath(excludePath);
+    out = out.filter((entry) => normalizePath(entry.path) !== exclude);
+  }
   out = [...out].sort((a, b) => new Date(b.date) - new Date(a.date));
   if (limit > 0) out = out.slice(0, limit);
   return out;

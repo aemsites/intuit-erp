@@ -210,7 +210,9 @@ export async function swapMain(doc, path, signal) {
   const p = fragmentPath(path);
   if (!main || !p) return false;
   try {
-    const resp = await fetch(`${p}.plain.html`, { signal });
+    // Folder-index pages serve content only at /foo/index.plain.html, not /foo/.plain.html
+    const plainPath = p.endsWith('/') ? `${p}index` : p;
+    const resp = await fetch(`${plainPath}.plain.html`, { signal });
     if (!resp.ok) return false;
     main.innerHTML = await resp.text();
     return true;

@@ -20,7 +20,9 @@ import {
  */
 export async function loadFragment(path) {
   if (path && path.startsWith('/') && !path.startsWith('//')) {
-    const resp = await fetch(`${path}.plain.html`);
+    // Folder-index pages serve content only at /foo/index.plain.html, not /foo/.plain.html
+    const plainPath = path.endsWith('/') ? `${path}index` : path;
+    const resp = await fetch(`${plainPath}.plain.html`);
     if (resp.ok) {
       const main = document.createElement('main');
       main.innerHTML = await resp.text();
