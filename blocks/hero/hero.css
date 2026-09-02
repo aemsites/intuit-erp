@@ -122,6 +122,10 @@
   box-shadow: 0 24px 60px rgb(0 0 0 / 35%);
 }
 
+.hero .hero-dashboard-lottie.is-loading {
+  visibility: hidden;
+}
+
 .hero.image-glow .hero-dashboard-lottie {
   overflow: initial;
 }

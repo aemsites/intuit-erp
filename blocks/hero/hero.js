@@ -5,7 +5,8 @@ const DEFAULT_FORM_FRAGMENT = '/fragments/schedule-call';
 const DASHBOARD_LOTTIE_PATHS = ['/', '/index'];
 const DASHBOARD_LOTTIE_JSON = '/blocks/hero/dashboard-animation.json';
 const LOTTIE_PLAYER_URL = 'https://cdn.jsdelivr.net/npm/lottie-web@5.12.2/build/player/lottie_light.min.js/+esm';
-const DASHBOARD_LOTTIE_DELAY = 3000;
+const DASHBOARD_LOTTIE_ROOT_MARGIN = '500px 0px';
+const DASHBOARD_LOTTIE_IDLE_TIMEOUT = 2000;
 const YOUTUBE_URL_RE = /(?:youtube(?:-nocookie)?\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/;
 const VIMEO_URL_RE = /vimeo\.com\/(?:video\/)?(\d+)/;
 
@@ -69,42 +70,119 @@ async function leadCard(path) {
   }
   return wrap;
 }
+function yieldToMain() {
+  if (window.scheduler?.yield) return window.scheduler.yield();
+  return new Promise((resolve) => { window.setTimeout(resolve, 0); });
+}
+
+function scheduleWhenIdle(callback) {
+  if (window.requestIdleCallback) {
+    window.requestIdleCallback(callback, { timeout: DASHBOARD_LOTTIE_IDLE_TIMEOUT });
+  } else {
+    window.setTimeout(callback, 0);
+  }
+}
+
 /*
  * @param {Element} media The .hero-media wrapper
  * @param {Element} picture The static <picture>/<img> already inside it
+ * @param {Object} dependencies Overridable resource loaders for tests
  */
-function enhanceDashboardAnimation(media, picture) {
+export function enhanceDashboardAnimation(media, picture, {
+  fetchAnimation = (url) => fetch(url),
+  loadPlayer = () => import(/* webpackIgnore: true */ LOTTIE_PLAYER_URL),
+} = {}) {
   if (!DASHBOARD_LOTTIE_PATHS.includes(window.location.pathname)) return;
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
+  let responsePromise;
+  let started = false;
+
+  const warmResources = () => {
+    if (!document.head.querySelector('link[data-hero-dashboard-lottie]')) {
+      const preload = document.createElement('link');
+      preload.rel = 'modulepreload';
+      preload.href = LOTTIE_PLAYER_URL;
+      preload.crossOrigin = 'anonymous';
+      preload.nonce = 'aem';
+      preload.dataset.heroDashboardLottie = '';
+      document.head.append(preload);
+    }
+
+    if (!responsePromise) {
+      const url = `${window.hlx?.codeBasePath || ''}${DASHBOARD_LOTTIE_JSON}`;
+      try {
+        responsePromise = Promise.resolve(fetchAnimation(url)).catch(() => null);
+      } catch {
+        responsePromise = Promise.resolve(null);
+      }
+    }
+    return responsePromise;
+  };
+
   const start = async () => {
+    let holder;
     try {
-      const [{ default: lottie }, res] = await Promise.all([
-        import(/* webpackIgnore: true */ LOTTIE_PLAYER_URL),
-        fetch(`${window.hlx.codeBasePath}${DASHBOARD_LOTTIE_JSON}`),
-      ]);
-      if (!res.ok) return;
+      const [{ default: lottie }, res] = await Promise.all([loadPlayer(), warmResources()]);
+      if (!res?.ok) return;
+      await yieldToMain();
       const animationData = await res.json();
-      const holder = document.createElement('div');
-      holder.className = 'hero-dashboard-lottie';
+      await yieldToMain();
+
+      holder = document.createElement('div');
+      holder.className = 'hero-dashboard-lottie is-loading';
       holder.setAttribute('aria-hidden', 'true');
       media.append(holder);
-      lottie.loadAnimation({
+      const animation = lottie.loadAnimation({
         container: holder,
         renderer: 'svg',
         loop: false,
-        autoplay: true,
+        autoplay: false,
         animationData,
       });
-      picture.classList.add('hero-dashboard-fallback');
+      animation.addEventListener('DOMLoaded', () => {
+        holder.classList.remove('is-loading');
+        picture.classList.add('hero-dashboard-fallback');
+        animation.play();
+      });
+      animation.addEventListener('data_failed', () => holder.remove());
     } catch {
-      // static image stays visible — nothing to clean up
+      holder?.remove();
+      // static image stays visible
     }
   };
 
-  const schedule = () => window.setTimeout(start, DASHBOARD_LOTTIE_DELAY);
-  if (document.readyState === 'complete') schedule();
-  else window.addEventListener('load', schedule, { once: true });
+  const initialize = async () => {
+    if (started) return;
+    started = true;
+    const image = picture.matches('img') ? picture : picture.querySelector('img');
+    if (image?.decode) await image.decode().catch(() => {});
+    scheduleWhenIdle(start);
+  };
+
+  if (!window.IntersectionObserver) {
+    warmResources();
+    initialize();
+    return;
+  }
+
+  const warmObserver = new IntersectionObserver((entries) => {
+    if (!entries.some(({ isIntersecting }) => isIntersecting)) return;
+    warmObserver.disconnect();
+    warmResources();
+  }, { rootMargin: DASHBOARD_LOTTIE_ROOT_MARGIN });
+
+  const visibleObserver = new IntersectionObserver((entries) => {
+    const visible = entries.some(({ isIntersecting, intersectionRatio }) => (
+      isIntersecting && intersectionRatio >= 0.1
+    ));
+    if (!visible) return;
+    visibleObserver.disconnect();
+    initialize();
+  }, { threshold: 0.1 });
+
+  warmObserver.observe(media);
+  visibleObserver.observe(media);
 }
 
 export default async function decorate(block) {
