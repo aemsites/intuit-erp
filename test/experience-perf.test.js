@@ -69,6 +69,7 @@ afterEach(() => {
   });
   if (window.hlx) delete window.hlx.experiencePerf;
   delete window.coreServiceAdapter;
+  delete globalThis.PerformanceObserver;
   vi.restoreAllMocks();
   vi.resetModules();
 });

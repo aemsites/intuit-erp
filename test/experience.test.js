@@ -80,6 +80,7 @@ beforeEach(() => {
 afterEach(() => {
   vi.restoreAllMocks();
   delete window.requestIdleCallback;
+  delete window.coreServiceAdapter;
   resetAnalytics();
   delete window.appVars;
   window.localStorage.clear();

@@ -34,7 +34,9 @@ function experienceLog(level, message, fields = {}) {
 }
 
 function recordOrchestratorCall(meta) {
-  orchestratorCallLog.push(meta);
+  // Only the perf reporter reads this, and it bails when !PERF_ENABLED — skip the work
+  // (and the unbounded growth across preview re-runs) on unsampled views.
+  if (PERF_ENABLED) orchestratorCallLog.push(meta);
 }
 
 // Mark/measure that can never throw (measure raises if its start mark is missing —
@@ -86,7 +88,8 @@ export function buildPerfPayload({
     if (field) payload[field] = round1(e.duration);
   });
   // Orchestrator calls: 1st = decision call, 2nd = resolveSwappedSlots follow-up.
-  payload.orchestratorCalls = orchestrator.length;
+  // Resource timings can be absent on a network-error/abort — callMeta still has the call.
+  payload.orchestratorCalls = Math.max(orchestrator.length, callMeta.length);
   orchestrator.slice(0, 2).forEach((e, i) => {
     const prefix = i === 0 ? 'orchestrator' : `orchestrator${i + 1}`;
     payload[`${prefix}Ms`] = round1(e.responseEnd - e.startTime);
@@ -422,6 +425,19 @@ export async function fetchExperience({ experimentIds, accessPointNames }, conte
   let signal = externalSignal;
   let timer;
   const tid = intuitTid();
+  // One seam for every failure branch: record for the perf payload + log to Splunk.
+  // Deadline aborts are expected fail-open behavior (the phase budget), so they log at
+  // warn, not error — a slow backend must not flood error dashboards.
+  const fail = (fields) => {
+    const failure = { intuitTid: tid, ok: false, ...fields };
+    recordOrchestratorCall(failure);
+    experienceLog(
+      failure.reason === 'aborted' ? 'warn' : 'error',
+      'experience-orchestrator-failed',
+      { event: 'experience-orchestrator-failed', ...failure },
+    );
+    return null;
+  };
   if (!signal) {
     const controller = new AbortController();
     signal = controller.signal;
@@ -447,47 +463,21 @@ export async function fetchExperience({ experimentIds, accessPointNames }, conte
       signal,
     });
     if (!res.ok) {
-      const failure = {
-        intuitTid: tid, ok: false, status: res.status, reason: 'http-error',
-      };
-      recordOrchestratorCall(failure);
-      experienceLog('error', 'experience-orchestrator-failed', {
-        event: 'experience-orchestrator-failed',
-        ...failure,
-        target,
-      });
-      return null;
+      return fail({ status: res.status, reason: 'http-error', target });
     }
     try {
       const data = await res.json();
       recordOrchestratorCall({ intuitTid: tid, ok: true, status: res.status });
       return data;
     } catch {
-      const failure = {
-        intuitTid: tid, ok: false, status: res.status, reason: 'invalid-json',
-      };
-      recordOrchestratorCall(failure);
-      experienceLog('error', 'experience-orchestrator-failed', {
-        event: 'experience-orchestrator-failed',
-        ...failure,
-        target,
-      });
-      return null;
+      return fail({ status: res.status, reason: 'invalid-json', target });
     }
   } catch (err) {
-    const reason = signal?.aborted ? 'aborted' : 'network-error';
-    const failure = {
-      intuitTid: tid,
-      ok: false,
-      reason,
-      error: err?.name || String(err),
-    };
-    recordOrchestratorCall(failure);
-    experienceLog('error', 'experience-orchestrator-failed', {
-      event: 'experience-orchestrator-failed',
-      ...failure,
+    // `target` is try-scoped; the tid still correlates this log with the request.
+    return fail({
+      reason: signal?.aborted ? 'aborted' : 'network-error',
+      error: err?.message || err?.name || String(err),
     });
-    return null;
   } finally {
     if (timer) clearTimeout(timer);
   }
