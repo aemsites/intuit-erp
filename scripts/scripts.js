@@ -21,6 +21,8 @@ import installEcsEnrich from './ecs-enrich.js';
 import { isBlogPage, hasAuthoredCaseStudyHeader } from '../blocks/blog-template/blog-detect.js';
 import { isVideoLink } from '../blocks/video/video-info.js';
 import { isGuidePage } from '../blocks/guide-hero/guide-detect.js';
+// eslint-disable-next-line import/no-cycle
+import { applyPageExperience, applyEagerLayers } from './experience.js';
 
 // AEP (Adobe Web SDK) datastream — armed but disabled. Uncomment with the AEP blocks in loadEager
 // / loadLazy to enable it (parallel with Tealium). The datastream id is public, not a secret.
@@ -409,7 +411,6 @@ async function loadEager(doc) {
   // }
 
   // EAGER experience — the single consolidated call + any whole-page swap, BEFORE decorateMain.
-  const { applyPageExperience, applyEagerLayers } = await import('./experience.js');
   const pageSwapped = await applyPageExperience(doc);
   const main = doc.querySelector('main');
   if (main) {
