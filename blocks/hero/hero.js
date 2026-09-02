@@ -139,6 +139,7 @@ export default async function decorate(block) {
   let mediaEl = null;
   if (rawMedia) {
     mediaEl = rawMedia.closest('picture') || rawMedia;
+    mediaEl.querySelector('img').fetchPriority = 'high';
     const host = mediaEl.parentElement;
     mediaEl.remove();
     if (host !== copy && !host.textContent.trim() && !host.querySelector('img, picture')) host.remove();
