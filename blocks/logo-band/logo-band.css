@@ -138,23 +138,33 @@
   .logo-band .logoband-list { max-width: 1120px; }
 }
 
-/* logo-band.marquee — dark band with infinite horizontally-scrolling logos.
-   Sizing: mobile = 32px logos / 24px gaps / 72px band; from 768px up =
-   40px / 32px / 80px. Band height is the logo height plus 20px of vertical
-   padding top and bottom. */
-.section.logo-band-container:has(.logo-band.marquee) { background: #00254a; overflow: hidden; }
-.logo-band.marquee { padding: 20px 0; }
+/* logo-band.marquee — infinite scrolling logo band. .light swaps it to a
+   white band with grayscale logos instead of the default navy/inverted. */
+.logo-band.marquee { padding: 36px 0 var(--section-y); }
 
-/* full-bleed: a scrolling marquee spans the whole viewport, so release the
-   section wrapper's centered column — same mechanism as cta-band.simple */
+/* variables live on the section, not the block, so both the section's own
+   background and the block's descendant rules can read them */
+.section.logo-band-container:has(.logo-band.marquee) {
+  --marquee-bg: #00254a;
+  --marquee-logo-filter: brightness(0) invert(1);
+
+  background: var(--marquee-bg);
+  overflow: hidden;
+}
+
+.section.logo-band-container:has(.logo-band.marquee.light) {
+  --marquee-bg: #fff;
+  --marquee-logo-filter: grayscale(1) opacity(60%);
+}
+
+/* full-bleed: release the section wrapper's centered column */
 main > .section.logo-band-container:has(.logo-band.marquee) > div { max-width: none; padding: 0; }
 
 .logo-band.marquee .logoband-viewport { overflow: hidden; width: 100%; }
 .logo-band.marquee .logoband-track { display: flex; flex-wrap: nowrap; align-items: center; width: max-content; }
 .logo-band.marquee .logoband-set { display: flex; flex-wrap: nowrap; align-items: center; gap: 24px; flex: 0 0 auto; padding-right: 24px; }
 
-/* the logo source images are colored; invert renders them white on the dark band */
-.logo-band.marquee img { height: 32px; width: auto; filter: brightness(0) invert(1); flex: 0 0 auto; }
+.logo-band.marquee img { height: 32px; width: auto; filter: var(--marquee-logo-filter); flex: 0 0 auto; }
 
 .logo-band.marquee.is-ready .logoband-track {
   animation-name: logoband-scroll;

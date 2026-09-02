@@ -52,6 +52,19 @@ function featurePayload(el) {
   };
 }
 
+// A short bold lead-in immediately followed by a <br> and body copy is a
+// highlighted callout (matched by shape, not by what the label says).
+const CALLOUT_LABEL_MAX_WORDS = 4;
+
+function calloutLead(p) {
+  const first = p.firstElementChild;
+  if (!first || first.tagName !== 'STRONG') return null;
+  if (first.nextSibling?.nodeName !== 'BR') return null;
+  const label = first.textContent.trim();
+  if (!label || label.split(/\s+/).length > CALLOUT_LABEL_MAX_WORDS) return null;
+  return first;
+}
+
 function buildCopy(textCell, { newTabCta = false } = {}) {
   const copy = document.createElement('div');
   copy.className = 'media-copy';
@@ -72,6 +85,22 @@ function buildCopy(textCell, { newTabCta = false } = {}) {
   [...copy.querySelectorAll('p')].forEach((p) => {
     if (p.classList.contains('button-wrapper')) return;
     if (p.querySelector('a')) return;
+    const lead = calloutLead(p);
+    if (lead) {
+      const callout = document.createElement('div');
+      callout.className = 'media-callout';
+      const label = document.createElement('p');
+      label.className = 'media-callout-label';
+      label.textContent = lead.textContent.trim();
+      const body = document.createElement('p');
+      body.className = 'media-callout-body';
+      // drop the leading label run and its trailing <br>, keep the rest
+      [...p.childNodes].forEach((n) => { if (n !== lead) body.append(n); });
+      while (body.firstChild && body.firstChild.nodeName === 'BR') body.firstChild.remove();
+      callout.append(label, body);
+      p.replaceWith(callout);
+      return;
+    }
     // eslint-disable-next-line no-bitwise -- compareDocumentPosition returns a bitmask
     if (heading && (p.compareDocumentPosition(heading) & Node.DOCUMENT_POSITION_FOLLOWING)) {
       p.classList.add('eyebrow', 'media-eyebrow');
