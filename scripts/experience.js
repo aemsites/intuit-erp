@@ -219,7 +219,7 @@ function intuitTid() {
   const rand = window.crypto?.randomUUID
     ? window.crypto.randomUUID()
     : Math.random().toString(36).slice(2);
-  return `rp-${rand}`;
+  return `${rand}`;
 }
 
 // Resolves to the promise's value, or undefined after ms (fail-open phase bound).
