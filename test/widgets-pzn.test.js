@@ -2,11 +2,15 @@ import {
   describe, it, expect, vi, afterEach,
 } from 'vitest';
 
-// web-survey + form-vs-chilipiper import createModal; stub it so importing the modules doesn't
-// pull the modal → fragment → scripts.js graph into these pure-helper tests.
+// web-survey + form-vs-chilipiper import createModal, and web-survey imports loadFragment; stub both
+// so importing the modules doesn't pull the modal/fragment → scripts.js graph (which runs loadPage
+// on import) into these pure-helper tests.
 vi.mock('../blocks/modal/modal.js', () => ({
   createModal: vi.fn(async () => ({ showModal: vi.fn(), block: document.createElement('div') })),
   openModal: vi.fn(() => Promise.resolve()),
+}));
+vi.mock('../blocks/fragment/fragment.js', () => ({
+  loadFragment: vi.fn(async () => null),
 }));
 
 // eslint-disable-next-line import/first
@@ -19,7 +23,9 @@ import { createModal, openModal } from '../blocks/modal/modal.js';
 // eslint-disable-next-line import/first
 import { bindScheduleLinks } from '../scripts/schedule-modal.js';
 // eslint-disable-next-line import/first
-import { alreadyHandled, surveyUrl } from '../widgets/pzn/web-survey/web-survey.js';
+import {
+  alreadyHandled, surveyUrl, resolveSurveyBase, bindAccept,
+} from '../widgets/pzn/web-survey/web-survey.js';
 // eslint-disable-next-line import/first
 import decorateSmartform, { appendDisclaimer } from '../widgets/pzn/smartform/smartform.js';
 
@@ -29,7 +35,7 @@ afterEach(() => {
   document.body.innerHTML = '';
   delete document.documentElement.dataset.chilipiperBound;
   vi.clearAllMocks();
-  ['wsp_accepted', 'wsp_declined', 'wsp_displayed'].forEach((c) => {
+  ['wsp_accepted', 'wsp_declined', 'wsp_displayed', 'ivid'].forEach((c) => {
     document.cookie = `${c}=; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
   });
   delete window.ziFcInstalled;
@@ -82,6 +88,44 @@ describe('web-survey: alreadyHandled / surveyUrl', () => {
   it('surveyUrl appends the ivid as transid, url-encoded', () => {
     expect(surveyUrl('https://s.example/pub/x?pan=991', 'iv 1')).toBe('https://s.example/pub/x?pan=991&transid=iv%201');
     expect(surveyUrl('https://s.example/pub/x', 'iv1')).toBe('https://s.example/pub/x?transid=iv1');
+  });
+});
+
+describe('web-survey: resolveSurveyBase / bindAccept', () => {
+  const DEFAULT = 'https://j1.intellisurvey.com/pub/is14262?pan=991';
+  const anchor = (href) => {
+    const a = document.createElement('a');
+    if (href != null) a.setAttribute('href', href);
+    a.className = 'button';
+    return a;
+  };
+
+  it('resolveSurveyBase prefers the widget ?survey override', () => {
+    const widget = document.createElement('div');
+    widget.dataset.survey = 'https://override.example/s';
+    expect(resolveSurveyBase(widget, anchor('https://frag.example/x'))).toBe('https://override.example/s');
+  });
+  it('falls back to the CTA href when it is absolute', () => {
+    expect(resolveSurveyBase(document.createElement('div'), anchor('https://frag.example/x'))).toBe('https://frag.example/x');
+  });
+  it('falls back to the default with no override and a non-absolute (or missing) CTA href', () => {
+    expect(resolveSurveyBase(document.createElement('div'), anchor('#'))).toBe(DEFAULT);
+    expect(resolveSurveyBase(document.createElement('div'), null)).toBe(DEFAULT);
+  });
+
+  it('bindAccept stamps tracking attrs and, on click, sets wsp_accepted + opens the survey with the ivid', () => {
+    document.cookie = 'ivid=visitor-9';
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+    const a = anchor('#');
+    bindAccept(a, 'https://s.example/pub/x?pan=1');
+
+    expect(a.getAttribute('data-ui-object-detail')).toBe('ies-web-survey-popup-modal continue button');
+    expect(a.getAttribute('data-action')).toBe('interacted');
+
+    a.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    expect(document.cookie).toContain('wsp_accepted=true');
+    expect(openSpy).toHaveBeenCalledWith('https://s.example/pub/x?pan=1&transid=visitor-9', '_self');
+    openSpy.mockRestore();
   });
 });
 
