@@ -40,8 +40,15 @@ export function appendDisclaimer(form) {
   const msg = document.createElement('p');
   msg.className = 'zi-formcomplete-msg';
   msg.textContent = DISCLAIMER_TEXT;
-  companyInput.after(msg);
-  companyInput.addEventListener('change', () => msg.remove(), { once: true });
+  // Anchor below the whole field wrap so the note clears Marketo's floated label/input.
+  (companyInput.closest('.mktoFieldWrap') || companyInput).after(msg);
+  // Ignore ZI/Marketo synthetic change events (isTrusted false); remove only on a real edit.
+  const onEdit = (event) => {
+    if (!event.isTrusted) return;
+    msg.remove();
+    companyInput.removeEventListener('input', onEdit);
+  };
+  companyInput.addEventListener('input', onEdit);
 }
 
 function installFormComplete() {
@@ -54,9 +61,14 @@ function installFormComplete() {
     onReady() { log('ZI FormComplete ready'); },
     onRequestSent() { log('ZI FormComplete match request sent'); },
     onMatch(data) {
-      if (data && data.intuitCompanyName) {
-        log('ZI FormComplete match data returned');
-        const form = document.activeElement?.closest('form') || document.querySelector('.mktoForm');
+      const form = document.activeElement?.closest('form') || document.querySelector('.mktoForm');
+      const companyInput = form?.querySelector(`[name="${COMPANY_FIELD}"]`);
+      // ZI keys its payload by its own field names, so gate on the enriched field, not data's keys.
+      const enriched = companyInput?.dataset.ziInputEnriched === 'true'
+        || !!companyInput?.value?.trim()
+        || !!data?.intuitCompanyName;
+      if (enriched) {
+        log('ZI FormComplete match: company enriched');
         appendDisclaimer(form);
       } else {
         log('ZI FormComplete no match data returned');
@@ -87,7 +99,5 @@ export function whenFormPresent(fn) {
 }
 
 export default async function decorate() {
-  // Load ZoomInfo only when the modal form exists, so FormComplete initializes with the form
-  // present and binds it — it won't re-scan a form that mounts later.
   whenFormPresent(installFormComplete);
 }

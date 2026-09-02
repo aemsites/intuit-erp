@@ -1,14 +1,5 @@
-/* Behavior-only widget block renders nothing; the survey UI lives in a modal. */
+/* Behavior-only widget block renders nothing; the survey UI lives in a modal built from the
+   /fragments/pzn/web-survey content fragment, whose own blocks carry the modal's layout/styles. */
 .web-survey {
   display: none;
-}
-
-.web-survey-modal h2 {
-  margin-top: 0;
-}
-
-.web-survey-actions {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 24px;
 }
