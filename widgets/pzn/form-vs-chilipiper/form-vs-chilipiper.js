@@ -10,12 +10,12 @@
  *
  * Author config (widget href query params → widget.dataset):
  *   base    – round-robin base URL (default: intuitsales cal-first-construction)
- *   trigger – CSS selector for the CTA (default: construction hero schedule link)
+ *   trigger – CSS selector for the CTA (default: the header "Schedule a call" nav CTA)
  */
 import { createModal } from '../../../blocks/modal/modal.js';
 
 const DEFAULT_BASE = 'https://intuitsales.chilipiper.com/round-robin/cal-first-construction';
-const DEFAULT_TRIGGER = '.hero a[href$="#schedule"]';
+const DEFAULT_TRIGGER = 'header .nav-cta';
 
 // RFC4122 v4 UUID — native when available, else a Math.random fallback (matches the OICMS snippet).
 export function createUUID() {
@@ -72,6 +72,7 @@ export default async function decorate(widget) {
     const cta = e.target.closest(trigger);
     if (!cta) return;
     cta.dataset.chilipiperTrigger = 'true';
+    e.stopPropagation();
     e.preventDefault();
     openChiliPiperModal(base);
   }, true);

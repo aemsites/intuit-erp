@@ -21,7 +21,7 @@ import decorateChiliPiper, {
 // eslint-disable-next-line import/first
 import { createModal, openModal } from '../blocks/modal/modal.js';
 // eslint-disable-next-line import/first
-import { bindScheduleLinks } from '../scripts/schedule-modal.js';
+import { openScheduleModal } from '../scripts/schedule-modal.js';
 // eslint-disable-next-line import/first
 import {
   alreadyHandled, surveyUrl, resolveSurveyBase, bindAccept,
@@ -57,25 +57,32 @@ describe('form-vs-chilipiper: createUUID / buildChiliPiperUrl', () => {
     expect(url).toContain('?a=1&lead_xref_id=');
   });
 
-  it('claims a replaced construction CTA before the baseline handler without stopping bubbling', async () => {
-    document.body.innerHTML = `
-      <div class="hero"><a href="#schedule">Schedule a call</a></div>
-      <div class="widget"></div>`;
+  it('claims the header CTA (rendered after decorate) and suppresses its baseline handler', async () => {
+    document.body.innerHTML = '<header></header><div class="widget"></div>';
     const widget = document.querySelector('.widget');
     await decorateChiliPiper(widget);
 
-    document.querySelector('.hero').innerHTML = '<a href="#schedule">Schedule a call</a>';
-    const cta = document.querySelector('.hero a');
-    bindScheduleLinks(document.querySelector('.hero'));
-    const tracking = vi.fn();
-    document.addEventListener('click', tracking, { once: true });
+    // Header chrome (and its "Schedule a call" nav CTA) can render after the
+    // widget decorates; the capture-phase handler must still claim it.
+    document.querySelector('header').innerHTML = '<button type="button" class="nav-cta">Schedule a call</button>';
+    const cta = document.querySelector('header .nav-cta');
+    // Baseline header handler (blocks/header/header.js) opens the schedule modal;
+    // the widget must suppress it without any header.js cooperation.
+    cta.addEventListener('click', () => openScheduleModal());
+    // A sibling document-capture listener (e.g. of1-intent) must still fire —
+    // the widget uses stopPropagation, not stopImmediatePropagation.
+    const siblingCapture = vi.fn();
+    document.addEventListener('click', siblingCapture, true);
+
     cta.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
     await new Promise((resolve) => { setTimeout(resolve, 0); });
 
     expect(cta.dataset.chilipiperTrigger).toBe('true');
     expect(createModal).toHaveBeenCalledTimes(1);
-    expect(openModal).not.toHaveBeenCalled();
-    expect(tracking).toHaveBeenCalledTimes(1);
+    expect(openModal).not.toHaveBeenCalled(); // baseline schedule handler suppressed
+    expect(siblingCapture).toHaveBeenCalledTimes(1);
+
+    document.removeEventListener('click', siblingCapture, true);
   });
 });
 
