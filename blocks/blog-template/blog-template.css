@@ -603,6 +603,11 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
   color: #000;
 }
 
+.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail) > .default-content-wrapper > p > picture > img {
+  display: block;
+  margin: 0 auto;
+}
+
 @media (width < 1024px) {
   .blog-article > .blog-hero > .default-content-wrapper > .blog-byline-tag,
   .blog-article > .blog-hero > .default-content-wrapper > .blog-byline-meta {
