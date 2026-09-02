@@ -70,7 +70,7 @@ phase), so the injected tracker reads them on the ensuing click. The DOM stays c
 
 ### Track-by-default
 
-Every CTA (`a[href]`, `button`, `[role="button"]`) inside a **content region** (`<main>`, `<header>`,
+Every CTA (`a[href]`, `button`, `summary`, `[role="button"]`) inside a **content region** (`<main>`, `<header>`,
 `<footer>`) is tracked — matching the live tracker's document-wide model (prod annotates ~all content
 links). A CTA in **no** declared block is tracked under the `page` key with pure-derive defaults.
 
@@ -89,7 +89,8 @@ links). A CTA in **no** declared block is tracked under the `page` key with pure
    payload defaults (`object`/`action`/`uiObject`), `linkName:false` to suppress the derived
    `link_name`, and `skip` selectors. It is a *declaration*, not a tracking gate. Defaults resolve
    from the CTA's **nearest** ancestor carrying them, so a block can set a default and a sub-section
-   refine it.
+   refine it. The floating talk-to-sales widget uses this for `ui_object=button`, including its
+   support destination: it is an anchor semantically, but is presented and tracked as a CTA button.
 3. **Sheet residue** (`/tracking.json`) — the authored values the derive cannot know: `wa-link`
    campaign codes, semantic `object_detail` / `ui_object`, non-default `action`, and authored
    `link_name`. Two authoring columns: **`path`** (the page path, or `*`/blank for site-wide chrome)
@@ -110,6 +111,15 @@ trails come from one `trackAs` option — `items`, a selector → segment map fo
 `footer|footer_menus|footer_menu_section`, `footer|products`, …; article hero → share row / ToC) or an
 **`(index, el) => string`** for repeated/indexed children (cards → `rw_cards_container|carousel|rw_card_N`).
 Explicit authored `data-tracking` in markup always wins.
+
+Auto-built article structure follows the same trail contract without pretending the section is a
+block: `blog-template` stamps `qrc_article_hero` on the generated hero section so eyebrow and byline
+links stay at the flat article-hero access point. Its relocatable share widget remains self-contained
+as `qrc_article_hero|social_media`.
+
+The static EDS rendering of `media-text compare` keeps the migrated carousel identity as
+`rw_cards_container|carousel|rw_card_N`; visual carousel behavior is not required for the legacy
+card-slot trail to remain stable.
 
 `items` only stamps the **trail**. Making a non-CTA element emit its **own beacon** is `alsoTrack`
 (#769) — a selector → `ui_object` map. Each match gets `data-track-as=<ui_object>` so a click resolves
@@ -147,6 +157,11 @@ Loose content CTAs in no block are keyed `page:<…>` at interaction time. The e
 `hrefSlug`, `hostLabel`, and `hrefTrackId` are the building blocks; `OWN_HOSTS` in `tracking.js` is the
 one site-specific knob (which apexes strip to a path).
 
+Two repeated-fragment cases use semantic ids instead of the shared `#schedule` destination:
+unclaimed loose schedule anchors receive `page:<slug(label)>`, and authored tabs CTAs receive
+`tabs:<slug(panel-label)>-<slug(cta-label)>`. This keeps the QuickBooks Desktop, QuickBooks Online,
+and non-Intuit migration CTAs independently addressable even though all three open the same modal.
+
 **Positional keying is retired.** Every block is id-keyed and the sheet has a single `id` column — no
 `<blockKey>-<n>` and no DOM-index resolution (`sheetRowFor`/`pageCtas` are gone). `indexRows` still
 tolerates a stray legacy `key` column so an un-republished sheet fails open, but nothing resolves by
@@ -165,17 +180,61 @@ Parity is measured deterministically against a golden captured from prod (`scrip
 - `gen-sheet-from-golden.mjs` — reverse-engineers the residue sheet from the golden, keyed by `id`
   the way the runtime resolves (`idOf`/`assignIds`: per-block special ids, else `<key>:<hrefSlug |
   slug(label)>`, deduped per page#block). The customer's `/tracking.json` seed.
+- `sheet-from-our-build.mjs` — rekeys that residue to current Stage `data-track-id` values. Pass the
+  reviewed replay manifest with `--manifest` so an explicitly reviewed target wins when migrated
+  copy or destinations no longer match the frozen production DOM.
 - `coverage-matrix.mjs` — a readable component × field coverage matrix.
 
 Golden fixtures with customer campaign codes stay **local + gitignored**
 (`scripts/diff/fixtures/local/`); they are never committed.
+
+### Authenticated stage replay (workstation only)
+
+The authenticated runner is deliberately limited to the exact `https://stage.erp.intuit.com`
+origin, a dedicated Chrome profile, one browser target, and one explicit customer-golden scenario.
+Observe mode sends the customer-authorized analytics click; use `Adobe Migration Test` in the
+authorization reference. Captures are privacy-sanitized before leaving the page and written mode
+`0600` under the gitignored local fixture directory.
+
+```sh
+node scripts/diff/live-replay-runner.mjs launch \
+  --port 9339 \
+  --profile-dir "$HOME/.intuit-erp-clicktrack/chrome-profile-cdp"
+```
+
+After connecting VPN and authenticating the opened stage page, qualify the explicit scenario:
+
+```sh
+node scripts/diff/live-replay-runner.mjs qualify \
+  --cdp http://127.0.0.1:9339 \
+  --profile-dir "$HOME/.intuit-erp-clicktrack/chrome-profile-cdp" \
+  --golden /absolute/path/to/clicktrack-golden-customer.json \
+  --scenario scripts/diff/fixtures/clicktrack-qualification-scenario.json \
+  --out scripts/diff/fixtures/local/live-replay-qualification.json \
+  --authorization-ref "customer-authorized Adobe Migration Test parity exercise YYYY-MM-DD"
+```
+
+The command refuses before clicking if authentication, consent, Tealium, tracker readiness,
+runtime hashes, target isolation, or authorization is missing. The current qualification scenario
+exercises only the customer golden FAQ click on `/workforce-automation`; it is not complete-golden
+coverage. Remove expired local replay evidence with:
+
+```sh
+node scripts/diff/live-replay-runner.mjs purge \
+  --evidence-dir scripts/diff/fixtures/local \
+  --retention-days 30
+```
+
+For bounded follow-up validation, the complete replay scheduler accepts repeatable
+`--only-scenario <scenario-id>` arguments. After the required one-time lineage-proof interaction,
+it activates only the selected reviewed customer interactions; all other scenarios remain pending.
 
 ## Status
 
 **Implemented and wired.** `scripts/tracking.js` is loaded lazily from `scripts.js`; blocks declare
 their tracking via `trackAs` (hero, cards, faq, testimonial, footer, header nav + secondary-nav,
 related-blogs, case-study-header, video, quick-links, cta-band, contact-us/talk-to-sales, blog-template
-author-bio). Card blocks (related-blogs, blog-cards) fire per-slot beacons via `alsoTrack`: the
+article hero/share and author-bio). Card blocks (related-blogs, blog-cards) fire per-slot beacons via `alsoTrack`: the
 thumbnail (`…|image`) and the body content slot (`…|qrc_content_card_content`); the blog index also
 reproduces its paginated **Load More** (`…|oisp_loadmore|button`).
 
@@ -185,7 +244,7 @@ remains (~4.4%) is **not** clean runtime work — see `CLICK-TRACKING-PATH-TO-10
 per-cell breakdown:
 
 - **Bucket B — EDS markup limitation (~2.1%)**: secondary-nav (our button flyout vs prod's link nav +
-  search input + nested submenus), the disclaimer + product_banner components (not ported), the
+  search input + nested submenus), the product_banner component (not ported), the
   case-study-header share/ToC nesting (#765), the video pause control, and the faq answer-body links
   (would need a CSS restructure — the `.faq-toggle + .faq-panel` sibling selector blocks isolating the
   toggle's `accordion` trail). A team call: restructure vs. accept.

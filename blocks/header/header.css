@@ -82,7 +82,6 @@ body.nav-scroll-lock {
 
 .header .ies-nav.scrolled {
    box-shadow: 0 1px 0 rgb(0 0 0 / 6%);
-   border-bottom: 2px solid var(--navy);
 }
 
 .header .ies-nav .container {
@@ -755,5 +754,16 @@ body.nav-scroll-lock {
 
    .header .ies-secondary-nav .rc-search-input {
       font-size: 16px;
+   }
+}
+
+
+body.author-guide {
+   header {
+      min-height: initial;
+   }
+
+   .header .nav-cta {
+      display: none;
    }
 }

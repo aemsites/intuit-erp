@@ -43,6 +43,54 @@
   margin: 0 0 8px;
 }
 
+/* Shown in place of the form once it has been submitted (see showThankYou in
+   form.js): a centred tick, heading and one line of body copy. The white
+   background comes from the enclosing `.section.form-container`.
+   `align-items: stretch` + `min-width: 0` keep the paragraphs sized to the
+   container; without them a flex item sizes to its own content, so copy longer
+   than the box overflows both edges and `text-align: center` centres it around
+   the narrow box, clipping the body on the left. */
+.form .form-success {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  box-sizing: border-box;
+  width: 100%;
+  margin: auto;
+  padding: 40px;
+  text-align: center;
+}
+
+/* 60x60 centred tick above the copy. decorateIcons() emits a 16x16 <img>
+   inside the span, so both are sized here. */
+.form .form-success .form-success-check {
+  display: block;
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 16px;
+}
+
+.form .form-success .form-success-check img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.form .form-success .form-success-heading {
+  font-size: 28px;
+  line-height: 1.2857; /* 36px */
+  font-weight: 500;
+  color: var(--heading);
+  margin: 0 0 20px;
+}
+
+.form .form-success p:not(.form-success-heading) {
+  font-size: 16px;
+  line-height: 1.5; /* 24px */
+  min-width: 0;
+  margin: 0;
+}
+
 .form .form-subheader {
   font-size: 15px;
   color: var(--text-muted);

@@ -49,12 +49,11 @@
  * CSS: blocks/blog-template/blog-template.css
  */
 import {
-  getMetadata, toClassName, loadCSS, createOptimizedPicture,
+  getMetadata, toClassName, loadCSS, buildBlock,
 } from '../../scripts/aem.js';
 import { hasAuthoredCaseStudyHeader } from './blog-detect.js';
-import { loadIndex } from '../../scripts/content-index.js';
-import { trackAs } from '../../scripts/tracking.js';
 import { MQ_DESKTOP_UP } from '../../scripts/breakpoints.js';
+import { stampTracking, trackAs } from '../../scripts/tracking.js';
 
 /**
  * Selects the article's main H2 sections only — excludes headings nested
@@ -65,7 +64,7 @@ import { MQ_DESKTOP_UP } from '../../scripts/breakpoints.js';
  */
 function tocHeadings(main) {
   return [...main.querySelectorAll('h2')].filter((h) => !h.closest(
-    '.blog-cards,.highlight,.testimonial,.stat-band,.cta-band,.media-text,.download-form',
+    '.blog-prehero,.blog-cards,.highlight,.testimonial,.stat-band,.cta-band,.media-text,.download-form',
   ) && !(h.parentElement && h.parentElement.querySelector('.blog-cards')));
 }
 
@@ -268,6 +267,12 @@ export function buildShare() {
   label.textContent = 'Share this article:';
   wrap.append(label);
 
+  // Links live in a display:contents span so the click-tracking trail nests as
+  // `…|social_media` (see the trackAs in buildBlogTemplate) without changing layout —
+  // .blog-share stays [label, link, link, …] in flow.
+  const links = document.createElement('span');
+  links.className = 'blog-share-links';
+  links.style.display = 'contents';
   buildShareLinks().forEach(({ label: name, href, icon }) => {
     const a = document.createElement('a');
     a.className = 'blog-share-link';
@@ -281,8 +286,9 @@ export function buildShare() {
     img.alt = '';
     img.loading = 'lazy';
     a.append(img);
-    wrap.append(a);
+    links.append(a);
   });
+  wrap.append(links);
 
   return wrap;
 }
@@ -410,162 +416,6 @@ function wireToc(tocWrap, nav, headings, mq) {
   headings.forEach((h) => observer.observe(h));
 }
 
-const BLOG_INDEX = '/blog/query-index.json';
-
-/**
- * Fetches the blog query-index and returns the author row for the given slug,
- * or null if not found. The index is cached by content-index.js so multiple
- * blocks share a single fetch.
- * @param {string} slug author slug (e.g. "abigail-sims")
- * @returns {Promise<object|null>}
- */
-async function fetchAuthorRow(slug) {
-  try {
-    const entries = await loadIndex(BLOG_INDEX);
-    const authorPath = `/blog/author/${slug}`;
-    return entries.find((e) => e.path === authorPath) || null;
-  } catch (error) {
-    // eslint-disable-next-line no-console
-    console.debug(`author-bio: could not load author row for "${slug}"`, error);
-    return null;
-  }
-}
-
-/**
- * Builds and inserts the end-of-article author bio strip from the given
- * query-index row: circular headshot (row.image), author name linked to the
- * author page (row.title), and bio text (row.description). Placed in the prose
- * column. Untrusted feed values are assigned via textContent / img.src — never
- * innerHTML.
- * @param {Element} main the page's <main>
- * @param {object} row the author's query-index row
- * @param {string} authorPath /blog/author/<slug>
- */
-export function insertAuthorBio(main, row, authorPath) {
-  const wrap = document.createElement('div');
-  wrap.className = 'blog-author-bio';
-  const inner = document.createElement('div');
-  inner.className = 'blog-author-bio-inner';
-  if (row.image) {
-    const imgWrap = document.createElement('div');
-    imgWrap.className = 'blog-author-bio-avatar';
-    // Responsive <picture> via the site's media pipeline; lazy since the bio
-    // sits at the very bottom of the article (below the fold).
-    const picture = createOptimizedPicture(row.image, row.title || '', false, [{ width: '120' }]);
-    const img = picture.querySelector('img');
-    img.width = 120;
-    img.height = 120;
-    imgWrap.append(picture);
-    inner.append(imgWrap);
-  }
-  const textWrap = document.createElement('div');
-  textWrap.className = 'blog-author-bio-text';
-  if (row.title) {
-    const nameEl = document.createElement('p');
-    nameEl.className = 'blog-author-bio-name';
-    const nameLink = document.createElement('a');
-    nameLink.href = authorPath;
-    nameLink.textContent = row.title;
-    nameEl.append(nameLink);
-    textWrap.append(nameEl);
-  }
-  if (row.description) {
-    const bioEl = document.createElement('p');
-    bioEl.className = 'blog-author-bio-desc';
-    bioEl.textContent = row.description;
-    textWrap.append(bioEl);
-  }
-  inner.append(textWrap);
-  wrap.append(inner);
-  // Click tracking: the author link reports under the `author_bio` trail; prod
-  // omits link_name here.
-  trackAs('author_bio', wrap, { key: 'author_bio', linkName: false });
-  // Production places the author bio right after the FAQ block. Some articles
-  // author "Recommended for you" BEFORE the FAQ (as this page does), so keying
-  // off the FAQ — not the recommended cards — is what keeps the bio after it.
-  // Fallbacks, in order: before the "Recommended for you" cards (pages with no
-  // FAQ), before the right-rail, else append.
-  const faqEl = main.querySelector('.faq');
-  const faqSection = faqEl && [...main.children].find((s) => s.contains(faqEl));
-  const blogCardsEl = main.querySelector('.blog-cards');
-  const recSection = blogCardsEl && [...main.children].find((s) => s.contains(blogCardsEl));
-  if (faqSection) {
-    faqSection.after(wrap);
-  } else if (recSection) {
-    recSection.before(wrap);
-  } else {
-    const rail = main.querySelector(':scope > .blog-rail');
-    if (rail) rail.before(wrap);
-    else main.append(wrap);
-  }
-}
-
-/**
- * Builds the social-share strip (Facebook / X / LinkedIn) that production
- * renders just above the author bio, with a "Share" label. Share links carry
- * the current article URL. Icons are referenced from /icons/*.svg.
- * @param {Element} main the page's <main>
- */
-function insertSocialShare(main) {
-  if (main.querySelector(':scope > .blog-social-share')) return;
-  const enc = encodeURIComponent(window.location.href);
-  const NETWORKS = [
-    { name: 'facebook', label: 'Facebook', href: `https://www.facebook.com/sharer/sharer.php?u=${enc}` },
-    { name: 'x', label: 'X', href: `https://twitter.com/share?url=${enc}` },
-    { name: 'linkedin', label: 'LinkedIn', href: `https://www.linkedin.com/sharing/share-offsite/?url=${enc}` },
-  ];
-  const wrap = document.createElement('div');
-  wrap.className = 'blog-social-share';
-  const label = document.createElement('span');
-  label.className = 'blog-social-share-label';
-  label.textContent = 'Share';
-  wrap.append(label);
-  const list = document.createElement('ul');
-  list.className = 'blog-social-share-list';
-  NETWORKS.forEach((n) => {
-    const li = document.createElement('li');
-    const a = document.createElement('a');
-    a.className = `blog-social-share-icon blog-social-${n.name}`;
-    a.href = n.href;
-    a.target = '_blank';
-    a.rel = 'noopener noreferrer';
-    a.setAttribute('aria-label', `Share on ${n.label}`);
-    const icon = document.createElement('img');
-    icon.src = `${window.hlx.codeBasePath}/icons/${n.name}.svg`;
-    icon.alt = '';
-    icon.width = 16;
-    icon.height = 16;
-    icon.loading = 'lazy';
-    a.append(icon);
-    li.append(a);
-    list.append(li);
-  });
-  wrap.append(list);
-  const bio = main.querySelector(':scope > .blog-author-bio');
-  const rail = main.querySelector(':scope > .blog-rail');
-  if (bio) bio.before(wrap);
-  else if (rail) rail.before(wrap);
-  else main.append(wrap);
-}
-
-/**
- * Async: loads the author's query-index row and, if found, renders the bio
- * strip plus the social-share strip above it. Fire-and-forget from
- * buildBlogTemplate so the sync layout setup isn't delayed.
- * @param {Element} main the page's <main>
- */
-async function appendAuthorBio(main) {
-  const author = getMetadata('author');
-  if (!author) return;
-  const slug = toClassName(author);
-  if (!slug) return;
-  const authorPath = `/blog/author/${slug}`;
-  const row = await fetchAuthorRow(slug);
-  if (!row) return;
-  insertAuthorBio(main, row, authorPath);
-  insertSocialShare(main);
-}
-
 /**
  * Resolves a metadata override to a `/fragments/...` path, same rule the
  * right-rail link already uses: an absolute value is used as-is, a bare name
@@ -650,6 +500,30 @@ export function decorateBlockquoteAttributions(main) {
   });
 }
 
+/**
+ * Injects the blog-author-bio block section into `main`, positioned to match
+ * production: after the FAQ; else before "Recommended for you"; else before the
+ * right-rail; else appended. Runs before decorateSections so the block rides the
+ * section pipeline — hidden until its async render resolves, then revealed
+ * fully-formed below the fold (#519). Exported for tests.
+ * @param {Element} main the page's <main>
+ */
+export function injectAuthorBioBlock(main) {
+  const bioSection = document.createElement('div');
+  bioSection.append(buildBlock('blog-author-bio', ''));
+  const faqEl = main.querySelector('.faq');
+  const faqSection = faqEl && [...main.children].find((s) => s.contains(faqEl));
+  const blogCardsEl = main.querySelector('.blog-cards');
+  const recSection = blogCardsEl && [...main.children].find((s) => s.contains(blogCardsEl));
+  if (faqSection) faqSection.after(bioSection);
+  else if (recSection) recSection.before(bioSection);
+  else {
+    const railEl = main.querySelector(':scope > .blog-rail');
+    if (railEl) railEl.before(bioSection);
+    else main.append(bioSection);
+  }
+}
+
 export function buildBlogTemplate(main) {
   // Three case studies author a `case-study-header` block in section 1 (its own
   // centred banner, share row and inline TOC). Bail out so those pages aren't
@@ -674,6 +548,12 @@ export function buildBlogTemplate(main) {
 
   main.classList.add('blog-article');
 
+  const hideRails = getMetadata('hide-rails').trim().toLowerCase();
+  const hideBoth = ['true', 'yes', 'hide', 'all'].includes(hideRails);
+  const hideRight = hideBoth || hideRails === 'right';
+  if (hideBoth) main.classList.add('blog-no-rails');
+  else if (hideRight) main.classList.add('blog-no-right-rail');
+
   // restore in-article pull-quote attribution styling (pipeline drops <cite>)
   decorateBlockquoteAttributions(main);
 
@@ -691,11 +571,21 @@ export function buildBlogTemplate(main) {
   //    image left in place (last) — natural DOM order so mobile needs no
   //    special handling; the 2-col band is desktop-only CSS (grid-column: 2
   //    on the image, spanning every row of the text column beside it).
-  const firstSection = sections[0];
+  const heroSection = sections.find((s) => s.querySelector('h1')) || sections[0];
+  const heroIndex = sections.indexOf(heroSection);
   let h1;
   let meta;
-  if (firstSection) {
-    firstSection.classList.add('blog-hero');
+  if (heroSection) {
+    sections.slice(0, heroIndex).forEach((s, i) => {
+      s.classList.add('blog-prehero');
+      s.style.gridRow = `${i + 1}`;
+    });
+    heroSection.classList.add('blog-hero');
+    // Prod reports the article eyebrow/byline links at the flat article-hero
+    // access point. The share widget carries its own nested trail because it
+    // can move into the desktop rail, but the hero's ordinary links need this
+    // structural segment so they do not fall back to the generic `page` trail.
+    stampTracking(heroSection, 'qrc_article_hero');
 
     // an article may carry several comma-separated categories; the byline shows
     // the primary (first) one.
@@ -707,17 +597,16 @@ export function buildBlogTemplate(main) {
       updated: getMetadata('updated'),
     });
 
-    h1 = firstSection.querySelector('h1');
+    h1 = heroSection.querySelector('h1');
     if (h1) {
       if (eyebrow) h1.before(eyebrow);
       if (meta.childElementCount) h1.after(meta);
     } else {
-      // no H1 authored — degrade gracefully, still put content at the top
-      if (meta.childElementCount) firstSection.prepend(meta);
-      if (eyebrow) firstSection.prepend(eyebrow);
+      if (meta.childElementCount) heroSection.prepend(meta);
+      if (eyebrow) heroSection.prepend(eyebrow);
     }
 
-    const heroImg = firstSection.querySelector('img');
+    const heroImg = heroSection.querySelector('img');
     heroImg?.closest('p')?.classList.add('blog-hero-image');
   }
 
@@ -725,14 +614,14 @@ export function buildBlogTemplate(main) {
   //    (section 1) so mobile stacks hero → toc panel → body naturally; CSS
   //    grid re-places it into the left rail on wide viewports regardless of
   //    DOM order.
-  const toc = buildToc(main);
+  const toc = hideBoth ? null : buildToc(main);
   let tocWrap;
   let headings = [];
   if (toc) {
     tocWrap = document.createElement('div');
     tocWrap.className = 'blog-toc-rail';
     tocWrap.append(toc);
-    if (firstSection) firstSection.after(tocWrap);
+    if (heroSection) heroSection.after(tocWrap);
     else main.prepend(tocWrap);
 
     headings = [...toc.querySelectorAll('.blog-toc-list a')]
@@ -743,17 +632,20 @@ export function buildBlogTemplate(main) {
 
   // 3. right-rail fragment link — the existing fragment autoblock (which runs
   //    AFTER this in buildAutoBlocks) picks it up and loads it.
-  const railName = getMetadata('right-rail') || '/fragments/right-rail';
-  const railPath = railName.startsWith('/') ? railName : `/fragments/${railName}`;
-  const rail = document.createElement('div');
-  rail.className = 'blog-rail';
-  const railLink = document.createElement('a');
-  railLink.href = railPath;
-  railLink.textContent = railPath;
-  const railP = document.createElement('p');
-  railP.append(railLink);
-  rail.append(railP);
-  main.append(rail);
+  let rail;
+  if (!hideRight) {
+    const railName = getMetadata('right-rail') || '/fragments/right-rail';
+    const railPath = railName.startsWith('/') ? railName : `/fragments/${railName}`;
+    rail = document.createElement('div');
+    rail.className = 'blog-rail';
+    const railLink = document.createElement('a');
+    railLink.href = railPath;
+    railLink.textContent = railPath;
+    const railP = document.createElement('p');
+    railP.append(railLink);
+    rail.append(railP);
+    main.append(rail);
+  }
 
   // 3b. hear-from-our-customers + pricing-disclaimer — trailing full-width
   //     bands every article gets by default (same fragment autoblock loads
@@ -767,30 +659,41 @@ export function buildBlogTemplate(main) {
   //    sticky containing block is exactly the article body's height. Falls
   //    back to the stylesheet's generous `span` default when it can't be
   //    computed (no TOC headings to anchor on).
-  const rowEnd = tocRailRowEnd(sections, headings);
-  if (rowEnd) {
-    if (tocWrap) tocWrap.style.gridRow = `2 / ${rowEnd}`;
-    rail.style.gridRow = `2 / ${rowEnd}`;
+  if (!hideBoth) {
+    const rowEnd = tocRailRowEnd(sections, headings);
+    const railStart = heroIndex + 2;
+    if (heroIndex > 0) heroSection.style.gridRow = `${heroIndex + 1}`;
+    if (rowEnd) {
+      if (tocWrap) tocWrap.style.gridRow = `${railStart} / ${rowEnd}`;
+      if (rail) rail.style.gridRow = `${railStart} / ${rowEnd}`;
+    } else if (heroIndex > 0) {
+      if (tocWrap) tocWrap.style.gridRow = `${railStart} / span 999`;
+      if (rail) rail.style.gridRow = `${railStart} / span 999`;
+    }
   }
 
   // 5. share widget — a single element relocated between the hero (mobile)
   //    and the top of the TOC rail (desktop) as the viewport crosses the
   //    desktop breakpoint (see scripts/breakpoints.js).
   const share = buildShare();
+  // Click tracking: prod reports the article share row nested under the article hero →
+  // `qrc_article_hero|social_media`. The trail is self-contained on the widget (qrc_article_hero
+  // on the row, social_media on the links span) so it survives the mobile/desktop relocation.
+  trackAs('qrc_article_hero', share, { key: 'case-study-header', linkName: false, items: { '.blog-share-links': 'social_media' } });
   relocateShare(
     share,
     () => {
       if (meta && meta.childElementCount) meta.before(share);
       else if (h1) h1.after(share);
-      else firstSection?.prepend(share);
+      else heroSection?.prepend(share);
     },
     toc ? () => toc.before(share) : null,
     desktopMQ,
   );
 
-  // end-of-article author bio + social share, sourced from the query-index
-  // (fire-and-forget so it never blocks the synchronous layout above)
-  appendAuthorBio(main);
+  // end-of-article author bio + social share (block injected below). Author-
+  // gated; the block itself drops its section if the query-index row is missing.
+  if (getMetadata('author')) injectAuthorBioBlock(main);
 }
 
 /**

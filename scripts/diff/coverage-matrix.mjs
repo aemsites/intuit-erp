@@ -17,9 +17,16 @@ import {
 import { indexRows } from '../tracking.js';
 
 const DIR = 'scripts/diff/fixtures/local';
-const golden = JSON.parse(readFileSync(`${DIR}/clicktrack-golden.json`, 'utf8'));
+// --golden/--sheet/--out select the source golden (default: our reverse-engineered one;
+// pass clicktrack-golden-customer.json + its sheet for the customer coverage matrix).
+const argOf = (flag) => { const i = process.argv.indexOf(flag); return i >= 0 ? process.argv[i + 1] : null; };
+const GOLDEN_PATH = argOf('--golden') || `${DIR}/clicktrack-golden.json`;
+const SHEET_PATH = argOf('--sheet') || `${DIR}/tracking-sheet.json`;
+const OUT_PATH = argOf('--out') || 'CLICK-TRACKING-COVERAGE.md';
+const golden = JSON.parse(readFileSync(GOLDEN_PATH, 'utf8'));
 assignIds(golden.entries); // assign each entry its id-based key (oursPayload resolves by it)
-const sheet = indexRows(JSON.parse(readFileSync(`${DIR}/tracking-sheet.json`, 'utf8')).data);
+let sheet = new Map();
+try { sheet = indexRows(JSON.parse(readFileSync(SHEET_PATH, 'utf8')).data); } catch { /* no sheet — derive-only coverage */ }
 const norm = (v) => { const s = typeof v === 'string' ? v.trim() : v; return s === '' || s == null ? null : s; };
 
 // short column headers for the 11 diff fields
@@ -87,8 +94,8 @@ const totalStruct = Object.values(struct).reduce((s, n) => s + n, 0);
 
 let md = `# Click-tracking coverage matrix
 
-Readable view of the 15-page prod golden and how our Option B runtime covers it.
-Regenerate: \`node scripts/diff/coverage-matrix.mjs\`. Counts only — no campaign codes.
+Readable view of the ${golden.pages.filter((p) => p !== '*').length}-page prod golden and how our Option B runtime covers it.
+Source golden: \`${GOLDEN_PATH.split('/').pop()}\`. Regenerate: \`node scripts/diff/coverage-matrix.mjs\`. Counts only — no campaign codes.
 
 - **${totalClose} closeable events** (CTAs + video) + **${totalStruct} structural** (non-CTA blog-card elements) = ${totalClose + totalStruct} across ${golden.pages.filter((p) => p !== '*').length} pages.
 - Cells compare our emitted value to prod on \`trim()\`. Legend: **✓** all match · **N✗** N events differ (gap) · **·** prod does not populate this field for this component.
@@ -119,5 +126,5 @@ const SNOTE = {
 };
 for (const [k, n] of Object.entries(struct).sort((a, b) => b[1] - a[1])) md += `| \`${k}\` | ${n} | ${SNOTE[k] || ''} |\n`;
 
-writeFileSync('CLICK-TRACKING-COVERAGE.md', md);
-console.log(`wrote CLICK-TRACKING-COVERAGE.md — ${keys.length} components, ${totalClose} closeable + ${totalStruct} structural`);
+writeFileSync(OUT_PATH, md);
+console.log(`wrote ${OUT_PATH} — ${keys.length} components, ${totalClose} closeable + ${totalStruct} structural`);

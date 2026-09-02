@@ -1,8 +1,8 @@
 /**
  * form — live lead-capture form: a Marketo Forms2 embed (fields rendered by
  * Marketo) followed by a ChiliPiper router handoff on success. Also owns the
- * shared "Schedule a call" modal (openScheduleModal/bindScheduleLinks) and the
- * ChiliPiper-only demo booking (bookDemo).
+ * ChiliPiper-only demo booking (bookDemo). The shared "Schedule a call" modal
+ * lives in scripts/schedule-modal.js.
  *
  * Per-page config rows (author): formId, chiliPiperRouter, downloadUrl,
  * successUrl, header, subheader, disclaimer, recaptcha (per-form v3 opt-in),
@@ -19,17 +19,24 @@
  *
  * CSS: blocks/form/form.css
  */
-import { loadScript, getMetadata } from '../../scripts/aem.js';
-// Vendored via git subtree at plugins/martech (see its README), not an
-// installed npm package, so this necessarily crosses a package.json boundary.
-// eslint-disable-next-line import/no-relative-packages
-import { sendEvent } from '../../plugins/martech/src/index.js';
+import { loadScript, getMetadata, decorateIcons } from '../../scripts/aem.js';
+import { fetchPlaceholders } from '../../scripts/placeholders.js';
+// Uncomment with the AEP/WebSDK integration in scripts/scripts.js.
+// // Vendored via git subtree at plugins/martech (see its README), not an
+// // installed npm package, so this necessarily crosses a package.json boundary.
+// // eslint-disable-next-line import/no-relative-packages
+// import { sendEvent } from '../../plugins/martech/src/index.js';
+// Shared ChiliPiper opener (also used by personalization widgets) + lead-xref/track helpers.
+import {
+  openChiliPiper, submitChiliPiper, mintLeadXref, trackLeadCreated,
+} from '../../scripts/chilipiper.js';
 
-// Tenant-namespaced XDM location for lead-identity events. Object name `of1Signal` must
-// byte-match the AEP "Experience Event Schema" field group path (AEP console config) or
-// ingestion silently drops it. Independent of the (removed) OF1 generative-page feature,
-// which used to write interest/intent data to this same object.
-export const LEAD_XDM_TARGET = { prefix: '_sapphiredemo1', object: 'of1Signal' };
+// Uncomment with the AEP/WebSDK integration in scripts/scripts.js.
+// // Tenant-namespaced XDM location for lead-identity events. Object name `of1Signal` must
+// // byte-match the AEP "Experience Event Schema" field group path (AEP console config) or
+// // ingestion silently drops it. Independent of the (removed) OF1 generative-page feature,
+// // which used to write interest/intent data to this same object.
+// export const LEAD_XDM_TARGET = { prefix: '<prefix>', object: 'of1Signal' };
 
 const CONFIG_KEYS = [
   'formId',
@@ -42,17 +49,6 @@ const CONFIG_KEYS = [
   'recaptcha',
   'buttonLabel',
 ];
-
-const CHILIPIPER_SRC_DEFAULT = '//js.chilipiper.com/marketing.js';
-const SCHEDULE_FRAGMENT_DEFAULT = '/fragments/schedule-call-vertical';
-
-// A page can point the nav "Schedule a call" modal at a different fragment via
-// `schedule-fragment` metadata — same override convention as blog-template.js's
-// right-rail fragment (bare name resolves under /fragments/, absolute path used as-is).
-function scheduleFragmentPath() {
-  const value = getMetadata('schedule-fragment') || SCHEDULE_FRAGMENT_DEFAULT;
-  return value.startsWith('/') ? value : `/fragments/${value}`;
-}
 
 // Marketo instance selection, keyed by the `marketo` page metadata. Prod unless the
 // page opts in; hostname is deliberately not consulted.
@@ -107,24 +103,24 @@ export function parseFormConfig(block) {
   };
 }
 
-// Maps lead fields → an identity sendEvent XDM. Email goes in identityMap as
-// 'ambiguous' (unverified). Pure — no DOM/network.
-export function buildIdentityXdm(fields) {
-  return {
-    eventType: 'web.formFilledOut',
-    identityMap: {
-      Email: [{ id: fields.email, primary: true, authenticatedState: 'ambiguous' }],
-    },
-    [LEAD_XDM_TARGET.prefix]: {
-      [LEAD_XDM_TARGET.object]: { lead: { ...fields }, capturedAt: new Date().toISOString() },
-    },
-  };
-}
+// Uncomment with the AEP/WebSDK integration in scripts/scripts.js.
+// // Maps lead fields → an identity sendEvent XDM. Email goes in identityMap as
+// // 'ambiguous' (unverified). Pure — no DOM/network.
+// export function buildIdentityXdm(fields) {
+//   return {
+//     eventType: 'web.formFilledOut',
+//     identityMap: {
+//       Email: [{ id: fields.email, primary: true, authenticatedState: 'ambiguous' }],
+//     },
+//     [LEAD_XDM_TARGET.prefix]: {
+//       [LEAD_XDM_TARGET.object]: { lead: { ...fields }, capturedAt: new Date().toISOString() },
+//     },
+//   };
+// }
 
-// Provider-aware submit tracking. `window.utag` only ever exists when scripts/scripts.js chose
-// the Tealium provider (the default) AND that instance is enabled — i.e. the hostname resolves
-// to a utag environment (see plugins/tealium-martech/src/index.js `resolveEnvironment`). The
-// Adobe path below only runs when the opt-in `?martech=adobe` override is used, unchanged.
+// Submit tracking. `window.utag` only ever exists when scripts/scripts.js chose the Tealium
+// provider (the default) AND that instance is enabled — i.e. the hostname resolves to a utag
+// environment (see plugins/tealium-martech/src/index.js `resolveEnvironment`).
 export function trackFormSubmit(fields) {
   if (window.utag?.link) {
     // Consent-gate, like the loader's whenConsentResolved: a link fired while getConsentState()===0
@@ -137,13 +133,13 @@ export function trackFormSubmit(fields) {
       ...fields,
       ivid: window.utag_data?.ivid,
     });
-    return;
   }
-  sendEvent({ xdm: buildIdentityXdm(fields) }).catch(() => {});
+  // Uncomment with the AEP/WebSDK integration in scripts/scripts.js.
+  // if (!window.utag?.link) sendEvent({ xdm: buildIdentityXdm(fields) }).catch(() => {});
 }
 
 // Marketo field names → the lower-cased lead shape trackFormSubmit expects, so
-// the same analytics events fire on a live submit as on the former mock.
+// the Tealium analytics event fires on a live submit as on the former mock.
 function marketoValuesToLead(vals = {}) {
   return {
     email: vals.Email || '',
@@ -154,14 +150,85 @@ function marketoValuesToLead(vals = {}) {
   };
 }
 
-async function chiliPiperHandoff(cfg, router, form) {
-  const subdomain = cfg['chilipiper.subdomain'];
-  if (!router || !subdomain) return false;
-  await loadScript(cfg['chilipiper.src'] || CHILIPIPER_SRC_DEFAULT);
-  window.ChiliPiper?.submit(subdomain, router, { map: true, lead: form.getValues() });
-  return true;
+// How long to wait for ChiliPiper's booking overlay to actually appear before
+// giving up and leaving the hosting modal open.
+const CHILIPIPER_OVERLAY_TIMEOUT_MS = 4000;
+
+// ChiliPiper injects its calendar into its own body-level overlay. Resolve once
+// that overlay exists, or to false if it never shows up within the timeout —
+// bounded, and always tears down its observer/timer so nothing leaks.
+function waitForChiliPiperOverlay(timeout = CHILIPIPER_OVERLAY_TIMEOUT_MS) {
+  const present = () => document.querySelector('.chilipiper-popup-window iframe.chilipiper-frame');
+  if (present()) return Promise.resolve(true);
+  return new Promise((resolve) => {
+    let timer;
+    const observer = new MutationObserver(() => {
+      if (!present()) return;
+      clearTimeout(timer);
+      observer.disconnect();
+      resolve(true);
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    timer = setTimeout(() => {
+      observer.disconnect();
+      resolve(false);
+    }, timeout);
+  });
 }
 
+// Confirmation copy shown in place of a submitted form. Authored centrally in
+// the `placeholders` sheet as `form thank you heading` / `form thank you body`
+// (camel-cased on read); these are the fallbacks for when the sheet has no row.
+const THANK_YOU_HEADING_DEFAULT = 'Thank you';
+const THANK_YOU_BODY_DEFAULT = 'An Intuit expert will be in touch with you shortly.';
+
+// Replaces the submitted form with the confirmation. This also removes Marketo's
+// submit button, which it relabels to "Please Wait" and only ever restores from
+// its own thank-you/redirect — suppressed whenever the block supplies its own
+// feedback, so the button would otherwise stay stuck on "Please Wait".
+// Idempotent: guarded by a `data-thank-you-shown` flag.
+function showThankYou(form, placeholders = {}) {
+  const formEl = form.getFormElem?.()?.[0] || document.getElementById(`mktoForm_${form.getId?.()}`);
+  if (!formEl || formEl.dataset.thankYouShown === 'true') return;
+  formEl.dataset.thankYouShown = 'true';
+  const note = document.createElement('div');
+  note.className = 'form-success';
+  note.setAttribute('role', 'status');
+  const check = document.createElement('span');
+  check.className = 'icon icon-circle-check-fill-green form-success-check';
+  const heading = document.createElement('p');
+  heading.className = 'form-success-heading';
+  heading.textContent = placeholders.formThankYouHeading || THANK_YOU_HEADING_DEFAULT;
+  const body = document.createElement('p');
+  body.textContent = placeholders.formThankYouBody || THANK_YOU_BODY_DEFAULT;
+  note.append(check, heading, body);
+  formEl.replaceWith(note);
+  // The page-load icon pass has long finished by the time a form is submitted,
+  // so resolve this icon's <img> explicitly.
+  decorateIcons(note);
+}
+
+// Post-Marketo handoff: submit the lead via the shared submitChiliPiper (prod-parity args +
+// the Lead_XRef_ID__c event), then only dismiss the hosting schedule-call modal once ChiliPiper's
+// own overlay has actually taken over. Returns false when the submit or the overlay never lands so
+// the caller can show a fallback rather than leaving the visitor with nothing.
+async function chiliPiperHandoff(router, form, xref) {
+  const submitted = await submitChiliPiper(router, form.getValues(), xref);
+  if (!submitted) return false;
+  // submitChiliPiper is fire-and-forget, so close the dialog only once the overlay is really up —
+  // closing unconditionally would leave a visitor with no calendar, no form and no error.
+  const tookOver = await waitForChiliPiperOverlay();
+  if (!tookOver) return false;
+  const formEl = form.getFormElem?.()?.[0] || document.getElementById(`mktoForm_${form.getId?.()}`);
+  const dialog = formEl?.closest('dialog');
+  if (dialog) {
+    // Distinct from a user-initiated close: skip the focus restore so we don't
+    // pull focus off ChiliPiper's overlay as it takes over (see modal.js).
+    dialog.dataset.suppressFocusRestore = 'true';
+    dialog.close();
+  }
+  return true;
+}
 // reCAPTCHA v3, mirroring erp.intuit.com: on form load fetch a score token and
 // verify it via Intuit's siteverify proxy, then gate the Marketo submit on the
 // result (Marketo's own captcha is off; the token is never a form field). The
@@ -230,8 +297,19 @@ async function embedMarketoForm(formEl, cfg, config, env) {
   if (!munchkin) return;
   const host = `//${munchkin.toLowerCase()}.mktoweb.com`;
   const forms2Src = `${host}/js/forms2/js/forms2.min.js`;
+  // Resolved before `onSuccess` is registered because that callback has to run
+  // synchronously — it can't await the sheet. Cached per prefix, so this is one
+  // request no matter how many forms a page has.
+  const placeholders = await fetchPlaceholders();
   await loadScript(forms2Src);
   window.MktoForms2.loadForm(host, munchkin, config.formId, (form) => {
+    // One lead-correlation id per form: stamp it into the Marketo hidden field up front (so it's
+    // persisted with the lead in SFDC), then reuse the same id for the ECS lead track and the
+    // ChiliPiper handoff on success. IVID__c is added when the ivid data-layer value is present.
+    const leadXref = mintLeadXref();
+    const hiddenFields = { Lead_XRef_ID__c: leadXref };
+    if (window.utag_data?.ivid) hiddenFields.IVID__c = window.utag_data.ivid;
+    form.addHiddenFields?.(hiddenFields);
     if (config.disclaimer) {
       const el = document.createElement('div');
       el.className = 'form-disclaimer';
@@ -261,7 +339,21 @@ async function embedMarketoForm(formEl, cfg, config, env) {
     const canHandoff = !!(config.chiliPiperRouter && cfg['chilipiper.subdomain']);
     form.onSuccess((vals) => {
       try { trackFormSubmit(marketoValuesToLead(vals)); } catch (e) { /* non-fatal */ }
-      if (canHandoff) chiliPiperHandoff(cfg, config.chiliPiperRouter, form);
+      // ECS lead track → IES_lead in the ies-erp container (IES_booking then fires from
+      // ChiliPiper's booking-confirmed postMessage). Same xref as the hidden field + handoff.
+      try {
+        trackLeadCreated({ leadXrefId: leadXref, formId: config.formId });
+      } catch (e) { /* non-fatal */ }
+      // Marketo relabels its submit button to "Please Wait" and only restores it
+      // from its own thank-you/redirect, suppressed below whenever we supply our
+      // own feedback — so swap the form for the confirmation now. This covers
+      // both outcomes of the fire-and-forget handoff (onSuccess must return
+      // synchronously): the visitor sees it whether ChiliPiper's calendar takes
+      // over or never loads.
+      if (canHandoff) {
+        showThankYou(form, placeholders);
+        chiliPiperHandoff(config.chiliPiperRouter, form, leadXref);
+      }
       if (config.downloadUrl) window.open(config.downloadUrl, '_blank', 'noopener');
       else if (config.successUrl && !canHandoff) window.location.href = config.successUrl;
       // Suppress Marketo's default redirect only when we provide our own feedback
@@ -319,31 +411,8 @@ export default async function decorate(block) {
   observer.observe(block);
 }
 
-// Shared "Schedule a call" modal — hosts the schedule-call fragment (which
-// authors its own form block) in the reusable modal block.
-export async function openScheduleModal() {
-  // eslint-disable-next-line import/no-cycle
-  const { openModal } = await import('../modal/modal.js');
-  return openModal(scheduleFragmentPath());
-}
-
-// Any anchor whose href ends with #schedule opens the modal instead of
-// navigating — covers both `#schedule` and stray absolute URLs ending in it.
-export function bindScheduleLinks(container) {
-  container.querySelectorAll('a[href$="#schedule"]').forEach((a) => {
-    a.addEventListener('click', (e) => {
-      e.preventDefault();
-      openScheduleModal();
-    });
-  });
-}
-
 // Book-a-demo: ChiliPiper scheduler directly (no Marketo form). Router is the
 // only per-page value; subdomain/script come from /site-config.json.
 export async function bookDemo(router) {
-  const cfg = await siteConfig();
-  const subdomain = cfg['chilipiper.subdomain'];
-  if (!router || !subdomain) return;
-  await loadScript(cfg['chilipiper.src'] || CHILIPIPER_SRC_DEFAULT);
-  window.ChiliPiper?.scheduling(subdomain, router, { title: document.title });
+  await openChiliPiper(router);
 }

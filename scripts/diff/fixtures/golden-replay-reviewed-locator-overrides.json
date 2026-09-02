@@ -1,0 +1,309 @@
+{
+  "schemaVersion": 1,
+  "reviewId": "v40-gap-audit-2026-08-31",
+  "evidenceRef": "scripts/diff/fixtures/golden-replay-reviewed-locator-overrides.json#reviewEvidence",
+  "reviewEvidence": {
+    "exactOrigin": "https://stage.erp.intuit.com",
+    "capturedAt": "2026-08-31T20:39:25.116Z",
+    "completedAt": "2026-08-31T20:44:50.770Z",
+    "inventorySha256": "sha256:c63b0c36ee470babb545bd7655fce3be3d3385466081c8e4a60dd1719d779e80",
+    "locatorReviewSha256": "sha256:1941a4efa72e5872913e7b695072a15f3a7bfb79aaae289f5a98d00f67bea4b9",
+    "manifestContentHash": "sha256:387991b92b1a8dead1593d964d57f666d8660b2b1e5361163634634f9c8974d5",
+    "goldenMappingHash": "sha256:51a2f49275364b5e7d7506182dd58fd1b40a9a1b12aed4be234bf3aab3fa7911",
+    "method": "Authenticated Stage inventory followed by unique stable-identity review; each decision below preserves the reviewed candidate identity and rationale.",
+    "supplementalEvidence": [{
+      "scenarioId": "customer-professional-services-aa56645bc6c8",
+      "capturedAt": "2026-08-31T13:22:26.629Z",
+      "inventoryRef": "scripts/diff/fixtures/local/clicktrack-golden-stage-inventory-v32.json",
+      "inventorySha256": "sha256:5abfc8d5606bb070df701f8ca0c6ba2ccfa83ea457be0ce3125183c80e976a1a",
+      "method": "The visible cards CTA has the exact article title and QuickBooks destination represented by the prod semantic campaign identity."
+    }, {
+      "scenarioIds": [
+        "customer-accounting-business-intelligence-rep-f5394eada35a",
+        "customer-accounting-business-intelligence-rep-59676cca353e",
+        "customer-accounting-business-intelligence-rep-da515b45f064",
+        "customer-home-f1a7df4ec339",
+        "customer-compare-70f348c74e9d",
+        "customer-blog-construction-automation-in-cons-0e10ba8ddb3e",
+        "customer-blog-construction-automation-in-cons-7b3473b467b0",
+        "customer-blog-construction-automation-in-cons-67db829b55cf"
+      ],
+      "capturedAt": "2026-08-31T13:22:26.629Z",
+      "inventoryRef": "scripts/diff/fixtures/local/clicktrack-golden-stage-inventory-v32.json",
+      "inventorySha256": "sha256:5abfc8d5606bb070df701f8ca0c6ba2ccfa83ea457be0ce3125183c80e976a1a",
+      "method": "The current header replacements preserve the prod destinations and interaction intent while using renamed customer-visible labels."
+    }, {
+      "scenarioIds": [
+        "customer-accountant-a977351edbd2",
+        "customer-migration-5a4d66ef88d4",
+        "customer-events-ea3f92116675"
+      ],
+      "capturedAt": "2026-09-01T02:31:29.445Z",
+      "completedAt": "2026-09-01T02:39:38.123Z",
+      "inventoryRef": "scripts/diff/fixtures/local/clicktrack-golden-stage-inventory-v43.json",
+      "inventorySha256": "sha256:da7dcbeca2448090e8789be3d311cb6da20525aff1d54e3e18a46d66c898b130",
+      "method": "The current accountant anchor preserves the bottom-banner scheduling intent; the first authored migration panel uniquely identifies the QuickBooks Desktop scheduling CTA among three same-label links; and the cloud-ERP article preserves the reviewed article subject and exact destination."
+    }]
+  },
+  "decisions": [
+    {
+      "scenarioId": "customer-accounting-business-intelligence-rep-f5394eada35a",
+      "page": "/accounting/business-intelligence-reports",
+      "candidateIdentity": { "dataTrackId": "nav:schedule-a-call-2", "accessibleName": "Schedule a call", "tag": "BUTTON", "role": "button", "region": "header", "block": "header" },
+      "locator": { "block": "header" },
+      "rationale": "The visible primary Schedule a call control preserves the prod header scheduling interaction after the Schedule demo copy change."
+    },
+    {
+      "scenarioId": "customer-accounting-business-intelligence-rep-59676cca353e",
+      "page": "/accounting/business-intelligence-reports",
+      "candidateIdentity": { "dataTrackId": "nav:accountant", "accessibleName": "For accounting firms", "tag": "A", "role": "link", "region": "header", "href": "https://stage.erp.intuit.com/accountant", "block": "header" },
+      "locator": { "block": "header" },
+      "rationale": "For accounting firms preserves the prod Accountants destination and header navigation intent."
+    },
+    {
+      "scenarioId": "customer-accounting-business-intelligence-rep-da515b45f064",
+      "page": "/accounting/business-intelligence-reports",
+      "candidateIdentity": { "dataTrackId": "nav:accounting", "accessibleName": "Overview", "tag": "A", "role": "link", "region": "header", "href": "https://stage.erp.intuit.com/accounting", "block": "header" },
+      "locator": { "block": "header" },
+      "setupSteps": [{
+        "type": "click",
+        "locator": { "trackId": "nav:capabilities", "region": "header", "role": "button", "name": "Capabilities", "exact": true, "block": "header" },
+        "expect": { "state": "visible", "locator": { "trackId": "nav:accounting", "region": "header", "role": "link", "name": "Overview", "exact": true, "block": "header" } }
+      }],
+      "rationale": "The Accounting Overview link preserves the prod Financial management overview destination under the renamed Capabilities hierarchy."
+    },
+    {
+      "scenarioId": "customer-home-f1a7df4ec339",
+      "page": "/",
+      "candidateIdentity": { "dataTrackId": "nav:schedule-a-call-2", "accessibleName": "Schedule a call", "tag": "BUTTON", "role": "button", "region": "header", "block": "header" },
+      "locator": { "block": "header" },
+      "rationale": "The visible primary Schedule a call control preserves the prod header scheduling interaction after the Schedule demo copy change."
+    },
+    {
+      "scenarioId": "customer-compare-70f348c74e9d",
+      "page": "/compare",
+      "candidateIdentity": { "dataTrackId": "nav:accountant", "accessibleName": "For accounting firms", "tag": "A", "role": "link", "region": "header", "href": "https://stage.erp.intuit.com/accountant", "block": "header" },
+      "locator": { "block": "header" },
+      "rationale": "For accounting firms preserves the prod Accountants destination and header navigation intent."
+    },
+    {
+      "scenarioId": "customer-blog-construction-automation-in-cons-0e10ba8ddb3e",
+      "page": "/blog/construction/automation-in-construction",
+      "candidateIdentity": { "dataTrackId": "nav:accountant", "accessibleName": "For accounting firms", "tag": "A", "role": "link", "region": "header", "href": "https://stage.erp.intuit.com/accountant", "block": "header" },
+      "locator": { "block": "header" },
+      "rationale": "For accounting firms preserves the prod Accountants destination and header navigation intent."
+    },
+    {
+      "scenarioId": "customer-blog-construction-automation-in-cons-7b3473b467b0",
+      "page": "/blog/construction/automation-in-construction",
+      "candidateIdentity": { "dataTrackId": "nav:accounting", "accessibleName": "Overview", "tag": "A", "role": "link", "region": "header", "href": "https://stage.erp.intuit.com/accounting", "block": "header" },
+      "locator": { "block": "header" },
+      "setupSteps": [{
+        "type": "click",
+        "locator": { "trackId": "nav:capabilities", "region": "header", "role": "button", "name": "Capabilities", "exact": true, "block": "header" },
+        "expect": { "state": "visible", "locator": { "trackId": "nav:accounting", "region": "header", "role": "link", "name": "Overview", "exact": true, "block": "header" } }
+      }],
+      "rationale": "The Accounting Overview link preserves the prod Financial management overview destination under the renamed Capabilities hierarchy."
+    },
+    {
+      "scenarioId": "customer-blog-construction-automation-in-cons-67db829b55cf",
+      "page": "/blog/construction/automation-in-construction",
+      "candidateIdentity": { "dataTrackId": "nav:schedule-a-call-2", "accessibleName": "Schedule a call", "tag": "BUTTON", "role": "button", "region": "header", "block": "header" },
+      "locator": { "block": "header" },
+      "rationale": "The visible primary Schedule a call control preserves the prod header scheduling interaction after the Schedule demo copy change."
+    },
+    {
+      "scenarioId": "customer-accountant-a977351edbd2",
+      "page": "/accountant",
+      "candidateIdentity": { "accessibleName": "Schedule a consultation", "tag": "A", "role": "link", "region": "main", "href": "https://stage.erp.intuit.com/", "block": "" },
+      "locator": { "block": "", "requireNoBlock": true, "href": "" },
+      "rationale": "The visible Schedule a consultation anchor preserves the prod bottom-banner scheduling intent and scrolls to the detailed-demo form; the separate Schedule now form submit is not the reviewed target."
+    },
+    {
+      "scenarioId": "customer-migration-5a4d66ef88d4",
+      "page": "/migration",
+      "candidateIdentity": { "accessibleName": "Schedule a call", "tag": "A", "role": "link", "region": "main", "href": "https://stage.erp.intuit.com/", "block": "tabs" },
+      "locator": { "block": "tabs", "href": "", "occurrence": 1, "occurrenceEvidence": { "stableConstraint": "The authored migration panel order is QuickBooks Desktop, QuickBooks Online, then non-Intuit solution; the first same-label CTA belongs to the QuickBooks Desktop panel." } },
+      "rationale": "The first authored tabs CTA is in the visible From QuickBooks Desktop panel and preserves the prod qb_desktop_migration scheduling interaction; the other same-label panel CTAs remain hidden."
+    },
+    {
+      "scenarioId": "customer-financial-services-9d04cc0e326f",
+      "page": "/financial-services",
+      "candidateIdentity": { "accessibleName": "Previous slide", "tag": "BUTTON", "role": "button", "region": "main", "block": "carousel" },
+      "locator": { "block": "carousel" },
+      "rationale": "The visible spotlight Previous slide control is the reviewed replacement for thumbnail_left_chevron."
+    },
+    {
+      "scenarioId": "customer-financial-services-dd83c4dc3df7",
+      "page": "/financial-services",
+      "candidateIdentity": { "accessibleName": "Next slide", "tag": "BUTTON", "role": "button", "region": "main", "block": "carousel" },
+      "locator": { "block": "carousel" },
+      "rationale": "The visible spotlight Next slide control is the reviewed replacement for thumbnail_right_chevron."
+    },
+    {
+      "scenarioId": "customer-accountant-4d751760cbfb",
+      "page": "/accountant",
+      "candidateIdentity": { "dataTrackId": "faq:how-much-does-intuit-enterprise-suite-cost-and-what-s-included", "accessibleName": "How much does Intuit Enterprise Suite cost and what’s included?", "tag": "BUTTON", "role": "button", "region": "main", "block": "faq" },
+      "locator": { "block": "faq" },
+      "rationale": "The exact FAQ tracking identity and question label disambiguate the duplicate sheet residue."
+    },
+    {
+      "scenarioId": "customer-events-7efa0bd38349",
+      "page": "/events",
+      "candidateIdentity": { "dataTrackId": "media-text:intuitconnect", "accessibleName": "Register", "tag": "A", "role": "link", "region": "main", "block": "media-text" },
+      "locator": { "block": "media-text" },
+      "rationale": "The feature access point maps to the media-text Register link, not the event-card duplicate; campaign query parameters are not target identity."
+    },
+    {
+      "scenarioId": "customer-events-ea3f92116675",
+      "page": "/events",
+      "candidateIdentity": { "dataTrackId": "cards:quickbooks-r-midsize-business-what-is-cloud-erp-benefits-examples", "accessibleName": "What is cloud ERP? How it works, benefits, and tips: Read more", "tag": "A", "role": "link", "region": "main", "href": "https://quickbooks.intuit.com/r/midsize-business/what-is-cloud-erp-benefits-examples/", "block": "cards" },
+      "locator": { "block": "cards" },
+      "rationale": "The current cards article preserves the prod What is cloud ERP subject and resolves to its exact QuickBooks midsize-business article destination."
+    },
+    {
+      "scenarioId": "customer-events-170319f758b0",
+      "page": "/events",
+      "candidateIdentity": { "accessibleName": "Previous events", "tag": "BUTTON", "role": "button", "region": "main", "block": "event-cards" },
+      "locator": { "block": "event-cards" },
+      "setupSteps": [{
+        "type": "click",
+        "locator": { "trackId": "cards:next-events", "region": "main", "role": "button", "name": "Next events", "exact": true, "block": "event-cards" },
+        "expect": { "state": "visible", "locator": { "trackId": "cards:previous-events", "region": "main", "role": "button", "name": "Previous events", "exact": true, "block": "event-cards" } }
+      }],
+      "rationale": "The current Previous events control is the reviewed arrow_left replacement."
+    },
+    {
+      "scenarioId": "customer-events-13616b89de29",
+      "page": "/events",
+      "candidateIdentity": { "accessibleName": "Next events", "tag": "BUTTON", "role": "button", "region": "main", "block": "event-cards" },
+      "locator": { "block": "event-cards" },
+      "rationale": "The current Next events control is the reviewed arrow_right replacement."
+    },
+    {
+      "scenarioId": "customer-events-03760052fa48",
+      "page": "/events",
+      "candidateIdentity": { "accessibleName": "Previous events", "tag": "BUTTON", "role": "button", "region": "main", "block": "event-cards" },
+      "locator": { "block": "event-cards" },
+      "setupSteps": [{
+        "type": "click",
+        "locator": { "trackId": "cards:next-events", "region": "main", "role": "button", "name": "Next events", "exact": true, "block": "event-cards" },
+        "expect": { "state": "visible", "locator": { "trackId": "cards:previous-events", "region": "main", "role": "button", "name": "Previous events", "exact": true, "block": "event-cards" } }
+      }],
+      "duplicateOf": "customer-events-170319f758b0",
+      "rationale": "This duplicate golden event deliberately replays the same reviewed Previous events target."
+    },
+    {
+      "scenarioId": "customer-events-a16100248c0e",
+      "page": "/events",
+      "candidateIdentity": { "accessibleName": "Next events", "tag": "BUTTON", "role": "button", "region": "main", "block": "event-cards" },
+      "locator": { "block": "event-cards" },
+      "duplicateOf": "customer-events-13616b89de29",
+      "rationale": "This duplicate golden event deliberately replays the same reviewed Next events target."
+    },
+    {
+      "scenarioId": "customer-home-76891cd325c6",
+      "page": "/",
+      "candidateIdentity": { "dataTrackId": "stat-band:next-outcomes", "accessibleName": "Next outcomes", "tag": "BUTTON", "role": "button", "region": "main", "block": "stat-band" },
+      "locator": { "block": "stat-band" },
+      "rationale": "The current stat-band Next outcomes control is the reviewed replacement for scroll right."
+    },
+    {
+      "scenarioId": "customer-erp-solutions-05d03056b672",
+      "page": "/erp-solutions",
+      "candidateIdentity": { "accessibleName": "Find out more", "tag": "A", "role": "link", "region": "main", "href": "https://quickbooks.intuit.com/desktop/enterprise/", "block": "media-text" },
+      "locator": { "block": "media-text" },
+      "rationale": "The reviewed card-context Find out more link is the media-text target, not the hero duplicate."
+    },
+    {
+      "scenarioId": "customer-blog-construction-automation-in-cons-242516cd77d9",
+      "page": "/blog/construction/automation-in-construction",
+      "candidateIdentity": { "dataTrackId": "", "accessibleName": "Abigail Sims", "tag": "A", "role": "link", "region": "main", "href": "https://stage.erp.intuit.com/blog/author/abigail-sims", "block": "" },
+      "locator": { "block": "", "requireNoBlock": true },
+      "rationale": "The block-less article byline is distinct from the author-bio link."
+    },
+    {
+      "scenarioId": "customer-blog-construction-automation-in-cons-c56b00289967",
+      "page": "/blog/construction/automation-in-construction",
+      "candidateIdentity": { "dataTrackId": "", "accessibleName": "Abigail Sims", "tag": "A", "role": "link", "region": "main", "href": "https://stage.erp.intuit.com/blog/author/abigail-sims", "block": "" },
+      "locator": { "block": "", "requireNoBlock": true },
+      "duplicateOf": "customer-blog-construction-automation-in-cons-242516cd77d9",
+      "rationale": "This duplicate golden occurrence reuses the reviewed article byline."
+    },
+    {
+      "scenarioId": "customer-blog-construction-automation-in-cons-33e92fc1f77f",
+      "page": "/blog/construction/automation-in-construction",
+      "candidateIdentity": { "dataTrackId": "", "accessibleName": "Abigail Sims", "tag": "A", "role": "link", "region": "main", "href": "https://stage.erp.intuit.com/blog/author/abigail-sims", "block": "" },
+      "locator": { "block": "", "requireNoBlock": true },
+      "duplicateOf": "customer-blog-construction-automation-in-cons-242516cd77d9",
+      "rationale": "This duplicate golden occurrence reuses the reviewed article byline."
+    },
+    {
+      "scenarioId": "customer-blog-accounting-what-is-automated-ac-7dcf53e40a8e",
+      "page": "/blog/accounting/what-is-automated-accounting",
+      "candidateIdentity": { "dataTrackId": "", "accessibleName": "Raine Guerrero", "tag": "A", "role": "link", "region": "main", "href": "https://stage.erp.intuit.com/blog/author/raine-guerrero", "block": "" },
+      "locator": { "block": "", "requireNoBlock": true },
+      "rationale": "The block-less article byline is distinct from the author-bio link."
+    },
+    {
+      "scenarioId": "customer-blog-accounting-what-is-automated-ac-cbd945aeca4d",
+      "page": "/blog/accounting/what-is-automated-accounting",
+      "candidateIdentity": { "dataTrackId": "", "accessibleName": "Raine Guerrero", "tag": "A", "role": "link", "region": "main", "href": "https://stage.erp.intuit.com/blog/author/raine-guerrero", "block": "" },
+      "locator": { "block": "", "requireNoBlock": true },
+      "duplicateOf": "customer-blog-accounting-what-is-automated-ac-7dcf53e40a8e",
+      "rationale": "This duplicate golden occurrence reuses the reviewed article byline."
+    },
+    {
+      "scenarioId": "customer-blog-hr-human-capital-management-0a8f7acc2c9d",
+      "page": "/blog/hr/human-capital-management",
+      "candidateIdentity": { "dataTrackId": "", "accessibleName": "Marshall Hargrave", "tag": "A", "role": "link", "region": "main", "href": "https://stage.erp.intuit.com/blog/author/marshall-hargrave", "block": "" },
+      "locator": { "block": "", "requireNoBlock": true },
+      "rationale": "The block-less article byline is distinct from the author-bio link."
+    },
+    {
+      "scenarioId": "customer-professional-services-aa56645bc6c8",
+      "page": "/professional-services",
+      "candidateIdentity": { "dataTrackId": "cards:quickbooks-r-enterprise-intuit-enterprise-suite-professional-service-business", "accessibleName": "Intuit Enterprise Suite for professional service firms: Read more", "tag": "A", "role": "link", "region": "main", "href": "https://quickbooks.intuit.com/r/enterprise/intuit-enterprise-suite-professional-service-business/", "block": "cards" },
+      "locator": { "block": "cards" },
+      "rationale": "The visible cards CTA carries the exact IES professional-services article title and destination represented by the prod semantic campaign identity."
+    },
+    {
+      "scenarioId": "customer-blog-construction-automation-in-cons-8643c8a7dd86",
+      "page": "/blog/construction/automation-in-construction",
+      "candidateIdentity": { "dataTrackId": "media-text:erp", "accessibleName": "Learn more", "tag": "A", "role": "link", "region": "main", "href": "https://stage.erp.intuit.com/", "block": "media-text" },
+      "locator": { "block": "media-text" },
+      "rationale": "The IES-context media-text link is distinct from the unrelated Events Learn more link."
+    },
+    {
+      "scenarioId": "customer-blog-construction-automation-in-cons-f31673a3238c",
+      "page": "/blog/construction/automation-in-construction",
+      "candidateIdentity": { "dataTrackId": "case-study-header:twitter-share", "accessibleName": "X", "tag": "A", "role": "link", "region": "main", "block": "" },
+      "locator": { "block": "", "requireNoBlock": true },
+      "rationale": "The visible X control preserves the reviewed Twitter-share identity; its generated share query is not target identity."
+    },
+    {
+      "scenarioId": "customer-blog-construction-automation-in-cons-da834311dd4d",
+      "page": "/blog/construction/automation-in-construction",
+      "candidateIdentity": { "dataTrackId": "talk-to-sales:schedule-a-call", "accessibleName": "Schedule a call", "tag": "BUTTON", "role": "button", "region": "widget", "block": "" },
+      "locator": { "region": "widget", "block": "", "requireNoBlock": true },
+      "setupSteps": [{
+        "type": "click",
+        "locator": { "trackId": "talk-to-sales:talk-to-sales", "region": "widget", "role": "button", "name": "Talk to sales", "exact": true },
+        "expect": { "state": "visible", "locator": { "trackId": "talk-to-sales:schedule-a-call", "region": "widget", "role": "button", "name": "Schedule a call", "exact": true } }
+      }],
+      "rationale": "The scoped Schedule a call control becomes visible only after opening Talk to sales."
+    },
+    {
+      "scenarioId": "customer-blog-construction-automation-in-cons-4eb93ded08b3",
+      "page": "/blog/construction/automation-in-construction",
+      "candidateIdentity": { "accessibleName": "Visit support page", "tag": "A", "role": "link", "region": "widget", "href": "https://quickbooks.intuit.com/learn-support/en-us/help-custom/L51DdHqau", "block": "" },
+      "locator": { "region": "widget", "block": "", "requireNoBlock": true },
+      "setupSteps": [{
+        "type": "click",
+        "locator": { "trackId": "talk-to-sales:talk-to-sales", "region": "widget", "role": "button", "name": "Talk to sales", "exact": true },
+        "expect": { "state": "visible", "locator": { "region": "widget", "role": "link", "name": "Visit support page", "exact": true } }
+      }],
+      "rationale": "The scoped support link becomes visible only after opening Talk to sales."
+    }
+  ]
+}

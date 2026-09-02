@@ -154,13 +154,17 @@ export default function decorate(block) {
 
   block.replaceChildren(wrap);
 
-  // Article header: eyebrow/byline -> qrc_article_hero, share -> social_media,
-  // ToC -> TableOfContents (three standalone trails, no block root); link_name off.
+  // Article header: the copy block (eyebrow/byline/share) is the qrc_article_hero root, so
+  // eyebrow/byline resolve to `qrc_article_hero` and the nested share row to
+  // `qrc_article_hero|social_media` (matching prod). ToC is a sibling of copy, so it stays a
+  // standalone `TableOfContents`. link_name off. (NOTE: prod also double-keys the share links
+  // as a standalone `social_media` on some blog templates — an accepted prod inconsistency we
+  // can't match both ways; we match the customer-authoritative nested trail.)
   trackAs(null, block, {
     key: 'case-study-header',
     linkName: false,
     items: {
-      '.case-study-eyebrow, .case-study-byline': 'qrc_article_hero',
+      '.case-study-copy': 'qrc_article_hero',
       '.case-study-share': 'social_media',
       '.case-study-toc': 'TableOfContents',
     },

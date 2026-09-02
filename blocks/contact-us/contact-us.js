@@ -15,7 +15,7 @@
  * CSS: blocks/contact-us/contact-us.css.
  */
 // eslint-disable-next-line import/no-cycle
-import { openScheduleModal } from '../form/form.js';
+import { openScheduleModal } from '../../scripts/schedule-modal.js';
 import { getMetadata } from '../../scripts/aem.js';
 import { trackAs } from '../../scripts/tracking.js';
 
@@ -147,7 +147,7 @@ export default async function initContactUs() {
     ${desktopBubble(label, phoneIcon, chatIcon)}
     ${mobileBubble(label, blog, ballIcon)}
     <div class="cu-panel" role="dialog" aria-label="${label}" aria-modal="false" hidden>
-      <button type="button" class="cu-close" aria-label="Close">${closeIcon}</button>
+      <button type="button" class="cu-close" aria-label="Close" data-track-id="talk-to-sales:close-sales-widget">${closeIcon}</button>
       <div class="cu-panel-body">${panelBody(blog, contact, chatNow)}</div>
     </div>`;
 
@@ -206,8 +206,14 @@ export default async function initContactUs() {
     });
   }
 
-  // Floating sales widget -> talk_to_sales (a declared block tracks in <body>); skip close.
-  trackAs('talk_to_sales', root, { key: 'talk-to-sales', linkName: false, skip: '.cu-close' });
+  // Floating sales widget -> talk_to_sales (a declared block tracks in <body>).
+  // Every interactive item in this widget is presented as a CTA button,
+  // including the support destination rendered as an <a>. Keep that visual
+  // contract in the payload instead of letting the generic anchor derive
+  // `ui_object=link` for the support CTA.
+  trackAs('talk_to_sales', root, {
+    key: 'talk-to-sales', linkName: false, uiObject: 'button',
+  });
 
   document.body.append(root);
 }

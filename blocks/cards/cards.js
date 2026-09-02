@@ -26,6 +26,24 @@ import { trackAs } from '../../scripts/tracking.js';
 const SCROLL_SHAPE_CLASSES = ['carousel', 'boxed'];
 const CARD_BG_COLORS = ['sky', 'agave', 'tofu', 'sky-blue', 'light-gray', 'wintermint', 'navy'];
 
+// The scroll carousel's prev/next arrows report prod's `rw_carousel_control` object with a
+// semantic `arrow_left`/`arrow_right` detail + matching link_name — not the derived button +
+// aria-label. Keyed on the nav-button classes; every other CTA derives normally. The block's
+// linkName:false drops the derived link_name, so the arrow supplies its own (prod authors it).
+export function navArrowPayload(el) {
+  if (!el.classList) return null;
+  let side = null;
+  if (el.classList.contains('cards-nav-prev')) side = 'left';
+  else if (el.classList.contains('cards-nav-next')) side = 'right';
+  if (!side) return null;
+  const detail = `arrow_${side}`;
+  return {
+    'ui-object': 'rw_carousel_control',
+    'ui-object-detail': detail,
+    'custom-properties': { link_name: `rw_carousel_control-${detail}` },
+  };
+}
+
 function buildNavButton(direction, label) {
   const btn = document.createElement('button');
   btn.type = 'button';
@@ -248,11 +266,15 @@ export default function decorate(block) {
 
   if (block.classList.contains('minimal')) {
     [...block.children].forEach((card) => {
-      const link = card.querySelector('a[href]');
-      if (!link) return;
-      link.classList.add('cards-card-link');
-      const title = card.querySelector('.cards-card-body h3');
-      if (title) link.setAttribute('aria-label', `${title.textContent.trim()}: ${link.textContent.trim()}`);
+      const body = card.querySelector('.cards-card-body');
+      const first = body?.querySelector('a[href]');
+      if (!first) return;
+      const link = document.createElement('a');
+      link.href = first.href;
+      link.className = 'cards-card-link';
+      body.querySelectorAll('a[href]').forEach((a) => a.replaceWith(...a.childNodes));
+      link.append(...body.childNodes);
+      body.append(link);
     });
   }
 
@@ -277,9 +299,13 @@ export default function decorate(block) {
   return trackAs('rw_cards_container', block, {
     key: 'cards',
     linkName: false, // prod omits it on ~half the card CTAs; sheet fills the rest
+    payload: navArrowPayload, // prev/next arrows -> rw_carousel_control|arrow_left|arrow_right
     items: {
       '.cards-track, .cards-track > *':
         (i, el) => (el.classList.contains('cards-track') ? 'carousel' : `rw_card_${i}`),
+      // the prev/next arrows + dots live in .cards-controls (sibling of .cards-track);
+      // prod reports them at the carousel level -> rw_cards_container|carousel (not a card).
+      '.cards-controls': 'carousel',
     },
   });
 }

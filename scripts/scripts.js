@@ -12,12 +12,12 @@ import {
   buildBlock,
   getMetadata,
 } from './aem.js';
-import { runExperimentation, runExperimentationLazy } from './experiment-loader.js';
 // Adobe/Alloy (plugins/martech, a git subtree) is armed but commented out; Tealium is the default.
 // Uncomment the AEP blocks in loadEager / loadLazy to load it in parallel.
 // The tealium plugin below is NOT a vendored subtree (project-owned code), but the relative
 // eslint-disable-next-line import/no-relative-packages
 import TealiumMartech from '../plugins/tealium-martech/src/index.js';
+import installEcsEnrich from './ecs-enrich.js';
 import { isBlogPage, hasAuthoredCaseStudyHeader } from '../blocks/blog-template/blog-detect.js';
 import { isVideoLink } from '../blocks/video/video-info.js';
 import { isGuidePage } from '../blocks/guide-hero/guide-detect.js';
@@ -80,16 +80,6 @@ export function getSiteConfig() {
   }
   return siteConfigPromise;
 }
-
-// no custom prod domain configured yet — treat only the .aem.live CDN as
-// prod (no pill overlay); .aem.page previews and localhost stay in debug mode.
-const experimentationConfig = {
-  isProd: () => window.location.hostname.endsWith('.aem.live'),
-  audiences: {
-    mobile: () => window.innerWidth < 600,
-    desktop: () => window.innerWidth >= 600,
-  },
-};
 
 if (window.trustedTypes && window.trustedTypes.createPolicy) {
   const innerTT = window.trustedTypes.createPolicy('tt-inner', {
@@ -242,6 +232,7 @@ function buildAutoBlocks(main) {
             const { pathname } = new URL(fragment.href);
             const frag = await loadFragment(pathname);
             fragment.parentElement.replaceWith(...frag.children);
+            import('./schedule-modal.js').then(({ bindScheduleLinks }) => bindScheduleLinks(main)).catch(() => {});
           } catch (error) {
             // eslint-disable-next-line no-console
             console.error('Fragment loading failed', error);
@@ -374,9 +365,6 @@ function redirectConstructionQToLlmAppCtx() {
   window.location.replace(`${window.location.pathname}?${params.toString()}${window.location.hash}`);
 }
 
-const EXPERIENCE_DEADLINE_MS = 1500;
-const EXPERIENCE_APPLY_MS = 2000;
-
 async function loadEager(doc) {
   redirectConstructionQToLlmAppCtx();
   document.documentElement.lang = 'en';
@@ -387,12 +375,17 @@ async function loadEager(doc) {
   }
 
   // Seed window.appVars before martech so the tracker finds it; analytics.js fills the arrays.
+  // The page pathname is the content identifier (stable across localhost/preview/prod).
   const appVars = window.appVars || (window.appVars = {});
-  const casId = getMetadata('cas-id') || getMetadata('page-cas-id');
-  appVars.externalContentIdentifier = casId || appVars.externalContentIdentifier || '';
+  appVars.externalContentIdentifier = window.location.pathname;
   appVars.pznRecDetailsArr = appVars.pznRecDetailsArr || [];
   appVars.pznPageRecDetailsArr = appVars.pznPageRecDetailsArr || [];
   appVars.ixpDetailsArr = appVars.ixpDetailsArr || [];
+
+  // Enrich the ECS profile's beacons with EDS-derived values it lost from SSR: page-view
+  // pzn/experiments (from appVars) + click page_cas_id (= pathname). Installs before utag loads.
+  // FIXME: remove once the profile reads appVars / the runtime pathname. See ecs-enrich.js.
+  if (MARTECH_PROVIDER !== 'off') installEcsEnrich();
 
   // Gated conversion pages (e.g. /webinar-* form landings) opt out of the global
   // header/footer via `hide-header` / `hide-footer` metadata
@@ -426,27 +419,9 @@ async function loadEager(doc) {
   //   }
   // }
 
-  await runExperimentation(doc, experimentationConfig);
-  window.hlx = window.hlx || {};
-  if (!window.hlx.pageExperienceApplied) {
-    window.hlx.pageExperienceApplied = true;
-    const {
-      collectRequest, buildContext, fetchExperience, applyPage,
-    } = await import('./experience.js');
-    const request = collectRequest(doc);
-    if (request.experimentIds.length || request.accessPointNames.length) {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), EXPERIENCE_DEADLINE_MS);
-      try {
-        const opts = { signal: controller.signal };
-        const response = await fetchExperience(request, buildContext(), opts);
-        window.hlx.experienceResponse = response;
-        if (response) await applyPage(doc, response, controller.signal);
-      } finally {
-        clearTimeout(timer);
-      }
-    }
-  }
+  // EAGER experience — the single consolidated call + any whole-page swap, BEFORE decorateMain.
+  const { applyPageExperience, applyEagerLayers } = await import('./experience.js');
+  const pageSwapped = await applyPageExperience(doc);
   const main = doc.querySelector('main');
   if (main) {
     buildBlogTemplate = await resolveBlogTemplate(main);
@@ -454,12 +429,9 @@ async function loadEager(doc) {
       ({ default: buildGuideHeroAutoBlock } = await import('../blocks/guide-hero/guide-hero-autoblock.js'));
     }
     decorateMain(main);
-    const firstSection = main.querySelector('.section');
-    if (firstSection && window.hlx.experienceResponse) {
-      const { applyLayer, withTimeout } = await import('./experience.js');
-      const apply = applyLayer(firstSection, window.hlx.experienceResponse);
-      await withTimeout(apply, EXPERIENCE_APPLY_MS);
-    }
+    // AFTER decorateMain: resolve a swapped page's own section/block slots (recursion-safe)
+    // and swap the first/LCP section — both before reveal. No-op without an experience response.
+    await applyEagerLayers(doc, pageSwapped);
     document.body.classList.add('appear');
     await Promise.all([
       // Uncomment with the AEP block above (applies eager martech decisions).
@@ -478,10 +450,8 @@ async function loadEager(doc) {
   }
 }
 
-const CONTACT_WIDGET_EXCLUDED_PATHS = ['/contact', '/library/templates/contact'];
-
 function shouldRenderContactUs() {
-  return !CONTACT_WIDGET_EXCLUDED_PATHS.includes(window.location.pathname);
+  return !['true', 'yes', 'hide'].includes((getMetadata('hide-contact-widget') || '').trim().toLowerCase());
 }
 
 /**
@@ -496,19 +466,34 @@ async function loadLazy(doc) {
 
   const main = doc.querySelector('main');
   // Below-the-fold personalization/experimentation
-  if (main && window.hlx.experienceResponse) {
-    const skip = { skip: main.querySelector('.section') };
-    import('./experience.js')
-      .then(({ applyLayer }) => applyLayer(main, window.hlx.experienceResponse, skip))
+  let experienceTracking;
+  if (window.hlx?.experienceResponse || window.hlx?.experienceResponsePromise) {
+    const experienceModule = import('./experience.js');
+    experienceTracking = experienceModule
+      .then(({ applyLazyExperience }) => applyLazyExperience(doc))
       .catch(() => {});
   }
   await loadSections(main);
+
+  // Global "Schedule a call" trigger — covers any a[href$="#schedule"] anywhere in
+  // main (tabs panels, bare default content), not just blocks that opt in individually.
+  if (main) {
+    import('./schedule-modal.js').then(({ bindScheduleLinks }) => bindScheduleLinks(main)).catch(() => {});
+  }
 
   // Click tracking (opt-in `tracking-` blocks) is not render-critical
   if (main) {
     import('./tracking.js')
       .then(({ initTracking }) => initTracking(document))
       .catch(() => {});
+  }
+
+  // Experience Preview engine — preview/dev hosts only, so it's inert on live/prod. Powers
+  // the "Experience Preview" sidekick palette;
+  const host = window.location.hostname;
+  if (/\.(aem|hlx)\.page$/.test(host) || host === 'localhost' || host === '127.0.0.1') {
+    // eslint-disable-next-line import/no-cycle
+    import('./experience-preview.js').then((m) => m.init()).catch(() => {});
   }
 
   const { hash } = window.location;
@@ -530,6 +515,7 @@ async function loadLazy(doc) {
 
   // Tealium (default): load utag.js for the resolved env + apply consent. Fail-open.
   if (MARTECH_PROVIDER === 'tealium') {
+    if (experienceTracking) await experienceTracking;
     try { await tealium.lazy(); } catch (e) { /* non-fatal */ }
   }
 
@@ -543,8 +529,6 @@ async function loadLazy(doc) {
   //     try { await adobe.updateUserConsent({ collect: true }); } catch (e) { /* non-fatal */ }
   //   }
   // }
-
-  await runExperimentationLazy(doc, experimentationConfig);
 
   loadCSS(`${window.hlx.codeBasePath}/styles/lazy-styles.css`);
   loadFonts();

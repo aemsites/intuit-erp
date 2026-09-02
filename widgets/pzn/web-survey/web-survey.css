@@ -1,0 +1,14 @@
+/* Behavior-only widget block renders nothing; the survey UI lives in a modal. */
+.web-survey {
+  display: none;
+}
+
+.web-survey-modal h2 {
+  margin-top: 0;
+}
+
+.web-survey-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 24px;
+}

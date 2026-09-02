@@ -11,6 +11,7 @@ import TealiumMartech, {
   loadUtag,
   loadConsentStack,
   loadObservabilityRum,
+  initObservabilityRum,
   settleConsent,
 } from '../plugins/tealium-martech/src/index.js';
 
@@ -56,6 +57,7 @@ beforeEach(() => {
   delete window.utag;
   delete window.utag_data;
   delete window.utag_cfg_ovrd;
+  delete window.O11yRUM;
 });
 
 afterEach(() => {
@@ -74,10 +76,10 @@ describe('resolveEnvironment / isProdHost', () => {
     expect(isProdHost()).toBe(true);
   });
 
-  it('resolves "dev" on the Intuit staging host (stage.erp.intuit.com)', () => {
+  it('resolves "prod" on the Intuit staging host (stage.erp.intuit.com — runs the prod profile)', () => {
     stubLocation({ hostname: STAGE_HOST });
-    expect(resolveEnvironment()).toBe('dev');
-    expect(isProdHost()).toBe(false);
+    expect(resolveEnvironment()).toBe('prod');
+    expect(isProdHost()).toBe(true);
   });
 
   it('resolves "dev" on localhost', () => {
@@ -130,9 +132,8 @@ describe('resolveEnvironment / isProdHost', () => {
     });
   });
 
-  it('NEVER resolves "prod" for any host other than the exact erp.intuit.com hostname', () => {
+  it('resolves "prod" ONLY for the exact erp.intuit.com / stage.erp.intuit.com hostnames', () => {
     [
-      STAGE_HOST,
       DEV_HOST_LOCALHOST,
       '127.0.0.1',
       AEM_PAGE_HOST,
@@ -204,11 +205,13 @@ describe('TealiumMartech constructor', () => {
 });
 
 describe('utag_cfg_ovrd.utagdb (Tealium debug console) by resolved environment', () => {
-  it('sets utagdb=true for the dev environment (stage.erp.intuit.com host)', () => {
+  it('sets no utag_cfg_ovrd for the prod environment (stage.erp.intuit.com host)', () => {
     stubLocation({ hostname: STAGE_HOST });
     // eslint-disable-next-line no-new
     new TealiumMartech();
-    expect(window.utag_cfg_ovrd.utagdb).toBe(true);
+    // stage.erp.intuit.com runs the prod profile — prod parity: no utagdb, no noview.
+    expect(window.utag_cfg_ovrd?.utagdb).toBeFalsy();
+    expect(window.utag_cfg_ovrd?.noview).toBeFalsy();
   });
 
   it('sets utagdb=true for the dev environment (localhost)', () => {
@@ -503,6 +506,69 @@ describe('loadObservabilityRum (Intuit o11y RUM — page-authored on prod, prod-
     document.getElementById('o11y-rum-init').dispatchEvent(new Event('error'));
     await expect(promise).resolves.toBeUndefined();
   });
+
+  it('starts the RUM reporter once the scripts load when the document is past "loading" '
+    + '(regression: init-0.0.1.js defers start to a DOMContentLoaded already fired under EDS)', async () => {
+    vi.spyOn(document, 'readyState', 'get').mockReturnValue('complete');
+    const RumReporter = vi.fn();
+    window.O11yRUM = { RumReporter };
+
+    const promise = loadObservabilityRum('prod');
+    document.getElementById('o11y-rum-web').dispatchEvent(new Event('load'));
+    await settle();
+    document.getElementById('o11y-rum-init').dispatchEvent(new Event('load'));
+    await promise;
+
+    // The bug was RumReporter never being constructed -> zero rum.api.intuit.com beacons.
+    expect(RumReporter).toHaveBeenCalledTimes(1);
+    const cfg = RumReporter.mock.calls[0][0];
+    expect(cfg.apiURL).toBe('https://rum.api.intuit.com/v1/rum/web');
+    expect(cfg.tags.env).toBe('prod');
+    expect(cfg.reportWebVitals).toBe(true);
+    vi.restoreAllMocks();
+  });
+});
+
+describe('initObservabilityRum (compensates for init-0.0.1.js DOMContentLoaded gating)', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('constructs the RumReporter with Intuit config when readyState is past "loading"', () => {
+    vi.spyOn(document, 'readyState', 'get').mockReturnValue('interactive');
+    const RumReporter = vi.fn();
+    window.O11yRUM = { RumReporter };
+
+    initObservabilityRum();
+
+    expect(RumReporter).toHaveBeenCalledTimes(1);
+    expect(RumReporter.mock.calls[0][0]).toMatchObject({
+      apiURL: 'https://rum.api.intuit.com/v1/rum/web',
+      reportNavigation: true,
+      reportResources: true,
+      reportWebVitals: true,
+      tags: { env: 'prod' },
+    });
+  });
+
+  it('defers to init-0.0.1.js while the document is still "loading" (no double init)', () => {
+    vi.spyOn(document, 'readyState', 'get').mockReturnValue('loading');
+    const RumReporter = vi.fn();
+    window.O11yRUM = { RumReporter };
+
+    initObservabilityRum();
+
+    expect(RumReporter).not.toHaveBeenCalled();
+  });
+
+  it('is a no-op when the bundle never defined window.O11yRUM (blocked/failed)', () => {
+    vi.spyOn(document, 'readyState', 'get').mockReturnValue('complete');
+    expect(() => initObservabilityRum()).not.toThrow();
+  });
+
+  it('fails open when the RumReporter constructor throws', () => {
+    vi.spyOn(document, 'readyState', 'get').mockReturnValue('complete');
+    window.O11yRUM = { RumReporter: vi.fn(() => { throw new Error('boom'); }) };
+    expect(() => initObservabilityRum()).not.toThrow();
+  });
 });
 
 describe('disabled instance (hostname resolveEnvironment does not recognize) — eager/lazy/delayed are no-ops', () => {
@@ -536,7 +602,7 @@ describe('disabled instance (hostname resolveEnvironment does not recognize) —
 describe("enabled instance — lazy() loads the consent stack, settles consent, loads utag.js, then fires the CONSENT-GATED initial view", () => {
   it.each([
     ['prod', PROD_HOST, 'privacy-cdn.a.intuit.com'],
-    ['dev', STAGE_HOST, 'privacy-cdn.e2e.a.intuit.com'],
+    ['prod', STAGE_HOST, 'privacy-cdn.a.intuit.com'],
   ])('env "%s" (host %s): eager() does no network; lazy() loads the consent stack (CDN %s) before utag.js, then fires the initial view once consent is resolved', async (env, hostname, cdnHost) => {
     stubLocation({ hostname });
     // A pre-existing OptanonConsent cookie lets settleConsent() resolve as soon as it's invoked

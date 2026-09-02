@@ -281,6 +281,10 @@ export function fetchTrackingSheet() {
   return sheetPromise;
 }
 
+// Per-block JIT payload derivers (trackAs { payload }), read by stampInteraction for
+// per-item fields the element + sheet can't express (e.g. faq accordion_item_N).
+const PAYLOAD_DERIVERS = new WeakMap();
+
 /**
  * Reset cached sheet state — test isolation only (each test needs a fresh fetch
  * stub and an empty resolved map).
@@ -435,9 +439,9 @@ export function blockNameOf(block) {
   return [...block.classList].find((c) => c !== 'block' && !c.startsWith(PREFIX)) || '';
 }
 
-// What counts as a clickable CTA: real links/buttons, plus role=button widgets
-// (e.g. the video block's poster/play control is a <div role="button">).
-export const CTA_SELECTOR = 'a[href], button, [role="button"]';
+// What counts as a clickable CTA: native links/buttons/disclosures, plus
+// role=button widgets (e.g. the video block's poster/play control).
+export const CTA_SELECTOR = 'a[href], button, summary, [role="button"]';
 
 // Content regions we track. Track-by-default fires only inside these, so injected
 // chrome mounted at the body root (OneTrust consent, dev sidekick, third-party
@@ -693,7 +697,23 @@ export function stampInteraction(e) {
   if (!isPart) {
     let id = trackIdOf(cta);
     if (!id && !block) id = hrefTrackId(cta, PAGE_KEY) || (labelFor(cta) ? `${PAGE_KEY}:${slug(labelFor(cta))}` : null);
-    if (id) row = sheetRowById(sheetMap, id, loc.pathname);
+    if (id) {
+      row = sheetRowById(sheetMap, id, loc.pathname);
+      // Our build may give a CTA an href-based id (e.g. hero:navattic-srk05sa) where
+      // the sheet keys it by label (hero:take-the-tour) — prod rendered that CTA
+      // href-less (a button), so gen-sheet used the label. Retry with
+      // <namespace>:<slug(label)> so authored residue still resolves across that
+      // button-vs-link divergence. Only fires when the primary (href) id misses.
+      if (!row) {
+        const label = labelFor(cta);
+        const sep = id.indexOf(':');
+        const ns = sep > 0 ? id.slice(0, sep) : '';
+        if (ns && label) {
+          const labelId = `${ns}:${slug(label)}`;
+          if (labelId !== id) row = sheetRowById(sheetMap, labelId, loc.pathname);
+        }
+      }
+    }
   }
   // Parts are pure-derive (no block payload defaults); the one exception is
   // link-name-off, which alsoTrack stamps on the part itself.
@@ -704,6 +724,11 @@ export function stampInteraction(e) {
     }
   } else {
     derived = applyBlockDefaults(derived, cta);
+  }
+  // Per-item payload deriver: a sheet-shaped cfg merged under any real sheet row (sheet wins).
+  if (block && !isPart) {
+    const derivePayload = PAYLOAD_DERIVERS.get(block);
+    if (derivePayload) { const ov = derivePayload(cta); if (ov) row = { ...ov, ...(row || {}) }; }
   }
   const regionCtx = resolveRegionContext(cta);
   const context = regionCtx ? { customProperties: regionCustomProperties(regionCtx) } : {};
@@ -746,6 +771,8 @@ export function initTracking(scope = document) {
  *   selector -> inner-slot trail segment (fixed string, or (index, el) => string)
  * @param {Record<string, string|{as:string, linkName?:boolean}>} [opts.alsoTrack]
  *   selector -> ui_object, registering non-CTA beacon sources (#769)
+ * @param {(el: Element) => (Record<string, unknown>|null)} [opts.payload] per-CTA JIT
+ *   deriver returning a partial sheet-shaped cfg (kebab keys); merged under any sheet row
  * @param {string} [opts.action]
  * @param {string} [opts.object]
  * @param {string} [opts.uiObject] code-built payload defaults
@@ -755,9 +782,11 @@ export function initTracking(scope = document) {
  */
 export function trackAs(name, block, {
   key = name, items, trackId, alsoTrack, action, object,
-  uiObject: uiObjectDefault, linkName, skip,
+  uiObject: uiObjectDefault, linkName, skip, payload,
 } = {}) {
   if (!block) return block;
+  // Register the per-item JIT payload deriver (read by stampInteraction).
+  if (payload) PAYLOAD_DERIVERS.set(block, payload);
   // Opt pure-UI controls out (hamburger, toggles) via data-track-skip.
   if (skip) block.querySelectorAll(skip).forEach((el) => el.setAttribute('data-track-skip', ''));
   // Stamp each non-skipped CTA's data-track-id (order-independent sheet key). The

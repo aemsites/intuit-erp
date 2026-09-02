@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "scenarioId": "customer-workforce-faq-third-party-apps",
+  "page": "/workforce-automation",
+  "runtimeAssets": [
+    "/blocks/faq/faq.js"
+  ],
+  "goldenRef": {
+    "payloadFile": "payloads/111_content_interacted_faq|question_1_workforce-automation_f3c9a3c7764b.json"
+  },
+  "locator": {
+    "role": "button",
+    "name": "Do you integrate with third-party apps?",
+    "exact": true
+  },
+  "preconditions": {
+    "attributes": {
+      "aria-expanded": "true"
+    }
+  },
+  "interaction": {
+    "type": "click",
+    "preventNavigation": true,
+    "testText": null
+  }
+}

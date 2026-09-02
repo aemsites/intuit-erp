@@ -1,13 +1,14 @@
 import {
   describe, it, expect, vi, beforeEach,
 } from 'vitest';
-// eslint-disable-next-line import/no-relative-packages
-import { sendEvent } from '../plugins/martech/src/index.js';
 import decorate, { parseFormConfig } from '../blocks/form/form.js';
 
-vi.mock('../plugins/martech/src/index.js', () => ({
-  sendEvent: vi.fn(() => Promise.resolve()),
-}));
+// Uncomment with the AEP/WebSDK integration in scripts/scripts.js and blocks/form/form.js.
+// // eslint-disable-next-line import/no-relative-packages
+// import { sendEvent } from '../plugins/martech/src/index.js';
+// vi.mock('../plugins/martech/src/index.js', () => ({
+//   sendEvent: vi.fn(() => Promise.resolve()),
+// }));
 vi.mock('../scripts/aem.js', () => ({
   loadScript: vi.fn(() => Promise.resolve()),
   getMetadata: vi.fn(() => ''),
@@ -40,7 +41,8 @@ beforeEach(() => {
   onSuccessFn = null;
   onValidateFn = null;
   submittable = vi.fn();
-  sendEvent.mockClear();
+  // Uncomment with the AEP/WebSDK integration in scripts/scripts.js and blocks/form/form.js.
+  // sendEvent.mockClear();
   getSiteConfig.mockResolvedValue({
     'marketo.munchkin': '743-RZM-619',
     'chilipiper.subdomain': 'intuitsales',
@@ -209,7 +211,9 @@ describe('decorate — live Marketo form', () => {
     );
   });
 
-  it('hands off to ChiliPiper and tracks on Marketo success', async () => {
+  it('hands off to ChiliPiper (prod args + xref) and fires the ECS lead track on success', async () => {
+    const track = vi.fn();
+    window.intuit = { tracking: { ecs: { webAnalytics: { track } } } };
     const block = make([['formId', '1058'], ['chiliPiperRouter', 'mid-us-webform-managed-ies']]);
     await decorate(block);
     await flush();
@@ -222,11 +226,25 @@ describe('decorate — live Marketo form', () => {
     expect(window.ChiliPiper.submit).toHaveBeenCalledWith(
       'intuitsales',
       'mid-us-webform-managed-ies',
-      expect.objectContaining({ map: true }),
+      expect.objectContaining({
+        map: false,
+        disableRelation: true,
+        event: expect.objectContaining({ Lead_XRef_ID__c: expect.any(String) }),
+      }),
     );
-    // analytics preserved: with no Tealium, the Adobe identity event fires with mapped values
-    expect(sendEvent).toHaveBeenCalledTimes(1);
-    expect(sendEvent.mock.calls[0][0].xdm.identityMap.Email[0].id).toBe('controller@brightpathco.com');
+    // The same minted xref feeds the ECS lead track → IES_lead.
+    const xref = window.ChiliPiper.submit.mock.calls[0][2].event.Lead_XRef_ID__c;
+    expect(track).toHaveBeenCalledWith(expect.objectContaining({
+      object: 'lead',
+      action: 'create_submitted',
+      lead_xref_id: xref,
+      product_family_of_interest: 'Intuit Enterprise Suite',
+    }));
+    // Uncomment with the AEP/WebSDK integration in scripts/scripts.js and blocks/form/form.js.
+    // expect(sendEvent).toHaveBeenCalledTimes(1);
+    // expect(sendEvent.mock.calls[0][0].xdm.identityMap.Email[0].id)
+    //   .toBe('controller@brightpathco.com');
+    delete window.intuit;
   });
 });
 

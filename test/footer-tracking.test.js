@@ -152,3 +152,94 @@ describe('footer click-tracking — id-based keying', () => {
     });
   });
 });
+
+// Clicking "Manage cookies" must undo the scroll-to-top OneTrust does when it opens the
+// preference centre, without touching any scrolling the reader does themselves. The real
+// stage build showed OneTrust jumps the page to the very top (scrollY 0) with no focus
+// change, so the handler keys on "landed back at the top", not on focus. jsdom stubs
+// `window.scrollTo` as a no-op, so scroll position is mocked here to observe what the
+// handler actually calls it with.
+function mockScrollPosition(x, y) {
+  const pos = { x, y };
+  Object.defineProperty(window, 'scrollX', { configurable: true, get: () => pos.x });
+  Object.defineProperty(window, 'scrollY', { configurable: true, get: () => pos.y });
+  const scrollTo = vi.fn((newX, newY) => { pos.x = newX; pos.y = newY; });
+  window.scrollTo = scrollTo;
+  return { setPos: (newX, newY) => { pos.x = newX; pos.y = newY; }, scrollTo };
+}
+
+const clickManageCookies = (block) => block.querySelector('.footer-copy-btn')
+  .dispatchEvent(new window.MouseEvent('click', { bubbles: true, cancelable: true }));
+
+describe('footer cookie preferences — scroll pinning', () => {
+  // pinScroll arms a window scroll listener that only self-removes after a 2s timeout,
+  // so fake timers let each test flush that disarm and not leak a still-armed listener
+  // into the next test (they share `window`).
+  beforeEach(() => {
+    vi.useFakeTimers();
+    document.head.innerHTML = '';
+    document.body.innerHTML = '';
+    resetTrackingState();
+    window.OneTrust = { getGeolocationData: () => ({ country: 'US', state: 'TX' }) };
+    window.scrollTo = vi.fn();
+    stubFetch();
+  });
+  afterEach(() => {
+    vi.runOnlyPendingTimers(); // fire pinScroll's disarm timeout -> removes its listener
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+    delete window.OneTrust;
+    delete window.scrollTo;
+  });
+
+  it('restores scroll when OneTrust jumps the page to the top', async () => {
+    const block = await buildFooter();
+    const { setPos, scrollTo } = mockScrollPosition(0, 3000);
+
+    clickManageCookies(block);
+    // OneTrust opens the preference centre and jumps the window to the top.
+    setPos(0, 0);
+    window.dispatchEvent(new window.Event('scroll'));
+
+    expect(scrollTo).toHaveBeenCalledWith(0, 3000);
+    expect(window.scrollY).toBe(3000);
+  });
+
+  it('does not fight a reader scroll that never reaches the top', async () => {
+    const block = await buildFooter();
+    const { setPos, scrollTo } = mockScrollPosition(0, 3000);
+
+    clickManageCookies(block);
+    // The reader scrolls up on their own but nowhere near the top.
+    setPos(0, 500);
+    window.dispatchEvent(new window.Event('scroll'));
+
+    expect(scrollTo).not.toHaveBeenCalled();
+    expect(window.scrollY).toBe(500);
+  });
+
+  it('corrects the jump only once, then leaves the page alone', async () => {
+    const block = await buildFooter();
+    const { setPos, scrollTo } = mockScrollPosition(0, 3000);
+
+    clickManageCookies(block);
+    setPos(0, 0);
+    window.dispatchEvent(new window.Event('scroll')); // OneTrust's jump -> restored to 3000
+    // A later top-ward scroll (e.g. the reader themselves) is no longer touched.
+    setPos(0, 0);
+    window.dispatchEvent(new window.Event('scroll'));
+
+    expect(scrollTo).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not arm when the reader clicks from near the top of the page', async () => {
+    const block = await buildFooter();
+    const { setPos, scrollTo } = mockScrollPosition(0, 20);
+
+    clickManageCookies(block);
+    setPos(0, 0);
+    window.dispatchEvent(new window.Event('scroll'));
+
+    expect(scrollTo).not.toHaveBeenCalled();
+  });
+});

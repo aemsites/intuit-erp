@@ -1,0 +1,260 @@
+/*
+ * Experience Preview palette — reuses the Experience Workspace (Spectrum 2) token system
+ * and component classes from the DA personalization plugin so the palette matches DA
+ * Canvas, then adds only the right-rail layout specific to this tool.
+ */
+@import url('/tools/plugins/personalization/index.css');
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+#app {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--s2-spacing-200);
+  padding-bottom: 84px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2-spacing-100);
+}
+
+.iep-intro {
+  font-size: var(--s2-body-size-xs);
+  color: var(--pzn-muted);
+  margin-bottom: var(--s2-spacing-50);
+}
+
+.pzn-section-head .pzn-section-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.iep-kind {
+  flex: none;
+  white-space: nowrap;
+}
+
+.iep-group-title {
+  font-size: var(--s2-body-size-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--pzn-muted);
+  margin: var(--s2-spacing-100) 0 0;
+}
+
+/* one target card body */
+.iep-target-body {
+  padding: var(--s2-spacing-100);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2-spacing-75);
+}
+
+.iep-note {
+  font-size: var(--s2-body-size-xs);
+  color: var(--pzn-muted);
+  overflow-wrap: anywhere;
+}
+
+.iep-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 1px 6px;
+  border-radius: 999px;
+  border: 1px solid var(--s2-gray-300);
+  color: var(--pzn-muted);
+}
+
+.iep-badge-append {
+  border-color: var(--s2-blue-800);
+  color: var(--s2-blue-900);
+}
+
+.iep-badge-ixp {
+  border-color: var(--s2-red-800);
+  color: var(--pzn-error);
+}
+
+/* variant options — radio rows */
+.iep-variants {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2-spacing-50);
+}
+
+.iep-variant {
+  display: flex;
+  align-items: center;
+  gap: var(--s2-spacing-75);
+  padding: var(--s2-spacing-75) var(--s2-spacing-100);
+  border-radius: var(--s2-corner-radius-400);
+  border: 1px solid transparent;
+  background: var(--s2-gray-75);
+  cursor: pointer;
+}
+
+.iep-variant:hover {
+  border-color: var(--s2-gray-300);
+}
+
+.iep-variant.is-active {
+  border-color: var(--s2-blue-800);
+
+  /* imported blue-100 is nearly black on dark — give dark a more visible tint */
+  background: light-dark(var(--s2-blue-100), color-mix(in srgb, var(--s2-blue-800) 20%, transparent));
+}
+
+/* The imported kind-chip tints (pale bg + colored text) look great in light mode but wash
+   out on dark. Keep the tint in light; use a solid, saturated fill with white text on dark
+   so the Personalization/Experiment chips stay vivid and legible. */
+.pzn-chip-exp.is-set {
+  border-color: transparent;
+  background: light-dark(var(--s2-blue-100), var(--s2-blue-800));
+  color: light-dark(var(--s2-blue-900), #fff);
+}
+
+.pzn-chip-pzn.is-set {
+  border-color: transparent;
+  background: light-dark(var(--s2-green-100), var(--s2-green-800));
+  color: light-dark(var(--s2-green-900), #fff);
+}
+
+.iep-variant input {
+  flex: none;
+  margin: 0;
+  accent-color: var(--s2-blue-900);
+}
+
+.iep-variant-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* collapsible sections (Simulate context) */
+.iep-collapse-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s2-spacing-100);
+  width: 100%;
+  padding: var(--s2-spacing-100);
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  border: none;
+  border-radius: var(--s2-corner-radius-400);
+  background: var(--s2-gray-75);
+  color: var(--pzn-fg);
+}
+
+.iep-collapse-head:hover {
+  background: var(--s2-gray-100);
+}
+
+.iep-caret {
+  transition: transform 0.15s ease;
+}
+
+.iep-collapse.is-open .iep-caret {
+  transform: rotate(90deg);
+}
+
+.iep-collapse-body {
+  display: none;
+  flex-direction: column;
+  gap: var(--s2-spacing-100);
+  padding: var(--s2-spacing-100) var(--s2-spacing-50) var(--s2-spacing-50);
+}
+
+.iep-collapse.is-open .iep-collapse-body {
+  display: flex;
+}
+
+/* form fields */
+.iep-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2-spacing-50);
+}
+
+.iep-field .pzn-input,
+.iep-field .pzn-select,
+.iep-textarea {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.iep-textarea {
+  font-family: ui-monospace, sfmono-regular, menlo, monospace;
+  font-size: var(--s2-body-size-xs);
+  min-height: 96px;
+  resize: vertical;
+  padding: 6px var(--s2-spacing-100);
+  border-radius: var(--s2-corner-radius-400);
+  border: 1px solid var(--s2-gray-300);
+  background: var(--pzn-bg);
+  color: var(--pzn-fg);
+}
+
+.iep-textarea:focus {
+  outline: none;
+  border-color: var(--s2-blue-800);
+  box-shadow: 0 0 0 1px var(--s2-blue-800);
+}
+
+.iep-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2-spacing-100);
+  align-items: center;
+}
+
+.iep-decisions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2-spacing-50);
+  padding: var(--s2-spacing-100);
+  border-radius: var(--s2-corner-radius-400);
+  background: var(--s2-gray-75);
+  font-size: var(--s2-body-size-xs);
+}
+
+.iep-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s2-spacing-100);
+  margin-top: var(--s2-spacing-100);
+  padding: var(--s2-spacing-200) var(--s2-spacing-100) 0;
+  border-top: 1px solid var(--s2-gray-200);
+}
+
+.iep-path {
+  font-family: ui-monospace, sfmono-regular, menlo, monospace;
+  font-size: var(--s2-body-size-xs);
+  color: var(--pzn-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

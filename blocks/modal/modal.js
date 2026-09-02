@@ -3,6 +3,7 @@ import { loadFragment } from '../fragment/fragment.js';
 import {
   buildBlock, decorateBlock, loadBlock, loadCSS, loadSections,
 } from '../../scripts/aem.js';
+import { bindScheduleLinks } from '../../scripts/schedule-modal.js';
 
 // Fragments are fetched once and reused across opens; each open clones the
 // cached copy (loadFragment has no cache of its own).
@@ -51,7 +52,13 @@ export async function createModal(contentNodes) {
   dialog.addEventListener('close', () => {
     document.body.classList.remove('modal-open');
     wrapper.remove();
-    // Restore focus to whatever opened the modal (a11y).
+    // Restore focus to whatever opened the modal (a11y) — but only for a
+    // user-initiated close (✕ / click-outside / Esc). A caller handing the
+    // visitor off to another surface (e.g. ChiliPiper's own full-screen
+    // booking overlay) sets `data-suppress-focus-restore` first: pulling focus
+    // back to the trigger button mid-handoff would yank keyboard and
+    // screen-reader users out of the surface that is taking over.
+    if (dialog.dataset.suppressFocusRestore === 'true') return;
     if (previouslyFocused?.focus) previouslyFocused.focus();
   });
 
@@ -99,5 +106,8 @@ export async function openModal(fragmentUrl) {
   block.querySelectorAll('[data-block-status]').forEach((b) => { b.dataset.blockStatus = 'initialized'; });
   block.querySelectorAll('.section[data-section-status]').forEach((s) => { s.dataset.sectionStatus = 'initialized'; });
   await loadSections(block);
+  // Modal content can itself contain a #schedule link (e.g. a nested CTA); the
+  // page-level bind (scripts.js) never sees content injected this late.
+  bindScheduleLinks(block);
   showModal();
 }

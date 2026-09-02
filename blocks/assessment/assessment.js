@@ -1,5 +1,5 @@
 // eslint-disable-next-line import/no-cycle
-import { openScheduleModal } from '../form/form.js';
+import { openScheduleModal } from '../../scripts/schedule-modal.js';
 
 // Ties count as positive (e.g. 2-of-4 is positive).
 const isPositive = (yesCount, total) => 2 * yesCount >= total;

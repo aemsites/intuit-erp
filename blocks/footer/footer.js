@@ -237,6 +237,32 @@ function applyCaliforniaPrivacyLabel(link) {
   check();
 }
 
+// Opening the OneTrust preference centre makes the page jump to the top ~a third of a
+// second after the click, so clicking "Manage cookies" deep in the footer looked like it
+// "navigated to top". preventDefault stops the `#` anchor jump but not this one:
+// instrumenting the real stage build showed OneTrust performs a bare scrollTo(0) with no
+// focus change (focus stays on the link — it never lands in the consent widget, which is
+// why an earlier focusin-scoped guard never fired). So watch the scroll itself, and undo
+// the single jump that lands the page back at the very top — that is OneTrust's
+// signature; a reader's own scrolling is incremental and does not leap to 0, so it is
+// left untouched. Disarm after the one correction. Stays armed for armedMs since the jump
+// lands a few hundred ms after the click, not on the same tick.
+function pinScroll(armedMs = 2000) {
+  const startX = window.scrollX;
+  const startY = window.scrollY;
+  if (startY < 100) return; // already near the top — nothing to protect
+  let done = false;
+  const onScroll = () => {
+    if (done) return;
+    if (window.scrollY < 50) {
+      window.scrollTo(startX, startY);
+      done = true;
+    }
+  };
+  window.addEventListener('scroll', onScroll, { passive: true });
+  setTimeout(() => window.removeEventListener('scroll', onScroll), armedMs);
+}
+
 // "Manage cookies" opens the OneTrust preference centre, mirroring production's
 // two-branch handler: OneTrust.ToggleInfoDisplay(), falling back to
 // intuit_gdpr.showCookiePreference() when the OneTrust SDK hasn't loaded (the consent
@@ -249,6 +275,7 @@ function wireCookiePreferences(block) {
   if (!link) return;
   link.addEventListener('click', (e) => {
     e.preventDefault();
+    pinScroll();
     const ot = window.OneTrust;
     if (ot && typeof ot.ToggleInfoDisplay === 'function') {
       ot.ToggleInfoDisplay();

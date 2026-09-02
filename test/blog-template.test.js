@@ -4,7 +4,7 @@ import {
 import {
   buildToc, buildByline, buildEyebrow, buildBylineMeta,
   buildShare, relocateShare, tocRailRowEnd, isBlogPage,
-  buildBlogTemplate, insertAuthorBio,
+  buildBlogTemplate, injectAuthorBioBlock,
 } from '../blocks/blog-template/blog-template.js';
 
 describe('buildToc', () => {
@@ -221,8 +221,10 @@ describe('tocRailRowEnd', () => {
   });
 });
 
-describe('insertAuthorBio', () => {
-  it('places the bio after the FAQ, even when Recommended is authored before it', () => {
+describe('injectAuthorBioBlock', () => {
+  // The bio is injected as a block wrapped in its own section div, so assertions
+  // target that section (the `.blog-author-bio` block's parent), not the block.
+  it('places the bio block after the FAQ, even when Recommended is authored before it', () => {
     window.hlx = { codeBasePath: '' };
     const main = document.createElement('main');
     main.innerHTML = `
@@ -232,14 +234,14 @@ describe('insertAuthorBio', () => {
     `;
     const faqSection = main.querySelector('.faq').closest('main > div');
 
-    insertAuthorBio(main, { title: 'Jane Doe', description: 'bio text' }, '/blog/author/jane-doe');
+    injectAuthorBioBlock(main);
 
-    const bio = main.querySelector(':scope > .blog-author-bio');
-    expect(bio).toBeTruthy();
+    const bioSection = main.querySelector('.blog-author-bio').parentElement;
+    expect(bioSection.parentElement).toBe(main);
     // immediately after the FAQ section — and therefore after Recommended too
-    expect(faqSection.nextElementSibling).toBe(bio);
+    expect(faqSection.nextElementSibling).toBe(bioSection);
     const idx = (el) => [...main.children].indexOf(el);
-    expect(idx(bio)).toBeGreaterThan(idx(main.querySelector('.blog-cards-container')));
+    expect(idx(bioSection)).toBeGreaterThan(idx(main.querySelector('.blog-cards-container')));
   });
 
   it('falls back to before Recommended when there is no FAQ', () => {
@@ -251,9 +253,10 @@ describe('insertAuthorBio', () => {
     `;
     const rec = main.querySelector('.blog-cards-container');
 
-    insertAuthorBio(main, { title: 'Jane Doe', description: 'bio text' }, '/blog/author/jane-doe');
+    injectAuthorBioBlock(main);
 
-    expect(rec.previousElementSibling).toBe(main.querySelector(':scope > .blog-author-bio'));
+    const bioSection = main.querySelector('.blog-author-bio').parentElement;
+    expect(rec.previousElementSibling).toBe(bioSection);
   });
 });
 
@@ -426,6 +429,68 @@ describe('buildBlogTemplate', () => {
     // appendix then auto-places at row 4, after the rails rather than inside them
     expect(main.querySelector('.blog-toc-rail').style.gridRow).toBe('2 / 4');
     expect(main.querySelector('.blog-rail').style.gridRow).toBe('2 / 4');
+  });
+
+  it('treats a leading section without the H1 as a pre-hero band and decorates the H1 section as the hero', () => {
+    window.hlx = { codeBasePath: '' };
+    window.matchMedia = () => ({ matches: false, addEventListener: () => {} });
+    const main = mainWith(`
+      <div class="columns"><div><div><h2>299% ROI</h2></div></div></div>
+      <div><h1>Headline</h1><p><picture><img src="hero.jpg"></picture></p></div>
+      <div><h2>One</h2><p>a</p></div>
+      <div><h2>Two</h2><p>b</p></div>
+    `);
+
+    buildBlogTemplate(main);
+
+    const prehero = main.children[0];
+    const hero = main.querySelector('.blog-hero');
+    expect(prehero.classList.contains('blog-prehero')).toBe(true);
+    expect(prehero.classList.contains('blog-hero')).toBe(false);
+    expect(prehero.style.gridRow).toBe('1');
+    expect(hero).toBe(main.children[1]);
+    expect(hero.style.gridRow).toBe('2');
+    // eyebrow/byline land in the hero, never in the pre-hero band
+    expect(prehero.querySelector('.blog-byline-tag')).toBeNull();
+    // rails start below the pre-hero (row 3), last TOC section (index 3) ends at line 5
+    expect(main.querySelector('.blog-toc-rail').style.gridRow).toBe('3 / 5');
+    expect(main.querySelector('.blog-rail').style.gridRow).toBe('3 / 5');
+  });
+
+  it('hide-rails: true suppresses both rails and marks the article full-width', () => {
+    window.hlx = { codeBasePath: '' };
+    window.matchMedia = () => ({ matches: false, addEventListener: () => {} });
+    document.head.innerHTML = '<meta name="hide-rails" content="true">';
+    const main = mainWith(`
+      <div><h1>Headline</h1><p><picture><img src="hero.jpg"></picture></p></div>
+      <div><h2>One</h2><p>a</p></div>
+      <div><h2>Two</h2><p>b</p></div>
+    `);
+
+    buildBlogTemplate(main);
+
+    expect(main.classList.contains('blog-no-rails')).toBe(true);
+    expect(main.querySelector('.blog-hero')).toBeTruthy();
+    expect(main.querySelector('.blog-toc-rail')).toBeNull();
+    expect(main.querySelector('.blog-rail')).toBeNull();
+  });
+
+  it('hide-rails: right drops only the right rail and keeps the TOC (matches upstream research)', () => {
+    window.hlx = { codeBasePath: '' };
+    window.matchMedia = () => ({ matches: false, addEventListener: () => {} });
+    document.head.innerHTML = '<meta name="hide-rails" content="right">';
+    const main = mainWith(`
+      <div><h1>Headline</h1><p><picture><img src="hero.jpg"></picture></p></div>
+      <div><h2>One</h2><p>a</p></div>
+      <div><h2>Two</h2><p>b</p></div>
+    `);
+
+    buildBlogTemplate(main);
+
+    expect(main.classList.contains('blog-no-right-rail')).toBe(true);
+    expect(main.classList.contains('blog-no-rails')).toBe(false);
+    expect(main.querySelector('.blog-toc-rail')).toBeTruthy();
+    expect(main.querySelector('.blog-rail')).toBeNull();
   });
 
   it('relocates an inline-authored pricing-disclaimer to the last section, full-bleed', () => {

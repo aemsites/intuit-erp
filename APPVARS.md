@@ -1,111 +1,161 @@
 # Data layer (`window.appVars`)
 
-`window.appVars` is the page-level data layer the Intuit **clickstream / page-view tracker** reads
-to enrich its beacons with personalization and experiment context. On the legacy rendering service
-(Next.js SSR) it was built server-side and inlined into `<head>`; on Edge Delivery there is no such
-server in the render path, so the site code reproduces it in the eager phase of
-[`scripts.js`](scripts/scripts.js).
+`window.appVars` is the page-level data layer that carries **personalization** and **experiment**
+context for the Intuit clickstream / page-view tracker. On the legacy rendering service (Next.js
+SSR) this context was built server-side and inlined into `<head>`; on Edge Delivery there is no
+server in the render path, so the site code reproduces it client-side in the eager phase of
+[`scripts.js`](scripts/scripts.js) and fills it as personalization/experiment decisions resolve
+([`scripts/experience.js`](scripts/experience.js)).
 
-Two things you'll want:
+> **Reality check (Aug 2026).** `appVars` is the *intended* contract — the shape both
+> Intuit's `sbseg-tracker.txt` (the customer-shared reference) and their `getTrackStarScript`
+> read. But the tracker **actually deployed** via the `ies-erp` Tealium profile does **not** read
+> `appVars` for the page-view: on prod it gets `personalization_details` **server-interpolated**
+> (baked from `__NEXT_DATA__`), and on EDS — where there is no SSR — its page-init emits
+> `personalization_details: null`. Closing that is the [open gap](#page-view-personalization--the-open-gap)
+> below. The click channel (`data-pzn-*`) is unaffected and works today.
+
+Three things you'll want:
 
 1. [The contract](#the-contract) — the exact shape the tracker depends on.
-2. [Parity validation](#parity-validation) — verify the rebuilt site emits it, and matches prod's
-   click channel.
+2. [Page-view personalization — the open gap](#page-view-personalization--the-open-gap) — why the
+   page-view event drops it, and the enrich shim that fixes it.
+3. [Parity validation](#parity-validation) — verify the rebuilt site emits it, and matches prod.
 
 ---
 
 ## The contract
 
-The tracker reads **only** `window.appVars` (no other `window.*` object), and only these four fields:
+The intended data layer is `window.appVars`, with these four fields:
 
 | Field | Type | Source | Notes |
 | --- | --- | --- | --- |
-| `externalContentIdentifier` | **string** | page metadata (`cas-id`) | the CAS external content id (`page_cas_id`); `''` when a page has no CAS id yet |
+| `externalContentIdentifier` | **string** | page pathname (`window.location.pathname`) | the content identifier; stable across localhost/preview/prod |
 | `pznRecDetailsArr` | **array** | client pzn integration | section-level personalization records |
-| `pznPageRecDetailsArr` | **array** | client pzn integration | page-level personalization records (empty until whole-page pzn exists on EDS) |
-| `ixpDetailsArr` | **array** | client experiment integration | `[{experiment_id, experiment_version, experiment_treatment}, …]` |
+| `pznPageRecDetailsArr` | **array** | client pzn integration | page-level personalization records (page-level wins over section-level) |
+| `ixpDetailsArr` | **array** | client experiment integration | `[{experiment_id, experiment_version, experiment_treatment}, …]` → joined into `window.ixp.xt` |
 
-> **The three `*Arr` fields are REAL ARRAYS, not JSON strings.** The tracker reads them directly (no
-> `JSON.parse`). This deliberately **reverses** the historical RaaS typing (where they were
-> JSON-stringified) — it matches the current tracker Intuit shared. `test/analytics.test.js` asserts
-> the array typing explicitly.
+Each personalization record (`pznRecord` in [`scripts/experience.js`](scripts/experience.js)) has
+`personalization_placement` / `personalization_id` / `personalization_action` (`'im'`) /
+`personalization_workflow` (`'marketing'`) / `content_id` / `externalContentIdentifier` — the same
+shape prod's `personalization_details` array carries.
+
+> **The three `*Arr` fields are REAL ARRAYS, not JSON strings.** They are read directly (no
+> `JSON.parse`) — this reverses the historical RaaS typing (JSON-stringified) to match the current
+> tracker Intuit shared. The array typing is asserted in
+> [`test/experience.test.js`](test/experience.test.js) (`npm test`).
 
 ### How it's built
 
 - **Eager, before martech.** `loadEager()` in [`scripts.js`](scripts/scripts.js) seeds
-  `window.appVars` **before** the martech/tracker loads — `externalContentIdentifier` from metadata,
-  the three record arrays empty — so it always exists (all four keys) when a tracker reads it.
-- **Arrays fill in place.** Personalization/experiments resolve asynchronously on EDS. As decisions
-  land across the eager (LCP section) and lazy (rest-of-page) phases,
-  [`scripts/experience.js`](scripts/experience.js) (`recordPzn` /
-  `recordIxp`) updates the arrays **on the same object reference** — so a tracker that captured
-  `window.appVars` eagerly still sees the records. Record de-dup + the global write are deferred to an
-  idle callback, off the LCP path.
+  `window.appVars` **before** the martech/tracker loads — `externalContentIdentifier` from the URL
+  pathname, the three record arrays empty — so all four keys always exist when a tracker reads it.
+- **Decisions and visuals have separate deadlines.** The baseline is revealed after 1.5 seconds,
+  while the decision request may continue for up to 5 seconds so late decisions can still apply to
+  below-the-fold regions. Treatment context is recorded only after replacement content lands;
+  control context is recorded when its corresponding apply phase runs. A late page or first-section
+  assignment that misses the paint budget is not reported as an exposure. The page-view waits within
+  the same 5 second bound for successful below-the-fold applications, then proceeds fail-open.
 
 ### Two channels
 
-The data layer reaches the tracker through **two** channels — both are needed for full parity:
+1. **Page-level — `window.appVars`.** *Intended* to feed page-view beacons
+   (`personalization_details`, `experiment_ids`). See the open gap below — the deployed tracker does
+   not yet consume it.
+2. **Click-level — DOM PZN plus global IXP.** `data-pzn-*` attributes let the tracker rebuild a
+   record **per click** by walking the DOM up from the clicked element, so personalized blocks must
+   carry these. `stampPzn` ([`scripts/experience.js`](scripts/experience.js)) writes the full set
+   Intuit's `helix-common/pzn-container-block` uses — `data-pzn-placement` / `-id` / `-action` /
+   `-workflow` / `-model-name` / `-model-version` (+ `data-experiment-*` via `stampExperiment`).
+   The ECS enrichment shim also fills global `experiment_ids` from `appVars` when the profile leaves
+   the click payload empty.
 
-1. **Page-level — `window.appVars`** (this file). Feeds page-view beacons.
-2. **Block-level — `data-pzn-*` DOM attributes** on personalized blocks
-   (`data-pzn-placement` / `data-pzn-id` / `data-pzn-action` / `data-pzn-workflow` …). The tracker
-   rebuilds a record **per click** by walking the DOM up from the clicked element, so personalized
-   blocks must carry these attributes for click tracking to work. Prod erp injects them client-side on
-   personalized blocks; the parity harness flags whether our build does too (see below).
+---
+
+## Page-view personalization — the open gap
+
+**Symptom (customer report).** On a PZN page the `screen:viewed` event ships with
+`personalization_details: null` (missing), while prod ships the populated array. It IS present on
+click (`track`) events.
+
+**Root cause (verified live, prod vs stage).** `personalization_details` / `experiment_ids` on the
+page-view are built by Intuit's ECS page tracker from `pznPageRecDetailsArr || pznRecDetailsArr` and
+`ixpDetailsArr` (see `getTrackStarScript` / `sbseg-tracker.txt` §4). On legacy prod those values are
+**server-interpolated** (baked from `__NEXT_DATA__` at render). On EDS there is no SSR, and the
+deployed profile page-init reads **no runtime data layer** for the page view — probed live, it reads
+neither `window.appVars`, `window.utag_data`, `window.mktg_datalayer`, nor the DOM, and it fires
+once at bootstrap (not re-triggered by `utag.view`). So it emits `null`. Clicks are unaffected
+because the click handler walks `data-pzn-*` off the DOM at click time.
+
+The page-view is fired **once** by the profile at bootstrap (not re-triggered by `utag.view`), the
+ECS libs expose **no page-view opt-out flag**, and `utag.view` is load-bearing for every Tealium
+vendor tag (GA4/ads/Marketo/…) — so we can't cleanly suppress just the ECS page-view client-side.
+
+- **Shipped now — enrich ([`scripts/ecs-enrich.js`](scripts/ecs-enrich.js)).** A
+  temporary client-side shim (**on by default**; skipped only with `?martech=off`): it **wraps** the
+  profile's own `webAnalytics.trackPage` and fills `personalization_details` / `experiment_ids` from
+  `window.appVars`, only where the profile left them empty. One enriched `screen:viewed`, vendor tags
+  intact, no profile change. Installs in the eager phase via an accessor trap on
+  `window.intuit.tracking.ecs.webAnalytics` (race-free, before utag loads). Validated on stage: a
+  profile `trackPage({personalization_details: null})` came out with the `appVars` records +
+  `experiment_ids`. **FIXME:** remove once option C lands.
+- **End-state — option C (Intuit's change).** Point the profile / `helix-common` EDS page-init at
+  `window.appVars.pznPageRecDetailsArr` (their `getTrackStarScript` logic, runtime instead of SSR).
+  Single page-view, no client shim — then the enrich module above is redundant and should be deleted.
 
 ---
 
 ## Parity validation
 
 [`scripts/diff/appvars-diff.mjs`](scripts/diff/appvars-diff.mjs) checks the data layer against live
-`erp.intuit.com`. It's a sibling of [`martech-diff.mjs`](scripts/diff/martech-diff.mjs) and reuses the
-same hardened live capture ([`scripts/diff/live-session.mjs`](scripts/diff/live-session.mjs), which
-clears Akamai/Cloudflare bot-management so prod is never silently measured as an "Access Denied" page).
+`erp.intuit.com`. It reuses the hardened live capture
+([`scripts/diff/live-session.mjs`](scripts/diff/live-session.mjs), which clears Akamai/Cloudflare
+bot-management so prod is never silently measured as an "Access Denied" page).
 
-### What it checks
-
-The data layer is delivered **differently** on prod vs EDS, so the harness has two truth sources:
+### What it checks — three truth sources
 
 - **`window.appVars` contract** — asserted against the fixed four-field contract above (types
-  included; `array` ≠ `string`). On **prod erp this object is absent** (`app_vars_enabled` is off — erp
-  used `window.mktg_datalayer` instead), so there's nothing on prod to diff its *shape* against; the
-  harness confirms **our** build emits it correctly.
-- **`data-pzn-*` block channel** — prod is the baseline. The harness diffs the set of `data-pzn-*`
+  included; `array` ≠ `string`). On **prod erp this object is absent** (`app_vars_enabled` off; prod
+  builds the data layer server-side), so there is nothing on prod to diff its *shape* against — the
+  harness confirms **our** build emits the contract.
+- **`data-pzn-*` block channel** — prod is the baseline; the harness diffs the set of `data-pzn-*`
   attribute **names** so click-time DOM traversal keeps working.
-- **`mktg_datalayer` keys** — captured informationally. We do **not** reproduce that object (the
-  tracker was moved onto `appVars`); it's shown so the divergence stays visible.
+- **page-view beacon** *(new)* — captures the `screen:viewed` clickstream POST and, when prod fires
+  `personalization_details` on a page (i.e. it is a pzn page), **asserts our build does too**. This
+  closes the loop the shape-check alone can't: `appVars` ✓ does **not** prove the records reach the
+  outgoing event — the exact gap that shipped. It passes on an env where the enrich shim (or option
+  C) is live, and reports a GAP on any env still missing it.
 
-The array typing is also asserted in [`test/analytics.test.js`](test/analytics.test.js) (`npm test`).
-The live harness is the integration-level check that the *deployed* build actually emits the contract.
-
-### Setup
-
-```bash
-npm install                     # pulls playwright (a devDependency)
-npx playwright install chromium # one-time browser download
-```
+The array typing + record/stamp shapes are also unit-gated in
+[`test/experience.test.js`](test/experience.test.js) and
+[`test/ecs-enrich.test.js`](test/ecs-enrich.test.js) (`npm test`).
 
 ### Running it
 
 ```bash
-# Diff your local build against the committed prod golden (authenticated `aem up` on :3000):
+npm install                     # pulls playwright (a devDependency)
+npx playwright install chromium # one-time browser download
+
+# Diff local build vs the committed prod golden (authenticated `aem up` on :3000):
 node scripts/diff/appvars-diff.mjs --env local --local-base http://localhost:3000 \
   --baseline scripts/diff/fixtures/appvars-homepage.golden.json
 
-# (Re)capture the prod golden — do this deliberately when prod's data layer changes:
-node scripts/diff/appvars-diff.mjs --env prod \
-  --refresh scripts/diff/fixtures/appvars-homepage.golden.json
+# Point at a page WITH personalization (the homepage may have none locally):
+node scripts/diff/appvars-diff.mjs --env local --ours-path /drafts/home
 
-# CI mode — exit non-zero if a MEASURED env fails the appVars contract:
+# (Re)capture the prod golden — deliberately, when prod's data layer changes:
+node scripts/diff/appvars-diff.mjs --env prod --refresh scripts/diff/fixtures/appvars-homepage.golden.json
+
+# CI mode — exit non-zero when a MEASURED env fails a check:
 node scripts/diff/appvars-diff.mjs --env local --assert
 ```
 
 | Flag | Purpose |
 | --- | --- |
 | `--env prod,stage,preview,local` | capture a subset of the env ladder (stage is VPN-gated; unreachable envs are SKIPPED, never failed) |
-| `--ours-path /drafts/home` | point the our-build capture at a page **with personalization** (the homepage may have none) |
+| `--ours-path /drafts/home` | point the our-build capture at a page **with personalization** |
 | `--preview-base <url>` / `--local-base <url>` | override an env's base URL |
-| `--assert` | exit 1 when a measured env fails the appVars contract (else report-only, exit 0) |
+| `--assert` | exit 1 when a measured env fails a check (appVars contract and/or page-view beacon); else report-only, exit 0 |
 | `--headed` | stealth real Chrome — escalate if prod bot-challenges the headless capture |
 | `--refresh <file>` / `--baseline <file>` | (re)write / load the prod golden |
 
@@ -114,21 +164,31 @@ node scripts/diff/appvars-diff.mjs --env local --assert
 ```
 baseline appVars absent (app_vars_enabled off — expected on erp)
          data-pzn blocks: 3 · attrs: [data-pzn-action, data-pzn-id, data-pzn-placement, data-pzn-workflow, …]
+         page-view beacon: personalization_details 2 record(s) [content_id, personalization_id, personalization_placement, …] · experiment_ids ✓
          mktg_datalayer: 20 keys (informational — not reproduced)
 local    CONTRACT ✓  appVars has the 4 fields, types ok
-         data-pzn channel GAP: prod stamps [data-pzn-action, data-pzn-id, data-pzn-placement, …] — our build stamps none/fewer
+         data-pzn channel ✓ (3 blocks)
+         page-view pzn GAP: prod fires 2 personalization_details record(s), our page-view has none — personalization_details ABSENT from the event
 ```
 
-- **`CONTRACT ✓ / ✗`** — does our `window.appVars` match the four-field contract (types included).
-- **`data-pzn channel ✓ / GAP`** — does our build stamp the same `data-pzn-*` attributes prod does.
+- **`CONTRACT ✓ / ✗`** — does our `window.appVars` match the four-field contract.
+- **`data-pzn channel ✓ / GAP`** — does our build stamp the same `data-pzn-*` attributes as prod.
+- **`page-view pzn ✓ / GAP`** — does our `screen:viewed` event actually carry
+  `personalization_details` (the integration truth). Passes where the enrich shim (or option C) is
+  live; GAP otherwise.
+
+`martech-diff.mjs` complements this: it asserts `o11y-rum` fires on prod-env captures
+(`mustFireProdMartech`, gated to `stage`) — see [MARTECH.md](MARTECH.md).
 
 ### Known open items
 
-- **Block-level `data-pzn-*` stamping (companion channel).** Page-level `appVars` (this change) feeds
-  page-view beacons; click tracking additionally needs personalized blocks to carry `data-pzn-*`
-  attributes. Our personalization applies content but does not yet stamp those attributes, so the
-  harness will report a `data-pzn channel GAP` on personalized pages until that's wired. Tracked
-  separately.
-- **CAS ids on migrated pages.** `externalContentIdentifier` reads the `cas-id` (or `page-cas-id`)
-  page-metadata field; migrated pages must carry it, or it is `''`. Confirm the successor id with the
-  content/analytics team.
+- **Page-view `personalization_details` / `experiment_ids`.** Enriched client-side by the
+  `ecs-enrich.js` shim (on by default). Land option C (profile reads `appVars` directly),
+  then delete the shim. Confirm the shim's eager-phase trap catches the profile's bootstrap
+  `trackPage` on a deployed prod-env host. See
+  [above](#page-view-personalization--the-open-gap).
+- **Content identifier.** `externalContentIdentifier` is the page pathname
+  (`window.location.pathname`) — no page metadata required. The intuit-orchestrator gets the same
+  pathname as `context.casId`, plus the full URL as `context.permalink`. If the content/analytics
+  team ever standardizes on a different id scheme, change it in `loadEager` (`scripts/scripts.js`)
+  and `buildContext` (`scripts/experience.js`).

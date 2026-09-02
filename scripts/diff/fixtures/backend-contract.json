@@ -2,6 +2,7 @@
   "_comment": "The FIXED backend contract Option B must preserve for the SBSEG click channel. Re-verified LIVE 2026-08-20 (real Chrome; fetch/XHR/sendBeacon patched to intercept+ABORT the eventbus /t POST — nothing delivered; batched flush forced via visibilitychange/pagehide; controlled dynamically-injected elements used for exact input->output). Not scraped PII: only field shapes + safe example values (campaign codes, experiment ids, labels). See memory intuit-erp-clickstream-beacon-contract.",
   "capturedAt": "2026-08-20",
   "verifiedOn": ["erp.intuit.com (WordPress/Next.js prod)", "stage.erp.intuit.com (EDS build — send layer present)"],
+  "reconciledWith": "2026-08-26: 161-payload customer golden (scripts/diff/contract-audit.mjs). Confirmed eventNameRule (161/161) + all perClick/shared/consent buckets; ADDED pseudonym_id (identity, all events) + link_href/link_href_domain (conditional, out-nav links).",
 
   "endpoint": {
     "url": "https://eventbus.intuit.com/v2/segment/intuit-general-clickstream/t",
@@ -50,14 +51,16 @@
       "data-wa-link": "when data-wa-link authored (literal hyphenated key)",
       "icom_user_action": "when data-wa-link authored; = '<wa-link> [org|purpose|scope|scope_area|screen]'",
       "link_name": "when authored via data-custom-properties (expanded to top-level)",
+      "link_href": "when the element is an out-navigating link/button with a resolved destination; the target URL (customer golden: seen on content:goto + nav-out)",
+      "link_href_domain": "when link_href present; its host (e.g. erp.intuit.com)",
       "<any-custom-prop>": "EVERY k|v in data-custom-properties is expanded to a TOP-LEVEL property. There is NO custom_properties object in the payload."
     }
   },
 
   "sharedContext": {
     "_note": "~47 keys the injected tracker attaches to EVERY event (page-view + click), byte-identical across clicks. Option B INHERITS these; does NOT derive them. Excluded from the oracle diff.",
-    "keys": ["org", "purpose", "scope", "scope_area", "screen", "top_scope_area", "top_screen", "platform", "env", "ecs_version", "write_key", "url", "url_clean", "url_host_name", "locale", "page_language", "page_geography", "akes_geo", "page_hierarchy", "page_hierarchy_extended", "page_name_parameter", "page_category_parameter", "page_cas_id", "project_asset_id", "page_load_id", "page_track_seq_num", "channel_cookie_90day", "ivid", "fbp", "event_sender_path", "loadAdobeVisitorApi", "segment_api_ts", "session_replay_id", "session_replay_url", "browser_width", "browser_height", "browser_encoding", "browser_plugins", "browser_java_enabled", "browser_cookies_enabled", "screen_color_depth"],
-    "safeValues": { "org": "cmo", "purpose": "mktg", "scope": "corp", "scope_area": "enterprise", "screen": "homepage", "platform": "web", "env": "prod", "ecs_version": "4.1", "locale": "en-US", "page_language": "en", "page_geography": "us" }
+    "keys": ["org", "purpose", "scope", "scope_area", "screen", "top_scope_area", "top_screen", "platform", "env", "ecs_version", "write_key", "url", "url_clean", "url_host_name", "locale", "page_language", "page_geography", "akes_geo", "page_hierarchy", "page_hierarchy_extended", "page_name_parameter", "page_category_parameter", "page_cas_id", "project_asset_id", "page_load_id", "page_track_seq_num", "channel_cookie_90day", "ivid", "pseudonym_id", "fbp", "event_sender_path", "loadAdobeVisitorApi", "segment_api_ts", "session_replay_id", "session_replay_url", "browser_width", "browser_height", "browser_encoding", "browser_plugins", "browser_java_enabled", "browser_cookies_enabled", "screen_color_depth"],
+    "safeValues": { "org": "cmo", "purpose": "mktg", "scope": "corp", "scope_area": "enterprise", "screen": "homepage", "platform": "web", "env": "prod", "ecs_version": "4.1", "locale": "en-US", "page_language": "en", "page_geography": "us", "pseudonym_id": "null" }
   },
 
   "consentFields": {

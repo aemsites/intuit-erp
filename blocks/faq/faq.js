@@ -11,10 +11,35 @@
  * button's [aria-expanded] state rather than native <details>.
  * CSS: blocks/faq/faq.css
  */
-import { trackAs } from '../../scripts/tracking.js';
+import { trackAs, slug } from '../../scripts/tracking.js';
 
 const CHEVRON = '<path d="M3.5 6L8 10.5L12.5 6" fill="none" stroke="currentColor" '
   + 'stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>';
+
+/**
+ * JIT payload deriver for a faq toggle: prod's structured accordion beacon —
+ * `accordion_item_N` / `faq|question_N` by DOM order, `displayed` on expand / `dismissed` on
+ * collapse (from the pre-click aria-expanded), and `link_name`. object_detail is scored
+ * index-tolerant (prod's N is authored + scrambled). Non-toggles return null → normal derive.
+ * Exported so the offline parity harness (parity-gate `oursPayload`) derives it identically.
+ * @param {Element} el clicked element
+ * @param {Element} block the faq block (for DOM-order index)
+ * @returns {Record<string, unknown>|null}
+ */
+export function faqTogglePayload(el, block) {
+  if (!el.matches || !el.matches('.faq-toggle')) return null;
+  const item = el.closest('.faq-item');
+  const n = item ? [...block.querySelectorAll('.faq-item')].indexOf(item) + 1 : 0;
+  if (n < 1) return null;
+  const q = (el.querySelector('.faq-question')?.textContent || '').trim();
+  const willOpen = el.getAttribute('aria-expanded') !== 'true'; // pointerdown precedes the toggle
+  return {
+    'ui-object': `accordion_item_${n}`,
+    'object-detail': `faq|question_${n}`,
+    'ui-action': willOpen ? 'displayed' : 'dismissed',
+    'custom-properties': { link_name: `accordion_item_${n}-${slug(q)}` },
+  };
+}
 
 export default function decorate(block) {
   const rows = [...block.children];
@@ -77,6 +102,8 @@ export default function decorate(block) {
   });
 
   block.replaceChildren(list);
-  // Accordion -> "accordion" trail; sheet/opt-in key "faq".
-  return trackAs('accordion', block, { key: 'faq', linkName: false });
+
+  // Per-toggle structured payload prod records — derived by faqTogglePayload (exported so the
+  // offline parity harness derives it identically). Non-toggles fall through to the normal derive.
+  return trackAs('accordion', block, { key: 'faq', linkName: false, payload: (el) => faqTogglePayload(el, block) });
 }

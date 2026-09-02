@@ -113,3 +113,46 @@ h3s handled separately above) is not affected. */
 font-size: 48px;
 font-weight: 700;
 }
+
+/* Prose band: one heading, copy, optional CTA row. Distinguished from the
+   stat band above by having no second sibling heading — tested at any heading
+   level so it holds whichever levels an author picks. */
+.highlight.dark .highlight-inner:not(:has(:is(h1, h2, h3, h4, h5, h6) ~ :is(h1, h2, h3, h4, h5, h6))) {
+  padding: 48px 0;
+
+  & :is(h1, h2, h3, h4, h5, h6) {
+    margin: 0 0 20px;
+    line-height: 1.25;
+  }
+
+  & > p:not(.button-wrapper) {
+    max-width: 30rem;
+    margin: 0 auto 8px;
+  }
+
+  & > p.button-wrapper {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-top: 40px;
+  }
+
+  @media (width >= 1024px) {
+    padding: 60px 0;
+
+    & > p:not(.button-wrapper) {
+      font-size: 20px;
+      line-height: 28px;
+    }
+
+    & > p.button-wrapper {
+      gap: 40px;
+      margin-top: 60px;
+    }
+  }
+}
+
+body.author-guide .highlight .highlight-inner {
+  padding: 1.5rem;
+}
+

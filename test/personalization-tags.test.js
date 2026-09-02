@@ -166,6 +166,21 @@ describe('setSectionTag', () => {
     expect(section.pzn).toBe('myPlacementId');
   });
 
+  it('writes and clears the append (mode) flag for both modes', () => {
+    const appended = setSectionTag(PAGE, 0, 'pzn', { id: 'p1', append: true });
+    expect(appended).toContain('pzn-mode');
+    expect(parseExperience(appended).sections[0].pznAppend).toBe(true);
+
+    // exp works identically
+    const expAppended = setSectionTag(PAGE, 0, 'exp', { id: 'e1', append: true });
+    expect(parseExperience(expAppended).sections[0].expAppend).toBe(true);
+
+    // default is swap; re-set without append removes the row
+    expect(parseExperience(setSectionTag(PAGE, 0, 'pzn', { id: 'p1' })).sections[0].pznAppend).toBe(false);
+    const cleared = setSectionTag(appended, 0, 'pzn', { id: 'p1', append: false });
+    expect(parseExperience(cleared).sections[0].pznAppend).toBe(false);
+  });
+
   it('is a no-op for empty id, invalid mode, or out-of-range section', () => {
     expect(setSectionTag(PAGE, 0, 'pzn', { id: '' })).toBe(PAGE);
     expect(setSectionTag(PAGE, 0, 'nope', { id: 'x' })).toBe(PAGE);
