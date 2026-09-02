@@ -57,6 +57,9 @@ export function normalizeValue(spec, v) {
   }
   if (spec.normalizeEnv && N.env && N.env.map[s] != null) s = N.env.map[s];
   if (spec.normalizeTags || (N.stripTags || []).length) s = s.replace(/<[^>]*>/g, '');
+  if (spec.normalizeTypography) {
+    s = s.replace(/[\u2018\u2019]/g, "'").replace(/[\u201c\u201d]/g, '"');
+  }
   if (spec.stripBracket) s = s.replace(/ \[[^\]]*\]$/, '');
   if (N.trim !== false) s = s.trim().replace(/\s+/g, ' ');
   return s;

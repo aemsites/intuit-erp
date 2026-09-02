@@ -268,7 +268,7 @@ function pageWillSwap(response) {
   const pageExp = (getMetadata('experiment-id') || '').trim();
   if (/^\d+$/.test(pageExp)) {
     const d = experimentDecision(response, pageExp);
-    return !!(d && d.replacementCasId && d.replacementCasId !== d.originalCasId);
+    return !!(d && d.contentId);
   }
   const pagePzn = (getMetadata('personalization-id') || '').trim();
   if (pagePzn) {
@@ -285,7 +285,7 @@ function summarizeResponse(response) {
     const d = experimentDecision(response, id);
     if (d) {
       out.push({
-        kind: 'exp', id, replacement: d.replacementCasId, treatment: d.treatmentId,
+        kind: 'exp', id, replacement: d.contentId, treatment: d.treatmentId,
       });
     }
   });
@@ -301,7 +301,7 @@ function summarizeResponse(response) {
 }
 
 // Send a (possibly edited) context to the orchestrator and apply its real decision. Adds
-// ?preview=true (Akamai routes to the preview backend) + edited attrs as query params.
+// ?preview=true&previewContext=<context JSON> so Akamai routes to the preview backend.
 export async function simulateContext(context, opts = {}) {
   const signal = nextSignal();
   await swapAndDecorate(window.location.pathname, signal); // clean slate
@@ -315,7 +315,6 @@ export async function simulateContext(context, opts = {}) {
   const response = await fetchExperience(request, context || buildContext(), {
     signal,
     preview: true, // always on for the preview tool; change here if that ever flips
-    previewParams: opts.previewParams,
     baseUrl: opts.baseUrl,
     timeoutMs: SIMULATE_TIMEOUT_MS,
   });
@@ -371,7 +370,6 @@ async function handle(type, payload) {
     case 'simulateContext': {
       const r = await simulateContext(payload.context, {
         preview: payload.preview,
-        previewParams: payload.previewParams,
         baseUrl: payload.baseUrl,
       });
       return { type: 'applied', ...r, ok: r.applied };

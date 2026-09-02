@@ -53,7 +53,7 @@ import {
 } from '../../scripts/aem.js';
 import { hasAuthoredCaseStudyHeader } from './blog-detect.js';
 import { MQ_DESKTOP_UP } from '../../scripts/breakpoints.js';
-import { trackAs } from '../../scripts/tracking.js';
+import { stampTracking, trackAs } from '../../scripts/tracking.js';
 
 /**
  * Selects the article's main H2 sections only — excludes headings nested
@@ -581,6 +581,11 @@ export function buildBlogTemplate(main) {
       s.style.gridRow = `${i + 1}`;
     });
     heroSection.classList.add('blog-hero');
+    // Prod reports the article eyebrow/byline links at the flat article-hero
+    // access point. The share widget carries its own nested trail because it
+    // can move into the desktop rail, but the hero's ordinary links need this
+    // structural segment so they do not fall back to the generic `page` trail.
+    stampTracking(heroSection, 'qrc_article_hero');
 
     // an article may carry several comma-separated categories; the byline shows
     // the primary (first) one.

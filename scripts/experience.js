@@ -6,6 +6,186 @@
 import { getMetadata } from './aem.js';
 import { buildIntentContext, getIntentProfile } from './of1-intent.js';
 
+// Perf telemetry is sampled before any observers/marks/measures are installed, keeping
+// unsampled views off the LCP path. `?perf=on` forces instrumentation and console output.
+const PERF_ON = (() => {
+  try {
+    return new URLSearchParams(window.location.search).get('perf') === 'on';
+  } catch {
+    return false;
+  }
+})();
+
+// Fraction of page views that send the experience-perf log to Splunk (1 = every view).
+const PERF_SAMPLE_RATE = 0.1;
+// How long after load to let LCP/lazy layers settle before reporting.
+const PERF_REPORT_DELAY_MS = 6000;
+const PERF_ENABLED = PERF_ON || Math.random() < PERF_SAMPLE_RATE;
+
+const round1 = (n) => Math.round(n * 10) / 10;
+
+// Per-call orchestrator outcomes (intuit_tid + ok/status/error) for perf payload + error logs.
+const orchestratorCallLog = [];
+
+function experienceLog(level, message, fields = {}) {
+  try {
+    window.coreServiceAdapter?.logger?.[level]?.(message, fields);
+  } catch { /* logging must never break the page */ }
+}
+
+function recordOrchestratorCall(meta) {
+  // Only the perf reporter reads this, and it bails when !PERF_ENABLED — skip the work
+  // (and the unbounded growth across preview re-runs) on unsampled views.
+  if (PERF_ENABLED) orchestratorCallLog.push(meta);
+}
+
+// Mark/measure that can never throw (measure raises if its start mark is missing —
+// possible when phases run standalone, e.g. in tests or partial page flows).
+function perfMark(name) {
+  if (!PERF_ENABLED) return;
+  try { performance.mark(name); } catch { /* ignore */ }
+}
+function perfMeasure(name, start, end) {
+  if (!PERF_ENABLED) return;
+  try { performance.measure(name, start, end); } catch { /* ignore */ }
+}
+
+// exp:* measure name → flat Splunk field.
+const PERF_MEASURE_FIELDS = {
+  'exp:eager-decision': 'eagerDecisionMs',
+  'exp:page-swap': 'pageSwapMs',
+  'exp:first-section-swap': 'firstSectionSwapMs',
+  'exp:eager-total': 'eagerTotalMs',
+  'exp:lazy-layers': 'lazyLayersMs',
+};
+
+// Flattens the captured entries + page details into ONE flat object (stable `event` key,
+// numeric *Ms fields, absent metrics omitted — never null/0 placeholders) so Splunk
+// spath/stats queries stay trivial. Pure: everything visible from the args + DOM reads.
+export function buildPerfPayload({
+  measures = [], orchestrator = [], callMeta = [], lcp, fcp, nav,
+} = {}) {
+  const payload = {
+    event: 'experience-perf',
+    pageUrl: window.location.href,
+    pagePath: window.location.pathname,
+    viewportWidth: window.innerWidth,
+  };
+  // Page details (omitted when absent).
+  if (document.referrer) payload.pageReferrer = document.referrer;
+  if (document.documentElement.lang) payload.pageLocale = document.documentElement.lang;
+  const template = getMetadata('template');
+  if (template) payload.pageTemplate = template;
+  const pageExp = getMetadata('experiment-id');
+  if (pageExp) payload.pageExperimentId = pageExp;
+  const pagePzn = getMetadata('personalization-id');
+  if (pagePzn) payload.pagePersonalizationId = pagePzn;
+  const connection = navigator.connection?.effectiveType;
+  if (connection) payload.connectionType = connection;
+  // Stitching phases.
+  measures.forEach((e) => {
+    const field = PERF_MEASURE_FIELDS[e.name];
+    if (field) payload[field] = round1(e.duration);
+  });
+  // Orchestrator calls: 1st = decision call, 2nd = resolveSwappedSlots follow-up.
+  // Resource timings can be absent on a network-error/abort — callMeta still has the call.
+  payload.orchestratorCalls = Math.max(orchestrator.length, callMeta.length);
+  orchestrator.slice(0, 2).forEach((e, i) => {
+    const prefix = i === 0 ? 'orchestrator' : `orchestrator${i + 1}`;
+    payload[`${prefix}Ms`] = round1(e.responseEnd - e.startTime);
+    payload[`${prefix}TtfbMs`] = round1(e.responseStart - e.requestStart);
+  });
+  callMeta.slice(0, 2).forEach((meta, i) => {
+    const prefix = i === 0 ? 'orchestrator' : `orchestrator${i + 1}`;
+    if (meta.intuitTid) payload[`${prefix}IntuitTid`] = meta.intuitTid;
+    if (meta.ok === false) {
+      payload[`${prefix}Ok`] = false;
+      if (meta.status) payload[`${prefix}Status`] = meta.status;
+      if (meta.reason) payload[`${prefix}Reason`] = meta.reason;
+      if (meta.error) payload[`${prefix}Error`] = meta.error;
+    }
+  });
+  // Overall page performance.
+  if (lcp) payload.lcpMs = round1(lcp.startTime);
+  if (fcp) payload.fcpMs = round1(fcp.startTime);
+  if (nav) {
+    payload.ttfbMs = round1(nav.responseStart);
+    payload.domContentLoadedMs = round1(nav.domContentLoadedEventEnd);
+    if (nav.loadEventEnd > 0) payload.loadMs = round1(nav.loadEventEnd);
+  }
+  return payload;
+}
+
+(() => {
+  if (!PERF_ENABLED) return;
+  if (typeof window === 'undefined' || typeof PerformanceObserver === 'undefined') return;
+  // Capture entries with a PerformanceObserver into private arrays as they fire: observer delivery
+  // is independent of the shared timeline, so another script's performance.clear*() (martech/RUM
+  // buffer cleanup) can't evict our data before we report.
+  let lcpEntry;
+  let fcpEntry;
+  const measures = [];
+  const orchestrator = [];
+  const observe = (type, onEntry) => {
+    try {
+      new PerformanceObserver((list) => list.getEntries().forEach(onEntry))
+        .observe({ type, buffered: true });
+    } catch { /* entry type unsupported — ignore */ }
+  };
+  observe('largest-contentful-paint', (e) => { lcpEntry = e; });
+  observe('paint', (e) => { if (e.name === 'first-contentful-paint') fcpEntry = e; });
+  observe('measure', (e) => { if (e.name.startsWith('exp:')) measures.push(e); });
+  // The 1st decision call and any 2nd resolveSwappedSlots call each get their own entry.
+  observe('resource', (e) => { if (e.name.includes('intuit-orchestrator')) orchestrator.push(e); });
+
+  const collect = () => buildPerfPayload({
+    measures,
+    orchestrator,
+    callMeta: orchestratorCallLog,
+    lcp: lcpEntry,
+    fcp: fcpEntry,
+    nav: performance.getEntriesByType?.('navigation')?.[0],
+  });
+
+  // Console report (opt-in) — same numbers, table form.
+  const report = () => {
+    const rows = {};
+    measures.forEach((e) => { rows[e.name] = { ms: round1(e.duration) }; });
+    orchestrator.forEach((e, i) => {
+      rows[`orchestrator-call[${i}]`] = {
+        ms: round1(e.responseEnd - e.startTime),
+        ttfb: round1(e.responseStart - e.requestStart),
+      };
+    });
+    if (lcpEntry) rows['LCP (browser)'] = { ms: round1(lcpEntry.startTime) };
+    // eslint-disable-next-line no-console
+    console.table(rows);
+    return rows;
+  };
+
+  // One Splunk-bound log per sampled view, via the erp-logging bridge (head.html). Logger
+  // absent (script blocked/failed) ⇒ silent no-op. Fires once.
+  let sent = false;
+  const sendPerfLog = () => {
+    if (sent) return;
+    const logger = window.coreServiceAdapter?.logger;
+    if (!logger?.info) return;
+    sent = true;
+    const payload = collect();
+    payload.sampleRate = PERF_ON ? 1 : PERF_SAMPLE_RATE;
+    try {
+      logger.info('experience-perf', payload);
+    } catch { /* logging must never break the page */ }
+  };
+
+  window.hlx = window.hlx || {};
+  window.hlx.experiencePerf = { report, collect };
+  setTimeout(() => {
+    if (PERF_ON) report();
+    sendPerfLog();
+  }, PERF_REPORT_DELAY_MS);
+})();
+
 // --- Endpoint + fetch primitives -------------------------------------------
 
 // API base: `experience-api-base` metadata override, else same-origin /api (Akamai-fronted).
@@ -57,7 +237,9 @@ export async function swapMain(doc, path, signal) {
   const p = fragmentPath(path);
   if (!main || !p) return false;
   try {
-    const resp = await fetch(`${p}.plain.html`, { signal });
+    // Folder-index pages serve content only at /foo/index.plain.html, not /foo/.plain.html
+    const plainPath = p.endsWith('/') ? `${p}index` : p;
+    const resp = await fetch(`${plainPath}.plain.html`, { signal });
     if (!resp.ok) return false;
     main.innerHTML = await resp.text();
     return true;
@@ -109,7 +291,15 @@ function underscoreLocale(value) {
 
 // The sibling `context`: front-end signals + AOF1 intent. NOT ZoomInfo (orchestrator
 // enriches server-side) and NOT geo (Akamai injects it).
-export function buildContext(permalink = window.location.href) {
+function defaultPermalink() {
+  if (typeof window === 'undefined') return '';
+  const url = new URL(window.location.href);
+  url.searchParams.delete('preview');
+  url.searchParams.delete('previewContext');
+  return url.toString();
+}
+
+export function buildContext(permalink = defaultPermalink()) {
   const context = {
     permalink,
     locale: underscoreLocale(
@@ -208,12 +398,48 @@ export function collectRequest(doc = document) {
 
 // --- The single call --------------------------------------------------------
 
+// Query string for /intuit-orchestrator when preview mode is active. opts.preview (the
+// Experience Preview tool) wins so an edited context is never shadowed by a stale page URL;
+// else a page loaded with ?preview=true forwards ONLY preview + previewContext (never the
+// rest of the page query — utm_*/gclid etc. stay off the orchestrator URL).
+function previewOrchestratorQuery(opts, context) {
+  if (opts.preview) {
+    const params = new URLSearchParams({ preview: 'true' });
+    if (context) params.set('previewContext', JSON.stringify(context));
+    return params.toString();
+  }
+  if (typeof window !== 'undefined') {
+    const page = new URLSearchParams(window.location.search);
+    if (page.get('preview') === 'true') {
+      const params = new URLSearchParams({ preview: 'true' });
+      const previewContext = page.get('previewContext');
+      if (previewContext) params.set('previewContext', previewContext);
+      return params.toString();
+    }
+  }
+  return '';
+}
+
 // POSTs the request; returns the parsed response or null (fail-open) on any failure.
 // With `signal` the caller owns the deadline, else `timeoutMs` applies.
 export async function fetchExperience({ experimentIds, accessPointNames }, context, opts = {}) {
   const { signal: externalSignal, timeoutMs = 1500 } = opts;
   let signal = externalSignal;
   let timer;
+  const tid = intuitTid();
+  // One seam for every failure branch: record for the perf payload + log to Splunk.
+  // Deadline aborts are expected fail-open behavior (the phase budget), so they log at
+  // warn, not error — a slow backend must not flood error dashboards.
+  const fail = (fields) => {
+    const failure = { intuitTid: tid, ok: false, ...fields };
+    recordOrchestratorCall(failure);
+    experienceLog(
+      failure.reason === 'aborted' ? 'warn' : 'error',
+      'experience-orchestrator-failed',
+      { event: 'experience-orchestrator-failed', ...failure },
+    );
+    return null;
+  };
   if (!signal) {
     const controller = new AbortController();
     signal = controller.signal;
@@ -225,27 +451,35 @@ export async function fetchExperience({ experimentIds, accessPointNames }, conte
       accessPointName: accessPointNames,
       context,
     };
-    // Preview seam: opts.preview adds ?preview=true (+ edited attrs) so Akamai routes to the
-    // preview backend; baseUrl overrides the host. No preview opts ⇒ identical prod URL.
-    let target = `${(opts.baseUrl || apiBase()).replace(/\/+$/, '')}/intuit-orchestrator`;
-    if (opts.preview) {
-      const params = new URLSearchParams({ preview: 'true' });
-      Object.entries(opts.previewParams || {}).forEach(([k, v]) => {
-        if (v !== undefined && v !== null) params.set(k, String(v));
-      });
-      target += `?${params.toString()}`;
-    }
+    // Preview seam: opts.preview or a page-level ?preview=true adds preview=true +
+    // previewContext to the target URL so Akamai routes to the preview backend. baseUrl
+    // overrides the host. No preview ⇒ identical prod URL.
+    const apiRoot = (opts.baseUrl || apiBase()).replace(/\/+$/, '');
+    const previewQs = previewOrchestratorQuery(opts, context);
+    const target = `${apiRoot}/intuit-orchestrator${previewQs ? `?${previewQs}` : ''}`;
     const res = await fetch(target, {
       method: 'POST',
       credentials: 'include',
-      headers: { intuit_tid: intuitTid(), 'content-type': 'application/json' },
+      headers: { intuit_tid: tid, 'content-type': 'application/json' },
       body: JSON.stringify(body),
       signal,
     });
-    if (!res.ok) return null;
-    return await res.json();
-  } catch {
-    return null;
+    if (!res.ok) {
+      return fail({ status: res.status, reason: 'http-error', target });
+    }
+    try {
+      const data = await res.json();
+      recordOrchestratorCall({ intuitTid: tid, ok: true, status: res.status });
+      return data;
+    } catch {
+      return fail({ status: res.status, reason: 'invalid-json', target });
+    }
+  } catch (err) {
+    // `target` is try-scoped; the tid still correlates this log with the request.
+    return fail({
+      reason: signal?.aborted ? 'aborted' : 'network-error',
+      error: err?.message || err?.name || String(err),
+    });
   } finally {
     if (timer) clearTimeout(timer);
   }
@@ -264,16 +498,17 @@ function parseJson(value) {
   }
 }
 
-// The experiment decision for an id (or null if absent). A missing/unchanged
-// replacementCasId is a control arm — recorded but not swapped.
+// The experiment decision for an id (or null if absent). A missing or blank contentId
+// is a control arm — recorded but not swapped.
 export function experimentDecision(response, id) {
   const entry = response?.experiments?.[id];
   if (!entry) return null;
   const payload = parseJson(entry.payload) || {};
   const ta = entry.trackingAttributes || {};
   return {
-    originalCasId: payload.originalCasId || null,
-    replacementCasId: payload.replacementCasId || null,
+    // Trimmed so a whitespace-only contentId reads as control, not as a treatment whose
+    // swap silently fails downstream in fragmentPath().
+    contentId: (typeof payload.contentId === 'string' ? payload.contentId.trim() : '') || null,
     treatmentId: ta.treatmentId,
     experimentId: ta.experimentId || id,
     experimentIdVersion: ta.experimentIdVersion,
@@ -305,14 +540,17 @@ export function pznDecision(response, name) {
 // Normalized pzn record, or null when there's no offer/content.
 export function pznRecord(placement, decision) {
   if (!decision || (!decision.offerId && !decision.contentId)) return null;
-  return {
+  const record = {
     personalization_placement: placement,
     personalization_id: decision.offerId,
     personalization_action: 'im',
     personalization_workflow: 'marketing',
-    content_id: decision.contentId,
-    externalContentIdentifier: decision.contentId,
   };
+  if (decision.contentId) {
+    record.content_id = decision.contentId;
+    record.externalContentIdentifier = decision.contentId;
+  }
+  return record;
 }
 
 // Normalized ixp record, or null without experiment identity. Control arms still emit a
@@ -323,11 +561,11 @@ export function ixpRecord(decision, path) {
     experiment_id: decision.experimentId,
     experiment_version: decision.experimentIdVersion,
     experiment_treatment: decision.treatmentId,
-    original_content_id: decision.originalCasId || path,
+    original_content_id: path,
   };
-  // Treatment (real swap) carries a replacement; control/identical does not.
-  if (decision.replacementCasId && decision.replacementCasId !== decision.originalCasId) {
-    record.replacement_content_id = decision.replacementCasId;
+  // Treatment (real swap) carries content; control does not.
+  if (decision.contentId) {
+    record.replacement_content_id = decision.contentId;
   }
   return record;
 }
@@ -461,9 +699,9 @@ export function stampPzn(el, rec) {
 
 // --- Applying the response --------------------------------------------------
 
-// Two helpers = the ONE place each apply-shape lives: decision → record exposure → (if
-// there's content) resolve path, apply via applyContent(path), stamp + notify. applyPage
-// feeds them swapMain (whole page); applyLayer feeds applyFragment (an element). `track`
+// Two helpers = the ONE place each apply-shape lives: decision → apply treatment content →
+// record exposure, stamp + notify. Control experiments are exposed when their apply phase runs.
+// applyPage feeds them swapMain (whole page); applyLayer feeds applyFragment (an element). `track`
 // (default true at the public entry points) gates EVERY analytics side effect — appVars
 // records, click-tracker stamps, and FullStory events — so a preview/simulation can swap
 // content read-only, without biasing the very experiment data it's measuring.
@@ -472,11 +710,14 @@ async function applyExperiment(response, id, stampTarget, applyContent, record, 
   const d = experimentDecision(response, id);
   if (!d) return false;
   const rec = ixpRecord(d, window.location.pathname);
-  if (rec && track) record([rec]);
-  if (!d.replacementCasId || d.replacementCasId === d.originalCasId) return false;
-  const path = casToPath(d.replacementCasId);
+  if (!d.contentId) {
+    if (rec && track) record([rec]);
+    return false;
+  }
+  const path = casToPath(d.contentId);
   if (!path || !(await applyContent(path))) return false;
   if (track) {
+    if (rec) record([rec]);
     stampExperiment(stampTarget, rec);
     notifyFullStory('Experiment Viewed', rec?.experiment_treatment, rec?.experiment_id);
   }
@@ -487,11 +728,14 @@ async function applyPznSlot(response, placement, stampTarget, applyContent, reco
   const d = pznDecision(response, placement);
   if (!d) return false;
   const rec = pznRecord(placement, d);
-  if (rec && track) record([rec]);
-  if (!d.contentId) return false;
+  if (!d.contentId) {
+    if (rec && track) record([rec]);
+    return false;
+  }
   const path = casToPath(d.contentId);
   if (!path || !(await applyContent(path))) return false;
   if (track) {
+    if (rec) record([rec]);
     stampPzn(stampTarget, rec);
     notifyFullStory('Personalization Viewed', rec?.personalization_id, rec?.personalization_placement);
   }
@@ -585,8 +829,9 @@ export function resolveSwappedSlots(doc, { timeoutMs = 1500 } = {}) {
 
 // --- Phase entry points (the experience surface scripts.js drives) ----------
 
-const EAGER_DEADLINE_MS = 1500; // network budget: the consolidated call + optional 2nd call
+const EAGER_DEADLINE_MS = 1500; // visual decision budget before baseline reveal
 const EAGER_APPLY_MS = 2000; // budget for swapping the first/LCP section before reveal
+const DECISION_DEADLINE_MS = 5000; // lets late decisions reach lazy regions without delaying paint
 
 // EAGER, before decorateMain: the one consolidated call + whole-page swap (runs once).
 // Caches the decision; returns whether a page swap landed.
@@ -594,16 +839,33 @@ export async function applyPageExperience(doc) {
   window.hlx = window.hlx || {};
   if (window.hlx.pageExperienceApplied) return false;
   window.hlx.pageExperienceApplied = true;
+  perfMark('exp:eager-start');
   const request = collectRequest(doc);
   if (!request.experimentIds.length && !request.accessPointNames.length) return false;
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), EAGER_DEADLINE_MS);
-  try {
-    const response = await fetchExperience(request, buildContext(), { signal: controller.signal });
+  const decisionController = new AbortController();
+  const decisionTimer = setTimeout(() => decisionController.abort(), DECISION_DEADLINE_MS);
+  const responsePromise = fetchExperience(request, buildContext(), {
+    signal: decisionController.signal,
+  }).then((response) => {
     window.hlx.experienceResponse = response;
-    return response ? applyPage(doc, response, controller.signal) : false;
+    return response;
+  }).finally(() => clearTimeout(decisionTimer));
+  window.hlx.experienceResponsePromise = responsePromise;
+
+  const eagerController = new AbortController();
+  const eagerTimer = setTimeout(() => eagerController.abort(), EAGER_DEADLINE_MS);
+  try {
+    const response = await withTimeout(responsePromise, EAGER_DEADLINE_MS);
+    perfMark('exp:decision-ready');
+    perfMeasure('exp:eager-decision', 'exp:eager-start', 'exp:decision-ready');
+    if (!response) return false;
+    perfMark('exp:page-swap:start');
+    const applied = await applyPage(doc, response, eagerController.signal);
+    perfMark('exp:page-swap:end');
+    perfMeasure('exp:page-swap', 'exp:page-swap:start', 'exp:page-swap:end');
+    return applied;
   } finally {
-    clearTimeout(timer);
+    clearTimeout(eagerTimer);
   }
 }
 
@@ -613,20 +875,51 @@ export async function applyEagerLayers(doc, pageSwapped) {
   const main = doc.querySelector('main');
   if (!main || !window.hlx?.experienceResponse) return;
   if (pageSwapped) {
-    const swap = resolveSwappedSlots(doc, { timeoutMs: EAGER_DEADLINE_MS });
+    const swap = resolveSwappedSlots(doc, { timeoutMs: DECISION_DEADLINE_MS });
     window.hlx.experienceSwapResolved = swap.done;
-    if (swap.firstSectionAffected) await swap.done;
+    if (swap.firstSectionAffected) await withTimeout(swap.done, EAGER_DEADLINE_MS);
   }
   const firstSection = main.querySelector('.section');
   if (firstSection) {
+    perfMark('exp:first-section-swap:start');
     await withTimeout(applyLayer(firstSection, window.hlx.experienceResponse), EAGER_APPLY_MS);
+    perfMark('exp:first-section-swap:end');
+    perfMeasure('exp:first-section-swap', 'exp:first-section-swap:start', 'exp:first-section-swap:end');
   }
+  perfMark('exp:eager-layers-end');
+  perfMeasure('exp:eager-total', 'exp:eager-start', 'exp:eager-layers-end');
+}
+
+async function latestExperienceResponse() {
+  const initial = window.hlx?.experienceResponse
+    || await window.hlx?.experienceResponsePromise;
+  if (!initial) return null;
+  if (window.hlx.experienceSwapResolved) await window.hlx.experienceSwapResolved;
+  return window.hlx?.experienceResponse || initial;
+}
+
+// Gives successful lazy applications the bounded decision window to record exposure before the
+// one-shot page view. A late assignment that never renders contributes no treatment context.
+export async function prepareExperienceTracking(application) {
+  if (application) await withTimeout(application, DECISION_DEADLINE_MS);
+  flushAppVars();
 }
 
 // LAZY: swap every remaining (below-the-fold) section, after any 2nd-call merge has landed.
 export async function applyLazyLayers(doc) {
   const main = doc.querySelector('main');
-  if (!main || !window.hlx?.experienceResponse) return;
-  if (window.hlx.experienceSwapResolved) await window.hlx.experienceSwapResolved;
-  await applyLayer(main, window.hlx.experienceResponse, { skip: main.querySelector('.section') });
+  if (!main) return;
+  const response = await latestExperienceResponse();
+  if (!response) return;
+  perfMark('exp:lazy-layers:start');
+  await applyLayer(main, response, { skip: main.querySelector('.section') });
+  perfMark('exp:lazy-layers:end');
+  perfMeasure('exp:lazy-layers', 'exp:lazy-layers:start', 'exp:lazy-layers:end');
+}
+
+// Starts lazy application immediately and gives its real exposures the bounded opportunity to
+// reach the one-shot page view. Keeping this wiring here makes the ordering contract testable.
+export async function applyLazyExperience(doc) {
+  const application = applyLazyLayers(doc);
+  await prepareExperienceTracking(application);
 }

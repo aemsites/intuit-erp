@@ -355,18 +355,7 @@ export function decorateMain(main) {
  * Loads everything needed to get to LCP.
  * @param {Element} doc The container element
  */
-function redirectConstructionQToLlmAppCtx() {
-  if (window.location.pathname !== '/construction') return;
-  const params = new URLSearchParams(window.location.search);
-  const q = params.get('q');
-  if (!q) return;
-  params.delete('q');
-  params.set('llm_app_ctx', q);
-  window.location.replace(`${window.location.pathname}?${params.toString()}${window.location.hash}`);
-}
-
 async function loadEager(doc) {
-  redirectConstructionQToLlmAppCtx();
   document.documentElement.lang = 'en';
   decorateTemplateAndTheme();
 
@@ -466,8 +455,12 @@ async function loadLazy(doc) {
 
   const main = doc.querySelector('main');
   // Below-the-fold personalization/experimentation
-  if (window.hlx?.experienceResponse) {
-    import('./experience.js').then(({ applyLazyLayers }) => applyLazyLayers(doc)).catch(() => {});
+  let experienceTracking;
+  if (window.hlx?.experienceResponse || window.hlx?.experienceResponsePromise) {
+    const experienceModule = import('./experience.js');
+    experienceTracking = experienceModule
+      .then(({ applyLazyExperience }) => applyLazyExperience(doc))
+      .catch(() => {});
   }
   await loadSections(main);
 
@@ -511,6 +504,7 @@ async function loadLazy(doc) {
 
   // Tealium (default): load utag.js for the resolved env + apply consent. Fail-open.
   if (MARTECH_PROVIDER === 'tealium') {
+    if (experienceTracking) await experienceTracking;
     try { await tealium.lazy(); } catch (e) { /* non-fatal */ }
   }
 

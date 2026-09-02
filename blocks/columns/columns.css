@@ -1,3 +1,18 @@
 /* columns — baseline layout only. */
 .columns > div { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; }
 .columns img { width: 100%; height: auto; display: block; }
+
+.columns.vertical-center > div {
+    align-items: center;
+}
+
+body.author-guide .columns img {
+    box-shadow: rgb(0 0 0 / 8%) 0 6px 16px, rgb(0 0 0 / 12%) 0 3px 6px;
+    border-radius: 10px;
+}
+
+body.author-guide .columns > div {
+    > div {
+        margin-bottom: 3rem;
+    }
+}

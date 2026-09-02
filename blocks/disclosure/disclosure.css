@@ -3,7 +3,7 @@
 .section.disclosure-container > div { max-width: 1180px; }
 
 .disclosure .disclosure-item summary {
-  list-style: none; cursor: pointer; color: #fff; text-align: center; padding: 40px 0; font-size: 16px; font-weight: 600;
+  list-style: none; cursor: pointer; color: #fff; text-align: center; padding: 40px 0; font-size: 13.33px; font-weight: 600;
 }
 .disclosure .disclosure-item summary::-webkit-details-marker { display: none; }
 .disclosure .disc-caret { width: 17px; height: 8px; margin-left: 6px; vertical-align: middle; transition: transform 0.2s ease; }
