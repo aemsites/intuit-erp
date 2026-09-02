@@ -569,6 +569,26 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
   padding: 0;
 }
 
+/* Each H2 gets its own section, and main.blog-article is a grid at >=1024px,
+   so sections are grid items and don't margin-collapse like normal flow —
+   doubling the gap at every section break (padding + margin stacking instead
+   of collapsing). Zero the wrapper padding and let heading margins own the
+   gap instead; hero/toc-rail/rail sections keep their own explicit padding. */
+.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail) > .default-content-wrapper {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail) > .default-content-wrapper > :last-child {
+  margin-bottom: 0;
+}
+
+/* Same fix for sections that end in a block (highlight, testimonial, …)
+   instead of prose. */
+.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail) > :last-child > :last-child {
+  margin-bottom: 0;
+}
+
 .blog-article .download-form-wrapper {
   background: var(--navy);
   padding: var(--section-y) 0;
