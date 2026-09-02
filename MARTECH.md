@@ -1,299 +1,116 @@
 # Martech
 
-This site reproduces the production `erp.intuit.com` martech stack: a single **Tealium iQ** tag
-manager (account `intuit`, profile `ies-erp`) that injects every downstream vendor at runtime,
-gated by [**OneTrust** consent](#consent) (US opt-out model). Client loader:
-[`plugins/tealium-martech/src/index.js`](plugins/tealium-martech/src/index.js).
+This is the entry point for the site's analytics stack. The site loads one Tealium iQ profile
+(`intuit/ies-erp`); that profile injects ECS click/page-view tracking and downstream vendors such as
+Google, Meta, LinkedIn, Marketo, Demandbase, Segment, and Qualtrics.
 
-Three things you'll want:
+The two data contracts are documented separately:
 
-1. [The `?martech` runtime flag](#the-martech-runtime-flag) — switch what loads, per environment.
-2. [Consent](#consent) — how OneTrust + Consent Mode gate the tags, and who gates what.
-3. [Martech parity validation](#martech-parity-validation) — verify the rebuild fires the same
-   martech as prod, page-for-page.
+- [`APPVARS.md`](APPVARS.md): page-view personalization and experiment data;
+- [`CLICK-TRACKING.md`](CLICK-TRACKING.md): click-time DOM attributes and residue authoring.
 
----
+## Load sequence
 
-## The `?martech` runtime flag
+1. [`head.html`](head.html) creates `window.utag_data` and sets `utag_cfg_ovrd.noview=true`, which
+   prevents Tealium from sending an automatic view before consent resolves.
+2. During eager loading, [`scripts/scripts.js`](scripts/scripts.js) seeds `window.appVars`, installs
+   the temporary ECS enrichment shim, and creates `TealiumMartech`.
+3. During lazy loading, the Tealium loader starts prod-only Intuit Observability RUM, loads the
+   OneTrust stack, waits briefly for consent state, loads `utag.js`, then sends the single initial
+   `utag.view` through the consent guard.
+4. During delayed loading, the site sends a consent-gated `delayed_ready` event.
 
-What loads is decided by **two independent things**: the **host** (which Tealium *environment* to
-use, if any) and the optional **`?martech=` query param** (which *provider / source*).
+The loader is [`plugins/tealium-martech/src/index.js`](plugins/tealium-martech/src/index.js). Adobe
+Web SDK code remains in the repository as commented, inactive integration code; it is not a runtime
+provider and has no query-parameter switch.
 
-### Host → Tealium environment
+## Environment and runtime switches
 
-`resolveEnvironment()` maps the hostname to a Tealium env. **Only the two real Intuit hosts
-(`erp.intuit.com` and `stage.erp.intuit.com`) can ever be `prod`** — there is no query-string or
-config override that escalates a preview/localhost/lookalike host to `prod`.
+The hostname selects the Tealium environment. A query parameter cannot promote a non-Intuit host
+to the production profile.
 
-| Host | Tealium env | Notes |
-| --- | --- | --- |
-| `erp.intuit.com` | **`prod`** | the live customer site |
-| `stage.erp.intuit.com` | **`prod`** | Intuit staging — runs the prod profile for parity (an `intuit.com` origin, consent CDN reachable) |
-| `<branch>--intuit-erp--aemsites.aem.page` | `dev` | AEM preview |
-| `<branch>--intuit-erp--aemsites.aem.live` | `dev` | AEM published |
-| `localhost` / `127.0.0.1` | `dev` | local `aem up` |
-| anything else (e.g. `*.preview.da.live`) | **inert** | martech fully disabled |
-
-### `?martech=` → provider / source
-
-| `?martech=` | What loads |
+| Host | Tealium environment |
 | --- | --- |
-| *(absent)* or `cdn` | **Default.** Tealium `utag.js` + tags from `tags.tiqcdn.com`; OneTrust consent from Intuit's privacy CDN. |
-| `local` | Tealium `utag.js` + the OneTrust consent stack from **local copies** in `/scripts/martech/` (see caveat below). |
-| `off` | **Nothing** — no Tealium, no Adobe, fully inert. Use to isolate a page from all martech. |
-| `adobe` | Legacy Adobe / `aem-martech` (Alloy) path — opt-in, currently dormant. |
+| `erp.intuit.com` | `prod` |
+| `stage.erp.intuit.com` | `prod` |
+| `*--intuit-erp--aemsites.aem.page` | `dev` |
+| `*--intuit-erp--aemsites.aem.live` | `dev` |
+| `localhost`, `127.0.0.1` | `dev` |
+| any other host, including `*.preview.da.live` | disabled |
 
-The env (host) and the provider (`?martech`) are orthogonal: e.g. `localhost` is always the `dev`
-env, but `?martech=local` vs the default only changes **where** utag.js and the consent stack are
-fetched from.
+`?martech=` changes whether martech loads and, for local testing, where vendor files come from:
 
-### Consent-CDN caveat (why `?martech=local` exists)
+| Value | Behavior |
+| --- | --- |
+| absent, `cdn`, or any unrecognized value | Tealium and consent scripts load from their CDNs |
+| `local` | Tealium and consent scripts load from `/scripts/martech/` |
+| `off` | all martech and ECS enrichment are disabled |
 
-OneTrust's consent CDN (`privacy-cdn*.a.intuit.com`) only serves **`*.intuit.com` origins**:
+The `local` vendor directory is workstation-only and not committed, so this mode works from a
+checkout that has the mirrored files but not from a deployed AEM preview. Intuit's OneTrust CDN
+accepts `*.intuit.com` origins; on localhost and AEM hosts it may be blocked. Use `local` for a
+deterministic local consent stack or `off` when martech is irrelevant to the test.
 
-- On **`erp.intuit.com`** and **`stage.erp.intuit.com`** the default (CDN) consent stack works.
-- On **aem.page / aem.live / localhost** (non-`intuit.com` origins) the consent CDN is
-  CloudFront-blocked, so the default consent stack can't settle. Use **`?martech=local`** (local
-  consent copies) or **`?martech=off`**.
+## Consent ownership
 
-> **`?martech=local` needs the vendor files.** The local copies live in `/scripts/martech/`
-> (`utag.js`, `otSDKStub.js`, `cookies-consent-wrapper.min.js`, `gdprUtilBundle.js`, `stable/…`).
-> They **mirror Intuit's CDN, are refreshed manually, and are git-ignored (not committed)**. So
-> `?martech=local` works in a local checkout that has them, but **404s on the deployed
-> aem.page/aem.live previews** (which serve committed code only). On a preview, either use
-> `?martech=off`, or run an authenticated `aem up` locally (see below) where the default CDN path
-> works.
+The site loads Intuit's OneTrust stack before `utag.js`:
 
-### What loads where — quick matrix
+1. `otSDKStub.js` with Intuit domain script `74130b76-29e2-4d72-ab52-09f9ed5818fb`;
+2. `cookies-consent-wrapper.min.js`;
+3. `gdprUtilBundle.js`.
 
-| Where | Default (no param) | `?martech=local` | `?martech=off` |
-| --- | --- | --- | --- |
-| `erp.intuit.com` | Tealium **prod** + OneTrust (CDN) ✅ | — | inert |
-| `stage.erp.intuit.com` | Tealium **prod** + OneTrust (CDN) ✅ | Tealium prod + local consent | inert |
-| aem.page / aem.live preview | Tealium **dev** from CDN; consent CDN blocked → utag self-resolves (US opt-out) | ❌ 404 (vendor files not committed) | inert |
-| `localhost` (`aem up`) | Tealium **dev** from CDN; consent CDN blocked | Tealium dev + **local** copies ✅ | inert |
+Consent responsibility is split deliberately:
 
-When the consent CDN can't settle (non-`intuit.com` origin), utag resolves consent itself for the
-US opt-out posture, so tags still fire.
+| Owner | Responsibility |
+| --- | --- |
+| this repository | wait until Tealium reports a resolved consent state before calling `utag.view` or `utag.link` |
+| `ies-erp` Tealium profile | map OneTrust categories and enforce Google Consent Mode v2 for downstream tags |
 
----
+`whenConsentResolved()` is an anti-recursion guard. The profile can recurse between its consent
+queue and preference handling if it receives a tracked call while consent state is `0`. The guard
+runs calls after either a granted or declined decision and drops them if state never resolves. It
+does not grant consent or map categories.
 
-## Consent
+The footer's `button.ot-sdk-show-settings` opens the OneTrust Preference Center after the SDK binds
+it. That interaction can only be tested reliably on an `intuit.com` origin because the consent CDN
+blocks other origins.
 
-Consent uses **Intuit's own OneTrust account** (not a generic one), and the martech tags are gated
-**Consent Mode style** — but the per-category enforcement lives in the **Tealium profile**, not in
-this repo. Understanding that split is the whole point of this section.
+## Profile-owned integrations
 
-### The stack (Intuit's OneTrust)
+Do not add page loaders for vendors already owned by `ies-erp`. Their Tealium load rules carry the
+required path and consent scope. For example, the blog Feedback tab is Qualtrics tag 35, restricted
+by the profile to `/blog/*`; loading it from page code would duplicate it and bypass that scope.
 
-The loader loads Intuit's consent stack, in order, **before** `utag.js` (see `loadConsentStack`):
+Intuit Observability RUM is the exception: it is page-authored rather than a Tealium tag. The loader
+starts it only when the resolved Tealium environment is `prod`.
 
-1. `otSDKStub.js` with `data-domain-script=74130b76-29e2-4d72-ab52-09f9ed5818fb` (Intuit's OneTrust
-   domain script) from `privacy-cdn.a.intuit.com` (prod) / `privacy-cdn.e2e.a.intuit.com` (non-prod)
-2. Intuit's `cookies-consent-wrapper.min.js`
-3. `gdprUtilBundle.js` (`uxfabric.intuitcdn.net`)
+## Validation
 
-`head.html` preconnects both privacy CDNs. This is Intuit's real account — the same domain script
-prod serves — so consent state is shared with the rest of `*.intuit.com`.
+Unit coverage for environment resolution, consent, and loader behavior is in
+[`test/tealium-martech.test.js`](test/tealium-martech.test.js).
 
-### Two-layer gating (who gates what)
-
-| Layer | Responsibility | Where |
-| --- | --- | --- |
-| **This repo** | Gate _"has consent resolved at all?"_ — never hand `utag` a tracked call while `getConsentState() === 0`. This is an **anti-recursion** guard, not category logic: the `ies-erp` consent extension stack-overflows (`processQueue` ↔ `setPreferencesValues`) if it gets a tracked call while consent is pending. | `whenConsentResolved` wraps every `utag.view`/`utag.link`; `head.html` sets `noview:true` to suppress utag's own auto-view. |
-| **The `ies-erp` profile** | Gate _"which category may fire?"_ — analytics vs. advertising vs. functional, i.e. the actual **Consent Mode** enforcement. | The profile reads OneTrust `OptanonConsent` and drives **Google Consent Mode v2**. |
-
-`whenConsentResolved` fires once consent is **resolved — granted _or_ declined** — never while
-pending. Firing the initial `utag.view` for a *declined* user is correct under Consent Mode: the
-profile then loads the tags in `denied` mode (cookieless pings), so nothing is set without consent.
-
-### Verified: the profile is the Consent Mode bridge
-
-Confirmed by inspecting the live prod profile
-(`tags.tiqcdn.com/utag/intuit/ies-erp/prod/utag.js`). The profile:
-
-- derives consent categories from OneTrust (`utag.gdpr.getCategories`, `consent_categories`,
-  `gdpr_cats`), reading the `OptanonConsent` cookie;
-- implements **Google Consent Mode v2** — `ad_storage`, `analytics_storage`, `ad_user_data`,
-  `ad_personalization`, **defaulting to `denied`**, then flipping to `granted`/`denied` on the
-  user's decision (`ta.gcm`, `google_*_consent`);
-- passes that consent state into every downstream gtag/ad tag it injects.
-
-So every ad/analytics vendor that fans out from the profile is already per-category consent-gated by
-the profile. **Issue #122's "gate martech tags (Consent Mode style)" is satisfied here.**
-
-### Why this repo does NOT map categories client-side
-
-`plugins/tealium-martech/src/index.js` deliberately carries **no** client-side OneTrust→Tealium
-category mapper. It only *reads* consent — `readOptanonConsent`, used by `settleConsent` to detect
-that consent has settled — and never mutates it. A client-side mapper is off-limits for two reasons:
-(1) it would have to call `utag.gdpr.setPreferencesValues`, itself an arm of the recursion above;
-and (2) it would double-map categories the profile already owns.
-
-### Footer "Manage cookies" → OneTrust Preference Center
-
-The footer renders a `<button class="ot-sdk-show-settings">Manage cookies</button>`
-(`blocks/footer/footer.js` → `renderLegalCopy`). `ot-sdk-show-settings` is OneTrust's canonical
-trigger class: once the SDK initializes it binds the click to open the Preference Center — no
-app-side click wiring needed. (`normalizeCookieLabel` re-asserts the "Manage cookies" label because
-OneTrust otherwise clobbers it from its own config — issue #79 — which also confirms OneTrust does
-bind to the button.) The button is fixed chrome, rendered unconditionally regardless of the authored
-fragment.
-
-### Testing the Preference Center
-
-The Preference-Center click-through can only be exercised on an `intuit.com` origin
-(`erp.intuit.com` / `stage.erp.intuit.com`) — the OneTrust CDN CloudFront-blocks every other origin,
-so the SDK never loads on `aem.page`/`aem.live`/`localhost` to bind the button there.
-
----
-
-## Martech parity validation
-
-[`scripts/diff/martech-diff.mjs`](scripts/diff/martech-diff.mjs) checks that the rebuilt EDS site
-fires the **same martech as live `erp.intuit.com`, page-for-page** — a golden-master diff. It's a
-sibling of `content-diff` / `visual-diff` and reuses the same hardened live capture
-(`scripts/diff/live-session.mjs`, which clears Akamai/Cloudflare bot-management so prod is never
-silently measured as an "Access Denied" page).
-
-### What it compares
-
-Exact URLs can't match across environments (env path `…/ies-erp/prod/…` vs `…/dev/…`, per-load
-visitor/trace IDs, cache-busters), so each page is reduced to three **environment-independent** sets
-and diffed against a committed **prod golden**:
-
-- **vendors** — which martech vendors fired a network call (GA4, Google Ads, Meta, LinkedIn,
-  Marketo, Demandbase, Segment, o11y, …).
-- **Tealium tag-uids** — which `utag.N.js` tag templates loaded (profile-assigned; identical across
-  prod/dev publishes).
-- **UDO keys** — the field *names* on the runtime `utag.data` layer (names only — values
-  legitimately differ per page/visit).
-
-### Setup
+[`scripts/diff/martech-diff.mjs`](scripts/diff/martech-diff.mjs) compares normalized vendor names,
+Tealium tag ids, and UDO key names with production. It classifies expected profile, edge, and
+nondeterministic DSP differences instead of comparing unstable request URLs.
 
 ```bash
-npm install                     # pulls playwright (a devDependency)
-npx playwright install chromium # one-time browser download
-```
-
-Network access to `erp.intuit.com` (public) is required for the baseline.
-
-### Running it
-
-The tricky part is capturing **our build's** side: the rebuilt homepage on a preview is
-access-gated. The clean answer is that the auth lives in **`aem up`** (server-side proxy), so if you
-run the harness against an **authenticated local `aem up`** it stays cookie-free:
-
-```bash
-# Diff your local build against the committed prod golden (authenticated `aem up` on :3000):
+# Compare an authenticated local build with the committed production baseline
 node scripts/diff/martech-diff.mjs --env local --local-base http://localhost:3000 \
   --baseline scripts/diff/fixtures/martech-homepage.golden.json
 
-# (Re)capture the prod golden — do this deliberately when prod's stack changes:
+# Deliberately refresh the production baseline
 node scripts/diff/martech-diff.mjs --env prod \
   --refresh scripts/diff/fixtures/martech-homepage.golden.json
-```
 
-Other options:
-
-| Flag | Purpose |
-| --- | --- |
-| `--env prod,stage,preview,local` | capture a subset of the env ladder (stage is VPN-gated; unreachable envs are SKIPPED, never failed) |
-| `--ours-path /drafts/home` | point the our-build capture at a specific path (e.g. a disk-served draft that fires martech, no auth) |
-| `--preview-base <url>` / `--local-base <url>` | override an env's base URL (e.g. your `aem up` port) |
-| `--cookie 'name=value'` | pass an auth cookie if you must capture a gated preview directly (repeatable) |
-| `--headed` | stealth real Chrome — escalate if prod bot-challenges the headless capture |
-| `--settle <ms>` | capture window (default 9000 — spans the EDS delayed phase) |
-| `--samples <n>` | capture each env `n` times and **union** the sets into the golden — recovers sampled/nondeterministic martech (FullStory, Akamai mPulse, DSP cookie-syncs). Prints a per-vendor hit frequency so you see what was flaky. Default 1. |
-| `--json out.json` | also write the raw capture + diff |
-| `--assert` | gate mode — exit 1 on any per-page `mustFire`/`mustNotFire` violation (see [Allowlist assertions](#allowlist-assertions)) |
-
-### Reading the output
-
-Each env is captured **best-effort**; an env we can't reach (stage off-VPN, gated preview, server
-down) is **SKIPPED with a reason** — never mistaken for parity.
-
-```
-baseline golden(...)  25 vendors · 14 tag-uids · 47 udo-keys
-          unclassified 3rd-party (add a vendor pattern or confirm noise): www.google.com
-local     GAP
-  missing vendors [page-authored on prod → LOOK INTO]: [trustarc]
-  missing vendors [Tealium-injected → dev-profile diff, ok gap]: [demandbase, google-ads, segment, …]
-  missing vendors [Akamai/CDN edge-injected → ok gap]: [mpulse]
-  missing [downstream DSP cookie-sync — nondeterministic, informational]: [casale-index, …]
-```
-
-Because the whole stack is one Tealium tag manager, **most gaps are just Tealium _profile_
-differences, not rebuild gaps.** Each missing vendor is auto-classified by *how prod loads it*:
-
-| Class | Meaning | Action |
-| --- | --- | --- |
-| **page-authored → LOOK INTO** | prod loads it from the page itself (e.g. a TrustArc footer seal) | 🔴 real gap — decide if the rebuild needs it |
-| **Tealium-injected → ok gap** | a Tealium tag the dev/e2e profile excludes | ✅ ok — fires once the prod profile is used |
-| **Akamai / CDN edge-injected → ok gap** | injected by the edge (e.g. Akamai mPulse) | ✅ ok — appears behind Akamai |
-| **downstream DSP cookie-sync** | fires nondeterministically downstream of the ad tags | ✅ informational — not a real gap |
-
-The **unclassified 3rd-party** line lists any host not yet recognized by a vendor pattern — add a
-pattern (see below) or confirm it's noise, so nothing is ever silently dropped.
-
-### Allowlist assertions
-
-`--assert` turns the report into a **gate**: each page in `PAGES` may declare vendors that
-**must fire** (`mustFire`) or **must not fire** (`mustNotFire`) on the our-build envs, and any
-violation exits **1**. Without `--assert` the run stays report-only (exit 0), so existing usage is
-unchanged. Use it to lock in behavior that would otherwise regress silently — in particular, that a
-vendor riding the Tealium profile fan-out still fires **where prod scopes it, and nowhere else**.
-
-**Why this exists — Qualtrics (#148, #620).** The "Feedback" tab on `/blog/*` is Qualtrics Site
-Intercept, and it is **not** page code: it is `ies-erp` Tealium **tag #35** (`utag.35.js`), scoped by
-the tag's own load rule `cond[2] = /^\/blog\//` and gated on the analytics consent category
-(`tcat:1`). The rebuild loads the real profile, so it already fires — no `scripts/delayed.js` loader
-needed. A manual loader (proposed in #620) would **double-load** it on `/blog/*`, **over-fire** it
-site-wide (it has no path gate), and **bypass** the consent category. These assertions encode the
-correct contract so either regression — losing it, or re-broadening it — fails loudly.
-
-| Page | `ours` path | assertion |
-| --- | --- | --- |
-| `blog-feedback` | `/blog/parity-probe` | `mustFire: ['qualtrics']` |
-| `non-blog-scope` | `/parity-probe` | `mustNotFire: ['qualtrics']` |
-
-The migrated `/blog` content is auth-gated, so `ours` points at committed drafts fixtures
-(`drafts/blog/parity-probe.html`, `drafts/parity-probe.html`) served at **real** paths. Tag #35 keys
-off `location.pathname`, so a synthetic `/blog/*` path triggers it exactly like real content. Serve
-the fixtures at root with `--html-mount /`:
-
-```bash
+# Check the Qualtrics blog/non-blog load rules
+# Serve the committed drafts at / on port 3001
 npx @adobe/aem-cli up --no-open --html-folder drafts --html-mount / --port 3001 &
-node scripts/diff/martech-diff.mjs --env local --page blog-feedback,non-blog-scope \
-  --local-base http://localhost:3001 --settle 15000 --assert
-# → ASSERT ok  local: fires [qualtrics]   ·   ASSERT ok  local: absent [qualtrics]   (exit 0)
+node scripts/diff/martech-diff.mjs --env local \
+  --page blog-feedback,non-blog-scope --local-base http://localhost:3001 \
+  --settle 15000 --assert
 ```
 
-Run this **manually or on a schedule, not as a blocking CI gate.** It drives a browser, needs network
-to `tags.tiqcdn.com`, fires a **real Qualtrics impression** each run (the dev profile points at the
-production zone), and it guards an *external* dependency (the Tealium profile), so it can legitimately
-go red for reasons outside any given PR.
-
-### Updating / extending
-
-- **Add a reference page:** add `{ name, prod, ours }` to `PAGES` in the script, then `--refresh` a
-  golden for it (tags are page-specific via Tealium load rules, so capture a golden **per page**).
-- **Add a vendor:** add a `[name, /regex/]` entry to `VENDORS`. If it is *not* a normal Tealium tag,
-  also give it a `LOAD_CLASS` (`edge` / `authored` / `dsp-sync` / `infra`).
-- **The golden** (`scripts/diff/fixtures/martech-homepage.golden.json`) is normalized — vendor
-  names, tag numbers, and UDO key *names* only (no IDs or values) — so it is safe to commit.
-
-### Known limitations
-
-- **Report-only by default** (exit 0). `--assert` enables per-page must-fire/must-not-fire vendor
-  allowlists (see [Allowlist assertions](#allowlist-assertions)); must-have UDO keys and per-vendor
-  param comparison are still TODO.
-- Some vendors fire **nondeterministically** — FullStory and Akamai mPulse are **sampled** (only a
-  subset of visits records; note `fs_is_sampled` in the UDO), and the DSP cookie-syncs fire a
-  different subset each load — so a single golden capture under-measures prod. Use **`--samples <n>`**
-  to capture N times and union the stable set into the golden (each capture is a fresh context =
-  fresh visitor = independent sampling roll); the summary reports the per-vendor hit frequency
-  (e.g. `fullstory 3/8`) so the recovered set is explicit. The DSP syncs are additionally
-  class-separated so they never gate parity.
-- Tags are **page-specific** (load rules) — the homepage fires 14 tags, other page types fire
-  others. Capture a golden per reference page.
+Browser captures need Playwright and network access. Unreachable environments are reported as
+skipped. `--assert` gates only explicit vendor allowlist rules; the general comparison is
+report-only. Use multiple samples when validating sampled vendors such as FullStory or Akamai
+mPulse.
