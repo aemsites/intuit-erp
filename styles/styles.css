@@ -202,7 +202,12 @@ body.has-events-bar header {
 }
 
 header .header,
-footer .footer {
+footer .footer,
+/* Raw fragment markup the CDN inlines as <header><nav>…</nav></header> /
+   <footer><nav>…</nav></footer> (see akamai/ EdgeWorker). Hidden until header.js/
+   footer.js consume and remove it; the reserved header height keeps this CLS-free. */
+header > nav,
+footer > nav {
   visibility: hidden;
 }
 
