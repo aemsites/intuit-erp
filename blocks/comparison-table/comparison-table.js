@@ -149,6 +149,54 @@ function getLegendText(cells) {
   return cells.slice(2).map((c) => c.textContent.trim()).filter(Boolean).join(' ');
 }
 
+/**
+ * Returns the legend's authored source cell — the one whose child markup should
+ * be preserved (paragraphs, `<strong>` labels, check/dash glyphs) — or null when
+ * the legend has no such cell. Mirrors getLegendText's precedence.
+ * @param {Element[]} cells
+ * @returns {Element|null}
+ */
+function legendSourceCell(cells) {
+  if (cells.length > 1 && cells[1].textContent.trim()) return cells[1];
+  return null;
+}
+
+/**
+ * Renders legend content into `container`, preserving authored line structure.
+ * Each authored paragraph becomes its own line. A leading check glyph is swapped
+ * for the same CSS `.ck` checkmark the table body uses, so the key matches the
+ * symbols it explains; a leading en/em dash becomes `.ct-dash`. Falls back to
+ * flat text when the cell has no paragraph children.
+ * @param {Element} container `.ct-legend` element to fill
+ * @param {Element|null} cell authored legend cell
+ * @param {string} fallbackText plain-text legend used when `cell` is absent
+ */
+function renderLegend(container, cell, fallbackText) {
+  const paras = cell ? [...cell.querySelectorAll(':scope > p')] : [];
+  if (!paras.length) {
+    container.textContent = fallbackText;
+    return;
+  }
+  paras.forEach((p) => {
+    const line = document.createElement('span');
+    line.className = 'ct-legend-item';
+    [...p.childNodes].forEach((n) => line.append(n.cloneNode(true)));
+    const first = line.firstChild;
+    if (first && first.nodeType === Node.TEXT_NODE) {
+      const m = first.textContent.match(/^\s*(\u2713|\u2714|\u2013|\u2014|-)\s*/);
+      if (m) {
+        first.textContent = first.textContent.slice(m[0].length);
+        const glyph = document.createElement('span');
+        const isCheck = m[1] === '\u2713' || m[1] === '\u2714';
+        glyph.className = isCheck ? 'ck' : 'ct-dash';
+        if (!isCheck) glyph.innerHTML = '&ndash;';
+        line.prepend(glyph);
+      }
+    }
+    container.append(line);
+  });
+}
+
 function valueCell(cell) {
   const td = document.createElement('td');
   const t = cell.textContent.trim();
@@ -292,7 +340,7 @@ export default function decorate(block) {
     if (legendText !== null) {
       legendEl = document.createElement('p');
       legendEl.className = 'ct-legend';
-      legendEl.textContent = legendText;
+      renderLegend(legendEl, legendSourceCell(cells), legendText);
       return;
     }
 
