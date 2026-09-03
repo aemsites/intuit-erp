@@ -57,6 +57,9 @@ export function normalizeValue(spec, v) {
   }
   if (spec.normalizeEnv && N.env && N.env.map[s] != null) s = N.env.map[s];
   if (spec.normalizeTags || (N.stripTags || []).length) s = s.replace(/<[^>]*>/g, '');
+  if (spec.normalizeTypography) {
+    s = s.replace(/[\u2018\u2019]/g, "'").replace(/[\u201c\u201d]/g, '"');
+  }
   if (spec.stripBracket) s = s.replace(/ \[[^\]]*\]$/, '');
   if (N.trim !== false) s = s.trim().replace(/\s+/g, ' ');
   return s;
@@ -66,6 +69,15 @@ const canon = (spec, v) => { const s = normalizeValue(spec, v); return s === '' 
 // rw_card_2 (trail), or accordion_item_1 vs _2 (embedded in link_name), match on STRUCTURE not
 // exact index. Global (not just segment-end) so it also catches mid-string ids in link_name.
 const idxNorm = (v) => (typeof v === 'string' ? v.replace(/_\d+/g, '_N') : v);
+
+/**
+ * The value `got` is compared against for a gated field. Normally the golden's `want`, but for
+ * pathname-derived fields (page_cas_id — the content id is now window.location.pathname, see
+ * OVERRIDES.md) the frozen golden holds the OLD prod CMS id, so the expectation is the entry's own
+ * pathname instead. Keeps the golden immutable while validating the new (present + equals-pathname)
+ * behavior. Callers pass the entry's pathname.
+ */
+export const resolveWant = (spec, pathname, want) => (spec && spec.equalsPathname ? (pathname || '/') : want);
 
 /** value-match one gated field. `want`=prod, `got`=ours. */
 export function gatedMatch(spec, want, got) {

@@ -54,10 +54,6 @@
   color: var(--primary);
 }
 
-.blog-article .blog-hero .blog-byline-updated {
-  color: var(--text-soft);
-}
-
 .blog-article .blog-hero .blog-hero-image {
   margin: 0;
 }
@@ -150,7 +146,7 @@
   height: 60px;
   margin: 0;
   border: 0;
-  background: transparent;
+  background: #fff;
   padding: 0 20px;
   font: inherit;
   font-size: 16px;
@@ -344,8 +340,8 @@
 @media (width >= 1024px) {
   main.blog-article {
     display: grid;
-    grid-template-columns: 332px minmax(0, 1fr) 300px;
-    column-gap: 48px;
+    grid-template-columns: 250px minmax(0, 1fr) 300px;
+    column-gap: 130px;
     align-items: start;
   }
 
@@ -413,7 +409,7 @@
   .blog-article .blog-toc {
     border: 0;
     border-radius: 0 var(--radius-card) var(--radius-card) 0;
-    background: #eef1f6;
+    background: #f0f4f6;
     box-shadow: 0 10px 30px rgb(0 0 0 / 10%);
   }
 
@@ -511,10 +507,29 @@
     font-size: var(--heading-font-size-xxl);
   }
 
+  /* author in its own column; published/updated stack together in a second
+     column instead of flowing as a wrapping row — flex-wrap would drop
+     "Updated" back to the start (under the author), not under "Published on" */
   .blog-article .blog-hero .blog-byline-meta {
-    flex-flow: row wrap;
-    column-gap: 24px;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 4px 24px;
     margin-bottom: 0;
+  }
+
+  .blog-article .blog-hero .blog-byline-author {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .blog-article .blog-hero .blog-byline-date {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .blog-article .blog-hero .blog-byline-updated {
+    grid-column: 2;
+    grid-row: 2;
   }
 
   .blog-article > .blog-hero > .default-content-wrapper > .blog-byline-tag {
@@ -569,6 +584,26 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
   padding: 0;
 }
 
+/* Each H2 gets its own section, and main.blog-article is a grid at >=1024px,
+   so sections are grid items and don't margin-collapse like normal flow —
+   doubling the gap at every section break (padding + margin stacking instead
+   of collapsing). Zero the wrapper padding and let heading margins own the
+   gap instead; hero/toc-rail/rail sections keep their own explicit padding. */
+.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail) > .default-content-wrapper {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail) > .default-content-wrapper > :last-child {
+  margin-bottom: 0;
+}
+
+/* Same fix for sections that end in a block (highlight, testimonial, …)
+   instead of prose. */
+.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail) > :last-child > :last-child {
+  margin-bottom: 0;
+}
+
 .blog-article .download-form-wrapper {
   background: var(--navy);
   padding: var(--section-y) 0;
@@ -578,9 +613,18 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
   max-width: none;
   margin: 0 0 20px;
   text-align: left;
-  font-size: 16px;
+  font-size: 20px;
   line-height: 1.5;
   color: #000;
+}
+
+.blog-article .testimonial-wrapper:has(.testimonial.simple) {
+  margin: 2rem 0;
+}
+
+.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail) > .default-content-wrapper > p > picture > img {
+  display: block;
+  margin: 0 auto;
 }
 
 @media (width < 1024px) {
@@ -639,11 +683,23 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
   padding: 24px 40px;
 }
 
+.blog-article .highlight .highlight-inner:has(> p .icon[class*="icon-quick-answer"]) {
+  display: flex;
+}
+
+.blog-article .video-wrapper {
+  margin: 2rem 0;
+}
+
 :is(.blog-article, .case-study) .testimonial:not(.video, .simple) {
   box-sizing: border-box;
   margin: 32px 0;
   background: var(--tofu);
   padding: 8px 20px 24px;
+}
+
+:is(.blog-article, .case-study) .testimonial:not(.video, .simple) > :is(h2, h3, h4, h5, h6) {
+  padding-top: 1rem;
 }
 
 @media (width >= 1024px) {

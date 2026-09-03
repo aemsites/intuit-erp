@@ -1,3 +1,5 @@
+import { trackAs } from '../../scripts/tracking.js';
+
 /**
  * disclosure — blue bar with an expandable "Important pricing details" note
  * (index, erp-solutions).
@@ -30,4 +32,9 @@ export default function decorate(block) {
   details.append(summary, body);
 
   block.replaceChildren(details);
+  return trackAs(null, block, {
+    key: 'disclaimer',
+    uiObject: 'link',
+    payload: () => ({ 'object-detail': `disclaimer|${details.open ? 'close' : 'open'}` }),
+  });
 }

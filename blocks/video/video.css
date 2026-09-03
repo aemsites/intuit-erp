@@ -69,7 +69,7 @@ main .section.video-container {
   object-fit: cover;
 }
 
-.video .video-play {
+.video-preview .video-play {
   position: absolute;
   inset: 0;
   width: 64px;
@@ -80,7 +80,7 @@ main .section.video-container {
   box-shadow: 0 4px 30px rgb(0 0 0 / 15%);
 }
 
-.video .video-play::after {
+.video-preview .video-play::after {
   content: '';
   position: absolute;
   inset: 0;
@@ -134,12 +134,12 @@ main .section.video-container {
 }
 
 @media (width >= 1024px) {
-  .video .video-play {
+  .video-preview .video-play {
     width: 100px;
     height: 100px;
   }
 
-  .video .video-play::after {
+  .video-preview .video-play::after {
     border-width: 22px 0 22px 34px;
     transform: translateX(4px);
   }

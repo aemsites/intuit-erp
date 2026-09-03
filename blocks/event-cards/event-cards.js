@@ -22,11 +22,28 @@
 import { createOptimizedPicture } from '../../scripts/aem.js';
 import { loadIndex, formatDate } from '../../scripts/content-index.js';
 import { BP_DESKTOP } from '../../scripts/breakpoints.js';
+import { trackAs } from '../../scripts/tracking.js';
 
 const INDEX_PATH = '/events/query-index.json';
 
 function eventsPerView() {
   return window.innerWidth < BP_DESKTOP ? 1 : 3;
+}
+
+// The events carousel's prev/next arrows report prod's `rw_carousel_control` object with a
+// semantic arrow_left/arrow_right detail + matching link_name (mirrors cards.js navArrowPayload).
+function eventArrowPayload(el) {
+  if (!el.classList) return null;
+  let side = null;
+  if (el.classList.contains('prev')) side = 'left';
+  else if (el.classList.contains('next')) side = 'right';
+  if (!side) return null;
+  const detail = `arrow_${side}`;
+  return {
+    'ui-object': 'rw_carousel_control',
+    'ui-object-detail': detail,
+    'custom-properties': { link_name: `rw_carousel_control-${detail}` },
+  };
 }
 
 function buildCarousel(block, track) {
@@ -41,11 +58,13 @@ function buildCarousel(block, track) {
   prevBtn.type = 'button';
   prevBtn.className = 'events-arrow prev';
   prevBtn.setAttribute('aria-label', 'Previous events');
+  prevBtn.dataset.trackId = 'cards:previous-events';
   prevBtn.textContent = '‹';
   const nextBtn = document.createElement('button');
   nextBtn.type = 'button';
   nextBtn.className = 'events-arrow next';
   nextBtn.setAttribute('aria-label', 'Next events');
+  nextBtn.dataset.trackId = 'cards:next-events';
   nextBtn.textContent = '›';
   const nav = document.createElement('div');
   nav.className = 'events-nav';
@@ -226,4 +245,17 @@ export default async function decorate(block) {
     grid.classList.add('events-track');
     buildCarousel(block, grid);
   }
+
+  // Click tracking: prod's rw_cards_container carousel — each .event-card is an rw_card_N slot and
+  // the arrows report rw_carousel_control (eventArrowPayload). key:'cards' so the CTA ids
+  // (cards:<label>, via the label fallback) resolve the sheet's authored wa-links; linkName:false.
+  return trackAs('rw_cards_container', block, {
+    key: 'cards',
+    linkName: false,
+    payload: eventArrowPayload,
+    items: {
+      '.event-grid, .event-grid > *': (i, el) => (el.classList.contains('event-grid') ? 'carousel' : `rw_card_${i}`),
+      '.events-controls': 'carousel',
+    },
+  });
 }

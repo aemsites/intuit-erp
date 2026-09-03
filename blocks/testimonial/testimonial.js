@@ -34,6 +34,7 @@
  */
 
 import { trackAs } from '../../scripts/tracking.js';
+import { openVideoModal } from '../../scripts/scripts.js';
 
 function pic(cell) {
   if (!cell) return null;
@@ -57,29 +58,9 @@ function extractHeading(cell) {
 const STORY_VIDEO_SRC = 'https://erp.intuit.com/oidam/intuit/erp/en_us/web/motion-and-video/case-study-rhodes-cutdown-video-ies-us-en-sm.mp4';
 const STORY_YOUTUBE_ID = 'gpHd4jd6dTk';
 
-function openVideoModal(videoId) {
-  const overlay = document.createElement('div');
-  overlay.className = 'video-modal-overlay';
-  overlay.innerHTML = `
-    <div class="video-modal">
-      <button type="button" class="video-modal-close" aria-label="Close video">×</button>
-      <div class="video-modal-frame">
-        <iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0" title="Customer story video" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
-      </div>
-    </div>`;
-  // close/onKey are mutually referential hoisted function declarations; one direction
-  // will always textually precede the other's declaration, so this is safe, not a bug.
-  function close() {
-    overlay.remove();
-    // eslint-disable-next-line no-use-before-define
-    document.removeEventListener('keydown', onKey);
-  }
-  function onKey(e) { if (e.key === 'Escape') close(); }
-  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
-  overlay.querySelector('.video-modal-close').addEventListener('click', close);
-  document.addEventListener('keydown', onKey);
-  document.body.append(overlay);
-}
+// Build the autoplay embed URL for a bare YouTube id, then hand off to the
+// shared modal opener (scripts.js).
+const playVideo = (videoId) => openVideoModal(`https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`, 'Customer story video');
 
 // Parse a YouTube watch/short/embed URL into its id; '' if not a URL (a bare
 // id authored directly is returned as-is by the caller's fallback).
@@ -262,7 +243,7 @@ export function buildVideoFrame(cells, opts = {}) {
   play.type = 'button';
   play.setAttribute('aria-label', 'Play full video');
   play.textContent = '▶';
-  play.addEventListener('click', () => openVideoModal(youtubeId));
+  play.addEventListener('click', () => playVideo(youtubeId));
 
   const parts = [];
   if (logoEl) { logoEl.classList.add('video-logo'); parts.push(logoEl); }
@@ -475,7 +456,7 @@ function buildVideoSplit(cells) {
     play.type = 'button';
     play.setAttribute('aria-label', 'Play full video');
     play.textContent = '▶';
-    play.addEventListener('click', () => openVideoModal(youtubeId));
+    play.addEventListener('click', () => playVideo(youtubeId));
     media.append(play);
   }
 

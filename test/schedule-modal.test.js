@@ -103,4 +103,42 @@ describe('bindScheduleLinks', () => {
     bindScheduleLinks(container);
     expect(container.querySelector('a').dataset.scheduleBound).toBe('true');
   });
+
+  it('gives an unclaimed loose schedule anchor a semantic sheet identity', () => {
+    const container = document.createElement('main');
+    container.innerHTML = '<p><a href="#schedule">Schedule a consultation</a></p>';
+    bindScheduleLinks(container);
+    expect(container.querySelector('a').dataset.trackId).toBe('page:schedule-a-consultation');
+  });
+
+  it('preserves block-owned and explicit schedule identities', () => {
+    const container = document.createElement('main');
+    container.innerHTML = `
+      <div class="tabs block"><a href="#schedule">Schedule a call</a></div>
+      <p><a href="#schedule" data-track-id="custom:schedule">Schedule a demo</a></p>`;
+    bindScheduleLinks(container);
+    const [blockOwned, explicit] = container.querySelectorAll('a');
+    expect(blockOwned.hasAttribute('data-track-id')).toBe(false);
+    expect(explicit.dataset.trackId).toBe('custom:schedule');
+  });
+
+  it('leaves claimed ChiliPiper links to the widget without stopping bubbling', async () => {
+    const container = makeContainer('#schedule');
+    const link = container.querySelector('a');
+    link.dataset.chilipiperTrigger = 'true';
+    document.body.append(container);
+    const tracking = vi.fn();
+    document.addEventListener('click', tracking, { once: true });
+    bindScheduleLinks(container);
+
+    const event = new MouseEvent('click', { bubbles: true, cancelable: true });
+    const preventDefault = vi.spyOn(event, 'preventDefault');
+    link.dispatchEvent(event);
+    await flush();
+
+    expect(openModal).not.toHaveBeenCalled();
+    expect(preventDefault).not.toHaveBeenCalled();
+    expect(tracking).toHaveBeenCalledTimes(1);
+    container.remove();
+  });
 });

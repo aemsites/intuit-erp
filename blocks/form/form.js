@@ -19,21 +19,24 @@
  *
  * CSS: blocks/form/form.css
  */
-import { loadScript, getMetadata } from '../../scripts/aem.js';
-// Vendored via git subtree at plugins/martech (see its README), not an
-// installed npm package, so this necessarily crosses a package.json boundary.
-// eslint-disable-next-line import/no-relative-packages
-import { sendEvent } from '../../plugins/martech/src/index.js';
+import { loadScript, getMetadata, decorateIcons } from '../../scripts/aem.js';
+import { fetchPlaceholders } from '../../scripts/placeholders.js';
+// Uncomment with the AEP/WebSDK integration in scripts/scripts.js.
+// // Vendored via git subtree at plugins/martech (see its README), not an
+// // installed npm package, so this necessarily crosses a package.json boundary.
+// // eslint-disable-next-line import/no-relative-packages
+// import { sendEvent } from '../../plugins/martech/src/index.js';
 // Shared ChiliPiper opener (also used by personalization widgets) + lead-xref/track helpers.
 import {
   openChiliPiper, submitChiliPiper, mintLeadXref, trackLeadCreated,
 } from '../../scripts/chilipiper.js';
 
-// Tenant-namespaced XDM location for lead-identity events. Object name `of1Signal` must
-// byte-match the AEP "Experience Event Schema" field group path (AEP console config) or
-// ingestion silently drops it. Independent of the (removed) OF1 generative-page feature,
-// which used to write interest/intent data to this same object.
-export const LEAD_XDM_TARGET = { prefix: '_sapphiredemo1', object: 'of1Signal' };
+// Uncomment with the AEP/WebSDK integration in scripts/scripts.js.
+// // Tenant-namespaced XDM location for lead-identity events. Object name `of1Signal` must
+// // byte-match the AEP "Experience Event Schema" field group path (AEP console config) or
+// // ingestion silently drops it. Independent of the (removed) OF1 generative-page feature,
+// // which used to write interest/intent data to this same object.
+// export const LEAD_XDM_TARGET = { prefix: '<prefix>', object: 'of1Signal' };
 
 const CONFIG_KEYS = [
   'formId',
@@ -100,24 +103,24 @@ export function parseFormConfig(block) {
   };
 }
 
-// Maps lead fields → an identity sendEvent XDM. Email goes in identityMap as
-// 'ambiguous' (unverified). Pure — no DOM/network.
-export function buildIdentityXdm(fields) {
-  return {
-    eventType: 'web.formFilledOut',
-    identityMap: {
-      Email: [{ id: fields.email, primary: true, authenticatedState: 'ambiguous' }],
-    },
-    [LEAD_XDM_TARGET.prefix]: {
-      [LEAD_XDM_TARGET.object]: { lead: { ...fields }, capturedAt: new Date().toISOString() },
-    },
-  };
-}
+// Uncomment with the AEP/WebSDK integration in scripts/scripts.js.
+// // Maps lead fields → an identity sendEvent XDM. Email goes in identityMap as
+// // 'ambiguous' (unverified). Pure — no DOM/network.
+// export function buildIdentityXdm(fields) {
+//   return {
+//     eventType: 'web.formFilledOut',
+//     identityMap: {
+//       Email: [{ id: fields.email, primary: true, authenticatedState: 'ambiguous' }],
+//     },
+//     [LEAD_XDM_TARGET.prefix]: {
+//       [LEAD_XDM_TARGET.object]: { lead: { ...fields }, capturedAt: new Date().toISOString() },
+//     },
+//   };
+// }
 
-// Provider-aware submit tracking. `window.utag` only ever exists when scripts/scripts.js chose
-// the Tealium provider (the default) AND that instance is enabled — i.e. the hostname resolves
-// to a utag environment (see plugins/tealium-martech/src/index.js `resolveEnvironment`). The
-// Adobe path below only runs when the opt-in `?martech=adobe` override is used, unchanged.
+// Submit tracking. `window.utag` only ever exists when scripts/scripts.js chose the Tealium
+// provider (the default) AND that instance is enabled — i.e. the hostname resolves to a utag
+// environment (see plugins/tealium-martech/src/index.js `resolveEnvironment`).
 export function trackFormSubmit(fields) {
   if (window.utag?.link) {
     // Consent-gate, like the loader's whenConsentResolved: a link fired while getConsentState()===0
@@ -130,13 +133,13 @@ export function trackFormSubmit(fields) {
       ...fields,
       ivid: window.utag_data?.ivid,
     });
-    return;
   }
-  sendEvent({ xdm: buildIdentityXdm(fields) }).catch(() => {});
+  // Uncomment with the AEP/WebSDK integration in scripts/scripts.js.
+  // if (!window.utag?.link) sendEvent({ xdm: buildIdentityXdm(fields) }).catch(() => {});
 }
 
 // Marketo field names → the lower-cased lead shape trackFormSubmit expects, so
-// the same analytics events fire on a live submit as on the former mock.
+// the Tealium analytics event fires on a live submit as on the former mock.
 function marketoValuesToLead(vals = {}) {
   return {
     email: vals.Email || '',
@@ -173,24 +176,36 @@ function waitForChiliPiperOverlay(timeout = CHILIPIPER_OVERLAY_TIMEOUT_MS) {
   });
 }
 
-// Visible last resort when the lead was captured but ChiliPiper never took over
-// (blocked script, router failure). Mirrors production's inline confirmation
-// wording rather than redirecting, and replaces the form so the visitor isn't
-// left looking at fields they already submitted.
-function showHandoffFallback(form) {
+// Confirmation copy shown in place of a submitted form. Authored centrally in
+// the `placeholders` sheet as `form thank you heading` / `form thank you body`
+// (camel-cased on read); these are the fallbacks for when the sheet has no row.
+const THANK_YOU_HEADING_DEFAULT = 'Thank you';
+const THANK_YOU_BODY_DEFAULT = 'An Intuit expert will be in touch with you shortly.';
+
+// Replaces the submitted form with the confirmation. This also removes Marketo's
+// submit button, which it relabels to "Please Wait" and only ever restores from
+// its own thank-you/redirect — suppressed whenever the block supplies its own
+// feedback, so the button would otherwise stay stuck on "Please Wait".
+// Idempotent: guarded by a `data-thank-you-shown` flag.
+function showThankYou(form, placeholders = {}) {
   const formEl = form.getFormElem?.()?.[0] || document.getElementById(`mktoForm_${form.getId?.()}`);
-  if (!formEl || formEl.dataset.handoffFallback === 'true') return;
-  formEl.dataset.handoffFallback = 'true';
+  if (!formEl || formEl.dataset.thankYouShown === 'true') return;
+  formEl.dataset.thankYouShown = 'true';
   const note = document.createElement('div');
   note.className = 'form-success';
   note.setAttribute('role', 'status');
+  const check = document.createElement('span');
+  check.className = 'icon icon-circle-check-fill-green form-success-check';
   const heading = document.createElement('p');
   heading.className = 'form-success-heading';
-  heading.textContent = 'Thank you';
+  heading.textContent = placeholders.formThankYouHeading || THANK_YOU_HEADING_DEFAULT;
   const body = document.createElement('p');
-  body.textContent = 'An Intuit expert will be in touch with you shortly.';
-  note.append(heading, body);
+  body.textContent = placeholders.formThankYouBody || THANK_YOU_BODY_DEFAULT;
+  note.append(check, heading, body);
   formEl.replaceWith(note);
+  // The page-load icon pass has long finished by the time a form is submitted,
+  // so resolve this icon's <img> explicitly.
+  decorateIcons(note);
 }
 
 // Post-Marketo handoff: submit the lead via the shared submitChiliPiper (prod-parity args +
@@ -282,6 +297,10 @@ async function embedMarketoForm(formEl, cfg, config, env) {
   if (!munchkin) return;
   const host = `//${munchkin.toLowerCase()}.mktoweb.com`;
   const forms2Src = `${host}/js/forms2/js/forms2.min.js`;
+  // Resolved before `onSuccess` is registered because that callback has to run
+  // synchronously — it can't await the sheet. Cached per prefix, so this is one
+  // request no matter how many forms a page has.
+  const placeholders = await fetchPlaceholders();
   await loadScript(forms2Src);
   window.MktoForms2.loadForm(host, munchkin, config.formId, (form) => {
     // One lead-correlation id per form: stamp it into the Marketo hidden field up front (so it's
@@ -325,13 +344,15 @@ async function embedMarketoForm(formEl, cfg, config, env) {
       try {
         trackLeadCreated({ leadXrefId: leadXref, formId: config.formId });
       } catch (e) { /* non-fatal */ }
-      // Fire-and-forget by necessity (onSuccess must return synchronously). If the handoff never
-      // took over, surface a fallback confirmation in place of the form so a blocked ChiliPiper
-      // doesn't leave the visitor with nothing.
+      // Marketo relabels its submit button to "Please Wait" and only restores it
+      // from its own thank-you/redirect, suppressed below whenever we supply our
+      // own feedback — so swap the form for the confirmation now. This covers
+      // both outcomes of the fire-and-forget handoff (onSuccess must return
+      // synchronously): the visitor sees it whether ChiliPiper's calendar takes
+      // over or never loads.
       if (canHandoff) {
-        chiliPiperHandoff(config.chiliPiperRouter, form, leadXref).then((handedOff) => {
-          if (!handedOff) showHandoffFallback(form);
-        });
+        showThankYou(form, placeholders);
+        chiliPiperHandoff(config.chiliPiperRouter, form, leadXref);
       }
       if (config.downloadUrl) window.open(config.downloadUrl, '_blank', 'noopener');
       else if (config.successUrl && !canHandoff) window.location.href = config.successUrl;

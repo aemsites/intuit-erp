@@ -410,12 +410,13 @@ export default class TealiumMartech {
     seedUdo();
     this.env = resolveEnvironment();
     this.enabled = this.env !== null;
-    // head.html sets `utag_cfg_ovrd.noview=true` to suppress utag's own auto-view (firing before
-    // consent resolves would seed the ies-erp recursion); lazy() fires the view itself, gated by
-    // whenConsentResolved. Here we only add Tealium's verbose logging on dev.
+    window.utag_data = window.utag_data || {};
+    window.utag_cfg_ovrd = window.utag_cfg_ovrd || {};
+    window.utag_cfg_ovrd.noview = true;
+    // Add Tealium's verbose logging on dev.
     if (DEBUG_ENVIRONMENTS.includes(this.env)) {
       // Tealium's own verbose console logging — dev only, set before utag.js loads in lazy().
-      window.utag_cfg_ovrd = { ...(window.utag_cfg_ovrd || {}), utagdb: true };
+      window.utag_cfg_ovrd.utagdb = true;
     }
   }
 

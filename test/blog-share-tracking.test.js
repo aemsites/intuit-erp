@@ -9,7 +9,7 @@ import {
 import { initTracking, resetTrackingState, stampInteraction, trackAs } from '../scripts/tracking.js';
 import { computeTrackingPayload } from '../scripts/diff/tracker-replica.mjs';
 
-const { buildShare } = await import('../blocks/blog-template/blog-template.js');
+const { buildBlogTemplate, buildShare } = await import('../blocks/blog-template/blog-template.js');
 
 function makeWiredShare() {
   window.hlx = window.hlx || { codeBasePath: '' };
@@ -36,5 +36,25 @@ describe('blog-template share row — click tracking', () => {
     const link = share.querySelector('.blog-share-links a');
     stampInteraction({ target: link });
     expect(computeTrackingPayload(link).ui_access_point).toBe('qrc_article_hero|social_media');
+  });
+
+  it('article byline links resolve to qrc_article_hero (matches prod)', () => {
+    window.hlx = { codeBasePath: '' };
+    window.matchMedia = () => ({ matches: false, addEventListener: () => {} });
+    document.head.innerHTML = '<meta name="author" content="Abigail Sims">';
+    const main = document.createElement('main');
+    main.innerHTML = `
+      <div><h1>Automation in construction</h1><p><img src="hero.jpg" alt=""></p></div>
+      <div><h2>First section</h2></div>
+      <div><h2>Second section</h2></div>
+    `;
+    document.body.append(main);
+
+    buildBlogTemplate(main);
+    initTracking(document);
+    const byline = main.querySelector('.blog-byline-author a');
+    stampInteraction({ target: byline });
+
+    expect(computeTrackingPayload(byline).ui_access_point).toBe('qrc_article_hero');
   });
 });
