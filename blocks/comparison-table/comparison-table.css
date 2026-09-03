@@ -91,6 +91,7 @@
    table body uses so the key matches the symbols it explains. Prod's own toggle
    renders white-on-white (invisible) — we use the standard link colour instead. */
 .comparison-table .ct-legend { text-align: center; }
+
 .comparison-table .ct-legend .ct-legend-item-wrap > summary {
   list-style: none; cursor: pointer; color: var(--link-color); font-size: 13.33px; font-weight: 600;
 }
@@ -99,6 +100,7 @@
 .comparison-table .ct-legend .ct-legend-item { display: block; }
 .comparison-table .ct-legend .ct-legend-item + .ct-legend-item { margin-top: 4px; }
 .comparison-table .ct-legend .ck { display: inline-block; width: 12px; height: 12px; position: relative; margin-right: 4px; }
+
 .comparison-table .ct-legend .ck::after {
   content: ""; position: absolute; left: 3px; top: 0; width: 4px; height: 8px;
   border: solid var(--primary); border-width: 0 2px 2px 0; transform: rotate(45deg);
