@@ -149,9 +149,15 @@ describe('wrapTrack', () => {
     window.appVars = {
       ixpDetailsArr: [{ experiment_id: '111', experiment_version: '2', experiment_treatment: '333' }],
     };
-    wa.track({ object: 'content', action: 'interacted' });
-    expect(original.mock.calls[0][0].page_cas_id).toBe(window.location.pathname);
-    expect(original.mock.calls[0][0].experiment_ids).toBe('111:2:333');
+    const personalizationDetails = [{
+      personalization_placement: 'ConstructionHero',
+      personalization_id: 'offer-1',
+    }];
+    wa.track({ object: 'content', action: 'interacted', personalization_details: personalizationDetails });
+    const outbound = original.mock.calls[0][0];
+    expect(outbound.personalization_details).toBe(personalizationDetails);
+    expect(outbound.page_cas_id).toBe(window.location.pathname);
+    expect(outbound.experiment_ids).toBe('111:2:333');
   });
   it('is idempotent — a second wrap does not double-invoke the original', () => {
     const original = vi.fn();
@@ -296,6 +302,43 @@ describe('whenAssigned', () => {
 });
 
 describe('installEcsEnrich', () => {
+  it('enriches final Segment page properties after ECS preparation drops runtime fields', () => {
+    window.appVars = {
+      pznRecDetailsArr: [{
+        personalization_placement: 'ConstructionHero',
+        personalization_id: 'offer-1',
+      }],
+      ixpDetailsArr: [{
+        experiment_id: '111',
+        experiment_version: '2',
+        experiment_treatment: '333',
+      }],
+    };
+    installEcsEnrich();
+    const page = vi.fn();
+    window.intuit = { tracking: { ecs: {
+      analytics: { page },
+      webAnalytics: {
+        track: vi.fn(),
+        trackPage(payload) {
+          // The live sender prepares a new properties object after webAnalytics.trackPage.
+          // Model that allowlist boundary by intentionally dropping runtime-only fields.
+          const prepared = { screen: payload.screen };
+          window.intuit.tracking.ecs.analytics.page('cmo', 'construction', prepared, {});
+        },
+      },
+    } } };
+
+    window.intuit.tracking.ecs.webAnalytics.trackPage({ screen: 'construction' });
+
+    const properties = page.mock.calls[0][2];
+    expect(properties.personalization_details).toEqual([{
+      personalization_placement: 'ConstructionHero',
+      personalization_id: 'offer-1',
+    }]);
+    expect(properties.experiment_ids).toBe('111:2:333');
+  });
+
   it('wraps trackPage + track when the chain is built incrementally after install', () => {
     window.appVars = { pznPageRecDetailsArr: [{ personalization_placement: 'HomeHero', personalization_id: 'o1' }] };
     installEcsEnrich();

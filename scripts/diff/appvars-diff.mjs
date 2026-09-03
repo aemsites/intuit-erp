@@ -28,8 +28,8 @@
  *     reproduce that object; the tracker was moved onto appVars only.)
  *
  *  3. page-view beacon — the `screen:viewed` POST the tracker sends. Sources 1–2 prove the data
- *     LAYER exists, not that pzn/ixp reach the wire; when prod fires `personalization_details` on a
- *     page, assert our build does too. Closes the appVars→beacon loop (the gap that shipped).
+ *     LAYER exists, not that pzn/ixp reach the wire; when prod or measured appVars proves a page is
+ *     personalized, assert our build sends both fields. Closes the appVars→beacon loop.
  *
  * ENV LADDER — captured best-effort; an env we cannot measure is SKIPPED with a reason,
  * never mistaken for parity (identical model to martech-diff):
@@ -57,6 +57,7 @@
 
 import { chromium } from 'playwright';
 import { writeFileSync, readFileSync, existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import {
   newLiveContext, gotoLive, dismissOverlays, launchStealthHeaded,
 } from './live-session.mjs';
@@ -67,7 +68,7 @@ import {
 
 const PAGES = [
   { name: 'homepage', prod: '/', ours: '/' },
-  // { name: '<pzn-page>', prod: '/<path>', ours: '/<path>' },  // add a page WITH personalization
+  { name: 'construction', prod: '/construction/', ours: '/construction/' },
 ];
 
 const ENVS = [
@@ -202,9 +203,12 @@ function attachPageBeaconCapture(pg) {
 }
 
 // Reduce captured page events to names/shape/counts only (env-independent, golden-safe).
-function summarizePageBeacon(events) {
+export function summarizePageBeacon(events) {
   if (!events || !events.length) return { present: false };
-  const props = events[0].properties || {};
+  // The last captured page call is the final state. Picking an earlier enriched call could hide a
+  // later sender rebuild that stripped the fields this harness exists to verify.
+  const representative = events.at(-1);
+  const props = representative.properties || {};
   const pd = props.personalization_details;
   let pdCount = -1; // -1 = present but not an array (unexpected)
   if (Array.isArray(pd)) pdCount = pd.length;
@@ -216,7 +220,7 @@ function summarizePageBeacon(events) {
     hasPdKey: Object.prototype.hasOwnProperty.call(props, 'personalization_details'),
     pdCount,
     pdRecordKeys,
-    hasExperimentIds: Object.prototype.hasOwnProperty.call(props, 'experiment_ids') && !!props.experiment_ids,
+    hasExperimentIds: typeof props.experiment_ids === 'string' && props.experiment_ids.trim().length > 0,
   };
 }
 
@@ -227,14 +231,38 @@ function describePd(pb) {
   return 'ABSENT';
 }
 
-// Parity vs prod: only meaningful when prod fires personalization_details on this page.
-function checkPageBeacon(cap, baseline) {
+// Require page-view PZN/IXP whenever prod or the measured runtime proves they should be present.
+export function checkPageBeacon(cap, baseline) {
   const base = baseline && baseline.status === 'OK' ? baseline.pageBeacon : null;
   const prodHasPd = base && base.present && base.pdCount > 0;
-  if (!prodHasPd) return { relevant: false };
+  const prodHasIxp = !!(base && base.present && base.hasExperimentIds);
+  const counts = cap?.appVars?.counts || {};
+  const appVarsPdCount = counts.pznPageRecDetailsArr > 0
+    ? counts.pznPageRecDetailsArr
+    : (counts.pznRecDetailsArr || 0);
+  const appVarsIxpCount = counts.ixpDetailsArr || 0;
+  const expectedPdCount = Math.max(prodHasPd ? base.pdCount : 0, appVarsPdCount);
+  const expectsPzn = expectedPdCount > 0;
+  const expectsIxp = prodHasIxp || appVarsIxpCount > 0;
+  if (!expectsPzn && !expectsIxp) return { relevant: false };
   const ours = cap.pageBeacon;
-  const ok = !!(ours && ours.present && ours.hasPdKey && ours.pdCount > 0);
-  return { relevant: true, ok, prodPdCount: base.pdCount, oursPresent: !!(ours && ours.present), ours };
+  const pznOk = !expectsPzn
+    || !!(ours && ours.present && ours.hasPdKey && ours.pdCount > 0);
+  const ixpOk = !expectsIxp || !!(ours && ours.present && ours.hasExperimentIds);
+  return {
+    relevant: true,
+    ok: pznOk && ixpOk,
+    expectsPzn,
+    expectsIxp,
+    pznOk,
+    ixpOk,
+    expectedPdCount,
+    prodPdCount: prodHasPd ? base.pdCount : 0,
+    appVarsPdCount,
+    appVarsIxpCount,
+    oursPresent: !!(ours && ours.present),
+    ours,
+  };
 }
 
 // --------------------------------------------------------------------------
@@ -336,12 +364,23 @@ function renderOurs(env, cap, baseline, problems) {
   const pv = checkPageBeacon(cap, baseline);
   if (pv.relevant) {
     if (pv.ok) {
-      lines.push(`${' '.repeat(9)}${G(`page-view pzn ✓ (personalization_details: ${pv.ours.pdCount} record(s))`)}`);
+      const details = [];
+      if (pv.expectsPzn) details.push(`personalization_details: ${pv.ours.pdCount} record(s)`);
+      if (pv.expectsIxp) details.push('experiment_ids ✓');
+      lines.push(`${' '.repeat(9)}${G(`page-view pzn/ixp ✓ (${details.join(' · ')})`)}`);
     } else {
-      problems.push(`${env.name}: page-view beacon missing personalization_details (prod fires ${pv.prodPdCount})`);
-      let why = 'no page-view beacon captured';
-      if (pv.oursPresent) why = pv.ours.hasPdKey ? 'personalization_details present but empty' : 'personalization_details ABSENT from the event';
-      lines.push(`${' '.repeat(9)}${R(`page-view pzn GAP: prod fires ${pv.prodPdCount} personalization_details record(s), our page-view has none — ${why}`)}`);
+      const gaps = [];
+      if (!pv.pznOk) {
+        let why = 'no page-view beacon captured';
+        if (pv.oursPresent) why = pv.ours.hasPdKey ? 'personalization_details present but empty' : 'personalization_details ABSENT from the event';
+        const source = pv.prodPdCount
+          ? `prod fires ${pv.prodPdCount}`
+          : `appVars contains ${pv.appVarsPdCount}`;
+        gaps.push(`${source} personalization record(s), our page-view has none (${why})`);
+      }
+      if (!pv.ixpOk) gaps.push(`experiment_ids ABSENT (appVars contains ${pv.appVarsIxpCount} IXP record(s))`);
+      problems.push(`${env.name}: page-view beacon PZN/IXP gap: ${gaps.join('; ')}`);
+      lines.push(`${' '.repeat(9)}${R(`page-view pzn/ixp GAP: ${gaps.join(' · ')}`)}`);
     }
   }
   return lines.join('\n');
@@ -438,4 +477,6 @@ async function main() {
   process.stdout.write(`\n${DIM('report-only (exit 0). Pass --assert to fail CI on a measured contract break.')}\n`);
 }
 
-main().catch((e) => { process.stderr.write(`appvars-diff error: ${e.message}\n`); process.exit(1); });
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  main().catch((e) => { process.stderr.write(`appvars-diff error: ${e.message}\n`); process.exit(1); });
+}
