@@ -184,19 +184,6 @@ function variantsSection() {
 
 // --- Phase 2: context simulation --------------------------------------------
 
-function buildPreviewParams(ctx) {
-  // Exact contract is TBD (see plan Open items). Send the common scalar signals as query
-  // params so the preview backend can read overrides; the full context still rides the body.
-  const p = {};
-  if (ctx.locale) p.locale = ctx.locale;
-  if (ctx.deviceType) p.deviceType = ctx.deviceType;
-  const of1 = ctx.of1Intent || {};
-  if (of1.topIntent) p.topIntent = of1.topIntent;
-  if (of1.journeyStage) p.journeyStage = of1.journeyStage;
-  if (Array.isArray(ctx.segments) && ctx.segments.length) p.segments = ctx.segments.join(',');
-  return p;
-}
-
 function assembleContext(f, rawMode) {
   if (rawMode) return JSON.parse(f.raw.value);
   const seed = state.seed || {};
@@ -313,7 +300,6 @@ function simulateSection(shared) {
     try {
       const res = await request('simulateContext', {
         context: ctx,
-        previewParams: buildPreviewParams(ctx),
         baseUrl: shared.apiUrl.value.trim() || undefined,
       });
       decisionsOut.hidden = false;
@@ -356,7 +342,7 @@ function advancedSection(shared) {
   const body = el('div', { class: 'iep-collapse-body' }, [
     el('div', { class: 'iep-group-title', text: 'API endpoint' }),
     field('Override API URL', shared.apiUrl),
-    el('div', { class: 'iep-note', text: 'Blank uses this site’s /api. Set a full base (e.g. https://stage.erp.intuit.com/api) to point pzn/exp elsewhere. ?preview=true is always added.' }),
+    el('div', { class: 'iep-note', text: 'Blank uses this site’s /api. Set a full base (e.g. https://stage.erp.intuit.com/api) to point pzn/exp elsewhere. ?preview=true&previewContext=… is always added.' }),
   ]);
   const head = el('button', { class: 'iep-collapse-head' }, [
     el('span', { text: 'Advanced' }),

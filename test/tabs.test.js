@@ -160,6 +160,18 @@ describe('tabs.pill: vertical pill rail, true ARIA tablist', () => {
     expect(cta.textContent).toBe('Schedule a call');
   });
 
+  it('gives same-label panel CTAs distinct semantic sheet identities', () => {
+    const block = make('pill', [
+      'From QuickBooks Desktop', 'From QuickBooks Online', 'From a non-Intuit solution',
+    ].map((label) => row(label, '<h3>Heading</h3><p>Body.</p><p><a href="#schedule">Schedule a call</a></p>')).join(''));
+    decorate(block);
+    expect([...block.querySelectorAll('.vt-cta')].map(({ dataset }) => dataset.trackId)).toEqual([
+      'tabs:from-quickbooks-desktop-schedule-a-call',
+      'tabs:from-quickbooks-online-schedule-a-call',
+      'tabs:from-a-non-intuit-solution-schedule-a-call',
+    ]);
+  });
+
   it('ArrowDown/ArrowUp move the active tab and panel', () => {
     const block = makePill();
     decorate(block);

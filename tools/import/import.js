@@ -34,7 +34,9 @@ export default {
   },
 
   /**
-   * Output path in DA — mirrors the source /blog/... slug exactly.
+   * Output path in DA — mirrors the source /blog/... slug exactly. Emits a flat
+   * /blog/<slug> doc (trailing slash stripped); this is the blog-article re-import
+   * tool, NOT the trailing-slash folder-index migration (that is a DA-side restructure).
    * @param {{ url: string }} ctx
    * @returns {string}
    */

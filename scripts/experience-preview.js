@@ -268,12 +268,12 @@ function pageWillSwap(response) {
   const pageExp = (getMetadata('experiment-id') || '').trim();
   if (/^\d+$/.test(pageExp)) {
     const d = experimentDecision(response, pageExp);
-    return !!(d && d.replacementCasId && d.replacementCasId !== d.originalCasId);
+    return !!(d && d.contentId);
   }
   const pagePzn = (getMetadata('personalization-id') || '').trim();
   if (pagePzn) {
     const d = pznDecision(response, pagePzn);
-    return !!(d && d.casId);
+    return !!(d && d.contentId);
   }
   return false;
 }
@@ -285,7 +285,7 @@ function summarizeResponse(response) {
     const d = experimentDecision(response, id);
     if (d) {
       out.push({
-        kind: 'exp', id, replacement: d.replacementCasId, treatment: d.treatmentId,
+        kind: 'exp', id, replacement: d.contentId, treatment: d.treatmentId,
       });
     }
   });
@@ -293,7 +293,7 @@ function summarizeResponse(response) {
     const d = pznDecision(response, name);
     if (d) {
       out.push({
-        kind: 'pzn', id: name, replacement: d.casId, offer: d.offerId,
+        kind: 'pzn', id: name, replacement: d.contentId, offer: d.offerId,
       });
     }
   });
@@ -301,7 +301,7 @@ function summarizeResponse(response) {
 }
 
 // Send a (possibly edited) context to the orchestrator and apply its real decision. Adds
-// ?preview=true (Akamai routes to the preview backend) + edited attrs as query params.
+// ?preview=true&previewContext=<context JSON> so Akamai routes to the preview backend.
 export async function simulateContext(context, opts = {}) {
   const signal = nextSignal();
   await swapAndDecorate(window.location.pathname, signal); // clean slate
@@ -315,21 +315,22 @@ export async function simulateContext(context, opts = {}) {
   const response = await fetchExperience(request, context || buildContext(), {
     signal,
     preview: true, // always on for the preview tool; change here if that ever flips
-    previewParams: opts.previewParams,
     baseUrl: opts.baseUrl,
     timeoutMs: SIMULATE_TIMEOUT_MS,
   });
   if (!response) return { applied: false, reason: 'no-response' };
 
   try {
+    // track:false — this is a read-only preview, so suppress ALL analytics (FullStory
+    // events, appVars pzn/ixp records, click-tracker stamps).
     const willSwap = pageWillSwap(response);
-    await applyPage(document, response, signal);
+    await applyPage(document, response, signal, { track: false });
     const main = document.querySelector('main');
     if (willSwap) {
       decorateMain(main);
       await loadSections(main);
     }
-    await applyLayer(main, response);
+    await applyLayer(main, response, { track: false });
   } finally {
     if (window.hlx) window.hlx.experienceResponse = prev; // don't disturb the runtime cache
   }
@@ -369,7 +370,6 @@ async function handle(type, payload) {
     case 'simulateContext': {
       const r = await simulateContext(payload.context, {
         preview: payload.preview,
-        previewParams: payload.previewParams,
         baseUrl: payload.baseUrl,
       });
       return { type: 'applied', ...r, ok: r.applied };

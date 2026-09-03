@@ -9,15 +9,18 @@
   >
   <title>404 - Page Not Found | Intuit Enterprise Suite</title>
   <script nonce="aem" type="text/javascript">
-    // Trailing-slash recovery: EDS serves /page and /page/ as different
-    // resources and does not redirect between them, so /page/ 404s. When this
-    // error page loads for a path with a trailing slash, redirect to the
-    // canonical slash-free path (preserving query + hash) before anything
-    // paints. replace() keeps the bad URL out of history.
-    (function redirectTrailingSlash() {
+    // Trailing-slash recovery: canonical pages serve at /page/ (folder + index
+    // doc); EDS serves /page and /page/ as different resources and does not
+    // redirect between them, so a slash-free /page 404s. When this error page
+    // loads for a slash-free, extension-less path, redirect to the canonical
+    // /page/ form (preserving query + hash) before anything paints. replace()
+    // keeps the bad URL out of history. Skips the root, already-slashed paths,
+    // and file-like paths (last segment has a dot, e.g. /scripts/x.js).
+    (function redirectAddTrailingSlash() {
       const { pathname, search, hash } = window.location;
-      if (pathname.length > 1 && pathname.endsWith('/')) {
-        window.location.replace(pathname.replace(/\/+$/, '') + search + hash);
+      const lastSegment = pathname.split('/').pop();
+      if (pathname.length > 1 && !pathname.endsWith('/') && !lastSegment.includes('.')) {
+        window.location.replace(`${pathname}/${search}${hash}`);
       }
     }());
   </script>

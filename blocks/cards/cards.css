@@ -36,7 +36,7 @@
   margin-top: 32px;
 }
 
-.cards .cards-card-body a {
+.cards .cards-card-body a:not(.button) {
   color: var(--info);
   font-weight: 400;
 }
@@ -224,6 +224,10 @@
   font-size: 15px;
   line-height: 1.55;
   margin: 0;
+
+  &.button-wrapper {
+    margin-top: 2rem;
+  }
 }
 
 
@@ -692,6 +696,10 @@
     .cards-card-body p:has(a) {
       margin-top: 0;
     }
+
+    .cards-card-body a:hover {
+      text-decoration: none;
+    }
   }
 }
 
@@ -823,4 +831,9 @@
   :is(h2, h3, h4, h5, h6, p, ul, ol, li) {
     color: #fff;
   }
+}
+
+
+body.author-guide .cards.icons.icons-sm .cards-card-image img {
+  filter: invert(1);
 }

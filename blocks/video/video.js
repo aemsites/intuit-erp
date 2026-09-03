@@ -16,6 +16,7 @@
  */
 
 import { createOptimizedPicture } from '../../scripts/aem.js';
+import { openVideoModal } from '../../scripts/scripts.js';
 import { trackAs } from '../../scripts/tracking.js';
 import { videoInfo, isVideoLink, posterFor } from './video-info.js';
 
@@ -37,34 +38,6 @@ function buildPoster(src, alt) {
   const picture = createOptimizedPicture(src, alt, false, [{ width: '750' }]);
   picture.querySelector('img').setAttribute('decoding', 'async');
   return picture;
-}
-
-/**
- * Opens the video in a dismissible lightbox modal (autoplay iframe).
- * @param {string} embedUrl provider embed URL
- * @param {string} [title] accessible iframe title
- */
-function openVideoModal(embedUrl, title) {
-  const overlay = document.createElement('div');
-  overlay.className = 'video-modal-overlay';
-  overlay.innerHTML = `
-    <div class="video-modal">
-      <button type="button" class="video-modal-close" aria-label="Close video">×</button>
-      <div class="video-modal-frame">
-        <iframe src="${embedUrl}" title="${title || 'Video'}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>
-      </div>
-    </div>`;
-
-  function close() {
-    overlay.remove();
-    // eslint-disable-next-line no-use-before-define
-    document.removeEventListener('keydown', onKey);
-  }
-  function onKey(e) { if (e.key === 'Escape') close(); }
-  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
-  overlay.querySelector('.video-modal-close').addEventListener('click', close);
-  document.addEventListener('keydown', onKey);
-  document.body.append(overlay);
 }
 
 /**

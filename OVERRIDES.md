@@ -148,6 +148,18 @@ Per-element/per-block overrides for click tracking, authored as `data-track-*` a
 
 ---
 
+## Fragment-rendered content
+
+Not an authored toggle — behavior that follows from **where** content lives. The `fragment` block
+marks the detached `<main>` it builds with `data-fragment="true"` while its blocks are decorated
+([blocks/fragment/fragment.js](blocks/fragment/fragment.js)); `media-text` reads that ancestor and
+gives its CTAs (`.button-wrapper a`) `target="_blank"` + `rel="noopener"`, because fragment content is
+shared boilerplate reused across many pages
+([blocks/media-text/media-text.js](blocks/media-text/media-text.js)). A `media-text` authored directly
+on a page keeps its CTAs in the same tab.
+
+---
+
 ## URL parameters
 
 | Param | Controls | Values | Source |
@@ -156,6 +168,8 @@ Per-element/per-block overrides for click tracking, authored as `data-track-*` a
 | `?rum=` (alias `?optel=`) | RUM sampling rate | `on`→1, `off`→0, `high`→10, `low`→1000, else weight 100 | [scripts/aem.js](scripts/aem.js) |
 | `?lighthouse=on` | Sets `window.hlx.lighthouse = true` (perf-test mode) | `on` | [scripts/aem.js](scripts/aem.js) |
 | `?locale=` | Locale sent to the decision API | locale string, hyphen converted to underscore (falls back to `navigator.language` → `en_US`) | [scripts/experience.js](scripts/experience.js) |
+| `?preview=true` | Routes the `/intuit-orchestrator` decision call to the preview backend (Akamai keys off the param); only `preview` + `previewContext` are forwarded, and both are stripped from `context.permalink` | `true` | [scripts/experience.js](scripts/experience.js) |
+| `?previewContext=` | Context JSON forwarded to the preview backend alongside `?preview=true` (ignored without it) | URL-encoded context JSON | [scripts/experience.js](scripts/experience.js) |
 | `?search-term=` | Seeds/reads the blog search query | string | [blocks/blog-search/search-utils.js](blocks/blog-search/search-utils.js) |
 | `?q=` (only on `/construction`) | Rewritten into the `llm_app_ctx` param, then redirects | string | [scripts/scripts.js](scripts/scripts.js) |
 | widget href params | Any `key=value` on a widget's authored link is copied onto the widget as `data-<key>` (config into the widget) | author-defined | [blocks/widget/widget.js](blocks/widget/widget.js) |

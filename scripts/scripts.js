@@ -17,10 +17,12 @@ import {
 // The tealium plugin below is NOT a vendored subtree (project-owned code), but the relative
 // eslint-disable-next-line import/no-relative-packages
 import TealiumMartech from '../plugins/tealium-martech/src/index.js';
-import installPznPageViewEnrich from './pzn-pageview-enrich.js';
+import installEcsEnrich from './ecs-enrich.js';
 import { isBlogPage, hasAuthoredCaseStudyHeader } from '../blocks/blog-template/blog-detect.js';
-import { isVideoLink } from '../blocks/video/video-info.js';
+import { isVideoLink, videoInfo } from '../blocks/video/video-info.js';
 import { isGuidePage } from '../blocks/guide-hero/guide-detect.js';
+// eslint-disable-next-line import/no-cycle
+import { applyPageExperience, applyEagerLayers } from './experience.js';
 
 // AEP (Adobe Web SDK) datastream — armed but disabled. Uncomment with the AEP blocks in loadEager
 // / loadLazy to enable it (parallel with Tealium). The datastream id is public, not a secret.
@@ -342,6 +344,72 @@ function decorateSectionBackgrounds(main) {
  * @param {Element} main The main element
  */
 // eslint-disable-next-line import/prefer-default-export
+/**
+ * Opens a video in a dismissible lightbox, reusing the `.video-modal-*` markup
+ * and styles that blocks/video owns. Shared by the video, carousel and hero
+ * blocks and by default-content video links (see decorateVideoLinks).
+ * @param {string} embedUrl provider embed URL
+ * @param {string} title accessible iframe title
+ */
+export function openVideoModal(embedUrl, title) {
+  if (document.querySelector('.video-modal-overlay')) return;
+  loadCSS(`${window.hlx.codeBasePath}/blocks/video/video.css`);
+  const overlay = document.createElement('div');
+  overlay.className = 'video-modal-overlay';
+  const frame = document.createElement('div');
+  frame.className = 'video-modal-frame';
+  const iframe = document.createElement('iframe');
+  iframe.src = embedUrl;
+  iframe.title = title || 'Video';
+  iframe.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+  iframe.allowFullscreen = true;
+  frame.append(iframe);
+  const close = document.createElement('button');
+  close.type = 'button';
+  close.className = 'video-modal-close';
+  close.setAttribute('aria-label', 'Close video');
+  close.textContent = '×';
+  const modal = document.createElement('div');
+  modal.className = 'video-modal';
+  modal.append(close, frame);
+  overlay.append(modal);
+
+  function dismiss() {
+    overlay.remove();
+    // eslint-disable-next-line no-use-before-define
+    document.removeEventListener('keydown', onKey);
+  }
+  function onKey(e) { if (e.key === 'Escape') dismiss(); }
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) dismiss(); });
+  close.addEventListener('click', dismiss);
+  document.addEventListener('keydown', onKey);
+  document.body.append(overlay);
+}
+
+/**
+ * Turns default-content video links/buttons (YouTube/Vimeo) into modal openers.
+ * The anchor is replaced with a <button> — no href means no navigation, the same
+ * approach the video block uses — that opens the video in the lightbox. Links
+ * inside blocks are left alone; those blocks own their own video CTAs.
+ * @param {Element} main The container element
+ */
+function decorateVideoLinks(main) {
+  main.querySelectorAll('a[href]').forEach((a) => {
+    if (a.closest('.block')) return;
+    const info = videoInfo(a.getAttribute('href'));
+    if (!info) return;
+    const button = document.createElement('button');
+    button.type = 'button';
+    // carry over authored classes (button primary/secondary), title, data-track-*
+    [...a.attributes].forEach((attr) => {
+      if (attr.name !== 'href') button.setAttribute(attr.name, attr.value);
+    });
+    button.textContent = a.textContent.trim();
+    button.addEventListener('click', () => openVideoModal(info.embedUrl, button.textContent));
+    a.replaceWith(button);
+  });
+}
+
 export function decorateMain(main) {
   decorateIcons(main);
   buildAutoBlocks(main);
@@ -349,27 +417,14 @@ export function decorateMain(main) {
   decorateSectionBackgrounds(main);
   decorateBlocks(main);
   decorateButtons(main);
+  decorateVideoLinks(main);
 }
 
 /**
  * Loads everything needed to get to LCP.
  * @param {Element} doc The container element
  */
-function redirectConstructionQToLlmAppCtx() {
-  if (window.location.pathname !== '/construction') return;
-  const params = new URLSearchParams(window.location.search);
-  const q = params.get('q');
-  if (!q) return;
-  params.delete('q');
-  params.set('llm_app_ctx', q);
-  window.location.replace(`${window.location.pathname}?${params.toString()}${window.location.hash}`);
-}
-
-const EXPERIENCE_DEADLINE_MS = 1500;
-const EXPERIENCE_APPLY_MS = 2000;
-
 async function loadEager(doc) {
-  redirectConstructionQToLlmAppCtx();
   document.documentElement.lang = 'en';
   decorateTemplateAndTheme();
 
@@ -385,9 +440,10 @@ async function loadEager(doc) {
   appVars.pznPageRecDetailsArr = appVars.pznPageRecDetailsArr || [];
   appVars.ixpDetailsArr = appVars.ixpDetailsArr || [];
 
-  // Enrich the profile's page-view with pzn/experiments from appVars (installs before utag loads).
-  // FIXME(pzn): remove once Intuit's profile page-init reads window.appVars directly (option C).
-  if (MARTECH_PROVIDER !== 'off') installPznPageViewEnrich();
+  // Enrich the ECS profile's beacons with EDS-derived values it lost from SSR: page-view
+  // pzn/experiments (from appVars) + click page_cas_id (= pathname). Installs before utag loads.
+  // FIXME: remove once the profile reads appVars / the runtime pathname. See ecs-enrich.js.
+  if (MARTECH_PROVIDER !== 'off') installEcsEnrich();
 
   // Gated conversion pages (e.g. /webinar-* form landings) opt out of the global
   // header/footer via `hide-header` / `hide-footer` metadata
@@ -421,26 +477,8 @@ async function loadEager(doc) {
   //   }
   // }
 
-  window.hlx = window.hlx || {};
-  if (!window.hlx.pageExperienceApplied) {
-    window.hlx.pageExperienceApplied = true;
-    const {
-      collectRequest, buildContext, fetchExperience, applyPage,
-    } = await import('./experience.js');
-    const request = collectRequest(doc);
-    if (request.experimentIds.length || request.accessPointNames.length) {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), EXPERIENCE_DEADLINE_MS);
-      try {
-        const opts = { signal: controller.signal };
-        const response = await fetchExperience(request, buildContext(), opts);
-        window.hlx.experienceResponse = response;
-        if (response) await applyPage(doc, response, controller.signal);
-      } finally {
-        clearTimeout(timer);
-      }
-    }
-  }
+  // EAGER experience — the single consolidated call + any whole-page swap, BEFORE decorateMain.
+  const pageSwapped = await applyPageExperience(doc);
   const main = doc.querySelector('main');
   if (main) {
     buildBlogTemplate = await resolveBlogTemplate(main);
@@ -448,12 +486,9 @@ async function loadEager(doc) {
       ({ default: buildGuideHeroAutoBlock } = await import('../blocks/guide-hero/guide-hero-autoblock.js'));
     }
     decorateMain(main);
-    const firstSection = main.querySelector('.section');
-    if (firstSection && window.hlx.experienceResponse) {
-      const { applyLayer, withTimeout } = await import('./experience.js');
-      const apply = applyLayer(firstSection, window.hlx.experienceResponse);
-      await withTimeout(apply, EXPERIENCE_APPLY_MS);
-    }
+    // AFTER decorateMain: resolve a swapped page's own section/block slots (recursion-safe)
+    // and swap the first/LCP section — both before reveal. No-op without an experience response.
+    await applyEagerLayers(doc, pageSwapped);
     document.body.classList.add('appear');
     await Promise.all([
       // Uncomment with the AEP block above (applies eager martech decisions).
@@ -488,10 +523,11 @@ async function loadLazy(doc) {
 
   const main = doc.querySelector('main');
   // Below-the-fold personalization/experimentation
-  if (main && window.hlx.experienceResponse) {
-    const skip = { skip: main.querySelector('.section') };
-    import('./experience.js')
-      .then(({ applyLayer }) => applyLayer(main, window.hlx.experienceResponse, skip))
+  let experienceTracking;
+  if (window.hlx?.experienceResponse || window.hlx?.experienceResponsePromise) {
+    const experienceModule = import('./experience.js');
+    experienceTracking = experienceModule
+      .then(({ applyLazyExperience }) => applyLazyExperience(doc))
       .catch(() => {});
   }
   await loadSections(main);
@@ -536,6 +572,7 @@ async function loadLazy(doc) {
 
   // Tealium (default): load utag.js for the resolved env + apply consent. Fail-open.
   if (MARTECH_PROVIDER === 'tealium') {
+    if (experienceTracking) await experienceTracking;
     try { await tealium.lazy(); } catch (e) { /* non-fatal */ }
   }
 

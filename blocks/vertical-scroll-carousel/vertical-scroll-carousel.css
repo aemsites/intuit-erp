@@ -105,10 +105,14 @@
 }
 
 @media (min-width: 1024px) {
+  main .section.vertical-scroll-carousel-container > .vertical-scroll-carousel-wrapper {
+    max-width: 1440px;
+  }
+
   /* static two-column row: accordion left, shared media right, both centered */
   .vertical-scroll-carousel {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 392fr 493fr;
     gap: 0 clamp(64px, 13vw, 175px);
     align-items: center;
   }
@@ -212,6 +216,10 @@
   /* .reverse — opt-in mirror of the desktop layout: shared media on the left,
      copy on the right (matches the source's -reverse content row). Only affects
      the ≥1024px two-column grid; the stacked mobile layout is untouched. */
+  .vertical-scroll-carousel.reverse {
+    grid-template-columns: 493fr 392fr;
+  }
+
   .vertical-scroll-carousel.reverse .vsc-stage {
     grid-column: 1;
     grid-row: 1;

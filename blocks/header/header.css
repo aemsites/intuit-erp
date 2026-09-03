@@ -756,3 +756,14 @@ body.nav-scroll-lock {
       font-size: 16px;
    }
 }
+
+
+body.author-guide {
+   header {
+      min-height: initial;
+   }
+
+   .header .nav-cta {
+      display: none;
+   }
+}

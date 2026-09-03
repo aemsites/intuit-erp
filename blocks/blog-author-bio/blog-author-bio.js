@@ -8,7 +8,7 @@
  * img.src, never innerHTML.
  */
 import { getMetadata, toClassName, createOptimizedPicture } from '../../scripts/aem.js';
-import { loadIndex } from '../../scripts/content-index.js';
+import { loadIndex, normalizePath } from '../../scripts/content-index.js';
 import { trackAs } from '../../scripts/tracking.js';
 
 const BLOG_INDEX = '/blog/query-index.json';
@@ -22,7 +22,7 @@ const BLOG_INDEX = '/blog/query-index.json';
 async function fetchAuthorRow(slug) {
   try {
     const entries = await loadIndex(BLOG_INDEX);
-    return entries.find((e) => e.path === `/blog/author/${slug}`) || null;
+    return entries.find((e) => normalizePath(e.path) === `/blog/author/${slug}`) || null;
   } catch (error) {
     // eslint-disable-next-line no-console
     console.debug(`author-bio: could not load author row for "${slug}"`, error);
@@ -73,6 +73,22 @@ function buildSocialShare() {
 }
 
 /**
+ * The author's full body bio as paragraph strings. The index's `author-bio`
+ * property is defined with `values:`, so it arrives as an array — one entry per
+ * `<p>` of the author page's bio. A plain string (single value, or paragraphs
+ * joined by newlines) is tolerated too. Falls back to the short `description`
+ * when the row carries no bio yet (#922).
+ * @param {object} row the author's query-index row
+ * @returns {string[]} non-empty, trimmed paragraphs
+ */
+function bioParagraphs(row) {
+  const raw = row['author-bio'];
+  const parts = Array.isArray(raw) ? raw : String(raw ?? '').split('\n');
+  const bio = parts.map((p) => String(p ?? '').trim()).filter((p) => p);
+  return bio.length ? bio : [String(row.description ?? '').trim()].filter((p) => p);
+}
+
+/**
  * Builds the author bio strip (circular headshot, linked name, description)
  * from the given query-index row.
  * @param {object} row the author's query-index row
@@ -103,12 +119,12 @@ function buildBio(row, authorPath) {
     nameEl.append(nameLink);
     textWrap.append(nameEl);
   }
-  if (row.description) {
+  bioParagraphs(row).forEach((text) => {
     const bioEl = document.createElement('p');
     bioEl.className = 'blog-author-bio-desc';
-    bioEl.textContent = row.description;
+    bioEl.textContent = text;
     textWrap.append(bioEl);
-  }
+  });
   inner.append(textWrap);
   return inner;
 }
@@ -126,7 +142,8 @@ export default async function decorate(block) {
     block.closest('.section')?.remove();
     return;
   }
-  block.replaceChildren(buildSocialShare(), buildBio(row, `/blog/author/${slug}`));
+  // link to the author page via the matched row's own path (the canonical served form)
+  block.replaceChildren(buildSocialShare(), buildBio(row, row.path));
   // author link reports under the `author_bio` trail (prod omits link_name)
   trackAs('author_bio', block, { key: 'author_bio', linkName: false });
 }

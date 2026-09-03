@@ -38,7 +38,7 @@ const ARROW_SVG = {
 // The outcomes carousel's paging arrows report prod's `scroll left`/`scroll right` detail (+
 // matching link_name), not the derived button + aria-label. Golden confirms `scroll right`
 // (next); `scroll left` (prev) is the symmetric pair (prod only captured the next click).
-function scrollArrowPayload(el) {
+export function scrollArrowPayload(el) {
   if (!el.classList || !el.classList.contains('stats-arrow')) return null;
   let side = null;
   if (el.classList.contains('prev')) side = 'left';
@@ -147,12 +147,17 @@ function buildCarousel(block, track) {
   }
 
   function applyTransform() {
-    // One "page" (perView cards + gaps) always spans exactly the track's own
-    // box width — that's what the .stat flex-basis calc() is built to do —
-    // so translateX(-100%) per page is exact with no layout read needed
-    // (measuring via getBoundingClientRect/getComputedStyle here was forcing
-    // a synchronous reflow right after the DOM/style writes above it).
-    track.style.transform = `translateX(-${current * 100}%)`;
+    // One "page" (perView cards + gaps) spans exactly the track's own box
+    // width per the .stat flex-basis calc() — but the flex `gap` also lands
+    // BETWEEN pages (it separates every adjacent card, not just cards within
+    // a page), so each page boundary adds one extra 20px gap on top of that.
+    // translateX needs both terms: current*100% for the pages themselves,
+    // plus current*20px for the accumulated inter-page gaps — pure
+    // translateX(-100%) per page undershoots by 20px per page and chops the
+    // trailing card. No layout read needed (measuring via
+    // getBoundingClientRect/getComputedStyle here was forcing a synchronous
+    // reflow right after the DOM/style writes above it).
+    track.style.transform = `translateX(calc(-${current * 100}% - ${current * 20}px))`;
   }
 
   function goTo(idx) {
