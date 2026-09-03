@@ -137,6 +137,17 @@ const ID_SPECIAL = {
     if (/(^|\|)products$/.test(entry.exp.ui_access_point || '')) return `footer:brand-${hostLabel(entry.href)}`;
     return null; // fall through to the default
   },
+  'talk-to-sales'(entry) {
+    const detail = (entry.exp.ui_object_detail || entry.text || '').trim();
+    if (entry.page.startsWith('/blog')) {
+      if (detail === 'ies-open-sales-widget') return 'talk-to-sales:talk-to-sales';
+      if (detail === 'close-sales-widget') return 'talk-to-sales:close-sales-widget-blog';
+    } else {
+      if (detail === 'talktosales|open_widget') return 'talk-to-sales:contact-us';
+      if (detail === 'talktosales|close_widget') return 'talk-to-sales:close-sales-widget';
+    }
+    return null;
+  },
 };
 
 // The pre-dedup id for a golden entry: its block's special id, else
