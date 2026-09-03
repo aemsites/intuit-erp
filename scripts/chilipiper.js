@@ -35,23 +35,6 @@ export async function openChiliPiper(router, { title = document.title } = {}) {
   return true;
 }
 
-// Fires the ECS lead track that the `ies-erp` Tealium container turns into IES_lead (and, after
-// ChiliPiper's iframe posts `booking-confirmed`, IES_booking — the container owns that listener).
-// No-ops off-intuit, where the Intuit edge doesn't inject `window.intuit.tracking.ecs`. The
-// container gates on object+action, a non-empty lead_xref_id, and this exact product family.
-export function trackLeadCreated({ leadXrefId, formId } = {}) {
-  const wa = window.intuit?.tracking?.ecs?.webAnalytics;
-  if (typeof wa?.track !== 'function') return false;
-  wa.track({
-    object: 'lead',
-    action: 'create_submitted',
-    lead_xref_id: leadXrefId,
-    product_family_of_interest: 'Intuit Enterprise Suite',
-    form_id: formId,
-  });
-  return true;
-}
-
 // Post-Marketo handoff: submit the lead to `router`, handing ChiliPiper the same xref that went to
 // the Marketo hidden field + lead track so the booking correlates. Matches erp.intuit.com's call —
 // `map:false` (lead passed explicitly, not auto-mapped), `disableRelation`, and the xref event.

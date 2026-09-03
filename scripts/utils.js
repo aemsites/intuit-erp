@@ -1,7 +1,7 @@
 /**
  * Creates unique uuid string
  */
-const createUUID = () => {
+export const createUUID = () => {
     const lut = [];
     for (let i = 0; i < 256; i += 1) {
       lut[i] = (i < 16 ? '0' : '') + i.toString(16);
@@ -28,7 +28,7 @@ const createUUID = () => {
  * Loads the Munchkin JavaScript library for Marketo and initializes it with a specified form ID
  * @param {String} environment - The unique identifier for the Marketo Munchkin id
  */
-const loadMunchkinTag = (munchkinId) => {
+export const loadMunchkinTag = (munchkinId) => {
     let didInit = false;
     const initMunchkin = () => {
       const munchkin = window.Munchkin;
@@ -50,7 +50,7 @@ const loadMunchkinTag = (munchkinId) => {
  * @param {String} paramName name of the query param to retrieve
  * @returns {String} value of query param if found else null
  */
-const getQueryParamValue = (paramName) => {
+export const getQueryParamValue = (paramName) => {
     const value = new URLSearchParams(window.location.search).get(paramName);
     return value === '' ? null : value;
 };
@@ -60,7 +60,7 @@ const getQueryParamValue = (paramName) => {
  * @param {String} cookieName key of the cookie to be retrieved
  * @returns {String} value of cookie if found else null
  */
-const getCookieValue = (cookieName) => {
+export const getCookieValue = (cookieName) => {
     if (!cookieName) {
         return null;
     }
@@ -76,7 +76,7 @@ const getCookieValue = (cookieName) => {
  * Get value of cid from URL query param or cookies
  * @returns {String} value of cid if found else empty string
  */
-const getCidValue = () => {
+export const getCidValue = () => {
     const cidFromQuery = getQueryParamValue('cid') || getQueryParamValue('CID');
     if (cidFromQuery) {
         return cidFromQuery;
@@ -93,7 +93,7 @@ const getCidValue = () => {
  * @param {String} countryCode
  * @returns {String|""}
  */
-const getDynamicScreenData = (countryCode) => {
+export const getDynamicScreenData = (countryCode) => {
     const pathName = window?.location.pathname;
     if (pathName) {
       const pathnameArr = pathName.replace(/\/+$/, '').split('/');
@@ -115,7 +115,7 @@ const getDynamicScreenData = (countryCode) => {
  * @param {String} countryCode
  * @returns {String|""}
  */
-const getDynamicScopeArea = (countryCode) => {
+export const getDynamicScopeArea = (countryCode) => {
     const pathName = window?.location?.pathname;
     if (pathName) {
       const pathnameArr = pathName.replace(/\/+$/, '').split('/');
@@ -139,7 +139,7 @@ const getDynamicScopeArea = (countryCode) => {
  * @param initConfig
  * @param trackObj
  */
-const buildPageHierarchy = (
+export const buildPageHierarchy = (
     initConfig,
     trackObj
   ) => {
@@ -165,7 +165,7 @@ const buildPageHierarchy = (
  * @param countryCode
  * @param eventOverrides
  */
-const getTrackData = (countryCode) => {
+export const getTrackData = (countryCode) => {
     return {
       scope_area: getDynamicScopeArea(countryCode),
       screen: getDynamicScreenData(countryCode),
@@ -182,3 +182,28 @@ const getTrackData = (countryCode) => {
       _mkto_trk: getCookieValue('_mkto_trk'),
     }
 };
+
+/**
+ * Get phone number country code
+ * @param {String} geoCountry
+ * @returns {String}
+ */
+export const getPhCountryCodeForGeo = (geoCountry) => {
+    let phCountryCode = '+1';
+    const countryCodes = {
+      us: '+1',
+      uk: '+44',
+      ca: '+1',
+      fr: '+33',
+      mx: '+52',
+      za: '+27',
+      br: '+55',
+      au: '+61',
+      in: '+91',
+      sg: '+65'
+    };
+    if (geoCountry) {
+      phCountryCode = countryCodes[geoCountry?.toLowerCase()] || '+1';
+    }
+    return phCountryCode;
+  };

@@ -34,7 +34,7 @@ import {
 } from '../../scripts/chilipiper.js';
 
 import {
-  createUUID, loadMunchkinTag, getCookieValue, getCidValue, getTrackData, buildPageHierarchy
+  createUUID, loadMunchkinTag, getCookieValue, getCidValue, getTrackData, buildPageHierarchy, getPhCountryCodeForGeo
 } from '../../scripts/utils.js';
 
 // Uncomment with the AEP/WebSDK integration in scripts/scripts.js.
@@ -55,8 +55,15 @@ const CONFIG_KEYS = [
   'recaptcha',
   'buttonLabel',
   'enableMunchkinTag',
-  'environment',
-
+  'munchkinId',
+  'leadSource',
+  'productFamily',
+  'primaryProduct',
+  'leadTreatmentName',
+  'leadLegacyCampaign',
+  'leadCountry',
+  'leadCountryCode',
+  'leadLanguage',
 ];
 
 // Marketo instance selection, keyed by the `marketo` page metadata. Prod unless the
@@ -108,7 +115,7 @@ export function parseFormConfig(block) {
     recaptcha: found.recaptcha === 'true',
     buttonLabel: found.buttonLabel,
     enableMunchkinTag: found.enableMunchkinTag === 'true',
-    environment: found.environment,
+    munchkinId: found.munchkinId,
     leadSource: found.leadSource,
     productFamily: found.productFamily,
     primaryProduct: found.primaryProduct,
@@ -160,8 +167,8 @@ export const getFirstAndLastName = (fullName, fieldName) => {
 export const getTraitData = (formVals) => {
   // get phone number country code
   const phCountryCode =
-  formVals?.CountryCode && values?.Phone
-      ? getPhCountryCodeForGeo(values.CountryCode)
+  formVals?.CountryCode && formVals?.Phone
+      ? getPhCountryCodeForGeo(formVals.CountryCode)
       : '';
 
   return {
@@ -189,9 +196,9 @@ export const getTraitData = (formVals) => {
  * @returns campaign details object:{Object}
  * @param values
  */
-const getCustomProperties = (formVals) => {
+const getCustomProperties = (formVals, formId) => {
   return {
-    form_id: formVals?.formid || '',
+    form_id: formId || formVals?.formid || '',
     product_family_of_interest: formVals?.Product_Family_of_Interest__c || '',
     product_of_interest: formVals?.Primary_Product_of_Interest__c || '',
     lead_source: formVals?.LeadSource || '',
@@ -204,20 +211,18 @@ const getCustomProperties = (formVals) => {
   };
 };
 
-function trackFormSubmit(formVals) {
+export function trackFormSubmit(formVals, formId) {
   const webAnalyticsObj = window.intuit?.tracking?.ecs?.webAnalytics;
-  if (typeof webAnalyticsObj?.track !== 'function') return false;
-
-  const trackObj = getTrackData(values?.CountryCode || 'us',);
-  trackObj.custom_properties = getCustomProperties(values);
-
   if (webAnalyticsObj) {
+    const trackObj = getTrackData(formVals?.CountryCode || 'us');
+    trackObj.custom_properties = getCustomProperties(formVals, formId);
+
     const { segment } = webAnalyticsObj;
     const initialConfig = segment?.initConfig;
     trackObj.page_name_parameter = buildPageHierarchy(initialConfig, trackObj);
 
     if (typeof webAnalyticsObj?.track === 'function') webAnalyticsObj.track(trackObj);
-    if (typeof webAnalyticsObj?.identify === 'function') webAnalyticsObj.identify(getTraitData(values));
+    if (typeof webAnalyticsObj?.identify === 'function') webAnalyticsObj.identify(getTraitData(formVals));
   }
 }
 
@@ -406,7 +411,7 @@ export const getMappedHiddenFields = (configObj) => {
 async function embedMarketoForm(formEl, cfg, config, env) {
 
   // generate an load Forms2 script URL.
-  const munchkin = environment || cfg[MARKETO_MUNCHKIN_KEYS[env]] || cfg['marketo.munchkin'];
+  const munchkin = config.munchkinId || cfg[MARKETO_MUNCHKIN_KEYS[env]] || cfg['marketo.munchkin'];
   if (!munchkin) return;
   const host = `//${munchkin.toLowerCase()}.mktoweb.com`;
   const forms2Src = `${host}/js/forms2/js/forms2.min.js`;
@@ -429,7 +434,7 @@ async function embedMarketoForm(formEl, cfg, config, env) {
     hiddenFields.IVID__c = window?.utag_data?.ivid || getCookieValue('ivid') || '';
     hiddenFields.cID = getCidValue() || '';
     const customizedHiddenFields = getMappedHiddenFields(config);
-    form.addHiddenFields?.({hiddenFields, ...customizedHiddenFields});
+    form.addHiddenFields?.({ ...hiddenFields, ...customizedHiddenFields });
 
     // append disclaimers
     if (config.disclaimer) {
@@ -462,7 +467,7 @@ async function embedMarketoForm(formEl, cfg, config, env) {
 
     form.onSuccess((vals) => {
       // invoking ECS tracking
-      trackFormSubmit(vals);
+      trackFormSubmit({ ...vals, Lead_XRef_ID__c: leadXref }, config.formId);
 
       // show thank you message and invoke chilipiper
       if (canHandoff) {
@@ -479,7 +484,7 @@ async function embedMarketoForm(formEl, cfg, config, env) {
       // thank-you so a misconfigured handoff never leaves the visitor with nothing.
       const handled = canHandoff || !!config.downloadUrl || !!config.successUrl;
       return !handled;
-      
+
     });
   });
 }
