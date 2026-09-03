@@ -1,0 +1,3 @@
+/* disable the existing LivePerson chat bubble when the 1Mind AI BDR launcher is active */
+/* stylelint-disable-next-line selector-class-pattern */
+.contact-us .cu-bubble, .LPMcontainer.LPMoverlay { display: none !important; }
