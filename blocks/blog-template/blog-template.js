@@ -175,7 +175,7 @@ export function buildBylineMeta({ author, date, updated } = {}) {
     a.className = 'blog-byline-author';
     a.append('By ');
     const link = document.createElement('a');
-    link.href = `/blog/author/${toClassName(author)}`;
+    link.href = `/blog/author/${toClassName(author)}/`;
     link.textContent = author;
     a.append(link);
     meta.append(a);
