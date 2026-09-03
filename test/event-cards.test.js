@@ -158,6 +158,23 @@ describe('event-cards', () => {
     expect(cta.rel).toBe('noopener');
   });
 
+  it('pins an event with an authored order ahead of the rest', async () => {
+    const decorate = await loadBlock();
+    entries.push(
+      {
+        path: '/events/pinned', title: 'Pinned replay', date: '', status: 'on-demand', order: '1',
+      },
+      {
+        path: '/events/other', title: 'Other replay', date: '', status: 'on-demand',
+      },
+    );
+    const block = make('on-demand');
+    await decorate(block);
+    expect([...block.querySelectorAll('.event-card h3')].map((h) => h.textContent))
+      .toEqual(['Pinned replay', 'Recorded webinar', 'Other replay']);
+    entries.length -= 2;
+  });
+
   it('escapes authored text rather than injecting it as markup', async () => {
     const decorate = await loadBlock();
     const block = make('on-demand');

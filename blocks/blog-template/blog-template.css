@@ -760,6 +760,7 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
 
   .section.hear-customers {
     padding: 40px 0;
+    margin-top: 3rem;
   }
 
   .section.hear-customers .default-content-wrapper {
