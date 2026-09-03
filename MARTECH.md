@@ -53,6 +53,51 @@ checkout that has the mirrored files but not from a deployed AEM preview. Intuit
 accepts `*.intuit.com` origins; on localhost and AEM hosts it may be blocked. Use `local` for a
 deterministic local consent stack or `off` when martech is irrelevant to the test.
 
+### Worker experiment
+
+`?martech-worker=` is an opt-in performance lab. When absent or invalid, its module and worker
+runtime are not loaded and the page behaves normally. It does not change Tealium load rules or tag
+configuration. Instead, it intercepts matching script elements immediately before Tealium inserts
+them into the DOM, assigns `type="text/partytown"`, and lets the same-origin Partytown runtime
+evaluate them in a worker.
+
+| Value | Scripts moved to the worker | Additional setup |
+| --- | --- | --- |
+| `segment` | the versioned Intuit ECS sender, AJS destination, schema filter, Visitor API, and Segment action chunks | none; these CDN responses allow CORS |
+| `all` | everything in `segment`, plus Google `gtag`, Meta Pixel, and Demandbase | Chrome response-header overrides are required for Meta and Demandbase; see below |
+
+The 54 KB `track-event-lib-init.min.js` Track Star bootstrap deliberately stays on main. It owns the
+vendor's `window.intuit` queue, delegated click listener, and bootstrap event. Its 229 KB sender and
+the modules the sender loads are the worker boundary. The Partytown `mainWindowAccessors` bridge
+lets the worker consume that existing queue. For Google, `dataLayer.push` is forwarded; for Meta,
+`fbq` is forwarded. A completion bridge translates Partytown's finished/error state back to the
+original script's `load`/`error` event so vendor loaders do not hang.
+
+Meta (`connect.facebook.net`) and Demandbase (`scripts.demandbase.com` and
+`tag-logger.demandbase.com`) do not send `Access-Control-Allow-Origin`, while worker script fetches
+require CORS. For the `all` experiment, use Chrome DevTools Local Overrides to add this response
+header to each of those three host patterns:
+
+```text
+Access-Control-Allow-Origin: *
+```
+
+No override is needed for `segment` or Google. Without those header overrides, the affected `all`
+scripts fail closed and dispatch their normal error event. The live diagnostic is available at
+`window.__martechWorkerExperiment`; its `diverted` array records every intercepted URL and
+`requiredCorsOverrides` lists the three required hostnames. User Timing marks named
+`martech-worker:installed`, `:queued`, `:complete`, and `:error` make the boundary visible in a
+DevTools performance recording.
+
+This is not a production switch. Partytown remains beta, and a production version of `all` would
+need a tightly allowlisted same-origin reverse proxy for Meta and Demandbase rather than browser
+overrides. To compare runs, use a fresh Chrome profile for baseline, `segment`, and `all`; keep
+consent, viewport, CPU, and network settings identical; and confirm both beacon parity and that the
+selected script evaluations moved from the main renderer thread to the Partytown worker.
+
+The pinned runtime is committed under `scripts/~partytown/`. Regenerate it after an intentional
+dependency upgrade with `npm run partytown:copy`.
+
 ## Consent ownership
 
 The site loads Intuit's OneTrust stack before `utag.js`:

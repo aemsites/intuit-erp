@@ -165,6 +165,7 @@ on a page keeps its CTAs in the same tab.
 | Param | Controls | Values | Source |
 | --- | --- | --- | --- |
 | `?martech=` | Martech loading | `off` = disable all martech (Tealium + Adobe inert); `local` = load utag.js + OneTrust from local `/scripts/martech/`; absent/other = CDN default | [scripts/scripts.js](scripts/scripts.js) — see [MARTECH.md](MARTECH.md) |
+| `?martech-worker=` | Opt-in worker lab for Tealium-injected scripts | `segment` = Intuit/Segment sender chain; `all` = Segment + Google + Meta + Demandbase (Meta/Demandbase require Chrome CORS response-header overrides); absent/other = inert | [scripts/martech-worker.js](scripts/martech-worker.js) — see [MARTECH.md](MARTECH.md#worker-experiment) |
 | `?rum=` (alias `?optel=`) | RUM sampling rate | `on`→1, `off`→0, `high`→10, `low`→1000, else weight 100 | [scripts/aem.js](scripts/aem.js) |
 | `?lighthouse=on` | Sets `window.hlx.lighthouse = true` (perf-test mode) | `on` | [scripts/aem.js](scripts/aem.js) |
 | `?locale=` | Locale sent to the decision API | locale string, hyphen converted to underscore (falls back to `navigator.language` → `en_US`) | [scripts/experience.js](scripts/experience.js) |

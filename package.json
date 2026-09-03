@@ -12,6 +12,7 @@
     "golden:customer": "node scripts/diff/payloads-to-golden.mjs",
     "contract:audit": "node scripts/diff/contract-audit.mjs",
     "golden:crosscheck": "node scripts/diff/golden-crosscheck.mjs",
+    "partytown:copy": "partytown copylib scripts/~partytown --no-debug",
     "sheet:customer": "node scripts/diff/gen-sheet-from-golden.mjs --golden scripts/diff/fixtures/local/clicktrack-golden-customer.json --out scripts/diff/fixtures/local/tracking-sheet-customer.json",
     "oracle:customer": "npm run --silent sheet:customer && node scripts/diff/customer-oracle.mjs",
     "oracle:customer:floor": "node scripts/diff/customer-oracle.mjs --sheet /nonexistent",
@@ -24,6 +25,7 @@
   "type": "module",
   "devDependencies": {
     "@babel/eslint-parser": "7.29.7",
+    "@qwik.dev/partytown": "0.14.3",
     "eslint": "8.57.1",
     "eslint-config-airbnb-base": "15.0.0",
     "eslint-plugin-import": "2.32.0",
