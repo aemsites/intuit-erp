@@ -18,15 +18,20 @@
  *     BEFORE band detection — a single-cell "legend" row would otherwise
  *     match the band heuristic below). Legend text comes from the second
  *     cell when present, else from a nested tip/second-paragraph on the
- *     first cell. Renders as `.ct-legend`.
+ *     first cell. Each paragraph in the second cell renders as its own line,
+ *     and a leading check/dash glyph becomes the same marker the table body
+ *     uses. An optional THIRD cell supplies the disclosure toggle's label
+ *     (defaults to "Chart definition"). Renders as `.ct-legend`, collapsed
+ *     behind a `<details>` like the original.
  *   - Mobile: the table scrolls horizontally within `.cmp-table-scroll`
  *     (see CSS), matching the original rather than reflowing into cards.
  *
  * CSS: blocks/comparison-table/comparison-table.css
  */
 
-// Label for the collapsible legend toggle, matching prod's "Chart definition".
-const LEGEND_SUMMARY = 'Chart definition';
+// Fallback label for the collapsible legend toggle when the legend row doesn't
+// author one. Matches prod's wording.
+const LEGEND_SUMMARY_DEFAULT = 'Chart definition';
 
 let tipSeq = 0;
 // Tooltip wrappers currently expanded, so a single document-level click
@@ -173,7 +178,20 @@ function legendSourceCell(cells) {
  * @param {Element} container `.ct-legend` element to fill
  * @param {Element|null} cell authored legend cell
  * @param {string} fallbackText plain-text legend used when `cell` is absent
+ * @param {string} summaryText label for the disclosure toggle
  */
+/**
+ * Returns the authored label for the legend's disclosure toggle — the third cell
+ * of the legend row — falling back to LEGEND_SUMMARY_DEFAULT when it's absent or
+ * empty, so existing two-cell legend rows keep working.
+ * @param {Element[]} cells
+ * @returns {string}
+ */
+function legendSummaryText(cells) {
+  const authored = cells.length > 2 ? cells[2].textContent.trim() : '';
+  return authored || LEGEND_SUMMARY_DEFAULT;
+}
+
 function legendLine(sourceP) {
   const line = document.createElement('span');
   line.className = 'ct-legend-item';
@@ -194,7 +212,7 @@ function legendLine(sourceP) {
   return line;
 }
 
-function renderLegend(container, cell, fallbackText) {
+function renderLegend(container, cell, fallbackText, summaryText) {
   const paras = cell ? [...cell.querySelectorAll(':scope > p')] : [];
   if (!paras.length) {
     container.textContent = fallbackText;
@@ -205,7 +223,7 @@ function renderLegend(container, cell, fallbackText) {
   const details = document.createElement('details');
   details.className = 'ct-legend-item-wrap';
   const summary = document.createElement('summary');
-  summary.textContent = LEGEND_SUMMARY;
+  summary.textContent = summaryText;
   details.append(summary);
   const body = document.createElement('div');
   body.className = 'ct-legend-body';
@@ -357,7 +375,7 @@ export default function decorate(block) {
     if (legendText !== null) {
       legendEl = document.createElement('p');
       legendEl.className = 'ct-legend';
-      renderLegend(legendEl, legendSourceCell(cells), legendText);
+      renderLegend(legendEl, legendSourceCell(cells), legendText, legendSummaryText(cells));
       return;
     }
 
