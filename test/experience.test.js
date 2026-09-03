@@ -310,9 +310,9 @@ describe('hasEagerWork (above-the-fold gate)', () => {
   it('false with no targets at all', () => {
     expect(hasEagerWork(document)).toBe(false);
   });
-  it('ignores a non-numeric page experiment id', () => {
+  it('counts any experiment-id metadata as eager work (numeric-id validation is collectRequest\'s job)', () => {
     setMeta('experiment-id', 'not-a-number');
-    expect(hasEagerWork(document)).toBe(false);
+    expect(hasEagerWork(document)).toBe(true);
   });
 });
 
