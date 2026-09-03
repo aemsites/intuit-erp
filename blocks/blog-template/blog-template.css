@@ -674,7 +674,7 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
   }
 }
 
-.blog-article .highlight { margin: 32px 0 40px; }
+.blog-article .highlight { margin: 60px 0 40px; }
 
 /* Callouts get their own section (block-per-section), so the callout is the
    last child of its section and the trailing-margin reset above would zero its
