@@ -54,6 +54,13 @@ The runtime stamps payload attributes just in time on capture-phase `pointerdown
 activation, before the injected tracker handles the ensuing click. At rest it keeps only structural
 trail metadata, stable ids, block defaults, and opt-out markers.
 
+The eager ECS shim also keeps non-navigation click work out of the interaction task. Calls to
+`webAnalytics.track` made during a button, same-page hash, download, modified, or new-context click
+are queued with `scheduler.postTask({ priority: 'background' })`, falling back to `setTimeout` where
+the Scheduling API is unavailable. The queue releases one tracking call per task. Same-window link
+and form navigation remains synchronous so the tracker can form its batch before unload; any queued
+calls are drained on `visibilitychange` to hidden or `pagehide` as a final delivery guard.
+
 Values merge in this order:
 
 1. **Derived baseline** — accessible label, link/button/icon/video type, default action, and
