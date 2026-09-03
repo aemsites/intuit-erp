@@ -34,16 +34,13 @@ import {
 } from '../../scripts/chilipiper.js';
 
 import {
-  readCookie,
-} from '../../scripts/erp-logging.js';
-
-import {
   createUUID,
   loadMunchkinTag,
   getCidValue,
   getTrackData,
   buildPageHierarchy,
   getPhCountryCodeForGeo,
+  getCookieValue,
 } from '../../scripts/utils.js';
 
 // Uncomment with the AEP/WebSDK integration in scripts/scripts.js.
@@ -191,10 +188,10 @@ export const getTraitData = (formVals) => {
     lead_country: formVals?.CountryCode || '',
     phone: `${phCountryCode}${formVals?.Phone || ''}`,
     type: 'identity',
-    ivid: readCookie('ivid'),
-    ecid: readCookie('s_ecid'),
-    uidp: readCookie('qbn.uidp'),
-    _mkto_trk: readCookie('_mkto_trk'),
+    ivid: getCookieValue('ivid'),
+    ecid: getCookieValue('s_ecid'),
+    uidp: getCookieValue('qbn.uidp'),
+    _mkto_trk: getCookieValue('_mkto_trk'),
     cid: getCidValue(),
   };
 };
@@ -404,7 +401,7 @@ async function embedMarketoForm(formEl, cfg, config, env) {
   const [placeholders] = await Promise.all([fetchPlaceholders(), loadScript(forms2Src)]);
 
   // load munchkin tag
-  if (config.enableMunchkinTag && readCookie('ccpa') === '1|1') {
+  if (config.enableMunchkinTag && getCookieValue('ccpa') === '1|1') {
     loadMunchkinTag(munchkin);
   }
 
@@ -414,7 +411,7 @@ async function embedMarketoForm(formEl, cfg, config, env) {
 
     // add hidden fields and populate values
     const hiddenFields = { Lead_XRef_ID__c: leadXref };
-    hiddenFields.IVID__c = window?.utag_data?.ivid || readCookie('ivid') || '';
+    hiddenFields.IVID__c = window?.utag_data?.ivid || getCookieValue('ivid') || '';
     hiddenFields.cID = getCidValue() || '';
     const customizedHiddenFields = getMappedHiddenFields(config);
     form.addHiddenFields?.({ ...hiddenFields, ...customizedHiddenFields });

@@ -1,6 +1,19 @@
-import {
-  readCookie,
-} from './erp-logging.js';
+/**
+ * Get value of cookie found with accurate key
+ * @param {String} cookieName key of the cookie to be retrieved
+ * @returns {String|null} value of cookie if found else null
+ */
+export const getCookieValue = (cookieName) => {
+  if (!cookieName) {
+    return null;
+  }
+  const regex = new RegExp(
+    `(?:^|; )${cookieName.replace(/([.$?*|{}()[\]\\/+^])/g, '\\$1')}=([^;]*)`,
+  );
+  const matches = regex.exec(document.cookie);
+  return matches ? matches[1] : null;
+};
+
 /**
  * Creates unique uuid string
  */
@@ -70,7 +83,7 @@ export const getCidValue = () => {
     return cidFromQuery;
   }
 
-  let cidVal = readCookie('qbn.qbo_sc') || '';
+  let cidVal = getCookieValue('qbn.qbo_sc') || '';
   cidVal = (cidVal && cidVal.includes('|') && cidVal.split('|')[0]) || '';
   cidVal = (cidVal && cidVal.includes(':') && cidVal.split(':')[1]) || '';
   return cidVal;
@@ -162,7 +175,7 @@ export const getTrackData = (countryCode) => ({
   cid: getCidValue(),
   page_name_parameter: '',
   custom_properties: {},
-  _mkto_trk: readCookie('_mkto_trk'),
+  _mkto_trk: getCookieValue('_mkto_trk'),
 });
 
 /**
