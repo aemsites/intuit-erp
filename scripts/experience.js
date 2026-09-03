@@ -399,8 +399,7 @@ export function collectRequest(doc = document) {
 // True when the eager phase has something to apply before reveal: a page-level target (whole-page
 // swap in applyPageExperience) or a target in the first/LCP section
 export function hasEagerWork(doc = document) {
-  const pageExp = getMetadata('experiment-id');
-  if (pageExp && /^\d+$/.test(pageExp)) return true;
+  if (getMetadata('experiment-id')) return true;
   if (getMetadata('personalization-id')) return true;
   const firstSection = doc.querySelector('main')?.querySelector('.section');
   if (!firstSection) return false;
