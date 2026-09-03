@@ -16,10 +16,13 @@ beforeEach(() => {
   delete window.ixp;
   delete window.intuit;
   delete window.appVars;
+  delete window.scheduler;
+  document.body.replaceChildren();
 });
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.useRealTimers();
 });
 
 describe('personalizationDetails', () => {
@@ -164,6 +167,114 @@ describe('wrapTrack', () => {
     wrapTrack(wa);
     expect(() => wa.track(null)).not.toThrow();
     expect(original).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('interaction scheduling', () => {
+  it('defers a non-navigation click to a background task', () => {
+    let scheduledTask;
+    window.scheduler = {
+      postTask: vi.fn((task) => {
+        scheduledTask = task;
+        return Promise.resolve();
+      }),
+    };
+    installEcsEnrich();
+    const original = vi.fn();
+    window.intuit = { tracking: { ecs: { webAnalytics: { track: original } } } };
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.addEventListener('click', () => {
+      window.intuit.tracking.ecs.webAnalytics.track({ object: 'button' });
+    });
+    document.body.append(button);
+
+    button.click();
+
+    expect(original).not.toHaveBeenCalled();
+    expect(window.scheduler.postTask).toHaveBeenCalledOnce();
+    expect(window.scheduler.postTask).toHaveBeenCalledWith(
+      expect.any(Function),
+      { priority: 'background' },
+    );
+    scheduledTask();
+    expect(original).toHaveBeenCalledOnce();
+  });
+
+  it('keeps same-window navigation clicks synchronous', () => {
+    window.scheduler = { postTask: vi.fn() };
+    installEcsEnrich();
+    const original = vi.fn();
+    window.intuit = { tracking: { ecs: { webAnalytics: { track: original } } } };
+    const link = document.createElement('a');
+    link.href = '/next-page';
+    link.addEventListener('click', (event) => {
+      window.intuit.tracking.ecs.webAnalytics.track({ object: 'link' });
+      event.preventDefault();
+    });
+    document.body.append(link);
+
+    link.click();
+
+    expect(original).toHaveBeenCalledOnce();
+    expect(window.scheduler.postTask).not.toHaveBeenCalled();
+  });
+
+  it('flushes queued clicks on pagehide without double-sending', () => {
+    let scheduledTask;
+    window.scheduler = {
+      postTask: vi.fn((task) => {
+        scheduledTask = task;
+        return Promise.resolve();
+      }),
+    };
+    installEcsEnrich();
+    const original = vi.fn();
+    window.intuit = { tracking: { ecs: { webAnalytics: { track: original } } } };
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.addEventListener('click', () => {
+      window.intuit.tracking.ecs.webAnalytics.track({ object: 'button' });
+    });
+    document.body.append(button);
+    button.click();
+
+    window.dispatchEvent(new Event('pagehide'));
+
+    expect(original).toHaveBeenCalledOnce();
+    scheduledTask();
+    expect(original).toHaveBeenCalledOnce();
+  });
+
+  it('runs at most one queued tracking call per task', () => {
+    const scheduledTasks = [];
+    window.scheduler = {
+      postTask: vi.fn((task) => {
+        scheduledTasks.push(task);
+        return Promise.resolve();
+      }),
+    };
+    installEcsEnrich();
+    const original = vi.fn();
+    window.intuit = { tracking: { ecs: { webAnalytics: { track: original } } } };
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.addEventListener('click', () => {
+      const track = window.intuit.tracking.ecs.webAnalytics.track.bind(
+        window.intuit.tracking.ecs.webAnalytics,
+      );
+      track({ object: 'first' });
+      track({ object: 'second' });
+    });
+    document.body.append(button);
+    button.click();
+
+    expect(scheduledTasks).toHaveLength(1);
+    scheduledTasks[0]();
+    expect(original).toHaveBeenCalledOnce();
+    expect(scheduledTasks).toHaveLength(2);
+    scheduledTasks[1]();
+    expect(original).toHaveBeenCalledTimes(2);
   });
 });
 

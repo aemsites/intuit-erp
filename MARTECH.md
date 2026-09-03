@@ -14,7 +14,7 @@ The two data contracts are documented separately:
 1. [`head.html`](head.html) creates `window.utag_data` and sets `utag_cfg_ovrd.noview=true`, which
    prevents Tealium from sending an automatic view before consent resolves.
 2. During eager loading, [`scripts/scripts.js`](scripts/scripts.js) seeds `window.appVars`, installs
-   the temporary ECS enrichment shim, and creates `TealiumMartech`.
+   the temporary ECS enrichment and interaction-scheduling shim, and creates `TealiumMartech`.
 3. During lazy loading, the Tealium loader starts prod-only Intuit Observability RUM, loads the
    OneTrust stack, and waits up to three seconds for consent state. With a pre-existing decision it
    loads `utag.js` immediately. If consent is still unknown, lazy loading continues without Tealium;

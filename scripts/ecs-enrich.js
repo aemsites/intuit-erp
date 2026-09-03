@@ -18,6 +18,11 @@
 const WRAPPED_PAGE = Symbol('ecsWrappedPage');
 const WRAPPED_EVENT = Symbol('ecsWrappedEvent');
 
+let currentClick;
+let interactionSchedulingInstalled = false;
+let trackTaskScheduled = false;
+const pendingTrackJobs = [];
+
 // The tracker treats null/undefined, '', or [] as "no value".
 function isEmpty(v) {
   return v == null || v === '' || (Array.isArray(v) && v.length === 0);
@@ -95,6 +100,93 @@ export function enrichEventPayload(payload, appVars = {}) {
   return payload;
 }
 
+function clickMayUnloadPage(event) {
+  if (!event || event.defaultPrevented || event.button > 0
+    || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return false;
+
+  const target = typeof event.target?.closest === 'function'
+    ? event.target
+    : event.target?.parentElement;
+  const control = target?.closest('a[href], area[href], button, input');
+  if (!control) return false;
+
+  if (control.matches('a[href], area[href]')) {
+    if (control.hasAttribute('download')) return false;
+    const browsingContext = control.target
+      || document.querySelector('base[target]')?.target
+      || '_self';
+    if (browsingContext.toLowerCase() !== '_self') return false;
+    try {
+      const destination = new URL(control.href, window.location.href);
+      const current = new URL(window.location.href);
+      const sameDocument = destination.origin === current.origin
+        && destination.pathname === current.pathname
+        && destination.search === current.search
+        && destination.hash;
+      return !sameDocument;
+    } catch (e) {
+      return true;
+    }
+  }
+
+  if (!control.form || !['submit', 'image'].includes(control.type)) return false;
+  const browsingContext = control.formTarget || control.form.target || '_self';
+  return browsingContext.toLowerCase() === '_self';
+}
+
+function runTrackJob(track) {
+  try {
+    track();
+  } catch (e) {
+    // fail-open — a deferred analytics failure must not surface as an unhandled rejection
+  }
+}
+
+function scheduleNextTrackJob() {
+  if (trackTaskScheduled || !pendingTrackJobs.length) return;
+  trackTaskScheduled = true;
+  const run = () => {
+    trackTaskScheduled = false;
+    const track = pendingTrackJobs.shift();
+    if (track) runTrackJob(track);
+    scheduleNextTrackJob();
+  };
+  try {
+    if (typeof window.scheduler?.postTask === 'function') {
+      window.scheduler.postTask(run, { priority: 'background' });
+    } else {
+      window.setTimeout(run, 0);
+    }
+  } catch (e) {
+    window.setTimeout(run, 0);
+  }
+}
+
+function enqueueTrackJob(track) {
+  pendingTrackJobs.push(track);
+  scheduleNextTrackJob();
+}
+
+function flushTrackJobs() {
+  trackTaskScheduled = false;
+  while (pendingTrackJobs.length) runTrackJob(pendingTrackJobs.shift());
+}
+
+function installInteractionScheduling() {
+  if (interactionSchedulingInstalled || typeof document === 'undefined') return;
+  interactionSchedulingInstalled = true;
+  document.addEventListener('click', (event) => {
+    currentClick = event;
+    window.setTimeout(() => {
+      if (currentClick === event) currentClick = undefined;
+    }, 0);
+  }, true);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') flushTrackJobs();
+  }, true);
+  window.addEventListener('pagehide', flushTrackJobs, true);
+}
+
 /** Wraps `wa.track` to enrich each event/click payload (idempotent, fail-open). */
 export function wrapTrack(wa) {
   if (!wa || typeof wa.track !== 'function' || wa[WRAPPED_EVENT]) return;
@@ -104,6 +196,9 @@ export function wrapTrack(wa) {
       enrichEventPayload(payload, (typeof window !== 'undefined' && window.appVars) || {});
     } catch (e) {
       // fail-open — enrichment must never block the real beacon
+    }
+    if (currentClick && currentClick.eventPhase !== 0 && !clickMayUnloadPage(currentClick)) {
+      return enqueueTrackJob(() => original(payload, ...rest));
     }
     return original(payload, ...rest);
   };
@@ -134,6 +229,7 @@ export function whenAssigned(obj, key, cb) {
  */
 export default function installEcsEnrich() {
   if (typeof window === 'undefined') return;
+  installInteractionScheduling();
   whenAssigned(window, 'intuit', (intuit) => {
     if (!intuit || typeof intuit !== 'object') return;
     whenAssigned(intuit, 'tracking', (tracking) => {
