@@ -50,6 +50,8 @@ const CONFIG_KEYS = [
   'buttonLabel',
 ];
 
+const RICH_TEXT_KEYS = ['header', 'subheader', 'disclaimer'];
+
 // Marketo instance selection, keyed by the `marketo` page metadata. Prod unless the
 // page opts in; hostname is deliberately not consulted.
 const MARKETO_MUNCHKIN_KEYS = {
@@ -85,9 +87,9 @@ export function parseFormConfig(block) {
     const [keyCell, valueCell] = row.children;
     const key = keyCell?.textContent.trim();
     if (key && CONFIG_KEYS.includes(key)) {
-      // disclaimer keeps inline markup (e.g. the Privacy Statement link); others are plain text
       if (!valueCell) found[key] = undefined;
-      else found[key] = key === 'disclaimer' ? valueCell.innerHTML.trim() : valueCell.textContent.trim();
+      else if (RICH_TEXT_KEYS.includes(key)) found[key] = valueCell.innerHTML.trim();
+      else found[key] = valueCell.textContent.trim();
     }
   });
   return {
@@ -365,6 +367,12 @@ async function embedMarketoForm(formEl, cfg, config, env) {
   });
 }
 
+function setRichText(el, html) {
+  el.innerHTML = html;
+  const only = el.firstElementChild;
+  if (el.childElementCount === 1 && only.tagName === 'P') only.replaceWith(...only.childNodes);
+}
+
 export default async function decorate(block) {
   // blocks/modal/modal.js clones + force-redecorates cached fragments, so this can run
   // twice; the 2nd pass sees the <form> shell from the 1st, not the original config rows.
@@ -386,13 +394,13 @@ export default async function decorate(block) {
   if (config.header) {
     const el = document.createElement('h3');
     el.className = 'form-header';
-    el.textContent = config.header;
+    setRichText(el, config.header);
     children.push(el);
   }
   if (config.subheader) {
     const el = document.createElement('p');
     el.className = 'form-subheader';
-    el.textContent = config.subheader;
+    setRichText(el, config.subheader);
     children.push(el);
   }
   const form = document.createElement('form');
