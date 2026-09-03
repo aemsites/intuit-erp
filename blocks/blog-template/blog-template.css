@@ -345,7 +345,7 @@
   main.blog-article {
     display: grid;
     grid-template-columns: 332px minmax(0, 1fr) 300px;
-    column-gap: 48px;
+    column-gap: 130px;
     align-items: start;
   }
 
@@ -668,6 +668,10 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
   padding: 24px 40px;
 }
 
+.blog-article .highlight .highlight-inner:has(> p .icon[class*="icon-quick-answer"]) {
+  display: flex;
+}
+
 .blog-article .video-wrapper {
   margin: 2rem 0;
 }
@@ -677,6 +681,10 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
   margin: 32px 0;
   background: var(--tofu);
   padding: 8px 20px 24px;
+}
+
+:is(.blog-article, .case-study) .testimonial:not(.video, .simple) > :is(h2, h3, h4, h5, h6) {
+  padding-top: 1rem;
 }
 
 @media (width >= 1024px) {
