@@ -709,6 +709,14 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
   padding-top: 1rem;
 }
 
+/* When the quote box ends its section the trailing-margin reset zeros its
+   bottom margin, collapsing the gap to the following content (e.g. an image)
+   to 0px. Keep the 40px gap to match prod. Only margin-bottom is set so the
+   desktop full-bleed horizontal margin is preserved. */
+.blog-article > .section > .testimonial-wrapper:last-child > .testimonial:not(.video, .simple) {
+  margin-bottom: 40px;
+}
+
 @media (width >= 1024px) {
   :is(.blog-article, .case-study) .testimonial:not(.video, .simple) {
     width: calc(100% + 80px);
