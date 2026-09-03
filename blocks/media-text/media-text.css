@@ -1,6 +1,6 @@
 .section.media-text-container {
   background: #fff;
-  padding: var(--section-y) 0;
+  padding: 35px 0;
 }
 
 .section.media-text-container:has(.media-text.tint) {
@@ -25,6 +25,10 @@
   color: var(--text-muted);
 }
 
+.media-text-container .default-content-wrapper:last-child>p:last-child {
+  margin-bottom: 0;
+}
+
 .media-text .media-row {
   display: grid;
   grid-template-columns: var(--split, 1fr 1fr);
@@ -34,6 +38,14 @@
 
 .media-text .media-row + .media-row {
   margin-top: 44px;
+}
+
+.media-text .media-row:first-child {
+  padding-top: 0;
+}
+
+.media-text .media-row:last-child {
+  padding-bottom: 0;
 }
 
 .media-text .media-row.row-reverse .media-visual {
