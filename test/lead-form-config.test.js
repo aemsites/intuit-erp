@@ -51,6 +51,7 @@ beforeEach(() => {
   delete window.utag;
   delete window.grecaptcha;
   delete global.fetch;
+  window.placeholders = { default: {} };
   global.IntersectionObserver = class {
     constructor(cb) { this.cb = cb; }
 
@@ -60,9 +61,19 @@ beforeEach(() => {
   };
   window.MktoForms2 = {
     loadForm: vi.fn((host, munchkin, formId, cb) => {
-      // simulate Marketo rendering its button row into the form element
+      // Simulate a measurable stacked Marketo form so disclaimer placement can
+      // distinguish the field rows from the submit row.
       const el = document.getElementById(`mktoForm_${formId}`);
-      if (el) el.innerHTML = '<div class="mktoButtonRow"><button class="mktoButton" type="submit">Schedule a call</button></div>';
+      if (el) {
+        el.innerHTML = [
+          '<div class="mktoFormRow"><input type="text"></div>',
+          '<div class="mktoButtonRow">',
+          '<button class="mktoButton" type="submit">Schedule a call</button>',
+          '</div>',
+        ].join('');
+        el.querySelector('.mktoFormRow').getBoundingClientRect = () => ({ top: 0 });
+        el.querySelector('.mktoButtonRow').getBoundingClientRect = () => ({ top: 50 });
+      }
       cb({
         onSuccess: (fn) => { onSuccessFn = fn; },
         onValidate: (fn) => { onValidateFn = fn; },
