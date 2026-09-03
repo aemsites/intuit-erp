@@ -21,15 +21,26 @@
  */
 import { loadScript, getMetadata, decorateIcons } from '../../scripts/aem.js';
 import { fetchPlaceholders } from '../../scripts/placeholders.js';
+
 // Uncomment with the AEP/WebSDK integration in scripts/scripts.js.
 // // Vendored via git subtree at plugins/martech (see its README), not an
 // // installed npm package, so this necessarily crosses a package.json boundary.
 // // eslint-disable-next-line import/no-relative-packages
 // import { sendEvent } from '../../plugins/martech/src/index.js';
-// Shared ChiliPiper opener (also used by personalization widgets) + lead-xref/track helpers.
+
+// Shared ChiliPiper opener (also used by personalization widgets).
 import {
-  openChiliPiper, submitChiliPiper, mintLeadXref, trackLeadCreated,
+  openChiliPiper, submitChiliPiper,
 } from '../../scripts/chilipiper.js';
+
+import {
+  createUUID,
+  getCidValue,
+  getTrackData,
+  buildPageHierarchy,
+  getPhCountryCodeForGeo,
+  getCookieValue,
+} from '../../scripts/utils.js';
 
 // Uncomment with the AEP/WebSDK integration in scripts/scripts.js.
 // // Tenant-namespaced XDM location for lead-identity events. Object name `of1Signal` must
@@ -48,6 +59,16 @@ const CONFIG_KEYS = [
   'disclaimer',
   'recaptcha',
   'buttonLabel',
+  'enableMunchkinTag',
+  'munchkinId',
+  'leadSource',
+  'productFamily',
+  'primaryProduct',
+  'leadTreatmentName',
+  'leadLegacyCampaign',
+  'leadCountry',
+  'leadCountryCode',
+  'leadLanguage',
 ];
 
 const RICH_TEXT_KEYS = ['header', 'subheader', 'disclaimer'];
@@ -65,13 +86,14 @@ function marketoEnv() {
   return m === 'dev' || m === 'e2e' ? m : 'prod';
 }
 
-// reCAPTCHA v3 (invisible). erp.intuit.com's own siteverify proxy scores the
-// token; enable per form block via the `recaptcha` config row. Runs only on an
-// *.intuit.com origin (the endpoint's CORS allowlist) — see setupRecaptcha.
+// reCAPTCHA v3 constants
 const RECAPTCHA_API_SRC = 'https://www.google.com/recaptcha/api.js';
 const RECAPTCHA_DEFAULT_THRESHOLD = 0.3;
 const RECAPTCHA_MAX_ATTEMPTS = 3;
 const RECAPTCHA_RETRY_MS = 2000;
+
+// munchkin tag constants
+const MUNCHKIN_API_SRC = '//munchkin.marketo.net/munchkin.js';
 
 // getSiteConfig lives in scripts.js; import it dynamically so this block (which
 // scripts.js's graph pulls in for the schedule modal) doesn't form a static cycle.
@@ -102,6 +124,16 @@ export function parseFormConfig(block) {
     disclaimer: found.disclaimer,
     recaptcha: found.recaptcha === 'true',
     buttonLabel: found.buttonLabel,
+    enableMunchkinTag: found.enableMunchkinTag === 'true',
+    munchkinId: found.munchkinId,
+    leadSource: found.leadSource,
+    productFamily: found.productFamily,
+    primaryProduct: found.primaryProduct,
+    leadTreatmentName: found.leadTreatmentName,
+    leadLegacyCampaign: found.leadLegacyCampaign,
+    leadCountry: found.leadCountry,
+    leadCountryCode: found.leadCountryCode,
+    leadLanguage: found.leadLanguage,
   };
 }
 
@@ -120,36 +152,115 @@ export function parseFormConfig(block) {
 //   };
 // }
 
-// Submit tracking. `window.utag` only ever exists when scripts/scripts.js chose the Tealium
-// provider (the default) AND that instance is enabled — i.e. the hostname resolves to a utag
-// environment (see plugins/tealium-martech/src/index.js `resolveEnvironment`).
-export function trackFormSubmit(fields) {
-  if (window.utag?.link) {
-    // Consent-gate, like the loader's whenConsentResolved: a link fired while getConsentState()===0
-    // enqueues and can re-trigger the ies-erp processQueue<->setPreferencesValues recursion. A
-    // one-shot check is enough at submit time — on prod consent is long resolved; on a stuck-at-0
-    // host it drops rather than loops.
-    if (window.utag.gdpr?.getConsentState?.() === 0) return;
-    window.utag.link({
-      tealium_event: 'form_submit',
-      ...fields,
-      ivid: window.utag_data?.ivid,
-    });
+/**
+ * Loads the Munchkin JavaScript library for Marketo and initializes it with a specified form ID
+ * @param {String} environment - The unique identifier for the Marketo Munchkin id
+ */
+const loadMunchkinTag = (munchkinId) => {
+  let didInit = false;
+  const initMunchkin = () => {
+    const munchkin = window.Munchkin;
+    if (munchkin && !didInit) {
+      didInit = true;
+      munchkin.init(munchkinId);
+    }
+  };
+  loadScript(MUNCHKIN_API_SRC).then(initMunchkin);
+};
+
+/**
+ * Split full name into First and Last name
+ * @returns first or last name {String}
+ * @param fullName
+ * @param fieldName
+ */
+const getFirstAndLastName = (fullName, fieldName) => {
+  if (fullName) {
+    const [firstName, ...rest] = fullName.trim().split(' ');
+    const lastName = rest.join(' ');
+
+    if (fieldName === 'first_name') return firstName;
+    if (fieldName === 'last_name') return lastName || 'NotProvided';
   }
-  // Uncomment with the AEP/WebSDK integration in scripts/scripts.js.
-  // if (!window.utag?.link) sendEvent({ xdm: buildIdentityXdm(fields) }).catch(() => {});
+  return null;
+};
+
+/**
+ * When the form uses a single Full_Name__c field, split it into Marketo
+ * FirstName/LastName hidden fields before submit.
+ * @param {Object} form Marketo form instance
+ */
+function syncFullNameHiddenFields(form) {
+  const formValues = form.getValues();
+  if (!formValues?.Full_Name__c) return;
+  form.addHiddenFields({
+    FirstName: getFirstAndLastName(formValues.Full_Name__c, 'first_name') || '',
+    LastName: getFirstAndLastName(formValues.Full_Name__c, 'last_name') || '',
+  });
 }
 
-// Marketo field names → the lower-cased lead shape trackFormSubmit expects, so
-// the Tealium analytics event fires on a live submit as on the former mock.
-function marketoValuesToLead(vals = {}) {
+/**
+ * Build Trait data object
+ * @returns trait object:{Object}
+ * @param values
+ */
+export const getTraitData = (formVals) => {
+  // get phone number country code
+  const phCountryCode = formVals?.CountryCode && formVals?.Phone
+    ? getPhCountryCodeForGeo(formVals.CountryCode)
+    : '';
+
   return {
-    email: vals.Email || '',
-    firstName: vals.FirstName || '',
-    lastName: vals.LastName || '',
-    businessName: vals.Company || '',
-    phone: vals.Phone || '',
+    first_name:
+    formVals?.FirstName
+      || getFirstAndLastName(formVals?.Full_Name__c, 'first_name') || '',
+    last_name:
+    formVals?.LastName
+      || getFirstAndLastName(formVals?.Full_Name__c, 'last_name') || '',
+    full_name: formVals?.Full_Name__c || '',
+    email: formVals?.Email || '',
+    lead_country: formVals?.CountryCode || '',
+    phone: `${phCountryCode}${formVals?.Phone || ''}`,
+    type: 'identity',
+    ivid: getCookieValue('ivid'),
+    ecid: getCookieValue('s_ecid'),
+    uidp: getCookieValue('qbn.uidp'),
+    _mkto_trk: getCookieValue('_mkto_trk'),
+    cid: getCidValue(),
   };
+};
+
+/**
+ * Build custom/campaign details object
+ * @returns campaign details object:{Object}
+ * @param values
+ */
+const getCustomProperties = (formVals, formId) => ({
+  form_id: formId || formVals?.formid || '',
+  product_family_of_interest: formVals?.Product_Family_of_Interest__c || '',
+  product_of_interest: formVals?.Primary_Product_of_Interest__c || '',
+  lead_source: formVals?.LeadSource || '',
+  lead_treatment_name: formVals?.Legacy_Treatment_Name__c || '',
+  lead_language: formVals?.Language__c || 'English',
+  lead_xref_id: formVals?.Lead_XRef_ID__c || '',
+  legacy_campaign_name: formVals?.Legacy_Campaign_Name__c || '',
+  market: formVals?.CountryCode || '',
+  productRegion: formVals?.CountryCode || '',
+});
+
+export function trackFormSubmit(formVals, formId) {
+  const webAnalyticsObj = window.intuit?.tracking?.ecs?.webAnalytics;
+  if (webAnalyticsObj) {
+    const trackObj = getTrackData(formVals?.CountryCode || 'us');
+    trackObj.custom_properties = getCustomProperties(formVals, formId);
+
+    const { segment } = webAnalyticsObj;
+    const initialConfig = segment?.initConfig;
+    trackObj.page_name_parameter = buildPageHierarchy(initialConfig, trackObj);
+
+    if (typeof webAnalyticsObj?.track === 'function') webAnalyticsObj.track(trackObj);
+    if (typeof webAnalyticsObj?.identify === 'function') webAnalyticsObj.identify(getTraitData(formVals));
+  }
 }
 
 // How long to wait for ChiliPiper's booking overlay to actually appear before
@@ -214,8 +325,8 @@ function showThankYou(form, placeholders = {}) {
 // the Lead_XRef_ID__c event), then only dismiss the hosting schedule-call modal once ChiliPiper's
 // own overlay has actually taken over. Returns false when the submit or the overlay never lands so
 // the caller can show a fallback rather than leaving the visitor with nothing.
-async function chiliPiperHandoff(router, form, xref) {
-  const submitted = await submitChiliPiper(router, form.getValues(), xref);
+async function chiliPiperHandoff(router, form) {
+  const submitted = await submitChiliPiper(router, form.getValues());
   if (!submitted) return false;
   // submitChiliPiper is fire-and-forget, so close the dialog only once the overlay is really up —
   // closing unconditionally would leave a visitor with no calendar, no form and no error.
@@ -231,12 +342,8 @@ async function chiliPiperHandoff(router, form, xref) {
   }
   return true;
 }
-// reCAPTCHA v3, mirroring erp.intuit.com: on form load fetch a score token and
-// verify it via Intuit's siteverify proxy, then gate the Marketo submit on the
-// result (Marketo's own captcha is off; the token is never a form field). The
-// verify endpoint's CORS allowlist is *.intuit.com, so this is a no-op that
-// never blocks a submit anywhere else. Config: per-form `recaptcha` opt-in plus
-// site-wide recaptcha.siteKey/verifyUrl/apiKey/scoreThreshold from /site-config.json.
+
+// reCAPTCHA v3
 async function setupRecaptcha(cfg, config, form) {
   const siteKey = cfg['recaptcha.siteKey'];
   const verifyUrl = cfg['recaptcha.verifyUrl'];
@@ -266,7 +373,10 @@ async function setupRecaptcha(cfg, config, form) {
   };
 
   let verified = false;
-  form.onValidate(() => form.submittable(verified));
+  form.onValidate(() => {
+    syncFullNameHiddenFields(form);
+    form.submittable(verified);
+  });
 
   await loadScript(`${RECAPTCHA_API_SRC}?render=${siteKey}`);
   let attempts = 0;
@@ -292,26 +402,58 @@ function disclaimerBelowFields(formEl) {
   return buttonRow.getBoundingClientRect().top - lastFieldTop > 20;
 }
 
+/**
+ * This function takes an object of hidden fields and maps them to a new object
+ * with specific keys. It filters out any fields that are `undefined` and ensures
+ * the resulting record contains only string values.
+ *
+ * @param hiddenFields - An object containing the hidden fields to be mapped.
+ * @returns A record of key-value pairs where the keys are the mapped field names
+ * and the values are the corresponding non-undefined string values.
+ */
+export const getMappedHiddenFields = (configObj) => {
+  const mappedFields = {
+    LeadSource: configObj?.leadSource,
+    Product_Family_of_Interest__c: configObj?.productFamily,
+    Primary_Product_of_Interest__c: configObj?.primaryProduct,
+    Legacy_Treatment_Name__c: configObj?.leadTreatmentName,
+    Legacy_Campaign_Name__c: configObj?.leadLegacyCampaign,
+    CountryCode: configObj?.leadCountryCode,
+    Country: configObj?.leadCountry,
+    Language__c: configObj?.leadLanguage,
+  };
+
+  return Object.fromEntries(
+    Object.entries(mappedFields).filter(([, value]) => value !== undefined),
+  );
+};
+
 async function embedMarketoForm(formEl, cfg, config, env) {
-  // Munchkin for the active instance, falling back to the base (prod) key. The
-  // Forms2 script URL is generated from it — one host per Marketo instance.
-  const munchkin = cfg[MARKETO_MUNCHKIN_KEYS[env]] || cfg['marketo.munchkin'];
+  // generate an load Forms2 script URL.
+  const munchkin = config.munchkinId || cfg[MARKETO_MUNCHKIN_KEYS[env]] || cfg['marketo.munchkin'];
   if (!munchkin) return;
   const host = `//${munchkin.toLowerCase()}.mktoweb.com`;
   const forms2Src = `${host}/js/forms2/js/forms2.min.js`;
-  // Resolved before `onSuccess` is registered because that callback has to run
-  // synchronously — it can't await the sheet. Cached per prefix, so this is one
-  // request no matter how many forms a page has.
-  const placeholders = await fetchPlaceholders();
-  await loadScript(forms2Src);
+
+  const [placeholders] = await Promise.all([fetchPlaceholders(), loadScript(forms2Src)]);
+
+  // load munchkin tag
+  if (config.enableMunchkinTag && getCookieValue('ccpa') === '1|1') {
+    loadMunchkinTag(munchkin);
+  }
+
   window.MktoForms2.loadForm(host, munchkin, config.formId, (form) => {
-    // One lead-correlation id per form: stamp it into the Marketo hidden field up front (so it's
-    // persisted with the lead in SFDC), then reuse the same id for the ECS lead track and the
-    // ChiliPiper handoff on success. IVID__c is added when the ivid data-layer value is present.
-    const leadXref = mintLeadXref();
+    // Get random UUID
+    const leadXref = (window.crypto?.randomUUID ? window.crypto.randomUUID() : createUUID());
+
+    // add hidden fields and populate values
     const hiddenFields = { Lead_XRef_ID__c: leadXref };
-    if (window.utag_data?.ivid) hiddenFields.IVID__c = window.utag_data.ivid;
-    form.addHiddenFields?.(hiddenFields);
+    hiddenFields.IVID__c = window?.utag_data?.ivid || getCookieValue('ivid') || '';
+    hiddenFields.cID = getCidValue() || '';
+    const customizedHiddenFields = getMappedHiddenFields(config);
+    form.addHiddenFields?.({ ...hiddenFields, ...customizedHiddenFields });
+
+    // append disclaimers
     if (config.disclaimer) {
       const el = document.createElement('div');
       el.className = 'form-disclaimer';
@@ -327,37 +469,41 @@ async function embedMarketoForm(formEl, cfg, config, env) {
         formEl.parentNode.insertBefore(el, formEl);
       }
     }
-    // Marketo forms ship with their own hardcoded button text (e.g. "Watch Now"
-    // on a form template built for webinars); override it per-page when the
-    // form is reused in a context that needs different copy.
+
+    // update the button label
     if (config.buttonLabel) {
       const button = formEl.querySelector('.mktoButton');
       if (button) button.textContent = config.buttonLabel;
     }
-    setupRecaptcha(cfg, config, form);
-    // A ChiliPiper handoff only actually fires when both router (authored) and
-    // subdomain (site-config) are present; decide synchronously so onSuccess can
-    // fall back to Marketo's own thank-you if ChiliPiper is misconfigured.
+
+    // recaptcha
+    if (config.recaptcha) {
+      setupRecaptcha(cfg, config, form);
+    } else {
+      form.onValidate(() => {
+        syncFullNameHiddenFields(form);
+      });
+    }
+
+    // check for chilipiper config added
     const canHandoff = !!(config.chiliPiperRouter && cfg['chilipiper.subdomain']);
+
     form.onSuccess((vals) => {
-      try { trackFormSubmit(marketoValuesToLead(vals)); } catch (e) { /* non-fatal */ }
-      // ECS lead track → IES_lead in the ies-erp container (IES_booking then fires from
-      // ChiliPiper's booking-confirmed postMessage). Same xref as the hidden field + handoff.
+      // invoking ECS tracking
       try {
-        trackLeadCreated({ leadXrefId: leadXref, formId: config.formId });
+        trackFormSubmit({ ...vals, Lead_XRef_ID__c: leadXref }, config.formId);
       } catch (e) { /* non-fatal */ }
-      // Marketo relabels its submit button to "Please Wait" and only restores it
-      // from its own thank-you/redirect, suppressed below whenever we supply our
-      // own feedback — so swap the form for the confirmation now. This covers
-      // both outcomes of the fire-and-forget handoff (onSuccess must return
-      // synchronously): the visitor sees it whether ChiliPiper's calendar takes
-      // over or never loads.
+
+      // show thank you message and invoke chilipiper
       if (canHandoff) {
         showThankYou(form, placeholders);
-        chiliPiperHandoff(config.chiliPiperRouter, form, leadXref);
+        chiliPiperHandoff(config.chiliPiperRouter, form);
       }
+
+      // handling other use case like download file or redirect to success URL
       if (config.downloadUrl) window.open(config.downloadUrl, '_blank', 'noopener');
       else if (config.successUrl && !canHandoff) window.location.href = config.successUrl;
+
       // Suppress Marketo's default redirect only when we provide our own feedback
       // (ChiliPiper / download / successUrl). Otherwise let Marketo show its
       // thank-you so a misconfigured handoff never leaves the visitor with nothing.
