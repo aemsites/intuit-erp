@@ -85,11 +85,12 @@
 /* legend row */
 .comparison-table .ct-legend { margin: 16px 4px 0; font-size: 12px; color: var(--text-soft); line-height: 1.5; }
 
-/* Legend key. Prod collapses it behind a centred "Chart definition" toggle and
-   centres the expanded lines, so mirror both. Each authored paragraph becomes a
-   line; a leading check/dash glyph is swapped for the same .ck / grey dash the
-   table body uses so the key matches the symbols it explains. Prod's own toggle
-   renders white-on-white (invisible) — we use the standard link colour instead. */
+/* Legend key. The original centres it and collapses it behind a toggle whose
+   label is authored on the legend row, so mirror both. Each authored paragraph
+   becomes a line; a leading check/dash glyph is swapped for the same .ck / grey
+   dash the table body uses so the key matches the symbols it explains. The
+   original's toggle renders white-on-white (invisible) — this uses the standard
+   link colour so the key is discoverable. */
 .comparison-table .ct-legend { text-align: center; }
 
 .comparison-table .ct-legend .ct-legend-item-wrap > summary {

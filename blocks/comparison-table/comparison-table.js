@@ -20,18 +20,14 @@
  *     cell when present, else from a nested tip/second-paragraph on the
  *     first cell. Each paragraph in the second cell renders as its own line,
  *     and a leading check/dash glyph becomes the same marker the table body
- *     uses. An optional THIRD cell supplies the disclosure toggle's label
- *     (defaults to "Chart definition"). Renders as `.ct-legend`, collapsed
- *     behind a `<details>` like the original.
+ *     uses. An optional THIRD cell supplies the disclosure toggle's label; when
+ *     authored the key is collapsed behind a `<details>` like the original,
+ *     and when omitted it renders expanded. Renders as `.ct-legend`.
  *   - Mobile: the table scrolls horizontally within `.cmp-table-scroll`
  *     (see CSS), matching the original rather than reflowing into cards.
  *
  * CSS: blocks/comparison-table/comparison-table.css
  */
-
-// Fallback label for the collapsible legend toggle when the legend row doesn't
-// author one. Matches prod's wording.
-const LEGEND_SUMMARY_DEFAULT = 'Chart definition';
 
 let tipSeq = 0;
 // Tooltip wrappers currently expanded, so a single document-level click
@@ -178,18 +174,18 @@ function legendSourceCell(cells) {
  * @param {Element} container `.ct-legend` element to fill
  * @param {Element|null} cell authored legend cell
  * @param {string} fallbackText plain-text legend used when `cell` is absent
- * @param {string} summaryText label for the disclosure toggle
+ * @param {string} summaryText authored toggle label; when empty the key renders
+ *   expanded instead of collapsed
  */
 /**
  * Returns the authored label for the legend's disclosure toggle — the third cell
- * of the legend row — falling back to LEGEND_SUMMARY_DEFAULT when it's absent or
- * empty, so existing two-cell legend rows keep working.
+ * of the legend row — or '' when none is authored, in which case the legend
+ * renders expanded rather than behind an unlabelled toggle.
  * @param {Element[]} cells
  * @returns {string}
  */
 function legendSummaryText(cells) {
-  const authored = cells.length > 2 ? cells[2].textContent.trim() : '';
-  return authored || LEGEND_SUMMARY_DEFAULT;
+  return cells.length > 2 ? cells[2].textContent.trim() : '';
 }
 
 function legendLine(sourceP) {
@@ -218,17 +214,22 @@ function renderLegend(container, cell, fallbackText, summaryText) {
     container.textContent = fallbackText;
     return;
   }
-  // Prod presents the key collapsed behind a "Chart definition" toggle; mirror
-  // that with a native <details> so it works without JS and stays accessible.
+  const body = document.createElement('div');
+  body.className = 'ct-legend-body';
+  paras.forEach((sourceP) => body.append(legendLine(sourceP)));
+  if (!summaryText) {
+    // No toggle label authored — show the key rather than hide it behind a
+    // blank control.
+    container.append(body);
+    return;
+  }
+  // The original collapses the key behind a labelled toggle; mirror that with a
+  // native <details> so it works without JS and stays accessible.
   const details = document.createElement('details');
   details.className = 'ct-legend-item-wrap';
   const summary = document.createElement('summary');
   summary.textContent = summaryText;
-  details.append(summary);
-  const body = document.createElement('div');
-  body.className = 'ct-legend-body';
-  paras.forEach((sourceP) => body.append(legendLine(sourceP)));
-  details.append(body);
+  details.append(summary, body);
   container.append(details);
 }
 
