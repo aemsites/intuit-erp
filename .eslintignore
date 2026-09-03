@@ -3,6 +3,7 @@ helix-importer-ui
 plugins/experimentation
 plugins/martech
 scripts/martech
+scripts/~partytown
 vitest.config.js
 test
 edge
