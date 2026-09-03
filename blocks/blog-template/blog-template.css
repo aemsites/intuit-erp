@@ -630,7 +630,7 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
   }
 }
 
-.blog-article .highlight { margin: 32px 0; }
+.blog-article .highlight { margin: 32px 0 40px; }
 
 .blog-article .highlight.sky .highlight-inner,
 .blog-article .highlight .highlight-inner {
