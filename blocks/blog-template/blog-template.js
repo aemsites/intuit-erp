@@ -175,7 +175,10 @@ export function buildBylineMeta({ author, date, updated } = {}) {
     a.className = 'blog-byline-author';
     a.append('By ');
     const link = document.createElement('a');
-    link.href = `/blog/author/${toClassName(author)}`;
+    // trailing slash = the canonical served form (author pages are folder+index,
+    // so the slash-free path 404s and only recovers via the 404 page's JS); the
+    // author-bio block links the same slashed path.
+    link.href = `/blog/author/${toClassName(author)}/`;
     link.textContent = author;
     a.append(link);
     meta.append(a);

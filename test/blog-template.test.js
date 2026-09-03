@@ -95,7 +95,7 @@ describe('buildBylineMeta', () => {
   it('links the author name to their author page', () => {
     const el = buildBylineMeta({ author: 'Bryan Bui', date: 'March 9, 2026' });
     const link = el.querySelector('.blog-byline-author a');
-    expect(link.getAttribute('href')).toBe('/blog/author/bryan-bui');
+    expect(link.getAttribute('href')).toBe('/blog/author/bryan-bui/');
     expect(link.textContent).toBe('Bryan Bui');
     expect(el.querySelector('.blog-byline-date').textContent).toBe('Published on March 9, 2026');
   });
