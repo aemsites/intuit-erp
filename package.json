@@ -12,7 +12,7 @@
     "golden:customer": "node scripts/diff/payloads-to-golden.mjs",
     "contract:audit": "node scripts/diff/contract-audit.mjs",
     "golden:crosscheck": "node scripts/diff/golden-crosscheck.mjs",
-    "partytown:copy": "partytown copylib scripts/~partytown --no-debug",
+    "partytown:copy": "partytown copylib scripts/partytown --no-debug",
     "sheet:customer": "node scripts/diff/gen-sheet-from-golden.mjs --golden scripts/diff/fixtures/local/clicktrack-golden-customer.json --out scripts/diff/fixtures/local/tracking-sheet-customer.json",
     "oracle:customer": "npm run --silent sheet:customer && node scripts/diff/customer-oracle.mjs",
     "oracle:customer:floor": "node scripts/diff/customer-oracle.mjs --sheet /nonexistent",

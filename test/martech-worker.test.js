@@ -140,9 +140,9 @@ describe('installMartechWorkerExperiment', () => {
     expect(installMartechWorkerExperiment({ mode: 'segment' })).toBe(segment);
     expect(document.querySelectorAll('#martech-worker-runtime')).toHaveLength(1);
     expect(document.getElementById('martech-worker-runtime').src)
-      .toBe('http://localhost:3000/scripts/~partytown/partytown.js');
+      .toBe('http://localhost:3000/scripts/partytown/partytown.js');
     expect(window.partytown).toEqual(expect.objectContaining({
-      lib: '/scripts/~partytown/',
+      lib: '/scripts/partytown/',
       nonce: 'aem',
       fallbackTimeout: 0,
       mainWindowAccessors: expect.arrayContaining(['intuit', 'appVars', 'mktg_datalayer']),

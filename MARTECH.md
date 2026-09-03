@@ -95,7 +95,7 @@ overrides. To compare runs, use a fresh Chrome profile for baseline, `segment`, 
 consent, viewport, CPU, and network settings identical; and confirm both beacon parity and that the
 selected script evaluations moved from the main renderer thread to the Partytown worker.
 
-The pinned runtime is committed under `scripts/~partytown/`. Regenerate it after an intentional
+The pinned runtime is committed under `scripts/partytown/`. Regenerate it after an intentional
 dependency upgrade with `npm run partytown:copy`.
 
 ## Consent ownership
