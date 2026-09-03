@@ -603,6 +603,10 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
   color: #000;
 }
 
+.blog-article .testimonial-wrapper:has(.testimonial.simple) {
+  margin: 2rem 0;
+}
+
 .blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail) > .default-content-wrapper > p > picture > img {
   display: block;
   margin: 0 auto;
