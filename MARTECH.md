@@ -22,6 +22,13 @@ The two data contracts are documented separately:
    The loader then sends the single initial `utag.view` through the consent guard.
 4. During delayed loading, the site sends a consent-gated `delayed_ready` event.
 
+The opt-in `?martech-phase-split=on` performance experiment changes only steps 3–4. The initial
+view targets all tags that are active under the profile's existing load rules except Floodlight
+(UID 9), Google Ads (UID 15), LivePerson (UID 23), and Demandbase (UID 27). At `delayed_ready`, a
+second targeted view sends those four active tags. A view is required because the deployed
+LivePerson and Demandbase templates do not accept link events. Without the parameter, the original
+unfiltered initial view and delayed link remain unchanged.
+
 The loader is [`plugins/tealium-martech/src/index.js`](plugins/tealium-martech/src/index.js). Adobe
 Web SDK code remains in the repository as commented, inactive integration code; it is not a runtime
 provider and has no query-parameter switch.
@@ -47,6 +54,9 @@ to the production profile.
 | absent, `cdn`, or any unrecognized value | Tealium and consent scripts load from their CDNs |
 | `local` | Tealium and consent scripts load from `/scripts/martech/` |
 | `off` | all martech and ECS enrichment are disabled |
+
+`?martech-phase-split=on` can be combined with the values above. It is a lab switch for controlled
+performance traces, not a replacement for publishing equivalent event-based rules in Tealium iQ.
 
 The `local` vendor directory is workstation-only and not committed, so this mode works from a
 checkout that has the mirrored files but not from a deployed AEM preview. Intuit's OneTrust CDN
