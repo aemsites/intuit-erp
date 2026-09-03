@@ -1,3 +1,6 @@
+import {
+    readCookie,
+  } from './erp-logging.js';
 /**
  * Creates unique uuid string
  */
@@ -58,23 +61,6 @@ export const getQueryParamValue = (paramName) => {
 };
 
 /**
- * Get value of cookie found with accurate key
- * @param {String} cookieName key of the cookie to be retrieved
- * @returns {String} value of cookie if found else null
- */
-export const getCookieValue = (cookieName) => {
-  if (!cookieName) {
-    return null;
-  }
-  const regex = new RegExp(
-    `(?:^|; )${cookieName.replace(/([.$?*|{}()[\]\\/+^])/g, '\\$1')}=([^;]*)`,
-  );
-  const matches = regex.exec(document.cookie);
-
-  return matches ? matches[1] : null;
-};
-
-/**
  * Get value of cid from URL query param or cookies
  * @returns {String} value of cid if found else empty string
  */
@@ -84,7 +70,7 @@ export const getCidValue = () => {
     return cidFromQuery;
   }
 
-  let cidVal = getCookieValue('qbn.qbo_sc') || '';
+  let cidVal = readCookie('qbn.qbo_sc') || '';
   cidVal = (cidVal && cidVal.includes('|') && cidVal.split('|')[0]) || '';
   cidVal = (cidVal && cidVal.includes(':') && cidVal.split(':')[1]) || '';
   return cidVal;
@@ -160,12 +146,8 @@ export const buildPageHierarchy = (
 
 /**
  * Build Track data object.
- * Defaults to the form-submit event shape, but any attribute (action,
- * ui_action, ui_object, ui_object_detail, etc.) can be overridden via
- * `eventOverrides` so this builder can be reused for other event types
  * @returns track object:{Object}
  * @param countryCode
- * @param eventOverrides
  */
 export const getTrackData = (countryCode) => ({
   scope_area: getDynamicScopeArea(countryCode),
@@ -180,7 +162,7 @@ export const getTrackData = (countryCode) => ({
   cid: getCidValue(),
   page_name_parameter: '',
   custom_properties: {},
-  _mkto_trk: getCookieValue('_mkto_trk'),
+  _mkto_trk: readCookie('_mkto_trk'),
 });
 
 /**

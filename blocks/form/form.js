@@ -34,9 +34,12 @@ import {
 } from '../../scripts/chilipiper.js';
 
 import {
+  readCookie,
+} from '../../scripts/erp-logging.js';
+
+import {
   createUUID,
   loadMunchkinTag,
-  getCookieValue,
   getCidValue,
   getTrackData,
   buildPageHierarchy,
@@ -179,19 +182,19 @@ export const getTraitData = (formVals) => {
   return {
     first_name:
     formVals?.FirstName
-      || getFirstAndLastName(formVals?.Full_Name__c, 'first_name'),
+      || getFirstAndLastName(formVals?.Full_Name__c, 'first_name') || '',
     last_name:
     formVals?.LastName
-      || getFirstAndLastName(formVals?.Full_Name__c, 'last_name'),
+      || getFirstAndLastName(formVals?.Full_Name__c, 'last_name') || '',
     full_name: formVals?.Full_Name__c || '',
     email: formVals?.Email || '',
     lead_country: formVals?.CountryCode || '',
     phone: `${phCountryCode}${formVals?.Phone || ''}`,
     type: 'identity',
-    ivid: getCookieValue('ivid'),
-    ecid: getCookieValue('s_ecid'),
-    uidp: getCookieValue('qbn.uidp'),
-    _mkto_trk: getCookieValue('_mkto_trk'),
+    ivid: readCookie('ivid'),
+    ecid: readCookie('s_ecid'),
+    uidp: readCookie('qbn.uidp'),
+    _mkto_trk: readCookie('_mkto_trk'),
     cid: getCidValue(),
   };
 };
@@ -339,25 +342,7 @@ async function setupRecaptcha(cfg, config, form) {
   };
 
   let verified = false;
-  form.onValidate(() => {
-    const formValues = form.getValues();
-    if (formValues?.Full_Name__c) {
-      form.addHiddenFields({
-        FirstName:
-          getFirstAndLastName(
-            form.getValues()?.Full_Name__c,
-            'first_name',
-          ) || '',
-        LastName:
-          getFirstAndLastName(
-            form.getValues()?.Full_Name__c,
-            'last_name',
-          ) || '',
-      });
-    }
-
-    form.submittable(verified);
-  });
+  form.onValidate(() => form.submittable(verified));
 
   await loadScript(`${RECAPTCHA_API_SRC}?render=${siteKey}`);
   let attempts = 0;
@@ -405,9 +390,7 @@ export const getMappedHiddenFields = (configObj) => {
   };
 
   return Object.fromEntries(
-    Object.entries(mappedFields)
-      .filter(([, value]) => value !== undefined)
-      .map(([key, value]) => [key, value]),
+    Object.entries(mappedFields).filter(([, value]) => value !== undefined),
   );
 };
 
@@ -417,22 +400,21 @@ async function embedMarketoForm(formEl, cfg, config, env) {
   if (!munchkin) return;
   const host = `//${munchkin.toLowerCase()}.mktoweb.com`;
   const forms2Src = `${host}/js/forms2/js/forms2.min.js`;
-  const placeholders = await fetchPlaceholders();
 
-  await loadScript(forms2Src);
+  const [placeholders] = await Promise.all([fetchPlaceholders(), loadScript(forms2Src)]);
 
   // load munchkin tag
-  if (config.enableMunchkinTag && getCookieValue('ccpa') === '1|1') {
+  if (config.enableMunchkinTag && readCookie('ccpa') === '1|1') {
     loadMunchkinTag(munchkin);
   }
 
   window.MktoForms2.loadForm(host, munchkin, config.formId, (form) => {
     // Get random UUID
-    const leadXref = createUUID();
+    const leadXref = (window.crypto?.randomUUID ? window.crypto.randomUUID() : createUUID());
 
     // add hidden fields and populate values
     const hiddenFields = { Lead_XRef_ID__c: leadXref };
-    hiddenFields.IVID__c = window?.utag_data?.ivid || getCookieValue('ivid') || '';
+    hiddenFields.IVID__c = window?.utag_data?.ivid || readCookie('ivid') || '';
     hiddenFields.cID = getCidValue() || '';
     const customizedHiddenFields = getMappedHiddenFields(config);
     form.addHiddenFields?.({ ...hiddenFields, ...customizedHiddenFields });
@@ -466,9 +448,29 @@ async function embedMarketoForm(formEl, cfg, config, env) {
     // check for chilipiper config added
     const canHandoff = !!(config.chiliPiperRouter && cfg['chilipiper.subdomain']);
 
+    form.onValidate(() => {
+      const formValues = form.getValues();
+      if (formValues?.Full_Name__c) {
+        form.addHiddenFields({
+          FirstName:
+            getFirstAndLastName(
+              formValues?.Full_Name__c,
+              'first_name',
+            ) || '',
+          LastName:
+            getFirstAndLastName(
+              formValues?.Full_Name__c,
+              'last_name',
+            ) || '',
+        });
+      }
+    });
+
     form.onSuccess((vals) => {
       // invoking ECS tracking
-      trackFormSubmit({ ...vals, Lead_XRef_ID__c: leadXref }, config.formId);
+      try {
+        trackFormSubmit({ ...vals, Lead_XRef_ID__c: leadXref }, config.formId);
+      } catch (e) { /* non-fatal */ }
 
       // show thank you message and invoke chilipiper
       if (canHandoff) {

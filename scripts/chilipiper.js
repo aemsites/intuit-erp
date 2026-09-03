@@ -56,7 +56,7 @@ export async function submitChiliPiper(router, lead) {
   if (!cp?.submit) return false;
   cp.submit(subdomain, router, {
     map: false,
-    leadObj,
+    lead: leadObj,
     disableRelation: true,
     event: { Lead_XRef_ID__c: lead.Lead_XRef_ID__c },
   });
