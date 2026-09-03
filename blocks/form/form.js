@@ -35,7 +35,6 @@ import {
 
 import {
   createUUID,
-  loadMunchkinTag,
   getCidValue,
   getTrackData,
   buildPageHierarchy,
@@ -85,11 +84,14 @@ function marketoEnv() {
   return m === 'dev' || m === 'e2e' ? m : 'prod';
 }
 
-// reCAPTCHA v3 config constants
+// reCAPTCHA v3 constants
 const RECAPTCHA_API_SRC = 'https://www.google.com/recaptcha/api.js';
 const RECAPTCHA_DEFAULT_THRESHOLD = 0.3;
 const RECAPTCHA_MAX_ATTEMPTS = 3;
 const RECAPTCHA_RETRY_MS = 2000;
+
+// munchkin tag constants
+const MUNCHKIN_API_SRC = '//munchkin.marketo.net/munchkin.js';
 
 // getSiteConfig lives in scripts.js; import it dynamically so this block (which
 // scripts.js's graph pulls in for the schedule modal) doesn't form a static cycle.
@@ -149,12 +151,28 @@ export function parseFormConfig(block) {
 // }
 
 /**
+ * Loads the Munchkin JavaScript library for Marketo and initializes it with a specified form ID
+ * @param {String} environment - The unique identifier for the Marketo Munchkin id
+ */
+ const loadMunchkinTag = (munchkinId) => {
+  let didInit = false;
+  const initMunchkin = () => {
+    const munchkin = window.Munchkin;
+    if (munchkin && !didInit) {
+      didInit = true;
+      munchkin.init(munchkinId);
+    }
+  };
+  loadScript(MUNCHKIN_API_SRC);
+};
+
+/**
  * Split full name into First and Last name
  * @returns first or last name {String}
  * @param fullName
  * @param fieldName
  */
-export const getFirstAndLastName = (fullName, fieldName) => {
+const getFirstAndLastName = (fullName, fieldName) => {
   if (fullName) {
     const [firstName, ...rest] = fullName.trim().split(' ');
     const lastName = rest.join(' ');
@@ -170,7 +188,7 @@ export const getFirstAndLastName = (fullName, fieldName) => {
  * @returns trait object:{Object}
  * @param values
  */
-export const getTraitData = (formVals) => {
+const getTraitData = (formVals) => {
   // get phone number country code
   const phCountryCode = formVals?.CountryCode && formVals?.Phone
     ? getPhCountryCodeForGeo(formVals.CountryCode)

@@ -43,27 +43,6 @@ export const createUUID = () => {
 /* eslint-enable no-bitwise */
 
 /**
- * Loads the Munchkin JavaScript library for Marketo and initializes it with a specified form ID
- * @param {String} environment - The unique identifier for the Marketo Munchkin id
- */
-export const loadMunchkinTag = (munchkinId) => {
-  let didInit = false;
-  const initMunchkin = () => {
-    const munchkin = window.Munchkin;
-    if (munchkin && !didInit) {
-      didInit = true;
-      munchkin.init(munchkinId);
-    }
-  };
-
-  const scriptEl = document.createElement('script');
-  scriptEl.type = 'text/javascript';
-  scriptEl.src = '//munchkin.marketo.net/munchkin.js';
-  scriptEl.onload = initMunchkin;
-  document.head.appendChild(scriptEl);
-};
-
-/**
  * Get value of a query param from the current URL
  * @param {String} paramName name of the query param to retrieve
  * @returns {String} value of query param if found else null
