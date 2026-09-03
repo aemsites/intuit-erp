@@ -19,7 +19,7 @@ import {
 import TealiumMartech from '../plugins/tealium-martech/src/index.js';
 import installEcsEnrich from './ecs-enrich.js';
 import { isBlogPage, hasAuthoredCaseStudyHeader } from '../blocks/blog-template/blog-detect.js';
-import { isVideoLink } from '../blocks/video/video-info.js';
+import { isVideoLink, videoInfo } from '../blocks/video/video-info.js';
 import { isGuidePage } from '../blocks/guide-hero/guide-detect.js';
 // eslint-disable-next-line import/no-cycle
 import { applyPageExperience, applyEagerLayers } from './experience.js';
@@ -344,6 +344,72 @@ function decorateSectionBackgrounds(main) {
  * @param {Element} main The main element
  */
 // eslint-disable-next-line import/prefer-default-export
+/**
+ * Opens a video in a dismissible lightbox, reusing the `.video-modal-*` markup
+ * and styles that blocks/video owns. Shared by the video, carousel and hero
+ * blocks and by default-content video links (see decorateVideoLinks).
+ * @param {string} embedUrl provider embed URL
+ * @param {string} title accessible iframe title
+ */
+export function openVideoModal(embedUrl, title) {
+  if (document.querySelector('.video-modal-overlay')) return;
+  loadCSS(`${window.hlx.codeBasePath}/blocks/video/video.css`);
+  const overlay = document.createElement('div');
+  overlay.className = 'video-modal-overlay';
+  const frame = document.createElement('div');
+  frame.className = 'video-modal-frame';
+  const iframe = document.createElement('iframe');
+  iframe.src = embedUrl;
+  iframe.title = title || 'Video';
+  iframe.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+  iframe.allowFullscreen = true;
+  frame.append(iframe);
+  const close = document.createElement('button');
+  close.type = 'button';
+  close.className = 'video-modal-close';
+  close.setAttribute('aria-label', 'Close video');
+  close.textContent = '×';
+  const modal = document.createElement('div');
+  modal.className = 'video-modal';
+  modal.append(close, frame);
+  overlay.append(modal);
+
+  function dismiss() {
+    overlay.remove();
+    // eslint-disable-next-line no-use-before-define
+    document.removeEventListener('keydown', onKey);
+  }
+  function onKey(e) { if (e.key === 'Escape') dismiss(); }
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) dismiss(); });
+  close.addEventListener('click', dismiss);
+  document.addEventListener('keydown', onKey);
+  document.body.append(overlay);
+}
+
+/**
+ * Turns default-content video links/buttons (YouTube/Vimeo) into modal openers.
+ * The anchor is replaced with a <button> — no href means no navigation, the same
+ * approach the video block uses — that opens the video in the lightbox. Links
+ * inside blocks are left alone; those blocks own their own video CTAs.
+ * @param {Element} main The container element
+ */
+function decorateVideoLinks(main) {
+  main.querySelectorAll('a[href]').forEach((a) => {
+    if (a.closest('.block')) return;
+    const info = videoInfo(a.getAttribute('href'));
+    if (!info) return;
+    const button = document.createElement('button');
+    button.type = 'button';
+    // carry over authored classes (button primary/secondary), title, data-track-*
+    [...a.attributes].forEach((attr) => {
+      if (attr.name !== 'href') button.setAttribute(attr.name, attr.value);
+    });
+    button.textContent = a.textContent.trim();
+    button.addEventListener('click', () => openVideoModal(info.embedUrl, button.textContent));
+    a.replaceWith(button);
+  });
+}
+
 export function decorateMain(main) {
   decorateIcons(main);
   buildAutoBlocks(main);
@@ -351,6 +417,7 @@ export function decorateMain(main) {
   decorateSectionBackgrounds(main);
   decorateBlocks(main);
   decorateButtons(main);
+  decorateVideoLinks(main);
 }
 
 /**

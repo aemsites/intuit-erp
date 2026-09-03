@@ -451,7 +451,7 @@
 
 .testimonial.simple .cmp-quote {
   max-width: none;
-  font-size: clamp(28px, 3vw, 44px);
+  font-size: clamp(28px, 3vw, 42px);
   line-height: 1.25;
   font-weight: 700;
 }
