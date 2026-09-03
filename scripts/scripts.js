@@ -45,10 +45,6 @@ const MARTECH_PARAM = new URLSearchParams(window.location.search).get('martech')
 const MARTECH_PROVIDER = MARTECH_PARAM === 'off' ? 'off' : 'tealium';
 // `?martech=local`: load utag.js + the consent stack from /scripts/martech/ instead of the CDNs.
 const MARTECH_LOCAL = MARTECH_PARAM === 'local';
-const MARTECH_WORKER_PARAM = new URLSearchParams(window.location.search).get('martech-worker');
-const MARTECH_WORKER_MODE = ['segment', 'all'].includes(MARTECH_WORKER_PARAM)
-  ? MARTECH_WORKER_PARAM
-  : null;
 
 // Active Tealium instance (undefined when `?martech=off`); exposed via getTealium().
 let tealium;
@@ -443,13 +439,6 @@ async function loadEager(doc) {
   appVars.pznRecDetailsArr = appVars.pznRecDetailsArr || [];
   appVars.pznPageRecDetailsArr = appVars.pznPageRecDetailsArr || [];
   appVars.ixpDetailsArr = appVars.ixpDetailsArr || [];
-
-  // Opt-in lab only. Keep the module out of the normal page graph, but await it before constructing
-  // Tealium so its script-sink interception is guaranteed to exist before any profile tag fires.
-  if (MARTECH_PROVIDER !== 'off' && MARTECH_WORKER_MODE) {
-    const { installMartechWorkerExperiment } = await import('./martech-worker.js');
-    installMartechWorkerExperiment({ mode: MARTECH_WORKER_MODE });
-  }
 
   // Enrich the ECS profile's beacons with EDS-derived values it lost from SSR: page-view
   // pzn/experiments (from appVars) + click page_cas_id (= pathname). Installs before utag loads.
