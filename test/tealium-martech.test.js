@@ -2,8 +2,10 @@ import {
   describe, it, expect, vi, beforeEach, afterEach,
 } from 'vitest';
 import TealiumMartech, {
+  DELAYED_TAG_UIDS,
   isProdHost,
   resolveEnvironment,
+  resolvePhaseTagUids,
   readOptanonConsent,
   readIvid,
   readAkamaiGeo,
@@ -200,6 +202,92 @@ describe('TealiumMartech constructor', () => {
     const tealium = new TealiumMartech();
     expect(tealium.enabled).toBe(false);
     expect(tealium.env).toBeNull();
+  });
+});
+
+describe('experimental phased tag routing', () => {
+  it('preserves active profile order while separating the four delayed tag UIDs', () => {
+    const utag = {
+      loader: {
+        cfgsort: ['32', '9', '23', '27', '21', '15', '99'],
+        cfg: {
+          9: { load: 1, send: 1 },
+          15: { load: 1, send: 1 },
+          21: { load: 1, send: 1 },
+          23: { load: 0, send: 1 },
+          27: { load: 1, send: 1 },
+          32: { load: 1, send: 1 },
+          99: { load: 1, send: 0 },
+        },
+      },
+    };
+
+    expect(resolvePhaseTagUids(utag, 'lazy')).toEqual(['32', '21']);
+    expect(resolvePhaseTagUids(utag, 'delayed')).toEqual(['9', '27', '15']);
+  });
+
+  it('targets the initial view to active non-delayed tags when enabled', () => {
+    stubLocation({ hostname: PROD_HOST });
+    const tealium = new TealiumMartech({ phaseSplit: true });
+    window.utag = {
+      view: vi.fn(),
+      gdpr: { getConsentState: vi.fn(() => 1) },
+      loader: {
+        cfgsort: ['32', '9', '21', '27'],
+        cfg: {
+          9: { load: 1, send: 1 },
+          21: { load: 1, send: 1 },
+          27: { load: 1, send: 1 },
+          32: { load: 1, send: 1 },
+        },
+      },
+    };
+
+    tealium.sendInitialView();
+
+    expect(window.utag.view).toHaveBeenCalledWith(window.utag_data, null, ['32', '21']);
+  });
+
+  it('fires delayed_ready as one targeted view and never duplicates it', () => {
+    stubLocation({ hostname: PROD_HOST });
+    window.utag_data = { page_name: 'business intelligence' };
+    const tealium = new TealiumMartech({ phaseSplit: true });
+    window.utag = {
+      view: vi.fn(),
+      link: vi.fn(),
+      gdpr: { getConsentState: vi.fn(() => 1) },
+      loader: {
+        cfgsort: ['32', '9', '15', '23', '27'],
+        cfg: Object.fromEntries(
+          ['32', ...DELAYED_TAG_UIDS].map((uid) => [uid, { load: 1, send: 1 }]),
+        ),
+      },
+    };
+
+    tealium.delayed();
+    tealium.delayed();
+
+    expect(window.utag.view).toHaveBeenCalledOnce();
+    expect(window.utag.view).toHaveBeenCalledWith({
+      ...window.utag_data,
+      tealium_event: 'delayed_ready',
+    }, null, ['9', '15', '23', '27']);
+    expect(window.utag.link).not.toHaveBeenCalled();
+  });
+
+  it('keeps the existing unfiltered delayed link when the experiment is disabled', () => {
+    stubLocation({ hostname: PROD_HOST });
+    const tealium = new TealiumMartech();
+    window.utag = {
+      view: vi.fn(),
+      link: vi.fn(),
+      gdpr: { getConsentState: vi.fn(() => 1) },
+    };
+
+    tealium.delayed();
+
+    expect(window.utag.link).toHaveBeenCalledWith({ tealium_event: 'delayed_ready' });
+    expect(window.utag.view).not.toHaveBeenCalled();
   });
 });
 

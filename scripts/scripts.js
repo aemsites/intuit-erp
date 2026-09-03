@@ -41,10 +41,13 @@ import { applyPageExperience, applyEagerLayers } from './experience.js';
 // Tealium still self-gates via TealiumMartech's `resolveEnvironment`
 // (plugins/tealium-martech/src/index.js): only erp.intuit.com -> 'prod'; stage.erp.intuit.com, the
 // aem.page/aem.live previews, and localhost -> 'dev'; every other host stays inert.
-const MARTECH_PARAM = new URLSearchParams(window.location.search).get('martech');
+const URL_PARAMS = new URLSearchParams(window.location.search);
+const MARTECH_PARAM = URL_PARAMS.get('martech');
 const MARTECH_PROVIDER = MARTECH_PARAM === 'off' ? 'off' : 'tealium';
 // `?martech=local`: load utag.js + the consent stack from /scripts/martech/ instead of the CDNs.
 const MARTECH_LOCAL = MARTECH_PARAM === 'local';
+// Lab-only: keep most active tags in lazy, but move UIDs 9/15/23/27 to delayed_ready.
+const MARTECH_PHASE_SPLIT = URL_PARAMS.get('martech-phase-split') === 'on';
 
 // Active Tealium instance (undefined when `?martech=off`); exposed via getTealium().
 let tealium;
@@ -456,7 +459,10 @@ async function loadEager(doc) {
 
   // Tealium (default): loads only once resolveEnvironment recognizes the host; inert elsewhere.
   if (MARTECH_PROVIDER === 'tealium') {
-    tealium = new TealiumMartech({ local: MARTECH_LOCAL });
+    tealium = new TealiumMartech({
+      local: MARTECH_LOCAL,
+      phaseSplit: MARTECH_PHASE_SPLIT,
+    });
     tealium.eager();
   }
 
