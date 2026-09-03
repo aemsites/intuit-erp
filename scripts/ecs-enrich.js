@@ -1,9 +1,12 @@
 /**
  * ECS beacon ENRICH — one eager shim that backfills the values the injected `ies-erp` profile
  * used to get from Next.js SSR (`__NEXT_DATA__`), which does not exist on Edge Delivery. It traps
- * `window.intuit.tracking.ecs.webAnalytics` once (before utag.js loads) and wraps both calls:
+ * `window.intuit.tracking.ecs` once (before utag.js loads) and wraps its sender calls:
  *
- *   - trackPage (screen:viewed) — fills personalization_details / experiment_ids from appVars.
+ *   - webAnalytics.trackPage — fills personalization_details / experiment_ids before ECS prepares
+ *     the page payload;
+ *   - analytics.page — restores those fields at the final Segment boundary in case ECS preparation
+ *     filtered them;
  *   - track (content:* clicks)  — fills page_cas_id + global experiment_ids.
  *
  * One module, one trap, no double-fire, no profile change. Kept together (same bucket, one fetch on
@@ -16,6 +19,7 @@
 // Per-method wrap markers (Symbols → no collision, hidden from JSON/keys); each wrap is
 // independently idempotent, so installing (wraps both) and standalone use each no-op on a re-wrap.
 const WRAPPED_PAGE = Symbol('ecsWrappedPage');
+const WRAPPED_SEGMENT_PAGE = Symbol('ecsWrappedSegmentPage');
 const WRAPPED_EVENT = Symbol('ecsWrappedEvent');
 
 let currentClick;
@@ -224,7 +228,30 @@ export function whenAssigned(obj, key, cb) {
 }
 
 /**
- * Traps window.intuit.tracking.ecs.webAnalytics and wraps trackPage + track (each independently
+ * Enriches the final Segment page properties. The live ECS sender rebuilds the payload after
+ * webAnalytics.trackPage, so runtime-only fields must also be restored on analytics.page's third
+ * argument immediately before Segment receives it.
+ */
+export function wrapSegmentPage(analytics) {
+  if (!analytics || typeof analytics !== 'object') return;
+  whenAssigned(analytics, 'page', (page) => {
+    if (typeof page !== 'function' || page[WRAPPED_SEGMENT_PAGE]) return;
+    const original = page.bind(analytics);
+    const wrapped = function enrichedSegmentPage(category, name, properties, ...rest) {
+      try {
+        enrichPagePayload(properties, (typeof window !== 'undefined' && window.appVars) || {});
+      } catch (e) {
+        // fail-open — enrichment must never block the real call
+      }
+      return original(category, name, properties, ...rest);
+    };
+    wrapped[WRAPPED_SEGMENT_PAGE] = true;
+    try { analytics.page = wrapped; } catch (e) { /* non-writable — best-effort no-op */ }
+  });
+}
+
+/**
+ * Traps window.intuit.tracking.ecs sender objects and wraps page + click calls (each independently
  * idempotent). Call in the eager phase, before utag.js loads.
  */
 export default function installEcsEnrich() {
@@ -236,6 +263,7 @@ export default function installEcsEnrich() {
       if (!tracking || typeof tracking !== 'object') return;
       whenAssigned(tracking, 'ecs', (ecs) => {
         if (!ecs || typeof ecs !== 'object') return;
+        whenAssigned(ecs, 'analytics', wrapSegmentPage);
         whenAssigned(ecs, 'webAnalytics', (wa) => { wrapTrack(wa); wrapTrackPage(wa); });
       });
     });

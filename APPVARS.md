@@ -51,9 +51,12 @@ so the profile can leave `personalization_details` and `experiment_ids` empty ev
 `window.appVars` is populated.
 
 [`scripts/ecs-enrich.js`](scripts/ecs-enrich.js) is the temporary bridge. Installed before Tealium,
-it wraps the profile's ECS `webAnalytics` object and only fills fields the profile left empty:
+it wraps the profile's ECS `webAnalytics` object and the final Segment `analytics.page` boundary,
+and only fills fields the profile left empty. The final boundary is required because the ECS sender
+rebuilds page properties after `webAnalytics.trackPage` and otherwise filters runtime-only fields:
 
-- `trackPage`: `personalization_details` and `experiment_ids` from `window.appVars`;
+- `trackPage` / `analytics.page`: `personalization_details` and `experiment_ids` from
+  `window.appVars`;
 - `track`: `page_cas_id` from the pathname and global `experiment_ids`.
 
 The shim is skipped with `?martech=off`, never overwrites a non-empty profile value, and does not
@@ -69,7 +72,8 @@ Unit coverage lives in [`test/experience.test.js`](test/experience.test.js) and
 
 - the four-field `window.appVars` contract and types;
 - the `data-pzn-*` DOM channel;
-- the outgoing `screen:viewed` personalization payload when the production baseline has one.
+- the outgoing `screen:viewed` PZN/IXP payload when production or measured `appVars` proves the
+  fields should be present.
 
 ```bash
 # Compare an authenticated local build with the committed production baseline
