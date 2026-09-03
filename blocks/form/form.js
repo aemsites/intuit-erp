@@ -154,7 +154,7 @@ export function parseFormConfig(block) {
  * Loads the Munchkin JavaScript library for Marketo and initializes it with a specified form ID
  * @param {String} environment - The unique identifier for the Marketo Munchkin id
  */
- const loadMunchkinTag = (munchkinId) => {
+const loadMunchkinTag = (munchkinId) => {
   let didInit = false;
   const initMunchkin = () => {
     const munchkin = window.Munchkin;
@@ -163,7 +163,7 @@ export function parseFormConfig(block) {
       munchkin.init(munchkinId);
     }
   };
-  loadScript(MUNCHKIN_API_SRC);
+  loadScript(MUNCHKIN_API_SRC).then(initMunchkin);
 };
 
 /**
@@ -184,11 +184,25 @@ const getFirstAndLastName = (fullName, fieldName) => {
 };
 
 /**
+ * When the form uses a single Full_Name__c field, split it into Marketo
+ * FirstName/LastName hidden fields before submit.
+ * @param {Object} form Marketo form instance
+ */
+function syncFullNameHiddenFields(form) {
+  const formValues = form.getValues();
+  if (!formValues?.Full_Name__c) return;
+  form.addHiddenFields({
+    FirstName: getFirstAndLastName(formValues.Full_Name__c, 'first_name') || '',
+    LastName: getFirstAndLastName(formValues.Full_Name__c, 'last_name') || '',
+  });
+}
+
+/**
  * Build Trait data object
  * @returns trait object:{Object}
  * @param values
  */
-const getTraitData = (formVals) => {
+export const getTraitData = (formVals) => {
   // get phone number country code
   const phCountryCode = formVals?.CountryCode && formVals?.Phone
     ? getPhCountryCodeForGeo(formVals.CountryCode)
@@ -357,7 +371,10 @@ async function setupRecaptcha(cfg, config, form) {
   };
 
   let verified = false;
-  form.onValidate(() => form.submittable(verified));
+  form.onValidate(() => {
+    syncFullNameHiddenFields(form);
+    form.submittable(verified);
+  });
 
   await loadScript(`${RECAPTCHA_API_SRC}?render=${siteKey}`);
   let attempts = 0;
@@ -458,28 +475,16 @@ async function embedMarketoForm(formEl, cfg, config, env) {
     }
 
     // recaptcha
-    setupRecaptcha(cfg, config, form);
+    if (config.recaptcha) {
+      setupRecaptcha(cfg, config, form);
+    } else {
+      form.onValidate(() => {
+        syncFullNameHiddenFields(form);
+      });
+    }
 
     // check for chilipiper config added
     const canHandoff = !!(config.chiliPiperRouter && cfg['chilipiper.subdomain']);
-
-    form.onValidate(() => {
-      const formValues = form.getValues();
-      if (formValues?.Full_Name__c) {
-        form.addHiddenFields({
-          FirstName:
-            getFirstAndLastName(
-              formValues?.Full_Name__c,
-              'first_name',
-            ) || '',
-          LastName:
-            getFirstAndLastName(
-              formValues?.Full_Name__c,
-              'last_name',
-            ) || '',
-        });
-      }
-    });
 
     form.onSuccess((vals) => {
       // invoking ECS tracking

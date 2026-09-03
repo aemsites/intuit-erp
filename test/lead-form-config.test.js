@@ -300,12 +300,12 @@ describe('decorate — reCAPTCHA v3 gate', () => {
   const okScore = () => Promise.resolve({ json: () => Promise.resolve({ success: true, score: 0.9 }) });
   const lowScore = () => Promise.resolve({ json: () => Promise.resolve({ success: true, score: 0.1 }) });
 
-  it('does not load reCAPTCHA or register a gate when the form does not opt in', async () => {
+  it('does not load reCAPTCHA when the form does not opt in', async () => {
     getSiteConfig.mockResolvedValue(RECAPTCHA_CFG);
     global.fetch = vi.fn(okScore);
     await decorate(make([['formId', '1058']])); // no recaptcha row
     await flush();
-    expect(onValidateFn).toBeNull();
+    expect(onValidateFn).toBeTypeOf('function');
     expect(window.grecaptcha).toBeUndefined();
   });
 
