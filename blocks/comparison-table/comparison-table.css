@@ -85,6 +85,26 @@
 /* legend row */
 .comparison-table .ct-legend { margin: 16px 4px 0; font-size: 12px; color: var(--text-soft); line-height: 1.5; }
 
+/* Legend key. Prod collapses it behind a centred "Chart definition" toggle and
+   centres the expanded lines, so mirror both. Each authored paragraph becomes a
+   line; a leading check/dash glyph is swapped for the same .ck / grey dash the
+   table body uses so the key matches the symbols it explains. Prod's own toggle
+   renders white-on-white (invisible) — we use the standard link colour instead. */
+.comparison-table .ct-legend { text-align: center; }
+.comparison-table .ct-legend .ct-legend-item-wrap > summary {
+  list-style: none; cursor: pointer; color: var(--link-color); font-size: 13.33px; font-weight: 600;
+}
+.comparison-table .ct-legend .ct-legend-item-wrap > summary::-webkit-details-marker { display: none; }
+.comparison-table .ct-legend .ct-legend-body { margin-top: 12px; font-size: 14px; color: var(--text-color); }
+.comparison-table .ct-legend .ct-legend-item { display: block; }
+.comparison-table .ct-legend .ct-legend-item + .ct-legend-item { margin-top: 4px; }
+.comparison-table .ct-legend .ck { display: inline-block; width: 12px; height: 12px; position: relative; margin-right: 4px; }
+.comparison-table .ct-legend .ck::after {
+  content: ""; position: absolute; left: 3px; top: 0; width: 4px; height: 8px;
+  border: solid var(--primary); border-width: 0 2px 2px 0; transform: rotate(45deg);
+}
+.comparison-table .ct-legend .ct-dash { margin-right: 4px; }
+
 /* Mobile matches the original: the table scrolls horizontally inside
    .cmp-table-scroll rather than reflowing. The group band and footnote are
    pinned to the left (sticky) so they read as full-width bars while the value
