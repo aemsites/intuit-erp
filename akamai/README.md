@@ -12,10 +12,8 @@ inlining. It is a faithful Akamai port of Adobe's Cloudflare/Fastly reference,
 
 ## 1. Why
 
-Pages are served by aem.live with **empty** `<header></header>` and `<footer></footer>`;
-the browser currently makes two extra requests (`/nav.plain.html`, `/footer.plain.html`)
-to build the chrome. Inlining them at the edge removes those round-trips and puts the
-nav/footer in the first byte (better a11y landmarks + crawlability).
+Inline `<header></header>` and `<footer></footer>`; to the initial payload
+
 
 **The catch — cache invalidation.** aem.live uses *push invalidation*: when content
 changes it calls the Akamai **Fast Purge API** (Delete by URL **and** Delete by cache
@@ -121,7 +119,7 @@ must stay external.)
 ## 7. EdgeWorkers limits this design respects
 
 - **Body must be a stream.** A string body in `responseProvider` caps at **16 KB**; pages
-  are larger (homepage ≈ 64 KB), so the worker returns a `ReadableStream`.
+  are larger, so the worker returns a `ReadableStream`.
 - **Subrequests:** HTTPS only, no port, ≤ 5 MB response, ≤ **1 s** wall-time each. Nav/footer
   are tiny; two are fetched in parallel.
 
