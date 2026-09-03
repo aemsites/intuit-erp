@@ -34,7 +34,13 @@ import {
 } from '../../scripts/chilipiper.js';
 
 import {
-  createUUID, loadMunchkinTag, getCookieValue, getCidValue, getTrackData, buildPageHierarchy, getPhCountryCodeForGeo
+  createUUID,
+  loadMunchkinTag,
+  getCookieValue,
+  getCidValue,
+  getTrackData,
+  buildPageHierarchy,
+  getPhCountryCodeForGeo,
 } from '../../scripts/utils.js';
 
 // Uncomment with the AEP/WebSDK integration in scripts/scripts.js.
@@ -166,18 +172,17 @@ export const getFirstAndLastName = (fullName, fieldName) => {
  */
 export const getTraitData = (formVals) => {
   // get phone number country code
-  const phCountryCode =
-  formVals?.CountryCode && formVals?.Phone
-      ? getPhCountryCodeForGeo(formVals.CountryCode)
-      : '';
+  const phCountryCode = formVals?.CountryCode && formVals?.Phone
+    ? getPhCountryCodeForGeo(formVals.CountryCode)
+    : '';
 
   return {
     first_name:
-    formVals?.FirstName ||
-      getFirstAndLastName(formVals?.Full_Name__c, 'first_name'),
+    formVals?.FirstName
+      || getFirstAndLastName(formVals?.Full_Name__c, 'first_name'),
     last_name:
-    formVals?.LastName ||
-      getFirstAndLastName(formVals?.Full_Name__c, 'last_name'),
+    formVals?.LastName
+      || getFirstAndLastName(formVals?.Full_Name__c, 'last_name'),
     full_name: formVals?.Full_Name__c || '',
     email: formVals?.Email || '',
     lead_country: formVals?.CountryCode || '',
@@ -196,20 +201,18 @@ export const getTraitData = (formVals) => {
  * @returns campaign details object:{Object}
  * @param values
  */
-const getCustomProperties = (formVals, formId) => {
-  return {
-    form_id: formId || formVals?.formid || '',
-    product_family_of_interest: formVals?.Product_Family_of_Interest__c || '',
-    product_of_interest: formVals?.Primary_Product_of_Interest__c || '',
-    lead_source: formVals?.LeadSource || '',
-    lead_treatment_name: formVals?.Legacy_Treatment_Name__c || '',
-    lead_language: formVals?.Language__c || 'English',
-    lead_xref_id: formVals?.Lead_XRef_ID__c || '',
-    legacy_campaign_name: formVals?.Legacy_Campaign_Name__c || '',
-    market: formVals?.CountryCode || '',
-    productRegion: formVals?.CountryCode || ''
-  };
-};
+const getCustomProperties = (formVals, formId) => ({
+  form_id: formId || formVals?.formid || '',
+  product_family_of_interest: formVals?.Product_Family_of_Interest__c || '',
+  product_of_interest: formVals?.Primary_Product_of_Interest__c || '',
+  lead_source: formVals?.LeadSource || '',
+  lead_treatment_name: formVals?.Legacy_Treatment_Name__c || '',
+  lead_language: formVals?.Language__c || 'English',
+  lead_xref_id: formVals?.Lead_XRef_ID__c || '',
+  legacy_campaign_name: formVals?.Legacy_Campaign_Name__c || '',
+  market: formVals?.CountryCode || '',
+  productRegion: formVals?.CountryCode || '',
+});
 
 export function trackFormSubmit(formVals, formId) {
   const webAnalyticsObj = window.intuit?.tracking?.ecs?.webAnalytics;
@@ -306,7 +309,7 @@ async function chiliPiperHandoff(router, form) {
   return true;
 }
 
-// reCAPTCHA v3 
+// reCAPTCHA v3
 async function setupRecaptcha(cfg, config, form) {
   const siteKey = cfg['recaptcha.siteKey'];
   const verifyUrl = cfg['recaptcha.verifyUrl'];
@@ -343,13 +346,13 @@ async function setupRecaptcha(cfg, config, form) {
         FirstName:
           getFirstAndLastName(
             form.getValues()?.Full_Name__c,
-            'first_name'
+            'first_name',
           ) || '',
         LastName:
           getFirstAndLastName(
             form.getValues()?.Full_Name__c,
-            'last_name'
-          ) || ''
+            'last_name',
+          ) || '',
       });
     }
 
@@ -398,25 +401,24 @@ export const getMappedHiddenFields = (configObj) => {
     Legacy_Campaign_Name__c: configObj?.leadLegacyCampaign,
     CountryCode: configObj?.leadCountryCode,
     Country: configObj?.leadCountry,
-    Language__c: configObj?.leadLanguage
+    Language__c: configObj?.leadLanguage,
   };
 
   return Object.fromEntries(
     Object.entries(mappedFields)
       .filter(([, value]) => value !== undefined)
-      .map(([key, value]) => [key, value])
+      .map(([key, value]) => [key, value]),
   );
 };
 
 async function embedMarketoForm(formEl, cfg, config, env) {
-
   // generate an load Forms2 script URL.
   const munchkin = config.munchkinId || cfg[MARKETO_MUNCHKIN_KEYS[env]] || cfg['marketo.munchkin'];
   if (!munchkin) return;
   const host = `//${munchkin.toLowerCase()}.mktoweb.com`;
   const forms2Src = `${host}/js/forms2/js/forms2.min.js`;
   const placeholders = await fetchPlaceholders();
-  
+
   await loadScript(forms2Src);
 
   // load munchkin tag
@@ -425,11 +427,10 @@ async function embedMarketoForm(formEl, cfg, config, env) {
   }
 
   window.MktoForms2.loadForm(host, munchkin, config.formId, (form) => {
-
-    //Get random UUID
+    // Get random UUID
     const leadXref = createUUID();
-    
-    //add hidden fields and populate values
+
+    // add hidden fields and populate values
     const hiddenFields = { Lead_XRef_ID__c: leadXref };
     hiddenFields.IVID__c = window?.utag_data?.ivid || getCookieValue('ivid') || '';
     hiddenFields.cID = getCidValue() || '';
@@ -461,7 +462,7 @@ async function embedMarketoForm(formEl, cfg, config, env) {
 
     // recaptcha
     setupRecaptcha(cfg, config, form);
-  
+
     // check for chilipiper config added
     const canHandoff = !!(config.chiliPiperRouter && cfg['chilipiper.subdomain']);
 
@@ -474,7 +475,7 @@ async function embedMarketoForm(formEl, cfg, config, env) {
         showThankYou(form, placeholders);
         chiliPiperHandoff(config.chiliPiperRouter, form);
       }
-      
+
       // handling other use case like download file or redirect to success URL
       if (config.downloadUrl) window.open(config.downloadUrl, '_blank', 'noopener');
       else if (config.successUrl && !canHandoff) window.location.href = config.successUrl;
@@ -484,7 +485,6 @@ async function embedMarketoForm(formEl, cfg, config, env) {
       // thank-you so a misconfigured handoff never leaves the visitor with nothing.
       const handled = canHandoff || !!config.downloadUrl || !!config.successUrl;
       return !handled;
-
     });
   });
 }

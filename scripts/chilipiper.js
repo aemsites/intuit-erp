@@ -47,7 +47,7 @@ export async function submitChiliPiper(router, lead) {
     Phone: lead.Phone || '',
     Country: lead.Country || '',
     Number_of_Employees__c: lead.NumberOfEmployees || '',
-    Language: lead.Language__c || ''
+    Language: lead.Language__c || '',
   };
   const cfg = await chilipiperConfig();
   const subdomain = cfg['chilipiper.subdomain'];
@@ -62,4 +62,3 @@ export async function submitChiliPiper(router, lead) {
   });
   return true;
 }
-
