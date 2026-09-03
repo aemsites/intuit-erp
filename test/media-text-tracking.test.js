@@ -1,5 +1,5 @@
 import {
-  describe, it, expect, beforeEach,
+  describe, it, expect, beforeEach, afterEach, vi,
 } from 'vitest';
 // Real-render wiring guard for media-text's AI-agents promo CTA. On /accounting the "Explore
 // agents" button is a loose media-text CTA that prod tags with the upstream `feature` component's
@@ -37,6 +37,28 @@ function makeMediaText() {
   return block;
 }
 
+function makeCompareMediaText() {
+  const block = document.createElement('div');
+  block.className = 'media-text compare block';
+  block.setAttribute('data-block-name', 'media-text');
+  block.innerHTML = ''
+    + '<div>'
+    + '  <div>'
+    + '    <h2>Payroll</h2>'
+    + '    <p class="button-wrapper"><a class="button primary" href="/">Schedule a consultation</a></p>'
+    + '  </div>'
+    + '  <div><img src="/payroll.png" alt="Payroll"></div>'
+    + '</div>'
+    + '<div>'
+    + '  <div>'
+    + '    <h2>Payments</h2>'
+    + '    <p class="button-wrapper"><a class="button primary" href="https://quickbooks.intuit.com/desktop/enterprise/">Find out more</a></p>'
+    + '  </div>'
+    + '  <div><img src="/payments.png" alt="Payments"></div>'
+    + '</div>';
+  return block;
+}
+
 function setup() {
   document.head.innerHTML = ''; document.body.innerHTML = ''; resetTrackingState();
   const main = document.createElement('main');
@@ -48,7 +70,11 @@ function setup() {
 }
 
 describe('media-text — AI-agents feature CTA tracking (JIT-derived)', () => {
-  beforeEach(() => { document.head.innerHTML = ''; document.body.innerHTML = ''; resetTrackingState(); });
+  beforeEach(() => {
+    document.head.innerHTML = ''; document.body.innerHTML = ''; resetTrackingState();
+    window.history.replaceState({}, '', '/');
+  });
+  afterEach(() => { vi.unstubAllGlobals(); });
 
   it('the /ai-agents promo CTA JIT-stamps the authored feature|explore_agents_cta residue', () => {
     const block = setup();
@@ -86,5 +112,76 @@ describe('media-text — AI-agents feature CTA tracking (JIT-derived)', () => {
     expect(other.getAttribute('data-object-detail')).toBeNull();
     expect(other.getAttribute('data-wa-link')).toBeNull();
     expect(other.getAttribute('data-ui-object-detail')).toBe('Refer a client');
+  });
+
+  it('the compare variant resolves its authored sheet row through the cards namespace', async () => {
+    window.history.replaceState({}, '', '/erp-solutions');
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: [{
+        path: '/erp-solutions',
+        id: 'cards:schedule-a-consultation',
+        'object-detail': 'payroll card',
+        action: 'goto',
+        'wa-link': 'see-plans-payroll',
+      }] }),
+    }));
+    const main = document.createElement('main');
+    const block = makeCompareMediaText();
+    main.append(block); document.body.append(main);
+    decorate(block);
+    initTracking(document);
+    const cta = block.querySelector('a.button');
+
+    await vi.waitFor(() => {
+      stampInteraction({ target: cta });
+      expect(cta.getAttribute('data-track-id')).toBe('cards:erp');
+      expect(cta.getAttribute('data-object-detail')).toBe('payroll card');
+      expect(cta.getAttribute('data-action')).toBe('goto');
+      expect(cta.getAttribute('data-wa-link')).toBe('see-plans-payroll');
+    });
+
+    expect(computeTrackingPayload(cta).ui_access_point)
+      .toBe('rw_cards_container|carousel|rw_card_1');
+    const payments = block.querySelectorAll('a.button')[1];
+    stampInteraction({ target: payments });
+    expect(computeTrackingPayload(payments).ui_access_point)
+      .toBe('rw_cards_container|carousel|rw_card_2');
+  });
+});
+
+// media-text CTAs inside content rendered by the `fragment` block open in a new tab (see
+// OVERRIDES.md "Fragment-rendered content"). fragment.js marks the detached <main> it builds
+// with data-fragment="true" before decorating it, so the block sees the attribute on an
+// ancestor — never a `.fragment` class, the markup isn't in the page yet at that point.
+function setupInFragment() {
+  document.head.innerHTML = ''; document.body.innerHTML = ''; resetTrackingState();
+  const main = document.createElement('main');
+  main.dataset.fragment = 'true';
+  const block = makeMediaText();
+  main.append(block); document.body.append(main);
+  decorate(block);
+  return block;
+}
+
+describe('media-text — fragment-rendered CTAs open in a new tab', () => {
+  beforeEach(() => { document.head.innerHTML = ''; document.body.innerHTML = ''; resetTrackingState(); });
+
+  it('gives every .button-wrapper CTA target=_blank + rel=noopener under [data-fragment]', () => {
+    const ctas = [...setupInFragment().querySelectorAll('.media-copy .button-wrapper a')];
+    expect(ctas).toHaveLength(2);
+    ctas.forEach((cta) => {
+      expect(cta.getAttribute('target')).toBe('_blank');
+      expect(cta.getAttribute('rel')).toBe('noopener');
+    });
+  });
+
+  it('leaves page-authored CTAs in the same tab (no [data-fragment] ancestor)', () => {
+    const ctas = [...setup().querySelectorAll('.media-copy .button-wrapper a')];
+    expect(ctas).toHaveLength(2);
+    ctas.forEach((cta) => {
+      expect(cta.getAttribute('target')).toBeNull();
+      expect(cta.getAttribute('rel')).toBeNull();
+    });
   });
 });

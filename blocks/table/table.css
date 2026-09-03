@@ -1,3 +1,19 @@
 /* table — baseline layout only. */
-.table { width: 100%; }
-.table > div { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
+.table {
+  width: 100%;
+}
+
+.table > div {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  border: 1px solid var(--tofu);
+
+  > div {
+    padding: 0.5rem 1rem;
+  }
+
+  & [role="columnheader"] {
+    background: var(--tofu);
+    font-weight: 600;
+  }
+}

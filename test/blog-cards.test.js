@@ -1,7 +1,11 @@
-import { describe, it, expect } from 'vitest';
 import {
+  describe, it, expect, beforeEach, vi,
+} from 'vitest';
+import decorate, {
   filterEntries, cardEl, categoryLabel, distinctValues,
 } from '../blocks/blog-cards/blog-cards.js';
+import { initTracking, resetTrackingState, stampInteraction } from '../scripts/tracking.js';
+import { computeTrackingPayload } from '../scripts/diff/tracker-replica.mjs';
 
 const data = [
   {
@@ -15,6 +19,25 @@ const data = [
   },
 ];
 
+// The two shapes the live feed carries in `hero-video-url` (an /embed/ URL and a
+// watch?v= one); both must resolve to a play badge + lightbox.
+const videoEntry = {
+  path: '/blog/case-study/hfmm-legacy-group-growth',
+  title: 'HFMM legacy group growth',
+  category: 'case-study',
+  date: '2026-02-15',
+  image: '/hfmm.jpg',
+  'hero-video-url': 'https://www.youtube.com/embed/Wk8JSGDOvx8?autoplay=1&showinfo=0&rel=0&enablejsapi=1',
+};
+
+const watchVideoEntry = {
+  path: '/blog/product-update/summer-2026-release-notes',
+  title: 'Summer 2026 release notes',
+  category: 'product-update',
+  date: '2026-02-10',
+  'hero-video-url': 'https://www.youtube.com/watch?v=asJBXQnNFyo',
+};
+
 describe('filterEntries', () => {
   it('filters by category and sorts by date desc', () => {
     const out = filterEntries(data, { category: 'financials' });
@@ -27,6 +50,14 @@ describe('filterEntries', () => {
   });
   it('excludes the current path (for recommended grids)', () => {
     const out = filterEntries(data, { category: 'financials', excludePath: '/blog/financials/a' });
+    expect(out.map((e) => e.title)).toEqual(['C']);
+  });
+  it('excludes the current path despite a trailing-slash mismatch', () => {
+    // post-folderization the live pathname carries a trailing slash; the feed/author value may not
+    const slashedExclude = filterEntries(data, { category: 'financials', excludePath: '/blog/financials/a/' });
+    expect(slashedExclude.map((e) => e.title)).toEqual(['C']);
+    const slashedFeed = data.map((e) => ({ ...e, path: `${e.path}/` }));
+    const out = filterEntries(slashedFeed, { category: 'financials', excludePath: '/blog/financials/a' });
     expect(out.map((e) => e.title)).toEqual(['C']);
   });
   it('excludes listing pages by their template metadata, not their path', () => {
@@ -158,6 +189,45 @@ describe('cardEl', () => {
     expect(el.classList.contains('featured')).toBe(true);
     expect(el.querySelector('img').getAttribute('src')).toContain('width=750');
   });
+  it('leaves a card with no hero-video-url untouched (no badge, no video class)', () => {
+    const el = cardEl(data[0]);
+    expect(el.classList.contains('has-video')).toBe(false);
+    expect(el.querySelector('.blog-card-play')).toBeNull();
+    expect(el.querySelector('.blog-card-image').getAttribute('role')).toBeNull();
+    expect(el.querySelector('.blog-card-link')).toBeNull();
+  });
+  it('marks a hero-video post with .has-video and a play badge on the thumbnail', () => {
+    const el = cardEl(videoEntry);
+    expect(el.classList.contains('has-video')).toBe(true);
+    const play = el.querySelector('.blog-card-image .blog-card-play');
+    expect(play).not.toBeNull();
+    expect(play.getAttribute('aria-hidden')).toBe('true');
+  });
+  it('makes the thumbnail the play control and keeps the article link on the body', () => {
+    const el = cardEl(videoEntry);
+    // the control must be a SIBLING of the link — a focusable control inside an <a>
+    // is invalid markup and unreachable by keyboard
+    expect(el.tagName).toBe('DIV');
+    expect(el.getAttribute('href')).toBeNull();
+    const imageWrap = el.querySelector('.blog-card-image');
+    expect(imageWrap.getAttribute('role')).toBe('button');
+    expect(imageWrap.getAttribute('tabindex')).toBe('0');
+    expect(imageWrap.getAttribute('aria-label')).toBe('Play video: HFMM legacy group growth');
+    const link = el.querySelector('.blog-card-content-slot > a.blog-card-link');
+    expect(link.getAttribute('href')).toBe('/blog/case-study/hfmm-legacy-group-growth');
+    expect(link.querySelector('.blog-card-body .blog-card-title').textContent)
+      .toBe('HFMM legacy group growth');
+    expect(imageWrap.querySelector('a')).toBeNull();
+  });
+  it('falls back to the provider thumbnail when a video post has no authored image', () => {
+    const el = cardEl(watchVideoEntry);
+    expect(el.classList.contains('has-video')).toBe(true);
+    expect(el.querySelector('img').getAttribute('src')).toContain('i.ytimg.com/vi/asJBXQnNFyo');
+  });
+  it('keeps the authored image as the poster when there is one', () => {
+    const el = cardEl(videoEntry);
+    expect(el.querySelector('img').getAttribute('src')).toContain('/hfmm.jpg');
+  });
 });
 
 describe('distinctValues', () => {
@@ -166,5 +236,200 @@ describe('distinctValues', () => {
   });
   it('returns an empty array when no entry has the field', () => {
     expect(distinctValues(data, 'industry')).toEqual([]);
+  });
+});
+
+// --- video lightbox -------------------------------------------------------
+// The play control is a real DOM control, so these mount the card and drive it
+// the way a user does (pointer + keyboard), then assert the overlay's lifecycle.
+
+function mountCard(entry) {
+  document.body.innerHTML = '';
+  const card = cardEl(entry);
+  document.body.append(card);
+  return card;
+}
+
+function currentOverlay() {
+  return document.querySelector('.blog-card-video-overlay');
+}
+
+function click(el) {
+  el.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+}
+
+function press(el, key) {
+  const e = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true });
+  el.dispatchEvent(e);
+  return e;
+}
+
+describe('cardEl — video lightbox', () => {
+  beforeEach(() => { document.body.innerHTML = ''; });
+
+  it('opens the player on a pointer click anywhere on the poster', () => {
+    const card = mountCard(videoEntry);
+    click(card.querySelector('.blog-card-image img'));
+    const iframe = currentOverlay().querySelector('.blog-card-video-frame iframe');
+    expect(iframe.getAttribute('src')).toContain('https://www.youtube.com/embed/Wk8JSGDOvx8');
+    expect(iframe.getAttribute('src')).toContain('autoplay=1');
+    expect(iframe.getAttribute('src')).toContain('modestbranding=1');
+    expect(iframe.getAttribute('src')).toContain('enablejsapi=1');
+    expect(iframe.getAttribute('title')).toBe('HFMM legacy group growth');
+  });
+
+  it('plays a watch?v= hero URL from the same feed column', () => {
+    const card = mountCard(watchVideoEntry);
+    click(card.querySelector('.blog-card-image'));
+    expect(currentOverlay().querySelector('iframe').getAttribute('src'))
+      .toContain('https://www.youtube.com/embed/asJBXQnNFyo');
+  });
+
+  it('opens on Enter and on Space, and Space does not scroll the listing', () => {
+    const card = mountCard(videoEntry);
+    const imageWrap = card.querySelector('.blog-card-image');
+    const enter = press(imageWrap, 'Enter');
+    expect(currentOverlay()).not.toBeNull();
+    expect(enter.defaultPrevented).toBe(true);
+    currentOverlay().remove();
+    const space = press(imageWrap, ' ');
+    expect(currentOverlay()).not.toBeNull();
+    expect(space.defaultPrevented).toBe(true);
+  });
+
+  it('ignores other keys on the play control', () => {
+    const card = mountCard(videoEntry);
+    press(card.querySelector('.blog-card-image'), 'ArrowDown');
+    expect(currentOverlay()).toBeNull();
+  });
+
+  it('never stacks two overlays', () => {
+    const card = mountCard(videoEntry);
+    const imageWrap = card.querySelector('.blog-card-image');
+    click(imageWrap);
+    click(imageWrap);
+    expect(document.querySelectorAll('.blog-card-video-overlay').length).toBe(1);
+  });
+
+  it('dismisses on the close button, the backdrop and Escape — but not on the frame', () => {
+    const card = mountCard(videoEntry);
+    const imageWrap = card.querySelector('.blog-card-image');
+
+    click(imageWrap);
+    click(currentOverlay().querySelector('.blog-card-video-close'));
+    expect(currentOverlay()).toBeNull();
+
+    click(imageWrap);
+    click(currentOverlay().querySelector('.blog-card-video-frame'));
+    expect(currentOverlay()).not.toBeNull();
+    click(currentOverlay());
+    expect(currentOverlay()).toBeNull();
+
+    click(imageWrap);
+    press(currentOverlay(), 'Escape');
+    expect(currentOverlay()).toBeNull();
+  });
+
+  it('removes its document keydown listener and restores focus to the opener', () => {
+    const card = mountCard(videoEntry);
+    const imageWrap = card.querySelector('.blog-card-image');
+    const added = vi.spyOn(document, 'addEventListener');
+    const removed = vi.spyOn(document, 'removeEventListener');
+
+    imageWrap.focus();
+    expect(document.activeElement).toBe(imageWrap);
+    press(imageWrap, 'Enter');
+    const keydownCall = added.mock.calls.find(([type]) => type === 'keydown');
+    expect(keydownCall).toBeDefined();
+    // focus moves into the modal so the dialog is operable by keyboard
+    expect(document.activeElement.className).toBe('blog-card-video-close');
+
+    press(document.activeElement, 'Escape');
+    expect(currentOverlay()).toBeNull();
+    expect(removed).toHaveBeenCalledWith('keydown', keydownCall[1]);
+    expect(document.activeElement).toBe(imageWrap);
+  });
+});
+
+// --- click tracking -------------------------------------------------------
+// Prod reports a listing play as video/started, not the generic content/interacted
+// a thumbnail derives. The poster is deliberately NOT an alsoTrack part: payload
+// derivers only run for a resolved CTA, so the click must climb to the role=button
+// wrapper (see blogCardPayload + the narrowed alsoTrack selector).
+
+let indexSeq = 0;
+
+async function mountBlock(rows) {
+  document.head.innerHTML = '';
+  document.body.innerHTML = '';
+  resetTrackingState();
+  global.fetch = vi.fn(async (url) => ({
+    ok: String(url).includes('query-index.json'),
+    json: async () => ({ data: rows }),
+  }));
+  indexSeq += 1; // content-index caches per path — a fresh source per mount
+  const main = document.createElement('main');
+  const block = document.createElement('div');
+  block.className = 'blog-cards block';
+  block.setAttribute('data-block-name', 'blog-cards');
+  block.innerHTML = `<div><div>source</div><div>/test/blog-cards-${indexSeq}/query-index.json</div></div>`;
+  main.append(block);
+  document.body.append(main);
+  await decorate(block);
+  initTracking(document);
+  return block;
+}
+
+const VIDEO_PAYLOAD = {
+  object: 'video',
+  action: 'started',
+  ui_object: 'video',
+  ui_object_detail: '',
+  ui_action: 'clicked',
+};
+
+describe('blog-cards — video play tracking', () => {
+  beforeEach(() => { document.head.innerHTML = ''; document.body.innerHTML = ''; resetTrackingState(); });
+
+  it('leaves the video poster out of the alsoTrack parts (derivers skip parts)', async () => {
+    const block = await mountBlock([videoEntry, data[0]]);
+    const videoImg = block.querySelector('.blog-card.has-video .blog-card-image img');
+    const plainImg = block.querySelector('.blog-card:not(.has-video) .blog-card-image img');
+    expect(videoImg.getAttribute('data-track-as')).toBeNull();
+    expect(plainImg.getAttribute('data-track-as')).toBe('button');
+    // the card body stays a part on both card shapes
+    expect(block.querySelectorAll('.blog-card-body[data-track-as="button"]').length).toBe(2);
+  });
+
+  it('a pointer click on the poster stamps video/started on the play control', async () => {
+    const block = await mountBlock([videoEntry, data[0]]);
+    const imageWrap = block.querySelector('.blog-card.has-video .blog-card-image');
+    const posterImg = imageWrap.querySelector('img');
+    stampInteraction({ target: posterImg });
+    expect(posterImg.getAttribute('data-object')).toBeNull(); // resolved to the wrapper
+    expect(computeTrackingPayload(posterImg)).toMatchObject(VIDEO_PAYLOAD);
+    expect(computeTrackingPayload(posterImg).event).toBe('video:started');
+  });
+
+  it('keyboard activation on the wrapper stamps the same payload', async () => {
+    const block = await mountBlock([videoEntry, data[0]]);
+    const imageWrap = block.querySelector('.blog-card.has-video .blog-card-image');
+    stampInteraction({ target: imageWrap });
+    const payload = computeTrackingPayload(imageWrap);
+    expect(payload).toMatchObject(VIDEO_PAYLOAD);
+    expect(payload.event).toBe('video:started');
+    expect(imageWrap.getAttribute('data-ui-object-detail')).toBe('');
+  });
+
+  it('an ordinary card thumbnail keeps its generic image beacon', async () => {
+    const block = await mountBlock([videoEntry, data[0]]);
+    const plainImg = block.querySelector('.blog-card:not(.has-video) .blog-card-image img');
+    stampInteraction({ target: plainImg });
+    const payload = computeTrackingPayload(plainImg);
+    expect(payload.object).toBe('content');
+    expect(payload.action).toBe('interacted');
+    expect(payload.ui_object).toBe('button');
+    expect(payload.ui_object_detail).toBe('A');
+    expect(payload.event).toBe('content:interacted');
   });
 });

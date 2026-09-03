@@ -47,6 +47,135 @@
   display: block;
 }
 
+/* ---- video posts ----
+   The thumbnail is the play control (role=button; the article link wraps the
+   card body instead). The badge is a white circle + dark triangle, matching the
+   video block's control (blocks/video/video.css), and sits inset from the
+   thumbnail's bottom-right corner by half its own size — the source listing's
+   placement (an 80px badge 40px in, on its 441x248 desktop / 346x200 mobile
+   thumbnail). `font-size` carries the badge size so the triangle scales with it. */
+.blog-cards .blog-card-play {
+  --blog-card-play-size: 48px;
+
+  position: absolute;
+  right: calc(var(--blog-card-play-size) / 2);
+  bottom: calc(var(--blog-card-play-size) / 2);
+  width: var(--blog-card-play-size);
+  height: var(--blog-card-play-size);
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 4px 30px rgb(0 0 0 / 15%);
+  font-size: var(--blog-card-play-size);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.blog-cards .blog-card-play::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: 0;
+  height: 0;
+  margin: auto;
+  border-style: solid;
+  border-width: 0.22em 0 0.22em 0.34em;
+  border-color: transparent transparent transparent #0d333f;
+  transform: translateX(0.03em);
+}
+
+/* the source's 80px badge, wherever the thumbnail is that big: the featured card
+   (16:9 at every width) and the 3-up card from 1200px (445x248) up */
+.blog-cards .blog-card.featured .blog-card-play {
+  --blog-card-play-size: 80px;
+}
+
+@media (min-width: 1200px) {
+  .blog-cards .blog-card-play {
+    --blog-card-play-size: 80px;
+  }
+}
+
+.blog-cards .blog-card.has-video .blog-card-image {
+  cursor: pointer;
+}
+
+/* Keyboard focus ring, drawn as an overlay inside the thumbnail: the card clips
+   its overflow (an outset outline is swallowed on the three edges the thumbnail
+   sits flush to) and the poster, being an absolutely positioned child, paints
+   over an inset one. The white inner line keeps it visible on any poster. */
+.blog-cards .blog-card.has-video .blog-card-image:focus-visible {
+  outline: none;
+}
+
+.blog-cards .blog-card.has-video .blog-card-image:focus-visible::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 3px solid var(--link-color, #2ca01c);
+  box-shadow: inset 0 0 0 2px #fff;
+  z-index: 2;
+}
+
+/* video card only: the article link wraps the body, so it stands in for the body
+   as the card's flex child (layout otherwise unchanged) */
+.blog-cards .blog-card-link {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+/* ---- video lightbox: appended to <body>, so deliberately not scoped under
+   .blog-cards. Owned by this block (its own copy of the small overlay) because a
+   dynamic import of blocks/video would not bring that block's stylesheet with
+   it. Backdrop dim, z-index and 8px radius match the source's modal. ---- */
+.blog-card-video-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgb(0 0 0 / 40%);
+}
+
+.blog-card-video-modal {
+  position: relative;
+  width: min(602px, 100%);
+}
+
+.blog-card-video-frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+}
+
+.blog-card-video-frame iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: 8px;
+}
+
+.blog-card-video-close {
+  position: absolute;
+  top: -40px;
+  right: 0;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #fff;
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+}
+
 /* click-tracking body wrapper — layout-transparent (carries the content-slot trail) */
 .blog-cards .blog-card-content-slot {
   display: contents;

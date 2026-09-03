@@ -18,6 +18,7 @@
 
 import { loadCSS } from '../../scripts/aem.js';
 import { videoInfo } from '../video/video-info.js';
+import { openVideoModal } from '../../scripts/scripts.js';
 import { trackAs } from '../../scripts/tracking.js';
 
 const SWIPE_THRESHOLD = 40; // px — minimum horizontal drag to change slides
@@ -90,48 +91,6 @@ function splitFeatureQuote(slide) {
   cite.className = 'carousel-attribution';
   cite.textContent = attribution;
   p.after(cite);
-}
-
-/**
- * Opens a video in a dismissible lightbox, reusing the `.video-modal-*` markup
- * and styles that blocks/video owns.
- * @param {string} embedUrl provider embed URL
- * @param {string} title accessible iframe title
- */
-function openVideoModal(embedUrl, title) {
-  // guard against a double-click or two different CTAs stacking overlays
-  if (document.querySelector('.video-modal-overlay')) return;
-  loadCSS(`${window.hlx.codeBasePath}/blocks/video/video.css`);
-  const overlay = document.createElement('div');
-  overlay.className = 'video-modal-overlay';
-  const frame = document.createElement('div');
-  frame.className = 'video-modal-frame';
-  const iframe = document.createElement('iframe');
-  iframe.src = embedUrl;
-  iframe.title = title || 'Video';
-  iframe.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
-  iframe.allowFullscreen = true;
-  frame.append(iframe);
-  const close = document.createElement('button');
-  close.type = 'button';
-  close.className = 'video-modal-close';
-  close.setAttribute('aria-label', 'Close video');
-  close.textContent = '×';
-  const modal = document.createElement('div');
-  modal.className = 'video-modal';
-  modal.append(close, frame);
-  overlay.append(modal);
-
-  function dismiss() {
-    overlay.remove();
-    // eslint-disable-next-line no-use-before-define
-    document.removeEventListener('keydown', onKey);
-  }
-  function onKey(e) { if (e.key === 'Escape') dismiss(); }
-  overlay.addEventListener('click', (e) => { if (e.target === overlay) dismiss(); });
-  close.addEventListener('click', dismiss);
-  document.addEventListener('keydown', onKey);
-  document.body.append(overlay);
 }
 
 /**
@@ -239,6 +198,30 @@ function normalizeTestimonial(slide) {
   return !!title;
 }
 
+/**
+ * JIT payload deriver for a spotlight testimonial thumbnail-strip chevron: prod's authored
+ * `testimonial|thumbnail_{side}_chevron` id + WA link (the ‹/› glyph is not a tracked label).
+ * Non-spotlight variants / non-chevron elements return null → normal derive. Exported so the
+ * offline parity harness (parity-gate `oursPayload`) derives it identically.
+ * @param {Element} el clicked element
+ * @param {boolean} isSpotlight whether this is the .spotlight testimonial carousel
+ * @returns {Record<string, string>|null}
+ */
+export function chevronPayload(el, isSpotlight) {
+  if (!isSpotlight || !el.classList) return null;
+  let side = null;
+  if (el.classList.contains('carousel-prev')) side = 'left';
+  else if (el.classList.contains('carousel-next')) side = 'right';
+  if (!side) return null;
+  const id = `testimonial|thumbnail_${side}_chevron`;
+  return {
+    'object-detail': id,
+    'ui-object-detail': id,
+    'ui-object': 'button',
+    'wa-link': `testimonial-thumbnail-${side}-chevron`,
+  };
+}
+
 export default function decorate(block) {
   const slides = [...block.querySelectorAll(':scope > div')];
   if (!slides.length) return;
@@ -271,6 +254,9 @@ export default function decorate(block) {
 
   const prevBtn = buildArrow('prev', 'Previous slide', '‹');
   const nextBtn = buildArrow('next', 'Next slide', '›');
+  const trackingKey = isTestimonial ? 'testimonial' : 'carousel';
+  prevBtn.dataset.trackId = `${trackingKey}:previous-slide`;
+  nextBtn.dataset.trackId = `${trackingKey}:next-slide`;
 
   // .spotlight navigates with photo thumbnails + a counter; every other variant
   // uses the dot strip. Only one set is built, so goTo below updates whichever
@@ -390,23 +376,20 @@ export default function decorate(block) {
 
   goTo(0);
 
-  // Click tracking: the spotlight testimonial's thumbnail-strip chevrons report prod's authored
-  // `testimonial|thumbnail_{side}_chevron` id + WA link (the glyph ‹/› is not a tracked label);
-  // slide CTAs and every other variant's controls stay generic loose derives. No trail — prod
-  // emits ui_access_point=page on these controls.
-  const chevronPayload = (el) => {
-    if (!isSpotlight || !el.classList) return null;
-    let side = null;
-    if (el.classList.contains('carousel-prev')) side = 'left';
-    else if (el.classList.contains('carousel-next')) side = 'right';
-    if (!side) return null;
-    const id = `testimonial|thumbnail_${side}_chevron`;
-    return {
-      'object-detail': id,
-      'ui-object-detail': id,
-      'ui-object': 'button',
-      'wa-link': `testimonial-thumbnail-${side}-chevron`,
-    };
-  };
-  trackAs(null, block, { key: 'carousel', payload: chevronPayload });
+  // Click tracking. A .testimonial carousel IS prod's rw_testimonial component: slide CTAs report
+  // rw_testimonial|rw_testimonial_item and key off `testimonial:<id>` (the sheet fills link_name),
+  // matching blocks/testimonial. The trail rides the SLIDE TRACK, not the block, so the controls
+  // (chevrons/dots, siblings of the viewport) fall back to `page` as prod does — only the slides
+  // carry rw_testimonial. Spotlight thumbnail chevrons still report chevronPayload. Every other
+  // variant stays a generic loose derive with NO trail.
+  if (isTestimonial) {
+    trackAs(null, block, {
+      key: 'testimonial',
+      linkName: false,
+      items: { '.carousel-track': 'rw_testimonial', '.carousel-slide': 'rw_testimonial_item' },
+      payload: (el) => chevronPayload(el, isSpotlight),
+    });
+  } else {
+    trackAs(null, block, { key: 'carousel', payload: (el) => chevronPayload(el, isSpotlight) });
+  }
 }

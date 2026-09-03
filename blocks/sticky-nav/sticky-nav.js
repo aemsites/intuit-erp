@@ -3,18 +3,30 @@ function targetFor(a) {
   return id ? document.getElementById(id) : null;
 }
 
+// Extends the scroll margin to also clear a preceding eyebrow paragraph, so
+// the anchor doesn't land with the eyebrow hidden under the fixed nav bar.
+// The extra breathing room below the eyebrow scales with its own line-height
+// (2 lines' worth) instead of a fixed pixel guess, so it still looks right
+// wherever this pattern is reused with a different eyebrow type scale.
+function scrollMarginFor(target) {
+  const prev = target.previousElementSibling;
+  const coversEyebrow = prev && prev.tagName === 'P' && !prev.querySelector('a, img, picture');
+  if (!coversEyebrow) return 0;
+  const gap = target.getBoundingClientRect().top - prev.getBoundingClientRect().top;
+  const computedLineHeight = parseFloat(getComputedStyle(prev).lineHeight);
+  const lineHeight = computedLineHeight || prev.getBoundingClientRect().height;
+  return gap + (lineHeight * 2);
+}
+
 export default function decorate(block) {
   const ul = block.querySelector('ul');
   if (!ul) return;
   block.replaceChildren(ul);
 
   const links = [...ul.querySelectorAll('a')];
-  const navH = block.offsetHeight;
-  document.body.style.setProperty('--sticky-nav-h', `${navH}px`);
 
   links.forEach((a) => {
     const target = targetFor(a);
-    if (target) target.style.scrollMarginTop = `${navH}px`;
     a.addEventListener('click', (e) => {
       if (!target) return;
       e.preventDefault();
@@ -37,12 +49,25 @@ export default function decorate(block) {
     document.body.classList.toggle('sticky-nav-active', stuck);
   }, { threshold: 0 }).observe(sentinel);
 
-  // scrollspy: activate the link whose section is under the bar
   if (links[0]) links[0].classList.add('active');
-  const spy = new IntersectionObserver((entries) => {
-    entries.filter((en) => en.isIntersecting).forEach((en) => {
-      links.forEach((a) => a.classList.toggle('active', a.getAttribute('href') === `#${en.target.id}`));
+
+  // defer past decorate()'s own CSS load so offsetHeight/getBoundingClientRect
+  // reads reflect real, styled layout instead of 0
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    const navH = block.offsetHeight;
+    document.body.style.setProperty('--sticky-nav-h', `${navH}px`);
+
+    links.forEach((a) => {
+      const target = targetFor(a);
+      if (target) target.style.scrollMarginTop = `${navH + scrollMarginFor(target)}px`;
     });
-  }, { rootMargin: `-${navH}px 0px -70% 0px`, threshold: 0 });
-  links.map(targetFor).filter(Boolean).forEach((t) => spy.observe(t));
+
+    // scrollspy: activate the link whose section is under the bar
+    const spy = new IntersectionObserver((entries) => {
+      entries.filter((en) => en.isIntersecting).forEach((en) => {
+        links.forEach((a) => a.classList.toggle('active', a.getAttribute('href') === `#${en.target.id}`));
+      });
+    }, { rootMargin: `-${navH}px 0px -70% 0px`, threshold: 0 });
+    links.map(targetFor).filter(Boolean).forEach((t) => spy.observe(t));
+  }));
 }

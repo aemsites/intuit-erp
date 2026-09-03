@@ -30,7 +30,7 @@ const CARD_BG_COLORS = ['sky', 'agave', 'tofu', 'sky-blue', 'light-gray', 'winte
 // semantic `arrow_left`/`arrow_right` detail + matching link_name — not the derived button +
 // aria-label. Keyed on the nav-button classes; every other CTA derives normally. The block's
 // linkName:false drops the derived link_name, so the arrow supplies its own (prod authors it).
-function navArrowPayload(el) {
+export function navArrowPayload(el) {
   if (!el.classList) return null;
   let side = null;
   if (el.classList.contains('cards-nav-prev')) side = 'left';
@@ -266,11 +266,15 @@ export default function decorate(block) {
 
   if (block.classList.contains('minimal')) {
     [...block.children].forEach((card) => {
-      const link = card.querySelector('a[href]');
-      if (!link) return;
-      link.classList.add('cards-card-link');
-      const title = card.querySelector('.cards-card-body h3');
-      if (title) link.setAttribute('aria-label', `${title.textContent.trim()}: ${link.textContent.trim()}`);
+      const body = card.querySelector('.cards-card-body');
+      const first = body?.querySelector('a[href]');
+      if (!first) return;
+      const link = document.createElement('a');
+      link.href = first.href;
+      link.className = 'cards-card-link';
+      body.querySelectorAll('a[href]').forEach((a) => a.replaceWith(...a.childNodes));
+      link.append(...body.childNodes);
+      body.append(link);
     });
   }
 

@@ -11,6 +11,9 @@
 
 /* ZoomInfo "we found this business name" disclaimer. */
 .zi-formcomplete-msg {
+  display: block;
+  clear: both;
+  margin-top: 4px;
   font-size: 14px;
   font-family: "Avenir Next forINTUIT", "Avenir Next", Futura, sans-serif;
   color: #000;

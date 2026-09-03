@@ -5,6 +5,7 @@
  * creating a scripts-depends-on-block or block-depends-on-block edge.
  */
 import { getMetadata } from './aem.js';
+import { labelFor, slug } from './tracking.js';
 
 const SCHEDULE_FRAGMENT_DEFAULT = '/fragments/schedule-call-vertical';
 
@@ -29,8 +30,13 @@ export async function openScheduleModal() {
 // already have the listener rather than double-binding them.
 export function bindScheduleLinks(container) {
   container.querySelectorAll('a[href$="#schedule"]:not([data-schedule-bound])').forEach((a) => {
+    if (!a.hasAttribute('data-track-id') && !a.closest('.block')) {
+      const identity = slug(labelFor(a));
+      if (identity) a.dataset.trackId = `page:${identity}`;
+    }
     a.dataset.scheduleBound = 'true';
     a.addEventListener('click', (e) => {
+      if (a.dataset.chilipiperTrigger === 'true') return;
       e.preventDefault();
       openScheduleModal();
     });
