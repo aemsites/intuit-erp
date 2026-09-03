@@ -1,6 +1,6 @@
 import {
-    readCookie,
-  } from './erp-logging.js';
+  readCookie,
+} from './erp-logging.js';
 /**
  * Creates unique uuid string
  */
