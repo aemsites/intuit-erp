@@ -32,10 +32,11 @@
  * CONSENT: the `ies-erp` profile's consent extension recurses infinitely
  * (`processQueue` <-> `setPreferencesValues`, stack overflow) if utag is handed a tracked call
  * while consent is unresolved (`getConsentState() === 0`). We avoid it three ways: load the
- * OneTrust consent stack before utag.js (`loadConsentStack`/`settleConsent`); `head.html` sets
- * `noview:true` to suppress utag's own auto-view; and every tracked call goes through
- * `whenConsentResolved`. Per-category gating (Consent Mode) is owned by the profile, not here — so
- * this loader only *reads* consent (`readOptanonConsent`) and never drives `utag.gdpr.*`.
+ * OneTrust consent stack before utag.js (`loadConsentStack`/`settleConsent`); keep utag itself
+ * behind a OneTrust decision (`deferUtagUntilConsent`); `head.html` sets `noview:true` to suppress
+ * utag's own auto-view; and every tracked call goes through `whenConsentResolved`. Per-category
+ * gating (Consent Mode) is owned by the profile, not here — so this loader only *reads* consent
+ * (`readOptanonConsent`) and never drives `utag.gdpr.*`.
  * See MARTECH.md#consent.
  *
  * CSP: the page enforces Trusted Types + `strict-dynamic`, so utag.js and the consent stack are
@@ -323,9 +324,9 @@ export async function loadObservabilityRum(env) {
 
 /**
  * Waits for a consistent `OptanonConsent` cookie to exist (as parsed by `readOptanonConsent`),
- * polling roughly every 100ms, or until `timeoutMs` elapses — whichever comes first. Fail-open:
- * always resolves (never rejects), so a slow, blocked, or misconfigured consent stack never
- * permanently blocks utag.js from loading.
+ * polling roughly every 100ms, or until `timeoutMs` elapses — whichever comes first. This always
+ * resolves (never rejects), so a slow, blocked, or misconfigured consent stack never wedges the
+ * EDS lazy phase. The caller decides whether to load utag or wait for a later OneTrust event.
  * @param {Number} [timeoutMs=3000] the maximum time to wait, in milliseconds
  * @returns {Promise<void>}
  */
@@ -413,6 +414,9 @@ export default class TealiumMartech {
     window.utag_data = window.utag_data || {};
     window.utag_cfg_ovrd = window.utag_cfg_ovrd || {};
     window.utag_cfg_ovrd.noview = true;
+    this.utagLoadPromise = null;
+    this.consentListener = null;
+    this.delayedReached = false;
     // Add Tealium's verbose logging on dev.
     if (DEBUG_ENVIRONMENTS.includes(this.env)) {
       // Tealium's own verbose console logging — dev only, set before utag.js loads in lazy().
@@ -432,11 +436,52 @@ export default class TealiumMartech {
   }
 
   /**
-   * Lazy-phase: load Intuit's OneTrust consent stack, wait for it to settle (fail-open), load
-   * utag.js, then fire the initial page view via `whenConsentResolved` — never while consent is
-   * unresolved (that seeds the ies-erp recursion; see the CONSENT note in the file header).
+   * Loads utag and sends the initial view at most once. The shared promise makes repeated
+   * OneTrust events harmless and preserves load failures for the normal, awaited fast path.
+   * @returns {Promise<void>} resolves after utag and the initial view have been handled
+   */
+  loadUtagAndInitialView() {
+    if (!this.utagLoadPromise) {
+      this.utagLoadPromise = loadUtag(this.env, this.local).then(() => {
+        // head.html's noview suppresses utag's own auto-view, so this is ours to fire.
+        if (window.utag?.view) {
+          whenConsentResolved(() => window.utag.view(window.utag_data));
+        }
+        // If consent held utag past the EDS delayed phase, preserve the phase signal that tags
+        // may use as a trigger instead of silently losing it.
+        if (this.delayedReached && window.utag?.link) {
+          whenConsentResolved(() => window.utag.link({ tealium_event: 'delayed_ready' }));
+        }
+      });
+    }
+    return this.utagLoadPromise;
+  }
+
+  /**
+   * Arms a one-shot gate for sessions where OneTrust has not produced a parseable consent state.
+   * `OneTrustGroupsUpdated` may fire without a usable cookie, so the listener stays armed until an
+   * actual state is readable. Deferred load failures are contained because lazy() has returned.
+   */
+  deferUtagUntilConsent() {
+    if (this.consentListener) return;
+    this.consentListener = () => {
+      if (readOptanonConsent() === null) return;
+      window.removeEventListener('OneTrustGroupsUpdated', this.consentListener);
+      this.consentListener = null;
+      this.loadUtagAndInitialView().catch(() => {});
+    };
+    window.addEventListener('OneTrustGroupsUpdated', this.consentListener);
+  }
+
+  /**
+   * Lazy-phase: load Intuit's OneTrust consent stack and wait briefly for it to settle. Returning
+   * visitors with a consent cookie continue directly to utag. If consent remains unknown, lazy()
+   * returns without loading utag and a one-shot OneTrust listener resumes it after a decision.
+   * The initial page view still passes through `whenConsentResolved` — never while Tealium consent
+   * is unresolved (that seeds the ies-erp recursion; see the CONSENT note in the file header).
    * `head.html`'s `noview:true` suppresses utag's own auto-view, so the initial view is ours.
-   * @returns {Promise<void>} resolves once the consent stack has settled and utag.js has loaded
+   * @returns {Promise<void>} resolves after the bounded consent wait, and after utag on the
+   * fast path
    */
   async lazy() {
     if (!this.enabled) return;
@@ -444,19 +489,20 @@ export default class TealiumMartech {
     loadObservabilityRum(this.env);
     await loadConsentStack(this.env, this.local);
     await settleConsent();
-    await loadUtag(this.env, this.local);
-    // Initial page view, consent-gated (see whenConsentResolved) — since head.html's noview
-    // suppresses utag's own auto-view, this is ours to fire, and only once consent resolves.
-    if (window.utag?.view) {
-      whenConsentResolved(() => window.utag.view(window.utag_data));
+    if (readOptanonConsent() === null) {
+      this.deferUtagUntilConsent();
+      return;
     }
+    await this.loadUtagAndInitialView();
   }
 
   /**
    * Delayed-phase logic: signals that the page has reached the delayed phase.
    */
   delayed() {
-    if (!this.enabled || !window.utag?.link) return;
+    if (!this.enabled) return;
+    this.delayedReached = true;
+    if (!window.utag?.link) return;
     // Consent-gated: firing this link while getConsentState()===0 enqueues it and triggers the
     // profile consent-extension recursion (this was the delayed-phase regression).
     whenConsentResolved(() => window.utag.link({ tealium_event: 'delayed_ready' }));

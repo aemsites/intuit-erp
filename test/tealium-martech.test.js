@@ -177,15 +177,14 @@ describe('TealiumMartech constructor', () => {
     expect(window.utag_data.foo).toBe('bar');
   });
 
-  it('does NOT force utag_cfg_ovrd.noview — prod parity: utag fires its own consent-gated view', () => {
+  it('forces noview so the loader owns the single consent-gated initial view', () => {
     stubLocation({ hostname: PROD_HOST });
     window.utag_cfg_ovrd = { noview: false, other: 1 };
     // eslint-disable-next-line no-new
     new TealiumMartech();
-    // erp.intuit.com sets no `noview` override. Forcing it suppressed utag's own view, which is why
-    // the loader then fired a manual view — the call that seeded the profile consent extension's
-    // infinite processQueue <-> setPreferencesValues recursion. Leave utag's own view alone.
-    expect(window.utag_cfg_ovrd.noview).toBe(false);
+    // Suppress utag's automatic view: lazy() sends exactly one manual view after both the OneTrust
+    // loader gate and the Tealium consent-state recursion guard have resolved.
+    expect(window.utag_cfg_ovrd.noview).toBe(true);
     expect(window.utag_cfg_ovrd.other).toBe(1);
   });
 
@@ -209,9 +208,9 @@ describe('utag_cfg_ovrd.utagdb (Tealium debug console) by resolved environment',
     stubLocation({ hostname: STAGE_HOST });
     // eslint-disable-next-line no-new
     new TealiumMartech();
-    // stage.erp.intuit.com runs the prod profile — prod parity: no utagdb, no noview.
+    // stage.erp.intuit.com runs the prod profile: no debug console, but noview remains mandatory.
     expect(window.utag_cfg_ovrd?.utagdb).toBeFalsy();
-    expect(window.utag_cfg_ovrd?.noview).toBeFalsy();
+    expect(window.utag_cfg_ovrd?.noview).toBe(true);
   });
 
   it('sets utagdb=true for the dev environment (localhost)', () => {
@@ -228,21 +227,20 @@ describe('utag_cfg_ovrd.utagdb (Tealium debug console) by resolved environment',
     expect(window.utag_cfg_ovrd.utagdb).toBe(true);
   });
 
-  it('does not set utagdb for the prod environment (and adds no utag_cfg_ovrd overrides at all)', () => {
+  it('does not set utagdb for prod, while retaining the mandatory noview guard', () => {
     stubLocation({ hostname: PROD_HOST });
     // eslint-disable-next-line no-new
     new TealiumMartech();
-    // Prod parity: erp.intuit.com sets no utag_cfg_ovrd; we add none either (no utagdb, no noview).
     expect(window.utag_cfg_ovrd?.utagdb).toBeFalsy();
-    expect(window.utag_cfg_ovrd?.noview).toBeFalsy();
+    expect(window.utag_cfg_ovrd?.noview).toBe(true);
   });
 
-  it('does not set utagdb (or noview) on an inert host', () => {
+  it('does not set utagdb on an inert host, while retaining the mandatory noview guard', () => {
     stubLocation({ hostname: INERT_HOST });
     // eslint-disable-next-line no-new
     new TealiumMartech();
     expect(window.utag_cfg_ovrd?.utagdb).toBeFalsy();
-    expect(window.utag_cfg_ovrd?.noview).toBeFalsy();
+    expect(window.utag_cfg_ovrd?.noview).toBe(true);
   });
 });
 
@@ -600,6 +598,87 @@ describe('disabled instance (hostname resolveEnvironment does not recognize) —
 });
 
 describe("enabled instance — lazy() loads the consent stack, settles consent, loads utag.js, then fires the CONSENT-GATED initial view", () => {
+  it('holds utag behind unresolved consent and loads it once after OneTrust publishes a decision', async () => {
+    vi.useFakeTimers();
+    try {
+      stubLocation({ hostname: PROD_HOST });
+      const tealium = new TealiumMartech();
+      window.utag = {
+        view: vi.fn(),
+        link: vi.fn(),
+        gdpr: { getConsentState: vi.fn(() => 1) },
+      };
+
+      const lazyPromise = tealium.lazy();
+      document.getElementById('onetrust-stub').dispatchEvent(new Event('load'));
+      await vi.advanceTimersByTimeAsync(0);
+      document.getElementById('intuit-consent-wrapper').dispatchEvent(new Event('load'));
+      await vi.advanceTimersByTimeAsync(0);
+      document.getElementById('intuit-gdpr-util').dispatchEvent(new Event('load'));
+
+      // The bounded wait still releases EDS lazy loading, but an absent/unparseable consent
+      // cookie must no longer fail open into the entire Tealium profile.
+      await vi.advanceTimersByTimeAsync(3100);
+      expect(document.querySelectorAll('script[src*="tiqcdn"]').length).toBe(0);
+      await expect(lazyPromise).resolves.toBeUndefined();
+
+      // OneTrust can publish the groups event more than once. The first event carrying a real
+      // decision opens the gate; subsequent events must not inject another utag.js.
+      document.cookie = `OptanonConsent=${OPTANON_COOKIE_VALUE}`;
+      window.dispatchEvent(new Event('OneTrustGroupsUpdated'));
+      window.dispatchEvent(new Event('OneTrustGroupsUpdated'));
+      await vi.advanceTimersByTimeAsync(0);
+
+      const scripts = document.querySelectorAll('script[src*="tiqcdn"]');
+      expect(scripts.length).toBe(1);
+      scripts[0].dispatchEvent(new Event('load'));
+      await vi.advanceTimersByTimeAsync(0);
+      expect(window.utag.view).toHaveBeenCalledTimes(1);
+      expect(window.utag.view).toHaveBeenCalledWith(window.utag_data);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('preserves delayed_ready when the delayed phase runs before deferred utag loads', async () => {
+    vi.useFakeTimers();
+    try {
+      stubLocation({ hostname: PROD_HOST });
+      const tealium = new TealiumMartech();
+
+      const lazyPromise = tealium.lazy();
+      document.getElementById('onetrust-stub').dispatchEvent(new Event('load'));
+      await vi.advanceTimersByTimeAsync(0);
+      document.getElementById('intuit-consent-wrapper').dispatchEvent(new Event('load'));
+      await vi.advanceTimersByTimeAsync(0);
+      document.getElementById('intuit-gdpr-util').dispatchEvent(new Event('load'));
+      await vi.advanceTimersByTimeAsync(3100);
+      await lazyPromise;
+
+      // EDS continues into delayed loading even though the profile is still consent-gated.
+      tealium.delayed();
+
+      document.cookie = `OptanonConsent=${OPTANON_COOKIE_VALUE}`;
+      window.dispatchEvent(new Event('OneTrustGroupsUpdated'));
+      await vi.advanceTimersByTimeAsync(0);
+      const script = document.querySelector('script[src*="tiqcdn"]');
+      expect(script).toBeTruthy();
+
+      window.utag = {
+        view: vi.fn(),
+        link: vi.fn(),
+        gdpr: { getConsentState: vi.fn(() => 1) },
+      };
+      script.dispatchEvent(new Event('load'));
+      await vi.advanceTimersByTimeAsync(0);
+
+      expect(window.utag.link).toHaveBeenCalledTimes(1);
+      expect(window.utag.link).toHaveBeenCalledWith({ tealium_event: 'delayed_ready' });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it.each([
     ['prod', PROD_HOST, 'privacy-cdn.a.intuit.com'],
     ['prod', STAGE_HOST, 'privacy-cdn.a.intuit.com'],
