@@ -101,7 +101,9 @@ function buildBio(row, authorPath) {
   if (row.image) {
     const imgWrap = document.createElement('div');
     imgWrap.className = 'blog-author-bio-avatar';
-    const picture = createOptimizedPicture(row.image, row.title || '', false, [{ width: '120' }]);
+    // request 2x the 120px display size (blog-author-bio.css) so the avatar
+    // stays crisp on retina/high-DPI screens instead of upscaling a 1x source
+    const picture = createOptimizedPicture(row.image, row.title || '', false, [{ width: '240' }]);
     const img = picture.querySelector('img');
     img.width = 120;
     img.height = 120;

@@ -54,10 +54,6 @@
   color: var(--primary);
 }
 
-.blog-article .blog-hero .blog-byline-updated {
-  color: var(--text-soft);
-}
-
 .blog-article .blog-hero .blog-hero-image {
   margin: 0;
 }
@@ -511,10 +507,29 @@
     font-size: var(--heading-font-size-xxl);
   }
 
+  /* author in its own column; published/updated stack together in a second
+     column instead of flowing as a wrapping row — flex-wrap would drop
+     "Updated" back to the start (under the author), not under "Published on" */
   .blog-article .blog-hero .blog-byline-meta {
-    flex-flow: row wrap;
-    column-gap: 24px;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 4px 24px;
     margin-bottom: 0;
+  }
+
+  .blog-article .blog-hero .blog-byline-author {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .blog-article .blog-hero .blog-byline-date {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .blog-article .blog-hero .blog-byline-updated {
+    grid-column: 2;
+    grid-row: 2;
   }
 
   .blog-article > .blog-hero > .default-content-wrapper > .blog-byline-tag {
