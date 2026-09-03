@@ -674,7 +674,14 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
   }
 }
 
-.blog-article .highlight { margin: 32px 0; }
+.blog-article .highlight { margin: 60px 0 40px; }
+
+/* Callouts get their own section (block-per-section), so the callout is the
+   last child of its section and the trailing-margin reset above would zero its
+   bottom margin. Keep the 40px gap to the following content. */
+.blog-article > .section > .highlight-wrapper > .highlight:last-child {
+  margin-bottom: 40px;
+}
 
 .blog-article .highlight.sky .highlight-inner,
 .blog-article .highlight .highlight-inner {
@@ -700,6 +707,14 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
 
 :is(.blog-article, .case-study) .testimonial:not(.video, .simple) > :is(h2, h3, h4, h5, h6) {
   padding-top: 1rem;
+}
+
+/* When the quote box ends its section the trailing-margin reset zeros its
+   bottom margin, collapsing the gap to the following content (e.g. an image)
+   to 0px. Keep the 40px gap to match prod. Only margin-bottom is set so the
+   desktop full-bleed horizontal margin is preserved. */
+.blog-article > .section > .testimonial-wrapper:last-child > .testimonial:not(.video, .simple) {
+  margin-bottom: 40px;
 }
 
 @media (width >= 1024px) {
