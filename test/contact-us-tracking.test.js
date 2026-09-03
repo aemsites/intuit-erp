@@ -37,6 +37,25 @@ describe('contact-us tracking', () => {
     expect(close.getAttribute('data-ui-action')).toBe('clicked');
   });
 
+  it('uses a distinct close identity for the blog widget', async () => {
+    window.history.replaceState(null, '', '/blog/construction/automation-in-construction');
+    await initContactUs();
+    const close = document.querySelector('.cu-close');
+    const trigger = document.querySelector('.cu-bubble');
+    const panel = document.querySelector('.cu-panel');
+
+    expect(trackIdOf(close)).toBe('talk-to-sales:close-sales-widget-blog');
+    expect(resolveTrackable(close)).not.toBeNull();
+
+    trigger.click();
+    expect(panel.hidden).toBe(false);
+    expect(document.activeElement).toBe(close);
+
+    close.click();
+    expect(panel.hidden).toBe(true);
+    expect(document.activeElement).toBe(trigger);
+  });
+
   it('reports the blog support CTA as a button, matching its widget presentation', async () => {
     window.history.replaceState(null, '', '/blog/construction/automation-in-construction');
     await initContactUs();
