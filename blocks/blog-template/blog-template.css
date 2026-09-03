@@ -676,6 +676,13 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
 
 .blog-article .highlight { margin: 32px 0 40px; }
 
+/* Callouts get their own section (block-per-section), so the callout is the
+   last child of its section and the trailing-margin reset above would zero its
+   bottom margin. Keep the 40px gap to the following content. */
+.blog-article > .section > .highlight-wrapper > .highlight:last-child {
+  margin-bottom: 40px;
+}
+
 .blog-article .highlight.sky .highlight-inner,
 .blog-article .highlight .highlight-inner {
   background: var(--agave);
