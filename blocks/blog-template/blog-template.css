@@ -598,7 +598,7 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
   max-width: none;
   margin: 0 0 20px;
   text-align: left;
-  font-size: 16px;
+  font-size: 20px;
   line-height: 1.5;
   color: #000;
 }
@@ -662,6 +662,10 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
   background: var(--agave);
   border-radius: 0;
   padding: 24px 40px;
+}
+
+.blog-article .video-wrapper {
+  margin: 2rem 0;
 }
 
 :is(.blog-article, .case-study) .testimonial:not(.video, .simple) {
