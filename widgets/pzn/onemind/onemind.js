@@ -17,6 +17,9 @@ export default async function decorate(widget) {
   if (phase === 'off') return;
 
   const load = () => {
+    // Enables the eager, mobile sizing guard before the vendor can paint its launcher shell.
+    document.documentElement.classList.add('onemind-active');
+
     // Guard against a duplicate launcher if the PZN treatment re-applies (e.g. a later swap).
     if (document.querySelector(`script[src="${src}"]`)) return;
 
