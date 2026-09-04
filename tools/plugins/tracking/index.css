@@ -35,6 +35,17 @@ button { cursor: pointer; }
 
 #app { min-height: 100vh; padding: 12px; }
 
+.tracking-probe {
+  position: fixed;
+  top: 0;
+  left: -10000px;
+  width: 1440px;
+  height: 900px;
+  visibility: hidden;
+  pointer-events: none;
+  border: 0;
+}
+
 .tracking-search,
 .tracking-input,
 .tracking-select {
@@ -185,6 +196,64 @@ button { cursor: pointer; }
 }
 
 .tracking-editor { min-width: 0; }
+
+.tracking-comparison {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--tracking-border);
+}
+
+.tracking-section-heading h3 { margin: 0; font-size: 14px; }
+
+.tracking-section-heading p {
+  margin: 3px 0 10px;
+  color: var(--tracking-muted);
+  font-size: 12px;
+}
+
+.tracking-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--tracking-border);
+  border-radius: 8px;
+}
+
+.tracking-comparison-table {
+  width: 100%;
+  min-width: 390px;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 12px;
+}
+
+.tracking-comparison-table th,
+.tracking-comparison-table td {
+  padding: 8px 7px;
+  text-align: left;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  border-bottom: 1px solid var(--tracking-border);
+}
+
+.tracking-comparison-table thead th {
+  color: var(--tracking-muted);
+  font-weight: 600;
+}
+
+.tracking-comparison-table th:first-child,
+.tracking-comparison-table td:first-child { width: 29%; }
+
+.tracking-comparison-table tbody th {
+  color: var(--tracking-muted);
+  font-weight: 400;
+}
+
+.tracking-effective { color: var(--tracking-muted); }
+
+.tracking-effective.is-changed {
+  color: var(--tracking-accent);
+  background: var(--tracking-accent-soft);
+  font-weight: 600;
+}
 
 .tracking-identity {
   padding: 14px 0;

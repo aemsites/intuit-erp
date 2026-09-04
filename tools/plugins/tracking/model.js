@@ -15,6 +15,27 @@ export const DA_SOURCE_WRITE_METHOD = 'POST';
 const STRUCTURAL_FIELDS = new Set(['path', 'id']);
 const EDITOR_FIELDS = new Set(OVERRIDE_FIELDS);
 
+function comparableValue(value) {
+  if (!value || typeof value !== 'object') return value ?? '';
+  return Object.fromEntries(Object.entries(value)
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([key, item]) => [key, comparableValue(item)]));
+}
+
+export function comparisonRows(automatic = {}, effective = {}, fields = []) {
+  return fields.map((field) => {
+    const automaticValue = automatic[field];
+    const effectiveValue = effective[field];
+    return {
+      field,
+      automatic: automaticValue,
+      effective: effectiveValue,
+      changed: JSON.stringify(comparableValue(automaticValue))
+        !== JSON.stringify(comparableValue(effectiveValue)),
+    };
+  });
+}
+
 function cleanPath(path) {
   const value = String(path || '*').trim();
   if (!value || value === '*') return '*';
@@ -36,41 +57,6 @@ export function resolveEditorPath({ contextPath = '', search = '' } = {}) {
   const raw = String(requested || contextPath || '/').trim().split(/[?#]/)[0];
   const withoutHtml = raw.endsWith('.html') ? raw.slice(0, -5) || '/' : raw;
   return cleanPath(withoutHtml);
-}
-
-/** Build the frame-free editor inventory from global and current-page sheet rows. */
-export function trackingRowsForPath(sheet, path) {
-  const pagePath = cleanPath(path);
-  return (sheet?.data || []).flatMap((row) => {
-    const id = cleanValue(row.id);
-    const rowPath = cleanPath(row.path);
-    if (!id || (rowPath !== '*' && rowPath !== pagePath)) return [];
-
-    const override = Object.fromEntries(OVERRIDE_FIELDS
-      .filter((field) => cleanValue(row[field]))
-      .map((field) => [field, row[field]]));
-    const effective = { ...override };
-    if (effective.object && effective.action) {
-      effective.event = `${effective.object}:${effective.action}`;
-    }
-    const separator = id.indexOf(':');
-    const block = separator > 0 ? id.slice(0, separator) : 'page';
-
-    return [{
-      id,
-      matchedId: id,
-      path: pagePath,
-      label: cleanValue(row['ui-object-detail']) || cleanValue(row['object-detail']) || id,
-      href: '',
-      tag: '',
-      block,
-      editable: true,
-      scope: rowPath === '*' ? 'global' : 'page',
-      automatic: {},
-      override,
-      effective,
-    }];
-  });
 }
 
 function rowMatches(row, path, id) {
