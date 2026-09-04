@@ -7,6 +7,8 @@ import {
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import {
+  REPLAY_VIEWPORT,
+  assertReplayViewport,
   canonicalReplayPath,
   createLineageRegistry,
   installReplayPageHook,
@@ -169,6 +171,12 @@ function fakeScope({
 }
 
 describe('live replay harness contracts', () => {
+  it('requires the reviewed desktop viewport used for replay qualification', () => {
+    expect(assertReplayViewport({ width: 1440, height: 1200 })).toEqual(REPLAY_VIEWPORT);
+    expect(() => assertReplayViewport({ width: 1280, height: 1200 }))
+      .toThrow(/replay viewport.*1440x1200/i);
+  });
+
   it('uses canonical trailing-slash URLs without changing reviewed scenario identity', () => {
     expect(canonicalReplayPath('/')).toBe('/');
     expect(canonicalReplayPath('/events')).toBe('/events/');
@@ -233,6 +241,7 @@ describe('live replay harness contracts', () => {
     const ready = {
       origin: 'https://stage.erp.intuit.com',
       pathname: '/workforce-automation/',
+      viewport: { width: 1440, height: 1200 },
       authenticated: true,
       consentState: 'resolved',
       utagReady: true,
@@ -587,6 +596,7 @@ describe('live replay harness contracts', () => {
     const binding = {
       origin: 'https://stage.erp.intuit.com', profileId: 'profile', chromeVersion: '151',
       mode: 'dedicated', harnessVersion: '0.2.0', consentState: 'resolved',
+      viewport: { width: 1440, height: 1200 },
       targetId: 'target', authorizationRef: 'Adobe Migration Test', lineagePolicyVersion: 'message-id-v1',
       runtimeHashes: { tracking: 'sha256:tracking' },
       sourceHashes: { 'live-replay-runner.mjs': 'sha256:runner', 'clicktrack-qualification-scenario.json': 'sha256:capture' },
@@ -610,6 +620,9 @@ describe('live replay harness contracts', () => {
       expect(() => validateLineageQualification(proof, changed, Buffer.from('proof')))
         .toThrow(/lineage qualification binding/i);
     });
+    expect(() => validateLineageQualification(proof, {
+      ...binding, viewport: { width: 1280, height: 1200 },
+    }, Buffer.from('proof'))).toThrow(/lineage qualification binding/i);
   });
 
   it('waits for a replay target to stabilize to exactly one element', async () => {

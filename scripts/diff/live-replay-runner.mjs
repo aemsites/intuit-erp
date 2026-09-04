@@ -15,12 +15,12 @@ import { dirname, resolve } from 'node:path';
 import { homedir } from 'node:os';
 import { pathToFileURL } from 'node:url';
 import {
-  REPLAY_INVOCATION_MARKER_KEY, REPLAY_LINEAGE_POLICY_VERSION, canonicalReplayPath, installReplayPageHook,
-  replayPathMatches, validateCdpEndpoint, validateQualification,
+  REPLAY_INVOCATION_MARKER_KEY, REPLAY_LINEAGE_POLICY_VERSION, REPLAY_VIEWPORT, assertReplayViewport,
+  canonicalReplayPath, installReplayPageHook, replayPathMatches, validateCdpEndpoint, validateQualification,
 } from './live-replay-harness.mjs';
 import { POLICY } from './oracle-lib.mjs';
 
-const HARNESS_VERSION = '0.2.8';
+const HARNESS_VERSION = '0.2.9';
 const TRACKER_POLICY_VERSION = '1';
 const EVIDENCE_FETCH_TIMEOUT_MS = 15000;
 const DEFAULT_ORIGIN = 'https://stage.erp.intuit.com';
@@ -401,6 +401,7 @@ async function browserPreflight(page, origin, timeoutMs = EVIDENCE_FETCH_TIMEOUT
     return {
       origin: location.origin,
       pathname: location.pathname,
+      viewport: { width: window.innerWidth, height: window.innerHeight },
       responseUrl: clean(location.href),
       documentResponseHash: await digest(responseText),
       interactionInventoryHash: await digest(JSON.stringify(trackables)),
@@ -431,6 +432,7 @@ function assertPreflight(preflight, origin, pagePath) {
   if (!preflight.trackerReady) failures.push('webAnalytics.track');
   if (!preflight.enqueueReady) failures.push('analytics._dispatch');
   if (!preflight.trackableCount) failures.push('trackable-inventory');
+  try { assertReplayViewport(preflight.viewport); } catch { failures.push('desktop-viewport'); }
   if (failures.length) throw new Error(`preflight refused: ${failures.join(', ')}`);
 }
 
@@ -480,6 +482,7 @@ function qualificationBinding({
     profileId: options.profileId,
     chromeVersion: browserVersion,
     harnessVersion: HARNESS_VERSION,
+    viewport: assertReplayViewport(preflight.viewport),
     lineagePolicyVersion: REPLAY_LINEAGE_POLICY_VERSION,
     transportMarkerGuard: {
       verified: true,
@@ -727,6 +730,7 @@ function validateLineageQualification(proof, binding, bytes, now = Date.now()) {
       'origin', 'consentState', 'authorizationRef', 'targetId',
     ]
       .every((key) => qualified[key] === binding[key])
+    && exact(qualified.viewport) === exact(binding.viewport)
     && exact(comparableRuntime(qualified.runtimeHashes)) === exact(comparableRuntime(binding.runtimeHashes))
     && exact(comparableSources(qualified.sourceHashes)) === exact(comparableSources(binding.sourceHashes))
     && exact(qualified.transportMarkerGuard) === exact(binding.transportMarkerGuard)
@@ -948,6 +952,7 @@ async function qualify(options) {
     };
     await context.route(MARKER_GUARD_ROUTE, eventbusRoute);
     page = selectDedicatedPage(context.pages(), options.origin, scenario.page);
+    await page.setViewportSize(REPLAY_VIEWPORT);
     const targetGuard = createTargetGuard(page, options.origin);
     const onPage = (candidate) => targetGuard.observePage(candidate);
     const onNavigation = (frame) => {

@@ -4,7 +4,7 @@ import {
 import { EventEmitter } from 'node:events';
 import {
   buildQualificationScenario, captureDeploymentFingerprint, capturePageFingerprint,
-  disposeUnreplayableScenarios, isRunBindingDrift, parseArgs,
+  disposeUnreplayableScenarios, isRunBindingDrift, isRunInfrastructureFailure, moduleGraphFailureReason, parseArgs,
   nextSelectedReplayScenario, qualificationFailureReason, recoveryTargetUrl, replayReadiness, runQualificationProcess,
   selectLineageQualificationScenario, shouldRetryQualification,
   validateQualificationCapture,
@@ -16,6 +16,7 @@ const binding = {
   profileId: 'dedicated-stage',
   chromeVersion: '151',
   harnessVersion: 'complete-golden-v2',
+  viewport: { width: 1440, height: 1200 },
   sourceHashes: { scheduler: 'sha256:one' },
   consentState: 'resolved',
   authenticationState: 'authenticated',
@@ -252,6 +253,16 @@ describe('complete golden replay scheduler', () => {
     expect(isRunBindingDrift('uniform deployment identity changed during the complete-golden run')).toBe(true);
     expect(isRunBindingDrift('uniform page deployment identity changed during the complete-golden run')).toBe(true);
     expect(isRunBindingDrift('scenario locator resolved 0 elements')).toBe(false);
+  });
+
+  it('stops the run when a partial deployment breaks the JavaScript module graph', () => {
+    const reason = moduleGraphFailureReason(new Error(
+      "The requested module '../plugins/tealium-martech/src/index.js' does not provide an export named 'parseTealiumTagUids'",
+    ));
+    expect(reason).toMatch(/^stage module graph failed:/i);
+    expect(isRunInfrastructureFailure(reason)).toBe(true);
+    expect(isRunInfrastructureFailure('stage runtime readiness failed after navigation')).toBe(true);
+    expect(isRunInfrastructureFailure('scenario locator resolved 0 elements')).toBe(false);
   });
 
   it('accepts explicit repeatable completed-scenario rerun requests', () => {
