@@ -18,6 +18,10 @@
 import { openScheduleModal } from '../../scripts/schedule-modal.js';
 import { getMetadata } from '../../scripts/aem.js';
 import { trackAs } from '../../scripts/tracking.js';
+import {
+  LIVEPERSON_FACADE_ACTIVATE,
+  LIVEPERSON_FACADE_STARTED,
+} from '../liveperson-facade/liveperson-facade-events.js';
 
 // Contact info (sales phone, hours, support URL) is authored in DA — a
 // fragment table, not hardcoded here — so it can change without a code
@@ -99,7 +103,10 @@ function mobileBubble(label, blog, ballIcon) {
  * is verbatim from erp.intuit.com because the LivePerson campaign targets it by id.
  */
 function panelBody(blog, contact, chatNow) {
-  const chatCta = chatNow ? '<div id="ies-button-div" class="cu-chat-cta"></div>' : '';
+  const chatCta = chatNow ? `
+    <div id="ies-button-div" class="cu-chat-cta">
+      <button type="button" class="cu-btn cu-btn-secondary cu-chat-facade">Chat now</button>
+    </div>` : '';
   if (blog) {
     return `
       <div class="cu-headline cu-headline-blog">How can we help?</div>
@@ -120,7 +127,7 @@ function panelBody(blog, contact, chatNow) {
 /**
  * Builds, wires and appends the widget. Idempotent — a second call is a no-op.
  */
-export default async function initContactUs() {
+export default async function initContactUs({ requestLivePerson } = {}) {
   if (document.getElementById('contact-us')) return;
 
   const blog = isBlogVariant();
@@ -157,16 +164,79 @@ export default async function initContactUs() {
   const panel = root.querySelector('.cu-panel');
   const closeBtn = root.querySelector('.cu-close');
   const triggers = root.querySelectorAll('.cu-bubble, .cu-ball');
+  const chatTarget = root.querySelector('#ies-button-div');
+  const chatFacade = root.querySelector('.cu-chat-facade');
   let lastTrigger = null;
-  let lpPainted = false;
+  let livePersonRequested = false;
+  let proactiveActivation = false;
+  let livePersonStarted = false;
+  let vendorInviteSuppressed = false;
+  let vendorInviteObserverTimeout;
+  let proactiveStartTimeout;
+  let vendorInviteObserver;
 
-  function paintLivePerson() {
-    if (!chatNow || lpPainted) return;
-    try {
-      window.lpTag?.newPage?.(window.location.href);
-    } catch (e) { /* non-fatal — chat button just won't paint */ }
-    lpPainted = true;
+  function stopVendorInviteObserver() {
+    vendorInviteObserver?.disconnect();
+    window.clearTimeout(vendorInviteObserverTimeout);
   }
+
+  const suppressVendorInvite = () => {
+    if (!proactiveActivation) return;
+    document.querySelectorAll('.LPMcontainer.LPMoverlay').forEach((offer) => {
+      if (chatTarget?.contains(offer)) return;
+      const campaignAsset = offer.querySelector('img[src*="qb-IES-proactive-invite"]');
+      if (!campaignAsset) return;
+      offer.hidden = true;
+      offer.style.setProperty('display', 'none', 'important');
+      vendorInviteSuppressed = true;
+    });
+    if (livePersonStarted && vendorInviteSuppressed) stopVendorInviteObserver();
+  };
+  vendorInviteObserver = chatTarget ? new MutationObserver(suppressVendorInvite) : null;
+
+  function enableProactiveActivation() {
+    proactiveActivation = true;
+    suppressVendorInvite();
+    vendorInviteObserver?.observe(document.body, { childList: true, subtree: true });
+    vendorInviteObserverTimeout = window.setTimeout(stopVendorInviteObserver, 15000);
+    proactiveStartTimeout = window.setTimeout(() => {
+      if (livePersonStarted) return;
+      proactiveActivation = false;
+      stopVendorInviteObserver();
+      if (chatFacade) chatFacade.textContent = 'Chat is taking longer than expected';
+      triggers[0]?.click();
+    }, 15000);
+  }
+
+  function requestChat({ autoStart = false } = {}) {
+    if (autoStart) enableProactiveActivation();
+    if (!chatNow || livePersonRequested) return;
+    livePersonRequested = true;
+    if (chatFacade) {
+      chatFacade.disabled = true;
+      chatFacade.textContent = 'Loading chat…';
+    }
+    try {
+      requestLivePerson?.();
+    } catch (e) { /* non-fatal — the phone/schedule options remain available */ }
+  }
+
+  const livePersonObserver = chatTarget ? new MutationObserver(() => {
+    const container = chatTarget.querySelector('.LPMcontainer');
+    if (!container) return;
+    if (chatFacade) chatFacade.hidden = true;
+    if (proactiveActivation && !livePersonStarted) {
+      const engagement = container.querySelector('[data-lp-event="click"], button, [role="button"]');
+      if (!engagement) return;
+      livePersonStarted = true;
+      suppressVendorInvite();
+      engagement.click();
+      window.clearTimeout(proactiveStartTimeout);
+      window.dispatchEvent(new CustomEvent(LIVEPERSON_FACADE_STARTED));
+    }
+    livePersonObserver.disconnect();
+  }) : null;
+  livePersonObserver?.observe(chatTarget, { childList: true, subtree: true });
 
   function onKeydown(e) {
     // eslint-disable-next-line no-use-before-define
@@ -179,14 +249,40 @@ export default async function initContactUs() {
   }
 
   function open(trigger) {
+    if (!document.documentElement.dataset.livepersonInviteActivated) {
+      document.documentElement.dataset.livepersonInviteActivated = 'panel';
+    }
+    const proactiveFacade = document.getElementById('liveperson-invite-facade');
+    if (proactiveFacade) proactiveFacade.hidden = true;
     lastTrigger = trigger || triggers[0];
     root.classList.add('cu-open');
     panel.hidden = false;
     closeBtn.focus();
     document.addEventListener('keydown', onKeydown);
     document.addEventListener('click', onOutside, true);
-    paintLivePerson();
+    requestChat();
   }
+
+  const activateFromInvite = (event) => {
+    const source = event?.detail?.source
+      || document.documentElement.dataset.livepersonInviteActivated;
+    if (source === 'proactive') requestChat({ autoStart: true });
+    else open(triggers[0]);
+  };
+  const inviteActivated = document.documentElement.dataset.livepersonInviteActivated;
+  if (!inviteActivated) {
+    window.addEventListener(LIVEPERSON_FACADE_ACTIVATE, activateFromInvite, { once: true });
+  }
+
+  const cleanup = (event) => {
+    if (event.persisted) return;
+    stopVendorInviteObserver();
+    livePersonObserver?.disconnect();
+    window.clearTimeout(proactiveStartTimeout);
+    window.removeEventListener(LIVEPERSON_FACADE_ACTIVATE, activateFromInvite);
+    window.removeEventListener('pagehide', cleanup);
+  };
+  window.addEventListener('pagehide', cleanup);
 
   function close() {
     root.classList.remove('cu-open');
@@ -219,4 +315,5 @@ export default async function initContactUs() {
   });
 
   document.body.append(root);
+  if (inviteActivated) activateFromInvite();
 }
