@@ -304,6 +304,24 @@ function showThankYou(form, placeholders = {}) {
   const formEl = form.getFormElem?.()?.[0] || document.getElementById(`mktoForm_${form.getId?.()}`);
   if (!formEl || formEl.dataset.thankYouShown === 'true') return;
   formEl.dataset.thankYouShown = 'true';
+
+  // The <form> is not the only thing that introduces the form. `.form-header`/`.form-subheader`
+  // are siblings inside the `.form` block (from the header/subheader config rows), and fragments
+  // such as `schedule-call-vertical` author their own intro heading, copy and "I'm an accountant"
+  // link as a `.default-content-wrapper` sibling of `.form-wrapper` in `.section.form-container`.
+  // Replacing only the <form> leaves all of that stranded above the confirmation.
+  const formBlock = formEl.closest('.form');
+  formBlock?.querySelectorAll(':scope > .form-header, :scope > .form-subheader')
+    .forEach((el) => el.remove());
+  const section = formEl.closest('.section.form-container');
+  // The two-col/download layout is left alone: there the default-content-wrapper is a standalone
+  // marketing pitch *beside* the form, not a lead-in to it.
+  const isSideBySideMarketing = section?.classList.contains('two-col')
+    || formBlock?.classList.contains('download');
+  if (section && !isSideBySideMarketing) {
+    section.querySelector(':scope > .default-content-wrapper')?.remove();
+  }
+
   const note = document.createElement('div');
   note.className = 'form-success';
   note.setAttribute('role', 'status');
@@ -325,15 +343,19 @@ function showThankYou(form, placeholders = {}) {
 // the Lead_XRef_ID__c event), then only dismiss the hosting schedule-call modal once ChiliPiper's
 // own overlay has actually taken over. Returns false when the submit or the overlay never lands so
 // the caller can show a fallback rather than leaving the visitor with nothing.
-async function chiliPiperHandoff(router, form) {
+// `dialog` is passed in rather than re-derived here: by the time this resolves, `showThankYou`
+// has already replaced the <form> with the confirmation note, so the original <form> is detached
+// and its `.closest('dialog')` no longer finds anything — the modal hosting a "Schedule a call"
+// form would never close. ChiliPiper's overlay renders as a normal body-level element *underneath*
+// the still-open `<dialog>` (the browser promotes it to the top layer) and is dimmed by that
+// dialog's own `::backdrop`, so closing the dialog is what brings the calendar to the front.
+async function chiliPiperHandoff(router, form, dialog) {
   const submitted = await submitChiliPiper(router, form.getValues());
   if (!submitted) return false;
   // submitChiliPiper is fire-and-forget, so close the dialog only once the overlay is really up —
   // closing unconditionally would leave a visitor with no calendar, no form and no error.
   const tookOver = await waitForChiliPiperOverlay();
   if (!tookOver) return false;
-  const formEl = form.getFormElem?.()?.[0] || document.getElementById(`mktoForm_${form.getId?.()}`);
-  const dialog = formEl?.closest('dialog');
   if (dialog) {
     // Distinct from a user-initiated close: skip the focus restore so we don't
     // pull focus off ChiliPiper's overlay as it takes over (see modal.js).
@@ -496,8 +518,13 @@ async function embedMarketoForm(formEl, cfg, config, env) {
 
       // show thank you message and invoke chilipiper
       if (canHandoff) {
+        // Resolved *before* showThankYou, which replaces the <form> — walking up from a
+        // still-attached element is the only reliable way to find the hosting modal's <dialog>.
+        const formElForDialog = form.getFormElem?.()?.[0]
+          || document.getElementById(`mktoForm_${form.getId?.()}`);
+        const dialog = formElForDialog?.closest('dialog') || null;
         showThankYou(form, placeholders);
-        chiliPiperHandoff(config.chiliPiperRouter, form);
+        chiliPiperHandoff(config.chiliPiperRouter, form, dialog);
       }
 
       // handling other use case like download file or redirect to success URL
