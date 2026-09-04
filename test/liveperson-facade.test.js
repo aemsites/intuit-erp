@@ -5,8 +5,10 @@ import {
   DEFAULT_LIVEPERSON_INVITE_DELAY,
   LIVEPERSON_FACADE_ACTIVATE,
   LIVEPERSON_FACADE_STARTED,
+  default as decorateLivePersonFacade,
   initLivePersonInviteFacade,
-} from '../scripts/liveperson-facade.js';
+  isLivePersonFacadeEnabled,
+} from '../blocks/liveperson-facade/liveperson-facade.js';
 
 describe('LivePerson proactive invite facade', () => {
   beforeEach(() => {
@@ -15,6 +17,35 @@ describe('LivePerson proactive invite facade', () => {
     document.documentElement.removeAttribute('data-liveperson-invite-scheduled');
     document.body.innerHTML = '';
     sessionStorage.clear();
+  });
+
+  it('only enables the optimization when its URL flag is on', () => {
+    expect(isLivePersonFacadeEnabled('')).toBe(false);
+    expect(isLivePersonFacadeEnabled('?liveperson-facade=off')).toBe(false);
+    expect(isLivePersonFacadeEnabled('?liveperson-facade=on')).toBe(true);
+    expect(isLivePersonFacadeEnabled('?foo=bar&liveperson-facade=on')).toBe(true);
+  });
+
+  it('decorates the auto-created block element in place', () => {
+    const wrapper = document.createElement('div');
+    const block = document.createElement('div');
+    block.className = 'liveperson-facade block';
+    block.dataset.inviteDelay = '1234';
+    wrapper.className = 'liveperson-facade-wrapper';
+    wrapper.append(block);
+    document.body.append(wrapper);
+
+    decorateLivePersonFacade(block);
+
+    expect(document.getElementById('liveperson-invite-facade')).toBe(block);
+    expect(block.querySelector('.lp-invite-action').textContent).toBe('Chat live now');
+    vi.advanceTimersByTime(1233);
+    expect(block.classList.contains('lp-invite-visible')).toBe(false);
+    vi.advanceTimersByTime(1);
+    expect(block.classList.contains('lp-invite-visible')).toBe(true);
+
+    block.querySelector('.lp-invite-dismiss').click();
+    expect(wrapper.isConnected).toBe(false);
   });
 
   afterEach(() => {

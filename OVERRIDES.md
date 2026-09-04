@@ -69,8 +69,8 @@ There is also the **aem-experimentation plugin** convention (loaded only when pr
 | Metadata | Controls | Values / default | Source |
 | --- | --- | --- | --- |
 | `marketo` | Marketo Munchkin environment | `dev` / `e2e` / anything-else→`prod` | [blocks/form/form.js](blocks/form/form.js) |
-| `chat-now` | Adds a delayed `Hi there!` invite and contact-panel chat facade; LivePerson tag 23 loads only after either facade is accepted (paints only where Tealium/LivePerson are available) | `true` / `yes` | [scripts/liveperson-facade.js](scripts/liveperson-facade.js), [blocks/contact-us/contact-us.js](blocks/contact-us/contact-us.js), [plugins/tealium-martech/src/index.js](plugins/tealium-martech/src/index.js) |
-| `chat-invite-delay` | Overrides the proactive chat facade delay in milliseconds; defaults to `30000` | non-negative integer | [scripts/scripts.js](scripts/scripts.js), [scripts/liveperson-facade.js](scripts/liveperson-facade.js) |
+| `chat-now` | Makes the page eligible for LivePerson; with `?liveperson-facade=on`, adds the delayed invite and interaction-gates tag 23 | `true` / `yes` | [blocks/liveperson-facade/liveperson-facade.js](blocks/liveperson-facade/liveperson-facade.js), [blocks/contact-us/contact-us.js](blocks/contact-us/contact-us.js), [plugins/tealium-martech/src/index.js](plugins/tealium-martech/src/index.js) |
+| `chat-invite-delay` | Overrides the proactive chat facade delay in milliseconds; defaults to `30000` | non-negative integer | [scripts/scripts.js](scripts/scripts.js), [blocks/liveperson-facade/liveperson-facade.js](blocks/liveperson-facade/liveperson-facade.js) |
 | `schedule-fragment` | Fragment path for the "schedule a demo" modal | path (default in [scripts/schedule-modal.js](scripts/schedule-modal.js)) | [scripts/schedule-modal.js](scripts/schedule-modal.js) |
 | `tracking` | Click-tracking access-point segment stamped on `<main>` as `data-tracking` | string | [scripts/tracking.js](scripts/tracking.js) — see [CLICK-TRACKING.md](CLICK-TRACKING.md) |
 
@@ -165,6 +165,7 @@ on a page keeps its CTAs in the same tab.
 
 | Param | Controls | Values | Source |
 | --- | --- | --- | --- |
+| `?liveperson-facade=on` | Opts eligible `chat-now` pages into the native facade and interaction-gated LivePerson loading | `on` = facade experiment; absent/other = existing LivePerson behavior | [scripts/scripts.js](scripts/scripts.js), [blocks/liveperson-facade/liveperson-facade.js](blocks/liveperson-facade/liveperson-facade.js) — see [MARTECH.md](MARTECH.md) |
 | `?martech=` | Martech loading | `off` = disable all martech (Tealium + Adobe inert); `local` = load utag.js + OneTrust from local `/scripts/martech/`; absent/other = CDN default | [scripts/scripts.js](scripts/scripts.js) — see [MARTECH.md](MARTECH.md) |
 | `?martech-phase-split=on` | Opt-in martech performance experiment | Keeps active tags in the lazy initial view except UIDs 9/15/23/27, then sends those four as a targeted `delayed_ready` view; absent/other = existing routing | [plugins/tealium-martech/src/index.js](plugins/tealium-martech/src/index.js) — see [MARTECH.md](MARTECH.md) |
 | `?rum=` (alias `?optel=`) | RUM sampling rate | `on`→1, `off`→0, `high`→10, `low`→1000, else weight 100 | [scripts/aem.js](scripts/aem.js) |

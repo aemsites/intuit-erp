@@ -21,7 +21,7 @@ import { trackAs } from '../../scripts/tracking.js';
 import {
   LIVEPERSON_FACADE_ACTIVATE,
   LIVEPERSON_FACADE_STARTED,
-} from '../../scripts/liveperson-facade.js';
+} from '../liveperson-facade/liveperson-facade-events.js';
 
 // Contact info (sales phone, hours, support URL) is authored in DA — a
 // fragment table, not hardcoded here — so it can change without a code

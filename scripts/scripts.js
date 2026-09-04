@@ -1,6 +1,7 @@
 import {
   loadHeader,
   loadFooter,
+  decorateBlock,
   decorateIcons,
   decorateSections,
   decorateBlocks,
@@ -9,6 +10,7 @@ import {
   loadSection,
   loadSections,
   loadCSS,
+  loadBlock,
   buildBlock,
   getMetadata,
 } from './aem.js';
@@ -21,7 +23,7 @@ import installEcsEnrich from './ecs-enrich.js';
 import { isBlogPage, hasAuthoredCaseStudyHeader } from '../blocks/blog-template/blog-detect.js';
 import { isVideoLink, videoInfo } from '../blocks/video/video-info.js';
 import { isGuidePage } from '../blocks/guide-hero/guide-detect.js';
-import { initLivePersonInviteFacade } from './liveperson-facade.js';
+import { isLivePersonFacadeEnabled } from '../blocks/liveperson-facade/liveperson-facade-events.js';
 // eslint-disable-next-line import/no-cycle
 import { applyPageExperience, applyEagerLayers } from './experience.js';
 
@@ -464,7 +466,7 @@ function shouldRenderContactUs() {
 async function loadEager(doc) {
   document.documentElement.lang = 'en';
   decorateTemplateAndTheme();
-  const livePersonOnDemand = isLivePersonOnDemand();
+  const livePersonOnDemand = isLivePersonOnDemand() && isLivePersonFacadeEnabled();
 
   if (['true', 'yes'].includes((getMetadata('events-bar') || '').trim().toLowerCase())) {
     document.body.classList.add('has-events-bar');
@@ -528,10 +530,16 @@ async function loadEager(doc) {
       ({ default: buildGuideHeroAutoBlock } = await import('../blocks/guide-hero/guide-hero-autoblock.js'));
     }
     decorateMain(main);
-    initLivePersonInviteFacade({
-      enabled: livePersonOnDemand && shouldRenderContactUs() && tealium?.enabled,
-      delay: livePersonInviteDelay(),
-    });
+    if (livePersonOnDemand && shouldRenderContactUs() && tealium?.enabled) {
+      const facade = buildBlock('liveperson-facade', '');
+      const facadeWrapper = document.createElement('div');
+      const inviteDelay = livePersonInviteDelay();
+      if (inviteDelay !== undefined) facade.dataset.inviteDelay = inviteDelay;
+      facadeWrapper.append(facade);
+      document.body.append(facadeWrapper);
+      decorateBlock(facade);
+      await loadBlock(facade);
+    }
     // AFTER decorateMain: resolve a swapped page's own section/block slots (recursion-safe)
     // and swap the first/LCP section — both before reveal. No-op without an experience response.
     await applyEagerLayers(doc, pageSwapped);

@@ -1,5 +1,14 @@
-export const LIVEPERSON_FACADE_ACTIVATE = 'liveperson-facade:activate';
-export const LIVEPERSON_FACADE_STARTED = 'liveperson-facade:started';
+import {
+  LIVEPERSON_FACADE_ACTIVATE,
+  LIVEPERSON_FACADE_STARTED,
+} from './liveperson-facade-events.js';
+
+export {
+  LIVEPERSON_FACADE_ACTIVATE,
+  LIVEPERSON_FACADE_STARTED,
+  isLivePersonFacadeEnabled,
+} from './liveperson-facade-events.js';
+
 export const DEFAULT_LIVEPERSON_INVITE_DELAY = 30000;
 const DISMISSED_KEY = 'liveperson-invite-dismissed';
 const DISPOSE_EVENT = 'liveperson-facade:dispose';
@@ -19,14 +28,18 @@ function rememberDismissal() {
 }
 
 function removeInvite(facade) {
+  const wrapper = facade.parentElement;
   facade.dispatchEvent(new Event(DISPOSE_EVENT));
   facade.remove();
+  if (wrapper?.classList.contains('liveperson-facade-wrapper') && !wrapper.children.length) {
+    wrapper.remove();
+  }
 }
 
-function buildInvite() {
-  const facade = document.createElement('aside');
+function buildInvite(facade = document.createElement('aside')) {
   facade.id = 'liveperson-invite-facade';
-  facade.className = 'lp-invite-facade tracking-talk-to-sales';
+  facade.classList.add('liveperson-facade', 'tracking-talk-to-sales');
+  facade.setAttribute('role', 'complementary');
   facade.setAttribute('aria-label', 'Chat invitation');
   facade.setAttribute('aria-hidden', 'true');
   facade.inert = true;
@@ -77,10 +90,12 @@ function buildInvite() {
  * @param {Object} options facade options
  * @param {boolean} options.enabled whether this page offers LivePerson chat
  * @param {number} options.delay milliseconds before the invitation is revealed
+ * @param {HTMLElement} options.facade existing block element to decorate
  */
 export function initLivePersonInviteFacade({
   enabled = false,
   delay = DEFAULT_LIVEPERSON_INVITE_DELAY,
+  facade: facadeElement,
 } = {}) {
   const root = document.documentElement;
   if (!enabled || root.dataset.livepersonInviteScheduled || wasDismissed()) return;
@@ -88,8 +103,8 @@ export function initLivePersonInviteFacade({
 
   // Paint the fixed-position facade with the eager page at effectively transparent
   // opacity. Revealing already-painted text later avoids creating a delayed LCP candidate.
-  const facade = buildInvite();
-  document.body.append(facade);
+  const facade = buildInvite(facadeElement);
+  if (!facade.isConnected) document.body.append(facade);
 
   const wait = Number.isFinite(Number(delay))
     ? Math.max(0, Number(delay))
@@ -103,4 +118,17 @@ export function initLivePersonInviteFacade({
     facade.removeAttribute('aria-hidden');
     facade.inert = false;
   }, wait);
+}
+
+/**
+ * Decorates the auto-created LivePerson facade block.
+ * @param {HTMLElement} block LivePerson facade block
+ */
+export default function decorate(block) {
+  const delay = Number.parseInt(block.dataset.inviteDelay, 10);
+  initLivePersonInviteFacade({
+    enabled: true,
+    delay: Number.isFinite(delay) ? delay : undefined,
+    facade: block,
+  });
 }
