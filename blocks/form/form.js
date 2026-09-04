@@ -321,19 +321,26 @@ function showThankYou(form, placeholders = {}) {
   decorateIcons(note);
 }
 
+// Native <dialog> with showModal() sits in the top layer and covers ChiliPiper's
+// body-level overlay until it is closed — capture it before the form node is replaced.
+function getHostingDialog(form) {
+  const formEl = form.getFormElem?.()?.[0];
+  if (formEl?.isConnected) return formEl.closest('dialog');
+  return document.querySelector('.modal dialog[open]');
+}
+
 // Post-Marketo handoff: submit the lead via the shared submitChiliPiper (prod-parity args +
 // the Lead_XRef_ID__c event), then only dismiss the hosting schedule-call modal once ChiliPiper's
 // own overlay has actually taken over. Returns false when the submit or the overlay never lands so
 // the caller can show a fallback rather than leaving the visitor with nothing.
-async function chiliPiperHandoff(router, form) {
+async function chiliPiperHandoff(router, form, hostingDialog) {
   const submitted = await submitChiliPiper(router, form.getValues());
   if (!submitted) return false;
   // submitChiliPiper is fire-and-forget, so close the dialog only once the overlay is really up —
   // closing unconditionally would leave a visitor with no calendar, no form and no error.
   const tookOver = await waitForChiliPiperOverlay();
   if (!tookOver) return false;
-  const formEl = form.getFormElem?.()?.[0] || document.getElementById(`mktoForm_${form.getId?.()}`);
-  const dialog = formEl?.closest('dialog');
+  const dialog = hostingDialog || getHostingDialog(form);
   if (dialog) {
     // Distinct from a user-initiated close: skip the focus restore so we don't
     // pull focus off ChiliPiper's overlay as it takes over (see modal.js).
@@ -494,10 +501,14 @@ async function embedMarketoForm(formEl, cfg, config, env) {
         trackFormSubmit({ ...vals, Lead_XRef_ID__c: leadXref }, config.formId);
       } catch (e) { /* non-fatal */ }
 
-      // show thank you message and invoke chilipiper
+      // ChiliPiper handoff: capture the hosting modal before any DOM swap, then
+      // close it once ChiliPiper's overlay is up so it isn't trapped behind the
+      // native <dialog> top layer. Thank-you is the fallback when handoff fails.
       if (canHandoff) {
-        showThankYou(form, placeholders);
-        chiliPiperHandoff(config.chiliPiperRouter, form);
+        const hostingDialog = getHostingDialog(form);
+        chiliPiperHandoff(config.chiliPiperRouter, form, hostingDialog).then((ok) => {
+          if (!ok) showThankYou(form, placeholders);
+        });
       }
 
       // handling other use case like download file or redirect to success URL

@@ -57,7 +57,6 @@ beforeEach(() => {
   delete window.utag;
   delete window.grecaptcha;
   delete global.fetch;
-  window.placeholders = { default: {} };
   global.IntersectionObserver = class {
     constructor(cb) { this.cb = cb; }
 
@@ -67,24 +66,19 @@ beforeEach(() => {
   };
   window.MktoForms2 = {
     loadForm: vi.fn((host, munchkin, formId, cb) => {
-      // Simulate a measurable stacked Marketo form so disclaimer placement can
-      // distinguish the field rows from the submit row.
+      // simulate Marketo rendering its button row into the form element
       const el = document.getElementById(`mktoForm_${formId}`);
-      if (el) {
-        el.innerHTML = [
-          '<div class="mktoFormRow"><input type="text"></div>',
-          '<div class="mktoButtonRow">',
-          '<button class="mktoButton" type="submit">Schedule a call</button>',
-          '</div>',
-        ].join('');
-        el.querySelector('.mktoFormRow').getBoundingClientRect = () => ({ top: 0 });
-        el.querySelector('.mktoButtonRow').getBoundingClientRect = () => ({ top: 50 });
-      }
+      if (el) el.innerHTML = '<div class="mktoButtonRow"><button class="mktoButton" type="submit">Schedule a call</button></div>';
       cb({
         onSuccess: (fn) => { onSuccessFn = fn; },
         onValidate: (fn) => { onValidateFn = fn; },
         submittable,
         addHiddenFields: (fields) => { hiddenFields = { ...hiddenFields, ...fields }; },
+        getId: () => formId,
+        getFormElem: () => {
+          const el = document.getElementById(`mktoForm_${formId}`);
+          return el ? [el] : [];
+        },
         getValues: () => ({
           Email: 'controller@brightpathco.com',
           FirstName: 'Dana',
@@ -272,6 +266,38 @@ describe('decorate — live Marketo form', () => {
     // expect(sendEvent.mock.calls[0][0].xdm.identityMap.Email[0].id)
     //   .toBe('controller@brightpathco.com');
     delete window.intuit;
+  });
+
+  it('closes the hosting modal once ChiliPiper overlay appears', async () => {
+    const block = make([['formId', '1058'], ['chiliPiperRouter', 'mid-us-webform-managed-ies']]);
+    const modal = document.createElement('div');
+    modal.className = 'modal block';
+    const dialog = document.createElement('dialog');
+    dialog.close = vi.fn();
+    modal.append(dialog);
+    dialog.append(block);
+    document.body.append(modal);
+
+    await decorate(block);
+    await flush();
+
+    onSuccessFn({ Email: 'controller@brightpathco.com' });
+    await flush();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'chilipiper-popup-window';
+    const iframe = document.createElement('iframe');
+    iframe.className = 'chilipiper-frame';
+    overlay.append(iframe);
+    document.body.append(overlay);
+    await flush();
+    await new Promise((r) => { setTimeout(r, 0); });
+    await flush();
+
+    expect(dialog.close).toHaveBeenCalled();
+    expect(dialog.dataset.suppressFocusRestore).toBe('true');
+    modal.remove();
+    overlay.remove();
   });
 });
 
