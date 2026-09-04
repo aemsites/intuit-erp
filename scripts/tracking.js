@@ -459,12 +459,6 @@ export function regionCustomProperties(ctx) {
   return out;
 }
 
-function sheetMapFrom(input) {
-  if (input instanceof Map) return input;
-  if (Array.isArray(input)) return indexRows(input);
-  return indexRows(input?.data);
-}
-
 function resolvedTarget(target, map, loc) {
   const hit = resolveTrackable(target);
   if (!hit) return null;
@@ -526,112 +520,6 @@ function resolvedTarget(target, map, loc) {
   };
 }
 
-function computedAccessPoint(cta, attrs) {
-  let cur = cta;
-  if (Object.hasOwn(attrs, 'data-tracking')) {
-    cur = cta.parentElement;
-  } else {
-    while (cur && cur.nodeType === 1 && !cur.hasAttribute('data-tracking')) {
-      cur = cur.parentElement;
-    }
-    cur = cur?.parentElement || null;
-  }
-
-  const segments = [];
-  while (cur && cur.nodeType === 1) {
-    if (cur.hasAttribute('data-tracking')) segments.unshift(cur.getAttribute('data-tracking'));
-    cur = cur.parentElement;
-  }
-  const trail = segments.filter(Boolean).join('|').replace(/-/g, '_').trim();
-  if (trail) return trail;
-  return cta.closest('header') ? '' : 'page';
-}
-
-function parseTrackerProperties(value) {
-  const out = {};
-  String(value || '').split(',').forEach((pair) => {
-    const separator = pair.indexOf('|');
-    if (separator < 1) return;
-    const key = pair.slice(0, separator);
-    const val = pair.slice(separator + 1);
-    if (key && val && !val.includes('|')) out[key] = val;
-  });
-  return out;
-}
-
-function inspectionValues(cta, attrs) {
-  const output = {};
-  const fields = [
-    'object', 'object-detail', 'action', 'ui-object', 'ui-object-detail',
-    'ui-action', 'wa-link',
-  ];
-  fields.forEach((field) => {
-    const value = attrs[`data-${field}`];
-    if (value != null && value !== '') output[field] = value;
-  });
-  if (Object.hasOwn(attrs, 'data-ui-access-point')) {
-    output['ui-access-point'] = computedAccessPoint(cta, attrs);
-  }
-  const custom = parseTrackerProperties(attrs['data-custom-properties']);
-  if (Object.keys(custom).length) output['custom-properties'] = custom;
-  Object.entries(attrs).forEach(([name, value]) => {
-    if (name.startsWith('data-survey-')) output[name.slice(5)] = value;
-  });
-  if (output.object && output.action) output.event = `${output.object}:${output.action}`;
-  return output;
-}
-
-/**
- * Describe one rendered tracking target without stamping the DOM or firing an interaction.
- * Used by the DA tracking editor and by tests that verify its view stays aligned
- * with the live runtime's derive -> component -> sheet precedence.
- * @param {EventTarget} target element or descendant to inspect
- * @param {Map|Array|object} sheet indexed map, row array, or DA sheet document
- * @param {{pathname?: string, hostname?: string}} location page location override
- * @returns {Record<string, unknown>|null}
- */
-export function describeTrackingTarget(target, sheet = [], location = {}) {
-  const browserLocation = (typeof window !== 'undefined' && window.location) || {};
-  const loc = {
-    pathname: location.pathname || browserLocation.pathname || '/',
-    hostname: location.hostname || browserLocation.hostname || '',
-  };
-  const resolved = resolvedTarget(target, sheetMapFrom(sheet), loc);
-  if (!resolved) return null;
-  const {
-    cta, block, blockName, id, isPart, match, automaticAttrs, effectiveAttrs,
-  } = resolved;
-  return {
-    id,
-    matchedId: match?.id || null,
-    path: normalizePath(loc.pathname),
-    label: labelFor(cta),
-    href: cta.getAttribute('href') || '',
-    tag: cta.tagName.toLowerCase(),
-    block: block ? (blockName || trackingKey(block)) : PAGE_KEY,
-    editable: !isPart && !!id,
-    scope: match?.scope || null,
-    automatic: inspectionValues(cta, automaticAttrs),
-    override: match?.row ? { ...match.row } : {},
-    effective: inspectionValues(cta, effectiveAttrs),
-  };
-}
-
-/**
- * Return a non-mutating inventory of all trackable rendered interactions in a scope.
- * @param {ParentNode} scope rendered page/document
- * @param {Map|Array|object} sheet indexed map, row array, or DA sheet document
- * @param {{pathname?: string, hostname?: string}} location page location override
- * @returns {Array<Record<string, unknown>>}
- */
-export function collectTrackingInventory(scope = document, sheet = [], location = {}) {
-  const root = scope?.querySelectorAll ? scope : document;
-  const selectors = `[data-track-as], ${CTA_SELECTOR}`;
-  return [...root.querySelectorAll(selectors)]
-    .map((target) => describeTrackingTarget(target, sheet, location))
-    .filter(Boolean);
-}
-
 /**
  * JIT-stamp the resolved (derived + sheet + region context) data-* onto the
  * interacted CTA so the injected tracker reads them on the ensuing click. Nothing
@@ -646,48 +534,6 @@ export function stampInteraction(e) {
   stampCta(resolved.cta, resolved.effectiveAttrs);
 }
 
-/**
- * Whether the explicitly requested inspector may be exposed for this location.
- * DA plugins render project code on preview.da.live rather than aem.page.
- * @param {{hostname?: string, search?: string}} location browser location
- * @returns {boolean}
- */
-export function isTrackingInspectorPreview(location = {}) {
-  const host = location.hostname || '';
-  const params = new URLSearchParams(location.search || '');
-  const canvasPreview = /\.preview\.da\.live$/.test(host)
-    && params.get('quick-edit') === 'on'
-    && params.get('controller') === 'parent';
-  const previewHost = /\.(aem|hlx)\.page$/.test(host)
-    || /\.preview\.da\.live$/.test(host)
-    || ['localhost', '127.0.0.1'].includes(host);
-  return previewHost && (params.get('tracking-editor') === '1' || canvasPreview);
-}
-
-/** Load editor-only messaging without adding it to the normal tracking module path. */
-export function loadTrackingInspectorBridge(
-  location = {},
-  // Query-versioned import keeps Canvas preview and extension on the same release.
-  // eslint-disable-next-line import/no-unresolved
-  loader = () => import('../tools/plugins/tracking/bridge.js?v=20260904.1'),
-) {
-  return isTrackingInspectorPreview(location) ? loader() : null;
-}
-
-function exposeTrackingInspector() {
-  if (typeof window === 'undefined' || !isTrackingInspectorPreview(window.location)) return;
-  window.hlx = window.hlx || {};
-  window.hlx.trackingInspector = {
-    collect: (rows = []) => collectTrackingInventory(document, rows, window.location),
-    describe: (target, rows = []) => describeTrackingTarget(target, rows, window.location),
-  };
-  loadTrackingInspectorBridge(window.location)
-    .then(({ installTrackingInspectorBridge }) => installTrackingInspectorBridge({
-      collect: window.hlx.trackingInspector.collect,
-    }))
-    .catch(() => {});
-}
-
 /** Initialize trails, sheet caching, and capture handlers. */
 export function initTracking(scope = document) {
   const root = scope && scope.addEventListener ? scope : document;
@@ -697,7 +543,6 @@ export function initTracking(scope = document) {
   root.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') stampInteraction(e);
   }, true);
-  exposeTrackingInspector();
   return stampInteraction;
 }
 
