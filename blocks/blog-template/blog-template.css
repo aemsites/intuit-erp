@@ -773,12 +773,12 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
     padding: 0 40px;
   }
 
-  &.hear-from-our-customers {
+  .section.hear-customers {
     padding: 40px 0;
     margin-top: 3rem;
   }
 
-  &.hear-from-our-customers .default-content-wrapper {
+  .section.hear-customers .default-content-wrapper {
     display: flex;
     flex-direction: row;
     gap: 20px;
