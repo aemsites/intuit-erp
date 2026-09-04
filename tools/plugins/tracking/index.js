@@ -4,6 +4,10 @@
 // eslint-disable-next-line import/no-unresolved
 import DA_SDK from 'https://da.live/nx/utils/sdk.js';
 import {
+  createTrackingInspectorClient,
+  trackingPreviewUrl,
+} from './bridge.js';
+import {
   TRACKING_SOURCE_PATH,
   createTrackingApi,
   resolveTrackingRef,
@@ -17,8 +21,6 @@ import {
   resolveEditorPath,
   validateOverride,
 } from './model.js';
-
-const TARGET_SELECTOR = '[data-track-as], a[href], button, summary, [role="button"]';
 
 const FIELD_LABELS = {
   object: 'Object',
@@ -51,10 +53,10 @@ const state = {
   base: null,
   etag: '',
   api: null,
+  context: {},
   ref: 'main',
   inventory: [],
   selected: null,
-  selectedElement: null,
   scope: '/',
   frame: null,
   inspector: null,
@@ -115,71 +117,8 @@ function uniqueInventory(items) {
   }, []);
 }
 
-function previewUrl(path) {
-  const url = new URL(path, window.location.origin);
-  url.searchParams.set('tracking-editor', '1');
-  url.searchParams.set('martech', 'off');
-  return url.href;
-}
-
-function waitForInspector(frame) {
-  return new Promise((resolve, reject) => {
-    let attempts = 0;
-    const poll = () => {
-      attempts += 1;
-      try {
-        const inspector = frame.contentWindow?.hlx?.trackingInspector;
-        if (inspector) {
-          resolve(inspector);
-          return;
-        }
-      } catch {
-        reject(new Error('The rendered preview is not on the same branch origin as the editor.'));
-        return;
-      }
-      if (attempts >= 80) {
-        reject(new Error('The rendered page did not expose its tracking inventory.'));
-        return;
-      }
-      setTimeout(poll, 250);
-    };
-    poll();
-  });
-}
-
-function clearPreviewHighlight() {
-  if (state.selectedElement) state.selectedElement.classList.remove('tracking-editor-selected');
-  state.selectedElement = null;
-}
-
-function highlightPreview(target) {
-  clearPreviewHighlight();
-  const candidate = target?.closest?.(TARGET_SELECTOR);
-  if (!candidate) return;
-  candidate.classList.add('tracking-editor-selected');
-  state.selectedElement = candidate;
-}
-
-function bindPreviewSelection() {
-  const doc = state.frame.contentDocument;
-  if (!doc || doc.getElementById('tracking-editor-style')) return;
-  const style = doc.createElement('style');
-  style.id = 'tracking-editor-style';
-  style.textContent = '.tracking-editor-selected{outline:4px solid #6d4aff!important;'
-    + 'outline-offset:3px!important;}';
-  doc.head.appendChild(style);
-  doc.addEventListener('click', (event) => {
-    const item = state.inspector.describe(event.target, state.sheet.data);
-    if (!item) return;
-    event.preventDefault();
-    event.stopPropagation();
-    highlightPreview(event.target);
-    selectInventoryItem(item);
-  }, true);
-}
-
 async function collectInventory() {
-  state.inventory = uniqueInventory(state.inspector.collect(state.sheet.data));
+  state.inventory = uniqueInventory(await state.inspector.collect(state.sheet.data));
   renderTargetList();
   if (state.selected?.id) {
     const refreshed = state.inventory.find((item) => item.id === state.selected.id);
@@ -192,9 +131,14 @@ async function loadPreview(path) {
   state.previewGeneration = generation;
   state.path = cleanPagePath(path);
   state.selected = null;
-  clearPreviewHighlight();
-  setStatus(`Loading rendered preview for ${state.path}…`, 'pending');
-  state.frame.src = previewUrl(state.path);
+  setStatus(`Loading tracking properties for ${state.path}…`, 'pending');
+  const url = trackingPreviewUrl(state.path, {
+    context: state.context,
+    ref: state.ref,
+    location: window.location,
+  });
+  const targetOrigin = new URL(url).origin;
+  state.frame.src = url;
   await new Promise((resolve, reject) => {
     const loaded = () => { clearTimeout(timer); resolve(); };
     const timer = setTimeout(() => {
@@ -204,13 +148,10 @@ async function loadPreview(path) {
     state.frame.addEventListener('load', loaded, { once: true });
   });
   if (generation !== state.previewGeneration) return;
-  const inspector = await waitForInspector(state.frame);
-  if (generation !== state.previewGeneration) return;
-  state.inspector = inspector;
-  bindPreviewSelection();
+  state.inspector = createTrackingInspectorClient({ frame: state.frame, targetOrigin });
   await collectInventory();
   setStatus(
-    `Found ${state.inventory.length} trackable targets. Click the preview or choose one from the list.`,
+    `Found ${state.inventory.length} trackable targets. Choose one to inspect its properties.`,
     'ok',
   );
 }
@@ -389,10 +330,15 @@ function renderEditor(item) {
   const comparisonRoot = el('div');
   const formValues = () => Object.fromEntries(OVERRIDE_FIELDS
     .map((field) => [field, controls[field].value.trim()]));
-  const updateEffective = () => {
+  let comparisonGeneration = 0;
+  const updateEffective = async () => {
+    comparisonGeneration += 1;
+    const generation = comparisonGeneration;
     const values = formValues();
     const simulated = applyOverride(state.sheet, { path: state.scope, id: overrideId, values });
-    const refreshed = state.inspector.collect(simulated.data)
+    const refreshedInventory = await state.inspector.collect(simulated.data);
+    if (generation !== comparisonGeneration) return;
+    const refreshed = refreshedInventory
       .find((candidate) => candidate.id === item.id && candidate.label === item.label);
     comparisonRoot.replaceChildren(comparisonTable(
       item.automatic,
@@ -423,18 +369,18 @@ function renderEditor(item) {
   Object.entries(controls).forEach(([field, control]) => control.addEventListener('input', () => {
     control.removeAttribute('aria-invalid');
     form.querySelector(`[data-error-for="${field}"]`).textContent = '';
-    updateEffective();
+    updateEffective().catch((error) => setStatus(error.message, 'error'));
     syncActions();
   }));
   scopeSelect.addEventListener('change', () => {
     state.scope = scopeSelect.value;
     setFormValues();
-    updateEffective();
+    updateEffective().catch((error) => setStatus(error.message, 'error'));
     syncActions();
   });
   reset.addEventListener('click', () => {
     setFormValues();
-    updateEffective();
+    updateEffective().catch((error) => setStatus(error.message, 'error'));
     syncActions();
   });
   form.appendChild(el('div', { class: 'tracking-actions' }, [reset, save, publish]));
@@ -534,7 +480,7 @@ function renderEditor(item) {
     comparisonRoot,
     form,
   );
-  updateEffective();
+  updateEffective().catch((error) => setStatus(error.message, 'error'));
   syncActions();
 }
 
@@ -553,24 +499,14 @@ function renderShell() {
     attrs: { role: 'status', 'aria-live': 'polite' },
   });
 
-  const pathInput = el('input', {
-    class: 'tracking-path',
-    attrs: { type: 'text', value: state.path, 'aria-label': 'Page path' },
-  });
-  const loadButton = el('button', { class: 'tracking-load', text: 'Load page' });
-  loadButton.addEventListener('click', () => loadPreview(pathInput.value).catch((error) => setStatus(error.message, 'error')));
-  pathInput.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter') loadButton.click();
-  });
-
-  const toolbar = el('div', { class: 'tracking-canvas-toolbar' }, [
-    el('div', { class: 'tracking-path-group' }, [pathInput, loadButton]),
-    el('p', { class: 'tracking-toolbar-note', text: `Rendered ${state.ref} preview` }),
-  ]);
-
   state.frame = el('iframe', {
-    class: 'tracking-preview',
-    attrs: { title: 'Rendered page preview', sandbox: 'allow-scripts allow-same-origin allow-forms allow-popups' },
+    attrs: {
+      title: 'Tracking inventory source',
+      hidden: '',
+      'aria-hidden': 'true',
+      tabindex: '-1',
+      sandbox: 'allow-scripts allow-same-origin',
+    },
   });
   searchInput = el('input', {
     class: 'tracking-search',
@@ -597,7 +533,6 @@ function renderShell() {
     ]),
     el('span', { class: 'tracking-source', text: 'Live source' }),
   ]);
-  const canvas = el('section', { class: 'tracking-canvas' }, [toolbar, state.frame]);
   const rail = el('aside', { class: 'tracking-rail' }, [
     railHeader,
     statusEl,
@@ -609,8 +544,8 @@ function renderShell() {
     }),
   ]);
   const workspace = el('div', { class: 'tracking-workspace' }, [
-    canvas,
     rail,
+    state.frame,
   ]);
   app.append(workspace);
 }
@@ -625,6 +560,7 @@ async function loadInitialSheet() {
 async function init() {
   try {
     const { context, actions } = await DA_SDK;
+    state.context = context;
     const params = new URLSearchParams(window.location.search);
     const explicitRef = params.get('ref') || '';
     state.ref = resolveTrackingRef({
@@ -636,7 +572,11 @@ async function init() {
     state.path = resolveEditorPath({ contextPath: context.path, search: window.location.search });
     await loadInitialSheet();
     renderShell();
-    await loadPreview(state.path);
+    try {
+      await loadPreview(state.path);
+    } catch (error) {
+      setStatus(error.message, 'error');
+    }
   } catch (error) {
     app.replaceChildren(el('div', { class: 'tracking-status tracking-status-error', text: error.message }));
   }

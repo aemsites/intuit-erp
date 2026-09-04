@@ -1,6 +1,6 @@
 # Tracking Inspector
 
-A fullscreen Document Authoring plugin for inspecting rendered tracking values and maintaining the
+A Document Authoring rail extension for inspecting rendered tracking values and maintaining the
 sparse overrides in `/tracking.json`.
 
 ## What it does
@@ -8,7 +8,9 @@ sparse overrides in `/tracking.json`.
 - Opens the current DA document automatically, with an optional `path` query override for direct-app
   use.
 - Inventories block-scoped, loose-page, and pure-derived tracking targets from the rendered page.
-- Selects targets from the list or by clicking the embedded preview.
+- Keeps the rendered document in the DA canvas and shows only tracking properties in the extension
+  rail.
+- Selects targets from the searchable interaction list.
 - Compares automatic and effective values and highlights only the fields changed by an override.
 - Edits page-scoped or global sparse overrides without requiring authors to derive tracking IDs.
 - Validates `custom-properties` and survey key/value syntax.
@@ -16,7 +18,8 @@ sparse overrides in `/tracking.json`.
   preconditions so an interleaved whole-sheet write cannot be overwritten.
 - Saves the source sheet, previews it through AEM, and publishes only after an explicit confirmation.
 
-The rendered inspector is query-gated and available only on AEM preview, DA preview, and localhost
+The extension gathers its inventory from a hidden, authenticated DA preview of the same ref. The
+rendered inspector is query-gated and available only on AEM preview, DA preview, and localhost
 origins. It never enables martech while inspecting a page and never synthesizes an interaction.
 
 ## DA registration
@@ -25,7 +28,7 @@ Register the plugin in the site's `library` config sheet:
 
 | title | path | format | icon | experience | ref |
 | --- | --- | --- | --- | --- | --- |
-| Tracking Inspector | `/tools/plugins/tracking/index.html` |  | `/tools/plugins/tracking/tracking.svg` | `fullsize-dialog` |  |
+| Tracking Inspector | `/tools/plugins/tracking/index.html` |  | `/tools/plugins/tracking/tracking.svg` |  |  |
 
 Use the `ref` column only while reviewing a feature branch. Leave it blank in the production
 registration so DA loads the plugin from `main`.
@@ -64,7 +67,7 @@ so previous sheet revisions remain available in document history.
 Run the focused editor and runtime tests:
 
 ```bash
-npx vitest run test/tracking-editor-api.test.js test/tracking-editor-delivery.test.js test/tracking-editor-model.test.js test/tracking-inspector.test.js
+npx vitest run test/tracking-editor-api.test.js test/tracking-editor-delivery.test.js test/tracking-editor-model.test.js test/tracking-inspector.test.js test/tracking-inspector-bridge.test.js
 ```
 
 Before release, also run `npm run lint` and exercise an authenticated add → edit → remove lifecycle
