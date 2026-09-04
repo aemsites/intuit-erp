@@ -847,3 +847,7 @@ main.blog-article > .section:not(.blog-hero):not(.blog-toc-rail):not(.blog-rail)
     }
   }
 }
+
+.blog-article > .section .media-text-container .default-content-wrapper>p {
+  text-align: left;
+}
