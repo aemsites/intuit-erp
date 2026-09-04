@@ -77,6 +77,21 @@ describe('tracking editor authenticated delivery API', () => {
     });
   });
 
+  it('normalizes Cloudflare weak ETags before conditional writes', async () => {
+    const sheet = { ':type': 'sheet', total: 0, data: [] };
+    const daFetch = vi.fn().mockResolvedValue(response({ body: sheet, etag: 'W/"revision-42"' }));
+    const api = createTrackingApi({ daFetch, context: CONTEXT });
+
+    const revision = await api.readSourceRevision();
+    await api.writeSource(sheet, { etag: 'W/"revision-42"' });
+
+    expect(revision.etag).toBe('"revision-42"');
+    expect(daFetch).toHaveBeenLastCalledWith(SOURCE_URL, expect.objectContaining({
+      method: 'POST',
+      headers: { 'If-Match': '"revision-42"' },
+    }));
+  });
+
   it('reports actionable read failures for HTTP, network, and malformed JSON errors', async () => {
     const forbidden = createTrackingApi({
       context: CONTEXT,

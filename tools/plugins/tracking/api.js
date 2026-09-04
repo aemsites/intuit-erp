@@ -8,6 +8,10 @@ function cleanRef(value) {
   return typeof value === 'string' ? value.trim() : '';
 }
 
+function normalizeEtag(value) {
+  return cleanRef(value).replace(/^W\//, '');
+}
+
 export function resolveTrackingRef({ ref, context = {}, hostname } = {}) {
   const configured = cleanRef(ref) || cleanRef(context.ref);
   if (configured) return configured === 'local' ? 'main' : configured;
@@ -74,7 +78,7 @@ export function createTrackingApi({ daFetch, context = {}, ref } = {}) {
     async readSourceRevision() {
       const response = await request('read tracking sheet', sourceUrl, { method: 'GET' });
       const sheet = await parseSheet(response);
-      const etag = response.headers?.get('etag') || '';
+      const etag = normalizeEtag(response.headers?.get('etag'));
       if (!etag) {
         throw new Error('The tracking sheet response did not include the ETag required for safe editing.');
       }
@@ -82,12 +86,13 @@ export function createTrackingApi({ daFetch, context = {}, ref } = {}) {
     },
 
     async writeSource(sheet, { etag } = {}) {
-      if (!cleanRef(etag)) {
+      const revision = normalizeEtag(etag);
+      if (!revision) {
         throw new TypeError('An ETag is required for a safe tracking sheet update.');
       }
       return request('save tracking sheet', sourceUrl, {
         method: 'POST',
-        headers: { 'If-Match': etag },
+        headers: { 'If-Match': revision },
         body: buildSheetFormData(sheet),
       });
     },
