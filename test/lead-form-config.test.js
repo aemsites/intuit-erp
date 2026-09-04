@@ -17,7 +17,11 @@ vi.mock('../scripts/aem.js', () => ({
 vi.mock('../scripts/placeholders.js', () => ({
   fetchPlaceholders: vi.fn(() => Promise.resolve({})),
 }));
+vi.mock('../scripts/experience.js', () => ({
+  experienceLog: vi.fn(),
+}));
 import { loadScript, getMetadata } from '../scripts/aem.js';
+import { experienceLog } from '../scripts/experience.js';
 import { getSiteConfig } from '../scripts/scripts.js';
 
 vi.mock('../scripts/scripts.js', () => ({
@@ -40,15 +44,18 @@ const RECAPTCHA_CFG = {
 
 let onSuccessFn;
 let onValidateFn;
+let onSubmitFn;
 let submittable;
 let hiddenFields;
 beforeEach(() => {
   onSuccessFn = null;
   onValidateFn = null;
+  onSubmitFn = null;
   submittable = vi.fn();
   hiddenFields = {};
   // Uncomment with the AEP/WebSDK integration in scripts/scripts.js and blocks/form/form.js.
   // sendEvent.mockClear();
+  vi.mocked(experienceLog).mockClear();
   getSiteConfig.mockResolvedValue({
     'marketo.munchkin': '743-RZM-619',
     'chilipiper.subdomain': 'intuitsales',
@@ -65,30 +72,20 @@ beforeEach(() => {
     disconnect() {}
   };
   window.MktoForms2 = {
-    whenReady: vi.fn((cb) => {
-      queueMicrotask(() => {
-        const formId = document.querySelector('[id^="mktoForm_"]')?.id?.replace('mktoForm_', '');
-        if (!formId) return;
-        const el = document.getElementById(`mktoForm_${formId}`);
-        cb({
-          getId: () => formId,
-          getFormElem: () => (el ? [el] : []),
-        });
-      });
-    }),
     loadForm: vi.fn((host, munchkin, formId, cb) => {
       // simulate Marketo rendering its button row into the form element
       const el = document.getElementById(`mktoForm_${formId}`);
-      if (el) el.innerHTML = '<div class="mktoButtonRow"><button class="mktoButton" type="submit">Schedule a call</button></div>';
+      if (el) el.innerHTML = '<div class="mktoButtonRow"><div class="mktoButtonWrap"><button class="mktoButton" type="submit">Schedule a call</button></div></div>';
       cb({
         onSuccess: (fn) => { onSuccessFn = fn; },
         onValidate: (fn) => { onValidateFn = fn; },
+        onSubmit: (fn) => { onSubmitFn = fn; },
         submittable,
         addHiddenFields: (fields) => { hiddenFields = { ...hiddenFields, ...fields }; },
         getId: () => formId,
         getFormElem: () => {
-          const el = document.getElementById(`mktoForm_${formId}`);
-          return el ? [el] : [];
+          const formEl = document.getElementById(`mktoForm_${formId}`);
+          return formEl ? [formEl] : [];
         },
         getValues: () => ({
           Email: 'controller@brightpathco.com',
@@ -96,7 +93,6 @@ beforeEach(() => {
           Company: 'Bright Path',
           ...hiddenFields,
         }),
-        onSubmit: vi.fn(),
       });
     }),
   };
@@ -242,16 +238,19 @@ describe('decorate — live Marketo form', () => {
     );
   });
 
-  it('hands off to ChiliPiper (prod args + xref) and fires the ECS lead track on success', async () => {
+  it('hands off to ChiliPiper (prod args + xref), shows thank-you, and fires the ECS lead track on success', async () => {
     const track = vi.fn();
     window.intuit = { tracking: { ecs: { webAnalytics: { track } } } };
     const block = make([['formId', '1058'], ['chiliPiperRouter', 'mid-us-webform-managed-ies']]);
+    document.body.append(block);
     await decorate(block);
     await flush();
     expect(onSuccessFn).toBeTypeOf('function');
 
     const result = onSuccessFn({ Email: 'controller@brightpathco.com', FirstName: 'Dana', Company: 'Bright Path' });
     expect(result).toBe(false); // suppress Marketo's default redirect
+    expect(block.querySelector('.form-success')).not.toBeNull();
+    expect(block.querySelector('form#mktoForm_1058')).toBeNull();
     await flush();
 
     expect(window.ChiliPiper.submit).toHaveBeenCalledWith(
@@ -278,6 +277,27 @@ describe('decorate — live Marketo form', () => {
     // expect(sendEvent.mock.calls[0][0].xdm.identityMap.Email[0].id)
     //   .toBe('controller@brightpathco.com');
     delete window.intuit;
+    block.remove();
+  });
+
+  it('logs a Marketo submission error when validation messages appear after submit', async () => {
+    const block = make([['formId', '1058']]);
+    document.body.append(block);
+    await decorate(block);
+    await flush();
+    expect(onSubmitFn).toBeTypeOf('function');
+
+    onSubmitFn();
+    const error = document.createElement('div');
+    error.className = 'mktoErrorMsg';
+    block.querySelector('.mktoButtonWrap').append(error);
+    await new Promise((r) => { setTimeout(r, 500); });
+
+    expect(experienceLog).toHaveBeenCalledWith(
+      'error',
+      expect.stringContaining('MARKETOFORM_ISSUE_WITH_FORM_SUBMISSION'),
+    );
+    block.remove();
   });
 });
 
