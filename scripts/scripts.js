@@ -18,7 +18,7 @@ import {
 // Uncomment the AEP blocks in loadEager / loadLazy to load it in parallel.
 // The tealium plugin below is NOT a vendored subtree (project-owned code), but the relative
 // eslint-disable-next-line import/no-relative-packages
-import TealiumMartech from '../plugins/tealium-martech/src/index.js';
+import TealiumMartech, { parseTealiumTagUids } from '../plugins/tealium-martech/src/index.js';
 import installEcsEnrich from './ecs-enrich.js';
 import { isBlogPage, hasAuthoredCaseStudyHeader } from '../blocks/blog-template/blog-detect.js';
 import { isVideoLink, videoInfo } from '../blocks/video/video-info.js';
@@ -51,6 +51,7 @@ const MARTECH_PROVIDER = MARTECH_PARAM === 'off' ? 'off' : 'tealium';
 const MARTECH_LOCAL = MARTECH_PARAM === 'local';
 // Lab-only: keep most active tags in lazy, but move UIDs 9/15/23/27 to delayed_ready.
 const MARTECH_PHASE_SPLIT = URL_PARAMS.get('martech-phase-split') === 'on';
+const TEALIUM_TAG_UIDS = parseTealiumTagUids(URL_PARAMS);
 
 function isLivePersonOnDemand() {
   return ['true', 'yes'].includes((getMetadata('chat-now') || '').trim().toLowerCase());
@@ -500,6 +501,7 @@ async function loadEager(doc) {
       local: MARTECH_LOCAL,
       phaseSplit: MARTECH_PHASE_SPLIT,
       livePersonOnDemand,
+      tagUids: TEALIUM_TAG_UIDS,
     });
     tealium.eager();
   }
