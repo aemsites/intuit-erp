@@ -185,8 +185,9 @@
 /* CLS #519: reserve the row + top-pin the card so the Marketo form's late
    field-render fills reserved space instead of growing the row (which
    re-centers the lone headline and shoves the next section down). Desktop
-   only; mobile stacks the card below the fold. */
-@media (width >=768px) {
+   only (>=1024, where the hero is side-by-side); below that the card stacks
+   below the fold and no reservation is needed. */
+@media (width >=1024px) {
   .hero.form .hero-grid:has(.hero-copy > h1:only-child) {
     min-height: 760px;
   }
@@ -303,7 +304,10 @@
   color: var(--text-muted);
 }
 
-@media (width <768px) {
+/* Prod stacks the hero at 1024 (verified across nonprofit/homepage/accounting/
+   pricing — side-by-side at 1025, stacked at 1023), not 768. The stacked
+   treatment therefore applies below 1024. */
+@media (width <1024px) {
   .hero .hero-grid {
     grid-template-columns: 1fr;
     gap: 28px;
