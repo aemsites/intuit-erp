@@ -1,6 +1,6 @@
 export const LIVEPERSON_FACADE_ACTIVATE = 'liveperson-facade:activate';
 export const LIVEPERSON_FACADE_STARTED = 'liveperson-facade:started';
-export const DEFAULT_LIVEPERSON_INVITE_DELAY = 2500;
+export const DEFAULT_LIVEPERSON_INVITE_DELAY = 30000;
 const DISMISSED_KEY = 'liveperson-invite-dismissed';
 const DISPOSE_EVENT = 'liveperson-facade:dispose';
 

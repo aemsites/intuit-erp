@@ -21,7 +21,8 @@ describe('LivePerson proactive invite facade', () => {
     vi.useRealTimers();
   });
 
-  it('paints the invitation eagerly but reveals it after the LivePerson-equivalent delay', () => {
+  it('paints the invitation eagerly but reveals it after the configured default delay', () => {
+    expect(DEFAULT_LIVEPERSON_INVITE_DELAY).toBe(30000);
     initLivePersonInviteFacade({ enabled: true });
 
     const facade = document.getElementById('liveperson-invite-facade');
@@ -36,6 +37,17 @@ describe('LivePerson proactive invite facade', () => {
     expect(facade.classList.contains('lp-invite-visible')).toBe(true);
     expect(facade.hasAttribute('aria-hidden')).toBe(false);
     expect(facade.inert).toBe(false);
+  });
+
+  it('honors an authored invitation delay override', () => {
+    initLivePersonInviteFacade({ enabled: true, delay: 1234 });
+
+    const facade = document.getElementById('liveperson-invite-facade');
+    vi.advanceTimersByTime(1233);
+    expect(facade.classList.contains('lp-invite-visible')).toBe(false);
+
+    vi.advanceTimersByTime(1);
+    expect(facade.classList.contains('lp-invite-visible')).toBe(true);
   });
 
   it('matches the LivePerson invitation copy and actions', () => {

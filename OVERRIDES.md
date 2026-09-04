@@ -70,7 +70,7 @@ There is also the **aem-experimentation plugin** convention (loaded only when pr
 | --- | --- | --- | --- |
 | `marketo` | Marketo Munchkin environment | `dev` / `e2e` / anything-else→`prod` | [blocks/form/form.js](blocks/form/form.js) |
 | `chat-now` | Adds a delayed `Hi there!` invite and contact-panel chat facade; LivePerson tag 23 loads only after either facade is accepted (paints only where Tealium/LivePerson are available) | `true` / `yes` | [scripts/liveperson-facade.js](scripts/liveperson-facade.js), [blocks/contact-us/contact-us.js](blocks/contact-us/contact-us.js), [plugins/tealium-martech/src/index.js](plugins/tealium-martech/src/index.js) |
-| `chat-invite-delay` | Overrides the proactive chat facade delay in milliseconds; defaults to `2500` | non-negative integer | [scripts/scripts.js](scripts/scripts.js), [scripts/liveperson-facade.js](scripts/liveperson-facade.js) |
+| `chat-invite-delay` | Overrides the proactive chat facade delay in milliseconds; defaults to `30000` | non-negative integer | [scripts/scripts.js](scripts/scripts.js), [scripts/liveperson-facade.js](scripts/liveperson-facade.js) |
 | `schedule-fragment` | Fragment path for the "schedule a demo" modal | path (default in [scripts/schedule-modal.js](scripts/schedule-modal.js)) | [scripts/schedule-modal.js](scripts/schedule-modal.js) |
 | `tracking` | Click-tracking access-point segment stamped on `<main>` as `data-tracking` | string | [scripts/tracking.js](scripts/tracking.js) — see [CLICK-TRACKING.md](CLICK-TRACKING.md) |
 

@@ -28,7 +28,7 @@ const OPTANON_COOKIE_VALUE = 'isGpcEnabled=0&datestamp=Fri+Aug+07+2026+12%3A00%3
 const PROD_HOST = 'erp.intuit.com';
 const STAGE_HOST = 'stage.erp.intuit.com';
 const DEV_HOST_LOCALHOST = 'localhost';
-// The AEM preview hosts are now INERT (not intuit.com origins → consent CDN unreachable).
+// AEM preview hosts use dev, but their non-Intuit origins cannot complete the CDN consent flow.
 const AEM_LIVE_HOST = 'main--intuit-erp--aemsites.aem.live';
 const AEM_PAGE_HOST = 'main--intuit-erp--aemsites.aem.page';
 const INERT_HOST = 'something.preview.da.live';
