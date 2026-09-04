@@ -28,6 +28,7 @@ function rememberDismissal() {
 }
 
 function removeInvite(facade) {
+  document.documentElement.removeAttribute('data-liveperson-invite-visible');
   const wrapper = facade.parentElement;
   facade.dispatchEvent(new Event(DISPOSE_EVENT));
   facade.remove();
@@ -53,8 +54,11 @@ function buildInvite(facade = document.createElement('aside')) {
       <span>Chat with a product specialist.</span>
     </p>
     <div class="lp-invite-actions">
-      <button type="button" class="lp-invite-action" data-track-id="talk-to-sales:proactive-chat-invite">Chat live now</button>
-      <button type="button" class="lp-invite-dismiss" data-track-skip>No thanks</button>
+      <button type="button" class="lp-invite-action" data-track-id="talk-to-sales:proactive-chat-invite">
+        <span class="lp-invite-desktop-label">Chat live now</span>
+        <span class="lp-invite-mobile-label">Chat with a specialist</span>
+      </button>
+      <button type="button" class="lp-invite-dismiss" aria-label="Dismiss chat invitation" data-track-skip>No thanks</button>
     </div>`;
 
   let activated = false;
@@ -70,6 +74,7 @@ function buildInvite(facade = document.createElement('aside')) {
     if (activated) return;
     activated = true;
     facade.hidden = true;
+    document.documentElement.removeAttribute('data-liveperson-invite-visible');
     document.documentElement.dataset.livepersonInviteActivated = 'proactive';
     window.dispatchEvent(new CustomEvent(LIVEPERSON_FACADE_ACTIVATE, {
       detail: { source: 'proactive' },
@@ -117,6 +122,7 @@ export function initLivePersonInviteFacade({
     facade.classList.add('lp-invite-visible');
     facade.removeAttribute('aria-hidden');
     facade.inert = false;
+    root.dataset.livepersonInviteVisible = 'true';
   }, wait);
 }
 

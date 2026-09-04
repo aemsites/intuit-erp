@@ -15,6 +15,7 @@ describe('LivePerson proactive invite facade', () => {
     vi.useFakeTimers();
     document.documentElement.removeAttribute('data-liveperson-invite-activated');
     document.documentElement.removeAttribute('data-liveperson-invite-scheduled');
+    document.documentElement.removeAttribute('data-liveperson-invite-visible');
     document.body.innerHTML = '';
     sessionStorage.clear();
   });
@@ -38,7 +39,7 @@ describe('LivePerson proactive invite facade', () => {
     decorateLivePersonFacade(block);
 
     expect(document.getElementById('liveperson-invite-facade')).toBe(block);
-    expect(block.querySelector('.lp-invite-action').textContent).toBe('Chat live now');
+    expect(block.querySelector('.lp-invite-desktop-label').textContent).toBe('Chat live now');
     vi.advanceTimersByTime(1233);
     expect(block.classList.contains('lp-invite-visible')).toBe(false);
     vi.advanceTimersByTime(1);
@@ -61,6 +62,7 @@ describe('LivePerson proactive invite facade', () => {
     expect(facade.classList.contains('lp-invite-visible')).toBe(false);
     expect(facade.getAttribute('aria-hidden')).toBe('true');
     expect(facade.inert).toBe(true);
+    expect(document.documentElement.dataset.livepersonInviteVisible).toBeUndefined();
     vi.advanceTimersByTime(DEFAULT_LIVEPERSON_INVITE_DELAY - 1);
     expect(facade.classList.contains('lp-invite-visible')).toBe(false);
 
@@ -68,6 +70,7 @@ describe('LivePerson proactive invite facade', () => {
     expect(facade.classList.contains('lp-invite-visible')).toBe(true);
     expect(facade.hasAttribute('aria-hidden')).toBe(false);
     expect(facade.inert).toBe(false);
+    expect(document.documentElement.dataset.livepersonInviteVisible).toBe('true');
   });
 
   it('honors an authored invitation delay override', () => {
@@ -93,8 +96,13 @@ describe('LivePerson proactive invite facade', () => {
     expect(facade.querySelector('.lp-invite-copy').textContent).toContain(
       'Chat with a product specialist.',
     );
-    expect(facade.querySelector('.lp-invite-action').textContent).toBe('Chat live now');
-    expect(facade.querySelector('.lp-invite-dismiss').textContent).toBe('No thanks');
+    const action = facade.querySelector('.lp-invite-action');
+    const dismiss = facade.querySelector('.lp-invite-dismiss');
+    expect(action.querySelector('.lp-invite-desktop-label').textContent).toBe('Chat live now');
+    expect(action.querySelector('.lp-invite-mobile-label').textContent)
+      .toBe('Chat with a specialist');
+    expect(dismiss.textContent).toBe('No thanks');
+    expect(dismiss.getAttribute('aria-label')).toBe('Dismiss chat invitation');
   });
 
   it('requests direct proactive-chat activation once', () => {
@@ -111,6 +119,7 @@ describe('LivePerson proactive invite facade', () => {
     expect(document.documentElement.dataset.livepersonInviteActivated).toBe('proactive');
     expect(sessionStorage.getItem('liveperson-invite-dismissed')).toBeNull();
     expect(facade.hidden).toBe(true);
+    expect(document.documentElement.dataset.livepersonInviteVisible).toBeUndefined();
     expect(activations).toEqual([{ source: 'proactive' }]);
 
     window.dispatchEvent(new CustomEvent(LIVEPERSON_FACADE_STARTED));
