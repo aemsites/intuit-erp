@@ -19,6 +19,7 @@ describe('contact-us tracking', () => {
     window.history.replaceState(null, '', '/accounting/business-intelligence-reports');
     window.hlx = { codeBasePath: '' };
     document.documentElement.removeAttribute('data-liveperson-invite-activated');
+    delete window.lpTag;
     Object.keys(metadata).forEach((key) => delete metadata[key]);
     resetTrackingState();
     vi.stubGlobal('fetch', vi.fn(async (url) => ({
@@ -75,9 +76,19 @@ describe('contact-us tracking', () => {
     expect(support.getAttribute('data-ui-object')).toBe('button');
   });
 
-  it('loads LivePerson only after the contact panel opens and replaces the facade when ready', async () => {
+  it('loads LivePerson only after the panel Chat now CTA is selected', async () => {
     metadata['chat-now'] = 'true';
     const requestLivePerson = vi.fn();
+    const offerEvents = {};
+    const triggerEngagement = vi.fn(() => true);
+    window.lpTag = {
+      events: {
+        bind: vi.fn((appName, eventName, callback) => {
+          offerEvents[`${appName}:${eventName}`] = callback;
+        }),
+      },
+      taglets: { rendererStub: { click: triggerEngagement } },
+    };
     await initContactUs({ requestLivePerson });
 
     const trigger = document.querySelector('.cu-bubble');
@@ -90,17 +101,28 @@ describe('contact-us tracking', () => {
 
     trigger.click();
 
+    expect(requestLivePerson).not.toHaveBeenCalled();
+    expect(facade.disabled).toBe(false);
+    expect(facade.textContent).toBe('Chat now');
+
+    facade.click();
+
     expect(requestLivePerson).toHaveBeenCalledOnce();
     expect(facade.disabled).toBe(true);
     expect(facade.textContent).toBe('Loading chat…');
+    offerEvents['LP_OFFERS:OFFER_DISPLAY']({
+      engagementId: '123456',
+      engagementType: 5,
+    });
 
-    const livePersonButton = document.createElement('button');
-    livePersonButton.className = 'LPMcontainer';
-    livePersonButton.textContent = 'Chat now';
-    target.append(livePersonButton);
+    const livePersonContainer = document.createElement('div');
+    livePersonContainer.className = 'LPMcontainer';
+    livePersonContainer.innerHTML = '<button data-lp-event="click">Chat now</button>';
+    target.append(livePersonContainer);
     await Promise.resolve();
 
     expect(facade.hidden).toBe(true);
+    expect(triggerEngagement).toHaveBeenCalledWith('123456');
 
     document.querySelector('.cu-close').click();
     trigger.click();
@@ -110,6 +132,16 @@ describe('contact-us tracking', () => {
   it('requests and starts the embedded LivePerson engagement from the proactive facade', async () => {
     metadata['chat-now'] = 'true';
     const requestLivePerson = vi.fn();
+    const offerEvents = {};
+    const triggerEngagement = vi.fn(() => true);
+    window.lpTag = {
+      events: {
+        bind: vi.fn((appName, eventName, callback) => {
+          offerEvents[`${appName}:${eventName}`] = callback;
+        }),
+      },
+      taglets: { rendererStub: { click: triggerEngagement } },
+    };
     await initContactUs({ requestLivePerson });
 
     window.dispatchEvent(new CustomEvent('liveperson-facade:activate', {
@@ -118,6 +150,12 @@ describe('contact-us tracking', () => {
 
     expect(document.querySelector('.cu-panel').hidden).toBe(true);
     expect(requestLivePerson).toHaveBeenCalledOnce();
+    expect(offerEvents['LP_OFFERS:OFFER_DISPLAY']).toBeTypeOf('function');
+
+    offerEvents['LP_OFFERS:OFFER_DISPLAY']({
+      engagementId: '123456',
+      engagementType: 5,
+    });
 
     const vendorInvite = document.createElement('div');
     vendorInvite.className = 'LPMcontainer LPMoverlay';
@@ -135,12 +173,23 @@ describe('contact-us tracking', () => {
     await Promise.resolve();
 
     expect(vendorInvite.hidden).toBe(true);
-    expect(startChat).toHaveBeenCalledOnce();
+    expect(triggerEngagement).toHaveBeenCalledWith('123456');
+    expect(startChat).not.toHaveBeenCalled();
   });
 
   it('starts an embedded engagement that LivePerson rendered before facade activation', async () => {
     metadata['chat-now'] = 'true';
     const requestLivePerson = vi.fn();
+    const offerEvents = {};
+    const triggerEngagement = vi.fn(() => true);
+    window.lpTag = {
+      events: {
+        bind: vi.fn((appName, eventName, callback) => {
+          offerEvents[`${appName}:${eventName}`] = callback;
+        }),
+      },
+      taglets: { rendererStub: { click: triggerEngagement } },
+    };
     await initContactUs({ requestLivePerson });
 
     const engagement = document.createElement('div');
@@ -151,8 +200,12 @@ describe('contact-us tracking', () => {
     livePersonButton.addEventListener('click', startChat);
     engagement.append(livePersonButton);
     document.getElementById('ies-button-div').append(engagement);
+    offerEvents['LP_OFFERS:OFFER_DISPLAY']({
+      engagementId: '123456',
+      engagementType: 5,
+    });
     await Promise.resolve();
-    expect(startChat).not.toHaveBeenCalled();
+    expect(triggerEngagement).not.toHaveBeenCalled();
 
     window.dispatchEvent(new CustomEvent('liveperson-facade:activate', {
       detail: { source: 'proactive' },
@@ -160,7 +213,8 @@ describe('contact-us tracking', () => {
     await Promise.resolve();
 
     expect(requestLivePerson).toHaveBeenCalledOnce();
-    expect(startChat).toHaveBeenCalledOnce();
+    expect(triggerEngagement).toHaveBeenCalledWith('123456');
+    expect(startChat).not.toHaveBeenCalled();
   });
 
   it('suppresses a vendor campaign invite that arrives after chat starts', async () => {
@@ -205,6 +259,7 @@ describe('contact-us tracking', () => {
 
   it('opens the contact options when proactive chat does not become ready', async () => {
     vi.useFakeTimers();
+    const clearInterval = vi.spyOn(window, 'clearInterval');
     metadata['chat-now'] = 'true';
     await initContactUs({ requestLivePerson: vi.fn() });
     window.dispatchEvent(new CustomEvent('liveperson-facade:activate', {
@@ -216,6 +271,42 @@ describe('contact-us tracking', () => {
     expect(document.querySelector('.cu-panel').hidden).toBe(false);
     expect(document.querySelector('.cu-chat-facade').textContent)
       .toBe('Chat is taking longer than expected');
+    expect(clearInterval).toHaveBeenCalled();
+  });
+
+  it('shows a visible fallback when LivePerson renders but cannot start the engagement', async () => {
+    vi.useFakeTimers();
+    metadata['chat-now'] = 'true';
+    const offerEvents = {};
+    window.lpTag = {
+      events: {
+        bind: vi.fn((appName, eventName, callback) => {
+          offerEvents[`${appName}:${eventName}`] = callback;
+        }),
+      },
+      taglets: { rendererStub: { click: vi.fn(() => false) } },
+    };
+    await initContactUs({ requestLivePerson: vi.fn() });
+    window.dispatchEvent(new CustomEvent('liveperson-facade:activate', {
+      detail: { source: 'proactive' },
+    }));
+    offerEvents['LP_OFFERS:OFFER_DISPLAY']({
+      engagementId: '123456',
+      engagementType: 5,
+    });
+
+    const engagement = document.createElement('div');
+    engagement.className = 'LPMcontainer';
+    document.getElementById('ies-button-div').append(engagement);
+    await Promise.resolve();
+
+    expect(document.querySelector('.cu-chat-facade').hidden).toBe(false);
+    vi.advanceTimersByTime(15000);
+
+    const fallback = document.querySelector('.cu-chat-facade');
+    expect(document.querySelector('.cu-panel').hidden).toBe(false);
+    expect(fallback.hidden).toBe(false);
+    expect(fallback.textContent).toBe('Chat is taking longer than expected');
   });
 
   it('keeps facade activation wired while the page is in the back-forward cache', async () => {
