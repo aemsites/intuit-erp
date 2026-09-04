@@ -627,6 +627,14 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
   margin: 0 auto;
 }
 
+/* Standalone in-post images sit in their own paragraph; give them vertical
+   breathing room so they don't hug the surrounding text, quotes, or headings.
+   Survives the trailing-margin reset so an image that ends a section keeps its
+   gap to the following content. */
+.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail) > .default-content-wrapper > p:has(picture) {
+  margin: 40px 0;
+}
+
 @media (width < 1024px) {
   .blog-article > .blog-hero > .default-content-wrapper > .blog-byline-tag,
   .blog-article > .blog-hero > .default-content-wrapper > .blog-byline-meta {
