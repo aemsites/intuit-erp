@@ -303,6 +303,15 @@ const THANK_YOU_BODY_DEFAULT = 'An Intuit expert will be in touch with you short
 function showThankYou(form, placeholders = {}) {
   const formEl = form.getFormElem?.()?.[0] || document.getElementById(`mktoForm_${form.getId?.()}`);
   if (!formEl || formEl.dataset.thankYouShown === 'true') return;
+
+  // hide heading and disclaimers text
+  if (formEl.previousElementSibling?.classList?.contains('form-disclaimer')) {
+    formEl.previousElementSibling.classList.add('hide-element');
+  }
+  if (formEl.closest('.form-wrapper')?.previousElementSibling?.classList?.contains('default-content-wrapper')) {
+    formEl.closest('.form-wrapper').previousElementSibling.classList.add('hide-element');
+  }
+
   formEl.dataset.thankYouShown = 'true';
   const note = document.createElement('div');
   note.className = 'form-success';
