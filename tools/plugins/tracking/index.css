@@ -35,9 +35,8 @@ button { cursor: pointer; }
 
 #app { min-height: 100vh; padding: 12px; }
 
-.tracking-workspace { display: grid; gap: 12px; }
+.tracking-workspace { display: block; }
 
-.tracking-canvas,
 .tracking-rail {
   min-width: 0;
   overflow: hidden;
@@ -46,22 +45,6 @@ button { cursor: pointer; }
   border-radius: 10px;
 }
 
-.tracking-canvas {
-  display: grid;
-  grid-template-rows: auto minmax(460px, 68vh);
-}
-
-.tracking-canvas-toolbar {
-  display: grid;
-  gap: 8px;
-  padding: 10px 12px;
-  background: var(--tracking-surface-muted);
-  border-bottom: 1px solid var(--tracking-border);
-}
-
-.tracking-path-group { display: flex; gap: 8px; }
-
-.tracking-path,
 .tracking-search,
 .tracking-input,
 .tracking-select {
@@ -74,9 +57,6 @@ button { cursor: pointer; }
   border-radius: 7px;
 }
 
-.tracking-path { flex: 1; }
-
-.tracking-load,
 .tracking-save,
 .tracking-publish,
 .tracking-reset {
@@ -85,7 +65,6 @@ button { cursor: pointer; }
   border-radius: 7px;
 }
 
-.tracking-load,
 .tracking-save {
   color: #fff;
   background: var(--tracking-accent);
@@ -98,27 +77,16 @@ button { cursor: pointer; }
   border-color: var(--tracking-ok);
 }
 
-.tracking-load:disabled,
 .tracking-save:disabled,
 .tracking-publish:disabled,
 .tracking-reset:disabled { cursor: not-allowed; opacity: .6; }
 
 .tracking-reset { color: var(--tracking-text); background: transparent; }
 
-.tracking-toolbar-note,
 .tracking-storage-note {
   margin: 0;
   color: var(--tracking-muted);
   font-size: 12px;
-}
-
-.tracking-toolbar-note { align-self: center; }
-
-.tracking-preview {
-  width: 100%;
-  height: 100%;
-  min-height: 460px;
-  border: 0;
 }
 
 .tracking-rail { padding: 14px; overflow: visible; }
@@ -338,7 +306,6 @@ textarea:focus-visible {
 }
 
 @media (width >= 768px) {
-  .tracking-canvas-toolbar { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
   .tracking-form { display: grid; grid-template-columns: 1fr 1fr; column-gap: 10px; }
 
   .tracking-form-head,
@@ -349,25 +316,10 @@ textarea:focus-visible {
   body { overflow: hidden; }
   #app { padding: 0; }
 
-  .tracking-workspace {
-    grid-template-columns: minmax(0, 1fr) clamp(430px, 36vw, 520px);
-    gap: 0;
-    height: 100vh;
-  }
-
-  .tracking-canvas,
-  .tracking-rail { border-radius: 0; }
-
-  .tracking-canvas {
-    grid-template-rows: auto minmax(0, 1fr);
-    border-width: 0 1px 0 0;
-  }
-
-  .tracking-preview { min-height: 0; }
-
   .tracking-rail {
     height: 100vh;
     overflow-y: auto;
     border: 0;
+    border-radius: 0;
   }
 }

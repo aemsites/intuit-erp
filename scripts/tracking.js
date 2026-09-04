@@ -5,6 +5,7 @@
  */
 
 import { isVideoLink } from '../blocks/video/video-info.js';
+import { installTrackingInspectorBridge } from './tracking-inspector-bridge.js';
 
 export const PREFIX = 'tracking-';
 
@@ -667,6 +668,9 @@ function exposeTrackingInspector() {
     collect: (rows = []) => collectTrackingInventory(document, rows, window.location),
     describe: (target, rows = []) => describeTrackingTarget(target, rows, window.location),
   };
+  installTrackingInspectorBridge({
+    collect: window.hlx.trackingInspector.collect,
+  });
 }
 
 /** Initialize trails, sheet caching, and capture handlers. */
