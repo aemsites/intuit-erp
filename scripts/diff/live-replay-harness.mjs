@@ -534,7 +534,13 @@ export async function installReplayPageHook(config, injectedScope) {
     let resolveMarker;
     const markerPromise = new Promise((resolveMarkerPromise) => { resolveMarker = resolveMarkerPromise; });
     const invocation = {
-      invocationId, marker, markerConsumed: false, markerPromise, resolveMarker, status: 'pending',
+      scenarioId: active.scenarioId,
+      invocationId,
+      marker,
+      markerConsumed: false,
+      markerPromise,
+      resolveMarker,
+      status: 'pending',
     };
     active.invocationPending = invocation;
     invocationsByMarker.set(marker, invocation);
