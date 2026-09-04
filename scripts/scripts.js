@@ -18,7 +18,10 @@ import {
 // Uncomment the AEP blocks in loadEager / loadLazy to load it in parallel.
 // The tealium plugin below is NOT a vendored subtree (project-owned code), but the relative
 // eslint-disable-next-line import/no-relative-packages
-import TealiumMartech, { parseTealiumTagUids } from '../plugins/tealium-martech/src/index.js';
+import TealiumMartech, {
+  parseTealiumLoadPhase,
+  parseTealiumTagUids,
+} from '../plugins/tealium-martech/src/index.js';
 import installEcsEnrich from './ecs-enrich.js';
 import { isBlogPage, hasAuthoredCaseStudyHeader } from '../blocks/blog-template/blog-detect.js';
 import { isVideoLink, videoInfo } from '../blocks/video/video-info.js';
@@ -51,6 +54,8 @@ const MARTECH_PROVIDER = MARTECH_PARAM === 'off' ? 'off' : 'tealium';
 const MARTECH_LOCAL = MARTECH_PARAM === 'local';
 // Lab-only: keep most active tags in lazy, but move UIDs 9/15/23/27 to delayed_ready.
 const MARTECH_PHASE_SPLIT = URL_PARAMS.get('martech-phase-split') === 'on';
+// Lab-only: keep OneTrust in lazy while optionally moving utag.js to delayed.
+const TEALIUM_LOAD_PHASE = parseTealiumLoadPhase(URL_PARAMS);
 const TEALIUM_TAG_UIDS = parseTealiumTagUids(URL_PARAMS);
 
 function isLivePersonOnDemand() {
@@ -500,6 +505,7 @@ async function loadEager(doc) {
     tealium = new TealiumMartech({
       local: MARTECH_LOCAL,
       phaseSplit: MARTECH_PHASE_SPLIT,
+      loadPhase: TEALIUM_LOAD_PHASE,
       livePersonOnDemand,
       tagUids: TEALIUM_TAG_UIDS,
     });

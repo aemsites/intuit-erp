@@ -118,6 +118,33 @@ describe('experience perf reporter', () => {
     expect(table).toHaveBeenCalled();
   });
 
+  it('captures consent-window and privacy-safe layout-shift attribution', async () => {
+    stubLocation('?perf=on');
+    installPerformanceObserverMock();
+    vi.spyOn(console, 'table').mockImplementation(() => {});
+    await import('../scripts/experience.js');
+
+    const banner = document.createElement('div');
+    banner.id = 'onetrust-banner-sdk';
+    globalThis.PerformanceObserver.notify('measure', {
+      name: 'consent:total', startTime: 100, duration: 200,
+    });
+    globalThis.PerformanceObserver.notify('layout-shift', {
+      startTime: 150,
+      value: 0.015,
+      hadRecentInput: false,
+      sources: [{ node: banner }],
+    });
+
+    expect(window.hlx.experiencePerf.collect()).toMatchObject({
+      consentTotalMs: 200,
+      cls: 0.015,
+      onetrustDirectShift: 0.015,
+      consentWindowShift: 0.015,
+      topLayoutShiftSource: 'div#onetrust-banner-sdk',
+    });
+  });
+
   it('installs collection on sampled page views (console report remains ?perf=on only)', async () => {
     stubLocation('');
     stubSampled(true);

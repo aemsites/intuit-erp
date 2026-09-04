@@ -5,6 +5,11 @@
 import { getTealium } from './scripts.js';
 import { whenConsentResolved } from '../plugins/tealium-martech/src/index.js';
 
+// Shared lifecycle signal for optional integrations that explicitly choose the EDS delayed phase.
+window.hlx = window.hlx || {};
+window.hlx.delayed = true;
+window.dispatchEvent(new Event('aem:delayed'));
+
 // Tealium's own "delayed" signal. A no-op on the opt-in Adobe provider path (`?martech=adobe`),
 // where getTealium() returns undefined, and on a disabled Tealium instance (any hostname
 // resolveEnvironment doesn't recognize) — see TealiumMartech#delayed.

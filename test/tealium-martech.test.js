@@ -4,6 +4,7 @@ import {
 import TealiumMartech, {
   DELAYED_TAG_UIDS,
   isProdHost,
+  parseTealiumLoadPhase,
   parseTealiumTagUids,
   resolveEnvironment,
   resolvePhaseTagUids,
@@ -70,6 +71,7 @@ afterEach(() => {
   delete window.utag;
   delete window.utag_data;
   delete window.utag_cfg_ovrd;
+  if (window.hlx) delete window.hlx.experiencePerf;
 });
 
 describe('resolveEnvironment / isProdHost', () => {
@@ -359,6 +361,15 @@ describe('Tealium tag UID allowlist', () => {
       tealium_event: 'liveperson_requested',
     }, null, ['23']);
     expect(window.utag.link).not.toHaveBeenCalled();
+  });
+});
+
+describe('Tealium load phase', () => {
+  it('defaults to lazy and only accepts the delayed diagnostic override', () => {
+    expect(parseTealiumLoadPhase(new URLSearchParams())).toBe('lazy');
+    expect(parseTealiumLoadPhase(new URLSearchParams('tealium-phase=lazy'))).toBe('lazy');
+    expect(parseTealiumLoadPhase(new URLSearchParams('tealium-phase=delayed'))).toBe('delayed');
+    expect(parseTealiumLoadPhase(new URLSearchParams('tealium-phase=off'))).toBe('lazy');
   });
 });
 
@@ -926,6 +937,67 @@ describe('disabled instance (hostname resolveEnvironment does not recognize) —
 });
 
 describe("enabled instance — lazy() loads the consent stack, settles consent, loads utag.js, then fires the CONSENT-GATED initial view", () => {
+  it('measures the consent stack and settle window only when perf collection is active', async () => {
+    stubLocation({ hostname: PROD_HOST });
+    document.cookie = `OptanonConsent=${OPTANON_COOKIE_VALUE}`;
+    window.hlx = { ...(window.hlx || {}), experiencePerf: {} };
+    const mark = vi.spyOn(performance, 'mark');
+    const measure = vi.spyOn(performance, 'measure');
+    const tealium = new TealiumMartech();
+    window.utag = {
+      view: vi.fn(),
+      link: vi.fn(),
+      gdpr: { getConsentState: vi.fn(() => 1) },
+    };
+
+    const lazyPromise = tealium.lazy();
+    document.getElementById('onetrust-stub').dispatchEvent(new Event('load'));
+    await settle();
+    document.getElementById('intuit-consent-wrapper').dispatchEvent(new Event('load'));
+    await settle();
+    document.getElementById('intuit-gdpr-util').dispatchEvent(new Event('load'));
+    await settle();
+    document.querySelector('script[src*="tiqcdn"]').dispatchEvent(new Event('load'));
+    await lazyPromise;
+
+    expect(mark).toHaveBeenCalledWith('consent:start');
+    expect(mark).toHaveBeenCalledWith('consent:end');
+    expect(measure).toHaveBeenCalledWith('consent:stack', 'consent:start', 'consent:stack-end');
+    expect(measure).toHaveBeenCalledWith('consent:settle', 'consent:stack-end', 'consent:end');
+    expect(measure).toHaveBeenCalledWith('consent:total', 'consent:start', 'consent:end');
+  });
+
+  it('keeps consent in lazy but waits for delayed before loading utag when configured', async () => {
+    stubLocation({ hostname: PROD_HOST });
+    document.cookie = `OptanonConsent=${OPTANON_COOKIE_VALUE}`;
+    const tealium = new TealiumMartech({ loadPhase: 'delayed' });
+    window.utag = {
+      view: vi.fn(),
+      link: vi.fn(),
+      gdpr: { getConsentState: vi.fn(() => 1) },
+    };
+
+    const lazyPromise = tealium.lazy();
+    document.getElementById('onetrust-stub').dispatchEvent(new Event('load'));
+    await settle();
+    document.getElementById('intuit-consent-wrapper').dispatchEvent(new Event('load'));
+    await settle();
+    document.getElementById('intuit-gdpr-util').dispatchEvent(new Event('load'));
+    await lazyPromise;
+
+    expect(document.querySelector('script[src*="tiqcdn"]')).toBeNull();
+    expect(window.utag.view).not.toHaveBeenCalled();
+
+    tealium.delayed();
+    const script = document.querySelector('script[src*="tiqcdn"]');
+    expect(script).toBeTruthy();
+    script.dispatchEvent(new Event('load'));
+    await settle();
+
+    expect(window.utag.view).toHaveBeenCalledWith(window.utag_data);
+    expect(window.utag.link).toHaveBeenCalledWith({ tealium_event: 'delayed_ready' });
+  });
+
   it('holds utag behind unresolved consent and loads it once after OneTrust publishes a decision', async () => {
     vi.useFakeTimers();
     try {
