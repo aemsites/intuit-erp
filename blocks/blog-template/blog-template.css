@@ -229,18 +229,20 @@
   position: absolute;
   top: 0;
   bottom: 0;
-  left: 16px;
   width: 4px;
-  background: var(--primary);
+  top: 50%;
+  background: rgb(35, 108, 255);
+  transform: translateY(-50%);
+  border-radius: 2px;
 }
 
 .blog-article .blog-toc-list a {
   display: block;
   padding: 8px 20px 8px 24px;
-  color: var(--text-muted);
+  color: var(--text);
   font-size: var(--body-font-size-xxs);
   line-height: 16px;
-  font-weight: 600;
+  font-weight: 500;
   text-decoration: none;
 }
 
@@ -255,12 +257,11 @@
 }
 
 .blog-article .blog-toc-list a.active {
-  color: var(--primary);
   font-weight: 600;
 }
 
 .blog-article .blog-toc-list a.active::before {
-  color: var(--primary);
+  color: var(--text);
 }
 
 /* faint vertical scroll-track line inside the body panel, right edge */
@@ -417,7 +418,7 @@
   .blog-article .blog-toc {
     border: 0;
     border-radius: 0 var(--radius-card) var(--radius-card) 0;
-    background: #f0f4f6;
+    background: #fff;
     box-shadow: 0 10px 30px rgb(0 0 0 / 10%);
   }
 
@@ -664,14 +665,14 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
 }
 
 .blog-article > .section > .default-content-wrapper h2 {
-  font-size: 40px;
+  font-size: 38px;
   line-height: 52px;
   margin: 40px 0 20px;
 }
 
 .blog-article > .section > .default-content-wrapper h3,
 .case-study > .section > .default-content-wrapper h3 {
-  font-size: 34px;
+  font-size: 28px;
   line-height: 44px;
   margin: 32px 0 16px;
 }
@@ -726,8 +727,8 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
   }
 }
 
-.blog-article > .section > .default-content-wrapper a:any-link {
-  color: #236cff;
+main.blog-article > .section:not(.blog-hero):not(.blog-toc-rail):not(.blog-rail):not(.blog-cards-container):not(.full-bleed) > .default-content-wrapper a:any-link {
+  color: rgb(0, 0, 238);
   text-decoration: underline;
 }
 
