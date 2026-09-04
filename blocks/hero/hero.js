@@ -175,23 +175,18 @@ export default async function decorate(block) {
       p.querySelectorAll('a').forEach((a) => {
         const info = parseVideoUrl(a.href);
         if (info) {
-          a.classList.add('icon-video');
-          a.setAttribute('data-track-id', `hero:${info.provider}-${info.id}`);
-          const originalHref = a.getAttribute('href');
-          const neutralizeHref = () => {
-            a.setAttribute('href', '#');
-            setTimeout(() => a.setAttribute('href', originalHref), 0);
-          };
-          a.addEventListener('pointerdown', neutralizeHref);
-          a.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') neutralizeHref();
-          });
-          a.addEventListener('click', (e) => {
-            e.preventDefault();
-            openVideoModal(info.embedUrl, a.textContent.trim());
-          });
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = a.className; // carries `button primary` from decorateButtons
+          btn.classList.add('icon-video');
+          btn.textContent = a.textContent.trim();
+          btn.setAttribute('data-track-id', `hero:${info.provider}-${info.id}`);
+          btn.setAttribute('data-video-src', a.getAttribute('href'));
+          btn.addEventListener('click', () => openVideoModal(info.embedUrl, btn.textContent));
+          actions.append(btn);
+        } else {
+          actions.append(a);
         }
-        actions.append(a);
       });
     });
     ctas[0].replaceWith(actions);

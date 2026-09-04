@@ -209,6 +209,18 @@ function cardHTML(item) {
   return card;
 }
 
+function pinRank(item) {
+  const n = Number(item.order);
+  return String(item.order ?? '').trim() && Number.isFinite(n) ? n : Number.MAX_SAFE_INTEGER;
+}
+
+function byDate(a, b, newestFirst) {
+  const diff = newestFirst
+    ? new Date(b.date) - new Date(a.date)
+    : new Date(a.date) - new Date(b.date);
+  return Number.isNaN(diff) ? 0 : diff;
+}
+
 export default async function decorate(block) {
   const wantsOnDemand = block.classList.contains('on-demand');
   const status = wantsOnDemand ? 'on-demand' : 'upcoming';
@@ -232,9 +244,7 @@ export default async function decorate(block) {
       startOfToday.setHours(0, 0, 0, 0);
       return when >= startOfToday;
     })
-    .sort((a, b) => (wantsOnDemand
-      ? new Date(b.date) - new Date(a.date)
-      : new Date(a.date) - new Date(b.date)));
+    .sort((a, b) => pinRank(a) - pinRank(b) || byDate(a, b, wantsOnDemand));
 
   const grid = document.createElement('div');
   grid.className = 'event-grid';

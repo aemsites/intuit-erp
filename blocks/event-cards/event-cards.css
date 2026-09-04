@@ -1,14 +1,11 @@
-/* event-cards — auto-populated grid, sourced from /events/query-index.json
-   NOTE: the page's lead band is above the fold, so it lives in styles/styles.css
-   (eager) — styling it from this lazily-loaded file caused a 0.28 CLS. */
+.section.event-cards-container {
+  padding: var(--section-y) 0;
+}
 
-/* the Upcoming bucket sits on a pale blue band with a large centred heading;
-   On-demand is the same heading on plain white (matches erp.intuit.com) */
-.section.event-cards-container { padding: var(--section-y) 0; }
-.section.event-cards-container:has(.event-cards.upcoming) { background: #eff4f9; }
+.section.event-cards-container:has(.event-cards.upcoming) {
+  background: #eff4f9;
+}
 
-/* the original insets the card row from the section's own gutter — three cards
-   plus their gaps span 1153px rather than the full container width */
 .event-cards-container .event-cards-wrapper {
   box-sizing: content-box;
   max-width: 1153px;
@@ -16,56 +13,143 @@
 }
 
 .event-cards-container .default-content-wrapper h2 {
-  font-size: 48px; line-height: 1.27; font-weight: 500; color: #000;
-  text-align: center; margin: 0 0 20px;
+  font-size: 48px;
+  line-height: 1.27;
+  font-weight: 500;
+  color: #000;
+  text-align: center;
+  margin: 0 0 20px;
 }
 
-/* matches the lead heading's single 60px tier (see styles.css) */
-@media (width >= 1200px) {
-  .event-cards-container .default-content-wrapper h2 { font-size: 60px; }
+@media (width >=1200px) {
+  .event-cards-container .default-content-wrapper h2 {
+    font-size: 60px;
+  }
 }
 
-/* --event-gap is shared by the static grid, the carousel track, and the track's
-   per-card flex-basis — they must agree or a page won't align to the viewport */
-.event-cards { --event-gap: 18px; }
-.event-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: var(--event-gap); }
+.event-cards {
+  --event-gap: 18px;
+}
+
+.event-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: var(--event-gap);
+}
 
 .event-card {
-  grid-column: span 2; display: flex; flex-direction: column; background: #fff;
-  border-radius: 8px; overflow: hidden; box-shadow: 0 6px 24px rgb(0 0 0 / 20%);
+  grid-column: span 2;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 6px 24px rgb(0 0 0 / 20%);
 }
 
-.event-card-image { position: relative; padding-top: 57.9%; background: var(--sand); }
-.event-card-image picture, .event-card-image img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.event-card-image {
+  position: relative;
+  padding-top: 57.9%;
+  background: var(--sand);
+}
 
-.event-card-body { display: flex; flex-direction: column; align-items: flex-start; gap: 20px; padding: 40px; flex: 1; }
-.event-card-type { margin: 0; font-size: var(--body-font-size-m); line-height: 1.5; color: #000; }
-.event-card-body h3 { margin: 0; font-size: 20px; line-height: 1.4; font-weight: 600; color: #000; }
-.event-card-description { margin: 0; font-size: var(--body-font-size-m); line-height: 1.5; color: #000; }
-.event-card-detail { margin: 0 0 4px; font-size: var(--body-font-size-m); line-height: 1.5; color: #000; }
-.event-card-detail:last-child { margin-bottom: 0; }
+.event-card-image picture,
+.event-card-image img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
 
-/* auto drops the CTA to the card's baseline so CTAs line up across a row; the
-   body's gap guarantees breathing room when the copy is long enough to fill it */
-.event-card-body .button { margin-top: auto; min-height: 52px; }
+.event-card-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 20px;
+  padding: 40px;
+  flex: 1;
+}
+
+.event-card-type {
+  margin: 0;
+  font-size: var(--body-font-size-m);
+  line-height: 1.5;
+  color: #000;
+}
+
+.event-card-body h3 {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.4;
+  font-weight: 600;
+  color: #000;
+}
+
+.event-card-description {
+  margin: 0;
+  font-size: var(--body-font-size-m);
+  line-height: 1.5;
+  color: #000;
+}
+
+.event-card-detail {
+  margin: 0 0 4px;
+  font-size: var(--body-font-size-m);
+  line-height: 1.5;
+  color: #000;
+}
+
+.event-card-detail:last-child {
+  margin-bottom: 0;
+}
+
+.event-card-body .button {
+  margin-top: auto;
+  min-height: 52px;
+}
 
 @media (width < 1024px) {
-  .event-grid { grid-template-columns: repeat(2, 1fr); }
-  .event-card { grid-column: span 2; }
-  .event-card-body { padding: 40px 20px; }
+  .event-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .event-card {
+    grid-column: span 2;
+  }
+
+  .event-card-body {
+    padding: 40px 20px;
+  }
 }
 
-/* 48px would wrap "On-demand" awkwardly on a narrow phone, so this is the one
-   step-down upstream does not have */
-@media (width <= 600px) {
-  .event-cards-container .default-content-wrapper h2 { font-size: 36px; }
-  .event-grid { grid-template-columns: 1fr; }
-  .event-card { grid-column: span 1; }
+@media (width <=600px) {
+  .event-cards-container .default-content-wrapper h2 {
+    font-size: 36px;
+  }
+
+  .event-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .event-card {
+    grid-column: span 1;
+  }
 }
 
-/* ---- carousel paging (a bucket with more events than fit in one row) ---- */
-.event-cards { --cards-per-view: 3; }
-.event-cards .events-viewport { width: 100%; overflow: hidden; }
+.event-cards {
+  --cards-per-view: 3;
+}
+
+.event-cards .events-viewport {
+  width: 100%;
+  overflow: hidden;
+
+  @media (width >=1024px) {
+    padding: 2rem;
+  }
+}
 
 .event-cards .events-track.event-grid {
   display: flex;
@@ -78,42 +162,89 @@
   min-width: 0;
 }
 
-/* controls sit at the trailing edge of the card row, dots then arrows (upstream).
-   flex-wrap is the phone guard: a one-card-per-view bucket has as many dots as
-   events, which would otherwise push the arrows past the viewport edge. */
 .event-cards .events-controls {
-  display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end;
-  gap: 30px; margin-top: 24px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 30px;
+  margin-top: 24px;
 }
 
-.event-cards .events-dots { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center; }
+.event-cards .events-dots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+}
 
-/* upstream distinguishes state by opacity on one ink colour, not by hue */
 .event-cards .events-dots .dot {
-  width: 12px; height: 12px; border-radius: 50%; border: none; padding: 0;
-  background: var(--ink-teal, #0d333f); opacity: 0.25;
-  cursor: pointer; position: relative; transition: opacity 0.3s ease;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  background: var(--ink-teal, #0d333f);
+  opacity: 0.25;
+  cursor: pointer;
+  position: relative;
+  transition: opacity 0.3s ease;
 }
 
-/* expand the hit area to upstream's 20×20px touch target without growing the visible dot */
-.event-cards .events-dots .dot::after { content: ""; position: absolute; inset: -4px; }
-.event-cards .events-dots .dot.active { opacity: 0.75; }
-.event-cards .events-nav { display: flex; gap: 40px; }
+.event-cards .events-dots .dot::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+}
+
+.event-cards .events-dots .dot.active {
+  opacity: 0.75;
+}
+
+.event-cards .events-nav {
+  display: flex;
+  gap: 40px;
+}
 
 .event-cards .events-arrow {
-  width: 60px; height: 60px; border-radius: 50%; border: none;
-  background: var(--ink-teal, #0d333f); color: #fff;
-  display: flex; align-items: center; justify-content: center; font-size: 24px; line-height: 1; cursor: pointer;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: none;
+  background: var(--ink-teal, #0d333f);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
 }
-.event-cards .events-arrow:disabled { background: #859299; opacity: 0.6; cursor: not-allowed; }
 
-/* Must follow the base control rules above — same specificity, so source order
-   decides. Upstream centres the controls below 1024px and hides the arrows,
-   relying on swipe; this block has no touch handler, so the arrows stay as the
-   only reliable way to page, shrunk to a 44px minimum touch target. */
+.event-cards .events-arrow:disabled {
+  background: #859299;
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 @media (width < 1024px) {
-  .event-cards { --cards-per-view: 1; }
-  .event-cards .events-controls { justify-content: center; gap: 20px; }
-  .event-cards .events-nav { gap: 20px; }
-  .event-cards .events-arrow { width: 44px; height: 44px; font-size: 20px; }
+  .event-cards {
+    --cards-per-view: 1;
+  }
+
+  .event-cards .events-controls {
+    justify-content: center;
+    gap: 20px;
+  }
+
+  .event-cards .events-nav {
+    gap: 20px;
+  }
+
+  .event-cards .events-arrow {
+    width: 44px;
+    height: 44px;
+    font-size: 20px;
+  }
 }

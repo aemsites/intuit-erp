@@ -165,6 +165,7 @@ on a page keeps its CTAs in the same tab.
 | Param | Controls | Values | Source |
 | --- | --- | --- | --- |
 | `?martech=` | Martech loading | `off` = disable all martech (Tealium + Adobe inert); `local` = load utag.js + OneTrust from local `/scripts/martech/`; absent/other = CDN default | [scripts/scripts.js](scripts/scripts.js) — see [MARTECH.md](MARTECH.md) |
+| `?martech-phase-split=on` | Opt-in martech performance experiment | Keeps active tags in the lazy initial view except UIDs 9/15/23/27, then sends those four as a targeted `delayed_ready` view; absent/other = existing routing | [plugins/tealium-martech/src/index.js](plugins/tealium-martech/src/index.js) — see [MARTECH.md](MARTECH.md) |
 | `?rum=` (alias `?optel=`) | RUM sampling rate | `on`→1, `off`→0, `high`→10, `low`→1000, else weight 100 | [scripts/aem.js](scripts/aem.js) |
 | `?lighthouse=on` | Sets `window.hlx.lighthouse = true` (perf-test mode) | `on` | [scripts/aem.js](scripts/aem.js) |
 | `?locale=` | Locale sent to the decision API | locale string, hyphen converted to underscore (falls back to `navigator.language` → `en_US`) | [scripts/experience.js](scripts/experience.js) |

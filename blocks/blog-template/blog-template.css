@@ -54,10 +54,6 @@
   color: var(--primary);
 }
 
-.blog-article .blog-hero .blog-byline-updated {
-  color: var(--text-soft);
-}
-
 .blog-article .blog-hero .blog-hero-image {
   margin: 0;
 }
@@ -150,7 +146,7 @@
   height: 60px;
   margin: 0;
   border: 0;
-  background: transparent;
+  background: #fff;
   padding: 0 20px;
   font: inherit;
   font-size: 16px;
@@ -344,8 +340,8 @@
 @media (width >= 1024px) {
   main.blog-article {
     display: grid;
-    grid-template-columns: 332px minmax(0, 1fr) 300px;
-    column-gap: 48px;
+    grid-template-columns: 250px minmax(0, 1fr) 300px;
+    column-gap: 130px;
     align-items: start;
   }
 
@@ -413,7 +409,7 @@
   .blog-article .blog-toc {
     border: 0;
     border-radius: 0 var(--radius-card) var(--radius-card) 0;
-    background: #eef1f6;
+    background: #f0f4f6;
     box-shadow: 0 10px 30px rgb(0 0 0 / 10%);
   }
 
@@ -511,10 +507,29 @@
     font-size: var(--heading-font-size-xxl);
   }
 
+  /* author in its own column; published/updated stack together in a second
+     column instead of flowing as a wrapping row — flex-wrap would drop
+     "Updated" back to the start (under the author), not under "Published on" */
   .blog-article .blog-hero .blog-byline-meta {
-    flex-flow: row wrap;
-    column-gap: 24px;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 4px 24px;
     margin-bottom: 0;
+  }
+
+  .blog-article .blog-hero .blog-byline-author {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .blog-article .blog-hero .blog-byline-date {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .blog-article .blog-hero .blog-byline-updated {
+    grid-column: 2;
+    grid-row: 2;
   }
 
   .blog-article > .blog-hero > .default-content-wrapper > .blog-byline-tag {
@@ -598,14 +613,34 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
   max-width: none;
   margin: 0 0 20px;
   text-align: left;
-  font-size: 16px;
+  font-size: 20px;
   line-height: 1.5;
   color: #000;
+}
+
+.blog-article .testimonial-wrapper:has(.testimonial.simple) {
+  margin: 2rem 0;
 }
 
 .blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail) > .default-content-wrapper > p > picture > img {
   display: block;
   margin: 0 auto;
+}
+
+/* Standalone in-post images sit in their own paragraph; give them vertical
+   breathing room so they don't hug the surrounding text, quotes, or headings:
+   80px above, 40px below. Survives the trailing-margin reset so an image that
+   ends a section keeps its gap to the following content. */
+.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail) > .default-content-wrapper > p:has(picture) {
+  margin: 80px 0 40px;
+}
+
+/* The trailing-margin reset above outweighs the image rule on specificity, so
+   an image that ends a section would lose its bottom gap. Re-assert the 40px
+   with a :last-child-qualified override, matching the highlight/testimonial
+   handling below. */
+.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail) > .default-content-wrapper > p:has(picture):last-child {
+  margin-bottom: 40px;
 }
 
 @media (width < 1024px) {
@@ -617,8 +652,8 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
 
 .blog-article > .section > .default-content-wrapper :is(ul, ol) {
   margin: 0 0 20px;
-  padding-left: 24px;
-  font-size: 16px;
+  padding-left: 40px;
+  font-size: 20px;
   line-height: 1.5;
   color: #000;
 }
@@ -655,13 +690,28 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
   }
 }
 
-.blog-article .highlight { margin: 32px 0; }
+.blog-article .highlight { margin: 60px 0 40px; }
+
+/* Callouts get their own section (block-per-section), so the callout is the
+   last child of its section and the trailing-margin reset above would zero its
+   bottom margin. Keep the 40px gap to the following content. */
+.blog-article > .section > .highlight-wrapper > .highlight:last-child {
+  margin-bottom: 40px;
+}
 
 .blog-article .highlight.sky .highlight-inner,
 .blog-article .highlight .highlight-inner {
   background: var(--agave);
   border-radius: 0;
   padding: 24px 40px;
+}
+
+.blog-article .highlight .highlight-inner:has(> p .icon[class*="icon-quick-answer"]) {
+  display: flex;
+}
+
+.blog-article .video-wrapper {
+  margin: 40px 0;
 }
 
 :is(.blog-article, .case-study) .testimonial:not(.video, .simple) {
@@ -671,10 +721,20 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
   padding: 8px 20px 24px;
 }
 
+:is(.blog-article, .case-study) .testimonial:not(.video, .simple) > :is(h2, h3, h4, h5, h6) {
+  padding-top: 1rem;
+}
+
+/* When the quote box ends its section the trailing-margin reset zeros its
+   bottom margin, collapsing the gap to the following content (e.g. an image)
+   to 0px. Keep the 40px gap to match prod. Only margin-bottom is set so the
+   desktop full-bleed horizontal margin is preserved. */
+.blog-article > .section > .testimonial-wrapper:last-child > .testimonial:not(.video, .simple) {
+  margin-bottom: 40px;
+}
+
 @media (width >= 1024px) {
   :is(.blog-article, .case-study) .testimonial:not(.video, .simple) {
-    width: calc(100% + 80px);
-    margin: 32px -40px;
     padding: 8px 40px 24px;
   }
 }
@@ -729,6 +789,7 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
 
   .section.hear-customers {
     padding: 40px 0;
+    margin-top: 3rem;
   }
 
   .section.hear-customers .default-content-wrapper {

@@ -175,7 +175,10 @@ export function buildBylineMeta({ author, date, updated } = {}) {
     a.className = 'blog-byline-author';
     a.append('By ');
     const link = document.createElement('a');
-    link.href = `/blog/author/${toClassName(author)}`;
+    // trailing slash = the canonical served form (author pages are folder+index,
+    // so the slash-free path 404s and only recovers via the 404 page's JS); the
+    // author-bio block links the same slashed path.
+    link.href = `/blog/author/${toClassName(author)}/`;
     link.textContent = author;
     a.append(link);
     meta.append(a);
@@ -372,10 +375,10 @@ function wireToc(tocWrap, nav, headings, mq) {
     updateLabel();
   });
 
-  // Collapse the rail (desktop: narrow tab; mobile: the bar) once the reader is
-  // properly into the article, so the content gets the space back. One-way —
-  // scrolling back up does NOT re-expand it, and a reader who re-opens it
-  // manually keeps it open.
+  // Collapse the rail to its bar once the reader is properly into the article,
+  // so the content gets the space back. Mobile only: on desktop the full rail
+  // stays expanded and sticky for the whole article. One-way — scrolling back
+  // up does NOT re-expand it, and a reader who re-opens it manually keeps it open.
   //
   // Triggers when the first article heading scrolls up out of the viewport,
   // which tracks the article's own layout instead of a hard-coded offset. The
@@ -387,6 +390,7 @@ function wireToc(tocWrap, nav, headings, mq) {
   if (collapseTrigger && typeof IntersectionObserver !== 'undefined') {
     const autoObserver = new IntersectionObserver(([entry]) => {
       if (userToggled || !entry) return;
+      if (mq.matches) return; // desktop: keep the rail expanded
       if (window.scrollY < window.innerHeight) return;
       if (entry.isIntersecting || entry.boundingClientRect.top > 0) return;
       if (tocWrap.classList.contains('blog-toc-collapsed')) return;

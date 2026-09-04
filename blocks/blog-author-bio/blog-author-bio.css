@@ -3,8 +3,27 @@
 
 .blog-author-bio .blog-social-share {
   margin-top: 32px;
-  padding-top: 24px;
-  border-top: 1px solid var(--rule-color, #e0e0e0);
+}
+
+/* blue rounded separator above the author bio (matches erp.intuit.com's superblue) */
+.blog-author-bio .blog-social-share::before {
+  content: "";
+  display: block;
+  height: 4px;
+  margin-bottom: 24px;
+  border-radius: 10px;
+  background: var(--info);
+}
+
+/* matching separator below the bio, before "Recommended for you" — sits in the
+   same reading column, so it lines up with the one above the bio */
+.blog-author-bio-container:has(+ .blog-cards-container) .blog-author-bio::after {
+  content: "";
+  display: block;
+  height: 4px;
+  margin: 40px 0;
+  border-radius: 10px;
+  background: var(--info);
 }
 
 .blog-author-bio .blog-social-share-label {

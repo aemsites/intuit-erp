@@ -14,11 +14,20 @@ The two data contracts are documented separately:
 1. [`head.html`](head.html) creates `window.utag_data` and sets `utag_cfg_ovrd.noview=true`, which
    prevents Tealium from sending an automatic view before consent resolves.
 2. During eager loading, [`scripts/scripts.js`](scripts/scripts.js) seeds `window.appVars`, installs
-   the temporary ECS enrichment shim, and creates `TealiumMartech`.
+   the temporary ECS enrichment and interaction-scheduling shim, and creates `TealiumMartech`.
 3. During lazy loading, the Tealium loader starts prod-only Intuit Observability RUM, loads the
-   OneTrust stack, waits briefly for consent state, loads `utag.js`, then sends the single initial
-   `utag.view` through the consent guard.
+   OneTrust stack, and waits up to three seconds for consent state. With a pre-existing decision it
+   loads `utag.js` immediately. If consent is still unknown, lazy loading continues without Tealium;
+   a one-shot `OneTrustGroupsUpdated` listener loads it after OneTrust publishes a decision.
+   The loader then sends the single initial `utag.view` through the consent guard.
 4. During delayed loading, the site sends a consent-gated `delayed_ready` event.
+
+The opt-in `?martech-phase-split=on` performance experiment changes only steps 3–4. The initial
+view targets all tags that are active under the profile's existing load rules except Floodlight
+(UID 9), Google Ads (UID 15), LivePerson (UID 23), and Demandbase (UID 27). At `delayed_ready`, a
+second targeted view sends those four active tags. A view is required because the deployed
+LivePerson and Demandbase templates do not accept link events. Without the parameter, the original
+unfiltered initial view and delayed link remain unchanged.
 
 The loader is [`plugins/tealium-martech/src/index.js`](plugins/tealium-martech/src/index.js). Adobe
 Web SDK code remains in the repository as commented, inactive integration code; it is not a runtime
@@ -46,6 +55,9 @@ to the production profile.
 | `local` | Tealium and consent scripts load from `/scripts/martech/` |
 | `off` | all martech and ECS enrichment are disabled |
 
+`?martech-phase-split=on` can be combined with the values above. It is a lab switch for controlled
+performance traces, not a replacement for publishing equivalent event-based rules in Tealium iQ.
+
 The `local` vendor directory is workstation-only and not committed, so this mode works from a
 checkout that has the mirrored files but not from a deployed AEM preview. Intuit's OneTrust CDN
 accepts `*.intuit.com` origins; on localhost and AEM hosts it may be blocked. Use `local` for a
@@ -63,13 +75,18 @@ Consent responsibility is split deliberately:
 
 | Owner | Responsibility |
 | --- | --- |
-| this repository | wait until Tealium reports a resolved consent state before calling `utag.view` or `utag.link` |
+| this repository | keep `utag.js` unloaded while OneTrust consent is unknown, then wait until Tealium reports a resolved consent state before calling `utag.view` or `utag.link` |
 | `ies-erp` Tealium profile | map OneTrust categories and enforce Google Consent Mode v2 for downstream tags |
 
 `whenConsentResolved()` is an anti-recursion guard. The profile can recurse between its consent
 queue and preference handling if it receives a tracked call while consent state is `0`. The guard
 runs calls after either a granted or declined decision and drops them if state never resolves. It
 does not grant consent or map categories.
+
+The loader treats a parseable `OptanonConsent` groups value as an existing decision. If it is still
+absent after the bounded wait, `lazy()` returns so page loading is not held open. The listener
+ignores OneTrust group events until that cookie becomes readable, removes itself before loading
+`utag.js`, and shares one load promise so duplicate events cannot inject the profile twice.
 
 The footer's `button.ot-sdk-show-settings` opens the OneTrust Preference Center after the SDK binds
 it. That interaction can only be tested reliably on an `intuit.com` origin because the consent CDN

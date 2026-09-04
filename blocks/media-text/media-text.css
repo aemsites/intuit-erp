@@ -1,6 +1,6 @@
 .section.media-text-container {
   background: #fff;
-  padding: var(--section-y) 0;
+  padding: 35px 0;
 }
 
 .section.media-text-container:has(.media-text.tint) {
@@ -25,6 +25,10 @@
   color: var(--text-muted);
 }
 
+.media-text-container .default-content-wrapper:last-child>p:last-child {
+  margin-bottom: 0;
+}
+
 .media-text .media-row {
   display: grid;
   grid-template-columns: var(--split, 1fr 1fr);
@@ -34,6 +38,14 @@
 
 .media-text .media-row + .media-row {
   margin-top: 44px;
+}
+
+.media-text .media-row:first-child {
+  padding-top: 0;
+}
+
+.media-text .media-row:last-child {
+  padding-bottom: 0;
 }
 
 .media-text .media-row.row-reverse .media-visual {
@@ -112,6 +124,35 @@
   line-height: 1.6;
   max-width: 34em;
   margin: 0 0 14px;
+}
+
+/* .checklist variant: feature lists render with a blue check bullet (matches
+   the source's checklist sections, e.g. /nonprofit), replacing the browser
+   disc. Plain default/reverse lists elsewhere (e.g. /accounting) keep their
+   disc bullets to match prod, so this is opt-in per section via the variant. */
+.media-text.checklist .media-copy > ul {
+  list-style: none;
+  padding-left: 0;
+  margin: 0 0 14px;
+}
+
+.media-text.checklist .media-copy > ul > li {
+  position: relative;
+  padding-left: 21px;
+  margin-bottom: 8px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text);
+}
+
+.media-text.checklist .media-copy > ul > li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 7px;
+  width: 13px;
+  height: 9px;
+  background: url("/icons/icon-check-blue.svg") no-repeat center / contain;
 }
 
 .media-text .media-copy .button-wrapper {

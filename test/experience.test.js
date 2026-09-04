@@ -10,7 +10,7 @@ vi.mock('../blocks/fragment/fragment.js', () => ({
 // eslint-disable-next-line import/first
 import {
   fragmentPath, casToPath, buildContext, resolveIvid,
-  collectRequest, collectExperiments, collectSlots, sameTargetAsExp,
+  collectRequest, collectExperiments, collectSlots, sameTargetAsExp, hasEagerWork,
   experimentDecision, pznDecision, pznRecord, ixpRecord,
   ensureAppVars, flushAppVars, recordPzn, recordPznPage, recordIxp, resetAnalytics,
   stampPzn, stampExperiment,
@@ -286,6 +286,49 @@ describe('collectSlots + sameTargetAsExp (IXP precedence)', () => {
   });
 });
 
+describe('hasEagerWork (above-the-fold gate)', () => {
+  beforeEach(() => { document.body.innerHTML = '<main></main>'; });
+  it('true for a page-level experiment', () => {
+    setMeta('experiment-id', '376648');
+    expect(hasEagerWork(document)).toBe(true);
+  });
+  it('true for a page-level personalization', () => {
+    setMeta('personalization-id', 'HomeHero');
+    expect(hasEagerWork(document)).toBe(true);
+  });
+  it('true when the first section carries a target', () => {
+    document.body.innerHTML = '<main><div class="section" data-pzn="alpha"></div></main>';
+    expect(hasEagerWork(document)).toBe(true);
+  });
+  it('false when targets live only below the first section', () => {
+    document.body.innerHTML = '<main>'
+      + '<div class="section"></div>'
+      + '<div class="section" data-pzn="beta"></div>'
+      + '</main>';
+    expect(hasEagerWork(document)).toBe(false);
+  });
+  it('false with no targets at all', () => {
+    expect(hasEagerWork(document)).toBe(false);
+  });
+  it('counts any experiment-id metadata as eager work (numeric-id validation is collectRequest\'s job)', () => {
+    setMeta('experiment-id', 'not-a-number');
+    expect(hasEagerWork(document)).toBe(true);
+  });
+  // Regression: hasEagerWork runs BEFORE decorateMain, so real pages have raw section
+  // divs with NO `.section` class yet — only pipeline-emitted data-pzn/data-exp.
+  it('true when the first RAW (pre-decorate) section carries a target', () => {
+    document.body.innerHTML = '<main><div data-pzn="alpha"></div><div></div></main>';
+    expect(hasEagerWork(document)).toBe(true);
+  });
+  it('false when RAW targets live only below the first section', () => {
+    document.body.innerHTML = '<main>'
+      + '<div></div>'
+      + '<div data-pzn="beta"></div>'
+      + '</main>';
+    expect(hasEagerWork(document)).toBe(false);
+  });
+});
+
 describe('experimentDecision / pznDecision', () => {
   it('parses the experiment payload JSON + tracking attributes', () => {
     const d = experimentDecision(expResp('376648'), '376648');
@@ -454,7 +497,7 @@ describe('fetchExperience', () => {
     expect(opts.method).toBe('POST');
     expect(opts.credentials).toBe('include');
     expect(opts.headers['content-type']).toBe('application/json');
-    expect(opts.headers.intuit_tid).toMatch(/^rp-/);
+    expect(opts.headers.intuit_tid).toMatch(/^[\w-]+$/); // a non-empty correlation id (UUID or base36)
     expect(JSON.parse(opts.body)).toEqual({
       experimentIds: ['1'], accessPointName: ['a'], context: { locale: 'en_US' },
     });
@@ -519,13 +562,13 @@ describe('fetchExperience', () => {
     expect(await fetchExperience({ experimentIds: ['1'], accessPointNames: [] }, {})).toBeNull();
     expect(error).toHaveBeenCalledWith(
       'experience-orchestrator-failed',
-      expect.objectContaining({ intuitTid: expect.stringMatching(/^rp-/), reason: 'http-error', status: 500 }),
+      expect.objectContaining({ intuitTid: expect.stringMatching(/^[\w-]+$/), reason: 'http-error', status: 500 }),
     );
     globalThis.fetch.mockRejectedValueOnce(new Error('network'));
     expect(await fetchExperience({ experimentIds: ['1'], accessPointNames: [] }, {})).toBeNull();
     expect(error).toHaveBeenCalledWith(
       'experience-orchestrator-failed',
-      expect.objectContaining({ intuitTid: expect.stringMatching(/^rp-/), reason: 'network-error' }),
+      expect.objectContaining({ intuitTid: expect.stringMatching(/^[\w-]+$/), reason: 'network-error' }),
     );
   });
 });
@@ -551,7 +594,7 @@ describe('applyPage (whole-page swap, before decorate)', () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response('<div class="hero">V</div>', { status: 200, headers: { 'content-type': 'text/html' } }),
     );
-    await applyPage(document, expResp('376648', { replacementCasId: '/experiments/foo/' }));
+    await applyPage(document, expResp('376648', { contentId: '/experiments/foo/' }));
     expect(globalThis.fetch).toHaveBeenCalledWith('/experiments/foo/index.plain.html', expect.anything());
   });
 
@@ -1023,6 +1066,45 @@ describe('phase entry points (applyPageExperience / applyEagerLayers / applyLazy
     expect(document.querySelector('main').innerHTML).toContain('V');
   });
 
+  it('applyPageExperience: below-fold-only slots ⇒ fires+caches the fetch but does NOT await or swap', async () => {
+    // The only target is in the SECOND section; the first/LCP section has none.
+    document.body.innerHTML = '<main>'
+      + '<div class="section"></div>'
+      + '<div class="section" data-pzn="beta"></div>'
+      + '</main>';
+    // A decision fetch that never settles — if applyPageExperience awaited it, this would hang.
+    let resolveFetch;
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementationOnce(
+      () => new Promise((resolve) => { resolveFetch = resolve; }),
+    );
+    expect(await applyPageExperience(document)).toBe(false); // returns without blocking reveal
+    expect(fetchSpy).toHaveBeenCalledTimes(1); // still fired — warms the cache for the lazy phase
+    expect(window.hlx.experienceResponsePromise).toBeTruthy(); // cached for applyLazyLayers
+    expect(document.querySelector('main').children).toHaveLength(2); // no page swap happened
+    // settle the dangling decision so no timer/promise leaks into the next test
+    resolveFetch(new Response(JSON.stringify(pznResp('beta', { contentId: '/fragments/pzn/b' })), {
+      status: 200, headers: { 'content-type': 'application/json' },
+    }));
+    await window.hlx.experienceResponsePromise;
+  });
+
+  it('applyPageExperience: a first-section target still awaits the decision before reveal', async () => {
+    document.body.innerHTML = '<main><div class="section" data-pzn="alpha"></div></main>';
+    let resolveFetch;
+    vi.spyOn(globalThis, 'fetch').mockImplementationOnce(
+      () => new Promise((resolve) => { resolveFetch = resolve; }),
+    );
+    let settled = false;
+    const p = applyPageExperience(document).then((r) => { settled = true; return r; });
+    await Promise.resolve();
+    expect(settled).toBe(false); // blocked on the pending decision — proves the eager await ran
+    resolveFetch(new Response(JSON.stringify(pznResp('alpha', { contentId: null })), {
+      status: 200, headers: { 'content-type': 'application/json' },
+    }));
+    await p;
+    expect(settled).toBe(true);
+  });
+
   it('applyEagerLayers: no-op without a cached response', async () => {
     window.hlx = {};
     await expect(applyEagerLayers(document, false)).resolves.toBeUndefined();
@@ -1372,15 +1454,15 @@ describe('buildPerfPayload', () => {
   it('includes intuit_tid and failure details from callMeta', () => {
     const payload = buildPerfPayload({
       callMeta: [
-        { intuitTid: 'rp-aaa', ok: true, status: 200 },
+        { intuitTid: 'tid-aaa', ok: true, status: 200 },
         {
-          intuitTid: 'rp-bbb', ok: false, status: 504, reason: 'http-error',
+          intuitTid: 'tid-bbb', ok: false, status: 504, reason: 'http-error',
         },
       ],
     });
     expect(payload).toMatchObject({
-      orchestratorIntuitTid: 'rp-aaa',
-      orchestrator2IntuitTid: 'rp-bbb',
+      orchestratorIntuitTid: 'tid-aaa',
+      orchestrator2IntuitTid: 'tid-bbb',
       orchestrator2Ok: false,
       orchestrator2Status: 504,
       orchestrator2Reason: 'http-error',

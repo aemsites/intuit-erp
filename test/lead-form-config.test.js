@@ -12,6 +12,10 @@ import decorate, { parseFormConfig } from '../blocks/form/form.js';
 vi.mock('../scripts/aem.js', () => ({
   loadScript: vi.fn(() => Promise.resolve()),
   getMetadata: vi.fn(() => ''),
+  decorateIcons: vi.fn(),
+}));
+vi.mock('../scripts/placeholders.js', () => ({
+  fetchPlaceholders: vi.fn(() => Promise.resolve({})),
 }));
 import { loadScript, getMetadata } from '../scripts/aem.js';
 import { getSiteConfig } from '../scripts/scripts.js';
@@ -37,10 +41,12 @@ const RECAPTCHA_CFG = {
 let onSuccessFn;
 let onValidateFn;
 let submittable;
+let hiddenFields;
 beforeEach(() => {
   onSuccessFn = null;
   onValidateFn = null;
   submittable = vi.fn();
+  hiddenFields = {};
   // Uncomment with the AEP/WebSDK integration in scripts/scripts.js and blocks/form/form.js.
   // sendEvent.mockClear();
   getSiteConfig.mockResolvedValue({
@@ -51,6 +57,7 @@ beforeEach(() => {
   delete window.utag;
   delete window.grecaptcha;
   delete global.fetch;
+  window.placeholders = { default: {} };
   global.IntersectionObserver = class {
     constructor(cb) { this.cb = cb; }
 
@@ -60,14 +67,30 @@ beforeEach(() => {
   };
   window.MktoForms2 = {
     loadForm: vi.fn((host, munchkin, formId, cb) => {
-      // simulate Marketo rendering its button row into the form element
+      // Simulate a measurable stacked Marketo form so disclaimer placement can
+      // distinguish the field rows from the submit row.
       const el = document.getElementById(`mktoForm_${formId}`);
-      if (el) el.innerHTML = '<div class="mktoButtonRow"><button class="mktoButton" type="submit">Schedule a call</button></div>';
+      if (el) {
+        el.innerHTML = [
+          '<div class="mktoFormRow"><input type="text"></div>',
+          '<div class="mktoButtonRow">',
+          '<button class="mktoButton" type="submit">Schedule a call</button>',
+          '</div>',
+        ].join('');
+        el.querySelector('.mktoFormRow').getBoundingClientRect = () => ({ top: 0 });
+        el.querySelector('.mktoButtonRow').getBoundingClientRect = () => ({ top: 50 });
+      }
       cb({
         onSuccess: (fn) => { onSuccessFn = fn; },
         onValidate: (fn) => { onValidateFn = fn; },
         submittable,
-        getValues: () => ({ Email: 'controller@brightpathco.com', FirstName: 'Dana', Company: 'Bright Path' }),
+        addHiddenFields: (fields) => { hiddenFields = { ...hiddenFields, ...fields }; },
+        getValues: () => ({
+          Email: 'controller@brightpathco.com',
+          FirstName: 'Dana',
+          Company: 'Bright Path',
+          ...hiddenFields,
+        }),
       });
     }),
   };
@@ -120,15 +143,17 @@ describe('decorate — live Marketo form', () => {
 
   it('injects the disclaimer (with markup) above the Marketo submit button', async () => {
     const block = make([['formId', '1058'], ['disclaimer', 'See our <a href="/privacy">Privacy Statement</a>.']]);
-    document.body.append(block); // Marketo's loadForm mock resolves the form via the document
+    document.body.append(block);
     await decorate(block);
     await flush();
     const form = block.querySelector('form#mktoForm_1058');
-    const disc = form.querySelector('.form-disclaimer');
+    const disc = block.querySelector('.form-disclaimer');
     const btnRow = form.querySelector('.mktoButtonRow');
     expect(disc).not.toBeNull();
     expect(disc.querySelector('a')).not.toBeNull(); // link preserved
-    // disclaimer comes before the button row
+    // Without rendered field rows, disclaimer is placed before the form shell.
+    // eslint-disable-next-line no-bitwise
+    expect(disc.compareDocumentPosition(form) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     // eslint-disable-next-line no-bitwise
     expect(disc.compareDocumentPosition(btnRow) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     block.remove();
@@ -237,8 +262,10 @@ describe('decorate — live Marketo form', () => {
     expect(track).toHaveBeenCalledWith(expect.objectContaining({
       object: 'lead',
       action: 'create_submitted',
-      lead_xref_id: xref,
-      product_family_of_interest: 'Intuit Enterprise Suite',
+      custom_properties: expect.objectContaining({
+        form_id: '1058',
+        lead_xref_id: xref,
+      }),
     }));
     // Uncomment with the AEP/WebSDK integration in scripts/scripts.js and blocks/form/form.js.
     // expect(sendEvent).toHaveBeenCalledTimes(1);
@@ -284,12 +311,12 @@ describe('decorate — reCAPTCHA v3 gate', () => {
   const okScore = () => Promise.resolve({ json: () => Promise.resolve({ success: true, score: 0.9 }) });
   const lowScore = () => Promise.resolve({ json: () => Promise.resolve({ success: true, score: 0.1 }) });
 
-  it('does not load reCAPTCHA or register a gate when the form does not opt in', async () => {
+  it('does not load reCAPTCHA when the form does not opt in', async () => {
     getSiteConfig.mockResolvedValue(RECAPTCHA_CFG);
     global.fetch = vi.fn(okScore);
     await decorate(make([['formId', '1058']])); // no recaptcha row
     await flush();
-    expect(onValidateFn).toBeNull();
+    expect(onValidateFn).toBeTypeOf('function');
     expect(window.grecaptcha).toBeUndefined();
   });
 

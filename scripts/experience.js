@@ -396,6 +396,17 @@ export function collectRequest(doc = document) {
   return { experimentIds: [...experimentIds], accessPointNames: [...accessPointNames] };
 }
 
+// True when the eager phase has something to apply before reveal: a page-level target (whole-page
+// swap in applyPageExperience) or a target in the first/LCP section
+export function hasEagerWork(doc = document) {
+  if (getMetadata('experiment-id')) return true;
+  if (getMetadata('personalization-id')) return true;
+  const main = doc.querySelector('main');
+  const firstSection = main?.querySelector('.section') || main?.firstElementChild;
+  if (!firstSection) return false;
+  return collectExperiments(firstSection).length > 0 || collectSlots(firstSection).length > 0;
+}
+
 // --- The single call --------------------------------------------------------
 
 // Query string for /intuit-orchestrator when preview mode is active. opts.preview (the
@@ -851,6 +862,8 @@ export async function applyPageExperience(doc) {
     return response;
   }).finally(() => clearTimeout(decisionTimer));
   window.hlx.experienceResponsePromise = responsePromise;
+
+  if (!hasEagerWork(doc)) return false;
 
   const eagerController = new AbortController();
   const eagerTimer = setTimeout(() => eagerController.abort(), EAGER_DEADLINE_MS);

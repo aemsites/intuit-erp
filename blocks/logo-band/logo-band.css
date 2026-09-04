@@ -140,7 +140,7 @@
 
 /* logo-band.marquee — infinite scrolling logo band. .light swaps it to a
    white band with grayscale logos instead of the default navy/inverted. */
-.logo-band.marquee { padding: 36px 0 var(--section-y); }
+.logo-band.marquee.light { padding: 36px 0 var(--section-y); }
 
 /* variables live on the section, not the block, so both the section's own
    background and the block's descendant rules can read them */

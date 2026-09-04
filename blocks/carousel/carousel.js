@@ -18,6 +18,7 @@
 
 import { loadCSS } from '../../scripts/aem.js';
 import { videoInfo } from '../video/video-info.js';
+import { openVideoModal } from '../../scripts/scripts.js';
 import { trackAs } from '../../scripts/tracking.js';
 
 const SWIPE_THRESHOLD = 40; // px — minimum horizontal drag to change slides
@@ -90,48 +91,6 @@ function splitFeatureQuote(slide) {
   cite.className = 'carousel-attribution';
   cite.textContent = attribution;
   p.after(cite);
-}
-
-/**
- * Opens a video in a dismissible lightbox, reusing the `.video-modal-*` markup
- * and styles that blocks/video owns.
- * @param {string} embedUrl provider embed URL
- * @param {string} title accessible iframe title
- */
-function openVideoModal(embedUrl, title) {
-  // guard against a double-click or two different CTAs stacking overlays
-  if (document.querySelector('.video-modal-overlay')) return;
-  loadCSS(`${window.hlx.codeBasePath}/blocks/video/video.css`);
-  const overlay = document.createElement('div');
-  overlay.className = 'video-modal-overlay';
-  const frame = document.createElement('div');
-  frame.className = 'video-modal-frame';
-  const iframe = document.createElement('iframe');
-  iframe.src = embedUrl;
-  iframe.title = title || 'Video';
-  iframe.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
-  iframe.allowFullscreen = true;
-  frame.append(iframe);
-  const close = document.createElement('button');
-  close.type = 'button';
-  close.className = 'video-modal-close';
-  close.setAttribute('aria-label', 'Close video');
-  close.textContent = '×';
-  const modal = document.createElement('div');
-  modal.className = 'video-modal';
-  modal.append(close, frame);
-  overlay.append(modal);
-
-  function dismiss() {
-    overlay.remove();
-    // eslint-disable-next-line no-use-before-define
-    document.removeEventListener('keydown', onKey);
-  }
-  function onKey(e) { if (e.key === 'Escape') dismiss(); }
-  overlay.addEventListener('click', (e) => { if (e.target === overlay) dismiss(); });
-  close.addEventListener('click', dismiss);
-  document.addEventListener('keydown', onKey);
-  document.body.append(overlay);
 }
 
 /**

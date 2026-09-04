@@ -125,6 +125,9 @@ export default async function initContactUs() {
 
   const blog = isBlogVariant();
   const label = blog ? 'Talk to sales' : 'Contact us';
+  const closeTrackId = blog
+    ? 'talk-to-sales:close-sales-widget-blog'
+    : 'talk-to-sales:close-sales-widget';
 
   const chatNow = ['true', 'yes'].includes((getMetadata('chat-now') || '').trim().toLowerCase());
   if (chatNow) {
@@ -147,7 +150,7 @@ export default async function initContactUs() {
     ${desktopBubble(label, phoneIcon, chatIcon)}
     ${mobileBubble(label, blog, ballIcon)}
     <div class="cu-panel" role="dialog" aria-label="${label}" aria-modal="false" hidden>
-      <button type="button" class="cu-close" aria-label="Close" data-track-id="talk-to-sales:close-sales-widget">${closeIcon}</button>
+      <button type="button" class="cu-close" aria-label="Close" data-track-id="${closeTrackId}">${closeIcon}</button>
       <div class="cu-panel-body">${panelBody(blog, contact, chatNow)}</div>
     </div>`;
 

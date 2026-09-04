@@ -136,9 +136,12 @@
    the body column, holding one centered bold sentence per authored row. */
 .section.stat-band-container:has(.stat-band.plain) { background: transparent; padding: 0; }
 
+/* blog article sections that contain a block are forced to padding:0 (blocks
+   own their spacing), and the callout is interleaved with prose siblings, so
+   the box carries its own vertical gap: 60px above / 40px below to match prod. */
 .stat-band.plain .stats-box {
   box-sizing: border-box; background: #c2f5ff; padding: 40px;
-  max-width: 740px; margin: 0 auto; text-align: center;
+  max-width: 740px; margin: 60px auto 40px; text-align: center;
 }
 
 .stat-band.plain .stat-line {
