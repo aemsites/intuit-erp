@@ -33,19 +33,26 @@ link remain unchanged for tags other than interaction-gated LivePerson.
 ## LivePerson interaction gate
 
 Pages with `chat-now: true` keep LivePerson tag UID 23 out of both the initial and delayed views.
-The site paints a lightweight proactive `Hi there` invitation with the eager page, plus its own
-`Chat now` facade in the existing contact panel. Dismissing the invitation loads nothing. Accepting
-it opens the contact panel and requests UID 23 through a consent-gated, UID-targeted `utag.view`;
-opening the panel directly does the same. If Tealium is not ready yet, the request is remembered and
-sent after `utag.js` loads. The unchanged Tealium tag then initializes LivePerson against the
-existing `#ies-button-div` target and replaces the panel facade with its real engagement button.
+The site eagerly paints an effectively transparent native HTML/CSS reconstruction of the proactive
+`Hi there!` invitation, then reveals it after 2.5 seconds. Painting the fixed-position facade with
+the page prevents its delayed reveal from replacing the page's LCP candidate. The site also adds its
+own `Chat now` facade in the existing contact panel. Dismissing `No thanks` loads nothing and
+suppresses the invite for the browser session. Accepting `Chat live now` requests
+UID 23 through a consent-gated, UID-targeted `utag.view`; once the unchanged tag paints its embedded
+engagement in `#ies-button-div`, the site activates that real engagement to start the LivePerson
+chat. The session suppression is only recorded after that real engagement starts. If chat does not
+become available within 15 seconds, the contact panel opens as a fallback and the invite can return
+on the next page. Opening the contact panel directly requests the tag but leaves its `Chat now`
+engagement for the visitor to activate. If Tealium is not ready yet, the request is remembered and
+sent after `utag.js` loads.
 
-This preserves an automatic marketing invitation without allowing LivePerson's configuration,
-window, survey, storage runtime, or vendor-rendered proactive invite onto the page-load path. The
-facade click uses the site's normal tracking contract; LivePerson can only count its own campaign
-activity after the visitor accepts the facade. If marketing requires a passive impression metric,
-that should be represented by a separate first-party analytics event rather than by starting the
-vendor runtime. Pages without `chat-now` retain the Tealium profile's existing LivePerson load rules.
+This preserves the campaign's copy, presentation, delay, and activation behavior without allowing
+LivePerson's configuration, window, survey, storage runtime, or vendor-rendered proactive invite
+onto the page-load path. The facade click uses the site's normal tracking contract; LivePerson can
+only count its own campaign activity after the visitor accepts the facade. If marketing requires a
+passive impression metric, that should be represented by a separate first-party analytics event
+rather than by starting the vendor runtime. Pages without `chat-now` retain the Tealium profile's
+existing LivePerson load rules.
 
 The loader is [`plugins/tealium-martech/src/index.js`](plugins/tealium-martech/src/index.js). Adobe
 Web SDK code remains in the repository as commented, inactive integration code; it is not a runtime

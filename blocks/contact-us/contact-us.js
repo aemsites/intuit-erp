@@ -18,12 +18,15 @@
 import { openScheduleModal } from '../../scripts/schedule-modal.js';
 import { getMetadata } from '../../scripts/aem.js';
 import { trackAs } from '../../scripts/tracking.js';
-import { LIVEPERSON_FACADE_ACTIVATE } from '../../scripts/liveperson-facade.js';
+import {
+  LIVEPERSON_FACADE_ACTIVATE,
+  LIVEPERSON_FACADE_STARTED,
+} from '../../scripts/liveperson-facade.js';
 
 // Contact info (sales phone, hours, support URL) is authored in DA — a
 // fragment table, not hardcoded here — so it can change without a code
 // deploy. See /fragments/contact-info (block: contact-info).
-const CONTACT_FRAGMENT = '/fragments/contact-info';
+const CONTACT_FRAGMENT = getMetadata('contact-info') || '/fragments/contact-info';
 let contactInfo;
 
 /** Fetches & parses the contact-info fragment into { phone, hours, supportUrl }; caches it. */
@@ -165,8 +168,48 @@ export default async function initContactUs({ requestLivePerson } = {}) {
   const chatFacade = root.querySelector('.cu-chat-facade');
   let lastTrigger = null;
   let livePersonRequested = false;
+  let proactiveActivation = false;
+  let livePersonStarted = false;
+  let vendorInviteSuppressed = false;
+  let vendorInviteObserverTimeout;
+  let proactiveStartTimeout;
+  let vendorInviteObserver;
 
-  function requestChat() {
+  function stopVendorInviteObserver() {
+    vendorInviteObserver?.disconnect();
+    window.clearTimeout(vendorInviteObserverTimeout);
+  }
+
+  const suppressVendorInvite = () => {
+    if (!proactiveActivation) return;
+    document.querySelectorAll('.LPMcontainer.LPMoverlay').forEach((offer) => {
+      if (chatTarget?.contains(offer)) return;
+      const campaignAsset = offer.querySelector('img[src*="qb-IES-proactive-invite"]');
+      if (!campaignAsset) return;
+      offer.hidden = true;
+      offer.style.setProperty('display', 'none', 'important');
+      vendorInviteSuppressed = true;
+    });
+    if (livePersonStarted && vendorInviteSuppressed) stopVendorInviteObserver();
+  };
+  vendorInviteObserver = chatTarget ? new MutationObserver(suppressVendorInvite) : null;
+
+  function enableProactiveActivation() {
+    proactiveActivation = true;
+    suppressVendorInvite();
+    vendorInviteObserver?.observe(document.body, { childList: true, subtree: true });
+    vendorInviteObserverTimeout = window.setTimeout(stopVendorInviteObserver, 15000);
+    proactiveStartTimeout = window.setTimeout(() => {
+      if (livePersonStarted) return;
+      proactiveActivation = false;
+      stopVendorInviteObserver();
+      if (chatFacade) chatFacade.textContent = 'Chat is taking longer than expected';
+      triggers[0]?.click();
+    }, 15000);
+  }
+
+  function requestChat({ autoStart = false } = {}) {
+    if (autoStart) enableProactiveActivation();
     if (!chatNow || livePersonRequested) return;
     livePersonRequested = true;
     if (chatFacade) {
@@ -179,8 +222,18 @@ export default async function initContactUs({ requestLivePerson } = {}) {
   }
 
   const livePersonObserver = chatTarget ? new MutationObserver(() => {
-    if (!chatTarget.querySelector('.LPMcontainer')) return;
+    const container = chatTarget.querySelector('.LPMcontainer');
+    if (!container) return;
     if (chatFacade) chatFacade.hidden = true;
+    if (proactiveActivation && !livePersonStarted) {
+      const engagement = container.querySelector('[data-lp-event="click"], button, [role="button"]');
+      if (!engagement) return;
+      livePersonStarted = true;
+      suppressVendorInvite();
+      engagement.click();
+      window.clearTimeout(proactiveStartTimeout);
+      window.dispatchEvent(new CustomEvent(LIVEPERSON_FACADE_STARTED));
+    }
     livePersonObserver.disconnect();
   }) : null;
   livePersonObserver?.observe(chatTarget, { childList: true, subtree: true });
@@ -196,6 +249,11 @@ export default async function initContactUs({ requestLivePerson } = {}) {
   }
 
   function open(trigger) {
+    if (!document.documentElement.dataset.livepersonInviteActivated) {
+      document.documentElement.dataset.livepersonInviteActivated = 'panel';
+    }
+    const proactiveFacade = document.getElementById('liveperson-invite-facade');
+    if (proactiveFacade) proactiveFacade.hidden = true;
     lastTrigger = trigger || triggers[0];
     root.classList.add('cu-open');
     panel.hidden = false;
@@ -205,11 +263,26 @@ export default async function initContactUs({ requestLivePerson } = {}) {
     requestChat();
   }
 
-  const openFromInvite = () => open(triggers[0]);
-  const inviteActivated = document.documentElement.dataset.livepersonInviteActivated === 'true';
+  const activateFromInvite = (event) => {
+    const source = event?.detail?.source
+      || document.documentElement.dataset.livepersonInviteActivated;
+    if (source === 'proactive') requestChat({ autoStart: true });
+    else open(triggers[0]);
+  };
+  const inviteActivated = document.documentElement.dataset.livepersonInviteActivated;
   if (!inviteActivated) {
-    window.addEventListener(LIVEPERSON_FACADE_ACTIVATE, openFromInvite, { once: true });
+    window.addEventListener(LIVEPERSON_FACADE_ACTIVATE, activateFromInvite, { once: true });
   }
+
+  const cleanup = (event) => {
+    if (event.persisted) return;
+    stopVendorInviteObserver();
+    livePersonObserver?.disconnect();
+    window.clearTimeout(proactiveStartTimeout);
+    window.removeEventListener(LIVEPERSON_FACADE_ACTIVATE, activateFromInvite);
+    window.removeEventListener('pagehide', cleanup);
+  };
+  window.addEventListener('pagehide', cleanup);
 
   function close() {
     root.classList.remove('cu-open');
@@ -242,5 +315,5 @@ export default async function initContactUs({ requestLivePerson } = {}) {
   });
 
   document.body.append(root);
-  if (inviteActivated) openFromInvite();
+  if (inviteActivated) activateFromInvite();
 }

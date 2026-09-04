@@ -119,71 +119,104 @@
   --section-y: 80px;
 }
 
-/*
- * First-party facade for LivePerson's proactive invitation. It is painted with
- * the eager page so the vendor cannot introduce a late LCP candidate. The full
- * contact widget replaces the interaction after the visitor accepts it.
- */
+/* First-party HTML/CSS reconstruction of LivePerson's proactive invitation. */
 .lp-invite-facade {
   position: fixed;
-  right: 12px;
-  bottom: 72px;
-  z-index: 999;
+  top: 50%;
+  right: 0;
+  z-index: 107158;
   box-sizing: border-box;
-  width: min(260px, calc(100vw - 24px));
-  padding: 18px 40px 18px 18px;
-  border: 1px solid #d4d7dc;
-  border-radius: 12px;
+  width: min(400px, calc(100vw - 12px));
+  min-height: 290px;
+  padding: 46px 36px 36px;
+  transform: translateY(-74%);
+  opacity: 0.001;
+  border: 0;
+  border-radius: 40px;
   background: #fff;
-  box-shadow: 0 6px 24px rgb(0 0 0 / 20%);
+  box-shadow: 0 8px 28px rgb(0 0 0 / 18%);
   color: #11181c;
   font-family: var(--body-font-family);
+  pointer-events: none;
+}
+
+.lp-invite-facade.lp-invite-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.lp-invite-facade::after {
+  position: absolute;
+  bottom: -18px;
+  left: 50%;
+  width: 0;
+  height: 0;
+  transform: translateX(-50%);
+  border-top: 20px solid #fff;
+  border-right: 18px solid transparent;
+  border-left: 18px solid transparent;
+  content: "";
 }
 
 .lp-invite-facade[hidden] {
   display: none;
 }
 
+.lp-invite-facade h2 {
+  margin: 0 0 20px;
+  color: #236cff;
+  font-family: inherit;
+  font-size: 32px;
+  font-weight: 400;
+  line-height: 40px;
+}
+
+.lp-invite-facade .lp-invite-copy {
+  margin: 0 0 28px;
+  color: #11181c;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.lp-invite-facade .lp-invite-copy span {
+  display: block;
+}
+
+.lp-invite-facade .lp-invite-actions {
+  display: flex;
+  align-items: center;
+  gap: 38px;
+}
+
 .lp-invite-facade button {
   margin: 0;
-  border: 0;
   font: inherit;
   cursor: pointer;
 }
 
 .lp-invite-facade .lp-invite-action {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  width: 100%;
-  padding: 0;
+  min-width: 142px;
+  min-height: 48px;
+  padding: 0 18px;
+  border: 2px solid #0d333f;
+  border-radius: 4px;
   background: transparent;
-  color: inherit;
-  text-align: left;
-}
-
-.lp-invite-facade .lp-invite-action strong {
-  color: #236cff;
-  font-size: 18px;
+  color: #0d333f;
+  font-size: 16px;
+  font-weight: 600;
   line-height: 24px;
 }
 
-.lp-invite-facade .lp-invite-action span {
-  font-size: 14px;
-  line-height: 20px;
-}
-
 .lp-invite-facade .lp-invite-dismiss {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 32px;
-  height: 32px;
+  min-height: 48px;
   padding: 0;
+  border: 0;
   background: transparent;
-  color: #6b6c72;
-  font-size: 24px;
-  line-height: 32px;
+  color: #11181c;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 24px;
+  text-decoration: underline;
 }
 
 .lp-invite-facade .lp-invite-action:focus-visible,
@@ -194,9 +227,8 @@
 
 @media (width >= 768px) {
   .lp-invite-facade {
-    right: 40px;
-    bottom: 168px;
-    z-index: 1499;
+    right: 48px;
+    transform: translateY(-82.5%);
   }
 }
 

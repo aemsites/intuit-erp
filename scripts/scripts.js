@@ -54,6 +54,11 @@ function isLivePersonOnDemand() {
   return ['true', 'yes'].includes((getMetadata('chat-now') || '').trim().toLowerCase());
 }
 
+function livePersonInviteDelay() {
+  const value = Number.parseInt(getMetadata('chat-invite-delay'), 10);
+  return Number.isFinite(value) && value >= 0 ? value : undefined;
+}
+
 // Active Tealium instance (undefined when `?martech=off`); exposed via getTealium().
 let tealium;
 
@@ -524,7 +529,8 @@ async function loadEager(doc) {
     }
     decorateMain(main);
     initLivePersonInviteFacade({
-      enabled: livePersonOnDemand && shouldRenderContactUs() && MARTECH_PROVIDER !== 'off',
+      enabled: livePersonOnDemand && shouldRenderContactUs() && tealium?.enabled,
+      delay: livePersonInviteDelay(),
     });
     // AFTER decorateMain: resolve a swapped page's own section/block slots (recursion-safe)
     // and swap the first/LCP section — both before reveal. No-op without an experience response.
