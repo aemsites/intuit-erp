@@ -8,6 +8,7 @@
  * block-depends-on-block edge.
  */
 import { loadScript } from './aem.js';
+import { experienceLog } from './experience.js';
 
 const CHILIPIPER_SRC_DEFAULT = '//js.chilipiper.com/marketing.js';
 
@@ -54,11 +55,19 @@ export async function submitChiliPiper(router, lead) {
   if (!router || !subdomain) return false;
   const cp = await ensureChiliPiper(cfg);
   if (!cp?.submit) return false;
-  cp.submit(subdomain, router, {
-    map: false,
-    lead: leadObj,
-    disableRelation: true,
-    event: { Lead_XRef_ID__c: lead.Lead_XRef_ID__c },
-  });
-  return true;
+  try {
+    cp.submit(subdomain, router, {
+      map: false,
+      lead: leadObj,
+      disableRelation: true,
+      event: { Lead_XRef_ID__c: lead.Lead_XRef_ID__c },
+    });
+    return true;
+  } catch (e) {
+    experienceLog(
+      'error',
+      `MARKETOFORM_CHILIPIPER_API_CALL_FAILED,formId:${lead.formId},leadXRefID:${lead.Lead_XRef_ID__c},ivid:${lead.IVID__c}`,
+    );
+    return false;
+  }
 }
