@@ -21,7 +21,7 @@
  */
 import { loadScript, getMetadata, decorateIcons } from '../../scripts/aem.js';
 import { fetchPlaceholders } from '../../scripts/placeholders.js';
-import { experienceLog } from '../../scripts/experience.js'
+import { experienceLog } from '../../scripts/experience.js';
 
 // Uncomment with the AEP/WebSDK integration in scripts/scripts.js.
 // // Vendored via git subtree at plugins/martech (see its README), not an
@@ -90,8 +90,8 @@ function marketoEnv() {
 // reCAPTCHA v3 constants
 const RECAPTCHA_API_SRC = 'https://www.google.com/recaptcha/api.js';
 const RECAPTCHA_DEFAULT_THRESHOLD = 0.3;
-const RECAPTCHA_MAX_ATTEMPTS = 3;
-const RECAPTCHA_RETRY_MS = 2000;
+const CAPTCHA_V2_JS_URL = 'https://www.google.com/recaptcha/api.js?onload=invokeV2Recaptcha&render=explicit&badge=bottomleft';
+export const CAPTCHA_V2_KEY = '6LdTQDQrAAAAALma4VbXZN_n4ftrH5g-zyh7cxsj';
 
 // munchkin tag constants
 const MUNCHKIN_API_SRC = '//munchkin.marketo.net/munchkin.js';
@@ -360,6 +360,39 @@ async function chiliPiperHandoff(router, form, hostingDialog) {
   return true;
 }
 
+// Verify the recaptcha response on submit and allow form submissions when v2 passes.
+const verifyRecaptchaResponse = (formId) => {
+  const gcaptcha = document.querySelector(
+    `#mktoForm_${formId} .g-recaptcha`,
+  );
+  const { grecaptcha } = window;
+  if (gcaptcha && grecaptcha) {
+    const captchaid = gcaptcha.getAttribute('data-captchaid');
+    const gcaptchaRes = grecaptcha.getResponse(
+      captchaid ? parseInt(captchaid, 10) : undefined,
+    );
+    if (gcaptchaRes.length !== 0) return true;
+  }
+  return false;
+};
+
+// Invoke recaptchaV2 and render challenge for user
+const invokeV2Recaptcha = () => {
+  const { grecaptcha } = window;
+  if (!grecaptcha) return;
+  const recaptachaV2Div = document.querySelectorAll('.g-recaptcha');
+  recaptachaV2Div.forEach((obj) => {
+    if (!obj.getAttribute('data-captchaid')) {
+      const widgetId1 = grecaptcha.render(obj, {
+        sitekey: `${CAPTCHA_V2_KEY}`,
+        theme: 'light',
+      });
+      obj.setAttribute('data-captchaid', `${widgetId1}`);
+      grecaptcha.reset(widgetId1);
+    }
+  });
+};
+
 // reCAPTCHA v3
 async function setupRecaptcha(cfg, config, form) {
   const siteKey = cfg['recaptcha.siteKey'];
@@ -372,8 +405,6 @@ async function setupRecaptcha(cfg, config, form) {
   const parsed = parseFloat(cfg['recaptcha.scoreThreshold']);
   const threshold = Number.isFinite(parsed) ? parsed : RECAPTCHA_DEFAULT_THRESHOLD;
 
-  // Distinguish "endpoint says bot" (low/invalid score → block) from "endpoint
-  // unreachable" (network/CORS → allow, so an outage never drops real leads).
   const verify = async (token) => {
     try {
       const res = await fetch(verifyUrl, {
@@ -382,29 +413,35 @@ async function setupRecaptcha(cfg, config, form) {
         body: `response=${encodeURIComponent(token)}`,
       });
       const data = await res.json();
-      if (data.success === true) return data.score === undefined || data.score >= threshold;
-      return false; // expired/invalid/low-score token — refresh and retry
+      return (data.success === true && data.score >= threshold);
     } catch (e) {
-      return true;
+      return false;
     }
   };
 
   let verified = false;
   form.onValidate(() => {
     syncFullNameHiddenFields(form);
+
+    if (!verified) {
+      verified = verifyRecaptchaResponse(config.formId);
+    }
     form.submittable(verified);
   });
 
   await loadScript(`${RECAPTCHA_API_SRC}?render=${siteKey}`);
-  let attempts = 0;
   const run = () => window.grecaptcha?.ready(() => {
     window.grecaptcha.execute(siteKey, { action: '' })
       .then(async (token) => {
         verified = await verify(token);
-        attempts += 1;
-        if (!verified && attempts < RECAPTCHA_MAX_ATTEMPTS) setTimeout(run, RECAPTCHA_RETRY_MS);
+        if (!verified) {
+          loadScript(CAPTCHA_V2_JS_URL);
+        }
       })
-      .catch(() => { verified = true; }); // grecaptcha unavailable — don't block leads
+      .catch(() => {
+        verified = false;
+        loadScript(CAPTCHA_V2_JS_URL);
+      });
   });
   run();
 }
@@ -462,7 +499,7 @@ async function embedMarketoForm(formEl, cfg, config, env) {
   window.MktoForms2.loadForm(host, munchkin, config.formId, (form) => {
     // Get random UUID
     const leadXref = (window.crypto?.randomUUID ? window.crypto.randomUUID() : createUUID());
-    const ividVal = window?.utag_data?.ivid || getCookieValue('ivid') || ''
+    const ividVal = window?.utag_data?.ivid || getCookieValue('ivid') || '';
 
     // add hidden fields and populate values
     const hiddenFields = { Lead_XRef_ID__c: leadXref };
@@ -507,7 +544,6 @@ async function embedMarketoForm(formEl, cfg, config, env) {
     const canHandoff = !!(config.chiliPiperRouter && cfg['chilipiper.subdomain']);
 
     form.onSuccess((vals) => {
-
       // invoking ECS tracking
       try {
         trackFormSubmit({ ...vals, Lead_XRef_ID__c: leadXref }, config.formId);
@@ -538,16 +574,31 @@ async function embedMarketoForm(formEl, cfg, config, env) {
     form.onSubmit(() => {
       setTimeout(() => {
         const targetNode = document.querySelectorAll(
-          `#mktoForm_${config.formId} .mktoButtonRow .mktoButtonWrap .mktoErrorMsg`
+          `#mktoForm_${config.formId} .mktoButtonRow .mktoButtonWrap .mktoErrorMsg`,
         )[0];
         if (targetNode) {
-          experienceLog('error',
-            `MARKETOFORM_ISSUE_WITH_FORM_SUBMISSION,formId:${config.formId},leadXRefID:${leadXref},ivid:${ividVal}`
+          experienceLog(
+            'error',
+            `MARKETOFORM_ISSUE_WITH_FORM_SUBMISSION,formId:${config.formId},leadXRefID:${leadXref},ivid:${ividVal}`,
           );
         }
       }, 500);
     });
 
+    form.whenReady(() => {
+      // V2 reCAPTCHA placeholder — rendered when v3 score fails.
+      if (config.recaptcha) {
+        const recaptchaV2Div = document.createElement('div');
+        recaptchaV2Div.className = 'g-recaptcha';
+        const recapV2ElRendered = formEl.querySelector('div.g-recaptcha');
+        const submitBtnRow = formEl.querySelector('div.mktoButtonRow');
+
+        if (submitBtnRow && !recapV2ElRendered) {
+          submitBtnRow.parentNode?.insertBefore(recaptchaV2Div, submitBtnRow);
+        }
+        window.invokeV2Recaptcha = invokeV2Recaptcha;
+      }
+    });
   });
 }
 
