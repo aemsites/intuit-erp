@@ -20,10 +20,10 @@
 * { box-sizing: border-box; }
 
 body {
-  min-width: 320px;
+  min-width: 0;
   min-height: 100vh;
   margin: 0;
-  background: var(--tracking-bg);
+  background: transparent;
 }
 
 button,
@@ -34,14 +34,6 @@ textarea { font: inherit; }
 button { cursor: pointer; }
 
 #app { min-height: 100vh; padding: 12px; }
-
-.tracking-rail {
-  min-width: 0;
-  overflow: hidden;
-  background: var(--tracking-surface);
-  border: 1px solid var(--tracking-border);
-  border-radius: 10px;
-}
 
 .tracking-search,
 .tracking-input,
@@ -87,9 +79,6 @@ button { cursor: pointer; }
   font-size: 12px;
 }
 
-.tracking-rail { padding: 14px; overflow: visible; }
-
-.tracking-rail-header,
 .tracking-inventory-head,
 .tracking-form-head {
   display: flex;
@@ -98,18 +87,9 @@ button { cursor: pointer; }
   gap: 12px;
 }
 
-.tracking-rail-header {
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--tracking-border);
-}
-
-.tracking-rail-header h1,
 .tracking-identity h2,
 .tracking-inventory h2,
-.tracking-comparison h3,
 .tracking-form h3 { margin: 0; }
-
-.tracking-rail-header h1 { font-size: 20px; }
 
 .tracking-eyebrow {
   margin: 0 0 3px;
@@ -120,7 +100,6 @@ button { cursor: pointer; }
   text-transform: uppercase;
 }
 
-.tracking-source,
 .tracking-target-state,
 .tracking-count {
   display: inline-flex;
@@ -218,61 +197,17 @@ button { cursor: pointer; }
 .tracking-identity dt { color: var(--tracking-muted); }
 .tracking-identity dd { min-width: 0; margin: 0; overflow-wrap: anywhere; }
 
-.tracking-comparison,
 .tracking-form {
   padding: 14px 0;
   border-bottom: 1px solid var(--tracking-border);
 }
 
-.tracking-comparison h3,
 .tracking-form h3 { font-size: 14px; }
 
-.tracking-section-heading p,
 .tracking-form-head p {
   margin: 3px 0 0;
   color: var(--tracking-muted);
   font-size: 12px;
-}
-
-.tracking-table-wrap { margin-top: 10px; overflow-x: auto; }
-
-.tracking-comparison-table {
-  width: 100%;
-  min-width: 390px;
-  border-collapse: collapse;
-  table-layout: fixed;
-  font-size: 12px;
-}
-
-.tracking-comparison-table th,
-.tracking-comparison-table td {
-  padding: 8px 7px;
-  text-align: left;
-  vertical-align: top;
-  overflow-wrap: anywhere;
-  white-space: pre-wrap;
-  border-bottom: 1px solid var(--tracking-border);
-}
-
-.tracking-comparison-table thead th {
-  color: var(--tracking-muted);
-  font-weight: 600;
-}
-
-.tracking-comparison-table th:first-child,
-.tracking-comparison-table td:first-child { width: 29%; }
-
-.tracking-comparison-table tbody th {
-  color: var(--tracking-muted);
-  font-weight: 400;
-}
-
-.tracking-effective { color: var(--tracking-muted); }
-
-.tracking-effective.is-changed {
-  color: var(--tracking-accent);
-  background: var(--tracking-accent-soft);
-  font-weight: 600;
 }
 
 .tracking-form-head { align-items: flex-start; margin-bottom: 10px; }
@@ -308,16 +243,4 @@ textarea:focus-visible {
 
   .tracking-form-head,
   .tracking-actions { grid-column: 1 / -1; }
-}
-
-@media (width >= 1024px) {
-  body { overflow: hidden; }
-  #app { padding: 0; }
-
-  .tracking-rail {
-    height: 100vh;
-    overflow-y: auto;
-    border: 0;
-    border-radius: 0;
-  }
 }
