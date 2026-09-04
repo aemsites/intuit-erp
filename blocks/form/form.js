@@ -355,7 +355,7 @@ function showThankYou(form, placeholders = {}) {
 // the still-open `<dialog>` (the browser promotes it to the top layer) and is dimmed by that
 // dialog's own `::backdrop`, so closing the dialog is what brings the calendar to the front.
 async function chiliPiperHandoff(router, form, formId, dialog) {
-  const submitted = await submitChiliPiper(router, form.getValues());
+  const submitted = await submitChiliPiper(router, { ...form.getValues(), formId });
   if (!submitted) return false;
   // submitChiliPiper is fire-and-forget, so close the dialog only once the overlay is really up —
   // closing unconditionally would leave a visitor with no calendar, no form and no error.
