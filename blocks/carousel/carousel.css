@@ -841,10 +841,16 @@
 @media (width >= 1024px) {
   /* even 50/50 media/copy split (base .feature is 35/65) with an 80px inset on
      the media, matching the source. box-sizing keeps the inset inside the 50%
-     so the image ends at the slide midpoint and the copy takes the other half. */
+     so the image ends at the slide midpoint and the copy takes the other half.
+     The inset is symmetric (top = bottom = 80px) and the image is centered: the
+     media cell is flex-stretched to the taller copy column, and the uncropped
+     `contain` image doesn't fill it, so without this the leftover height would
+     pool entirely below the image (top-anchored card, stray navy strip). */
   .carousel.feature.panel .carousel-slide > div:first-child {
     flex: 0 0 50%;
-    padding: 80px 0 0 80px;
+    display: flex;
+    align-items: center;
+    padding: 80px 0 80px 80px;
   }
 }
 
