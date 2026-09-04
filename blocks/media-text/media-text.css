@@ -703,7 +703,12 @@
   border-radius: var(--radius-card);
 }
 
-@media (width <768px) {
+/* Prod stacks the default media-text split at 1024 (verified on nonprofit,
+   accounting, accountant, and the blog media-promo fragment — side-by-side at
+   1100, stacked at 900), not 768. Move the row-stacking and its image-order
+   rules to <1024. The `.cards`/`.power` grids keep their own <768 stacking
+   below, and mobile typography stays at <768. */
+@media (width <1024px) {
   .media-text .media-row {
     grid-template-columns: 1fr;
     gap: 24px;
@@ -728,7 +733,9 @@
   .section.media-lead .media-text .media-copy .media-body {
     text-align: center;
   }
+}
 
+@media (width <768px) {
   .media-text .media-copy h2,
   .media-text .media-copy h3 {
     font-size: 26px;
