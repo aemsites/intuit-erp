@@ -22,7 +22,7 @@ import { trackAs } from '../../scripts/tracking.js';
 // Contact info (sales phone, hours, support URL) is authored in DA — a
 // fragment table, not hardcoded here — so it can change without a code
 // deploy. See /fragments/contact-info (block: contact-info).
-const CONTACT_FRAGMENT = '/fragments/contact-info';
+const CONTACT_FRAGMENT = getMetadata('contact-info') || '/fragments/contact-info';
 let contactInfo;
 
 /** Fetches & parses the contact-info fragment into { phone, hours, supportUrl }; caches it. */
