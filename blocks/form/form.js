@@ -348,7 +348,7 @@ async function chiliPiperHandoff(router, form, hostingDialog) {
   // submitChiliPiper is fire-and-forget, so close the dialog only once the overlay is really up —
   // closing unconditionally would leave a visitor with no calendar, no form and no error.
   const tookOver = await waitForChiliPiperOverlay();
-  if (!tookOver) return false;
+  if (!tookOver || !hostingDialog || !getHostingDialog(form)) return false;
   const dialog = hostingDialog || getHostingDialog(form);
   if (dialog) {
     // Distinct from a user-initiated close: skip the focus restore so we don't
