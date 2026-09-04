@@ -174,6 +174,7 @@ export default async function initContactUs({ requestLivePerson } = {}) {
   let vendorInviteObserverTimeout;
   let proactiveStartTimeout;
   let vendorInviteObserver;
+  let livePersonObserver;
 
   function stopVendorInviteObserver() {
     vendorInviteObserver?.disconnect();
@@ -194,6 +195,18 @@ export default async function initContactUs({ requestLivePerson } = {}) {
   };
   vendorInviteObserver = chatTarget ? new MutationObserver(suppressVendorInvite) : null;
 
+  function startRenderedEngagement() {
+    const container = chatTarget?.querySelector('.LPMcontainer');
+    const engagement = container?.querySelector('[data-lp-event="click"], button, [role="button"]');
+    if (!proactiveActivation || livePersonStarted || !engagement) return;
+    livePersonStarted = true;
+    suppressVendorInvite();
+    engagement.click();
+    window.clearTimeout(proactiveStartTimeout);
+    livePersonObserver?.disconnect();
+    window.dispatchEvent(new CustomEvent(LIVEPERSON_FACADE_STARTED));
+  }
+
   function enableProactiveActivation() {
     proactiveActivation = true;
     suppressVendorInvite();
@@ -206,6 +219,7 @@ export default async function initContactUs({ requestLivePerson } = {}) {
       if (chatFacade) chatFacade.textContent = 'Chat is taking longer than expected';
       triggers[0]?.click();
     }, 15000);
+    startRenderedEngagement();
   }
 
   function requestChat({ autoStart = false } = {}) {
@@ -221,20 +235,14 @@ export default async function initContactUs({ requestLivePerson } = {}) {
     } catch (e) { /* non-fatal — the phone/schedule options remain available */ }
   }
 
-  const livePersonObserver = chatTarget ? new MutationObserver(() => {
+  livePersonObserver = chatTarget ? new MutationObserver(() => {
     const container = chatTarget.querySelector('.LPMcontainer');
     if (!container) return;
     if (chatFacade) chatFacade.hidden = true;
-    if (proactiveActivation && !livePersonStarted) {
-      const engagement = container.querySelector('[data-lp-event="click"], button, [role="button"]');
-      if (!engagement) return;
-      livePersonStarted = true;
-      suppressVendorInvite();
-      engagement.click();
-      window.clearTimeout(proactiveStartTimeout);
-      window.dispatchEvent(new CustomEvent(LIVEPERSON_FACADE_STARTED));
-    }
-    livePersonObserver.disconnect();
+    const engagement = container.querySelector('[data-lp-event="click"], button, [role="button"]');
+    if (!engagement) return;
+    if (proactiveActivation) startRenderedEngagement();
+    else livePersonObserver.disconnect();
   }) : null;
   livePersonObserver?.observe(chatTarget, { childList: true, subtree: true });
 
