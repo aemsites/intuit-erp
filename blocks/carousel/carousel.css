@@ -838,6 +838,26 @@
   border-radius: 12px;
 }
 
+/* stacked (below desktop), the source puts the copy above the image — the
+   reverse of the base .feature (ai-agents), which keeps the photo on top. Only
+   flip .panel; column-reverse lifts the copy (last child) above the media. */
+.carousel.feature.panel .carousel-slide {
+  flex-direction: column-reverse;
+}
+
+/* Copy rhythm: the base .feature only zeroes .carousel-quote/-attribution, but
+   the panel copy also carries an eyebrow (p) and title (h2) whose default UA
+   margins would stack on top of the cell gap, over-spacing the block versus the
+   source (~16-20px). Reset every child margin so only the gap sets the rhythm,
+   and tighten the gap to match. */
+.carousel.feature.panel .carousel-slide > div:last-child {
+  gap: 20px;
+}
+
+.carousel.feature.panel .carousel-slide > div:last-child > * {
+  margin: 0;
+}
+
 @media (width >= 1024px) {
   /* even 50/50 media/copy split (base .feature is 35/65) with an 80px inset on
      the media, matching the source. box-sizing keeps the inset inside the 50%
@@ -846,6 +866,10 @@
      media cell is flex-stretched to the taller copy column, and the uncropped
      `contain` image doesn't fill it, so without this the leftover height would
      pool entirely below the image (top-anchored card, stray navy strip). */
+  .carousel.feature.panel .carousel-slide {
+    flex-direction: row;
+  }
+
   .carousel.feature.panel .carousel-slide > div:first-child {
     flex: 0 0 50%;
     display: flex;
