@@ -64,10 +64,12 @@ export async function submitChiliPiper(router, lead) {
     });
     return true;
   } catch (e) {
-    experienceLog(
-      'error',
-      `MARKETOFORM_CHILIPIPER_API_CALL_FAILED,formId:${lead.formId},leadXRefID:${lead.Lead_XRef_ID__c},ivid:${lead.IVID__c}`,
-    );
+    experienceLog('error', 'MARKETOFORM_CHILIPIPER_API_CALL_FAILED', {
+      formId: lead.formId,
+      leadXRefID: lead.Lead_XRef_ID__c,
+      ivid: lead.IVID__c,
+      errorMsg: e?.message,
+    });
     return false;
   }
 }

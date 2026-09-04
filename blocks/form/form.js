@@ -8,8 +8,9 @@
  * successUrl, header, subheader, disclaimer, recaptcha (per-form v3 opt-in),
  * buttonLabel (overrides Marketo's own hardcoded submit button text).
  * Site-wide values (munchkin, chilipiper subdomain, script URLs, reCAPTCHA
- * site key/verify endpoint) come from /site-config.json via getSiteConfig() —
- * never authored per page, never hardcoded.
+ * keys/endpoints: recaptcha.enabled, recaptcha.siteKey, recaptcha.v2SiteKey,
+ * recaptcha.verifyUrl, recaptcha.apiKey, recaptcha.scoreThreshold) come from
+ * /site-config.json via getSiteConfig() — never authored per page, never hardcoded.
  *
  * Marketo instance: production by default. A page opts into a non-prod instance
  * with `marketo: dev` | `marketo: e2e` metadata (no hostname logic), which selects
@@ -94,6 +95,10 @@ const CAPTCHA_V2_JS_URL = 'https://www.google.com/recaptcha/api.js?onload=invoke
 
 // munchkin tag constants
 const MUNCHKIN_API_SRC = '//munchkin.marketo.net/munchkin.js';
+
+// Defer after onSubmit before checking for .mktoErrorMsg — Marketo injects validation
+// errors immediately after submit handling; 500ms covers that without a visible delay.
+export const MARKETO_ERROR_MSG_POLL_MS = 500;
 
 // getSiteConfig lives in scripts.js; import it dynamically so this block (which
 // scripts.js's graph pulls in for the schedule modal) doesn't form a static cycle.
@@ -325,8 +330,8 @@ function showThankYou(form, placeholders = {}) {
 // the Lead_XRef_ID__c event), then only dismiss the hosting schedule-call modal once ChiliPiper's
 // own overlay has actually taken over. Returns false when the submit or the overlay never lands so
 // the caller can show a fallback rather than leaving the visitor with nothing.
-async function chiliPiperHandoff(router, form) {
-  const submitted = await submitChiliPiper(router, form.getValues());
+async function chiliPiperHandoff(router, form, formId) {
+  const submitted = await submitChiliPiper(router, { ...form.getValues(), formId });
   if (!submitted) return false;
   // submitChiliPiper is fire-and-forget, so close the dialog only once the overlay is really up —
   // closing unconditionally would leave a visitor with no calendar, no form and no error.
@@ -350,11 +355,15 @@ const verifyRecaptchaResponse = (formId) => {
   );
   const { grecaptcha } = window;
   if (gcaptcha && grecaptcha) {
-    const captchaid = gcaptcha.getAttribute('data-captchaid');
-    const gcaptchaRes = grecaptcha.getResponse(
-      captchaid ? parseInt(captchaid, 10) : undefined,
-    );
-    if (gcaptchaRes.length !== 0) return true;
+    try {
+      const captchaid = gcaptcha.getAttribute('data-captchaid');
+      const gcaptchaRes = grecaptcha.getResponse(
+        captchaid ? parseInt(captchaid, 10) : undefined,
+      );
+      if (gcaptchaRes.length !== 0) return true;
+    } catch (e) {
+      return false;
+    }
   }
   return false;
 };
@@ -388,9 +397,20 @@ function mountRecaptchaV2Placeholder(targetFormEl) {
   submitBtnRow.parentNode?.insertBefore(recaptchaV2Div, submitBtnRow);
 }
 
+// loadScript dedupes by src, so the v2 script's onload only fires on first load. Register
+// the global callback, then render any new placeholders directly when grecaptcha is ready.
+async function loadRecaptchaV2Fallback(v2SiteKey) {
+  window.invokeV2Recaptcha = createInvokeV2Recaptcha(v2SiteKey);
+  await loadScript(CAPTCHA_V2_JS_URL);
+  if (window.grecaptcha) {
+    window.invokeV2Recaptcha?.();
+  }
+}
+
 // reCAPTCHA v3
 async function setupRecaptcha(cfg, config, form, formEl) {
   const siteKey = cfg['recaptcha.siteKey'];
+  const v2SiteKey = cfg['recaptcha.v2SiteKey'];
   const verifyUrl = cfg['recaptcha.verifyUrl'];
   const apiKey = cfg['recaptcha.apiKey'];
   if (!config.recaptcha || cfg['recaptcha.enabled'] === false || !siteKey || !verifyUrl || !apiKey) {
@@ -408,6 +428,7 @@ async function setupRecaptcha(cfg, config, form, formEl) {
         body: `response=${encodeURIComponent(token)}`,
       });
       const data = await res.json();
+      // Pass when verification succeeds and score meets threshold; otherwise show v2.
       return (data.success === true && data.score >= threshold);
     } catch (e) {
       return true; // network/CORS outage — don't block real leads
@@ -433,9 +454,13 @@ async function setupRecaptcha(cfg, config, form, formEl) {
       .then(async (token) => {
         verified = await verify(token);
         if (!verified) {
-          mountRecaptchaV2Placeholder(formEl);
-          window.invokeV2Recaptcha = createInvokeV2Recaptcha(cfg['recaptcha.v2SiteKey']);
-          loadScript(CAPTCHA_V2_JS_URL);
+          if (!v2SiteKey) {
+            // v2 fallback cannot render without a site key — fail open; don't drop leads.
+            verified = true;
+          } else {
+            mountRecaptchaV2Placeholder(formEl);
+            await loadRecaptchaV2Fallback(v2SiteKey);
+          }
         }
       })
       .catch(() => {
@@ -551,7 +576,7 @@ async function embedMarketoForm(formEl, cfg, config, env) {
       // show thank you message and invoke chilipiper
       if (canHandoff) {
         showThankYou(form, placeholders);
-        chiliPiperHandoff(config.chiliPiperRouter, form);
+        chiliPiperHandoff(config.chiliPiperRouter, form, config.formId);
       }
 
       // handling other use case like download file or redirect to success URL
@@ -572,12 +597,13 @@ async function embedMarketoForm(formEl, cfg, config, env) {
           `#mktoForm_${config.formId} .mktoButtonRow .mktoButtonWrap .mktoErrorMsg`,
         )[0];
         if (targetNode) {
-          experienceLog(
-            'error',
-            `MARKETOFORM_ISSUE_WITH_FORM_SUBMISSION,formId:${config.formId},leadXRefID:${leadXref},ivid:${ividVal}`,
-          );
+          experienceLog('error', 'MARKETOFORM_ISSUE_WITH_FORM_SUBMISSION', {
+            formId: config.formId,
+            leadXRefID: leadXref,
+            ivid: ividVal,
+          });
         }
-      }, 500);
+      }, MARKETO_ERROR_MSG_POLL_MS);
     });
   });
 }

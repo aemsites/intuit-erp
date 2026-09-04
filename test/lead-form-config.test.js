@@ -1,7 +1,7 @@
 import {
   describe, it, expect, vi, beforeEach,
 } from 'vitest';
-import decorate, { parseFormConfig } from '../blocks/form/form.js';
+import decorate, { parseFormConfig, MARKETO_ERROR_MSG_POLL_MS } from '../blocks/form/form.js';
 
 // Uncomment with the AEP/WebSDK integration in scripts/scripts.js and blocks/form/form.js.
 // // eslint-disable-next-line import/no-relative-packages
@@ -38,6 +38,7 @@ const RECAPTCHA_CFG = {
   'chilipiper.subdomain': 'intuitsales',
   'recaptcha.enabled': true,
   'recaptcha.siteKey': '6LeQ-test',
+  'recaptcha.v2SiteKey': '6LdTQ-test',
   'recaptcha.verifyUrl': 'https://marketingplatform.api.intuit.com/v3/captcha/verify',
   'recaptcha.apiKey': 'Intuit_APIKey intuit_apikey=test',
 };
@@ -291,11 +292,16 @@ describe('decorate — live Marketo form', () => {
     const error = document.createElement('div');
     error.className = 'mktoErrorMsg';
     block.querySelector('.mktoButtonWrap').append(error);
-    await new Promise((r) => { setTimeout(r, 500); });
+    await new Promise((r) => { setTimeout(r, MARKETO_ERROR_MSG_POLL_MS); });
 
     expect(experienceLog).toHaveBeenCalledWith(
       'error',
-      expect.stringContaining('MARKETOFORM_ISSUE_WITH_FORM_SUBMISSION'),
+      'MARKETOFORM_ISSUE_WITH_FORM_SUBMISSION',
+      expect.objectContaining({
+        formId: '1058',
+        leadXRefID: expect.any(String),
+        ivid: expect.any(String),
+      }),
     );
     block.remove();
   });
@@ -370,10 +376,71 @@ describe('decorate — reCAPTCHA v3 gate', () => {
     expect(submittable).toHaveBeenLastCalledWith(true);
   });
 
-  it('blocks submit on a failing score', async () => {
+  it('blocks submit on a failing score when v2 is configured', async () => {
     await decorateWithRecaptcha([], lowScore);
     onValidateFn();
     expect(submittable).toHaveBeenLastCalledWith(false);
+  });
+
+  it('blocks submit when grecaptcha.getResponse throws on a stale widget id', async () => {
+    window.grecaptcha = {
+      ready: (fn) => fn(),
+      execute: vi.fn(() => Promise.resolve('score-token')),
+      getResponse: vi.fn(() => { throw new Error('stale widget'); }),
+      render: vi.fn((el) => {
+        el.setAttribute('data-captchaid', '1');
+        return 1;
+      }),
+      reset: vi.fn(),
+    };
+    getSiteConfig.mockResolvedValue(RECAPTCHA_CFG);
+    global.fetch = vi.fn(lowScore);
+    loadScript.mockImplementation(() => Promise.resolve());
+
+    const block = make([['formId', '1058'], ['recaptcha', 'true']]);
+    document.body.append(block);
+    await decorate(block);
+    await settle();
+
+    onValidateFn();
+    expect(submittable).toHaveBeenLastCalledWith(false);
+    block.remove();
+  });
+
+  it('fails open on a failing v3 score when recaptcha.v2SiteKey is not configured', async () => {
+    const cfgWithoutV2 = { ...RECAPTCHA_CFG };
+    delete cfgWithoutV2['recaptcha.v2SiteKey'];
+    getSiteConfig.mockResolvedValue(cfgWithoutV2);
+    mockGrecaptcha('score-token');
+    global.fetch = vi.fn(lowScore);
+    await decorate(make([['formId', '1058'], ['recaptcha', 'true']]));
+    await settle();
+    onValidateFn();
+    expect(submittable).toHaveBeenLastCalledWith(true);
+    expect(loadScript).not.toHaveBeenCalledWith(expect.stringContaining('onload=invokeV2Recaptcha'));
+  });
+
+  it('renders v2 when the script is already loaded (multi-form / deduped loadScript)', async () => {
+    const render = vi.fn(() => 1);
+    window.grecaptcha = {
+      ready: (fn) => fn(),
+      execute: vi.fn(() => Promise.resolve('score-token')),
+      render,
+      reset: vi.fn(),
+    };
+    getSiteConfig.mockResolvedValue(RECAPTCHA_CFG);
+    global.fetch = vi.fn(lowScore);
+    // v2 script already in head — loadScript resolves without re-firing onload.
+    loadScript.mockImplementation((src) => Promise.resolve());
+
+    const block = make([['formId', '1058'], ['recaptcha', 'true']]);
+    document.body.append(block);
+    await decorate(block);
+    await settle();
+
+    expect(block.querySelector('.g-recaptcha')).not.toBeNull();
+    expect(render).toHaveBeenCalled();
+    block.remove();
   });
 
   it('fails open (allows submit) when the verify endpoint is unreachable', async () => {

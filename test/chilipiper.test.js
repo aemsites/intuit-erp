@@ -99,7 +99,13 @@ describe('submitChiliPiper', () => {
     expect(ok).toBe(false);
     expect(experienceLog).toHaveBeenCalledWith(
       'error',
-      'MARKETOFORM_CHILIPIPER_API_CALL_FAILED,formId:1058,leadXRefID:XREF-1,ivid:ivid-123',
+      'MARKETOFORM_CHILIPIPER_API_CALL_FAILED',
+      {
+        formId: '1058',
+        leadXRefID: 'XREF-1',
+        ivid: 'ivid-123',
+        errorMsg: 'ChiliPiper submit failed',
+      },
     );
   });
 });
