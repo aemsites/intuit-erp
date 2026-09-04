@@ -459,6 +459,12 @@ export function regionCustomProperties(ctx) {
   return out;
 }
 
+function sheetMapFrom(input) {
+  if (input instanceof Map) return input;
+  if (Array.isArray(input)) return indexRows(input);
+  return indexRows(input?.data);
+}
+
 function resolvedTarget(target, map, loc) {
   const hit = resolveTrackable(target);
   if (!hit) return null;
@@ -520,6 +526,98 @@ function resolvedTarget(target, map, loc) {
   };
 }
 
+function computedAccessPoint(cta, attrs) {
+  let cur = cta;
+  if (Object.hasOwn(attrs, 'data-tracking')) {
+    cur = cta.parentElement;
+  } else {
+    while (cur && cur.nodeType === 1 && !cur.hasAttribute('data-tracking')) {
+      cur = cur.parentElement;
+    }
+    cur = cur?.parentElement || null;
+  }
+
+  const segments = [];
+  while (cur && cur.nodeType === 1) {
+    if (cur.hasAttribute('data-tracking')) segments.unshift(cur.getAttribute('data-tracking'));
+    cur = cur.parentElement;
+  }
+  const trail = segments.filter(Boolean).join('|').replace(/-/g, '_').trim();
+  if (trail) return trail;
+  return cta.closest('header') ? '' : 'page';
+}
+
+function parseTrackerProperties(value) {
+  const out = {};
+  String(value || '').split(',').forEach((pair) => {
+    const separator = pair.indexOf('|');
+    if (separator < 1) return;
+    const key = pair.slice(0, separator);
+    const val = pair.slice(separator + 1);
+    if (key && val && !val.includes('|')) out[key] = val;
+  });
+  return out;
+}
+
+function inspectionValues(cta, attrs) {
+  const output = {};
+  const fields = [
+    'object', 'object-detail', 'action', 'ui-object', 'ui-object-detail',
+    'ui-action', 'wa-link',
+  ];
+  fields.forEach((field) => {
+    const value = attrs[`data-${field}`];
+    if (value != null && value !== '') output[field] = value;
+  });
+  if (Object.hasOwn(attrs, 'data-ui-access-point')) {
+    output['ui-access-point'] = computedAccessPoint(cta, attrs);
+  }
+  const custom = parseTrackerProperties(attrs['data-custom-properties']);
+  if (Object.keys(custom).length) output['custom-properties'] = custom;
+  Object.entries(attrs).forEach(([name, value]) => {
+    if (name.startsWith('data-survey-')) output[name.slice(5)] = value;
+  });
+  if (output.object && output.action) output.event = `${output.object}:${output.action}`;
+  return output;
+}
+
+/** Describe one rendered tracking target without stamping or firing an interaction. */
+export function describeTrackingTarget(target, sheet = [], location = {}) {
+  const browserLocation = (typeof window !== 'undefined' && window.location) || {};
+  const loc = {
+    pathname: location.pathname || browserLocation.pathname || '/',
+    hostname: location.hostname || browserLocation.hostname || '',
+  };
+  const resolved = resolvedTarget(target, sheetMapFrom(sheet), loc);
+  if (!resolved) return null;
+  const {
+    cta, block, blockName, id, isPart, match, automaticAttrs, effectiveAttrs,
+  } = resolved;
+  return {
+    id,
+    matchedId: match?.id || null,
+    path: normalizePath(loc.pathname),
+    label: labelFor(cta),
+    href: cta.getAttribute('href') || '',
+    tag: cta.tagName.toLowerCase(),
+    block: block ? (blockName || trackingKey(block)) : PAGE_KEY,
+    editable: !isPart && !!id,
+    scope: match?.scope || null,
+    automatic: inspectionValues(cta, automaticAttrs),
+    override: match?.row ? { ...match.row } : {},
+    effective: inspectionValues(cta, effectiveAttrs),
+  };
+}
+
+/** Return a non-mutating inventory of every trackable interaction in a rendered scope. */
+export function collectTrackingInventory(scope = document, sheet = [], location = {}) {
+  const root = scope?.querySelectorAll ? scope : document;
+  const selectors = `[data-track-as], ${CTA_SELECTOR}`;
+  return [...root.querySelectorAll(selectors)]
+    .map((target) => describeTrackingTarget(target, sheet, location))
+    .filter(Boolean);
+}
+
 /**
  * JIT-stamp the resolved (derived + sheet + region context) data-* onto the
  * interacted CTA so the injected tracker reads them on the ensuing click. Nothing
@@ -534,15 +632,52 @@ export function stampInteraction(e) {
   stampCta(resolved.cta, resolved.effectiveAttrs);
 }
 
+/** Whether this page is the explicit, editor-only Tracking Inspector probe. */
+export function isTrackingInspectorPreview(location = {}) {
+  const host = location.hostname || '';
+  const params = new URLSearchParams(location.search || '');
+  const previewHost = /\.(aem|hlx)\.page$/.test(host)
+    || /\.preview\.da\.live$/.test(host)
+    || ['localhost', '127.0.0.1'].includes(host);
+  return previewHost && params.get('tracking-editor') === '1';
+}
+
+/** Load editor-only messaging only inside the explicitly requested probe. */
+export function loadTrackingInspectorBridge(
+  location = {},
+  // Query-versioned import keeps the probe and extension on the same release.
+  // eslint-disable-next-line import/no-unresolved
+  loader = () => import('../tools/plugins/tracking/bridge.js?v=20260904.3'),
+) {
+  return isTrackingInspectorPreview(location) ? loader() : null;
+}
+
+function exposeTrackingInspector() {
+  if (typeof window === 'undefined' || !isTrackingInspectorPreview(window.location)) return;
+  loadTrackingInspectorBridge(window.location)
+    .then(({ installTrackingInspectorBridge, waitForTrackingDocument }) => (
+      installTrackingInspectorBridge({
+        ready: waitForTrackingDocument(document),
+        collect: (rows = []) => collectTrackingInventory(document, rows, window.location),
+      })
+    ))
+    .catch(() => {});
+}
+
 /** Initialize trails, sheet caching, and capture handlers. */
 export function initTracking(scope = document) {
   const root = scope && scope.addEventListener ? scope : document;
-  fetchTrackingSheet().then((m) => { sheetMap = m; stampTrail(root); }).catch(() => {});
+  const sheetReady = fetchTrackingSheet()
+    .then((m) => { sheetMap = m; stampTrail(root); })
+    .catch(() => {});
   stampTrail(root);
   root.addEventListener('pointerdown', stampInteraction, true);
   root.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') stampInteraction(e);
   }, true);
+  if (typeof window !== 'undefined' && isTrackingInspectorPreview(window.location)) {
+    sheetReady.then(exposeTrackingInspector).catch(() => {});
+  }
   return stampInteraction;
 }
 

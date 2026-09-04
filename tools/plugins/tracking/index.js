@@ -3,18 +3,24 @@
 // section cohesive is clearer than ordering the file around handler references.
 import DA_SDK from 'https://da.live/nx/utils/sdk.js';
 import {
+  createTrackingInspectorClient,
+  trackingPreviewOrigin,
+  trackingProbeUrl,
+} from './bridge.js?v=20260904.3';
+import {
   TRACKING_SOURCE_PATH,
   createTrackingApi,
   resolveTrackingRef,
-} from './api.js?v=20260904.2';
-import { publishReviewedSheet, saveAndPreviewOverride } from './delivery.js?v=20260904.2';
+} from './api.js?v=20260904.3';
+import { publishReviewedSheet, saveAndPreviewOverride } from './delivery.js?v=20260904.3';
 import {
   OVERRIDE_FIELDS,
+  applyOverride,
+  comparisonRows,
   findOverride,
   resolveEditorPath,
-  trackingRowsForPath,
   validateOverride,
-} from './model.js?v=20260904.2';
+} from './model.js?v=20260904.3';
 
 const FIELD_LABELS = {
   object: 'Object',
@@ -28,6 +34,18 @@ const FIELD_LABELS = {
   survey: 'Survey properties',
 };
 
+const COMPARISON_FIELDS = [
+  'object',
+  'object-detail',
+  'action',
+  'ui-object',
+  'ui-object-detail',
+  'ui-action',
+  'ui-access-point',
+  'wa-link',
+  'custom-properties',
+];
+
 const app = document.getElementById('app');
 const state = {
   path: '/',
@@ -35,10 +53,13 @@ const state = {
   base: null,
   etag: '',
   api: null,
+  context: {},
   ref: 'main',
   inventory: [],
   selected: null,
   scope: '/',
+  inspector: null,
+  probe: null,
 };
 
 function el(tag, opts = {}, children = []) {
@@ -66,8 +87,14 @@ function pairsToText(value) {
   return Object.entries(value).map(([key, val]) => `${key}=${val}`).join('\n');
 }
 
+function displayValue(value) {
+  if (value == null || value === '') return '—';
+  if (typeof value === 'object') return pairsToText(value) || '—';
+  return String(value);
+}
+
 function inventoryKey(item, index) {
-  if (item.id) return `${item.scope}|${item.path}|${item.id}`;
+  if (item.id) return `${item.path}|${item.id}`;
   return `derived|${item.block}|${item.label}|${item.href}|${index}`;
 }
 
@@ -83,12 +110,12 @@ function uniqueInventory(items) {
   }, []);
 }
 
-function collectInventory() {
-  state.inventory = uniqueInventory(trackingRowsForPath(state.sheet, state.path));
+async function collectInventory() {
+  state.inventory = uniqueInventory(await state.inspector.collect(state.sheet.data));
   renderTargetList();
   if (state.selected?.id) {
     const refreshed = state.inventory.find((item) => item.id === state.selected.id
-      && item.scope === state.selected.scope);
+      && item.label === state.selected.label && item.block === state.selected.block);
     if (refreshed) selectInventoryItem(refreshed);
     else {
       state.selected = null;
@@ -97,12 +124,38 @@ function collectInventory() {
   }
 }
 
-function loadInventory(path) {
-  state.path = resolveEditorPath({ contextPath: path });
+async function loadProbe() {
   state.selected = null;
-  collectInventory();
+  setStatus(`Rendering tracking properties for ${state.path}…`, 'pending');
+  const targetOrigin = trackingPreviewOrigin({
+    context: state.context,
+    ref: state.ref,
+    location: window.location,
+  });
+  state.probe = el('iframe', {
+    class: 'tracking-probe',
+    attrs: {
+      src: trackingProbeUrl({
+        context: state.context,
+        ref: state.ref,
+        location: window.location,
+      }),
+      title: 'Tracking preview probe',
+      'aria-hidden': 'true',
+      tabindex: '-1',
+      loading: 'eager',
+      referrerpolicy: 'no-referrer',
+      sandbox: 'allow-scripts allow-same-origin',
+    },
+  });
+  app.appendChild(state.probe);
+  state.inspector = createTrackingInspectorClient({
+    targetOrigin,
+    getTarget: () => state.probe?.contentWindow,
+  });
+  await collectInventory();
   setStatus(
-    `Loaded ${state.inventory.length} configured interactions for ${state.path}.`,
+    `Found ${state.inventory.length} trackable interactions for ${state.path}.`,
     'ok',
   );
 }
@@ -126,20 +179,22 @@ function renderTargetList() {
   if (!visible.length) {
     listRoot.appendChild(el('p', {
       class: 'tracking-empty',
-      text: query ? 'No matching interactions.' : 'No configured interactions for this page.',
+      text: query ? 'No matching interactions.' : 'No trackable interactions found on this page.',
     }));
     return;
   }
   visible.forEach((item) => {
-    const stateLabel = item.scope === 'global' ? 'all pages' : 'this page';
+    const overridden = Object.keys(item.override || {}).length > 0;
+    let stateLabel = item.editable ? 'automatic' : 'derived only';
+    if (overridden) stateLabel = `${item.scope || 'page'} override`;
     const button = el('button', {
       class: `tracking-target${state.selected?.editorKey === item.editorKey ? ' is-selected' : ''}`,
       onclick: () => selectInventoryItem(item),
     }, [
       el('span', { class: 'tracking-target-label', text: item.label || '(unlabelled interaction)' }),
-      el('span', { class: 'tracking-target-meta', text: item.id }),
+      el('span', { class: 'tracking-target-meta', text: `${item.block} · ${item.href || item.tag}` }),
       el('span', {
-        class: 'tracking-target-state is-overridden',
+        class: `tracking-target-state${overridden ? ' is-overridden' : ''}`,
         text: stateLabel,
       }),
     ]);
@@ -150,6 +205,40 @@ function renderTargetList() {
 function directRowValues(path, id) {
   const row = findOverride(state.sheet, path, id) || {};
   return Object.fromEntries(OVERRIDE_FIELDS.map((field) => [field, pairsToText(row[field])]));
+}
+
+function comparisonFields(automatic, effective) {
+  const surveys = [...new Set([...Object.keys(automatic || {}), ...Object.keys(effective || {})]
+    .filter((field) => field.startsWith('survey-')))];
+  return [...COMPARISON_FIELDS, ...surveys];
+}
+
+function comparisonTable(automatic, effective) {
+  const rows = comparisonRows(automatic, effective, comparisonFields(automatic, effective));
+  const body = el('tbody', {}, rows.map((row) => el('tr', {}, [
+    el('th', { text: FIELD_LABELS[row.field] || row.field, attrs: { scope: 'row' } }),
+    el('td', { class: 'tracking-automatic', text: displayValue(row.automatic) }),
+    el('td', {
+      class: `tracking-effective${row.changed ? ' is-changed' : ''}`,
+      text: displayValue(row.effective),
+    }),
+  ])));
+  return el('section', { class: 'tracking-comparison' }, [
+    el('div', { class: 'tracking-section-heading' }, [
+      el('h3', { text: 'Resolved tracking values' }),
+      el('p', { text: 'Effective values include applicable overrides. Changes are highlighted.' }),
+    ]),
+    el('div', { class: 'tracking-table-wrap' }, [
+      el('table', { class: 'tracking-comparison-table' }, [
+        el('thead', {}, [el('tr', {}, [
+          el('th', { text: 'Field', attrs: { scope: 'col' } }),
+          el('th', { text: 'Automatic', attrs: { scope: 'col' } }),
+          el('th', { text: 'Effective', attrs: { scope: 'col' } }),
+        ])]),
+        body,
+      ]),
+    ]),
+  ]);
 }
 
 function changedValues(initial, controls) {
@@ -166,7 +255,7 @@ function renderEditor(item) {
   if (!item) {
     editorRoot.appendChild(el('div', {
       class: 'tracking-empty tracking-empty-editor',
-      text: 'Select a configured interaction to edit its tracking properties.',
+      text: 'Select an interaction to inspect its automatic and effective values.',
     }));
     return;
   }
@@ -174,18 +263,28 @@ function renderEditor(item) {
   const overrideId = item.matchedId || item.id;
 
   const identity = el('section', { class: 'tracking-identity' }, [
-    el('p', {
-      class: 'tracking-eyebrow',
-      text: item.scope === 'global' ? 'All pages' : item.path,
-    }),
+    el('p', { class: 'tracking-eyebrow', text: `${item.block} · ${item.tag}` }),
     el('h2', { text: item.label || '(unlabelled interaction)' }),
     el('dl', {}, [
       el('div', {}, [el('dt', { text: 'ID' }), el('dd', { text: item.id || 'Not sheet-addressable' })]),
-      el('div', {}, [el('dt', { text: 'Stored event' }), el('dd', { text: item.effective.event || '—' })]),
-      el('div', {}, [el('dt', { text: 'Stored access point' }), el('dd', { text: item.effective['ui-access-point'] || '—' })]),
+      item.matchedId && item.matchedId !== item.id
+        ? el('div', {}, [el('dt', { text: 'Sheet row ID' }), el('dd', { text: item.matchedId })])
+        : null,
+      el('div', {}, [el('dt', { text: 'Destination' }), el('dd', { text: item.href || '—' })]),
+      el('div', {}, [el('dt', { text: 'Effective event' }), el('dd', { text: item.effective.event || '—' })]),
+      el('div', {}, [el('dt', { text: 'Access point' }), el('dd', { text: item.effective['ui-access-point'] || 'page' })]),
     ]),
   ]);
   editorRoot.appendChild(identity);
+
+  if (!item.editable) {
+    editorRoot.appendChild(comparisonTable(item.automatic, item.effective));
+    editorRoot.appendChild(el('p', {
+      class: 'tracking-note',
+      text: 'This interaction is pure-derived and has no sheet identity.',
+    }));
+    return;
+  }
 
   const scopeSelect = el('select', { class: 'tracking-select', attrs: { 'aria-label': 'Override scope' } }, [
     el('option', { text: `This page (${item.path})`, attrs: { value: item.path } }),
@@ -207,7 +306,7 @@ function renderEditor(item) {
     el('div', { class: 'tracking-form-head' }, [
       el('div', {}, [
         el('h3', { text: 'Overrides' }),
-        el('p', { text: 'Blank fields inherit their runtime defaults.' }),
+        el('p', { text: 'Leave a field blank to inherit its automatic value.' }),
       ]),
       scopeSelect,
     ]),
@@ -235,8 +334,24 @@ function renderEditor(item) {
     ]));
   });
 
+  const comparisonRoot = el('div');
   const formValues = () => Object.fromEntries(OVERRIDE_FIELDS
     .map((field) => [field, controls[field].value.trim()]));
+  let comparisonGeneration = 0;
+  const updateEffective = async () => {
+    comparisonGeneration += 1;
+    const generation = comparisonGeneration;
+    const values = formValues();
+    const simulated = applyOverride(state.sheet, { path: state.scope, id: overrideId, values });
+    const refreshedInventory = await state.inspector.collect(simulated.data);
+    if (generation !== comparisonGeneration) return;
+    const refreshed = refreshedInventory
+      .find((candidate) => candidate.id === item.id && candidate.label === item.label);
+    comparisonRoot.replaceChildren(comparisonTable(
+      item.automatic,
+      refreshed?.effective || item.effective,
+    ));
+  };
 
   const save = el('button', { class: 'tracking-save', text: 'Save & preview' });
   const publish = el('button', {
@@ -261,15 +376,18 @@ function renderEditor(item) {
   Object.entries(controls).forEach(([field, control]) => control.addEventListener('input', () => {
     control.removeAttribute('aria-invalid');
     form.querySelector(`[data-error-for="${field}"]`).textContent = '';
+    updateEffective().catch((error) => setStatus(error.message, 'error'));
     syncActions();
   }));
   scopeSelect.addEventListener('change', () => {
     state.scope = scopeSelect.value;
     setFormValues();
+    updateEffective().catch((error) => setStatus(error.message, 'error'));
     syncActions();
   });
   reset.addEventListener('click', () => {
     setFormValues();
+    updateEffective().catch((error) => setStatus(error.message, 'error'));
     syncActions();
   });
   form.appendChild(el('div', { class: 'tracking-actions' }, [reset, save, publish]));
@@ -365,13 +483,14 @@ function renderEditor(item) {
   });
 
   setFormValues();
-  editorRoot.append(form);
+  editorRoot.append(comparisonRoot, form);
+  updateEffective().catch((error) => setStatus(error.message, 'error'));
   syncActions();
 }
 
 function selectInventoryItem(candidate) {
   const match = state.inventory.find((item) => item.id === candidate.id
-    && item.scope === candidate.scope && item.block === candidate.block) || candidate;
+    && item.label === candidate.label && item.block === candidate.block) || candidate;
   state.selected = match;
   renderTargetList();
   renderEditor(match);
@@ -434,11 +553,12 @@ async function init() {
       context,
       hostname: window.location.hostname,
     });
+    state.context = { ...context, path: params.get('path') || context.path };
     state.api = createTrackingApi({ daFetch: actions.daFetch, context, ref: state.ref });
     state.path = resolveEditorPath({ contextPath: context.path, search: window.location.search });
     await loadInitialSheet();
     renderShell();
-    loadInventory(state.path);
+    await loadProbe();
   } catch (error) {
     app.replaceChildren(el('div', { class: 'tracking-status tracking-status-error', text: error.message }));
   }
