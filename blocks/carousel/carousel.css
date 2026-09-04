@@ -820,6 +820,32 @@
   .carousel.feature .carousel-quote { font-size: 40px; }
 }
 
+/* ---- .feature.panel — media is a self-contained image (it carries its own
+   background, e.g. a white-background brand image) shown INSIDE an inset,
+   rounded card on the navy slide, rather than the full-bleed cover photo of
+   the base .feature (ai-agents customer voices). The base cover-crops the
+   media edge-to-edge; here it is contained and uncropped, and the card is
+   inset so the navy shows around it. No background is set — the image's own
+   background fills the card. ---- */
+.carousel.feature.panel .carousel-slide > div:first-child {
+  margin: 24px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.carousel.feature.panel .carousel-slide img {
+  height: auto;
+  object-fit: contain;
+}
+
+@media (width >= 1024px) {
+  /* hug the image height instead of stretching to the (taller) copy column, so
+     the card floats centered with navy around it like the source */
+  .carousel.feature.panel .carousel-slide > div:first-child {
+    align-self: center;
+  }
+}
+
 
 .section > [class*="-wrapper"] + .carousel-wrapper {
   margin-top: 4rem;
