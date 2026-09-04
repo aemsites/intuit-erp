@@ -298,6 +298,14 @@
   .blog-article .blog-rail .default-content-wrapper > .section + .section {
     margin-top: 20px;
   }
+
+  main.blog-article > .section:not(.blog-hero):not(.blog-toc-rail):not(.blog-rail):not(.blog-cards-container):not(.full-bleed) {
+    & > .default-content-wrapper picture > img {
+      max-width: 90%;
+      margin-top: 2.5rem;
+      margin-bottom: 2.5rem;
+    }
+  }
 }
 
 .blog-article .blog-rail .default-content-wrapper > .section:first-child {
