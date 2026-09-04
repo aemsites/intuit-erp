@@ -1,6 +1,5 @@
 import { loadFragment } from '../fragment/fragment.js';
 import { trackAs } from '../../scripts/tracking.js';
-import { onLazyPhaseComplete } from '../../scripts/load-phase.js';
 
 const DEFAULT_FORM_FRAGMENT = '/fragments/schedule-call';
 const DASHBOARD_LOTTIE_PATHS = ['/', '/index'];
@@ -79,7 +78,7 @@ function yieldToMain() {
 }
 
 function scheduleWhenIdle(callback) {
-  onLazyPhaseComplete(() => {
+  window.hlx.lazyPhaseComplete.then(() => {
     if (window.requestIdleCallback) {
       window.requestIdleCallback(callback);
     } else {

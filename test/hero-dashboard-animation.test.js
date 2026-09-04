@@ -5,7 +5,6 @@ import {
 vi.mock('../scripts/scripts.js', () => ({ decorateMain: vi.fn() }));
 
 const { enhanceDashboardAnimation } = await import('../blocks/hero/hero.js');
-const { markLazyPhaseComplete } = await import('../scripts/load-phase.js');
 
 class IntersectionObserverMock {
   static instances = [];
@@ -35,7 +34,7 @@ describe('hero — dashboard animation scheduling', () => {
     document.head.innerHTML = '';
     document.body.innerHTML = '';
     window.history.replaceState({}, '', '/');
-    window.hlx = { codeBasePath: '', lazyPhaseComplete: true };
+    window.hlx = { codeBasePath: '', lazyPhaseComplete: Promise.resolve() };
     IntersectionObserverMock.instances = [];
     idleCallbacks = [];
     isMobile = false;
@@ -90,6 +89,7 @@ describe('hero — dashboard animation scheduling', () => {
     expect(loadPlayer).not.toHaveBeenCalled();
 
     warmObserver.intersect();
+    await flushPromises();
     expect(idleCallbacks).toHaveLength(1);
     expect(window.requestIdleCallback).toHaveBeenNthCalledWith(1, expect.any(Function));
     expect(fetchAnimation).not.toHaveBeenCalled();
@@ -160,7 +160,10 @@ describe('hero — dashboard animation scheduling', () => {
   });
 
   it('does not queue lottie work until the lazy phase has completed', async () => {
-    window.hlx.lazyPhaseComplete = false;
+    let completeLazyPhase;
+    window.hlx.lazyPhaseComplete = new Promise((resolve) => {
+      completeLazyPhase = resolve;
+    });
     const fetchAnimation = vi.fn();
     const loadPlayer = vi.fn();
 
@@ -179,14 +182,15 @@ describe('hero — dashboard animation scheduling', () => {
     expect(fetchAnimation).not.toHaveBeenCalled();
     expect(loadPlayer).not.toHaveBeenCalled();
 
-    markLazyPhaseComplete();
+    completeLazyPhase();
+    await flushPromises();
 
     expect(window.requestIdleCallback).toHaveBeenCalledTimes(2);
     expect(fetchAnimation).not.toHaveBeenCalled();
     expect(loadPlayer).not.toHaveBeenCalled();
   });
 
-  it('uses a delayed fallback when idle callbacks are unavailable', () => {
+  it('uses a delayed fallback when idle callbacks are unavailable', async () => {
     vi.stubGlobal('requestIdleCallback', undefined);
     const setTimeoutSpy = vi.spyOn(window, 'setTimeout').mockImplementation(() => 1);
 
@@ -195,6 +199,7 @@ describe('hero — dashboard animation scheduling', () => {
     const warmObserver = IntersectionObserverMock.instances
       .find(({ options }) => options.rootMargin === '500px 0px');
     warmObserver.intersect();
+    await Promise.resolve();
 
     expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 3000);
   });
