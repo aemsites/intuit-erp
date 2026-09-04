@@ -343,6 +343,25 @@ function decorateSectionBackgrounds(main) {
 }
 
 /**
+ * Injects an authored eyebrow label as the first child of a section's
+ * default-content-wrapper, from the section metadata value in
+ * `section.dataset.eyebrowText`.
+ * @param {Element} main The main element
+ */
+function decorateSectionEyebrows(main) {
+  main.querySelectorAll('.section').forEach((section) => {
+    const { eyebrowText } = section.dataset;
+    if (!eyebrowText) return;
+    if (section.querySelector('.section-eyebrow')) return;
+    const eyebrow = document.createElement('h2');
+    eyebrow.className = 'section-eyebrow';
+    eyebrow.textContent = eyebrowText;
+    const wrapper = section.querySelector('.default-content-wrapper') || section;
+    wrapper.insertBefore(eyebrow, wrapper.firstChild);
+  });
+}
+
+/**
  * Decorates the main element.
  * @param {Element} main The main element
  */
@@ -418,6 +437,7 @@ export function decorateMain(main) {
   buildAutoBlocks(main);
   decorateSections(main);
   decorateSectionBackgrounds(main);
+  decorateSectionEyebrows(main);
   decorateBlocks(main);
   decorateButtons(main);
   decorateVideoLinks(main);
