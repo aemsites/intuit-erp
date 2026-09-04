@@ -105,7 +105,7 @@
   margin: 0;
   font-size: var(--body-font-size-s, 14px);
   line-height: 1.6;
-  color: var(--text-muted, #666);
+  color: var(--text);
 }
 
 /* multi-paragraph bios: space the stacked paragraphs, block stays flush */
