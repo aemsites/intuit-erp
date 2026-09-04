@@ -208,12 +208,27 @@ footer .footer,
    footer.js consume and remove it; the reserved header height keeps this CLS-free. */
 header > nav,
 footer > nav {
-  visibility: hidden;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 header .header[data-block-status="loaded"],
 footer .footer[data-block-status="loaded"] {
-  visibility: visible;
+  position: initial;
+  width: auto;
+  height: auto;
+  margin: 0;
+  overflow: initial;
+  clip-path: none;
+  white-space: initial;
+  border: 0;
 }
 
 h1,
