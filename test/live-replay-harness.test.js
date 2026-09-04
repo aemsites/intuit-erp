@@ -7,15 +7,20 @@ import {
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import {
+  canonicalReplayPath,
   createLineageRegistry,
   installReplayPageHook,
+  replayPathMatches,
   validateCdpEndpoint,
   validateQualification,
 } from '../scripts/diff/live-replay-harness.mjs';
 import {
-  activationEvidence, assertCanonicalScenarioPath, assertCleanReuseState, assertPreflight, assertRuntimeHashes, createRunJournal, createTargetGuard, deriveAllowlist, goldenScenario,
+  activationEvidence, assertCanonicalScenarioPath, assertCleanReuseState, assertPreflight, assertReplayLineageEvidence, assertRuntimeHashes, createRunJournal, createTargetGuard, deriveAllowlist, goldenScenario,
   browserPreflight, clickReplayTarget, executeSetupSteps, hashUrl, interactionSequence,
+  handleReplayNavigationRoute,
   launchArguments, portAvailable, purgeEvidence, qualificationLocator, qualificationLocatorCss,
+  requestBodyContainsReplayMarker,
+  resetUnsafeReplayTarget,
   selectDedicatedOriginPage, selectDedicatedPage, validateLineageQualification,
   waitForUniqueQualificationLocator,
   shouldAbortReplayNavigation,
@@ -33,7 +38,10 @@ const trackerEvent = (messageId, extra = {}) => ({
   anonymousId: 'raw-visitor-id',
   properties: {
     object: 'content',
+    action: 'interacted',
+    ui_object: 'button',
     ui_object_detail: 'Do you integrate with third-party apps?',
+    ui_action: 'clicked',
     page_cas_id: '/workforce-automation',
     url: 'https://stage.erp.intuit.com/workforce-automation?private=1#secret',
     url_clean: 'stage.erp.intuit.com/workforce-automation?private=1#secret',
@@ -63,25 +71,47 @@ const shapeOnly = {
   metadata: [],
 };
 
-function fakeScope({ transportPolicy = 'observe' } = {}) {
+function fakeScope({
+  transportPolicy = 'observe', capturedDispatch = false, deferredSerialization = false,
+  extraSerializedEvent = false, omitSerialization = false, prependUnmarkedStale = false,
+  serializedEventType = 'track',
+} = {}) {
   const sent = [];
   const documentListeners = {};
   const scopeListeners = {};
   const analytics = {
     _dispatch(event) { return Promise.resolve(event); },
   };
+  const dispatch = capturedDispatch
+    ? analytics._dispatch.bind(analytics)
+    : (...args) => analytics._dispatch(...args);
   const webAnalytics = {
     async track(payload) {
+      if (omitSerialization) return 'serialization-deferred-indefinitely';
       const event = trackerEvent(payload.messageId, payload.properties);
-      await analytics._dispatch(event);
+      event.type = serializedEventType;
+      await dispatch(event);
       const endpoint = 'https://eventbus.intuit.com/v2/segment/intuit-general-clickstream/b';
-      const body = JSON.stringify({ batch: [event] });
-      if (scope.__testTransport === 'beacon') scope.navigator.sendBeacon(endpoint, body);
-      else if (scope.__testTransport === 'xhr') {
-        const xhr = new scope.XMLHttpRequest();
-        xhr.open('POST', endpoint);
-        xhr.send(body);
-      } else await scope.fetch(endpoint, { method: 'POST', body });
+      const batch = [event];
+      if (prependUnmarkedStale) {
+        const staleProperties = { ...event.properties };
+        delete staleProperties.__adobe_migration_replay_invocation;
+        batch.unshift(trackerEvent('business-identical-stale', staleProperties));
+      }
+      if (extraSerializedEvent) {
+        batch.push(trackerEvent('same-task-duplicate', payload.properties));
+      }
+      const body = JSON.stringify({ batch });
+      const serialize = async () => {
+        if (scope.__testTransport === 'beacon') scope.navigator.sendBeacon(endpoint, body);
+        else if (scope.__testTransport === 'xhr') {
+          const xhr = new scope.XMLHttpRequest();
+          xhr.open('POST', endpoint);
+          xhr.send(body);
+        } else await scope.fetch(endpoint, { method: 'POST', body });
+      };
+      if (deferredSerialization) setTimeout(() => { void serialize(); }, 0);
+      else await serialize();
       return 'sent-to-segment';
     },
   };
@@ -139,6 +169,21 @@ function fakeScope({ transportPolicy = 'observe' } = {}) {
 }
 
 describe('live replay harness contracts', () => {
+  it('uses canonical trailing-slash URLs without changing reviewed scenario identity', () => {
+    expect(canonicalReplayPath('/')).toBe('/');
+    expect(canonicalReplayPath('/events')).toBe('/events/');
+    expect(canonicalReplayPath('/events/')).toBe('/events/');
+    expect(replayPathMatches('/events/', '/events')).toBe(true);
+    expect(replayPathMatches('/events/other/', '/events')).toBe(false);
+    expect(replayPathMatches('/events//', '/events')).toBe(false);
+    expect(() => canonicalReplayPath('events')).toThrow(/reviewed pathname/i);
+    expect(() => canonicalReplayPath('/events?source=test')).toThrow(/reviewed pathname/i);
+    expect(() => canonicalReplayPath('//evil.example/events')).toThrow(/reviewed pathname/i);
+    expect(() => canonicalReplayPath('/events/../admin')).toThrow(/reviewed pathname/i);
+    expect(() => canonicalReplayPath('/events\\admin')).toThrow(/reviewed pathname/i);
+    expect(() => canonicalReplayPath('/events//')).toThrow(/reviewed pathname/i);
+  });
+
   it('selects the qualification golden entry only through its explicit fixture reference', () => {
     const entry = { page: scenario.page, payloadFile: 'payloads/111.json', fullPayload: trackerEvent('golden') };
     expect(goldenScenario({ entries: [entry] }, {
@@ -187,7 +232,7 @@ describe('live replay harness contracts', () => {
   it('refuses browser preflight before any click when auth, consent, tracker, or origin is wrong', () => {
     const ready = {
       origin: 'https://stage.erp.intuit.com',
-      pathname: '/workforce-automation',
+      pathname: '/workforce-automation/',
       authenticated: true,
       consentState: 'resolved',
       utagReady: true,
@@ -195,9 +240,9 @@ describe('live replay harness contracts', () => {
       enqueueReady: true,
       trackableCount: 1,
     };
-    expect(() => assertPreflight(ready, ready.origin, ready.pathname)).not.toThrow();
-    expect(() => assertPreflight({ ...ready, consentState: 'unresolved', trackerReady: false }, ready.origin, ready.pathname)).toThrow(/consent, webAnalytics\.track/);
-    expect(() => assertPreflight({ ...ready, origin: 'https://erp.intuit.com' }, ready.origin, ready.pathname)).toThrow(/stage-origin/);
+    expect(() => assertPreflight(ready, ready.origin, '/workforce-automation')).not.toThrow();
+    expect(() => assertPreflight({ ...ready, consentState: 'unresolved', trackerReady: false }, ready.origin, '/workforce-automation')).toThrow(/consent, webAnalytics\.track/);
+    expect(() => assertPreflight({ ...ready, origin: 'https://erp.intuit.com' }, ready.origin, '/workforce-automation')).toThrow(/stage-origin/);
   });
 
   it('requires every load-bearing and same-origin runtime hash before a click', () => {
@@ -245,6 +290,64 @@ describe('live replay harness contracts', () => {
     expect(shouldAbortReplayNavigation({ isNavigationRequest: () => true, frame: () => 'main-frame' }, page)).toBe(true);
     expect(shouldAbortReplayNavigation({ isNavigationRequest: () => false, frame: () => 'main-frame' }, page)).toBe(false);
     expect(shouldAbortReplayNavigation({ isNavigationRequest: () => true, frame: () => 'iframe' }, page)).toBe(false);
+  });
+
+  it('falls allowed page requests through to the context-level marker guard', async () => {
+    const page = { mainFrame: () => 'main-frame' };
+    const route = {
+      request: () => ({ isNavigationRequest: () => false, frame: () => 'main-frame' }),
+      abort: vi.fn(),
+      fallback: vi.fn(),
+      continue: vi.fn(),
+    };
+    await handleReplayNavigationRoute(route, page);
+    expect(route.fallback).toHaveBeenCalledOnce();
+    expect(route.continue).not.toHaveBeenCalled();
+    expect(route.abort).not.toHaveBeenCalled();
+  });
+
+  it('rejects an ambiguous tracker invocation even when another event linked', () => {
+    const evidence = {
+      invocations: [
+        { scenarioId: scenario.scenarioId, status: 'ambiguous' },
+        { scenarioId: scenario.scenarioId, status: 'linked' },
+      ],
+      dispatches: [],
+      serialized: [{ scenarioId: scenario.scenarioId, status: 'linked' }],
+    };
+    expect(() => assertReplayLineageEvidence(evidence, {
+      ...scenario, expected: { invocationCount: 1 },
+    })).toThrow(/expected 1 tracker invocation.*got 2/i);
+  });
+
+  it('rejects ambiguity even when the tracker invocation count matches', () => {
+    expect(() => assertReplayLineageEvidence({
+      invocations: [{ scenarioId: scenario.scenarioId, status: 'ambiguous' }],
+      dispatches: [],
+      serialized: [{ scenarioId: scenario.scenarioId, status: 'linked' }],
+    }, { ...scenario, expected: { invocationCount: 1 } })).toThrow(/ambiguous invocation/i);
+  });
+
+  it('reloads an unsafe target under the browser marker guard before cleanup', async () => {
+    const page = { isClosed: () => false, reload: vi.fn().mockResolvedValue() };
+    await expect(resetUnsafeReplayTarget(page, { restored: false }, false)).resolves.toBe(true);
+    expect(page.reload).toHaveBeenCalledWith({ waitUntil: 'domcontentloaded', timeout: 15000 });
+    page.reload.mockClear();
+    await expect(resetUnsafeReplayTarget(page, null, false)).resolves.toBe(true);
+    expect(page.reload).toHaveBeenCalledOnce();
+    page.reload.mockClear();
+    await expect(resetUnsafeReplayTarget(page, { restored: true }, false)).resolves.toBe(false);
+    expect(page.reload).not.toHaveBeenCalled();
+  });
+
+  it('refuses to remove the marker guard when an unsafe target cannot be reset', async () => {
+    const page = {
+      isClosed: () => false,
+      reload: vi.fn().mockRejectedValue(new Error('reload failed')),
+      close: vi.fn().mockRejectedValue(new Error('close failed')),
+    };
+    await expect(resetUnsafeReplayTarget(page, null, false))
+      .rejects.toThrow(/could not reset unsafe replay target/i);
   });
 
   it('pre-cancels link clicks without rewriting href metadata', async () => {
@@ -295,7 +398,7 @@ describe('live replay harness contracts', () => {
   });
 
   it('requires exactly one bound stage target and continuously poisons target violations', () => {
-    const page = { url: () => 'https://stage.erp.intuit.com/workforce-automation' };
+    const page = { url: () => 'https://stage.erp.intuit.com/workforce-automation/' };
     const navigated = { url: () => 'https://stage.erp.intuit.com/' };
     expect(selectDedicatedPage([page], 'https://stage.erp.intuit.com', '/workforce-automation')).toBe(page);
     expect(selectDedicatedOriginPage([navigated], 'https://stage.erp.intuit.com')).toBe(navigated);
@@ -516,6 +619,20 @@ describe('live replay harness contracts', () => {
     expect(await portAvailable(9339, fakeServer('listening'))).toBe(true);
   });
 
+  it('detects a replay marker in browser-intercepted text and binary request bodies', () => {
+    const marker = '__adobe_migration_replay_invocation';
+    expect(requestBodyContainsReplayMarker({
+      postDataBuffer: () => Buffer.from(`{"${marker}":"one"}`),
+    })).toBe(true);
+    expect(requestBodyContainsReplayMarker({
+      postDataBuffer: () => null,
+      postData: () => `{"${marker}":"two"}`,
+    })).toBe(true);
+    expect(requestBodyContainsReplayMarker({
+      postDataBuffer: () => Buffer.from('{"event":"clean"}'),
+    })).toBe(false);
+  });
+
   it('keeps a resumable refusal journal across attempts', () => {
     const options = {
       origin: 'https://stage.erp.intuit.com',
@@ -696,7 +813,7 @@ describe('live replay harness contracts', () => {
   });
 
   it('keeps a pre-scenario transport unlinked when it arrives during the active window', async () => {
-    const { scope, dispatchClick } = fakeScope();
+    const { scope, dispatchClick } = fakeScope({ capturedDispatch: true });
     const hook = await installReplayPageHook({
       origin: 'https://stage.erp.intuit.com',
       transportPolicy: 'observe',
@@ -729,6 +846,30 @@ describe('live replay harness contracts', () => {
     await hook.teardown('test-complete');
   });
 
+  it('refuses multiple message IDs serialized by one captured-dispatch invocation', async () => {
+    const { scope, dispatchClick } = fakeScope({ capturedDispatch: true, extraSerializedEvent: true });
+    const hook = await installReplayPageHook({
+      origin: 'https://stage.erp.intuit.com',
+      transportPolicy: 'observe',
+      observeAuthorizationRef: 'customer-approved parity exercise 2026-08-29',
+      targetMarker: 'test-target',
+      allowlist,
+      shapeOnly,
+      leaseMs: 1000,
+      heartbeatMs: 100,
+    }, scope);
+    hook.activate(scenario);
+    await dispatchClick(() => scope.intuit.tracking.ecs.webAnalytics.track({
+      messageId: 'clicked-with-background', properties: trackerEvent('x').properties,
+    }));
+    const evidence = await hook.snapshot();
+    expect(evidence.dispatches).toHaveLength(0);
+    expect(evidence.serialized).toHaveLength(2);
+    expect(evidence.serialized.every(({ status, reason }) => status === 'ambiguous'
+      && reason === 'multiple-message-ids-per-invocation')).toBe(true);
+    await hook.teardown('test-complete');
+  });
+
   it('links only tracker invocations caused by the active click dispatch', async () => {
     const { scope, dispatchClick } = fakeScope();
     const hook = await installReplayPageHook({
@@ -750,11 +891,234 @@ describe('live replay harness contracts', () => {
       messageId: 'clicked-control', properties: trackerEvent('x').properties,
     }));
     const evidence = await hook.snapshot();
-    expect(evidence.serialized.map(({ status }) => status)).toEqual(['unlinked', 'linked']);
-    expect(evidence.serialized[1]).toMatchObject({
+    expect(evidence.serialized.map(({ status }) => status).sort()).toEqual(['linked', 'unlinked']);
+    expect(evidence.serialized.find(({ status }) => status === 'linked')).toMatchObject({
       scenarioId: scenario.scenarioId,
       invocationId: `${scenario.scenarioId}:1`,
     });
+    await hook.teardown('test-complete');
+  });
+
+  it('links the click-task serialization when the SDK captured dispatch before hook installation', async () => {
+    const { scope, sent, dispatchClick } = fakeScope({ capturedDispatch: true, deferredSerialization: true });
+    const hook = await installReplayPageHook({
+      origin: 'https://stage.erp.intuit.com',
+      transportPolicy: 'observe',
+      observeAuthorizationRef: 'customer-approved parity exercise 2026-08-29',
+      targetMarker: 'test-target',
+      allowlist,
+      shapeOnly,
+      leaseMs: 1000,
+      heartbeatMs: 100,
+    }, scope);
+    hook.activate(scenario);
+    await dispatchClick(() => scope.intuit.tracking.ecs.webAnalytics.track({
+      messageId: 'clicked-captured-dispatch', properties: trackerEvent('x').properties,
+    }));
+    await vi.waitFor(async () => expect((await hook.snapshot()).serialized).toHaveLength(1));
+    await scope.intuit.tracking.ecs.webAnalytics.track({
+      messageId: 'later-chat',
+      properties: { ...trackerEvent('x').properties, object: 'chat', action: 'viewed' },
+    });
+    await vi.waitFor(async () => expect((await hook.snapshot()).serialized).toHaveLength(2));
+    const evidence = await hook.snapshot();
+    expect(evidence.dispatches).toHaveLength(0);
+    expect(evidence.serialized.map(({ status }) => status)).toEqual(['linked', 'unlinked']);
+    expect(evidence.serialized[0]).toMatchObject({
+      scenarioId: scenario.scenarioId,
+      invocationId: `${scenario.scenarioId}:1`,
+      lineageSource: 'click-invocation-marker',
+    });
+    expect(sent.every(({ body }) => !body.includes('__adobe_migration_replay_invocation'))).toBe(true);
+    await hook.teardown('test-complete');
+  });
+
+  it('does not link a matching non-track envelope when dispatch was captured', async () => {
+    const { scope, dispatchClick } = fakeScope({
+      capturedDispatch: true, deferredSerialization: true, serializedEventType: 'page',
+    });
+    const hook = await installReplayPageHook({
+      origin: 'https://stage.erp.intuit.com',
+      transportPolicy: 'observe',
+      observeAuthorizationRef: 'customer-approved parity exercise 2026-08-29',
+      targetMarker: 'test-target',
+      allowlist,
+      shapeOnly,
+      leaseMs: 1000,
+      heartbeatMs: 100,
+    }, scope);
+    hook.activate(scenario);
+    await dispatchClick(() => scope.intuit.tracking.ecs.webAnalytics.track({
+      messageId: 'matching-page-event', properties: trackerEvent('x').properties,
+    }));
+    await vi.waitFor(async () => expect((await hook.snapshot()).serialized).toHaveLength(1));
+    expect((await hook.snapshot()).serialized[0]).toMatchObject({
+      status: 'ambiguous', reason: 'non-track-invocation-marker',
+    });
+    await hook.teardown('test-complete');
+  });
+
+  it('does not attribute an unmarked business-identical stale event to the active click', async () => {
+    const { scope, sent, dispatchClick } = fakeScope({
+      capturedDispatch: true, deferredSerialization: true, prependUnmarkedStale: true,
+    });
+    const hook = await installReplayPageHook({
+      origin: 'https://stage.erp.intuit.com',
+      transportPolicy: 'observe',
+      observeAuthorizationRef: 'customer-approved parity exercise 2026-08-29',
+      targetMarker: 'test-target',
+      allowlist,
+      shapeOnly,
+      leaseMs: 1000,
+      heartbeatMs: 100,
+    }, scope);
+    hook.activate(scenario);
+    await dispatchClick(() => scope.intuit.tracking.ecs.webAnalytics.track({
+      messageId: 'marked-click', properties: trackerEvent('x').properties,
+    }));
+    await vi.waitFor(async () => expect((await hook.snapshot()).serialized).toHaveLength(2));
+    const evidence = await hook.snapshot();
+    expect(evidence.serialized.map(({ status }) => status)).toEqual(['unlinked', 'linked']);
+    expect(evidence.serialized[1]).toMatchObject({
+      invocationId: `${scenario.scenarioId}:1`, lineageSource: 'click-invocation-marker',
+    });
+    expect(sent.every(({ body }) => !body.includes('__adobe_migration_replay_invocation'))).toBe(true);
+    await hook.teardown('test-complete');
+  });
+
+  it('preserves overlapping tracker calls while poisoning their lineage', async () => {
+    const { scope, sent, dispatchClick } = fakeScope({ capturedDispatch: true, deferredSerialization: true });
+    const hook = await installReplayPageHook({
+      origin: 'https://stage.erp.intuit.com',
+      transportPolicy: 'observe',
+      observeAuthorizationRef: 'customer-approved parity exercise 2026-08-29',
+      targetMarker: 'test-target',
+      allowlist,
+      shapeOnly,
+      leaseMs: 1000,
+      heartbeatMs: 100,
+    }, scope);
+    hook.activate(scenario);
+    await dispatchClick(() => scope.intuit.tracking.ecs.webAnalytics.track({
+      messageId: 'first-click', properties: trackerEvent('x').properties,
+    }));
+    await expect(dispatchClick(() => scope.intuit.tracking.ecs.webAnalytics.track({
+      messageId: 'second-click', properties: trackerEvent('x').properties,
+    }))).resolves.toBe('sent-to-segment');
+    await vi.waitFor(async () => expect((await hook.snapshot()).serialized).toHaveLength(2));
+    const evidence = await hook.snapshot();
+    expect(sent).toHaveLength(2);
+    expect(evidence.serialized.some(({ status }) => status === 'linked')).toBe(false);
+    expect(evidence.serialized.some(({ status }) => status === 'ambiguous')).toBe(true);
+    await hook.teardown('test-complete');
+  });
+
+  it('drains deferred marker serialization before restoring transport hooks', async () => {
+    const { scope, sent, dispatchClick } = fakeScope({ capturedDispatch: true, deferredSerialization: true });
+    const originalFetch = scope.fetch;
+    const hook = await installReplayPageHook({
+      origin: 'https://stage.erp.intuit.com',
+      transportPolicy: 'observe',
+      observeAuthorizationRef: 'customer-approved parity exercise 2026-08-29',
+      targetMarker: 'test-target',
+      allowlist,
+      shapeOnly,
+      leaseMs: 1000,
+      heartbeatMs: 100,
+    }, scope);
+    hook.activate(scenario);
+    await dispatchClick(() => scope.intuit.tracking.ecs.webAnalytics.track({
+      messageId: 'deferred-before-teardown', properties: trackerEvent('x').properties,
+    }));
+    await hook.teardown('test-complete');
+    expect(sent).toHaveLength(1);
+    expect(sent[0].body).not.toContain('__adobe_migration_replay_invocation');
+    expect(scope.fetch).toBe(originalFetch);
+    expect(hook.cleanupState()).toMatchObject({ installed: false, invocationsByMarker: 0 });
+  });
+
+  it('keeps a timed-out marker hook discoverable until the runner resets the target', async () => {
+    const { scope, dispatchClick } = fakeScope({ omitSerialization: true });
+    const originalFetch = scope.fetch;
+    const hook = await installReplayPageHook({
+      origin: 'https://stage.erp.intuit.com',
+      transportPolicy: 'observe',
+      observeAuthorizationRef: 'customer-approved parity exercise 2026-08-29',
+      targetMarker: 'test-target',
+      allowlist,
+      shapeOnly,
+      leaseMs: 1000,
+      heartbeatMs: 100,
+      markerDrainTimeoutMs: 5,
+    }, scope);
+    hook.activate(scenario);
+    await dispatchClick(() => scope.intuit.tracking.ecs.webAnalytics.track({
+      messageId: 'never-serialized', properties: trackerEvent('x').properties,
+    }));
+    const cleanup = await hook.teardown('test-complete');
+    expect(cleanup).toMatchObject({ restored: false, reason: 'test-complete:marker-drain-timeout' });
+    expect(scope.__adobeMigrationReplay).toBe(hook);
+    expect(scope.fetch).not.toBe(originalFetch);
+    expect(hook.cleanupState()).toMatchObject({ installed: true, invocationsByMarker: 1 });
+  });
+
+  it.each(['fetch-request', 'fetch-blob', 'beacon-blob', 'xhr-blob'])(
+    'refuses an uninspectable %s body while a marker is outstanding',
+    async (transport) => {
+      const { scope, sent, dispatchClick } = fakeScope({ capturedDispatch: true, deferredSerialization: true });
+      const hook = await installReplayPageHook({
+        origin: 'https://stage.erp.intuit.com',
+        transportPolicy: 'observe',
+        observeAuthorizationRef: 'customer-approved parity exercise 2026-08-29',
+        targetMarker: 'test-target',
+        allowlist,
+        shapeOnly,
+        leaseMs: 1000,
+        heartbeatMs: 100,
+      }, scope);
+      hook.activate(scenario);
+      await dispatchClick(() => scope.intuit.tracking.ecs.webAnalytics.track({
+        messageId: `deferred-${transport}`, properties: trackerEvent('x').properties,
+      }));
+      const endpoint = 'https://eventbus.intuit.com/v2/segment/intuit-general-clickstream/b';
+      if (transport === 'fetch-request') {
+        const request = new Request(endpoint, { method: 'POST', body: new Blob(['opaque']) });
+        await expect(scope.fetch(request)).rejects.toThrow(/uninspectable eventbus body/i);
+      } else if (transport === 'fetch-blob') {
+        await expect(scope.fetch(endpoint, { method: 'POST', body: new Blob(['opaque']) }))
+          .rejects.toThrow(/uninspectable eventbus body/i);
+      } else if (transport === 'beacon-blob') {
+        expect(() => scope.navigator.sendBeacon(endpoint, new Blob(['opaque'])))
+          .toThrow(/uninspectable eventbus body/i);
+      } else {
+        const xhr = new scope.XMLHttpRequest();
+        xhr.open('POST', endpoint);
+        expect(() => xhr.send(new Blob(['opaque']))).toThrow(/uninspectable eventbus body/i);
+      }
+      await vi.waitFor(() => expect(sent).toHaveLength(1));
+      expect(sent[0].body).not.toContain('__adobe_migration_replay_invocation');
+      expect((await hook.snapshot()).serialized.some(({ status }) => status === 'linked')).toBe(false);
+      await hook.teardown('test-complete');
+    },
+  );
+
+  it('refuses a reserved marker left in an unrecognized JSON location', async () => {
+    const { scope, sent } = fakeScope();
+    const hook = await installReplayPageHook({
+      origin: 'https://stage.erp.intuit.com',
+      transportPolicy: 'observe',
+      observeAuthorizationRef: 'customer-approved parity exercise 2026-08-29',
+      targetMarker: 'test-target',
+      allowlist,
+      shapeOnly,
+      leaseMs: 1000,
+      heartbeatMs: 100,
+    }, scope);
+    await expect(scope.fetch('https://eventbus.intuit.com/v2/segment/intuit-general-clickstream/b', {
+      method: 'POST',
+      body: JSON.stringify({ metadata: { __adobe_migration_replay_invocation: 'unexpected' } }),
+    })).rejects.toThrow(/retained a reserved invocation marker/i);
+    expect(sent).toHaveLength(0);
     await hook.teardown('test-complete');
   });
 
@@ -831,6 +1195,7 @@ describe('live replay harness contracts', () => {
     const evidence = await hook.snapshot();
     expect(evidence.serialized[0].status).toBe('linked');
     expect(sent.some((entry) => entry.transport === transport)).toBe(true);
+    expect(sent.every(({ body }) => !body.includes('__adobe_migration_replay_invocation'))).toBe(true);
     await hook.teardown('test-complete');
     expect(scope.navigator.sendBeacon).toBe(originalBeacon);
     expect(scope.XMLHttpRequest.prototype.open).toBe(originalOpen);

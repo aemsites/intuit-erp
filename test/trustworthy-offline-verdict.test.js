@@ -153,7 +153,12 @@ function authenticatedCapture() {
     profileId: replay.provenance.global.browser.profileId,
     chromeVersion: replay.provenance.global.browser.version,
     harnessVersion: replay.provenance.global.harness.version,
-    lineagePolicyVersion: 'click-message-id-v2',
+    lineagePolicyVersion: 'click-message-id-v3',
+    transportMarkerGuard: {
+      verified: true,
+      markerKey: '__adobe_migration_replay_invocation',
+      detected: false,
+    },
     origin: replay.provenance.global.origin,
     consentState: 'resolved',
     authorizationRef: 'customer-approved Adobe Migration Test',
@@ -735,6 +740,20 @@ describe('trustworthy offline verdict', () => {
     expect(explicit.verdict).toBe('PASS');
   });
 
+  it('accepts one canonical trailing slash for document and page_cas_id path bindings', () => {
+    const result = evaluateOfflineVerdict({
+      golden: { entries: [goldenEntry('hero-primary')] },
+      captures: [capture({
+        page: pageProvenance({
+          document: { responseUrl: 'https://stage.erp.intuit.com/foo/', contentHash: sha256('1') },
+        }),
+        events: [event('hero-primary', { pageCasId: '/foo/' })],
+      })],
+    });
+    expect(result.refusals.map(({ code }) => code)).not.toContain('DOCUMENT_URL_MISMATCH');
+    expect(result.gates.pageCasId).toMatchObject({ pass: true, checked: 1, failed: 0 });
+  });
+
   it('rejects non-canonical document and same-origin script URLs', () => {
     const result = evaluateOfflineVerdict({
       golden: { entries: [goldenEntry('hero-primary')] },
@@ -889,6 +908,15 @@ describe('trustworthy offline verdict', () => {
     expect(result.refusals).toEqual([]);
   });
 
+  it('refuses an authenticated replay from the superseded lineage policy', () => {
+    const replay = authenticatedCapture();
+    replay.qualification.lineagePolicyVersion = 'click-message-id-v2';
+    const result = evaluateOfflineVerdict({
+      golden: { entries: [goldenEntry('hero-primary')] }, captures: [replay],
+    });
+    expect(result.refusals).toContainEqual(expect.objectContaining({ code: 'INVALID_QUALIFICATION' }));
+  });
+
   it('refuses changed source, exact runtime URL, cleanup lease, or independent target bindings', () => {
     const mutations = [
       (replay) => { replay.qualification.sourceHashes['live-replay-harness.mjs'] = sha256('9'); },
@@ -900,6 +928,7 @@ describe('trustworthy offline verdict', () => {
           .filter(({ url }) => !url.endsWith('/blocks/faq/faq.js'));
       },
       (replay) => { replay.qualification.disconnectCleanup.leaseMs = 10001; },
+      (replay) => { replay.qualification.transportMarkerGuard.detected = true; },
       (replay) => { replay.provenance.global.browser.targetId = 'replacement-target'; },
     ];
     mutations.forEach((mutate) => {
