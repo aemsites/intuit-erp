@@ -654,16 +654,22 @@ export function stampInteraction(e) {
  */
 export function isTrackingInspectorPreview(location = {}) {
   const host = location.hostname || '';
+  const params = new URLSearchParams(location.search || '');
+  const canvasPreview = /\.preview\.da\.live$/.test(host)
+    && params.get('quick-edit') === 'on'
+    && params.get('controller') === 'parent';
   const previewHost = /\.(aem|hlx)\.page$/.test(host)
     || /\.preview\.da\.live$/.test(host)
     || ['localhost', '127.0.0.1'].includes(host);
-  return previewHost && new URLSearchParams(location.search || '').get('tracking-editor') === '1';
+  return previewHost && (params.get('tracking-editor') === '1' || canvasPreview);
 }
 
 /** Load editor-only messaging without adding it to the normal tracking module path. */
 export function loadTrackingInspectorBridge(
   location = {},
-  loader = () => import('../tools/plugins/tracking/bridge.js'),
+  // Query-versioned import keeps Canvas preview and extension on the same release.
+  // eslint-disable-next-line import/no-unresolved
+  loader = () => import('../tools/plugins/tracking/bridge.js?v=20260904.1'),
 ) {
   return isTrackingInspectorPreview(location) ? loader() : null;
 }

@@ -4,29 +4,37 @@ import {
 import {
   TRACKING_INSPECTOR_REQUEST,
   TRACKING_INSPECTOR_RESPONSE,
+  canvasPreviewWindows,
   createTrackingInspectorClient,
   installTrackingInspectorBridge,
   isTrustedTrackingEditorOrigin,
-  trackingPreviewUrl,
+  trackingPreviewOrigin,
 } from '../tools/plugins/tracking/bridge.js';
 
 describe('tracking inspector cross-origin bridge', () => {
-  it('loads the rendered document from the matching authenticated DA preview origin', () => {
-    expect(trackingPreviewUrl('/accounting/multi-entity/index', {
+  it('targets the matching authenticated DA preview origin', () => {
+    expect(trackingPreviewOrigin({
       context: { org: 'aemsites', repo: 'intuit-erp' },
       ref: 'main',
       location: { hostname: 'main--intuit-erp--aemsites.aem.live', origin: 'https://main--intuit-erp--aemsites.aem.live' },
-    })).toBe(
-      'https://main--intuit-erp--aemsites.preview.da.live/accounting/multi-entity/index?tracking-editor=1&martech=off',
-    );
+    })).toBe('https://main--intuit-erp--aemsites.preview.da.live');
   });
 
   it('keeps local development on the same origin', () => {
-    expect(trackingPreviewUrl('/accounting', {
+    expect(trackingPreviewOrigin({
       context: { org: 'aemsites', repo: 'intuit-erp' },
       ref: 'main',
       location: { hostname: 'localhost', origin: 'http://localhost:3000' },
-    })).toBe('http://localhost:3000/accounting?tracking-editor=1&martech=off');
+    })).toBe('http://localhost:3000');
+  });
+
+  it('discovers the existing Canvas preview without reading its DOM', () => {
+    const preview = { postMessage: vi.fn() };
+    const extension = {};
+    const other = { postMessage: vi.fn() };
+    extension.parent = { frames: [preview, extension, other], length: 3 };
+
+    expect(canvasPreviewWindows(extension)).toEqual([preview, other]);
   });
 
   it('trusts only the matching project and ref editor origin', () => {
@@ -89,14 +97,13 @@ describe('tracking inspector cross-origin bridge', () => {
 
   it('collects inventory through postMessage without reading the frame DOM', async () => {
     const listeners = new Map();
-    const contentWindow = { postMessage: vi.fn() };
-    const frame = { contentWindow };
+    const previewWindow = { postMessage: vi.fn() };
     const hostWindow = {
       addEventListener: vi.fn((type, listener) => listeners.set(type, listener)),
       removeEventListener: vi.fn(),
     };
     const client = createTrackingInspectorClient({
-      frame,
+      getTargets: () => [previewWindow],
       hostWindow,
       targetOrigin: 'https://main--intuit-erp--aemsites.preview.da.live',
       retryMs: 1000,
@@ -104,9 +111,9 @@ describe('tracking inspector cross-origin bridge', () => {
     });
 
     const result = client.collect([{ path: '*', id: 'footer:company' }]);
-    const request = contentWindow.postMessage.mock.calls[0][0];
+    const request = previewWindow.postMessage.mock.calls[0][0];
     listeners.get('message')({
-      source: contentWindow,
+      source: previewWindow,
       origin: 'https://main--intuit-erp--aemsites.preview.da.live',
       data: {
         type: TRACKING_INSPECTOR_RESPONSE,
@@ -116,7 +123,7 @@ describe('tracking inspector cross-origin bridge', () => {
     });
 
     await expect(result).resolves.toEqual([{ id: 'footer:company' }]);
-    expect(contentWindow.postMessage).toHaveBeenCalledWith(expect.objectContaining({
+    expect(previewWindow.postMessage).toHaveBeenCalledWith(expect.objectContaining({
       type: TRACKING_INSPECTOR_REQUEST,
       rows: [{ path: '*', id: 'footer:company' }],
     }), 'https://main--intuit-erp--aemsites.preview.da.live');

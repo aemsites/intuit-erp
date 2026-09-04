@@ -5,8 +5,7 @@ sparse overrides in `/tracking.json`.
 
 ## What it does
 
-- Opens the current DA document automatically, with an optional `path` query override for direct-app
-  use.
+- Opens the current DA document automatically.
 - Inventories block-scoped, loose-page, and pure-derived tracking targets from the rendered page.
 - Keeps the rendered document in the DA canvas and shows only tracking properties in the extension
   rail.
@@ -18,9 +17,10 @@ sparse overrides in `/tracking.json`.
   preconditions so an interleaved whole-sheet write cannot be overwritten.
 - Saves the source sheet, previews it through AEM, and publishes only after an explicit confirmation.
 
-The extension gathers its inventory from a hidden, authenticated DA preview of the same ref. The
-rendered inspector is query-gated and available only on AEM preview, DA preview, and localhost
-origins. It never enables martech while inspecting a page and never synthesizes an interaction.
+The extension gathers its inventory from the rendered preview already owned by DA Canvas. A narrow,
+same-project `postMessage` bridge lets the rail ask that sibling preview for resolved properties
+without embedding a second copy of the page. The bridge loads only in DA quick-edit previews (or
+when explicitly enabled for local tests); it never enables martech or synthesizes an interaction.
 
 ## DA registration
 
@@ -28,26 +28,17 @@ Register the plugin in the site's `library` config sheet:
 
 | title | path | format | icon | experience | ref |
 | --- | --- | --- | --- | --- | --- |
-| Tracking Inspector | `/tools/plugins/tracking/index.html` |  | `/tools/plugins/tracking/tracking.svg` |  |  |
+| Tracking Inspector | `/tools/plugins/tracking/index.html?v=20260904.1` |  | `/tools/plugins/tracking/tracking.svg` |  |  |
 
 Use the `ref` column only while reviewing a feature branch. Leave it blank in the production
 registration so DA loads the plugin from `main`.
 
-## Direct app
+The version query is the plugin release identifier. Bump it in both this row and the plugin's local
+asset imports whenever a release changes browser code; this prevents Canvas from reusing a mixed or
+stale module graph.
 
-The registered plugin is the normal entry point. For branch review, open the app directly with the
-AEM-safe branch ref and a previewed content path:
-
-```text
-https://da.live/app/aemsites/intuit-erp/tools/plugins/tracking/index?ref={feature-ref}&path=/accounting/multi-entity
-```
-
-For local development, start AEM CLI and use `ref=local`. DA loads the plugin and rendered page from
-localhost; source delivery is intentionally previewed and published against the `main` AEM ref:
-
-```text
-https://da.live/app/aemsites/intuit-erp/tools/plugins/tracking/index?ref=local&path=/accounting/multi-entity
-```
+Open Tracking Inspector from the extension selector in DA Canvas. The standalone `/app/` URL has no
+rendered Canvas sibling and is therefore not an end-to-end test for this extension.
 
 ## Editing and delivery lifecycle
 
@@ -67,7 +58,7 @@ so previous sheet revisions remain available in document history.
 Run the focused editor and runtime tests:
 
 ```bash
-npx vitest run test/tracking-editor-api.test.js test/tracking-editor-delivery.test.js test/tracking-editor-model.test.js test/tracking-inspector.test.js test/tracking-inspector-bridge.test.js
+npx vitest run test/tracking-editor-assets.test.js test/tracking-editor-api.test.js test/tracking-editor-delivery.test.js test/tracking-editor-model.test.js test/tracking-inspector.test.js test/tracking-inspector-bridge.test.js
 ```
 
 Before release, also run `npm run lint` and exercise an authenticated add → edit → remove lifecycle

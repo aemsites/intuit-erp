@@ -32,6 +32,10 @@ describe('tracking inspector', () => {
       search: '?tracking-editor=1&martech=off',
     })).toBe(true);
     expect(isTrackingInspectorPreview({
+      hostname: 'main--intuit-erp--aemsites.preview.da.live',
+      search: '?quick-edit=on&controller=parent',
+    })).toBe(true);
+    expect(isTrackingInspectorPreview({
       hostname: 'codex-tracking-editor-poc--intuit-erp--aemsites.preview.da.live',
       search: '?martech=off',
     })).toBe(false);
@@ -52,7 +56,7 @@ describe('tracking inspector', () => {
 
     await expect(loadTrackingInspectorBridge({
       hostname: 'main--intuit-erp--aemsites.preview.da.live',
-      search: '?tracking-editor=1&martech=off',
+      search: '?quick-edit=on&controller=parent',
     }, loader)).resolves.toBeDefined();
     expect(loader).toHaveBeenCalledTimes(1);
   });

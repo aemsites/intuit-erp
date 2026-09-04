@@ -59,7 +59,7 @@ export function installTrackingInspectorBridge({ frameWindow = window, collect }
   return () => frameWindow.removeEventListener('message', receive);
 }
 
-function previewOrigin({ context = {}, ref = 'main', location = window.location } = {}) {
+export function trackingPreviewOrigin({ context = {}, ref = 'main', location = window.location } = {}) {
   if (['localhost', '127.0.0.1'].includes(location.hostname)) return location.origin;
   if (/\.(aem|hlx)\.page$/.test(location.hostname)
     || /\.preview\.da\.live$/.test(location.hostname)) return location.origin;
@@ -70,19 +70,23 @@ function previewOrigin({ context = {}, ref = 'main', location = window.location 
   return `https://${ref}--${repo}--${org}.preview.da.live`;
 }
 
-/** Build the authenticated rendered-page URL used only as an inventory source. */
-export function trackingPreviewUrl(path, options = {}) {
-  const url = new URL(path, previewOrigin(options));
-  url.searchParams.set('tracking-editor', '1');
-  url.searchParams.set('martech', 'off');
-  return url.href;
+/** Return the sibling frames Canvas already owns, without reading their DOM. */
+export function canvasPreviewWindows(hostWindow = window) {
+  try {
+    if (!hostWindow.parent || hostWindow.parent === hostWindow) return [];
+    return Array.from({ length: hostWindow.parent.length }, (_, index) => (
+      hostWindow.parent.frames[index]
+    )).filter((candidate) => candidate && candidate !== hostWindow);
+  } catch {
+    return [];
+  }
 }
 
 /** Create the request side of the rendered-page inventory bridge. */
 export function createTrackingInspectorClient({
-  frame,
   targetOrigin,
   hostWindow = window,
+  getTargets = () => canvasPreviewWindows(hostWindow),
   retryMs = 250,
   timeoutMs = 20000,
 }) {
@@ -94,14 +98,14 @@ export function createTrackingInspectorClient({
         let retry;
         let timeout;
         let cleanup = () => {};
-        const send = () => frame.contentWindow?.postMessage({
+        const send = () => getTargets().forEach((target) => target.postMessage({
           type: TRACKING_INSPECTOR_REQUEST,
           requestId,
           rows,
-        }, targetOrigin);
+        }, targetOrigin));
         const receive = (event) => {
           const { data } = event;
-          if (event.source !== frame.contentWindow || event.origin !== targetOrigin
+          if (!getTargets().includes(event.source) || event.origin !== targetOrigin
             || data?.type !== TRACKING_INSPECTOR_RESPONSE || data.requestId !== requestId) return;
           cleanup();
           if (data.error) reject(new Error(data.error));

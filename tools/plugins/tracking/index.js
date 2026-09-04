@@ -1,18 +1,18 @@
-/* eslint-disable no-use-before-define */
+/* eslint-disable no-use-before-define, import/no-unresolved */
 // The preview/list/editor handlers intentionally call each other; keeping each
 // section cohesive is clearer than ordering the file around handler references.
-// eslint-disable-next-line import/no-unresolved
 import DA_SDK from 'https://da.live/nx/utils/sdk.js';
 import {
+  canvasPreviewWindows,
   createTrackingInspectorClient,
-  trackingPreviewUrl,
-} from './bridge.js';
+  trackingPreviewOrigin,
+} from './bridge.js?v=20260904.1';
 import {
   TRACKING_SOURCE_PATH,
   createTrackingApi,
   resolveTrackingRef,
-} from './api.js';
-import { publishReviewedSheet, saveAndPreviewOverride } from './delivery.js';
+} from './api.js?v=20260904.1';
+import { publishReviewedSheet, saveAndPreviewOverride } from './delivery.js?v=20260904.1';
 import {
   OVERRIDE_FIELDS,
   applyOverride,
@@ -20,7 +20,7 @@ import {
   findOverride,
   resolveEditorPath,
   validateOverride,
-} from './model.js';
+} from './model.js?v=20260904.1';
 
 const FIELD_LABELS = {
   object: 'Object',
@@ -58,7 +58,6 @@ const state = {
   inventory: [],
   selected: null,
   scope: '/',
-  frame: null,
   inspector: null,
   previewGeneration: 0,
 };
@@ -132,24 +131,17 @@ async function loadPreview(path) {
   state.path = cleanPagePath(path);
   state.selected = null;
   setStatus(`Loading tracking properties for ${state.path}…`, 'pending');
-  const url = trackingPreviewUrl(state.path, {
+  const targetOrigin = trackingPreviewOrigin({
     context: state.context,
     ref: state.ref,
     location: window.location,
   });
-  const targetOrigin = new URL(url).origin;
-  state.frame.src = url;
-  await new Promise((resolve, reject) => {
-    const loaded = () => { clearTimeout(timer); resolve(); };
-    const timer = setTimeout(() => {
-      state.frame.removeEventListener('load', loaded);
-      reject(new Error('Preview load timed out.'));
-    }, 30000);
-    state.frame.addEventListener('load', loaded, { once: true });
-  });
-  if (generation !== state.previewGeneration) return;
-  state.inspector = createTrackingInspectorClient({ frame: state.frame, targetOrigin });
+  if (!canvasPreviewWindows().length) {
+    throw new Error('Open Tracking Inspector from the DA Canvas to inspect the rendered page.');
+  }
+  state.inspector = createTrackingInspectorClient({ targetOrigin });
   await collectInventory();
+  if (generation !== state.previewGeneration) return;
   setStatus(
     `Found ${state.inventory.length} trackable targets. Choose one to inspect its properties.`,
     'ok',
@@ -499,15 +491,6 @@ function renderShell() {
     attrs: { role: 'status', 'aria-live': 'polite' },
   });
 
-  state.frame = el('iframe', {
-    attrs: {
-      title: 'Tracking inventory source',
-      hidden: '',
-      'aria-hidden': 'true',
-      tabindex: '-1',
-      sandbox: 'allow-scripts allow-same-origin',
-    },
-  });
   searchInput = el('input', {
     class: 'tracking-search',
     attrs: { type: 'search', placeholder: 'Search targets…', 'aria-label': 'Search tracking targets' },
@@ -543,11 +526,7 @@ function renderShell() {
       text: `Edits ${TRACKING_SOURCE_PATH}. Saving updates preview; publishing requires confirmation.`,
     }),
   ]);
-  const workspace = el('div', { class: 'tracking-workspace' }, [
-    rail,
-    state.frame,
-  ]);
-  app.append(workspace);
+  app.append(rail);
 }
 
 async function loadInitialSheet() {
