@@ -237,7 +237,7 @@
 .blog-article .blog-toc-list a {
   display: block;
   padding: 8px 20px 8px 24px;
-  color: var(--text-muted);
+  color: var(--text);
   font-size: var(--body-font-size-xxs);
   line-height: 16px;
   font-weight: 600;
@@ -650,7 +650,9 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
   }
 }
 
-.blog-article > .section > .default-content-wrapper :is(ul, ol) {
+/* body-content lists only — exclude the rails so this article styling doesn't
+   leak into the TOC's <ol> (its own .blog-toc-list rules are less specific) */
+.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail) > .default-content-wrapper :is(ul, ol) {
   margin: 0 0 20px;
   padding-left: 40px;
   font-size: 20px;
@@ -658,7 +660,7 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
   color: #000;
 }
 
-.blog-article > .section > .default-content-wrapper li { margin: 0 0 8px; }
+.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail) > .default-content-wrapper li { margin: 0 0 8px; }
 
 .blog-article > .section > .default-content-wrapper :is(h2, h3),
 .case-study > .section > .default-content-wrapper :is(h2, h3) {
