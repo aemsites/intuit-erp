@@ -629,10 +629,11 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
 
 /* Standalone in-post images sit in their own paragraph; give them vertical
    breathing room so they don't hug the surrounding text, quotes, or headings.
+   Matches prod's generous space above (80px) with a smaller gap below (40px).
    Survives the trailing-margin reset so an image that ends a section keeps its
    gap to the following content. */
 .blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail) > .default-content-wrapper > p:has(picture) {
-  margin: 40px 0;
+  margin: 80px 0 40px;
 }
 
 @media (width < 1024px) {
