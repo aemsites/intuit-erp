@@ -4,11 +4,9 @@ import {
 import {
   TRACKING_INSPECTOR_REQUEST,
   TRACKING_INSPECTOR_RESPONSE,
+  createTrackingInspectorClient,
   installTrackingInspectorBridge,
   isTrustedTrackingEditorOrigin,
-} from '../scripts/tracking-inspector-bridge.js';
-import {
-  createTrackingInspectorClient,
   trackingPreviewUrl,
 } from '../tools/plugins/tracking/bridge.js';
 

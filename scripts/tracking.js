@@ -5,7 +5,6 @@
  */
 
 import { isVideoLink } from '../blocks/video/video-info.js';
-import { installTrackingInspectorBridge } from './tracking-inspector-bridge.js';
 
 export const PREFIX = 'tracking-';
 
@@ -661,6 +660,14 @@ export function isTrackingInspectorPreview(location = {}) {
   return previewHost && new URLSearchParams(location.search || '').get('tracking-editor') === '1';
 }
 
+/** Load editor-only messaging without adding it to the normal tracking module path. */
+export function loadTrackingInspectorBridge(
+  location = {},
+  loader = () => import('../tools/plugins/tracking/bridge.js'),
+) {
+  return isTrackingInspectorPreview(location) ? loader() : null;
+}
+
 function exposeTrackingInspector() {
   if (typeof window === 'undefined' || !isTrackingInspectorPreview(window.location)) return;
   window.hlx = window.hlx || {};
@@ -668,9 +675,11 @@ function exposeTrackingInspector() {
     collect: (rows = []) => collectTrackingInventory(document, rows, window.location),
     describe: (target, rows = []) => describeTrackingTarget(target, rows, window.location),
   };
-  installTrackingInspectorBridge({
-    collect: window.hlx.trackingInspector.collect,
-  });
+  loadTrackingInspectorBridge(window.location)
+    .then(({ installTrackingInspectorBridge }) => installTrackingInspectorBridge({
+      collect: window.hlx.trackingInspector.collect,
+    }))
+    .catch(() => {});
 }
 
 /** Initialize trails, sheet caching, and capture handlers. */

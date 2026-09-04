@@ -1,11 +1,12 @@
 import {
-  describe, it, expect, beforeEach,
+  describe, it, expect, beforeEach, vi,
 } from 'vitest';
 import {
   collectTrackingInventory,
   describeTrackingTarget,
   indexRows,
   isTrackingInspectorPreview,
+  loadTrackingInspectorBridge,
   trackAs,
 } from '../scripts/tracking.js';
 
@@ -38,6 +39,22 @@ describe('tracking inspector', () => {
       hostname: 'erp.intuit.com',
       search: '?tracking-editor=1',
     })).toBe(false);
+  });
+
+  it('loads the editor bridge only for an explicitly requested inspector preview', async () => {
+    const loader = vi.fn().mockResolvedValue({ installTrackingInspectorBridge: vi.fn() });
+
+    expect(loadTrackingInspectorBridge({
+      hostname: 'erp.intuit.com',
+      search: '',
+    }, loader)).toBeNull();
+    expect(loader).not.toHaveBeenCalled();
+
+    await expect(loadTrackingInspectorBridge({
+      hostname: 'main--intuit-erp--aemsites.preview.da.live',
+      search: '?tracking-editor=1&martech=off',
+    }, loader)).resolves.toBeDefined();
+    expect(loader).toHaveBeenCalledTimes(1);
   });
 
   it('describes automatic, override, and effective values without stamping the CTA', () => {
