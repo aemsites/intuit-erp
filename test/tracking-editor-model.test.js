@@ -4,6 +4,7 @@ import {
   applyOverride,
   comparisonRows,
   mergeOverride,
+  resolveEditorPath,
   validateOverride,
 } from '../tools/plugins/tracking/model.js';
 
@@ -17,6 +18,17 @@ const SHEET = {
 };
 
 describe('tracking editor sheet model', () => {
+  it('opens the current DA document by default while preserving direct-app path overrides', () => {
+    expect(resolveEditorPath({ contextPath: '/accounting/multi-entity' }))
+      .toBe('/accounting/multi-entity');
+    expect(resolveEditorPath({
+      contextPath: '/accounting/multi-entity',
+      search: '?path=/pricing/enterprise&ref=main',
+    })).toBe('/pricing/enterprise');
+    expect(resolveEditorPath({ contextPath: '/accounting/multi-entity.html?foo=bar' }))
+      .toBe('/accounting/multi-entity');
+  });
+
   it('uses POST when replacing an existing DA Source JSON file', () => {
     expect(DA_SOURCE_WRITE_METHOD).toBe('POST');
   });

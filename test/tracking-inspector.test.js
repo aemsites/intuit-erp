@@ -21,9 +21,13 @@ describe('tracking inspector', () => {
     trackAs('cta_block', document.querySelector('.cta'), { key: 'cta' });
   });
 
-  it('allows an explicitly requested inspector on DA branch-preview origins', () => {
+  it('allows an explicitly requested inspector on DA project-preview origins', () => {
     expect(isTrackingInspectorPreview({
       hostname: 'codex-tracking-editor-poc--intuit-erp--aemsites.preview.da.live',
+      search: '?tracking-editor=1&martech=off',
+    })).toBe(true);
+    expect(isTrackingInspectorPreview({
+      hostname: 'main--intuit-erp--aemsites.preview.da.live',
       search: '?tracking-editor=1&martech=off',
     })).toBe(true);
     expect(isTrackingInspectorPreview({

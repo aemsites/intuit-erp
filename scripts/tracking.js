@@ -583,7 +583,7 @@ function inspectionValues(cta, attrs) {
 
 /**
  * Describe one rendered tracking target without stamping the DOM or firing an interaction.
- * Used by the branch-only DA tracking editor and by tests that verify its view stays aligned
+ * Used by the DA tracking editor and by tests that verify its view stays aligned
  * with the live runtime's derive -> component -> sheet precedence.
  * @param {EventTarget} target element or descendant to inspect
  * @param {Map|Array|object} sheet indexed map, row array, or DA sheet document
@@ -647,8 +647,8 @@ export function stampInteraction(e) {
 }
 
 /**
- * Whether the branch-only inspector may be exposed for this location.
- * DA apps render branch code on preview.da.live rather than aem.page.
+ * Whether the explicitly requested inspector may be exposed for this location.
+ * DA plugins render project code on preview.da.live rather than aem.page.
  * @param {{hostname?: string, search?: string}} location browser location
  * @returns {boolean}
  */

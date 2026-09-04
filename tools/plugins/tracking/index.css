@@ -78,6 +78,7 @@ button { cursor: pointer; }
 
 .tracking-load,
 .tracking-save,
+.tracking-publish,
 .tracking-reset {
   padding: 8px 12px;
   border: 1px solid var(--tracking-border);
@@ -91,8 +92,16 @@ button { cursor: pointer; }
   border-color: var(--tracking-accent);
 }
 
+.tracking-publish {
+  color: #fff;
+  background: var(--tracking-ok);
+  border-color: var(--tracking-ok);
+}
+
 .tracking-load:disabled,
-.tracking-save:disabled { cursor: progress; opacity: .6; }
+.tracking-save:disabled,
+.tracking-publish:disabled,
+.tracking-reset:disabled { cursor: not-allowed; opacity: .6; }
 
 .tracking-reset { color: var(--tracking-text); background: transparent; }
 
@@ -145,7 +154,7 @@ button { cursor: pointer; }
   text-transform: uppercase;
 }
 
-.tracking-sandbox,
+.tracking-source,
 .tracking-target-state,
 .tracking-count {
   display: inline-flex;

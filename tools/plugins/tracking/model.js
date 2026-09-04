@@ -44,6 +44,12 @@ function cleanPath(path) {
   return withSlash.length > 1 ? withSlash.replace(/\/+$/, '') : '/';
 }
 
+export function resolveEditorPath({ contextPath = '', search = '' } = {}) {
+  const requested = new URLSearchParams(search).get('path');
+  const path = cleanPath(requested || contextPath || '/');
+  return path.endsWith('.html') ? path.slice(0, -5) || '/' : path;
+}
+
 function cleanValue(value) {
   return String(value == null ? '' : value).trim();
 }

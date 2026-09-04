@@ -4,19 +4,20 @@
 // eslint-disable-next-line import/no-unresolved
 import DA_SDK from 'https://da.live/nx/utils/sdk.js';
 import {
-  DA_SOURCE_WRITE_METHOD,
+  TRACKING_SOURCE_PATH,
+  createTrackingApi,
+  resolveTrackingRef,
+} from './api.js';
+import { publishReviewedSheet, saveAndPreviewOverride } from './delivery.js';
+import {
   OVERRIDE_FIELDS,
   applyOverride,
-  buildSheetFormData,
   comparisonRows,
   findOverride,
-  mergeOverride,
+  resolveEditorPath,
   validateOverride,
 } from './model.js';
 
-const DA_ADMIN = 'https://admin.da.live';
-const LIVE_SOURCE = '/tracking.json';
-const SANDBOX_SOURCE = '/drafts/tracking-editor-poc.json';
 const TARGET_SELECTOR = '[data-track-as], a[href], button, summary, [role="button"]';
 
 const FIELD_LABELS = {
@@ -45,17 +46,19 @@ const COMPARISON_FIELDS = [
 
 const app = document.getElementById('app');
 const state = {
-  sdk: null,
   path: '/',
   sheet: null,
   base: null,
-  sandboxExists: false,
+  etag: '',
+  api: null,
+  ref: 'main',
   inventory: [],
   selected: null,
   selectedElement: null,
   scope: '/',
   frame: null,
   inspector: null,
+  previewGeneration: 0,
 };
 
 function el(tag, opts = {}, children = []) {
@@ -81,34 +84,6 @@ function cleanPagePath(value) {
   const raw = String(value || '/').trim().split(/[?#]/)[0];
   const path = raw.startsWith('/') ? raw : `/${raw}`;
   return path.length > 1 ? path.replace(/\/+$/, '') : '/';
-}
-
-function sourceUrl(path) {
-  const { org, repo } = state.sdk.context;
-  return `${DA_ADMIN}/source/${org}/${repo}${path}`;
-}
-
-async function fetchSheet(path) {
-  const response = await fetch(sourceUrl(path), {
-    headers: { Authorization: `Bearer ${state.sdk.token}` },
-  });
-  if (response.status === 404) return null;
-  if (!response.ok) throw new Error(`Could not load ${path} (${response.status})`);
-  const text = await response.text();
-  try {
-    return { json: JSON.parse(text), text };
-  } catch {
-    throw new Error(`${path} is not valid JSON`);
-  }
-}
-
-async function putSheet(sheet) {
-  const response = await fetch(sourceUrl(SANDBOX_SOURCE), {
-    method: DA_SOURCE_WRITE_METHOD,
-    headers: { Authorization: `Bearer ${state.sdk.token}` },
-    body: buildSheetFormData(sheet),
-  });
-  if (!response.ok) throw new Error(`Sandbox save failed (${response.status})`);
 }
 
 function pairsToText(value) {
@@ -187,9 +162,9 @@ function highlightPreview(target) {
 
 function bindPreviewSelection() {
   const doc = state.frame.contentDocument;
-  if (!doc || doc.getElementById('tracking-editor-poc-style')) return;
+  if (!doc || doc.getElementById('tracking-editor-style')) return;
   const style = doc.createElement('style');
-  style.id = 'tracking-editor-poc-style';
+  style.id = 'tracking-editor-style';
   style.textContent = '.tracking-editor-selected{outline:4px solid #6d4aff!important;'
     + 'outline-offset:3px!important;}';
   doc.head.appendChild(style);
@@ -213,16 +188,25 @@ async function collectInventory() {
 }
 
 async function loadPreview(path) {
+  const generation = state.previewGeneration + 1;
+  state.previewGeneration = generation;
   state.path = cleanPagePath(path);
   state.selected = null;
   clearPreviewHighlight();
   setStatus(`Loading rendered preview for ${state.path}…`, 'pending');
   state.frame.src = previewUrl(state.path);
   await new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error('Preview load timed out.')), 30000);
-    state.frame.onload = () => { clearTimeout(timer); resolve(); };
+    const loaded = () => { clearTimeout(timer); resolve(); };
+    const timer = setTimeout(() => {
+      state.frame.removeEventListener('load', loaded);
+      reject(new Error('Preview load timed out.'));
+    }, 30000);
+    state.frame.addEventListener('load', loaded, { once: true });
   });
-  state.inspector = await waitForInspector(state.frame);
+  if (generation !== state.previewGeneration) return;
+  const inspector = await waitForInspector(state.frame);
+  if (generation !== state.previewGeneration) return;
+  state.inspector = inspector;
   bindPreviewSelection();
   await collectInventory();
   setStatus(
@@ -382,10 +366,12 @@ function renderEditor(item) {
 
   OVERRIDE_FIELDS.forEach((field) => {
     const multiline = ['custom-properties', 'survey'].includes(field);
+    const errorId = `tracking-${field}-error`;
     const control = el(multiline ? 'textarea' : 'input', {
       class: 'tracking-input',
       attrs: {
         id: `tracking-${field}`,
+        'aria-describedby': errorId,
         ...(multiline ? { rows: '3', placeholder: 'one key=value pair per line' } : { type: 'text' }),
       },
     });
@@ -393,14 +379,18 @@ function renderEditor(item) {
     form.appendChild(el('label', { class: 'tracking-field', attrs: { for: `tracking-${field}` } }, [
       el('span', { text: FIELD_LABELS[field] }),
       control,
-      el('small', { class: 'tracking-field-error', attrs: { 'data-error-for': field } }),
+      el('small', {
+        class: 'tracking-field-error',
+        attrs: { id: errorId, 'data-error-for': field },
+      }),
     ]));
   });
 
   const comparisonRoot = el('div');
+  const formValues = () => Object.fromEntries(OVERRIDE_FIELDS
+    .map((field) => [field, controls[field].value.trim()]));
   const updateEffective = () => {
-    const values = Object.fromEntries(OVERRIDE_FIELDS
-      .map((field) => [field, controls[field].value.trim()]));
+    const values = formValues();
     const simulated = applyOverride(state.sheet, { path: state.scope, id: overrideId, values });
     const refreshed = state.inspector.collect(simulated.data)
       .find((candidate) => candidate.id === item.id && candidate.label === item.label);
@@ -410,67 +400,132 @@ function renderEditor(item) {
     ));
   };
 
-  Object.values(controls).forEach((control) => control.addEventListener('input', updateEffective));
-  scopeSelect.addEventListener('change', () => {
-    state.scope = scopeSelect.value;
-    setFormValues();
-    updateEffective();
+  const save = el('button', { class: 'tracking-save', text: 'Save & preview' });
+  const publish = el('button', {
+    class: 'tracking-publish',
+    text: 'Publish',
+    attrs: { type: 'button' },
   });
-
-  const save = el('button', { class: 'tracking-save', text: 'Save to sandbox' });
   const reset = el('button', {
     class: 'tracking-reset',
     text: 'Reset fields',
     attrs: { type: 'button' },
-    onclick: () => { setFormValues(); updateEffective(); },
   });
-  form.appendChild(el('div', { class: 'tracking-actions' }, [reset, save]));
+  let busy = false;
+  const syncActions = () => {
+    const dirty = Object.keys(changedValues(initial, controls)).length > 0;
+    save.disabled = busy;
+    reset.disabled = busy;
+    publish.disabled = busy || dirty;
+    publish.title = dirty ? 'Save and preview these changes before publishing.' : '';
+  };
+
+  Object.entries(controls).forEach(([field, control]) => control.addEventListener('input', () => {
+    control.removeAttribute('aria-invalid');
+    form.querySelector(`[data-error-for="${field}"]`).textContent = '';
+    updateEffective();
+    syncActions();
+  }));
+  scopeSelect.addEventListener('change', () => {
+    state.scope = scopeSelect.value;
+    setFormValues();
+    updateEffective();
+    syncActions();
+  });
+  reset.addEventListener('click', () => {
+    setFormValues();
+    updateEffective();
+    syncActions();
+  });
+  form.appendChild(el('div', { class: 'tracking-actions' }, [reset, save, publish]));
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
-    const current = Object.fromEntries(OVERRIDE_FIELDS
-      .map((field) => [field, controls[field].value.trim()]));
+    const current = formValues();
     const errors = validateOverride(current);
     form.querySelectorAll('.tracking-field-error').forEach((error) => {
-      error.textContent = errors[error.dataset.errorFor] || '';
+      const { errorFor } = error.dataset;
+      const message = errors[errorFor] || '';
+      error.textContent = message;
+      if (message) controls[errorFor].setAttribute('aria-invalid', 'true');
+      else controls[errorFor].removeAttribute('aria-invalid');
     });
     if (Object.keys(errors).length) {
       setStatus('Fix the highlighted override fields before saving.', 'error');
+      controls[Object.keys(errors)[0]]?.focus();
       return;
     }
 
     const values = changedValues(initial, controls);
     if (!Object.keys(values).length) {
-      setStatus('No sandbox changes to save.', 'pending');
+      setStatus('No tracking sheet changes to save.', 'pending');
       return;
     }
 
-    save.disabled = true;
-    setStatus(`Checking ${SANDBOX_SOURCE} for concurrent changes…`, 'pending');
+    busy = true;
+    syncActions();
+    setStatus(`Checking ${TRACKING_SOURCE_PATH} for concurrent changes…`, 'pending');
     try {
-      const latestSource = await fetchSheet(SANDBOX_SOURCE);
-      const latest = latestSource?.json || state.base;
-      const result = mergeOverride({
+      const result = await saveAndPreviewOverride({
+        api: state.api,
         base: state.base,
-        latest,
         change: { path: state.scope, id: overrideId, values },
       });
       if (result.conflicts.length) {
         setStatus(`Save stopped: ${result.conflicts.join(', ')} changed in another session. Refresh and review it.`, 'error');
         return;
       }
-      await putSheet(result.sheet);
-      const saved = await fetchSheet(SANDBOX_SOURCE);
-      state.sheet = saved.json;
-      state.base = saved.json;
-      state.sandboxExists = true;
+      state.sheet = result.sheet;
+      state.base = result.sheet;
+      state.etag = result.etag;
       initial = directRowValues(state.scope, overrideId);
       await collectInventory();
-      setStatus(`Saved to sandbox ${SANDBOX_SOURCE}. The live site still uses ${LIVE_SOURCE}.`, 'ok');
+      setStatus(`Saved and previewed ${TRACKING_SOURCE_PATH}. Publish when the change is ready for live traffic.`, 'ok');
+    } catch (error) {
+      if (error.sourceSaved && error.sheet) {
+        state.sheet = error.sheet;
+        state.base = error.sheet;
+        state.etag = error.etag;
+        initial = directRowValues(state.scope, overrideId);
+        await collectInventory();
+      }
+      setStatus(error.message, 'error');
+    } finally {
+      busy = false;
+      syncActions();
+    }
+  });
+
+  publish.addEventListener('click', async () => {
+    if (Object.keys(changedValues(initial, controls)).length) {
+      setStatus('Save and preview these changes before publishing.', 'error');
+      return;
+    }
+
+    busy = true;
+    syncActions();
+    try {
+      // eslint-disable-next-line no-alert -- live publishing requires explicit author confirmation.
+      if (!window.confirm(`Publish ${TRACKING_SOURCE_PATH} to live traffic?`)) {
+        setStatus('Publish cancelled.', 'pending');
+        return;
+      }
+      setStatus(`Refreshing the ${state.ref} preview before publish…`, 'pending');
+      const result = await publishReviewedSheet({
+        api: state.api,
+        reviewed: state.base,
+        etag: state.etag,
+      });
+      if (result.stale) {
+        setStatus('Publish stopped: the tracking sheet changed in another session. Reload and review the latest source.', 'error');
+        return;
+      }
+      setStatus(`Published ${TRACKING_SOURCE_PATH} to live traffic.`, 'ok');
     } catch (error) {
       setStatus(error.message, 'error');
     } finally {
-      save.disabled = false;
+      busy = false;
+      syncActions();
     }
   });
 
@@ -480,6 +535,7 @@ function renderEditor(item) {
     form,
   );
   updateEffective();
+  syncActions();
 }
 
 function selectInventoryItem(candidate) {
@@ -509,7 +565,7 @@ function renderShell() {
 
   const toolbar = el('div', { class: 'tracking-canvas-toolbar' }, [
     el('div', { class: 'tracking-path-group' }, [pathInput, loadButton]),
-    el('p', { class: 'tracking-toolbar-note', text: 'Rendered branch preview' }),
+    el('p', { class: 'tracking-toolbar-note', text: `Rendered ${state.ref} preview` }),
   ]);
 
   state.frame = el('iframe', {
@@ -536,10 +592,10 @@ function renderShell() {
   ]);
   const railHeader = el('header', { class: 'tracking-rail-header' }, [
     el('div', {}, [
-      el('p', { class: 'tracking-eyebrow', text: 'Branch-only proof of concept' }),
+      el('p', { class: 'tracking-eyebrow', text: 'Document Authoring plugin' }),
       el('h1', { text: 'Tracking Inspector' }),
     ]),
-    el('span', { class: 'tracking-sandbox', text: 'Sandbox storage' }),
+    el('span', { class: 'tracking-source', text: 'Live source' }),
   ]);
   const canvas = el('section', { class: 'tracking-canvas' }, [toolbar, state.frame]);
   const rail = el('aside', { class: 'tracking-rail' }, [
@@ -549,7 +605,7 @@ function renderShell() {
     editorRoot,
     el('p', {
       class: 'tracking-storage-note',
-      text: `Reads ${LIVE_SOURCE}; writes only ${SANDBOX_SOURCE}.`,
+      text: `Edits ${TRACKING_SOURCE_PATH}. Saving updates preview; publishing requires confirmation.`,
     }),
   ]);
   const workspace = el('div', { class: 'tracking-workspace' }, [
@@ -560,30 +616,27 @@ function renderShell() {
 }
 
 async function loadInitialSheet() {
-  const sandbox = await fetchSheet(SANDBOX_SOURCE);
-  if (sandbox) {
-    state.sheet = sandbox.json;
-    state.base = sandbox.json;
-    state.sandboxExists = true;
-    return;
-  }
-  const live = await fetchSheet(LIVE_SOURCE);
-  state.sheet = live?.json || { ':type': 'sheet', total: 0, data: [] };
+  const live = await state.api.readSourceRevision();
+  state.sheet = live.sheet;
   state.base = state.sheet;
-  state.sandboxExists = false;
+  state.etag = live.etag;
 }
 
 async function init() {
   try {
-    const { context, token } = await DA_SDK;
-    state.sdk = { context, token };
-    state.path = cleanPagePath(new URLSearchParams(window.location.search).get('path') || '/');
+    const { context, actions } = await DA_SDK;
+    const params = new URLSearchParams(window.location.search);
+    const explicitRef = params.get('ref') || '';
+    state.ref = resolveTrackingRef({
+      ref: explicitRef,
+      context,
+      hostname: window.location.hostname,
+    });
+    state.api = createTrackingApi({ daFetch: actions.daFetch, context, ref: state.ref });
+    state.path = resolveEditorPath({ contextPath: context.path, search: window.location.search });
     await loadInitialSheet();
     renderShell();
     await loadPreview(state.path);
-    if (!state.sandboxExists) {
-      setStatus(`Sandbox not created yet. Values are seeded read-only from ${LIVE_SOURCE} until the first save.`, 'ok');
-    }
   } catch (error) {
     app.replaceChildren(el('div', { class: 'tracking-status tracking-status-error', text: error.message }));
   }
