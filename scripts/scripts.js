@@ -24,6 +24,7 @@ import { isBlogPage, hasAuthoredCaseStudyHeader } from '../blocks/blog-template/
 import { isVideoLink, videoInfo } from '../blocks/video/video-info.js';
 import { isGuidePage } from '../blocks/guide-hero/guide-detect.js';
 import { isLivePersonFacadeEnabled } from '../blocks/liveperson-facade/liveperson-facade-events.js';
+import { markLazyPhaseComplete } from './load-phase.js';
 // eslint-disable-next-line import/no-cycle
 import { applyPageExperience, applyEagerLayers } from './experience.js';
 
@@ -643,6 +644,7 @@ async function loadLazy(doc) {
 
   loadCSS(`${window.hlx.codeBasePath}/styles/lazy-styles.css`);
   loadFonts();
+  markLazyPhaseComplete();
 }
 
 /**

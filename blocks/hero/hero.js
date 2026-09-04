@@ -1,5 +1,6 @@
 import { loadFragment } from '../fragment/fragment.js';
 import { trackAs } from '../../scripts/tracking.js';
+import { onLazyPhaseComplete } from '../../scripts/load-phase.js';
 
 const DEFAULT_FORM_FRAGMENT = '/fragments/schedule-call';
 const DASHBOARD_LOTTIE_PATHS = ['/', '/index'];
@@ -78,11 +79,13 @@ function yieldToMain() {
 }
 
 function scheduleWhenIdle(callback) {
-  if (window.requestIdleCallback) {
-    window.requestIdleCallback(callback);
-  } else {
-    window.setTimeout(callback, DASHBOARD_LOTTIE_FALLBACK_DELAY);
-  }
+  onLazyPhaseComplete(() => {
+    if (window.requestIdleCallback) {
+      window.requestIdleCallback(callback);
+    } else {
+      window.setTimeout(callback, DASHBOARD_LOTTIE_FALLBACK_DELAY);
+    }
+  });
 }
 
 /*

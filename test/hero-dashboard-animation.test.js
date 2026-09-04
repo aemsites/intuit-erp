@@ -5,6 +5,7 @@ import {
 vi.mock('../scripts/scripts.js', () => ({ decorateMain: vi.fn() }));
 
 const { enhanceDashboardAnimation } = await import('../blocks/hero/hero.js');
+const { markLazyPhaseComplete } = await import('../scripts/load-phase.js');
 
 class IntersectionObserverMock {
   static instances = [];
@@ -34,7 +35,7 @@ describe('hero — dashboard animation scheduling', () => {
     document.head.innerHTML = '';
     document.body.innerHTML = '';
     window.history.replaceState({}, '', '/');
-    window.hlx = { codeBasePath: '' };
+    window.hlx = { codeBasePath: '', lazyPhaseComplete: true };
     IntersectionObserverMock.instances = [];
     idleCallbacks = [];
     isMobile = false;
@@ -154,6 +155,33 @@ describe('hero — dashboard animation scheduling', () => {
     await flushPromises();
     expect(idleCallbacks).toHaveLength(1);
     expect(visibleObserver.disconnect).toHaveBeenCalledOnce();
+    expect(fetchAnimation).not.toHaveBeenCalled();
+    expect(loadPlayer).not.toHaveBeenCalled();
+  });
+
+  it('does not queue lottie work until the lazy phase has completed', async () => {
+    window.hlx.lazyPhaseComplete = false;
+    const fetchAnimation = vi.fn();
+    const loadPlayer = vi.fn();
+
+    enhanceDashboardAnimation(media, picture, { fetchAnimation, loadPlayer });
+
+    const warmObserver = IntersectionObserverMock.instances
+      .find(({ options }) => options.rootMargin === '500px 0px');
+    const visibleObserver = IntersectionObserverMock.instances
+      .find(({ options }) => options.threshold === 0.1);
+
+    warmObserver.intersect();
+    visibleObserver.intersect({ ratio: 0.25 });
+    await flushPromises();
+
+    expect(window.requestIdleCallback).not.toHaveBeenCalled();
+    expect(fetchAnimation).not.toHaveBeenCalled();
+    expect(loadPlayer).not.toHaveBeenCalled();
+
+    markLazyPhaseComplete();
+
+    expect(window.requestIdleCallback).toHaveBeenCalledTimes(2);
     expect(fetchAnimation).not.toHaveBeenCalled();
     expect(loadPlayer).not.toHaveBeenCalled();
   });
