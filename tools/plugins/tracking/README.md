@@ -27,7 +27,7 @@ Register the plugin in the site's `library` config sheet:
 
 | title | path | format | icon | experience | ref |
 | --- | --- | --- | --- | --- | --- |
-| Tracking Inspector | `/tools/plugins/tracking/index.html?v=20260904.4` |  | `/tools/plugins/tracking/tracking.svg` |  |  |
+| Tracking Inspector | `/tools/plugins/tracking/index.html?v=20260904.5` |  | `/tools/plugins/tracking/tracking.svg` |  |  |
 
 Use the `ref` column only while reviewing a feature branch. Leave it blank in the production
 registration so DA loads the plugin from `main`.

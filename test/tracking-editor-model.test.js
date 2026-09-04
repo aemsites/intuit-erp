@@ -4,6 +4,7 @@ import {
   applyOverride,
   comparisonRows,
   mergeOverride,
+  resolveDocumentPath,
   resolveEditorPath,
   validateOverride,
 } from '../tools/plugins/tracking/model.js';
@@ -31,6 +32,13 @@ describe('tracking editor sheet model', () => {
       .toBe('/accounting/multi-entity');
     expect(resolveEditorPath({ contextPath: '/accounting/multi-entity/index.html' }))
       .toBe('/accounting/multi-entity');
+  });
+
+  it('formats the DA document path with its repo and canonical trailing slash', () => {
+    expect(resolveDocumentPath({
+      repo: 'intuit-erp',
+      path: '/accounting/multi-entity/index',
+    })).toBe('/intuit-erp/accounting/multi-entity/');
   });
 
   it('uses POST when replacing an existing DA Source JSON file', () => {
