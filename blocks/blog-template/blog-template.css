@@ -341,7 +341,7 @@
   main.blog-article {
     display: grid;
     grid-template-columns: 250px minmax(0, 1fr) 300px;
-    column-gap: 130px;
+    column-gap: 32px;
     align-items: start;
   }
 
@@ -484,6 +484,10 @@
   }
 }
 
+.blog-article .section .media-text .media-row {
+  align-items: start;
+}
+
 @media (min-width: 1024px) {
   .blog-article .blog-hero > .default-content-wrapper {
     display: grid;
@@ -579,16 +583,16 @@
   }
 }
 
+main.blog-article > .section:not(.blog-hero):not(.blog-toc-rail):not(.blog-rail):not(.blog-cards-container):not(.full-bleed) {
+  max-width: 740px;
+  margin: 0 auto;
+}
+  
 main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .blog-rail, [class*="padding-"]):has(.block) {
   background: #fff;
   padding: 0;
 }
 
-/* Each H2 gets its own section, and main.blog-article is a grid at >=1024px,
-   so sections are grid items and don't margin-collapse like normal flow —
-   doubling the gap at every section break (padding + margin stacking instead
-   of collapsing). Zero the wrapper padding and let heading margins own the
-   gap instead; hero/toc-rail/rail sections keep their own explicit padding. */
 .blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail) > .default-content-wrapper {
   padding-top: 0;
   padding-bottom: 0;
@@ -688,6 +692,8 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
   background: var(--agave);
   border-radius: 0;
   padding: 24px 40px;
+  font-size: 20px;
+  margin: 0 -30px;
 }
 
 .blog-article .highlight .highlight-inner:has(> p .icon[class*="icon-quick-answer"]) {
