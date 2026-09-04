@@ -10,7 +10,9 @@ body.modal-open {
   overscroll-behavior: none;
   overflow-y: hidden;
   width: calc(100vw - 48px);
-  max-width: 900px;
+
+  /* 36rem, the modal width the design uses from 768px up. */
+  max-width: 576px;
   max-height: calc(100dvh - (2 * var(--header-height, 64px)));
   padding: 0;
   border: 1px solid var(--line, var(--dark-color));
