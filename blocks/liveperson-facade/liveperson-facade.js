@@ -53,8 +53,11 @@ function buildInvite(facade = document.createElement('aside')) {
       <span>Chat with a product specialist.</span>
     </p>
     <div class="lp-invite-actions">
-      <button type="button" class="lp-invite-action" data-track-id="talk-to-sales:proactive-chat-invite">Chat live now</button>
-      <button type="button" class="lp-invite-dismiss" data-track-skip>No thanks</button>
+      <button type="button" class="lp-invite-action" data-track-id="talk-to-sales:proactive-chat-invite">
+        <span class="lp-invite-desktop-label">Chat live now</span>
+        <span class="lp-invite-mobile-label">Chat with a specialist</span>
+      </button>
+      <button type="button" class="lp-invite-dismiss" aria-label="Dismiss chat invitation" data-track-skip>No thanks</button>
     </div>`;
 
   let activated = false;

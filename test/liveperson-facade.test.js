@@ -38,7 +38,7 @@ describe('LivePerson proactive invite facade', () => {
     decorateLivePersonFacade(block);
 
     expect(document.getElementById('liveperson-invite-facade')).toBe(block);
-    expect(block.querySelector('.lp-invite-action').textContent).toBe('Chat live now');
+    expect(block.querySelector('.lp-invite-desktop-label').textContent).toBe('Chat live now');
     vi.advanceTimersByTime(1233);
     expect(block.classList.contains('lp-invite-visible')).toBe(false);
     vi.advanceTimersByTime(1);
@@ -93,8 +93,13 @@ describe('LivePerson proactive invite facade', () => {
     expect(facade.querySelector('.lp-invite-copy').textContent).toContain(
       'Chat with a product specialist.',
     );
-    expect(facade.querySelector('.lp-invite-action').textContent).toBe('Chat live now');
-    expect(facade.querySelector('.lp-invite-dismiss').textContent).toBe('No thanks');
+    const action = facade.querySelector('.lp-invite-action');
+    const dismiss = facade.querySelector('.lp-invite-dismiss');
+    expect(action.querySelector('.lp-invite-desktop-label').textContent).toBe('Chat live now');
+    expect(action.querySelector('.lp-invite-mobile-label').textContent)
+      .toBe('Chat with a specialist');
+    expect(dismiss.textContent).toBe('No thanks');
+    expect(dismiss.getAttribute('aria-label')).toBe('Dismiss chat invitation');
   });
 
   it('requests direct proactive-chat activation once', () => {

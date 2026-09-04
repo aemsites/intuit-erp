@@ -1,19 +1,17 @@
 /* First-party HTML/CSS reconstruction of LivePerson's proactive invitation. */
 .liveperson-facade {
   position: fixed;
-  top: 50%;
-  right: 0;
+  right: 12px;
+  bottom: 72px;
   z-index: 107158;
   box-sizing: border-box;
-  width: min(400px, calc(100vw - 12px));
-  min-height: 290px;
-  padding: 46px 36px 36px;
-  transform: translateY(-74%);
+  width: min(304px, calc(100vw - 84px));
+  padding: 10px 42px 10px 10px;
   opacity: 0.001;
   border: 0;
-  border-radius: 40px;
+  border-radius: 12px;
   background: #fff;
-  box-shadow: 0 8px 28px rgb(0 0 0 / 18%);
+  box-shadow: 0 6px 24px rgb(0 0 0 / 20%);
   color: #11181c;
   font-family: var(--body-font-family);
   pointer-events: none;
@@ -26,14 +24,13 @@
 
 .liveperson-facade::after {
   position: absolute;
-  bottom: -18px;
-  left: 50%;
+  right: 18px;
+  bottom: -9px;
   width: 0;
   height: 0;
-  transform: translateX(-50%);
-  border-top: 20px solid #fff;
-  border-right: 18px solid transparent;
-  border-left: 18px solid transparent;
+  border-top: 10px solid #fff;
+  border-right: 9px solid transparent;
+  border-left: 9px solid transparent;
   content: "";
 }
 
@@ -42,6 +39,7 @@
 }
 
 .liveperson-facade h2 {
+  display: none;
   margin: 0 0 20px;
   color: #236cff;
   font-family: inherit;
@@ -51,6 +49,7 @@
 }
 
 .liveperson-facade .lp-invite-copy {
+  display: none;
   margin: 0 0 28px;
   color: #11181c;
   font-size: 16px;
@@ -62,9 +61,7 @@
 }
 
 .liveperson-facade .lp-invite-actions {
-  display: flex;
-  align-items: center;
-  gap: 38px;
+  display: block;
 }
 
 .liveperson-facade button {
@@ -74,28 +71,41 @@
 }
 
 .liveperson-facade .lp-invite-action {
-  min-width: 142px;
-  min-height: 48px;
-  padding: 0 18px;
+  width: 100%;
+  min-height: 52px;
+  padding: 0 14px;
   border: 2px solid #0d333f;
   border-radius: 4px;
-  background: transparent;
-  color: #0d333f;
+  background: #0d333f;
+  color: #fff;
   font-size: 16px;
   font-weight: 600;
   line-height: 24px;
 }
 
 .liveperson-facade .lp-invite-dismiss {
-  min-height: 48px;
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 36px;
+  height: 36px;
   padding: 0;
   border: 0;
   background: transparent;
   color: #11181c;
-  font-size: 16px;
+  font-size: 0;
   font-weight: 600;
-  line-height: 24px;
-  text-decoration: underline;
+  line-height: 1;
+}
+
+.liveperson-facade .lp-invite-dismiss::before {
+  font-size: 24px;
+  font-weight: 400;
+  content: "×";
+}
+
+.liveperson-facade .lp-invite-desktop-label {
+  display: none;
 }
 
 .liveperson-facade .lp-invite-action:focus-visible,
@@ -106,7 +116,66 @@
 
 @media (width >= 768px) {
   .liveperson-facade {
+    top: 50%;
     right: 48px;
+    bottom: auto;
+    width: min(400px, calc(100vw - 12px));
+    min-height: 290px;
+    padding: 46px 36px 36px;
     transform: translateY(-82.5%);
+    border-radius: 40px;
+    box-shadow: 0 8px 28px rgb(0 0 0 / 18%);
+  }
+
+  .liveperson-facade::after {
+    right: auto;
+    bottom: -18px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-top-width: 20px;
+    border-right-width: 18px;
+    border-left-width: 18px;
+  }
+
+  .liveperson-facade h2,
+  .liveperson-facade .lp-invite-copy {
+    display: block;
+  }
+
+  .liveperson-facade .lp-invite-actions {
+    display: flex;
+    align-items: center;
+    gap: 38px;
+  }
+
+  .liveperson-facade .lp-invite-action {
+    width: auto;
+    min-width: 142px;
+    min-height: 48px;
+    padding: 0 18px;
+    background: transparent;
+    color: #0d333f;
+  }
+
+  .liveperson-facade .lp-invite-mobile-label {
+    display: none;
+  }
+
+  .liveperson-facade .lp-invite-desktop-label {
+    display: inline;
+  }
+
+  .liveperson-facade .lp-invite-dismiss {
+    position: static;
+    width: auto;
+    height: auto;
+    min-height: 48px;
+    font-size: 16px;
+    line-height: 24px;
+    text-decoration: underline;
+  }
+
+  .liveperson-facade .lp-invite-dismiss::before {
+    content: none;
   }
 }
