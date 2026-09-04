@@ -20,7 +20,7 @@ import {
 } from './live-replay-harness.mjs';
 import { POLICY } from './oracle-lib.mjs';
 
-const HARNESS_VERSION = '0.2.7';
+const HARNESS_VERSION = '0.2.8';
 const TRACKER_POLICY_VERSION = '1';
 const EVIDENCE_FETCH_TIMEOUT_MS = 15000;
 const DEFAULT_ORIGIN = 'https://stage.erp.intuit.com';
@@ -38,6 +38,7 @@ const DEFAULT_SCENARIO = 'scripts/diff/fixtures/clicktrack-qualification-scenari
 const DEFAULT_GOLDEN = 'scripts/diff/fixtures/local/clicktrack-golden-customer.json';
 const DEFAULT_OUT = 'scripts/diff/fixtures/local/live-replay-qualification.json';
 const DEFAULT_CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+const REPLAY_ORIGINAL_TARGET_KEY = '__adobeMigrationReplayOriginalTarget';
 const HARNESS_SOURCE_FILES = {
   'live-replay-harness.mjs': resolve('scripts/diff/live-replay-harness.mjs'),
   'live-replay-runner.mjs': resolve('scripts/diff/live-replay-runner.mjs'),
@@ -635,12 +636,22 @@ async function resetUnsafeReplayTarget(page, cleanup, markerGuardDetected) {
 async function clickReplayTarget(locator, scenario, clickOptions) {
   if (scenario.locator?.role === 'link' && scenario.interaction?.preventNavigation !== false) {
     // Preserve href-derived metadata while removing the native navigation default.
-    return locator.evaluate((element) => {
+    return locator.evaluate((element, targetStateKey) => {
       const nativeGet = Element.prototype.getAttribute;
       const nativeSet = Element.prototype.setAttribute;
       const originalHref = nativeGet.call(element, 'href');
       const originalUrl = window.location.href;
+      if (!Object.prototype.hasOwnProperty.call(element, targetStateKey)) {
+        Object.defineProperty(element, targetStateKey, {
+          configurable: true,
+          value: { target: nativeGet.call(element, 'target') },
+        });
+      }
       nativeSet.call(element, 'href', '#adobe-migration-test');
+      // The initialized Intuit tracker may resume a canceled link navigation
+      // after its analytics work. Presenting the replay-only activation as a
+      // new-tab link keeps that vendor continuation away from the bound page.
+      nativeSet.call(element, 'target', '_blank');
       Object.defineProperty(element, 'getAttribute', {
         configurable: true,
         value(name) { return String(name).toLowerCase() === 'href' ? originalHref : nativeGet.call(this, name); },
@@ -655,9 +666,22 @@ async function clickReplayTarget(locator, scenario, clickOptions) {
         nativeSet.call(element, 'href', originalHref);
         if (window.location.href !== originalUrl) window.history.replaceState(null, '', originalUrl);
       }
-    });
+    }, REPLAY_ORIGINAL_TARGET_KEY);
   }
   return locator.click(clickOptions);
+}
+
+async function restoreReplayTarget(locator) {
+  return locator.evaluate((element, targetStateKey) => {
+    if (!Object.prototype.hasOwnProperty.call(element, targetStateKey)) return false;
+    const nativeSet = Element.prototype.setAttribute;
+    const nativeRemove = Element.prototype.removeAttribute;
+    const { target } = element[targetStateKey];
+    if (target == null) nativeRemove.call(element, 'target');
+    else nativeSet.call(element, 'target', target);
+    delete element[targetStateKey];
+    return true;
+  }, REPLAY_ORIGINAL_TARGET_KEY);
 }
 
 async function executeSetupSteps(page, steps = [], { locate = qualificationLocator } = {}) {
@@ -721,66 +745,84 @@ function validateLineageQualification(proof, binding, bytes, now = Date.now()) {
 
 async function exerciseQualification(page, scenario, requestedLineageMode) {
   const clickOptions = { force: true, noWaitAfter: true, timeout: 8000 };
-  await executeSetupSteps(page, scenario.setupSteps);
-  const locator = qualificationLocator(page, scenario.locator);
-  await waitForUniqueQualificationLocator(page, locator);
-  const expectedExpanded = scenario.preconditions?.attributes?.['aria-expanded'];
-  if (expectedExpanded != null && await locator.getAttribute('aria-expanded') !== expectedExpanded) {
-    await clickReplayTarget(locator, scenario, clickOptions);
-    await page.waitForTimeout(250);
-    if (await locator.getAttribute('aria-expanded') !== expectedExpanded) {
-      throw new Error(`scenario precondition failed: aria-expanded=${expectedExpanded}`);
+  let locator;
+  let targetContained = false;
+  let primaryError;
+  try {
+    await executeSetupSteps(page, scenario.setupSteps);
+    locator = qualificationLocator(page, scenario.locator);
+    await waitForUniqueQualificationLocator(page, locator);
+    targetContained = scenario.locator?.role === 'link'
+      && scenario.interaction?.preventNavigation !== false;
+    const expectedExpanded = scenario.preconditions?.attributes?.['aria-expanded'];
+    if (expectedExpanded != null && await locator.getAttribute('aria-expanded') !== expectedExpanded) {
+      await clickReplayTarget(locator, scenario, clickOptions);
+      await page.waitForTimeout(250);
+      if (await locator.getAttribute('aria-expanded') !== expectedExpanded) {
+        throw new Error(`scenario precondition failed: aria-expanded=${expectedExpanded}`);
+      }
     }
-  }
-  const locatorEvidence = await locator.evaluate((element) => ({
-    tag: element.tagName,
-    trackId: element.getAttribute('data-track-id') || '',
-    waLink: element.getAttribute('data-wa-link') || '',
-    text: (element.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 160),
-  }));
+    const locatorEvidence = await locator.evaluate((element) => ({
+      tag: element.tagName,
+      trackId: element.getAttribute('data-track-id') || '',
+      waLink: element.getAttribute('data-wa-link') || '',
+      text: (element.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 160),
+    }));
 
-  const lineageMode = requestedLineageMode || scenario.lineage?.mode || 'proof';
-  interactionSequence(lineageMode);
-  if (lineageMode === 'capture') {
+    const lineageMode = requestedLineageMode || scenario.lineage?.mode || 'proof';
+    interactionSequence(lineageMode);
+    if (lineageMode === 'capture') {
+      await page.evaluate((activeScenario) => window.__adobeMigrationReplay.activate(activeScenario), {
+        scenarioId: scenario.scenarioId,
+        page: scenario.page,
+      });
+      await clickReplayTarget(locator, scenario, clickOptions);
+      await waitForSerialized(page, scenario.scenarioId);
+      await page.waitForTimeout(250);
+      const evidence = await page.evaluate(async () => window.__adobeMigrationReplay.snapshot());
+      await page.evaluate(() => window.__adobeMigrationReplay.deactivate());
+      const linked = evidence.serialized.filter((entry) => entry.status === 'linked' && entry.scenarioId === scenario.scenarioId);
+      assertReplayLineageEvidence(evidence, scenario, 'capture');
+      if (linked.length !== 1) throw new Error(`capture expected one linked event, got ${linked.length}`);
+      return { evidence, linked: linked[0], locatorEvidence };
+    }
+
+    // The one-time proof establishes that a business-identical stale request
+    // cannot be linked to the active scenario window.
+    await page.evaluate(() => window.__adobeMigrationReplay.holdNextTransport());
+    await clickReplayTarget(locator, scenario, clickOptions);
+    await page.waitForFunction(() => window.__adobeMigrationReplay.hasHeldTransport(), null, { timeout: 8000 });
+    await clickReplayTarget(locator, scenario, clickOptions);
     await page.evaluate((activeScenario) => window.__adobeMigrationReplay.activate(activeScenario), {
       scenarioId: scenario.scenarioId,
       page: scenario.page,
     });
+    await page.evaluate(() => window.__adobeMigrationReplay.releaseHeldTransport());
     await clickReplayTarget(locator, scenario, clickOptions);
     await waitForSerialized(page, scenario.scenarioId);
     await page.waitForTimeout(250);
     const evidence = await page.evaluate(async () => window.__adobeMigrationReplay.snapshot());
     await page.evaluate(() => window.__adobeMigrationReplay.deactivate());
     const linked = evidence.serialized.filter((entry) => entry.status === 'linked' && entry.scenarioId === scenario.scenarioId);
-    assertReplayLineageEvidence(evidence, scenario, 'capture');
-    if (linked.length !== 1) throw new Error(`capture expected one linked event, got ${linked.length}`);
+    const stale = evidence.serialized.filter((entry) => entry.status === 'unlinked');
+    assertReplayLineageEvidence(evidence, scenario, 'qualification');
+    if (linked.length !== 1) throw new Error(`qualification expected one linked event, got ${linked.length}`);
+    if (!stale.some((entry) => businessIdentity(entry.payload) === businessIdentity(linked[0].payload))) {
+      throw new Error('qualification did not prove a business-identical stale event was excluded');
+    }
     return { evidence, linked: linked[0], locatorEvidence };
+  } catch (error) {
+    primaryError = error;
+    throw error;
+  } finally {
+    if (targetContained && locator) {
+      try {
+        await restoreReplayTarget(locator);
+      } catch (error) {
+        if (!primaryError) throw error;
+      }
+    }
   }
-
-  // The one-time proof establishes that a business-identical stale request
-  // cannot be linked to the active scenario window.
-  await page.evaluate(() => window.__adobeMigrationReplay.holdNextTransport());
-  await clickReplayTarget(locator, scenario, clickOptions);
-  await page.waitForFunction(() => window.__adobeMigrationReplay.hasHeldTransport(), null, { timeout: 8000 });
-  await clickReplayTarget(locator, scenario, clickOptions);
-  await page.evaluate((activeScenario) => window.__adobeMigrationReplay.activate(activeScenario), {
-    scenarioId: scenario.scenarioId,
-    page: scenario.page,
-  });
-  await page.evaluate(() => window.__adobeMigrationReplay.releaseHeldTransport());
-  await clickReplayTarget(locator, scenario, clickOptions);
-  await waitForSerialized(page, scenario.scenarioId);
-  await page.waitForTimeout(250);
-  const evidence = await page.evaluate(async () => window.__adobeMigrationReplay.snapshot());
-  await page.evaluate(() => window.__adobeMigrationReplay.deactivate());
-  const linked = evidence.serialized.filter((entry) => entry.status === 'linked' && entry.scenarioId === scenario.scenarioId);
-  const stale = evidence.serialized.filter((entry) => entry.status === 'unlinked');
-  assertReplayLineageEvidence(evidence, scenario, 'qualification');
-  if (linked.length !== 1) throw new Error(`qualification expected one linked event, got ${linked.length}`);
-  if (!stale.some((entry) => businessIdentity(entry.payload) === businessIdentity(linked[0].payload))) {
-    throw new Error('qualification did not prove a business-identical stale event was excluded');
-  }
-  return { evidence, linked: linked[0], locatorEvidence };
 }
 
 function buildCapture({
@@ -1101,6 +1143,6 @@ export {
   activationEvidence, assertCanonicalScenarioPath, assertCleanReuseState, assertPreflight, assertReplayLineageEvidence, assertRuntimeHashes, businessIdentity, createRunJournal, deriveAllowlist, goldenScenario, launchArguments,
   browserPreflight, clickReplayTarget, createTargetGuard, executeSetupSteps, handleReplayNavigationRoute, hashUrl, interactionSequence,
   portAvailable, purgeEvidence, qualificationLocator, qualificationLocatorCss, selectDedicatedOriginPage,
-  resetUnsafeReplayTarget, selectDedicatedPage, validateLineageQualification,
+  resetUnsafeReplayTarget, restoreReplayTarget, selectDedicatedPage, validateLineageQualification,
   shouldAbortReplayNavigation, waitForUniqueQualificationLocator,
 };

@@ -20,7 +20,7 @@ import {
   handleReplayNavigationRoute,
   launchArguments, portAvailable, purgeEvidence, qualificationLocator, qualificationLocatorCss,
   requestBodyContainsReplayMarker,
-  resetUnsafeReplayTarget,
+  resetUnsafeReplayTarget, restoreReplayTarget,
   selectDedicatedOriginPage, selectDedicatedPage, validateLineageQualification,
   waitForUniqueQualificationLocator,
   shouldAbortReplayNavigation,
@@ -358,6 +358,50 @@ describe('live replay harness contracts', () => {
 
     await clickReplayTarget(locator, { locator: { role: 'button' }, interaction: { preventNavigation: true } }, {});
     expect(locator.click).toHaveBeenCalledOnce();
+  });
+
+  it('presents a contained link as a new-tab target through the replay lifecycle', async () => {
+    const BrowserMouseEvent = window.MouseEvent;
+    class ReplayMouseEvent extends BrowserMouseEvent {
+      constructor(type, init = {}) {
+        const { view, ...portableInit } = init;
+        super(type, portableInit);
+      }
+    }
+    vi.stubGlobal('MouseEvent', ReplayMouseEvent);
+    vi.stubGlobal('PointerEvent', ReplayMouseEvent);
+    const link = document.createElement('a');
+    link.href = 'https://www.youtube.com/playlist?list=customer-golden';
+    const observed = [];
+    let delayedTarget;
+    link.addEventListener('click', () => {
+      observed.push({
+        href: link.getAttribute('href'),
+        target: link.getAttribute('target'),
+      });
+      setTimeout(() => { delayedTarget = link.getAttribute('target'); }, 0);
+    });
+    document.body.append(link);
+    const locator = {
+      evaluate: vi.fn(async (callback, argument) => callback(link, argument)),
+      click: vi.fn(),
+    };
+
+    await clickReplayTarget(locator, {
+      locator: { role: 'link' },
+      interaction: { preventNavigation: true },
+    }, {});
+
+    expect(observed).toEqual([{
+      href: 'https://www.youtube.com/playlist?list=customer-golden',
+      target: '_blank',
+    }]);
+    expect(link.getAttribute('href')).toBe('https://www.youtube.com/playlist?list=customer-golden');
+    await new Promise((resolve) => { setTimeout(resolve, 0); });
+    expect(delayedTarget).toBe('_blank');
+    expect(link.getAttribute('target')).toBe('_blank');
+    await restoreReplayTarget(locator);
+    expect(link.hasAttribute('target')).toBe(false);
   });
 
   it('normalizes Tealium and vendor activation evidence for page provenance', () => {
