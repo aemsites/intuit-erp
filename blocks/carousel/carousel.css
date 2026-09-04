@@ -828,21 +828,23 @@
    inset so the navy shows around it. No background is set — the image's own
    background fills the card. ---- */
 .carousel.feature.panel .carousel-slide > div:first-child {
-  margin: 24px;
-  border-radius: 12px;
-  overflow: hidden;
+  box-sizing: border-box;
+  padding: 24px;
 }
 
 .carousel.feature.panel .carousel-slide img {
   height: auto;
   object-fit: contain;
+  border-radius: 12px;
 }
 
 @media (width >= 1024px) {
-  /* hug the image height instead of stretching to the (taller) copy column, so
-     the card floats centered with navy around it like the source */
+  /* even 50/50 media/copy split (base .feature is 35/65) with an 80px inset on
+     the media, matching the source. box-sizing keeps the inset inside the 50%
+     so the image ends at the slide midpoint and the copy takes the other half. */
   .carousel.feature.panel .carousel-slide > div:first-child {
-    align-self: center;
+    flex: 0 0 50%;
+    padding: 80px 0 0 80px;
   }
 }
 
