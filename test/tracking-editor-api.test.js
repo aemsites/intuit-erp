@@ -63,7 +63,7 @@ describe('tracking editor authenticated delivery API', () => {
     const api = createTrackingApi({ daFetch, context: CONTEXT });
 
     await expect(api.readSource()).resolves.toEqual(sheet);
-    expect(daFetch).toHaveBeenCalledWith(SOURCE_URL, { method: 'GET' });
+    expect(daFetch).toHaveBeenCalledWith(SOURCE_URL, { method: 'GET', cache: 'no-store' });
   });
 
   it('reads the source ETag required for atomic editing', async () => {
@@ -86,6 +86,7 @@ describe('tracking editor authenticated delivery API', () => {
     await api.writeSource(sheet, { etag: 'W/"revision-42"' });
 
     expect(revision.etag).toBe('"revision-42"');
+    expect(daFetch).toHaveBeenNthCalledWith(1, SOURCE_URL, { method: 'GET', cache: 'no-store' });
     expect(daFetch).toHaveBeenLastCalledWith(SOURCE_URL, expect.objectContaining({
       method: 'POST',
       headers: { 'If-Match': '"revision-42"' },

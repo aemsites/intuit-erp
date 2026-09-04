@@ -71,12 +71,18 @@ export function createTrackingApi({ daFetch, context = {}, ref } = {}) {
 
   return {
     async readSource() {
-      const response = await request('read tracking sheet', sourceUrl, { method: 'GET' });
+      const response = await request('read tracking sheet', sourceUrl, {
+        method: 'GET',
+        cache: 'no-store',
+      });
       return parseSheet(response);
     },
 
     async readSourceRevision() {
-      const response = await request('read tracking sheet', sourceUrl, { method: 'GET' });
+      const response = await request('read tracking sheet', sourceUrl, {
+        method: 'GET',
+        cache: 'no-store',
+      });
       const sheet = await parseSheet(response);
       const etag = normalizeEtag(response.headers?.get('etag'));
       if (!etag) {
