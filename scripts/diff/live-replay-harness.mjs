@@ -11,6 +11,7 @@ const QUALIFICATION_BINDINGS = [
   'chromeVersion',
   'harnessVersion',
   'lineagePolicyVersion',
+  'transportMarkerGuard',
   'origin',
   'consentState',
   'authorizationRef',
@@ -19,6 +20,29 @@ const QUALIFICATION_BINDINGS = [
   'scenarioId',
   'scenarioDefinitionHash',
 ];
+export const REPLAY_LINEAGE_POLICY_VERSION = 'click-message-id-v3';
+export const REPLAY_INVOCATION_MARKER_KEY = '__adobe_migration_replay_invocation';
+
+export function canonicalReplayPath(value) {
+  if (typeof value !== 'string' || !value.startsWith('/') || value.includes('?') || value.includes('#')) {
+    throw new Error(`reviewed pathname is invalid: ${value}`);
+  }
+  if (value !== '/' && value.endsWith('//')) throw new Error(`reviewed pathname is invalid: ${value}`);
+  const parsed = new URL(value, 'https://stage.invalid');
+  if (parsed.origin !== 'https://stage.invalid' || parsed.pathname !== value) {
+    throw new Error(`reviewed pathname is invalid: ${value}`);
+  }
+  if (value === '/') return value;
+  return value.endsWith('/') ? value : `${value}/`;
+}
+
+export function replayPathMatches(actual, reviewed) {
+  try {
+    return canonicalReplayPath(actual) === canonicalReplayPath(reviewed);
+  } catch {
+    return false;
+  }
+}
 
 export function validateCdpEndpoint(value) {
   let endpoint;
@@ -117,6 +141,10 @@ export function createLineageRegistry() {
  */
 export async function installReplayPageHook(config, injectedScope) {
   const scope = injectedScope || window;
+  const invocationMarkerKey = config?.invocationMarkerKey || '__adobe_migration_replay_invocation';
+  if (invocationMarkerKey !== '__adobe_migration_replay_invocation') {
+    throw new Error('invalid replay invocation marker key');
+  }
   const expectedOrigin = config?.origin;
   const transportPolicy = config?.transportPolicy || 'observe';
   if (scope.location?.origin !== expectedOrigin) throw new Error('replay hook origin mismatch');
@@ -170,6 +198,8 @@ export async function installReplayPageHook(config, injectedScope) {
   let installed = true;
   const byMessageId = new Map();
   const ambiguousMessageIds = new Set();
+  const ambiguityReasonsByMessageId = new Map();
+  const invocationsByMarker = new Map();
   const dispatchesByMessageId = new Map();
   const serializedByMessageId = new Map();
   const serializedCounts = new Map();
@@ -284,38 +314,125 @@ export async function installReplayPageHook(config, injectedScope) {
     }
     return output;
   };
-  const eventbusEntries = (body) => {
-    if (typeof body !== 'string') return [];
-    try {
-      const parsed = JSON.parse(body);
-      if (Array.isArray(parsed?.batch)) return parsed.batch;
-      if (Array.isArray(parsed)) return parsed;
-      return parsed && typeof parsed === 'object' ? [parsed] : [];
-    } catch {
-      return [];
+  const taggedTrackArgs = (args, marker) => {
+    const index = args.findIndex((value) => value && typeof value === 'object' && !Array.isArray(value));
+    if (index < 0) return null;
+    const envelope = args[index];
+    const tagged = [...args];
+    if (envelope.properties && typeof envelope.properties === 'object') {
+      if (Object.hasOwn(envelope.properties, invocationMarkerKey)) return null;
+      tagged[index] = {
+        ...envelope,
+        properties: { ...envelope.properties, [invocationMarkerKey]: marker },
+      };
+    } else {
+      if (Object.hasOwn(envelope, invocationMarkerKey)) return null;
+      tagged[index] = { ...envelope, [invocationMarkerKey]: marker };
     }
+    return tagged;
   };
   const trackPromise = (promise) => {
     pendingSanitizers.add(promise);
     promise.finally(() => pendingSanitizers.delete(promise));
     return promise;
   };
-  const observeSerialized = (event, requestUrl) => {
+  const poisonInvocation = (invocation, reason) => {
+    if (!invocation) return;
+    invocation.status = 'ambiguous';
+    invocation.reason = reason;
+    if (active?.invocationPending === invocation) active.invocationPending = null;
+    if (active?.invocationAwaiting === invocation) active.invocationAwaiting = null;
+    [...byMessageId.entries()]
+      .filter(([, entry]) => entry.invocationId === invocation.invocationId)
+      .forEach(([messageId]) => {
+        ambiguousMessageIds.add(messageId);
+        ambiguityReasonsByMessageId.set(messageId, reason);
+        byMessageId.delete(messageId);
+        (serializedByMessageId.get(messageId) || []).forEach((entry) => {
+          entry.status = 'ambiguous';
+          entry.reason = reason;
+          entry.scenarioId = null;
+          entry.invocationId = null;
+        });
+      });
+  };
+  const settleInvocationMarker = (invocation) => {
+    if (!invocation || invocation.markerConsumed) return;
+    invocation.markerConsumed = true;
+    invocation.resolveMarker?.();
+  };
+  const outstandingMarkerInvocations = () => [...invocationsByMarker.values()]
+    .filter((invocation) => !invocation.markerConsumed);
+  const refuseUnsafeEventbusBody = (reason) => {
+    outstandingMarkerInvocations().forEach((invocation) => {
+      poisonInvocation(invocation, reason);
+      settleInvocationMarker(invocation);
+    });
+    throw new Error(reason);
+  };
+  const linkClickInvocationSerialization = (messageId, event, marker) => {
+    if (!marker) return null;
+    const invocation = invocationsByMarker.get(marker);
+    const invocationId = invocation?.invocationId;
+    if (!messageId || !invocationId || invocation.status === 'ambiguous' || event?.type !== 'track') return null;
+    if (invocation !== active?.invocationPending && invocation !== active?.invocationAwaiting) return null;
+    if (active.invocationPending === invocation && !interactionDispatchActive) return null;
+    const invocationEntry = [...byMessageId.entries()]
+      .find(([, entry]) => entry.invocationId === invocationId);
+    if (invocationEntry) {
+      const [existingMessageId] = invocationEntry;
+      const reason = 'multiple-message-ids-per-invocation';
+      poisonInvocation(invocation, reason);
+      [existingMessageId, messageId].forEach((id) => {
+        ambiguousMessageIds.add(id);
+        ambiguityReasonsByMessageId.set(id, reason);
+      });
+      byMessageId.delete(existingMessageId);
+      (serializedByMessageId.get(existingMessageId) || []).forEach((entry) => {
+        entry.status = 'ambiguous';
+        entry.reason = reason;
+        entry.scenarioId = null;
+        entry.invocationId = null;
+      });
+      return null;
+    }
+    const linked = {
+      scenarioId: active.scenarioId,
+      invocationId,
+      messageIdPresent: true,
+      status: 'enqueued',
+      lineageSource: 'click-invocation-marker',
+    };
+    byMessageId.set(messageId, linked);
+    invocation.messageId = messageId;
+    invocation.status = 'linked';
+    return linked;
+  };
+  const observeSerialized = (event, requestUrl, marker = null) => {
     if (!installed) return Promise.resolve();
     return trackPromise((async () => {
       const messageId = typeof event?.messageId === 'string' ? event.messageId : null;
-      const poisoned = messageId ? ambiguousMessageIds.has(messageId) : false;
-      const linked = messageId && !poisoned ? byMessageId.get(messageId) : null;
+      let poisoned = messageId ? ambiguousMessageIds.has(messageId) : false;
+      let linked = messageId && !poisoned ? byMessageId.get(messageId) : null;
+      // The production SDK captures its original dispatch function before this
+      // hook is installed. In that case, a per-invocation marker is carried by
+      // the wrapped track call and removed before transport. This establishes
+      // causal lineage without relying on timing or business-field similarity.
+      if (!linked && !poisoned) linked = linkClickInvocationSerialization(messageId, event, marker);
+      poisoned = messageId ? ambiguousMessageIds.has(messageId) : false;
       const count = messageId ? (serializedCounts.get(messageId) || 0) + 1 : 0;
       if (messageId) serializedCounts.set(messageId, count);
       let status = 'unlinked';
       let reason = 'no-invocation-lineage';
       if (poisoned) {
         status = 'ambiguous';
-        reason = 'duplicate-message-id';
+        reason = ambiguityReasonsByMessageId.get(messageId) || 'duplicate-message-id';
       } else if (linked) {
         status = 'linked';
         reason = null;
+      } else if (marker) {
+        status = 'ambiguous';
+        reason = event?.type === 'track' ? 'unbound-invocation-marker' : 'non-track-invocation-marker';
       }
       if (linked && count > 1) {
         status = 'ambiguous';
@@ -326,6 +443,7 @@ export async function installReplayPageHook(config, injectedScope) {
         reason,
         scenarioId: linked?.scenarioId || null,
         invocationId: linked?.invocationId || null,
+        lineageSource: linked?.lineageSource || null,
         activeScenarioIdAtSerialization: active?.scenarioId || null,
         messageId: messageId ? await redactedValue(messageId) : null,
         requestUrl: cleanUrl(requestUrl),
@@ -334,7 +452,7 @@ export async function installReplayPageHook(config, injectedScope) {
       if (!installed) return;
       if (messageId && ambiguousMessageIds.has(messageId)) {
         record.status = 'ambiguous';
-        record.reason = 'duplicate-message-id';
+        record.reason = ambiguityReasonsByMessageId.get(messageId) || 'duplicate-message-id';
         record.scenarioId = null;
         record.invocationId = null;
       }
@@ -345,27 +463,106 @@ export async function installReplayPageHook(config, injectedScope) {
       }
     })());
   };
+  const processEventbusBody = (body, requestUrl) => {
+    if (typeof body !== 'string') {
+      if (outstandingMarkerInvocations().length) {
+        return refuseUnsafeEventbusBody('uninspectable eventbus body with an outstanding invocation marker');
+      }
+      return body;
+    }
+    let parsed;
+    try {
+      parsed = JSON.parse(body);
+    } catch (error) {
+      if (body.includes(invocationMarkerKey)) {
+        throw new Error(`invocation marker could not be removed: ${error.message}`);
+      }
+      return body;
+    }
+    let events = [];
+    if (Array.isArray(parsed?.batch)) events = parsed.batch;
+    else if (Array.isArray(parsed)) events = parsed;
+    else if (parsed && typeof parsed === 'object') events = [parsed];
+    let markerRemoved = false;
+    events.forEach((event) => {
+      const properties = event?.properties;
+      const propertiesMarker = properties && Object.hasOwn(properties, invocationMarkerKey);
+      const envelopeMarker = event && Object.hasOwn(event, invocationMarkerKey);
+      const hasMarker = propertiesMarker || envelopeMarker;
+      const marker = propertiesMarker ? properties[invocationMarkerKey] : event?.[invocationMarkerKey];
+      if (hasMarker) {
+        if (propertiesMarker) delete properties[invocationMarkerKey];
+        if (envelopeMarker) delete event[invocationMarkerKey];
+        markerRemoved = true;
+        settleInvocationMarker(invocationsByMarker.get(marker));
+      }
+      observeSerialized(event, requestUrl, marker);
+    });
+    const forwardedBody = markerRemoved ? JSON.stringify(parsed) : body;
+    if (forwardedBody.includes(invocationMarkerKey)) {
+      return refuseUnsafeEventbusBody('eventbus body retained a reserved invocation marker');
+    }
+    return forwardedBody;
+  };
 
   const trackWrapper = async function replayTrackWrapper(...args) {
     if (!installed || !active || !interactionDispatchActive) return original.track.apply(this, args);
-    if (active.invocationPending) throw new Error('concurrent tracker invocation is ambiguous');
+    const overlapping = active.invocationPending || active.invocationAwaiting;
+    if (overlapping) {
+      poisonInvocation(overlapping, 'multiple-tracker-invocations');
+      const invocationId = `${active.scenarioId}:${++invocationCounter}`;
+      invocations.push({
+        scenarioId: active.scenarioId,
+        invocationId,
+        status: 'ambiguous',
+        reason: 'multiple-tracker-invocations',
+      });
+      return original.track.apply(this, args);
+    }
     const invocationId = `${active.scenarioId}:${++invocationCounter}`;
-    active.invocationPending = invocationId;
-    invocations.push({ scenarioId: active.scenarioId, invocationId });
+    const marker = `${config.targetMarker}:${invocationId}`;
+    const taggedArgs = taggedTrackArgs(args, marker);
+    if (!taggedArgs) {
+      invocations.push({
+        scenarioId: active.scenarioId,
+        invocationId,
+        status: 'ambiguous',
+        reason: 'unmarkable-tracker-invocation',
+      });
+      return original.track.apply(this, args);
+    }
+    let resolveMarker;
+    const markerPromise = new Promise((resolveMarkerPromise) => { resolveMarker = resolveMarkerPromise; });
+    const invocation = {
+      invocationId, marker, markerConsumed: false, markerPromise, resolveMarker, status: 'pending',
+    };
+    active.invocationPending = invocation;
+    invocationsByMarker.set(marker, invocation);
+    invocations.push(invocation);
     try {
-      return await original.track.apply(this, args);
+      const result = await original.track.apply(this, taggedArgs);
+      const alreadyLinked = [...byMessageId.values()]
+        .some((entry) => entry.invocationId === invocationId);
+      if (active?.invocationPending === invocation && !alreadyLinked) {
+        invocation.status = 'awaiting-serialization';
+        active.invocationAwaiting = invocation;
+      } else if (alreadyLinked) {
+        invocation.status = 'linked';
+      }
+      return result;
     } finally {
-      if (active?.invocationPending === invocationId) active.invocationPending = null;
+      if (active?.invocationPending === invocation) active.invocationPending = null;
     }
   };
   const dispatchWrapper = function replayDispatchWrapper(event, ...args) {
-    const invocationId = active?.invocationPending;
+    const invocationId = active?.invocationPending?.invocationId;
     if (installed && invocationId && event?.type === 'track') {
       const messageId = event.messageId;
       const record = {
         scenarioId: active.scenarioId,
         invocationId,
         messageIdPresent: typeof messageId === 'string' && Boolean(messageId),
+        lineageSource: 'dispatch',
       };
       if (!record.messageIdPresent) record.status = 'ambiguous';
       else if (byMessageId.has(messageId) || ambiguousMessageIds.has(messageId)) {
@@ -400,7 +597,6 @@ export async function installReplayPageHook(config, injectedScope) {
     if (holdNextTransport) {
       holdNextTransport = false;
       const receiver = this;
-      const args = arguments;
       return new Promise((resolveCall, rejectCall) => {
         const transport = {
           released: false,
@@ -408,31 +604,31 @@ export async function installReplayPageHook(config, injectedScope) {
             if (this.released) return;
             this.released = true;
             if (heldTransport === this) heldTransport = null;
-            eventbusEntries(options?.body).forEach((event) => observeSerialized(event, requestUrl));
-            try { resolveCall(await original.fetch.apply(receiver, args)); } catch (error) { rejectCall(error); }
+            const forwardedOptions = { ...options, body: processEventbusBody(options?.body, requestUrl) };
+            try { resolveCall(await original.fetch.call(receiver, input, forwardedOptions)); } catch (error) { rejectCall(error); }
           },
         };
         heldTransport = transport;
       });
     }
-    eventbusEntries(options?.body).forEach((event) => observeSerialized(event, requestUrl));
+    const forwardedOptions = { ...options, body: processEventbusBody(options?.body, requestUrl) };
     if (transportPolicy === 'abort') {
       if (scope.Response) return new scope.Response(null, { status: 204 });
       return { ok: true, status: 204, __abortedByHarness: true };
     }
     if (transportPolicy === 'test-sink') {
-      return original.fetch.call(this, config.testSinkUrl, options);
+      return original.fetch.call(this, config.testSinkUrl, forwardedOptions);
     }
-    return original.fetch.apply(this, arguments);
+    return original.fetch.call(this, input, forwardedOptions);
   };
   const sendBeaconWrapper = function replaySendBeaconWrapper(requestUrl, body) {
     if (!installed || !endpoint.test(String(requestUrl || ''))) {
       return original.sendBeacon.apply(this, arguments);
     }
-    eventbusEntries(body).forEach((event) => observeSerialized(event, requestUrl));
+    const forwardedBody = processEventbusBody(body, requestUrl);
     if (transportPolicy === 'abort') return true;
-    if (transportPolicy === 'test-sink') return original.sendBeacon.call(this, config.testSinkUrl, body);
-    return original.sendBeacon.apply(this, arguments);
+    if (transportPolicy === 'test-sink') return original.sendBeacon.call(this, config.testSinkUrl, forwardedBody);
+    return original.sendBeacon.call(this, requestUrl, forwardedBody);
   };
   const xhrOpenWrapper = function replayXhrOpenWrapper(method, requestUrl, ...args) {
     xhrUrls.set(this, String(requestUrl || ''));
@@ -443,9 +639,9 @@ export async function installReplayPageHook(config, injectedScope) {
   const xhrSendWrapper = function replayXhrSendWrapper(body) {
     const requestUrl = xhrUrls.get(this) || '';
     if (!installed || !endpoint.test(requestUrl)) return original.xhrSend.apply(this, arguments);
-    eventbusEntries(body).forEach((event) => observeSerialized(event, requestUrl));
+    const forwardedBody = processEventbusBody(body, requestUrl);
     if (transportPolicy === 'abort') return undefined;
-    return original.xhrSend.apply(this, arguments);
+    return original.xhrSend.call(this, forwardedBody);
   };
 
   webAnalytics.track = trackWrapper;
@@ -490,6 +686,47 @@ export async function installReplayPageHook(config, injectedScope) {
     if (!installed) return;
     const transportToRelease = heldTransport;
     heldTransport = null;
+    if (transportToRelease) void transportToRelease.release();
+    const markerDrain = outstandingMarkerInvocations();
+    if (markerDrain.length) {
+      interactionDispatchSequence += 1;
+      interactionDispatchActive = false;
+      if (webAnalytics.track === trackWrapper) webAnalytics.track = original.track;
+      if (analytics._dispatch === dispatchWrapper) analytics._dispatch = original.dispatch;
+      const waitForDrain = Promise.all(markerDrain.map((invocation) => invocation.markerPromise));
+      const drainTimeout = new Promise((resolveDrain) => {
+        (scope.setTimeout || setTimeout)(resolveDrain, config.markerDrainTimeoutMs || 1000);
+      });
+      await Promise.race([waitForDrain, drainTimeout]);
+      if (outstandingMarkerInvocations().length) {
+        active = null;
+        scope.clearInterval(timer);
+        scope.removeEventListener?.('pagehide', pagehide);
+        scope.removeEventListener?.('click', beginInteractionDispatch, true);
+        scope.document?.removeEventListener?.('click', preventNavigation, true);
+        scope.document?.removeEventListener?.('submit', preventSubmit, true);
+        const cleanup = {
+          targetMarker: config.targetMarker,
+          reason: `${reason}:marker-drain-timeout`,
+          restored: false,
+          cleared: {
+            byMessageId: byMessageId.size,
+            ambiguousMessageIds: ambiguousMessageIds.size,
+            ambiguityReasonsByMessageId: ambiguityReasonsByMessageId.size,
+            invocationsByMarker: invocationsByMarker.size,
+            dispatchesByMessageId: dispatchesByMessageId.size,
+            serializedByMessageId: serializedByMessageId.size,
+            serializedCounts: serializedCounts.size,
+            invocations: invocations.length,
+            dispatches: dispatches.length,
+            serialized: serialized.length,
+            pendingSanitizers: pendingSanitizers.size,
+          },
+        };
+        try { scope.sessionStorage?.setItem('adobe-migration-replay-cleanup', JSON.stringify(cleanup)); } catch { /* best effort */ }
+        return cleanup;
+      }
+    }
     installed = false;
     active = null;
     interactionDispatchSequence += 1;
@@ -509,6 +746,8 @@ export async function installReplayPageHook(config, injectedScope) {
     if (scope.__adobeMigrationReplayTarget === config.targetMarker) delete scope.__adobeMigrationReplayTarget;
     byMessageId.clear();
     ambiguousMessageIds.clear();
+    ambiguityReasonsByMessageId.clear();
+    invocationsByMarker.clear();
     dispatchesByMessageId.clear();
     serializedByMessageId.clear();
     serializedCounts.clear();
@@ -532,6 +771,8 @@ export async function installReplayPageHook(config, injectedScope) {
       cleared: {
         byMessageId: byMessageId.size,
         ambiguousMessageIds: ambiguousMessageIds.size,
+        ambiguityReasonsByMessageId: ambiguityReasonsByMessageId.size,
+        invocationsByMarker: invocationsByMarker.size,
         dispatchesByMessageId: dispatchesByMessageId.size,
         serializedByMessageId: serializedByMessageId.size,
         serializedCounts: serializedCounts.size,
@@ -542,7 +783,7 @@ export async function installReplayPageHook(config, injectedScope) {
       },
     };
     try { scope.sessionStorage?.setItem('adobe-migration-replay-cleanup', JSON.stringify(cleanup)); } catch { /* best effort */ }
-    if (transportToRelease) void transportToRelease.release();
+    return cleanup;
   }
 
   const api = {
@@ -550,7 +791,7 @@ export async function installReplayPageHook(config, injectedScope) {
       if (!installed) throw new Error('replay hook is not installed');
       if (active) throw new Error(`scenario already active: ${active.scenarioId}`);
       if (!scenario?.scenarioId) throw new Error('scenarioId is required');
-      active = { ...scenario, invocationPending: null };
+      active = { ...scenario, invocationPending: null, invocationAwaiting: null };
     },
     deactivate() {
       active = null;
@@ -578,7 +819,14 @@ export async function installReplayPageHook(config, injectedScope) {
         active: Boolean(active && installed),
         installed,
         transportPolicy,
-        invocations: invocations.map((entry) => ({ ...entry })),
+        invocations: invocations.map((entry) => ({
+          scenarioId: entry.scenarioId,
+          invocationId: entry.invocationId,
+          status: entry.status,
+          reason: entry.reason || null,
+          messageId: entry.messageId || null,
+          markerConsumed: entry.markerConsumed ?? null,
+        })),
         dispatches: dispatches.map((entry) => ({ ...entry })),
         serialized: serialized.map((entry) => ({ ...entry })),
       };
@@ -588,6 +836,8 @@ export async function installReplayPageHook(config, injectedScope) {
         installed,
         byMessageId: byMessageId.size,
         ambiguousMessageIds: ambiguousMessageIds.size,
+        ambiguityReasonsByMessageId: ambiguityReasonsByMessageId.size,
+        invocationsByMarker: invocationsByMarker.size,
         dispatchesByMessageId: dispatchesByMessageId.size,
         serializedByMessageId: serializedByMessageId.size,
         serializedCounts: serializedCounts.size,

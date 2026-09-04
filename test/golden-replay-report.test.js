@@ -332,12 +332,12 @@ describe('complete golden replay report', () => {
     ] };
     const state = { status: 'complete', coverage: { total: 2, pending: 0 }, resume: { nextScenarioId: null }, outcomes: [
       {
-        scenarioId: 'one', pathname: '/events', status: 'captured', pageCasId: '/events',
+        scenarioId: 'one', pathname: '/events', status: 'captured', pageCasId: '/events/',
         payload: {
           type: 'track', event: 'content:interacted',
           properties: {
             object: 'content', action: 'interacted', ui_object: 'button',
-            page_cas_id: '/events', url: 'https://stage.erp.intuit.com/events',
+            page_cas_id: '/events/', url: 'https://stage.erp.intuit.com/events',
           },
         },
       },
@@ -355,7 +355,7 @@ describe('complete golden replay report', () => {
     expect(report.fields.find((row) => row.scenarioId === 'one' && row.field === 'page_cas_id'))
       .toMatchObject({
         category: 'expected-migration', policy: 'pathname-policy', match: true,
-        golden: 'CMSabc123', expected: '/events', got: '/events',
+        golden: 'CMSabc123', expected: '/events', got: '/events/',
         adjudication: expect.objectContaining({ owner: 'Adobe Migration Test', reviewDate: '2026-08-30' }),
       });
     expect(report.fields.find((row) => row.scenarioId === 'one' && row.field === 'url'))

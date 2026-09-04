@@ -15,7 +15,7 @@ const binding = {
   origin: 'https://stage.erp.intuit.com',
   profileId: 'dedicated-stage',
   chromeVersion: '151',
-  harnessVersion: 'complete-golden-v1',
+  harnessVersion: 'complete-golden-v2',
   sourceHashes: { scheduler: 'sha256:one' },
   consentState: 'resolved',
   authenticationState: 'authenticated',
@@ -31,6 +31,7 @@ const scenario = (scenarioId, status, locator = {}) => ({
   locator: { status, ...locator },
   preconditions: {},
   interaction: { type: status === 'passive' ? 'passive' : 'click', preventNavigation: true },
+  expected: { invocationCount: status === 'passive' ? 0 : 1, serializedCount: status === 'passive' ? 0 : 1 },
 });
 
 const manifest = () => ({
@@ -59,6 +60,7 @@ describe('complete golden replay scheduler', () => {
       scenarioId: 'tracked',
       locator: { trackId: 'cards:register', role: 'link', name: 'Register', exact: true },
       interaction: { testText: 'Adobe Migration Test', preventNavigation: true },
+      expected: { invocationCount: 1, serializedCount: 1 },
     });
     expect(buildQualificationScenario(semantic)).toMatchObject({
       locator: { region: 'main', role: 'button', name: 'Watch now', exact: true },
@@ -128,12 +130,12 @@ describe('complete golden replay scheduler', () => {
       } },
       pages: [{
         pathname: '/events',
-        events: [{ scenarioId: 'tracked', payload: { event: 'content:interacted', properties: { page_cas_id: '/events' } } }],
+        events: [{ scenarioId: 'tracked', payload: { event: 'content:interacted', properties: { page_cas_id: '/events/' } } }],
         outcomes: [{ scenarioId: 'tracked', status: 'captured', messageId: 'message-one', invocationId: 'invoke-one' }],
       }],
     };
     expect(validateQualificationCapture(capture, sourceScenario, binding.authorizationRef)).toMatchObject({
-      pageCasId: '/events', messageId: 'message-one', payload: { event: 'content:interacted' },
+      pageCasId: '/events/', messageId: 'message-one', payload: { event: 'content:interacted' },
     });
     const first = captureDeploymentFingerprint(capture);
     capture.provenance.global.capturedAt = 'time-two';
@@ -212,13 +214,13 @@ describe('complete golden replay scheduler', () => {
   it('resets every scenario by navigating to the exact reviewed stage page', () => {
     const origin = 'https://stage.erp.intuit.com';
     expect(recoveryTargetUrl('https://quickbooks.intuit.com/', origin, '/events'))
-      .toBe('https://stage.erp.intuit.com/events');
+      .toBe('https://stage.erp.intuit.com/events/');
     expect(recoveryTargetUrl('https://stage.erp.intuit.com/events', origin, '/events'))
-      .toBe('https://stage.erp.intuit.com/events');
+      .toBe('https://stage.erp.intuit.com/events/');
     expect(recoveryTargetUrl('https://stage.erp.intuit.com/events#schedule', origin, '/events'))
-      .toBe('https://stage.erp.intuit.com/events');
+      .toBe('https://stage.erp.intuit.com/events/');
     expect(recoveryTargetUrl('https://stage.erp.intuit.com/events?source=test', origin, '/events'))
-      .toBe('https://stage.erp.intuit.com/events');
+      .toBe('https://stage.erp.intuit.com/events/');
     expect(() => recoveryTargetUrl('https://stage.erp.intuit.com/events', 'https://example.com', '/events'))
       .toThrow(/exact stage origin/i);
   });

@@ -14,6 +14,9 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
   THRESHOLD, assertIntegrity, gatedMatch, gatedSpecs, normalizeValue, presenceSpecs, resolveWant,
 } from './oracle-lib.mjs';
+import {
+  REPLAY_INVOCATION_MARKER_KEY, REPLAY_LINEAGE_POLICY_VERSION, replayPathMatches,
+} from './live-replay-harness.mjs';
 
 const DEFAULT_EXPECTED_ORIGIN = 'https://stage.erp.intuit.com';
 const DEFAULT_MAX_CAPTURE_AGE_MS = 24 * 60 * 60 * 1000;
@@ -434,7 +437,9 @@ function compareFields(entry, capturedPayload) {
     let policy = 'exact';
     if (gated) {
       policyExpectation = resolveWant(gated, entry.page, rawProduction);
-      policyEqual = gatedMatch(gated, policyExpectation, actualStage);
+      policyEqual = gated.equalsPathname
+        ? replayPathMatches(actualStage, policyExpectation)
+        : gatedMatch(gated, policyExpectation, actualStage);
       policy = gated.equalsPathname ? 'equals-pathname' : 'gated';
     } else if (presence) {
       policyExpectation = '‹present›';
@@ -442,7 +447,7 @@ function compareFields(entry, capturedPayload) {
       policy = 'presence';
     } else if (path === 'properties.page_cas_id') {
       policyExpectation = entry.page || '/';
-      policyEqual = exactEqual(policyExpectation, actualStage);
+      policyEqual = replayPathMatches(actualStage, policyExpectation);
       policy = 'equals-pathname';
     }
     return {
@@ -480,7 +485,13 @@ function validateReplayQualification(capture, global, { expectedOrigin, nowMs })
   if (Number.isNaN(qualifiedAt) || Number.isNaN(expiresAt) || expiresAt <= qualifiedAt
     || expiresAt - qualifiedAt > 24 * 60 * 60 * 1000 || nowMs > expiresAt) invalid.push('qualification.validity');
   if (qualification.mode !== 'dedicated') invalid.push('qualification.mode');
-  if (qualification.lineagePolicyVersion !== 'click-message-id-v2') invalid.push('qualification.lineagePolicyVersion');
+  if (qualification.lineagePolicyVersion !== REPLAY_LINEAGE_POLICY_VERSION) invalid.push('qualification.lineagePolicyVersion');
+  if (!isRecord(qualification.transportMarkerGuard)
+    || qualification.transportMarkerGuard.verified !== true
+    || qualification.transportMarkerGuard.detected !== false
+    || qualification.transportMarkerGuard.markerKey !== REPLAY_INVOCATION_MARKER_KEY) {
+    invalid.push('qualification.transportMarkerGuard');
+  }
   if (qualification.origin !== expectedOrigin) invalid.push('qualification.origin');
   if (qualification.consentState !== 'resolved') invalid.push('qualification.consentState');
   if (!['observe', 'abort', 'test-sink'].includes(qualification.transportPolicy)) invalid.push('qualification.transportPolicy');
@@ -632,7 +643,7 @@ function inspectProvenance(captures, mode, {
     }
     const documentUrl = parsedUrl(provenance.document?.responseUrl);
     if (typeof provenance.document?.responseUrl === 'string'
-      && (!documentUrl || documentUrl.origin !== expectedOrigin || documentUrl.pathname !== page.pathname)) {
+      && (!documentUrl || documentUrl.origin !== expectedOrigin || !replayPathMatches(documentUrl.pathname, page.pathname))) {
       issues.push({
         code: 'DOCUMENT_URL_MISMATCH',
         pathname: page.pathname,
@@ -973,7 +984,7 @@ export function evaluateOfflineVerdict({
 
   const pageCasFailures = comparisons.filter((comparison) => {
     const field = comparison.fields.find((item) => item.path === 'properties.page_cas_id');
-    return !field || !field.actualPresent || field.actualStage !== comparison.pathname;
+    return !field || !field.actualPresent || !replayPathMatches(field.actualStage, comparison.pathname);
   }).map((comparison) => ({
     scenarioId: comparison.scenarioId,
     pathname: comparison.pathname,
