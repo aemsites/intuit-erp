@@ -65,6 +65,17 @@ beforeEach(() => {
     disconnect() {}
   };
   window.MktoForms2 = {
+    whenReady: vi.fn((cb) => {
+      queueMicrotask(() => {
+        const formId = document.querySelector('[id^="mktoForm_"]')?.id?.replace('mktoForm_', '');
+        if (!formId) return;
+        const el = document.getElementById(`mktoForm_${formId}`);
+        cb({
+          getId: () => formId,
+          getFormElem: () => (el ? [el] : []),
+        });
+      });
+    }),
     loadForm: vi.fn((host, munchkin, formId, cb) => {
       // simulate Marketo rendering its button row into the form element
       const el = document.getElementById(`mktoForm_${formId}`);
@@ -85,6 +96,7 @@ beforeEach(() => {
           Company: 'Bright Path',
           ...hiddenFields,
         }),
+        onSubmit: vi.fn(),
       });
     }),
   };

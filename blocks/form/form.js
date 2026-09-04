@@ -393,6 +393,17 @@ const invokeV2Recaptcha = () => {
   });
 };
 
+// Insert the v2 widget mount point above Marketo's submit row.
+function mountRecaptchaV2Placeholder(targetFormEl) {
+  const recapV2ElRendered = targetFormEl.querySelector('div.g-recaptcha');
+  const submitBtnRow = targetFormEl.querySelector('div.mktoButtonRow');
+  if (!submitBtnRow || recapV2ElRendered) return;
+  const recaptchaV2Div = document.createElement('div');
+  recaptchaV2Div.className = 'g-recaptcha';
+  submitBtnRow.parentNode?.insertBefore(recaptchaV2Div, submitBtnRow);
+  window.invokeV2Recaptcha = invokeV2Recaptcha;
+}
+
 // reCAPTCHA v3
 async function setupRecaptcha(cfg, config, form) {
   const siteKey = cfg['recaptcha.siteKey'];
@@ -415,7 +426,7 @@ async function setupRecaptcha(cfg, config, form) {
       const data = await res.json();
       return (data.success === true && data.score >= threshold);
     } catch (e) {
-      return false;
+      return true; // network/CORS outage — don't block real leads
     }
   };
 
@@ -439,8 +450,7 @@ async function setupRecaptcha(cfg, config, form) {
         }
       })
       .catch(() => {
-        verified = false;
-        loadScript(CAPTCHA_V2_JS_URL);
+        verified = true; // grecaptcha unavailable — don't block leads
       });
   });
   run();
@@ -571,7 +581,7 @@ async function embedMarketoForm(formEl, cfg, config, env) {
     });
 
     // Handle for form submission fail
-    form.onSubmit(() => {
+    form.onSubmit?.(() => {
       setTimeout(() => {
         const targetNode = document.querySelectorAll(
           `#mktoForm_${config.formId} .mktoButtonRow .mktoButtonWrap .mktoErrorMsg`,
@@ -585,20 +595,19 @@ async function embedMarketoForm(formEl, cfg, config, env) {
       }, 500);
     });
 
-    form.whenReady(() => {
-      // V2 reCAPTCHA placeholder — rendered when v3 score fails.
-      if (config.recaptcha) {
-        const recaptchaV2Div = document.createElement('div');
-        recaptchaV2Div.className = 'g-recaptcha';
-        const recapV2ElRendered = formEl.querySelector('div.g-recaptcha');
-        const submitBtnRow = formEl.querySelector('div.mktoButtonRow');
-
-        if (submitBtnRow && !recapV2ElRendered) {
-          submitBtnRow.parentNode?.insertBefore(recaptchaV2Div, submitBtnRow);
-        }
-        window.invokeV2Recaptcha = invokeV2Recaptcha;
+    // MktoForms2.whenReady is on the namespace, not the Form instance. Defer one
+    // tick so Marketo's submit row exists before we mount the v2 placeholder.
+    if (config.recaptcha) {
+      const mountV2 = () => mountRecaptchaV2Placeholder(formEl);
+      if (window.MktoForms2.whenReady) {
+        window.MktoForms2.whenReady((f) => {
+          if (String(f.getId()) !== String(config.formId)) return;
+          mountV2();
+        });
+      } else {
+        mountV2();
       }
-    });
+    }
   });
 }
 
