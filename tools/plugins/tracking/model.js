@@ -59,6 +59,13 @@ export function resolveEditorPath({ contextPath = '', search = '' } = {}) {
   return cleanPath(withoutHtml);
 }
 
+export function resolveDocumentPath({ repo = '', path = '/' } = {}) {
+  const repoSegment = String(repo).trim().replace(/^\/+|\/+$/g, '');
+  const pathSegments = cleanPath(path).split('/').filter(Boolean);
+  if (repoSegment && pathSegments[0] !== repoSegment) pathSegments.unshift(repoSegment);
+  return pathSegments.length ? `/${pathSegments.join('/')}/` : '/';
+}
+
 function rowMatches(row, path, id) {
   return cleanPath(row.path) === cleanPath(path) && cleanValue(row.id) === cleanValue(id);
 }

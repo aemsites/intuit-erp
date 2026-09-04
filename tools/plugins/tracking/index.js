@@ -6,21 +6,22 @@ import {
   createTrackingInspectorClient,
   trackingPreviewOrigin,
   trackingProbeUrl,
-} from './bridge.js?v=20260904.4';
+} from './bridge.js?v=20260904.5';
 import {
   TRACKING_SOURCE_PATH,
   createTrackingApi,
   resolveTrackingRef,
-} from './api.js?v=20260904.4';
-import { publishReviewedSheet, saveAndPreviewOverride } from './delivery.js?v=20260904.4';
+} from './api.js?v=20260904.5';
+import { publishReviewedSheet, saveAndPreviewOverride } from './delivery.js?v=20260904.5';
 import {
   OVERRIDE_FIELDS,
   applyOverride,
   comparisonRows,
   findOverride,
+  resolveDocumentPath,
   resolveEditorPath,
   validateOverride,
-} from './model.js?v=20260904.4';
+} from './model.js?v=20260904.5';
 
 const FIELD_LABELS = {
   object: 'Object',
@@ -126,7 +127,11 @@ async function collectInventory() {
 
 async function loadProbe() {
   state.selected = null;
-  setStatus(`Rendering tracking properties for ${state.path}…`, 'pending');
+  const documentPath = resolveDocumentPath({
+    repo: state.context.repo,
+    path: state.context.path || state.path,
+  });
+  setStatus(`Rendering tracking properties for ${documentPath}…`, 'pending');
   const targetOrigin = trackingPreviewOrigin({
     context: state.context,
     ref: state.ref,
@@ -155,7 +160,7 @@ async function loadProbe() {
   });
   await collectInventory();
   setStatus(
-    `Found ${state.inventory.length} trackable interactions for ${state.path}.`,
+    `Found ${state.inventory.length} trackable interactions for ${documentPath}.`,
     'ok',
   );
 }
