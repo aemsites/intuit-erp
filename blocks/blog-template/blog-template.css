@@ -704,10 +704,6 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
   margin: 0 -30px;
 }
 
-.blog-article .highlight .highlight-inner:has(> p .icon[class*="icon-quick-answer"]) {
-  display: flex;
-}
-
 .blog-article .video-wrapper {
   margin: 2rem 0;
 }
