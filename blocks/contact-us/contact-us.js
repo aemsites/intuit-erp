@@ -173,8 +173,11 @@ export default async function initContactUs({ requestLivePerson } = {}) {
   let vendorInviteSuppressed = false;
   let vendorInviteObserverTimeout;
   let proactiveStartTimeout;
+  let livePersonApiInterval;
   let vendorInviteObserver;
   let livePersonObserver;
+  let livePersonEventsBound = false;
+  let livePersonEngagementId;
 
   function stopVendorInviteObserver() {
     vendorInviteObserver?.disconnect();
@@ -197,14 +200,32 @@ export default async function initContactUs({ requestLivePerson } = {}) {
 
   function startRenderedEngagement() {
     const container = chatTarget?.querySelector('.LPMcontainer');
-    const engagement = container?.querySelector('[data-lp-event="click"], button, [role="button"]');
-    if (!proactiveActivation || livePersonStarted || !engagement) return;
+    const renderer = window.lpTag?.taglets?.rendererStub;
+    if (!proactiveActivation || livePersonStarted || !container
+      || !livePersonEngagementId || typeof renderer?.click !== 'function') return;
+    if (!renderer.click(livePersonEngagementId)) return;
     livePersonStarted = true;
     suppressVendorInvite();
-    engagement.click();
     window.clearTimeout(proactiveStartTimeout);
     livePersonObserver?.disconnect();
     window.dispatchEvent(new CustomEvent(LIVEPERSON_FACADE_STARTED));
+  }
+
+  function bindLivePersonEvents() {
+    if (livePersonEventsBound || typeof window.lpTag?.events?.bind !== 'function') return false;
+    livePersonEventsBound = true;
+    window.clearInterval(livePersonApiInterval);
+    window.lpTag.events.bind('LP_OFFERS', 'OFFER_DISPLAY', (data) => {
+      if (Number(data?.engagementType) !== 5 || !data?.engagementId) return;
+      livePersonEngagementId = data.engagementId;
+      startRenderedEngagement();
+    });
+    return true;
+  }
+
+  function watchLivePersonEvents() {
+    if (bindLivePersonEvents() || livePersonApiInterval) return;
+    livePersonApiInterval = window.setInterval(bindLivePersonEvents, 50);
   }
 
   function enableProactiveActivation() {
@@ -215,8 +236,16 @@ export default async function initContactUs({ requestLivePerson } = {}) {
     proactiveStartTimeout = window.setTimeout(() => {
       if (livePersonStarted) return;
       proactiveActivation = false;
+      window.clearInterval(livePersonApiInterval);
+      livePersonApiInterval = undefined;
       stopVendorInviteObserver();
-      if (chatFacade) chatFacade.textContent = 'Chat is taking longer than expected';
+      if (chatFacade) {
+        const engagement = chatTarget?.querySelector(
+          '.LPMcontainer [data-lp-event="click"], .LPMcontainer button, .LPMcontainer [role="button"]',
+        );
+        chatFacade.hidden = !!engagement;
+        chatFacade.textContent = 'Chat is taking longer than expected';
+      }
       triggers[0]?.click();
     }, 15000);
     startRenderedEngagement();
@@ -226,6 +255,7 @@ export default async function initContactUs({ requestLivePerson } = {}) {
     if (autoStart) enableProactiveActivation();
     if (!chatNow || livePersonRequested) return;
     livePersonRequested = true;
+    watchLivePersonEvents();
     if (chatFacade) {
       chatFacade.disabled = true;
       chatFacade.textContent = 'Loading chat…';
@@ -238,13 +268,14 @@ export default async function initContactUs({ requestLivePerson } = {}) {
   livePersonObserver = chatTarget ? new MutationObserver(() => {
     const container = chatTarget.querySelector('.LPMcontainer');
     if (!container) return;
-    if (chatFacade) chatFacade.hidden = true;
     const engagement = container.querySelector('[data-lp-event="click"], button, [role="button"]');
     if (!engagement) return;
+    if (chatFacade) chatFacade.hidden = true;
     if (proactiveActivation) startRenderedEngagement();
     else livePersonObserver.disconnect();
   }) : null;
   livePersonObserver?.observe(chatTarget, { childList: true, subtree: true });
+  bindLivePersonEvents();
 
   function onKeydown(e) {
     // eslint-disable-next-line no-use-before-define
@@ -268,7 +299,6 @@ export default async function initContactUs({ requestLivePerson } = {}) {
     closeBtn.focus();
     document.addEventListener('keydown', onKeydown);
     document.addEventListener('click', onOutside, true);
-    requestChat();
   }
 
   const activateFromInvite = (event) => {
@@ -286,6 +316,7 @@ export default async function initContactUs({ requestLivePerson } = {}) {
     if (event.persisted) return;
     stopVendorInviteObserver();
     livePersonObserver?.disconnect();
+    window.clearInterval(livePersonApiInterval);
     window.clearTimeout(proactiveStartTimeout);
     window.removeEventListener(LIVEPERSON_FACADE_ACTIVATE, activateFromInvite);
     window.removeEventListener('pagehide', cleanup);
@@ -302,6 +333,7 @@ export default async function initContactUs({ requestLivePerson } = {}) {
 
   triggers.forEach((t) => t.addEventListener('click', () => open(t)));
   closeBtn.addEventListener('click', close);
+  chatFacade?.addEventListener('click', () => requestChat({ autoStart: true }));
 
   // Blog "Schedule a call" reuses the shared modal; close the widget first so
   // the two overlays don't stack.
