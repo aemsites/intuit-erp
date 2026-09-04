@@ -57,6 +57,16 @@
   border-radius: 14px;
 }
 
+/* In-article CTA promo: the default grid is 1fr 1fr, but 1fr is
+   minmax(auto, 1fr), so a long heading widens the copy column and squeezes the
+   image down to whatever space is left — making the thumbnail size swing with
+   heading length. Pin the image to a compact fixed column so it stays a small,
+   consistent thumbnail beside the copy. */
+.blog-article .media-text:not(.cyan, .agave, .center, .dark, .tint, .cards, .compare, .power) .media-row {
+  grid-template-columns: 93px minmax(0, 1fr);
+  gap: 24px;
+}
+
 .media-text .media-copy .media-eyebrow {
   margin-bottom: 16px;
   color: var(--text-muted);
