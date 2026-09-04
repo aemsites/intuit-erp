@@ -923,6 +923,13 @@ describe('live replay harness contracts', () => {
     await vi.waitFor(async () => expect((await hook.snapshot()).serialized).toHaveLength(2));
     const evidence = await hook.snapshot();
     expect(evidence.dispatches).toHaveLength(0);
+    expect(evidence.invocations).toEqual([expect.objectContaining({
+      scenarioId: scenario.scenarioId,
+      status: 'linked',
+    })]);
+    expect(() => assertReplayLineageEvidence(evidence, {
+      ...scenario, expected: { invocationCount: 1 },
+    })).not.toThrow();
     expect(evidence.serialized.map(({ status }) => status)).toEqual(['linked', 'unlinked']);
     expect(evidence.serialized[0]).toMatchObject({
       scenarioId: scenario.scenarioId,
