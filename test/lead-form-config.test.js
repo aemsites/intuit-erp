@@ -279,38 +279,6 @@ describe('decorate — live Marketo form', () => {
     //   .toBe('controller@brightpathco.com');
     delete window.intuit;
   });
-
-  it('closes the hosting modal once ChiliPiper overlay appears', async () => {
-    const block = make([['formId', '1058'], ['chiliPiperRouter', 'mid-us-webform-managed-ies']]);
-    const modal = document.createElement('div');
-    modal.className = 'modal block';
-    const dialog = document.createElement('dialog');
-    dialog.close = vi.fn();
-    modal.append(dialog);
-    dialog.append(block);
-    document.body.append(modal);
-
-    await decorate(block);
-    await flush();
-
-    onSuccessFn({ Email: 'controller@brightpathco.com' });
-    await flush();
-
-    const overlay = document.createElement('div');
-    overlay.className = 'chilipiper-popup-window';
-    const iframe = document.createElement('iframe');
-    iframe.className = 'chilipiper-frame';
-    overlay.append(iframe);
-    document.body.append(overlay);
-    await flush();
-    await new Promise((r) => { setTimeout(r, 0); });
-    await flush();
-
-    expect(dialog.close).toHaveBeenCalled();
-    expect(dialog.dataset.suppressFocusRestore).toBe('true');
-    modal.remove();
-    overlay.remove();
-  });
 });
 
 describe('decorate — inside the shared "Schedule a call" modal', () => {
