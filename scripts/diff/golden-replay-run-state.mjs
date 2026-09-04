@@ -33,6 +33,7 @@ function resumeBinding(manifest, binding) {
       origin: binding.origin,
       profileId: binding.profileId,
       chromeVersion: binding.chromeVersion,
+      viewport: binding.viewport,
     },
     harness: {
       version: binding.harnessVersion,

@@ -14,7 +14,7 @@ import { spawn } from 'node:child_process';
 import { dirname, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import {
-  canonicalReplayPath, replayPathMatches, validateCdpEndpoint,
+  REPLAY_VIEWPORT, assertReplayViewport, canonicalReplayPath, replayPathMatches, validateCdpEndpoint,
 } from './live-replay-harness.mjs';
 import { validateGoldenReplayManifest } from './golden-replay-manifest.mjs';
 import {
@@ -33,7 +33,7 @@ const RUNNER_PATH = resolve('scripts/diff/live-replay-runner.mjs');
 const SCENARIO_TIMEOUT_MS = 120000;
 const PROCESS_KILL_GRACE_MS = 5000;
 const MAX_QUALIFICATION_ATTEMPTS = 2;
-const HARNESS_VERSION = 'complete-golden-v2';
+const HARNESS_VERSION = 'complete-golden-v3';
 const SOURCE_FILES = [
   'scripts/diff/golden-replay-scheduler.mjs',
   'scripts/diff/golden-replay-run-state.mjs',
@@ -82,6 +82,18 @@ export function shouldRetryQualification(reason) {
 export function isRunBindingDrift(reason) {
   return /lineage qualification binding does not match|uniform (?:page )?deployment identity changed/i
     .test(String(reason || ''));
+}
+
+export function moduleGraphFailureReason(error) {
+  const message = safeError(error?.message || error);
+  if (!/does not provide an export named|failed to fetch dynamically imported module|error loading dynamically imported module|importing a module script failed/i.test(message)) {
+    return null;
+  }
+  return `stage module graph failed: ${message}`;
+}
+
+export function isRunInfrastructureFailure(reason) {
+  return /stage (?:module graph|runtime readiness) failed/i.test(String(reason || ''));
 }
 
 export function replayReadiness(scope) {
@@ -330,11 +342,13 @@ async function browserBinding(options) {
     const contexts = browser.contexts();
     if (contexts.length !== 1 || contexts[0].pages().length !== 1) throw new Error('dedicated CDP must have one context and one target');
     const page = contexts[0].pages()[0];
+    await page.setViewportSize(REPLAY_VIEWPORT);
     const preflight = await page.evaluate(() => {
       const loginUi = Boolean(document.querySelector('input[type="password"], form[action*="login" i], [data-testid*="login" i]'));
       const consentBanner = Boolean(document.querySelector('#onetrust-banner-sdk:not([style*="display: none"])'));
       return {
         origin: window.location.origin,
+        viewport: { width: window.innerWidth, height: window.innerHeight },
         authenticated: !loginUi,
         consentState: (typeof window.OneTrust === 'object' || typeof window.OneTrust === 'function') && !consentBanner
           ? 'resolved' : 'unresolved',
@@ -347,11 +361,13 @@ async function browserBinding(options) {
       || !preflight.utagReady || !preflight.trackerReady || !preflight.enqueueReady) {
       throw new Error('authenticated stage browser preflight failed');
     }
+    assertReplayViewport(preflight.viewport);
     return {
       origin: options.origin,
       profileId: options.profileId,
       chromeVersion: await browser.version(),
       harnessVersion: HARNESS_VERSION,
+      viewport: preflight.viewport,
       sourceHashes: Object.fromEntries(SOURCE_FILES.map((path) => [path, sha256(readFileSync(path))])),
       consentState: preflight.consentState,
       authenticationState: 'authenticated',
@@ -368,11 +384,43 @@ async function prepareTarget(options, pathname) {
     const contexts = browser.contexts();
     if (contexts.length !== 1 || contexts[0].pages().length !== 1) throw new Error('dedicated CDP must have one context and one target');
     const page = contexts[0].pages()[0];
-    const recoveryUrl = recoveryTargetUrl(page.url(), options.origin, pathname);
-    if (recoveryUrl) await page.goto(recoveryUrl, { waitUntil: 'domcontentloaded' });
-    await page.waitForFunction(() => window.__adobeMigrationReplay == null
-      && window.__adobeMigrationReplayTarget == null, null, { timeout: 15000 });
-    await page.waitForFunction(replayReadiness, null, { timeout: 45000 });
+    const moduleFailures = [];
+    let rejectModuleFailure;
+    const onPageError = (error) => {
+      const reason = moduleGraphFailureReason(error);
+      if (!reason) return;
+      moduleFailures.push(reason);
+      rejectModuleFailure?.(new Error(reason));
+    };
+    page.on('pageerror', onPageError);
+    try {
+      await page.setViewportSize(REPLAY_VIEWPORT);
+      const recoveryUrl = recoveryTargetUrl(page.url(), options.origin, pathname);
+      if (recoveryUrl) await page.goto(recoveryUrl, { waitUntil: 'domcontentloaded' });
+      if (moduleFailures.length) throw new Error(moduleFailures[0]);
+      const moduleFailure = new Promise((_, reject) => {
+        rejectModuleFailure = reject;
+      });
+      await Promise.race([
+        (async () => {
+          await page.waitForFunction(() => window.__adobeMigrationReplay == null
+            && window.__adobeMigrationReplayTarget == null, null, { timeout: 15000 });
+          await page.waitForFunction(replayReadiness, null, { timeout: 45000 });
+        })(),
+        moduleFailure,
+      ]);
+      const viewport = await page.evaluate(() => ({ width: window.innerWidth, height: window.innerHeight }));
+      assertReplayViewport(viewport);
+    } catch (error) {
+      const moduleFailure = moduleFailures[0] || moduleGraphFailureReason(error);
+      if (moduleFailure) throw new Error(moduleFailure);
+      if (/page\.waitForFunction: Timeout/i.test(error.message)) {
+        throw new Error(`stage runtime readiness failed after navigation: ${pathname}`);
+      }
+      throw error;
+    } finally {
+      page.off('pageerror', onPageError);
+    }
     const prepared = new URL(page.url());
     if (prepared.origin !== options.origin || !replayPathMatches(prepared.pathname, pathname)) {
       throw new Error(`dedicated target preparation failed: ${pathname}`);
@@ -547,14 +595,14 @@ export async function main(argv = process.argv.slice(2)) {
         };
         break;
       } catch (error) {
-        if (isRunBindingDrift(error.message)) {
+        if (isRunBindingDrift(error.message) || isRunInfrastructureFailure(error.message)) {
           writeReplayCheckpoint(options.out, state);
           throw error;
         }
         let refusalJournal = null;
         try { refusalJournal = JSON.parse(readFileSync(capturePath, 'utf8')); } catch { /* fallback below */ }
         const reason = qualificationFailureReason(error, refusalJournal, scenario.scenarioId);
-        if (isRunBindingDrift(reason)) {
+        if (isRunBindingDrift(reason) || isRunInfrastructureFailure(reason)) {
           writeReplayCheckpoint(options.out, state);
           throw new Error(reason);
         }

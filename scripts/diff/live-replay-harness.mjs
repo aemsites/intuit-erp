@@ -10,6 +10,7 @@ const QUALIFICATION_BINDINGS = [
   'profileId',
   'chromeVersion',
   'harnessVersion',
+  'viewport',
   'lineagePolicyVersion',
   'transportMarkerGuard',
   'origin',
@@ -22,6 +23,14 @@ const QUALIFICATION_BINDINGS = [
 ];
 export const REPLAY_LINEAGE_POLICY_VERSION = 'click-message-id-v3';
 export const REPLAY_INVOCATION_MARKER_KEY = '__adobe_migration_replay_invocation';
+export const REPLAY_VIEWPORT = Object.freeze({ width: 1440, height: 1200 });
+
+export function assertReplayViewport(viewport) {
+  if (viewport?.width !== REPLAY_VIEWPORT.width || viewport?.height !== REPLAY_VIEWPORT.height) {
+    throw new Error(`replay viewport must be ${REPLAY_VIEWPORT.width}x${REPLAY_VIEWPORT.height}`);
+  }
+  return REPLAY_VIEWPORT;
+}
 
 export function canonicalReplayPath(value) {
   if (typeof value !== 'string' || !value.startsWith('/') || value.includes('?') || value.includes('#')) {
