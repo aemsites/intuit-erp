@@ -35,8 +35,6 @@ button { cursor: pointer; }
 
 #app { min-height: 100vh; padding: 12px; }
 
-.tracking-workspace { display: block; }
-
 .tracking-rail {
   min-width: 0;
   overflow: hidden;

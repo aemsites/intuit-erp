@@ -1,4 +1,6 @@
-import { mergeOverride } from './model.js';
+// Query-versioned imports keep Canvas from mixing plugin releases.
+// eslint-disable-next-line import/no-unresolved
+import { mergeOverride } from './model.js?v=20260904.1';
 
 function canonicalValue(value) {
   if (Array.isArray(value)) return value.map((item) => canonicalValue(item));
