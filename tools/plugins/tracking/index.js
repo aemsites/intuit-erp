@@ -6,13 +6,13 @@ import {
   createTrackingInspectorClient,
   trackingPreviewOrigin,
   trackingProbeUrl,
-} from './bridge.js?v=20260904.3';
+} from './bridge.js?v=20260904.4';
 import {
   TRACKING_SOURCE_PATH,
   createTrackingApi,
   resolveTrackingRef,
-} from './api.js?v=20260904.3';
-import { publishReviewedSheet, saveAndPreviewOverride } from './delivery.js?v=20260904.3';
+} from './api.js?v=20260904.4';
+import { publishReviewedSheet, saveAndPreviewOverride } from './delivery.js?v=20260904.4';
 import {
   OVERRIDE_FIELDS,
   applyOverride,
@@ -20,7 +20,7 @@ import {
   findOverride,
   resolveEditorPath,
   validateOverride,
-} from './model.js?v=20260904.3';
+} from './model.js?v=20260904.4';
 
 const FIELD_LABELS = {
   object: 'Object',

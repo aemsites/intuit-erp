@@ -16,9 +16,10 @@ sparse overrides in `/tracking.json`.
 - Saves the source sheet, previews it through AEM, and publishes only after an explicit confirmation.
 
 The visible UI runs directly inside the native DA extension panel. A visually hidden probe iframe
-loads the current authenticated preview with martech disabled so the site runtime can enumerate the
-same decorated interactions that real clicks use. The probe is the only page that dynamically loads
-the message bridge; ordinary production and Canvas preview loads do not fetch editor code.
+loads the current public preview with martech disabled so the site runtime can enumerate the same
+decorated interactions that real clicks use. Feature-ref extensions already hosted on the
+authenticated DA preview keep that origin. The probe is the only page that dynamically loads the
+message bridge; ordinary production and Canvas preview loads do not fetch editor code.
 
 ## DA registration
 
@@ -26,7 +27,7 @@ Register the plugin in the site's `library` config sheet:
 
 | title | path | format | icon | experience | ref |
 | --- | --- | --- | --- | --- | --- |
-| Tracking Inspector | `/tools/plugins/tracking/index.html?v=20260904.3` |  | `/tools/plugins/tracking/tracking.svg` |  |  |
+| Tracking Inspector | `/tools/plugins/tracking/index.html?v=20260904.4` |  | `/tools/plugins/tracking/tracking.svg` |  |  |
 
 Use the `ref` column only while reviewing a feature branch. Leave it blank in the production
 registration so DA loads the plugin from `main`.

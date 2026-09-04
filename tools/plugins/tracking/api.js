@@ -1,6 +1,6 @@
 // Query-versioned imports keep Canvas from mixing plugin releases.
 // eslint-disable-next-line import/no-unresolved
-import { buildSheetFormData } from './model.js?v=20260904.3';
+import { buildSheetFormData } from './model.js?v=20260904.4';
 
 export const TRACKING_SOURCE_PATH = '/tracking.json';
 export const DA_ADMIN_ORIGIN = 'https://admin.da.live';
