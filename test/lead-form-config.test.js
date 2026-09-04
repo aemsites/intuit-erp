@@ -1,7 +1,7 @@
 import {
   describe, it, expect, vi, beforeEach,
 } from 'vitest';
-import decorate, { parseFormConfig } from '../blocks/form/form.js';
+import decorate, { parseFormConfig, MARKETO_ERROR_MSG_POLL_MS } from '../blocks/form/form.js';
 
 // Uncomment with the AEP/WebSDK integration in scripts/scripts.js and blocks/form/form.js.
 // // eslint-disable-next-line import/no-relative-packages
@@ -17,7 +17,11 @@ vi.mock('../scripts/aem.js', () => ({
 vi.mock('../scripts/placeholders.js', () => ({
   fetchPlaceholders: vi.fn(() => Promise.resolve({})),
 }));
+vi.mock('../scripts/experience.js', () => ({
+  experienceLog: vi.fn(),
+}));
 import { loadScript, getMetadata } from '../scripts/aem.js';
+import { experienceLog } from '../scripts/experience.js';
 import { getSiteConfig } from '../scripts/scripts.js';
 
 vi.mock('../scripts/scripts.js', () => ({
@@ -34,21 +38,25 @@ const RECAPTCHA_CFG = {
   'chilipiper.subdomain': 'intuitsales',
   'recaptcha.enabled': true,
   'recaptcha.siteKey': '6LeQ-test',
+  'recaptcha.v2SiteKey': '6LdTQ-test',
   'recaptcha.verifyUrl': 'https://marketingplatform.api.intuit.com/v3/captcha/verify',
   'recaptcha.apiKey': 'Intuit_APIKey intuit_apikey=test',
 };
 
 let onSuccessFn;
 let onValidateFn;
+let onSubmitFn;
 let submittable;
 let hiddenFields;
 beforeEach(() => {
   onSuccessFn = null;
   onValidateFn = null;
+  onSubmitFn = null;
   submittable = vi.fn();
   hiddenFields = {};
   // Uncomment with the AEP/WebSDK integration in scripts/scripts.js and blocks/form/form.js.
   // sendEvent.mockClear();
+  vi.mocked(experienceLog).mockClear();
   getSiteConfig.mockResolvedValue({
     'marketo.munchkin': '743-RZM-619',
     'chilipiper.subdomain': 'intuitsales',
@@ -57,7 +65,6 @@ beforeEach(() => {
   delete window.utag;
   delete window.grecaptcha;
   delete global.fetch;
-  window.placeholders = { default: {} };
   global.IntersectionObserver = class {
     constructor(cb) { this.cb = cb; }
 
@@ -67,24 +74,20 @@ beforeEach(() => {
   };
   window.MktoForms2 = {
     loadForm: vi.fn((host, munchkin, formId, cb) => {
-      // Simulate a measurable stacked Marketo form so disclaimer placement can
-      // distinguish the field rows from the submit row.
+      // simulate Marketo rendering its button row into the form element
       const el = document.getElementById(`mktoForm_${formId}`);
-      if (el) {
-        el.innerHTML = [
-          '<div class="mktoFormRow"><input type="text"></div>',
-          '<div class="mktoButtonRow">',
-          '<button class="mktoButton" type="submit">Schedule a call</button>',
-          '</div>',
-        ].join('');
-        el.querySelector('.mktoFormRow').getBoundingClientRect = () => ({ top: 0 });
-        el.querySelector('.mktoButtonRow').getBoundingClientRect = () => ({ top: 50 });
-      }
+      if (el) el.innerHTML = '<div class="mktoButtonRow"><div class="mktoButtonWrap"><button class="mktoButton" type="submit">Schedule a call</button></div></div>';
       cb({
         onSuccess: (fn) => { onSuccessFn = fn; },
         onValidate: (fn) => { onValidateFn = fn; },
+        onSubmit: (fn) => { onSubmitFn = fn; },
         submittable,
         addHiddenFields: (fields) => { hiddenFields = { ...hiddenFields, ...fields }; },
+        getId: () => formId,
+        getFormElem: () => {
+          const formEl = document.getElementById(`mktoForm_${formId}`);
+          return formEl ? [formEl] : [];
+        },
         getValues: () => ({
           Email: 'controller@brightpathco.com',
           FirstName: 'Dana',
@@ -236,16 +239,19 @@ describe('decorate — live Marketo form', () => {
     );
   });
 
-  it('hands off to ChiliPiper (prod args + xref) and fires the ECS lead track on success', async () => {
+  it('hands off to ChiliPiper (prod args + xref), shows thank-you, and fires the ECS lead track on success', async () => {
     const track = vi.fn();
     window.intuit = { tracking: { ecs: { webAnalytics: { track } } } };
     const block = make([['formId', '1058'], ['chiliPiperRouter', 'mid-us-webform-managed-ies']]);
+    document.body.append(block);
     await decorate(block);
     await flush();
     expect(onSuccessFn).toBeTypeOf('function');
 
     const result = onSuccessFn({ Email: 'controller@brightpathco.com', FirstName: 'Dana', Company: 'Bright Path' });
     expect(result).toBe(false); // suppress Marketo's default redirect
+    expect(block.querySelector('.form-success')).not.toBeNull();
+    expect(block.querySelector('form#mktoForm_1058')).toBeNull();
     await flush();
 
     expect(window.ChiliPiper.submit).toHaveBeenCalledWith(
@@ -272,6 +278,32 @@ describe('decorate — live Marketo form', () => {
     // expect(sendEvent.mock.calls[0][0].xdm.identityMap.Email[0].id)
     //   .toBe('controller@brightpathco.com');
     delete window.intuit;
+    block.remove();
+  });
+
+  it('logs a Marketo submission error when validation messages appear after submit', async () => {
+    const block = make([['formId', '1058']]);
+    document.body.append(block);
+    await decorate(block);
+    await flush();
+    expect(onSubmitFn).toBeTypeOf('function');
+
+    onSubmitFn();
+    const error = document.createElement('div');
+    error.className = 'mktoErrorMsg';
+    block.querySelector('.mktoButtonWrap').append(error);
+    await new Promise((r) => { setTimeout(r, MARKETO_ERROR_MSG_POLL_MS); });
+
+    expect(experienceLog).toHaveBeenCalledWith(
+      'error',
+      'MARKETOFORM_ISSUE_WITH_FORM_SUBMISSION',
+      expect.objectContaining({
+        formId: '1058',
+        leadXRefID: expect.any(String),
+        ivid: expect.any(String),
+      }),
+    );
+    block.remove();
   });
 });
 
@@ -344,10 +376,71 @@ describe('decorate — reCAPTCHA v3 gate', () => {
     expect(submittable).toHaveBeenLastCalledWith(true);
   });
 
-  it('blocks submit on a failing score', async () => {
+  it('blocks submit on a failing score when v2 is configured', async () => {
     await decorateWithRecaptcha([], lowScore);
     onValidateFn();
     expect(submittable).toHaveBeenLastCalledWith(false);
+  });
+
+  it('blocks submit when grecaptcha.getResponse throws on a stale widget id', async () => {
+    window.grecaptcha = {
+      ready: (fn) => fn(),
+      execute: vi.fn(() => Promise.resolve('score-token')),
+      getResponse: vi.fn(() => { throw new Error('stale widget'); }),
+      render: vi.fn((el) => {
+        el.setAttribute('data-captchaid', '1');
+        return 1;
+      }),
+      reset: vi.fn(),
+    };
+    getSiteConfig.mockResolvedValue(RECAPTCHA_CFG);
+    global.fetch = vi.fn(lowScore);
+    loadScript.mockImplementation(() => Promise.resolve());
+
+    const block = make([['formId', '1058'], ['recaptcha', 'true']]);
+    document.body.append(block);
+    await decorate(block);
+    await settle();
+
+    onValidateFn();
+    expect(submittable).toHaveBeenLastCalledWith(false);
+    block.remove();
+  });
+
+  it('fails open on a failing v3 score when recaptcha.v2SiteKey is not configured', async () => {
+    const cfgWithoutV2 = { ...RECAPTCHA_CFG };
+    delete cfgWithoutV2['recaptcha.v2SiteKey'];
+    getSiteConfig.mockResolvedValue(cfgWithoutV2);
+    mockGrecaptcha('score-token');
+    global.fetch = vi.fn(lowScore);
+    await decorate(make([['formId', '1058'], ['recaptcha', 'true']]));
+    await settle();
+    onValidateFn();
+    expect(submittable).toHaveBeenLastCalledWith(true);
+    expect(loadScript).not.toHaveBeenCalledWith(expect.stringContaining('onload=invokeV2Recaptcha'));
+  });
+
+  it('renders v2 when the script is already loaded (multi-form / deduped loadScript)', async () => {
+    const render = vi.fn(() => 1);
+    window.grecaptcha = {
+      ready: (fn) => fn(),
+      execute: vi.fn(() => Promise.resolve('score-token')),
+      render,
+      reset: vi.fn(),
+    };
+    getSiteConfig.mockResolvedValue(RECAPTCHA_CFG);
+    global.fetch = vi.fn(lowScore);
+    // v2 script already in head — loadScript resolves without re-firing onload.
+    loadScript.mockImplementation((src) => Promise.resolve());
+
+    const block = make([['formId', '1058'], ['recaptcha', 'true']]);
+    document.body.append(block);
+    await decorate(block);
+    await settle();
+
+    expect(block.querySelector('.g-recaptcha')).not.toBeNull();
+    expect(render).toHaveBeenCalled();
+    block.remove();
   });
 
   it('fails open (allows submit) when the verify endpoint is unreachable', async () => {

@@ -27,7 +27,7 @@ const round1 = (n) => Math.round(n * 10) / 10;
 // Per-call orchestrator outcomes (intuit_tid + ok/status/error) for perf payload + error logs.
 const orchestratorCallLog = [];
 
-function experienceLog(level, message, fields = {}) {
+export function experienceLog(level, message, fields = {}) {
   try {
     window.coreServiceAdapter?.logger?.[level]?.(message, fields);
   } catch { /* logging must never break the page */ }

@@ -8,8 +8,9 @@
  * successUrl, header, subheader, disclaimer, recaptcha (per-form v3 opt-in),
  * buttonLabel (overrides Marketo's own hardcoded submit button text).
  * Site-wide values (munchkin, chilipiper subdomain, script URLs, reCAPTCHA
- * site key/verify endpoint) come from /site-config.json via getSiteConfig() —
- * never authored per page, never hardcoded.
+ * keys/endpoints: recaptcha.enabled, recaptcha.siteKey, recaptcha.v2SiteKey,
+ * recaptcha.verifyUrl, recaptcha.apiKey, recaptcha.scoreThreshold) come from
+ * /site-config.json via getSiteConfig() — never authored per page, never hardcoded.
  *
  * Marketo instance: production by default. A page opts into a non-prod instance
  * with `marketo: dev` | `marketo: e2e` metadata (no hostname logic), which selects
@@ -21,6 +22,7 @@
  */
 import { loadScript, getMetadata, decorateIcons } from '../../scripts/aem.js';
 import { fetchPlaceholders } from '../../scripts/placeholders.js';
+import { experienceLog } from '../../scripts/experience.js';
 
 // Uncomment with the AEP/WebSDK integration in scripts/scripts.js.
 // // Vendored via git subtree at plugins/martech (see its README), not an
@@ -89,11 +91,14 @@ function marketoEnv() {
 // reCAPTCHA v3 constants
 const RECAPTCHA_API_SRC = 'https://www.google.com/recaptcha/api.js';
 const RECAPTCHA_DEFAULT_THRESHOLD = 0.3;
-const RECAPTCHA_MAX_ATTEMPTS = 3;
-const RECAPTCHA_RETRY_MS = 2000;
+const CAPTCHA_V2_JS_URL = 'https://www.google.com/recaptcha/api.js?onload=invokeV2Recaptcha&render=explicit&badge=bottomleft';
 
 // munchkin tag constants
 const MUNCHKIN_API_SRC = '//munchkin.marketo.net/munchkin.js';
+
+// Defer after onSubmit before checking for .mktoErrorMsg — Marketo injects validation
+// errors immediately after submit handling; 500ms covers that without a visible delay.
+export const MARKETO_ERROR_MSG_POLL_MS = 500;
 
 // getSiteConfig lives in scripts.js; import it dynamically so this block (which
 // scripts.js's graph pulls in for the schedule modal) doesn't form a static cycle.
@@ -349,8 +354,8 @@ function showThankYou(form, placeholders = {}) {
 // form would never close. ChiliPiper's overlay renders as a normal body-level element *underneath*
 // the still-open `<dialog>` (the browser promotes it to the top layer) and is dimmed by that
 // dialog's own `::backdrop`, so closing the dialog is what brings the calendar to the front.
-async function chiliPiperHandoff(router, form, dialog) {
-  const submitted = await submitChiliPiper(router, form.getValues());
+async function chiliPiperHandoff(router, form, formId, dialog) {
+  const submitted = await submitChiliPiper(router, { ...form.getValues(), formId });
   if (!submitted) return false;
   // submitChiliPiper is fire-and-forget, so close the dialog only once the overlay is really up —
   // closing unconditionally would leave a visitor with no calendar, no form and no error.
@@ -365,9 +370,69 @@ async function chiliPiperHandoff(router, form, dialog) {
   return true;
 }
 
+// Verify the recaptcha response on submit and allow form submissions when v2 passes.
+const verifyRecaptchaResponse = (formId) => {
+  const gcaptcha = document.querySelector(
+    `#mktoForm_${formId} .g-recaptcha`,
+  );
+  const { grecaptcha } = window;
+  if (gcaptcha && grecaptcha) {
+    try {
+      const captchaid = gcaptcha.getAttribute('data-captchaid');
+      const gcaptchaRes = grecaptcha.getResponse(
+        captchaid ? parseInt(captchaid, 10) : undefined,
+      );
+      if (gcaptchaRes.length !== 0) return true;
+    } catch (e) {
+      return false;
+    }
+  }
+  return false;
+};
+
+// Invoke recaptchaV2 and render challenge for user (global onload callback from CAPTCHA_V2_JS_URL).
+function createInvokeV2Recaptcha(v2SiteKey) {
+  return () => {
+    const { grecaptcha } = window;
+    if (!grecaptcha || !v2SiteKey) return;
+    const recaptachaV2Div = document.querySelectorAll('.g-recaptcha');
+    recaptachaV2Div.forEach((obj) => {
+      if (!obj.getAttribute('data-captchaid')) {
+        const widgetId1 = grecaptcha.render(obj, {
+          sitekey: v2SiteKey,
+          theme: 'light',
+        });
+        obj.setAttribute('data-captchaid', `${widgetId1}`);
+        grecaptcha.reset(widgetId1);
+      }
+    });
+  };
+}
+
+// Insert the v2 widget mount point above Marketo's submit row.
+function mountRecaptchaV2Placeholder(targetFormEl) {
+  const recapV2ElRendered = targetFormEl.querySelector('div.g-recaptcha');
+  const submitBtnRow = targetFormEl.querySelector('div.mktoButtonRow');
+  if (!submitBtnRow || recapV2ElRendered) return;
+  const recaptchaV2Div = document.createElement('div');
+  recaptchaV2Div.className = 'g-recaptcha';
+  submitBtnRow.parentNode?.insertBefore(recaptchaV2Div, submitBtnRow);
+}
+
+// loadScript dedupes by src, so the v2 script's onload only fires on first load. Register
+// the global callback, then render any new placeholders directly when grecaptcha is ready.
+async function loadRecaptchaV2Fallback(v2SiteKey) {
+  window.invokeV2Recaptcha = createInvokeV2Recaptcha(v2SiteKey);
+  await loadScript(CAPTCHA_V2_JS_URL);
+  if (window.grecaptcha) {
+    window.invokeV2Recaptcha?.();
+  }
+}
+
 // reCAPTCHA v3
-async function setupRecaptcha(cfg, config, form) {
+async function setupRecaptcha(cfg, config, form, formEl) {
   const siteKey = cfg['recaptcha.siteKey'];
+  const v2SiteKey = cfg['recaptcha.v2SiteKey'];
   const verifyUrl = cfg['recaptcha.verifyUrl'];
   const apiKey = cfg['recaptcha.apiKey'];
   if (!config.recaptcha || cfg['recaptcha.enabled'] === false || !siteKey || !verifyUrl || !apiKey) {
@@ -377,8 +442,6 @@ async function setupRecaptcha(cfg, config, form) {
   const parsed = parseFloat(cfg['recaptcha.scoreThreshold']);
   const threshold = Number.isFinite(parsed) ? parsed : RECAPTCHA_DEFAULT_THRESHOLD;
 
-  // Distinguish "endpoint says bot" (low/invalid score → block) from "endpoint
-  // unreachable" (network/CORS → allow, so an outage never drops real leads).
   const verify = async (token) => {
     try {
       const res = await fetch(verifyUrl, {
@@ -387,29 +450,44 @@ async function setupRecaptcha(cfg, config, form) {
         body: `response=${encodeURIComponent(token)}`,
       });
       const data = await res.json();
-      if (data.success === true) return data.score === undefined || data.score >= threshold;
-      return false; // expired/invalid/low-score token — refresh and retry
+      // Pass when verification succeeds and score meets threshold; otherwise show v2.
+      return (data.success === true && data.score >= threshold);
     } catch (e) {
-      return true;
+      return true; // network/CORS outage — don't block real leads
     }
   };
 
   let verified = false;
   form.onValidate(() => {
     syncFullNameHiddenFields(form);
+
+    if (!verified) {
+      const v2ElMount = document.querySelector(`#mktoForm_${config.formId} .g-recaptcha`);
+      if (v2ElMount) {
+        verified = verifyRecaptchaResponse(config.formId);
+      }
+    }
     form.submittable(verified);
   });
 
   await loadScript(`${RECAPTCHA_API_SRC}?render=${siteKey}`);
-  let attempts = 0;
   const run = () => window.grecaptcha?.ready(() => {
     window.grecaptcha.execute(siteKey, { action: '' })
       .then(async (token) => {
         verified = await verify(token);
-        attempts += 1;
-        if (!verified && attempts < RECAPTCHA_MAX_ATTEMPTS) setTimeout(run, RECAPTCHA_RETRY_MS);
+        if (!verified) {
+          if (!v2SiteKey) {
+            // v2 fallback cannot render without a site key — fail open; don't drop leads.
+            verified = true;
+          } else {
+            mountRecaptchaV2Placeholder(formEl);
+            await loadRecaptchaV2Fallback(v2SiteKey);
+          }
+        }
       })
-      .catch(() => { verified = true; }); // grecaptcha unavailable — don't block leads
+      .catch(() => {
+        verified = true; // grecaptcha unavailable — don't block leads
+      });
   });
   run();
 }
@@ -467,10 +545,11 @@ async function embedMarketoForm(formEl, cfg, config, env) {
   window.MktoForms2.loadForm(host, munchkin, config.formId, (form) => {
     // Get random UUID
     const leadXref = (window.crypto?.randomUUID ? window.crypto.randomUUID() : createUUID());
+    const ividVal = window?.utag_data?.ivid || getCookieValue('ivid') || '';
 
     // add hidden fields and populate values
     const hiddenFields = { Lead_XRef_ID__c: leadXref };
-    hiddenFields.IVID__c = window?.utag_data?.ivid || getCookieValue('ivid') || '';
+    hiddenFields.IVID__c = ividVal;
     hiddenFields.cID = getCidValue() || '';
     const customizedHiddenFields = getMappedHiddenFields(config);
     form.addHiddenFields?.({ ...hiddenFields, ...customizedHiddenFields });
@@ -500,7 +579,7 @@ async function embedMarketoForm(formEl, cfg, config, env) {
 
     // recaptcha
     if (config.recaptcha) {
-      setupRecaptcha(cfg, config, form);
+      setupRecaptcha(cfg, config, form, formEl);
     } else {
       form.onValidate(() => {
         syncFullNameHiddenFields(form);
@@ -524,7 +603,7 @@ async function embedMarketoForm(formEl, cfg, config, env) {
           || document.getElementById(`mktoForm_${form.getId?.()}`);
         const dialog = formElForDialog?.closest('dialog') || null;
         showThankYou(form, placeholders);
-        chiliPiperHandoff(config.chiliPiperRouter, form, dialog);
+        chiliPiperHandoff(config.chiliPiperRouter, form, config.formId, dialog);
       }
 
       // handling other use case like download file or redirect to success URL
@@ -536,6 +615,22 @@ async function embedMarketoForm(formEl, cfg, config, env) {
       // thank-you so a misconfigured handoff never leaves the visitor with nothing.
       const handled = canHandoff || !!config.downloadUrl || !!config.successUrl;
       return !handled;
+    });
+
+    // Handle for form submission fail
+    form.onSubmit?.(() => {
+      setTimeout(() => {
+        const targetNode = document.querySelectorAll(
+          `#mktoForm_${config.formId} .mktoButtonRow .mktoButtonWrap .mktoErrorMsg`,
+        )[0];
+        if (targetNode) {
+          experienceLog('error', 'MARKETOFORM_ISSUE_WITH_FORM_SUBMISSION', {
+            formId: config.formId,
+            leadXRefID: leadXref,
+            ivid: ividVal,
+          });
+        }
+      }, MARKETO_ERROR_MSG_POLL_MS);
     });
   });
 }
