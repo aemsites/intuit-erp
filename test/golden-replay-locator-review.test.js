@@ -273,6 +273,42 @@ describe('golden replay locator review', () => {
     expect(() => create(unstableIdentity)).toThrow(/stable candidate identity/i);
   });
 
+  it('matches reviewed same-origin href identities across the canonical trailing slash', () => {
+    const testInventory = inventory();
+    testInventory.pages[0].candidates[2].href = 'https://stage.erp.intuit.com/events/';
+    const reviewedOverrides = {
+      schemaVersion: 1,
+      reviewId: 'review-2026-09-04',
+      evidenceRef: 'inventory-v67.json',
+      decisions: [{
+        scenarioId: 'two',
+        page: '/events',
+        candidateIdentity: {
+          dataTrackId: 'duplicate:b',
+          accessibleName: 'Duplicate',
+          role: 'link',
+          region: 'main',
+          href: 'https://stage.erp.intuit.com/events',
+          block: '',
+        },
+        rationale: 'same reviewed Stage target before canonical slash enforcement',
+      }],
+    };
+    const review = createLocatorReview({
+      manifest: manifest(),
+      inventory: testInventory,
+      inventoryBytes: Buffer.from('inventory'),
+      trackingSheetBytes: Buffer.from('{"data":[]}'),
+      reviewedOverridesBytes: Buffer.from(JSON.stringify(reviewedOverrides)),
+    });
+
+    expect(review.scenarios[1]).toMatchObject({
+      status: 'proposed',
+      locator: { value: 'duplicate:b' },
+      evidence: { candidate: { href: 'https://stage.erp.intuit.com/events/' } },
+    });
+  });
+
   it('uses reviewed occurrence evidence to disambiguate identical authored targets', () => {
     const testInventory = inventory();
     testInventory.pages[0].candidates = [

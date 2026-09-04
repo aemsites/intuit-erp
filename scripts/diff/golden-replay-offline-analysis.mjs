@@ -5,6 +5,7 @@ import { chmodSync, readFileSync, writeFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { fieldRows } from './golden-replay-report.mjs';
 import { validateGoldenReplayManifest } from './golden-replay-manifest.mjs';
+import { replayPathMatches } from './live-replay-harness.mjs';
 
 const DEFAULT_GOLDEN = 'scripts/diff/fixtures/local/clicktrack-golden-customer.json';
 const DEFAULT_MANIFEST = 'scripts/diff/fixtures/local/clicktrack-golden-replay-manifest.json';
@@ -78,7 +79,7 @@ export function buildOfflineGoldenReplayAnalysis({ golden, manifest, state, devi
     const scenario = scenarios.get(outcome.scenarioId);
     const entry = entries.get(scenario.goldenRef.payloadFile);
     if (!entry) throw new Error(`golden payload mapping is missing: ${outcome.scenarioId}`);
-    if (outcome.payload?.properties?.page_cas_id === scenario.page) pageCasIdExact += 1;
+    if (replayPathMatches(outcome.payload?.properties?.page_cas_id, scenario.page)) pageCasIdExact += 1;
     if (entry.event !== outcome.payload?.event && outcome.locator?.trackId) {
       const goldenProperties = entry.fullPayload?.properties || {};
       const stageProperties = outcome.payload?.properties || {};
@@ -186,7 +187,7 @@ Generated ${analysis.generatedAt}. This is evidence and a non-applying correctio
 - Denominator: ${s.total}
 - Captured: ${s.captured}; pending: ${s.pending}; blocked: ${s.blocked}
 - Missing: ${s.missing}; unreproducible: ${s.unreproducible}; passive: ${s.passive}
-- Captured page_cas_id exact pathname: ${s.pageCasIdExact}/${s.captured}
+- Captured page_cas_id canonical pathname: ${s.pageCasIdExact}/${s.captured}
 - Click-metadata review items: ${s.clickMetadataReviewItems} (${s.clickMetadataBugs} bugs, ${s.clickMetadataInvestigations} investigations)
 - Environment/session-context differences: ${s.environmentContextRows}; missing fields: ${s.environmentMissingPresence}
 - Draft tracking-sheet rows: ${s.draftSheetRows}

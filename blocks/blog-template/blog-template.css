@@ -237,7 +237,7 @@
 .blog-article .blog-toc-list a {
   display: block;
   padding: 8px 20px 8px 24px;
-  color: var(--text-muted);
+  color: var(--text);
   font-size: var(--body-font-size-xxs);
   line-height: 16px;
   font-weight: 600;
@@ -627,6 +627,22 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
   margin: 0 auto;
 }
 
+/* Standalone in-post images sit in their own paragraph; give them vertical
+   breathing room so they don't hug the surrounding text, quotes, or headings:
+   80px above, 40px below. Survives the trailing-margin reset so an image that
+   ends a section keeps its gap to the following content. */
+.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail) > .default-content-wrapper > p:has(picture) {
+  margin: 80px 0 40px;
+}
+
+/* The trailing-margin reset above outweighs the image rule on specificity, so
+   an image that ends a section would lose its bottom gap. Re-assert the 40px
+   with a :last-child-qualified override, matching the highlight/testimonial
+   handling below. */
+.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail) > .default-content-wrapper > p:has(picture):last-child {
+  margin-bottom: 40px;
+}
+
 @media (width < 1024px) {
   .blog-article > .blog-hero > .default-content-wrapper > .blog-byline-tag,
   .blog-article > .blog-hero > .default-content-wrapper > .blog-byline-meta {
@@ -634,7 +650,9 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
   }
 }
 
-.blog-article > .section > .default-content-wrapper :is(ul, ol) {
+/* body-content lists only — exclude the rails so this article styling doesn't
+   leak into the TOC's <ol> (its own .blog-toc-list rules are less specific) */
+.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail) > .default-content-wrapper :is(ul, ol) {
   margin: 0 0 20px;
   padding-left: 40px;
   font-size: 20px;
@@ -642,7 +660,7 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
   color: #000;
 }
 
-.blog-article > .section > .default-content-wrapper li { margin: 0 0 8px; }
+.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail) > .default-content-wrapper li { margin: 0 0 8px; }
 
 .blog-article > .section > .default-content-wrapper :is(h2, h3),
 .case-study > .section > .default-content-wrapper :is(h2, h3) {
@@ -695,7 +713,7 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
 }
 
 .blog-article .video-wrapper {
-  margin: 2rem 0;
+  margin: 40px 0;
 }
 
 :is(.blog-article, .case-study) .testimonial:not(.video, .simple) {
@@ -719,8 +737,6 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
 
 @media (width >= 1024px) {
   :is(.blog-article, .case-study) .testimonial:not(.video, .simple) {
-    width: calc(100% + 80px);
-    margin: 32px -40px;
     padding: 8px 40px 24px;
   }
 }

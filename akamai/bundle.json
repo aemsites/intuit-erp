@@ -1,0 +1,4 @@
+{
+  "edgeworker-version": "1.0",
+  "description": "Inline aem.live header (nav) + footer fragments into the HTML document at the edge and forward the Akamai edge-cache-tag so push invalidation stays correct."
+}

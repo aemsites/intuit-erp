@@ -289,10 +289,18 @@ function wireCookiePreferences(block) {
 export default async function decorate(block) {
   const footerMeta = getMetadata('footer');
   const footerPath = footerMeta ? new URL(footerMeta, window.location).pathname : '/footer';
-  const frag = await fetchFragment(footerPath);
-  const doc = frag ? new DOMParser().parseFromString(frag, 'text/html') : null;
+  // The CDN may inline the footer fragment into <footer><nav>…</nav></footer>
+  // (see akamai/ EdgeWorker) — parse that directly (the footer reads undecorated
+  // markup anyway). Otherwise fetch the fragment as before.
+  const inlined = block.closest('footer')?.querySelector(':scope > nav') || null;
+  let doc = inlined;
+  if (!doc) {
+    const frag = await fetchFragment(footerPath);
+    doc = frag ? new DOMParser().parseFromString(frag, 'text/html') : null;
+  }
   const columns = (doc && parseFooterColumns(doc)) || [];
   const legal = (doc && parseFooterLegal(doc)) || { navHtml: '', copyHtml: '', linksHtml: '' };
+  inlined?.remove();
 
   block.innerHTML = buildChrome(columns, legal);
   wireAccordions(block);

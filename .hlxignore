@@ -6,4 +6,5 @@ package.json
 package-lock.json
 test/*
 edge/*
+akamai/*
 scripts/diff/*

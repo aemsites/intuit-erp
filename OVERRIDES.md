@@ -69,7 +69,8 @@ There is also the **aem-experimentation plugin** convention (loaded only when pr
 | Metadata | Controls | Values / default | Source |
 | --- | --- | --- | --- |
 | `marketo` | Marketo Munchkin environment | `dev` / `e2e` / anything-else→`prod` | [blocks/form/form.js](blocks/form/form.js) |
-| `chat-now` | Wires up LivePerson chat globals (paints only on prod/stage) | `true` / `yes` | [blocks/contact-us/contact-us.js](blocks/contact-us/contact-us.js) |
+| `chat-now` | Makes the page eligible for LivePerson; with `?liveperson-facade=on`, adds the delayed invite and interaction-gates tag 23 | `true` / `yes` | [blocks/liveperson-facade/liveperson-facade.js](blocks/liveperson-facade/liveperson-facade.js), [blocks/contact-us/contact-us.js](blocks/contact-us/contact-us.js), [plugins/tealium-martech/src/index.js](plugins/tealium-martech/src/index.js) |
+| `chat-invite-delay` | Overrides the proactive chat facade delay in milliseconds; defaults to `30000` | non-negative integer | [scripts/scripts.js](scripts/scripts.js), [blocks/liveperson-facade/liveperson-facade.js](blocks/liveperson-facade/liveperson-facade.js) |
 | `schedule-fragment` | Fragment path for the "schedule a demo" modal | path (default in [scripts/schedule-modal.js](scripts/schedule-modal.js)) | [scripts/schedule-modal.js](scripts/schedule-modal.js) |
 | `tracking` | Click-tracking access-point segment stamped on `<main>` as `data-tracking` | string | [scripts/tracking.js](scripts/tracking.js) — see [CLICK-TRACKING.md](CLICK-TRACKING.md) |
 
@@ -164,10 +165,13 @@ on a page keeps its CTAs in the same tab.
 
 | Param | Controls | Values | Source |
 | --- | --- | --- | --- |
+| `?liveperson-facade=on` | Opts eligible `chat-now` pages into the native facade and interaction-gated LivePerson loading | `on` = facade experiment; absent/other = existing LivePerson behavior | [scripts/scripts.js](scripts/scripts.js), [blocks/liveperson-facade/liveperson-facade.js](blocks/liveperson-facade/liveperson-facade.js) — see [MARTECH.md](MARTECH.md) |
 | `?martech=` | Martech loading | `off` = disable all martech (Tealium + Adobe inert); `local` = load utag.js + OneTrust from local `/scripts/martech/`; absent/other = CDN default | [scripts/scripts.js](scripts/scripts.js) — see [MARTECH.md](MARTECH.md) |
 | `?martech-phase-split=on` | Opt-in martech performance experiment | Keeps active tags in the lazy initial view except UIDs 9/15/23/27, then sends those four as a targeted `delayed_ready` view; absent/other = existing routing | [plugins/tealium-martech/src/index.js](plugins/tealium-martech/src/index.js) — see [MARTECH.md](MARTECH.md) |
+| `?tealium-tags=` | Tealium lifecycle-tag delivery allowlist | Comma-separated numeric UIDs (for example `1,2,3,7`) constrain the site's initial, delayed, and on-demand LivePerson calls; public `trackView`/`trackEvent` calls retain normal event-time load-rule routing. Absent = existing routing; present but empty/invalid = documented `noload` core/pre-loader-only baseline. Non-empty values do not prevent all other active templates from initializing; public-call filtering and true load isolation require the profile-side `qp.tealium-tags` load rule documented in MARTECH.md. | [scripts/scripts.js](scripts/scripts.js), [plugins/tealium-martech/src/index.js](plugins/tealium-martech/src/index.js) — see [MARTECH.md](MARTECH.md) |
 | `?rum=` (alias `?optel=`) | RUM sampling rate | `on`→1, `off`→0, `high`→10, `low`→1000, else weight 100 | [scripts/aem.js](scripts/aem.js) |
 | `?lighthouse=on` | Sets `window.hlx.lighthouse = true` (perf-test mode) | `on` | [scripts/aem.js](scripts/aem.js) |
+| `?tracking-editor=1` | Exposes the rendered-page tracking inspector consumed by the DA Tracking Inspector plugin; ignored outside localhost, AEM preview, and DA preview hosts | `1` | [scripts/tracking.js](scripts/tracking.js), [tools/plugins/tracking/README.md](tools/plugins/tracking/README.md) |
 | `?locale=` | Locale sent to the decision API | locale string, hyphen converted to underscore (falls back to `navigator.language` → `en_US`) | [scripts/experience.js](scripts/experience.js) |
 | `?preview=true` | Routes the `/intuit-orchestrator` decision call to the preview backend (Akamai keys off the param); only `preview` + `previewContext` are forwarded, and both are stripped from `context.permalink` | `true` | [scripts/experience.js](scripts/experience.js) |
 | `?previewContext=` | Context JSON forwarded to the preview backend alongside `?preview=true` (ignored without it) | URL-encoded context JSON | [scripts/experience.js](scripts/experience.js) |

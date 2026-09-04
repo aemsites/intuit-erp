@@ -204,6 +204,10 @@
   margin-top: 12px;
 }
 
+.contact-us .cu-chat-facade {
+  width: 100%;
+}
+
 /* open state hides the trigger */
 .contact-us.cu-open .cu-ball {
   display: none;

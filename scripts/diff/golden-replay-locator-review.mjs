@@ -15,6 +15,7 @@ import {
   indexTrackingSheet, matchScenarioToInventory,
 } from './golden-replay-stage-inventory.mjs';
 import { manifestContentHash } from './golden-replay-manifest.mjs';
+import { replayPathMatches } from './live-replay-harness.mjs';
 import { slug } from '../tracking.js';
 
 const EXACT_ORIGIN = 'https://stage.erp.intuit.com';
@@ -116,7 +117,20 @@ function reviewedCandidate(page, scenario, overrides) {
   }
   const entries = Object.entries(decision.candidateIdentity);
   const matches = (page.candidates || []).filter((candidate) => entries
-    .every(([key, expected]) => String(candidate[key] ?? '') === String(expected ?? '')));
+    .every(([key, expected]) => {
+      const actual = candidate[key];
+      if (key === 'href') {
+        try {
+          const actualUrl = new URL(actual);
+          const expectedUrl = new URL(expected);
+          if (actualUrl.origin === EXACT_ORIGIN && expectedUrl.origin === EXACT_ORIGIN
+            && !actualUrl.search && !actualUrl.hash && !expectedUrl.search && !expectedUrl.hash) {
+            return replayPathMatches(actualUrl.pathname, expectedUrl.pathname);
+          }
+        } catch { /* Fall through to exact identity matching. */ }
+      }
+      return String(actual ?? '') === String(expected ?? '');
+    }));
   const occurrence = decision.locator?.occurrence;
   if (matches.length > 1 && occurrence != null && occurrence <= matches.length) {
     return { decision, candidate: matches[occurrence - 1] };

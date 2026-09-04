@@ -1,4 +1,6 @@
-import { getMetadata } from '../../scripts/aem.js';
+import { getMetadata, loadSections } from '../../scripts/aem.js';
+// eslint-disable-next-line import/no-cycle
+import { decorateMain } from '../../scripts/scripts.js';
 import { openScheduleModal } from '../../scripts/schedule-modal.js';
 import { loadFragment } from '../fragment/fragment.js';
 import { enhanceSecondaryNavSearch } from '../blog-search/search-utils.js';
@@ -154,17 +156,37 @@ function brandLinksFromRow(row) {
   return lead ? [{ a: lead, label: '' }, ...rest] : rest;
 }
 
+// The CDN may inline the nav fragment into <header><nav>…</nav></header> (see
+// akamai/ EdgeWorker). Consume that raw markup by moving it into a detached
+// scratch container and decorating it exactly as loadFragment would a fetched
+// fragment (so navigation.js runs), then remove the now-empty <nav>. The scratch
+// element is never inserted into the page — it is returned only for parsing and
+// then discarded. Returns null when nothing was inlined.
+async function consumeInlinedNav(headerEl) {
+  const inlined = headerEl?.querySelector(':scope > nav');
+  if (!inlined) return null;
+  const scratch = document.createElement('main');
+  scratch.append(...inlined.childNodes);
+  scratch.dataset.fragment = 'true';
+  inlined.remove();
+  decorateMain(scratch);
+  await loadSections(scratch);
+  return scratch;
+}
+
 // navigation.js has already decorated the main row's cell 2 into flat
-// .nav-item/.nav-link markup by the time loadFragment returns, so it's
-// identified here by that markup rather than the (now-gone) nested <ul>
-// navigation.js itself used to find it.
-async function fetchChromeHTML(path) {
-  let frag = null;
-  try {
-    frag = await loadFragment(path);
-  } catch (e) { /* missing/broken fragment — render no chrome content */ }
-  const block = frag && frag.querySelector('.navigation');
-  const rows = block ? [...block.children] : [];
+// .nav-item/.nav-link markup by the time the fragment is decorated (whether
+// fetched or inlined), so it's identified here by that markup rather than the
+// (now-gone) nested <ul> navigation.js itself used to find it.
+async function fetchChromeHTML(path, block) {
+  let frag = await consumeInlinedNav(block?.closest('header'));
+  if (!frag) {
+    try {
+      frag = await loadFragment(path);
+    } catch (e) { /* missing/broken fragment — render no chrome content */ }
+  }
+  const navBlock = frag && frag.querySelector('.navigation');
+  const rows = navBlock ? [...navBlock.children] : [];
   const mainRow = rows.find((row) => row.children[1]?.querySelector(':scope > .nav-item, :scope > .nav-link, :scope > .acct-link'));
   const utilityRow = rows.find((row) => row !== mainRow);
 
@@ -253,7 +275,7 @@ export default async function decorate(block) {
   const navPath = navMeta ? new URL(navMeta, window.location).pathname : '/nav';
   const {
     navMainHTML, brandLinks, logoHTML, resourcesItem,
-  } = await fetchChromeHTML(navPath);
+  } = await fetchChromeHTML(navPath, block);
   const stripHTML = topstripRowsHTML(brandLinks);
   const eventsHTML = eventsBarHTML();
   const secondaryHTML = secondaryNavHTML(resourcesItem);

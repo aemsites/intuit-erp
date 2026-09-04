@@ -29,27 +29,27 @@
   color: var(--text, #11181c);
 }
 
-.section.hero-container.light a.button.primary {
+.section.hero-container.light :is(a, button).button.primary {
   background: var(--navy);
   border-color: var(--navy);
   color: #fff;
 }
 
-.section.hero-container.light a.button.primary:hover,
-.section.hero-container.light a.button.primary:focus-visible {
+.section.hero-container.light :is(a, button).button.primary:hover,
+.section.hero-container.light :is(a, button).button.primary:focus-visible {
   background: var(--navy-hover);
   border-color: var(--navy-hover);
   color: #fff;
 }
 
-.section.hero-container.light a.button.secondary {
+.section.hero-container.light :is(a, button).button.secondary {
   background: transparent;
   border-color: var(--ink-teal);
   color: var(--ink-teal);
 }
 
-.section.hero-container.light a.button.secondary:hover,
-.section.hero-container.light a.button.secondary:focus-visible {
+.section.hero-container.light :is(a, button).button.secondary:hover,
+.section.hero-container.light :is(a, button).button.secondary:focus-visible {
   background: var(--ink-teal);
   border-color: var(--ink-teal);
   color: #fff;
@@ -122,6 +122,10 @@
   box-shadow: 0 24px 60px rgb(0 0 0 / 35%);
 }
 
+.hero .hero-dashboard-lottie.is-loading {
+  visibility: hidden;
+}
+
 .hero.image-glow .hero-dashboard-lottie {
   overflow: initial;
 }
@@ -145,22 +149,22 @@
   visibility: hidden;
 }
 
-.hero a.button.primary {
+.hero :is(a, button).button.primary {
   background: #fff;
   color: var(--ink-teal, #0d333f);
   border-color: #fff;
 }
 
-.hero a.button.primary:hover {
+.hero :is(a, button).button.primary:hover {
   background: #eef4f6;
   border-color: #eef4f6;
 }
 
-.hero a.button.icon-video {
+.hero :is(a, button).button.icon-video {
   gap: 10px;
 }
 
-.hero a.button.icon-video::before {
+.hero :is(a, button).button.icon-video::before {
   content: "";
   flex: 0 0 auto;
   width: 22px;
@@ -185,8 +189,9 @@
 /* CLS #519: reserve the row + top-pin the card so the Marketo form's late
    field-render fills reserved space instead of growing the row (which
    re-centers the lone headline and shoves the next section down). Desktop
-   only; mobile stacks the card below the fold. */
-@media (width >=768px) {
+   only (>=1024, where the hero is side-by-side); below that the card stacks
+   below the fold and no reservation is needed. */
+@media (width >=1024px) {
   .hero.form .hero-grid:has(.hero-copy > h1:only-child) {
     min-height: 760px;
   }
@@ -207,9 +212,20 @@
   margin-top: 32px;
 }
 
+/* Size hero logos by height so any logo sits at a consistent cap-height
+   regardless of its aspect ratio; width follows from the intrinsic ratio.
+   width:auto + height:auto + the global max-width:100% keep the aspect ratio
+   intact (no distortion) and let the logo scale down to fit on mobile. */
 .hero.form.gradient .hero-copy img {
-  width: 154px;
-  height: auto;
+  width: auto;
+  max-height: 90px;
+}
+
+/* Wide horizontal logos (e.g. the "Powered by QuickBooks" lockup) sit at a
+   shorter cap-height than the square award badge above. Opt a hero into this
+   with the `wide-logo` block variant, matching prod (~28px tall / 348px wide). */
+.hero.form.gradient.wide-logo .hero-copy img {
+  max-height: 28px;
 }
 
 .hero .hero-form {
@@ -292,7 +308,10 @@
   color: var(--text-muted);
 }
 
-@media (width <768px) {
+/* Prod stacks the hero at 1024 (verified across nonprofit/homepage/accounting/
+   pricing — side-by-side at 1025, stacked at 1023), not 768. The stacked
+   treatment therefore applies below 1024. */
+@media (width <1024px) {
   .hero .hero-grid {
     grid-template-columns: 1fr;
     gap: 28px;
@@ -372,7 +391,7 @@
   justify-content: center;
 }
 
-.hero.centered .hero-actions a.button {
+.hero.centered .hero-actions :is(a, button).button {
   min-height: 52px;
   padding: 0 28px;
   line-height: 24px;

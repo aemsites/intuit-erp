@@ -11,7 +11,9 @@ import {
 import { createHash, randomUUID } from 'node:crypto';
 import { dirname, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { validateCdpEndpoint } from './live-replay-harness.mjs';
+import {
+  canonicalReplayPath, replayPathMatches, validateCdpEndpoint,
+} from './live-replay-harness.mjs';
 import { createTargetGuard } from './live-replay-runner.mjs';
 import { validateGoldenReplayManifest } from './golden-replay-manifest.mjs';
 
@@ -349,7 +351,7 @@ async function run(options) {
       try {
         const result = await retryTransientInventoryPage(async (attempt) => {
           if (attempt > 1) await page.waitForTimeout(500);
-          const response = await page.goto(`${options.origin}${manifestPage.pathname}`, { waitUntil: 'domcontentloaded' });
+          const response = await page.goto(`${options.origin}${canonicalReplayPath(manifestPage.pathname)}`, { waitUntil: 'domcontentloaded' });
           const documentBody = await captureDocumentBody(response, page);
           context.pages().forEach((candidate) => guard.observePage(candidate));
           guard.assert();
@@ -360,7 +362,7 @@ async function run(options) {
           }, null, { timeout: 30000 });
           await preloadReadOnly(page);
           const evidence = await collectPageEvidence(page, options.origin);
-          if (evidence.origin !== options.origin || evidence.pathname !== manifestPage.pathname
+          if (evidence.origin !== options.origin || !replayPathMatches(evidence.pathname, manifestPage.pathname)
             || !evidence.authenticated || evidence.consentState !== 'resolved'
             || !evidence.utagReady || !evidence.trackerReady || !evidence.enqueueReady) {
             throw new Error('page readiness failed');
@@ -375,7 +377,7 @@ async function run(options) {
             status: 'inventoried',
             expectedScenarioIds: manifestPage.expectedScenarioIds,
             pageCasId: evidence.pageCasId,
-            pageCasIdPass: evidence.pageCasId === manifestPage.pathname,
+            pageCasIdPass: replayPathMatches(evidence.pageCasId, manifestPage.pathname),
             documentHash,
             runtimeHashes,
             candidates: evidence.candidates,

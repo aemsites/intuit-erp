@@ -55,11 +55,11 @@ describe('offline golden replay analysis', () => {
       status: 'in-progress', coverage: { total: 3, captured: 2, missing: 1, pending: 0 },
       outcomes: [
         {
-          scenarioId: 'one', pathname: '/one', status: 'captured', pageCasId: '/one',
+          scenarioId: 'one', pathname: '/one', status: 'captured', pageCasId: '/one/',
           locator: { trackId: 'hero:schedule-a-call' },
           payload: payload({
             object: 'content', action: 'interacted', ui_object: 'button',
-            ui_access_point: 'rw2_hero', page_cas_id: '/one',
+            ui_access_point: 'rw2_hero', page_cas_id: '/one/',
           }),
         },
         { scenarioId: 'two', pathname: '/two', status: 'missing', reason: 'sheet-target-not-rendered' },

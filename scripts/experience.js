@@ -401,7 +401,8 @@ export function collectRequest(doc = document) {
 export function hasEagerWork(doc = document) {
   if (getMetadata('experiment-id')) return true;
   if (getMetadata('personalization-id')) return true;
-  const firstSection = doc.querySelector('main')?.querySelector('.section');
+  const main = doc.querySelector('main');
+  const firstSection = main?.querySelector('.section') || main?.firstElementChild;
   if (!firstSection) return false;
   return collectExperiments(firstSection).length > 0 || collectSlots(firstSection).length > 0;
 }

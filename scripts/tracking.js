@@ -337,7 +337,22 @@ export function sheetRowById(map, id, path) {
   return null;
 }
 
-/** Read visible text, image alt text, or aria-label as the CTA label. */
+function sheetMatchById(map, id, path) {
+  if (!map || !id) return null;
+  const pageKey = `${normalizePath(path)}|${id}`;
+  if (map.has(pageKey)) return { id, scope: 'page', row: map.get(pageKey) };
+  if (map.has(id)) return { id, scope: 'global', row: map.get(id) };
+  return null;
+}
+
+/**
+ * The label the live tracker reads for ui_object_detail + link_name: an element's
+ * accessible name — visible text, else an inner image's alt, else aria-label.
+ * Prod annotates text-less CTAs (icon/image/logo links) from their alt/aria-label,
+ * so a plain textContent read under-derives both fields.
+ * @param {Element} el
+ * @returns {string}
+ */
 export function labelFor(el) {
   const text = (el.textContent || '').trim();
   if (text) return text;
@@ -357,7 +372,10 @@ export function partLabel(el) {
 /** Derive a live element's baseline, including video and icon classifications. */
 export function deriveForCta(el, blockName, host = '') {
   const partKind = el.getAttribute && el.getAttribute('data-track-as');
-  const isVideo = !partKind && el.tagName === 'A' && isVideoLink(el.getAttribute('href'));
+  const isVideo = !partKind && (
+    (el.tagName === 'A' && isVideoLink(el.getAttribute('href')))
+    || isVideoLink(el.getAttribute('data-video-src'))
+  );
   const isIcon = !partKind && !isVideo && el.tagName === 'A' && !(el.textContent || '').trim() && !!el.querySelector('img, svg, picture, .icon');
   return deriveBaseline({
     tagName: el.tagName,
@@ -441,34 +459,42 @@ export function regionCustomProperties(ctx) {
   return out;
 }
 
-/** JIT-stamp the interacted target before the injected tracker handles the click. */
-export function stampInteraction(e) {
-  const hit = resolveTrackable(e.target);
-  if (!hit) return;
+function sheetMapFrom(input) {
+  if (input instanceof Map) return input;
+  if (Array.isArray(input)) return indexRows(input);
+  return indexRows(input?.data);
+}
+
+function resolvedTarget(target, map, loc) {
+  const hit = resolveTrackable(target);
+  if (!hit) return null;
   const { cta, block } = hit;
-  const loc = (typeof window !== 'undefined' && window.location) || {};
-  const host = loc.hostname || '';
   const isPart = cta.hasAttribute('data-track-as');
   const blockName = block ? blockNameOf(block) : '';
-  let row = null;
+  let id = null;
+  let match = null;
+
   if (!isPart) {
-    let id = trackIdOf(cta);
-    if (!id && !block) id = hrefTrackId(cta, PAGE_KEY) || (labelFor(cta) ? `${PAGE_KEY}:${slug(labelFor(cta))}` : null);
+    id = trackIdOf(cta);
+    if (!id && !block) {
+      id = hrefTrackId(cta, PAGE_KEY)
+        || (labelFor(cta) ? `${PAGE_KEY}:${slug(labelFor(cta))}` : null);
+    }
     if (id) {
-      row = sheetRowById(sheetMap, id, loc.pathname);
-      // Retry label identity when production represented the same CTA as a button.
-      if (!row) {
+      match = sheetMatchById(map, id, loc.pathname);
+      if (!match) {
         const label = labelFor(cta);
         const sep = id.indexOf(':');
         const ns = sep > 0 ? id.slice(0, sep) : '';
         if (ns && label) {
           const labelId = `${ns}:${slug(label)}`;
-          if (labelId !== id) row = sheetRowById(sheetMap, labelId, loc.pathname);
+          if (labelId !== id) match = sheetMatchById(map, labelId, loc.pathname);
         }
       }
     }
   }
-  let derived = deriveForCta(cta, blockName, host);
+
+  let derived = deriveForCta(cta, blockName, loc.hostname || '');
   if (isPart) {
     if (cta.getAttribute('data-track-link-name') === 'off' && derived['custom-properties']) {
       delete derived['custom-properties'].link_name;
@@ -476,24 +502,182 @@ export function stampInteraction(e) {
   } else {
     derived = applyBlockDefaults(derived, cta);
   }
+
+  let component = null;
   if (block && !isPart) {
     const derivePayload = PAYLOAD_DERIVERS.get(block);
-    if (derivePayload) { const ov = derivePayload(cta); if (ov) row = { ...ov, ...(row || {}) }; }
+    if (derivePayload) component = derivePayload(cta) || null;
   }
+
   const regionCtx = resolveRegionContext(cta);
   const context = regionCtx ? { customProperties: regionCustomProperties(regionCtx) } : {};
-  stampCta(cta, resolveCta(derived, row, context));
+  const automaticAttrs = resolveCta(derived, component, context);
+  const effectiveConfig = { ...(component || {}), ...(match?.row || {}) };
+  const effectiveAttrs = resolveCta(derived, effectiveConfig, context);
+  return {
+    cta,
+    block,
+    blockName,
+    id,
+    isPart,
+    match,
+    automaticAttrs,
+    effectiveAttrs,
+  };
+}
+
+function computedAccessPoint(cta, attrs) {
+  let cur = cta;
+  if (Object.hasOwn(attrs, 'data-tracking')) {
+    cur = cta.parentElement;
+  } else {
+    while (cur && cur.nodeType === 1 && !cur.hasAttribute('data-tracking')) {
+      cur = cur.parentElement;
+    }
+    cur = cur?.parentElement || null;
+  }
+
+  const segments = [];
+  while (cur && cur.nodeType === 1) {
+    if (cur.hasAttribute('data-tracking')) segments.unshift(cur.getAttribute('data-tracking'));
+    cur = cur.parentElement;
+  }
+  const trail = segments.filter(Boolean).join('|').replace(/-/g, '_').trim();
+  if (trail) return trail;
+  return cta.closest('header') ? '' : 'page';
+}
+
+function parseTrackerProperties(value) {
+  const out = {};
+  String(value || '').split(',').forEach((pair) => {
+    const separator = pair.indexOf('|');
+    if (separator < 1) return;
+    const key = pair.slice(0, separator);
+    const val = pair.slice(separator + 1);
+    if (key && val && !val.includes('|')) out[key] = val;
+  });
+  return out;
+}
+
+function inspectionValues(cta, attrs) {
+  const output = {};
+  const fields = [
+    'object', 'object-detail', 'action', 'ui-object', 'ui-object-detail',
+    'ui-action', 'wa-link',
+  ];
+  fields.forEach((field) => {
+    const value = attrs[`data-${field}`];
+    if (value != null && value !== '') output[field] = value;
+  });
+  if (Object.hasOwn(attrs, 'data-ui-access-point')) {
+    output['ui-access-point'] = computedAccessPoint(cta, attrs);
+  }
+  const custom = parseTrackerProperties(attrs['data-custom-properties']);
+  if (Object.keys(custom).length) output['custom-properties'] = custom;
+  Object.entries(attrs).forEach(([name, value]) => {
+    if (name.startsWith('data-survey-')) output[name.slice(5)] = value;
+  });
+  if (output.object && output.action) output.event = `${output.object}:${output.action}`;
+  return output;
+}
+
+/** Describe one rendered tracking target without stamping or firing an interaction. */
+export function describeTrackingTarget(target, sheet = [], location = {}) {
+  const browserLocation = (typeof window !== 'undefined' && window.location) || {};
+  const loc = {
+    pathname: location.pathname || browserLocation.pathname || '/',
+    hostname: location.hostname || browserLocation.hostname || '',
+  };
+  const resolved = resolvedTarget(target, sheetMapFrom(sheet), loc);
+  if (!resolved) return null;
+  const {
+    cta, block, blockName, id, isPart, match, automaticAttrs, effectiveAttrs,
+  } = resolved;
+  return {
+    id,
+    matchedId: match?.id || null,
+    path: normalizePath(loc.pathname),
+    label: labelFor(cta),
+    href: cta.getAttribute('href') || '',
+    tag: cta.tagName.toLowerCase(),
+    block: block ? (blockName || trackingKey(block)) : PAGE_KEY,
+    editable: !isPart && !!id,
+    scope: match?.scope || null,
+    automatic: inspectionValues(cta, automaticAttrs),
+    override: match?.row ? { ...match.row } : {},
+    effective: inspectionValues(cta, effectiveAttrs),
+  };
+}
+
+/** Return a non-mutating inventory of every trackable interaction in a rendered scope. */
+export function collectTrackingInventory(scope = document, sheet = [], location = {}) {
+  const root = scope?.querySelectorAll ? scope : document;
+  const selectors = `[data-track-as], ${CTA_SELECTOR}`;
+  return [...root.querySelectorAll(selectors)]
+    .map((target) => describeTrackingTarget(target, sheet, location))
+    .filter(Boolean);
+}
+
+/**
+ * JIT-stamp the resolved (derived + sheet + region context) data-* onto the
+ * interacted CTA so the injected tracker reads them on the ensuing click. Nothing
+ * is stamped at rest. Any enclosing pzn/ixp region's identity folds into
+ * custom_properties (nearest wins).
+ * @param {Event} e
+ */
+export function stampInteraction(e) {
+  const loc = (typeof window !== 'undefined' && window.location) || {};
+  const resolved = resolvedTarget(e.target, sheetMap, loc);
+  if (!resolved) return;
+  stampCta(resolved.cta, resolved.effectiveAttrs);
+}
+
+/** Whether this page is the explicit, editor-only Tracking Inspector probe. */
+export function isTrackingInspectorPreview(location = {}) {
+  const host = location.hostname || '';
+  const params = new URLSearchParams(location.search || '');
+  const previewHost = /\.(aem|hlx)\.page$/.test(host)
+    || /\.preview\.da\.live$/.test(host)
+    || ['localhost', '127.0.0.1'].includes(host);
+  return previewHost && params.get('tracking-editor') === '1';
+}
+
+/** Load editor-only messaging only inside the explicitly requested probe. */
+export function loadTrackingInspectorBridge(
+  location = {},
+  // Query-versioned import keeps the probe and extension on the same release.
+  // eslint-disable-next-line import/no-unresolved
+  loader = () => import('../tools/plugins/tracking/bridge.js?v=20260904.5'),
+) {
+  return isTrackingInspectorPreview(location) ? loader() : null;
+}
+
+function exposeTrackingInspector() {
+  if (typeof window === 'undefined' || !isTrackingInspectorPreview(window.location)) return;
+  loadTrackingInspectorBridge(window.location)
+    .then(({ installTrackingInspectorBridge, waitForTrackingDocument }) => (
+      installTrackingInspectorBridge({
+        ready: waitForTrackingDocument(document),
+        collect: (rows = []) => collectTrackingInventory(document, rows, window.location),
+      })
+    ))
+    .catch(() => {});
 }
 
 /** Initialize trails, sheet caching, and capture handlers. */
 export function initTracking(scope = document) {
   const root = scope && scope.addEventListener ? scope : document;
-  fetchTrackingSheet().then((m) => { sheetMap = m; stampTrail(root); }).catch(() => {});
+  const sheetReady = fetchTrackingSheet()
+    .then((m) => { sheetMap = m; stampTrail(root); })
+    .catch(() => {});
   stampTrail(root);
   root.addEventListener('pointerdown', stampInteraction, true);
   root.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') stampInteraction(e);
   }, true);
+  if (typeof window !== 'undefined' && isTrackingInspectorPreview(window.location)) {
+    sheetReady.then(exposeTrackingInspector).catch(() => {});
+  }
   return stampInteraction;
 }
 

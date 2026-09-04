@@ -4,6 +4,7 @@ import {
 import TealiumMartech, {
   DELAYED_TAG_UIDS,
   isProdHost,
+  parseTealiumTagUids,
   resolveEnvironment,
   resolvePhaseTagUids,
   readOptanonConsent,
@@ -28,7 +29,7 @@ const OPTANON_COOKIE_VALUE = 'isGpcEnabled=0&datestamp=Fri+Aug+07+2026+12%3A00%3
 const PROD_HOST = 'erp.intuit.com';
 const STAGE_HOST = 'stage.erp.intuit.com';
 const DEV_HOST_LOCALHOST = 'localhost';
-// The AEM preview hosts are now INERT (not intuit.com origins → consent CDN unreachable).
+// AEM preview hosts use dev, but their non-Intuit origins cannot complete the CDN consent flow.
 const AEM_LIVE_HOST = 'main--intuit-erp--aemsites.aem.live';
 const AEM_PAGE_HOST = 'main--intuit-erp--aemsites.aem.page';
 const INERT_HOST = 'something.preview.da.live';
@@ -205,6 +206,162 @@ describe('TealiumMartech constructor', () => {
   });
 });
 
+describe('Tealium tag UID allowlist', () => {
+  it('distinguishes an absent filter from a normalized present filter', () => {
+    expect(parseTealiumTagUids(new URLSearchParams('foo=bar'))).toBeNull();
+    expect(parseTealiumTagUids(new URLSearchParams('tealium-tags=1, 2,1,wat,3.5,-4,007')))
+      .toEqual(new Set(['1', '2', '7']));
+    expect(parseTealiumTagUids(new URLSearchParams('tealium-tags=,wat,3.5')))
+      .toEqual(new Set());
+    expect(parseTealiumTagUids(new URLSearchParams('tealium-tags=')))
+      .toEqual(new Set());
+  });
+
+  it('halts Tealium initialization for an explicitly empty core-only baseline', () => {
+    stubLocation({ hostname: PROD_HOST });
+
+    // eslint-disable-next-line no-new
+    new TealiumMartech({ tagUids: new Set() });
+
+    expect(window.utag_cfg_ovrd.noload).toBe(true);
+
+    window.utag_cfg_ovrd = {};
+    // eslint-disable-next-line no-new
+    new TealiumMartech({ tagUids: new Set(['1']) });
+
+    expect(window.utag_cfg_ovrd.noload).toBeUndefined();
+  });
+
+  it('constrains lifecycle calls while preserving public event-time load-rule routing', () => {
+    stubLocation({ hostname: PROD_HOST });
+    window.utag_data = { page_name: 'homepage' };
+    window.utag = {
+      view: vi.fn(),
+      link: vi.fn(),
+      gdpr: { getConsentState: vi.fn(() => 1) },
+      loader: {
+        cfgsort: ['32', '9', '23', '27', '21', '15', '99'],
+        cfg: {
+          9: { load: 1, send: 1 },
+          15: { load: 1, send: 1 },
+          21: { load: 1, send: 1 },
+          23: { load: 0, send: 1 },
+          27: { load: 1, send: 1 },
+          32: { load: 1, send: 1 },
+          99: { load: 1, send: 0 },
+        },
+      },
+    };
+    const allowlist = new Set(['99', '27', '23', '32']);
+    const tealium = new TealiumMartech({ tagUids: allowlist });
+
+    tealium.sendInitialView();
+    tealium.delayed();
+    tealium.trackView({ tealium_event: 'public_view' });
+    tealium.trackEvent({ tealium_event: 'public_link' });
+
+    expect(window.utag.view).toHaveBeenNthCalledWith(1, window.utag_data, null, ['32', '27']);
+    expect(window.utag.link).toHaveBeenNthCalledWith(
+      1,
+      { tealium_event: 'delayed_ready' },
+      null,
+      ['32', '27'],
+    );
+    expect(window.utag.view).toHaveBeenNthCalledWith(2, {
+      ...window.utag_data,
+      tealium_event: 'public_view',
+    });
+    expect(window.utag.link).toHaveBeenNthCalledWith(
+      2,
+      { tealium_event: 'public_link' },
+    );
+
+    window.utag.view.mockClear();
+    window.utag.link.mockClear();
+    const splitTealium = new TealiumMartech({ phaseSplit: true, tagUids: allowlist });
+    splitTealium.sendInitialView();
+    splitTealium.delayed();
+
+    expect(window.utag.view).toHaveBeenNthCalledWith(1, window.utag_data, null, ['32']);
+    expect(window.utag.view).toHaveBeenNthCalledWith(2, {
+      ...window.utag_data,
+      tealium_event: 'delayed_ready',
+    }, null, ['27']);
+    expect(window.utag.link).not.toHaveBeenCalled();
+  });
+
+  it('does not dispatch lifecycle calls when the active allowlist intersection is empty', () => {
+    stubLocation({ hostname: PROD_HOST });
+    window.utag = {
+      view: vi.fn(),
+      link: vi.fn(),
+      gdpr: { getConsentState: vi.fn(() => 1) },
+      loader: {
+        cfgsort: ['1', '23', '99'],
+        cfg: {
+          1: { load: 1, send: 1 },
+          23: { load: 1, send: 1 },
+          99: { load: 0, send: 1 },
+        },
+      },
+    };
+    const tealium = new TealiumMartech({
+      phaseSplit: true,
+      livePersonOnDemand: true,
+      tagUids: new Set(['99']),
+    });
+
+    tealium.sendInitialView();
+    tealium.delayed();
+    tealium.livePersonRequested = true;
+    tealium.sendLivePersonRequest();
+
+    expect(window.utag.view).not.toHaveBeenCalled();
+    expect(window.utag.link).not.toHaveBeenCalled();
+  });
+
+  it('keeps on-demand LivePerson inert unless UID 23 is allowlisted and active', () => {
+    stubLocation({ hostname: PROD_HOST });
+    window.utag = {
+      view: vi.fn(),
+      link: vi.fn(),
+      gdpr: { getConsentState: vi.fn(() => 1) },
+      loader: {
+        cfgsort: ['1', '23'],
+        cfg: {
+          1: { load: 1, send: 1 },
+          23: { load: 1, send: 1 },
+        },
+      },
+    };
+    const denied = new TealiumMartech({
+      livePersonOnDemand: true,
+      tagUids: new Set(['1']),
+    });
+
+    denied.requestLivePerson();
+
+    expect(denied.livePersonRequested).toBe(false);
+    expect(window.utag.view).not.toHaveBeenCalled();
+
+    const allowed = new TealiumMartech({
+      phaseSplit: true,
+      livePersonOnDemand: true,
+      tagUids: new Set(['23']),
+    });
+    allowed.sendInitialView();
+    allowed.delayed();
+    allowed.requestLivePerson();
+
+    expect(window.utag.view).toHaveBeenCalledOnce();
+    expect(window.utag.view).toHaveBeenCalledWith({
+      ...window.utag_data,
+      tealium_event: 'liveperson_requested',
+    }, null, ['23']);
+    expect(window.utag.link).not.toHaveBeenCalled();
+  });
+});
+
 describe('experimental phased tag routing', () => {
   it('preserves active profile order while separating the four delayed tag UIDs', () => {
     const utag = {
@@ -288,6 +445,89 @@ describe('experimental phased tag routing', () => {
 
     expect(window.utag.link).toHaveBeenCalledWith({ tealium_event: 'delayed_ready' });
     expect(window.utag.view).not.toHaveBeenCalled();
+  });
+});
+
+describe('interaction-triggered LivePerson', () => {
+  const activeTags = () => ({
+    cfgsort: ['1', '9', '23', '27', '32'],
+    cfg: Object.fromEntries(
+      ['1', '9', '23', '27', '32'].map((uid) => [uid, { load: 1, send: 1 }]),
+    ),
+  });
+
+  it('omits only LivePerson from the initial view on chat-enabled pages', () => {
+    stubLocation({ hostname: PROD_HOST });
+    const tealium = new TealiumMartech({ livePersonOnDemand: true });
+    window.utag = {
+      view: vi.fn(),
+      gdpr: { getConsentState: vi.fn(() => 1) },
+      loader: activeTags(),
+    };
+
+    tealium.sendInitialView();
+
+    expect(window.utag.view).toHaveBeenCalledWith(
+      window.utag_data,
+      null,
+      ['1', '9', '27', '32'],
+    );
+  });
+
+  it('loads UID 23 once on request through a targeted consent-gated view', () => {
+    stubLocation({ hostname: PROD_HOST });
+    window.utag_data = { page_name: 'homepage' };
+    const tealium = new TealiumMartech({ livePersonOnDemand: true });
+    window.utag = {
+      view: vi.fn(),
+      gdpr: { getConsentState: vi.fn(() => 1) },
+      loader: activeTags(),
+    };
+
+    tealium.requestLivePerson();
+    tealium.requestLivePerson();
+
+    expect(window.utag.view).toHaveBeenCalledOnce();
+    expect(window.utag.view).toHaveBeenCalledWith({
+      ...window.utag_data,
+      tealium_event: 'liveperson_requested',
+    }, null, ['23']);
+  });
+
+  it('remembers a request made before utag is ready', () => {
+    stubLocation({ hostname: PROD_HOST });
+    const tealium = new TealiumMartech({ livePersonOnDemand: true });
+
+    tealium.requestLivePerson();
+    window.utag = {
+      view: vi.fn(),
+      gdpr: { getConsentState: vi.fn(() => 1) },
+      loader: activeTags(),
+    };
+    tealium.sendLivePersonRequest();
+
+    expect(window.utag.view).toHaveBeenCalledWith({
+      ...window.utag_data,
+      tealium_event: 'liveperson_requested',
+    }, null, ['23']);
+  });
+
+  it('keeps LivePerson out of the delayed phase-split view until requested', () => {
+    stubLocation({ hostname: PROD_HOST });
+    const tealium = new TealiumMartech({ phaseSplit: true, livePersonOnDemand: true });
+    window.utag = {
+      view: vi.fn(),
+      link: vi.fn(),
+      gdpr: { getConsentState: vi.fn(() => 1) },
+      loader: activeTags(),
+    };
+
+    tealium.delayed();
+
+    expect(window.utag.view).toHaveBeenCalledWith({
+      ...window.utag_data,
+      tealium_event: 'delayed_ready',
+    }, null, ['9', '27']);
   });
 });
 

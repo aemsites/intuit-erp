@@ -44,9 +44,11 @@ function sourceUrl() {
   return `${DA_ADMIN}/source/${org}/${repo}${path}.html`;
 }
 
-/** GET the stored page source. */
+/** GET the stored page source. `no-store` so the panel never parses a cached
+ *  copy that lags a just-saved edit. */
 async function fetchSource() {
   const res = await fetch(sourceUrl(), {
+    cache: 'no-store',
     headers: { Authorization: `Bearer ${state.sdk.token}` },
   });
   if (!res.ok) throw new Error(`Could not load page source (${res.status})`);
@@ -76,6 +78,30 @@ async function save(newHtml) {
     setStatus('Saved. Note: a save can conflict with an open live edit.', 'ok');
   } catch (err) {
     setStatus(err.message, 'error');
+  }
+}
+
+let refreshing = false;
+/**
+ * Re-pull the DA source and re-render if it changed. Wired to tab focus/visibility
+ * so re-opening the panel reflects doc edits even when the host keeps the iframe
+ * alive (init runs once). Skipped while a popup is open (mid-edit) or a refresh is
+ * already in flight; a transient fetch error leaves the current view intact.
+ */
+async function refresh() {
+  if (refreshing || !state.sdk) return;
+  if (state.root.querySelector('.pzn-popup')) return;
+  refreshing = true;
+  try {
+    const latest = await fetchSource();
+    if (latest !== state.source) {
+      state.source = latest;
+      render();
+    }
+  } catch {
+    // keep the current view on a transient fetch failure
+  } finally {
+    refreshing = false;
   }
 }
 
@@ -532,6 +558,12 @@ async function init() {
     state.sdk = { context, token };
     state.source = await fetchSource();
     render();
+    // Re-open of the panel doesn't re-run init when the host keeps the iframe warm,
+    // so re-read the source whenever the tab regains focus/visibility.
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') refresh();
+    });
+    window.addEventListener('focus', refresh);
   } catch (err) {
     state.root.replaceChildren(
       el('div', { class: 'pzn-status pzn-status-error', text: err.message || 'Failed to load.' }),

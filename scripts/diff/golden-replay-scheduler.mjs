@@ -13,7 +13,9 @@ import { createHash, randomUUID } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { dirname, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { validateCdpEndpoint } from './live-replay-harness.mjs';
+import {
+  canonicalReplayPath, replayPathMatches, validateCdpEndpoint,
+} from './live-replay-harness.mjs';
 import { validateGoldenReplayManifest } from './golden-replay-manifest.mjs';
 import {
   createReplayRunState, nextReplayScenario, recordScenarioOutcome,
@@ -31,7 +33,7 @@ const RUNNER_PATH = resolve('scripts/diff/live-replay-runner.mjs');
 const SCENARIO_TIMEOUT_MS = 120000;
 const PROCESS_KILL_GRACE_MS = 5000;
 const MAX_QUALIFICATION_ATTEMPTS = 2;
-const HARNESS_VERSION = 'complete-golden-v1';
+const HARNESS_VERSION = 'complete-golden-v2';
 const SOURCE_FILES = [
   'scripts/diff/golden-replay-scheduler.mjs',
   'scripts/diff/golden-replay-run-state.mjs',
@@ -54,8 +56,9 @@ const safeError = (value) => [...String(value || 'unknown error')].map((characte
 
 export function recoveryTargetUrl(currentUrl, origin, pathname) {
   if (origin !== EXACT_ORIGIN) throw new Error(`exact stage origin is required: ${EXACT_ORIGIN}`);
-  const target = new URL(pathname, origin);
-  if (target.origin !== EXACT_ORIGIN || target.pathname !== pathname) {
+  const canonicalPath = canonicalReplayPath(pathname);
+  const target = new URL(canonicalPath, origin);
+  if (target.origin !== EXACT_ORIGIN || target.pathname !== canonicalPath) {
     throw new Error(`reviewed stage pathname is invalid: ${pathname}`);
   }
   if (typeof currentUrl !== 'string') return target.href;
@@ -172,6 +175,7 @@ export function buildQualificationScenario(scenario, {
     },
     preconditions: scenario.preconditions || {},
     setupSteps: scenario.setupSteps || [],
+    expected: scenario.expected || { invocationCount: 1, serializedCount: 1 },
     interaction: {
       type: 'click',
       preventNavigation: scenario.interaction?.preventNavigation !== false,
@@ -280,7 +284,7 @@ export function validateQualificationCapture(capture, scenario, authorizationRef
     throw new Error(`qualification capture is invalid: ${scenario.scenarioId}`);
   }
   const pageCasId = event.payload.properties?.page_cas_id;
-  if (pageCasId !== scenario.page) throw new Error(`qualification page_cas_id is invalid: ${scenario.scenarioId}`);
+  if (!replayPathMatches(pageCasId, scenario.page)) throw new Error(`qualification page_cas_id is invalid: ${scenario.scenarioId}`);
   return {
     payload: event.payload,
     pageCasId,
@@ -370,7 +374,7 @@ async function prepareTarget(options, pathname) {
       && window.__adobeMigrationReplayTarget == null, null, { timeout: 15000 });
     await page.waitForFunction(replayReadiness, null, { timeout: 45000 });
     const prepared = new URL(page.url());
-    if (prepared.origin !== options.origin || prepared.pathname !== pathname) {
+    if (prepared.origin !== options.origin || !replayPathMatches(prepared.pathname, pathname)) {
       throw new Error(`dedicated target preparation failed: ${pathname}`);
     }
   } finally {

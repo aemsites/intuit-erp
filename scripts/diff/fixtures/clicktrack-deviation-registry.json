@@ -420,6 +420,160 @@
       "evidence": "complete-golden-replay-v31 capture; immutable golden payload sha256:4c6eaca7943c375126b7453dc393c15d35758688744e057ba83398045f2f0735",
       "owner": "Adobe Migration Test",
       "reviewDate": "2026-08-31"
+    },
+    {
+      "id": "migration-bi-testimonial-structure-v69",
+      "classification": "expected-migration",
+      "scope": {
+        "location": "properties",
+        "field": "ui_access_point",
+        "scenarioId": "customer-accounting-business-intelligence-rep-30ffc672d43b"
+      },
+      "policy": "value-mismatch",
+      "rationale": "Stage reports the more precise testimonial item ancestor trail while preserving the same video action.",
+      "evidence": "complete-golden-replay-v69-full capture; customer accepted granular Stage access-point trails",
+      "owner": "Adobe Migration Test",
+      "reviewDate": "2026-09-04"
+    },
+    {
+      "id": "migration-bi-footer-structure-v69",
+      "classification": "expected-migration",
+      "scope": {
+        "location": "properties",
+        "field": "ui_access_point",
+        "scenarioId": "customer-accounting-business-intelligence-rep-0a9b96896cae"
+      },
+      "policy": "value-mismatch",
+      "rationale": "Stage reports the more precise footer menu ancestor trail while preserving the same semantic action.",
+      "evidence": "complete-golden-replay-v69-full capture; customer accepted granular Stage access-point trails",
+      "owner": "Adobe Migration Test",
+      "reviewDate": "2026-09-04"
+    },
+    {
+      "id": "migration-events-card-structure-v69",
+      "classification": "expected-migration",
+      "scope": {
+        "location": "properties",
+        "field": "ui_access_point",
+        "scenarioId": "customer-events-ea3f92116675"
+      },
+      "policy": "value-mismatch",
+      "rationale": "Stage reports the more precise card and carousel ancestor trail while preserving the same content action.",
+      "evidence": "complete-golden-replay-v69-full capture; customer accepted granular Stage access-point trails",
+      "owner": "Adobe Migration Test",
+      "reviewDate": "2026-09-04"
+    },
+    {
+      "id": "migration-erp-solutions-hero-structure-v69",
+      "classification": "expected-migration",
+      "scope": {
+        "location": "properties",
+        "field": "ui_access_point",
+        "scenarioId": "customer-erp-solutions-58da479a2419"
+      },
+      "policy": "value-mismatch",
+      "rationale": "Stage reports the more precise hero ancestor trail while preserving the same CTA action.",
+      "evidence": "complete-golden-replay-v69-full capture; customer accepted granular Stage access-point trails",
+      "owner": "Adobe Migration Test",
+      "reviewDate": "2026-09-04"
+    },
+    {
+      "id": "migration-construction-blog-footer-first-v69",
+      "classification": "expected-migration",
+      "scope": {
+        "location": "properties",
+        "field": "ui_access_point",
+        "scenarioId": "customer-blog-construction-automation-in-cons-a586c50f0021"
+      },
+      "policy": "value-mismatch",
+      "rationale": "Stage reports the more precise footer menu ancestor trail while preserving the same semantic action.",
+      "evidence": "complete-golden-replay-v69-full capture; customer accepted granular Stage access-point trails",
+      "owner": "Adobe Migration Test",
+      "reviewDate": "2026-09-04"
+    },
+    {
+      "id": "migration-construction-blog-footer-second-v69",
+      "classification": "expected-migration",
+      "scope": {
+        "location": "properties",
+        "field": "ui_access_point",
+        "scenarioId": "customer-blog-construction-automation-in-cons-42cdd82a4b79"
+      },
+      "policy": "value-mismatch",
+      "rationale": "Stage reports the more precise footer menu ancestor trail while preserving the same semantic action.",
+      "evidence": "complete-golden-replay-v69-full capture; customer accepted granular Stage access-point trails",
+      "owner": "Adobe Migration Test",
+      "reviewDate": "2026-09-04"
+    },
+    {
+      "id": "migration-bi-video-empty-fragment-url-v69",
+      "classification": "expected-migration",
+      "scope": {
+        "location": "properties",
+        "field": "url",
+        "scenarioId": "customer-accounting-business-intelligence-rep-30ffc672d43b"
+      },
+      "policy": "url-fragment-evidence-limited",
+      "rationale": "Production records an empty URL fragment; Stage emits the same host-normalized page URL without the non-identifying fragment.",
+      "evidence": "complete-golden-replay-v69-full capture; customer accepted hostname, trailing-slash, and empty-fragment normalization",
+      "owner": "Adobe Migration Test",
+      "reviewDate": "2026-09-04"
+    },
+    {
+      "id": "migration-bi-footer-empty-fragment-url-v69",
+      "classification": "expected-migration",
+      "scope": {
+        "location": "properties",
+        "field": "url",
+        "scenarioId": "customer-accounting-business-intelligence-rep-0a9b96896cae"
+      },
+      "policy": "url-fragment-evidence-limited",
+      "rationale": "Production records an empty URL fragment; Stage emits the same host-normalized page URL without the non-identifying fragment.",
+      "evidence": "complete-golden-replay-v69-full capture; customer accepted hostname, trailing-slash, and empty-fragment normalization",
+      "owner": "Adobe Migration Test",
+      "reviewDate": "2026-09-04"
+    },
+    {
+      "id": "migration-bi-about-cookies-empty-fragment-url-v69",
+      "classification": "expected-migration",
+      "scope": {
+        "location": "properties",
+        "field": "url",
+        "scenarioId": "customer-accounting-business-intelligence-rep-0c6205af2454"
+      },
+      "policy": "url-fragment-evidence-limited",
+      "rationale": "Production records an empty URL fragment; Stage emits the same host-normalized page URL without the non-identifying fragment.",
+      "evidence": "complete-golden-replay-v69-full capture; customer accepted hostname, trailing-slash, and empty-fragment normalization",
+      "owner": "Adobe Migration Test",
+      "reviewDate": "2026-09-04"
+    },
+    {
+      "id": "migration-bi-nav-first-empty-fragment-url-v69",
+      "classification": "expected-migration",
+      "scope": {
+        "location": "properties",
+        "field": "url",
+        "scenarioId": "customer-accounting-business-intelligence-rep-59676cca353e"
+      },
+      "policy": "url-fragment-evidence-limited",
+      "rationale": "Production records an empty URL fragment; Stage emits the same host-normalized page URL without the non-identifying fragment.",
+      "evidence": "complete-golden-replay-v69-full capture; customer accepted hostname, trailing-slash, and empty-fragment normalization",
+      "owner": "Adobe Migration Test",
+      "reviewDate": "2026-09-04"
+    },
+    {
+      "id": "migration-bi-nav-second-empty-fragment-url-v69",
+      "classification": "expected-migration",
+      "scope": {
+        "location": "properties",
+        "field": "url",
+        "scenarioId": "customer-accounting-business-intelligence-rep-da515b45f064"
+      },
+      "policy": "url-fragment-evidence-limited",
+      "rationale": "Production records an empty URL fragment; Stage emits the same host-normalized page URL without the non-identifying fragment.",
+      "evidence": "complete-golden-replay-v69-full capture; customer accepted hostname, trailing-slash, and empty-fragment normalization",
+      "owner": "Adobe Migration Test",
+      "reviewDate": "2026-09-04"
     }
   ]
 }
