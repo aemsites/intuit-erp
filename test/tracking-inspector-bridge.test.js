@@ -12,7 +12,7 @@ import {
 } from '../tools/plugins/tracking/bridge.js';
 
 describe('tracking inspector probe transport', () => {
-  it('loads the current document in an explicit editor-only preview', () => {
+  it('loads the current document from a public preview when the extension is live', () => {
     expect(trackingProbeUrl({
       context: {
         org: 'aemsites',
@@ -25,7 +25,7 @@ describe('tracking inspector probe transport', () => {
         origin: 'https://codex-tracking-inspector-sheet--intuit-erp--aemsites.aem.live',
       },
     })).toBe(
-      'https://codex-tracking-inspector-sheet--intuit-erp--aemsites.preview.da.live/accounting/multi-entity?tracking-editor=1&martech=off',
+      'https://codex-tracking-inspector-sheet--intuit-erp--aemsites.aem.page/accounting/multi-entity?tracking-editor=1&martech=off',
     );
   });
 

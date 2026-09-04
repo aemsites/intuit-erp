@@ -647,7 +647,7 @@ export function loadTrackingInspectorBridge(
   location = {},
   // Query-versioned import keeps the probe and extension on the same release.
   // eslint-disable-next-line import/no-unresolved
-  loader = () => import('../tools/plugins/tracking/bridge.js?v=20260904.3'),
+  loader = () => import('../tools/plugins/tracking/bridge.js?v=20260904.4'),
 ) {
   return isTrackingInspectorPreview(location) ? loader() : null;
 }

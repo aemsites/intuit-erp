@@ -38,6 +38,12 @@ export function trackingPreviewOrigin({
   if (['localhost', '127.0.0.1'].includes(location.hostname)) return location.origin;
   if (/\.(aem|hlx)\.page$/.test(location.hostname)
     || /\.preview\.da\.live$/.test(location.hostname)) return location.origin;
+  if (/\.aem\.live$/.test(location.hostname)) {
+    return location.origin.replace(/\.aem\.live$/, '.aem.page');
+  }
+  if (/\.hlx\.live$/.test(location.hostname)) {
+    return location.origin.replace(/\.hlx\.live$/, '.hlx.page');
+  }
   const { org, repo } = context;
   if (!org || !repo || !ref) {
     throw new TypeError('DA context.org, context.repo, and ref are required to load the preview.');
