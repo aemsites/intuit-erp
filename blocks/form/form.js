@@ -21,6 +21,7 @@
  */
 import { loadScript, getMetadata, decorateIcons } from '../../scripts/aem.js';
 import { fetchPlaceholders } from '../../scripts/placeholders.js';
+import { experienceLog } from '../../scripts/experience.js'
 
 // Uncomment with the AEP/WebSDK integration in scripts/scripts.js.
 // // Vendored via git subtree at plugins/martech (see its README), not an
@@ -461,10 +462,11 @@ async function embedMarketoForm(formEl, cfg, config, env) {
   window.MktoForms2.loadForm(host, munchkin, config.formId, (form) => {
     // Get random UUID
     const leadXref = (window.crypto?.randomUUID ? window.crypto.randomUUID() : createUUID());
+    const ividVal = window?.utag_data?.ivid || getCookieValue('ivid') || ''
 
     // add hidden fields and populate values
     const hiddenFields = { Lead_XRef_ID__c: leadXref };
-    hiddenFields.IVID__c = window?.utag_data?.ivid || getCookieValue('ivid') || '';
+    hiddenFields.IVID__c = ividVal;
     hiddenFields.cID = getCidValue() || '';
     const customizedHiddenFields = getMappedHiddenFields(config);
     form.addHiddenFields?.({ ...hiddenFields, ...customizedHiddenFields });
@@ -505,6 +507,7 @@ async function embedMarketoForm(formEl, cfg, config, env) {
     const canHandoff = !!(config.chiliPiperRouter && cfg['chilipiper.subdomain']);
 
     form.onSuccess((vals) => {
+
       // invoking ECS tracking
       try {
         trackFormSubmit({ ...vals, Lead_XRef_ID__c: leadXref }, config.formId);
@@ -530,6 +533,21 @@ async function embedMarketoForm(formEl, cfg, config, env) {
       const handled = canHandoff || !!config.downloadUrl || !!config.successUrl;
       return !handled;
     });
+
+    // Handle for form submission fail
+    form.onSubmit(() => {
+      setTimeout(() => {
+        const targetNode = document.querySelectorAll(
+          `#mktoForm_${config.formId} .mktoButtonRow .mktoButtonWrap .mktoErrorMsg`
+        )[0];
+        if (targetNode) {
+          experienceLog('error',
+            `MARKETOFORM_ISSUE_WITH_FORM_SUBMISSION,formId:${config.formId},leadXRefID:${leadXref},ivid:${ividVal}`
+          );
+        }
+      }, 500);
+    });
+
   });
 }
 
