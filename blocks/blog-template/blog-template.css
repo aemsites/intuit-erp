@@ -735,8 +735,6 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
 
 @media (width >= 1024px) {
   :is(.blog-article, .case-study) .testimonial:not(.video, .simple) {
-    width: calc(100% + 80px);
-    margin: 32px -40px;
     padding: 8px 40px 24px;
   }
 }
