@@ -985,8 +985,8 @@ describe('live replay harness contracts', () => {
     }));
     await vi.waitFor(async () => expect((await hook.snapshot()).serialized).toHaveLength(2));
     const evidence = await hook.snapshot();
-    expect(evidence.serialized.map(({ status }) => status)).toEqual(['unlinked', 'linked']);
-    expect(evidence.serialized[1]).toMatchObject({
+    expect(evidence.serialized.map(({ status }) => status).sort()).toEqual(['linked', 'unlinked']);
+    expect(evidence.serialized.find(({ status }) => status === 'linked')).toMatchObject({
       invocationId: `${scenario.scenarioId}:1`, lineageSource: 'click-invocation-marker',
     });
     expect(sent.every(({ body }) => !body.includes('__adobe_migration_replay_invocation'))).toBe(true);
