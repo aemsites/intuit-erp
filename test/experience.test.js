@@ -314,6 +314,19 @@ describe('hasEagerWork (above-the-fold gate)', () => {
     setMeta('experiment-id', 'not-a-number');
     expect(hasEagerWork(document)).toBe(true);
   });
+  // Regression: hasEagerWork runs BEFORE decorateMain, so real pages have raw section
+  // divs with NO `.section` class yet — only pipeline-emitted data-pzn/data-exp.
+  it('true when the first RAW (pre-decorate) section carries a target', () => {
+    document.body.innerHTML = '<main><div data-pzn="alpha"></div><div></div></main>';
+    expect(hasEagerWork(document)).toBe(true);
+  });
+  it('false when RAW targets live only below the first section', () => {
+    document.body.innerHTML = '<main>'
+      + '<div></div>'
+      + '<div data-pzn="beta"></div>'
+      + '</main>';
+    expect(hasEagerWork(document)).toBe(false);
+  });
 });
 
 describe('experimentDecision / pznDecision', () => {
