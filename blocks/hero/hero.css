@@ -29,27 +29,27 @@
   color: var(--text, #11181c);
 }
 
-.section.hero-container.light a.button.primary {
+.section.hero-container.light :is(a, button).button.primary {
   background: var(--navy);
   border-color: var(--navy);
   color: #fff;
 }
 
-.section.hero-container.light a.button.primary:hover,
-.section.hero-container.light a.button.primary:focus-visible {
+.section.hero-container.light :is(a, button).button.primary:hover,
+.section.hero-container.light :is(a, button).button.primary:focus-visible {
   background: var(--navy-hover);
   border-color: var(--navy-hover);
   color: #fff;
 }
 
-.section.hero-container.light a.button.secondary {
+.section.hero-container.light :is(a, button).button.secondary {
   background: transparent;
   border-color: var(--ink-teal);
   color: var(--ink-teal);
 }
 
-.section.hero-container.light a.button.secondary:hover,
-.section.hero-container.light a.button.secondary:focus-visible {
+.section.hero-container.light :is(a, button).button.secondary:hover,
+.section.hero-container.light :is(a, button).button.secondary:focus-visible {
   background: var(--ink-teal);
   border-color: var(--ink-teal);
   color: #fff;
@@ -145,22 +145,22 @@
   visibility: hidden;
 }
 
-.hero a.button.primary {
+.hero :is(a, button).button.primary {
   background: #fff;
   color: var(--ink-teal, #0d333f);
   border-color: #fff;
 }
 
-.hero a.button.primary:hover {
+.hero :is(a, button).button.primary:hover {
   background: #eef4f6;
   border-color: #eef4f6;
 }
 
-.hero a.button.icon-video {
+.hero :is(a, button).button.icon-video {
   gap: 10px;
 }
 
-.hero a.button.icon-video::before {
+.hero :is(a, button).button.icon-video::before {
   content: "";
   flex: 0 0 auto;
   width: 22px;
@@ -372,7 +372,7 @@
   justify-content: center;
 }
 
-.hero.centered .hero-actions a.button {
+.hero.centered .hero-actions :is(a, button).button {
   min-height: 52px;
   padding: 0 28px;
   line-height: 24px;

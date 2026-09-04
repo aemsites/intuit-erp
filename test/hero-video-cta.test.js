@@ -52,13 +52,12 @@ describe('hero — video CTA', () => {
     const link = block.querySelector('[data-track-id="hero:youtube-Lo798Iuj3N4"]');
     expect(link).not.toBeNull();
     expect(link.classList.contains('icon-video')).toBe(true);
+    expect(link.tagName).toBe('BUTTON');
     expect(link.hasAttribute('href')).toBe(false);
     expect(link.getAttribute('data-video-src')).toBe('https://www.youtube.com/watch?v=Lo798Iuj3N4');
-    expect(link.getAttribute('role')).toBe('button');
 
-    const ev = new MouseEvent('click', { bubbles: true, cancelable: true });
-    link.dispatchEvent(ev);
-    expect(ev.defaultPrevented).toBe(true);
+    // a <button> has no navigation to prevent — clicking just opens the modal
+    link.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
 
     const overlay = document.querySelector('.video-modal-overlay');
     expect(overlay).not.toBeNull();
@@ -99,7 +98,7 @@ describe('hero — video CTA click-tracking parity (homepage "Watch product demo
     document.body.append(main);
     await decorate(block);
     initTracking(main);
-    return block.querySelector('a.icon-video');
+    return block.querySelector('.icon-video');
   }
 
   it('emits the prod video:engaged beacon on a real delegated interaction', async () => {
@@ -134,9 +133,7 @@ describe('hero — video CTA click-tracking parity (homepage "Watch product demo
     expect(link.getAttribute('data-ui-object')).toBe('video_link');
     expect(link.getAttribute('data-action')).toBe('engaged');
 
-    const ev = new MouseEvent('click', { bubbles: true, cancelable: true });
-    link.dispatchEvent(ev);
-    expect(ev.defaultPrevented).toBe(true);
+    link.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
     expect(document.querySelector('.video-modal-overlay')).not.toBeNull();
   });
 });
