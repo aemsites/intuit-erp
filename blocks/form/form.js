@@ -91,7 +91,6 @@ function marketoEnv() {
 const RECAPTCHA_API_SRC = 'https://www.google.com/recaptcha/api.js';
 const RECAPTCHA_DEFAULT_THRESHOLD = 0.3;
 const CAPTCHA_V2_JS_URL = 'https://www.google.com/recaptcha/api.js?onload=invokeV2Recaptcha&render=explicit&badge=bottomleft';
-export const CAPTCHA_V2_KEY = '6LdTQDQrAAAAALma4VbXZN_n4ftrH5g-zyh7cxsj';
 
 // munchkin tag constants
 const MUNCHKIN_API_SRC = '//munchkin.marketo.net/munchkin.js';
@@ -376,22 +375,24 @@ const verifyRecaptchaResponse = (formId) => {
   return false;
 };
 
-// Invoke recaptchaV2 and render challenge for user
-const invokeV2Recaptcha = () => {
-  const { grecaptcha } = window;
-  if (!grecaptcha) return;
-  const recaptachaV2Div = document.querySelectorAll('.g-recaptcha');
-  recaptachaV2Div.forEach((obj) => {
-    if (!obj.getAttribute('data-captchaid')) {
-      const widgetId1 = grecaptcha.render(obj, {
-        sitekey: `${CAPTCHA_V2_KEY}`,
-        theme: 'light',
-      });
-      obj.setAttribute('data-captchaid', `${widgetId1}`);
-      grecaptcha.reset(widgetId1);
-    }
-  });
-};
+// Invoke recaptchaV2 and render challenge for user (global onload callback from CAPTCHA_V2_JS_URL).
+function createInvokeV2Recaptcha(v2SiteKey) {
+  return () => {
+    const { grecaptcha } = window;
+    if (!grecaptcha || !v2SiteKey) return;
+    const recaptachaV2Div = document.querySelectorAll('.g-recaptcha');
+    recaptachaV2Div.forEach((obj) => {
+      if (!obj.getAttribute('data-captchaid')) {
+        const widgetId1 = grecaptcha.render(obj, {
+          sitekey: v2SiteKey,
+          theme: 'light',
+        });
+        obj.setAttribute('data-captchaid', `${widgetId1}`);
+        grecaptcha.reset(widgetId1);
+      }
+    });
+  };
+}
 
 // Insert the v2 widget mount point above Marketo's submit row.
 function mountRecaptchaV2Placeholder(targetFormEl) {
@@ -401,11 +402,10 @@ function mountRecaptchaV2Placeholder(targetFormEl) {
   const recaptchaV2Div = document.createElement('div');
   recaptchaV2Div.className = 'g-recaptcha';
   submitBtnRow.parentNode?.insertBefore(recaptchaV2Div, submitBtnRow);
-  window.invokeV2Recaptcha = invokeV2Recaptcha;
 }
 
 // reCAPTCHA v3
-async function setupRecaptcha(cfg, config, form) {
+async function setupRecaptcha(cfg, config, form, formEl) {
   const siteKey = cfg['recaptcha.siteKey'];
   const verifyUrl = cfg['recaptcha.verifyUrl'];
   const apiKey = cfg['recaptcha.apiKey'];
@@ -435,7 +435,10 @@ async function setupRecaptcha(cfg, config, form) {
     syncFullNameHiddenFields(form);
 
     if (!verified) {
-      verified = verifyRecaptchaResponse(config.formId);
+      const v2ElMount = document.querySelector(`#mktoForm_${config.formId} .g-recaptcha`);
+      if (v2ElMount) {
+        verified = verifyRecaptchaResponse(config.formId);
+      }
     }
     form.submittable(verified);
   });
@@ -446,6 +449,8 @@ async function setupRecaptcha(cfg, config, form) {
       .then(async (token) => {
         verified = await verify(token);
         if (!verified) {
+          mountRecaptchaV2Placeholder(formEl);
+          window.invokeV2Recaptcha = createInvokeV2Recaptcha(cfg['recaptcha.v2SiteKey']);
           loadScript(CAPTCHA_V2_JS_URL);
         }
       })
@@ -543,7 +548,7 @@ async function embedMarketoForm(formEl, cfg, config, env) {
 
     // recaptcha
     if (config.recaptcha) {
-      setupRecaptcha(cfg, config, form);
+      setupRecaptcha(cfg, config, form, formEl);
     } else {
       form.onValidate(() => {
         syncFullNameHiddenFields(form);
@@ -594,20 +599,6 @@ async function embedMarketoForm(formEl, cfg, config, env) {
         }
       }, 500);
     });
-
-    // MktoForms2.whenReady is on the namespace, not the Form instance. Defer one
-    // tick so Marketo's submit row exists before we mount the v2 placeholder.
-    if (config.recaptcha) {
-      const mountV2 = () => mountRecaptchaV2Placeholder(formEl);
-      if (window.MktoForms2.whenReady) {
-        window.MktoForms2.whenReady((f) => {
-          if (String(f.getId()) !== String(config.formId)) return;
-          mountV2();
-        });
-      } else {
-        mountV2();
-      }
-    }
   });
 }
 
