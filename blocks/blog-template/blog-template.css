@@ -698,10 +698,37 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
 .blog-article .highlight.sky .highlight-inner,
 .blog-article .highlight .highlight-inner {
   background: var(--agave);
-  border-radius: 0;
+  border-radius: 10px;
   padding: 24px 40px;
   font-size: 20px;
   margin: 0 -30px;
+}
+
+.blog-article .highlight .highlight-inner p:has(> .icon[class*="icon-quick-answer"]) {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+}
+
+.blog-article .highlight .highlight-inner .icon[class*="icon-quick-answer"] {
+  float: none;
+  flex: none;
+  margin: 0;
+}
+
+.blog-article .highlight .highlight-inner p:has(> .icon[class*="icon-quick-answer"]) ~ * {
+  margin-left: 90px;
+}
+
+@media (width >= 768px) {
+  .blog-article .highlight .highlight-inner p:has(> .icon[class*="icon-quick-answer"]) ~ * {
+    margin-left: 118px;
+  }
+}
+
+.blog-article > .section > .default-content-wrapper a:any-link {
+  color: #236cff;
+  text-decoration: underline;
 }
 
 .blog-article .video-wrapper {
@@ -719,10 +746,6 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
   padding-top: 1rem;
 }
 
-/* When the quote box ends its section the trailing-margin reset zeros its
-   bottom margin, collapsing the gap to the following content (e.g. an image)
-   to 0px. Keep the 40px gap to match prod. Only margin-bottom is set so the
-   desktop full-bleed horizontal margin is preserved. */
 .blog-article > .section > .testimonial-wrapper:last-child > .testimonial:not(.video, .simple) {
   margin-bottom: 40px;
 }
