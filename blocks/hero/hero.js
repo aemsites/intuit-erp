@@ -6,7 +6,9 @@ const DASHBOARD_LOTTIE_PATHS = ['/', '/index'];
 const DASHBOARD_LOTTIE_JSON = '/blocks/hero/dashboard-animation.json';
 const LOTTIE_PLAYER_URL = 'https://cdn.jsdelivr.net/npm/lottie-web@5.12.2/build/player/lottie_light.min.js/+esm';
 const DASHBOARD_LOTTIE_ROOT_MARGIN = '500px 0px';
-const DASHBOARD_LOTTIE_IDLE_TIMEOUT = 2000;
+const DASHBOARD_LOTTIE_FALLBACK_DELAY = 3000;
+const DASHBOARD_LOTTIE_DESKTOP_THRESHOLD = 0.1;
+const DASHBOARD_LOTTIE_MOBILE_THRESHOLD = 0.8;
 const YOUTUBE_URL_RE = /(?:youtube(?:-nocookie)?\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/;
 const VIMEO_URL_RE = /vimeo\.com\/(?:video\/)?(\d+)/;
 
@@ -77,9 +79,9 @@ function yieldToMain() {
 
 function scheduleWhenIdle(callback) {
   if (window.requestIdleCallback) {
-    window.requestIdleCallback(callback, { timeout: DASHBOARD_LOTTIE_IDLE_TIMEOUT });
+    window.requestIdleCallback(callback);
   } else {
-    window.setTimeout(callback, 0);
+    window.setTimeout(callback, DASHBOARD_LOTTIE_FALLBACK_DELAY);
   }
 }
 
@@ -95,6 +97,9 @@ export function enhanceDashboardAnimation(media, picture, {
   if (!DASHBOARD_LOTTIE_PATHS.includes(window.location.pathname)) return;
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
+  const visibilityThreshold = window.matchMedia('(width < 768px)').matches
+    ? DASHBOARD_LOTTIE_MOBILE_THRESHOLD
+    : DASHBOARD_LOTTIE_DESKTOP_THRESHOLD;
   let responsePromise;
   let started = false;
 
@@ -161,7 +166,7 @@ export function enhanceDashboardAnimation(media, picture, {
   };
 
   if (!window.IntersectionObserver) {
-    warmResources();
+    scheduleWhenIdle(warmResources);
     initialize();
     return;
   }
@@ -169,17 +174,17 @@ export function enhanceDashboardAnimation(media, picture, {
   const warmObserver = new IntersectionObserver((entries) => {
     if (!entries.some(({ isIntersecting }) => isIntersecting)) return;
     warmObserver.disconnect();
-    warmResources();
+    scheduleWhenIdle(warmResources);
   }, { rootMargin: DASHBOARD_LOTTIE_ROOT_MARGIN });
 
   const visibleObserver = new IntersectionObserver((entries) => {
     const visible = entries.some(({ isIntersecting, intersectionRatio }) => (
-      isIntersecting && intersectionRatio >= 0.1
+      isIntersecting && intersectionRatio >= visibilityThreshold
     ));
     if (!visible) return;
     visibleObserver.disconnect();
     initialize();
-  }, { threshold: 0.1 });
+  }, { threshold: visibilityThreshold });
 
   warmObserver.observe(media);
   visibleObserver.observe(media);

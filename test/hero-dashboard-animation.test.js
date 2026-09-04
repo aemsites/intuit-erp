@@ -26,6 +26,7 @@ const flushPromises = () => new Promise((resolve) => { setTimeout(resolve, 0); }
 
 describe('hero — dashboard animation scheduling', () => {
   let idleCallbacks;
+  let isMobile;
   let media;
   let picture;
 
@@ -36,13 +37,16 @@ describe('hero — dashboard animation scheduling', () => {
     window.hlx = { codeBasePath: '' };
     IntersectionObserverMock.instances = [];
     idleCallbacks = [];
+    isMobile = false;
 
     vi.stubGlobal('IntersectionObserver', IntersectionObserverMock);
     vi.stubGlobal('requestIdleCallback', vi.fn((callback) => {
       idleCallbacks.push(callback);
       return idleCallbacks.length;
     }));
-    vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: false })));
+    vi.stubGlobal('matchMedia', vi.fn((query) => ({
+      matches: isMobile && query === '(width < 768px)',
+    })));
 
     media = document.createElement('div');
     media.className = 'hero-media';
@@ -59,7 +63,7 @@ describe('hero — dashboard animation scheduling', () => {
     delete window.hlx;
   });
 
-  it('warms resources near the viewport, then initializes during idle once visible', async () => {
+  it('defers resource warm-up and initialization until idle once visible', async () => {
     const animationData = { layers: [] };
     const response = { ok: true, json: vi.fn(() => Promise.resolve(animationData)) };
     const fetchAnimation = vi.fn(() => Promise.resolve(response));
@@ -85,20 +89,33 @@ describe('hero — dashboard animation scheduling', () => {
     expect(loadPlayer).not.toHaveBeenCalled();
 
     warmObserver.intersect();
-    expect(fetchAnimation).toHaveBeenCalledWith('/blocks/hero/dashboard-animation.json');
+    expect(idleCallbacks).toHaveLength(1);
+    expect(window.requestIdleCallback).toHaveBeenNthCalledWith(1, expect.any(Function));
+    expect(fetchAnimation).not.toHaveBeenCalled();
     const modulePreload = document.head.querySelector(
       'link[rel="modulepreload"][href="https://cdn.jsdelivr.net/npm/lottie-web@5.12.2/build/player/lottie_light.min.js/+esm"]',
     );
-    expect(modulePreload).not.toBeNull();
-    expect(modulePreload.nonce).toBe('aem');
+    expect(modulePreload).toBeNull();
     expect(loadPlayer).not.toHaveBeenCalled();
 
     visibleObserver.intersect({ ratio: 0.25 });
     await flushPromises();
-    expect(idleCallbacks).toHaveLength(1);
+    expect(idleCallbacks).toHaveLength(2);
+    expect(fetchAnimation).not.toHaveBeenCalled();
     expect(loadPlayer).not.toHaveBeenCalled();
 
     idleCallbacks[0]();
+    await flushPromises();
+    expect(fetchAnimation).toHaveBeenCalledWith('/blocks/hero/dashboard-animation.json');
+    const idleModulePreload = document.head.querySelector(
+      'link[rel="modulepreload"][href="https://cdn.jsdelivr.net/npm/lottie-web@5.12.2/build/player/lottie_light.min.js/+esm"]',
+    );
+    expect(idleModulePreload).not.toBeNull();
+    expect(idleModulePreload.nonce).toBe('aem');
+    expect(loadPlayer).not.toHaveBeenCalled();
+
+    idleCallbacks[1]();
+    await flushPromises();
     await flushPromises();
     await flushPromises();
     await flushPromises();
@@ -115,5 +132,42 @@ describe('hero — dashboard animation scheduling', () => {
     onDomLoaded();
     expect(picture.classList.contains('hero-dashboard-fallback')).toBe(true);
     expect(animation.play).toHaveBeenCalledOnce();
+  });
+
+  it('waits until the dashboard is at least 80% visible on mobile', async () => {
+    isMobile = true;
+    const fetchAnimation = vi.fn();
+    const loadPlayer = vi.fn();
+
+    enhanceDashboardAnimation(media, picture, { fetchAnimation, loadPlayer });
+
+    const visibleObserver = IntersectionObserverMock.instances
+      .find(({ options }) => options.threshold === 0.8);
+
+    expect(visibleObserver).toBeDefined();
+    visibleObserver.intersect({ ratio: 0.79 });
+    await flushPromises();
+    expect(idleCallbacks).toHaveLength(0);
+    expect(visibleObserver.disconnect).not.toHaveBeenCalled();
+
+    visibleObserver.intersect({ ratio: 0.8 });
+    await flushPromises();
+    expect(idleCallbacks).toHaveLength(1);
+    expect(visibleObserver.disconnect).toHaveBeenCalledOnce();
+    expect(fetchAnimation).not.toHaveBeenCalled();
+    expect(loadPlayer).not.toHaveBeenCalled();
+  });
+
+  it('uses a delayed fallback when idle callbacks are unavailable', () => {
+    vi.stubGlobal('requestIdleCallback', undefined);
+    const setTimeoutSpy = vi.spyOn(window, 'setTimeout').mockImplementation(() => 1);
+
+    enhanceDashboardAnimation(media, picture);
+
+    const warmObserver = IntersectionObserverMock.instances
+      .find(({ options }) => options.rootMargin === '500px 0px');
+    warmObserver.intersect();
+
+    expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 3000);
   });
 });
