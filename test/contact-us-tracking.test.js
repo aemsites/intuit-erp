@@ -138,6 +138,31 @@ describe('contact-us tracking', () => {
     expect(startChat).toHaveBeenCalledOnce();
   });
 
+  it('starts an embedded engagement that LivePerson rendered before facade activation', async () => {
+    metadata['chat-now'] = 'true';
+    const requestLivePerson = vi.fn();
+    await initContactUs({ requestLivePerson });
+
+    const engagement = document.createElement('div');
+    engagement.className = 'LPMcontainer LPMoverlay';
+    const livePersonButton = document.createElement('button');
+    livePersonButton.dataset.lpEvent = 'click';
+    const startChat = vi.fn();
+    livePersonButton.addEventListener('click', startChat);
+    engagement.append(livePersonButton);
+    document.getElementById('ies-button-div').append(engagement);
+    await Promise.resolve();
+    expect(startChat).not.toHaveBeenCalled();
+
+    window.dispatchEvent(new CustomEvent('liveperson-facade:activate', {
+      detail: { source: 'proactive' },
+    }));
+    await Promise.resolve();
+
+    expect(requestLivePerson).toHaveBeenCalledOnce();
+    expect(startChat).toHaveBeenCalledOnce();
+  });
+
   it('suppresses a vendor campaign invite that arrives after chat starts', async () => {
     metadata['chat-now'] = 'true';
     await initContactUs({ requestLivePerson: vi.fn() });
