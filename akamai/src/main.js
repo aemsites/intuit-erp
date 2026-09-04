@@ -15,6 +15,7 @@ import { httpRequest } from 'http-request';
 import { createResponse } from 'create-response';
 import { ReadableStream } from 'streams';
 import { logger } from 'log';
+import { TextEncoder } from 'encoding';
 import {
   resolveFragmentPaths,
   toPlainHtmlPath,
