@@ -53,6 +53,8 @@
  * @property {Object} data Extra data used to seed `window.utag_data` (defaults to {}).
  * @property {Boolean} phaseSplit Whether to split selected profile tags across lazy/delayed views.
  * @property {Boolean} livePersonOnDemand Whether LivePerson waits for an explicit user request.
+ * @property {Set<String>|null} tagUids Optional active-tag allowlist; null preserves normal
+ * routing.
  */
 export const DEFAULT_CONFIG = {
   account: 'intuit',
@@ -69,13 +71,30 @@ const DELAYED_TAG_UID_SET = new Set(DELAYED_TAG_UIDS);
 export const LIVEPERSON_TAG_UID = '23';
 
 /**
+ * Parses the optional Tealium tag UID query filter. `null` means the parameter was absent and
+ * existing unfiltered routing should be preserved; an empty Set means it was present but no valid
+ * numeric UIDs were supplied, so no profile tags should run.
+ * @param {URLSearchParams} params page URL parameters
+ * @returns {Set<String>|null} normalized UID allowlist, or null when filtering is inactive
+ */
+export function parseTealiumTagUids(params) {
+  if (!params.has('tealium-tags')) return null;
+  const uids = params.get('tealium-tags').split(',')
+    .map((uid) => uid.trim())
+    .filter((uid) => /^\d+$/.test(uid))
+    .map((uid) => uid.replace(/^0+(?=\d)/, ''));
+  return new Set(uids);
+}
+
+/**
  * Returns active Tealium tags in profile order, excluding the requested UIDs.
  * Explicit UID views bypass load rules, so inactive tags must not be added to the list.
  * @param {Object} tealium the loaded `window.utag` runtime
  * @param {Set<String>} [excluded] UIDs to omit
+ * @param {Set<String>|null} [allowed] UIDs to allow, or null for every active tag
  * @returns {String[]} active tag UIDs
  */
-export function resolveActiveTagUids(tealium, excluded = new Set()) {
+export function resolveActiveTagUids(tealium, excluded = new Set(), allowed = null) {
   const cfg = tealium?.loader?.cfg || {};
   const order = Array.isArray(tealium?.loader?.cfgsort)
     ? tealium.loader.cfgsort
@@ -83,7 +102,10 @@ export function resolveActiveTagUids(tealium, excluded = new Set()) {
 
   return order.filter((uid) => {
     const tag = cfg[uid];
-    return tag?.load && tag?.send && !excluded.has(String(uid));
+    const normalizedUid = String(uid);
+    return tag?.load && tag?.send
+      && !excluded.has(normalizedUid)
+      && (allowed === null || allowed.has(normalizedUid));
   });
 }
 
@@ -92,11 +114,12 @@ export function resolveActiveTagUids(tealium, excluded = new Set()) {
  * Explicit UID calls bypass Tealium load-rule selection, so inactive tags must be removed here.
  * @param {Object} tealium the loaded `window.utag` runtime
  * @param {'lazy'|'delayed'} phase the target EDS phase
+ * @param {Set<String>|null} [allowed] UIDs to allow, or null for every active tag
  * @returns {String[]} active tag UIDs assigned to the phase
  */
-export function resolvePhaseTagUids(tealium, phase) {
+export function resolvePhaseTagUids(tealium, phase, allowed = null) {
   const selectDelayed = phase === 'delayed';
-  return resolveActiveTagUids(tealium)
+  return resolveActiveTagUids(tealium, new Set(), allowed)
     .filter((uid) => DELAYED_TAG_UID_SET.has(String(uid)) === selectDelayed);
 }
 
@@ -452,6 +475,8 @@ export default class TealiumMartech {
     // Chat-enabled EDS pages can keep LivePerson off the page-load path and request the unchanged
     // Tealium tag after the visitor opens the contact panel.
     this.livePersonOnDemand = !!cfg.livePersonOnDemand;
+    // A Set activates explicit UID routing. Null/undefined preserves the exact profile-owned path.
+    this.tagUids = cfg.tagUids instanceof Set ? new Set(cfg.tagUids) : null;
     // Pre-declare the data layer / config override globals as early as possible (head.html
     // already does this before any script runs; this just layers in the instance's own data).
     window.utag_data = { ...(window.utag_data || {}), ...config.data };
@@ -461,6 +486,9 @@ export default class TealiumMartech {
     window.utag_data = window.utag_data || {};
     window.utag_cfg_ovrd = window.utag_cfg_ovrd || {};
     window.utag_cfg_ovrd.noview = true;
+    // An explicitly empty experiment is the one supported way to prevent template loading:
+    // Tealium's documented noload override halts initialization after Pre Loader extensions.
+    if (this.tagUids?.size === 0) window.utag_cfg_ovrd.noload = true;
     this.utagLoadPromise = null;
     this.consentListener = null;
     this.delayedReached = false;
@@ -480,10 +508,11 @@ export default class TealiumMartech {
   sendInitialView() {
     if (!window.utag?.view) return;
     whenConsentResolved(() => {
-      if (this.phaseSplit || this.livePersonOnDemand) {
+      if (this.phaseSplit || this.livePersonOnDemand || this.tagUids !== null) {
         const excluded = new Set(this.phaseSplit ? DELAYED_TAG_UIDS : []);
         if (this.livePersonOnDemand) excluded.add(LIVEPERSON_TAG_UID);
-        const uids = resolveActiveTagUids(window.utag, excluded);
+        const uids = resolveActiveTagUids(window.utag, excluded, this.tagUids);
+        if (!uids.length) return;
         window.utag.view(window.utag_data, null, uids);
       } else {
         window.utag.view(window.utag_data);
@@ -503,12 +532,17 @@ export default class TealiumMartech {
 
     whenConsentResolved(() => {
       if (this.phaseSplit) {
-        const uids = resolvePhaseTagUids(window.utag, 'delayed')
+        const uids = resolvePhaseTagUids(window.utag, 'delayed', this.tagUids)
           .filter((uid) => !this.livePersonOnDemand || uid !== LIVEPERSON_TAG_UID);
+        if (!uids.length) return;
         window.utag.view({
           ...window.utag_data,
           tealium_event: 'delayed_ready',
         }, null, uids);
+      } else if (this.tagUids !== null) {
+        const uids = resolveActiveTagUids(window.utag, new Set(), this.tagUids);
+        if (!uids.length) return;
+        window.utag.link({ tealium_event: 'delayed_ready' }, null, uids);
       } else {
         window.utag.link({ tealium_event: 'delayed_ready' });
       }
@@ -523,6 +557,10 @@ export default class TealiumMartech {
     if (!this.livePersonRequested || this.livePersonSent || !window.utag?.view) return;
     whenConsentResolved(() => {
       if (this.livePersonSent) return;
+      if (this.tagUids !== null) {
+        const uids = resolveActiveTagUids(window.utag, new Set(), this.tagUids);
+        if (!uids.some((uid) => String(uid) === LIVEPERSON_TAG_UID)) return;
+      }
       this.livePersonSent = true;
       window.utag.view({
         ...window.utag_data,
@@ -537,6 +575,7 @@ export default class TealiumMartech {
    */
   requestLivePerson() {
     if (!this.enabled || !this.livePersonOnDemand || this.livePersonRequested) return;
+    if (this.tagUids !== null && !this.tagUids.has(LIVEPERSON_TAG_UID)) return;
     this.livePersonRequested = true;
     this.sendLivePersonRequest();
   }
