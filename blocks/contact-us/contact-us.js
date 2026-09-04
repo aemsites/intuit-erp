@@ -18,6 +18,7 @@
 import { openScheduleModal } from '../../scripts/schedule-modal.js';
 import { getMetadata } from '../../scripts/aem.js';
 import { trackAs } from '../../scripts/tracking.js';
+import { LIVEPERSON_FACADE_ACTIVATE } from '../../scripts/liveperson-facade.js';
 
 // Contact info (sales phone, hours, support URL) is authored in DA — a
 // fragment table, not hardcoded here — so it can change without a code
@@ -99,7 +100,10 @@ function mobileBubble(label, blog, ballIcon) {
  * is verbatim from erp.intuit.com because the LivePerson campaign targets it by id.
  */
 function panelBody(blog, contact, chatNow) {
-  const chatCta = chatNow ? '<div id="ies-button-div" class="cu-chat-cta"></div>' : '';
+  const chatCta = chatNow ? `
+    <div id="ies-button-div" class="cu-chat-cta">
+      <button type="button" class="cu-btn cu-btn-secondary cu-chat-facade">Chat now</button>
+    </div>` : '';
   if (blog) {
     return `
       <div class="cu-headline cu-headline-blog">How can we help?</div>
@@ -120,7 +124,7 @@ function panelBody(blog, contact, chatNow) {
 /**
  * Builds, wires and appends the widget. Idempotent — a second call is a no-op.
  */
-export default async function initContactUs() {
+export default async function initContactUs({ requestLivePerson } = {}) {
   if (document.getElementById('contact-us')) return;
 
   const blog = isBlogVariant();
@@ -157,16 +161,29 @@ export default async function initContactUs() {
   const panel = root.querySelector('.cu-panel');
   const closeBtn = root.querySelector('.cu-close');
   const triggers = root.querySelectorAll('.cu-bubble, .cu-ball');
+  const chatTarget = root.querySelector('#ies-button-div');
+  const chatFacade = root.querySelector('.cu-chat-facade');
   let lastTrigger = null;
-  let lpPainted = false;
+  let livePersonRequested = false;
 
-  function paintLivePerson() {
-    if (!chatNow || lpPainted) return;
+  function requestChat() {
+    if (!chatNow || livePersonRequested) return;
+    livePersonRequested = true;
+    if (chatFacade) {
+      chatFacade.disabled = true;
+      chatFacade.textContent = 'Loading chat…';
+    }
     try {
-      window.lpTag?.newPage?.(window.location.href);
-    } catch (e) { /* non-fatal — chat button just won't paint */ }
-    lpPainted = true;
+      requestLivePerson?.();
+    } catch (e) { /* non-fatal — the phone/schedule options remain available */ }
   }
+
+  const livePersonObserver = chatTarget ? new MutationObserver(() => {
+    if (!chatTarget.querySelector('.LPMcontainer')) return;
+    if (chatFacade) chatFacade.hidden = true;
+    livePersonObserver.disconnect();
+  }) : null;
+  livePersonObserver?.observe(chatTarget, { childList: true, subtree: true });
 
   function onKeydown(e) {
     // eslint-disable-next-line no-use-before-define
@@ -185,7 +202,13 @@ export default async function initContactUs() {
     closeBtn.focus();
     document.addEventListener('keydown', onKeydown);
     document.addEventListener('click', onOutside, true);
-    paintLivePerson();
+    requestChat();
+  }
+
+  const openFromInvite = () => open(triggers[0]);
+  const inviteActivated = document.documentElement.dataset.livepersonInviteActivated === 'true';
+  if (!inviteActivated) {
+    window.addEventListener(LIVEPERSON_FACADE_ACTIVATE, openFromInvite, { once: true });
   }
 
   function close() {
@@ -219,4 +242,5 @@ export default async function initContactUs() {
   });
 
   document.body.append(root);
+  if (inviteActivated) openFromInvite();
 }

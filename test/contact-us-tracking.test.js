@@ -5,7 +5,9 @@ import {
   resetTrackingState, resolveTrackable, stampInteraction, trackIdOf,
 } from '../scripts/tracking.js';
 
-vi.mock('../scripts/aem.js', () => ({ getMetadata: () => '' }));
+const { metadata } = vi.hoisted(() => ({ metadata: {} }));
+
+vi.mock('../scripts/aem.js', () => ({ getMetadata: (name) => metadata[name] || '' }));
 vi.mock('../scripts/schedule-modal.js', () => ({ openScheduleModal: vi.fn() }));
 
 const { default: initContactUs } = await import('../blocks/contact-us/contact-us.js');
@@ -16,6 +18,8 @@ describe('contact-us tracking', () => {
     document.body.innerHTML = '';
     window.history.replaceState(null, '', '/accounting/business-intelligence-reports');
     window.hlx = { codeBasePath: '' };
+    document.documentElement.removeAttribute('data-liveperson-invite-activated');
+    Object.keys(metadata).forEach((key) => delete metadata[key]);
     resetTrackingState();
     vi.stubGlobal('fetch', vi.fn(async (url) => ({
       ok: true,
@@ -64,5 +68,59 @@ describe('contact-us tracking', () => {
     stampInteraction({ target: support });
 
     expect(support.getAttribute('data-ui-object')).toBe('button');
+  });
+
+  it('loads LivePerson only after the contact panel opens and replaces the facade when ready', async () => {
+    metadata['chat-now'] = 'true';
+    const requestLivePerson = vi.fn();
+    await initContactUs({ requestLivePerson });
+
+    const trigger = document.querySelector('.cu-bubble');
+    const facade = document.querySelector('.cu-chat-facade');
+    const target = document.getElementById('ies-button-div');
+
+    expect(facade).not.toBeNull();
+    expect(facade.textContent).toBe('Chat now');
+    expect(requestLivePerson).not.toHaveBeenCalled();
+
+    trigger.click();
+
+    expect(requestLivePerson).toHaveBeenCalledOnce();
+    expect(facade.disabled).toBe(true);
+    expect(facade.textContent).toBe('Loading chat…');
+
+    const livePersonButton = document.createElement('button');
+    livePersonButton.className = 'LPMcontainer';
+    livePersonButton.textContent = 'Chat now';
+    target.append(livePersonButton);
+    await Promise.resolve();
+
+    expect(facade.hidden).toBe(true);
+
+    document.querySelector('.cu-close').click();
+    trigger.click();
+    expect(requestLivePerson).toHaveBeenCalledOnce();
+  });
+
+  it('opens and requests LivePerson when the proactive facade is activated', async () => {
+    metadata['chat-now'] = 'true';
+    const requestLivePerson = vi.fn();
+    await initContactUs({ requestLivePerson });
+
+    window.dispatchEvent(new CustomEvent('liveperson-facade:activate'));
+
+    expect(document.querySelector('.cu-panel').hidden).toBe(false);
+    expect(requestLivePerson).toHaveBeenCalledOnce();
+  });
+
+  it('honors a proactive-facade click that happens before the contact widget is ready', async () => {
+    metadata['chat-now'] = 'true';
+    document.documentElement.dataset.livepersonInviteActivated = 'true';
+    const requestLivePerson = vi.fn();
+
+    await initContactUs({ requestLivePerson });
+
+    expect(document.querySelector('.cu-panel').hidden).toBe(false);
+    expect(requestLivePerson).toHaveBeenCalledOnce();
   });
 });

@@ -291,6 +291,89 @@ describe('experimental phased tag routing', () => {
   });
 });
 
+describe('interaction-triggered LivePerson', () => {
+  const activeTags = () => ({
+    cfgsort: ['1', '9', '23', '27', '32'],
+    cfg: Object.fromEntries(
+      ['1', '9', '23', '27', '32'].map((uid) => [uid, { load: 1, send: 1 }]),
+    ),
+  });
+
+  it('omits only LivePerson from the initial view on chat-enabled pages', () => {
+    stubLocation({ hostname: PROD_HOST });
+    const tealium = new TealiumMartech({ livePersonOnDemand: true });
+    window.utag = {
+      view: vi.fn(),
+      gdpr: { getConsentState: vi.fn(() => 1) },
+      loader: activeTags(),
+    };
+
+    tealium.sendInitialView();
+
+    expect(window.utag.view).toHaveBeenCalledWith(
+      window.utag_data,
+      null,
+      ['1', '9', '27', '32'],
+    );
+  });
+
+  it('loads UID 23 once on request through a targeted consent-gated view', () => {
+    stubLocation({ hostname: PROD_HOST });
+    window.utag_data = { page_name: 'homepage' };
+    const tealium = new TealiumMartech({ livePersonOnDemand: true });
+    window.utag = {
+      view: vi.fn(),
+      gdpr: { getConsentState: vi.fn(() => 1) },
+      loader: activeTags(),
+    };
+
+    tealium.requestLivePerson();
+    tealium.requestLivePerson();
+
+    expect(window.utag.view).toHaveBeenCalledOnce();
+    expect(window.utag.view).toHaveBeenCalledWith({
+      ...window.utag_data,
+      tealium_event: 'liveperson_requested',
+    }, null, ['23']);
+  });
+
+  it('remembers a request made before utag is ready', () => {
+    stubLocation({ hostname: PROD_HOST });
+    const tealium = new TealiumMartech({ livePersonOnDemand: true });
+
+    tealium.requestLivePerson();
+    window.utag = {
+      view: vi.fn(),
+      gdpr: { getConsentState: vi.fn(() => 1) },
+      loader: activeTags(),
+    };
+    tealium.sendLivePersonRequest();
+
+    expect(window.utag.view).toHaveBeenCalledWith({
+      ...window.utag_data,
+      tealium_event: 'liveperson_requested',
+    }, null, ['23']);
+  });
+
+  it('keeps LivePerson out of the delayed phase-split view until requested', () => {
+    stubLocation({ hostname: PROD_HOST });
+    const tealium = new TealiumMartech({ phaseSplit: true, livePersonOnDemand: true });
+    window.utag = {
+      view: vi.fn(),
+      link: vi.fn(),
+      gdpr: { getConsentState: vi.fn(() => 1) },
+      loader: activeTags(),
+    };
+
+    tealium.delayed();
+
+    expect(window.utag.view).toHaveBeenCalledWith({
+      ...window.utag_data,
+      tealium_event: 'delayed_ready',
+    }, null, ['9', '27']);
+  });
+});
+
 describe('utag_cfg_ovrd.utagdb (Tealium debug console) by resolved environment', () => {
   it('sets no utag_cfg_ovrd for the prod environment (stage.erp.intuit.com host)', () => {
     stubLocation({ hostname: STAGE_HOST });
