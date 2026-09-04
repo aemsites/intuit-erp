@@ -25,11 +25,14 @@ export default function decorate(block) {
 
   const links = [...ul.querySelectorAll('a')];
 
+  const setActive = (current) => links.forEach((a) => a.classList.toggle('active', a === current));
+
   links.forEach((a) => {
     const target = targetFor(a);
     a.addEventListener('click', (e) => {
       if (!target) return;
       e.preventDefault();
+      setActive(a);
       target.scrollIntoView({ behavior: 'smooth' });
       window.history.pushState(null, '', a.getAttribute('href'));
     });
@@ -49,7 +52,7 @@ export default function decorate(block) {
     document.body.classList.toggle('sticky-nav-active', stuck);
   }, { threshold: 0 }).observe(sentinel);
 
-  if (links[0]) links[0].classList.add('active');
+  if (links[0]) setActive(links[0]);
 
   // defer past decorate()'s own CSS load so offsetHeight/getBoundingClientRect
   // reads reflect real, styled layout instead of 0
@@ -64,8 +67,11 @@ export default function decorate(block) {
 
     // scrollspy: activate the link whose section is under the bar
     const spy = new IntersectionObserver((entries) => {
+      // Match by element identity, not href: the nav links are authored as full
+      // paths with a hash (e.g. `/path/to/page#section`), so comparing the raw
+      // href against `#id` never matches and would clear every active state.
       entries.filter((en) => en.isIntersecting).forEach((en) => {
-        links.forEach((a) => a.classList.toggle('active', a.getAttribute('href') === `#${en.target.id}`));
+        setActive(links.find((a) => targetFor(a) === en.target));
       });
     }, { rootMargin: `-${navH}px 0px -70% 0px`, threshold: 0 });
     links.map(targetFor).filter(Boolean).forEach((t) => spy.observe(t));
