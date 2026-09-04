@@ -37,8 +37,10 @@ interaction-gated LivePerson.
 mode, LivePerson tag UID 23 stays out of both the initial and delayed views. The site eagerly paints
 an effectively transparent native HTML/CSS facade, then reveals it after 30 seconds by default.
 On desktop it reconstructs the proactive `Hi there!` invitation; below 768px it renders only a
-compact `Chat with a specialist` CTA above the contact bubble, keeping the delayed content too
-small to replace the page's primary LCP candidate. The site also adds its own
+compact `Chat with a specialist` CTA, keeping the delayed content too small to replace the page's
+primary LCP candidate. While that CTA is visible it temporarily takes
+the mobile contact launcher's bottom-right slot; dismissing it or starting chat restores the normal
+launcher, so the controls never stack. The site also adds its own
 `Chat now` facade in the existing contact panel. Dismissing `No thanks` loads nothing and suppresses
 the invite for the browser session. Accepting `Chat live now` requests UID 23 through a
 consent-gated, UID-targeted `utag.view`; once the unchanged tag paints its embedded engagement in

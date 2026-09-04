@@ -15,6 +15,7 @@ describe('LivePerson proactive invite facade', () => {
     vi.useFakeTimers();
     document.documentElement.removeAttribute('data-liveperson-invite-activated');
     document.documentElement.removeAttribute('data-liveperson-invite-scheduled');
+    document.documentElement.removeAttribute('data-liveperson-invite-visible');
     document.body.innerHTML = '';
     sessionStorage.clear();
   });
@@ -61,6 +62,7 @@ describe('LivePerson proactive invite facade', () => {
     expect(facade.classList.contains('lp-invite-visible')).toBe(false);
     expect(facade.getAttribute('aria-hidden')).toBe('true');
     expect(facade.inert).toBe(true);
+    expect(document.documentElement.dataset.livepersonInviteVisible).toBeUndefined();
     vi.advanceTimersByTime(DEFAULT_LIVEPERSON_INVITE_DELAY - 1);
     expect(facade.classList.contains('lp-invite-visible')).toBe(false);
 
@@ -68,6 +70,7 @@ describe('LivePerson proactive invite facade', () => {
     expect(facade.classList.contains('lp-invite-visible')).toBe(true);
     expect(facade.hasAttribute('aria-hidden')).toBe(false);
     expect(facade.inert).toBe(false);
+    expect(document.documentElement.dataset.livepersonInviteVisible).toBe('true');
   });
 
   it('honors an authored invitation delay override', () => {
@@ -116,6 +119,7 @@ describe('LivePerson proactive invite facade', () => {
     expect(document.documentElement.dataset.livepersonInviteActivated).toBe('proactive');
     expect(sessionStorage.getItem('liveperson-invite-dismissed')).toBeNull();
     expect(facade.hidden).toBe(true);
+    expect(document.documentElement.dataset.livepersonInviteVisible).toBeUndefined();
     expect(activations).toEqual([{ source: 'proactive' }]);
 
     window.dispatchEvent(new CustomEvent(LIVEPERSON_FACADE_STARTED));

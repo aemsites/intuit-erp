@@ -28,6 +28,7 @@ function rememberDismissal() {
 }
 
 function removeInvite(facade) {
+  document.documentElement.removeAttribute('data-liveperson-invite-visible');
   const wrapper = facade.parentElement;
   facade.dispatchEvent(new Event(DISPOSE_EVENT));
   facade.remove();
@@ -73,6 +74,7 @@ function buildInvite(facade = document.createElement('aside')) {
     if (activated) return;
     activated = true;
     facade.hidden = true;
+    document.documentElement.removeAttribute('data-liveperson-invite-visible');
     document.documentElement.dataset.livepersonInviteActivated = 'proactive';
     window.dispatchEvent(new CustomEvent(LIVEPERSON_FACADE_ACTIVATE, {
       detail: { source: 'proactive' },
@@ -120,6 +122,7 @@ export function initLivePersonInviteFacade({
     facade.classList.add('lp-invite-visible');
     facade.removeAttribute('aria-hidden');
     facade.inert = false;
+    root.dataset.livepersonInviteVisible = 'true';
   }, wait);
 }
 

@@ -2,14 +2,14 @@
 .liveperson-facade {
   position: fixed;
   right: 12px;
-  bottom: 72px;
+  bottom: 12px;
   z-index: 107158;
   box-sizing: border-box;
-  width: min(304px, calc(100vw - 84px));
-  padding: 10px 42px 10px 10px;
+  width: min(304px, calc(100vw - 24px));
+  padding: 4px 40px 4px 4px;
   opacity: 0.001;
   border: 0;
-  border-radius: 12px;
+  border-radius: 9999px;
   background: #fff;
   box-shadow: 0 6px 24px rgb(0 0 0 / 20%);
   color: #11181c;
@@ -23,15 +23,7 @@
 }
 
 .liveperson-facade::after {
-  position: absolute;
-  right: 18px;
-  bottom: -9px;
-  width: 0;
-  height: 0;
-  border-top: 10px solid #fff;
-  border-right: 9px solid transparent;
-  border-left: 9px solid transparent;
-  content: "";
+  content: none;
 }
 
 .liveperson-facade[hidden] {
@@ -72,10 +64,10 @@
 
 .liveperson-facade .lp-invite-action {
   width: 100%;
-  min-height: 52px;
+  min-height: 48px;
   padding: 0 14px;
   border: 2px solid #0d333f;
-  border-radius: 4px;
+  border-radius: 9999px;
   background: #0d333f;
   color: #fff;
   font-size: 16px;
@@ -108,6 +100,12 @@
   display: none;
 }
 
+@media (width < 768px) {
+  html[data-liveperson-invite-visible] .contact-us .cu-ball {
+    visibility: hidden;
+  }
+}
+
 .liveperson-facade .lp-invite-action:focus-visible,
 .liveperson-facade .lp-invite-dismiss:focus-visible {
   outline: 2px solid #236cff;
@@ -128,13 +126,17 @@
   }
 
   .liveperson-facade::after {
+    position: absolute;
     right: auto;
     bottom: -18px;
     left: 50%;
+    width: 0;
+    height: 0;
     transform: translateX(-50%);
-    border-top-width: 20px;
-    border-right-width: 18px;
-    border-left-width: 18px;
+    border-top: 20px solid #fff;
+    border-right: 18px solid transparent;
+    border-left: 18px solid transparent;
+    content: "";
   }
 
   .liveperson-facade h2,
@@ -153,6 +155,7 @@
     min-width: 142px;
     min-height: 48px;
     padding: 0 18px;
+    border-radius: 4px;
     background: transparent;
     color: #0d333f;
   }
