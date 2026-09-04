@@ -357,7 +357,10 @@ export function partLabel(el) {
 /** Derive a live element's baseline, including video and icon classifications. */
 export function deriveForCta(el, blockName, host = '') {
   const partKind = el.getAttribute && el.getAttribute('data-track-as');
-  const isVideo = !partKind && el.tagName === 'A' && isVideoLink(el.getAttribute('href'));
+  const isVideo = !partKind && (
+    (el.tagName === 'A' && isVideoLink(el.getAttribute('href')))
+    || isVideoLink(el.getAttribute('data-video-src'))
+  );
   const isIcon = !partKind && !isVideo && el.tagName === 'A' && !(el.textContent || '').trim() && !!el.querySelector('img, svg, picture, .icon');
   return deriveBaseline({
     tagName: el.tagName,

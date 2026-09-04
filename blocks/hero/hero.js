@@ -177,18 +177,14 @@ export default async function decorate(block) {
         if (info) {
           a.classList.add('icon-video');
           a.setAttribute('data-track-id', `hero:${info.provider}-${info.id}`);
-          const originalHref = a.getAttribute('href');
-          const neutralizeHref = () => {
-            a.setAttribute('href', '#');
-            setTimeout(() => a.setAttribute('href', originalHref), 0);
-          };
-          a.addEventListener('pointerdown', neutralizeHref);
+          a.setAttribute('data-video-src', a.getAttribute('href'));
+          a.removeAttribute('href');
+          a.setAttribute('role', 'button');
+          a.setAttribute('tabindex', '0');
+          const open = () => openVideoModal(info.embedUrl, a.textContent.trim());
+          a.addEventListener('click', (e) => { e.preventDefault(); open(); });
           a.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') neutralizeHref();
-          });
-          a.addEventListener('click', (e) => {
-            e.preventDefault();
-            openVideoModal(info.embedUrl, a.textContent.trim());
+            if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') { e.preventDefault(); open(); }
           });
         }
         actions.append(a);

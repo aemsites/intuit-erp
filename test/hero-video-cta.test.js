@@ -49,18 +49,12 @@ describe('hero — video CTA', () => {
     const block = makeHeroBlock();
     await decorate(block);
 
-    const link = block.querySelector('a[data-track-id="hero:youtube-Lo798Iuj3N4"]');
+    const link = block.querySelector('[data-track-id="hero:youtube-Lo798Iuj3N4"]');
     expect(link).not.toBeNull();
     expect(link.classList.contains('icon-video')).toBe(true);
-    // href stays real until the moment of interaction, so scripts/tracking.js's
-    // pointerdown/keydown-time read (which happens before any click) still
-    // classifies this as a video link.
-    expect(link.getAttribute('href')).toBe('https://www.youtube.com/watch?v=Lo798Iuj3N4');
-
-    link.dispatchEvent(new Event('pointerdown', { bubbles: true }));
-    // neutralized synchronously on pointerdown, strictly before 'click' — a 3rd-party
-    // outbound-click martech handler keyed on a[href*="youtube.com"] sees nothing.
-    expect(link.getAttribute('href')).toBe('#');
+    expect(link.hasAttribute('href')).toBe(false);
+    expect(link.getAttribute('data-video-src')).toBe('https://www.youtube.com/watch?v=Lo798Iuj3N4');
+    expect(link.getAttribute('role')).toBe('button');
 
     const ev = new MouseEvent('click', { bubbles: true, cancelable: true });
     link.dispatchEvent(ev);
@@ -69,10 +63,6 @@ describe('hero — video CTA', () => {
     const overlay = document.querySelector('.video-modal-overlay');
     expect(overlay).not.toBeNull();
     expect(overlay.querySelector('iframe').src).toBe('https://www.youtube.com/embed/Lo798Iuj3N4?autoplay=1&rel=0');
-
-    // restored shortly after so a later interaction is classified correctly too
-    await new Promise((resolve) => { setTimeout(resolve, 0); });
-    expect(link.getAttribute('href')).toBe('https://www.youtube.com/watch?v=Lo798Iuj3N4');
   });
 
   it('leaves the non-video CTA alone', async () => {
@@ -133,14 +123,13 @@ describe('hero — video CTA click-tracking parity (homepage "Watch product demo
     expect(payload.ui_access_point).toBe('page');
   });
 
-  it('keeps the video classification through href neutralization (ordering holds with the runtime live)', async () => {
+  it('keeps the video classification with no navigable href (derives off data-video-src)', async () => {
     const link = await mountHero();
-    expect(link.getAttribute('href')).toBe('https://www.youtube.com/watch?v=Lo798Iuj3N4');
+    expect(link.hasAttribute('href')).toBe(false);
+    expect(link.getAttribute('data-video-src')).toBe('https://www.youtube.com/watch?v=Lo798Iuj3N4');
 
     link.dispatchEvent(new Event('pointerdown', { bubbles: true }));
-    // inert before any click handler (incl. a 3rd-party outbound hijacker) reads it
-    expect(link.getAttribute('href')).toBe('#');
-    // but the derive already ran on the real href -> still classified as a video link
+    // derived off data-video-src -> still classified as a video link
     expect(link.getAttribute('data-object')).toBe('video');
     expect(link.getAttribute('data-ui-object')).toBe('video_link');
     expect(link.getAttribute('data-action')).toBe('engaged');
@@ -149,8 +138,5 @@ describe('hero — video CTA click-tracking parity (homepage "Watch product demo
     link.dispatchEvent(ev);
     expect(ev.defaultPrevented).toBe(true);
     expect(document.querySelector('.video-modal-overlay')).not.toBeNull();
-
-    await new Promise((resolve) => { setTimeout(resolve, 0); });
-    expect(link.getAttribute('href')).toBe('https://www.youtube.com/watch?v=Lo798Iuj3N4');
   });
 });
