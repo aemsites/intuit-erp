@@ -703,7 +703,7 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
 }
 
 .blog-article .video-wrapper {
-  margin: 2rem 0;
+  margin: 40px 0;
 }
 
 :is(.blog-article, .case-study) .testimonial:not(.video, .simple) {
