@@ -9,34 +9,16 @@
  *   category  | financials
  *   limit     | 5          (optional, defaults to 5)
  *   randomize | true        (optional; random subset instead of newest-first)
+ *   items     | <links>     (optional; curated set, in order — any articles)
  */
 
 import { readBlockConfig } from '../../scripts/aem.js';
 import { trackAs } from '../../scripts/tracking.js';
+import { isTruthy, orderRailItems } from '../../scripts/rail-select.js';
 
 const INDEX_URL = '/blog/query-index.json';
 const DEFAULT_LIMIT = 5;
 const PAGE_SIZE = 3;
-
-function parseDate(str) {
-  const d = new Date(str);
-  return Number.isNaN(d.getTime()) ? 0 : d.getTime();
-}
-
-// A truthy `randomize` config value (true/yes/on/1) opts into a random subset.
-function isTruthy(value) {
-  return ['true', 'yes', 'on', '1'].includes(String(value ?? '').trim().toLowerCase());
-}
-
-// Fisher–Yates: unbiased shuffle of a copy (leaves the source array untouched).
-function shuffle(list) {
-  const out = [...list];
-  for (let i = out.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [out[i], out[j]] = [out[j], out[i]];
-  }
-  return out;
-}
 
 function buildCard({
   path, title, image, category, date,
@@ -106,15 +88,14 @@ export default async function decorate(block) {
     return;
   }
 
-  const pool = (data || [])
-    .filter((entry) => !category || entry.category?.toLowerCase() === category)
-    .filter((entry) => entry.image && entry.title && entry.path);
+  const valid = (data || []).filter((entry) => entry.image && entry.title && entry.path);
+  const pool = valid.filter((entry) => !category || entry.category?.toLowerCase() === category);
 
-  // Default: newest-first (unchanged). Opt-in `randomize` picks a random subset.
-  const items = (randomize
-    ? shuffle(pool)
-    : pool.sort((a, b) => parseDate(b.date) - parseDate(a.date))
-  ).slice(0, limit);
+  // Default: newest-first (unchanged). Authors may opt into a curated `items`
+  // list (any articles, in order) or a `randomize` subset; see rail-select.js.
+  const items = orderRailItems({
+    pool, all: valid, items: config.items, randomize,
+  }).slice(0, limit);
 
   if (!items.length) { block.remove(); return; }
 
