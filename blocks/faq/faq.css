@@ -125,9 +125,11 @@
   margin-bottom: 8px;
 }
 
+/* In-copy links inside an answer keep the user-agent link blue rather than the
+   brand blue, matching the source site: at answer body size, inside a dense
+   paragraph, the brand tone reads as body copy instead of a link. */
 .faq .faq-answer a {
-  color: var(--primary);
-  text-decoration: none;
+  color: #00e;
   text-decoration: underline;
 }
 
