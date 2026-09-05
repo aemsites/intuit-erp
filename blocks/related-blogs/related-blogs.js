@@ -8,6 +8,7 @@
  * Authored config (key | value rows):
  *   category  | financials
  *   limit     | 5          (optional, defaults to 5)
+ *   randomize | true        (optional; random subset instead of newest-first)
  */
 
 import { readBlockConfig } from '../../scripts/aem.js';
@@ -20,6 +21,21 @@ const PAGE_SIZE = 3;
 function parseDate(str) {
   const d = new Date(str);
   return Number.isNaN(d.getTime()) ? 0 : d.getTime();
+}
+
+// A truthy `randomize` config value (true/yes/on/1) opts into a random subset.
+function isTruthy(value) {
+  return ['true', 'yes', 'on', '1'].includes(String(value ?? '').trim().toLowerCase());
+}
+
+// Fisher–Yates: unbiased shuffle of a copy (leaves the source array untouched).
+function shuffle(list) {
+  const out = [...list];
+  for (let i = out.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
 }
 
 function buildCard({
@@ -77,6 +93,7 @@ export default async function decorate(block) {
   const config = readBlockConfig(block);
   const category = (config.category || '').toLowerCase();
   const limit = parseInt(config.limit, 10) || DEFAULT_LIMIT;
+  const randomize = isTruthy(config.randomize);
   block.innerHTML = '';
 
   let data;
@@ -89,11 +106,15 @@ export default async function decorate(block) {
     return;
   }
 
-  const items = (data || [])
+  const pool = (data || [])
     .filter((entry) => !category || entry.category?.toLowerCase() === category)
-    .filter((entry) => entry.image && entry.title && entry.path)
-    .sort((a, b) => parseDate(b.date) - parseDate(a.date))
-    .slice(0, limit);
+    .filter((entry) => entry.image && entry.title && entry.path);
+
+  // Default: newest-first (unchanged). Opt-in `randomize` picks a random subset.
+  const items = (randomize
+    ? shuffle(pool)
+    : pool.sort((a, b) => parseDate(b.date) - parseDate(a.date))
+  ).slice(0, limit);
 
   if (!items.length) { block.remove(); return; }
 

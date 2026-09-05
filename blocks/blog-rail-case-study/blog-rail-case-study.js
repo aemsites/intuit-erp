@@ -6,8 +6,9 @@
  * Desktop (≥ 900px, narrow rail): compact thumbnail-left + title-right list.
  *
  * Authored config (key | value rows):
- *   index  | /blog/case-study/query-index.json  (optional)
- *   limit  | 5                                   (optional, defaults to 5)
+ *   index     | /blog/case-study/query-index.json  (optional)
+ *   limit     | 5                                   (optional, defaults to 5)
+ *   randomize | true                                (optional; random subset vs newest-first)
  */
 
 import { readBlockConfig } from '../../scripts/aem.js';
@@ -34,6 +35,21 @@ function hasCategory(entry, category) {
 function parseDate(str) {
   const d = new Date(str);
   return Number.isNaN(d.getTime()) ? 0 : d.getTime();
+}
+
+// A truthy `randomize` config value (true/yes/on/1) opts into a random subset.
+function isTruthy(value) {
+  return ['true', 'yes', 'on', '1'].includes(String(value ?? '').trim().toLowerCase());
+}
+
+// Fisher–Yates: unbiased shuffle of a copy (leaves the source array untouched).
+function shuffle(list) {
+  const out = [...list];
+  for (let i = out.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
 }
 
 function categoryFromPath(path) {
@@ -87,6 +103,7 @@ export default async function decorate(block) {
   const config = readBlockConfig(block);
   const indexUrl = config.index || DEFAULT_INDEX;
   const limit = parseInt(config.limit, 10) || DEFAULT_LIMIT;
+  const randomize = isTruthy(config.randomize);
   block.innerHTML = '';
 
   let data;
@@ -99,11 +116,15 @@ export default async function decorate(block) {
     return;
   }
 
-  const items = (data || [])
+  const pool = (data || [])
     .filter((entry) => hasCategory(entry, CASE_STUDY_CATEGORY))
-    .filter((entry) => entry.image && entry.title && entry.path)
-    .sort((a, b) => parseDate(b.date) - parseDate(a.date))
-    .slice(0, limit);
+    .filter((entry) => entry.image && entry.title && entry.path);
+
+  // Default: newest-first (unchanged). Opt-in `randomize` picks a random subset.
+  const items = (randomize
+    ? shuffle(pool)
+    : pool.sort((a, b) => parseDate(b.date) - parseDate(a.date))
+  ).slice(0, limit);
 
   if (!items.length) { block.remove(); return; }
 
