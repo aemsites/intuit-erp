@@ -1,27 +1,8 @@
 /**
- * Shared ordering helpers for the blog right-rail blocks (blog-rail-case-study,
- * related-blogs). Keeps selection behavior identical across the rails and gives
- * authors two opt-in controls on top of the default newest-first order.
- *
- * Precedence: a hand-picked `items` list wins; else `randomize`; else date.
+ * Shared ordering for the blog right-rail blocks (blog-rail-case-study,
+ * related-blogs). Default is newest-first; an authored `items` list lets an
+ * author hand-pick the exact articles to show, in order.
  */
-
-const TRUTHY = ['true', 'yes', 'on', '1'];
-
-// A truthy config value (true/yes/on/1) — used for the `randomize` toggle.
-export function isTruthy(value) {
-  return TRUTHY.includes(String(value ?? '').trim().toLowerCase());
-}
-
-// Fisher–Yates: unbiased shuffle of a copy (leaves the source array untouched).
-export function shuffle(list) {
-  const out = [...list];
-  for (let i = out.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [out[i], out[j]] = [out[j], out[i]];
-  }
-  return out;
-}
 
 // Normalize a path or absolute href to a slash-trimmed pathname for comparison.
 function toPath(value) {
@@ -57,17 +38,14 @@ function byDateDesc(a, b) {
  * @param {Array}  opts.pool  category-filtered candidates (fallback set)
  * @param {Array} [opts.all]  full valid entry set for curated lookups (defaults to pool)
  * @param {*}     [opts.items] authored path list (curation) — hrefs, array, or text
- * @param {boolean} [opts.randomize] shuffle the fallback set instead of date-sorting
  * @returns {Array} ordered entries (caller applies the limit)
  */
-export function orderRailItems({
-  pool, all = pool, items, randomize,
-} = {}) {
+export function orderRailItems({ pool, all = pool, items } = {}) {
   const wanted = parsePathList(items);
   if (wanted.length) {
     const byPath = new Map(all.map((entry) => [toPath(entry.path), entry]));
     const picked = wanted.map((p) => byPath.get(p)).filter(Boolean);
     if (picked.length) return picked;
   }
-  return randomize ? shuffle(pool) : [...pool].sort(byDateDesc);
+  return [...pool].sort(byDateDesc);
 }

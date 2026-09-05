@@ -8,12 +8,11 @@
  * Authored config (key | value rows):
  *   index     | /blog/case-study/query-index.json  (optional)
  *   limit     | 5                                   (optional, defaults to 5)
- *   randomize | true                                (optional; random subset vs newest-first)
  *   items     | <links to specific case studies>   (optional; curated set, in order)
  */
 
 import { readBlockConfig } from '../../scripts/aem.js';
-import { isTruthy, orderRailItems } from '../../scripts/rail-select.js';
+import { orderRailItems } from '../../scripts/rail-select.js';
 
 // The blog query-index (all articles); case studies are selected by the
 // `category` metadata below. A dedicated /blog/case-study/query-index.json is
@@ -85,7 +84,6 @@ export default async function decorate(block) {
   const config = readBlockConfig(block);
   const indexUrl = config.index || DEFAULT_INDEX;
   const limit = parseInt(config.limit, 10) || DEFAULT_LIMIT;
-  const randomize = isTruthy(config.randomize);
   block.innerHTML = '';
 
   let data;
@@ -101,11 +99,9 @@ export default async function decorate(block) {
   const valid = (data || []).filter((entry) => entry.image && entry.title && entry.path);
   const pool = valid.filter((entry) => hasCategory(entry, CASE_STUDY_CATEGORY));
 
-  // Default: newest-first (unchanged). Authors may opt into a curated `items`
-  // list (any articles, in order) or a `randomize` subset; see rail-select.js.
-  const items = orderRailItems({
-    pool, all: valid, items: config.items, randomize,
-  }).slice(0, limit);
+  // Default: newest-first (unchanged). An authored `items` list curates the
+  // exact articles to show, in order (any articles); see rail-select.js.
+  const items = orderRailItems({ pool, all: valid, items: config.items }).slice(0, limit);
 
   if (!items.length) { block.remove(); return; }
 

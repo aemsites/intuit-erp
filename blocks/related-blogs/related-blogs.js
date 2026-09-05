@@ -8,13 +8,12 @@
  * Authored config (key | value rows):
  *   category  | financials
  *   limit     | 5          (optional, defaults to 5)
- *   randomize | true        (optional; random subset instead of newest-first)
  *   items     | <links>     (optional; curated set, in order — any articles)
  */
 
 import { readBlockConfig } from '../../scripts/aem.js';
 import { trackAs } from '../../scripts/tracking.js';
-import { isTruthy, orderRailItems } from '../../scripts/rail-select.js';
+import { orderRailItems } from '../../scripts/rail-select.js';
 
 const INDEX_URL = '/blog/query-index.json';
 const DEFAULT_LIMIT = 5;
@@ -75,7 +74,6 @@ export default async function decorate(block) {
   const config = readBlockConfig(block);
   const category = (config.category || '').toLowerCase();
   const limit = parseInt(config.limit, 10) || DEFAULT_LIMIT;
-  const randomize = isTruthy(config.randomize);
   block.innerHTML = '';
 
   let data;
@@ -91,11 +89,9 @@ export default async function decorate(block) {
   const valid = (data || []).filter((entry) => entry.image && entry.title && entry.path);
   const pool = valid.filter((entry) => !category || entry.category?.toLowerCase() === category);
 
-  // Default: newest-first (unchanged). Authors may opt into a curated `items`
-  // list (any articles, in order) or a `randomize` subset; see rail-select.js.
-  const items = orderRailItems({
-    pool, all: valid, items: config.items, randomize,
-  }).slice(0, limit);
+  // Default: newest-first (unchanged). An authored `items` list curates the
+  // exact articles to show, in order (any articles); see rail-select.js.
+  const items = orderRailItems({ pool, all: valid, items: config.items }).slice(0, limit);
 
   if (!items.length) { block.remove(); return; }
 
