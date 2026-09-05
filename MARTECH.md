@@ -30,12 +30,11 @@ the same one-shot load promise.
 
 The opt-in `?martech-phase-split=on` performance experiment changes only steps 3–4. The initial
 view targets all tags that are active under the profile's existing load rules except Floodlight
-(UID 9), Google Ads (UID 15), LivePerson (UID 23), and Demandbase (UID 27). At `delayed_ready`, a
-second targeted view sends those four active tags, except that LivePerson remains interaction-gated
-when both `chat-now: true` and `?liveperson-facade=on` are present. A view is required because the
-deployed LivePerson and Demandbase templates do not accept link events. Without the parameter, the
-original unfiltered initial view and delayed link remain unchanged for tags other than
-interaction-gated LivePerson.
+(UID 9), Google Ads (UID 15), and Facebook (UID 21). At `delayed_ready`, a second targeted view
+sends those three active tags. This cohort comes from the September 2026 mobile leave-one-out and
+combined-exclusion benchmarks rather than template size alone. Without the parameter, the original
+unfiltered initial view and delayed link remain unchanged for tags other than interaction-gated
+LivePerson.
 
 ## LivePerson interaction gate
 
