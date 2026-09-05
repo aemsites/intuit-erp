@@ -31,6 +31,10 @@ export function parseContent(cell) {
   const nodes = cell ? [...cell.children] : [];
 
   const quote = nodes.find((el) => el.tagName === 'BLOCKQUOTE') || null;
+  // Authored position of the quote among top-level cell children, used below to
+  // keep the CTA link on whichever side of the quote it was authored on, instead
+  // of forcing a single fixed order once the CTA is lifted out of bodyNodes.
+  const quoteIndex = quote ? nodes.indexOf(quote) : -1;
   const citeParagraph = nodes.find((el) => el.tagName === 'P' && CITE_PREFIX.test(el.textContent.trim()));
   const citeEl = cell ? cell.querySelector('cite') : null;
   let attribution = null;
@@ -44,6 +48,7 @@ export function parseContent(cell) {
   let media = null;
   let eyebrow = null;
   let cta = null;
+  let ctaBeforeQuote = true;
   const bodyNodes = [];
 
   rest.forEach((el, i) => {
@@ -53,6 +58,7 @@ export function parseContent(cell) {
     if (isLinkOnly(el)) {
       const link = el.tagName === 'A' ? el : el.querySelector('a');
       cta = { href: link.getAttribute('href'), text: link.textContent.trim() };
+      if (quoteIndex !== -1) ctaBeforeQuote = nodes.indexOf(el) < quoteIndex;
       return;
     }
     if (!el.textContent.trim()) return;
@@ -64,7 +70,7 @@ export function parseContent(cell) {
   });
 
   return {
-    media, eyebrow, heading, bodyNodes, cta, quote, attribution,
+    media, eyebrow, heading, bodyNodes, cta, ctaBeforeQuote, quote, attribution,
   };
 }
 
@@ -121,12 +127,23 @@ function buildQuote(item, className) {
   return fig;
 }
 
+// Renders the CTA link and the quote in the order they were authored relative
+// to each other (tracked as `ctaBeforeQuote` in parseContent), rather than a
+// single hardcoded order that would misplace either one depending on how a
+// given panel was authored.
+function appendCtaAndQuote(container, item, ctaClass, quoteClass) {
+  const cta = item.cta ? buildCta(item, ctaClass) : null;
+  const quote = item.quote ? buildQuote(item, quoteClass) : null;
+  if (cta && item.ctaBeforeQuote) container.append(cta);
+  if (quote) container.append(quote);
+  if (cta && !item.ctaBeforeQuote) container.append(cta);
+}
+
 function fillCopy(item, copy, cls) {
   if (item.eyebrow) copy.append(buildEyebrow(item, cls.eyebrow));
   if (item.heading) copy.append(buildHeading(item, cls.headingTag, cls.heading));
   appendBody(copy, item.bodyNodes, cls.body);
-  if (item.cta) copy.append(buildCta(item, cls.cta));
-  if (item.quote) copy.append(buildQuote(item, cls.quote));
+  appendCtaAndQuote(copy, item, cls.cta, cls.quote);
 }
 
 /* ---- base (unclassed): horizontal tablist, crossfade + directional media slide -- */
@@ -399,8 +416,7 @@ function renderVerticalAccordion(block, items) {
     region.hidden = !open;
     if (item.eyebrow) region.append(buildEyebrow(item, 'eyebrow'));
     appendBody(region, item.bodyNodes, 'vt-body');
-    if (item.cta) region.append(buildCta(item, 'vt-cta button'));
-    if (item.quote) region.append(buildQuote(item, 'vt-quote'));
+    appendCtaAndQuote(region, item, 'vt-cta button', 'vt-quote');
 
     wrap.append(header, region);
 
@@ -522,10 +538,17 @@ function buildVpPanel(item, index) {
   if (item.eyebrow) copy.append(buildEyebrow(item, 'eyebrow'));
   if (item.heading) copy.append(buildHeading(item, 'h3', 'it-heading'));
 
+  // The quote (if present) is always rendered as a panel-level block after
+  // `.it-copy`/`.it-media`, not inside `.it-copy-body`. The CTA link has no
+  // fixed home: it stays with the body copy unless it was authored after the
+  // quote, in which case it is rendered at panel level, after the quote, to
+  // preserve that authored order.
+  const cta = item.cta ? buildCta(item, 'it-cta') : null;
+
   const copyBody = document.createElement('div');
   copyBody.className = 'it-copy-body';
   appendBody(copyBody, item.bodyNodes, 'it-body');
-  if (item.cta) copyBody.append(buildCta(item, 'it-cta'));
+  if (cta && item.ctaBeforeQuote) copyBody.append(cta);
   copy.append(copyBody);
   panel.append(copy);
 
@@ -537,6 +560,7 @@ function buildVpPanel(item, index) {
   }
 
   if (item.quote) panel.append(buildQuote(item, 'it-quote'));
+  if (cta && !item.ctaBeforeQuote) panel.append(cta);
 
   return panel;
 }
