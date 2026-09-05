@@ -144,11 +144,13 @@
 
 .event-cards .events-viewport {
   width: 100%;
-  overflow: hidden;
 
-  @media (width >=1024px) {
-    padding: 2rem;
-  }
+  /* Extend the clip box past the content so overflow:hidden doesn't clip the
+     cards' drop shadow; 18px stays within the mobile gutter (no page scroll). */
+  margin-inline: -18px;
+  padding-inline: 18px;
+  padding-bottom: 32px;
+  overflow: hidden;
 }
 
 .event-cards .events-track.event-grid {
@@ -230,7 +232,7 @@
 
 @media (width < 1024px) {
   .event-cards {
-    --cards-per-view: 1;
+    --cards-per-view: 2;
   }
 
   .event-cards .events-controls {
@@ -246,5 +248,11 @@
     width: 44px;
     height: 44px;
     font-size: 20px;
+  }
+}
+
+@media (width < 768px) {
+  .event-cards {
+    --cards-per-view: 1;
   }
 }
