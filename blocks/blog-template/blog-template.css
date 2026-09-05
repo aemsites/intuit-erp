@@ -727,7 +727,7 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
 }
 
 main.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail, .blog-cards-container, .full-bleed) > .default-content-wrapper a:any-link {
-  color: rgb(0 0 238);
+  color: rgb(16 60 192);
   text-decoration: underline;
 }
 
