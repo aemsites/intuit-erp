@@ -125,9 +125,11 @@
   margin-bottom: 8px;
 }
 
+/* In-copy links inside an answer take the source site's link blue rather than the
+   brand blue, for the same reason as the form copy above: at answer body size the
+   brand tone reads as running text and the link affordance has to carry itself. */
 .faq .faq-answer a {
-  color: var(--primary);
-  text-decoration: none;
+  color: #00e;
   text-decoration: underline;
 }
 
