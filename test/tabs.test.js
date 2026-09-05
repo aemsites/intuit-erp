@@ -271,3 +271,49 @@ describe('tabs.navy: dark rail (desktop) / accordion (mobile)', () => {
     expect(dPanels[0].classList.contains('is-active')).toBe(true);
   });
 });
+
+describe('tabs.vertical-panel: CTA placement relative to the quote', () => {
+  const QUOTE = '<blockquote>Great product.</blockquote><cite>Scott, RedHammer</cite>';
+  const LINK = '<p><a href="/blog/case-study/redhammer/">Read their story</a></p>';
+
+  function makeVerticalPanel(contentHtml) {
+    return make('vertical-panel', row('More than QuickBooks', contentHtml));
+  }
+
+  it('nests a CTA authored after the quote inside the figure, below the cite', () => {
+    const block = makeVerticalPanel(`<h3>H</h3><p>Body copy.</p>${QUOTE}${LINK}`);
+    decorate(block);
+    const panel = block.querySelector('.it-panel');
+    const cta = panel.querySelector('.it-quote .it-cta');
+    expect(cta).not.toBeNull();
+    expect(cta.getAttribute('href')).toBe('/blog/case-study/redhammer/');
+    // inside the figure, and after the attribution
+    const fig = panel.querySelector('.it-quote');
+    const kids = [...fig.children].map((el) => el.tagName);
+    expect(kids).toEqual(['BLOCKQUOTE', 'CITE', 'A']);
+    // and therefore NOT left in the body copy
+    expect(panel.querySelector('.it-copy-body .it-cta')).toBeNull();
+  });
+
+  it('keeps a CTA authored before the quote in the body copy', () => {
+    const block = makeVerticalPanel(`<h3>H</h3><p>Body copy.</p>${LINK}${QUOTE}`);
+    decorate(block);
+    const panel = block.querySelector('.it-panel');
+    expect(panel.querySelector('.it-copy-body .it-cta')).not.toBeNull();
+    expect(panel.querySelector('.it-quote .it-cta')).toBeNull();
+  });
+
+  it('appends a CTA normally when the panel has no quote to anchor it', () => {
+    const block = makeVerticalPanel(`<h3>H</h3><p>Body copy.</p>${LINK}`);
+    decorate(block);
+    const panel = block.querySelector('.it-panel');
+    expect(panel.querySelector('.it-quote')).toBeNull();
+    expect(panel.querySelector('.it-copy-body .it-cta')).not.toBeNull();
+  });
+
+  it('renders an empty authored cell without throwing', () => {
+    const block = makeVerticalPanel('');
+    expect(() => decorate(block)).not.toThrow();
+    expect(block.querySelectorAll('.it-panel')).toHaveLength(1);
+  });
+});

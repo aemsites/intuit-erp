@@ -113,7 +113,11 @@ function buildCta(item, className) {
   return a;
 }
 
-function buildQuote(item, className) {
+// `cta`, when supplied, is appended inside the figure after the attribution.
+// The source site treats a link authored after the quote as part of the
+// quotation itself — it sits within the quote's tinted panel, below the cite,
+// sharing its left rule — rather than as a sibling block underneath it.
+function buildQuote(item, className, cta = null) {
   const fig = document.createElement('figure');
   fig.className = className;
   const bq = document.createElement('blockquote');
@@ -124,6 +128,7 @@ function buildQuote(item, className) {
     cite.textContent = item.attribution;
     fig.append(cite);
   }
+  if (cta) fig.append(cta);
   return fig;
 }
 
@@ -131,12 +136,20 @@ function buildQuote(item, className) {
 // to each other (tracked as `ctaBeforeQuote` in parseContent), rather than a
 // single hardcoded order that would misplace either one depending on how a
 // given panel was authored.
+//
+// A CTA authored *after* the quote belongs to the quotation and is rendered
+// inside the figure, below the attribution, matching the source site. Authored
+// before, it stays a sibling ahead of the quote. With no quote to anchor it,
+// the CTA is simply appended.
 function appendCtaAndQuote(container, item, ctaClass, quoteClass) {
   const cta = item.cta ? buildCta(item, ctaClass) : null;
-  const quote = item.quote ? buildQuote(item, quoteClass) : null;
-  if (cta && item.ctaBeforeQuote) container.append(cta);
-  if (quote) container.append(quote);
-  if (cta && !item.ctaBeforeQuote) container.append(cta);
+  if (!item.quote) {
+    if (cta) container.append(cta);
+    return;
+  }
+  const ctaInsideQuote = cta && !item.ctaBeforeQuote;
+  if (cta && !ctaInsideQuote) container.append(cta);
+  container.append(buildQuote(item, quoteClass, ctaInsideQuote ? cta : null));
 }
 
 function fillCopy(item, copy, cls) {
@@ -541,14 +554,15 @@ function buildVpPanel(item, index) {
   // The quote (if present) is always rendered as a panel-level block after
   // `.it-copy`/`.it-media`, not inside `.it-copy-body`. The CTA link has no
   // fixed home: it stays with the body copy unless it was authored after the
-  // quote, in which case it is rendered at panel level, after the quote, to
-  // preserve that authored order.
+  // quote, in which case it renders inside the quote figure, below the
+  // attribution, which is how the source site presents it.
   const cta = item.cta ? buildCta(item, 'it-cta') : null;
+  const ctaInsideQuote = !!cta && !!item.quote && !item.ctaBeforeQuote;
 
   const copyBody = document.createElement('div');
   copyBody.className = 'it-copy-body';
   appendBody(copyBody, item.bodyNodes, 'it-body');
-  if (cta && item.ctaBeforeQuote) copyBody.append(cta);
+  if (cta && !ctaInsideQuote) copyBody.append(cta);
   copy.append(copyBody);
   panel.append(copy);
 
@@ -559,8 +573,7 @@ function buildVpPanel(item, index) {
     panel.append(wrap);
   }
 
-  if (item.quote) panel.append(buildQuote(item, 'it-quote'));
-  if (cta && !item.ctaBeforeQuote) panel.append(cta);
+  if (item.quote) panel.append(buildQuote(item, 'it-quote', ctaInsideQuote ? cta : null));
 
   return panel;
 }
