@@ -722,10 +722,18 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
   margin: 0 -30px;
 }
 
+/* Mobile: production stacks the lightbulb icon centered on top with the copy
+   centered beneath it, so lay the icon paragraph out as a centered column and
+   center the rest of the callout's content. */
+.blog-article .highlight .highlight-inner:has(> p .icon[class*="icon-quick-answer"]) {
+  text-align: center;
+}
+
 .blog-article .highlight .highlight-inner p:has(> .icon[class*="icon-quick-answer"]) {
   display: flex;
-  align-items: flex-start;
-  gap: 18px;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
 }
 
 .blog-article .highlight .highlight-inner .icon[class*="icon-quick-answer"] {
@@ -734,11 +742,27 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
   margin: 0;
 }
 
-.blog-article .highlight .highlight-inner p:has(> .icon[class*="icon-quick-answer"]) ~ * {
-  margin-left: 90px;
-}
-
 @media (width >= 768px) {
+  /* Tablet/desktop: icon beside the copy as an icon | body row, left-aligned. */
+  .blog-article .highlight .highlight-inner:has(> p .icon[class*="icon-quick-answer"]) {
+    text-align: left;
+  }
+
+  .blog-article .highlight .highlight-inner p:has(> .icon[class*="icon-quick-answer"]) {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 18px;
+  }
+
+  /* The copy after the icon is wrapped in one span (highlight.js) so it stays a
+     single flex item — the body column beside the icon — instead of each inline
+     run (text, links, bold) becoming its own column. min-width:0 lets long words
+     wrap rather than force the column wider than the callout. */
+  .blog-article .highlight .highlight-inner p:has(> .icon[class*="icon-quick-answer"]) > .highlight-answer {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
   .blog-article .highlight .highlight-inner p:has(> .icon[class*="icon-quick-answer"]) ~ * {
     margin-left: 118px;
   }
