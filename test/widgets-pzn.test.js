@@ -28,7 +28,6 @@ import {
 } from '../widgets/pzn/web-survey/web-survey.js';
 // eslint-disable-next-line import/first
 import decorateSmartform, { appendDisclaimer } from '../widgets/pzn/smartform/smartform.js';
-
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 afterEach(() => {

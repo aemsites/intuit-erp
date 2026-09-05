@@ -134,6 +134,19 @@
   src: local('Arial');
 }
 
+/* OneTrust renders before the lazy brand fonts settle. Its vendor font stack
+   skips our metric fallback, which can rewrap the mobile banner by a full line
+   when Avenir arrives. Pin banner text to the eager local fallback so its
+   dimensions remain stable; !important wins over OneTrust's late-injected CSS. */
+@media (width < 768px) {
+  #onetrust-banner-sdk,
+  #onetrust-banner-sdk #onetrust-policy-text,
+  #onetrust-banner-sdk a,
+  #onetrust-banner-sdk button {
+    font-family: avenir-fallback, arial, sans-serif !important;
+  }
+}
+
 html {
   scrollbar-gutter: stable;
 }
@@ -150,6 +163,24 @@ body {
 
 body.appear {
   display: block;
+}
+
+/* 1Mind injects a 100px launcher, then renders and resizes its cross-origin
+   iframe in two steps. Keep the mobile shell hidden at its settled size until
+   the iframe reports its collapsed state. This must remain eager because the
+   widget stylesheet and vendor script load in parallel. */
+@media (width < 768px) {
+  html.onemind-active #onemind-widget {
+    width: 214px !important;
+    height: 90px !important;
+    right: 12px !important;
+    bottom: 12px !important;
+    visibility: hidden !important;
+  }
+
+  html.onemind-active.onemind-ready #onemind-widget {
+    visibility: visible !important;
+  }
 }
 
 header {
