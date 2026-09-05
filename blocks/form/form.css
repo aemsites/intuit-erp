@@ -117,9 +117,8 @@
 
 .form .form-disclaimer a {
   color: #205ea3;
-}
 
-.form .form-disclaimer a[href*="policies.google.com"] {
+  /* Underline in-copy links so colour isn't the only affordance. */
   text-decoration: underline;
 }
 
