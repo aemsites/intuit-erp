@@ -10,7 +10,8 @@ import {
 import { computeTrackingPayload } from '../scripts/diff/tracker-replica.mjs';
 
 // event-cards is data-driven (loadIndex); mock it with enough items to force the carousel/arrows.
-vi.mock('../scripts/content-index.js', () => ({
+vi.mock('../scripts/content-index.js', async (importActual) => ({
+  ...(await importActual()),
   loadIndex: async () => ([
     { title: 'Event 1', status: 'upcoming', ctaUrl: 'https://x.example/reg1', ctaLabel: 'Register' },
     { title: 'Event 2', status: 'upcoming', ctaUrl: 'https://x.example/reg2', ctaLabel: 'Register' },

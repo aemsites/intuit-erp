@@ -20,7 +20,9 @@
  * CSS: blocks/event-cards/event-cards.css
  */
 import { createOptimizedPicture } from '../../scripts/aem.js';
-import { loadIndex, formatDate } from '../../scripts/content-index.js';
+import {
+  loadIndex, formatDate, pinRank, byDate,
+} from '../../scripts/content-index.js';
 import { BP_DESKTOP } from '../../scripts/breakpoints.js';
 import { trackAs } from '../../scripts/tracking.js';
 
@@ -207,18 +209,6 @@ function cardHTML(item) {
 
   card.append(picWrap, body);
   return card;
-}
-
-function pinRank(item) {
-  const n = Number(item.order);
-  return String(item.order ?? '').trim() && Number.isFinite(n) ? n : Number.MAX_SAFE_INTEGER;
-}
-
-function byDate(a, b, newestFirst) {
-  const diff = newestFirst
-    ? new Date(b.date) - new Date(a.date)
-    : new Date(a.date) - new Date(b.date);
-  return Number.isNaN(diff) ? 0 : diff;
 }
 
 export default async function decorate(block) {
