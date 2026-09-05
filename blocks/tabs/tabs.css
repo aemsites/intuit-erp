@@ -818,6 +818,18 @@ main > .section.tabs-container:has(.tabs.vertical-panel) > div { padding: 0; }
   color: var(--it-text-soft);
 }
 
+/* A CTA authored after the quote renders inside the figure, below the cite.
+   The source site paints it its own link blue with no underline, unlike the
+   body-copy CTA above, which inherits the text colour and is underlined. */
+.tabs.vertical-panel .it-quote .it-cta {
+  display: block;
+  margin: 8px 0 0;
+  color: #236cff;
+  text-decoration: none;
+}
+
+.tabs.vertical-panel .it-quote .it-cta:hover { text-decoration: underline; }
+
 @media (width >= 768px) {
   main > .section.tabs-container:has(.tabs.vertical-panel) { padding-bottom: 60px; }
 }
