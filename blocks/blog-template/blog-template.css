@@ -722,25 +722,45 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
   margin: 0 -30px;
 }
 
-.blog-article .highlight .highlight-inner p:has(> .icon[class*="icon-quick-answer"]) {
-  display: flex;
-  align-items: flex-start;
-  gap: 18px;
+/* Quick-answer callout: highlight.js lifts the icon out of the paragraph to sit
+   beside a .highlight-body wrapper. Mobile — icon centered on top, copy centered
+   beneath. */
+.blog-article .highlight .highlight-inner:has(> .icon[class*="icon-quick-answer"]) {
+  text-align: center;
 }
 
-.blog-article .highlight .highlight-inner .icon[class*="icon-quick-answer"] {
+.blog-article .highlight .highlight-inner > .icon[class*="icon-quick-answer"] {
+  display: block;
   float: none;
-  flex: none;
-  margin: 0;
+  margin: 0 auto 12px;
 }
 
-.blog-article .highlight .highlight-inner p:has(> .icon[class*="icon-quick-answer"]) ~ * {
-  margin-left: 90px;
+.blog-article .highlight .highlight-inner > .highlight-body > :first-child {
+  margin-top: 0;
+}
+
+.blog-article .highlight .highlight-inner > .highlight-body > :last-child {
+  margin-bottom: 0;
 }
 
 @media (width >= 768px) {
-  .blog-article .highlight .highlight-inner p:has(> .icon[class*="icon-quick-answer"]) ~ * {
-    margin-left: 118px;
+  /* Tablet/desktop: icon | body row, left-aligned. */
+  .blog-article .highlight .highlight-inner:has(> .icon[class*="icon-quick-answer"]) {
+    display: flex;
+    align-items: flex-start;
+    gap: 18px;
+    text-align: left;
+  }
+
+  .blog-article .highlight .highlight-inner > .icon[class*="icon-quick-answer"] {
+    flex: none;
+    margin: 0;
+  }
+
+  /* min-width:0 lets long words wrap instead of widening the body column. */
+  .blog-article .highlight .highlight-inner > .highlight-body {
+    flex: 1 1 auto;
+    min-width: 0;
   }
 }
 
