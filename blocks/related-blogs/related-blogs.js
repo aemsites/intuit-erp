@@ -8,19 +8,16 @@
  * Authored config (key | value rows):
  *   category  | financials
  *   limit     | 5          (optional, defaults to 5)
+ *   items     | <links>     (optional; curated set, in order — any articles)
  */
 
 import { readBlockConfig } from '../../scripts/aem.js';
 import { trackAs } from '../../scripts/tracking.js';
+import { orderRailItems } from '../../scripts/rail-select.js';
 
 const INDEX_URL = '/blog/query-index.json';
 const DEFAULT_LIMIT = 5;
 const PAGE_SIZE = 3;
-
-function parseDate(str) {
-  const d = new Date(str);
-  return Number.isNaN(d.getTime()) ? 0 : d.getTime();
-}
 
 function buildCard({
   path, title, image, category, date,
@@ -89,11 +86,12 @@ export default async function decorate(block) {
     return;
   }
 
-  const items = (data || [])
-    .filter((entry) => !category || entry.category?.toLowerCase() === category)
-    .filter((entry) => entry.image && entry.title && entry.path)
-    .sort((a, b) => parseDate(b.date) - parseDate(a.date))
-    .slice(0, limit);
+  const valid = (data || []).filter((entry) => entry.image && entry.title && entry.path);
+  const pool = valid.filter((entry) => !category || entry.category?.toLowerCase() === category);
+
+  // Default: newest-first (unchanged). An authored `items` list curates the
+  // exact articles to show, in order (any articles); see rail-select.js.
+  const items = orderRailItems({ pool, all: valid, items: config.items }).slice(0, limit);
 
   if (!items.length) { block.remove(); return; }
 

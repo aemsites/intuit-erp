@@ -6,11 +6,13 @@
  * Desktop (≥ 900px, narrow rail): compact thumbnail-left + title-right list.
  *
  * Authored config (key | value rows):
- *   index  | /blog/case-study/query-index.json  (optional)
- *   limit  | 5                                   (optional, defaults to 5)
+ *   index     | /blog/case-study/query-index.json  (optional)
+ *   limit     | 5                                   (optional, defaults to 5)
+ *   items     | <links to specific case studies>   (optional; curated set, in order)
  */
 
 import { readBlockConfig } from '../../scripts/aem.js';
+import { orderRailItems } from '../../scripts/rail-select.js';
 
 // The blog query-index (all articles); case studies are selected by the
 // `category` metadata below. A dedicated /blog/case-study/query-index.json is
@@ -29,11 +31,6 @@ function hasCategory(entry, category) {
     .toLowerCase()
     .split(',')
     .some((c) => c.trim() === category);
-}
-
-function parseDate(str) {
-  const d = new Date(str);
-  return Number.isNaN(d.getTime()) ? 0 : d.getTime();
 }
 
 function categoryFromPath(path) {
@@ -99,11 +96,12 @@ export default async function decorate(block) {
     return;
   }
 
-  const items = (data || [])
-    .filter((entry) => hasCategory(entry, CASE_STUDY_CATEGORY))
-    .filter((entry) => entry.image && entry.title && entry.path)
-    .sort((a, b) => parseDate(b.date) - parseDate(a.date))
-    .slice(0, limit);
+  const valid = (data || []).filter((entry) => entry.image && entry.title && entry.path);
+  const pool = valid.filter((entry) => hasCategory(entry, CASE_STUDY_CATEGORY));
+
+  // Default: newest-first (unchanged). An authored `items` list curates the
+  // exact articles to show, in order (any articles); see rail-select.js.
+  const items = orderRailItems({ pool, all: valid, items: config.items }).slice(0, limit);
 
   if (!items.length) { block.remove(); return; }
 
