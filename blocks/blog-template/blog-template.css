@@ -722,9 +722,7 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
   margin: 0 -30px;
 }
 
-/* Mobile: production stacks the lightbulb icon centered on top with the copy
-   centered beneath it, so lay the icon paragraph out as a centered column and
-   center the rest of the callout's content. */
+/* Mobile: icon stacked centered on top, copy centered beneath. */
 .blog-article .highlight .highlight-inner:has(> p .icon[class*="icon-quick-answer"]) {
   text-align: center;
 }
@@ -743,7 +741,7 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
 }
 
 @media (width >= 768px) {
-  /* Tablet/desktop: icon beside the copy as an icon | body row, left-aligned. */
+  /* Tablet/desktop: icon | body row, left-aligned. */
   .blog-article .highlight .highlight-inner:has(> p .icon[class*="icon-quick-answer"]) {
     text-align: left;
   }
@@ -754,10 +752,8 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
     gap: 18px;
   }
 
-  /* The copy after the icon is wrapped in one span (highlight.js) so it stays a
-     single flex item — the body column beside the icon — instead of each inline
-     run (text, links, bold) becoming its own column. min-width:0 lets long words
-     wrap rather than force the column wider than the callout. */
+  /* Copy after the icon is one span (highlight.js): the body column beside the
+     icon. min-width:0 lets long words wrap instead of widening the column. */
   .blog-article .highlight .highlight-inner p:has(> .icon[class*="icon-quick-answer"]) > .highlight-answer {
     flex: 1 1 auto;
     min-width: 0;

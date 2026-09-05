@@ -12,12 +12,8 @@ export default function decorate(block) {
   inner.append(...cell.childNodes);
   block.replaceChildren(inner);
 
-  // Quick-answer callouts author a leading lightbulb icon inline in a paragraph.
-  // Both layouts place that icon beside the copy — the base block floats it, and
-  // blog-template lays the paragraph out as an icon|body flex row (matching prod's
-  // TipBox). In a flex row every inline run (text, links, bold) would become its
-  // own flex item and stack into columns, so wrap all content after the icon in a
-  // single span, keeping the copy as one flowing item with its inline markup intact.
+  // Wrap the copy after a quick-answer icon in one span so it stays a single
+  // flex item, instead of each inline run (text, links, bold) becoming a column.
   inner.querySelectorAll(':scope > p').forEach((p) => {
     const icon = p.querySelector(':scope > span.icon[class*="icon-quick-answer"]');
     if (!icon) return;
