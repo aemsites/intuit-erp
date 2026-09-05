@@ -115,11 +115,13 @@
   margin-bottom: 0;
 }
 
+/* Legal links in the disclaimer are the one place on the site that keeps the
+   user-agent link colour and underline rather than the brand blue: at 12px in a
+   dense consent paragraph the muted brand tone reads as body copy, so the link
+   affordance has to carry itself. Applies to every link in the block, not just
+   the Google policy pair. */
 .form .form-disclaimer a {
-  color: #205ea3;
-}
-
-.form .form-disclaimer a[href*="policies.google.com"] {
+  color: #00e;
   text-decoration: underline;
 }
 
