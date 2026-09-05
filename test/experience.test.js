@@ -17,7 +17,7 @@ import {
   fetchExperience, applyPage, applyLayer,
   mergeExperience, collectSwapRequest, resolveSwappedSlots,
   applyPageExperience, applyEagerLayers, applyLazyLayers, applyLazyExperience,
-  prepareExperienceTracking, buildPerfPayload,
+  prepareExperienceTracking, buildPerfPayload, summarizeLayoutShifts,
   whenFullStoryReady, notifyFullStory,
 } from '../scripts/experience.js';
 // eslint-disable-next-line import/first
@@ -1392,7 +1392,16 @@ describe('buildPerfPayload', () => {
         measure('exp:first-section-swap', 51.9),
         measure('exp:eager-total', 640.21),
         measure('exp:lazy-layers', 120.55),
+        { ...measure('consent:stack', 144.44), startTime: 700 },
+        { ...measure('consent:settle', 50.04), startTime: 844.44 },
+        { ...measure('consent:total', 194.48), startTime: 700 },
       ],
+      layoutShifts: [{
+        startTime: 750,
+        value: 0.0123,
+        hadRecentInput: false,
+        sources: [{ node: document.createElement('main') }],
+      }],
       orchestrator: [resource(10, 12, 400.2, 422.5), resource(900, 902, 1100, 1150)],
       lcp: { startTime: 1234.56 },
       fcp: { startTime: 800.12 },
@@ -1405,6 +1414,11 @@ describe('buildPerfPayload', () => {
       firstSectionSwapMs: 51.9,
       eagerTotalMs: 640.2,
       lazyLayersMs: 120.6,
+      consentStackMs: 144.4,
+      consentSettleMs: 50,
+      consentTotalMs: 194.5,
+      cls: 0.0123,
+      consentWindowShift: 0.0123,
       orchestratorCalls: 2,
       orchestratorMs: 412.5,
       orchestratorTtfbMs: 388.2,
@@ -1468,5 +1482,60 @@ describe('buildPerfPayload', () => {
       orchestrator2Reason: 'http-error',
     });
     expect(payload).not.toHaveProperty('orchestratorOk');
+  });
+});
+
+describe('layout-shift attribution', () => {
+  it('separates direct OneTrust sources from shifts correlated with the consent window', () => {
+    const banner = document.createElement('div');
+    banner.id = 'onetrust-banner-sdk';
+    const bannerButton = document.createElement('button');
+    banner.append(bannerButton);
+    const hero = document.createElement('main');
+    hero.className = 'hero authored-copy';
+    hero.textContent = 'Never include this text in telemetry';
+
+    const summary = summarizeLayoutShifts([
+      {
+        startTime: 100,
+        value: 0.01,
+        hadRecentInput: false,
+        sources: [{ node: bannerButton }],
+      },
+      {
+        startTime: 150,
+        value: 0.02,
+        hadRecentInput: false,
+        sources: [{ node: hero }],
+      },
+      {
+        startTime: 160,
+        value: 0.5,
+        hadRecentInput: true,
+        sources: [{ node: hero }],
+      },
+    ], [{ name: 'consent:total', startTime: 90, duration: 100 }]);
+
+    expect(summary).toMatchObject({
+      cls: 0.03,
+      layoutShiftCount: 2,
+      onetrustDirectShift: 0.01,
+      consentWindowShift: 0.03,
+      topLayoutShiftSource: 'main.hero.authored-copy',
+      topLayoutShiftSourceScore: 0.02,
+    });
+    expect(JSON.stringify(summary)).not.toContain(hero.textContent);
+  });
+
+  it('uses the maximum CLS session window and starts a new window at a one-second gap', () => {
+    const summary = summarizeLayoutShifts([
+      {
+        startTime: 10, value: 0.04, hadRecentInput: false, sources: [],
+      },
+      {
+        startTime: 1010, value: 0.05, hadRecentInput: false, sources: [],
+      },
+    ]);
+    expect(summary.cls).toBe(0.05);
   });
 });

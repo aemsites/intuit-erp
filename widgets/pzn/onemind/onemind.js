@@ -4,16 +4,31 @@ const DEPLOYMENTS = {
   b: '5kxc4fwh8k',
 };
 
+export function resolveOneMindLoadPhase(params) {
+  const phase = params.get('onemind');
+  return ['delayed', 'off'].includes(phase) ? phase : 'lazy';
+}
+
 export default async function decorate(widget) {
   const variant = widget.dataset.variant?.toLowerCase();
   const deploymentId = DEPLOYMENTS[variant] || DEPLOYMENTS.a;
   const src = `https://launcher.1mind.com/deployment-${deploymentId}`;
+  const phase = resolveOneMindLoadPhase(new URLSearchParams(window.location.search));
+  if (phase === 'off') return;
 
-  // Guard against a duplicate launcher if the PZN treatment re-applies (e.g. a later swap).
-  if (document.querySelector(`script[src="${src}"]`)) return;
+  const load = () => {
+    // Guard against a duplicate launcher if the PZN treatment re-applies (e.g. a later swap).
+    if (document.querySelector(`script[src="${src}"]`)) return;
 
-  const script = document.createElement('script');
-  script.defer = true;
-  script.src = src;
-  document.head.appendChild(script);
+    const script = document.createElement('script');
+    script.defer = true;
+    script.src = src;
+    document.head.appendChild(script);
+  };
+
+  if (phase === 'delayed' && !window.hlx?.delayed) {
+    window.addEventListener('aem:delayed', load, { once: true });
+    return;
+  }
+  load();
 }

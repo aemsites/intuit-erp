@@ -23,6 +23,100 @@ const PERF_REPORT_DELAY_MS = 6000;
 const PERF_ENABLED = PERF_ON || Math.random() < PERF_SAMPLE_RATE;
 
 const round1 = (n) => Math.round(n * 10) / 10;
+const round4 = (n) => Math.round(n * 10000) / 10000;
+const CONSENT_SHIFT_TAIL_MS = 1000;
+
+function isOneTrustElement(node) {
+  let current = node?.nodeType === 1 ? node : null;
+  while (current) {
+    const id = current.id || '';
+    const classes = [...(current.classList || [])];
+    if (/^(onetrust|optanon)/i.test(id)
+      || classes.some((name) => /^(onetrust|optanon|ot-)/i.test(name))) return true;
+    current = current.parentElement;
+  }
+  return false;
+}
+
+/**
+ * Produces a low-cardinality, privacy-safe label for a layout-shift source. Text, attributes,
+ * hrefs, values, and arbitrary ids are deliberately excluded.
+ * @param {Node} node layout-shift source node
+ * @returns {String} sanitized tag/class label
+ */
+export function describeLayoutShiftNode(node) {
+  if (node?.nodeType !== 1) return 'unknown';
+  const tag = node.tagName.toLowerCase();
+  const vendorId = /^(onetrust|optanon)[a-z0-9_-]{0,48}$/i.test(node.id) ? `#${node.id}` : '';
+  const classes = [...node.classList]
+    .filter((name) => /^[a-z][a-z0-9_-]{0,48}$/i.test(name))
+    .slice(0, 2);
+  return `${tag}${vendorId}${classes.map((name) => `.${name}`).join('')}`;
+}
+
+/**
+ * Summarizes browser layout-shift entries while keeping direct OneTrust evidence separate from
+ * timing correlation. CLS uses the Web Vitals session-window rule; raw associated shift values
+ * retain four decimal places because typical shifts are much smaller than timing measurements.
+ * @param {PerformanceEntry[]} entries captured layout-shift entries
+ * @param {PerformanceMeasure[]} measures captured performance measures
+ * @returns {Object} flat layout-shift evidence for the perf payload
+ */
+export function summarizeLayoutShifts(entries = [], measures = []) {
+  const shifts = entries.filter((entry) => !entry.hadRecentInput && entry.value > 0)
+    .sort((a, b) => a.startTime - b.startTime);
+  if (!shifts.length) return {};
+
+  let cls = 0;
+  let windowValue = 0;
+  let windowStart = 0;
+  let previous = 0;
+  shifts.forEach((entry, index) => {
+    if (index === 0 || entry.startTime - previous >= 1000 || entry.startTime - windowStart > 5000) {
+      windowStart = entry.startTime;
+      windowValue = entry.value;
+    } else {
+      windowValue += entry.value;
+    }
+    previous = entry.startTime;
+    cls = Math.max(cls, windowValue);
+  });
+
+  const consent = measures.find((entry) => entry.name === 'consent:total');
+  const consentEnd = consent ? consent.startTime + consent.duration + CONSENT_SHIFT_TAIL_MS : null;
+  let onetrustDirectShift = 0;
+  let consentWindowShift = 0;
+  const sourceScores = new Map();
+
+  shifts.forEach((entry) => {
+    const sources = [...new Set((entry.sources || [])
+      .map((source) => source?.node)
+      .filter(Boolean))];
+    if (sources.some(isOneTrustElement)) onetrustDirectShift += entry.value;
+    if (consent && entry.startTime >= consent.startTime && entry.startTime <= consentEnd) {
+      consentWindowShift += entry.value;
+    }
+    const share = entry.value / Math.max(sources.length, 1);
+    sources.forEach((node) => {
+      const label = describeLayoutShiftNode(node);
+      sourceScores.set(label, (sourceScores.get(label) || 0) + share);
+    });
+  });
+
+  const topSource = [...sourceScores.entries()].sort((a, b) => b[1] - a[1])[0];
+  const summary = {
+    cls: round4(cls),
+    layoutShiftCount: shifts.length,
+  };
+  if (onetrustDirectShift) summary.onetrustDirectShift = round4(onetrustDirectShift);
+  if (consentWindowShift) summary.consentWindowShift = round4(consentWindowShift);
+  if (topSource) {
+    const [source, score] = topSource;
+    summary.topLayoutShiftSource = source;
+    summary.topLayoutShiftSourceScore = round4(score);
+  }
+  return summary;
+}
 
 // Per-call orchestrator outcomes (intuit_tid + ok/status/error) for perf payload + error logs.
 const orchestratorCallLog = [];
@@ -57,13 +151,16 @@ const PERF_MEASURE_FIELDS = {
   'exp:first-section-swap': 'firstSectionSwapMs',
   'exp:eager-total': 'eagerTotalMs',
   'exp:lazy-layers': 'lazyLayersMs',
+  'consent:stack': 'consentStackMs',
+  'consent:settle': 'consentSettleMs',
+  'consent:total': 'consentTotalMs',
 };
 
 // Flattens the captured entries + page details into ONE flat object (stable `event` key,
 // numeric *Ms fields, absent metrics omitted — never null/0 placeholders) so Splunk
 // spath/stats queries stay trivial. Pure: everything visible from the args + DOM reads.
 export function buildPerfPayload({
-  measures = [], orchestrator = [], callMeta = [], lcp, fcp, nav,
+  measures = [], orchestrator = [], callMeta = [], layoutShifts = [], lcp, fcp, nav,
 } = {}) {
   const payload = {
     event: 'experience-perf',
@@ -87,6 +184,7 @@ export function buildPerfPayload({
     const field = PERF_MEASURE_FIELDS[e.name];
     if (field) payload[field] = round1(e.duration);
   });
+  Object.assign(payload, summarizeLayoutShifts(layoutShifts, measures));
   // Orchestrator calls: 1st = decision call, 2nd = resolveSwappedSlots follow-up.
   // Resource timings can be absent on a network-error/abort — callMeta still has the call.
   payload.orchestratorCalls = Math.max(orchestrator.length, callMeta.length);
@@ -126,6 +224,7 @@ export function buildPerfPayload({
   let fcpEntry;
   const measures = [];
   const orchestrator = [];
+  const layoutShifts = [];
   const observe = (type, onEntry) => {
     try {
       new PerformanceObserver((list) => list.getEntries().forEach(onEntry))
@@ -134,7 +233,10 @@ export function buildPerfPayload({
   };
   observe('largest-contentful-paint', (e) => { lcpEntry = e; });
   observe('paint', (e) => { if (e.name === 'first-contentful-paint') fcpEntry = e; });
-  observe('measure', (e) => { if (e.name.startsWith('exp:')) measures.push(e); });
+  observe('measure', (e) => {
+    if (e.name.startsWith('exp:') || e.name.startsWith('consent:')) measures.push(e);
+  });
+  observe('layout-shift', (e) => { layoutShifts.push(e); });
   // The 1st decision call and any 2nd resolveSwappedSlots call each get their own entry.
   observe('resource', (e) => { if (e.name.includes('intuit-orchestrator')) orchestrator.push(e); });
 
@@ -142,6 +244,7 @@ export function buildPerfPayload({
     measures,
     orchestrator,
     callMeta: orchestratorCallLog,
+    layoutShifts,
     lcp: lcpEntry,
     fcp: fcpEntry,
     nav: performance.getEntriesByType?.('navigation')?.[0],

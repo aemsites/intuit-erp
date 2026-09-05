@@ -22,6 +22,12 @@ The two data contracts are documented separately:
    The loader then sends the single initial `utag.view` through the consent guard.
 4. During delayed loading, the site sends a consent-gated `delayed_ready` event.
 
+`?tealium-phase=delayed` is a page-owned diagnostic variant of steps 3–4. Observability and the
+complete OneTrust stack remain in lazy, but `utag.js`, the initial view, and `delayed_ready` wait
+until the EDS delayed phase. The absent/default value is `lazy`; unknown values preserve that
+default. Consent is still required in either phase, and duplicate lifecycle/OneTrust events share
+the same one-shot load promise.
+
 The opt-in `?martech-phase-split=on` performance experiment changes only steps 3–4. The initial
 view targets all tags that are active under the profile's existing load rules except Floodlight
 (UID 9), Google Ads (UID 15), LivePerson (UID 23), and Demandbase (UID 27). At `delayed_ready`, a
@@ -93,6 +99,17 @@ to the production profile.
 `?martech-phase-split=on` can be combined with the values above. It is a lab switch for controlled
 performance traces. `?liveperson-facade=on` independently opts eligible pages into the LivePerson
 facade and interaction gate.
+
+`?tealium-phase=delayed` moves the whole Tealium profile, but not OneTrust or Observability RUM,
+from lazy to delayed. It can be combined with `?martech-phase-split=on`; in that combination the
+initial and delayed targeted views occur after the profile loads in delayed, so use it to measure
+whole-profile timing rather than the benefit of spacing the two tag audiences apart.
+
+`?onemind=delayed` keeps the page-authored 1Mind launcher off the lazy path until the shared EDS
+delayed signal. `?onemind=off` prevents the launcher from loading for an attribution baseline.
+Absent, `lazy`, and unknown values preserve the existing immediate widget behavior. This switch
+does not disable or alter the site's personalization decision call; it only controls the selected
+1Mind treatment's external launcher.
 
 `?tealium-tags=` is a lab-only delivery allowlist for the site's initial, delayed, and on-demand
 LivePerson lifecycle calls. Values are comma-separated numeric tag UIDs; whitespace is trimmed,
@@ -194,6 +211,22 @@ ignores OneTrust group events until that cookie becomes readable, removes itself
 The footer's `button.ot-sdk-show-settings` opens the OneTrust Preference Center after the SDK binds
 it. That interaction can only be tested reliably on an `intuit.com` origin because the consent CDN
 blocks other origins.
+
+### Consent performance evidence
+
+Sampled experience-performance telemetry, and every view with `?perf=on`, records the OneTrust
+stack, consent-settle, and total consent durations as `consentStackMs`, `consentSettleMs`, and
+`consentTotalMs`. It also observes layout shifts without recent input and reports:
+
+- `cls`: browser CLS using the standard one-second-gap/five-second session window;
+- `onetrustDirectShift`: shift value for entries with a source inside OneTrust markup;
+- `consentWindowShift`: shift value during consent loading plus a one-second render tail;
+- `topLayoutShiftSource` and `topLayoutShiftSourceScore`: the highest associated shifted element.
+
+Direct source attribution and consent-window correlation are deliberately separate: a banner can
+move a page-owned node without OneTrust itself appearing as the browser's shift source. Element
+labels contain only tag names and at most two sanitized CSS classes—never text, field values,
+links, data attributes, or arbitrary element ids.
 
 ## Profile-owned integrations
 

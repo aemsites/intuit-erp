@@ -53,6 +53,7 @@
  * @property {Object} data Extra data used to seed `window.utag_data` (defaults to {}).
  * @property {Boolean} phaseSplit Whether to split selected profile tags across lazy/delayed views.
  * @property {Boolean} livePersonOnDemand Whether LivePerson waits for an explicit user request.
+ * @property {'lazy'|'delayed'} loadPhase EDS phase in which utag.js may load.
  * @property {Set<String>|null} tagUids Optional active-tag allowlist; null preserves normal
  * routing.
  */
@@ -69,6 +70,16 @@ export const DEFAULT_CONFIG = {
 export const DELAYED_TAG_UIDS = Object.freeze(['9', '15', '23', '27']);
 const DELAYED_TAG_UID_SET = new Set(DELAYED_TAG_UIDS);
 export const LIVEPERSON_TAG_UID = '23';
+
+/**
+ * Parses the diagnostic Tealium load-phase override. The production default remains lazy and
+ * unknown values fail closed to that existing behavior.
+ * @param {URLSearchParams} params page URL parameters
+ * @returns {'lazy'|'delayed'} selected EDS phase
+ */
+export function parseTealiumLoadPhase(params) {
+  return params.get('tealium-phase') === 'delayed' ? 'delayed' : 'lazy';
+}
 
 /**
  * Parses the optional Tealium tag UID query filter. `null` means the parameter was absent and
@@ -409,6 +420,18 @@ export function settleConsent(timeoutMs = 3000) {
   });
 }
 
+function consentPerfMark(name) {
+  if (!window.hlx?.experiencePerf) return;
+  try { performance.mark(name); } catch (e) { /* diagnostic telemetry must remain fail-open */ }
+}
+
+function consentPerfMeasure(name, start, end) {
+  if (!window.hlx?.experiencePerf) return;
+  try {
+    performance.measure(name, start, end);
+  } catch (e) { /* diagnostic telemetry must remain fail-open */ }
+}
+
 // TODO(geo): confirm the definitive user_geo source on EDS (Akamai edge cookie/header) before
 // go-live.
 /**
@@ -472,6 +495,8 @@ export default class TealiumMartech {
     this.local = !!cfg.local;
     // Opt-in performance experiment; normal Tealium routing remains the default.
     this.phaseSplit = !!cfg.phaseSplit;
+    // Diagnostic timing override. Consent stays in lazy; only utag.js can move to delayed.
+    this.loadPhase = cfg.loadPhase === 'delayed' ? 'delayed' : 'lazy';
     // Chat-enabled EDS pages can keep LivePerson off the page-load path and request the unchanged
     // Tealium tag after the visitor opens the contact panel.
     this.livePersonOnDemand = !!cfg.livePersonOnDemand;
@@ -491,6 +516,7 @@ export default class TealiumMartech {
     if (this.tagUids?.size === 0) window.utag_cfg_ovrd.noload = true;
     this.utagLoadPromise = null;
     this.consentListener = null;
+    this.consentReady = false;
     this.delayedReached = false;
     this.delayedSent = false;
     this.livePersonRequested = false;
@@ -621,7 +647,10 @@ export default class TealiumMartech {
       if (readOptanonConsent() === null) return;
       window.removeEventListener('OneTrustGroupsUpdated', this.consentListener);
       this.consentListener = null;
-      this.loadUtagAndInitialView().catch(() => {});
+      this.consentReady = true;
+      if (this.loadPhase === 'lazy' || this.delayedReached) {
+        this.loadUtagAndInitialView().catch(() => {});
+      }
     };
     window.addEventListener('OneTrustGroupsUpdated', this.consentListener);
   }
@@ -640,13 +669,20 @@ export default class TealiumMartech {
     if (!this.enabled) return;
     // o11y RUM: prod-only, page-authored (not a Tealium tag); intentionally not awaited.
     loadObservabilityRum(this.env);
+    consentPerfMark('consent:start');
     await loadConsentStack(this.env, this.local);
+    consentPerfMark('consent:stack-end');
+    consentPerfMeasure('consent:stack', 'consent:start', 'consent:stack-end');
     await settleConsent();
+    consentPerfMark('consent:end');
+    consentPerfMeasure('consent:settle', 'consent:stack-end', 'consent:end');
+    consentPerfMeasure('consent:total', 'consent:start', 'consent:end');
     if (readOptanonConsent() === null) {
       this.deferUtagUntilConsent();
       return;
     }
-    await this.loadUtagAndInitialView();
+    this.consentReady = true;
+    if (this.loadPhase === 'lazy' || this.delayedReached) await this.loadUtagAndInitialView();
   }
 
   /**
@@ -655,6 +691,10 @@ export default class TealiumMartech {
   delayed() {
     if (!this.enabled) return;
     this.delayedReached = true;
+    if (this.loadPhase === 'delayed') {
+      if (this.consentReady) this.loadUtagAndInitialView().catch(() => {});
+      return;
+    }
     // Consent-gated: firing this event while getConsentState()===0 enqueues it and triggers the
     // profile consent-extension recursion (the original delayed-phase regression).
     this.sendDelayedEvent();
