@@ -145,13 +145,8 @@
 .event-cards .events-viewport {
   width: 100%;
 
-  /* The overflow that hides off-screen carousel slides also clips the cards'
-     drop shadow (0 6px 24px). Extend the clip box past the content on the sides
-     and bottom with negative margins + matching padding, so the shadow shows
-     while the cards stay aligned with the section content (matching prod). The
-     18px side inset stays within the mobile gutter, so it never forces a
-     horizontal page scroll. Previously the room existed only at >=1024px, so the
-     shadow was clipped on the sides and bottom on tablet and mobile. */
+  /* Extend the clip box past the content so overflow:hidden doesn't clip the
+     cards' drop shadow; 18px stays within the mobile gutter (no page scroll). */
   margin-inline: -18px;
   padding-inline: 18px;
   padding-bottom: 32px;
@@ -237,7 +232,7 @@
 
 @media (width < 1024px) {
   .event-cards {
-    --cards-per-view: 1;
+    --cards-per-view: 2;
   }
 
   .event-cards .events-controls {
@@ -253,5 +248,11 @@
     width: 44px;
     height: 44px;
     font-size: 20px;
+  }
+}
+
+@media (width < 768px) {
+  .event-cards {
+    --cards-per-view: 1;
   }
 }
