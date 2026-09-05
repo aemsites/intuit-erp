@@ -722,9 +722,6 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
   margin: 0 -30px;
 }
 
-/* Float (not flex) the leading quick-answer icon: a flex container makes every
-   inline child its own flex item, fragmenting link-containing copy into narrow
-   per-run columns. flow-root contains the float within the paragraph. */
 .blog-article .highlight .highlight-inner p:has(> .icon[class*="icon-quick-answer"]) {
   display: flow-root;
 }
