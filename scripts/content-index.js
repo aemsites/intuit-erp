@@ -26,34 +26,6 @@ export function formatDate(value) {
 }
 
 /**
- * Curated ordering: an entry with a numeric `order` metadata pins first
- * (ascending). Entries without a usable `order` sort last (Number.MAX_SAFE_INTEGER),
- * so they keep their date order among themselves. Used as the primary sort key
- * by the event listing and the blog rails; requires the index to expose `order`.
- * @param {{order?: string|number}} item
- * @returns {number}
- */
-export function pinRank(item) {
-  const n = Number(item.order);
-  return String(item.order ?? '').trim() && Number.isFinite(n) ? n : Number.MAX_SAFE_INTEGER;
-}
-
-/**
- * Date comparator; newest-first when `newestFirst` is true, else oldest-first.
- * NaN-safe (missing/unparseable dates compare equal).
- * @param {{date?: string}} a
- * @param {{date?: string}} b
- * @param {boolean} newestFirst
- * @returns {number}
- */
-export function byDate(a, b, newestFirst) {
-  const diff = newestFirst
-    ? new Date(b.date) - new Date(a.date)
-    : new Date(a.date) - new Date(b.date);
-  return Number.isNaN(diff) ? 0 : diff;
-}
-
-/**
  * Canonicalize a content path for comparison: strips any query/hash and trailing
  * slash(es), keeping the root as '/'. So '/foo', '/foo/', and '/foo/?x#h' all
  * normalize to '/foo'. Apply to BOTH sides of a path comparison to make it

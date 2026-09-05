@@ -77,8 +77,7 @@ const entries = [
   },
 ];
 
-vi.mock('../scripts/content-index.js', async (importActual) => ({
-  ...(await importActual()),
+vi.mock('../scripts/content-index.js', () => ({
   loadIndex: vi.fn(async () => entries),
   formatDate: (v) => (v === '2026-10-26' ? 'October 26, 2026' : v),
 }));

@@ -8,14 +8,11 @@
  * Authored config (key | value rows):
  *   index     | /blog/case-study/query-index.json  (optional)
  *   limit     | 5                                   (optional, defaults to 5)
- *
- * Curation is per-article, not per-block: set `order` metadata on a case-study
- * page to pin it to the top of the rail (requires the blog index to expose the
- * `order` column). Same mechanism as event-cards.
+ *   items     | <links to specific case studies>   (optional; curated set, in order)
  */
 
 import { readBlockConfig } from '../../scripts/aem.js';
-import { pinRank, byDate } from '../../scripts/content-index.js';
+import { orderRailItems } from '../../scripts/rail-select.js';
 
 // The blog query-index (all articles); case studies are selected by the
 // `category` metadata below. A dedicated /blog/case-study/query-index.json is
@@ -99,13 +96,12 @@ export default async function decorate(block) {
     return;
   }
 
-  // Curation: an authored `order` on a case-study page pins it first (ascending);
-  // the rest stay newest-first. Default order is unchanged when no page sets one.
-  const items = (data || [])
-    .filter((entry) => hasCategory(entry, CASE_STUDY_CATEGORY))
-    .filter((entry) => entry.image && entry.title && entry.path)
-    .sort((a, b) => pinRank(a) - pinRank(b) || byDate(a, b, true))
-    .slice(0, limit);
+  const valid = (data || []).filter((entry) => entry.image && entry.title && entry.path);
+  const pool = valid.filter((entry) => hasCategory(entry, CASE_STUDY_CATEGORY));
+
+  // Default: newest-first (unchanged). An authored `items` list curates the
+  // exact articles to show, in order (any articles); see rail-select.js.
+  const items = orderRailItems({ pool, all: valid, items: config.items }).slice(0, limit);
 
   if (!items.length) { block.remove(); return; }
 

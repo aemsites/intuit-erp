@@ -8,15 +8,12 @@
  * Authored config (key | value rows):
  *   category  | financials
  *   limit     | 5          (optional, defaults to 5)
- *
- * Curation is per-article, not per-block: set `order` metadata on an article to
- * pin it to the top of the rail (requires the blog index to expose the `order`
- * column). Same mechanism as event-cards.
+ *   items     | <links>     (optional; curated set, in order — any articles)
  */
 
 import { readBlockConfig } from '../../scripts/aem.js';
 import { trackAs } from '../../scripts/tracking.js';
-import { pinRank, byDate } from '../../scripts/content-index.js';
+import { orderRailItems } from '../../scripts/rail-select.js';
 
 const INDEX_URL = '/blog/query-index.json';
 const DEFAULT_LIMIT = 5;
@@ -89,13 +86,12 @@ export default async function decorate(block) {
     return;
   }
 
-  // Curation: an authored `order` on an article pins it first (ascending); the
-  // rest stay newest-first. Default order is unchanged when no page sets one.
-  const items = (data || [])
-    .filter((entry) => !category || entry.category?.toLowerCase() === category)
-    .filter((entry) => entry.image && entry.title && entry.path)
-    .sort((a, b) => pinRank(a) - pinRank(b) || byDate(a, b, true))
-    .slice(0, limit);
+  const valid = (data || []).filter((entry) => entry.image && entry.title && entry.path);
+  const pool = valid.filter((entry) => !category || entry.category?.toLowerCase() === category);
+
+  // Default: newest-first (unchanged). An authored `items` list curates the
+  // exact articles to show, in order (any articles); see rail-select.js.
+  const items = orderRailItems({ pool, all: valid, items: config.items }).slice(0, limit);
 
   if (!items.length) { block.remove(); return; }
 
