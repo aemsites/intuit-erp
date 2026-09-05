@@ -284,11 +284,9 @@ describe('Tealium tag UID allowlist', () => {
     splitTealium.sendInitialView();
     splitTealium.delayed();
 
-    expect(window.utag.view).toHaveBeenNthCalledWith(1, window.utag_data, null, ['32']);
-    expect(window.utag.view).toHaveBeenNthCalledWith(2, {
-      ...window.utag_data,
-      tealium_event: 'delayed_ready',
-    }, null, ['27']);
+    // UID 27 is not in the measured v2 delayed cohort, so this allowlist has no delayed audience.
+    expect(window.utag.view).toHaveBeenCalledOnce();
+    expect(window.utag.view).toHaveBeenCalledWith(window.utag_data, null, ['32', '27']);
     expect(window.utag.link).not.toHaveBeenCalled();
   });
 
@@ -374,7 +372,7 @@ describe('Tealium load phase', () => {
 });
 
 describe('experimental phased tag routing', () => {
-  it('preserves active profile order while separating the four delayed tag UIDs', () => {
+  it('preserves active profile order while separating the three measured offender UIDs', () => {
     const utag = {
       loader: {
         cfgsort: ['32', '9', '23', '27', '21', '15', '99'],
@@ -390,8 +388,8 @@ describe('experimental phased tag routing', () => {
       },
     };
 
-    expect(resolvePhaseTagUids(utag, 'lazy')).toEqual(['32', '21']);
-    expect(resolvePhaseTagUids(utag, 'delayed')).toEqual(['9', '27', '15']);
+    expect(resolvePhaseTagUids(utag, 'lazy')).toEqual(['32', '27']);
+    expect(resolvePhaseTagUids(utag, 'delayed')).toEqual(['9', '21', '15']);
   });
 
   it('targets the initial view to active non-delayed tags when enabled', () => {
@@ -413,7 +411,7 @@ describe('experimental phased tag routing', () => {
 
     tealium.sendInitialView();
 
-    expect(window.utag.view).toHaveBeenCalledWith(window.utag_data, null, ['32', '21']);
+    expect(window.utag.view).toHaveBeenCalledWith(window.utag_data, null, ['32', '27']);
   });
 
   it('fires delayed_ready as one targeted view and never duplicates it', () => {
@@ -425,7 +423,7 @@ describe('experimental phased tag routing', () => {
       link: vi.fn(),
       gdpr: { getConsentState: vi.fn(() => 1) },
       loader: {
-        cfgsort: ['32', '9', '15', '23', '27'],
+        cfgsort: ['32', '9', '15', '21', '23', '27'],
         cfg: Object.fromEntries(
           ['32', ...DELAYED_TAG_UIDS].map((uid) => [uid, { load: 1, send: 1 }]),
         ),
@@ -439,7 +437,7 @@ describe('experimental phased tag routing', () => {
     expect(window.utag.view).toHaveBeenCalledWith({
       ...window.utag_data,
       tealium_event: 'delayed_ready',
-    }, null, ['9', '15', '23', '27']);
+    }, null, ['9', '15', '21']);
     expect(window.utag.link).not.toHaveBeenCalled();
   });
 
@@ -538,7 +536,7 @@ describe('interaction-triggered LivePerson', () => {
     expect(window.utag.view).toHaveBeenCalledWith({
       ...window.utag_data,
       tealium_event: 'delayed_ready',
-    }, null, ['9', '27']);
+    }, null, ['9']);
   });
 });
 

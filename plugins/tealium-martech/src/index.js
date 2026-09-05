@@ -64,10 +64,10 @@ export const DEFAULT_CONFIG = {
 };
 
 // Lab-only split derived from the current prod profile and the September 2026 mobile trace:
-// Floodlight (9), Google Ads (15), LivePerson (23), and Demandbase (27). The lazy audience is
+// Floodlight (9), Google Ads (15), and Facebook (21). The lazy audience is
 // resolved dynamically from Tealium's active cfg so conditional load rules and future tags remain
 // eligible instead of being replaced by a brittle page-owned allowlist.
-export const DELAYED_TAG_UIDS = Object.freeze(['9', '15', '23', '27']);
+export const DELAYED_TAG_UIDS = Object.freeze(['9', '15', '21']);
 const DELAYED_TAG_UID_SET = new Set(DELAYED_TAG_UIDS);
 export const LIVEPERSON_TAG_UID = '23';
 
