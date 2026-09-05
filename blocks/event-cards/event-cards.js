@@ -91,10 +91,11 @@ function buildCarousel(block, track) {
     nextBtn.disabled = current >= totalGroups - 1;
   }
 
-  // one page (perView cards + gaps) always spans exactly the track's own box
-  // width, so translateX(-100%) per page is exact with no layout read.
+  // A page advances by perView cards plus the gap that follows it, so shift by
+  // (100% + gap) per page. Plain -100% drifts right by one gap per page and
+  // clips the last card.
   function applyTransform() {
-    track.style.transform = `translateX(-${current * 100}%)`;
+    track.style.transform = `translateX(calc(${-current} * (100% + var(--event-gap))))`;
   }
 
   function goTo(idx) {
