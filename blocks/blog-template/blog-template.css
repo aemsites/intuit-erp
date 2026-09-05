@@ -227,11 +227,12 @@
 .blog-article .blog-toc-list li:has(a.active)::before {
   content: '';
   position: absolute;
-  top: 0;
   bottom: 0;
-  left: 16px;
   width: 4px;
-  background: var(--primary);
+  top: 50%;
+  background: rgb(35 108 255);
+  transform: translateY(-50%);
+  border-radius: 2px;
 }
 
 .blog-article .blog-toc-list a {
@@ -240,7 +241,7 @@
   color: var(--text);
   font-size: var(--body-font-size-xxs);
   line-height: 16px;
-  font-weight: 600;
+  font-weight: 500;
   text-decoration: none;
 }
 
@@ -255,12 +256,11 @@
 }
 
 .blog-article .blog-toc-list a.active {
-  color: var(--primary);
   font-weight: 600;
 }
 
 .blog-article .blog-toc-list a.active::before {
-  color: var(--primary);
+  color: var(--text);
 }
 
 /* faint vertical scroll-track line inside the body panel, right edge */
@@ -297,6 +297,14 @@
 @media (width >= 1024px) {
   .blog-article .blog-rail .default-content-wrapper > .section + .section {
     margin-top: 20px;
+  }
+
+  main.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail, .blog-cards-container, .full-bleed) {
+    & > .default-content-wrapper picture > img {
+      max-width: 90%;
+      margin-top: 2.5rem;
+      margin-bottom: 2.5rem;
+    }
   }
 }
 
@@ -341,7 +349,7 @@
   main.blog-article {
     display: grid;
     grid-template-columns: 250px minmax(0, 1fr) 300px;
-    column-gap: 130px;
+    column-gap: 32px;
     align-items: start;
   }
 
@@ -409,7 +417,7 @@
   .blog-article .blog-toc {
     border: 0;
     border-radius: 0 var(--radius-card) var(--radius-card) 0;
-    background: #f0f4f6;
+    background: #fff;
     box-shadow: 0 10px 30px rgb(0 0 0 / 10%);
   }
 
@@ -482,6 +490,10 @@
     position: absolute;
     transform: rotate(-45deg); /* › expand */
   }
+}
+
+.blog-article .section .media-text .media-row {
+  align-items: start;
 }
 
 @media (min-width: 1024px) {
@@ -579,16 +591,16 @@
   }
 }
 
+main.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail, .blog-cards-container, .full-bleed) {
+  max-width: 740px;
+  margin: 0 auto;
+}
+  
 main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .blog-rail, [class*="padding-"]):has(.block) {
   background: #fff;
   padding: 0;
 }
 
-/* Each H2 gets its own section, and main.blog-article is a grid at >=1024px,
-   so sections are grid items and don't margin-collapse like normal flow —
-   doubling the gap at every section break (padding + margin stacking instead
-   of collapsing). Zero the wrapper padding and let heading margins own the
-   gap instead; hero/toc-rail/rail sections keep their own explicit padding. */
 .blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail) > .default-content-wrapper {
   padding-top: 0;
   padding-bottom: 0;
@@ -624,7 +636,7 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
 
 .blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail) > .default-content-wrapper > p > picture > img {
   display: block;
-  margin: 0 auto;
+  margin-inline: auto;
 }
 
 /* Standalone in-post images sit in their own paragraph; give them vertical
@@ -670,14 +682,14 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
 }
 
 .blog-article > .section > .default-content-wrapper h2 {
-  font-size: 40px;
+  font-size: 38px;
   line-height: 52px;
   margin: 40px 0 20px;
 }
 
 .blog-article > .section > .default-content-wrapper h3,
 .case-study > .section > .default-content-wrapper h3 {
-  font-size: 34px;
+  font-size: 28px;
   line-height: 44px;
   margin: 32px 0 16px;
 }
@@ -704,12 +716,37 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
 .blog-article .highlight.sky .highlight-inner,
 .blog-article .highlight .highlight-inner {
   background: var(--agave);
-  border-radius: 0;
+  border-radius: 10px;
   padding: 24px 40px;
+  font-size: 20px;
+  margin: 0 -30px;
 }
 
-.blog-article .highlight .highlight-inner:has(> p .icon[class*="icon-quick-answer"]) {
+.blog-article .highlight .highlight-inner p:has(> .icon[class*="icon-quick-answer"]) {
   display: flex;
+  align-items: flex-start;
+  gap: 18px;
+}
+
+.blog-article .highlight .highlight-inner .icon[class*="icon-quick-answer"] {
+  float: none;
+  flex: none;
+  margin: 0;
+}
+
+.blog-article .highlight .highlight-inner p:has(> .icon[class*="icon-quick-answer"]) ~ * {
+  margin-left: 90px;
+}
+
+@media (width >= 768px) {
+  .blog-article .highlight .highlight-inner p:has(> .icon[class*="icon-quick-answer"]) ~ * {
+    margin-left: 118px;
+  }
+}
+
+main.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail, .blog-cards-container, .full-bleed) > .default-content-wrapper a:any-link {
+  color: rgb(16 60 192);
+  text-decoration: underline;
 }
 
 .blog-article .video-wrapper {
@@ -727,10 +764,6 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
   padding-top: 1rem;
 }
 
-/* When the quote box ends its section the trailing-margin reset zeros its
-   bottom margin, collapsing the gap to the following content (e.g. an image)
-   to 0px. Keep the 40px gap to match prod. Only margin-bottom is set so the
-   desktop full-bleed horizontal margin is preserved. */
 .blog-article > .section > .testimonial-wrapper:last-child > .testimonial:not(.video, .simple) {
   margin-bottom: 40px;
 }
@@ -830,4 +863,8 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
       }
     }
   }
+}
+
+.blog-article > .section .media-text-container .default-content-wrapper>p {
+  text-align: left;
 }
