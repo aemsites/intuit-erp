@@ -19,6 +19,17 @@ main > .section:has(.sticky-nav) > div {
   height: 0;
 }
 
+/* Landing offset for a jump from the bar. The anchor id sits on the heading,
+   but each of these sections opens with an image that starts well above that
+   heading, so the offset is applied to the whole section -- sticky-nav.js aims
+   scrollIntoView at the section and tags it -- and only has to clear the bar
+   itself. Driven by the same --sticky-nav-h the spacer reads, so the two cannot
+   disagree, and re-resolved by the browser rather than frozen into an inline
+   style at decorate time. */
+.section:has(.sticky-nav-target) {
+  scroll-margin-top: calc(var(--sticky-nav-h, 53px) + 1rem);
+}
+
 body.sticky-nav-active .sticky-nav-spacer {
   height: var(--sticky-nav-h, 53px);
 }

@@ -3,21 +3,6 @@ function targetFor(a) {
   return id ? document.getElementById(id) : null;
 }
 
-// Extends the scroll margin to also clear a preceding eyebrow paragraph, so
-// the anchor doesn't land with the eyebrow hidden under the fixed nav bar.
-// The extra breathing room below the eyebrow scales with its own line-height
-// (2 lines' worth) instead of a fixed pixel guess, so it still looks right
-// wherever this pattern is reused with a different eyebrow type scale.
-function scrollMarginFor(target) {
-  const prev = target.previousElementSibling;
-  const coversEyebrow = prev && prev.tagName === 'P' && !prev.querySelector('a, img, picture');
-  if (!coversEyebrow) return 0;
-  const gap = target.getBoundingClientRect().top - prev.getBoundingClientRect().top;
-  const computedLineHeight = parseFloat(getComputedStyle(prev).lineHeight);
-  const lineHeight = computedLineHeight || prev.getBoundingClientRect().height;
-  return gap + (lineHeight * 2);
-}
-
 export default function decorate(block) {
   const ul = block.querySelector('ul');
   if (!ul) return;
@@ -33,8 +18,14 @@ export default function decorate(block) {
       if (!target) return;
       e.preventDefault();
       setActive(a);
-      target.scrollIntoView({ behavior: 'smooth' });
-      window.history.pushState(null, '', a.getAttribute('href'));
+      // Scroll the whole section into view, not just the heading: these
+      // sections open with an image that sits well above their heading, and
+      // aiming at the heading alone leaves that image clipped by the bar.
+      (target.closest('.section') || target).scrollIntoView({ behavior: 'smooth' });
+      // Push the fragment alone: these links are sometimes authored with a full
+      // path (e.g. a leftover draft path) before the hash, and the address bar
+      // should reflect the page the visitor is actually on.
+      window.history.pushState(null, '', `#${target.id}`);
     });
   });
 
@@ -62,7 +53,7 @@ export default function decorate(block) {
 
     links.forEach((a) => {
       const target = targetFor(a);
-      if (target) target.style.scrollMarginTop = `${navH + scrollMarginFor(target)}px`;
+      if (target) target.classList.add('sticky-nav-target');
     });
 
     // scrollspy: activate the link whose section is under the bar
