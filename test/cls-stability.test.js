@@ -14,6 +14,10 @@ describe('third-party mobile CLS guards', () => {
     expect(mobileRule[1]).toContain('height: 90px !important;');
     expect(mobileRule[1]).toContain('right: 12px !important;');
     expect(mobileRule[1]).toContain('bottom: 12px !important;');
+    expect(mobileRule[1]).toContain('visibility: hidden !important;');
+    expect(eagerStyles).toMatch(
+      /html\.onemind-active\.onemind-ready #onemind-widget\s*{[^}]*visibility: visible !important;/,
+    );
   });
 
   it('keeps OneTrust banner text on the eager no-swap fallback stack', () => {

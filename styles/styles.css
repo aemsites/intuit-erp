@@ -165,16 +165,21 @@ body.appear {
   display: block;
 }
 
-/* 1Mind injects a 100px launcher and resizes it after its iframe initializes.
-   Keep the vendor shell at its settled mobile size from its first paint. This
-   must remain eager because the widget stylesheet and vendor script load in
-   parallel. The onemind-active class scopes the override to opted-in pages. */
+/* 1Mind injects a 100px launcher, then renders and resizes its cross-origin
+   iframe in two steps. Keep the mobile shell hidden at its settled size until
+   the iframe reports its collapsed state. This must remain eager because the
+   widget stylesheet and vendor script load in parallel. */
 @media (width < 768px) {
   html.onemind-active #onemind-widget {
     width: 214px !important;
     height: 90px !important;
     right: 12px !important;
     bottom: 12px !important;
+    visibility: hidden !important;
+  }
+
+  html.onemind-active.onemind-ready #onemind-widget {
+    visibility: visible !important;
   }
 }
 

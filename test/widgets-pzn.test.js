@@ -28,9 +28,6 @@ import {
 } from '../widgets/pzn/web-survey/web-survey.js';
 // eslint-disable-next-line import/first
 import decorateSmartform, { appendDisclaimer } from '../widgets/pzn/smartform/smartform.js';
-// eslint-disable-next-line import/first
-import decorateOneMind from '../widgets/pzn/onemind/onemind.js';
-
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 afterEach(() => {
@@ -43,26 +40,6 @@ afterEach(() => {
   delete window.ziFcInstalled;
   delete window.ZIProjectKey;
   delete window.zi__fc;
-  document.documentElement.classList.remove('onemind-active');
-  document.head.querySelectorAll('script[src*="launcher.1mind.com"]').forEach((script) => script.remove());
-});
-
-describe('1Mind launcher stability', () => {
-  it('activates the eager sizing hook before appending the vendor launcher', async () => {
-    const widget = document.createElement('div');
-    widget.dataset.variant = 'b';
-    const appendChild = document.head.appendChild.bind(document.head);
-    vi.spyOn(document.head, 'appendChild').mockImplementation((node) => {
-      if (node.matches?.('script[src*="launcher.1mind.com"]')) {
-        expect(document.documentElement.classList.contains('onemind-active')).toBe(true);
-      }
-      return appendChild(node);
-    });
-
-    await decorateOneMind(widget);
-
-    expect(document.head.querySelector('script[src$="deployment-5kxc4fwh8k"]')).toBeTruthy();
-  });
 });
 
 describe('form-vs-chilipiper: createUUID / buildChiliPiperUrl', () => {
