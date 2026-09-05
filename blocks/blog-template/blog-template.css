@@ -722,16 +722,16 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
   margin: 0 -30px;
 }
 
+/* Float (not flex) the leading quick-answer icon: a flex container makes every
+   inline child its own flex item, fragmenting link-containing copy into narrow
+   per-run columns. flow-root contains the float within the paragraph. */
 .blog-article .highlight .highlight-inner p:has(> .icon[class*="icon-quick-answer"]) {
-  display: flex;
-  align-items: flex-start;
-  gap: 18px;
+  display: flow-root;
 }
 
 .blog-article .highlight .highlight-inner .icon[class*="icon-quick-answer"] {
-  float: none;
-  flex: none;
-  margin: 0;
+  float: left;
+  margin: 0 18px 0 0;
 }
 
 .blog-article .highlight .highlight-inner p:has(> .icon[class*="icon-quick-answer"]) ~ * {
