@@ -45,19 +45,17 @@ export default function decorate(block) {
 
   if (links[0]) setActive(links[0]);
 
-  // defer past decorate()'s own CSS load so offsetHeight/getBoundingClientRect
-  // reads reflect real, styled layout instead of 0
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    const navH = block.offsetHeight;
-    document.body.style.setProperty('--sticky-nav-h', `${navH}px`);
+  links.forEach((a) => {
+    const target = targetFor(a);
+    if (target) target.classList.add('sticky-nav-target');
+  });
 
-    links.forEach((a) => {
-      const target = targetFor(a);
-      if (target) target.classList.add('sticky-nav-target');
-    });
-
-    // scrollspy: activate the link whose section is under the bar
-    const spy = new IntersectionObserver((entries) => {
+  // scrollspy: activate the link whose section is under the bar. Rebuilt on
+  // height change so rootMargin tracks the real bar height, not a one-off read.
+  let spy = null;
+  const buildSpy = (navH) => {
+    if (spy) spy.disconnect();
+    spy = new IntersectionObserver((entries) => {
       // Match by element identity, not href: the nav links are authored as full
       // paths with a hash (e.g. `/path/to/page#section`), so comparing the raw
       // href against `#id` never matches and would clear every active state.
@@ -66,5 +64,25 @@ export default function decorate(block) {
       });
     }, { rootMargin: `-${navH}px 0px -70% 0px`, threshold: 0 });
     links.map(targetFor).filter(Boolean).forEach((t) => spy.observe(t));
-  }));
+  };
+
+  // Keep --sticky-nav-h synced to the real bar height. decorate() runs while the
+  // section is still display:none, so a single deferred read can measure 0 and
+  // freeze it there, breaking the spacer and scroll-margin. ResizeObserver
+  // re-measures once the block gains layout and on any later reflow.
+  let lastNavH = 0;
+  const syncNavH = () => {
+    const navH = block.offsetHeight;
+    if (!navH || navH === lastNavH) return;
+    lastNavH = navH;
+    document.body.style.setProperty('--sticky-nav-h', `${navH}px`);
+    buildSpy(navH);
+  };
+
+  if (typeof ResizeObserver !== 'undefined') {
+    new ResizeObserver(syncNavH).observe(block);
+  } else {
+    requestAnimationFrame(() => requestAnimationFrame(syncNavH));
+  }
+  syncNavH();
 }
