@@ -45,19 +45,19 @@ export default function decorate(block) {
 
   if (links[0]) setActive(links[0]);
 
-  // defer past decorate()'s own CSS load so offsetHeight/getBoundingClientRect
-  // reads reflect real, styled layout instead of 0
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    const navH = block.offsetHeight;
-    document.body.style.setProperty('--sticky-nav-h', `${navH}px`);
+  links.forEach((a) => {
+    const target = targetFor(a);
+    if (target) target.classList.add('sticky-nav-target');
+  });
 
-    links.forEach((a) => {
-      const target = targetFor(a);
-      if (target) target.classList.add('sticky-nav-target');
-    });
-
-    // scrollspy: activate the link whose section is under the bar
-    const spy = new IntersectionObserver((entries) => {
+  // (Re)build the scrollspy for a given bar height: activate the link whose
+  // section is under the bar. Rebuilt whenever the measured height changes so
+  // its rootMargin tracks the real bar height rather than a one-off (possibly 0)
+  // reading.
+  let spy = null;
+  const buildSpy = (navH) => {
+    if (spy) spy.disconnect();
+    spy = new IntersectionObserver((entries) => {
       // Match by element identity, not href: the nav links are authored as full
       // paths with a hash (e.g. `/path/to/page#section`), so comparing the raw
       // href against `#id` never matches and would clear every active state.
@@ -66,5 +66,29 @@ export default function decorate(block) {
       });
     }, { rootMargin: `-${navH}px 0px -70% 0px`, threshold: 0 });
     links.map(targetFor).filter(Boolean).forEach((t) => spy.observe(t));
-  }));
+  };
+
+  // Keep --sticky-nav-h synced to the real, styled bar height. decorate() runs
+  // while the section is still display:none during lazy load (aem.js hides a
+  // section until all its blocks have decorated), so a single deferred read can
+  // measure 0 and freeze the property there — collapsing the spacer AND the
+  // sections' scroll-margin-top to nothing, which lands a jump-to heading behind
+  // the bar when the bar isn't stuck yet. A ResizeObserver re-measures the moment
+  // the block gains layout, and on any later reflow (font swap, wrap), so the two
+  // values can never disagree with the bar it stands in for.
+  let lastNavH = 0;
+  const syncNavH = () => {
+    const navH = block.offsetHeight;
+    if (!navH || navH === lastNavH) return;
+    lastNavH = navH;
+    document.body.style.setProperty('--sticky-nav-h', `${navH}px`);
+    buildSpy(navH);
+  };
+
+  if (typeof ResizeObserver !== 'undefined') {
+    new ResizeObserver(syncNavH).observe(block);
+  } else {
+    requestAnimationFrame(() => requestAnimationFrame(syncNavH));
+  }
+  syncNavH();
 }
