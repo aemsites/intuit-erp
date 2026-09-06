@@ -851,3 +851,8 @@ main.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail, .blog-c
 .blog-article > .section .media-text-container .default-content-wrapper>p {
   text-align: left;
 }
+
+.blog-article > .section .media-text-container .media-text .media-copy > :is(h2, h3):first-of-type {
+  font-weight: 700;
+  font-size: 28px;
+}
