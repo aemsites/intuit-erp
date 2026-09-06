@@ -50,10 +50,8 @@ export default function decorate(block) {
     if (target) target.classList.add('sticky-nav-target');
   });
 
-  // (Re)build the scrollspy for a given bar height: activate the link whose
-  // section is under the bar. Rebuilt whenever the measured height changes so
-  // its rootMargin tracks the real bar height rather than a one-off (possibly 0)
-  // reading.
+  // scrollspy: activate the link whose section is under the bar. Rebuilt on
+  // height change so rootMargin tracks the real bar height, not a one-off read.
   let spy = null;
   const buildSpy = (navH) => {
     if (spy) spy.disconnect();
@@ -68,14 +66,10 @@ export default function decorate(block) {
     links.map(targetFor).filter(Boolean).forEach((t) => spy.observe(t));
   };
 
-  // Keep --sticky-nav-h synced to the real, styled bar height. decorate() runs
-  // while the section is still display:none during lazy load (aem.js hides a
-  // section until all its blocks have decorated), so a single deferred read can
-  // measure 0 and freeze the property there — collapsing the spacer AND the
-  // sections' scroll-margin-top to nothing, which lands a jump-to heading behind
-  // the bar when the bar isn't stuck yet. A ResizeObserver re-measures the moment
-  // the block gains layout, and on any later reflow (font swap, wrap), so the two
-  // values can never disagree with the bar it stands in for.
+  // Keep --sticky-nav-h synced to the real bar height. decorate() runs while the
+  // section is still display:none, so a single deferred read can measure 0 and
+  // freeze it there, breaking the spacer and scroll-margin. ResizeObserver
+  // re-measures once the block gains layout and on any later reflow.
   let lastNavH = 0;
   const syncNavH = () => {
     const navH = block.offsetHeight;
