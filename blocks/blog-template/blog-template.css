@@ -722,27 +722,10 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
   margin: 0 -30px;
 }
 
-.blog-article .highlight .highlight-inner p:has(> .icon[class*="icon-quick-answer"]) {
-  display: flex;
-  align-items: flex-start;
-  gap: 18px;
-}
-
-.blog-article .highlight .highlight-inner .icon[class*="icon-quick-answer"] {
-  float: none;
-  flex: none;
-  margin: 0;
-}
-
-.blog-article .highlight .highlight-inner p:has(> .icon[class*="icon-quick-answer"]) ~ * {
-  margin-left: 90px;
-}
-
-@media (width >= 768px) {
-  .blog-article .highlight .highlight-inner p:has(> .icon[class*="icon-quick-answer"]) ~ * {
-    margin-left: 118px;
-  }
-}
+/* Quick-answer icon/text layout (centered stack on mobile, icon-left row on
+   desktop) now comes from the base .highlight-inner:has(> .highlight-icon)
+   flex rule in blocks/highlight/highlight.css — blog callouts only need their
+   own background/padding above, not their own layout override. */
 
 main.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail, .blog-cards-container, .full-bleed) > .default-content-wrapper a:any-link {
   color: rgb(16 60 192);
