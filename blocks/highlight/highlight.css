@@ -96,6 +96,14 @@
   gap: 18px;
 }
 
+/* The :first-child/:last-child margin reset above only reaches direct
+   children of .highlight-inner. Once content moves into .highlight-body, its
+   first paragraph's own top margin pushed the text below the icon's top
+   edge instead of aligning with it — repeat the reset one level deeper. */
+.highlight .highlight-inner .highlight-body > :first-child { margin-top: 0; }
+
+.highlight .highlight-inner .highlight-body > :last-child { margin-bottom: 0; }
+
 .highlight .highlight-inner .highlight-icon .icon[class*="icon-quick-answer"] {
   width: 72px;
   height: 72px;
