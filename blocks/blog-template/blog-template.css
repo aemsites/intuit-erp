@@ -648,11 +648,14 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
 }
 
 /* The trailing-margin reset above outweighs the image rule on specificity, so
-   an image that ends a section would lose its bottom gap. Re-assert the 40px
-   with a :last-child-qualified override, matching the highlight/testimonial
-   handling below. */
+   an image that ends a section would lose its bottom gap. Re-assert it with a
+   :last-child-qualified override, matching the highlight/testimonial handling
+   below. Zero here rather than 40px: the next section's heading already brings
+   its own 60px, and because sections don't margin-collapse the two would stack
+   to 100px — the source site holds ~46px after an image, not double the prose
+   gap. The heading margin is the single source of the section gap. */
 .blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail) > .default-content-wrapper > p:has(picture):last-child {
-  margin-bottom: 40px;
+  margin-bottom: 0;
 }
 
 @media (width < 1024px) {
@@ -681,10 +684,14 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
   font-weight: 700;
 }
 
+/* 60px is the gap the source site holds between a prose section and the next
+   heading. Sections are grid items at >=1024px, so nothing here margin-collapses
+   and this margin is the whole gap — which is also why the image rule below has
+   to subtract its own bottom margin instead of adding to it. */
 .blog-article > .section > .default-content-wrapper h2 {
   font-size: 38px;
   line-height: 52px;
-  margin: 40px 0 20px;
+  margin: 60px 0 20px;
 }
 
 .blog-article > .section > .default-content-wrapper h3,
