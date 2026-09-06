@@ -31,6 +31,10 @@ export function parseContent(cell) {
   const nodes = cell ? [...cell.children] : [];
 
   const quote = nodes.find((el) => el.tagName === 'BLOCKQUOTE') || null;
+  // Authored position of the quote among top-level cell children, used below to
+  // keep the CTA link on whichever side of the quote it was authored on, instead
+  // of forcing a single fixed order once the CTA is lifted out of bodyNodes.
+  const quoteIndex = quote ? nodes.indexOf(quote) : -1;
   const citeParagraph = nodes.find((el) => el.tagName === 'P' && CITE_PREFIX.test(el.textContent.trim()));
   const citeEl = cell ? cell.querySelector('cite') : null;
   let attribution = null;
@@ -44,6 +48,7 @@ export function parseContent(cell) {
   let media = null;
   let eyebrow = null;
   let cta = null;
+  let ctaBeforeQuote = true;
   const bodyNodes = [];
 
   rest.forEach((el, i) => {
@@ -53,6 +58,7 @@ export function parseContent(cell) {
     if (isLinkOnly(el)) {
       const link = el.tagName === 'A' ? el : el.querySelector('a');
       cta = { href: link.getAttribute('href'), text: link.textContent.trim() };
+      if (quoteIndex !== -1) ctaBeforeQuote = nodes.indexOf(el) < quoteIndex;
       return;
     }
     if (!el.textContent.trim()) return;
@@ -64,7 +70,7 @@ export function parseContent(cell) {
   });
 
   return {
-    media, eyebrow, heading, bodyNodes, cta, quote, attribution,
+    media, eyebrow, heading, bodyNodes, cta, ctaBeforeQuote, quote, attribution,
   };
 }
 
@@ -107,7 +113,11 @@ function buildCta(item, className) {
   return a;
 }
 
-function buildQuote(item, className) {
+// `cta`, when supplied, is appended inside the figure after the attribution.
+// The source site treats a link authored after the quote as part of the
+// quotation itself — it sits within the quote's tinted panel, below the cite,
+// sharing its left rule — rather than as a sibling block underneath it.
+function buildQuote(item, className, cta = null) {
   const fig = document.createElement('figure');
   fig.className = className;
   const bq = document.createElement('blockquote');
@@ -118,15 +128,35 @@ function buildQuote(item, className) {
     cite.textContent = item.attribution;
     fig.append(cite);
   }
+  if (cta) fig.append(cta);
   return fig;
+}
+
+// Renders the CTA link and the quote in the order they were authored relative
+// to each other (tracked as `ctaBeforeQuote` in parseContent), rather than a
+// single hardcoded order that would misplace either one depending on how a
+// given panel was authored.
+//
+// A CTA authored *after* the quote belongs to the quotation and is rendered
+// inside the figure, below the attribution, matching the source site. Authored
+// before, it stays a sibling ahead of the quote. With no quote to anchor it,
+// the CTA is simply appended.
+function appendCtaAndQuote(container, item, ctaClass, quoteClass) {
+  const cta = item.cta ? buildCta(item, ctaClass) : null;
+  if (!item.quote) {
+    if (cta) container.append(cta);
+    return;
+  }
+  const ctaInsideQuote = cta && !item.ctaBeforeQuote;
+  if (cta && !ctaInsideQuote) container.append(cta);
+  container.append(buildQuote(item, quoteClass, ctaInsideQuote ? cta : null));
 }
 
 function fillCopy(item, copy, cls) {
   if (item.eyebrow) copy.append(buildEyebrow(item, cls.eyebrow));
   if (item.heading) copy.append(buildHeading(item, cls.headingTag, cls.heading));
   appendBody(copy, item.bodyNodes, cls.body);
-  if (item.cta) copy.append(buildCta(item, cls.cta));
-  if (item.quote) copy.append(buildQuote(item, cls.quote));
+  appendCtaAndQuote(copy, item, cls.cta, cls.quote);
 }
 
 /* ---- base (unclassed): horizontal tablist, crossfade + directional media slide -- */
@@ -399,8 +429,7 @@ function renderVerticalAccordion(block, items) {
     region.hidden = !open;
     if (item.eyebrow) region.append(buildEyebrow(item, 'eyebrow'));
     appendBody(region, item.bodyNodes, 'vt-body');
-    if (item.cta) region.append(buildCta(item, 'vt-cta button'));
-    if (item.quote) region.append(buildQuote(item, 'vt-quote'));
+    appendCtaAndQuote(region, item, 'vt-cta button', 'vt-quote');
 
     wrap.append(header, region);
 
@@ -522,10 +551,18 @@ function buildVpPanel(item, index) {
   if (item.eyebrow) copy.append(buildEyebrow(item, 'eyebrow'));
   if (item.heading) copy.append(buildHeading(item, 'h3', 'it-heading'));
 
+  // The quote (if present) is always rendered as a panel-level block after
+  // `.it-copy`/`.it-media`, not inside `.it-copy-body`. The CTA link has no
+  // fixed home: it stays with the body copy unless it was authored after the
+  // quote, in which case it renders inside the quote figure, below the
+  // attribution, which is how the source site presents it.
+  const cta = item.cta ? buildCta(item, 'it-cta') : null;
+  const ctaInsideQuote = !!cta && !!item.quote && !item.ctaBeforeQuote;
+
   const copyBody = document.createElement('div');
   copyBody.className = 'it-copy-body';
   appendBody(copyBody, item.bodyNodes, 'it-body');
-  if (item.cta) copyBody.append(buildCta(item, 'it-cta'));
+  if (cta && !ctaInsideQuote) copyBody.append(cta);
   copy.append(copyBody);
   panel.append(copy);
 
@@ -536,7 +573,7 @@ function buildVpPanel(item, index) {
     panel.append(wrap);
   }
 
-  if (item.quote) panel.append(buildQuote(item, 'it-quote'));
+  if (item.quote) panel.append(buildQuote(item, 'it-quote', ctaInsideQuote ? cta : null));
 
   return panel;
 }
