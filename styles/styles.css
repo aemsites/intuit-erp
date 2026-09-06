@@ -1133,6 +1133,10 @@ main > .section.dark-background > .default-content-wrapper > .button-wrapper but
   text-align: left !important;
 }
 
+.modal dialog.web-survey-dialog {
+  max-width: 1000px;
+}
+
 body.block-library > main > .section {
   margin: 2rem 0;
 }

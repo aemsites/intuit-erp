@@ -99,6 +99,7 @@ export default async function decorate(widget) {
 
     const { showModal, block } = await createModal([...fragment.childNodes]);
     const dialog = block.querySelector('dialog');
+    dialog.classList.add('web-survey-dialog');
     const accept = block.querySelector('.modal-content a.button')
       || block.querySelector('.modal-content a');
     if (accept) bindAccept(accept, resolveSurveyBase(widget, accept));
