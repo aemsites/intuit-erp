@@ -722,13 +722,18 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
   margin: 0 -30px;
 }
 
+/* padding-left (not just float-avoidance) keeps every wrapped line indented,
+   including lines below the icon's bottom edge, where a float alone stops
+   affecting the line box. The icon's negative margin pulls it back into that
+   padding so it still renders flush with the text column. */
 .blog-article .highlight .highlight-inner p:has(> .icon[class*="icon-quick-answer"]) {
   display: flow-root;
+  padding-left: 90px;
 }
 
 .blog-article .highlight .highlight-inner .icon[class*="icon-quick-answer"] {
   float: left;
-  margin: 0 18px 0 0;
+  margin: 0 18px 0 -90px;
 }
 
 .blog-article .highlight .highlight-inner p:has(> .icon[class*="icon-quick-answer"]) ~ * {
@@ -736,6 +741,14 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
 }
 
 @media (width >= 768px) {
+  .blog-article .highlight .highlight-inner p:has(> .icon[class*="icon-quick-answer"]) {
+    padding-left: 118px;
+  }
+
+  .blog-article .highlight .highlight-inner .icon[class*="icon-quick-answer"] {
+    margin-left: -118px;
+  }
+
   .blog-article .highlight .highlight-inner p:has(> .icon[class*="icon-quick-answer"]) ~ * {
     margin-left: 118px;
   }
