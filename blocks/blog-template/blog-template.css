@@ -417,7 +417,7 @@
   .blog-article .blog-toc {
     border: 0;
     border-radius: 0 var(--radius-card) var(--radius-card) 0;
-    background: #fff;
+    background: var(--toc-bar-bg);
     box-shadow: 0 10px 30px rgb(0 0 0 / 10%);
   }
 
