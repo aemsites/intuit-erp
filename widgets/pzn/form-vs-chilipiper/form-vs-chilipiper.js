@@ -48,7 +48,8 @@ async function openChiliPiperModal(base) {
   iframe.setAttribute('data-chilipiper', 'true');
   iframe.setAttribute('allow', 'camera; microphone; fullscreen');
   iframe.loading = 'eager';
-  const { showModal } = await createModal([iframe]);
+  const { showModal, block } = await createModal([iframe]);
+  block.querySelector('dialog').classList.add('chilipiper-dialog');
   showModal();
 }
 
