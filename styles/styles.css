@@ -1167,3 +1167,9 @@ body.block-library .section > .default-content-wrapper {
 body.author-guide > main > .section > .default-content-wrapper :is(h1, h2, h3, h4, h5, h6, p, ul, li) {
   text-align: left !important;
 }
+
+/* Adjust LivePerson chat bubble image size */
+/* stylelint-disable-next-line selector-class-pattern */
+.LPMcontainer > img {
+    height: 338px;
+}
