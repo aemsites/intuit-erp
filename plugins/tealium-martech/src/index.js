@@ -52,7 +52,6 @@
  * @property {String} profile The Tealium profile name.
  * @property {Object} data Extra data used to seed `window.utag_data` (defaults to {}).
  * @property {Boolean} phaseSplit Whether to split selected profile tags across lazy/delayed views.
- * @property {Boolean} livePersonOnDemand Whether LivePerson waits for an explicit user request.
  * @property {'lazy'|'delayed'} loadPhase EDS phase in which utag.js may load.
  * @property {Set<String>|null} tagUids Optional active-tag allowlist; null preserves normal
  * routing.
@@ -69,7 +68,6 @@ export const DEFAULT_CONFIG = {
 // eligible instead of being replaced by a brittle page-owned allowlist.
 export const DELAYED_TAG_UIDS = Object.freeze(['9', '15', '21']);
 const DELAYED_TAG_UID_SET = new Set(DELAYED_TAG_UIDS);
-export const LIVEPERSON_TAG_UID = '23';
 
 /**
  * Parses the diagnostic Tealium load-phase override. The production default remains lazy and
@@ -497,9 +495,6 @@ export default class TealiumMartech {
     this.phaseSplit = !!cfg.phaseSplit;
     // Diagnostic timing override. Consent stays in lazy; only utag.js can move to delayed.
     this.loadPhase = cfg.loadPhase === 'delayed' ? 'delayed' : 'lazy';
-    // Chat-enabled EDS pages can keep LivePerson off the page-load path and request the unchanged
-    // Tealium tag after the visitor opens the contact panel.
-    this.livePersonOnDemand = !!cfg.livePersonOnDemand;
     // A Set activates explicit UID routing. Null/undefined preserves the exact profile-owned path.
     this.tagUids = cfg.tagUids instanceof Set ? new Set(cfg.tagUids) : null;
     // Pre-declare the data layer / config override globals as early as possible (head.html
@@ -519,8 +514,6 @@ export default class TealiumMartech {
     this.consentReady = false;
     this.delayedReached = false;
     this.delayedSent = false;
-    this.livePersonRequested = false;
-    this.livePersonSent = false;
     // Add Tealium's verbose logging on dev.
     if (DEBUG_ENVIRONMENTS.includes(this.env)) {
       // Tealium's own verbose console logging — dev only, set before utag.js loads in lazy().
@@ -534,9 +527,8 @@ export default class TealiumMartech {
   sendInitialView() {
     if (!window.utag?.view) return;
     whenConsentResolved(() => {
-      if (this.phaseSplit || this.livePersonOnDemand || this.tagUids !== null) {
+      if (this.phaseSplit || this.tagUids !== null) {
         const excluded = new Set(this.phaseSplit ? DELAYED_TAG_UIDS : []);
-        if (this.livePersonOnDemand) excluded.add(LIVEPERSON_TAG_UID);
         const uids = resolveActiveTagUids(window.utag, excluded, this.tagUids);
         if (!uids.length) return;
         window.utag.view(window.utag_data, null, uids);
@@ -558,8 +550,7 @@ export default class TealiumMartech {
 
     whenConsentResolved(() => {
       if (this.phaseSplit) {
-        const uids = resolvePhaseTagUids(window.utag, 'delayed', this.tagUids)
-          .filter((uid) => !this.livePersonOnDemand || uid !== LIVEPERSON_TAG_UID);
+        const uids = resolvePhaseTagUids(window.utag, 'delayed', this.tagUids);
         if (!uids.length) return;
         window.utag.view({
           ...window.utag_data,
@@ -573,37 +564,6 @@ export default class TealiumMartech {
         window.utag.link({ tealium_event: 'delayed_ready' });
       }
     });
-  }
-
-  /**
-   * Sends a pending interaction-triggered LivePerson request once Tealium is available.
-   * Kept separate so a request made before consent/utag readiness can be replayed after load.
-   */
-  sendLivePersonRequest() {
-    if (!this.livePersonRequested || this.livePersonSent || !window.utag?.view) return;
-    whenConsentResolved(() => {
-      if (this.livePersonSent) return;
-      if (this.tagUids !== null) {
-        const uids = resolveActiveTagUids(window.utag, new Set(), this.tagUids);
-        if (!uids.some((uid) => String(uid) === LIVEPERSON_TAG_UID)) return;
-      }
-      this.livePersonSent = true;
-      window.utag.view({
-        ...window.utag_data,
-        tealium_event: 'liveperson_requested',
-      }, null, [LIVEPERSON_TAG_UID]);
-    });
-  }
-
-  /**
-   * Requests the unchanged LivePerson Tealium tag after an explicit visitor interaction.
-   * Idempotent; if Tealium is still loading, loadUtagAndInitialView replays the request.
-   */
-  requestLivePerson() {
-    if (!this.enabled || !this.livePersonOnDemand || this.livePersonRequested) return;
-    if (this.tagUids !== null && !this.tagUids.has(LIVEPERSON_TAG_UID)) return;
-    this.livePersonRequested = true;
-    this.sendLivePersonRequest();
   }
 
   /**
@@ -627,7 +587,6 @@ export default class TealiumMartech {
       this.utagLoadPromise = loadUtag(this.env, this.local).then(() => {
         // head.html's noview suppresses utag's own auto-view, so this is ours to fire.
         this.sendInitialView();
-        this.sendLivePersonRequest();
         // If consent held utag past the EDS delayed phase, preserve the phase signal that tags
         // may use as a trigger instead of silently losing it.
         if (this.delayedReached) this.sendDelayedEvent();

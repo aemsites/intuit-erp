@@ -307,57 +307,13 @@ describe('Tealium tag UID allowlist', () => {
     };
     const tealium = new TealiumMartech({
       phaseSplit: true,
-      livePersonOnDemand: true,
       tagUids: new Set(['99']),
     });
 
     tealium.sendInitialView();
     tealium.delayed();
-    tealium.livePersonRequested = true;
-    tealium.sendLivePersonRequest();
 
     expect(window.utag.view).not.toHaveBeenCalled();
-    expect(window.utag.link).not.toHaveBeenCalled();
-  });
-
-  it('keeps on-demand LivePerson inert unless UID 23 is allowlisted and active', () => {
-    stubLocation({ hostname: PROD_HOST });
-    window.utag = {
-      view: vi.fn(),
-      link: vi.fn(),
-      gdpr: { getConsentState: vi.fn(() => 1) },
-      loader: {
-        cfgsort: ['1', '23'],
-        cfg: {
-          1: { load: 1, send: 1 },
-          23: { load: 1, send: 1 },
-        },
-      },
-    };
-    const denied = new TealiumMartech({
-      livePersonOnDemand: true,
-      tagUids: new Set(['1']),
-    });
-
-    denied.requestLivePerson();
-
-    expect(denied.livePersonRequested).toBe(false);
-    expect(window.utag.view).not.toHaveBeenCalled();
-
-    const allowed = new TealiumMartech({
-      phaseSplit: true,
-      livePersonOnDemand: true,
-      tagUids: new Set(['23']),
-    });
-    allowed.sendInitialView();
-    allowed.delayed();
-    allowed.requestLivePerson();
-
-    expect(window.utag.view).toHaveBeenCalledOnce();
-    expect(window.utag.view).toHaveBeenCalledWith({
-      ...window.utag_data,
-      tealium_event: 'liveperson_requested',
-    }, null, ['23']);
     expect(window.utag.link).not.toHaveBeenCalled();
   });
 });
@@ -454,89 +410,6 @@ describe('experimental phased tag routing', () => {
 
     expect(window.utag.link).toHaveBeenCalledWith({ tealium_event: 'delayed_ready' });
     expect(window.utag.view).not.toHaveBeenCalled();
-  });
-});
-
-describe('interaction-triggered LivePerson', () => {
-  const activeTags = () => ({
-    cfgsort: ['1', '9', '23', '27', '32'],
-    cfg: Object.fromEntries(
-      ['1', '9', '23', '27', '32'].map((uid) => [uid, { load: 1, send: 1 }]),
-    ),
-  });
-
-  it('omits only LivePerson from the initial view on chat-enabled pages', () => {
-    stubLocation({ hostname: PROD_HOST });
-    const tealium = new TealiumMartech({ livePersonOnDemand: true });
-    window.utag = {
-      view: vi.fn(),
-      gdpr: { getConsentState: vi.fn(() => 1) },
-      loader: activeTags(),
-    };
-
-    tealium.sendInitialView();
-
-    expect(window.utag.view).toHaveBeenCalledWith(
-      window.utag_data,
-      null,
-      ['1', '9', '27', '32'],
-    );
-  });
-
-  it('loads UID 23 once on request through a targeted consent-gated view', () => {
-    stubLocation({ hostname: PROD_HOST });
-    window.utag_data = { page_name: 'homepage' };
-    const tealium = new TealiumMartech({ livePersonOnDemand: true });
-    window.utag = {
-      view: vi.fn(),
-      gdpr: { getConsentState: vi.fn(() => 1) },
-      loader: activeTags(),
-    };
-
-    tealium.requestLivePerson();
-    tealium.requestLivePerson();
-
-    expect(window.utag.view).toHaveBeenCalledOnce();
-    expect(window.utag.view).toHaveBeenCalledWith({
-      ...window.utag_data,
-      tealium_event: 'liveperson_requested',
-    }, null, ['23']);
-  });
-
-  it('remembers a request made before utag is ready', () => {
-    stubLocation({ hostname: PROD_HOST });
-    const tealium = new TealiumMartech({ livePersonOnDemand: true });
-
-    tealium.requestLivePerson();
-    window.utag = {
-      view: vi.fn(),
-      gdpr: { getConsentState: vi.fn(() => 1) },
-      loader: activeTags(),
-    };
-    tealium.sendLivePersonRequest();
-
-    expect(window.utag.view).toHaveBeenCalledWith({
-      ...window.utag_data,
-      tealium_event: 'liveperson_requested',
-    }, null, ['23']);
-  });
-
-  it('keeps LivePerson out of the delayed phase-split view until requested', () => {
-    stubLocation({ hostname: PROD_HOST });
-    const tealium = new TealiumMartech({ phaseSplit: true, livePersonOnDemand: true });
-    window.utag = {
-      view: vi.fn(),
-      link: vi.fn(),
-      gdpr: { getConsentState: vi.fn(() => 1) },
-      loader: activeTags(),
-    };
-
-    tealium.delayed();
-
-    expect(window.utag.view).toHaveBeenCalledWith({
-      ...window.utag_data,
-      tealium_event: 'delayed_ready',
-    }, null, ['9']);
   });
 });
 
