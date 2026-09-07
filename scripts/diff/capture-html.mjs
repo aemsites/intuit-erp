@@ -1,8 +1,8 @@
 /**
  * scripts/diff/capture-html.mjs
  *
- * Shared prod-capture for the click-tracking tools (extract-tracking.mjs,
- * clicktrack-diff.mjs). Reuses live-session.mjs's hardened navigation (the same
+ * Shared production capture for clicktrack-diff.mjs. Reuses
+ * live-session.mjs's hardened navigation (the same
  * Akamai/Cloudflare bot-management ladder appvars-diff / martech-diff use) and
  * returns the fully-rendered HTML, which the callers parse with jsdom and feed
  * to the unit-tested tracking modules — so the tracker replica and derive logic

@@ -28,8 +28,8 @@ const FRAGMENT = `
     <div><p><a href="https://www.intuit.com/legal/">Legal</a> | <a href="https://www.intuit.com/privacy/">Privacy</a></p></div>
   </div>`;
 
-// A small id-keyed sheet (the shape gen-sheet-from-golden now emits): chrome by
-// semantic id, authored links by the readable href slug. No positional `<key>-<n>`.
+// A small id-keyed sheet: chrome by semantic id and authored links by the
+// readable href slug. No positional `<key>-<n>`.
 const SHEET = [
   { path: '*', id: 'footer:country-us', 'wa-link': 'ftr-corporate-country-enus', 'ui-object-detail': 'usa' },
   { path: '*', id: 'footer:brand-intuit', 'wa-link': 'ftr-corporate-icom', 'ui-object-detail': 'intuit' },

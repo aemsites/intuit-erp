@@ -1,10 +1,10 @@
 import {
   describe, it, expect, beforeEach,
 } from 'vitest';
-// Real-render wiring guard: drive the ACTUAL highlight decorate() + the delegated JIT-stamp
-// runtime + the tracker replica, and assert the variant-dependent trail the customer golden
-// (dark /events banner -> rw_banner) and our reverse-engineered golden (blog callout ->
-// product_banner) report on prod. Keeps parity-gate's BLOCK.product_banner entry honest.
+// Real-render wiring guard: drive the actual highlight decorator, delegated JIT-stamp
+// runtime, and tracker reference implementation. The assertion keeps the observed
+// variant-dependent trails stable: dark event banners use `rw_banner`, while blog
+// callouts use `product_banner`.
 import { initTracking, resetTrackingState, stampInteraction } from '../scripts/tracking.js';
 import { computeTrackingPayload } from '../scripts/diff/tracker-replica.mjs';
 

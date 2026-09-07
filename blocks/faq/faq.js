@@ -21,7 +21,7 @@ const CHEVRON = '<path d="M3.5 6L8 10.5L12.5 6" fill="none" stroke="currentColor
  * `accordion_item_N` / `faq|question_N` by DOM order, `displayed` on expand / `dismissed` on
  * collapse (from the pre-click aria-expanded), and `link_name`. object_detail is scored
  * index-tolerant (prod's N is authored + scrambled). Non-toggles return null → normal derive.
- * Exported so the offline parity harness (parity-gate `oursPayload`) derives it identically.
+ * Exported so contract tests can validate the same derivation as the runtime.
  * @param {Element} el clicked element
  * @param {Element} block the faq block (for DOM-order index)
  * @returns {Record<string, unknown>|null}

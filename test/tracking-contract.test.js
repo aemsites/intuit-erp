@@ -9,19 +9,19 @@ import decorateFaq from '../blocks/faq/faq.js';
 import { computeTrackingPayload } from '../scripts/diff/tracker-replica.mjs';
 
 /**
- * Self-made golden oracle. Loads the golden we captured off prod (real Chrome,
- * eventbus intercepted + aborted) and asserts that OUR runtime — the actual block
- * trackAs() wiring + the JIT stamp — reproduces the DOM-derivable per-click fields
- * for every event our implementation is expected to cover (coverage: "derive").
- * The payload is read back through the tracker replica, which was validated against
- * the REAL injected tracker (strip-and-restamp on prod). Swap the fixture for the
- * customer's set when it lands.
+ * Click-tracking contract. Loads the sanitized reference fixture and asserts that
+ * the runtime's block wiring and just-in-time stamp reproduce the DOM-derivable
+ * per-click fields for every event the implementation is expected to cover.
+ * The payload is read back through the documented tracker reference implementation.
  *
  * coverage: "code-built" (header/footer/global-nav) and "gap" (video play=started)
  * events are asserted-absent here on purpose — they need the block's own stamping,
  * not the generic derive, and are tracked as remaining work.
  */
-const golden = JSON.parse(readFileSync('scripts/diff/fixtures/clicktrack-selfmade.golden.json', 'utf8'));
+const golden = JSON.parse(readFileSync(
+  'scripts/diff/fixtures/clicktrack-contract.golden.json',
+  'utf8',
+));
 const eventOf = (path, name) => golden.pages.find((p) => p.path === path).events.find((e) => e.name === name);
 const normLinkName = (v) => (typeof v === 'string' ? v.replace(/ \[[^\]]*\]$/, '') : v);
 
@@ -45,7 +45,7 @@ function expectMatchesGolden(payload, derivable, skip = []) {
   });
 }
 
-describe('self-made golden oracle — our runtime reproduces the derive-covered events', () => {
+describe('click-tracking contract — the runtime reproduces derive-covered events', () => {
   beforeEach(() => { document.body.innerHTML = ''; });
 
   it('product hero CTA (rw2_hero)', () => {
@@ -104,7 +104,7 @@ describe('self-made golden oracle — our runtime reproduces the derive-covered 
   });
 });
 
-describe('self-made golden oracle — code-built surfaces (header/footer/video)', () => {
+describe('click-tracking contract — code-built surfaces (header/footer/video)', () => {
   beforeEach(() => { document.body.innerHTML = ''; });
 
   it('header cornerstone logo -> content:engaged, link_icon, empty ui_access_point', () => {
@@ -184,7 +184,7 @@ describe('self-made golden oracle — code-built surfaces (header/footer/video)'
   });
 });
 
-describe('self-made golden oracle — coverage is fully classified', () => {
+describe('click-tracking contract — coverage is fully classified', () => {
   const KNOWN = ['derive', 'code-built', 'to-annotate', 'sheet'];
   it('every golden event across all archetypes has a known coverage status', () => {
     const all = golden.pages.flatMap((p) => p.events);
@@ -201,7 +201,7 @@ describe('self-made golden oracle — coverage is fully classified', () => {
   });
 });
 
-describe('self-made golden oracle — blog + testimonial code-built surfaces', () => {
+describe('click-tracking contract — blog + testimonial code-built surfaces', () => {
   beforeEach(() => { document.body.innerHTML = ''; });
 
   it('blog share row -> social_media (content:interacted)', () => {

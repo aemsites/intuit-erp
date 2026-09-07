@@ -129,7 +129,7 @@ Authoring constraints:
 - Changes that intentionally correct inconsistent production values require a reviewed sheet and
   golden update; do not bury campaign residue in block code.
 
-## Validation and status
+## Validation
 
 Run the unit suite for derivation, ids, sheet resolution, JIT stamping, block wiring, and region
 context:
@@ -138,19 +138,13 @@ context:
 npm test
 ```
 
-The deterministic parity tools are in [`scripts/diff/`](scripts/diff/):
+The supported verification tools are documented in
+[`scripts/diff/README.md`](scripts/diff/README.md). Run the deterministic click-contract checks with:
 
-- `tracker-replica.mjs` reproduces the injected tracker's DOM read logic;
-- `parity-gate.mjs` scores the local derivation and sheet against a production golden;
-- `gen-sheet-from-golden.mjs` and `sheet-from-our-build.mjs` generate/rekey sparse residue;
-- `coverage-matrix.mjs` reports component-by-field coverage;
-- `live-replay-runner.mjs` performs bounded, customer-authorized stage qualification.
-
-```bash
-node scripts/diff/parity-gate.mjs
+```sh
+npm run verify:click-tracking
 ```
 
-Customer golden files and replay evidence belong under the gitignored
-`scripts/diff/fixtures/local/` directory. A run with no local golden has no production beacons to
-score and is not evidence of parity. This reference intentionally omits point-in-time percentages;
-generate the current totals from the reviewed local golden.
+For a live or saved-HTML comparison, use `clicktrack-diff.mjs` as described in the verification
+toolkit README. Production payloads, authenticated replay evidence, and campaign values are not
+part of the customer repository.

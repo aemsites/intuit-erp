@@ -201,8 +201,8 @@ function normalizeTestimonial(slide) {
 /**
  * JIT payload deriver for a spotlight testimonial thumbnail-strip chevron: prod's authored
  * `testimonial|thumbnail_{side}_chevron` id + WA link (the ‹/› glyph is not a tracked label).
- * Non-spotlight variants / non-chevron elements return null → normal derive. Exported so the
- * offline parity harness (parity-gate `oursPayload`) derives it identically.
+ * Non-spotlight variants / non-chevron elements return null → normal derive. Exported so
+ * contract tests can validate the same derivation as the runtime.
  * @param {Element} el clicked element
  * @param {boolean} isSpotlight whether this is the .spotlight testimonial carousel
  * @returns {Record<string, string>|null}

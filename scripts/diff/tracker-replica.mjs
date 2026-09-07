@@ -1,12 +1,10 @@
 /**
- * Faithful replica of the live SBSEG click tracker's read logic, reverse-
- * engineered from erp.intuit.com (see CLICK-TRACKING.md). Given a clicked
- * element it returns the payload the tracker WOULD send, or null when the gate
- * blocks it.
+ * Reference implementation of the delegated SBSEG click tracker's documented
+ * DOM read contract (see CLICK-TRACKING.md). Given a clicked element, it returns
+ * the payload the tracker would send, or null when the gate blocks it.
  *
- * This is the parity oracle for the harness — it lets us diff our build's CTAs
- * against prod's by comparing computed payloads. Pure DOM reads; never shipped
- * (the real tracker does this at click time).
+ * The verification tests use this to compare computed CTA payloads. It performs
+ * pure DOM reads and is not shipped to the browser.
  */
 
 const DATATRACKING = 'tracking';
@@ -94,9 +92,8 @@ function collectSurvey(ds, payload) {
  * Compute the tracker payload for a clicked element, or null when the gate
  * (no data-object / data-wa-link within 5 ancestors) blocks it.
  *
- * Models the LIVE `track-event-lib-init` tracker as re-verified 2026-08-20 (see
- * scripts/diff/fixtures/backend-contract.json), NOT the older reverse-engineered
- * shape:
+ * Models the `track-event-lib-init` tracker contract verified on 2026-08-20 (see
+ * scripts/diff/fixtures/backend-contract.json):
  *  - event name is `${object}:${action}`;
  *  - unauthored defaults: object=content, action=engaged, ui_object=link,
  *    ui_action=clicked (there is NO separate walink/INTERACTED path);

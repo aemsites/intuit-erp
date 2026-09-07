@@ -38,9 +38,8 @@
  *   preview (our build)                   <branch>--intuit-erp--aemsites.aem.page
  *   local   (our build)                   localhost:3000
  *
- * SCOPE — report-only by default (exit 0), like martech-diff's MVP. Pass `--assert` to
- * exit non-zero when a MEASURED env fails the appVars contract (for CI once previews are
- * reliably capturable). The unit test is the always-on hard gate; this is integration.
+ * SCOPE — report-only by default. Pass `--assert` to fail on contract problems in measured
+ * environments, or `--verify` to also require every selected environment to be measured.
  *
  * Usage:
  *   node scripts/diff/appvars-diff.mjs                          # all pages, all reachable envs
@@ -49,7 +48,7 @@
  *   node scripts/diff/appvars-diff.mjs --ours-path /drafts/home # a page that has pzn
  *   node scripts/diff/appvars-diff.mjs --baseline fixtures/appvars-homepage.golden.json
  *   node scripts/diff/appvars-diff.mjs --refresh  fixtures/appvars-homepage.golden.json
- *   node scripts/diff/appvars-diff.mjs --assert   # exit 1 on a contract failure (CI mode)
+ *   node scripts/diff/appvars-diff.mjs --verify   # require measurement and a passing contract
  */
 
 /* standalone dev tool (sibling of martech-diff): CLI-style loops + argv walking by design */
@@ -351,6 +350,7 @@ function renderOurs(env, cap, baseline, problems) {
   if (baseline && baseline.status === 'OK' && baseline.pznBlocks.attrNames.length) {
     const d = setDiff(baseline.pznBlocks.attrNames, cap.pznBlocks.attrNames);
     if (d.missing.length) {
+      problems.push(`${env.name}: data-pzn channel missing [${d.missing.join(', ')}]`);
       lines.push(`${' '.repeat(9)}${R(`data-pzn channel GAP: prod stamps [${d.missing.join(', ')}] — our build stamps none/fewer (click tracking needs these)`)}`);
     } else {
       lines.push(`${' '.repeat(9)}${G(`data-pzn channel ✓ (${cap.pznBlocks.count} blocks)`)}`);
@@ -410,6 +410,7 @@ function parseArgs(argv) {
   const opts = {
     pages: null, envs: null, scenario: 'us-optout', headed: false, settleMs: 9000,
     json: null, baseline: null, refresh: null, cookies: [], oursPath: null, assert: false,
+    verify: false,
   };
   for (let i = 2; i < argv.length; i += 1) {
     const a = argv[i];
@@ -424,10 +425,24 @@ function parseArgs(argv) {
     else if (a === '--baseline') opts.baseline = argv[++i];
     else if (a === '--refresh') opts.refresh = argv[++i];
     else if (a === '--assert') opts.assert = true;
+    else if (a === '--verify') { opts.verify = true; opts.assert = true; }
     else if (a === '--preview-base') ENVS.find((e) => e.name === 'preview').base = argv[++i];
     else if (a === '--local-base') ENVS.find((e) => e.name === 'local').base = argv[++i];
   }
   return opts;
+}
+
+export function measurementProblems(report, pageNames, envNames) {
+  const problems = [];
+  for (const pageName of pageNames) {
+    for (const envName of envNames) {
+      const capture = report.pages?.[pageName]?.[envName];
+      if (!capture || capture.status !== 'OK') {
+        problems.push(`${pageName} @ ${envName}: ${capture?.reason || 'not measured'}`);
+      }
+    }
+  }
+  return problems;
 }
 
 function loadGolden(path) {
@@ -470,11 +485,16 @@ async function main() {
   if (opts.refresh) { writeFileSync(opts.refresh, JSON.stringify(goldenOut, null, 2)); process.stdout.write(`${DIM(`wrote golden baseline → ${opts.refresh}`)}\n`); }
   if (opts.json) { writeFileSync(opts.json, JSON.stringify(report, null, 2)); process.stdout.write(`${DIM(`wrote ${opts.json}`)}\n`); }
 
-  if (opts.assert && problems.length) {
-    process.stdout.write(`\n${R(`FAIL — data-layer parity broke on a measured env (appVars contract and/or page-view beacon): ${problems.join('; ')}`)}\n`);
+  const unmeasured = opts.verify
+    ? measurementProblems(report, pages.map((page) => page.name), envs.filter((env) => env.role !== 'baseline').map((env) => env.name))
+    : [];
+  const failures = [...problems, ...unmeasured];
+  if (opts.assert && failures.length) {
+    process.stdout.write(`\n${R(`FAIL — appVars verification failed: ${failures.join('; ')}`)}\n`);
     process.exit(1);
   }
-  process.stdout.write(`\n${DIM('report-only (exit 0). Pass --assert to fail CI on a measured contract break.')}\n`);
+  if (opts.verify) process.stdout.write(`\n${G('appVars verification passed — every selected target was measured')}\n`);
+  else process.stdout.write(`\n${DIM('report-only (exit 0). Pass --verify to require measurement and a passing contract.')}\n`);
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

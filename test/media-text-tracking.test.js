@@ -83,7 +83,7 @@ describe('media-text — AI-agents feature CTA tracking (JIT-derived)', () => {
 
     stampInteraction({ target: cta });
     // object_detail + ui_object_detail carry the upstream `feature` id; ui_object=button;
-    // wa-link is the campaign code. These are what the customer golden gates for this beacon.
+    // wa-link is the campaign code. These fields are part of the click contract.
     expect(cta.getAttribute('data-object-detail')).toBe('feature|explore_agents_cta');
     expect(cta.getAttribute('data-ui-object-detail')).toBe('feature|explore_agents_cta');
     expect(cta.getAttribute('data-ui-object')).toBe('button');

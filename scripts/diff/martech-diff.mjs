@@ -2,7 +2,7 @@
 /**
  * scripts/diff/martech-diff.mjs
  *
- * Martech parity gate for the 1:1 rebuild: does our migrated EDS site fire the
+ * Martech comparison for the EDS site: does it fire the same required martech
  * SAME martech as the live prod erp.intuit.com, page-for-page? Built as a
  * sibling of content-diff / visual-diff — it reuses the SAME hardened live
  * navigation (../diff/live-session.mjs: Akamai/Cloudflare bot-management ladder)
@@ -29,9 +29,9 @@
  * the env and a set differed. So the same command degrades per operator: prod +
  * preview for anyone; stage only on VPN.
  *
- * SCOPE (MVP) — report-only (exit 0) by default. Phase-2 allowlist assertions land
- * incrementally: per-page must-fire/must-not-fire vendors via `--assert` (see below);
- * must-have UDO keys and per-vendor param comparison are still TODO.
+ * SCOPE — report-only by default. Per-page must-fire/must-not-fire rules are available
+ * through `--assert`; `--verify` also requires every selected target and baseline to be
+ * measurable, and is the supported customer-facing mode.
  *
  * Usage:
  *   node scripts/diff/martech-diff.mjs                       # all pages, all reachable envs
@@ -44,7 +44,7 @@
  *   node scripts/diff/martech-diff.mjs --samples 8   # capture each env 8x; UNION into golden
  *   node scripts/diff/martech-diff.mjs --env prod --samples 8 --refresh <golden.json>
  *
- *   # Phase-2 allowlist assertions — `--assert` makes a failing must-fire/must-not-fire exit 1.
+ *   # `--assert` makes a failing must-fire/must-not-fire rule exit 1.
  *   # The blog-feedback/non-blog-scope pages use committed drafts fixtures served at real paths:
  *   npx @adobe/aem-cli up --no-open --html-folder drafts --html-mount / --port 3001 &
  *   node scripts/diff/martech-diff.mjs --env local --page blog-feedback,non-blog-scope \
@@ -57,6 +57,7 @@
 
 import { chromium } from 'playwright';
 import { writeFileSync, readFileSync, existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import {
   newLiveContext, gotoLive, dismissOverlays, launchStealthHeaded,
 } from './live-session.mjs';
@@ -193,7 +194,7 @@ function isInfraHost(h, pageHost) {
     || /(^|\.)(gstatic\.com|googleapis\.com|jsdelivr\.net|unpkg\.com|cloudfront\.net|cloudflareinsights\.com)$/i.test(h);
 }
 
-// Authoritative load-mechanism per vendor (from the reverse-engineered martech inventory + probe):
+// Load mechanism per vendor, based on the maintained martech inventory and browser captures:
 // on erp.intuit.com EVERY martech vendor is injected by the single Tealium tag manager EXCEPT
 // Akamai edge (mPulse) and authored page embeds (a TrustArc seal). So a MISSING vendor is an
 // "ok gap" — a Tealium tag the dev/e2e profile excludes, or infra we don't run — UNLESS it is
@@ -421,6 +422,17 @@ function diffAgainstBaseline(baseline, target) {
   };
 }
 
+export function martechVerificationProblems(pageName, envName, capture, baseline) {
+  if (!capture || capture.status !== 'OK') {
+    return [`${pageName} @ ${envName}: ${capture?.reason || 'not measured'}`];
+  }
+  if (!baseline || baseline.status !== 'OK') {
+    return [`${pageName} @ ${envName}: no usable baseline`];
+  }
+  if (!capture.utagLoaded) return [`${pageName} @ ${envName}: Tealium did not load`];
+  return [];
+}
+
 // --------------------------------------------------------------------------
 // Report
 // --------------------------------------------------------------------------
@@ -443,7 +455,7 @@ function fmtVendorDiff(d) {
   const parts = [];
   const g = { authored: [], tealium: [], edge: [], infra: [], 'dsp-sync': [] };
   d.missing.forEach((v) => { (g[classOf(v)] || g.tealium).push(v); });
-  if (g.authored.length) parts.push(R(`missing vendors [page-authored on prod → LOOK INTO]: [${g.authored.join(', ')}]`));
+  if (g.authored.length) parts.push(Y(`missing vendors [page-authored in production → review]: [${g.authored.join(', ')}]`));
   if (g.tealium.length) parts.push(Y(`missing vendors [Tealium-injected → dev-profile diff, ok gap]: [${g.tealium.join(', ')}]`));
   if (g.edge.length) parts.push(DIM(`missing vendors [Akamai/CDN edge-injected → ok gap]: [${g.edge.join(', ')}]`));
   if (g['dsp-sync'].length) parts.push(DIM(`missing [downstream DSP cookie-sync — nondeterministic, informational]: [${g['dsp-sync'].join(', ')}]`));
@@ -488,7 +500,7 @@ function renderPage(page, scenario, captures, baseline, baselineSource) {
     if (!flags.length) {
       lines.push(`${tag} ${G('PARITY')}  matches baseline (${cap.vendors.length} vendors, ${cap.tagUids.length} tag-uids, ${cap.udoKeys.length} udo-keys)`);
     } else {
-      lines.push(`${tag} ${R('GAP')}  ${DIM(`(${cap.vendors.length} vendors, ${cap.tagUids.length} tag-uids, ${cap.udoKeys.length} udo-keys)`)}`);
+      lines.push(`${tag} ${Y('DIFFERENCE')}  ${DIM(`(${cap.vendors.length} vendors, ${cap.tagUids.length} tag-uids, ${cap.udoKeys.length} udo-keys)`)}`);
       for (const f of flags) lines.push(`${' '.repeat(9)}${f}`);
     }
   }
@@ -517,7 +529,7 @@ function renderSamplingSummary(page, captures) {
 }
 
 // --------------------------------------------------------------------------
-// Phase-2 allowlist assertions (#136)
+// Required-vendor assertions
 // --------------------------------------------------------------------------
 // Per-page must-fire / must-not-fire vendor checks, evaluated against the OUR-BUILD envs
 // (non-baseline) — the migrated site is the thing under test; prod is the trusted baseline.
@@ -568,7 +580,7 @@ function parseArgs(argv) {
   const opts = {
     pages: null, envs: null, scenario: 'us-optout', headed: false, settleMs: 6000,
     json: null, baseline: null, refresh: null, cookies: [], oursPath: null, samples: 1,
-    assert: false,
+    assert: false, verify: false,
   };
   // Default settle spans the EDS delayed phase (~3s) + tag fan-out so delayed-phase, self-hosted
   // vendors (FullStory, LivePerson) are captured; both baseline and compared env use the same value.
@@ -597,6 +609,7 @@ function parseArgs(argv) {
     // --assert: enforce per-page must-fire/must-not-fire allowlists. A failing assertion sets a
     // non-zero exit code; without it the run stays report-only (exit 0).
     else if (a === '--assert') opts.assert = true;
+    else if (a === '--verify') { opts.verify = true; opts.assert = true; }
   }
   return opts;
 }
@@ -619,6 +632,7 @@ async function main() {
   const report = { scenario, capturedAt: new Date().toISOString(), samples: opts.samples, pages: {} };
   const goldenOut = { scenario, capturedAt: new Date().toISOString(), samples: opts.samples, pages: {} };
   let anyAssertFail = false;
+  const verificationProblems = [];
   try {
     for (const page of pages) {
       const captures = {};
@@ -642,18 +656,31 @@ async function main() {
       const assertLines = renderAssertions(page, assertResults);
       if (assertLines) process.stdout.write(`${assertLines}\n`);
       if (assertResults.some((r) => !r.ok)) anyAssertFail = true;
+      if (opts.verify) {
+        for (const env of envs) {
+          if (env.role === 'baseline') continue;
+          verificationProblems.push(...martechVerificationProblems(
+            page.name, env.name, captures[env.name], baseline,
+          ));
+        }
+      }
     }
   } finally {
     await browser.close().catch(() => {});
   }
 
-  let assertMsg = DIM('report-only — exit 0. Pass --assert to enforce per-page must-fire/must-not-fire allowlists (#136).');
-  if (opts.assert && anyAssertFail) assertMsg = R('allowlist assertions FAILED — exit 1');
-  else if (opts.assert) assertMsg = G('allowlist assertions passed — exit 0');
+  const verifyFailed = opts.verify && (verificationProblems.length || anyAssertFail);
+  let assertMsg = DIM('report-only — exit 0. Pass --verify to require measurement and enforce required-vendor rules.');
+  if (verifyFailed) assertMsg = R(`martech verification FAILED — ${verificationProblems.join('; ') || 'required-vendor rule failed'}`);
+  else if (opts.verify) assertMsg = G('martech verification passed — every selected target was measured');
+  else if (opts.assert && anyAssertFail) assertMsg = R('required-vendor assertions FAILED — exit 1');
+  else if (opts.assert) assertMsg = G('required-vendor assertions passed — exit 0');
   process.stdout.write(`\n${assertMsg}\n`);
   if (opts.refresh) { writeFileSync(opts.refresh, JSON.stringify(goldenOut, null, 2)); process.stdout.write(`${DIM(`wrote golden baseline → ${opts.refresh}`)}\n`); }
   if (opts.json) { writeFileSync(opts.json, JSON.stringify(report, null, 2)); process.stdout.write(`${DIM(`wrote ${opts.json}`)}\n`); }
-  if (opts.assert && anyAssertFail) process.exit(1);
+  if (verifyFailed || (opts.assert && anyAssertFail)) process.exit(1);
 }
 
-main().catch((e) => { process.stderr.write(`martech-diff error: ${e.message}\n`); process.exit(1); });
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  main().catch((e) => { process.stderr.write(`martech-diff error: ${e.message}\n`); process.exit(1); });
+}

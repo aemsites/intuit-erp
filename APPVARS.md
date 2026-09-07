@@ -68,6 +68,13 @@ pathname directly.
 Unit coverage lives in [`test/experience.test.js`](test/experience.test.js) and
 [`test/ecs-enrich.test.js`](test/ecs-enrich.test.js).
 
+The supported browser checks are documented in
+[`scripts/diff/README.md`](scripts/diff/README.md). With the local development server running:
+
+```bash
+npm run verify:appvars
+```
+
 [`scripts/diff/appvars-diff.mjs`](scripts/diff/appvars-diff.mjs) validates the browser integration:
 
 - the four-field `window.appVars` contract and types;
