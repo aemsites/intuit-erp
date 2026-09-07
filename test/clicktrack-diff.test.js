@@ -42,12 +42,12 @@ describe('diffCaptures', () => {
   });
 });
 
-describe('simulate — Option B JIT-stamp on the OURS side (clean at rest)', () => {
+describe('simulate — click-time stamp on the candidate side (clean at rest)', () => {
   const OURS = '<main><div class="cta block tracking-demo" data-block-name="cta">'
     + '<p class="button-wrapper"><a class="button" href="#">Schedule a call</a></p></div></main>';
 
   it('finds nothing at rest but derives a payload once JIT-simulated', () => {
-    expect(payloadsFrom(OURS)).toHaveLength(0); // Option B stamps nothing until interaction
+    expect(payloadsFrom(OURS)).toHaveLength(0); // The site stamps nothing until interaction.
     const list = payloadsFrom(OURS, { simulate: true });
     expect(list).toHaveLength(1);
     expect(list[0].payload.event).toBe('content:interacted');

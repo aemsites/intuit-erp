@@ -241,6 +241,13 @@ starts it only when the resolved Tealium environment is `prod`.
 Unit coverage for environment resolution, consent, and loader behavior is in
 [`test/tealium-martech.test.js`](test/tealium-martech.test.js).
 
+The supported browser checks are documented in
+[`scripts/diff/README.md`](scripts/diff/README.md). With the local development server running:
+
+```bash
+npm run verify:martech
+```
+
 [`scripts/diff/martech-diff.mjs`](scripts/diff/martech-diff.mjs) compares normalized vendor names,
 Tealium tag ids, and UDO key names with production. It classifies expected profile, edge, and
 nondeterministic DSP differences instead of comparing unstable request URLs.
@@ -248,11 +255,11 @@ nondeterministic DSP differences instead of comparing unstable request URLs.
 ```bash
 # Compare an authenticated local build with the committed production baseline
 node scripts/diff/martech-diff.mjs --env local --local-base http://localhost:3000 \
-  --baseline scripts/diff/fixtures/martech-homepage.golden.json
+  --baseline scripts/diff/fixtures/martech.golden.json
 
 # Deliberately refresh the production baseline
 node scripts/diff/martech-diff.mjs --env prod \
-  --refresh scripts/diff/fixtures/martech-homepage.golden.json
+  --refresh scripts/diff/fixtures/martech.golden.json
 
 # Check the Qualtrics blog/non-blog load rules
 # Serve the committed drafts at / on port 3001

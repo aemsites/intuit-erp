@@ -5,7 +5,7 @@ import {
 
 beforeEach(() => { document.body.innerHTML = ''; });
 
-describe('getTrackingAccessStructure (reverse-engineered trail)', () => {
+describe('getTrackingAccessStructure (documented trail)', () => {
   it('joins broad->specific, matching the live carousel value', () => {
     document.body.innerHTML = '<div data-tracking="rw_cards_container">'
       + '<div data-tracking="carousel"><div data-tracking="rw_card_1">'

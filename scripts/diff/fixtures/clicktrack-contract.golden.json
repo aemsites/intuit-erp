@@ -1,0 +1,88 @@
+{
+  "_comment": "Sanitized regression fixture for the DOM-derived click-tracking contract. Visitor, session, campaign, and authored-residue values are excluded.",
+  "capturedAt": "2026-08-20",
+  "source": "legacy production contract capture",
+  "diffFields": ["event", "object", "action", "ui_object", "ui_object_detail", "ui_action", "ui_access_point", "link_name"],
+  "pages": [
+    {
+      "path": "/",
+      "events": [
+        {
+          "name": "cornerstone-logo-intuit",
+          "category": "cornerstone",
+          "coverage": "code-built",
+          "derivable": { "event": "content:engaged", "object": "content", "action": "engaged", "ui_object": "link_icon", "ui_access_point": "" }
+        },
+        {
+          "name": "main-nav-capabilities",
+          "category": "main_nav",
+          "coverage": "code-built",
+          "derivable": { "event": "content:engaged", "object": "content", "action": "engaged", "ui_object": "link", "ui_access_point": "" }
+        },
+        {
+          "name": "faq-accordion-item",
+          "category": "faq",
+          "coverage": "code-built",
+          "derivable": { "event": "content:interacted", "object": "content", "action": "interacted", "ui_access_point": "accordion" }
+        },
+        {
+          "name": "footer-corporate-row",
+          "category": "footer",
+          "coverage": "code-built",
+          "derivable": { "event": "content:interacted", "object": "content", "action": "interacted", "ui_object": "link", "ui_action": "clicked", "ui_access_point": "footer|products" }
+        },
+        {
+          "name": "video-play-button",
+          "category": "video_play",
+          "coverage": "code-built",
+          "derivable": { "event": "video:started", "object": "video", "action": "started", "ui_object": "button", "ui_access_point": "page" }
+        }
+      ]
+    },
+    {
+      "path": "/accounting/multi-entity/",
+      "events": [
+        {
+          "name": "hero-schedule-a-call",
+          "category": "hero_cta",
+          "coverage": "derive",
+          "derivable": { "event": "content:interacted", "object": "content", "action": "interacted", "ui_object": "button", "ui_object_detail": "Schedule a call", "ui_action": "clicked", "ui_access_point": "rw2_hero", "link_name": "button-schedule-a-call" }
+        },
+        {
+          "name": "card-link-explore-articles",
+          "category": "cards",
+          "coverage": "derive",
+          "derivable": { "event": "content:interacted", "object": "content", "action": "interacted", "ui_object": "link", "ui_object_detail": "Explore articles", "ui_action": "clicked", "ui_access_point": "rw_cards_container|carousel|rw_card_1", "link_name": "link-explore-articles" }
+        },
+        {
+          "name": "card-link-rw-card-2",
+          "category": "cards",
+          "coverage": "derive",
+          "derivable": { "event": "content:interacted", "object": "content", "action": "interacted", "ui_object": "link", "ui_object_detail": "See offerings", "ui_action": "clicked", "ui_access_point": "rw_cards_container|carousel|rw_card_2", "link_name": "link-see-offerings" }
+        },
+        {
+          "name": "video-watch-patrick",
+          "category": "video_link",
+          "coverage": "derive",
+          "derivable": { "event": "video:engaged", "object": "video", "action": "engaged", "ui_object": "video_link", "ui_object_detail": "Watch Patrick's story (2:33)", "ui_action": "clicked", "ui_access_point": "page" }
+        },
+        {
+          "name": "testimonial-control",
+          "category": "rw_testimonial",
+          "coverage": "code-built",
+          "derivable": { "event": "content:interacted", "object": "content", "action": "interacted", "ui_access_point": "rw_testimonial" }
+        }
+      ]
+    },
+    {
+      "path": "/blog/case-study/*",
+      "events": [
+        { "name": "blog-article-hero", "category": "qrc_article_hero", "coverage": "code-built", "derivable": { "event": "content:interacted", "object": "content", "ui_access_point": "qrc_article_hero" } },
+        { "name": "blog-content-cards", "category": "qrc_content_card_grid", "coverage": "code-built", "derivable": { "event": "content:engaged", "object": "content", "ui_access_point": "qrc_content_card_grid|qrc_content_card" } },
+        { "name": "blog-toc", "category": "TableOfContents", "coverage": "code-built", "derivable": { "event": "content:interacted", "object": "content", "ui_access_point": "TableOfContents" } },
+        { "name": "blog-social-share", "category": "social_media", "coverage": "code-built", "derivable": { "event": "content:interacted", "object": "content", "ui_access_point": "social_media" } },
+        { "name": "blog-secondary-nav", "category": "secondary_nav", "coverage": "code-built", "derivable": { "event": "content:engaged", "object": "content", "ui_access_point": "secondary_nav" } }
+      ]
+    }
+  ]
+}

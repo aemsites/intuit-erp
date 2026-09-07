@@ -2,7 +2,7 @@ import {
   describe, it, expect, beforeEach,
 } from 'vitest';
 // Real-render wiring guard for the blog-template article share row (.blog-share). The
-// customer golden (regular blog articles) reports these under qrc_article_hero|social_media;
+// The reference contract reports these under qrc_article_hero|social_media;
 // the widget carries a self-contained trail (qrc_article_hero on the row, social_media on the
 // .blog-share-links span) so it survives the mobile/desktop relocation. Mirrors the trackAs
 // wiring in buildBlogTemplate.

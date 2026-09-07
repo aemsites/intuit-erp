@@ -7,7 +7,7 @@ import decorateFaq from '../blocks/faq/faq.js';
 import decorateCards from '../blocks/cards/cards.js';
 import decorateVideo from '../blocks/video/video.js';
 
-// Derive matrix — realistic CTA shapes observed across the reverse-engineered
+// Derive matrix — realistic CTA shapes observed across the documented
 // reference pages (homepage, /pricing/, /accounting/multi-entity/, a /blog/
 // article). Synthetic inputs (no scraped campaign codes); asserts the
 // DOM-derivable fields only (wa-link/object_detail residue is the sheet's job).

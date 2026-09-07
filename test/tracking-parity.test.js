@@ -7,17 +7,14 @@ import {
 import { computeTrackingPayload } from '../scripts/diff/tracker-replica.mjs';
 
 /**
- * End-to-end parity: run the REAL Option B runtime (stampTrail structural trail +
- * stampInteraction JIT-stamp) on cta_block markup, then read each CTA back
- * through the tracker replica and assert the resulting payload. This closes the
- * loop: JIT stamp -> tracker reads -> prod-equivalent payload for the documented
+ * End-to-end parity: run the site runtime (stampTrail structural trail plus
+ * stampInteraction click-time stamp) on cta_block markup, then read each CTA back
+ * through the tracker model and assert the resulting payload. This closes the
+ * loop: click-time stamp -> tracker reads -> production-equivalent payload for the documented
  * `cta_block` "Schedule a call" CTAs.
  *
- * NOTE: the replica still models the reverse-engineered tracker; the live
- * 2026-08-20 re-verification (see fixtures/backend-contract.json) found the real
- * tracker's wa-link/default/event-name behaviour has drifted. The Phase-6 oracle
- * diffs LIVE captures on both sides, so parity against prod is enforced there;
- * this suite guards the runtime->replica loop.
+ * The tracker model follows the sanitized contract in fixtures/backend-contract.json.
+ * This suite guards the runtime-to-model loop.
  */
 const MARKUP = `<main>
   <div class="section">

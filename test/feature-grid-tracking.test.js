@@ -1,10 +1,9 @@
 import {
   describe, it, expect, beforeEach,
 } from 'vitest';
-// Real-render wiring guard (the synthetic parity gate's blind spot): drive the ACTUAL
-// feature-grid decorate() + the delegated JIT-stamp runtime + the tracker replica, and
-// assert the block truly stamps the single-level `feature` trail the customer golden
-// reports on prod. This is what keeps parity-gate's BLOCK.feature entry honest.
+// Real-render wiring guard: drive the actual feature-grid decorator, delegated
+// JIT-stamp runtime, and tracker reference implementation. The assertion keeps
+// the production-aligned single-level `feature` trail stable.
 import { initTracking, resetTrackingState, stampInteraction } from '../scripts/tracking.js';
 import { computeTrackingPayload } from '../scripts/diff/tracker-replica.mjs';
 
