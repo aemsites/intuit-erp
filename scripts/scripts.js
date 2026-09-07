@@ -1,6 +1,7 @@
 import {
   loadHeader,
   loadFooter,
+  decorateBlock,
   decorateIcons,
   decorateSections,
   decorateBlocks,
@@ -9,6 +10,7 @@ import {
   loadSection,
   loadSections,
   loadCSS,
+  loadBlock,
   buildBlock,
   getMetadata,
 } from './aem.js';
@@ -16,11 +18,15 @@ import {
 // Uncomment the AEP blocks in loadEager / loadLazy to load it in parallel.
 // The tealium plugin below is NOT a vendored subtree (project-owned code), but the relative
 // eslint-disable-next-line import/no-relative-packages
-import TealiumMartech from '../plugins/tealium-martech/src/index.js';
+import TealiumMartech, {
+  parseTealiumLoadPhase,
+  parseTealiumTagUids,
+} from '../plugins/tealium-martech/src/index.js';
 import installEcsEnrich from './ecs-enrich.js';
 import { isBlogPage, hasAuthoredCaseStudyHeader } from '../blocks/blog-template/blog-detect.js';
 import { isVideoLink, videoInfo } from '../blocks/video/video-info.js';
 import { isGuidePage } from '../blocks/guide-hero/guide-detect.js';
+import { isLivePersonFacadeEnabled } from '../blocks/liveperson-facade/liveperson-facade-events.js';
 // eslint-disable-next-line import/no-cycle
 import { applyPageExperience, applyEagerLayers } from './experience.js';
 
@@ -48,6 +54,18 @@ const MARTECH_PROVIDER = MARTECH_PARAM === 'off' ? 'off' : 'tealium';
 const MARTECH_LOCAL = MARTECH_PARAM === 'local';
 // Lab-only: keep most active tags in lazy, but move UIDs 9/15/23/27 to delayed_ready.
 const MARTECH_PHASE_SPLIT = URL_PARAMS.get('martech-phase-split') === 'on';
+// Lab-only: keep OneTrust in lazy while optionally moving utag.js to delayed.
+const TEALIUM_LOAD_PHASE = parseTealiumLoadPhase(URL_PARAMS);
+const TEALIUM_TAG_UIDS = parseTealiumTagUids(URL_PARAMS);
+
+function isLivePersonOnDemand() {
+  return ['true', 'yes'].includes((getMetadata('chat-now') || '').trim().toLowerCase());
+}
+
+function livePersonInviteDelay() {
+  const value = Number.parseInt(getMetadata('chat-invite-delay'), 10);
+  return Number.isFinite(value) && value >= 0 ? value : undefined;
+}
 
 // Active Tealium instance (undefined when `?martech=off`); exposed via getTealium().
 let tealium;
@@ -343,6 +361,25 @@ function decorateSectionBackgrounds(main) {
 }
 
 /**
+ * Injects an authored eyebrow label as the first child of a section's
+ * default-content-wrapper, from the section metadata value in
+ * `section.dataset.eyebrowText`.
+ * @param {Element} main The main element
+ */
+function decorateSectionEyebrows(main) {
+  main.querySelectorAll('.section').forEach((section) => {
+    const { eyebrowText } = section.dataset;
+    if (!eyebrowText) return;
+    if (section.querySelector('.section-eyebrow')) return;
+    const eyebrow = document.createElement('h2');
+    eyebrow.className = 'section-eyebrow';
+    eyebrow.textContent = eyebrowText;
+    const wrapper = section.querySelector('.default-content-wrapper') || section;
+    wrapper.insertBefore(eyebrow, wrapper.firstChild);
+  });
+}
+
+/**
  * Decorates the main element.
  * @param {Element} main The main element
  */
@@ -418,9 +455,14 @@ export function decorateMain(main) {
   buildAutoBlocks(main);
   decorateSections(main);
   decorateSectionBackgrounds(main);
+  decorateSectionEyebrows(main);
   decorateBlocks(main);
   decorateButtons(main);
   decorateVideoLinks(main);
+}
+
+function shouldRenderContactUs() {
+  return !['true', 'yes', 'hide'].includes((getMetadata('hide-contact-widget') || '').trim().toLowerCase());
 }
 
 /**
@@ -430,6 +472,7 @@ export function decorateMain(main) {
 async function loadEager(doc) {
   document.documentElement.lang = 'en';
   decorateTemplateAndTheme();
+  const livePersonOnDemand = isLivePersonOnDemand() && isLivePersonFacadeEnabled();
 
   if (['true', 'yes'].includes((getMetadata('events-bar') || '').trim().toLowerCase())) {
     document.body.classList.add('has-events-bar');
@@ -462,6 +505,9 @@ async function loadEager(doc) {
     tealium = new TealiumMartech({
       local: MARTECH_LOCAL,
       phaseSplit: MARTECH_PHASE_SPLIT,
+      loadPhase: TEALIUM_LOAD_PHASE,
+      livePersonOnDemand,
+      tagUids: TEALIUM_TAG_UIDS,
     });
     tealium.eager();
   }
@@ -494,6 +540,16 @@ async function loadEager(doc) {
       ({ default: buildGuideHeroAutoBlock } = await import('../blocks/guide-hero/guide-hero-autoblock.js'));
     }
     decorateMain(main);
+    if (livePersonOnDemand && shouldRenderContactUs() && tealium?.enabled) {
+      const facade = buildBlock('liveperson-facade', '');
+      const facadeWrapper = document.createElement('div');
+      const inviteDelay = livePersonInviteDelay();
+      if (inviteDelay !== undefined) facade.dataset.inviteDelay = inviteDelay;
+      facadeWrapper.append(facade);
+      document.body.append(facadeWrapper);
+      decorateBlock(facade);
+      await loadBlock(facade);
+    }
     document.body.classList.add('appear');
     await Promise.all([
       // Uncomment with the AEP block above (applies eager martech decisions).
@@ -521,10 +577,6 @@ async function loadEager(doc) {
   } catch (e) {
     // do nothing
   }
-}
-
-function shouldRenderContactUs() {
-  return !['true', 'yes', 'hide'].includes((getMetadata('hide-contact-widget') || '').trim().toLowerCase());
 }
 
 /**
@@ -582,7 +634,9 @@ async function loadLazy(doc) {
     loadCSS(`${window.hlx.codeBasePath}/blocks/contact-us/contact-us.css`);
     // eslint-disable-next-line import/no-cycle
     import('../blocks/contact-us/contact-us.js')
-      .then(({ default: initContactUs }) => initContactUs())
+      .then(({ default: initContactUs }) => initContactUs({
+        requestLivePerson: () => tealium?.requestLivePerson(),
+      }))
       .catch(() => { /* non-fatal — widget is non-critical chrome */ });
   }
 
