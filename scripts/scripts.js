@@ -529,8 +529,10 @@ async function loadEager(doc) {
   //   }
   // }
 
-  // EAGER experience — the single consolidated call + any whole-page swap, BEFORE decorateMain.
-  const pageSwapped = await applyPageExperience(doc);
+  // EAGER experience — fires in parallel with decorateMain, does NOT gate reveal. Whichever
+  // finishes first: decorateMain never waits on the decision call. `appear` goes on as soon
+  // as decorateMain has run, so the reveal gate exists whether or not a decision landed in time.
+  const experiencePromise = applyPageExperience(doc);
   const main = doc.querySelector('main');
   if (main) {
     buildBlogTemplate = await resolveBlogTemplate(main);
@@ -548,15 +550,23 @@ async function loadEager(doc) {
       decorateBlock(facade);
       await loadBlock(facade);
     }
-    // AFTER decorateMain: resolve a swapped page's own section/block slots (recursion-safe)
-    // and swap the first/LCP section — both before reveal. No-op without an experience response.
-    await applyEagerLayers(doc, pageSwapped);
     document.body.classList.add('appear');
     await Promise.all([
       // Uncomment with the AEP block above (applies eager martech decisions).
       // martechLoadedPromise ? martechLoadedPromise.then(applyMartechEager) : Promise.resolve(),
       loadSection(main.querySelector('.section'), waitForFirstImage),
     ]);
+
+    // Apply the experience decision whenever it lands — before or after reveal.
+    // A whole-page swap replaces raw (undecorated) HTML, so decorateMain must re-run on it
+    // even though reveal has already happened; this is the rare path (only pages with a
+    // page-level experiment/personalization id take it, and only when the decision is slow).
+    const pageSwapped = await experiencePromise;
+    if (pageSwapped) {
+      decorateMain(main);
+      await loadSection(main.querySelector('.section'), waitForFirstImage);
+    }
+    await applyEagerLayers(doc, pageSwapped);
   }
 
   try {
