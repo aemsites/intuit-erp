@@ -627,10 +627,15 @@ main.blog-article > .blog-prehero:not(.full-bleed) {
    Scoped to `main.blog-article > .blog-prehero` so no other template, and no
    other section of this article, is affected. */
 
-/* Prod's banner sits on white, not the authored light-grey. */
+/* Prod's banner sits on white, not the authored light-grey. `!important` is
+   required because the section carries `data-background="#eff4f9"`, and
+   decorateSectionBackgrounds() (scripts.js) copies that into an INLINE
+   `style="background: ..."` — an inline declaration a stylesheet cannot
+   otherwise beat. The alternative, skipping pre-heroes in that function, would
+   mean editing shared decoration logic for one template. */
 main.blog-article > .blog-prehero.colored-background,
 main.blog-article > .blog-prehero.light-background {
-  background: #fff;
+  background: #fff !important;
 }
 
 /* 50/50 split. The authored `70-30` class makes media-text.js write
@@ -682,6 +687,27 @@ main.blog-article > .blog-prehero .media-visual img {
 main.blog-article > .blog-prehero:not(:has(.media-text)) {
   box-sizing: border-box;
   padding: 0 40px;
+}
+
+/* The wrapper inside that section carries its own 40px padding, which would
+   inset the band a second time (1440 - 160 = 1280 instead of 1360). */
+main.blog-article > .blog-prehero:not(:has(.media-text)) > .default-content-wrapper {
+  max-width: none;
+  padding: 0;
+}
+
+/* Body images in an article are capped to 90% with 2.5rem of vertical breathing
+   room (see the `width >= 1024px` block above). The stat band is a full-bleed
+   banner, not body copy: prod renders it edge-to-edge inside the 1360px inset
+   with no vertical margin. */
+main.blog-article
+  > .blog-prehero:not(:has(.media-text))
+  > .default-content-wrapper
+  picture
+  > img {
+  max-width: 100%;
+  margin-top: 0;
+  margin-bottom: 0;
 }
 
 /* CTA pair: prod paints primary #0665ae and secondary as a grey #d4d7dc fill
