@@ -79,10 +79,39 @@
       csLogImpl(type, logBody);
     };
 
+    // Expands a caught throwable into flat log fields. Callers can pass the raw
+    // value as `error` and still get the name and stack that make a failure
+    // root-causable, instead of having to flatten it at every call site. Non-Error
+    // throws are serialized rather than dropped, so the payload is never empty.
+    // Named errorName rather than name to avoid colliding with a top-level payload
+    // key. Callers that already pass a flattened string are left untouched.
+    const expandError = (payload) => {
+      const { error } = payload;
+      if (error === undefined || error === null) {
+        // Nothing useful to report - drop the key rather than logging "null".
+        if ('error' in payload) delete payload.error;
+        return;
+      }
+      if (error instanceof Error) {
+        payload.errorName = error.name;
+        payload.error = error.message;
+        if (error.stack) payload.stack = error.stack;
+      } else if (typeof error !== 'string') {
+        // Plain objects stringify to "[object Object]", so prefer JSON and only
+        // fall back to String() for values JSON cannot handle (cycles, BigInt).
+        try {
+          payload.error = typeof error === 'object' ? JSON.stringify(error) : String(error);
+        } catch (err) {
+          payload.error = String(error);
+        }
+      }
+    };
+
     // Wraps csLog so callers can pass a plain message plus an optional context object.
     const csaWrappedLogger = (level, message, obj) => {
       const payload = obj || {};
       payload.message = message || '';
+      expandError(payload);
       csLog(level, payload);
     };
 
