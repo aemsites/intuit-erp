@@ -591,7 +591,12 @@
   }
 }
 
-main.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail, .blog-cards-container, .full-bleed) {
+/* 740px is the readable measure for article body copy. `.blog-prehero` is
+   excluded alongside `.blog-hero`: sections authored above the H1 are banner
+   content, not body copy, and the grid already spans them full width
+   (`grid-column: 1 / -1` above), so capping them here left them pinched to
+   740px while their neighbours ran edge to edge. */
+main.blog-article > .section:not(.blog-hero, .blog-prehero, .blog-toc-rail, .blog-rail, .blog-cards-container, .full-bleed) {
   max-width: 740px;
   margin: 0 auto;
 }
