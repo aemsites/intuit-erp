@@ -20,9 +20,9 @@
  *   --out <dir>     output root (default: content)
  *   --verbose       print every warning (default: just the count)
  *
- * Scope: blog ARTICLES only. Case studies (/blog/case-study/*), guides
- * (/blog/guide/*), author pages (/blog/author/*), category landings and the
- * blog root are skipped with a message.
+ * Scope: blog ARTICLES and case studies (/blog/case-study/*, same article
+ * layout). Guides (/blog/guide/*), author pages (/blog/author/*), category
+ * landings and the blog root are skipped with a message.
  */
 import {
   writeFileSync, mkdirSync, existsSync, readFileSync,
@@ -36,7 +36,7 @@ import { diffStructure } from './diff.mjs';
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const ERP_HOST = 'https://erp.intuit.com';
-const OUT_OF_SCOPE = /^\/blog\/(case-study|guide|author)\//;
+const OUT_OF_SCOPE = /^\/blog\/(guide|author)\//;
 
 function parseArgs(argv) {
   const opts = {
@@ -63,7 +63,8 @@ function resolveInput(input, outRoot) {
   const sourceUrl = `${ERP_HOST}${sitePath}/`;
   const slug = sitePath.replace(/^\//, '');
   const base = isAbsolute(outRoot) ? outRoot : join(REPO_ROOT, outRoot);
-  const outFile = join(base, `${slug}.html`);
+  // write as <slug>/index.html so the preview URL is <slug>/ (folder convention)
+  const outFile = join(base, slug, 'index.html');
   return { sitePath, sourceUrl, slug, outFile };
 }
 
@@ -84,7 +85,7 @@ function processOne(input, opts) {
     return 'skip';
   }
   if (OUT_OF_SCOPE.test(`${sitePath}/`)) {
-    console.log(`SKIP  ${sitePath} — out of scope (articles only; not case-study/guide/author)`);
+    console.log(`SKIP  ${sitePath} — out of scope (articles & case studies only; not guide/author)`);
     return 'skip';
   }
 

@@ -203,13 +203,15 @@ function classify(el) {
 
 /** Locate the callout's content box. Prefer the element whose `<style>` rule
  *  paints it #C2F5FF (covers `.colored-box`, `.test-box`, and any other name),
- *  then fall back to the known TipBox containers. */
+ *  then fall back to the known TipBox containers. The TipBox `-body` wraps both
+ *  the title `<h2>` (e.g. "Key takeaways:") and the `-content`, so it is
+ *  preferred over `-content` — otherwise the callout heading is dropped. */
 function highlightBox(el) {
   const m = styleText(el).match(/\.([A-Za-z0-9_-]+)\s*\{[^}]*background(?:-color)?\s*:\s*#c2f5ff/i);
   if (m) { const box = el.querySelector(`.${m[1]}`); if (box) return box; }
   return el.querySelector('.colored-box')
-    || el.querySelector('[class*="TipBox-tip-box-content"]')
-    || el.querySelector('[class*="TipBox-tip-box-body"]') || el;
+    || el.querySelector('[class*="TipBox-tip-box-body"]')
+    || el.querySelector('[class*="TipBox-tip-box-content"]') || el;
 }
 
 /** Merge an icon-only paragraph (just `:name:` tokens) into the following
@@ -251,19 +253,25 @@ function extractHighlight(el) {
 
 function extractQuote(el) {
   // MDS Quote component (Quote_quoteContainer): a large pull-quote on the source
-  // (40px bold + block attribution line, verified on erp.intuit.com), so it maps
-  // to a default-content <blockquote> — matching styles.css `blockquote p`/`cite`
-  // — not the smaller `testimonial` block (which blog-template styles at 18px).
+  // (green quote-mark + bold body + attribution line, verified on erp.intuit.com,
+  // e.g. the Tampa Bay EDC case study), authored as a `testimonial simple green`
+  // block — matching content/blog/construction/intuit-enterprise-suite-construction.
   // Body and attribution live in dedicated divs (no <p>/<h>); the quote-mark is a
-  // decorative data-URI SVG and is dropped.
+  // decorative data-URI SVG and is dropped. Attribution renders as `<p><em>…</em></p>`.
   const qtEl = el.querySelector('[class*="Quote_quoteText"]');
   if (qtEl) {
     const quote = cleanText(qtEl.textContent);
     if (!quote) return [];
     const attribEl = el.querySelector('[class*="Quote_authorDetails"]');
     const attrib = attribEl ? cleanText(attribEl.textContent).replace(/^[\s\-–—]+/, '') : '';
-    const html = `<p>${esc(quote)}</p>${attrib ? `<cite>${esc(attrib)}</cite>` : ''}`;
-    return [{ type: 'blockquote', html }];
+    const paras = [esc(quote)];
+    if (attrib) paras.push(`<em>${esc(attrib)}</em>`);
+    return [{
+      type: 'block',
+      name: 'testimonial',
+      variant: 'simple green',
+      paras,
+    }];
   }
   const box = el.querySelector('.quote-box') || el;
   const nodes = [];
@@ -414,6 +422,25 @@ function fmtDate(ms) {
   return `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
 }
 
+/** ISO date string -> epoch ms (0 when absent/unparseable). */
+const isoMs = (s) => (s ? Date.parse(s) || 0 : 0);
+
+/**
+ * The article hero's date settings, rendered client-side (absent from the SSR
+ * DOM) so read from __NEXT_DATA__.blocks. `showUpdatedDate` is the source's own
+ * toggle for whether it displays an "Updated on" date, and it also governs which
+ * publish date is shown (see extractMetadata): an updated article shows its
+ * original `manualPublishDate`; a non-updated one shows `md.lastPublishedDate`.
+ */
+function heroDates(blocks) {
+  const hero = (blocks || []).find((b) => /qrc-article-hero/.test(b?.blockName || '') && b?.props);
+  const p = hero?.props || {};
+  return {
+    manualPublishDate: p.manualPublishDate || '',
+    showUpdatedDate: p.showUpdatedDate === true,
+  };
+}
+
 const titleCaseWords = (s) => s.split(/[\s-]+/).filter(Boolean)
   .map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 
@@ -421,6 +448,13 @@ function pathParts(url) {
   const path = new URL(url, ERP_HOST).pathname.replace(/\/+$/, '');
   const segs = path.replace(/^\/blog\/?/, '').split('/').filter(Boolean);
   return { path, segs };
+}
+
+/** DA `Template` value by section: research reports, case studies, else articles. */
+function pageTemplate(url) {
+  if (/\/blog\/research\//.test(url)) return 'Research';
+  if (/\/blog\/case-study\//.test(url)) return 'Case Study';
+  return 'Blog Article';
 }
 
 /** Synthesize the BreadcrumbList json-ld that DA carries (source has none). */
@@ -447,24 +481,34 @@ function buildJsonLd(url, h1) {
   });
 }
 
-function extractMetadata(doc, md, url) {
+function extractMetadata(doc, md, url, hero = {}) {
   const { segs } = pathParts(url);
   const category = segs.length >= 2 ? segs[0] : (segs[0] || '');
-  const template = /\/blog\/research\//.test(url) ? 'Research' : 'Blog Article';
+  const template = pageTemplate(url);
   const authorEl = doc.querySelector('[class*="primaryAuthor"]');
   const tags = (md.categories || [])
     .filter((c) => c.categoryName !== 'Primary Category')
     .flatMap((c) => (c.concepts || []).map((x) => x.prefLabel))
     .filter(Boolean);
   const h1 = doc.querySelector('h1')?.textContent.trim() || '';
+  // The source shows an "Updated on" date only when hero.showUpdatedDate is set,
+  // and that flag also picks the publish date. An updated article shows its
+  // original publish (manualPublishDate) as Date and the republish
+  // (md.lastPublishedDate) as Updated; a non-updated article just shows its
+  // md.lastPublishedDate as Date (its manualPublishDate is ~the publish time,
+  // not a deliberate backdate, so it is not used).
+  const manualMs = isoMs(hero.manualPublishDate);
+  const lastMs = md.lastPublishedDate || md.createdDate;
+  const date = fmtDate(hero.showUpdatedDate && manualMs ? manualMs : lastMs);
+  const updated = fmtDate(md.lastPublishedDate);
   const fields = {
     Title: (md.seo_og_title || md.seo_title || h1).replace(/\s*\|\s*Intuit\s*$/, ''),
     Description: md.seo_metaDescription || md.seo_og_desc || '',
-    Image: md.seo_og_image || '',
     Author: authorEl?.textContent.trim() || 'Intuit',
     Category: category,
     Tags: tags.join(', '),
-    Date: fmtDate(md.lastPublishedDate || md.createdDate),
+    Date: date,
+    ...(hero.showUpdatedDate && updated && updated !== date ? { Updated: updated } : {}),
     Template: template,
     'json-ld': buildJsonLd(url, h1),
   };
@@ -609,7 +653,7 @@ export function extractPageFromDoc(doc, url) {
   const blocks = pp.blocks || [];
   const warnings = [];
 
-  const template = /\/blog\/research\//.test(url) ? 'Research' : 'Blog Article';
+  const template = pageTemplate(url);
   const { path } = pathParts(url);
 
   const heroWrap = doc.querySelector('[class*="QrcArticleHero"]');
@@ -633,12 +677,7 @@ export function extractPageFromDoc(doc, url) {
   }
   const h1 = doc.querySelector('h1')?.textContent.trim() || md.seo_og_title || '';
 
-  const metadata = extractMetadata(doc, md, url);
-  // video-led pages have no seo_og_image; fall back to the hero (video poster)
-  if (!metadata.Image) {
-    const heroSrc = hero?.type === 'video' ? hero.poster?.src : hero?.src;
-    if (heroSrc) metadata.Image = heroSrc;
-  }
+  const metadata = extractMetadata(doc, md, url, heroDates(blocks));
 
   const body = findBody(doc);
   if (!body) throw new Error(`could not locate article body for ${url} (not an article layout?)`);
