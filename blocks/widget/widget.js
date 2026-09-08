@@ -78,7 +78,6 @@ export default async function decorate(widget) {
     })();
     await Promise.all([cssLoaded, decorationComplete]);
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error(`failed to load widget ${widgetPath}/${widgetName}`, error);
+    window.coreServiceAdapter?.logger?.error?.(`failed to load widget ${widgetPath}/${widgetName}`, { error });
   }
 }

@@ -245,8 +245,7 @@ function buildAutoBlocks(main) {
             fragment.parentElement.replaceWith(...frag.children);
             import('./schedule-modal.js').then(({ bindScheduleLinks }) => bindScheduleLinks(main)).catch(() => {});
           } catch (error) {
-            // eslint-disable-next-line no-console
-            console.error('Fragment loading failed', error);
+            window.coreServiceAdapter?.logger?.error?.('Fragment loading failed', { error });
           }
         });
       });
@@ -254,8 +253,7 @@ function buildAutoBlocks(main) {
     buildWidgetAutoBlocks(main);
     buildVideoAutoBlocks(main);
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('Auto Blocking failed', error);
+    window.coreServiceAdapter?.logger?.error?.('Auto Blocking failed', { error });
   }
 }
 
