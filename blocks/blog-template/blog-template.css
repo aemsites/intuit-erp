@@ -600,6 +600,19 @@ main.blog-article > .section:not(.blog-hero, .blog-prehero, .blog-toc-rail, .blo
   max-width: 740px;
   margin: 0 auto;
 }
+
+/* Excluding `.blog-prehero` above only stops it being pinched to 740px — on
+   its own it has no container at all and runs the full viewport (measured
+   1728px on a 1728px viewport). Prod's equivalent banner content (the
+   ROI-stat hero + stat-band image above the real H1) sits in a 1440px
+   container, matching this codebase's other full-bleed content grids (see
+   `.blog-cards-grid`, 1440px). `.full-bleed` preheros (e.g. the download-CTA
+   band) already manage their own edge-to-edge background plus inset content
+   and are excluded so they aren't double-capped. */
+main.blog-article > .blog-prehero:not(.full-bleed) {
+  max-width: 1440px;
+  margin: 0 auto;
+}
   
 main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .blog-rail, [class*="padding-"]):has(.block) {
   background: #fff;
