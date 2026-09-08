@@ -13,7 +13,7 @@ import {
   getMetadata,
 } from './aem.js';
 // Adobe/Alloy (plugins/martech, a git subtree) is armed but commented out; Tealium is the default.
-// Uncomment the AEP blocks in loadEager / loadLazy to load it in parallel.
+// Uncomment the AEP blocks in loadEager/loadLazy to load it in parallel.
 // The tealium plugin below is NOT a vendored subtree (project-owned code), but the relative
 // eslint-disable-next-line import/no-relative-packages
 import TealiumMartech, {
