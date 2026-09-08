@@ -39,6 +39,8 @@ content
 *.html
 !tools/**/*.html
 !widgets/**/*.html
+!head.html
+!404.html
 
 # Local verification inputs and reports are never committed. Production captures
 # can contain campaign or session values and may trip secret scanning.
