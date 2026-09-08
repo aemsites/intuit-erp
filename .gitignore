@@ -28,6 +28,8 @@ stardust/
 .impeccable/
 .playwright-mcp/
 .hlx/
+.worktrees/
+edge/
 
 .hlx/.da-token.json
 
