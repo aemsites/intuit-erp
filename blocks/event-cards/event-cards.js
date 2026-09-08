@@ -9,9 +9,10 @@
  *   .upcoming    events with status "upcoming", soonest first
  *   .on-demand   events with status "on-demand", newest first
  *
- * date/time/location/speakers are all optional and rendered as labelled rows
- * only when authored, so an evergreen webinar and a dated conference can share
- * the same grid.
+ * date/endDate/time/location/speakers are all optional and rendered as labelled
+ * rows only when authored, so an evergreen webinar and a dated conference can
+ * share the same grid. A multi-day event authors endDate and renders
+ * "start - end" on one Date row.
  *
  * When a bucket has more events than fit in one row, the grid becomes a
  * one-row-per-page carousel (arrows + dots), same mechanics as
@@ -151,6 +152,22 @@ function detailRow(label, value) {
   return p;
 }
 
+// "October 26, 2026" + "October 28, 2026" -> "October 26-28, 2026"; a range that
+// crosses a month keeps both month names, one that crosses a year keeps both years.
+function eventDates(item) {
+  const start = formatDate(item.date);
+  if (!String(item.endDate || '').trim()) return start;
+  const end = formatDate(item.endDate);
+  if (end === start) return start;
+  const [startMd, startYear] = start.split(', ');
+  const [endMd, endYear] = end.split(', ');
+  if (!startYear || !endYear || startYear !== endYear) return `${start} - ${end}`;
+  const [startMonth, startDay] = startMd.split(' ');
+  const [endMonth, endDay] = endMd.split(' ');
+  if (startMonth !== endMonth) return `${startMd} - ${endMd}, ${startYear}`;
+  return `${startMonth} ${startDay}-${endDay}, ${startYear}`;
+}
+
 function cardHTML(item) {
   const card = document.createElement('div');
   card.className = 'event-card';
@@ -184,7 +201,7 @@ function cardHTML(item) {
 
   // only the fields this event actually authored, in the original's order
   const details = [
-    ['Date', item.date && formatDate(item.date)],
+    ['Date', item.date && eventDates(item)],
     ['Time', item.time],
     ['Location', item.location],
     ['Speaker', item.speakers],
@@ -235,14 +252,11 @@ export default async function decorate(block) {
   const items = [...await loadIndex(INDEX_PATH)]
     .filter((item) => item.title && item.title.trim())
     .filter((item) => (item.status || 'upcoming').trim() === status)
-    // Upcoming events whose date has already passed are stale — production drops
-    // them. Only exclude items that HAVE a valid date in the past (day
-    // granularity, so an event happening today still counts); undated evergreen
-    // upcoming items (e.g. an ongoing demo series) and all on-demand items stay.
     .filter((item) => {
       if (wantsOnDemand) return true;
-      if (!item.date || !String(item.date).trim()) return true;
-      const when = new Date(item.date);
+      const last = String(item.endDate || '').trim() || item.date;
+      if (!last || !String(last).trim()) return true;
+      const when = new Date(last);
       if (Number.isNaN(when.getTime())) return true;
       const startOfToday = new Date();
       startOfToday.setHours(0, 0, 0, 0);
