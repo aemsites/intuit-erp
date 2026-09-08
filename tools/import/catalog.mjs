@@ -18,8 +18,10 @@ import { JSDOM } from 'jsdom';
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const MEDIA_PROMO_DIR = join(REPO_ROOT, 'content', 'fragments', 'media-promo');
 
-/** Fully-qualified fragment host the DA pages use (verbatim). */
-export const FRAGMENT_BASE = 'https://main--intuit-erp--aemsites.aem.page/fragments';
+/** Fully-qualified fragment host the DA pages use (verbatim). The active site is
+ *  erp--intuit (the repo syncs there), and the corpus references fragments on its
+ *  .aem.live host — not the stale intuit-erp--aemsites migration domain. */
+export const FRAGMENT_BASE = 'https://main--erp--intuit.aem.live/fragments';
 
 /** Trailing shared disclaimer every article carries. */
 export const PRICING_DISCLAIMER = `${FRAGMENT_BASE}/pricing-disclaimer`;
@@ -72,14 +74,29 @@ export function loadCatalog() {
 }
 
 /**
+ * Explicit source-image-basename -> fragment-id overrides, for CTAs the two
+ * automatic strategies can't bridge: the media-promo fragment stores a
+ * DA-optimized asset (so byAsset never sees the source basename) and the source
+ * CTA's heading is a bold <p> rather than an <h3> (so byHeading has nothing to
+ * key on). Verified by matching alt text + copy against the fragment.
+ *   cta-2-introducing-ies-image-us-en.jpg -> c21d6r8ia
+ *     ("Introducing Intuit Enterprise Suite" band; fragment img media_1833…avif)
+ */
+const CTA_ASSET_OVERRIDES = {
+  'cta-2-introducing-ies-image-us-en.jpg': 'c21d6r8ia',
+};
+
+/**
  * Resolve a source CTA to a media-promo fragment id.
  * @param {{imageSrc?: string, heading?: string}} cta
  * @returns {{id: string, how: string} | null} match + how it matched, or null
  */
 export function matchCta({ imageSrc, heading } = {}) {
-  const { byAsset, byHeading } = loadCatalog();
+  const { byAsset, byHeading, ids } = loadCatalog();
   if (imageSrc) {
     const asset = basename(imageSrc.split('?')[0]);
+    const override = CTA_ASSET_OVERRIDES[asset];
+    if (override && ids.has(override)) return { id: override, how: `override:${asset}` };
     if (byAsset.has(asset)) return { id: byAsset.get(asset).id, how: `asset:${asset}` };
   }
   if (heading) {
