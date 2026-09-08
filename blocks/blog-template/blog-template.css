@@ -654,8 +654,13 @@ main.blog-article > .blog-prehero .media-text .media-visual {
 }
 
 /* Prod's grid has no extra gutter — the 40px column padding supplies the
-   separation, so a 60px gap would push the asset column 60px off. */
+   separation, so a 60px gap would push the asset column 60px off.
+   `align-items: center` matches prod, whose copy column is a flex container with
+   `align-items: center`: the cover art is taller than the copy (552px vs 341px),
+   so top-aligning the copy leaves a large empty band beneath it before the next
+   section. Centring distributes that slack above and below as prod does. */
 main.blog-article > .blog-prehero .media-text .media-row {
+  align-items: center;
   gap: 0;
 }
 
