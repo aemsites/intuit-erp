@@ -261,10 +261,8 @@
   }
 }
 
-/* Blue radial glow behind the media panel. The same feature authored as a
-   `tabs (vertical)` block elsewhere (e.g. /accountant/) carries this glow; the
-   carousel was missing it. Desktop only — the media sits in the right column at
-   >=1024px; below that the block stacks (glow hidden), matching tabs.vertical. */
+/* Blue radial glow behind the media panel. Desktop only — the media sits in the
+   right column at >=1024px; below that the block stacks, so the glow is hidden. */
 @media (width >= 1024px) {
   .vertical-scroll-carousel {
     position: relative;
