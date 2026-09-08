@@ -41,6 +41,37 @@ describe('buildToc', () => {
     ]);
   });
 
+  it('excludes an h2 that is a SIBLING of a .highlight block and has no prose of its own — a callout label, not a real section (blog/pricing/job-order-costing regression)', () => {
+    // Mirrors the real (pre-decoration) DOM tocHeadings runs against — buildAutoBlocks calls
+    // buildToc BEFORE decorateSections/decorateBlocks run, so there's no default-content-wrapper
+    // or highlight-container yet; the heading and the highlight block are still flat siblings of
+    // the same `main > div`. h.closest('.highlight') misses this heading because it's the
+    // highlight's sibling, not its descendant — this is exactly the "What is job order costing?"
+    // bug: an h2 immediately followed by a .highlight box, with no paragraph of its own in between.
+    const main = document.createElement('main');
+    main.innerHTML = `
+      <div>
+        <h2>What is job order costing?</h2>
+        <div class="highlight"><div><div>Job order costing is a pricing system used for unique jobs.</div></div></div>
+        <p>For businesses producing custom goods, accurate cost tracking is essential.</p>
+      </div>
+      <div>
+        <h2>Breaking down the components</h2>
+        <p>Job order costing divides costs into direct materials, direct labor, and overhead.</p>
+        <div class="highlight"><div><div>Pro tip: break down overhead into variable and fixed.</div></div></div>
+      </div>
+      <div><h2>6 simple steps to implement job costing</h2><p>x</p></div>
+    `;
+    const nav = buildToc(main);
+    const links = [...nav.querySelectorAll('.blog-toc-list a')];
+    // "Breaking down the components" also shares its section with a .highlight block, but has its
+    // own prose BEFORE that block — a genuine section heading, so it must stay in the TOC.
+    expect(links.map((a) => a.textContent)).toEqual([
+      'Breaking down the components',
+      '6 simple steps to implement job costing',
+    ]);
+  });
+
   it('builds a toggle button and a numbered list wrapped in a nav', () => {
     const main = document.createElement('main');
     main.innerHTML = '<h2>First</h2><h2>Second</h2>';

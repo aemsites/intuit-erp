@@ -55,6 +55,11 @@ import { hasAuthoredCaseStudyHeader } from './blog-detect.js';
 import { MQ_DESKTOP_UP } from '../../scripts/breakpoints.js';
 import { stampTracking, trackAs } from '../../scripts/tracking.js';
 
+// Callout-style blocks: their own internal heading is an h3 (see tocHeadings' jsdoc), so
+// any h2 that's actually inside one is handled by the closest() check below. This list is
+// reused for the SIBLING check right under it — see that comment for why.
+const CALLOUT_BLOCKS = '.highlight,.testimonial,.stat-band,.cta-band,.media-text,.download-form';
+
 /**
  * Selects the article's main H2 sections only — excludes headings nested
  * inside callout/highlight-style blocks (which use h3 for their own internal
@@ -64,8 +69,20 @@ import { stampTracking, trackAs } from '../../scripts/tracking.js';
  */
 function tocHeadings(main) {
   return [...main.querySelectorAll('h2')].filter((h) => !h.closest(
-    '.blog-prehero,.blog-cards,.highlight,.testimonial,.stat-band,.cta-band,.media-text,.download-form',
-  ) && !(h.parentElement && h.parentElement.querySelector('.blog-cards')));
+    `.blog-prehero,.blog-cards,${CALLOUT_BLOCKS}`,
+  ) && !(h.parentElement && h.parentElement.querySelector('.blog-cards'))
+    // A heading immediately followed by a callout block (no prose of its own in between) is
+    // that block's label, not a real section heading — e.g. blog/pricing/job-order-costing's
+    // "What is job order costing?", whose entire authored "section" is just the heading plus
+    // a .highlight definition box. h.closest() above misses this because the heading is the
+    // callout's SIBLING, not its descendant (this runs on the pre-decoration tree, before
+    // decorateSections/decorateBlocks group children into wrapper divs — at that point the
+    // heading and the callout block are still flat, adjacent children of the same source
+    // section). A genuine section heading that merely happens to share its section with a
+    // callout always has its own prose between the two (e.g. "What is an ERP system?", which
+    // is followed by several paragraphs before its .highlight box further down), so this only
+    // catches the label case — same sibling-exclusion pattern as the blog-cards check above.
+    && !(h.nextElementSibling && h.nextElementSibling.matches(CALLOUT_BLOCKS)));
 }
 
 /**
