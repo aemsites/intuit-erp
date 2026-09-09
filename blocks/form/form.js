@@ -565,6 +565,14 @@ async function embedMarketoForm(formEl, cfg, config, env) {
       const el = document.createElement('div');
       el.className = 'form-disclaimer';
       el.innerHTML = config.disclaimer;
+      // Disclaimer links (Privacy Policy / Terms) open in a new tab. The form is
+      // injected async by Marketo, after the page's external-link pass has run, so
+      // decorate them here — a reader mid-form shouldn't lose their place.
+      el.querySelectorAll('a[href^="http"]').forEach((a) => {
+        if (a.target || new URL(a.href).host === window.location.host) return;
+        a.target = '_blank';
+        a.rel = a.rel ? `${a.rel} noopener` : 'noopener';
+      });
       const buttonRow = formEl.querySelector('.mktoButtonRow');
       // `disclaimer-below` variant forces the disclaimer under the submit button
       const below = formEl.closest('.form')?.classList.contains('disclaimer-below');
