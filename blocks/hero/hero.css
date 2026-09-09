@@ -308,6 +308,54 @@
   color: var(--text-muted);
 }
 
+/* Art-directed hero photo. When the desktop visual is a full-bleed section
+   background image, `background-size: cover` frames it well only at wide
+   ratios; below 1024 the section turns narrow-and-tall (the form card is tall,
+   the copy column empty) and `cover` zooms in and crops the subject. Author a
+   contained copy image alongside the background and swap between them by width,
+   the same way prod does: background composite on desktop, contained image
+   below 1024. Scoped to image-background hero-with-form sections only — a
+   gradient/colour background carries `colored-background`, so heroes like
+   /pricing/ (and ordinary hero+image layouts) are unaffected. */
+@media (width >= 1024px) {
+  /* Show the whole composite, never cropped — prod uses a tall band + `contain`
+     so nothing is cut at any width. Lock the band to the composite's own ratio
+     and `contain` it: the image fills the band edge-to-edge, and on very wide
+     screens (past the 1900 cap) the page background shows at the sides instead
+     of the image cropping. */
+  .section.hero-container[data-background]:not(.colored-background) {
+    max-width: 1900px;
+    margin-inline: auto;
+    aspect-ratio: 2000 / 1247;
+    background-color: #fff;
+
+    /* !important overrides the inline `background-size: cover` that
+       decorateSectionBackgrounds sets; contain keeps the whole composite in
+       frame (never cropped) when the band deviates from the image ratio. */
+    background-size: contain !important;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+
+  /* the band is now taller than the form, so pin the form to the top rather
+     than letting the grid stretch it down the full height */
+  .section.hero-container[data-background]:not(.colored-background) .hero.form .hero-grid {
+    align-items: start;
+  }
+
+  .section.hero-container[data-background]:not(.colored-background) .hero.form .hero-copy :is(img, picture) {
+    display: none;
+  }
+}
+
+@media (width < 1024px) {
+  .section.hero-container[data-background]:not(.colored-background):has(.hero.form .hero-copy :is(img, picture)) {
+    /* drop both the cropping cover image and the section's navy default so the
+       contained copy image sits on the plain page background, matching prod */
+    background: none !important;
+  }
+}
+
 /* Prod stacks the hero at 1024 (verified across nonprofit/homepage/accounting/
    pricing — side-by-side at 1025, stacked at 1023), not 768. The stacked
    treatment therefore applies below 1024. */

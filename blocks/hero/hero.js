@@ -1,3 +1,4 @@
+import { createOptimizedPicture } from '../../scripts/aem.js';
 import { loadFragment } from '../fragment/fragment.js';
 import { trackAs } from '../../scripts/tracking.js';
 
@@ -282,7 +283,20 @@ export default async function decorate(block) {
 
   if (isForm) {
     grid.append(await leadCard(formFragment));
-    if (mediaEl) copy.append(mediaEl);
+    if (mediaEl) {
+      copy.append(mediaEl);
+    } else {
+      // Art-directed backdrop: when the section carries an image background (the
+      // desktop composite) but no image was authored in the hero copy, mirror
+      // that background as a contained copy image. hero.css shows the section
+      // background on desktop and this image below 1024, where the stacked
+      // layout renders the whole image with the form beneath it — the
+      // background alone would cover-crop the subject at narrow widths.
+      const bg = block.closest('.section')?.dataset.background || '';
+      if (/\.(png|jpe?g|webp|gif|avif)(\?|$)/i.test(bg)) {
+        copy.append(createOptimizedPicture(new URL(bg, window.location.href).pathname));
+      }
+    }
   } else if (mediaEl && isCentered) {
     // logo lockup pinned above the headline instead of a media column
     const lockup = document.createElement('div');
