@@ -71,6 +71,8 @@ const CONFIG_KEYS = [
   'leadCountry',
   'leadCountryCode',
   'leadLanguage',
+  'marketoSync',
+  'marketoSyncAccount',
 ];
 
 const RICH_TEXT_KEYS = ['header', 'subheader', 'disclaimer'];
@@ -139,6 +141,8 @@ export function parseFormConfig(block) {
     leadCountry: found.leadCountry,
     leadCountryCode: found.leadCountryCode,
     leadLanguage: found.leadLanguage,
+    marketoSync: found.marketoSync,
+    marketoSyncAccount: found.marketoSyncAccount,
   };
 }
 
@@ -521,6 +525,8 @@ export const getMappedHiddenFields = (configObj) => {
     CountryCode: configObj?.leadCountryCode,
     Country: configObj?.leadCountry,
     Language__c: configObj?.leadLanguage,
+    Marketo_Sync__c: configObj.marketoSync || 'true',
+    Marketo_Sync__c_account: configObj.marketoSyncaccount || 'true',
   };
 
   return Object.fromEntries(
