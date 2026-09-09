@@ -496,6 +496,29 @@
   align-items: start;
 }
 
+/* Blog CTA promos (`media-text` inside a blog article, e.g.
+   /blog/financials/fp-a-challenges/) sat flush against the paragraph above them,
+   so the promo read as part of the preceding copy. Prod separates the two by
+   96px, measured at a 1728px viewport. The block's own CSS pads the row (28px
+   top/bottom below 1024) but nothing spaces the container from the body text
+   that precedes it. Applied to the container so it also works for the
+   variants that zero out the row padding. */
+.blog-article > .section.media-text-container:not(.blog-prehero) {
+  margin-top: 96px;
+}
+
+/* Prod leads these promos with the image: the asset sits left of the copy
+   (image x=561, heading x=924 at 1728px). The authored cell order is
+   copy-then-image, and the shared `row-reverse` variant class is not applied
+   to these blocks, so the visual is pulled ahead of the copy here.
+   Desktop only — below 1024 `media-text.css` collapses the row to one column
+   and resets the image order so the copy leads on mobile, which prod also does. */
+@media (width >= 1024px) {
+  .blog-article > .section.media-text-container:not(.blog-prehero) .media-text .media-row .media-visual {
+    order: -1;
+  }
+}
+
 @media (min-width: 1024px) {
   .blog-article .blog-hero > .default-content-wrapper {
     display: grid;
