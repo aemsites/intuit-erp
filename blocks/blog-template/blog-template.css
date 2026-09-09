@@ -496,6 +496,36 @@
   align-items: start;
 }
 
+/* Blog CTA promos sat flush against the paragraph above them, so the promo read
+   as a continuation of the body copy. The margin belongs on the promo's own
+   wrapper, not on the section: authors place these promos mid-article, so the
+   wrapper is typically the LAST of several siblings (measured 868px, 2182px and
+   4503px into its section on /blog/financials/fp-a-challenges/). A margin on the
+   section would land above the section's leading copy and leave the promo itself
+   still flush.
+   `:not(:first-child)` skips a promo that opens a section, where the section's
+   own spacing already applies.
+   96px is prod's total whitespace between the preceding text block and the promo:
+   prod stacks a 56px margin plus its own 40px `Spacer_large` module, which this
+   markup has no equivalent of, so the full 96px is reproduced here. */
+.blog-article > .section:not(.blog-prehero) > .media-text-wrapper:not(:first-child),
+.blog-article > .section:not(.blog-prehero) > .fragment-wrapper:has(.media-text):not(:first-child) {
+  margin-top: 96px;
+}
+
+/* Prod leads these promos with the image: the asset sits left of the copy
+   (image x=561, heading x=924 at 1728px). The authored cell order is
+   copy-then-image, and the shared `row-reverse` variant class is not applied
+   to these blocks, so the visual is pulled ahead of the copy here.
+   Desktop only — below 1024 `media-text.css` collapses the row to one column
+   and resets the image order so the copy leads on mobile, which prod also does. */
+@media (width >= 1024px) {
+  .blog-article > .section.media-text-container:not(.blog-prehero) .media-text .media-row .media-visual,
+  .blog-article > .section.fragment-container:has(.media-text):not(.blog-prehero) .media-text .media-row .media-visual {
+    order: -1;
+  }
+}
+
 @media (min-width: 1024px) {
   .blog-article .blog-hero > .default-content-wrapper {
     display: grid;
