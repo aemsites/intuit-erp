@@ -437,11 +437,8 @@ function decorateVideoLinks(main) {
 }
 
 /**
- * Opens external links in a new tab. A link is external when it is an absolute
- * http(s) URL pointing at a different host than the current page — internal
- * links are rendered relative by the pipeline, so they are never touched.
- * Links inside blocks are left alone; those blocks own their own external CTAs
- * (navigation/header/footer/media-text/etc. already set `target`/`rel`).
+ * Opens default-content external links (absolute http(s), different host) in a
+ * new tab. Links inside blocks own their own CTAs and are left alone.
  * @param {Element} main The container element
  */
 function decorateExternalLinks(main) {
