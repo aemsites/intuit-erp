@@ -764,7 +764,7 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
    flex rule in blocks/highlight/highlight.css — blog callouts only need their
    own background/padding above, not their own layout override. */
 
-main.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail, .blog-cards-container, .full-bleed) > .default-content-wrapper a:any-link {
+main.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail, .blog-cards-container, .full-bleed) > .default-content-wrapper a:any-link:not(.button) {
   color: rgb(16 60 192);
   text-decoration: underline;
 }
