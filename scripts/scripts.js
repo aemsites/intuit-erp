@@ -436,6 +436,27 @@ function decorateVideoLinks(main) {
   });
 }
 
+/**
+ * Opens external links (absolute http(s), different host) in a new tab. Runs
+ * once over the fully-decorated main so it covers every block, not just default
+ * content — links a block already gave a `target` are left as the block set them.
+ * @param {Element} main The container element
+ */
+function decorateExternalLinks(main) {
+  main.querySelectorAll('a[href^="http"]').forEach((a) => {
+    if (a.target) return;
+    let url;
+    try {
+      url = new URL(a.href);
+    } catch (e) {
+      return;
+    }
+    if (url.host === window.location.host) return;
+    a.target = '_blank';
+    a.rel = a.rel ? `${a.rel} noopener` : 'noopener';
+  });
+}
+
 export function decorateMain(main) {
   decorateIcons(main);
   buildAutoBlocks(main);
@@ -563,6 +584,10 @@ async function loadLazy(doc) {
       .catch(() => {});
   }
   await loadSections(main);
+
+  // Now that every block and fragment has decorated, open external links in a new
+  // tab site-wide — including inside blocks that don't manage their own links.
+  if (main) decorateExternalLinks(main);
 
   // Global "Schedule a call" trigger — covers any a[href$="#schedule"] anywhere in
   // main (tabs panels, bare default content), not just blocks that opt in individually.
