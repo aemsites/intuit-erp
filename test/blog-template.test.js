@@ -368,6 +368,25 @@ describe('buildBlogTemplate', () => {
     expect(main.querySelector('.blog-rail a').getAttribute('href')).toBe('/fragments/right-rail');
   });
 
+  it('does not throw when an H2 id starts with a digit (invalid CSS selector)', () => {
+    // AEM slugifies "10X revenue growth" to an id starting with a digit — a
+    // legal HTML id but an invalid CSS selector. Resolving TOC anchors with
+    // querySelector('#10x-…') threw and aborted the whole auto-block pass
+    // (TOC, rail, trailing fragments). getElementById handles it.
+    window.hlx = { codeBasePath: '' };
+    window.matchMedia = () => ({ matches: false, addEventListener: () => {} });
+    const main = mainWith(`
+      <div><h1>Headline</h1><p><picture><img src="hero.jpg"></picture></p></div>
+      <div><h2 id="10x-revenue-growth">10X revenue growth</h2><p>a</p></div>
+      <div><h2>Two</h2><p>b</p></div>
+    `);
+
+    expect(() => buildBlogTemplate(main)).not.toThrow();
+    // the page still gets its full template rather than silently losing it
+    expect(main.querySelector('.blog-toc-rail')).toBeTruthy();
+    expect(main.querySelector('.blog-rail')).toBeTruthy();
+  });
+
   it('still decorates when a case-study-header is authored below section 1', () => {
     // The early return is scoped to section 1 so a header further down a page
     // can't silently strip that page's hero band and rails. The 46em clamp in
