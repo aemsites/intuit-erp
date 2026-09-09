@@ -503,7 +503,8 @@
    top/bottom below 1024) but nothing spaces the container from the body text
    that precedes it. Applied to the container so it also works for the
    variants that zero out the row padding. */
-.blog-article > .section.media-text-container:not(.blog-prehero) {
+.blog-article > .section.media-text-container:not(.blog-prehero),
+.blog-article > .section.fragment-container:has(.media-text):not(.blog-prehero) {
   margin-top: 96px;
 }
 
@@ -514,7 +515,8 @@
    Desktop only — below 1024 `media-text.css` collapses the row to one column
    and resets the image order so the copy leads on mobile, which prod also does. */
 @media (width >= 1024px) {
-  .blog-article > .section.media-text-container:not(.blog-prehero) .media-text .media-row .media-visual {
+  .blog-article > .section.media-text-container:not(.blog-prehero) .media-text .media-row .media-visual,
+  .blog-article > .section.fragment-container:has(.media-text):not(.blog-prehero) .media-text .media-row .media-visual {
     order: -1;
   }
 }
