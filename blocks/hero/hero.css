@@ -354,6 +354,21 @@
        contained copy image sits on the plain page background, matching prod */
     background: none !important;
   }
+
+  /* full-bleed the stacked image edge-to-edge (prod shows it at full mobile
+     width); break out of the section wrapper's horizontal padding whatever its
+     value. The form below keeps the wrapper padding. */
+  .section.hero-container[data-background]:not(.colored-background) .hero.form .hero-copy > :is(img, picture) {
+    display: block;
+    width: 100vw;
+    max-width: 100vw;
+    margin-inline: calc(50% - 50vw);
+  }
+
+  .section.hero-container[data-background]:not(.colored-background) .hero.form .hero-copy picture img {
+    display: block;
+    width: 100%;
+  }
 }
 
 /* Prod stacks the hero at 1024 (verified across nonprofit/homepage/accounting/
