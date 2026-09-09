@@ -83,7 +83,7 @@ function eventsBarHTML() {
   const enabled = ['true', 'yes'].includes(getMetadata('events-bar').trim().toLowerCase());
   if (!enabled) return '';
   const text = getMetadata('events-bar-text') || 'Check out';
-  const href = getMetadata('events-bar-link') || '/events';
+  const href = getMetadata('events-bar-link') || '/events/';
   const cta = getMetadata('events-bar-cta') || 'upcoming events and Intuit Enterprise Suite updates';
   const variant = (getMetadata('events-bar-variant') || '').trim().toLowerCase();
   const variantClass = variant === 'dark' ? ' ies-events-dark' : '';
