@@ -2,6 +2,8 @@
  * video — poster image + centered play button that opens the video in a
  * lightbox modal, matching the source erp.intuit.com in-article video
  * (poster + play → player) and the site's existing testimonial.video lightbox.
+ * The `inline` variant (`Video (inline)`) swaps the poster for the player in
+ * place instead of opening the lightbox.
  *
  * Primary path is the autoblock: scripts.js buildVideoAutoBlocks() turns a
  * section-level paragraph that is only a link to a video host (YouTube/Vimeo),
@@ -41,6 +43,26 @@ function buildPoster(src, alt) {
 }
 
 /**
+ * Swaps the poster for the player in place (the `inline` variant). Click-to-play
+ * is kept so the third-party iframe stays off the initial page load.
+ * @param {Element} preview the .video-preview element
+ * @param {string} embedUrl
+ * @param {string} title
+ */
+function playInline(preview, embedUrl, title) {
+  if (preview.querySelector('iframe')) return;
+  const iframe = document.createElement('iframe');
+  iframe.src = embedUrl;
+  iframe.title = title || 'Video';
+  iframe.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+  iframe.allowFullscreen = true;
+  preview.replaceChildren(iframe);
+  preview.removeAttribute('role');
+  preview.removeAttribute('tabindex');
+  preview.removeAttribute('aria-label');
+}
+
+/**
  * Block entry point.
  * @param {Element} block the video block element
  */
@@ -69,7 +91,11 @@ export default function decorate(block) {
   play.setAttribute('aria-hidden', 'true');
   preview.append(play);
 
-  const open = () => openVideoModal(info.embedUrl, alt);
+  console.log(block);
+
+  const open = block.classList.contains('inline')
+    ? () => playInline(preview, info.embedUrl, alt)
+    : () => openVideoModal(info.embedUrl, alt);
   preview.addEventListener('click', open);
   preview.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
