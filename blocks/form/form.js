@@ -525,8 +525,8 @@ export const getMappedHiddenFields = (configObj) => {
     CountryCode: configObj?.leadCountryCode,
     Country: configObj?.leadCountry,
     Language__c: configObj?.leadLanguage,
-    Marketo_Sync__c: configObj.marketoSync || true,
-    Marketo_Sync__c_account: configObj.marketoSyncaccount || true,
+    Marketo_Sync__c: configObj.marketoSync || 'true',
+    Marketo_Sync__c_account: configObj.marketoSyncaccount || 'true',
   };
 
   return Object.fromEntries(
