@@ -36,6 +36,29 @@ describe('video decorate — authored label', () => {
   });
 });
 
+describe('video decorate — inline variant', () => {
+  it('plays in place instead of opening the lightbox', () => {
+    const block = makeVideoBlock('Watch', 'https://www.youtube.com/watch?v=v7W4vIWey1U');
+    block.classList.add('inline');
+    decorate(block);
+    const preview = block.querySelector('.video-preview');
+    preview.click();
+    const iframe = preview.querySelector('iframe');
+    expect(iframe.src).toBe('https://www.youtube.com/embed/v7W4vIWey1U?autoplay=1&rel=0');
+    expect(document.querySelector('.video-modal-overlay')).toBeNull();
+    expect(preview.hasAttribute('role')).toBe(false);
+  });
+
+  it('leaves the default variant on the lightbox path', () => {
+    const block = makeVideoBlock('Watch', 'https://www.youtube.com/watch?v=v7W4vIWey1U');
+    decorate(block);
+    const preview = block.querySelector('.video-preview');
+    preview.click();
+    expect(preview.querySelector('iframe')).toBeNull();
+    document.querySelector('.video-modal-overlay').remove();
+  });
+});
+
 describe('videoInfo', () => {
   it('parses a YouTube watch URL', () => {
     const info = videoInfo('https://www.youtube.com/watch?v=CQf15U4a70Q');
