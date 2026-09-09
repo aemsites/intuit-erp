@@ -30,6 +30,10 @@
   line-height: 1.3;
 }
 
+.form-container.large-text .default-content-wrapper p {
+  font-size: 20px;
+}
+
 /* The copy that introduces the form — e.g. the "I'm an accountant" cross-sell above
    "Let's connect" — carries in-copy links, not buttons. Same reasoning as the consent
    disclaimer below: these take the source site's link blue, not the brand blue. */

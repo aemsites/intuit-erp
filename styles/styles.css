@@ -1129,7 +1129,7 @@ main > .section.dark-background > .default-content-wrapper > .button-wrapper but
   color: var(--text-color); 
 }
 
-.section.left > .default-content-wrapper :is(h2, h3, h4, h5, h6) {
+.section.left > .default-content-wrapper :is(h2, h3, h4, h5, h6, p) {
   text-align: left !important;
 }
 
@@ -1172,4 +1172,12 @@ body.author-guide > main > .section > .default-content-wrapper :is(h1, h2, h3, h
 /* stylelint-disable-next-line selector-class-pattern */
 .LPMcontainer > img {
     height: 338px;
+}
+
+main > .section.large-text > .default-content-wrapper p {
+  font-size: 20px;
+}
+
+main > .section.large-text > .default-content-wrapper :is(h3, h4, h5, h6) {
+  margin-bottom: 2rem;
 }
