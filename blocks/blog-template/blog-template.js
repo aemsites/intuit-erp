@@ -628,8 +628,13 @@ export function buildBlogTemplate(main) {
     if (heroSection) heroSection.after(tocWrap);
     else main.prepend(tocWrap);
 
+    // Resolve each anchor's target by id via getElementById, not
+    // querySelector('#id'): a heading slugified to an id that starts with a
+    // digit (e.g. "10X revenue…" → "10x-revenue-…") is a legal HTML id but an
+    // invalid CSS selector, so querySelector would throw and abort the whole
+    // auto-block pass (TOC, rail, trailing fragments).
     headings = [...toc.querySelectorAll('.blog-toc-list a')]
-      .map((a) => main.querySelector(a.getAttribute('href')))
+      .map((a) => document.getElementById(a.getAttribute('href')?.slice(1) || ''))
       .filter(Boolean);
     wireToc(tocWrap, toc, headings, desktopMQ);
   }
