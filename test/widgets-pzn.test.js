@@ -39,7 +39,7 @@ afterEach(() => {
   });
   delete window.ziFcInstalled;
   delete window.ZIProjectKey;
-  delete window.zi__fc;
+  delete window._zi_fc;
 });
 
 describe('form-vs-chilipiper: createUUID / buildChiliPiperUrl', () => {
@@ -216,5 +216,20 @@ describe('smartform: decorate defers ZoomInfo until the Marketo form is present'
     await decorateSmartform();
     expect(window.ziFcInstalled).toBe(true);
     expect(document.querySelector('script[src*="zi-tag"]')).toBeTruthy();
+  });
+
+  // ZoomInfo's formcomplete.js dispatches lifecycle callbacks via window._zi_fc[method] — registering
+  // them under any other global (e.g. window.zi__fc) means onMatch never fires and the disclaimer
+  // never appears even though ZI enriches the field. Pin the exact global and the onMatch behaviour.
+  it('registers lifecycle callbacks on window._zi_fc and appends the disclaimer on match', async () => {
+    const form = addMktoForm();
+    form.insertAdjacentHTML('beforeend', '<div class="mktoFieldWrap">'
+      + '<input name="intuitCompanyName" class="mktoField" value="Acme Inc" data-zi-input-enriched="true">'
+      + '</div>');
+    await decorateSmartform();
+
+    expect(typeof window._zi_fc?.onMatch).toBe('function');
+    window._zi_fc.onMatch({});
+    expect(form.querySelector('.zi-formcomplete-msg')).toBeTruthy();
   });
 });
