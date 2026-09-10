@@ -158,6 +158,35 @@ describe('hero — dashboard animation scheduling', () => {
     expect(loadPlayer).not.toHaveBeenCalled();
   });
 
+  // hero.js's decorate() calls enhanceDashboardAnimation(media, mediaEl) BEFORE
+  // block.replaceChildren(grid) attaches `grid` (and therefore `media`) anywhere —
+  // media's own ancestor chain does NOT reach the document's <main> at call time.
+  // These two tests deliberately mirror that: `media` stays detached (never appended
+  // to the real <main>, matching beforeEach's plain `document.body.append(media)`),
+  // while the real page's <main> is a wholly separate element in the document. A
+  // check based on media.closest('main') would wrongly see no <main> at all here.
+  it('skips entirely when the document\'s <main> was replaced by a page-level PZN/experiment swap', () => {
+    const main = document.createElement('main');
+    main.dataset.pageSwapped = 'true';
+    document.body.append(main); // separate from `media`, which beforeEach left under body directly
+
+    const fetchAnimation = vi.fn();
+    const loadPlayer = vi.fn();
+    enhanceDashboardAnimation(media, picture, { fetchAnimation, loadPlayer });
+
+    expect(IntersectionObserverMock.instances).toHaveLength(0);
+    expect(window.requestIdleCallback).not.toHaveBeenCalled();
+  });
+
+  it('still runs when the document\'s <main> is present but was not swapped', () => {
+    const main = document.createElement('main');
+    document.body.append(main); // separate from `media`, same as above
+
+    enhanceDashboardAnimation(media, picture);
+
+    expect(IntersectionObserverMock.instances).toHaveLength(2);
+  });
+
   it('uses a delayed fallback when idle callbacks are unavailable', () => {
     vi.stubGlobal('requestIdleCallback', undefined);
     const setTimeoutSpy = vi.spyOn(window, 'setTimeout').mockImplementation(() => 1);

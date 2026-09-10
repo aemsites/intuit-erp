@@ -345,6 +345,10 @@ export async function swapMain(doc, path, signal) {
     const resp = await fetch(`${plainPath}.plain.html`, { signal });
     if (!resp.ok) return false;
     main.innerHTML = await resp.text();
+    // Blocks that gate behavior on the page's own path (e.g. hero's dashboard Lottie,
+    // which only makes sense for the DEFAULT homepage hero) need to tell a swapped-in
+    // variant apart from the original, since the URL itself doesn't change.
+    main.dataset.pageSwapped = 'true';
     return true;
   } catch {
     return false;
