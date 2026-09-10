@@ -158,6 +158,30 @@ describe('hero — dashboard animation scheduling', () => {
     expect(loadPlayer).not.toHaveBeenCalled();
   });
 
+  it('skips entirely when <main> was replaced by a page-level PZN/experiment swap', () => {
+    const main = document.createElement('main');
+    main.dataset.pageSwapped = 'true';
+    main.append(media);
+    document.body.append(main);
+
+    const fetchAnimation = vi.fn();
+    const loadPlayer = vi.fn();
+    enhanceDashboardAnimation(media, picture, { fetchAnimation, loadPlayer });
+
+    expect(IntersectionObserverMock.instances).toHaveLength(0);
+    expect(window.requestIdleCallback).not.toHaveBeenCalled();
+  });
+
+  it('still runs when <main> is present but was not swapped', () => {
+    const main = document.createElement('main');
+    main.append(media);
+    document.body.append(main);
+
+    enhanceDashboardAnimation(media, picture);
+
+    expect(IntersectionObserverMock.instances).toHaveLength(2);
+  });
+
   it('uses a delayed fallback when idle callbacks are unavailable', () => {
     vi.stubGlobal('requestIdleCallback', undefined);
     const setTimeoutSpy = vi.spyOn(window, 'setTimeout').mockImplementation(() => 1);

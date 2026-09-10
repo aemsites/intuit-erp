@@ -587,6 +587,9 @@ describe('applyPage (whole-page swap, before decorate)', () => {
     expect(document.querySelector('main').innerHTML).toContain('VARIATION');
     expect(document.querySelector('main').getAttribute('data-treatment-id')).toBe('T1');
     expect(window.appVars.ixpDetailsArr[0]).toMatchObject({ experiment_id: '376648', replacement_content_id: '/fragments/exp/page' });
+    // Lets hero.js (etc.) tell a swapped-in variant apart from the original at the
+    // same URL — see enhanceDashboardAnimation's page-swap guard.
+    expect(document.querySelector('main').dataset.pageSwapped).toBe('true');
   });
 
   it('maps a trailing-slash variation path to /index for the .plain.html fetch', async () => {
@@ -616,6 +619,7 @@ describe('applyPage (whole-page swap, before decorate)', () => {
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(document.querySelector('main').innerHTML).toContain('BASE');
     expect(window.appVars.ixpDetailsArr[0]).not.toHaveProperty('replacement_content_id');
+    expect(document.querySelector('main').dataset.pageSwapped).toBeUndefined();
   });
 
   it('swaps + records for a page personalization (pznPage channel)', async () => {

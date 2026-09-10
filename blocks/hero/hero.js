@@ -97,6 +97,11 @@ export function enhanceDashboardAnimation(media, picture, {
 } = {}) {
   if (!DASHBOARD_LOTTIE_PATHS.includes(window.location.pathname)) return;
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  // A personalization/experiment page swap (see experience.js#swapMain) replaces <main>
+  // without changing the URL, so the path check above can't tell a variant's own hero
+  // image apart from the default homepage dashboard screenshot. Skip the animation
+  // rather than paint it over content it doesn't belong to.
+  if (media.closest('main')?.dataset.pageSwapped === 'true') return;
 
   const visibilityThreshold = window.matchMedia('(width < 768px)').matches
     ? DASHBOARD_LOTTIE_MOBILE_THRESHOLD
