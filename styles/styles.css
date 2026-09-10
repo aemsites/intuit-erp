@@ -171,8 +171,6 @@ body.appear {
    widget stylesheet and vendor script load in parallel. */
 @media (width < 768px) {
   html.onemind-active #onemind-widget {
-    width: 214px !important;
-    height: 90px !important;
     right: 12px !important;
     bottom: 12px !important;
     visibility: hidden !important;
