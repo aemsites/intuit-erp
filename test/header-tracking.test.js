@@ -181,3 +181,27 @@ describe('header/nav click-tracking — id-based keying (real render)', () => {
     expect(document.body.classList.contains('nav-scroll-lock')).toBe(true);
   });
 });
+
+describe('header CTA — hide-nav-cta metadata', () => {
+  beforeEach(() => {
+    document.head.innerHTML = '';
+    document.body.innerHTML = '';
+    resetTrackingState();
+    loadFragment.mockResolvedValue(navFragment());
+    window.matchMedia = () => ({ matches: false, addEventListener() {}, removeEventListener() {} });
+    window.requestAnimationFrame = (cb) => { cb(); return 0; };
+  });
+
+  it('renders the code-built CTA in both chrome slots by default', async () => {
+    const block = await buildHeader();
+    expect(block.querySelector('.nav-right .nav-cta')).not.toBeNull();
+    expect(block.querySelector('.nav-mobile-extra .nav-cta')).not.toBeNull();
+  });
+
+  it('omits both when hide-nav-cta is set', async () => {
+    document.head.innerHTML = '<meta name="hide-nav-cta" content="true">';
+    const block = await buildHeader();
+    expect(block.querySelector('.nav-right .nav-cta')).toBeNull();
+    expect(block.querySelector('.nav-mobile-extra .nav-cta')).toBeNull();
+  });
+});

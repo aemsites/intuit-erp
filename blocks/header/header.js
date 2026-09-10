@@ -14,6 +14,14 @@ const CTA_CHEVRON_SVG = `<svg viewBox="0 0 6 10" width="6" height="10" focusable
             <path fill="currentColor" d="M0.750913 2.86102e-06C0.602552 -0.00039196 0.457411 0.0412617 0.333906 0.119678C0.210401 0.198094 0.1141 0.309739 0.0572195 0.440448C0.000339537 0.571156 -0.0145552 0.715035 0.0144259 0.853832C0.0434069 0.992628 0.114957 1.12008 0.219998 1.22003L4.18876 4.99511L0.234226 8.7809C0.164751 8.84731 0.109669 8.92613 0.0721264 9.01285C0.0345832 9.09957 0.0153135 9.19249 0.0154178 9.28631C0.0155221 9.38013 0.0349982 9.47302 0.0727341 9.55966C0.11047 9.6463 0.165727 9.72501 0.235349 9.79128C0.304972 9.85755 0.387596 9.91009 0.478506 9.94591C0.569415 9.98172 0.66683 10.0001 0.765186 10C0.863543 9.9999 0.960916 9.98132 1.05175 9.94533C1.14258 9.90933 1.22508 9.85662 1.29456 9.79021L5.78075 5.49798C5.92114 5.36402 6 5.18237 6 4.99296C6 4.80356 5.92114 4.62191 5.78075 4.48795L1.27958 0.208579C1.21024 0.142269 1.12783 0.0897026 1.03709 0.0539055C0.946361 0.0181093 0.8491 -0.000210762 0.750913 2.86102e-06Z"/>
           </svg>`;
 
+function navCtaHTML() {
+  if (['true', 'yes', 'hide'].includes(getMetadata('hide-nav-cta').trim().toLowerCase())) return '';
+  return `<button type="button" class="btn btn-primary nav-cta">
+          <span class="nav-cta-text">Schedule a call</span>
+          <span class="nav-cta-icon" aria-hidden="true">${CTA_CHEVRON_SVG}</span>
+        </button>`;
+}
+
 function brandLabel(img) {
   if (img.alt) return img.alt;
   const { iconName } = img.dataset;
@@ -36,10 +44,7 @@ function mobileBrandsHTML(brandLinks) {
 function mobileExtraHTML(brandLinks) {
   return `
     <div class="nav-mobile-extra">
-      <button type="button" class="btn btn-primary nav-cta">
-        <span class="nav-cta-text">Schedule a call</span>
-        <span class="nav-cta-icon" aria-hidden="true">${CTA_CHEVRON_SVG}</span>
-      </button>
+      ${navCtaHTML()}
       ${mobileBrandsHTML(brandLinks)}
     </div>`;
 }
@@ -114,10 +119,7 @@ function chromeHTML(topstripHTML, logoHTML, navMainHTML, eventsHTML, secondaryNa
       ${logoHTML}
       ${navMainHTML}
       <div class="nav-right">
-        <button type="button" class="btn btn-primary nav-cta">
-          <span class="nav-cta-text">Schedule a call</span>
-          <span class="nav-cta-icon" aria-hidden="true">${CTA_CHEVRON_SVG}</span>
-        </button>
+        ${navCtaHTML()}
         <button class="nav-toggle" aria-label="Menu"><span></span><span></span><span></span></button>
       </div>
     </div>
