@@ -594,78 +594,49 @@
 /* 740px is the readable measure for article body copy. `.blog-prehero` is
    excluded alongside `.blog-hero`: sections authored above the H1 are banner
    content, not body copy, and the grid already spans them full width
-   (`grid-column: 1 / -1` above), so capping them here left them pinched to
-   740px while their neighbours ran edge to edge. */
+   (`grid-column: 1 / -1` above). */
 main.blog-article > .section:not(.blog-hero, .blog-prehero, .blog-toc-rail, .blog-rail, .blog-cards-container, .full-bleed) {
   max-width: 740px;
   margin: 0 auto;
 }
 
-/* Excluding `.blog-prehero` above only stops it being pinched to 740px — on
-   its own it has no container at all and runs the full viewport (measured
-   1728px on a 1728px viewport). Prod's equivalent banner content (the
-   ROI-stat hero + stat-band image above the real H1) sits in a 1440px
-   container, matching this codebase's other full-bleed content grids (see
-   `.blog-cards-grid`, 1440px). `.full-bleed` preheros (e.g. the download-CTA
-   band) already manage their own edge-to-edge background plus inset content
-   and are excluded so they aren't double-capped. */
+/* Banner sections need a container of their own, otherwise the exclusion above
+   leaves them running the full viewport. 1440px matches `.blog-cards-grid`.
+   `.full-bleed` preheros manage their own edge-to-edge background. */
 main.blog-article > .blog-prehero:not(.full-bleed) {
   max-width: 1440px;
   margin: 0 auto;
 }
 
-/* --- Pre-hero prod parity -------------------------------------------------
-   Prod's banner ("Hero_hero") is a 1440px container holding a 50/50 split:
-   a 720px copy column and a 720px asset column, each with 40px inner padding,
-   on a WHITE background. The migrated markup authors this as `media-text 70-30`
-   inside a `colored-background light-background` section, which gives a 910/390
-   split on grey and an over-wide copy measure. The rules below realign the
-   pre-hero to prod. Measured on erp.intuit.com at a 1728px viewport:
-     copy col   x=144 w=720 (pad 0 40px)      asset col x=864 w=720 (pad 0 40px)
-     H1         48px/60px, 700, #393a3d       cover img 427x552 at x=904
-     stat band  x=184 w=1360                  container x=144 w=1440, #fff
-   Scoped to `main.blog-article > .blog-prehero` so no other template, and no
-   other section of this article, is affected. */
-
-/* Prod's banner sits on white, not the authored light-grey. `!important` is
-   required because the section carries `data-background="#eff4f9"`, and
-   decorateSectionBackgrounds() (scripts.js) copies that into an INLINE
-   `style="background: ..."` — an inline declaration a stylesheet cannot
-   otherwise beat. The alternative, skipping pre-heroes in that function, would
-   mean editing shared decoration logic for one template. */
+/* `!important` is required here: the section carries `data-background`, which
+   decorateSectionBackgrounds() (scripts.js) copies into an inline style. */
 main.blog-article > .blog-prehero.colored-background,
 main.blog-article > .blog-prehero.light-background {
   background: #fff !important;
 }
 
-/* 50/50 split. The authored `70-30` class makes media-text.js write
-   `--split: 70fr 30fr` as an INLINE style on the block, and an inline custom
-   property beats any stylesheet declaration of that property — including one
-   inherited from an ancestor. So `grid-template-columns` is set directly on the
-   row instead of trying to redefine `--split`. */
+/* The authored `70-30` class makes media-text.js write `--split` as an inline
+   style on the block, and an inline custom property cannot be overridden from a
+   stylesheet — so set `grid-template-columns` on the row instead. */
 main.blog-article > .blog-prehero .media-text .media-row {
   grid-template-columns: 1fr 1fr;
 }
 
-/* 40px inner padding per column, matching prod's Hero_copy / Hero_asset. */
 main.blog-article > .blog-prehero .media-text .media-copy,
 main.blog-article > .blog-prehero .media-text .media-visual {
   padding: 0 40px;
 }
 
-/* Prod's grid has no extra gutter — the 40px column padding supplies the
-   separation, so a 60px gap would push the asset column 60px off.
-   `align-items: center` matches prod, whose copy column is a flex container with
-   `align-items: center`: the cover art is taller than the copy (552px vs 341px),
-   so top-aligning the copy leaves a large empty band beneath it before the next
-   section. Centring distributes that slack above and below as prod does. */
+/* The 40px column padding supplies the separation between columns, so the
+   inherited gap would offset the asset column. Centring absorbs the height
+   difference between the copy and the taller cover art. */
 main.blog-article > .blog-prehero .media-text .media-row {
   align-items: center;
   gap: 0;
 }
 
-/* Lead heading: prod renders 48px/60px 700 in #393a3d. The migrated page
-   authors it as an h2, which inherits the article's 34px/500 body scale. */
+/* The lead heading is authored as an h2, which would otherwise inherit the
+   article's 34px body scale. */
 main.blog-article > .blog-prehero .media-copy h2 {
   margin-bottom: 24px;
   color: #393a3d;
@@ -674,37 +645,31 @@ main.blog-article > .blog-prehero .media-copy h2 {
   line-height: 60px;
 }
 
-/* Prod's cover art is 427px wide inside its 720px column and is not stretched;
-   the migrated image fills the column instead. Cap it and keep it left-aligned
-   against the column padding, as prod does. */
+/* Cover art is not stretched to fill its column. */
 main.blog-article > .blog-prehero .media-visual img {
   width: 100%;
   max-width: 427px;
   height: auto;
 }
 
-/* The stat-band pre-hero is a plain full-width image at 1360px on prod
-   (1440 container less the 40px column padding either side). It carries no
-   media-text block, so the inset is applied directly. `box-sizing` is set
-   because these sections are `content-box` and a grid item in the article's
-   3-column `main`, where padding would otherwise shrink the content box
-   instead of insetting it. */
+/* The stat band is a plain full-width image with no media-text block, so the
+   inset is applied to the section. `box-sizing` is needed because these
+   sections are `content-box` grid items, where padding would shrink the
+   content box rather than inset it. */
 main.blog-article > .blog-prehero:not(:has(.media-text)) {
   box-sizing: border-box;
   padding: 0 40px;
 }
 
-/* The wrapper inside that section carries its own 40px padding, which would
-   inset the band a second time (1440 - 160 = 1280 instead of 1360). */
+/* The wrapper carries its own 40px padding and cap, which would inset the band
+   a second time. */
 main.blog-article > .blog-prehero:not(:has(.media-text)) > .default-content-wrapper {
   max-width: none;
   padding: 0;
 }
 
-/* Body images in an article are capped to 90% with 2.5rem of vertical breathing
-   room (see the `width >= 1024px` block above). The stat band is a full-bleed
-   banner, not body copy: prod renders it edge-to-edge inside the 1360px inset
-   with no vertical margin. */
+/* Body images are capped to 90% with vertical margins by the `width >= 1024px`
+   block above. The stat band is a banner, not body copy. */
 main.blog-article
   > .blog-prehero:not(:has(.media-text))
   > .default-content-wrapper
@@ -715,11 +680,9 @@ main.blog-article
   margin-bottom: 0;
 }
 
-/* CTA pair: prod paints primary #0665ae and secondary as a grey #d4d7dc fill
-   with no border, both 48px tall with a 20px gap. The site-wide `a.button`
-   primary/secondary are navy (`--text-color`) and the secondary is an outline,
-   so they are overridden here only inside a pre-hero. Scoped deliberately —
-   editing the global tokens would repaint every button on every template. */
+/* The site-wide `a.button` primary is navy and the secondary an outline. The
+   banner CTAs use the blue/grey pair instead, scoped to the pre-hero so the
+   global tokens are untouched. */
 main.blog-article > .blog-prehero .button-wrapper {
   gap: 20px;
 }
@@ -756,8 +719,8 @@ main.blog-article > .blog-prehero a.button.secondary:focus-visible {
   color: #000;
 }
 
-/* Below the media-text stacking breakpoint the columns are full width, so the
-   prod desktop caps and insets no longer apply. */
+/* Below the stacking breakpoint the columns are full width, so the desktop
+   caps and insets no longer apply. */
 @media (width <= 1024px) {
   main.blog-article > .blog-prehero .media-text .media-copy,
   main.blog-article > .blog-prehero .media-text .media-visual {
