@@ -625,16 +625,17 @@ async function loadLazy(doc) {
   if (footerEl && document.body.classList.contains('hide-footer')) footerEl.remove();
   else loadFooter(footerEl);
 
-  // Persistent bottom-right sales widget ("Contact us" / "Talk to sales"). When a
-  // personalization/experiment decision is still in flight, give it a bounded head start so a
-  // decision that supersedes this widget (e.g. the 1Mind launcher) can land before Contact Us
-  // ever paints, instead of flashing the default bubble first (see CONTACT_US_WAIT_MS above).
+  // Persistent bottom-right sales widget ("Contact us" / "Talk to sales") — see
+  // CONTACT_US_WAIT_MS above for why this waits on a pending personalization decision.
   if (shouldRenderContactUs()) {
     loadCSS(`${window.hlx.codeBasePath}/blocks/contact-us/contact-us.css`);
+    // Falls back to the untimed experienceTracking (itself already fail-open via its own
+    // .catch) if loading experience.js for withTimeout fails, so a broken/blocked module
+    // can't take Contact Us down with it.
     const pending = experienceTracking
-      ? experienceModule.then(
-        ({ withTimeout }) => withTimeout(experienceTracking, CONTACT_US_WAIT_MS),
-      )
+      ? experienceModule
+        .then(({ withTimeout }) => withTimeout(experienceTracking, CONTACT_US_WAIT_MS))
+        .catch(() => experienceTracking)
       : Promise.resolve();
     pending
       // eslint-disable-next-line import/no-cycle
