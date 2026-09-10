@@ -476,7 +476,7 @@ function shouldRenderContactUs() {
 // (see loadLazy) — short relative to experience.js's own DECISION_DEADLINE_MS (5000ms), so a
 // decision that supersedes this widget (e.g. widgets/pzn/onemind/onemind.css hiding it) has a
 // chance to land first without holding up Contact Us on pages where it never resolves in time.
-const CONTACT_US_WAIT_MS = 1200;
+const CONTACT_US_WAIT_MS = 2000;
 
 /**
  * Loads everything needed to get to LCP.
