@@ -11,7 +11,8 @@
     "lint:fix": "npm run lint:js -- --fix && npm run lint:css -- --fix",
     "verify:appvars": "node scripts/diff/appvars-diff.mjs --env local --page homepage --local-base http://localhost:3000 --baseline scripts/diff/fixtures/appvars-homepage.golden.json --verify",
     "verify:click-tracking": "vitest run test/tracking-replica.test.js test/tracking-contract.test.js test/clicktrack-diff.test.js",
-    "verify:martech": "node scripts/diff/martech-diff.mjs --env local --page homepage,pricing,accountant,case-study --local-base http://localhost:3000 --baseline scripts/diff/fixtures/martech.golden.json --verify"
+    "verify:martech": "node scripts/diff/martech-diff.mjs --env local --page homepage,pricing,accountant,case-study --local-base http://localhost:3000 --baseline scripts/diff/fixtures/martech.golden.json --verify",
+    "start": "aem up --pagesUrl=https://main--erp--intuit.aem.page/"
   },
   "keywords": [],
   "author": "",
