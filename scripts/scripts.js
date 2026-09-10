@@ -472,6 +472,12 @@ function shouldRenderContactUs() {
   return !['true', 'yes', 'hide'].includes((getMetadata('hide-contact-widget') || '').trim().toLowerCase());
 }
 
+// Bounded wait for a pending personalization/experiment decision before revealing Contact Us
+// (see loadLazy) — short relative to experience.js's own DECISION_DEADLINE_MS (5000ms), so a
+// decision that supersedes this widget (e.g. widgets/pzn/onemind/onemind.css hiding it) has a
+// chance to land first without holding up Contact Us on pages where it never resolves in time.
+const CONTACT_US_WAIT_MS = 2000;
+
 /**
  * Loads everything needed to get to LCP.
  * @param {Element} doc The container element
@@ -576,9 +582,10 @@ async function loadLazy(doc) {
 
   const main = doc.querySelector('main');
   // Below-the-fold personalization/experimentation
+  let experienceModule;
   let experienceTracking;
   if (window.hlx?.experienceResponse || window.hlx?.experienceResponsePromise) {
-    const experienceModule = import('./experience.js');
+    experienceModule = import('./experience.js');
     experienceTracking = experienceModule
       .then(({ applyLazyExperience }) => applyLazyExperience(doc))
       .catch(() => {});
@@ -618,11 +625,21 @@ async function loadLazy(doc) {
   if (footerEl && document.body.classList.contains('hide-footer')) footerEl.remove();
   else loadFooter(footerEl);
 
-  // Persistent bottom-right sales widget ("Contact us" / "Talk to sales"),
+  // Persistent bottom-right sales widget ("Contact us" / "Talk to sales") — see
+  // CONTACT_US_WAIT_MS above for why this waits on a pending personalization decision.
   if (shouldRenderContactUs()) {
     loadCSS(`${window.hlx.codeBasePath}/blocks/contact-us/contact-us.css`);
-    // eslint-disable-next-line import/no-cycle
-    import('../blocks/contact-us/contact-us.js')
+    // Falls back to the untimed experienceTracking (itself already fail-open via its own
+    // .catch) if loading experience.js for withTimeout fails, so a broken/blocked module
+    // can't take Contact Us down with it.
+    const pending = experienceTracking
+      ? experienceModule
+        .then(({ withTimeout }) => withTimeout(experienceTracking, CONTACT_US_WAIT_MS))
+        .catch(() => experienceTracking)
+      : Promise.resolve();
+    pending
+      // eslint-disable-next-line import/no-cycle
+      .then(() => import('../blocks/contact-us/contact-us.js'))
       .then(({ default: initContactUs }) => initContactUs())
       .catch(() => { /* non-fatal — widget is non-critical chrome */ });
   }
