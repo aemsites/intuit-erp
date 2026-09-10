@@ -565,6 +565,52 @@
   background: rgb(255 255 255 / 28%);
 }
 
+main .section.hero-container:has(.hero.background-image) {
+  position: relative;
+  background: #04143a;
+}
+
+main .hero.background-image .hero-copy {
+  position: relative;
+  z-index: 3;
+}
+
+main .hero.background-image .hero-media {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+main .hero.background-image .hero-media img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  object-fit: cover;
+  object-position: right;
+}
+
+main .hero.background-image .hero-media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background:
+    linear-gradient(to right, rgb(4 20 58 / 95%) 0%, rgb(4 20 58 / 70%) 60%, transparent 100%),
+    linear-gradient(to top, rgb(4 20 58 / 92%) 0%, rgb(4 20 58 / 62%) 55%, rgb(4 20 58 / 40%) 100%);
+}
+
+@media (width >= 768px) {
+  main .hero.background-image .hero-media::after {
+    background:
+      linear-gradient(to top left, rgb(4 20 58 / 95%) 0%, rgb(4 20 58 / 60%) 15%, transparent 20%),
+      linear-gradient(to bottom, rgb(4 20 58 / 40%) 0%, transparent 20%),
+      linear-gradient(to right, #00254a 0%, #041f53 35%, transparent 80%);
+  }
+}
+
 main>.section.colored-background.hero-container {
   padding-top: 0;
   padding-bottom: 0;

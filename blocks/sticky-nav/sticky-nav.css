@@ -30,7 +30,11 @@ main > .section:has(.sticky-nav) > div {
   scroll-margin-top: calc(var(--sticky-nav-h, 53px) + 1rem);
 }
 
-body.sticky-nav-active .sticky-nav-spacer {
+.sticky-nav.is-fixed.is-past {
+  visibility: hidden;
+}
+
+body.sticky-nav-stuck .sticky-nav-spacer {
   height: var(--sticky-nav-h, 53px);
 }
 
