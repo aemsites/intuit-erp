@@ -56,8 +56,10 @@ function installFormComplete() {
   window.ziFcInstalled = true;
   window.ZIProjectKey = ZI_PROJECT_KEY;
 
-  // ZoomInfo FormComplete callbacks (window.zi__fc).
-  window.zi__fc = {
+  // ZoomInfo FormComplete reads its lifecycle callbacks from window._zi_fc — the unified zi-tag.js
+  /* eslint-disable no-underscore-dangle */
+  window._zi_fc = {
+    ...window._zi_fc,
     onReady() { log('ZI FormComplete ready'); },
     onRequestSent() { log('ZI FormComplete match request sent'); },
     onMatch(data) {
@@ -75,6 +77,7 @@ function installFormComplete() {
       }
     },
   };
+  /* eslint-enable no-underscore-dangle */
 
   const script = document.createElement('script');
   script.async = true;
