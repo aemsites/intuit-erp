@@ -6,8 +6,14 @@ import {
 // the (already navigation.js-decorated) nav fragment. Mock it to a representative
 // `.navigation` block; leave the rest of the header's decorate to run for real.
 vi.mock('../blocks/fragment/fragment.js', () => ({ loadFragment: vi.fn() }));
+// Mocked here — header.js's own tests only need to verify the click is wired up.
+vi.mock('../scripts/schedule-modal.js', () => ({
+  openScheduleModal: vi.fn(),
+  withTriggerLoading: vi.fn((trigger, openFn) => openFn()),
+}));
 
 const { loadFragment } = await import('../blocks/fragment/fragment.js');
+const { withTriggerLoading } = await import('../scripts/schedule-modal.js');
 const { default: decorate } = await import('../blocks/header/header.js');
 const {
   initTracking, stampInteraction, resetTrackingState, ctasIn, trackIdOf,
@@ -203,5 +209,31 @@ describe('header CTA — hide-nav-cta metadata', () => {
     const block = await buildHeader();
     expect(block.querySelector('.nav-right .nav-cta')).toBeNull();
     expect(block.querySelector('.nav-mobile-extra .nav-cta')).toBeNull();
+  });
+
+  it('wraps each nav-cta click with withTriggerLoading, calling openScheduleModal', async () => {
+    const block = await buildHeader();
+    const desktopCta = block.querySelector('.nav-right .nav-cta');
+    const mobileCta = block.querySelector('.nav-mobile-extra .nav-cta');
+
+    desktopCta.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    expect(withTriggerLoading).toHaveBeenCalledTimes(1);
+    expect(withTriggerLoading.mock.calls[0][0]).toBe(desktopCta);
+
+    mobileCta.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    expect(withTriggerLoading).toHaveBeenCalledTimes(2);
+    expect(withTriggerLoading.mock.calls[1][0]).toBe(mobileCta);
+
+    const { openScheduleModal } = await import('../scripts/schedule-modal.js');
+    expect(openScheduleModal).toHaveBeenCalledTimes(2);
+  });
+
+  it('ignores a click while the nav-cta is already aria-disabled', async () => {
+    const block = await buildHeader();
+    const cta = block.querySelector('.nav-right .nav-cta');
+    cta.setAttribute('aria-disabled', 'true');
+
+    cta.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    expect(withTriggerLoading).not.toHaveBeenCalled();
   });
 });

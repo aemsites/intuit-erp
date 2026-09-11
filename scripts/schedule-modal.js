@@ -23,6 +23,48 @@ export async function openScheduleModal() {
   return openModal(scheduleFragmentPath());
 }
 
+// Same-trigger reentrancy lock, set synchronously before withTriggerLoading's first await.
+const inFlightTriggers = new WeakSet();
+
+// Shared loading/disabled UI for any element that opens the shared modal.
+// `openFn` must resolve to the opened <dialog>, or null if a modal was already active.
+export async function withTriggerLoading(trigger, openFn) {
+  if (inFlightTriggers.has(trigger)) return;
+  inFlightTriggers.add(trigger);
+  try {
+    // eslint-disable-next-line import/no-cycle
+    const { isModalActive } = await import('../blocks/modal/modal.js');
+    // Another trigger's modal is already active — no-op, no visual change here.
+    if (isModalActive()) return;
+
+    trigger.setAttribute('aria-disabled', 'true');
+    const spinner = document.createElement('span');
+    spinner.className = 'modal-trigger-spinner';
+    spinner.setAttribute('aria-hidden', 'true');
+    trigger.append(spinner);
+    let dialog;
+    try {
+      dialog = await openFn();
+    } catch (err) {
+      // Don't strand this trigger disabled forever on a construction error.
+      spinner.remove();
+      trigger.removeAttribute('aria-disabled');
+      throw err;
+    }
+    spinner.remove();
+    if (!dialog) {
+      // Blocked by a concurrent open, or the open failed before a dialog existed.
+      trigger.removeAttribute('aria-disabled');
+      return;
+    }
+    dialog.addEventListener('close', () => {
+      trigger.removeAttribute('aria-disabled');
+    }, { once: true });
+  } finally {
+    inFlightTriggers.delete(trigger);
+  }
+}
+
 // Any anchor whose href ends with #schedule opens the modal instead of
 // navigating — covers both `#schedule` and stray absolute URLs ending in it.
 // Called from multiple content-injection points (initial page load, fragments,
@@ -38,7 +80,8 @@ export function bindScheduleLinks(container) {
     a.addEventListener('click', (e) => {
       if (a.dataset.chilipiperTrigger === 'true') return;
       e.preventDefault();
-      openScheduleModal();
+      if (a.getAttribute('aria-disabled') === 'true') return;
+      withTriggerLoading(a, () => openScheduleModal());
     });
   });
 }

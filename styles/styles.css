@@ -475,6 +475,31 @@ button.button.accent:disabled:focus-visible {
   color: var(--dark-color);
 }
 
+/* loading spinner shown on any CTA that opens the shared modal (blocks/modal/modal.js)
+   while it's being fetched/built — uses currentcolor so it matches any button variant */
+.modal-trigger-spinner {
+  display: inline-block;
+  box-sizing: border-box;
+  width: 0.9em;
+  height: 0.9em;
+  margin-inline-start: 0.5em;
+  border: 2px solid currentcolor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  vertical-align: middle;
+  animation: modal-trigger-spin 0.6s linear infinite;
+}
+
+@keyframes modal-trigger-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal-trigger-spinner {
+    animation-duration: 1.5s;
+  }
+}
+
 main img {
   max-width: 100%;
   width: auto;

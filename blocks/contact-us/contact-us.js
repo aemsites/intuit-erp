@@ -15,7 +15,7 @@
  * CSS: blocks/contact-us/contact-us.css.
  */
 // eslint-disable-next-line import/no-cycle
-import { openScheduleModal } from '../../scripts/schedule-modal.js';
+import { openScheduleModal, withTriggerLoading } from '../../scripts/schedule-modal.js';
 import { getMetadata } from '../../scripts/aem.js';
 import { trackAs } from '../../scripts/tracking.js';
 
@@ -204,8 +204,9 @@ export default async function initContactUs() {
   const schedule = root.querySelector('.cu-schedule');
   if (schedule) {
     schedule.addEventListener('click', () => {
+      if (schedule.getAttribute('aria-disabled') === 'true') return;
       close();
-      openScheduleModal();
+      withTriggerLoading(schedule, () => openScheduleModal());
     });
   }
 

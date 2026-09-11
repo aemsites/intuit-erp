@@ -13,6 +13,7 @@
  *   trigger – CSS selector for the CTA (default: the header "Schedule a call" nav CTA)
  */
 import { createModal } from '../../../blocks/modal/modal.js';
+import { withTriggerLoading } from '../../../scripts/schedule-modal.js';
 
 const DEFAULT_BASE = 'https://intuitsales.chilipiper.com/round-robin/cal-first-construction';
 const DEFAULT_TRIGGER = 'header .nav-cta';
@@ -37,6 +38,7 @@ export function buildChiliPiperUrl(base = DEFAULT_BASE) {
   return { url: `${base}${sep}lead_xref_id=${encodeURIComponent(leadXrefId)}`, leadXrefId };
 }
 
+// Returns the opened <dialog>, or null if a modal was already active elsewhere.
 async function openChiliPiperModal(base) {
   // The lead_xref_id rides in the iframe URL (below); the ies-erp container correlates on that,
   // so there's no window global to publish.
@@ -48,9 +50,13 @@ async function openChiliPiperModal(base) {
   iframe.setAttribute('data-chilipiper', 'true');
   iframe.setAttribute('allow', 'camera; microphone; fullscreen');
   iframe.loading = 'eager';
-  const { showModal, block } = await createModal([iframe]);
-  block.querySelector('dialog').classList.add('chilipiper-dialog');
+  const result = await createModal([iframe]);
+  if (!result) return null;
+  const { showModal, block } = result;
+  const dialog = block.querySelector('dialog');
+  dialog.classList.add('chilipiper-dialog');
   showModal();
+  return dialog;
 }
 
 export default async function decorate(widget) {
@@ -75,6 +81,7 @@ export default async function decorate(widget) {
     cta.dataset.chilipiperTrigger = 'true';
     e.stopPropagation();
     e.preventDefault();
-    openChiliPiperModal(base);
+    if (cta.getAttribute('aria-disabled') === 'true') return;
+    withTriggerLoading(cta, () => openChiliPiperModal(base));
   }, true);
 }

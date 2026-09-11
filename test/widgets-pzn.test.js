@@ -6,8 +6,13 @@ import {
 // so importing the modules doesn't pull the modal/fragment → scripts.js graph (which runs loadPage
 // on import) into these pure-helper tests.
 vi.mock('../blocks/modal/modal.js', () => ({
-  createModal: vi.fn(async () => ({ showModal: vi.fn(), block: document.createElement('div') })),
-  openModal: vi.fn(() => Promise.resolve()),
+  createModal: vi.fn(async () => {
+    const block = document.createElement('div');
+    block.innerHTML = '<dialog></dialog>';
+    return { showModal: vi.fn(), block };
+  }),
+  openModal: vi.fn(() => Promise.resolve(null)),
+  isModalActive: vi.fn(() => false),
 }));
 vi.mock('../blocks/fragment/fragment.js', () => ({
   loadFragment: vi.fn(async () => null),
@@ -19,7 +24,7 @@ import decorateChiliPiper, {
   buildChiliPiperUrl,
 } from '../widgets/pzn/form-vs-chilipiper/form-vs-chilipiper.js';
 // eslint-disable-next-line import/first
-import { createModal, openModal } from '../blocks/modal/modal.js';
+import { createModal, openModal, isModalActive } from '../blocks/modal/modal.js';
 // eslint-disable-next-line import/first
 import { openScheduleModal } from '../scripts/schedule-modal.js';
 // eslint-disable-next-line import/first
@@ -82,6 +87,44 @@ describe('form-vs-chilipiper: createUUID / buildChiliPiperUrl', () => {
     expect(siblingCapture).toHaveBeenCalledTimes(1);
 
     document.removeEventListener('click', siblingCapture, true);
+  });
+
+  it('shows a spinner and aria-disabled on the CTA while the ChiliPiper modal opens', async () => {
+    let resolveCreate;
+    createModal.mockImplementationOnce(() => new Promise((resolve) => { resolveCreate = resolve; }));
+    // Unique trigger class to avoid stale listeners bound by earlier tests in this file.
+    document.body.innerHTML = '<div class="widget"></div><button type="button" class="spinner-test-cta">Schedule a call</button>';
+    const widget = document.querySelector('.widget');
+    widget.dataset.trigger = '.spinner-test-cta';
+    await decorateChiliPiper(widget);
+    const cta = document.querySelector('.spinner-test-cta');
+
+    cta.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    await new Promise((resolve) => { setTimeout(resolve, 0); });
+    expect(cta.getAttribute('aria-disabled')).toBe('true');
+    expect(cta.querySelector('.modal-trigger-spinner')).not.toBeNull();
+
+    const block = document.createElement('div');
+    block.innerHTML = '<dialog></dialog>';
+    resolveCreate({ showModal: vi.fn(), block });
+    await new Promise((resolve) => { setTimeout(resolve, 0); });
+    expect(cta.querySelector('.modal-trigger-spinner')).toBeNull();
+    expect(cta.getAttribute('aria-disabled')).toBe('true'); // stays disabled until the dialog closes
+  });
+
+  it('does not open a ChiliPiper modal when a modal is already active elsewhere', async () => {
+    isModalActive.mockReturnValueOnce(true);
+    document.body.innerHTML = '<div class="widget"></div><button type="button" class="blocked-test-cta">Schedule a call</button>';
+    const widget = document.querySelector('.widget');
+    widget.dataset.trigger = '.blocked-test-cta';
+    await decorateChiliPiper(widget);
+    const cta = document.querySelector('.blocked-test-cta');
+
+    cta.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    await new Promise((resolve) => { setTimeout(resolve, 0); });
+
+    expect(createModal).not.toHaveBeenCalled();
+    expect(cta.hasAttribute('aria-disabled')).toBe(false);
   });
 });
 
