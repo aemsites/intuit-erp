@@ -261,6 +261,32 @@
   }
 }
 
+/* Opt-in blue glow behind the media panel, enabled by adding `blue-glow` to the
+   section's Style (Section Metadata). Rendered on the full-viewport-width
+   section so it bleeds to the right edge — the inner content is capped at a
+   max-width that would otherwise clip it. Desktop only: the media sits in the
+   right column at >=1024px, so below that the glow is hidden. */
+@media (width >= 1024px) {
+  .section.blue-glow {
+    position: relative;
+  }
+
+  .section.blue-glow::before {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    inset: 0 0 0 auto;
+    width: min(62%, 1000px);
+    background: radial-gradient(
+      741px 467px at 72% 50%,
+      rgb(0 85 255 / 42%) 0%,
+      rgb(35 108 255 / 42%) 29.7%,
+      rgb(35 108 255 / 0%) 100%
+    );
+    pointer-events: none;
+  }
+}
+
 
 .vertical-scroll-carousel.dark {
   .vsc-item.is-active .vsc-heading,
