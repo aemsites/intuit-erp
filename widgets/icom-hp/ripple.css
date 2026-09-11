@@ -1,0 +1,1 @@
+:root{--icom-header-initial-height: 60px;--icom-header-sticky-height: 60px;--icom-header-clearance: 16px;--icom-header-anchor-offset: calc(var(--icom-header-sticky-height) + var(--icom-header-clearance))}@media(min-width:1120px){:root{--icom-header-initial-height: 90px}}
