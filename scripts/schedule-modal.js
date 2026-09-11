@@ -46,9 +46,15 @@ export async function withTriggerLoading(trigger, openFn) {
   let dialog;
   try {
     dialog = await openFn();
-  } finally {
+  } catch (err) {
+    // A construction error (e.g. loadBlock failing) must not strand this trigger
+    // disabled forever — the global guard already resets itself (createModal()'s
+    // own catch), but this element's aria-disabled is local state only we clear.
     spinner.remove();
+    trigger.removeAttribute('aria-disabled');
+    throw err;
   }
+  spinner.remove();
   if (!dialog) {
     // Blocked by a concurrent open, or the open failed before a dialog existed.
     trigger.removeAttribute('aria-disabled');

@@ -81,6 +81,7 @@ export default async function decorate(widget) {
     cta.dataset.chilipiperTrigger = 'true';
     e.stopPropagation();
     e.preventDefault();
+    if (cta.getAttribute('aria-disabled') === 'true') return;
     withTriggerLoading(cta, () => openChiliPiperModal(base));
   }, true);
 }

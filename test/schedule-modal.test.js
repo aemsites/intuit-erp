@@ -201,4 +201,12 @@ describe('withTriggerLoading', () => {
     expect(trigger.hasAttribute('aria-disabled')).toBe(false);
     expect(trigger.querySelector('.modal-trigger-spinner')).toBeNull();
   });
+
+  it('re-enables and rethrows when openFn throws, instead of leaving the trigger stuck disabled', async () => {
+    const trigger = makeTrigger();
+    const boom = new Error('boom');
+    await expect(withTriggerLoading(trigger, () => Promise.reject(boom))).rejects.toThrow('boom');
+    expect(trigger.hasAttribute('aria-disabled')).toBe(false);
+    expect(trigger.querySelector('.modal-trigger-spinner')).toBeNull();
+  });
 });
