@@ -9,10 +9,7 @@ import { bindScheduleLinks } from '../../scripts/schedule-modal.js';
 // cached copy (loadFragment has no cache of its own).
 const fragmentCache = new Map();
 
-// Only one modal may be open (or under construction) at a time — createModal()
-// is invoked from multiple independent triggers (schedule CTA, personalization
-// widgets), and without this guard, rapid/duplicate triggers each build and show
-// their own <dialog>, stacking multiple simultaneously-open modals.
+// Guards against duplicate simultaneously-open modals from concurrent triggers.
 let modalActive = false;
 
 export function isModalActive() {
@@ -94,11 +91,7 @@ export async function createModal(contentNodes) {
   }
 }
 
-// Returns the opened <dialog> element, or null if a modal was already active
-// (createModal() declined) or the fragment fetch failed before any dialog could
-// be created (never happens today — the failure path always shows an error
-// dialog — but createModal() can still decline that fallback for the same
-// already-active reason).
+// Returns the opened <dialog> element, or null if a modal was already active.
 export async function openModal(fragmentUrl) {
   const path = fragmentUrl.startsWith('http')
     ? new URL(fragmentUrl, window.location).pathname

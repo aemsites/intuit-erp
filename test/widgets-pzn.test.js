@@ -92,9 +92,7 @@ describe('form-vs-chilipiper: createUUID / buildChiliPiperUrl', () => {
   it('shows a spinner and aria-disabled on the CTA while the ChiliPiper modal opens', async () => {
     let resolveCreate;
     createModal.mockImplementationOnce(() => new Promise((resolve) => { resolveCreate = resolve; }));
-    // Unique trigger class: other tests in this file leave their own document-level
-    // click listener bound (nothing in decorate() unbinds it), so reusing the default
-    // "header .nav-cta" selector here would also fire those stale listeners.
+    // Unique trigger class to avoid stale listeners bound by earlier tests in this file.
     document.body.innerHTML = '<div class="widget"></div><button type="button" class="spinner-test-cta">Schedule a call</button>';
     const widget = document.querySelector('.widget');
     widget.dataset.trigger = '.spinner-test-cta';

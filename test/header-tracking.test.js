@@ -6,9 +6,7 @@ import {
 // the (already navigation.js-decorated) nav fragment. Mock it to a representative
 // `.navigation` block; leave the rest of the header's decorate to run for real.
 vi.mock('../blocks/fragment/fragment.js', () => ({ loadFragment: vi.fn() }));
-// withTriggerLoading/openScheduleModal go on to dynamically import blocks/modal/modal.js
-// and run the full modal-construction pipeline (real loadBlock/loadCSS/etc.) — out of
-// scope for header.js's own tests, which only need to verify the click is wired up.
+// Mocked here — header.js's own tests only need to verify the click is wired up.
 vi.mock('../scripts/schedule-modal.js', () => ({
   openScheduleModal: vi.fn(),
   withTriggerLoading: vi.fn((trigger, openFn) => openFn()),

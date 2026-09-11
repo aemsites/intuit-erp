@@ -27,9 +27,7 @@ import {
 
 window.hlx = { codeBasePath: '' };
 
-// Directly dispatching 'close' (rather than calling the real .close()) sidesteps
-// jsdom's incomplete <dialog> implementation while still exercising the guard-reset
-// logic in modal.js's own 'close' listener.
+// jsdom's <dialog>.close() is incomplete — dispatch 'close' directly instead.
 function simulateClose(dialog) {
   dialog.dispatchEvent(new Event('close'));
 }
@@ -41,8 +39,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  // Belt-and-suspenders: if a test leaves a dialog open, release the module-level
-  // guard so it can't leak into the next test.
+  // Release the module-level guard so an open dialog can't leak into the next test.
   document.querySelectorAll('dialog').forEach(simulateClose);
   document.body.innerHTML = '';
 });

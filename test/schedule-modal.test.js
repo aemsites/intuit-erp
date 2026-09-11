@@ -186,26 +186,17 @@ describe('withTriggerLoading', () => {
   });
 
   it('calls openFn at most once for two concurrent calls on the SAME trigger', async () => {
-    // Regression for a race found in PR review: two clicks on the same trigger landing
-    // before the first call's `await import(...)` resolves (realistic on a cold module
-    // cache) could both pass the isModalActive() check and race openFn() — the "losing"
-    // call would then clear aria-disabled out from under the winner's still-open dialog.
-    // Asserting on the fully-settled state (via Promise.all) rather than at a specific
-    // mid-flight tick, since how many microtask hops each call's dynamic import takes
-    // to resolve isn't something to assume.
+    // Regression: PR review found a same-trigger race (see PR comment for details).
     const trigger = makeTrigger();
     const dialog = { addEventListener: vi.fn() };
     const openFn = vi.fn(() => Promise.resolve(dialog));
 
-    // Fired back-to-back, synchronously — neither has had a chance to await anything yet.
     await Promise.all([
       withTriggerLoading(trigger, openFn),
       withTriggerLoading(trigger, openFn),
     ]);
 
     expect(openFn).toHaveBeenCalledTimes(1);
-    // The one call that actually ran must have completed normally (not been left
-    // stuck by whatever blocked the other one).
     expect(trigger.getAttribute('aria-disabled')).toBe('true');
   });
 
