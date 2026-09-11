@@ -23,6 +23,16 @@ export async function openScheduleModal() {
   return openModal(scheduleFragmentPath());
 }
 
+// Trigger elements currently inside their own withTriggerLoading() call — checked and
+// set synchronously (before the first await) so two clicks on the SAME element landing
+// before the isModalActive() import resolves (realistic on a cold module cache) can't
+// both proceed: without this, both would pass the isModalActive() check, race openFn(),
+// and the "losing" call would clear aria-disabled out from under the winner's still-open
+// dialog. A WeakSet (not aria-disabled itself) because aria-disabled is only set once we
+// know we're not bailing out for the cross-trigger case below, but this guard must exist
+// before that.
+const inFlightTriggers = new WeakSet();
+
 // Shared loading/disabled UI for any element that opens the shared modal (schedule
 // links, the header nav-cta button, the ChiliPiper widget's trigger) — not just the
 // schedule-call flow, hence living here rather than being schedule-fragment-specific.
@@ -32,37 +42,43 @@ export async function openScheduleModal() {
 // can use it without a block-to-block import (blocks/header importing blocks/modal
 // directly would be a cross-block dependency).
 export async function withTriggerLoading(trigger, openFn) {
-  // eslint-disable-next-line import/no-cycle
-  const { isModalActive } = await import('../blocks/modal/modal.js');
-  // A modal from another trigger is already open/opening — nothing will load for
-  // this click, so leave this trigger's state untouched (no spinner flash).
-  if (isModalActive()) return;
-
-  trigger.setAttribute('aria-disabled', 'true');
-  const spinner = document.createElement('span');
-  spinner.className = 'modal-trigger-spinner';
-  spinner.setAttribute('aria-hidden', 'true');
-  trigger.append(spinner);
-  let dialog;
+  if (inFlightTriggers.has(trigger)) return;
+  inFlightTriggers.add(trigger);
   try {
-    dialog = await openFn();
-  } catch (err) {
-    // A construction error (e.g. loadBlock failing) must not strand this trigger
-    // disabled forever — the global guard already resets itself (createModal()'s
-    // own catch), but this element's aria-disabled is local state only we clear.
+    // eslint-disable-next-line import/no-cycle
+    const { isModalActive } = await import('../blocks/modal/modal.js');
+    // A modal from another trigger is already open/opening — nothing will load for
+    // this click, so leave this trigger's state untouched (no spinner flash).
+    if (isModalActive()) return;
+
+    trigger.setAttribute('aria-disabled', 'true');
+    const spinner = document.createElement('span');
+    spinner.className = 'modal-trigger-spinner';
+    spinner.setAttribute('aria-hidden', 'true');
+    trigger.append(spinner);
+    let dialog;
+    try {
+      dialog = await openFn();
+    } catch (err) {
+      // A construction error (e.g. loadBlock failing) must not strand this trigger
+      // disabled forever — the global guard already resets itself (createModal()'s
+      // own catch), but this element's aria-disabled is local state only we clear.
+      spinner.remove();
+      trigger.removeAttribute('aria-disabled');
+      throw err;
+    }
     spinner.remove();
-    trigger.removeAttribute('aria-disabled');
-    throw err;
+    if (!dialog) {
+      // Blocked by a concurrent open, or the open failed before a dialog existed.
+      trigger.removeAttribute('aria-disabled');
+      return;
+    }
+    dialog.addEventListener('close', () => {
+      trigger.removeAttribute('aria-disabled');
+    }, { once: true });
+  } finally {
+    inFlightTriggers.delete(trigger);
   }
-  spinner.remove();
-  if (!dialog) {
-    // Blocked by a concurrent open, or the open failed before a dialog existed.
-    trigger.removeAttribute('aria-disabled');
-    return;
-  }
-  dialog.addEventListener('close', () => {
-    trigger.removeAttribute('aria-disabled');
-  }, { once: true });
 }
 
 // Any anchor whose href ends with #schedule opens the modal instead of
