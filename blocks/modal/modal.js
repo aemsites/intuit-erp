@@ -9,73 +9,96 @@ import { bindScheduleLinks } from '../../scripts/schedule-modal.js';
 // cached copy (loadFragment has no cache of its own).
 const fragmentCache = new Map();
 
+// Only one modal may be open (or under construction) at a time — createModal()
+// is invoked from multiple independent triggers (schedule CTA, personalization
+// widgets), and without this guard, rapid/duplicate triggers each build and show
+// their own <dialog>, stacking multiple simultaneously-open modals.
+let modalActive = false;
+
+export function isModalActive() {
+  return modalActive;
+}
+
 // Not a decorated block: links to a /modals/ path are turned into modals, and
 // other code opens modals via createModal()/openModal(). Adapted from the AEM
 // Block Collection modal block.
 
 export async function createModal(contentNodes) {
-  await loadCSS(`${window.hlx.codeBasePath}/blocks/modal/modal.css`);
-  const dialog = document.createElement('dialog');
-  const dialogContent = document.createElement('div');
-  dialogContent.classList.add('modal-content');
-  dialogContent.append(...contentNodes);
-  dialog.append(dialogContent);
+  if (modalActive) return null;
+  modalActive = true;
+  try {
+    await loadCSS(`${window.hlx.codeBasePath}/blocks/modal/modal.css`);
+    const dialog = document.createElement('dialog');
+    const dialogContent = document.createElement('div');
+    dialogContent.classList.add('modal-content');
+    dialogContent.append(...contentNodes);
+    dialog.append(dialogContent);
 
-  const closeButton = document.createElement('button');
-  closeButton.classList.add('close-button');
-  closeButton.setAttribute('aria-label', 'Close');
-  closeButton.type = 'button';
-  closeButton.innerHTML = '<span class="icon icon-close"></span>';
-  closeButton.addEventListener('click', () => dialog.close());
-  dialog.prepend(closeButton);
+    const closeButton = document.createElement('button');
+    closeButton.classList.add('close-button');
+    closeButton.setAttribute('aria-label', 'Close');
+    closeButton.type = 'button';
+    closeButton.innerHTML = '<span class="icon icon-close"></span>';
+    closeButton.addEventListener('click', () => dialog.close());
+    dialog.prepend(closeButton);
 
-  // Wrap the block in its own div so decorateBlock() adds `modal-wrapper` to the
-  // wrapper, not to <main> (which would permanently pollute main's classList).
-  const block = buildBlock('modal', '');
-  const wrapper = document.createElement('div');
-  wrapper.append(block);
-  document.querySelector('main').append(wrapper);
-  decorateBlock(block);
-  await loadBlock(block);
+    // Wrap the block in its own div so decorateBlock() adds `modal-wrapper` to the
+    // wrapper, not to <main> (which would permanently pollute main's classList).
+    const block = buildBlock('modal', '');
+    const wrapper = document.createElement('div');
+    wrapper.append(block);
+    document.querySelector('main').append(wrapper);
+    decorateBlock(block);
+    await loadBlock(block);
 
-  // close on click outside the dialog
-  dialog.addEventListener('click', (e) => {
-    const {
-      left, right, top, bottom,
-    } = dialog.getBoundingClientRect();
-    if (e.clientX < left || e.clientX > right || e.clientY < top || e.clientY > bottom) {
-      dialog.close();
-    }
-  });
+    // close on click outside the dialog
+    dialog.addEventListener('click', (e) => {
+      const {
+        left, right, top, bottom,
+      } = dialog.getBoundingClientRect();
+      if (e.clientX < left || e.clientX > right || e.clientY < top || e.clientY > bottom) {
+        dialog.close();
+      }
+    });
 
-  let previouslyFocused;
-  dialog.addEventListener('close', () => {
-    document.body.classList.remove('modal-open');
-    wrapper.remove();
-    // Restore focus to whatever opened the modal (a11y) — but only for a
-    // user-initiated close (✕ / click-outside / Esc). A caller handing the
-    // visitor off to another surface (e.g. ChiliPiper's own full-screen
-    // booking overlay) sets `data-suppress-focus-restore` first: pulling focus
-    // back to the trigger button mid-handoff would yank keyboard and
-    // screen-reader users out of the surface that is taking over.
-    if (dialog.dataset.suppressFocusRestore === 'true') return;
-    if (previouslyFocused?.focus) previouslyFocused.focus();
-  });
+    let previouslyFocused;
+    dialog.addEventListener('close', () => {
+      modalActive = false;
+      document.body.classList.remove('modal-open');
+      wrapper.remove();
+      // Restore focus to whatever opened the modal (a11y) — but only for a
+      // user-initiated close (✕ / click-outside / Esc). A caller handing the
+      // visitor off to another surface (e.g. ChiliPiper's own full-screen
+      // booking overlay) sets `data-suppress-focus-restore` first: pulling focus
+      // back to the trigger button mid-handoff would yank keyboard and
+      // screen-reader users out of the surface that is taking over.
+      if (dialog.dataset.suppressFocusRestore === 'true') return;
+      if (previouslyFocused?.focus) previouslyFocused.focus();
+    });
 
-  block.innerHTML = '';
-  block.append(dialog);
+    block.innerHTML = '';
+    block.append(dialog);
 
-  return {
-    block,
-    showModal: () => {
-      previouslyFocused = document.activeElement;
-      dialog.showModal();
-      setTimeout(() => { dialogContent.scrollTop = 0; }, 0);
-      document.body.classList.add('modal-open');
-    },
-  };
+    return {
+      block,
+      showModal: () => {
+        previouslyFocused = document.activeElement;
+        dialog.showModal();
+        setTimeout(() => { dialogContent.scrollTop = 0; }, 0);
+        document.body.classList.add('modal-open');
+      },
+    };
+  } catch (err) {
+    modalActive = false;
+    throw err;
+  }
 }
 
+// Returns the opened <dialog> element, or null if a modal was already active
+// (createModal() declined) or the fragment fetch failed before any dialog could
+// be created (never happens today — the failure path always shows an error
+// dialog — but createModal() can still decline that fallback for the same
+// already-active reason).
 export async function openModal(fragmentUrl) {
   const path = fragmentUrl.startsWith('http')
     ? new URL(fragmentUrl, window.location).pathname
@@ -92,9 +115,10 @@ export async function openModal(fragmentUrl) {
     const error = document.createElement('p');
     error.className = 'modal-error';
     error.textContent = 'Sorry, something went wrong loading this content. Please try again.';
-    const { showModal } = await createModal([error]);
-    showModal();
-    return;
+    const result = await createModal([error]);
+    if (!result) return null;
+    result.showModal();
+    return result.block.querySelector('dialog');
   }
 
   // Clone so the cached fragment keeps its content for the next open. cloneNode
@@ -102,7 +126,9 @@ export async function openModal(fragmentUrl) {
   // clones: reset the "loaded" block/section status the cache carries back to
   // "initialized" so loadSections re-runs each block's decorate() and rebinds.
   const clones = [...fragment.childNodes].map((node) => node.cloneNode(true));
-  const { block, showModal } = await createModal(clones);
+  const result = await createModal(clones);
+  if (!result) return null;
+  const { block, showModal } = result;
   block.querySelectorAll('[data-block-status]').forEach((b) => { b.dataset.blockStatus = 'initialized'; });
   block.querySelectorAll('.section[data-section-status]').forEach((s) => { s.dataset.sectionStatus = 'initialized'; });
   await loadSections(block);
@@ -110,4 +136,5 @@ export async function openModal(fragmentUrl) {
   // page-level bind (scripts.js) never sees content injected this late.
   bindScheduleLinks(block);
   showModal();
+  return block.querySelector('dialog');
 }

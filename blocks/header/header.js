@@ -1,7 +1,7 @@
 import { getMetadata, loadSections } from '../../scripts/aem.js';
 // eslint-disable-next-line import/no-cycle
 import { decorateMain } from '../../scripts/scripts.js';
-import { openScheduleModal } from '../../scripts/schedule-modal.js';
+import { openScheduleModal, withTriggerLoading } from '../../scripts/schedule-modal.js';
 import { loadFragment } from '../fragment/fragment.js';
 import { enhanceSecondaryNavSearch } from '../blog-search/search-utils.js';
 import { trackAs } from '../../scripts/tracking.js';
@@ -353,7 +353,10 @@ export default async function decorate(block) {
   }
 
   block.querySelectorAll('.nav-cta').forEach((btn) => {
-    btn.addEventListener('click', () => openScheduleModal());
+    btn.addEventListener('click', () => {
+      if (btn.getAttribute('aria-disabled') === 'true') return;
+      withTriggerLoading(btn, () => openScheduleModal());
+    });
   });
 
   // Click tracking (code-built chrome): nav toggles, brand logos and mega-menu
