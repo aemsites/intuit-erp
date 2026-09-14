@@ -255,23 +255,25 @@ function valueCell(cell) {
 
 /**
  * Reads a leading status marker off a simple-variant cell and returns the icon
- * type plus the remaining copy. Markers are a glyph (✓ ✔ / ● • · ○ / ✗ ✘) or a
- * keyword (yes|check|included / no|partial|limited|x); anything else is plain
+ * type plus the remaining copy. Markers are a glyph (✓ ✔ / ● • · ○ / ✗ ✘ ×) or a
+ * keyword (yes|check|included / partial|limited / no|x); anything else is plain
  * text with no icon.
  * @param {string} raw
- * @returns {{icon: ('check'|'dot'|null), text: string}}
+ * @returns {{icon: ('check'|'dot'|'x'|null), text: string}}
  */
 function markerOf(raw) {
   const t = (raw || '').trim();
   if (!t) return { icon: null, text: '' };
   const g = t[0];
   if (g === '✓' || g === '✔') return { icon: 'check', text: t.slice(1).trim() };
-  if ('●•·○✗✘'.includes(g)) return { icon: 'dot', text: t.slice(1).trim() };
+  if ('✗✘×'.includes(g)) return { icon: 'x', text: t.slice(1).trim() };
+  if ('●•·○'.includes(g)) return { icon: 'dot', text: t.slice(1).trim() };
   const word = t.split(/\s+/)[0].toLowerCase();
   const sp = t.indexOf(' ');
   const rest = sp === -1 ? '' : t.slice(sp + 1).trim();
   if (['yes', 'check', 'included'].includes(word)) return { icon: 'check', text: rest };
-  if (['no', 'partial', 'limited', 'x'].includes(word)) return { icon: 'dot', text: rest };
+  if (['no', 'x'].includes(word)) return { icon: 'x', text: rest };
+  if (['partial', 'limited'].includes(word)) return { icon: 'dot', text: rest };
   return { icon: null, text: t };
 }
 

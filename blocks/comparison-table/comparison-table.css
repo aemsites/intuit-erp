@@ -130,7 +130,8 @@
 }
 
 /* ---- .simple variant: logo headers above a rounded card; each cell is a
-   status icon (blue check / orange dot) stacked over centred copy, no
+   status icon (blue check / orange dot / black cross) stacked over centred
+   copy, no
    row-label column. See decorateSimple in comparison-table.js. ---- */
 .comparison-table .cmp-simple { max-width: 1134px; margin: 0 auto; }
 
@@ -199,6 +200,18 @@
 
 /* orange status dot */
 .comparison-table .cs-dot { width: 12px; height: 12px; border-radius: 50%; background: #ec8b2f; }
+
+/* not-included cross — two bars rather than an icon file, matching .cs-check */
+.comparison-table .cs-x { position: relative; width: 22px; height: 22px; }
+
+.comparison-table .cs-x::before,
+.comparison-table .cs-x::after {
+  content: ""; position: absolute; left: 3px; top: 10px; width: 16px; height: 3px;
+  background: #000;
+}
+
+.comparison-table .cs-x::before { transform: rotate(45deg); }
+.comparison-table .cs-x::after { transform: rotate(-45deg); }
 
 @media (width <= 768px) {
   .comparison-table .cs-band { font-size: 17px; padding: 14px 20px; }

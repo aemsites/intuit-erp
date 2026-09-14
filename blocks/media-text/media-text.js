@@ -127,6 +127,31 @@ function buildCopy(textCell, { newTabCta = false } = {}) {
   return copy;
 }
 
+// A compare-card bullet may open with a status glyph (✓ ✔ / – — - / ✗ ✘ × x)
+// choosing that line's icon, matching the marker convention comparison-table
+// already uses. Without one the card keeps its positional default (see CSS).
+const LIST_MARKER_RE = /^\s*([✓✔–—✗✘×x-])\s+/i;
+const LIST_MARKER_CLASS = {
+  '✓': 'li-check',
+  '✔': 'li-check',
+  '–': 'li-dash',
+  '—': 'li-dash',
+  '-': 'li-dash',
+  '✗': 'li-x',
+  '✘': 'li-x',
+  '×': 'li-x',
+  x: 'li-x',
+};
+
+function markListItem(li) {
+  const first = li.firstChild;
+  if (!first || first.nodeType !== Node.TEXT_NODE) return;
+  const m = first.textContent.match(LIST_MARKER_RE);
+  if (!m) return;
+  first.textContent = first.textContent.slice(m[0].length);
+  li.classList.add(LIST_MARKER_CLASS[m[1].toLowerCase()]);
+}
+
 export default function decorate(block) {
   const splitMatch = [...block.classList].map((c) => c.match(SPLIT_RE)).find(Boolean);
   if (splitMatch) block.style.setProperty('--split', `${splitMatch[1]}fr ${splitMatch[2]}fr`);
@@ -158,6 +183,7 @@ export default function decorate(block) {
       const card = document.createElement('article');
       card.className = `compare-card ${i % 2 === 0 ? 'compare-blue' : 'compare-sand'}`;
       const copy = buildCopy(cells[0], { newTabCta: insideFragment });
+      copy.querySelectorAll('ul > li').forEach(markListItem);
       [...copy.children].forEach((el) => card.append(el));
       if (cells[1]) {
         const vis = document.createElement('div');
