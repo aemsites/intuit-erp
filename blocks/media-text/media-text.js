@@ -127,21 +127,10 @@ function buildCopy(textCell, { newTabCta = false } = {}) {
   return copy;
 }
 
-// A compare-card bullet may open with a status glyph (✓ ✔ / – — - / ✗ ✘ × x)
-// choosing that line's icon, matching the marker convention comparison-table
-// already uses. Without one the card keeps its positional default (see CSS).
-const LIST_MARKER_RE = /^\s*([✓✔–—✗✘×x-])\s+/i;
-const LIST_MARKER_CLASS = {
-  '✓': 'li-check',
-  '✔': 'li-check',
-  '–': 'li-dash',
-  '—': 'li-dash',
-  '-': 'li-dash',
-  '✗': 'li-x',
-  '✘': 'li-x',
-  '×': 'li-x',
-  x: 'li-x',
-};
+// A compare-card bullet may open with a status glyph (✓ / – / ✗) choosing that
+// line's icon; without one the card keeps its positional default (see CSS).
+const LIST_MARKER_RE = /^\s*([✓–✗])\s+/;
+const LIST_MARKER_CLASS = { '✓': 'li-check', '–': 'li-dash', '✗': 'li-x' };
 
 function markListItem(li) {
   const first = li.firstChild;
@@ -149,7 +138,7 @@ function markListItem(li) {
   const m = first.textContent.match(LIST_MARKER_RE);
   if (!m) return;
   first.textContent = first.textContent.slice(m[0].length);
-  li.classList.add(LIST_MARKER_CLASS[m[1].toLowerCase()]);
+  li.classList.add(LIST_MARKER_CLASS[m[1]]);
 }
 
 export default function decorate(block) {
