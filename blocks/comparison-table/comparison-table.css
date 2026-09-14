@@ -207,7 +207,7 @@
 .comparison-table .cs-x::before,
 .comparison-table .cs-x::after {
   content: ""; position: absolute; left: 3px; top: 10px; width: 16px; height: 3px;
-  background: #000;
+  background: #000; border-radius: 2px;
 }
 
 .comparison-table .cs-x::before { transform: rotate(45deg); }
