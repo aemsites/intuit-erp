@@ -893,3 +893,22 @@ main.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail, .blog-c
   font-weight: 700;
   font-size: 28px;
 }
+
+/* Article-body CTA buttons. The global `a.button` (styles.css) is 44px tall with 30px of
+   horizontal padding, which reads noticeably tighter than the rest of the site: five blocks
+   (cta-band, event-cards, hero, media-text, and the blog pre-hero rules) already set their own
+   larger button height rather than inherit it. Article-body CTAs are not covered by any of those,
+   so they are sized here to the 56px/36px used for a prominent standalone CTA. */
+main.blog-article > .section > .default-content-wrapper > p.button-wrapper > a.button {
+  height: 56px;
+  padding: 0 36px;
+}
+
+/* …and give it room. `.blog-article > .section > .default-content-wrapper > p` above sets the
+   `margin` shorthand, which resets the top margin that
+   `main > .section > .default-content-wrapper > .button-wrapper` (styles.css) sets to 2rem — so a
+   CTA paragraph ends up with no separation from the copy above it. Sections carrying an authored
+   `padding-*` class are excluded: they already space themselves, and adding to that would double it. */
+.blog-article > .section:not([class*="padding-"]) > .default-content-wrapper > p.button-wrapper {
+  margin-top: 2.5rem;
+}
