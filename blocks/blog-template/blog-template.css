@@ -893,3 +893,13 @@ main.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail, .blog-c
   font-weight: 700;
   font-size: 28px;
 }
+
+/* Article-body CTA buttons. The global `a.button` (styles.css) is 44px tall with 30px of
+   horizontal padding, which reads noticeably tighter than the rest of the site: five blocks
+   (cta-band, event-cards, hero, media-text, and the blog pre-hero rules) already set their own
+   larger button height rather than inherit it. Article-body CTAs are not covered by any of those,
+   so they are sized here to the 56px/36px used for a prominent standalone CTA. */
+main.blog-article > .section > .default-content-wrapper > p.button-wrapper > a.button {
+  height: 56px;
+  padding: 0 36px;
+}
