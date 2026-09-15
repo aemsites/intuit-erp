@@ -588,6 +588,24 @@ main .section:empty {
   display: none;
 }
 
+/* Responsive section visibility. Author via Section Metadata → Style:
+   `mobile-only` (rendered only below 768px) or `desktop-only` (only at 768px
+   and up). For content that differs by breakpoint and can't be one responsive
+   element — e.g. a distinct mobile vs desktop form heading, where both copies
+   must exist as real DOM text. Works on page sections and on sections inside a
+   loaded fragment. */
+@media (width >= 768px) {
+  main .section.mobile-only {
+    display: none;
+  }
+}
+
+@media (width < 768px) {
+  main .section.desktop-only {
+    display: none;
+  }
+}
+
 .da-form-wrapper {
   display: none;
 }
