@@ -105,6 +105,27 @@
   line-height: 1.5;
 }
 
+/* Responsive heading/subtext: a form may author `headerMobile`/`subheaderMobile`
+   (see form.js), which render as `.form-header-mobile` / `.form-subheader-mobile`
+   and flag the block `.has-responsive-copy`. Desktop shows the normal copy; below
+   768px the mobile variant takes over. Inert for forms without the mobile keys. */
+.form .form-header-mobile,
+.form .form-subheader-mobile {
+  display: none;
+}
+
+@media (width < 768px) {
+  .form.has-responsive-copy .form-header:not(.form-header-mobile),
+  .form.has-responsive-copy .form-subheader:not(.form-subheader-mobile) {
+    display: none;
+  }
+
+  .form.has-responsive-copy .form-header-mobile,
+  .form.has-responsive-copy .form-subheader-mobile {
+    display: block;
+  }
+}
+
 .form .form-disclaimer {
   font-size: 12px;
   line-height: 16px;

@@ -134,6 +134,18 @@ describe('parseFormConfig', () => {
     expect(parseFormConfig(make([['formId', '1058'], ['recaptcha', 'false']])).recaptcha).toBe(false);
     expect(parseFormConfig(make([['formId', '1058']])).recaptcha).toBe(false);
   });
+
+  it('parses the mobile heading/subtext variants', () => {
+    const cfg = parseFormConfig(make([
+      ['formId', '1058'],
+      ['header', 'Let’s connect'],
+      ['headerMobile', 'Keep growing with a more powerful suite'],
+      ['subheader', 'Schedule a call to see if Intuit Enterprise Suite is a good fit.'],
+      ['subheaderMobile', 'Boost productivity with business and financial management in one solution.'],
+    ]));
+    expect(cfg.headerMobile).toBe('Keep growing with a more powerful suite');
+    expect(cfg.subheaderMobile).toBe('Boost productivity with business and financial management in one solution.');
+  });
 });
 
 describe('decorate — live Marketo form', () => {
@@ -142,6 +154,35 @@ describe('decorate — live Marketo form', () => {
     await decorate(block);
     expect(block.querySelector('form#mktoForm_1058')).not.toBeNull();
     expect(block.querySelector('.form-header').textContent).toBe('Let’s connect');
+  });
+
+  it('renders desktop + mobile heading/subtext variants and flags the block', async () => {
+    const block = make([
+      ['formId', '1058'],
+      ['header', 'Let’s connect'],
+      ['headerMobile', 'Keep growing with a more powerful suite'],
+      ['subheader', 'Schedule a call to see if Intuit Enterprise Suite is a good fit.'],
+      ['subheaderMobile', 'Boost productivity with business and financial management in one solution.'],
+    ]);
+    await decorate(block);
+    const headers = [...block.querySelectorAll('.form-header')];
+    expect(headers).toHaveLength(2);
+    expect(headers[0].classList.contains('form-header-mobile')).toBe(false);
+    expect(headers[0].textContent).toBe('Let’s connect');
+    expect(headers[1].classList.contains('form-header-mobile')).toBe(true);
+    expect(headers[1].textContent).toBe('Keep growing with a more powerful suite');
+    const subs = [...block.querySelectorAll('.form-subheader')];
+    expect(subs).toHaveLength(2);
+    expect(subs[1].classList.contains('form-subheader-mobile')).toBe(true);
+    expect(block.classList.contains('has-responsive-copy')).toBe(true);
+  });
+
+  it('adds no mobile variants or responsive flag when the mobile keys are absent', async () => {
+    const block = make([['formId', '1058'], ['header', 'Let’s connect']]);
+    await decorate(block);
+    expect(block.querySelectorAll('.form-header')).toHaveLength(1);
+    expect(block.querySelector('.form-header-mobile')).toBeNull();
+    expect(block.classList.contains('has-responsive-copy')).toBe(false);
   });
 
   it('injects the disclaimer (with markup) above the Marketo submit button', async () => {

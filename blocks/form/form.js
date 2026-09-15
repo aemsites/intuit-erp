@@ -57,7 +57,9 @@ const CONFIG_KEYS = [
   'downloadUrl',
   'successUrl',
   'header',
+  'headerMobile',
   'subheader',
+  'subheaderMobile',
   'disclaimer',
   'recaptcha',
   'buttonLabel',
@@ -75,7 +77,7 @@ const CONFIG_KEYS = [
   'marketoSyncAccount',
 ];
 
-const RICH_TEXT_KEYS = ['header', 'subheader', 'disclaimer'];
+const RICH_TEXT_KEYS = ['header', 'headerMobile', 'subheader', 'subheaderMobile', 'disclaimer'];
 
 // Marketo instance selection, keyed by the `marketo` page metadata. Prod unless the
 // page opts in; hostname is deliberately not consulted.
@@ -127,7 +129,9 @@ export function parseFormConfig(block) {
     downloadUrl: found.downloadUrl,
     successUrl: found.successUrl,
     header: found.header,
+    headerMobile: found.headerMobile,
     subheader: found.subheader,
+    subheaderMobile: found.subheaderMobile,
     disclaimer: found.disclaimer,
     recaptcha: found.recaptcha === 'true',
     buttonLabel: found.buttonLabel,
@@ -665,18 +669,28 @@ export default async function decorate(block) {
   if (config.downloadUrl) block.classList.add('download');
 
   const children = [];
-  if (config.header) {
-    const el = document.createElement('h3');
-    el.className = 'form-header';
-    setRichText(el, config.header);
-    children.push(el);
-  }
-  if (config.subheader) {
-    const el = document.createElement('p');
-    el.className = 'form-subheader';
-    setRichText(el, config.subheader);
-    children.push(el);
-  }
+  // Render the desktop copy, plus an optional mobile-only variant when the
+  // `headerMobile`/`subheaderMobile` keys are authored (some forms — e.g.
+  // /pricing/ — take different heading/subtext on small screens, matching prod).
+  // form.css swaps them at <768px via `.has-responsive-copy`; this stays inert
+  // for the forms that don't set the *Mobile keys.
+  const addCopy = (tag, cls, desktop, mobile) => {
+    if (desktop) {
+      const el = document.createElement(tag);
+      el.className = cls;
+      setRichText(el, desktop);
+      children.push(el);
+    }
+    if (mobile) {
+      const el = document.createElement(tag);
+      el.className = `${cls} ${cls}-mobile`;
+      setRichText(el, mobile);
+      children.push(el);
+      block.classList.add('has-responsive-copy');
+    }
+  };
+  addCopy('h3', 'form-header', config.header, config.headerMobile);
+  addCopy('p', 'form-subheader', config.subheader, config.subheaderMobile);
   const form = document.createElement('form');
   form.id = `mktoForm_${config.formId}`;
   children.push(form);
