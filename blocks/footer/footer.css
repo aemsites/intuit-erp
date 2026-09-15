@@ -27,9 +27,11 @@ footer .footer .container { max-width: var(--container); margin: 0 auto; padding
 .footer .footer-search { margin-top: 40px; }
 .footer .footer-search input { width: 300px; max-width: 100%; height: 40px; border: 1px solid var(--line); border-radius: 4px; padding: 0 14px; font-size: 14px; font-family: inherit; color: var(--text); }
 
-.footer .footer-sitemap { display: flex; align-items: center; gap: 24px; padding: 22px 0; margin-top: 34px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+/* grid mirrors the legal tier's 1fr 2fr 1fr so the country chip lands in the
+   same center column as the brand logos below it */
+.footer .footer-sitemap { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 40px; align-items: center; padding: 22px 0; margin-top: 34px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
 .footer .footer-sitemap a { color: var(--text-muted); }
-.footer .footer-sitemap .social { margin-left: auto; display: flex; align-items: center; gap: 20px; }
+.footer .footer-sitemap .social { display: flex; align-items: center; gap: 20px; justify-self: end; }
 .footer .footer-sitemap .social a { color: var(--text-muted); display: inline-flex; }
 .footer .footer-sitemap .social a:hover { color: var(--primary); }
 .footer .footer-sitemap .social svg { width: 21px; height: 21px; }
@@ -117,7 +119,7 @@ footer .footer .container { max-width: var(--container); margin: 0 auto; padding
   .footer .footer-search input { width: 100%; max-width: 320px; }
 
   /* sitemap + social on one line */
-  .footer .footer-sitemap { margin: 0; padding: 20px 0; justify-content: space-between; gap: 16px; border-bottom: 1px solid var(--line); }
+  .footer .footer-sitemap { display: flex; margin: 0; padding: 20px 0; justify-content: space-between; gap: 16px; border-bottom: 1px solid var(--line); }
   .footer .footer-sitemap .social { margin-left: 0; }
 
   /* legal tier: flatten the three columns and regroup via grid areas */

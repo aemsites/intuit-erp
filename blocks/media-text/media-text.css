@@ -870,6 +870,19 @@
         background-image: url("/icons/icon-circle-dash-fill-blueberry.svg");
       }
     }
+
+    /* authored per-line markers (see markListItem) override the card default */
+    ul li.li-check::before {
+      background-image: url("/icons/icon-circle-check-fill-blue.svg");
+    }
+
+    ul li.li-dash::before {
+      background-image: url("/icons/icon-circle-dash-fill-blueberry.svg");
+    }
+
+    ul li.li-x::before {
+      background-image: url("/icons/icon-circle-x-fill-blueberry.svg");
+    }
   }
 
   .media-text.compare .compare-card h3 {
