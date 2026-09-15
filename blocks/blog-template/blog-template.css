@@ -728,7 +728,7 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
 .case-study > .section > .default-content-wrapper h3 {
   font-size: 34px;
   line-height: 44px;
-  margin: 20px 0 20px;
+  margin: 20px 0;
 }
 
 @media (width >= 1024px) {
