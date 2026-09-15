@@ -903,3 +903,12 @@ main.blog-article > .section > .default-content-wrapper > p.button-wrapper > a.b
   height: 56px;
   padding: 0 36px;
 }
+
+/* …and give it room. `.blog-article > .section > .default-content-wrapper > p` above sets the
+   `margin` shorthand, which resets the top margin that
+   `main > .section > .default-content-wrapper > .button-wrapper` (styles.css) sets to 2rem — so a
+   CTA paragraph ends up with no separation from the copy above it. Sections carrying an authored
+   `padding-*` class are excluded: they already space themselves, and adding to that would double it. */
+.blog-article > .section:not([class*="padding-"]) > .default-content-wrapper > p.button-wrapper {
+  margin-top: 2.5rem;
+}
