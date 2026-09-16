@@ -98,6 +98,15 @@
   padding-bottom: 2rem;
 }
 
+.hero .hero-copy .hero-actions ~ p {
+  font-size: var(--heading-font-size-l);
+  font-family: var(--heading-font-family);
+  line-height: 1.2;
+  color: var(--agave);
+  margin: 0;
+  max-width: 14em;
+}
+
 .hero .hero-media {
   position: relative;
   isolation: isolate;
