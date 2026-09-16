@@ -487,6 +487,16 @@ button.button.accent:disabled:focus-visible {
   /* hides the label so the centred spinner reads cleanly; the spinner keeps its
      own colour via --modal-trigger-spinner-color, set in scripts/schedule-modal.js */
   color: transparent !important;
+
+  /* `aria-disabled="true"` (set alongside this class) has its own disabled-state
+     background/border on some buttons (e.g. a.button.primary) meant for a truly
+     inactive CTA, not a transiently loading one — left alone, it washes the button
+     out to a pale background the pinned spinner colour can't stay visible against.
+     Pin the button's own pre-loading background/border back via custom properties
+     set in scripts/schedule-modal.js so only the label (and not the button chrome)
+     changes while loading. */
+  background-color: var(--modal-trigger-original-bg) !important;
+  border-color: var(--modal-trigger-original-border) !important;
 }
 
 .modal-trigger-spinner {

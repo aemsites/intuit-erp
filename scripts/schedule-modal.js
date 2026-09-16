@@ -46,15 +46,28 @@ export async function withTriggerLoading(trigger, openFn) {
       else trigger.setAttribute('aria-disabled', wasDisabled);
     };
 
+    // Read the trigger's current look before `aria-disabled` (which some buttons —
+    // e.g. `a.button.primary` — already swap to a lighter disabled palette of their
+    // own) and `is-modal-loading` change anything: reading after would both race
+    // `a.button`'s own `color`/`background-color` transition and pin the spinner to
+    // that disabled palette instead of the button's real one.
+    const originalColor = getComputedStyle(trigger).color;
+    const originalBackground = getComputedStyle(trigger).backgroundColor;
+    const originalBorderColor = getComputedStyle(trigger).borderColor;
+
     trigger.setAttribute('aria-disabled', 'true');
     trigger.setAttribute('aria-busy', 'true');
     const spinner = document.createElement('span');
     spinner.className = 'modal-trigger-spinner';
     spinner.setAttribute('aria-hidden', 'true');
     // `is-modal-loading` blanks the label with `color: transparent` so the
-    // overlaid spinner reads cleanly; pin the spinner to the colour the trigger
-    // had beforehand, since `currentcolor` would go transparent with it.
-    spinner.style.setProperty('--modal-trigger-spinner-color', getComputedStyle(trigger).color);
+    // overlaid spinner reads cleanly; pin the spinner and the button's own chrome
+    // to the colours the trigger had beforehand, since `currentcolor` would go
+    // transparent with it and `aria-disabled`'s own styling would otherwise wash
+    // the button out underneath the spinner.
+    spinner.style.setProperty('--modal-trigger-spinner-color', originalColor);
+    trigger.style.setProperty('--modal-trigger-original-bg', originalBackground);
+    trigger.style.setProperty('--modal-trigger-original-border', originalBorderColor);
     trigger.classList.add('is-modal-loading');
     trigger.append(spinner);
 
@@ -62,6 +75,8 @@ export async function withTriggerLoading(trigger, openFn) {
       spinner.remove();
       trigger.classList.remove('is-modal-loading');
       trigger.removeAttribute('aria-busy');
+      trigger.style.removeProperty('--modal-trigger-original-bg');
+      trigger.style.removeProperty('--modal-trigger-original-border');
     };
 
     let dialog;

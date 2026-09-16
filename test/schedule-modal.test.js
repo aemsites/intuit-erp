@@ -258,6 +258,40 @@ describe('withTriggerLoading', () => {
     await done;
   });
 
+  it('pins the pre-loading colour and background, not the aria-disabled palette some buttons already have', async () => {
+    // a.button.primary swaps to a lighter disabled background/text on
+    // aria-disabled="true" — reading getComputedStyle() after setting that
+    // attribute (instead of before) pins the spinner to that washed-out palette
+    // instead of the button's real one, and it's the exact palette the label
+    // itself vanishes into.
+    const style = document.createElement('style');
+    style.textContent = `
+      a.test-cta { background-color: rgb(0, 37, 74); border-color: rgb(0, 37, 74); color: rgb(255, 255, 255); }
+      a.test-cta[aria-disabled="true"] { background-color: rgb(247, 248, 243); border-color: rgb(247, 248, 243); color: rgb(107, 108, 114); }
+    `;
+    document.head.appendChild(style);
+    const trigger = makeTrigger();
+    trigger.classList.add('test-cta');
+    document.body.appendChild(trigger);
+
+    let resolveOpen;
+    const opening = new Promise((r) => { resolveOpen = r; });
+    const done = withTriggerLoading(trigger, () => opening);
+    await flush();
+
+    const spinner = trigger.querySelector('.modal-trigger-spinner');
+    expect(spinner.style.getPropertyValue('--modal-trigger-spinner-color')).toBe('rgb(255, 255, 255)');
+    expect(trigger.style.getPropertyValue('--modal-trigger-original-bg')).toBe('rgb(0, 37, 74)');
+    expect(trigger.style.getPropertyValue('--modal-trigger-original-border')).toBe('rgb(0, 37, 74)');
+
+    resolveOpen({ addEventListener: vi.fn() });
+    await done;
+    expect(trigger.style.getPropertyValue('--modal-trigger-original-bg')).toBe('');
+    expect(trigger.style.getPropertyValue('--modal-trigger-original-border')).toBe('');
+    trigger.remove();
+    style.remove();
+  });
+
   it('restores a pre-existing aria-disabled state instead of clearing it', async () => {
     // the assessment CTA owns aria-disabled as a content state (gated on answers),
     // so the loading state must hand it back rather than leave the CTA enabled
