@@ -66,7 +66,17 @@ export async function withTriggerLoading(trigger, openFn) {
     // transparent with it and `aria-disabled`'s own styling would otherwise wash
     // the button out underneath the spinner.
     spinner.style.setProperty('--modal-trigger-spinner-color', originalColor);
-    trigger.style.setProperty('--modal-trigger-original-bg', originalBackground);
+    // An outline/"secondary" button has no fill of its own (background is
+    // transparent) — with the label blanked, that leaves nothing but a thin
+    // border and a small spinner, which reads as an empty box rather than a
+    // loading button. Tint the loading background with the button's own colour
+    // in that case only; filled buttons keep their real background untouched.
+    const isTransparentBg = /rgba?\([^)]*,\s*0\s*\)$/.test(originalBackground);
+    const [, r, g, b] = originalColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/) || [];
+    const loadingBackground = isTransparentBg && r
+      ? `rgba(${r}, ${g}, ${b}, 0.12)`
+      : originalBackground;
+    trigger.style.setProperty('--modal-trigger-original-bg', loadingBackground);
     trigger.style.setProperty('--modal-trigger-original-border', originalBorderColor);
     trigger.classList.add('is-modal-loading');
     trigger.append(spinner);
