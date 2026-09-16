@@ -445,11 +445,9 @@
   border: 3px solid var(--navy);
   border-right-color: transparent;
   border-radius: 50%;
-  animation: form-loading-spin 0.6s linear infinite;
-}
 
-@keyframes form-loading-spin {
-  to { transform: rotate(360deg); }
+  /* `modal-trigger-spin` (styles.css) — same rotation, defined once globally. */
+  animation: modal-trigger-spin 0.6s linear infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
