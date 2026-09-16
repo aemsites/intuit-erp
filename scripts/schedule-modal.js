@@ -37,29 +37,49 @@ export async function withTriggerLoading(trigger, openFn) {
     // Another trigger's modal is already active — no-op, no visual change here.
     if (isModalActive()) return;
 
+    // Some triggers own `aria-disabled` as a content state of their own (the
+    // assessment CTA gates on the visitor's answers), so put back whatever was
+    // there instead of clearing it outright.
+    const wasDisabled = trigger.getAttribute('aria-disabled');
+    const restoreDisabled = () => {
+      if (wasDisabled === null) trigger.removeAttribute('aria-disabled');
+      else trigger.setAttribute('aria-disabled', wasDisabled);
+    };
+
     trigger.setAttribute('aria-disabled', 'true');
+    trigger.setAttribute('aria-busy', 'true');
     const spinner = document.createElement('span');
     spinner.className = 'modal-trigger-spinner';
     spinner.setAttribute('aria-hidden', 'true');
+    // `is-modal-loading` blanks the label with `color: transparent` so the
+    // overlaid spinner reads cleanly; pin the spinner to the colour the trigger
+    // had beforehand, since `currentcolor` would go transparent with it.
+    spinner.style.setProperty('--modal-trigger-spinner-color', getComputedStyle(trigger).color);
+    trigger.classList.add('is-modal-loading');
     trigger.append(spinner);
+
+    const endLoading = () => {
+      spinner.remove();
+      trigger.classList.remove('is-modal-loading');
+      trigger.removeAttribute('aria-busy');
+    };
+
     let dialog;
     try {
       dialog = await openFn();
     } catch (err) {
       // Don't strand this trigger disabled forever on a construction error.
-      spinner.remove();
-      trigger.removeAttribute('aria-disabled');
+      endLoading();
+      restoreDisabled();
       throw err;
     }
-    spinner.remove();
+    endLoading();
     if (!dialog) {
       // Blocked by a concurrent open, or the open failed before a dialog existed.
-      trigger.removeAttribute('aria-disabled');
+      restoreDisabled();
       return;
     }
-    dialog.addEventListener('close', () => {
-      trigger.removeAttribute('aria-disabled');
-    }, { once: true });
+    dialog.addEventListener('close', restoreDisabled, { once: true });
   } finally {
     inFlightTriggers.delete(trigger);
   }

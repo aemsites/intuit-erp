@@ -224,4 +224,59 @@ describe('withTriggerLoading', () => {
     expect(trigger.hasAttribute('aria-disabled')).toBe(false);
     expect(trigger.querySelector('.modal-trigger-spinner')).toBeNull();
   });
+
+  it('marks the trigger busy and drops the flag once the dialog is open', async () => {
+    let resolveOpen;
+    const opening = new Promise((r) => { resolveOpen = r; });
+    const trigger = makeTrigger();
+
+    const done = withTriggerLoading(trigger, () => opening);
+    await flush();
+    // in-page `a.button` CTAs are overflow:hidden/nowrap, so the spinner is overlaid
+    // via this class rather than appended into the button's inline flow
+    expect(trigger.classList.contains('is-modal-loading')).toBe(true);
+    expect(trigger.getAttribute('aria-busy')).toBe('true');
+
+    resolveOpen({ addEventListener: vi.fn() });
+    await done;
+    expect(trigger.classList.contains('is-modal-loading')).toBe(false);
+    expect(trigger.hasAttribute('aria-busy')).toBe(false);
+  });
+
+  it('pins the spinner colour so the blanked label does not take it with it', async () => {
+    let resolveOpen;
+    const opening = new Promise((r) => { resolveOpen = r; });
+    const trigger = makeTrigger();
+    trigger.style.color = 'rgb(1, 2, 3)';
+
+    const done = withTriggerLoading(trigger, () => opening);
+    await flush();
+    const spinner = trigger.querySelector('.modal-trigger-spinner');
+    expect(spinner.style.getPropertyValue('--modal-trigger-spinner-color')).toBe('rgb(1, 2, 3)');
+
+    resolveOpen({ addEventListener: vi.fn() });
+    await done;
+  });
+
+  it('restores a pre-existing aria-disabled state instead of clearing it', async () => {
+    // the assessment CTA owns aria-disabled as a content state (gated on answers),
+    // so the loading state must hand it back rather than leave the CTA enabled
+    const trigger = makeTrigger();
+    trigger.setAttribute('aria-disabled', 'false');
+    const closeHandlers = [];
+    const dialog = { addEventListener: (evt, cb) => closeHandlers.push(cb) };
+
+    await withTriggerLoading(trigger, () => Promise.resolve(dialog));
+    expect(trigger.getAttribute('aria-disabled')).toBe('true');
+
+    closeHandlers.forEach((cb) => cb());
+    expect(trigger.getAttribute('aria-disabled')).toBe('false');
+  });
+
+  it('restores a pre-existing aria-disabled state when the open is blocked', async () => {
+    const trigger = makeTrigger();
+    trigger.setAttribute('aria-disabled', 'false');
+    await withTriggerLoading(trigger, () => Promise.resolve(null));
+    expect(trigger.getAttribute('aria-disabled')).toBe('false');
+  });
 });

@@ -534,14 +534,44 @@ export const getMappedHiddenFields = (configObj) => {
   );
 };
 
+// Marketo's Forms2 script + loadForm() take ~1-2s, and they only start once the
+// dialog is already open — so the trigger's own spinner (scripts/schedule-modal.js)
+// is long gone and the modal sits on an empty <form>. Bridge that gap with a
+// spinner in the form's place. Modal-only on purpose: page-embedded forms are part
+// of the document flow, where swapping a placeholder for the rendered form would
+// cost layout shift (see test/cls-stability.test.js).
+function addLoadingState(block) {
+  if (!block.closest('dialog')) return null;
+  const loading = document.createElement('div');
+  loading.className = 'form-loading';
+  loading.setAttribute('role', 'status');
+  loading.setAttribute('aria-label', 'Loading form');
+  loading.innerHTML = '<span class="form-loading-spinner" aria-hidden="true"></span>';
+  return loading;
+}
+
+function clearLoadingState(formEl) {
+  formEl.closest('.form')?.querySelector('.form-loading')?.remove();
+}
+
 async function embedMarketoForm(formEl, cfg, config, env) {
   // generate an load Forms2 script URL.
   const munchkin = config.munchkinId || cfg[MARKETO_MUNCHKIN_KEYS[env]] || cfg['marketo.munchkin'];
-  if (!munchkin) return;
+  if (!munchkin) {
+    clearLoadingState(formEl);
+    return;
+  }
   const host = `//${munchkin.toLowerCase()}.mktoweb.com`;
   const forms2Src = `${host}/js/forms2/js/forms2.min.js`;
 
-  const [placeholders] = await Promise.all([fetchPlaceholders(), loadScript(forms2Src)]);
+  let placeholders;
+  try {
+    [placeholders] = await Promise.all([fetchPlaceholders(), loadScript(forms2Src)]);
+  } catch (e) {
+    // Marketo unreachable — don't leave the modal spinning forever.
+    clearLoadingState(formEl);
+    throw e;
+  }
 
   // load munchkin tag
   if (config.enableMunchkinTag && getCookieValue('ccpa') === '1|1') {
@@ -549,6 +579,7 @@ async function embedMarketoForm(formEl, cfg, config, env) {
   }
 
   window.MktoForms2.loadForm(host, munchkin, config.formId, (form) => {
+    clearLoadingState(formEl);
     // Get random UUID
     const leadXref = (window.crypto?.randomUUID ? window.crypto.randomUUID() : createUUID());
     const ividVal = window?.utag_data?.ivid || getCookieValue('ivid') || '';
@@ -680,6 +711,8 @@ export default async function decorate(block) {
   const form = document.createElement('form');
   form.id = `mktoForm_${config.formId}`;
   children.push(form);
+  const loading = addLoadingState(block);
+  if (loading) children.push(loading);
   block.replaceChildren(...children);
 
   const cfg = await siteConfig();

@@ -427,3 +427,33 @@
 .grecaptcha-badge {
   visibility: hidden;
 }
+
+/* Placeholder shown in a modal-hosted form while Marketo's Forms2 script renders
+   the fields (~1-2s). Added in blocks/form/form.js, and modal-only so page-embedded
+   forms keep their current zero-shift layout. */
+.form .form-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 220px;
+}
+
+.form .form-loading-spinner {
+  box-sizing: border-box;
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--navy);
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: form-loading-spin 0.6s linear infinite;
+}
+
+@keyframes form-loading-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .form .form-loading-spinner {
+    animation-duration: 1.5s;
+  }
+}
