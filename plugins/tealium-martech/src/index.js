@@ -501,7 +501,11 @@ export default class TealiumMartech {
     // already does this before any script runs; this just layers in the instance's own data).
     window.utag_data = { ...(window.utag_data || {}), ...config.data };
     seedUdo();
-    this.env = resolveEnvironment();
+    // `cfg.env` is an explicit environment override (default: derive from the hostname). Used by the
+    // airlock rewire trial to force the `prod` Tealium profile on an aem.live preview branch so the
+    // four TBT-dominant vendor tags actually fire off-prod-host (airlock spec 050). Absent -> the
+    // normal hostname-derived behaviour (resolveEnvironment + its tests are unchanged).
+    this.env = cfg.env || resolveEnvironment();
     this.enabled = this.env !== null;
     window.utag_data = window.utag_data || {};
     window.utag_cfg_ovrd = window.utag_cfg_ovrd || {};

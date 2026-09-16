@@ -49,6 +49,11 @@ const MARTECH_PARAM = URL_PARAMS.get('martech');
 const MARTECH_PROVIDER = MARTECH_PARAM === 'off' ? 'off' : 'tealium';
 // `?martech=local`: load utag.js + the consent stack from /scripts/martech/ instead of the CDNs.
 const MARTECH_LOCAL = MARTECH_PARAM === 'local';
+// `?martech=airlock`: additive to tealium — install airlock's native-tag suppressor (neutralizes the
+// four TBT-dominant vendor runtimes GA4/Google Ads/Floodlight/Meta as utag injects them) and boot the
+// off-thread airlock runtime that re-emits their governed equivalents. utag still loads the untouched
+// ~20 tags + ECS chain. See scripts/airlock-gate.js (airlock spec 050).
+const MARTECH_AIRLOCK = MARTECH_PARAM === 'airlock';
 // Lab-only: keep most active tags in lazy, but move UIDs 9/15/23/27 to delayed_ready.
 const MARTECH_PHASE_SPLIT = URL_PARAMS.get('martech-phase-split') === 'on';
 // Lab-only: keep OneTrust in lazy while optionally moving utag.js to delayed.
@@ -503,6 +508,15 @@ async function loadEager(doc) {
   // FIXME: remove once the profile reads appVars / the runtime pathname. See ecs-enrich.js.
   if (MARTECH_PROVIDER !== 'off') installEcsEnrich();
 
+  // `?martech=airlock` (airlock spec 050): install the native-tag suppressor + boot the off-thread
+  // runtime HERE, before utag injects the four vendor runtimes (utag loads in loadLazy). Dynamic
+  // import so a normal load pulls no airlock code. Awaited so the suppressor is patched in before
+  // loadLazy runs. Additive to the Tealium block below — utag still loads the untouched tail.
+  if (MARTECH_AIRLOCK) {
+    const { installAirlockRewire } = await import('./airlock-gate.js');
+    await installAirlockRewire();
+  }
+
   // Gated conversion pages (e.g. /webinar-* form landings) opt out of the global
   // header/footer via `hide-header` / `hide-footer` metadata
   if (['true', 'yes', 'hide'].includes((getMetadata('hide-header') || '').trim().toLowerCase())) {
@@ -519,6 +533,12 @@ async function loadEager(doc) {
       phaseSplit: MARTECH_PHASE_SPLIT,
       loadPhase: TEALIUM_LOAD_PHASE,
       tagUids: TEALIUM_TAG_UIDS,
+      // AIRLOCK TRIAL BRANCH ONLY (airlock spec 050): force the `prod` Tealium profile so the four
+      // TBT-dominant vendor tags fire on the aem.live preview branch (not just erp.intuit.com),
+      // enabling a same-host before (/) vs after (/?martech=airlock) comparison. REVERT BEFORE MERGE —
+      // this makes every preview load fire the PROD analytics/ads beacons. Caveat: whether all four
+      // tags actually fire off their prod host also depends on the prod profile's own load rules.
+      env: 'prod',
     });
     tealium.eager();
   }
