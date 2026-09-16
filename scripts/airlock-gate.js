@@ -73,7 +73,7 @@ export async function installAirlockRewire({ onDiagnostic } = {}) {
 
   // (2) Boot the off-thread runtime that re-emits the four vendors' governed beacons. `ga4-gtag`
   // auto-sources client/session id from the `_ga` cookie. OneTrust-gated end-to-end (see the map above).
-  return boot(
+  const handle = await boot(
     {
       connectors: [
         { type: 'ga4-gtag', measurementId: GA4_MEASUREMENT_ID },
@@ -85,4 +85,14 @@ export async function installAirlockRewire({ onDiagnostic } = {}) {
     },
     { onDiagnostic },
   );
+
+  // (3) Emit the page-load event. airlock's boot does NOT auto-capture a page_view
+  // (adapters/eds/index.js: "Boot still does NOT auto-capture a page_view") — it is push-driven —
+  // so the adopter must push the page-load event the native vendor tags fire automatically. Held
+  // under pending/denied OneTrust consent and flushed when consent resolves to granted (the MVP8
+  // accept-flow), mirroring the container's Consent-Mode-v2 behaviour. Verified live on the deployed
+  // branch: with consent granted, this drives all four vendors' beacons (g/collect, ccm/collect,
+  // ad.doubleclick.net/activity, facebook.com/tr).
+  handle.push({ event: 'page_view', page_location: window.location.href, page_title: document.title });
+  return handle;
 }
