@@ -963,6 +963,15 @@ p.button-wrapper {
   margin: 0;
 }
 
+/* Multi-CTA groups in default content stack full-width on mobile. Flex items
+   ignore the section's text-align, so they'd otherwise wrap left-aligned. */
+@media (width < 768px) {
+  main > .section > .default-content-wrapper > .button-wrapper.buttons-multi {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
 body {
   font-weight: 400;
 }
