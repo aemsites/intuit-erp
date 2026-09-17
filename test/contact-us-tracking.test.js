@@ -8,7 +8,10 @@ import {
 const { metadata } = vi.hoisted(() => ({ metadata: {} }));
 
 vi.mock('../scripts/aem.js', () => ({ getMetadata: (name) => metadata[name] || '' }));
-vi.mock('../scripts/schedule-modal.js', () => ({ openScheduleModal: vi.fn() }));
+vi.mock('../scripts/schedule-modal.js', () => ({
+  openScheduleModal: vi.fn(),
+  withTriggerLoading: vi.fn((trigger, openFn) => openFn()),
+}));
 
 const { default: initContactUs } = await import('../blocks/contact-us/contact-us.js');
 
@@ -68,6 +71,35 @@ describe('contact-us tracking', () => {
     stampInteraction({ target: support });
 
     expect(support.getAttribute('data-ui-object')).toBe('button');
+  });
+
+  it('wraps the blog schedule CTA with withTriggerLoading, closing the widget first', async () => {
+    window.history.replaceState(null, '', '/blog/construction/automation-in-construction');
+    await initContactUs();
+    const { openScheduleModal, withTriggerLoading } = await import('../scripts/schedule-modal.js');
+    const trigger = document.querySelector('.cu-bubble');
+    const panel = document.querySelector('.cu-panel');
+    const schedule = document.querySelector('.cu-schedule');
+
+    trigger.click();
+    expect(panel.hidden).toBe(false);
+
+    schedule.click();
+    expect(panel.hidden).toBe(true);
+    expect(withTriggerLoading).toHaveBeenCalledTimes(1);
+    expect(withTriggerLoading.mock.calls[0][0]).toBe(schedule);
+    expect(openScheduleModal).toHaveBeenCalledTimes(1);
+  });
+
+  it('ignores a click on the blog schedule CTA while it is already aria-disabled', async () => {
+    window.history.replaceState(null, '', '/blog/construction/automation-in-construction');
+    await initContactUs();
+    const { withTriggerLoading } = await import('../scripts/schedule-modal.js');
+    const schedule = document.querySelector('.cu-schedule');
+    schedule.setAttribute('aria-disabled', 'true');
+
+    schedule.click();
+    expect(withTriggerLoading).not.toHaveBeenCalled();
   });
 
   it('asks LivePerson to paint once when a chat-enabled panel opens', async () => {

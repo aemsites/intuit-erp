@@ -6,20 +6,24 @@ vi.mock('../scripts/aem.js', () => ({
   getMetadata: vi.fn(() => ''),
 }));
 vi.mock('../blocks/modal/modal.js', () => ({
-  openModal: vi.fn(() => Promise.resolve()),
+  openModal: vi.fn(() => Promise.resolve({ addEventListener: vi.fn() })),
+  isModalActive: vi.fn(() => false),
 }));
 
 // eslint-disable-next-line import/order
 import { getMetadata } from '../scripts/aem.js';
 // eslint-disable-next-line import/order
-import { openModal } from '../blocks/modal/modal.js';
+import { openModal, isModalActive } from '../blocks/modal/modal.js';
 // eslint-disable-next-line import/order
-import { bindScheduleLinks, openScheduleModal } from '../scripts/schedule-modal.js';
+import { bindScheduleLinks, openScheduleModal, withTriggerLoading } from '../scripts/schedule-modal.js';
 
 const flush = () => new Promise((r) => { setTimeout(r, 0); });
 
 beforeEach(() => {
   getMetadata.mockReturnValue('');
+  isModalActive.mockReturnValue(false);
+  openModal.mockReset();
+  openModal.mockImplementation(() => Promise.resolve({ addEventListener: vi.fn() }));
 });
 
 describe('openScheduleModal', () => {
@@ -140,5 +144,84 @@ describe('bindScheduleLinks', () => {
     expect(preventDefault).not.toHaveBeenCalled();
     expect(tracking).toHaveBeenCalledTimes(1);
     container.remove();
+  });
+
+  it('ignores a click while the trigger is already aria-disabled', async () => {
+    const container = makeContainer('#schedule');
+    bindScheduleLinks(container);
+    const link = container.querySelector('a');
+    link.setAttribute('aria-disabled', 'true');
+    link.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    await flush();
+    expect(openModal).not.toHaveBeenCalled();
+  });
+});
+
+describe('withTriggerLoading', () => {
+  function makeTrigger() {
+    const trigger = document.createElement('a');
+    trigger.textContent = 'Schedule a call';
+    return trigger;
+  }
+
+  it('shows a spinner and aria-disabled while opening, then keeps it disabled until close', async () => {
+    let resolveOpen;
+    const opening = new Promise((r) => { resolveOpen = r; });
+    const closeHandlers = [];
+    const dialog = { addEventListener: (evt, cb) => closeHandlers.push(cb) };
+    const trigger = makeTrigger();
+
+    const done = withTriggerLoading(trigger, () => opening);
+    await flush();
+    expect(trigger.getAttribute('aria-disabled')).toBe('true');
+    expect(trigger.querySelector('.modal-trigger-spinner')).not.toBeNull();
+
+    resolveOpen(dialog);
+    await done;
+    expect(trigger.querySelector('.modal-trigger-spinner')).toBeNull();
+    expect(trigger.getAttribute('aria-disabled')).toBe('true');
+
+    closeHandlers.forEach((cb) => cb());
+    expect(trigger.hasAttribute('aria-disabled')).toBe(false);
+  });
+
+  it('calls openFn at most once for two concurrent calls on the SAME trigger', async () => {
+    // Regression: PR review found a same-trigger race (see PR comment for details).
+    const trigger = makeTrigger();
+    const dialog = { addEventListener: vi.fn() };
+    const openFn = vi.fn(() => Promise.resolve(dialog));
+
+    await Promise.all([
+      withTriggerLoading(trigger, openFn),
+      withTriggerLoading(trigger, openFn),
+    ]);
+
+    expect(openFn).toHaveBeenCalledTimes(1);
+    expect(trigger.getAttribute('aria-disabled')).toBe('true');
+  });
+
+  it('does nothing when a modal is already active elsewhere', async () => {
+    isModalActive.mockReturnValue(true);
+    const trigger = makeTrigger();
+    const openFn = vi.fn();
+    await withTriggerLoading(trigger, openFn);
+    expect(openFn).not.toHaveBeenCalled();
+    expect(trigger.hasAttribute('aria-disabled')).toBe(false);
+    expect(trigger.querySelector('.modal-trigger-spinner')).toBeNull();
+  });
+
+  it('re-enables immediately when openFn resolves to null (blocked/failed)', async () => {
+    const trigger = makeTrigger();
+    await withTriggerLoading(trigger, () => Promise.resolve(null));
+    expect(trigger.hasAttribute('aria-disabled')).toBe(false);
+    expect(trigger.querySelector('.modal-trigger-spinner')).toBeNull();
+  });
+
+  it('re-enables and rethrows when openFn throws, instead of leaving the trigger stuck disabled', async () => {
+    const trigger = makeTrigger();
+    const boom = new Error('boom');
+    await expect(withTriggerLoading(trigger, () => Promise.reject(boom))).rejects.toThrow('boom');
+    expect(trigger.hasAttribute('aria-disabled')).toBe(false);
+    expect(trigger.querySelector('.modal-trigger-spinner')).toBeNull();
   });
 });

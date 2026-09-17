@@ -553,11 +553,19 @@ async function loadEager(doc) {
     // and swap the first/LCP section — both before reveal. No-op without an experience response.
     await applyEagerLayers(doc, pageSwapped);
     document.body.classList.add('appear');
+    const firstSection = main.querySelector('.section');
     await Promise.all([
       // Uncomment with the AEP block above (applies eager martech decisions).
       // martechLoadedPromise ? martechLoadedPromise.then(applyMartechEager) : Promise.resolve(),
-      loadSection(main.querySelector('.section'), waitForFirstImage),
+      loadSection(firstSection, waitForFirstImage),
     ]);
+    // The first section is visible/interactive as soon as this resolves, well before
+    // the full-page bindScheduleLinks call in loadLazy — bind its #schedule CTAs now so
+    // an early click on an above-the-fold CTA (e.g. the hero) isn't a no-op default
+    // navigation. Idempotent: loadLazy's later call skips anchors already bound here.
+    if (firstSection) {
+      import('./schedule-modal.js').then(({ bindScheduleLinks }) => bindScheduleLinks(firstSection)).catch(() => {});
+    }
   }
 
   try {

@@ -97,7 +97,9 @@ export default async function decorate(widget) {
       return;
     }
 
-    const { showModal, block } = await createModal([...fragment.childNodes]);
+    const result = await createModal([...fragment.childNodes]);
+    if (!result) return; // a modal is already active elsewhere — skip this survey trigger
+    const { showModal, block } = result;
     const dialog = block.querySelector('dialog');
     dialog.classList.add('web-survey-dialog');
     const accept = block.querySelector('.modal-content a.button')

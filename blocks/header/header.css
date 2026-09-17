@@ -179,6 +179,11 @@ body.nav-scroll-lock {
    border-color: var(--navy-hover);
 }
 
+.header .nav-cta[aria-disabled="true"] {
+   pointer-events: none;
+   opacity: 0.6;
+}
+
 .header .nav-cta-text {
    position: relative;
    right: 0;

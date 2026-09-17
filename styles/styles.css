@@ -475,6 +475,56 @@ button.button.accent:disabled:focus-visible {
   color: var(--dark-color);
 }
 
+/* brief "modal is loading" state (scripts/schedule-modal.js's withTriggerLoading) — keeps
+   each variant's own color and just dims it, instead of the [aria-disabled="true"] rules
+   above (which wash out to --light-color, a look meant for a genuinely-disabled CTA like
+   blocks/assessment/assessment.js's quiz-gated one, not a spinner lasting a second) */
+a.button.primary.modal-trigger-loading[aria-disabled="true"] {
+  background-color: var(--text-color);
+  border-color: var(--text-color);
+  color: var(--background-color);
+  opacity: 0.6;
+}
+
+a.button.secondary.modal-trigger-loading[aria-disabled="true"] {
+  background-color: transparent;
+  border-color: var(--text-color);
+  color: var(--text-color);
+  opacity: 0.6;
+}
+
+a.button.accent.modal-trigger-loading[aria-disabled="true"] {
+  background-color: var(--link-color);
+  border-color: var(--link-color);
+  color: var(--background-color);
+  opacity: 0.6;
+}
+
+/* loading spinner shown on any CTA that opens the shared modal (blocks/modal/modal.js)
+   while it's being fetched/built — uses currentcolor so it matches any button variant */
+.modal-trigger-spinner {
+  display: inline-block;
+  box-sizing: border-box;
+  width: 0.9em;
+  height: 0.9em;
+  margin-inline-start: 0.5em;
+  border: 2px solid currentcolor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  vertical-align: middle;
+  animation: modal-trigger-spin 0.6s linear infinite;
+}
+
+@keyframes modal-trigger-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal-trigger-spinner {
+    animation-duration: 1.5s;
+  }
+}
+
 main img {
   max-width: 100%;
   width: auto;

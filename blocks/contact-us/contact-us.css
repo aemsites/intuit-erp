@@ -186,6 +186,11 @@
   color: #fff;
 }
 
+.contact-us .cu-btn[aria-disabled="true"] {
+  pointer-events: none;
+  opacity: 0.6;
+}
+
 /* mobile: CTAs stretch full width */
 .contact-us .cu-call {
   align-self: stretch;
