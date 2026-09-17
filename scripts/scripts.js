@@ -513,8 +513,15 @@ async function loadEager(doc) {
   // import so a normal load pulls no airlock code. Awaited so the suppressor is patched in before
   // loadLazy runs. Additive to the Tealium block below — utag still loads the untouched tail.
   if (MARTECH_AIRLOCK) {
-    const { installAirlockRewire } = await import('./airlock-gate.js');
-    await installAirlockRewire();
+    // Guarded: loadEager is awaited by loadPage, so a failed airlock arm (bad import, boot error)
+    // must NOT halt the page's own martech (utag + the untouched tail). Log and continue.
+    try {
+      const { installAirlockRewire } = await import('./airlock-gate.js');
+      await installAirlockRewire();
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error('[airlock] rewire arm failed to install; native martech continues:', e);
+    }
   }
 
   // Gated conversion pages (e.g. /webinar-* form landings) opt out of the global
