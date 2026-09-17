@@ -26,6 +26,16 @@ export async function openScheduleModal() {
 // Same-trigger reentrancy lock, set synchronously before withTriggerLoading's first await.
 const inFlightTriggers = new WeakSet();
 
+// Marks the brief "modal is loading" state, distinct from aria-disabled's own
+// (pre-existing) CSS: `a.button[aria-disabled="true"]` in styles.css washes a button
+// out to --light-color for a genuinely-disabled look (relied on by, e.g.,
+// blocks/assessment/assessment.js's quiz-gated CTA). That's wrong for a loading spinner
+// that lasts a second — this class gets its own, milder styling instead.
+function clearTriggerLoading(trigger) {
+  trigger.removeAttribute('aria-disabled');
+  trigger.classList.remove('modal-trigger-loading');
+}
+
 // Shared loading/disabled UI for any element that opens the shared modal.
 // `openFn` must resolve to the opened <dialog>, or null if a modal was already active.
 export async function withTriggerLoading(trigger, openFn) {
@@ -38,6 +48,7 @@ export async function withTriggerLoading(trigger, openFn) {
     if (isModalActive()) return;
 
     trigger.setAttribute('aria-disabled', 'true');
+    trigger.classList.add('modal-trigger-loading');
     const spinner = document.createElement('span');
     spinner.className = 'modal-trigger-spinner';
     spinner.setAttribute('aria-hidden', 'true');
@@ -48,17 +59,17 @@ export async function withTriggerLoading(trigger, openFn) {
     } catch (err) {
       // Don't strand this trigger disabled forever on a construction error.
       spinner.remove();
-      trigger.removeAttribute('aria-disabled');
+      clearTriggerLoading(trigger);
       throw err;
     }
     spinner.remove();
     if (!dialog) {
       // Blocked by a concurrent open, or the open failed before a dialog existed.
-      trigger.removeAttribute('aria-disabled');
+      clearTriggerLoading(trigger);
       return;
     }
     dialog.addEventListener('close', () => {
-      trigger.removeAttribute('aria-disabled');
+      clearTriggerLoading(trigger);
     }, { once: true });
   } finally {
     inFlightTriggers.delete(trigger);
