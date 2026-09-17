@@ -63,7 +63,7 @@
 /* Always visible, not just a no-JS fallback: the frame is CSP-blocked off an
    intuit.com origin, and a reader who wants the file still needs the link. */
 .embed.embed-pdf .embed-fallback {
-  margin: 12px 0 0;
+  margin: var(--space-xs) 0 0;
   text-align: center;
   font-size: 14px;
 }

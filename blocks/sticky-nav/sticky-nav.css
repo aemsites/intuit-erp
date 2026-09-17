@@ -45,11 +45,11 @@ body.sticky-nav-active .header .ies-secondary-nav {
 
 .sticky-nav ul {
   display: flex;
-  gap: 40px;
+  gap: var(--space-2xl);
   overflow-x: auto;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 var(--space-l);
   list-style: none;
   scrollbar-width: none;
 }
@@ -65,9 +65,9 @@ body.sticky-nav-active .header .ies-secondary-nav {
 .sticky-nav a {
   position: relative;
   display: block;
-  padding: 16px 0;
+  padding: var(--space-s) 0;
   font-size: 16px;
-  line-height: 1.2;
+  line-height: var(--line-height-xs);
   color: var(--text-color);
   text-decoration: none;
   white-space: nowrap;
@@ -79,7 +79,7 @@ body.sticky-nav-active .header .ies-secondary-nav {
 
 .sticky-nav a.active {
   color: var(--heading-color);
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
 }
 
 .sticky-nav a.active::after {

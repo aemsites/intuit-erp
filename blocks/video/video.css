@@ -11,9 +11,9 @@
 .video-container .default-content-wrapper h2 {
   font-size: 30px;
   line-height: 1.13;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   text-align: left;
-  margin: 0 0 24px;
+  margin: 0 0 var(--space-l);
 }
 
 /* The source presents the in-article video on a full-width light-grey band
@@ -23,7 +23,7 @@
    block's own 2rem margins are reset here. Uses `main .section.video-container`
    because `main .section { padding: 0 }` in styles.css beats a single class. */
 main .section.video-container {
-  background: #f4f5f8;
+  background: var(--light-gray);
   padding: 56px 0;
 }
 
@@ -55,7 +55,7 @@ main .section.video-container {
 .video .video-preview {
   position: relative;
   aspect-ratio: 16 / 9;
-  border-radius: 8px;
+  border-radius: var(--radius-m);
   overflow: hidden;
   cursor: pointer;
   background: var(--navy);
@@ -75,7 +75,7 @@ main .section.video-container {
   width: 64px;
   height: 64px;
   margin: auto;
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   background: #fff;
   box-shadow: 0 4px 30px rgb(0 0 0 / 15%);
 }
@@ -111,15 +111,15 @@ main .section.video-container {
   display: inline-flex;
   align-items: center;
   align-self: flex-end;
-  gap: 8px;
-  margin: 16px 0 0;
+  gap: var(--space-2xs);
+  margin: var(--space-s) 0 0;
   padding: 0;
   border: 0;
   background: none;
   color: var(--primary);
   font-family: inherit;
   font-size: 16px;
-  line-height: 1.3;
+  line-height: var(--line-height-s);
   cursor: pointer;
 }
 
@@ -162,7 +162,7 @@ main .section.video-container {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
+  padding: var(--space-l);
   background: rgb(0 0 0 / 80%);
 }
 
@@ -176,7 +176,7 @@ main .section.video-container {
   width: 100%;
   height: 100%;
   border: 0;
-  border-radius: 8px;
+  border-radius: var(--radius-m);
 }
 
 .video-modal-close {
@@ -186,11 +186,11 @@ main .section.video-container {
   width: 32px;
   height: 32px;
   border: 0;
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   background: rgb(255 255 255 / 15%);
   color: #fff;
   font-size: 24px;
-  line-height: 1;
+  line-height: var(--line-height-none);
   cursor: pointer;
 }
 

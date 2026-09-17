@@ -16,10 +16,10 @@
 
 .form-container .default-content-wrapper h2 {
   font-size: 28px;
-  line-height: 1.3;
-  font-weight: 700;
+  line-height: var(--line-height-s);
+  font-weight: var(--font-weight-bold);
   color: var(--heading);
-  margin: 0 0 20px;
+  margin: 0 0 var(--space-m);
 }
 
 .form-container .default-content-wrapper p {
@@ -27,7 +27,7 @@
   color: var(--heading);
   max-width: 44em;
   margin: 0 auto 12px;
-  line-height: 1.3;
+  line-height: var(--line-height-s);
 }
 
 .form-container.large-text .default-content-wrapper p {
@@ -44,10 +44,10 @@
 
 .form .form-header {
   font-size: 24px;
-  line-height: 1.2;
-  font-weight: 400;
+  line-height: var(--line-height-xs);
+  font-weight: var(--font-weight-normal);
   color: var(--heading);
-  margin: 0 0 8px;
+  margin: 0 0 var(--space-2xs);
 }
 
 /* Shown in place of the form once it has been submitted (see showThankYou in
@@ -64,7 +64,7 @@
   box-sizing: border-box;
   width: 100%;
   margin: auto;
-  padding: 40px;
+  padding: var(--space-2xl);
   text-align: center;
 }
 
@@ -86,14 +86,14 @@
 .form .form-success .form-success-heading {
   font-size: 28px;
   line-height: 1.2857; /* 36px */
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   color: var(--heading);
-  margin: 0 0 20px;
+  margin: 0 0 var(--space-m);
 }
 
 .form .form-success p:not(.form-success-heading) {
   font-size: 16px;
-  line-height: 1.5; /* 24px */
+  line-height: var(--line-height-l); /* 24px */
   min-width: 0;
   margin: 0;
 }
@@ -101,8 +101,8 @@
 .form .form-subheader {
   font-size: 15px;
   color: var(--text-muted);
-  margin: 0 0 16px;
-  line-height: 1.5;
+  margin: 0 0 var(--space-s);
+  line-height: var(--line-height-l);
 }
 
 .form .form-disclaimer {
@@ -115,7 +115,7 @@
 }
 
 .form .form-disclaimer p {
-  margin: 0 0 20px;
+  margin: 0 0 var(--space-m);
 }
 
 .form .form-disclaimer p:last-child {
@@ -135,7 +135,7 @@
 .form .mktoForm>.form-disclaimer {
   flex: 1 0 100%;
   max-width: none;
-  margin: 4px 0 16px;
+  margin: var(--space-3xs) 0 var(--space-s);
   text-align: left;
 }
 
@@ -146,7 +146,7 @@
 }
 
 .form.disclaimer-below .mktoForm>.form-disclaimer {
-  margin-top: 16px;
+  margin-top: var(--space-s);
 }
 
 .form:not(.hero) {
@@ -179,7 +179,7 @@
 }
 
 .form:not(.hero) .mktoForm>.mktoFormRow {
-  margin-bottom: 16px;
+  margin-bottom: var(--space-s);
 }
 
 
@@ -201,7 +201,7 @@
   width: 100% !important;
   height: 49px;
   box-sizing: border-box;
-  background: #f4f5f8 !important;
+  background: var(--light-gray) !important;
   border: 0 !important;
   border-bottom: 1px solid var(--dark-color) !important;
   border-radius: 4px 4px 0 0 !important;
@@ -225,7 +225,7 @@
 
 .form .mktoForm .mktoButtonRow {
   width: 100%;
-  margin-top: 8px;
+  margin-top: var(--space-2xs);
 }
 
 .form .mktoForm .mktoButtonWrap {
@@ -265,12 +265,12 @@
 
 .hero-form .mktoForm .mktoButtonRow,
 .modal .mktoForm .mktoButtonRow {
-  margin-top: 12px;
+  margin-top: var(--space-xs);
 }
 
 .hero-form .form-wrapper+.default-content-wrapper,
 .modal .form-wrapper+.default-content-wrapper {
-  margin-top: 20px;
+  margin-top: var(--space-m);
 }
 
 .form-container .form {
@@ -289,7 +289,7 @@
     display: flex;
     flex-wrap: wrap;
     align-items: flex-start;
-    gap: 16px;
+    gap: var(--space-s);
   }
 
   .form.horizontal .mktoForm>.mktoFormRow {
@@ -337,13 +337,13 @@
   border-radius: var(--radius-card);
   max-width: none;
   margin: 0 auto;
-  padding: 24px;
+  padding: var(--space-l);
   box-shadow: 0 12px 32px rgb(0 0 0 / 12%);
 }
 
 .form.card .form-header {
   font-size: var(--heading-font-size-m);
-  margin: 0 0 8px;
+  margin: 0 0 var(--space-2xs);
 }
 
 .section.form-container:has(.form.download) {
@@ -361,7 +361,7 @@
 .section.form-container.two-col:has(.default-content-wrapper) {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 32px;
+  gap: var(--space-xl);
   align-items: start;
 }
 
@@ -373,8 +373,8 @@
 .section.form-container:has(.form.download) .default-content-wrapper h2,
 .section.form-container:has(.form.download) .default-content-wrapper h3 {
   font-size: 32px;
-  font-weight: 700;
-  margin: 0 0 16px;
+  font-weight: var(--font-weight-bold);
+  margin: 0 0 var(--space-s);
 }
 
 .section.form-container:has(.form.download) .default-content-wrapper li strong {
@@ -388,16 +388,16 @@
 .form.download {
   background: #fff;
   border-radius: var(--radius-card);
-  padding: 32px;
+  padding: var(--space-xl);
   max-width: none;
   box-shadow: 0 20px 50px rgb(0 0 0 / 25%);
 }
 
 .form.download .form-header {
   font-size: 22px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   color: var(--heading);
-  margin: 0 0 20px;
+  margin: 0 0 var(--space-m);
 }
 
 @media (width >=768px) {
@@ -407,7 +407,7 @@
 
   .form.card {
     max-width: 420px;
-    padding: 32px;
+    padding: var(--space-xl);
   }
 }
 
@@ -415,7 +415,7 @@
   .section.form-container:has(.form.download):has(.default-content-wrapper),
   .section.form-container.two-col:has(.default-content-wrapper) {
     grid-template-columns: 1.4fr 1fr;
-    gap: 48px;
+    gap: var(--space-3xl);
     padding-inline: max(24px, calc((100% - var(--container)) / 2));
   }
 

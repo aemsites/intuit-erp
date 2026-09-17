@@ -1,22 +1,22 @@
 /* stat-band — stat figures (index light carousel, pricing dark static grid). Lifted from erp.intuit.com #outcomes-slider / .perf */
 
 /* --- default (index): sky cards on white, paged carousel --- */
-.section.stat-band-container { background: #fff; padding: 40px 0; }
+.section.stat-band-container { background: #fff; padding: var(--space-2xl) 0; }
 
 .stat-band-container .default-content-wrapper h2 {
-  font-size: 48px; line-height: 1.4; font-weight: 400; text-align: center; color: var(--text-color);
-  margin: 0 0 48px;
+  font-size: 48px; line-height: var(--line-height-m); font-weight: var(--font-weight-normal); text-align: center; color: var(--text-color);
+  margin: 0 0 var(--space-3xl);
 }
 
 /* footnote/disclaimer — JS moves it inside the block, above the controls */
 .stat-band-container .default-content-wrapper p,
 .stat-band .stats-foot {
-  text-align: center; font-size: 12px; line-height: 1.5; color: #000; margin: 12px 0;
+  text-align: center; font-size: 12px; line-height: var(--line-height-l); color: #000; margin: var(--space-xs) 0;
 }
 
 .stat-band { --cards-per-view: 4; }
 .stat-band .stats-viewport { width: 100%; overflow: hidden; }
-.stat-band .stats-track { display: flex; gap: 20px; transition: transform 0.4s ease; }
+.stat-band .stats-track { display: flex; gap: var(--space-m); transition: transform 0.4s ease; }
 
 .stat-band .stats-track .stat {
   flex: 0 0 calc((100% - (var(--cards-per-view) - 1) * 20px) / var(--cards-per-view));
@@ -24,34 +24,34 @@
 }
 
 .stat-band .stat {
-  box-sizing: border-box; background: #eff4f9; border-radius: 16px; padding: 20px;
-  display: flex; flex-direction: column; gap: 16px;
+  box-sizing: border-box; background: var(--wintermint); border-radius: var(--radius-xl); padding: var(--space-m);
+  display: flex; flex-direction: column; gap: var(--space-s);
 }
 
 /* number+desc group, then company+segment group — the 16px card gap sits
    between the two groups, so each element's own margin stays 0 */
 .stat-band .stat-head { display: block; }
-.stat-band .stat-foot { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
-.stat-band .stat-num { font-size: 60px; line-height: 1.2; font-weight: 400; letter-spacing: -0.03em; color: #0052ea; margin: 0; }
-.stat-band .stat-desc { font-size: 16px; line-height: 1.5; color: #404b52; margin: 0; }
-.stat-band .stat-co { font-size: 14px; line-height: 1.5; font-weight: 600; color: #000; margin: 0; }
-.stat-band .stat-seg { font-size: 12px; line-height: 1.2; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: #404b52; margin: 0; }
+.stat-band .stat-foot { display: flex; flex-direction: column; gap: var(--space-2xs); align-items: flex-start; }
+.stat-band .stat-num { font-size: 60px; line-height: var(--line-height-xs); font-weight: var(--font-weight-normal); letter-spacing: -0.03em; color: #0052ea; margin: 0; }
+.stat-band .stat-desc { font-size: 16px; line-height: var(--line-height-l); color: #404b52; margin: 0; }
+.stat-band .stat-co { font-size: 14px; line-height: var(--line-height-l); font-weight: var(--font-weight-semibold); color: #000; margin: 0; }
+.stat-band .stat-seg { font-size: 12px; line-height: var(--line-height-xs); font-weight: var(--font-weight-medium); letter-spacing: 0.1em; text-transform: uppercase; color: #404b52; margin: 0; }
 
-.stat-band .stats-controls { display: flex; align-items: center; justify-content: flex-end; gap: 24px; margin-top: 24px; }
-.stat-band .stats-dots { display: flex; gap: 20px; align-items: center; }
+.stat-band .stats-controls { display: flex; align-items: center; justify-content: flex-end; gap: var(--space-l); margin-top: var(--space-l); }
+.stat-band .stats-dots { display: flex; gap: var(--space-m); align-items: center; }
 
 .stat-band .stats-dots .dot {
-  width: 12px; height: 12px; border-radius: 50%; background: #cbd1d6; border: none; padding: 0;
+  width: 12px; height: 12px; border-radius: var(--radius-circle); background: #cbd1d6; border: none; padding: 0;
   cursor: pointer; position: relative; transition: background-color 0.3s ease, transform 0.3s ease;
 }
 
 /* expand the hit area to a 24×24px minimum touch target without growing the visible dot */
 .stat-band .stats-dots .dot::after { content: ""; position: absolute; inset: -6px; }
 .stat-band .stats-dots .dot.active { background: var(--navy); transform: scale(1.1); }
-.stat-band .stats-nav { display: flex; gap: 12px; }
+.stat-band .stats-nav { display: flex; gap: var(--space-xs); }
 
 .stat-band .stats-arrow {
-  width: 60px; height: 60px; border-radius: 50%; border: none; background: var(--navy); color: #fff;
+  width: 60px; height: 60px; border-radius: var(--radius-circle); border: none; background: var(--navy); color: #fff;
   display: flex; align-items: center; justify-content: center; cursor: pointer;
 }
 .stat-band .stats-arrow svg { width: 24px; height: 24px; fill: currentcolor; }
@@ -62,11 +62,11 @@
 @media (width < 768px) {
   .stat-band { --cards-per-view: 1; }
   .stat-band .stats-nav { display: none; }
-  .section.stat-band-container { padding: 20px 0; }
-  .stat-band-container .default-content-wrapper h2 { font-size: 34px; margin-bottom: 24px; }
+  .section.stat-band-container { padding: var(--space-m) 0; }
+  .stat-band-container .default-content-wrapper h2 { font-size: 34px; margin-bottom: var(--space-l); }
   .stat-band .stat { padding: 20px 30px; }
   .stat-band .stat-num { font-size: 48px; }
-  .stat-band .stats-controls { justify-content: center; padding: 20px; margin-top: 0; }
+  .stat-band .stats-controls { justify-content: center; padding: var(--space-m); margin-top: 0; }
 }
 
 @media (768px <= width < 1024px) { .stat-band { --cards-per-view: 2; } }
@@ -79,16 +79,16 @@
 .section.stat-band-container:has(.stat-band.light) { background: #fff; }
 
 .stat-band-container:has(.stat-band:is(.dark, .light)) .default-content-wrapper :is(h1, h2, h3, h4, h5, h6, p, ul, ol, li) {
-  color: #fff; font-size: 48px; line-height: 1.4; font-weight: 500; margin: 0 0 80px;
+  color: #fff; font-size: 48px; line-height: var(--line-height-m); font-weight: var(--font-weight-medium); margin: 0 0 var(--space-5xl);
 }
 
 .stat-band-container:has(.stat-band:is(.dark, .light)) .default-content-wrapper p,
 .stat-band:is(.dark, .light) .stats-foot {
-  font-size: 14px; line-height: 1.4; color: #fff; margin: 0; text-align: center;
+  font-size: 14px; line-height: var(--line-height-m); color: #fff; margin: 0; text-align: center;
 }
-.stat-band:is(.dark, .light) .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.stat-band:is(.dark, .light) .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-m); }
 .stat-band:is(.dark, .light) .stat { background: none; border-radius: 0; padding: 0; text-align: center; display: block; }
-.stat-band:is(.dark, .light) .stat-num { font-size: 84px; line-height: 1.4; color: #81f2fe; margin: 0 0 8px; }
+.stat-band:is(.dark, .light) .stat-num { font-size: 84px; line-height: var(--line-height-m); color: var(--rail-promo); margin: 0 0 var(--space-2xs); }
 
 .stat-band:is(.dark, .light) .stat-desc {
   font-size: 20px; line-height: 28px; color: #fff; width: 75%; margin: 0 auto 20px;
@@ -108,7 +108,7 @@
 }
 
 @media (width < 768px) {
-  .section.stat-band-container:has(.stat-band:is(.dark, .light)) { padding: 80px 0 40px; }
+  .section.stat-band-container:has(.stat-band:is(.dark, .light)) { padding: var(--space-5xl) 0 var(--space-2xl); }
   .stat-band-container:has(.stat-band:is(.dark, .light)) .default-content-wrapper h2 { font-size: 34px; margin-bottom: 60px; }
   .stat-band:is(.dark, .light) .stats-grid { grid-template-columns: 1fr; gap: 44px; }
   .stat-band:is(.dark, .light) .stat-num { font-size: 64px; }
@@ -124,23 +124,23 @@
   border: 1px solid #e6e8eb;
   border-radius: 20px;
   box-shadow: 0 2px 20px rgb(0 0 0 / 6%);
-  padding: 24px 0;
+  padding: var(--space-l) 0;
 }
 
 .stat-band.simple .stat {
   background: none;
   border-radius: 0;
-  padding: 24px 32px;
+  padding: var(--space-l) var(--space-xl);
   text-align: center;
   display: block;
 }
 
 .stat-band.simple .stat + .stat { border-left: 1px solid #e6e8eb; }
-.stat-band.simple .stat-num { font-size: 64px; line-height: 1.1; font-weight: 700; color: #000; margin: 0 0 16px; }
+.stat-band.simple .stat-num { font-size: 64px; line-height: 1.1; font-weight: var(--font-weight-bold); color: #000; margin: 0 0 var(--space-s); }
 .stat-band.simple .stat-desc { font-size: 22px; line-height: 1.35; color: #000; margin: 0; }
 
 @media (width < 768px) {
-  .stat-band.simple .stats-grid { grid-template-columns: 1fr; padding: 8px 0; }
+  .stat-band.simple .stats-grid { grid-template-columns: 1fr; padding: var(--space-2xs) 0; }
   .stat-band.simple .stat + .stat { border-left: 0; border-top: 1px solid #e6e8eb; }
   .stat-band.simple .stat-num { font-size: 52px; }
   .stat-band.simple .stat-desc { font-size: 18px; }
@@ -155,17 +155,17 @@
    own their spacing), and the callout is interleaved with prose siblings, so
    the box carries its own vertical gap: 60px above / 40px below to match prod. */
 .stat-band.plain .stats-box {
-  box-sizing: border-box; background: #c2f5ff; padding: 40px;
+  box-sizing: border-box; background: #c2f5ff; padding: var(--space-2xl);
   max-width: 740px; margin: 60px auto 40px; text-align: center;
 }
 
 .stat-band.plain .stat-line {
-  font-size: 18px; line-height: 1.4; font-weight: 700; color: #000; margin: 0;
+  font-size: 18px; line-height: var(--line-height-m); font-weight: var(--font-weight-bold); color: #000; margin: 0;
 }
 .stat-band.plain .stat-line + .stat-line { margin-top: 18px; }
 
 @media (width < 768px) {
-  .stat-band.plain .stats-box { padding: 24px 20px; }
+  .stat-band.plain .stats-box { padding: var(--space-l) var(--space-m); }
   .stat-band.plain .stat-line { font-size: 16px; }
 }
 
@@ -175,24 +175,24 @@
 .section.stat-band-container:has(.stat-band.cards) { background: transparent; padding: 0; }
 
 .stat-band.cards .stats-cards {
-  display: flex; flex-direction: row; align-items: flex-start; gap: 16px;
-  overflow-x: auto; padding: 4px 0 16px;
+  display: flex; flex-direction: row; align-items: flex-start; gap: var(--space-s);
+  overflow-x: auto; padding: var(--space-3xs) 0 var(--space-s);
   scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
 }
 
 .stat-band.cards .stat-card {
   flex: 0 0 auto; width: 240px; scroll-snap-align: start;
-  display: flex; flex-direction: column; gap: 12px;
+  display: flex; flex-direction: column; gap: var(--space-xs);
 }
 
 .stat-band.cards .stat-card-media picture,
-.stat-band.cards .stat-card-media img { display: block; width: 100%; height: auto; border-radius: 16px; }
-.stat-band.cards .stat-card-copy p { font-size: 14px; line-height: 1.4; color: #404b52; margin: 0; }
+.stat-band.cards .stat-card-media img { display: block; width: 100%; height: auto; border-radius: var(--radius-xl); }
+.stat-band.cards .stat-card-copy p { font-size: 14px; line-height: var(--line-height-m); color: #404b52; margin: 0; }
 
 .stat-band.cards .stat-card-title {
-  justify-content: center; background: #c2f5ff; border-radius: 16px; padding: 24px; min-height: 180px;
+  justify-content: center; background: #c2f5ff; border-radius: var(--radius-xl); padding: var(--space-l); min-height: 180px;
 }
-.stat-band.cards .stat-card-title .stat-card-copy p { font-size: 22px; line-height: 1.3; font-weight: 600; color: #000; }
+.stat-band.cards .stat-card-title .stat-card-copy p { font-size: 22px; line-height: var(--line-height-s); font-weight: var(--font-weight-semibold); color: #000; }
 
 .stat-band.cards .stats-cards::-webkit-scrollbar { height: 8px; }
 .stat-band.cards .stats-cards::-webkit-scrollbar-thumb { background: #cbd1d6; border-radius: 4px; }
@@ -208,16 +208,16 @@
 .section.stat-band-container:has(.stat-band.glance) { background: transparent; padding: 0; }
 
 .stat-band.glance .glance-list {
-  max-width: 46em; margin: 0; padding: 0 0 0 40px;
+  max-width: 46em; margin: 0; padding: 0 0 0 var(--space-2xl);
   list-style: disc outside;
 }
 
 .stat-band.glance .glance-list li {
-  font-size: 20px; line-height: 28px; font-weight: 700; color: #000; margin: 0 0 20px;
+  font-size: 20px; line-height: 28px; font-weight: var(--font-weight-bold); color: #000; margin: 0 0 var(--space-m);
 }
 .stat-band.glance .glance-list li:last-child { margin-bottom: 0; }
 
 @media (width < 768px) {
-  .stat-band.glance .glance-list { padding-left: 24px; }
-  .stat-band.glance .glance-list li { font-size: 18px; line-height: 1.4; }
+  .stat-band.glance .glance-list { padding-left: var(--space-l); }
+  .stat-band.glance .glance-list li { font-size: 18px; line-height: var(--line-height-m); }
 }
