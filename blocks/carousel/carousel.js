@@ -93,6 +93,27 @@ function splitFeatureQuote(slide) {
   p.after(cite);
 }
 
+const textNodes = (el) => [...el.childNodes]
+  .flatMap((n) => (n.nodeType === Node.TEXT_NODE ? [n] : textNodes(n)));
+
+/**
+ * Joins a multi-line attribution (`**Name**<br>Company`) onto the single
+ * comma-separated line the type size expects, editing text nodes in place so
+ * authored emphasis on the name survives.
+ * @param {Element} el a `.testi-attr`
+ */
+function joinAttrLines(el) {
+  el.querySelectorAll('br').forEach((br) => {
+    const before = br.previousSibling?.textContent?.trimEnd() || '';
+    br.replaceWith(before.endsWith(',') ? ' ' : ', ');
+  });
+  const nodes = textNodes(el);
+  if (!nodes.length) return;
+  nodes.forEach((n) => { n.data = n.data.replace(/\s+/g, ' '); });
+  nodes[0].data = nodes[0].data.trimStart();
+  nodes[nodes.length - 1].data = nodes[nodes.length - 1].data.replace(/[\s,]+$/, '');
+}
+
 /**
  * Rewrites one `.testimonial` slide into `.testi-media` + `.testi-body`.
  *
@@ -151,12 +172,7 @@ function normalizeTestimonial(slide) {
     const a = document.createElement('p');
     a.className = 'testi-attr';
     a.append(...attr.childNodes);
-    // authored as a bold name over a line break (`**Name**<br>Company`), which
-    // renders as one run of unspaced text at this size — upstream sets it as a
-    // single comma-separated line, so flatten it rather than ask every page to
-    // be re-authored
-    a.querySelectorAll('br').forEach((br) => br.replaceWith(', '));
-    a.textContent = a.textContent.replace(/\s*,\s*/g, ', ').replace(/,\s*$/, '').trim();
+    joinAttrLines(a);
     body.append(a);
   }
 
