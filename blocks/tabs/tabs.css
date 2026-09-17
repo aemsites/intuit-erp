@@ -402,7 +402,7 @@
   position: relative;
 }
 
-.tabs.vertical::before {
+.tabs.vertical:not(.no-gradient)::before {
   content: "";
   position: absolute;
   z-index: -1;
@@ -944,3 +944,5 @@ main > .section.tabs-container:has(.tabs.vertical-panel) > div { padding: 0; }
     order: 2;
   }
 }
+
+

@@ -1119,6 +1119,10 @@ main > .section.dark-background > .default-content-wrapper > .button-wrapper but
   }
 }
 
+main > .section.dark-background > .default-content-wrapper > .button-wrapper .button.primary {
+  border-color: #fff;
+}
+
 main > .section.dark-background > .default-content-wrapper > .button-wrapper a.button.secondary,
 main > .section.dark-background > .default-content-wrapper > .button-wrapper button.secondary {
   background: transparent;

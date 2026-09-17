@@ -12,6 +12,7 @@
  * default (index): number/description + attribution — paged carousel
  * .stat-band.dark (pricing "Data-backed performance"): number/description +
  *   optional attribution — static grid
+ * .stat-band.light: the same static grid on a white band, stats in super-blue
  * .stat-band.simple: number/description — the same static grid as .dark, but a
  *   single bordered white box on the page background, columns split by dividers.
  * .stat-band.plain (research guide stat trios): number/description —
@@ -273,7 +274,7 @@ export default function decorate(block) {
     return;
   }
 
-  const staticGrid = block.classList.contains('dark') || block.classList.contains('simple');
+  const staticGrid = ['dark', 'light', 'simple'].some((v) => block.classList.contains(v));
   const track = document.createElement('div');
   track.className = staticGrid ? 'stats-grid' : 'stats-track';
 
