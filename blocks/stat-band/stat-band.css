@@ -73,31 +73,46 @@
 
 @media (1024px <= width < 1200px) { .stat-band { --cards-per-view: 3; } }
 
-/* --- .stat-band.dark (pricing "Data-backed performance") --- */
-.section.stat-band-container:has(.stat-band.dark) { background: var(--navy); padding: 120px 0 100px; }
+/* --- .stat-band.dark (pricing "Data-backed performance") and its .light twin:
+   same static grid, white band with super-blue stats instead of navy/cyan --- */
+.section.stat-band-container:has(.stat-band:is(.dark, .light)) { background: var(--navy); padding: 120px 0 100px; }
+.section.stat-band-container:has(.stat-band.light) { background: #fff; }
 
-.stat-band-container:has(.stat-band.dark) .default-content-wrapper :is(h1, h2, h3, h4, h5, h6, p, ul, ol, li) {
+.stat-band-container:has(.stat-band:is(.dark, .light)) .default-content-wrapper :is(h1, h2, h3, h4, h5, h6, p, ul, ol, li) {
   color: #fff; font-size: 48px; line-height: 1.4; font-weight: 500; margin: 0 0 80px;
 }
 
-.stat-band-container:has(.stat-band.dark) .default-content-wrapper p,
-.stat-band.dark .stats-foot {
+.stat-band-container:has(.stat-band:is(.dark, .light)) .default-content-wrapper p,
+.stat-band:is(.dark, .light) .stats-foot {
   font-size: 14px; line-height: 1.4; color: #fff; margin: 0; text-align: center;
 }
-.stat-band.dark .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-.stat-band.dark .stat { background: none; border-radius: 0; padding: 0; text-align: center; display: block; }
-.stat-band.dark .stat-num { font-size: 84px; line-height: 1.4; color: #81f2fe; margin: 0 0 8px; }
+.stat-band:is(.dark, .light) .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.stat-band:is(.dark, .light) .stat { background: none; border-radius: 0; padding: 0; text-align: center; display: block; }
+.stat-band:is(.dark, .light) .stat-num { font-size: 84px; line-height: 1.4; color: #81f2fe; margin: 0 0 8px; }
 
-.stat-band.dark .stat-desc {
+.stat-band:is(.dark, .light) .stat-desc {
   font-size: 20px; line-height: 28px; color: #fff; width: 75%; margin: 0 auto 20px;
 }
 
+.stat-band-container:has(.stat-band.light) .default-content-wrapper :is(h1, h2, h3, h4, h5, h6, p, ul, ol, li) {
+  color: var(--text-color);
+}
+
+.stat-band.light .stats-foot,
+.stat-band.light .stat-num {
+  color: var(--info);
+}
+
+.stat-band.light .stat-desc {
+  color: var(--text-color);
+}
+
 @media (width < 768px) {
-  .section.stat-band-container:has(.stat-band.dark) { padding: 80px 0 40px; }
-  .stat-band-container:has(.stat-band.dark) .default-content-wrapper h2 { font-size: 34px; margin-bottom: 60px; }
-  .stat-band.dark .stats-grid { grid-template-columns: 1fr; gap: 44px; }
-  .stat-band.dark .stat-num { font-size: 64px; }
-  .stat-band.dark .stat-desc { width: auto; }
+  .section.stat-band-container:has(.stat-band:is(.dark, .light)) { padding: 80px 0 40px; }
+  .stat-band-container:has(.stat-band:is(.dark, .light)) .default-content-wrapper h2 { font-size: 34px; margin-bottom: 60px; }
+  .stat-band:is(.dark, .light) .stats-grid { grid-template-columns: 1fr; gap: 44px; }
+  .stat-band:is(.dark, .light) .stat-num { font-size: 64px; }
+  .stat-band:is(.dark, .light) .stat-desc { width: auto; }
 }
 
 /* --- .stat-band.simple: one bordered white box, columns split by dividers --- */
