@@ -113,13 +113,24 @@ describe('carousel.testimonial normalizer', () => {
     expect(slide.querySelector('.testi-media').children.length).toBe(0);
   });
 
-  it('flattens a bold-name-over-break attribution into one comma-separated line', () => {
+  it('joins a bold-name-over-break attribution onto one line, keeping the emphasis', () => {
     const block = make(ONE_CELL_NO_TITLE);
     decorate(block);
     const attr = block.querySelector('.testi-attr');
     expect(attr.textContent).toBe('Sharon Ourian, Ourian Investments');
     expect(attr.querySelector('br')).toBeNull();
-    expect(attr.querySelector('strong')).toBeNull();
+    expect(attr.querySelector('strong').textContent).toBe('Sharon Ourian');
+  });
+
+  it('does not double the separator when the name is already comma-terminated', () => {
+    const block = make(`<div><div>
+      <p>“Quote text”</p>
+      <p><picture><img src="a.jpg" alt="Sharon"></picture></p>
+      <p><strong>Sharon Ourian,</strong><br>Ourian Investments</p>
+    </div></div>`);
+    decorate(block);
+    expect(block.querySelector('.testi-attr').textContent)
+      .toBe('Sharon Ourian, Ourian Investments');
   });
 
   it('leaves an already-comma-separated attribution unchanged', () => {
