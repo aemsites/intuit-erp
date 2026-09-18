@@ -26,6 +26,16 @@
   background: var(--info);
 }
 
+/* When the bio is the final section (directly above the footer, e.g. posts with
+   no "Recommended for you" after it), add breathing room so the avatar isn't
+   flush against the footer band. Scoped to :last-child so pages that have a
+   trailing section — which already carry their own spacing — are untouched. The
+   padding sits on the block, not the section, because blog-template.css zeroes
+   section padding on blog-article content sections. */
+.blog-author-bio-container:last-child .blog-author-bio {
+  padding-bottom: 40px;
+}
+
 .blog-author-bio .blog-social-share-label {
   display: block;
   margin-bottom: 8px;
