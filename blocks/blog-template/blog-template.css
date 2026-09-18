@@ -1,8 +1,8 @@
 .blog-article .blog-hero .blog-byline-tag {
-  margin: 0 0 12px;
+  margin: 0 0 var(--space-xs);
   color: var(--text-muted);
   font-size: var(--body-font-size-m);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -22,21 +22,21 @@
 
 @media (width < 1024px) {
   .blog-article > .blog-hero {
-    padding: 24px 0;
+    padding: var(--space-l) 0;
   }
 }
 
 .blog-article .blog-hero h1 {
-  margin: 0 0 16px;
+  margin: 0 0 var(--space-s);
   font-size: 40px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
 }
 
 .blog-article .blog-hero .blog-byline-meta {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  margin: 0 0 24px;
+  gap: var(--space-3xs);
+  margin: 0 0 var(--space-l);
   color: var(--text-muted);
   font-size: var(--body-font-size-s);
 }
@@ -66,7 +66,7 @@
 }
 
 .blog-article .blog-hero .blog-share {
-  margin: 0 0 24px;
+  margin: 0 0 var(--space-l);
 }
 
 .blog-article .blog-share {
@@ -78,10 +78,10 @@
 
 .blog-article .blog-share-label {
   display: none;
-  margin-right: 4px;
+  margin-right: var(--space-3xs);
   color: var(--text-muted);
   font-size: var(--body-font-size-xxs);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   line-height: 16px;
 }
 
@@ -92,7 +92,7 @@
   width: 32px;
   height: 32px;
   flex: none;
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   background: var(--primary);
   color: #fff;
 }
@@ -141,17 +141,17 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--space-xs);
   width: 100%;
   height: 60px;
   margin: 0;
   border: 0;
   background: #fff;
-  padding: 0 20px;
+  padding: 0 var(--space-m);
   font: inherit;
   font-size: 16px;
   line-height: 24px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   color: var(--toc-bar-text);
   text-align: left;
   cursor: pointer;
@@ -237,17 +237,17 @@
 
 .blog-article .blog-toc-list a {
   display: block;
-  padding: 8px 20px 8px 24px;
+  padding: var(--space-2xs) var(--space-m) var(--space-2xs) var(--space-l);
   color: var(--text);
   font-size: var(--body-font-size-xxs);
   line-height: 16px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   text-decoration: none;
 }
 
 .blog-article .blog-toc-list a::before {
   content: counter(toc) '. ';
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   color: var(--text);
 }
 
@@ -256,7 +256,7 @@
 }
 
 .blog-article .blog-toc-list a.active {
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .blog-article .blog-toc-list a.active::before {
@@ -280,7 +280,7 @@
 }
 
 .blog-article > .blog-rail {
-  margin: 40px 0;
+  margin: var(--space-2xl) 0;
 }
 
 @media (width >= 1024px) {
@@ -291,12 +291,12 @@
 
 
 .blog-article .blog-rail .default-content-wrapper > .section + .section {
-  margin-top: 40px;
+  margin-top: var(--space-2xl);
 }
 
 @media (width >= 1024px) {
   .blog-article .blog-rail .default-content-wrapper > .section + .section {
-    margin-top: 20px;
+    margin-top: var(--space-m);
   }
 
   main.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail, .blog-cards-container, .full-bleed) {
@@ -310,10 +310,10 @@
 
 .blog-article .blog-rail .default-content-wrapper > .section:first-child {
   box-sizing: border-box;
-  margin-bottom: 32px;
+  margin-bottom: var(--space-xl);
   border-radius: 12px;
   background: var(--rail-promo);
-  padding: 20px;
+  padding: var(--space-m);
 }
 
 .blog-article .blog-rail .default-content-wrapper > .section:first-child h3 {
@@ -321,7 +321,7 @@
   color: var(--ink-teal);
   font-size: var(--heading-font-size-s);
   font-style: normal;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
 }
 
 .blog-article .blog-rail .default-content-wrapper > .section:first-child p {
@@ -342,14 +342,14 @@
 }
 
 .blog-article .blog-toc-rail {
-  margin-bottom: 32px;
+  margin-bottom: var(--space-xl);
 }
 
 @media (width >= 1024px) {
   main.blog-article {
     display: grid;
     grid-template-columns: 250px minmax(0, 1fr) 300px;
-    column-gap: 32px;
+    column-gap: var(--space-xl);
     align-items: start;
   }
 
@@ -402,12 +402,12 @@
   .blog-article .blog-share-label {
     display: block;
     flex-basis: 100%;
-    margin: 0 0 8px;
+    margin: 0 0 var(--space-2xs);
   }
 
   .blog-article .blog-toc-rail > .default-content-wrapper > .blog-share {
-    margin: 0 0 16px;
-    padding-left: 20px;
+    margin: 0 0 var(--space-s);
+    padding-left: var(--space-m);
   }
 
   .blog-article > .blog-toc-rail > .default-content-wrapper {
@@ -427,7 +427,7 @@
 
   .blog-article .blog-toc-list {
     max-height: 360px;
-    padding-bottom: 4px;
+    padding-bottom: var(--space-3xs);
     overflow-y: auto;
   }
 
@@ -477,7 +477,7 @@
     flex: 1;
     align-items: center;
     justify-content: center;
-    padding: 16px 0;
+    padding: var(--space-s) 0;
     writing-mode: vertical-rl;
     transform: rotate(180deg);
     white-space: nowrap;
@@ -530,9 +530,9 @@
   .blog-article .blog-hero > .default-content-wrapper {
     display: grid;
     grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.5fr);
-    column-gap: 48px;
+    column-gap: var(--space-3xl);
     align-items: center;
-    padding: 40px;
+    padding: var(--space-2xl);
   }
 
   .blog-article .blog-hero > .default-content-wrapper:not(:has(.blog-hero-image)) {
@@ -599,7 +599,7 @@
   .blog-article .blog-hero.video-container {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    column-gap: 48px;
+    column-gap: var(--space-3xl);
     align-items: center;
     padding: 40px max(40px, calc((100% - 1380px) / 2));
   }
@@ -653,10 +653,10 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
 
 .blog-article > .section > .default-content-wrapper > p {
   max-width: none;
-  margin: 0 0 20px;
+  margin: 0 0 var(--space-m);
   text-align: left;
   font-size: 20px;
-  line-height: 1.5;
+  line-height: var(--line-height-l);
   color: #000;
 }
 
@@ -674,7 +674,7 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
    80px above, 40px below. Survives the trailing-margin reset so an image that
    ends a section keeps its gap to the following content. */
 .blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail) > .default-content-wrapper > p:has(picture) {
-  margin: 80px 0 40px;
+  margin: var(--space-5xl) 0 var(--space-2xl);
 }
 
 /* The trailing-margin reset above outweighs the image rule on specificity, so
@@ -698,20 +698,20 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
 /* body-content lists only — exclude the rails so this article styling doesn't
    leak into the TOC's <ol> (its own .blog-toc-list rules are less specific) */
 .blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail) > .default-content-wrapper :is(ul, ol) {
-  margin: 0 0 20px;
-  padding-left: 40px;
+  margin: 0 0 var(--space-m);
+  padding-left: var(--space-2xl);
   font-size: 20px;
-  line-height: 1.5;
+  line-height: var(--line-height-l);
   color: #000;
 }
 
-.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail) > .default-content-wrapper li { margin: 0 0 8px; }
+.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail) > .default-content-wrapper li { margin: 0 0 var(--space-2xs); }
 
 .blog-article > .section > .default-content-wrapper :is(h2, h3),
 .case-study > .section > .default-content-wrapper :is(h2, h3) {
   text-align: left;
   color: #000;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
 }
 
 /* 60px is the gap the source site holds between a prose section and the next
@@ -728,16 +728,16 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
 .case-study > .section > .default-content-wrapper h3 {
   font-size: 28px;
   line-height: 44px;
-  margin: 32px 0 16px;
+  margin: var(--space-xl) 0 var(--space-s);
 }
 
 @media (width >= 1024px) {
   .blog-article > .blog-rail .default-content-wrapper h3 {
     font-family: var(--body-font-family);
     font-size: var(--body-font-size-xs);
-    font-weight: 600;
+    font-weight: var(--font-weight-semibold);
     line-height: normal;
-    margin: 0 0 12px;
+    margin: 0 0 var(--space-xs);
   }
 }
 
@@ -747,14 +747,14 @@ main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .
    last child of its section and the trailing-margin reset above would zero its
    bottom margin. Keep the 40px gap to the following content. */
 .blog-article > .section > .highlight-wrapper > .highlight:last-child {
-  margin-bottom: 40px;
+  margin-bottom: var(--space-2xl);
 }
 
 .blog-article .highlight.sky .highlight-inner,
 .blog-article .highlight .highlight-inner {
   background: var(--agave);
   border-radius: 10px;
-  padding: 24px 40px;
+  padding: var(--space-l) var(--space-2xl);
   font-size: 20px;
   margin: 0 -30px;
 }
@@ -770,14 +770,14 @@ main.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail, .blog-c
 }
 
 .blog-article .video-wrapper {
-  margin: 40px 0;
+  margin: var(--space-2xl) 0;
 }
 
 :is(.blog-article, .case-study) .testimonial:not(.video, .simple) {
   box-sizing: border-box;
-  margin: 32px 0;
+  margin: var(--space-xl) 0;
   background: var(--tofu);
-  padding: 8px 20px 24px;
+  padding: var(--space-2xs) var(--space-m) var(--space-l);
 }
 
 :is(.blog-article, .case-study) .testimonial:not(.video, .simple) > :is(h2, h3, h4, h5, h6) {
@@ -785,12 +785,12 @@ main.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail, .blog-c
 }
 
 .blog-article > .section > .testimonial-wrapper:last-child > .testimonial:not(.video, .simple) {
-  margin-bottom: 40px;
+  margin-bottom: var(--space-2xl);
 }
 
 @media (width >= 1024px) {
   :is(.blog-article, .case-study) .testimonial:not(.video, .simple) {
-    padding: 8px 40px 24px;
+    padding: var(--space-2xs) var(--space-2xl) var(--space-l);
   }
 }
 
@@ -804,7 +804,7 @@ main.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail, .blog-c
   margin: 0 0 18px;
   padding: 0;
   font-size: 18px;
-  line-height: 1.5;
+  line-height: var(--line-height-l);
   color: #000;
   font-style: italic;
 }
@@ -815,7 +815,7 @@ main.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail, .blog-c
 :is(.blog-article, .case-study) .testimonial:not(.video, .simple) .cmp-quote-role {
   display: inline;
   font-size: 18px;
-  font-weight: 400;
+  font-weight: var(--font-weight-normal);
   color: #000;
 }
 
@@ -824,7 +824,7 @@ main.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail, .blog-c
 
 .blog-article .blog-cards .blog-card .blog-card-body .blog-card-category {
   color: #000;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   font-size: 16px;
   line-height: 16px;
 }
@@ -839,21 +839,21 @@ main.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail, .blog-c
   .section > div {
     max-width: var(--container);
     margin: 0 auto;
-    padding: 0 40px;
+    padding: 0 var(--space-2xl);
   }
 
   .section.hear-customers {
-    padding: 40px 0;
+    padding: var(--space-2xl) 0;
     margin-top: 3rem;
   }
 
   .section.hear-customers .default-content-wrapper {
     display: flex;
     flex-direction: row;
-    gap: 20px;
+    gap: var(--space-m);
     align-items: center;
     justify-content: space-between;
-    padding: 0 40px;
+    padding: 0 var(--space-2xl);
 
     a.button {
       background-color: var(--navy);
@@ -866,7 +866,7 @@ main.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail, .blog-c
 
     h2 {
       font-size: 34px;
-      font-weight: 700;
+      font-weight: var(--font-weight-bold);
     }
 
     .button-wrapper {
@@ -890,7 +890,7 @@ main.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail, .blog-c
 }
 
 .blog-article > .section .media-text-container .media-text .media-copy > :is(h2, h3):first-of-type {
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   font-size: 28px;
 }
 

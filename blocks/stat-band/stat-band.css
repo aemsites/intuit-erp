@@ -155,7 +155,7 @@
    own their spacing), and the callout is interleaved with prose siblings, so
    the box carries its own vertical gap: 60px above / 40px below to match prod. */
 .stat-band.plain .stats-box {
-  box-sizing: border-box; background: #c2f5ff; padding: var(--space-2xl);
+  box-sizing: border-box; background: var(--agave); padding: var(--space-2xl);
   max-width: 740px; margin: 60px auto 40px; text-align: center;
 }
 
@@ -190,7 +190,7 @@
 .stat-band.cards .stat-card-copy p { font-size: 14px; line-height: var(--line-height-m); color: #404b52; margin: 0; }
 
 .stat-band.cards .stat-card-title {
-  justify-content: center; background: #c2f5ff; border-radius: var(--radius-xl); padding: var(--space-l); min-height: 180px;
+  justify-content: center; background: var(--agave); border-radius: var(--radius-xl); padding: var(--space-l); min-height: 180px;
 }
 .stat-band.cards .stat-card-title .stat-card-copy p { font-size: 22px; line-height: var(--line-height-s); font-weight: var(--font-weight-semibold); color: #000; }
 
