@@ -457,6 +457,21 @@ function decorateExternalLinks(main) {
   });
 }
 
+/**
+ * Applies an author-set focal point (data-title="data-focal:x,y", from the DA
+ * focal-point tool) to an image via object-position, so cropped/cover images
+ * stay centered on the subject instead of the image's geometric center.
+ * @param {Element} main The container element
+ */
+function decorateFocalPoints(main) {
+  main.querySelectorAll('img[data-title*="data-focal"]').forEach((img) => {
+    const { title } = img.dataset;
+    delete img.dataset.title;
+    const [x, y] = title.split(':')[1].split(',');
+    img.style.objectPosition = `${x}% ${y}%`;
+  });
+}
+
 export function decorateMain(main) {
   decorateIcons(main);
   buildAutoBlocks(main);
@@ -466,6 +481,7 @@ export function decorateMain(main) {
   decorateBlocks(main);
   decorateButtons(main);
   decorateVideoLinks(main);
+  decorateFocalPoints(main);
 }
 
 function shouldRenderContactUs() {
