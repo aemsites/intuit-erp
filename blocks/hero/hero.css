@@ -58,41 +58,41 @@
 .hero .hero-grid {
   display: grid;
   grid-template-columns: 1.05fr 1fr;
-  gap: 48px;
+  gap: var(--space-3xl);
   align-items: center;
-  padding-top: 80px;
-  padding-bottom: 80px;
+  padding-top: var(--space-5xl);
+  padding-bottom: var(--space-5xl);
 }
 
 .hero .hero-copy .hero-eyebrow {
   color: #fff;
-  font-weight: 400;
+  font-weight: var(--font-weight-normal);
   font-size: 12px;
   line-height: 16px;
   letter-spacing: normal;
-  margin-bottom: 16px;
+  margin-bottom: var(--space-s);
 }
 
 .hero .hero-copy h1 {
   font-size: 48px;
   line-height: 1.25;
-  font-weight: 500;
-  margin: 0 0 20px;
+  font-weight: var(--font-weight-medium);
+  margin: 0 0 var(--space-m);
   color: #fff;
   max-width: 10em;
 }
 
 .hero .hero-copy .hero-lede {
   font-size: 20px;
-  line-height: 1.4;
+  line-height: var(--line-height-m);
   color: #e6eef6;
-  margin: 0 0 40px;
+  margin: 0 0 var(--space-2xl);
   max-width: 28em;
 }
 
 .hero .hero-actions {
   display: flex;
-  gap: 16px;
+  gap: var(--space-s);
   flex-wrap: wrap;
   margin: 0;
   padding-bottom: 2rem;
@@ -101,7 +101,7 @@
 .hero .hero-copy .hero-actions ~ p {
   font-size: var(--heading-font-size-l);
   font-family: var(--heading-font-family);
-  line-height: 1.2;
+  line-height: var(--line-height-xs);
   color: var(--agave);
   margin: 0;
   max-width: 14em;
@@ -218,7 +218,7 @@
 .hero.form .hero-copy .button-wrapper+img,
 .hero.form .hero-copy .button-wrapper+picture {
   display: block;
-  margin-top: 32px;
+  margin-top: var(--space-xl);
 }
 
 /* Size hero logos by height so any logo sits at a consistent cap-height
@@ -252,7 +252,7 @@
   text-align: center;
   color: var(--text-muted);
   font-size: 14px;
-  padding: 20px 0;
+  padding: var(--space-m) 0;
 }
 
 .hero .hero-form .section.form-container {
@@ -262,10 +262,10 @@
 
 .hero .hero-form .default-content-wrapper h2 {
   font-size: 26px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   color: var(--heading);
   text-align: center;
-  margin: 0 0 8px;
+  margin: 0 0 var(--space-2xs);
 }
 
 .hero .hero-form .default-content-wrapper p {
@@ -273,7 +273,7 @@
   color: var(--text-muted);
   text-align: center;
   line-height: 1.45;
-  margin: 0 0 12px;
+  margin: 0 0 var(--space-xs);
 }
 
 .hero .hero-form .form.boxed .form-disclaimer {
@@ -282,7 +282,7 @@
 
 .hero .hero-form .default-content-wrapper p a {
   color: var(--primary);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .hero .hero-form .form.card {
@@ -297,9 +297,9 @@
 .hero .hero-form .form .form-header {
   text-align: left;
   font-size: 26px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   color: var(--heading);
-  margin: 0 0 8px;
+  margin: 0 0 var(--space-2xs);
 }
 
 .hero .hero-form .form .form-subheader {
@@ -307,7 +307,7 @@
   font-size: 14px;
   color: var(--text-muted);
   line-height: 1.45;
-  margin: 0 0 12px;
+  margin: 0 0 var(--space-xs);
 }
 
 .hero .hero-form .form .form-disclaimer,
@@ -387,8 +387,8 @@
   .hero .hero-grid {
     grid-template-columns: 1fr;
     gap: 28px;
-    padding-top: 40px;
-    padding-bottom: 40px;
+    padding-top: var(--space-2xl);
+    padding-bottom: var(--space-2xl);
   }
 
   .hero .hero-copy h1 {
@@ -410,7 +410,7 @@
 
   .hero .hero-form {
     justify-self: stretch;
-    padding: 24px 20px;
+    padding: var(--space-l) var(--space-m);
   }
 }
 
@@ -441,10 +441,10 @@
 .hero.centered .hero-copy h1 {
   max-width: 930px;
   margin: 0;
-  padding: 0 40px;
+  padding: 0 var(--space-2xl);
   color: #fff;
   font-size: 72px;
-  line-height: 1.4;
+  line-height: var(--line-height-m);
   background: linear-gradient(89deg, #236cff -10.76%, #23deff 29.73%, #53fb79 95.86%);
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -453,10 +453,10 @@
 .hero.centered .hero-copy .hero-lede {
   max-width: 744px;
   margin: 0;
-  padding: 16px 40px 40px;
+  padding: var(--space-s) var(--space-2xl) var(--space-2xl);
   color: #fff;
   font-size: 16px;
-  line-height: 1.4;
+  line-height: var(--line-height-m);
 }
 
 .hero.centered .hero-actions {
@@ -480,7 +480,7 @@
   display: block;
   width: 100%;
   height: auto;
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
 }
 
 .hero.centered .hero-video-toggle {
@@ -490,11 +490,11 @@
   width: 38px;
   height: 38px;
   border: 0;
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   background: rgb(0 0 0 / 45%);
   color: #fff;
   font-size: 13px;
-  line-height: 1;
+  line-height: var(--line-height-none);
   cursor: pointer;
 }
 
@@ -516,7 +516,7 @@
   }
 
   .hero.centered .hero-video {
-    margin-top: 32px;
+    margin-top: var(--space-xl);
   }
 
   .hero.centered .hero-video video {
@@ -531,7 +531,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
+  padding: var(--space-l);
   background: rgb(0 0 0 / 80%);
 }
 
@@ -552,7 +552,7 @@
   width: 100%;
   height: 100%;
   border: 0;
-  border-radius: 8px;
+  border-radius: var(--radius-m);
 }
 
 .video-modal-close {
@@ -562,11 +562,11 @@
   width: 32px;
   height: 32px;
   border: 0;
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   background: rgb(255 255 255 / 15%);
   color: #fff;
   font-size: 24px;
-  line-height: 1;
+  line-height: var(--line-height-none);
   cursor: pointer;
 }
 

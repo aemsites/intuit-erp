@@ -25,7 +25,7 @@ body.modal-open {
   overscroll-behavior: none;
   width: 100%;
   max-height: calc(100dvh - (2 * var(--header-height, 64px)) - 48px);
-  padding: 24px;
+  padding: var(--space-l);
   padding-top: 44px;
 }
 
@@ -36,7 +36,7 @@ body.modal-open {
 
   .modal dialog .modal-content {
     max-height: calc(100dvh - (2 * var(--header-height, 64px)) - 64px);
-    padding: 32px;
+    padding: var(--space-xl);
     padding-top: 44px;
   }
 }

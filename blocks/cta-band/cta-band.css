@@ -3,18 +3,18 @@
  * erp.intuit.com: 1:2 columns, 24px radius, 80px padding, stat desc 34px, title 48px.
  */
 .section.cta-band-container { background: #fff; padding: 0 0 var(--section-y); }
-.cta-band .firstcall-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; align-items: stretch; }
+.cta-band .firstcall-grid { display: grid; grid-template-columns: 1fr 2fr; gap: var(--space-m); align-items: stretch; }
 
 .cta-band .firstcall-stat {
-  background: #d6e8f8; border-radius: 24px; padding: 80px;
+  background: var(--agave-band); border-radius: 24px; padding: var(--space-5xl);
   display: flex; flex-direction: column; justify-content: center;
 }
-.cta-band .fc-num { font-size: 60px; font-weight: 400; color: #000; line-height: 1.1; margin-bottom: 20px; }
-.cta-band .fc-desc { font-size: 34px; font-weight: 400; line-height: 1.4; color: #000; max-width: 9em; margin: 0; }
-.cta-band .firstcall-card { background: var(--navy); color: #fff; border-radius: 24px; padding: 80px; }
+.cta-band .fc-num { font-size: 60px; font-weight: var(--font-weight-normal); color: #000; line-height: 1.1; margin-bottom: var(--space-m); }
+.cta-band .fc-desc { font-size: 34px; font-weight: var(--font-weight-normal); line-height: var(--line-height-m); color: #000; max-width: 9em; margin: 0; }
+.cta-band .firstcall-card { background: var(--navy); color: #fff; border-radius: 24px; padding: var(--space-5xl); }
 .cta-band .fc-eyebrow { font-size: 12px; letter-spacing: 0.02em; text-transform: uppercase; opacity: 0.85; margin: 0 0 18px; }
-.cta-band .fc-title { font-size: 48px; font-weight: 400; line-height: 1.1; margin: 0 0 24px; color: #fff; }
-.cta-band .fc-body { font-size: 16px; line-height: 1.6; color: #d5e0ec; max-width: 40em; margin: 0 0 32px; }
+.cta-band .fc-title { font-size: 48px; font-weight: var(--font-weight-normal); line-height: 1.1; margin: 0 0 var(--space-l); color: #fff; }
+.cta-band .fc-body { font-size: 16px; line-height: var(--line-height-xl); color: #d5e0ec; max-width: 40em; margin: 0 0 var(--space-xl); }
 .cta-band .firstcall-card a.button.primary { background: #fff; color: var(--ink-teal); border-color: #fff; border-radius: 4px; }
 .cta-band .firstcall-card a.button.primary:hover { background: #eef4f6; border-color: #eef4f6; }
 .cta-band .firstcall-card .button-wrapper { margin: 0; }
@@ -27,7 +27,7 @@
 main > .section.cta-band-container:has(.cta-band.simple) { padding: 0; }
 main > .section.cta-band-container:has(.cta-band.simple) > div { max-width: none; padding: 0; }
 
-.cta-band.simple { background: #eaf6f7; }
+.cta-band.simple { background: var(--ice-band); }
 
 .cta-band.simple .firstcall-grid {
   display: block; max-width: 720px; margin: 0 auto; padding: 60px 30px; text-align: center;
@@ -45,18 +45,18 @@ main > .section.cta-band-container:has(.cta-band.simple) > div { max-width: none
 .cta-band.simple .fc-title,
 .cta-band.simple .fc-body {
   display: inline;
-  font-size: 24px; font-weight: 700; line-height: 32px; color: #000; margin: 0; max-width: none;
+  font-size: 24px; font-weight: var(--font-weight-bold); line-height: 32px; color: #000; margin: 0; max-width: none;
   -webkit-font-smoothing: antialiased;
 }
 .cta-band.simple .fc-title::after { content: "\0020"; }
 
 .cta-band.simple .firstcall-card .button-wrapper {
-  margin: 40px 0 0; display: flex; justify-content: center;
+  margin: var(--space-2xl) 0 0; display: flex; justify-content: center;
 }
 
 .cta-band.simple .firstcall-card a.button {
   background: none; color: var(--navy); border: 2px solid var(--navy); border-radius: 4px;
-  height: 48px; padding: 0 28px; font-size: 16px; font-weight: 600;
+  height: 48px; padding: 0 28px; font-size: 16px; font-weight: var(--font-weight-semibold);
 }
 
 .cta-band.simple .firstcall-card a.button:hover,
@@ -65,7 +65,7 @@ main > .section.cta-band-container:has(.cta-band.simple) > div { max-width: none
 }
 
 @media (width <= 768px) {
-  .cta-band .firstcall-grid { grid-template-columns: 1fr; gap: 16px; }
+  .cta-band .firstcall-grid { grid-template-columns: 1fr; gap: var(--space-s); }
   .cta-band .firstcall-stat, .cta-band .firstcall-card { padding: 40px 28px; }
   .cta-band .fc-num { font-size: 48px; }
   .cta-band .fc-desc { font-size: 24px; }

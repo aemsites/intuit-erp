@@ -26,7 +26,7 @@
    `:has(.guide-hero:not(.no-media))`, because the plain variant is not a card —
    it keeps the ordinary page gutter (see the no-media rules at the end). */
 .section.guide-hero-container:has(.guide-hero:not(.no-media)) > .guide-hero-wrapper {
-  padding: 0 20px;
+  padding: 0 var(--space-m);
 }
 
 .section.guide-hero-container:has(.guide-hero:not(.no-media)) {
@@ -34,7 +34,7 @@
 }
 
 .guide-hero {
-  border-radius: 8px;
+  border-radius: var(--radius-m);
   background: var(--sky);
   overflow: hidden;
 }
@@ -73,21 +73,21 @@
 }
 
 .guide-hero .guide-hero-copy {
-  padding: 32px;
+  padding: var(--space-xl);
 }
 
 .guide-hero .guide-hero-copy h1 {
-  margin: 0 0 20px;
+  margin: 0 0 var(--space-m);
   color: var(--heading);
   font-size: 34px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   line-height: 44px;
 }
 
 .guide-hero .guide-hero-copy p {
-  margin: 0 0 20px;
+  margin: 0 0 var(--space-m);
   font-size: 20px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   line-height: 28px;
 }
 
@@ -102,7 +102,7 @@
    mobile CTA unable to stretch to the copy width the way upstream's does. */
 .guide-hero .guide-hero-copy .button-wrapper {
   display: flex;
-  margin: 24px 0 0;
+  margin: var(--space-l) 0 0;
 }
 
 .guide-hero .guide-hero-copy a.button {
@@ -122,7 +122,7 @@
   background: none;
   color: var(--navy);
   font-size: 16px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .guide-hero .guide-hero-copy a.button:hover,
@@ -207,5 +207,5 @@
 .guide-hero.no-media .guide-hero-copy h1 {
   /* size/weight/line-height are the shared scale above — upstream renders the
      imageless headline at the same 34px/44px, only centred and full width */
-  margin: 0 0 16px;
+  margin: 0 0 var(--space-s);
 }
