@@ -64,14 +64,14 @@
   --heading-color: #11181c;
   --text-muted: #6b6c72;
   --text-soft: #8d9096;
-  --primary: #0077c5;
+  --primary: #236cff;
 
-  /* Intuit blue */
-  --primary-dark: #055393;
-  --navy: #00254a;
+  /* IES brand refresh: Superblue (was Intuit blue #0077c5) */
+  --primary-dark: #1a56cc;
+  --navy: #0d0031;
 
-  /* primary CTA / dark hero */
-  --navy-hover: #001a36;
+  /* IES brand refresh: Blueberry, primary CTA / dark hero (was #00254a) */
+  --navy-hover: #1a0a4d;
   --navy-mid: #053d6d;
   --hero-violet: #3b2f7a;
   --blue-bright: #0097e6;
@@ -79,19 +79,24 @@
   --green: #0a8543;
   --green-bright: #0fd46c;
   --info: #236cff;
-  --link-color: #0077c5;
-  --link-hover-color: #055393;
+  --link-color: #236cff;
+  --link-hover-color: #1a56cc;
   --line: #d4d7dc;
 
   /* aliases used by lifted block CSS (prototype token names) */
   --text: var(--text-color);
   --heading: var(--heading-color);
   --sand: var(--light-color);
-  --ink-teal: #0d333f;
+  --ink-teal: #0d0031;
+
+  /* IES brand refresh secondary accents (not yet consumed by any block) */
+  --ies-gradient: linear-gradient(180deg, #236cff 0%, #0d0031 100%);
+  --ies-orange-light: #ffcec4;
+  --ies-bronze: #883f1c;
 
   /* fonts */
-  --body-font-family: "AvenirNext forINTUIT", avenir-fallback, arial, sans-serif;
-  --heading-font-family: var(--body-font-family);
+  --body-font-family: "Tally VF", "AvenirNext forINTUIT", avenir-fallback, arial, sans-serif;
+  --heading-font-family: "Tally Display VF", "AvenirNext forINTUIT", avenir-fallback, arial, sans-serif;
 
   /* body sizes */
   --body-font-size-m: 16px;
@@ -115,7 +120,10 @@
   --nav-height: 92px;
   --container: 1380px;
   --radius: 4px;
-  --radius-card: 12px;
+  --radius-card: 24px;
+
+  /* IES brand refresh: rounder cards (was 12px) */
+  --radius-pill: 9999px;
   --section-y: 80px;
 }
 
@@ -901,7 +909,7 @@ button.button {
   justify-content: center;
   height: 44px;
   padding: 0 30px;
-  border-radius: var(--radius);
+  border-radius: var(--radius-pill);
   font-family: inherit;
   font-size: 16px;
   font-weight: 600;

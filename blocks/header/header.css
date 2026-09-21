@@ -165,7 +165,7 @@ body.nav-scroll-lock {
    line-height: 1;
    font-family: inherit;
    border: 2px solid var(--navy);
-   border-radius: var(--radius);
+   border-radius: var(--radius-pill);
    background: var(--navy);
    color: #fff;
    text-decoration: none;
@@ -435,7 +435,7 @@ body.nav-scroll-lock {
       height: 48px;
       padding: 0 48px 0 20px;
       box-sizing: border-box;
-      border-radius: var(--radius);
+      border-radius: var(--radius-pill);
       background: var(--navy);
       color: #fff;
       font-size: 16px;
