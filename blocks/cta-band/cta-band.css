@@ -6,7 +6,7 @@
 .cta-band .firstcall-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; align-items: stretch; }
 
 .cta-band .firstcall-stat {
-  background: #d6e8f8; border-radius: 24px; padding: 80px;
+  background: var(--agave-band); border-radius: 24px; padding: 80px;
   display: flex; flex-direction: column; justify-content: center;
 }
 .cta-band .fc-num { font-size: 60px; font-weight: 400; color: #000; line-height: 1.1; margin-bottom: 20px; }
