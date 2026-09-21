@@ -787,7 +787,7 @@ main > .section.tabs-container:has(.tabs.vertical-panel) > div { padding: 0; }
   max-width: 100%;
   height: auto;
   aspect-ratio: 16 / 9;
-  border-radius: 4px;
+  border-radius: var(--radius);
   object-fit: cover;
 }
 

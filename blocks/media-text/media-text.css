@@ -89,7 +89,7 @@
 .media-text .media-copy .media-callout {
   background: var(--wintermint);
   border-left: 4px solid var(--primary);
-  border-radius: 4px;
+  border-radius: var(--radius);
   padding: var(--space-m);
   margin-top: var(--space-l);
 }

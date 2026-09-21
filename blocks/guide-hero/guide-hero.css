@@ -118,7 +118,7 @@
   white-space: normal;
   text-align: center;
   border: 2px solid var(--navy);
-  border-radius: 4px;
+  border-radius: var(--radius);
   background: none;
   color: var(--navy);
   font-size: 16px;

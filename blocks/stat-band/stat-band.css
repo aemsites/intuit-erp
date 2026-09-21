@@ -195,7 +195,7 @@
 .stat-band.cards .stat-card-title .stat-card-copy p { font-size: 22px; line-height: var(--line-height-s); font-weight: var(--font-weight-semibold); color: #000; }
 
 .stat-band.cards .stats-cards::-webkit-scrollbar { height: 8px; }
-.stat-band.cards .stats-cards::-webkit-scrollbar-thumb { background: #cbd1d6; border-radius: 4px; }
+.stat-band.cards .stats-cards::-webkit-scrollbar-thumb { background: #cbd1d6; border-radius: var(--radius); }
 .stat-band.cards .stats-cards::-webkit-scrollbar-track { background: transparent; }
 
 @media (width < 768px) {

@@ -311,7 +311,7 @@
 .blog-article .blog-rail .default-content-wrapper > .section:first-child {
   box-sizing: border-box;
   margin-bottom: var(--space-xl);
-  border-radius: 12px;
+  border-radius: var(--radius-card);
   background: var(--rail-promo);
   padding: var(--space-m);
 }

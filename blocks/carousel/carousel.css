@@ -835,7 +835,7 @@
 .carousel.feature.panel .carousel-slide img {
   height: auto;
   object-fit: contain;
-  border-radius: 12px;
+  border-radius: var(--radius-card);
 }
 
 /* stacked (below desktop), the source puts the copy above the image — the

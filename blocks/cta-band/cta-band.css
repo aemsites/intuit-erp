@@ -15,7 +15,7 @@
 .cta-band .fc-eyebrow { font-size: 12px; letter-spacing: 0.02em; text-transform: uppercase; opacity: 0.85; margin: 0 0 18px; }
 .cta-band .fc-title { font-size: 48px; font-weight: var(--font-weight-normal); line-height: 1.1; margin: 0 0 var(--space-l); color: #fff; }
 .cta-band .fc-body { font-size: 16px; line-height: var(--line-height-xl); color: #d5e0ec; max-width: 40em; margin: 0 0 var(--space-xl); }
-.cta-band .firstcall-card a.button.primary { background: #fff; color: var(--ink-teal); border-color: #fff; border-radius: 4px; }
+.cta-band .firstcall-card a.button.primary { background: #fff; color: var(--ink-teal); border-color: #fff; border-radius: var(--radius); }
 .cta-band .firstcall-card a.button.primary:hover { background: #eef4f6; border-color: #eef4f6; }
 .cta-band .firstcall-card .button-wrapper { margin: 0; }
 
@@ -55,7 +55,7 @@ main > .section.cta-band-container:has(.cta-band.simple) > div { max-width: none
 }
 
 .cta-band.simple .firstcall-card a.button {
-  background: none; color: var(--navy); border: 2px solid var(--navy); border-radius: 4px;
+  background: none; color: var(--navy); border: 2px solid var(--navy); border-radius: var(--radius);
   height: 48px; padding: 0 28px; font-size: 16px; font-weight: var(--font-weight-semibold);
 }
 

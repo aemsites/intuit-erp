@@ -15,7 +15,7 @@
 
 .testimonial.video .video-frame {
   position: relative;
-  border-radius: 12px;
+  border-radius: var(--radius-card);
   overflow: hidden;
   aspect-ratio: 16 / 8.3;
   background: rgb(11 34 51);
@@ -111,7 +111,7 @@
 
 .testimonial.video .video-switcher {
   position: relative;
-  border-radius: 12px;
+  border-radius: var(--radius-card);
   overflow: hidden;
 }
 
@@ -325,7 +325,7 @@
   width: 100%;
   height: auto;
   display: block;
-  border-radius: 4px;
+  border-radius: var(--radius);
 }
 
 .testimonial.video-split .split-caption {
@@ -566,7 +566,7 @@
     grid-area: 4 / 1 / 5 / 2;
     width: 48px;
     height: 48px;
-    border-radius: 12px;
+    border-radius: var(--radius-card);
   }
 
   .testimonial.video .video-switcher .video-attr {

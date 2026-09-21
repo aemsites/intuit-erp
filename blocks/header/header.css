@@ -483,7 +483,7 @@ body.nav-scroll-lock {
       box-sizing: border-box;
       background: none;
       border: 1px solid var(--text);
-      border-radius: 4px;
+      border-radius: var(--radius);
       padding: 0;
       cursor: pointer;
    }
@@ -711,7 +711,7 @@ body.nav-scroll-lock {
    height: 40px;
    gap: var(--space-3xs);
    background: var(--sky);
-   border-radius: 4px;
+   border-radius: var(--radius);
    padding: 0 6px 0 10px;
 }
 

@@ -126,7 +126,7 @@
   position: absolute;
   inset: 0;
   z-index: 2;
-  border-radius: 12px;
+  border-radius: var(--radius-card);
   overflow: hidden;
   box-shadow: 0 24px 60px rgb(0 0 0 / 35%);
 }
@@ -242,7 +242,7 @@
   justify-self: end;
   width: 100%;
   background: #fff;
-  border-radius: 12px;
+  border-radius: var(--radius-card);
   padding: 34px 34px 30px;
   box-shadow: 0 24px 60px rgb(0 0 0 / 28%);
   color: var(--text);
