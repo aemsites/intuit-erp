@@ -79,6 +79,97 @@
     url("/styles/fonts/avenir-800.woff2") format("woff2"), url("/styles/fonts/avenir-800.woff") format("woff");
 }
 
+/* IES brand refresh: Tally VF (body) and Tally Display VF (headings). */
+@font-face {
+  font-family: "Tally VF";
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  src: local('Tally Regular'),
+    url("/styles/fonts/tally-400.woff2") format("woff2"), url("/styles/fonts/tally-400.woff") format("woff");
+}
+
+@font-face {
+  font-family: "Tally VF";
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+  src: local('Tally Regular Italic'),
+    url("/styles/fonts/tally-400-it.woff2") format("woff2"), url("/styles/fonts/tally-400-it.woff") format("woff");
+}
+
+@font-face {
+  font-family: "Tally VF";
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  src: local('Tally Medium'),
+    url("/styles/fonts/tally-500.woff2") format("woff2"), url("/styles/fonts/tally-500.woff") format("woff");
+}
+
+@font-face {
+  font-family: "Tally VF";
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+  src: local('Tally Medium Italic'),
+    url("/styles/fonts/tally-500-it.woff2") format("woff2"), url("/styles/fonts/tally-500-it.woff") format("woff");
+}
+
+@font-face {
+  font-family: "Tally VF";
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  src: local('Tally Bold'),
+    url("/styles/fonts/tally-700.woff2") format("woff2"), url("/styles/fonts/tally-700.woff") format("woff");
+}
+
+@font-face {
+  font-family: "Tally VF";
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+  src: local('Tally Bold Italic'),
+    url("/styles/fonts/tally-700-it.woff2") format("woff2"), url("/styles/fonts/tally-700-it.woff") format("woff");
+}
+
+@font-face {
+  font-family: "Tally Display VF";
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+  src: local('Tally Display Light'),
+    url("/styles/fonts/tally-display-300.woff2") format("woff2"), url("/styles/fonts/tally-display-300.woff") format("woff");
+}
+
+@font-face {
+  font-family: "Tally Display VF";
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  src: local('Tally Display Regular'),
+    url("/styles/fonts/tally-display-400.woff2") format("woff2"), url("/styles/fonts/tally-display-400.woff") format("woff");
+}
+
+@font-face {
+  font-family: "Tally Display VF";
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  src: local('Tally Display Medium'),
+    url("/styles/fonts/tally-display-500.woff2") format("woff2"), url("/styles/fonts/tally-display-500.woff") format("woff");
+}
+
+@font-face {
+  font-family: "Tally Display VF";
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  src: local('Tally Display Bold'),
+    url("/styles/fonts/tally-display-700.woff2") format("woff2"), url("/styles/fonts/tally-display-700.woff") format("woff");
+}
+
 /* The metric-matched fallback (avenir-fallback) lives in the eager styles.css,
    not here: fonts.css loads lazily (post-LCP on mobile), so a fallback defined
    here would not exist at first paint — exactly when it's needed, before the
