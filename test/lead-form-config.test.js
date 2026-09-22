@@ -64,6 +64,10 @@ beforeEach(() => {
   getMetadata.mockReturnValue(''); // no `marketo` metadata → prod instance
   delete window.utag;
   delete window.grecaptcha;
+  delete window.ziFcInstalled;
+  delete window.ZIProjectKey;
+  delete window._zi_fc;
+  document.querySelectorAll('script[src*="zi-tag"]').forEach((el) => el.remove());
   delete global.fetch;
   global.IntersectionObserver = class {
     constructor(cb) { this.cb = cb; }
@@ -133,6 +137,14 @@ describe('parseFormConfig', () => {
     expect(parseFormConfig(make([['formId', '1058'], ['recaptcha', 'true']])).recaptcha).toBe(true);
     expect(parseFormConfig(make([['formId', '1058'], ['recaptcha', 'false']])).recaptcha).toBe(false);
     expect(parseFormConfig(make([['formId', '1058']])).recaptcha).toBe(false);
+  });
+
+  it('parses the per-form enableFormComplete opt-in as a boolean', () => {
+    expect(parseFormConfig(make([['formId', '1058'], ['enableFormComplete', 'true']])).enableFormComplete)
+      .toBe(true);
+    expect(parseFormConfig(make([['formId', '1058'], ['enableFormComplete', 'false']])).enableFormComplete)
+      .toBe(false);
+    expect(parseFormConfig(make([['formId', '1058']])).enableFormComplete).toBe(false);
   });
 });
 
@@ -237,6 +249,28 @@ describe('decorate — live Marketo form', () => {
       '1058',
       expect.any(Function),
     );
+  });
+
+  it('loads ZoomInfo FormComplete when enableFormComplete is opted in', async () => {
+    delete window.ziFcInstalled;
+    delete window.ZIProjectKey;
+    const block = make([['formId', '1058'], ['enableFormComplete', 'true']]);
+    await decorate(block);
+    await flush();
+    expect(block.classList.contains('form-complete')).toBe(true);
+    expect(window.ziFcInstalled).toBe(true);
+    expect(window.ZIProjectKey).toBe('1205df03da1697208983');
+    expect(document.querySelector('script[src*="zi-tag"]')).toBeTruthy();
+  });
+
+  it('does not load ZoomInfo FormComplete when enableFormComplete is not opted in', async () => {
+    delete window.ziFcInstalled;
+    const block = make([['formId', '1058']]);
+    await decorate(block);
+    await flush();
+    expect(block.classList.contains('form-complete')).toBe(false);
+    expect(window.ziFcInstalled).toBeFalsy();
+    expect(document.querySelector('script[src*="zi-tag"]')).toBeNull();
   });
 
   it('hands off to ChiliPiper (prod args + xref), shows thank-you, and fires the ECS lead track on success', async () => {
