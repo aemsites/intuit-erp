@@ -224,3 +224,4 @@ Defaults (this project passes no overrides), in [plugins/experimentation/src/ind
   `window.location.hostname`; only `erp.intuit.com` and `stage.erp.intuit.com` resolve to prod, and
   experimentation treats `localhost` / `.page` hosts as preview. `?martech=` and the metadata above
   tune behavior **within** an environment — they never unlock prod integrations off-prod.
+
