@@ -139,12 +139,12 @@ describe('parseFormConfig', () => {
     expect(parseFormConfig(make([['formId', '1058']])).recaptcha).toBe(false);
   });
 
-  it('parses the per-form enableFormComplete opt-in as a boolean', () => {
+  it('parses enableFormComplete as on by default (opt-out with false)', () => {
+    expect(parseFormConfig(make([['formId', '1058']])).enableFormComplete).toBe(true);
     expect(parseFormConfig(make([['formId', '1058'], ['enableFormComplete', 'true']])).enableFormComplete)
       .toBe(true);
     expect(parseFormConfig(make([['formId', '1058'], ['enableFormComplete', 'false']])).enableFormComplete)
       .toBe(false);
-    expect(parseFormConfig(make([['formId', '1058']])).enableFormComplete).toBe(false);
   });
 });
 
@@ -251,10 +251,10 @@ describe('decorate — live Marketo form', () => {
     );
   });
 
-  it('loads ZoomInfo FormComplete when enableFormComplete is opted in', async () => {
+  it('loads ZoomInfo FormComplete by default', async () => {
     delete window.ziFcInstalled;
     delete window.ZIProjectKey;
-    const block = make([['formId', '1058'], ['enableFormComplete', 'true']]);
+    const block = make([['formId', '1058']]);
     await decorate(block);
     await flush();
     expect(block.classList.contains('form-complete')).toBe(true);
@@ -263,9 +263,9 @@ describe('decorate — live Marketo form', () => {
     expect(document.querySelector('script[src*="zi-tag"]')).toBeTruthy();
   });
 
-  it('does not load ZoomInfo FormComplete when enableFormComplete is not opted in', async () => {
+  it('does not load ZoomInfo FormComplete when enableFormComplete is false', async () => {
     delete window.ziFcInstalled;
-    const block = make([['formId', '1058']]);
+    const block = make([['formId', '1058'], ['enableFormComplete', 'false']]);
     await decorate(block);
     await flush();
     expect(block.classList.contains('form-complete')).toBe(false);

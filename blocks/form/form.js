@@ -7,7 +7,7 @@
  * Per-page config rows (author): formId, chiliPiperRouter, downloadUrl,
  * successUrl, header, subheader, disclaimer, recaptcha (per-form v3 opt-in),
  * buttonLabel (overrides Marketo's own hardcoded submit button text),
- * enableFormComplete (ZoomInfo FormComplete company-from-email opt-in).
+ * enableFormComplete (ZoomInfo FormComplete; on by default, set to false to disable).
  * Site-wide values (munchkin, chilipiper subdomain, script URLs, reCAPTCHA
  * keys/endpoints: recaptcha.enabled, recaptcha.siteKey, recaptcha.v2SiteKey,
  * recaptcha.verifyUrl, recaptcha.apiKey, recaptcha.scoreThreshold) come from
@@ -145,7 +145,8 @@ export function parseFormConfig(block) {
     leadLanguage: found.leadLanguage,
     marketoSync: found.marketoSync,
     marketoSyncAccount: found.marketoSyncAccount,
-    enableFormComplete: found.enableFormComplete === 'true',
+    // FormComplete is on by default; authors opt out with enableFormComplete: false.
+    enableFormComplete: found.enableFormComplete !== 'false',
   };
 }
 
