@@ -151,7 +151,6 @@ export function parseFormConfig(block) {
 }
 
 // ZoomInfo FormComplete — company-from-email enrichment (also used by the PZN smartform widget).
-const ZI_PROJECT_KEY = '1205df03da1697208983';
 const ZI_SCRIPT_URL = 'https://js.zi-scripts.com/zi-tag.js';
 const ZI_COMPANY_FIELD = 'intuitCompanyName';
 const ZI_DISCLAIMER_TEXT = 'We found this business name based on public information. '
@@ -179,10 +178,10 @@ export function appendDisclaimer(form) {
 
 // Loads ZoomInfo FormComplete once. Bind after the Marketo form is in the DOM — FormComplete
 // has no public re-scan hook, so an eager load would miss forms that mount later.
-export function installFormComplete() {
+export function installFormComplete(cfg) {
   if (window.ziFcInstalled) return;
   window.ziFcInstalled = true;
-  window.ZIProjectKey = ZI_PROJECT_KEY;
+  window.ZIProjectKey = cfg['formcomplete.ziProjectKey'];
 
   // ZoomInfo FormComplete reads its lifecycle callbacks from window._zi_fc — the unified zi-tag.js
   /* eslint-disable no-underscore-dangle */
@@ -668,7 +667,7 @@ async function embedMarketoForm(formEl, cfg, config, env) {
 
     // ZoomInfo FormComplete — load after Marketo has rendered so the tag can bind this form.
     if (config.enableFormComplete) {
-      installFormComplete();
+      installFormComplete(cfg);
     }
 
     // recaptcha
