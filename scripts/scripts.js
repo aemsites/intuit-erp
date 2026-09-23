@@ -12,8 +12,6 @@ import {
   buildBlock,
   getMetadata,
 } from './aem.js';
-// Adobe/Alloy (plugins/martech, a git subtree) is armed but commented out; Tealium is the default.
-// Uncomment the AEP blocks in loadEager/loadLazy to load it in parallel.
 // The tealium plugin below is NOT a vendored subtree (project-owned code), but the relative
 // eslint-disable-next-line import/no-relative-packages
 import TealiumMartech, {
@@ -27,21 +25,12 @@ import { isGuidePage } from '../blocks/guide-hero/guide-detect.js';
 // eslint-disable-next-line import/no-cycle
 import { applyPageExperience, applyEagerLayers } from './experience.js';
 
-// AEP (Adobe Web SDK) datastream — armed but disabled. Uncomment with the AEP blocks in loadEager
-// / loadLazy to enable it (parallel with Tealium). The datastream id is public, not a secret.
-// const AEP_DATASTREAM_ID = 'a114467b-290b-4429-9d7e-56bc5b5786fa';
-// const AEP_ORG_ID = '87020D54659BEED90A495E68@AdobeOrg';
-// // Disabled on *.preview.da.live (Alloy interferes with Experience Workspace previews).
-// const MARTECH_ENABLED = !AEP_DATASTREAM_ID.startsWith('REPLACE_')
-//   && !window.location.hostname.endsWith('.preview.da.live');
-
 // Provider gate via the `?martech=` query param:
-//   off    -> disable ALL martech (no Tealium, no Adobe — fully inert)
+//   off    -> disable ALL martech (no Tealium)
 //   local  -> Tealium, loading utag.js + the OneTrust consent stack from local copies in
 //             /scripts/martech/ (for testing without Intuit's VPN-gated consent CDN)
 //   (absent / any other value) -> Tealium, loading from the vendor CDNs (the default)
-// Adobe/AEP is no longer a runtime value — armed but commented out (see loadEager / loadLazy).
-// Tealium still self-gates via TealiumMartech's `resolveEnvironment`
+// Tealium self-gates via TealiumMartech's `resolveEnvironment`
 // (plugins/tealium-martech/src/index.js): only erp.intuit.com -> 'prod'; stage.erp.intuit.com, the
 // aem.page/aem.live previews, and localhost -> 'dev'; every other host stays inert.
 const URL_PARAMS = new URLSearchParams(window.location.search);
@@ -539,23 +528,6 @@ async function loadEager(doc) {
     tealium.eager();
   }
 
-  // Uncomment to enable AEP in parallel with Tealium (martechEager applies below).
-  // let martechLoadedPromise = null;
-  // let applyMartechEager = null;
-  // if (MARTECH_PROVIDER !== 'off' && MARTECH_ENABLED) {
-  //   try {
-  //     // eslint-disable-next-line import/no-relative-packages
-  //     const { initMartech, martechEager } = await import('../plugins/martech/src/index.js');
-  //     applyMartechEager = martechEager;
-  //     martechLoadedPromise = initMartech(
-  //       { datastreamId: AEP_DATASTREAM_ID, orgId: AEP_ORG_ID },
-  //       { personalization: true },
-  //     );
-  //   } catch (e) {
-  //     martechLoadedPromise = null;
-  //   }
-  // }
-
   // EAGER experience — the single consolidated call + any whole-page swap, BEFORE decorateMain.
   const pageSwapped = await applyPageExperience(doc);
   const main = doc.querySelector('main');
@@ -571,8 +543,6 @@ async function loadEager(doc) {
     document.body.classList.add('appear');
     const firstSection = main.querySelector('.section');
     await Promise.all([
-      // Uncomment with the AEP block above (applies eager martech decisions).
-      // martechLoadedPromise ? martechLoadedPromise.then(applyMartechEager) : Promise.resolve(),
       loadSection(firstSection, waitForFirstImage),
     ]);
     // The first section is visible/interactive as soon as this resolves, well before
@@ -673,17 +643,6 @@ async function loadLazy(doc) {
     if (experienceTracking) await experienceTracking;
     try { await tealium.lazy(); } catch (e) { /* non-fatal */ }
   }
-
-  // Uncomment to enable AEP in parallel with Tealium.
-  // if (MARTECH_PROVIDER !== 'off' && MARTECH_ENABLED) {
-  //   // eslint-disable-next-line import/no-relative-packages
-  //   const adobe = await import('../plugins/martech/src/index.js').catch(() => null);
-  //   if (adobe) {
-  //     try { await adobe.martechLazy(); } catch (e) { /* non-fatal */ }
-  //     // Auto-grant collect consent (martech inits 'pending', else form.js sendEvent drops).
-  //     try { await adobe.updateUserConsent({ collect: true }); } catch (e) { /* non-fatal */ }
-  //   }
-  // }
 
   loadCSS(`${window.hlx.codeBasePath}/styles/lazy-styles.css`);
   loadFonts();
