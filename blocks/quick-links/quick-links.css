@@ -12,9 +12,9 @@
   max-width: 335px;
   min-height: 68px;
   margin: 0 auto;
-  padding: 20px;
+  padding: var(--space-m);
   background: #fff;
-  border-radius: 12px;
+  border-radius: var(--radius-card);
   box-shadow: 0 4px 30px rgb(0 0 0 / 10%);
   cursor: pointer;
 }
@@ -22,10 +22,10 @@
 .quick-links.block .quick-links-title {
   flex-shrink: 0;
   margin: 0;
-  padding: 0 20px;
+  padding: 0 var(--space-m);
   color: #000;
   font-size: 20px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   line-height: 28px;
   text-align: center;
 }
@@ -68,7 +68,7 @@
 .quick-links.block.quick-links-expanded .quick-links-list {
   height: auto;
   min-height: 176px;
-  padding-top: 40px;
+  padding-top: var(--space-2xl);
   overflow: visible;
   opacity: 1;
 }
@@ -76,7 +76,7 @@
 .quick-links.block .quick-links-list li {
   width: 100%;
   margin: auto;
-  padding-bottom: 40px;
+  padding-bottom: var(--space-2xl);
   list-style-type: none;
 }
 
@@ -84,7 +84,7 @@
   color: #000;
   font-size: 20px;
   line-height: 28px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   text-decoration: none;
 }
 
@@ -126,7 +126,7 @@
 
   .quick-links.block .quick-links-list a {
     display: inline-block;
-    padding: 20px 40px;
+    padding: var(--space-m) var(--space-2xl);
     font-size: 16px;
     line-height: 24px;
   }
@@ -138,7 +138,7 @@
   }
 
   .quick-links.block .quick-links-title {
-    padding: 0 40px;
+    padding: 0 var(--space-2xl);
     font-size: 24px;
     line-height: 32px;
   }

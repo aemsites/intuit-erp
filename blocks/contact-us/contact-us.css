@@ -44,7 +44,7 @@
   height: 48px;
   padding: 0;
   border: 0;
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   background: var(--cu-dark);
   box-shadow: 0 6px 24px 0 rgb(196 196 196 / 80%);
   color: #fff;
@@ -54,16 +54,16 @@
 .contact-us .cu-ball-pill {
   width: auto;
   height: 48px;
-  gap: 8px;
-  padding: 0 20px;
+  gap: var(--space-2xs);
+  padding: 0 var(--space-m);
   border-radius: 9999px;
 }
 
 .contact-us .cu-ball-label {
   color: #fff;
   font-size: 16px;
-  font-weight: 600;
-  line-height: 1;
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-none);
   white-space: nowrap;
 }
 
@@ -80,7 +80,7 @@
   left: 0;
   box-sizing: border-box;
   max-height: 85vh;
-  padding: 20px 20px 32px;
+  padding: var(--space-m) var(--space-m) var(--space-xl);
   overflow-y: auto;
   border: 0;
   border-radius: 12px 12px 0 0;
@@ -98,7 +98,7 @@
   top: 16px;
   right: 16px;
   display: inline-flex;
-  padding: 4px;
+  padding: var(--space-3xs);
   border: 0;
   background: none;
   color: var(--cu-grey);
@@ -113,9 +113,9 @@
 }
 
 .contact-us .cu-headline {
-  margin: 24px 0 20px;
+  margin: var(--space-l) 0 var(--space-m);
   font-size: 34px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   line-height: 44px;
 }
 
@@ -128,9 +128,9 @@
 }
 
 .contact-us .cu-subhead {
-  margin: 0 0 20px;
+  margin: 0 0 var(--space-m);
   font-size: 18px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   line-height: 28px;
   color: #000;
 }
@@ -144,9 +144,9 @@
 
 .contact-us .cu-support-label {
   margin: 0;
-  padding: 40px 0 20px;
+  padding: var(--space-2xl) 0 var(--space-m);
   font-size: 20px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   line-height: 28px;
   color: #000;
 }
@@ -158,10 +158,10 @@
   align-items: center;
   justify-content: center;
   height: 52px;
-  padding: 0 20px;
-  border-radius: 4px;
+  padding: 0 var(--space-m);
+  border-radius: var(--radius);
   font-size: 16px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   text-align: center;
   text-decoration: none;
   cursor: pointer;
@@ -194,7 +194,7 @@
 /* mobile: CTAs stretch full width */
 .contact-us .cu-call {
   align-self: stretch;
-  margin: 0 0 12px;
+  margin: 0 0 var(--space-xs);
 }
 
 .contact-us .cu-schedule,
@@ -206,7 +206,7 @@
    (loaded via Tealium on prod/stage); we only reserve layout — spacing + full width. */
 .contact-us .cu-chat-cta {
   align-self: stretch;
-  margin-top: 12px;
+  margin-top: var(--space-xs);
 }
 
 /* open state hides the trigger */
@@ -242,7 +242,7 @@
     height: 128px;
     padding: 0;
     border: 0;
-    border-radius: 50%;
+    border-radius: var(--radius-circle);
     background: #fff;
     box-shadow: 0 6px 24px rgb(0 0 0 / 20%);
     cursor: pointer;
@@ -251,7 +251,7 @@
   .contact-us .cu-bubble-icons {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--space-2xs);
     color: var(--cu-blue);
   }
 
@@ -270,7 +270,7 @@
   .contact-us .cu-bubble-label {
     padding-top: 10px;
     font-size: 12px;
-    font-weight: 600;
+    font-weight: var(--font-weight-semibold);
     line-height: 16px;
     color: #000;
   }
@@ -286,10 +286,10 @@
     bottom: 0;
     left: auto;
     max-height: none;
-    padding: 40px;
+    padding: var(--space-2xl);
     overflow: visible;
     border: 1px solid var(--cu-border);
-    border-radius: 12px;
+    border-radius: var(--radius-card);
     box-shadow: 0 6px 24px rgb(0 0 0 / 20%);
   }
 
@@ -309,9 +309,9 @@
   }
 
   .contact-us .cu-headline {
-    margin: 20px 0;
+    margin: var(--space-m) 0;
     font-size: 28px;
-    font-weight: 700;
+    font-weight: var(--font-weight-bold);
     line-height: 36px;
   }
 

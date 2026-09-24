@@ -1,7 +1,7 @@
 .cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 32px;
+  gap: var(--space-xl);
 }
 
 .cards>div {
@@ -21,35 +21,35 @@
 
 .cards .cards-card-body h3 {
   font-size: var(--heading-font-size-m);
-  font-weight: 700;
-  line-height: 1.3;
-  margin: 32px 0 0;
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-s);
+  margin: var(--space-xl) 0 0;
 }
 
 .cards .cards-card-body p {
   font-size: 16px;
-  line-height: 1.5;
-  margin: 16px 0 0;
+  line-height: var(--line-height-l);
+  margin: var(--space-s) 0 0;
 }
 
 .cards .cards-card-body p:has(a) {
-  margin-top: 32px;
+  margin-top: var(--space-xl);
 }
 
 .cards .cards-card-body a:not(.button) {
   color: var(--info);
-  font-weight: 400;
+  font-weight: var(--font-weight-normal);
 }
 
 .cards.dark:not(.carousel, .boxed),
 .cards.accent:not(.carousel, .boxed) {
   grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
+  gap: var(--space-l);
 }
 
 .cards.dark:not(.carousel, .boxed)>div,
 .cards.accent:not(.carousel, .boxed)>div {
-  background: #236cff;
+  background: var(--info);
   border-radius: var(--radius-card);
   padding: 32px 28px;
   color: #fff;
@@ -58,7 +58,7 @@
 .cards.dark:not(.carousel, .boxed)>div>div:first-child,
 .cards.accent:not(.carousel, .boxed)>div>div:first-child {
   width: 40px;
-  margin-bottom: 32px;
+  margin-bottom: var(--space-xl);
 }
 
 .cards.dark:not(.carousel, .boxed) picture,
@@ -72,10 +72,10 @@
 .cards.dark:not(.carousel, .boxed) .cards-card-body h3,
 .cards.accent:not(.carousel, .boxed) .cards-card-body h3 {
   font-size: 28px;
-  font-weight: 400;
+  font-weight: var(--font-weight-normal);
   line-height: 1.15;
   color: #fff;
-  margin: 0 0 16px;
+  margin: 0 0 var(--space-s);
 }
 
 .cards.dark:not(.carousel, .boxed) .cards-card-body p,
@@ -85,13 +85,13 @@
 
 .cards.dark:not(.carousel, .boxed) .cards-card-body p:has(a),
 .cards.accent:not(.carousel, .boxed) .cards-card-body p:has(a) {
-  margin-top: 20px;
+  margin-top: var(--space-m);
 }
 
 .cards.dark:not(.carousel, .boxed) a,
 .cards.accent:not(.carousel, .boxed) a {
   color: #fff;
-  font-weight: 400;
+  font-weight: var(--font-weight-normal);
   text-decoration: underline;
 }
 
@@ -110,7 +110,7 @@
 
 .cards.accent:not(.carousel, .boxed) a {
   color: #fff;
-  font-weight: 400;
+  font-weight: var(--font-weight-normal);
   text-decoration: underline;
 }
 
@@ -175,15 +175,15 @@
 
 .cards.icons {
   grid-template-columns: repeat(3, 1fr);
-  gap: 48px;
+  gap: var(--space-3xl);
   margin: 0 auto;
 }
 
 .cards.icons .cards-card-head {
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 16px;
+  gap: var(--space-s);
+  margin-bottom: var(--space-s);
 }
 
 .cards.icons .cards-card-image {
@@ -215,9 +215,9 @@
 .cards.icons .cards-card-body h3 {
   font-size: 32px;
   line-height: 1.25;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   color: var(--heading);
-  margin: 0 0 16px;
+  margin: 0 0 var(--space-s);
 }
 
 .cards.icons .cards-card-body p {
@@ -250,22 +250,22 @@
 }
 
 .section.product-cards .cards .cards-card-body :is(h3, h4) {
-  margin: 24px 0 12px;
+  margin: var(--space-l) 0 var(--space-xs);
   font-size: 28px;
-  font-weight: 400;
-  line-height: 1.2;
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-xs);
   color: var(--heading);
 }
 
 .section.product-cards .cards .cards-card-body ul {
   margin: 0;
-  padding-left: 20px;
+  padding-left: var(--space-m);
 }
 
 .section.product-cards .cards .cards-card-body li {
-  margin: 0 0 8px;
+  margin: 0 0 var(--space-2xs);
   font-size: 16px;
-  line-height: 1.5;
+  line-height: var(--line-height-l);
   color: var(--text-muted);
 }
 
@@ -281,9 +281,9 @@
 
 .section.feature-cards .cards.icons>div {
   box-sizing: border-box;
-  padding: 32px;
+  padding: var(--space-xl);
   background: #eef2f6;
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
 }
 
 .section.feature-cards .cards.icons .cards-card-body h3 {
@@ -313,7 +313,7 @@
 .cards.carousel .cards-track,
 .cards.boxed .cards-track {
   display: flex;
-  gap: 32px;
+  gap: var(--space-xl);
 }
 
 .cards.carousel .cards-track {
@@ -369,7 +369,7 @@
 
 .cards.carousel .cards-track>div:hover .cards-card-body,
 .cards.carousel .cards-track>div:focus-within .cards-card-body {
-  padding-left: 16px;
+  padding-left: var(--space-s);
 }
 
 .cards.carousel .cards-track>div {
@@ -437,11 +437,11 @@
 }
 
 .cards.boxed .cards-card-body {
-  padding: 24px;
+  padding: var(--space-l);
 }
 
 .cards.boxed .cards-card-body h3 {
-  margin-top: 20px;
+  margin-top: var(--space-m);
 }
 
 .cards.carousel .cards-controls,
@@ -449,8 +449,8 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 24px;
-  margin-top: 32px;
+  gap: var(--space-l);
+  margin-top: var(--space-xl);
 }
 
 .cards.carousel .cards-controls[hidden],
@@ -459,7 +459,7 @@
 }
 
 .cards.carousel .cards-controls {
-  margin-top: 20px;
+  margin-top: var(--space-m);
 }
 
 .cards .cards-counter {
@@ -496,13 +496,13 @@
 .cards .cards-nav-buttons {
   display: flex;
   flex: 0 0 auto;
-  gap: 12px;
+  gap: var(--space-xs);
 }
 
 .cards .cards-nav {
   width: 48px;
   height: 48px;
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   border: none;
   padding: 0;
   display: flex;
@@ -547,19 +547,19 @@
 .cards.list {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: var(--space-l);
 }
 
 .cards.list>div {
   display: grid;
   grid-template-columns: 1fr 2fr;
-  gap: 16px;
+  gap: var(--space-s);
   align-items: start;
 }
 
 .cards.list .cards-card-image {
   margin: 0;
-  border-radius: 8px;
+  border-radius: var(--radius-m);
   overflow: hidden;
 }
 
@@ -571,8 +571,8 @@
 .cards.list .cards-card-body p:has(a) {
   margin-top: 0;
   font-size: var(--body-font-size-s);
-  font-weight: 700;
-  line-height: 1.4;
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-m);
   display: -webkit-box;
   -webkit-line-clamp: 3;
   line-clamp: 3;
@@ -582,7 +582,7 @@
 
 .cards.list .cards-card-body a {
   color: var(--text-color);
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
 }
 
 /* desktop (≥900px): fixed thumbnail size, matching the right-rail Customer
@@ -629,8 +629,8 @@
   justify-content: center;
   width: 96px;
   height: 96px;
-  border-radius: 50%;
-  color: #21262a;
+  border-radius: var(--radius-circle);
+  color: var(--text-color);
   background: rgb(255 255 255 / 70%);
   border: 1px solid rgb(0 37 74 / 20%);
   box-shadow: 0 12px 40px -18px rgb(35 108 255 / 15%);
@@ -648,7 +648,7 @@
 .cards-focus-cursor .cards-cursor-dot {
   width: 8px;
   height: 8px;
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   background: currentcolor;
   margin: 0 18px;
   transition: margin 0.2s ease-out;
@@ -681,7 +681,7 @@
 
 .section.cards-container:has(.cards.accent.carousel) .default-content-wrapper h2 {
   font-size: 40px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
 }
 
 
@@ -723,7 +723,7 @@
 .cards.editorial.carousel .cards-track>div {
   box-sizing: border-box;
   flex: 0 0 calc((100% - 64px) / 3);
-  background: #EFF4F9;
+  background: var(--wintermint);
   border-radius: var(--radius-card);
   padding: 32px 28px;
 }
@@ -765,7 +765,7 @@
   display: flex;
   flex: 0 0 auto;
   gap: 10px;
-  margin-right: 8px;
+  margin-right: var(--space-2xs);
 }
 
 .cards-dot {
@@ -773,7 +773,7 @@
   height: 10px;
   padding: 0;
   border: 0;
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   background: rgb(0 37 74 / 20%);
   cursor: pointer;
 }

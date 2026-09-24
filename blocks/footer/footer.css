@@ -1,20 +1,20 @@
 /* footer — two-tier IES footer. Lifted from base.css */
 footer { background: #fff; }
 footer .footer { background: #fff; }
-footer .footer .container { max-width: var(--container); margin: 0 auto; padding: 0 40px; }
+footer .footer .container { max-width: var(--container); margin: 0 auto; padding: 0 var(--space-2xl); }
 
-.footer .ies-footer { color: var(--text); font-size: 14px; background: #f4f5f8; }
+.footer .ies-footer { color: var(--text); font-size: 14px; background: var(--light-gray); }
 .footer .ftr-main { padding: 56px 0 0; }
-.footer .footer-cols { display: grid; grid-template-columns: repeat(4, 1fr); gap: 32px; }
-.footer .footer-cols h2 { font-size: 16px; font-weight: 700; color: var(--text); margin: 0 0 18px; }
+.footer .footer-cols { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-xl); }
+.footer .footer-cols h2 { font-size: 16px; font-weight: var(--font-weight-bold); color: var(--text); margin: 0 0 18px; }
 .footer .footer-cols ul { list-style: none; margin: 0; padding: 0; }
-.footer .footer-cols li { margin-bottom: 16px; }
-.footer .footer-cols a { color: var(--text-muted); font-size: 16px; line-height: 1.5; }
+.footer .footer-cols li { margin-bottom: var(--space-s); }
+.footer .footer-cols a { color: var(--text-muted); font-size: 16px; line-height: var(--line-height-l); }
 .footer .footer-cols a:hover { color: var(--primary); text-decoration: underline; }
 
 /* accordion toggle — on desktop it just renders as the plain column heading;
    the caret and the interactivity only surface at the mobile breakpoint */
-.footer .footer-col .col-toggle { display: inline-flex; align-items: center; gap: 8px; padding: 0; margin: 0; background: none; border: 0; font: inherit; font-size: 16px; font-weight: 700; color: var(--text); text-align: left; cursor: default; }
+.footer .footer-col .col-toggle { display: inline-flex; align-items: center; gap: var(--space-2xs); padding: 0; margin: 0; background: none; border: 0; font: inherit; font-size: 16px; font-weight: var(--font-weight-bold); color: var(--text); text-align: left; cursor: default; }
 .footer .footer-col .caret { display: none; }
 
 /* shared chevron for the country selector (all breakpoints) and the mobile
@@ -24,14 +24,14 @@ footer .footer .container { max-width: var(--container); margin: 0 auto; padding
 .footer .footer-col.open .caret,
 .footer .country.open .caret { transform: rotate(-135deg); margin-top: 2px; }
 
-.footer .footer-search { margin-top: 40px; }
-.footer .footer-search input { width: 300px; max-width: 100%; height: 40px; border: 1px solid var(--line); border-radius: 4px; padding: 0 14px; font-size: 14px; font-family: inherit; color: var(--text); }
+.footer .footer-search { margin-top: var(--space-2xl); }
+.footer .footer-search input { width: 300px; max-width: 100%; height: 40px; border: 1px solid var(--line); border-radius: var(--radius); padding: 0 14px; font-size: 14px; font-family: inherit; color: var(--text); }
 
 /* grid mirrors the legal tier's 1fr 2fr 1fr so the country chip lands in the
    same center column as the brand logos below it */
-.footer .footer-sitemap { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 40px; align-items: center; padding: 22px 0; margin-top: 34px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.footer .footer-sitemap { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: var(--space-2xl); align-items: center; padding: 22px 0; margin-top: 34px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
 .footer .footer-sitemap a { color: var(--text-muted); }
-.footer .footer-sitemap .social { display: flex; align-items: center; gap: 20px; justify-self: end; }
+.footer .footer-sitemap .social { display: flex; align-items: center; gap: var(--space-m); justify-self: end; }
 .footer .footer-sitemap .social a { color: var(--text-muted); display: inline-flex; }
 .footer .footer-sitemap .social a:hover { color: var(--primary); }
 .footer .footer-sitemap .social svg { width: 21px; height: 21px; }
@@ -40,16 +40,16 @@ footer .footer .container { max-width: var(--container); margin: 0 auto; padding
    accordion-style row rendered under the columns (hidden here, shown < 900px) */
 .footer .country-mobile { display: none; }
 .footer .footer-sitemap .country { position: relative; }
-.footer .country-toggle { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); border-radius: 4px; padding: 9px 14px; font-size: 14px; color: var(--text); background: #fff; font-family: inherit; cursor: pointer; }
+.footer .country-toggle { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); border-radius: var(--radius); padding: 9px 14px; font-size: 14px; color: var(--text); background: #fff; font-family: inherit; cursor: pointer; }
 .footer .country-toggle .caret { color: var(--text-muted); }
-.footer .country-menu { position: absolute; top: calc(100% + 8px); left: 0; z-index: 20; min-width: 220px; margin: 0; padding: 8px 0; list-style: none; background: #fff; border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 6px 20px rgb(0 0 0 / 12%); }
+.footer .country-menu { position: absolute; top: calc(100% + 8px); left: 0; z-index: 20; min-width: 220px; margin: 0; padding: var(--space-2xs) 0; list-style: none; background: #fff; border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 6px 20px rgb(0 0 0 / 12%); }
 .footer .country-menu[hidden] { display: none; }
 .footer .country-menu a { display: flex; align-items: center; gap: 10px; padding: 9px 18px; font-size: 14px; color: var(--text); white-space: nowrap; }
 .footer .country-menu a:hover { background: #f5f6f7; }
-.footer .country-menu .flag { font-size: 16px; line-height: 1; }
+.footer .country-menu .flag { font-size: 16px; line-height: var(--line-height-none); }
 
-.footer .ftr-legal { padding: 40px 0 48px; }
-.footer .legal-grid { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 40px; align-items: start; }
+.footer .ftr-legal { padding: var(--space-2xl) 0 var(--space-3xl); }
+.footer .legal-grid { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: var(--space-2xl); align-items: start; }
 .footer .legal-left ul { list-style: none; margin: 0; padding: 0; }
 .footer .legal-left li { margin-bottom: 0; }
 .footer .legal-left a { display: block; color: var(--text-muted); line-height: 1.8; }
@@ -60,7 +60,7 @@ footer .footer .container { max-width: var(--container); margin: 0 auto; padding
    ~20px row height since its own footer asset predates a brand refresh */
 .footer .ftr-logo { display: block; margin-bottom: 22px; }
 .footer .ftr-logo svg { height: 37px; width: auto; display: block; }
-.footer .legal-center .brand-logos { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; margin-bottom: 20px; }
+.footer .legal-center .brand-logos { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; margin-bottom: var(--space-m); }
 .footer .ftr-brand { display: inline-flex; align-items: center; }
 .footer .ftr-brand svg { height: 19px; width: auto; }
 .footer .ftr-brand-mailchimp svg:first-child { height: 20px; width: auto; margin-right: 4.5px; }
@@ -74,9 +74,9 @@ footer .footer .container { max-width: var(--container); margin: 0 auto; padding
 
 /* CCPA "Your Privacy Choices" opt-out icon (California geo label) — scaled to the text */
 .footer .footer-copy-btn .privacy-choices-icon { height: 0.85em; width: auto; vertical-align: middle; margin-left: 6px; }
-.footer .legal-right .legal-links { font-size: 14px; color: var(--text-muted); margin-bottom: 20px; white-space: nowrap; }
+.footer .legal-right .legal-links { font-size: 14px; color: var(--text-muted); margin-bottom: var(--space-m); white-space: nowrap; }
 .footer .legal-right .legal-links a { color: var(--text-muted); }
-.footer .legal-right .legal-links .legal-sep { margin: 0 4px; }
+.footer .legal-right .legal-links .legal-sep { margin: 0 var(--space-3xs); }
 .footer .truste { display: inline-block; line-height: 0; }
 .footer .truste img { width: 142px; height: 45px; }
 
@@ -85,10 +85,10 @@ footer .footer .container { max-width: var(--container); margin: 0 auto; padding
    social share a row, and the legal tier regroups (logos on one line, About
    links beside the copyright). Uniform light-gray background throughout. ── */
 @media (width < 1024px) {
-  footer .footer .container { padding: 0 20px; }
+  footer .footer .container { padding: 0 var(--space-m); }
 
   /* stack the top tier so DOM order (cols → country → search → sitemap) shows */
-  .footer .ftr-main { border-top: 0; padding: 4px 0 0; }
+  .footer .ftr-main { border-top: 0; padding: var(--space-3xs) 0 0; }
   .footer .ftr-main .container { display: flex; flex-direction: column; }
 
   /* link columns → accordions */
@@ -109,7 +109,7 @@ footer .footer .container { max-width: var(--container); margin: 0 auto; padding
   /* country selector row (mobile copy) */
   .footer .country-desktop { display: none; }
   .footer .country-mobile { display: block; border-bottom: 1px solid var(--line); position: relative; }
-  .footer .country-mobile .country-toggle { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 60px; padding: 0; border: 0; border-radius: 0; background: none; font-size: 16px; font-weight: 700; color: var(--text); }
+  .footer .country-mobile .country-toggle { display: flex; align-items: center; gap: var(--space-2xs); width: 100%; min-height: 60px; padding: 0; border: 0; border-radius: 0; background: none; font-size: 16px; font-weight: var(--font-weight-bold); color: var(--text); }
   .footer .country-mobile .country-toggle .caret { margin-left: auto; }
   .footer .country-mobile .country-menu { position: static; min-width: 0; margin: 0; padding: 0 0 14px; border: 0; border-radius: 0; box-shadow: none; }
   .footer .country-mobile .country-menu a { padding: 11px 0 11px 26px; }
@@ -119,11 +119,11 @@ footer .footer .container { max-width: var(--container); margin: 0 auto; padding
   .footer .footer-search input { width: 100%; max-width: 320px; }
 
   /* sitemap + social on one line */
-  .footer .footer-sitemap { display: flex; margin: 0; padding: 20px 0; justify-content: space-between; gap: 16px; border-bottom: 1px solid var(--line); }
+  .footer .footer-sitemap { display: flex; margin: 0; padding: var(--space-m) 0; justify-content: space-between; gap: var(--space-s); border-bottom: 1px solid var(--line); }
   .footer .footer-sitemap .social { margin-left: 0; }
 
   /* legal tier: flatten the three columns and regroup via grid areas */
-  .footer .ftr-legal { padding: 32px 0 40px; }
+  .footer .ftr-legal { padding: var(--space-xl) 0 var(--space-2xl); }
   .footer .legal-left, .footer .legal-center, .footer .legal-right { display: contents; }
 
   .footer .legal-grid {
@@ -153,7 +153,7 @@ footer .footer .container { max-width: var(--container); margin: 0 auto; padding
       "copy"
       "truste"
       "links";
-    row-gap: 20px;
+    row-gap: var(--space-m);
   }
 }
 
