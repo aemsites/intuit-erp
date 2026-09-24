@@ -1,7 +1,13 @@
 import {
   describe, it, expect, vi, beforeEach,
 } from 'vitest';
-import decorate, { parseFormConfig, MARKETO_ERROR_MSG_POLL_MS } from '../blocks/form/form.js';
+import decorate, {
+  parseFormConfig,
+  MARKETO_ERROR_MSG_POLL_MS,
+  appendDisclaimer,
+  installFormComplete,
+  ZI_DISCLAIMER_TEXT_DEFAULT,
+} from '../blocks/form/form.js';
 
 vi.mock('../scripts/aem.js', () => ({
   loadScript: vi.fn(() => Promise.resolve()),
@@ -30,6 +36,7 @@ const flush = () => new Promise((r) => { setTimeout(r, 0); });
 const RECAPTCHA_CFG = {
   'marketo.munchkin': '743-RZM-619',
   'chilipiper.subdomain': 'intuitsales',
+  'formcomplete.ziProjectKey': '1234567',
   'recaptcha.enabled': true,
   'recaptcha.siteKey': '6LeQ-test',
   'recaptcha.v2SiteKey': '6LdTQ-test',
@@ -54,6 +61,7 @@ beforeEach(() => {
   getSiteConfig.mockResolvedValue({
     'marketo.munchkin': '743-RZM-619',
     'chilipiper.subdomain': 'intuitsales',
+    'formcomplete.ziProjectKey': '1234567',
   });
   getMetadata.mockReturnValue(''); // no `marketo` metadata → prod instance
   delete window.utag;
@@ -139,6 +147,15 @@ describe('parseFormConfig', () => {
       .toBe(true);
     expect(parseFormConfig(make([['formId', '1058'], ['enableFormComplete', 'false']])).enableFormComplete)
       .toBe(false);
+  });
+
+  it('parses formCompleteDisclaimer with the shared default when omitted', () => {
+    expect(parseFormConfig(make([['formId', '1058']])).formCompleteDisclaimer)
+      .toBe(ZI_DISCLAIMER_TEXT_DEFAULT);
+    expect(parseFormConfig(make([
+      ['formId', '1058'],
+      ['formCompleteDisclaimer', 'Does this company look right?'],
+    ])).formCompleteDisclaimer).toBe('Does this company look right?');
   });
 });
 
@@ -253,7 +270,7 @@ describe('decorate — live Marketo form', () => {
     await flush();
     expect(block.classList.contains('form-complete')).toBe(true);
     expect(window.ziFcInstalled).toBe(true);
-    expect(window.ZIProjectKey).toBe('1205df03da1697208983');
+    expect(window.ZIProjectKey).toBe('1234567'); // from site-config formcomplete.ziProjectKey
     expect(document.querySelector('script[src*="zi-tag"]')).toBeTruthy();
   });
 
@@ -265,6 +282,30 @@ describe('decorate — live Marketo form', () => {
     expect(block.classList.contains('form-complete')).toBe(false);
     expect(window.ziFcInstalled).toBeFalsy();
     expect(document.querySelector('script[src*="zi-tag"]')).toBeNull();
+  });
+
+  it('uses authored formCompleteDisclaimer on match, else the default', async () => {
+    const form = document.createElement('form');
+    form.className = 'mktoForm';
+    form.innerHTML = '<div class="mktoFieldWrap">'
+      + '<input name="intuitCompanyName" value="Acme" data-zi-input-enriched="true">'
+      + '</div>';
+    document.body.append(form);
+
+    appendDisclaimer(form);
+    expect(form.querySelector('.zi-formcomplete-msg').textContent).toBe(ZI_DISCLAIMER_TEXT_DEFAULT);
+    form.querySelector('.zi-formcomplete-msg').remove();
+
+    delete window.ziFcInstalled;
+    installFormComplete(
+      { 'formcomplete.ziProjectKey': 'k' },
+      { formCompleteDisclaimer: 'Authored FormComplete disclaimer.' },
+    );
+    form.querySelector('input').focus();
+    window._zi_fc.onMatch({});
+    expect(form.querySelector('.zi-formcomplete-msg').textContent)
+      .toBe('Authored FormComplete disclaimer.');
+    form.remove();
   });
 
   it('hands off to ChiliPiper (prod args + xref), shows thank-you, and fires the ECS lead track on success', async () => {
