@@ -6,11 +6,14 @@
  *
  * Per-page config rows (author): formId, chiliPiperRouter, downloadUrl,
  * successUrl, header, subheader, disclaimer, recaptcha (per-form v3 opt-in),
- * buttonLabel (overrides Marketo's own hardcoded submit button text).
+ * buttonLabel (overrides Marketo's own hardcoded submit button text),
+ * enableFormComplete (ZoomInfo FormComplete; on by default, set to false to disable),
+ * formCompleteDisclaimer (optional override for the FormComplete company-match note).
  * Site-wide values (munchkin, chilipiper subdomain, script URLs, reCAPTCHA
  * keys/endpoints: recaptcha.enabled, recaptcha.siteKey, recaptcha.v2SiteKey,
- * recaptcha.verifyUrl, recaptcha.apiKey, recaptcha.scoreThreshold) come from
- * /site-config.json via getSiteConfig() — never authored per page, never hardcoded.
+ * recaptcha.verifyUrl, recaptcha.apiKey, recaptcha.scoreThreshold;
+ * formcomplete.ziProjectKey) come from /site-config.json via getSiteConfig() —
+ * never authored per page, never hardcoded.
  *
  * Marketo instance: production by default. A page opts into a non-prod instance
  * with `marketo: dev` | `marketo: e2e` metadata (no hostname logic), which selects
@@ -60,6 +63,8 @@ const CONFIG_KEYS = [
   'leadLanguage',
   'marketoSync',
   'marketoSyncAccount',
+  'enableFormComplete',
+  'formCompleteDisclaimer',
 ];
 
 const RICH_TEXT_KEYS = ['header', 'subheader', 'disclaimer'];
@@ -88,6 +93,10 @@ const MUNCHKIN_API_SRC = '//munchkin.marketo.net/munchkin.js';
 // Defer after onSubmit before checking for .mktoErrorMsg — Marketo injects validation
 // errors immediately after submit handling; 500ms covers that without a visible delay.
 export const MARKETO_ERROR_MSG_POLL_MS = 500;
+
+// Default FormComplete company-match note when authors omit formCompleteDisclaimer.
+export const ZI_DISCLAIMER_TEXT_DEFAULT = 'We found this business name based on public information. '
+  + 'Does this look right? If not, please edit.';
 
 // getSiteConfig lives in scripts.js; import it dynamically so this block (which
 // scripts.js's graph pulls in for the schedule modal) doesn't form a static cycle.
@@ -130,7 +139,87 @@ export function parseFormConfig(block) {
     leadLanguage: found.leadLanguage,
     marketoSync: found.marketoSync,
     marketoSyncAccount: found.marketoSyncAccount,
+    // FormComplete is on by default; authors opt out with enableFormComplete: false.
+    enableFormComplete: found.enableFormComplete !== 'false',
+    formCompleteDisclaimer: found.formCompleteDisclaimer || ZI_DISCLAIMER_TEXT_DEFAULT,
   };
+}
+
+// ZoomInfo FormComplete — company-from-email enrichment (also used by the PZN smartform widget).
+const ZI_SCRIPT_URL = 'https://js.zi-scripts.com/zi-tag.js';
+const ZI_COMPANY_FIELD = 'intuitCompanyName';
+
+// Adds the "we found this business name" note under the company field once ZI returns a match —
+// unless the visitor already edited it or the note is already there. Clears it on edit.
+export function appendDisclaimer(form, disclaimerText = ZI_DISCLAIMER_TEXT_DEFAULT) {
+  const companyInput = form?.querySelector(`[name="${ZI_COMPANY_FIELD}"]`);
+  if (!companyInput || form.querySelector('.zi-formcomplete-msg')) return;
+  if (companyInput.dataset.hasusertyped) return;
+  const msg = document.createElement('p');
+  msg.className = 'zi-formcomplete-msg';
+  msg.textContent = disclaimerText || ZI_DISCLAIMER_TEXT_DEFAULT;
+  // Anchor below the whole field wrap so the note clears Marketo's floated label/input.
+  (companyInput.closest('.mktoFieldWrap') || companyInput).after(msg);
+  // Ignore ZI/Marketo synthetic change events (isTrusted false); remove only on a real edit.
+  const onEdit = (event) => {
+    if (!event.isTrusted) return;
+    msg.remove();
+    companyInput.removeEventListener('input', onEdit);
+  };
+  companyInput.addEventListener('input', onEdit);
+}
+
+// Loads ZoomInfo FormComplete once. Bind after the Marketo form is in the DOM — FormComplete
+// has no public re-scan hook, so an eager load would miss forms that mount later.
+export function installFormComplete(cfg = {}, formConfig = {}) {
+  if (window.ziFcInstalled) return;
+  window.ziFcInstalled = true;
+  window.ZIProjectKey = cfg['formcomplete.ziProjectKey'];
+  const disclaimerText = formConfig.formCompleteDisclaimer || ZI_DISCLAIMER_TEXT_DEFAULT;
+
+  // ZoomInfo FormComplete reads its lifecycle callbacks from window._zi_fc — the unified zi-tag.js
+  /* eslint-disable no-underscore-dangle */
+  window._zi_fc = {
+    ...window._zi_fc,
+    onReady() { experienceLog('info', 'ZI FormComplete ready'); },
+    onRequestSent() { experienceLog('info', 'ZI FormComplete match request sent'); },
+    onMatch(data) {
+      const form = document.activeElement?.closest('form') || document.querySelector('.mktoForm');
+      const companyInput = form?.querySelector(`[name="${ZI_COMPANY_FIELD}"]`);
+      // ZI keys its payload by its own field names, so gate on the enriched field, not data's keys.
+      const enriched = companyInput?.dataset.ziInputEnriched === 'true'
+        || !!companyInput?.value?.trim()
+        || !!data?.intuitCompanyName;
+      if (enriched) {
+        experienceLog('info', 'ZI FormComplete match: company enriched');
+        appendDisclaimer(form, disclaimerText);
+      } else {
+        experienceLog('info', 'ZI FormComplete no match data returned');
+      }
+    },
+  };
+  /* eslint-enable no-underscore-dangle */
+
+  const script = document.createElement('script');
+  script.async = true;
+  script.src = ZI_SCRIPT_URL;
+  script.addEventListener('error', () => experienceLog('error', 'ZI FormComplete script load failure'));
+  document.body.appendChild(script);
+}
+
+// Runs `fn` once a Marketo form is in the DOM — immediately if one is already present, otherwise
+// on the first mutation that adds one. Used by the PZN smartform widget for deferred load.
+export function whenFormPresent(fn) {
+  if (document.querySelector('.mktoForm')) {
+    fn();
+    return;
+  }
+  const observer = new MutationObserver(() => {
+    if (!document.querySelector('.mktoForm')) return;
+    observer.disconnect();
+    fn();
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
 }
 
 /**
@@ -555,6 +644,11 @@ async function embedMarketoForm(formEl, cfg, config, env) {
       if (button) button.textContent = config.buttonLabel;
     }
 
+    // ZoomInfo FormComplete — load after Marketo has rendered so the tag can bind this form.
+    if (config.enableFormComplete) {
+      installFormComplete(cfg, config);
+    }
+
     // recaptcha
     if (config.recaptcha) {
       setupRecaptcha(cfg, config, form, formEl);
@@ -635,6 +729,7 @@ export default async function decorate(block) {
   }
   if (!stashedConfig) block.dataset.formConfig = JSON.stringify(config);
   if (config.downloadUrl) block.classList.add('download');
+  if (config.enableFormComplete) block.classList.add('form-complete');
 
   const children = [];
   if (config.header) {
