@@ -12,7 +12,7 @@
 .faq-container .default-content-wrapper h3 {
   font-size: 48px;
   line-height: 60px;
-  font-weight: 400;
+  font-weight: var(--font-weight-normal);
   text-align: center;
   margin: 0 0 60px;
   color: var(--heading);
@@ -36,7 +36,7 @@
   width: 100%;
   box-sizing: border-box;
   margin: 0;
-  padding: 20px 0;
+  padding: var(--space-m) 0;
   border: 0;
   background: none;
   cursor: pointer;
@@ -44,11 +44,11 @@
   font: inherit;
   font-size: 16px;
   line-height: 24px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: #000;
   display: flex;
   align-items: flex-start;
-  gap: 20px;
+  gap: var(--space-m);
   transition: color 0.2s;
 }
 
@@ -62,21 +62,21 @@
 
 .faq .faq-toggle:hover,
 .faq .faq-toggle:focus-visible {
-  color: #236cff;
+  color: var(--info);
 }
 
 .faq .faq-chevron {
   flex: 0 0 auto;
   width: 16px;
   height: 16px;
-  margin-top: 4px;
+  margin-top: var(--space-3xs);
   color: var(--text);
   transition: transform 0.24s ease-in-out, color 0.2s;
 }
 
 .faq .faq-toggle:hover .faq-chevron,
 .faq .faq-toggle:focus-visible .faq-chevron {
-  color: #236cff;
+  color: var(--info);
 }
 
 .faq .faq-toggle[aria-expanded="true"] .faq-chevron {
@@ -98,7 +98,7 @@
 }
 
 .faq .faq-answer {
-  padding: 0 40px 20px 0;
+  padding: 0 var(--space-2xl) var(--space-m) 0;
   font-size: 14px;
   color: var(--text);
   line-height: 1.43;
@@ -107,22 +107,22 @@
 }
 
 .faq .faq-toggle[aria-expanded="true"]+.faq-panel .faq-answer {
-  padding-top: 8px;
+  padding-top: var(--space-2xs);
   opacity: 1;
   transition: opacity 0.4s ease 0.25s;
 }
 
 .faq .faq-answer p {
-  margin: 0 0 12px;
+  margin: 0 0 var(--space-xs);
 }
 
 .faq .faq-answer ul {
-  margin: 0 0 12px;
-  padding-left: 20px;
+  margin: 0 0 var(--space-xs);
+  padding-left: var(--space-m);
 }
 
 .faq .faq-answer li {
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2xs);
 }
 
 /* In-copy links inside an answer take the source site's link blue rather than the
@@ -142,7 +142,7 @@
   .faq-container .default-content-wrapper h3 {
     font-size: 34px;
     line-height: 44px;
-    margin-bottom: 40px;
+    margin-bottom: var(--space-2xl);
   }
 
   .faq .faq-list {
@@ -150,7 +150,7 @@
   }
 
   .faq .faq-answer {
-    padding-right: 20px;
+    padding-right: var(--space-m);
   }
 }
 

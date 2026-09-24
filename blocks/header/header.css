@@ -22,7 +22,7 @@ header .header {
 header .header .container {
    max-width: var(--container);
    margin: 0 auto;
-   padding: 0 40px;
+   padding: 0 var(--space-2xl);
 }
 
 body.nav-scroll-lock {
@@ -37,7 +37,7 @@ body.nav-scroll-lock {
 .header .ies-topstrip .container {
    display: flex;
    align-items: center;
-   gap: 24px;
+   gap: var(--space-l);
    height: 30px;
 }
 
@@ -60,7 +60,7 @@ body.nav-scroll-lock {
 .header .bs-logo-label {
    font-size: 14px;
    color: var(--heading);
-   font-weight: 600;
+   font-weight: var(--font-weight-semibold);
 }
 
 .header a.bs-logo:hover {
@@ -159,10 +159,10 @@ body.nav-scroll-lock {
    align-items: center;
    justify-content: center;
    height: 40px;
-   padding: 0 24px;
+   padding: 0 var(--space-l);
    font-size: 16px;
-   font-weight: 500;
-   line-height: 1;
+   font-weight: var(--font-weight-medium);
+   line-height: var(--line-height-none);
    font-family: inherit;
    border: 2px solid var(--navy);
    border-radius: var(--radius);
@@ -228,12 +228,12 @@ body.nav-scroll-lock {
    display: flex;
    align-items: center;
    height: 48px;
-   gap: 20px;
+   gap: var(--space-m);
 }
 
 .header .secondary-nav-brand {
    font-size: 16px;
-   font-weight: 600;
+   font-weight: var(--font-weight-semibold);
    color: var(--heading);
    text-decoration: none;
 }
@@ -244,7 +244,7 @@ body.nav-scroll-lock {
 
 .header .ies-secondary-nav .nav-main {
    margin-left: auto;
-   gap: 20px;
+   gap: var(--space-m);
 }
 
 .header .secondary-nav-toggle {
@@ -266,11 +266,11 @@ body.nav-scroll-lock {
 
    .header .secondary-nav-brand {
       font-size: 24px;
-      font-weight: 700;
+      font-weight: var(--font-weight-bold);
    }
 
    .header .ies-secondary-nav .nav-main button:not(.flyout-back) {
-      font-weight: 600;
+      font-weight: var(--font-weight-semibold);
    }
 
    .header .ies-secondary-nav .nav-item {
@@ -290,7 +290,7 @@ body.nav-scroll-lock {
    .header .ies-secondary-nav .flyout-inner {
       max-width: none;
       margin: 0;
-      padding: 0 24px;
+      padding: 0 var(--space-l);
    }
 
    /* Resource Center nav: thicken the shared underline to 4px and colour it
@@ -315,7 +315,7 @@ body.nav-scroll-lock {
 }
 
 .header .ies-events a {
-   font-weight: 500;
+   font-weight: var(--font-weight-medium);
    text-decoration: underline;
    color: var(--heading);
 }
@@ -331,7 +331,7 @@ body.nav-scroll-lock {
 
 .header .ies-events.ies-events-dark .ies-events-hl {
    color: #07c4d9;
-   font-weight: 600;
+   font-weight: var(--font-weight-semibold);
 }
 
 @media (min-width: 1300px) {
@@ -359,7 +359,7 @@ body.nav-scroll-lock {
    }
 
    header .header .container {
-      padding: 0 20px;
+      padding: 0 var(--space-m);
    }
 
    .header .ies-topstrip {
@@ -372,7 +372,7 @@ body.nav-scroll-lock {
 
    .header .ies-nav .container {
       height: 56px;
-      gap: 12px;
+      gap: var(--space-xs);
    }
 
    .header .nav-main {
@@ -391,11 +391,11 @@ body.nav-scroll-lock {
       box-sizing: border-box;
       overflow: hidden auto;
       padding-top: 14px;
-      padding-bottom: 20px;
+      padding-bottom: var(--space-m);
    }
 
    .header .nav-right {
-      gap: 12px;
+      gap: var(--space-xs);
    }
 
    .header .nav-right .nav-cta {
@@ -416,7 +416,7 @@ body.nav-scroll-lock {
    .header .nav-mobile-extra {
       display: flex;
       flex-direction: column;
-      padding: 24px 20px 20px;
+      padding: var(--space-l) var(--space-m) var(--space-m);
    }
 
    .header .nav-mobile-extra .nav-cta {
@@ -426,8 +426,8 @@ body.nav-scroll-lock {
    .header .nav-mobile-brands {
       display: flex;
       flex-direction: column;
-      gap: 16px;
-      margin: 40px 0 0;
+      gap: var(--space-s);
+      margin: var(--space-2xl) 0 0;
       padding: 0;
       list-style: none;
    }
@@ -436,15 +436,15 @@ body.nav-scroll-lock {
       position: relative;
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: var(--space-xs);
       height: 48px;
-      padding: 0 48px 0 20px;
+      padding: 0 var(--space-3xl) 0 var(--space-m);
       box-sizing: border-box;
       border-radius: var(--radius);
       background: var(--navy);
       color: #fff;
       font-size: 16px;
-      font-weight: 500;
+      font-weight: var(--font-weight-medium);
       text-decoration: none;
    }
 
@@ -468,8 +468,8 @@ body.nav-scroll-lock {
 
    .header .ies-events .container {
       font-size: 13px;
-      padding-top: 12px;
-      padding-bottom: 12px;
+      padding-top: var(--space-xs);
+      padding-bottom: var(--space-xs);
    }
 
    .header .nav-toggle {
@@ -477,13 +477,13 @@ body.nav-scroll-lock {
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 4px;
+      gap: var(--space-3xs);
       width: 36px;
       height: 36px;
       box-sizing: border-box;
       background: none;
       border: 1px solid var(--text);
-      border-radius: 4px;
+      border-radius: var(--radius);
       padding: 0;
       cursor: pointer;
    }
@@ -595,7 +595,7 @@ body.nav-scroll-lock {
       width: 100%;
       flex-basis: 100%;
       background: #fff;
-      padding: 4px 20px 12px;
+      padding: var(--space-3xs) var(--space-m) var(--space-xs);
       border-top: 1px solid var(--line);
    }
 
@@ -608,7 +608,7 @@ body.nav-scroll-lock {
       width: auto;
       height: auto;
       box-sizing: border-box;
-      padding: 0 0 8px 20px;
+      padding: 0 0 var(--space-2xs) var(--space-m);
       opacity: 1;
       pointer-events: auto;
       transform: none;
@@ -624,7 +624,7 @@ body.nav-scroll-lock {
 
    .header .ies-secondary-nav .flyout-inner {
       flex-direction: column;
-      gap: 4px;
+      gap: var(--space-3xs);
    }
 
    .header .ies-secondary-nav .flyout-back {
@@ -661,7 +661,7 @@ body.nav-scroll-lock {
    display: none;
    flex: 1;
    align-items: center;
-   gap: 8px;
+   gap: var(--space-2xs);
 }
 
 .header .ies-secondary-nav .rc-search-input {
@@ -691,9 +691,9 @@ body.nav-scroll-lock {
    background: transparent;
    cursor: pointer;
    font-size: 24px;
-   line-height: 1;
+   line-height: var(--line-height-none);
    color: var(--text-muted);
-   padding: 0 4px;
+   padding: 0 var(--space-3xs);
 }
 
 .header .ies-secondary-nav .rc-search-clear:hover {
@@ -707,11 +707,11 @@ body.nav-scroll-lock {
 
 .header .ies-secondary-nav.rc-search-active .rc-search {
    flex: 1;
-   margin-left: 24px;
+   margin-left: var(--space-l);
    height: 40px;
-   gap: 4px;
+   gap: var(--space-3xs);
    background: var(--sky);
-   border-radius: 4px;
+   border-radius: var(--radius);
    padding: 0 6px 0 10px;
 }
 
@@ -730,7 +730,7 @@ body.nav-scroll-lock {
       flex-basis: 100%;
       margin: 0;
       align-items: center;
-      gap: 8px;
+      gap: var(--space-2xs);
       padding: 10px 20px;
       border-top: 1px solid var(--line);
       background: none;

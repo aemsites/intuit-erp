@@ -25,12 +25,6 @@ import { loadScript, getMetadata, decorateIcons } from '../../scripts/aem.js';
 import { fetchPlaceholders } from '../../scripts/placeholders.js';
 import { experienceLog } from '../../scripts/experience.js';
 
-// Uncomment with the AEP/WebSDK integration in scripts/scripts.js.
-// // Vendored via git subtree at plugins/martech (see its README), not an
-// // installed npm package, so this necessarily crosses a package.json boundary.
-// // eslint-disable-next-line import/no-relative-packages
-// import { sendEvent } from '../../plugins/martech/src/index.js';
-
 // Shared ChiliPiper opener (also used by personalization widgets).
 import {
   openChiliPiper, submitChiliPiper,
@@ -44,13 +38,6 @@ import {
   getPhCountryCodeForGeo,
   getCookieValue,
 } from '../../scripts/utils.js';
-
-// Uncomment with the AEP/WebSDK integration in scripts/scripts.js.
-// // Tenant-namespaced XDM location for lead-identity events. Object name `of1Signal` must
-// // byte-match the AEP "Experience Event Schema" field group path (AEP console config) or
-// // ingestion silently drops it. Independent of the (removed) OF1 generative-page feature,
-// // which used to write interest/intent data to this same object.
-// export const LEAD_XDM_TARGET = { prefix: '<prefix>', object: 'of1Signal' };
 
 const CONFIG_KEYS = [
   'formId',
@@ -227,21 +214,6 @@ export function whenFormPresent(fn) {
   });
   observer.observe(document.body, { childList: true, subtree: true });
 }
-
-// Uncomment with the AEP/WebSDK integration in scripts/scripts.js.
-// // Maps lead fields → an identity sendEvent XDM. Email goes in identityMap as
-// // 'ambiguous' (unverified). Pure — no DOM/network.
-// export function buildIdentityXdm(fields) {
-//   return {
-//     eventType: 'web.formFilledOut',
-//     identityMap: {
-//       Email: [{ id: fields.email, primary: true, authenticatedState: 'ambiguous' }],
-//     },
-//     [LEAD_XDM_TARGET.prefix]: {
-//       [LEAD_XDM_TARGET.object]: { lead: { ...fields }, capturedAt: new Date().toISOString() },
-//     },
-//   };
-// }
 
 /**
  * Loads the Munchkin JavaScript library for Marketo and initializes it with a specified form ID

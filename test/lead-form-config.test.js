@@ -3,12 +3,6 @@ import {
 } from 'vitest';
 import decorate, { parseFormConfig, MARKETO_ERROR_MSG_POLL_MS } from '../blocks/form/form.js';
 
-// Uncomment with the AEP/WebSDK integration in scripts/scripts.js and blocks/form/form.js.
-// // eslint-disable-next-line import/no-relative-packages
-// import { sendEvent } from '../plugins/martech/src/index.js';
-// vi.mock('../plugins/martech/src/index.js', () => ({
-//   sendEvent: vi.fn(() => Promise.resolve()),
-// }));
 vi.mock('../scripts/aem.js', () => ({
   loadScript: vi.fn(() => Promise.resolve()),
   getMetadata: vi.fn(() => ''),
