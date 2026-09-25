@@ -291,10 +291,10 @@ export default async function decorate(block) {
   const nav = block.querySelector('#iesNav, .ies-nav');
   const fixedSecondaryNav = block.querySelector('.ies-secondary-nav');
   if (nav) {
-    // Heights are constant per breakpoint — measure once (and on resize) rather
-    // than reading offsetHeight, which forces a layout, on every scroll frame.
-    let topstripH = topstrip ? topstrip.offsetHeight : 0;
-    let navH = nav.offsetHeight;
+    // Heights are constant per breakpoint, so they're cached rather than read
+    // via offsetHeight (which forces a layout) on every scroll frame.
+    let topstripH = 0;
+    let navH = 0;
     let scrollTicking = false;
     const onScroll = () => {
       const y = window.scrollY;
@@ -315,13 +315,27 @@ export default async function decorate(block) {
         requestAnimationFrame(onScroll);
       }
     };
-    requestScrollTick();
-    window.addEventListener('scroll', requestScrollTick, { passive: true });
-    window.addEventListener('resize', () => {
-      topstripH = topstrip ? topstrip.offsetHeight : 0;
-      navH = nav.offsetHeight;
+    // decorate() can run before header.css applies (parallel CSS load in
+    // loadBlock), so an early offsetHeight misplaces the fixed secondary nav.
+    // Re-measure on height change so it self-corrects once styled.
+    const measure = () => {
+      const nextTopstripH = topstrip ? topstrip.offsetHeight : 0;
+      const nextNavH = nav.offsetHeight;
+      if (nextTopstripH === topstripH && nextNavH === navH) return;
+      topstripH = nextTopstripH;
+      navH = nextNavH;
       requestScrollTick();
-    }, { passive: true });
+    };
+    measure();
+    window.addEventListener('scroll', requestScrollTick, { passive: true });
+    if (typeof ResizeObserver !== 'undefined') {
+      const ro = new ResizeObserver(measure);
+      ro.observe(nav);
+      if (topstrip) ro.observe(topstrip);
+    } else {
+      window.addEventListener('resize', measure, { passive: true });
+      requestAnimationFrame(() => requestAnimationFrame(measure));
+    }
   }
 
   wireFlyouts(block);
