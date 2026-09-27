@@ -160,9 +160,13 @@ export function appendDisclaimer(form, disclaimerText = ZI_DISCLAIMER_TEXT_DEFAU
   msg.textContent = disclaimerText || ZI_DISCLAIMER_TEXT_DEFAULT;
   // Anchor below the whole field wrap so the note clears Marketo's floated label/input.
   (companyInput.closest('.mktoFieldWrap') || companyInput).after(msg);
+  // Snapshot the FormComplete-filled value so we can log when the visitor overrides it.
+  const formCompleteValue = companyInput.value;
   // Ignore ZI/Marketo synthetic change events (isTrusted false); remove only on a real edit.
   const onEdit = (event) => {
     if (!event.isTrusted) return;
+    companyInput.dataset.hasusertyped = 'true';
+    experienceLog('info', 'ZI FormComplete company field edited by user');
     msg.remove();
     companyInput.removeEventListener('input', onEdit);
   };
