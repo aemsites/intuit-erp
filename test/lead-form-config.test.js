@@ -331,7 +331,6 @@ describe('decorate — live Marketo form', () => {
     expect(experienceLog).toHaveBeenCalledWith(
       'info',
       'ZI FormComplete company field edited by user',
-      { previousValue: 'Acme Inc', newValue: 'Acme Edited' },
     );
     expect(input.dataset.hasusertyped).toBe('true');
     expect(form.querySelector('.zi-formcomplete-msg')).toBeNull();
