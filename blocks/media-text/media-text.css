@@ -216,6 +216,16 @@
   text-decoration: underline;
 }
 
+.media-text.dark .media-copy .button-wrapper a.button.primary {
+  background: #fff;
+  color: var(--navy);
+  text-decoration: none;
+
+  &:hover {
+    background: #eef4f6;
+  }
+} 
+
 .media-text.dark .media-copy .button-wrapper a.button.secondary {
   border-color: #fff;
   text-decoration: none;

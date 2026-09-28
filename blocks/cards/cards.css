@@ -124,6 +124,11 @@
   color: var(--heading);
 }
 
+.cards.editorial.icons .cards-card-body p a:only-child {
+  margin-top: 1rem;
+  display: block;
+}
+
 .cards.editorial .cards-card-body p,
 .cards.editorial.icons .cards-card-body p {
   color: var(--text);
