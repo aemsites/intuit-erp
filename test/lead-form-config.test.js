@@ -308,6 +308,35 @@ describe('decorate — live Marketo form', () => {
     form.remove();
   });
 
+  it('logs when the visitor edits a FormComplete-filled company value', () => {
+    const form = document.createElement('form');
+    form.className = 'mktoForm';
+    form.innerHTML = '<div class="mktoFieldWrap">'
+      + '<input name="intuitCompanyName" value="Acme Inc" data-zi-input-enriched="true">'
+      + '</div>';
+    document.body.append(form);
+
+    const input = form.querySelector('[name="intuitCompanyName"]');
+    let onEdit;
+    const add = input.addEventListener.bind(input);
+    input.addEventListener = (type, fn, opts) => {
+      if (type === 'input') onEdit = fn;
+      return add(type, fn, opts);
+    };
+
+    appendDisclaimer(form);
+    input.value = 'Acme Edited';
+    onEdit({ isTrusted: true });
+
+    expect(experienceLog).toHaveBeenCalledWith(
+      'info',
+      'ZI FormComplete company field edited by user',
+    );
+    expect(input.dataset.hasusertyped).toBe('true');
+    expect(form.querySelector('.zi-formcomplete-msg')).toBeNull();
+    form.remove();
+  });
+
   it('hands off to ChiliPiper (prod args + xref), shows thank-you, and fires the ECS lead track on success', async () => {
     const track = vi.fn();
     window.intuit = { tracking: { ecs: { webAnalytics: { track } } } };
