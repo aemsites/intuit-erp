@@ -164,8 +164,6 @@ export function appendDisclaimer(form, disclaimerText = ZI_DISCLAIMER_TEXT_DEFAU
   // Ignore ZI/Marketo synthetic change events (isTrusted false); remove only on a real edit.
   const onEdit = (event) => {
     if (!event.isTrusted) return;
-    companyInput.dataset.hasusertyped = 'true';
-    experienceLog('info', 'ZI FormComplete company field edited by user');
     msg.remove();
     companyInput.removeEventListener('input', onEdit);
   };
@@ -206,14 +204,7 @@ export function installFormComplete(cfg = {}, formConfig = {}) {
   const script = document.createElement('script');
   script.async = true;
   script.src = ZI_SCRIPT_URL;
-  script.addEventListener('error', (event) => {
-    const err = event?.error;
-    experienceLog('error', 'ZI FormComplete script load failure', {
-      scriptSrc: script.src,
-      message: err?.message,
-      stack: err?.stack,
-    });
-  });
+  script.addEventListener('error', () => experienceLog('error', 'ZI FormComplete script load failure'));
   document.body.appendChild(script);
 }
 
