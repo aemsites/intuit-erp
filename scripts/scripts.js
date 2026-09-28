@@ -431,7 +431,7 @@ function decorateVideoLinks(main) {
  * content — links a block already gave a `target` are left as the block set them.
  * @param {Element} main The container element
  */
-function decorateExternalLinks(main) {
+export function decorateExternalLinks(main) {
   main.querySelectorAll('a[href^="http"]').forEach((a) => {
     if (a.target) return;
     let url;
