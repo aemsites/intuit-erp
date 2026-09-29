@@ -26,6 +26,7 @@
 import { loadScript, getMetadata, decorateIcons } from '../../scripts/aem.js';
 import { fetchPlaceholders } from '../../scripts/placeholders.js';
 import { experienceLog } from '../../scripts/experience.js';
+import { decorateExternalLinks } from '../../scripts/scripts.js';
 
 // Shared ChiliPiper opener (also used by personalization widgets).
 import {
@@ -665,6 +666,11 @@ async function embedMarketoForm(formEl, cfg, config, env) {
       form.onValidate(() => {
         syncFullNameHiddenFields(form);
       });
+    }
+
+    // Decorate external links in the form container to open in a new tab
+    if (formEl.parentNode) {
+      decorateExternalLinks(formEl.parentNode);
     }
 
     // check for chilipiper config added
