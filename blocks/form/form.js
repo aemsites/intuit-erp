@@ -669,9 +669,8 @@ async function embedMarketoForm(formEl, cfg, config, env) {
     }
 
     // Decorate external links in the form container to open in a new tab
-    if (formEl.parentNode) {
-      decorateExternalLinks(formEl.parentNode);
-    }
+    const container = formEl?.parentNode;
+    if (container) decorateExternalLinks(container);
 
     // check for chilipiper config added
     const canHandoff = !!(config.chiliPiperRouter && cfg['chilipiper.subdomain']);
