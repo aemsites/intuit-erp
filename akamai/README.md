@@ -78,7 +78,8 @@ property's own origin request headers):
 
 **Response:** the composed page keeps the origin page's headers, drops `Content-Length` /
 `Content-Encoding` (the body is rewritten and emitted uncompressed — the CDN recompresses),
-and sets `Edge-Cache-Tag` = **union(page tags, nav tags, footer tags)**.
+sets `Edge-Cache-Tag` = **union(page tags, nav tags, footer tags)**, and sets
+`Last-Modified` = **max(page, nav, footer)** so the page is never older than an inlined fragment.
 
 ## 5. Files & bundling
 

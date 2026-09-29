@@ -125,6 +125,27 @@ export function serializeCacheKeys(keys) {
 }
 
 /**
+ * Pick the most recent `last-modified` across the page and its inlined fragments,
+ * so the composed document is never reported older than any of its parts.
+ * Unparseable or missing values are ignored.
+ * @param {...HeaderBag} bags page first, then fragments
+ * @returns {string|null} the newest original header value, or null if none
+ */
+export function latestLastModified(...bags) {
+  let latest = null;
+  let latestTime = -Infinity;
+  bags.forEach((headers) => {
+    const value = headers.get('last-modified');
+    const time = value ? Date.parse(value) : NaN;
+    if (!Number.isNaN(time) && time > latestTime) {
+      latest = value;
+      latestTime = time;
+    }
+  });
+  return latest;
+}
+
+/**
  * Indent every line of `markup` by `count` spaces.
  * @param {string} markup
  * @param {number} count

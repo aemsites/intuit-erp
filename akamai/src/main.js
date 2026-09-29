@@ -22,6 +22,7 @@ import {
   createCacheKeys,
   mergeCacheKeys,
   serializeCacheKeys,
+  latestLastModified,
   inlineTag,
 } from './inline.js';
 
@@ -78,14 +79,15 @@ async function fetchFragment(path, fwd) {
 
 /**
  * Copy the page response headers, drop the ones invalidated by rewriting the body,
- * and set the unioned edge-cache-tag.
+ * and set the unioned edge-cache-tag and newest last-modified.
  */
-function buildResponseHeaders(pageResp, cacheKeys) {
+function buildResponseHeaders(pageResp, cacheKeys, lastModified) {
   const headers = pageResp.getHeaders(); // { name: [values] }, lowercased names
   delete headers['content-length'];
   delete headers['content-encoding']; // body is emitted uncompressed; CDN recompresses
   const tags = serializeCacheKeys(cacheKeys);
   if (tags) headers['edge-cache-tag'] = [tags];
+  if (lastModified) headers['last-modified'] = [lastModified];
   return headers;
 }
 
@@ -133,7 +135,16 @@ export async function responseProvider(request) {
     html = inlineTag(html, 'footer', await footer.text());
   }
 
-  // 5. Return the composed page as a stream. String bodies cap at 16 KB in
+  // 5. The composed page is as fresh as its newest part.
+  const lastModified = latestLastModified(
+    ...[page, nav, footer].filter(Boolean).map(headerBag),
+  );
+
+  // 6. Return the composed page as a stream. String bodies cap at 16 KB in
   //    responseProvider; real pages exceed that, so a ReadableStream is required.
-  return createResponse(200, buildResponseHeaders(page, cacheKeys), streamFromString(html));
+  return createResponse(
+    200,
+    buildResponseHeaders(page, cacheKeys, lastModified),
+    streamFromString(html),
+  );
 }
