@@ -5,6 +5,7 @@ import {
   createCacheKeys,
   mergeCacheKeys,
   serializeCacheKeys,
+  latestLastModified,
   inlineTag,
   metaContent,
   DEFAULT_NAV_PATH,
@@ -99,6 +100,26 @@ describe('cache keys (edge-cache-tag union)', () => {
     mergeCacheKeys(keys, bag('  '));
     mergeCacheKeys(keys, bag('only'));
     expect(serializeCacheKeys(keys)).toBe('only');
+  });
+});
+
+describe('latestLastModified', () => {
+  const lm = (value) => ({ get: (name) => (name === 'last-modified' ? value : null) });
+  const PAGE = 'Mon, 01 Sep 2026 10:00:00 GMT';
+  const NAV = 'Tue, 02 Sep 2026 10:00:00 GMT';
+  const FOOTER = 'Wed, 20 Aug 2026 10:00:00 GMT';
+
+  it('keeps the page value when it is the newest', () => {
+    expect(latestLastModified(lm(PAGE), lm(FOOTER))).toBe(PAGE);
+  });
+
+  it('uses a newer fragment value', () => {
+    expect(latestLastModified(lm(PAGE), lm(NAV), lm(FOOTER))).toBe(NAV);
+  });
+
+  it('ignores missing and unparseable values', () => {
+    expect(latestLastModified(lm(null), lm('garbage'), lm(FOOTER))).toBe(FOOTER);
+    expect(latestLastModified(lm(null), lm('garbage'))).toBeNull();
   });
 });
 
