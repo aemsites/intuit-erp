@@ -5,6 +5,7 @@ import { openScheduleModal, withTriggerLoading } from '../../scripts/schedule-mo
 import { loadFragment } from '../fragment/fragment.js';
 import { enhanceSecondaryNavSearch } from '../blog-search/search-utils.js';
 import { trackAs } from '../../scripts/tracking.js';
+import { fetchPlaceholders } from '../../scripts/placeholders.js';
 
 function isExternal(href) {
   return /^https?:\/\//.test(href);
@@ -281,7 +282,9 @@ export default async function decorate(block) {
       const skipLink = document.createElement('a');
       skipLink.className = 'skip-to-main';
       skipLink.href = `#${encodeURIComponent(main.id)}`;
-      skipLink.textContent = 'Skip to main content';
+      fetchPlaceholders().then((placeholders) => {
+        if (placeholders.skipToMain) skipLink.textContent = placeholders.skipToMain;
+      });
       document.body.prepend(skipLink);
     }
   }

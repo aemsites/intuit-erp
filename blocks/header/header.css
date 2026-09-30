@@ -117,10 +117,10 @@ body.nav-scroll-lock {
   left: 50%;
   padding: 0.5rem 1rem;
   transform: translate(-50%, calc(-100% - 2rem));
-  border-radius: 4px;
+  border-radius: var(--radius);
   background: var(--background-color);
   color: var(--navy);
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   box-shadow: 0 2px 8px rgb(0 0 0 / 20%);
 }
 
@@ -132,7 +132,7 @@ body.nav-scroll-lock {
 
 main:focus {
   outline: 2px solid var(--navy);
-  outline-offset: 4px;
+  outline-offset: var(--space-3xs);
 }
 
 @media (min-width: 1300px) {
