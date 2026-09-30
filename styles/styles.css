@@ -333,8 +333,10 @@ h6 {
   font-size: var(--heading-font-size-xs);
 }
 
-main .section > .default-content-wrapper > h2.section-eyebrow,
-main .section > h2.section-eyebrow {
+main > .section > .default-content-wrapper > h2.section-eyebrow,
+main .fragment-wrapper .section > .default-content-wrapper > h2.section-eyebrow,
+main > .section > h2.section-eyebrow,
+main .fragment-wrapper .section > h2.section-eyebrow {
   margin: 0;
   padding-bottom: 20px;
   font-size: 12px;
@@ -577,22 +579,26 @@ main img {
 }
 
 /* sections */
-main .section {
+main>.section,
+main .fragment-wrapper .section {
   margin: 40px 0;
 }
 
-main .section>div {
+main>.section>div,
+main .fragment-wrapper .section>div {
   max-width: 1200px;
   margin: auto;
   padding: 0 24px;
 }
 
-main .section:first-of-type {
+main>.section:first-of-type,
+main .fragment-wrapper .section:first-of-type {
   margin-top: 0;
 }
 
 @media (width >=1024px) {
-  main .section>div {
+  main>.section>div,
+  main .fragment-wrapper .section>div {
     padding: 0 32px;
   }
 }
@@ -648,7 +654,8 @@ main .section.super-blue .faq-toggle:hover .faq-chevron {
 }
 
 /* content width */
-main .section>div {
+main>.section>div,
+main .fragment-wrapper .section>div {
   max-width: var(--container);
   margin: 0 auto;
   padding: 0 40px;
@@ -664,7 +671,8 @@ main .section {
   padding: 0;
 }
 
-main .section {
+main>.section,
+main .fragment-wrapper .section {
   margin: 0;
 }
 
@@ -685,7 +693,8 @@ main .section.narrow>div {
   }
 }
 
-main .section > .default-content-wrapper > h2 {
+main > .section > .default-content-wrapper > h2,
+main .fragment-wrapper .section > .default-content-wrapper > h2 {
   font-size: 48px;
 }
 
@@ -777,104 +786,122 @@ main .section.super-blue a.button.secondary:focus-visible {
 }
 
 /* contained sections */
-main .section.contained {
+main>.section.contained,
+main .fragment-wrapper .section.contained {
   margin: 2rem auto;
   max-width: 1400px;
   border-radius: 6px;
 }
 
 /* case-studies index intro (Template: "Case Studies Index" metadata -> body.case-studies-index) */
-body.case-studies-index main .section:first-of-type .default-content-wrapper {
+body.case-studies-index main>.section:first-of-type .default-content-wrapper,
+body.case-studies-index main .fragment-wrapper .section:first-of-type .default-content-wrapper {
   max-width: 46em;
   margin: 0 auto;
   text-align: center;
 }
 
-body.case-studies-index main .section:first-of-type h1 {
+body.case-studies-index main>.section:first-of-type h1,
+body.case-studies-index main .fragment-wrapper .section:first-of-type h1 {
   font-size: 40px;
   font-weight: 600;
   margin: 0 0 16px;
 }
 
-body.case-studies-index main .section:first-of-type p {
+body.case-studies-index main>.section:first-of-type p,
+body.case-studies-index main .fragment-wrapper .section:first-of-type p {
   font-size: 17px;
   color: var(--text-muted);
 }
 
 /* blog category listing intro (Template: "Category" metadata -> body.category) */
-body.category main .section:first-of-type {
+body.category main>.section:first-of-type,
+body.category main .fragment-wrapper .section:first-of-type {
   padding-top: 5rem;
 }
 
-body.category main .section:first-of-type .default-content-wrapper {
+body.category main>.section:first-of-type .default-content-wrapper,
+body.category main .fragment-wrapper .section:first-of-type .default-content-wrapper {
   max-width: 46em;
   margin: 0 auto;
   text-align: center;
 }
 
-body.category main .section:first-of-type h1 {
+body.category main>.section:first-of-type h1,
+body.category main .fragment-wrapper .section:first-of-type h1 {
   font-size: 40px;
   font-weight: 600;
   margin: 0 0 16px;
 }
 
-body.category main .section:first-of-type p {
+body.category main>.section:first-of-type p,
+body.category main .fragment-wrapper .section:first-of-type p {
   font-size: 17px;
   color: var(--text-muted);
 }
 
-body.blog-home main .section:first-of-type .default-content-wrapper {
+body.blog-home main>.section:first-of-type .default-content-wrapper,
+body.blog-home main .fragment-wrapper .section:first-of-type .default-content-wrapper {
   text-align: center;
 }
 
-body.blog-home main .section:first-of-type h2 {
+body.blog-home main>.section:first-of-type h2,
+body.blog-home main .fragment-wrapper .section:first-of-type h2 {
   font-size: 34px;
   font-weight: 700;
   color: #000;
   margin: 0 0 16px;
 }
 
-body.blog-home main .section:first-of-type p {
+body.blog-home main>.section:first-of-type p,
+body.blog-home main .fragment-wrapper .section:first-of-type p {
   line-height: 1.5;
   color: #000;
   max-width: 46em;
   margin-inline: auto;
 }
 
-body.blog-home main .section:not(:first-of-type) h2 {
+body.blog-home main>.section:not(:first-of-type) h2,
+body.blog-home main .fragment-wrapper .section:not(:first-of-type) h2 {
   font-size: 28px;
   font-weight: 700;
   color: #000;
 }
 
 @media (min-width: 1024px) {
-  body.blog-home main .section:first-of-type h2 {
+  body.blog-home main>.section:first-of-type h2,
+  body.blog-home main .fragment-wrapper .section:first-of-type h2 {
     font-size: 40px;
   }
 
-  body.blog-home main .section:not(:first-of-type) h2 {
+  body.blog-home main>.section:not(:first-of-type) h2,
+  body.blog-home main .fragment-wrapper .section:not(:first-of-type) h2 {
     font-size: 34px;
   }
 }
 
-body.search main .section:first-of-type {
+body.search main>.section:first-of-type,
+body.search main .fragment-wrapper .section:first-of-type {
   padding-top: 5rem;
 }
 
-main:has(.event-cards) .section:first-of-type {
+main:has(.event-cards)>.section:first-of-type,
+main:has(.event-cards) .fragment-wrapper .section:first-of-type {
   background: var(--navy);
   background-image: linear-gradient(135deg, #041839 0%, #041f53 45%, #03339c 100%);
   color: #fff;
   padding: 96px 0 80px;
 }
 
-main:has(.event-cards) .section:first-of-type .default-content-wrapper {
+main:has(.event-cards)>.section:first-of-type .default-content-wrapper,
+main:has(.event-cards) .fragment-wrapper .section:first-of-type .default-content-wrapper {
   max-width: 1000px;
   margin: 0 auto;
   text-align: center;
 }
 
-main:has(.event-cards) .section:first-of-type h1 {
+main:has(.event-cards)>.section:first-of-type h1,
+main:has(.event-cards) .fragment-wrapper .section:first-of-type h1 {
   font-size: 48px;
   line-height: 1.27;
   font-weight: 500;
@@ -882,7 +909,8 @@ main:has(.event-cards) .section:first-of-type h1 {
   margin: 0 0 20px;
 }
 
-main:has(.event-cards) .section:first-of-type p {
+main:has(.event-cards)>.section:first-of-type p,
+main:has(.event-cards) .fragment-wrapper .section:first-of-type p {
   font-size: 20px;
   line-height: 1.4;
   color: #fff;
@@ -891,19 +919,22 @@ main:has(.event-cards) .section:first-of-type p {
 
 /* upstream runs one step: 48px until the 1200px container is reached, 60px above */
 @media (width >=1200px) {
-  main:has(.event-cards) .section:first-of-type h1 {
+  main:has(.event-cards)>.section:first-of-type h1,
+  main:has(.event-cards) .fragment-wrapper .section:first-of-type h1 {
     font-size: 60px;
   }
 }
 
 @media (width <1024px) {
-  main:has(.event-cards) .section:first-of-type {
+  main:has(.event-cards)>.section:first-of-type,
+  main:has(.event-cards) .fragment-wrapper .section:first-of-type {
     padding: 64px 0 56px;
   }
 }
 
 @media (width <768px) {
-  main:has(.event-cards) .section:first-of-type h1 {
+  main:has(.event-cards)>.section:first-of-type h1,
+  main:has(.event-cards) .fragment-wrapper .section:first-of-type h1 {
     font-size: 36px;
   }
 }
@@ -1050,7 +1081,8 @@ p.button-wrapper {
 /* Multi-CTA groups in default content stack full-width on mobile. Flex items
    ignore the section's text-align, so they'd otherwise wrap left-aligned. */
 @media (width < 768px) {
-  main .section > .default-content-wrapper > .button-wrapper.buttons-multi {
+  main > .section > .default-content-wrapper > .button-wrapper.buttons-multi,
+  main .fragment-wrapper .section > .default-content-wrapper > .button-wrapper.buttons-multi {
     display: flex;
     flex-direction: column;
   }
@@ -1076,7 +1108,8 @@ img {
     --nav-height: 60px;
   }
 
-  main .section>div {
+  main>.section>div,
+  main .fragment-wrapper .section>div {
     padding: 0 20px;
   }
 }
@@ -1108,63 +1141,113 @@ body.blog-home .section:not(:first-of-type)>.default-content-wrapper> :is(h1, h2
 }
 
 
-main .section.spacer-top-s { margin-top: 1rem; }
-main .section.spacer-top-m { margin-top: 1.5rem; }
-main .section.spacer-top-l { margin-top: 2.5rem; }
-main .section.spacer-top-xl { margin-top: 4rem; }
-main .section.spacer-top-xxl { margin-top: 6rem; }
-main .section.spacer-bottom-s { margin-bottom: 1rem; }
-main .section.spacer-bottom-m { margin-bottom: 1.5rem; }
-main .section.spacer-bottom-l { margin-bottom: 2.5rem; }
-main .section.spacer-bottom-xl { margin-bottom: 4rem; }
-main .section.spacer-bottom-xxl { margin-bottom: 6rem; }
-main .section.spacer-bottom-xxxl { margin-bottom: 8rem; }
-main .section.spacer-bottom-xxxxl { margin-bottom: 10rem; }
+main > .section.spacer-top-s { margin-top: 1rem; }
+main .fragment-wrapper .section.spacer-top-s { margin-top: 1rem; }
+main > .section.spacer-top-m { margin-top: 1.5rem; }
+main .fragment-wrapper .section.spacer-top-m { margin-top: 1.5rem; }
+main > .section.spacer-top-l { margin-top: 2.5rem; }
+main .fragment-wrapper .section.spacer-top-l { margin-top: 2.5rem; }
+main > .section.spacer-top-xl { margin-top: 4rem; }
+main .fragment-wrapper .section.spacer-top-xl { margin-top: 4rem; }
+main > .section.spacer-top-xxl { margin-top: 6rem; }
+main .fragment-wrapper .section.spacer-top-xxl { margin-top: 6rem; }
+main > .section.spacer-bottom-s { margin-bottom: 1rem; }
+main .fragment-wrapper .section.spacer-bottom-s { margin-bottom: 1rem; }
+main > .section.spacer-bottom-m { margin-bottom: 1.5rem; }
+main .fragment-wrapper .section.spacer-bottom-m { margin-bottom: 1.5rem; }
+main > .section.spacer-bottom-l { margin-bottom: 2.5rem; }
+main .fragment-wrapper .section.spacer-bottom-l { margin-bottom: 2.5rem; }
+main > .section.spacer-bottom-xl { margin-bottom: 4rem; }
+main .fragment-wrapper .section.spacer-bottom-xl { margin-bottom: 4rem; }
+main > .section.spacer-bottom-xxl { margin-bottom: 6rem; }
+main .fragment-wrapper .section.spacer-bottom-xxl { margin-bottom: 6rem; }
+main > .section.spacer-bottom-xxxl { margin-bottom: 8rem; }
+main .fragment-wrapper .section.spacer-bottom-xxxl { margin-bottom: 8rem; }
+main > .section.spacer-bottom-xxxxl { margin-bottom: 10rem; }
+main .fragment-wrapper .section.spacer-bottom-xxxxl { margin-bottom: 10rem; }
 
-main .section .block.spacer-top-s { margin-top: 1rem; }
-main .section .block.spacer-top-m { margin-top: 1.5rem; }
-main .section .block.spacer-top-l { margin-top: 2.5rem; }
-main .section .block.spacer-top-xl { margin-top: 4rem; }
-main .section .block.spacer-top-xxl { margin-top: 6rem; }
-main .section .block.spacer-bottom-s { margin-bottom: 1rem; }
-main .section .block.spacer-bottom-m { margin-bottom: 1.5rem; }
-main .section .block.spacer-bottom-l { margin-bottom: 2.5rem; }
-main .section .block.spacer-bottom-xl { margin-bottom: 4rem; }
-main .section .block.spacer-bottom-xxl { margin-bottom: 6rem; }
-main .section .block.spacer-bottom-xxxl { margin-bottom: 8rem; }
-main .section .block.spacer-bottom-xxxxl { margin-bottom: 10rem; }
+main > .section .block.spacer-top-s { margin-top: 1rem; }
+main .fragment-wrapper .section .block.spacer-top-s { margin-top: 1rem; }
+main > .section .block.spacer-top-m { margin-top: 1.5rem; }
+main .fragment-wrapper .section .block.spacer-top-m { margin-top: 1.5rem; }
+main > .section .block.spacer-top-l { margin-top: 2.5rem; }
+main .fragment-wrapper .section .block.spacer-top-l { margin-top: 2.5rem; }
+main > .section .block.spacer-top-xl { margin-top: 4rem; }
+main .fragment-wrapper .section .block.spacer-top-xl { margin-top: 4rem; }
+main > .section .block.spacer-top-xxl { margin-top: 6rem; }
+main .fragment-wrapper .section .block.spacer-top-xxl { margin-top: 6rem; }
+main > .section .block.spacer-bottom-s { margin-bottom: 1rem; }
+main .fragment-wrapper .section .block.spacer-bottom-s { margin-bottom: 1rem; }
+main > .section .block.spacer-bottom-m { margin-bottom: 1.5rem; }
+main .fragment-wrapper .section .block.spacer-bottom-m { margin-bottom: 1.5rem; }
+main > .section .block.spacer-bottom-l { margin-bottom: 2.5rem; }
+main .fragment-wrapper .section .block.spacer-bottom-l { margin-bottom: 2.5rem; }
+main > .section .block.spacer-bottom-xl { margin-bottom: 4rem; }
+main .fragment-wrapper .section .block.spacer-bottom-xl { margin-bottom: 4rem; }
+main > .section .block.spacer-bottom-xxl { margin-bottom: 6rem; }
+main .fragment-wrapper .section .block.spacer-bottom-xxl { margin-bottom: 6rem; }
+main > .section .block.spacer-bottom-xxxl { margin-bottom: 8rem; }
+main .fragment-wrapper .section .block.spacer-bottom-xxxl { margin-bottom: 8rem; }
+main > .section .block.spacer-bottom-xxxxl { margin-bottom: 10rem; }
+main .fragment-wrapper .section .block.spacer-bottom-xxxxl { margin-bottom: 10rem; }
 
-main .section.padding-top-s { padding-top: 1rem; }
-main .section.padding-top-m { padding-top: 1.5rem; }
-main .section.padding-top-l { padding-top: 2.5rem; }
-main .section.padding-top-xl { padding-top: 4rem; }
-main .section.padding-top-xxl { padding-top: 6rem; }
-main .section.padding-bottom-s { padding-bottom: 1rem; }
-main .section.padding-bottom-m { padding-bottom: 1.5rem; }
-main .section.padding-bottom-l { padding-bottom: 2.5rem; }
-main .section.padding-bottom-xl { padding-bottom: 4rem; }
-main .section.padding-bottom-xxl { padding-bottom: 6rem; }
-main .section.padding-bottom-xxxl { padding-bottom: 8rem; }
-main .section.padding-bottom-xxxxl { padding-bottom: 10rem; }
+main > .section.padding-top-s { padding-top: 1rem; }
+main .fragment-wrapper .section.padding-top-s { padding-top: 1rem; }
+main > .section.padding-top-m { padding-top: 1.5rem; }
+main .fragment-wrapper .section.padding-top-m { padding-top: 1.5rem; }
+main > .section.padding-top-l { padding-top: 2.5rem; }
+main .fragment-wrapper .section.padding-top-l { padding-top: 2.5rem; }
+main > .section.padding-top-xl { padding-top: 4rem; }
+main .fragment-wrapper .section.padding-top-xl { padding-top: 4rem; }
+main > .section.padding-top-xxl { padding-top: 6rem; }
+main .fragment-wrapper .section.padding-top-xxl { padding-top: 6rem; }
+main > .section.padding-bottom-s { padding-bottom: 1rem; }
+main .fragment-wrapper .section.padding-bottom-s { padding-bottom: 1rem; }
+main > .section.padding-bottom-m { padding-bottom: 1.5rem; }
+main .fragment-wrapper .section.padding-bottom-m { padding-bottom: 1.5rem; }
+main > .section.padding-bottom-l { padding-bottom: 2.5rem; }
+main .fragment-wrapper .section.padding-bottom-l { padding-bottom: 2.5rem; }
+main > .section.padding-bottom-xl { padding-bottom: 4rem; }
+main .fragment-wrapper .section.padding-bottom-xl { padding-bottom: 4rem; }
+main > .section.padding-bottom-xxl { padding-bottom: 6rem; }
+main .fragment-wrapper .section.padding-bottom-xxl { padding-bottom: 6rem; }
+main > .section.padding-bottom-xxxl { padding-bottom: 8rem; }
+main .fragment-wrapper .section.padding-bottom-xxxl { padding-bottom: 8rem; }
+main > .section.padding-bottom-xxxxl { padding-bottom: 10rem; }
+main .fragment-wrapper .section.padding-bottom-xxxxl { padding-bottom: 10rem; }
 
-main .section .block.padding-top-s { padding-top: 1rem; }
-main .section .block.padding-top-m { padding-top: 1.5rem; }
-main .section .block.padding-top-l { padding-top: 2.5rem; }
-main .section .block.padding-top-xl { padding-top: 4rem; }
-main .section .block.padding-top-xxl { padding-top: 6rem; }
-main .section .block.padding-bottom-s { padding-bottom: 1rem; }
-main .section .block.padding-bottom-m { padding-bottom: 1.5rem; }
-main .section .block.padding-bottom-l { padding-bottom: 2.5rem; }
-main .section .block.padding-bottom-xl { padding-bottom: 4rem; }
-main .section .block.padding-bottom-xxl { padding-bottom: 6rem; }
-main .section .block.padding-bottom-xxxl { padding-bottom: 8rem; }
-main .section .block.padding-bottom-xxxxl { padding-bottom: 10rem; }
+main > .section .block.padding-top-s { padding-top: 1rem; }
+main .fragment-wrapper .section .block.padding-top-s { padding-top: 1rem; }
+main > .section .block.padding-top-m { padding-top: 1.5rem; }
+main .fragment-wrapper .section .block.padding-top-m { padding-top: 1.5rem; }
+main > .section .block.padding-top-l { padding-top: 2.5rem; }
+main .fragment-wrapper .section .block.padding-top-l { padding-top: 2.5rem; }
+main > .section .block.padding-top-xl { padding-top: 4rem; }
+main .fragment-wrapper .section .block.padding-top-xl { padding-top: 4rem; }
+main > .section .block.padding-top-xxl { padding-top: 6rem; }
+main .fragment-wrapper .section .block.padding-top-xxl { padding-top: 6rem; }
+main > .section .block.padding-bottom-s { padding-bottom: 1rem; }
+main .fragment-wrapper .section .block.padding-bottom-s { padding-bottom: 1rem; }
+main > .section .block.padding-bottom-m { padding-bottom: 1.5rem; }
+main .fragment-wrapper .section .block.padding-bottom-m { padding-bottom: 1.5rem; }
+main > .section .block.padding-bottom-l { padding-bottom: 2.5rem; }
+main .fragment-wrapper .section .block.padding-bottom-l { padding-bottom: 2.5rem; }
+main > .section .block.padding-bottom-xl { padding-bottom: 4rem; }
+main .fragment-wrapper .section .block.padding-bottom-xl { padding-bottom: 4rem; }
+main > .section .block.padding-bottom-xxl { padding-bottom: 6rem; }
+main .fragment-wrapper .section .block.padding-bottom-xxl { padding-bottom: 6rem; }
+main > .section .block.padding-bottom-xxxl { padding-bottom: 8rem; }
+main .fragment-wrapper .section .block.padding-bottom-xxxl { padding-bottom: 8rem; }
+main > .section .block.padding-bottom-xxxxl { padding-bottom: 10rem; }
+main .fragment-wrapper .section .block.padding-bottom-xxxxl { padding-bottom: 10rem; }
 
-main .section > .default-content-wrapper > .button-wrapper {
+main > .section > .default-content-wrapper > .button-wrapper,
+main .fragment-wrapper .section > .default-content-wrapper > .button-wrapper {
   margin-top: 2rem;
 }
 
-main .section.colored-background {
+main > .section.colored-background,
+main .fragment-wrapper .section.colored-background {
   padding-top: 3rem;
   padding-bottom: 3rem;
 
@@ -1175,7 +1258,8 @@ main .section.colored-background {
   }
 }
 
-main .section.blue-divider {
+main > .section.blue-divider,
+main .fragment-wrapper .section.blue-divider {
   > .default-content-wrapper {
     border-top: 2px solid var(--info);
   }
@@ -1193,8 +1277,10 @@ main .section.blue-divider {
   color: #fff; 
 }
 
-main .section.dark-background > .default-content-wrapper > .button-wrapper a.button,
-main .section.dark-background > .default-content-wrapper > .button-wrapper button {
+main > .section.dark-background > .default-content-wrapper > .button-wrapper a.button,
+main .fragment-wrapper .section.dark-background > .default-content-wrapper > .button-wrapper a.button,
+main > .section.dark-background > .default-content-wrapper > .button-wrapper button,
+main .fragment-wrapper .section.dark-background > .default-content-wrapper > .button-wrapper button {
   background: #fff;
   color: var(--navy);
 
@@ -1203,12 +1289,15 @@ main .section.dark-background > .default-content-wrapper > .button-wrapper butto
   }
 }
 
-main .section.dark-background > .default-content-wrapper > .button-wrapper .button.primary {
+main > .section.dark-background > .default-content-wrapper > .button-wrapper .button.primary,
+main .fragment-wrapper .section.dark-background > .default-content-wrapper > .button-wrapper .button.primary {
   border-color: #fff;
 }
 
-main .section.dark-background > .default-content-wrapper > .button-wrapper a.button.secondary,
-main .section.dark-background > .default-content-wrapper > .button-wrapper button.secondary {
+main > .section.dark-background > .default-content-wrapper > .button-wrapper a.button.secondary,
+main .fragment-wrapper .section.dark-background > .default-content-wrapper > .button-wrapper a.button.secondary,
+main > .section.dark-background > .default-content-wrapper > .button-wrapper button.secondary,
+main .fragment-wrapper .section.dark-background > .default-content-wrapper > .button-wrapper button.secondary {
   background: transparent;
   color: #fff;
   border-color: #fff;
@@ -1235,11 +1324,11 @@ main .section.dark-background > .default-content-wrapper > .button-wrapper butto
   max-width: 1000px;
 }
 
-body.block-library > main .section {
+body.block-library > main > .section {
   margin: 2rem 0;
 }
 
-body.block-library > main .section > .default-content-wrapper > h1 {
+body.block-library > main > .section > .default-content-wrapper > h1 {
   font-size: 36px;
   text-align: left !important;
   margin-top: 0;
@@ -1262,7 +1351,7 @@ body.block-library .section > .default-content-wrapper {
   padding:0
 }
 
-body.author-guide > main .section > .default-content-wrapper :is(h1, h2, h3, h4, h5, h6, p, ul, li) {
+body.author-guide > main > .section > .default-content-wrapper :is(h1, h2, h3, h4, h5, h6, p, ul, li) {
   text-align: left !important;
 }
 
@@ -1272,10 +1361,12 @@ body.author-guide > main .section > .default-content-wrapper :is(h1, h2, h3, h4,
     height: 338px;
 }
 
-main .section.large-text > .default-content-wrapper p {
+main > .section.large-text > .default-content-wrapper p,
+main .fragment-wrapper .section.large-text > .default-content-wrapper p {
   font-size: 20px;
 }
 
-main .section.large-text > .default-content-wrapper :is(h3, h4, h5, h6) {
+main > .section.large-text > .default-content-wrapper :is(h3, h4, h5, h6),
+main .fragment-wrapper .section.large-text > .default-content-wrapper :is(h3, h4, h5, h6) {
   margin-bottom: 2rem;
 }
