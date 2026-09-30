@@ -169,6 +169,18 @@
   border-color: #eef4f6;
 }
 
+.hero :is(a, button).button.secondary {
+  color: #fff;
+  border-color: #fff;
+}
+
+.hero :is(a, button).button.secondary:hover,
+.hero :is(a, button).button.secondary:focus-visible {
+  background: #fff;
+  color: #09222a;
+  border-color: #fff;
+}
+
 .hero :is(a, button).button.icon-video {
   gap: 10px;
 }
