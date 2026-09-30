@@ -262,7 +262,6 @@ function decorateButtons(main) {
     const links = multi ? formatted : [...p.querySelectorAll(':scope a[href]')];
 
     links.forEach((a) => {
-      a.title = a.title || a.textContent;
       const text = a.textContent.trim();
 
       // skip links that wrap an image
