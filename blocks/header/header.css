@@ -120,7 +120,6 @@ body.nav-scroll-lock {
   height: auto;
   margin: 0;
   overflow: visible;
-  clip: auto;
   clip-path: none;
   white-space: normal;
   transform: translateX(-50%);
