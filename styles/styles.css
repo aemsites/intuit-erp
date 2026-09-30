@@ -195,31 +195,6 @@ body {
   line-height: 1.6;
 }
 
-.skip-to-main {
-  position: fixed;
-  z-index: 1000;
-  top: 0.5rem;
-  left: 50%;
-  padding: 0.5rem 1rem;
-  transform: translate(-50%, calc(-100% - 2rem));
-  border-radius: 4px;
-  background: var(--background-color);
-  color: var(--navy);
-  font-weight: 700;
-  box-shadow: 0 2px 8px rgb(0 0 0 / 20%);
-}
-
-.skip-to-main:focus {
-  transform: translateX(-50%);
-  outline: 2px solid var(--navy);
-  outline-offset: 2px;
-}
-
-main:focus {
-  outline: 2px solid var(--navy);
-  outline-offset: 4px;
-}
-
 body.appear {
   display: block;
 }
