@@ -241,6 +241,13 @@ function wireFlyoutGroup(nav) {
       closeAll(item);
       setOpen(item, willOpen);
     });
+
+    // Close flyout when focus leaves the nav-item (keyboard accessibility)
+    item.addEventListener('focusout', (e) => {
+      if (!item.contains(e.relatedTarget)) {
+        setOpen(item, false);
+      }
+    });
   });
 
   // Resource Center secondary nav: on desktop the flyouts open on hover to
