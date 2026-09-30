@@ -243,13 +243,10 @@ function wireFlyoutGroup(nav) {
     });
 
     // Close flyout when focus leaves the nav-item (keyboard accessibility)
-    item.addEventListener('focusout', () => {
-      setTimeout(() => {
-        // Check if the newly focused element is outside this nav-item
-        if (!item.contains(document.activeElement)) {
-          setOpen(item, false);
-        }
-      }, 0);
+    item.addEventListener('focusout', (e) => {
+      if (!item.contains(e.relatedTarget)) {
+        setOpen(item, false);
+      }
     });
   });
 
