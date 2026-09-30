@@ -1026,7 +1026,8 @@ a.button.secondary:hover {
 }
 
 .section.dark a.button.secondary:hover,
-.hero a.button.secondary:hover {
+.hero a.button.secondary:hover,
+.hero a.button.secondary:focus-visible {
   background: #fff;
   color: #09222a;
   border-color: #fff;
