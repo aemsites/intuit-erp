@@ -189,7 +189,7 @@ body.author-guide .highlight .highlight-inner {
   margin-inline: auto;
   background: transparent;
   border-radius: 0;
-  color: #fff;
+  color: var(--background-color);
 }
 
 .highlight.dark.stats .highlight-inner > * {
@@ -231,15 +231,15 @@ body.author-guide .highlight .highlight-inner {
 .highlight.dark.stats .highlight-inner > p:nth-of-type(4) {
   max-width: 16em;
   margin-inline: auto;
-  color: #fff;
-  font-size: 16px;
+  color: var(--background-color);
+  font-size: var(--body-font-size-m);
   line-height: var(--line-height-m);
 }
 
 @media (min-width: 1024px) {
   .highlight.dark.stats .highlight-inner {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    column-gap: clamp(48px, 8vw, 150px);
+    column-gap: clamp(var(--space-3xl), 8vw, 150px);
     max-width: 1000px;
   }
 
@@ -253,8 +253,8 @@ body.author-guide .highlight .highlight-inner {
   .highlight.dark.stats .highlight-inner > p:nth-of-type(4) {
     max-width: none;
     margin-inline: 0;
-    font-size: 20px;
-    line-height: 28px;
+    font-size: var(--heading-font-size-s);
+    line-height: var(--line-height-m);
     text-align: left;
   }
 
