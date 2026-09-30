@@ -273,6 +273,19 @@ function wireFlyouts(block) {
 }
 
 export default async function decorate(block) {
+  const main = document.querySelector('main');
+  if (main) {
+    if (!main.id) main.id = 'main';
+    if (!main.hasAttribute('tabindex')) main.setAttribute('tabindex', '-1');
+    if (!document.querySelector('.skip-to-main')) {
+      const skipLink = document.createElement('a');
+      skipLink.className = 'skip-to-main';
+      skipLink.href = `#${encodeURIComponent(main.id)}`;
+      skipLink.textContent = 'Skip to main content';
+      document.body.prepend(skipLink);
+    }
+  }
+
   const navMeta = getMetadata('nav');
   const navPath = navMeta ? new URL(navMeta, window.location).pathname : '/nav';
   const {
