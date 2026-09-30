@@ -1019,14 +1019,12 @@ a.button.secondary:hover {
   background: rgb(0 37 74 / 6%);
 }
 
-.section.dark a.button.secondary,
-.hero a.button.secondary {
+.section.dark a.button.secondary {
   color: #fff;
   border-color: #fff;
 }
 
-.section.dark a.button.secondary:hover,
-.hero a.button.secondary:hover {
+.section.dark a.button.secondary:hover {
   background: #fff;
   color: #09222a;
   border-color: #fff;

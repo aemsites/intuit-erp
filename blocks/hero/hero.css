@@ -164,9 +164,22 @@
   border-color: #fff;
 }
 
-.hero :is(a, button).button.primary:hover {
+.hero :is(a, button).button.primary:hover,
+ .hero :is(a, button).button.primary:focus-visible{
   background: #eef4f6;
   border-color: #eef4f6;
+}
+
+.hero :is(a, button).button.secondary {
+  color: #fff;
+  border-color: #fff;
+}
+
+.hero :is(a, button).button.secondary:hover,
+.hero :is(a, button).button.secondary:focus-visible {
+  background: var(--background-color);
+  color: #09222a;
+  border-color: #fff;
 }
 
 .hero :is(a, button).button.icon-video {

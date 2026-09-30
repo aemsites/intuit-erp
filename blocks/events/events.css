@@ -72,7 +72,11 @@
   margin-top: 8px;
 }
 
-.events .event-body .button:hover { background: var(--navy-hover); border-color: var(--navy-hover); }
+.events .event-body .button:hover,
+.events .event-body .button:focus-visible { 
+  background: var(--navy-hover); 
+  border-color: var(--navy-hover); 
+}
 
 /* side-by-side at tablet and up */
 @media (width >= 600px) {
