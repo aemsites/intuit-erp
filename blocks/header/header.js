@@ -280,7 +280,7 @@ export default async function decorate(block) {
     if (!main.hasAttribute('tabindex')) main.setAttribute('tabindex', '-1');
     if (!document.querySelector('.skip-to-main')) {
       const skipLink = document.createElement('a');
-      skipLink.className = 'skip-to-main';
+      skipLink.className = 'skip-to-main sr-only';
       skipLink.href = `#${encodeURIComponent(main.id)}`;
       fetchPlaceholders().then((placeholders) => {
         if (placeholders.skipToMain) skipLink.textContent = placeholders.skipToMain;

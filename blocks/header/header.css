@@ -110,22 +110,23 @@ body.nav-scroll-lock {
    margin-left: 10px;
 }
 
-.skip-to-main {
+.skip-to-main:focus {
   position: fixed;
   z-index: 1000;
   top: 0.5rem;
   left: 50%;
   padding: 0.5rem 1rem;
-  transform: translate(-50%, calc(-100% - 2rem));
+  width: auto;
+  height: auto;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  clip-path: none;
+  white-space: normal;
+  transform: translateX(-50%);
   border-radius: var(--radius);
-  background: var(--background-color);
-  color: var(--navy);
   font-weight: var(--font-weight-bold);
   box-shadow: 0 2px 8px rgb(0 0 0 / 20%);
-}
-
-.skip-to-main:focus {
-  transform: translateX(-50%);
   outline: 2px solid var(--navy);
   outline-offset: 2px;
 }
