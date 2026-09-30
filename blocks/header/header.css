@@ -113,9 +113,9 @@ body.nav-scroll-lock {
 .skip-to-main:focus {
   position: fixed;
   z-index: 1000;
-  top: 0.5rem;
+  top: var(--space-2xs);
   left: 50%;
-  padding: 0.5rem 1rem;
+  padding: var(--space-2xs) var(--space-s);
   width: auto;
   height: auto;
   margin: 0;
