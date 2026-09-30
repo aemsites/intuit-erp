@@ -70,7 +70,7 @@
 @media (width < 1024px) {
   /* mobile: figures stay stacked and centered, but production keeps each
      description in a ~75% centered column rather than full width */
-  .highlight.dark .highlight-inner:has(h3 ~ h3) h3 + p { max-width: 16em; margin-inline: auto; }
+  .highlight.dark .highlight-inner:has(h3 ~ h3) h3 + p { max-width: 256px; margin-inline: auto; }
 }
 
 .highlight.dark .highlight-inner a:not(.button) { color: #fff; }
@@ -220,7 +220,7 @@ body.author-guide .highlight .highlight-inner {
 
 .highlight.dark.stats .highlight-inner > p:nth-of-type(3) {
   grid-row: 3;
-  margin-top: 64px;
+  margin-top: var(--space-4xl);
 }
 
 .highlight.dark.stats .highlight-inner > p:nth-of-type(4) {
@@ -229,7 +229,7 @@ body.author-guide .highlight .highlight-inner {
 
 .highlight.dark.stats .highlight-inner > p:nth-of-type(2),
 .highlight.dark.stats .highlight-inner > p:nth-of-type(4) {
-  max-width: 16em;
+  max-width: 256px;
   margin-inline: auto;
   color: #fff;
   font-size: 16px;
