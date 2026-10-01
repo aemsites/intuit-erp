@@ -577,7 +577,8 @@ main img {
 }
 
 /* sections */
-:where(main > .section, main .fragment-wrapper .section) {
+main > .section,
+main .fragment-wrapper .section {
   margin: 40px 0;
 }
 
@@ -587,7 +588,8 @@ main img {
   padding: 0 24px;
 }
 
-:where(main > .section:first-of-type, main .fragment-wrapper .section:first-of-type) {
+main > .section:first-of-type,
+main .fragment-wrapper .section:first-of-type {
   margin-top: 0;
 }
 
@@ -664,7 +666,8 @@ main .section {
   padding: 0;
 }
 
-:where(main > .section, main .fragment-wrapper .section) {
+main > .section,
+main .fragment-wrapper .section {
   margin: 0;
 }
 
@@ -777,7 +780,8 @@ main .section.super-blue a.button.secondary:focus-visible {
 }
 
 /* contained sections */
-:where(main > .section.contained, main .fragment-wrapper .section.contained) {
+main > .section.contained,
+main .fragment-wrapper .section.contained {
   margin: 2rem auto;
   max-width: 1400px;
   border-radius: 6px;
@@ -802,7 +806,8 @@ main .section.super-blue a.button.secondary:focus-visible {
 }
 
 /* blog category listing intro (Template: "Category" metadata -> body.category) */
-:where(body.category main > .section:first-of-type, body.category main .fragment-wrapper .section:first-of-type) {
+body.category main > .section:first-of-type,
+body.category main .fragment-wrapper .section:first-of-type {
   padding-top: 5rem;
 }
 
@@ -857,11 +862,13 @@ main .section.super-blue a.button.secondary:focus-visible {
   }
 }
 
-:where(body.search main > .section:first-of-type, body.search main .fragment-wrapper .section:first-of-type) {
+body.search main > .section:first-of-type,
+body.search main .fragment-wrapper .section:first-of-type {
   padding-top: 5rem;
 }
 
-:where(main:has(.event-cards) > .section:first-of-type, main:has(.event-cards) .fragment-wrapper .section:first-of-type) {
+main:has(.event-cards) > .section:first-of-type,
+main:has(.event-cards) .fragment-wrapper .section:first-of-type {
   background: var(--navy);
   background-image: linear-gradient(135deg, #041839 0%, #041f53 45%, #03339c 100%);
   color: #fff;
@@ -897,7 +904,8 @@ main .section.super-blue a.button.secondary:focus-visible {
 }
 
 @media (width <1024px) {
-  :where(main:has(.event-cards) > .section:first-of-type, main:has(.event-cards) .fragment-wrapper .section:first-of-type) {
+  main:has(.event-cards) > .section:first-of-type,
+  main:has(.event-cards) .fragment-wrapper .section:first-of-type {
     padding: 64px 0 56px;
   }
 }
@@ -1108,18 +1116,41 @@ body.blog-home .section:not(:first-of-type)>.default-content-wrapper> :is(h1, h2
 }
 
 
-:where(main > .section.spacer-top-s, main .fragment-wrapper .section.spacer-top-s) { margin-top: 1rem; }
-:where(main > .section.spacer-top-m, main .fragment-wrapper .section.spacer-top-m) { margin-top: 1.5rem; }
-:where(main > .section.spacer-top-l, main .fragment-wrapper .section.spacer-top-l) { margin-top: 2.5rem; }
-:where(main > .section.spacer-top-xl, main .fragment-wrapper .section.spacer-top-xl) { margin-top: 4rem; }
-:where(main > .section.spacer-top-xxl, main .fragment-wrapper .section.spacer-top-xxl) { margin-top: 6rem; }
-:where(main > .section.spacer-bottom-s, main .fragment-wrapper .section.spacer-bottom-s) { margin-bottom: 1rem; }
-:where(main > .section.spacer-bottom-m, main .fragment-wrapper .section.spacer-bottom-m) { margin-bottom: 1.5rem; }
-:where(main > .section.spacer-bottom-l, main .fragment-wrapper .section.spacer-bottom-l) { margin-bottom: 2.5rem; }
-:where(main > .section.spacer-bottom-xl, main .fragment-wrapper .section.spacer-bottom-xl) { margin-bottom: 4rem; }
-:where(main > .section.spacer-bottom-xxl, main .fragment-wrapper .section.spacer-bottom-xxl) { margin-bottom: 6rem; }
-:where(main > .section.spacer-bottom-xxxl, main .fragment-wrapper .section.spacer-bottom-xxxl) { margin-bottom: 8rem; }
-:where(main > .section.spacer-bottom-xxxxl, main .fragment-wrapper .section.spacer-bottom-xxxxl) { margin-bottom: 10rem; }
+main > .section.spacer-top-s,
+main .fragment-wrapper .section.spacer-top-s { margin-top: 1rem; }
+
+main > .section.spacer-top-m,
+main .fragment-wrapper .section.spacer-top-m { margin-top: 1.5rem; }
+
+main > .section.spacer-top-l,
+main .fragment-wrapper .section.spacer-top-l { margin-top: 2.5rem; }
+
+main > .section.spacer-top-xl,
+main .fragment-wrapper .section.spacer-top-xl { margin-top: 4rem; }
+
+main > .section.spacer-top-xxl,
+main .fragment-wrapper .section.spacer-top-xxl { margin-top: 6rem; }
+
+main > .section.spacer-bottom-s,
+main .fragment-wrapper .section.spacer-bottom-s { margin-bottom: 1rem; }
+
+main > .section.spacer-bottom-m,
+main .fragment-wrapper .section.spacer-bottom-m { margin-bottom: 1.5rem; }
+
+main > .section.spacer-bottom-l,
+main .fragment-wrapper .section.spacer-bottom-l { margin-bottom: 2.5rem; }
+
+main > .section.spacer-bottom-xl,
+main .fragment-wrapper .section.spacer-bottom-xl { margin-bottom: 4rem; }
+
+main > .section.spacer-bottom-xxl,
+main .fragment-wrapper .section.spacer-bottom-xxl { margin-bottom: 6rem; }
+
+main > .section.spacer-bottom-xxxl,
+main .fragment-wrapper .section.spacer-bottom-xxxl { margin-bottom: 8rem; }
+
+main > .section.spacer-bottom-xxxxl,
+main .fragment-wrapper .section.spacer-bottom-xxxxl { margin-bottom: 10rem; }
 
 :where(main > .section, main .fragment-wrapper .section) .block.spacer-top-s { margin-top: 1rem; }
 :where(main > .section, main .fragment-wrapper .section) .block.spacer-top-m { margin-top: 1.5rem; }
@@ -1134,18 +1165,41 @@ body.blog-home .section:not(:first-of-type)>.default-content-wrapper> :is(h1, h2
 :where(main > .section, main .fragment-wrapper .section) .block.spacer-bottom-xxxl { margin-bottom: 8rem; }
 :where(main > .section, main .fragment-wrapper .section) .block.spacer-bottom-xxxxl { margin-bottom: 10rem; }
 
-:where(main > .section.padding-top-s, main .fragment-wrapper .section.padding-top-s) { padding-top: 1rem; }
-:where(main > .section.padding-top-m, main .fragment-wrapper .section.padding-top-m) { padding-top: 1.5rem; }
-:where(main > .section.padding-top-l, main .fragment-wrapper .section.padding-top-l) { padding-top: 2.5rem; }
-:where(main > .section.padding-top-xl, main .fragment-wrapper .section.padding-top-xl) { padding-top: 4rem; }
-:where(main > .section.padding-top-xxl, main .fragment-wrapper .section.padding-top-xxl) { padding-top: 6rem; }
-:where(main > .section.padding-bottom-s, main .fragment-wrapper .section.padding-bottom-s) { padding-bottom: 1rem; }
-:where(main > .section.padding-bottom-m, main .fragment-wrapper .section.padding-bottom-m) { padding-bottom: 1.5rem; }
-:where(main > .section.padding-bottom-l, main .fragment-wrapper .section.padding-bottom-l) { padding-bottom: 2.5rem; }
-:where(main > .section.padding-bottom-xl, main .fragment-wrapper .section.padding-bottom-xl) { padding-bottom: 4rem; }
-:where(main > .section.padding-bottom-xxl, main .fragment-wrapper .section.padding-bottom-xxl) { padding-bottom: 6rem; }
-:where(main > .section.padding-bottom-xxxl, main .fragment-wrapper .section.padding-bottom-xxxl) { padding-bottom: 8rem; }
-:where(main > .section.padding-bottom-xxxxl, main .fragment-wrapper .section.padding-bottom-xxxxl) { padding-bottom: 10rem; }
+main > .section.padding-top-s,
+main .fragment-wrapper .section.padding-top-s { padding-top: 1rem; }
+
+main > .section.padding-top-m,
+main .fragment-wrapper .section.padding-top-m { padding-top: 1.5rem; }
+
+main > .section.padding-top-l,
+main .fragment-wrapper .section.padding-top-l { padding-top: 2.5rem; }
+
+main > .section.padding-top-xl,
+main .fragment-wrapper .section.padding-top-xl { padding-top: 4rem; }
+
+main > .section.padding-top-xxl,
+main .fragment-wrapper .section.padding-top-xxl { padding-top: 6rem; }
+
+main > .section.padding-bottom-s,
+main .fragment-wrapper .section.padding-bottom-s { padding-bottom: 1rem; }
+
+main > .section.padding-bottom-m,
+main .fragment-wrapper .section.padding-bottom-m { padding-bottom: 1.5rem; }
+
+main > .section.padding-bottom-l,
+main .fragment-wrapper .section.padding-bottom-l { padding-bottom: 2.5rem; }
+
+main > .section.padding-bottom-xl,
+main .fragment-wrapper .section.padding-bottom-xl { padding-bottom: 4rem; }
+
+main > .section.padding-bottom-xxl,
+main .fragment-wrapper .section.padding-bottom-xxl { padding-bottom: 6rem; }
+
+main > .section.padding-bottom-xxxl,
+main .fragment-wrapper .section.padding-bottom-xxxl { padding-bottom: 8rem; }
+
+main > .section.padding-bottom-xxxxl,
+main .fragment-wrapper .section.padding-bottom-xxxxl { padding-bottom: 10rem; }
 
 :where(main > .section, main .fragment-wrapper .section) .block.padding-top-s { padding-top: 1rem; }
 :where(main > .section, main .fragment-wrapper .section) .block.padding-top-m { padding-top: 1.5rem; }
@@ -1164,7 +1218,8 @@ body.blog-home .section:not(:first-of-type)>.default-content-wrapper> :is(h1, h2
   margin-top: 2rem;
 }
 
-:where(main > .section.colored-background, main .fragment-wrapper .section.colored-background) {
+main > .section.colored-background,
+main .fragment-wrapper .section.colored-background {
   padding-top: 3rem;
   padding-bottom: 3rem;
 
@@ -1175,7 +1230,8 @@ body.blog-home .section:not(:first-of-type)>.default-content-wrapper> :is(h1, h2
   }
 }
 
-:where(main > .section.blue-divider, main .fragment-wrapper .section.blue-divider) {
+main > .section.blue-divider,
+main .fragment-wrapper .section.blue-divider {
   > .default-content-wrapper {
     border-top: 2px solid var(--info);
   }
