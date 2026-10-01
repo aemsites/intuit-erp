@@ -5,6 +5,7 @@ import { openScheduleModal, withTriggerLoading } from '../../scripts/schedule-mo
 import { loadFragment } from '../fragment/fragment.js';
 import { enhanceSecondaryNavSearch } from '../blog-search/search-utils.js';
 import { trackAs } from '../../scripts/tracking.js';
+import { fetchPlaceholders } from '../../scripts/placeholders.js';
 
 function isExternal(href) {
   return /^https?:\/\//.test(href);
@@ -280,6 +281,24 @@ function wireFlyouts(block) {
 }
 
 export default async function decorate(block) {
+  const SKIP_TO_MAIN = 'Skip to main content';
+  const main = document.querySelector('main');
+  if (main) {
+    if (!main.id) main.id = 'main';
+    if (!main.hasAttribute('tabindex')) main.setAttribute('tabindex', '-1');
+    if (!document.querySelector('.skip-to-main')) {
+      const skipLink = document.createElement('a');
+      skipLink.className = 'button secondary skip-to-main sr-only';
+      skipLink.href = `#${encodeURIComponent(main.id)}`;
+      fetchPlaceholders().then((placeholders) => {
+        if (placeholders?.skipToMain) {
+          skipLink.textContent = placeholders?.skipToMain || SKIP_TO_MAIN;
+        }
+      });
+      document.body.prepend(skipLink);
+    }
+  }
+
   const navMeta = getMetadata('nav');
   const navPath = navMeta ? new URL(navMeta, window.location).pathname : '/nav';
   const {
