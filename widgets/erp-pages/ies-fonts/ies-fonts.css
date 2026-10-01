@@ -1,0 +1,95 @@
+/* ies-fonts widget — loads the Tally brand fonts and applies them to the page
+   that embeds the widget (via the widget block), without touching the global
+   font stack. Weights map the OTF kit: Tally 400/500/700 (+ italics),
+   Tally Display 300/400/500/700. Figma references these as "Tally VF" and
+   "Tally Display VF". */
+
+@font-face {
+  font-family: Tally;
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  src: url("/widgets/erp-pages/ies-fonts/fonts/Tally-Regular.otf") format("opentype");
+}
+
+@font-face {
+  font-family: Tally;
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+  src: url("/widgets/erp-pages/ies-fonts/fonts/Tally-RegularItalic.otf") format("opentype");
+}
+
+@font-face {
+  font-family: Tally;
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  src: url("/widgets/erp-pages/ies-fonts/fonts/Tally-Medium.otf") format("opentype");
+}
+
+@font-face {
+  font-family: Tally;
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+  src: url("/widgets/erp-pages/ies-fonts/fonts/Tally-MediumItalic.otf") format("opentype");
+}
+
+@font-face {
+  font-family: Tally;
+  font-weight: 600 700;
+  font-style: normal;
+  font-display: swap;
+  src: url("/widgets/erp-pages/ies-fonts/fonts/Tally-Bold.otf") format("opentype");
+}
+
+@font-face {
+  font-family: Tally;
+  font-weight: 600 700;
+  font-style: italic;
+  font-display: swap;
+  src: url("/widgets/erp-pages/ies-fonts/fonts/Tally-BoldItalic.otf") format("opentype");
+}
+
+@font-face {
+  font-family: "Tally Display";
+  font-weight: 300;
+  font-display: swap;
+  src: url("/widgets/erp-pages/ies-fonts/fonts/TallyDisplay-Light.otf") format("opentype");
+}
+
+@font-face {
+  font-family: "Tally Display";
+  font-weight: 400;
+  font-display: swap;
+  src: url("/widgets/erp-pages/ies-fonts/fonts/TallyDisplay-Regular.otf") format("opentype");
+}
+
+@font-face {
+  font-family: "Tally Display";
+  font-weight: 500;
+  font-display: swap;
+  src: url("/widgets/erp-pages/ies-fonts/fonts/TallyDisplay-Medium.otf") format("opentype");
+}
+
+@font-face {
+  font-family: "Tally Display";
+  font-weight: 600 700;
+  font-display: swap;
+  src: url("/widgets/erp-pages/ies-fonts/fonts/TallyDisplay-Bold.otf") format("opentype");
+}
+
+/* Page-level swap: redefine the font tokens on <body> only when this widget is
+   on the page. Every block reads var(--body-font-family) /
+   var(--heading-font-family), so the whole page picks up Tally while the
+   :root defaults (and every other page) stay on AvenirNext. */
+body:has(.widget.ies-fonts) {
+  --body-font-family: tally, "AvenirNext forINTUIT", avenir-fallback, arial, sans-serif;
+  --heading-font-family: "Tally Display", tally, "AvenirNext forINTUIT", avenir-fallback, arial, sans-serif;
+
+  font-family: var(--body-font-family);
+}
+
+/* the widget renders nothing visible */
+.widget.ies-fonts { display: none; }
