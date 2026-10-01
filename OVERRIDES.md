@@ -161,6 +161,20 @@ on a page keeps its CTAs in the same tab.
 
 ---
 
+## Authored link targets
+
+Append `#target=_blank` or `#target=_self` to a link URL to choose its target. If the destination
+already has a fragment, append the marker after it (for example,
+`/accounting#plans#target=_blank`). The marker is removed before navigation, so the destination
+fragment remains `#plans`. New-tab links receive `rel="noopener"`. Links without a marker keep their
+existing behavior.
+
+The shared target handling runs for page content and the generated navigation and footer links
+([scripts/link-target.js](scripts/link-target.js), [blocks/navigation/navigation.js](blocks/navigation/navigation.js),
+[blocks/header/header.js](blocks/header/header.js), [blocks/footer/footer.js](blocks/footer/footer.js)).
+
+---
+
 ## URL parameters
 
 | Param | Controls | Values | Source |
@@ -224,4 +238,3 @@ Defaults (this project passes no overrides), in [plugins/experimentation/src/ind
   `window.location.hostname`; only `erp.intuit.com` and `stage.erp.intuit.com` resolve to prod, and
   experimentation treats `localhost` / `.page` hosts as preview. `?martech=` and the metadata above
   tune behavior **within** an environment — they never unlock prod integrations off-prod.
-

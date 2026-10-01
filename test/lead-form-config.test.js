@@ -25,6 +25,7 @@ import { experienceLog } from '../scripts/experience.js';
 import { getSiteConfig } from '../scripts/scripts.js';
 
 vi.mock('../scripts/scripts.js', () => ({
+  decorateExternalLinks: vi.fn(),
   getSiteConfig: vi.fn(() => Promise.resolve({
     'marketo.munchkin': '743-RZM-619',
     'chilipiper.subdomain': 'intuitsales',

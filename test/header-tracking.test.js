@@ -6,6 +6,10 @@ import {
 // the (already navigation.js-decorated) nav fragment. Mock it to a representative
 // `.navigation` block; leave the rest of the header's decorate to run for real.
 vi.mock('../blocks/fragment/fragment.js', () => ({ loadFragment: vi.fn() }));
+vi.mock('../scripts/scripts.js', () => ({
+  decorateMain: vi.fn(),
+  decorateExternalLinks: vi.fn(),
+}));
 // Mocked here — header.js's own tests only need to verify the click is wired up.
 vi.mock('../scripts/schedule-modal.js', () => ({
   openScheduleModal: vi.fn(),
@@ -29,7 +33,7 @@ function navFragment() {
       <div>
         <div><a href="https://www.intuit.com/"><img src="/i.svg" alt="Intuit"></a></div>
         <div><ul>
-          <li><a href="https://turbotax.intuit.com/"><img src="/tt.svg" alt="TurboTax"></a></li>
+          <li><a href="https://turbotax.intuit.com/#plans#target=_self"><img src="/tt.svg" alt="TurboTax"></a></li>
           <li><a href="https://mailchimp.com/"><img src="/mc.svg" alt="Mailchimp"></a></li>
         </ul></div>
       </div>
@@ -41,7 +45,7 @@ function navFragment() {
           <div class="nav-item"><button type="button">Pricing</button></div>
           <div class="nav-item"><button type="button">Resources</button>
             <div class="flyout"><p class="flyout-heading">Resource center</p>
-              <div class="flyout-col"><a href="https://erp.intuit.com/blog/">Resource center</a><a href="https://erp.intuit.com/compare/">Compare ERPs</a></div></div></div>
+              <div class="flyout-col"><a href="https://erp.intuit.com/blog/">Resource center</a><a href="https://erp.intuit.com/compare/#pricing#target=_blank">Compare ERPs</a></div></div></div>
           <a class="nav-link nav-cta" href="#schedule">Schedule a call</a>
         </div>
       </div>
@@ -91,12 +95,23 @@ describe('header/nav click-tracking — id-based keying (real render)', () => {
 
   it('keys brand logos + IES logo by host, flyout buttons by label, schedule CTA by label', async () => {
     const block = await buildHeader();
-    expect(idOf(block.querySelector('.bs-logo[href="https://turbotax.intuit.com/"]'))).toBe('nav:turbotax');
+    expect(idOf(block.querySelector('.bs-logo[href="https://turbotax.intuit.com/#plans"]'))).toBe('nav:turbotax');
     expect(idOf(block.querySelector('.bs-logo[href="https://mailchimp.com/"]'))).toBe('nav:mailchimp');
     expect(idOf(block.querySelector('.nav-logo'))).toBe('nav:erp'); // own host -> hostLabel
     const capabilities = [...block.querySelectorAll('.nav-item > button')].find((b) => b.textContent.trim() === 'Capabilities');
     expect(idOf(capabilities)).toBe('nav:capabilities');
     expect(idOf(block.querySelector('.nav-cta'))).toBe('nav:schedule-a-call'); // href-less -> label
+  });
+
+  it('applies authored targets to generated header links and keeps their destination fragments', async () => {
+    const block = await buildHeader();
+    const brandLinks = block.querySelectorAll('a[href="https://turbotax.intuit.com/#plans"]');
+    expect(brandLinks.length).toBe(2);
+    brandLinks.forEach((link) => expect(link.target).toBe('_self'));
+
+    const compare = block.querySelector('a[href="https://erp.intuit.com/compare/#pricing"]');
+    expect(compare.target).toBe('_blank');
+    expect(compare.relList.contains('noopener')).toBe(true);
   });
 
   it('resolves a flyout button to its sheet residue by id (not DOM position)', async () => {

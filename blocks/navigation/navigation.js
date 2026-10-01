@@ -1,3 +1,5 @@
+import { decorateLinkTargets } from '../../scripts/link-target.js';
+
 function isExternal(href) {
   return /^https?:\/\//.test(href);
 }
@@ -70,4 +72,5 @@ export default function decorate(block) {
     return menuItemHTML(label, nestedUl ? parseColumns(nestedUl) : [], idx);
   }).join('');
   menuCell.innerHTML = html;
+  decorateLinkTargets(block);
 }

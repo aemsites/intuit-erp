@@ -1,6 +1,7 @@
 import { getMetadata, loadSections } from '../../scripts/aem.js';
 // eslint-disable-next-line import/no-cycle
 import { decorateMain } from '../../scripts/scripts.js';
+import { decorateLinkTargets } from '../../scripts/link-target.js';
 import { openScheduleModal, withTriggerLoading } from '../../scripts/schedule-modal.js';
 import { loadFragment } from '../fragment/fragment.js';
 import { enhanceSecondaryNavSearch } from '../blog-search/search-utils.js';
@@ -293,6 +294,7 @@ export default async function decorate(block) {
   block.classList.toggle('has-secondary-nav', !!secondaryHTML);
   block.closest('header')?.classList.toggle('has-secondary-nav', !!secondaryHTML);
   block.querySelector('.ies-nav .nav-main')?.insertAdjacentHTML('beforeend', mobileExtraHTML(brandLinks));
+  decorateLinkTargets(block);
 
   const topstrip = block.querySelector('.ies-topstrip');
   const nav = block.querySelector('#iesNav, .ies-nav');
