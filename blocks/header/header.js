@@ -284,7 +284,9 @@ export default async function decorate(block) {
       skipLink.className = 'button secondary skip-to-main sr-only';
       skipLink.href = `#${encodeURIComponent(main.id)}`;
       fetchPlaceholders().then((placeholders) => {
-        if (placeholders?.skipToMain) skipLink.textContent = placeholders?.skipToMain || SKIP_TO_MAIN;
+        if (placeholders?.skipToMain) {
+          skipLink.textContent = placeholders?.skipToMain || SKIP_TO_MAIN;
+        }
       });
       document.body.prepend(skipLink);
     }
