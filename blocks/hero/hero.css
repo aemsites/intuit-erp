@@ -662,3 +662,82 @@ body.author-guide .hero .hero-copy h1,
 body.author-guide .hero .hero-copy .hero-lede {
   max-width: initial;
 }
+
+/* .ies — IES brand-refresh hero (Figma ACQ-4698 Desktop→IES migration):
+   Blueberry band, 14px tracked eyebrow, 60px medium headline, 16px lede,
+   Superblue primary pill + white-outlined secondary pill, media image with a
+   38px radius. Scoped to .hero.ies / its section; the default hero is untouched. */
+.section.hero-container:has(.hero.ies) {
+  --ies-ink: #0d0031;
+  --ies-blue: #236cff;
+  --ies-blue-hover: #1b5be0;
+
+  background: var(--ies-ink);
+}
+
+.hero.ies .hero-copy .hero-eyebrow {
+  margin-bottom: var(--space-3xs);
+  font-size: 14px;
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+  letter-spacing: 1.82px;
+  text-transform: uppercase;
+}
+
+.hero.ies .hero-copy h1 {
+  margin: 0 0 var(--space-s);
+  font-size: 44px;
+  line-height: 1;
+  font-weight: var(--font-weight-medium);
+  max-width: 12em;
+}
+
+.hero.ies .hero-copy .hero-lede {
+  margin: 0 0 var(--space-xl);
+  font-size: var(--body-font-size-m);
+  line-height: var(--line-height-m);
+  color: #fff;
+}
+
+.hero.ies :is(a, button).button {
+  min-height: 48px;
+  padding: 12px var(--space-m);
+  border-radius: 999px;
+  font-size: var(--body-font-size-m);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-m);
+}
+
+.hero.ies :is(a, button).button.primary {
+  border-color: var(--ies-blue);
+  background: var(--ies-blue);
+  color: #fff;
+}
+
+.hero.ies :is(a, button).button.primary:hover,
+.hero.ies :is(a, button).button.primary:focus-visible {
+  border-color: var(--ies-blue-hover);
+  background: var(--ies-blue-hover);
+  color: #fff;
+}
+
+.hero.ies :is(a, button).button.secondary {
+  border: 2px solid #fff;
+  background: transparent;
+  color: #fff;
+}
+
+.hero.ies :is(a, button).button.secondary:hover,
+.hero.ies :is(a, button).button.secondary:focus-visible {
+  background: #fff;
+  color: var(--ies-ink);
+}
+
+.hero.ies .hero-media img {
+  border-radius: 38px;
+  max-height: 555px;
+}
+
+@media (width >= 1024px) {
+  .hero.ies .hero-copy h1 { font-size: 60px; }
+}

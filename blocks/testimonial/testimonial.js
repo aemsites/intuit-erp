@@ -14,6 +14,18 @@
  * Variant .card (migration rationale / account testimonials) — one or more
  * rows, each row a card with 1-2 cells:
  *   1. photo <img> (optional)   2. content (quote, bold name, plain title)
+ *   .card.feature (Figma ACQ-4698 "An accountant's perspective") — one row,
+ *   photo left on a Superblue band, copy right. Same cells; additionally an
+ *   italic-only line renders as the eyebrow, the first plain paragraph after
+ *   the bold name is the role, and any further paragraphs are a footnote.
+ *
+ * Variant .story (Figma ACQ-4698 "Desktop migration story") — one row, a
+ * dark Blueberry card: copy left, media tile right. 2 cells:
+ *   1. content — an optional italic-only eyebrow, a heading (h2-h4), quote
+ *      paragraph(s), a bold-only name line, a plain role line, and an
+ *      optional link-only paragraph that becomes the CTA button
+ *   2. media — one image: the DAM "feature" asset, which already carries the
+ *      Superblue tile, inset photo and customer logo
  *
  * Variant .video (index) — one or more rows, each row 1-2 cells:
  *   1. media — poster <img>, optionally a second image (customer logo)
@@ -101,7 +113,7 @@ function parseQuote(cell) {
   };
 }
 
-function buildCard(row) {
+function buildCard(row, { feature = false } = {}) {
   const [photoCell, contentCell] = [...row.children];
   const figure = document.createElement('figure');
   figure.className = 'testimonial-card';
@@ -113,7 +125,15 @@ function buildCard(row) {
     figure.append(media);
   }
 
-  const { quoteParas, name, roleParas } = parseQuote(contentCell);
+  const {
+    quoteParas, name, roleParas, cite,
+  } = parseQuote(contentCell);
+  if (feature && cite) {
+    const eyebrow = document.createElement('p');
+    eyebrow.className = 'testimonial-eyebrow';
+    eyebrow.textContent = cite;
+    figure.append(eyebrow);
+  }
   const quote = document.createElement('blockquote');
   quoteParas.forEach((p) => {
     const q = document.createElement('p');
@@ -129,7 +149,9 @@ function buildCard(row) {
     nameEl.textContent = name;
     figcaption.append(nameEl);
   }
-  const title = roleParas.map((p) => p.textContent.trim()).filter(Boolean).join(', ');
+  // .feature keeps only the first role line as the title; the rest is a footnote
+  const titleParas = feature ? roleParas.slice(0, 1) : roleParas;
+  const title = titleParas.map((p) => p.textContent.trim()).filter(Boolean).join(', ');
   if (title) {
     const titleEl = document.createElement('p');
     titleEl.className = 'testimonial-title';
@@ -137,6 +159,13 @@ function buildCard(row) {
     figcaption.append(titleEl);
   }
   figure.append(figcaption);
+
+  if (feature && roleParas.length > 1) {
+    const note = document.createElement('p');
+    note.className = 'testimonial-footnote';
+    note.innerHTML = roleParas.slice(1).map((p) => p.innerHTML).join('<br>');
+    figure.append(note);
+  }
 
   return figure;
 }
@@ -577,6 +606,105 @@ function buildCardCarousel(figures) {
   return wrap;
 }
 
+function isLinkOnly(p) {
+  const only = p.children.length === 1 ? p.children[0] : null;
+  return only?.tagName === 'A' && p.textContent.trim() === only.textContent.trim();
+}
+
+function buildStory(row) {
+  const [contentCell, mediaCell] = [...row.children];
+  const figure = document.createElement('figure');
+  figure.className = 'testimonial-card story-card';
+
+  const copy = document.createElement('div');
+  copy.className = 'story-copy';
+
+  // peel off the parts parseQuote doesn't model, then let it handle the rest
+  let eyebrowText = '';
+  let headingEl = null;
+  let ctaLink = null;
+  if (contentCell) {
+    [...contentCell.children].forEach((node) => {
+      if (!headingEl && /^H[1-4]$/.test(node.tagName)) {
+        headingEl = document.createElement('h3');
+        headingEl.className = 'story-title';
+        headingEl.innerHTML = node.innerHTML;
+        node.remove();
+        return;
+      }
+      if (node.tagName !== 'P') return;
+      const only = node.children.length === 1 ? node.children[0] : null;
+      const text = node.textContent.trim();
+      if (!eyebrowText && only?.tagName === 'EM' && text === only.textContent.trim()) {
+        eyebrowText = text;
+        node.remove();
+        return;
+      }
+      if (!ctaLink && isLinkOnly(node)) {
+        ctaLink = only;
+        node.remove();
+      }
+    });
+  }
+
+  if (eyebrowText) {
+    const eb = document.createElement('p');
+    eb.className = 'story-eyebrow';
+    eb.textContent = eyebrowText;
+    copy.append(eb);
+  }
+  if (headingEl) copy.append(headingEl);
+
+  const { quoteParas, name, roleParas } = parseQuote(contentCell);
+  const quote = document.createElement('blockquote');
+  quote.className = 'story-quote';
+  quoteParas.forEach((p) => {
+    const q = document.createElement('p');
+    q.innerHTML = p.innerHTML;
+    quote.append(q);
+  });
+  copy.append(quote);
+
+  const figcaption = document.createElement('figcaption');
+  figcaption.className = 'story-attr';
+  if (name) {
+    const n = document.createElement('span');
+    n.className = 'testimonial-name';
+    n.textContent = name;
+    figcaption.append(n);
+  }
+  const role = roleParas.map((p) => p.textContent.trim()).filter(Boolean).join(', ');
+  if (role) {
+    const r = document.createElement('span');
+    r.className = 'testimonial-title';
+    r.textContent = role;
+    figcaption.append(r);
+  }
+  if (figcaption.childElementCount) copy.append(figcaption);
+
+  if (ctaLink) {
+    ctaLink.className = 'button story-cta';
+    const wrap = document.createElement('p');
+    wrap.className = 'button-wrapper';
+    wrap.append(ctaLink);
+    copy.append(wrap);
+  }
+  figure.append(copy);
+
+  const media = pic(mediaCell);
+  if (media) {
+    const img = media.tagName === 'IMG' ? media : media.querySelector('img');
+    img.classList.add('testimonial-photo');
+    img.loading = 'lazy';
+    const tile = document.createElement('div');
+    tile.className = 'story-media';
+    tile.append(media);
+    figure.append(tile);
+  }
+
+  return figure;
+}
+
 export default function decorate(block) {
   // Customer proof -> rw_testimonial trail; each story card/frame is an
   // rw_testimonial_item slot (the carousel dots stay at the block level). link_name off.
@@ -586,12 +714,21 @@ export default function decorate(block) {
     items: { '.testimonial-card, .video-frame': 'rw_testimonial_item' },
   });
   if (block.classList.contains('card')) {
-    const figures = [...block.querySelectorAll(':scope > div')].map(buildCard);
+    const feature = block.classList.contains('feature');
+    const figures = [...block.querySelectorAll(':scope > div')].map((row) => buildCard(row, { feature }));
     if (block.classList.contains('carousel')) {
       block.replaceChildren(buildCardCarousel(figures));
     } else {
       block.replaceChildren(...figures);
     }
+    track();
+    return;
+  }
+
+  if (block.classList.contains('story')) {
+    const row = block.querySelector(':scope > div');
+    if (!row) return;
+    block.replaceChildren(buildStory(row));
     track();
     return;
   }

@@ -50,11 +50,15 @@ export function parseContent(cell) {
   let cta = null;
   let ctaBeforeQuote = true;
   const bodyNodes = [];
+  // pictures after the first; only .vertical-panel.industry renders them (as a
+  // media row), every other variant ignores them exactly as before
+  const extraMedia = [];
 
   rest.forEach((el, i) => {
     if (el === heading) return;
     const pic = el.matches('picture, img') ? el : el.querySelector('picture, img');
     if (pic && !media) { media = pic.closest('picture') || pic; return; }
+    if (pic) { extraMedia.push(pic.closest('picture') || pic); return; }
     if (isLinkOnly(el)) {
       const link = el.tagName === 'A' ? el : el.querySelector('a');
       cta = { href: link.getAttribute('href'), text: link.textContent.trim() };
@@ -70,7 +74,7 @@ export function parseContent(cell) {
   });
 
   return {
-    media, eyebrow, heading, bodyNodes, cta, ctaBeforeQuote, quote, attribution,
+    media, extraMedia, eyebrow, heading, bodyNodes, cta, ctaBeforeQuote, quote, attribution,
   };
 }
 
@@ -539,7 +543,7 @@ function buildVpTab(item, index) {
   return btn;
 }
 
-function buildVpPanel(item, index) {
+function buildVpPanel(item, index, { multiMedia = false } = {}) {
   const panel = document.createElement('div');
   panel.className = index === 0 ? 'it-panel is-active' : 'it-panel';
   panel.id = `it-panel-${index}`;
@@ -570,6 +574,7 @@ function buildVpPanel(item, index) {
     const wrap = document.createElement('div');
     wrap.className = 'it-media';
     wrap.append(item.media);
+    if (multiMedia && item.extraMedia?.length) wrap.append(...item.extraMedia);
     panel.append(wrap);
   }
 
@@ -591,7 +596,8 @@ function activateVp(tabs, panels, index, focusIndex = index) {
 
 function renderVerticalPanel(block, items) {
   const tabs = items.map(buildVpTab);
-  const panels = items.map(buildVpPanel);
+  const multiMedia = block.classList.contains('industry');
+  const panels = items.map((item, i) => buildVpPanel(item, i, { multiMedia }));
   tabs.forEach((tab, i) => tab.setAttribute('aria-controls', panels[i].id));
 
   const nav = document.createElement('div');

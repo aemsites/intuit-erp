@@ -794,3 +794,301 @@
     min-width: 0;
   }
 }
+
+/* .card.feature — single "accountant's perspective" quote band (Figma
+   ACQ-4698): portrait photo left, eyebrow + large quote + attribution +
+   footnote right, on a Superblue card. Stacks photo-over-copy below 1024px.
+   Scoped to .testimonial.card.feature so the plain .card grid is untouched. */
+.testimonial.card.feature {
+  --feature-blue: #236cff;
+  --feature-radius: 24px;
+
+  display: block;
+  max-width: var(--container);
+}
+
+.testimonial.card.feature .testimonial-card {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+  align-items: center;
+  text-align: left;
+  box-sizing: border-box;
+  padding: 10px 10px 60px;
+  border-radius: 38px;
+  background: var(--feature-blue);
+  color: #fff;
+}
+
+/* mobile copy (Figma 11312:15675): a 259px column 38px from the card edge
+   (28px inside the 10px frame), 40px below the photo, 16px between items,
+   60px of card padding below the footnote */
+.testimonial.card.feature .testimonial-eyebrow,
+.testimonial.card.feature .testimonial-card blockquote,
+.testimonial.card.feature .testimonial-card figcaption,
+.testimonial.card.feature .testimonial-footnote {
+  margin-inline: 28px;
+}
+
+/* the grid child is the <picture>; the <img> fills it absolutely so its
+   natural size never feeds back into the grid's row sizing */
+.testimonial.card.feature .testimonial-card > picture {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 315 / 252;
+  border-radius: 30px;
+  overflow: hidden;
+}
+
+.testimonial.card.feature .testimonial-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  border-radius: 0;
+  object-fit: cover;
+}
+
+.testimonial.card.feature .testimonial-eyebrow {
+  margin-block: var(--space-2xl) var(--space-s);
+  font-size: 12px;
+  font-weight: var(--font-weight-medium);
+  line-height: 1.2;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+.testimonial.card.feature .testimonial-card blockquote {
+  margin-block: 0 var(--space-xl);
+  font-size: 28px;
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-s);
+  color: #fff;
+}
+
+.testimonial.card.feature .testimonial-card blockquote p { margin: 0; }
+
+.testimonial.card.feature .testimonial-card figcaption {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-3xs);
+  font-size: var(--body-font-size-xxs);
+  line-height: 1.1;
+}
+
+.testimonial.card.feature .testimonial-card .testimonial-name {
+  margin: 0;
+  font-size: inherit;
+  font-weight: var(--font-weight-medium);
+  color: #fff;
+}
+
+.testimonial.card.feature .testimonial-card .testimonial-name:not(:last-child)::after { content: ","; }
+
+.testimonial.card.feature .testimonial-card .testimonial-title {
+  margin: 0;
+  font-size: inherit;
+  color: #fff;
+}
+
+.testimonial.card.feature .testimonial-footnote {
+  margin-block: var(--space-s) 0;
+  font-size: var(--body-font-size-xxs);
+  line-height: var(--line-height-l);
+  color: rgb(255 255 255 / 85%);
+}
+
+@media (width >= 1024px) {
+  /* photo spans every row; the copy sits in the middle four auto rows and
+     the 1fr rows above/below absorb any spare height, so the copy is centred
+     against the photo instead of being spaced out by the photo's height */
+  .testimonial.card.feature .testimonial-card {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 7fr);
+    grid-template-rows: 1fr auto auto auto auto 1fr;
+    gap: 0 clamp(var(--space-2xl), 6vw, 100px);
+    padding: var(--space-xl);
+    border-radius: 38px;
+  }
+
+  .testimonial.card.feature .testimonial-eyebrow { margin: 0 0 var(--space-m); }
+  .testimonial.card.feature .testimonial-card blockquote { margin: 0 0 var(--space-xl); }
+  .testimonial.card.feature .testimonial-card figcaption { margin: 0; }
+  .testimonial.card.feature .testimonial-footnote { margin: var(--space-xl) 0 0; font-size: var(--body-font-size-xxs); }
+
+  .testimonial.card.feature .testimonial-card > picture {
+    grid-column: 1;
+    grid-row: 1 / -1;
+    height: 100%;
+    min-height: 480px;
+    aspect-ratio: auto;
+    border-radius: 30px;
+  }
+
+  .testimonial.card.feature .testimonial-eyebrow { grid-row: 2; }
+  .testimonial.card.feature .testimonial-card blockquote { grid-row: 3; font-size: 34px; line-height: var(--line-height-xs); }
+  .testimonial.card.feature .testimonial-card figcaption { font-size: var(--body-font-size-m); line-height: var(--line-height-m); }
+  .testimonial.card.feature .testimonial-card figcaption { grid-row: 4; }
+  .testimonial.card.feature .testimonial-footnote { grid-row: 5; }
+
+  .testimonial.card.feature .testimonial-eyebrow,
+  .testimonial.card.feature .testimonial-card blockquote,
+  .testimonial.card.feature .testimonial-card figcaption,
+  .testimonial.card.feature .testimonial-footnote {
+    grid-column: 2;
+  }
+}
+
+
+/* .story — "Desktop migration story" band (Figma ACQ-4698): dark Blueberry
+   card, copy left (eyebrow, title, quote glyph, quote, attribution, CTA),
+   Superblue media tile right (photo + customer logo). Stacks below 1024px.
+   Scoped to .testimonial.story; nothing here touches the other variants. */
+
+/* the story band sits on the page background, not the default cyan section */
+.section.testimonial-container:has(.testimonial.story) {
+  background: var(--background-color);
+  padding: var(--section-y) 0;
+}
+
+.testimonial.story {
+  --story-ink: #0d0031;
+  --story-blue: #236cff;
+
+  max-width: var(--container);
+  margin: 0 auto;
+}
+
+.testimonial.story .story-card {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-xl);
+  align-items: center;
+  box-sizing: border-box;
+  margin: 0;
+  padding: var(--space-l);
+  border-radius: 38px;
+  background: var(--story-ink);
+  color: #fff;
+  text-align: left;
+}
+
+.testimonial.story .story-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.testimonial.story .story-eyebrow {
+  margin: 0 0 var(--space-m);
+  font-size: 12px;
+  font-weight: var(--font-weight-medium);
+  line-height: 1.2;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+.testimonial.story .story-title {
+  margin: 0 0 var(--space-l);
+  font-size: 28px;
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-xs);
+  color: #fff;
+}
+
+/* opening-quote glyph, drawn inline so it needs no content-side asset */
+.testimonial.story .story-quote {
+  position: static;
+  margin: 0 0 var(--space-s);
+  padding: 0;
+  font-size: 18px;
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-m);
+  color: #fff;
+}
+
+.testimonial.story .story-quote::before {
+  content: "";
+  position: static;
+  display: block;
+  width: 34px;
+  height: 26px;
+  margin-bottom: var(--space-m);
+  filter: none;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 34 26'%3E%3Cpath fill='%23fff' d='M0 26V14.6C0 6.5 4.2 1.6 12.6 0l1.6 3.6c-4 1.3-6.2 3.8-6.6 7.4H14V26H0Zm20 0V14.6C20 6.5 24.2 1.6 32.6 0l1.4 3.6c-4 1.3-6.2 3.8-6.6 7.4H34V26H20Z'/%3E%3C/svg%3E") left top / contain no-repeat;
+}
+
+.testimonial.story .story-quote p { margin: 0; }
+
+.testimonial.story .story-attr {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-3xs);
+  margin: 0 0 var(--space-xl);
+  font-size: 12px;
+  line-height: 1.3;
+  color: #fff;
+}
+
+.testimonial.story .story-attr .testimonial-name {
+  font-weight: var(--font-weight-bold);
+  color: #fff;
+}
+
+.testimonial.story .story-attr .testimonial-name:not(:last-child)::after { content: ","; }
+.testimonial.story .story-attr .testimonial-title { color: #fff; }
+
+.testimonial.story .button-wrapper { margin: 0; }
+
+.testimonial.story a.button.story-cta {
+  padding: 12px 28px;
+  border-color: var(--story-blue);
+  border-radius: 999px;
+  background: var(--story-blue);
+  font-size: 14px;
+  font-weight: var(--font-weight-medium);
+  color: #fff;
+}
+
+.testimonial.story a.button.story-cta:hover,
+.testimonial.story a.button.story-cta:focus-visible {
+  border-color: #1b5be0;
+  background: #1b5be0;
+  color: #fff;
+  text-decoration: none;
+}
+
+/* media: the DAM feature asset already carries its tile, so render it plain */
+.testimonial.story .story-media {
+  border-radius: 32px;
+  overflow: hidden;
+  line-height: 0;
+}
+
+.testimonial.story .story-media picture { display: block; }
+
+.testimonial.story .testimonial-photo {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 32px;
+}
+
+@media (width >= 768px) {
+  .testimonial.story .story-card { padding: var(--space-2xl); }
+  .testimonial.story .story-title { font-size: 34px; }
+  .testimonial.story .story-quote { font-size: 20px; }
+}
+
+@media (width >= 1024px) {
+  .testimonial.story .story-card {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 42%);
+    gap: clamp(var(--space-2xl), 8vw, 130px);
+    padding: 72px 104px;
+  }
+
+  .testimonial.story .story-copy { max-width: 400px; }
+}

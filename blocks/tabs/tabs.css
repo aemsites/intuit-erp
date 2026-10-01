@@ -945,4 +945,143 @@ main > .section.tabs-container:has(.tabs.vertical-panel) > div { padding: 0; }
   }
 }
 
+/* ---- .vertical-panel.industry: light IES theme (Figma ACQ-4698 "Industry depth") --
+   278px rail of 44px icon tabs (active: light-blue + Superblue left rule),
+   light-blue panel rounded 38px on three corners, heading beside body + link,
+   and a row of images (every picture authored in the cell) beneath. */
+main > .section.tabs-container:has(.tabs.vertical-panel.industry) {
+  --it-band: transparent;
+  --it-surface: #d6e8f8;
+  --it-text: #0d0031;
+  --it-text-soft: #0d0031;
+  --it-accent: #236cff;
+  --it-tab-idle: transparent;
 
+  max-width: 1130px;
+  border-radius: 0;
+  background: var(--background-color);
+}
+
+.tabs-container:has(.tabs.vertical-panel.industry) .tabs-wrapper { max-width: 1130px; }
+
+.tabs-container:has(.tabs.vertical-panel.industry) .default-content-wrapper h2 {
+  font-weight: var(--font-weight-medium);
+  color: var(--it-text);
+}
+
+/* the authored section eyebrow is also an h2; keep it at the site's eyebrow
+   style instead of inheriting the vertical-panel headline sizing above */
+.tabs-container:has(.tabs.vertical-panel.industry) .default-content-wrapper h2.section-eyebrow {
+  margin: 0;
+  padding-bottom: var(--space-m);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 14.4px;
+  letter-spacing: 1.2px;
+  color: #000;
+}
+
+.tabs.vertical-panel.industry .it-tab {
+  min-height: 44px;
+  gap: var(--space-2xs);
+  padding: 6px 12px;
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-m);
+}
+
+.tabs.vertical-panel.industry .it-tab[aria-expanded="true"] { background: var(--it-surface); }
+
+.tabs.vertical-panel.industry .it-heading {
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-xs);
+}
+
+.tabs.vertical-panel.industry .it-body { line-height: var(--line-height-m); }
+
+.tabs.vertical-panel.industry .it-cta {
+  color: var(--it-accent);
+  font-weight: var(--font-weight-medium);
+  text-underline-offset: 2px;
+}
+
+/* media: the DAM composed asset (two tiles side by side) renders plain at its
+   natural ratio on desktop. Below desktop, a lone picture is cropped to one
+   square tile (Figma mobile, 287x287, 38px radius) with object-fit: cover,
+   so the author's DA focal point (applied as object-position by scripts.js)
+   decides which tile shows. Authoring a second picture (the DAM mobile
+   composition) replaces that crop: it shows whole below desktop and the first
+   picture shows whole on desktop. */
+.tabs.vertical-panel.industry .it-media { display: block; }
+
+.tabs.vertical-panel.industry .it-media picture { display: block; min-width: 0; }
+
+.tabs.vertical-panel.industry .it-media img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  border-radius: 38px;
+  object-fit: cover;
+}
+
+/* authored pair below desktop: hide the desktop composition, show the mobile one whole */
+.tabs.vertical-panel.industry .it-media picture:has(+ picture) { display: none; }
+
+.tabs.vertical-panel.industry .it-media picture + picture img {
+  aspect-ratio: auto;
+  border-radius: 0;
+  object-fit: contain;
+}
+
+/* mobile card (Figma 11312:15484): light-blue 38px card, Pepper tabs, 24px
+   from tab to copy, 40px below the media, 8px between collapsed tabs */
+.tabs.vertical-panel.industry {
+  box-sizing: border-box;
+  padding: var(--space-2xl) var(--space-m);
+  border-radius: 38px;
+  background: var(--it-surface);
+}
+
+.tabs.vertical-panel.industry .it-nav { gap: var(--space-2xs); }
+
+.tabs.vertical-panel.industry .it-tab {
+  background: #f0f4f6;
+  border-left: 0;
+}
+
+.tabs.vertical-panel.industry .it-tab[aria-expanded="true"] { background: #f0f4f6; }
+
+.tabs.vertical-panel.industry .it-panel.is-active {
+  gap: var(--space-l);
+  padding: var(--space-l) 0 var(--space-2xl);
+}
+
+.tabs.vertical-panel.industry .it-copy { padding: 0; margin-bottom: 0; gap: var(--space-m); }
+.tabs.vertical-panel.industry .it-heading { font-size: 28px; line-height: var(--line-height-s); }
+.tabs.vertical-panel.industry .it-copy-body { padding-top: 0; gap: var(--space-m); }
+
+@media (width >= 1024px) {
+  /* desktop: drop the mobile card, restore the rail + panel layout */
+  .tabs.vertical-panel.industry { padding: 0; border-radius: 0; background: transparent; }
+  .tabs.vertical-panel.industry .it-tab { background: var(--it-tab-idle); border-left: 3px solid transparent; }
+  .tabs.vertical-panel.industry .it-tab[aria-expanded="true"] { background: var(--it-surface); border-left-color: var(--it-accent); }
+
+  /* desktop: the composed asset shows whole; its own radius and gap apply */
+  .tabs.vertical-panel.industry .it-media img { aspect-ratio: auto; border-radius: 0; object-fit: contain; }
+
+  /* authored pair on desktop: first picture shows, mobile one hidden */
+  .tabs.vertical-panel.industry .it-media picture:has(+ picture) { display: block; }
+  .tabs.vertical-panel.industry .it-media picture + picture { display: none; }
+
+  .tabs.vertical-panel.industry .it-nav { width: 278px; gap: var(--space-3xs); }
+  .tabs.vertical-panel.industry .it-panel { left: 278px; margin-left: var(--space-3xs); }
+
+  .tabs.vertical-panel.industry .it-panel.is-active {
+    gap: var(--space-2xl);
+    padding: 44px 40px;
+    border-radius: 0 38px 38px;
+  }
+
+  .tabs.vertical-panel.industry .it-copy { gap: var(--space-2xl); }
+  .tabs.vertical-panel.industry .it-heading { max-width: 260px; font-size: 34px; }
+  .tabs.vertical-panel.industry .it-copy-body { gap: var(--space-m); padding-top: var(--space-2xs); }
+}
