@@ -640,7 +640,7 @@
 }
 
 
-main > .section.tabs-container:has(.tabs.vertical-panel) {
+.section.tabs-container:has(.tabs.vertical-panel) {
   --it-band: var(--wintermint);
   --it-surface: var(--wintermint);
   --it-text: var(--heading-color);
@@ -649,7 +649,7 @@ main > .section.tabs-container:has(.tabs.vertical-panel) {
   --it-tab-idle: transparent;
 }
 
-main > .section.tabs-container:has(.tabs.vertical-panel.dark) {
+.section.tabs-container:has(.tabs.vertical-panel.dark) {
   --it-band: var(--navy);
   --it-surface: #001d3c;
   --it-text: #fff;
@@ -660,7 +660,7 @@ main > .section.tabs-container:has(.tabs.vertical-panel.dark) {
   background-color: var(--navy);
 }
 
-main > .section.tabs-container:has(.tabs.vertical-panel) {
+.section.tabs-container:has(.tabs.vertical-panel) {
   box-sizing: border-box;
   width: calc(100% - 24px);
   max-width: 1160px;
@@ -670,7 +670,7 @@ main > .section.tabs-container:has(.tabs.vertical-panel) {
   color: var(--it-text);
 }
 
-main > .section.tabs-container:has(.tabs.vertical-panel) > div { padding: 0; }
+.section.tabs-container:has(.tabs.vertical-panel) > div { padding: 0; }
 
 .tabs-container:has(.tabs.vertical-panel) .tabs-wrapper { max-width: 1160px; margin: 0 auto; }
 
