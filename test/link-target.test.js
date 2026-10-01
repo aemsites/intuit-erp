@@ -50,7 +50,34 @@ describe('author-controlled link targets', () => {
     expect(newTab.relList.contains('nofollow')).toBe(true);
     expect(newTab.relList.contains('noopener')).toBe(true);
     expect(sameTab.getAttribute('href')).toBe('https://partner.example/help#support');
-    expect(sameTab.target).toBe('_self');
+    expect(sameTab.target).toBe('_blank');
+  });
+
+  it('preserves an existing target and is safe to run repeatedly', () => {
+    const main = document.createElement('main');
+    main.innerHTML = '<a href="/account#details#target=_blank" target="_self">Account</a>';
+
+    decorateLinkTargets(main);
+    const link = main.querySelector('a');
+    expect(link.getAttribute('href')).toBe('/account#details');
+    expect(link.target).toBe('_self');
+    expect(link.hasAttribute('rel')).toBe(false);
+
+    const firstResult = link.outerHTML;
+    decorateLinkTargets(main);
+    expect(link.outerHTML).toBe(firstResult);
+  });
+
+  it('adds noopener to an existing new-tab target', () => {
+    const main = document.createElement('main');
+    main.innerHTML = '<a href="/account#target=_self" target="_blank">Account</a>';
+
+    decorateLinkTargets(main);
+
+    const link = main.querySelector('a');
+    expect(link.getAttribute('href')).toBe('/account');
+    expect(link.target).toBe('_blank');
+    expect(link.relList.contains('noopener')).toBe(true);
   });
 
   it('keeps current behavior for unmarked links and ignores unsupported markers', () => {

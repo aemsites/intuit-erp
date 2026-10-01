@@ -1,7 +1,7 @@
 import { getMetadata, loadSections } from '../../scripts/aem.js';
 // eslint-disable-next-line import/no-cycle
 import { decorateMain } from '../../scripts/scripts.js';
-import decorateLinkTargets from '../../scripts/link-target.js';
+import decorateLinkTargets, { hasAuthoredTargetMarker } from '../../scripts/link-target.js';
 import { openScheduleModal, withTriggerLoading } from '../../scripts/schedule-modal.js';
 import { loadFragment } from '../fragment/fragment.js';
 import { enhanceSecondaryNavSearch } from '../blog-search/search-utils.js';
@@ -35,7 +35,7 @@ function mobileBrandsHTML(brandLinks) {
     const img = a.querySelector('img');
     if (!img) return '';
     const href = a.getAttribute('href');
-    const tgt = isExternal(href) ? ' target="_blank" rel="noopener"' : '';
+    const tgt = isExternal(href) && !hasAuthoredTargetMarker(href) ? ' target="_blank" rel="noopener"' : '';
     const text = label || brandLabel(img);
     return `<li><a href="${href}" class="mobile-brand-btn"${tgt}>${img.outerHTML}${text ? `<span>${text}</span>` : ''}<span class="mobile-brand-chevron" aria-hidden="true">${CTA_CHEVRON_SVG}</span></a></li>`;
   }).join('');
@@ -135,7 +135,7 @@ function topstripRowsHTML(brandLinks) {
     const img = a.querySelector('img');
     if (!img) return '';
     const href = a.getAttribute('href');
-    const tgt = isExternal(href) ? ' target="_blank" rel="noopener"' : '';
+    const tgt = isExternal(href) && !hasAuthoredTargetMarker(href) ? ' target="_blank" rel="noopener"' : '';
     const ariaLabel = label ? '' : brandLabel(img);
     return `<a href="${href}" class="bs-logo"${tgt}${ariaLabel ? ` aria-label="${ariaLabel}"` : ''}>${img.outerHTML}${label ? `<span class="bs-logo-label">${label}</span>` : ''}</a>`;
   }).join('');

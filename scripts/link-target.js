@@ -1,5 +1,9 @@
 const TARGET_MARKER = /#target=(_blank|_self)$/;
 
+export function hasAuthoredTargetMarker(href) {
+  return TARGET_MARKER.test(href);
+}
+
 /**
  * Applies a terminal authored target marker and restores any destination fragment before it.
  * @param {Element} root The container element
@@ -12,7 +16,7 @@ export default function decorateLinkTargets(root) {
 
     const [, target] = marker;
     link.setAttribute('href', href.slice(0, marker.index));
-    link.target = target;
-    if (target === '_blank') link.relList.add('noopener');
+    if (!link.hasAttribute('target')) link.target = target;
+    if (link.target === '_blank') link.relList.add('noopener');
   });
 }
