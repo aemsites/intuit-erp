@@ -1,3 +1,5 @@
+import decorateLinkTargets, { hasAuthoredTargetMarker } from '../../scripts/link-target.js';
+
 function isExternal(href) {
   return /^https?:\/\//.test(href);
 }
@@ -5,14 +7,14 @@ function isExternal(href) {
 function navLinkHTML(a) {
   const href = a.getAttribute('href');
   const cls = a.closest('strong') ? 'acct-link' : 'nav-link';
-  const tgt = isExternal(href) ? ' target="_blank" rel="noopener"' : '';
+  const tgt = isExternal(href) && !hasAuthoredTargetMarker(href) ? ' target="_blank" rel="noopener"' : '';
   return `<a class="${cls}" href="${href}"${tgt}>${a.textContent.trim()}</a>`;
 }
 
 function flyoutLinkHTML(l) {
   const external = isExternal(l.href);
   const cls = `flyout-link${external ? '' : ' is-internal'}`;
-  const tgt = external ? ' target="_blank" rel="noopener"' : '';
+  const tgt = external && !hasAuthoredTargetMarker(l.href) ? ' target="_blank" rel="noopener"' : '';
   const desc = l.desc ? `<span class="flyout-desc">${l.desc}</span>` : '';
   return `<a class="${cls}" href="${l.href}"${tgt}><span class="flyout-label">${l.text}</span>${desc}</a>`;
 }
@@ -70,4 +72,5 @@ export default function decorate(block) {
     return menuItemHTML(label, nestedUl ? parseColumns(nestedUl) : [], idx);
   }).join('');
   menuCell.innerHTML = html;
+  decorateLinkTargets(block);
 }

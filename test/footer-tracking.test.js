@@ -14,7 +14,7 @@ import {
 const FRAGMENT = `
   <div class="footer-columns">
     <div><div>The company</div><div><ul>
-      <li><a href="https://www.intuit.com/company">About Intuit</a></li>
+      <li><a href="https://www.intuit.com/company#about#target=_blank">About Intuit</a></li>
       <li><a href="https://investors.intuit.com">Investor relations</a></li>
     </ul></div></div>
     <div><div>Products</div><div><ul>
@@ -111,6 +111,15 @@ describe('footer click-tracking — id-based keying', () => {
     expect(idOf(about)).toBe('footer:company');
     // "Manage cookies" is href="#" — the block's trackId returns a semantic id
     expect(idOf(block.querySelector('.footer-copy-btn'))).toBe('footer:manage-cookies');
+  });
+
+  it('applies authored link targets while preserving destination fragments', async () => {
+    const block = await buildFooter();
+    const about = [...block.querySelectorAll('.footer-col a')]
+      .find((a) => a.textContent.includes('About Intuit'));
+    expect(about.getAttribute('href')).toBe('https://www.intuit.com/company#about');
+    expect(about.target).toBe('_blank');
+    expect(about.relList.contains('noopener')).toBe(true);
   });
 
   describe('runtime resolution (order-independent — the whole point)', () => {

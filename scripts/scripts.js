@@ -19,6 +19,7 @@ import TealiumMartech, {
   parseTealiumTagUids,
 } from '../plugins/tealium-martech/src/index.js';
 import installEcsEnrich from './ecs-enrich.js';
+import decorateLinkTargets from './link-target.js';
 import { isBlogPage, hasAuthoredCaseStudyHeader } from '../blocks/blog-template/blog-detect.js';
 import { isVideoLink, videoInfo } from '../blocks/video/video-info.js';
 import { isGuidePage } from '../blocks/guide-hero/guide-detect.js';
@@ -425,23 +426,22 @@ function decorateVideoLinks(main) {
 }
 
 /**
- * Opens external links (absolute http(s), different host) in a new tab. Runs
- * once over the fully-decorated main so it covers every block, not just default
- * content — links a block already gave a `target` are left as the block set them.
- * @param {Element} main The container element
+ * Opens unmarked off-site HTTP(S) links in a new tab after applying authored targets.
+ * @param {Element} main The fully decorated page content
  */
 export function decorateExternalLinks(main) {
-  main.querySelectorAll('a[href^="http"]').forEach((a) => {
-    if (a.target) return;
+  decorateLinkTargets(main);
+  main.querySelectorAll('a[href^="http"]').forEach((link) => {
+    if (link.target) return;
     let url;
     try {
-      url = new URL(a.href);
-    } catch (e) {
+      url = new URL(link.href);
+    } catch {
       return;
     }
     if (url.host === window.location.host) return;
-    a.target = '_blank';
-    a.rel = a.rel ? `${a.rel} noopener` : 'noopener';
+    link.target = '_blank';
+    link.relList.add('noopener');
   });
 }
 

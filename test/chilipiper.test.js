@@ -4,6 +4,7 @@ import {
 
 vi.mock('../scripts/aem.js', () => ({ loadScript: vi.fn(() => Promise.resolve()) }));
 vi.mock('../scripts/scripts.js', () => ({
+  decorateExternalLinks: vi.fn(),
   getSiteConfig: vi.fn(() => Promise.resolve({})),
 }));
 vi.mock('../scripts/experience.js', () => ({
