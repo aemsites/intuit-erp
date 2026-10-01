@@ -1,1 +1,12 @@
-/* stylelint-disable no-empty-source */
+/* A fragment's own content is decorated into its own <section> before being
+   relocated here (see fragment.js loadFragment()), so it already re-applies
+   the standard content-width containment (main .section>div in styles.css)
+   on itself. Without this reset, this wrapper applies that same containment
+   a second time, confining the fragment's content — and any full-width
+   backgrounds — inside a doubly-narrowed box. Undo only this outer layer so
+   a transcluded fragment renders exactly as wide as it does in its own
+   standalone preview. */
+main .section>.fragment-wrapper {
+  max-width: none;
+  padding: 0;
+}
