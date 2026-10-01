@@ -34,7 +34,7 @@ footer .footer .container { max-width: var(--container); margin: 0 auto; padding
 .footer .footer-sitemap .social { display: flex; align-items: center; gap: var(--space-m); justify-self: end; }
 .footer .footer-sitemap .social a { color: var(--text-muted); display: inline-flex; }
 .footer .footer-sitemap .social a:hover { color: var(--primary); }
-.footer .footer-sitemap .social svg { width: 21px; height: 21px; }
+.footer .footer-sitemap .social svg { width: 24px; height: 24px; }
 
 /* country selector — a desktop chip inside the sitemap row, plus a mobile
    accordion-style row rendered under the columns (hidden here, shown < 900px) */
