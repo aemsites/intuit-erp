@@ -1,7 +1,7 @@
 import { getMetadata, loadSections } from '../../scripts/aem.js';
 // eslint-disable-next-line import/no-cycle
 import { decorateMain } from '../../scripts/scripts.js';
-import { decorateLinkTargets } from '../../scripts/link-target.js';
+import decorateLinkTargets from '../../scripts/link-target.js';
 import { openScheduleModal, withTriggerLoading } from '../../scripts/schedule-modal.js';
 import { loadFragment } from '../fragment/fragment.js';
 import { enhanceSecondaryNavSearch } from '../blog-search/search-utils.js';

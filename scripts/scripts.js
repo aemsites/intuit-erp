@@ -19,7 +19,7 @@ import TealiumMartech, {
   parseTealiumTagUids,
 } from '../plugins/tealium-martech/src/index.js';
 import installEcsEnrich from './ecs-enrich.js';
-import { decorateLinkTargets } from './link-target.js';
+import decorateLinkTargets from './link-target.js';
 import { isBlogPage, hasAuthoredCaseStudyHeader } from '../blocks/blog-template/blog-detect.js';
 import { isVideoLink, videoInfo } from '../blocks/video/video-info.js';
 import { isGuidePage } from '../blocks/guide-hero/guide-detect.js';

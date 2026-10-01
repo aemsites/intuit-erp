@@ -22,7 +22,7 @@ import {
 } from './brand-logos.js';
 import { LOGO_MAILCHIMP_ICON, LOGO_MAILCHIMP_WORD } from '../header/brand-logos.js';
 import { wireFooterSearch } from '../blog-search/search-utils.js';
-import { decorateLinkTargets } from '../../scripts/link-target.js';
+import decorateLinkTargets from '../../scripts/link-target.js';
 import { trackAs, hostLabel, hrefTrackId } from '../../scripts/tracking.js';
 
 // "Footer Columns" content model: one row per column, cell 1 = heading text,

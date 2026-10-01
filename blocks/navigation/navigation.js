@@ -1,4 +1,4 @@
-import { decorateLinkTargets } from '../../scripts/link-target.js';
+import decorateLinkTargets from '../../scripts/link-target.js';
 
 function isExternal(href) {
   return /^https?:\/\//.test(href);
