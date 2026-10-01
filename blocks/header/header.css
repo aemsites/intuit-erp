@@ -110,7 +110,8 @@ body.nav-scroll-lock {
    margin-left: 10px;
 }
 
-.skip-to-main:focus {
+a.button.secondary.skip-to-main:hover,
+a.button.secondary.skip-to-main:focus {
   position: fixed;
   z-index: 1000;
   top: var(--space-2xs);
@@ -124,7 +125,7 @@ body.nav-scroll-lock {
   white-space: normal;
   transform: translateX(-50%);
   border-radius: var(--radius);
-  font-weight: var(--font-weight-bold);
+  color: var(--ink-teal, #0d333f);
   box-shadow: 0 2px 8px rgb(0 0 0 / 20%);
   outline: 2px solid var(--navy);
   outline-offset: 2px;
