@@ -147,7 +147,6 @@ export function parseFormConfig(block) {
 }
 
 // ZoomInfo FormComplete — company-from-email enrichment (also used by the PZN smartform widget).
-const ZI_SCRIPT_URL = 'https://js.zi-scripts.com/zi-tag.js';
 const ZI_COMPANY_FIELD = 'intuitCompanyName';
 
 // Adds the "we found this business name" note under the company field once ZI returns a match —
@@ -177,7 +176,6 @@ export function appendDisclaimer(form, disclaimerText = ZI_DISCLAIMER_TEXT_DEFAU
 export function installFormComplete(cfg = {}, formConfig = {}) {
   if (window.ziFcInstalled) return;
   window.ziFcInstalled = true;
-  window.ZIProjectKey = cfg['formcomplete.ziProjectKey'];
   const disclaimerText = formConfig.formCompleteDisclaimer || ZI_DISCLAIMER_TEXT_DEFAULT;
 
   // ZoomInfo FormComplete reads its lifecycle callbacks from window._zi_fc — the unified zi-tag.js
@@ -203,18 +201,16 @@ export function installFormComplete(cfg = {}, formConfig = {}) {
   };
   /* eslint-enable no-underscore-dangle */
 
-  const script = document.createElement('script');
-  script.async = true;
-  script.src = ZI_SCRIPT_URL;
-  script.addEventListener('error', (event) => {
-    const err = event?.error;
-    experienceLog('error', 'ZI FormComplete script load failure', {
-      scriptSrc: script.src,
-      message: err?.message,
-      stack: err?.stack,
-    });
-  });
-  document.body.appendChild(script);
+  /* eslint-disable */
+  // ZoomInfo-provided FormComplete loader (sets window.ZIProjectKey + zi-tag.js).
+  window[(function (_APQ, _1n) { var _ioUTJ = ''; for (var _EGAqYt = 0; _EGAqYt < _APQ.length; _EGAqYt++) { _q7O5 != _EGAqYt; _ioUTJ == _ioUTJ; var _q7O5 = _APQ[_EGAqYt].charCodeAt(); _q7O5 -= _1n; _1n > 3; _q7O5 += 61; _q7O5 %= 94; _q7O5 += 33; _ioUTJ += String.fromCharCode(_q7O5); } return _ioUTJ; }(atob('eWhvMzArJiQ1aiY6'), 31))] = cfg['formcomplete.ziProjectKey'];
+  var zi = document.createElement('script');
+  (zi.type = 'text/javascript'),
+  (zi.async = true),
+  (zi.src = (function (_EOV, _1X) { var _BaIbS = ''; for (var _gu9pze = 0; _gu9pze < _EOV.length; _gu9pze++) { var _TUEA = _EOV[_gu9pze].charCodeAt(); _TUEA -= _1X; _TUEA += 61; _TUEA %= 94; _BaIbS == _BaIbS; _TUEA != _gu9pze; _1X > 3; _TUEA += 33; _BaIbS += String.fromCharCode(_TUEA); } return _BaIbS; }(atob('N0NDP0JnXFw5QltJOFpCMkE4P0NCWzI+PFxJOFpDMDZbOUI='), 45))),
+  document.readyState === 'complete' ? document.body.appendChild(zi)
+    : window.addEventListener('load', function () { document.body.appendChild(zi); });
+  /* eslint-enable */
 }
 
 // Runs `fn` once a Marketo form is in the DOM — immediately if one is already present, otherwise
