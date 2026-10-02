@@ -77,7 +77,7 @@ main > .section.cta-band-container:has(.cta-band.simple) > div { max-width: none
 /*
  * ies variant — IES "Sign off banner" (Figma ACQ-4698): white band, centred
  * 900px column, 14px tracked eyebrow, 48px medium Blueberry title, 20px body,
- * Superblue pill CTA, 150px vertical padding. One row: eyebrow p, heading,
+ * Superblue pill CTA (generic `ies` section theme), 150px vertical padding. One row: eyebrow p, heading,
  * body p, bold link. Builds on the auto-applied .simple layout; scoped to
  * .cta-band.ies so the default and .simple bands are untouched.
  */
@@ -126,22 +126,13 @@ main > .section.cta-band-container:has(.cta-band.simple) > div { max-width: none
 
 .cta-band.simple.ies .firstcall-card .button-wrapper { margin-top: 36px; }
 
+/* colours/hover come from the generic `ies` section theme. The base .simple
+   button rule above outranks the theme's shape rule, so restore the pill here
+   (Figma widens it to 42px). */
 .cta-band.simple.ies .firstcall-card a.button {
-  height: 48px;
-  padding: 0 42px;
-  border: 2px solid var(--info);
+  padding: 12px 42px;
   border-radius: 999px;
-  background: var(--info);
-  color: #fff;
-  font-size: var(--body-font-size-m);
   font-weight: var(--font-weight-medium);
-}
-
-.cta-band.simple.ies .firstcall-card a.button:hover,
-.cta-band.simple.ies .firstcall-card a.button:focus-visible {
-  border-color: #1b5be0;
-  background: #1b5be0;
-  color: #fff;
 }
 
 @media (width >= 1024px) {

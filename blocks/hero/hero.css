@@ -665,15 +665,10 @@ body.author-guide .hero .hero-copy .hero-lede {
 
 /* .ies — IES brand-refresh hero (Figma ACQ-4698 Desktop→IES migration):
    Blueberry band, 14px tracked eyebrow, 60px medium headline, 16px lede,
-   Superblue primary pill + white-outlined secondary pill, media image with a
-   38px radius. Scoped to .hero.ies / its section; the default hero is untouched. */
-.section.hero-container:has(.hero.ies) {
-  --ies-ink: #0d0031;
-  --ies-blue: #236cff;
-  --ies-blue-hover: #1b5be0;
-
-  background: var(--ies-ink);
-}
+   media image with a 38px radius. Buttons come from the generic `ies` section
+   theme in styles.css (author the section with `ies, dark-background`).
+   Scoped to .hero.ies / its section; the default hero is untouched. */
+.section.hero-container:has(.hero.ies) { background: #0d0031; }
 
 .hero.ies .hero-copy .hero-eyebrow {
   margin-bottom: var(--space-3xs);
@@ -697,40 +692,6 @@ body.author-guide .hero .hero-copy .hero-lede {
   font-size: var(--body-font-size-m);
   line-height: var(--line-height-m);
   color: #fff;
-}
-
-.hero.ies :is(a, button).button {
-  min-height: 48px;
-  padding: 12px var(--space-m);
-  border-radius: 999px;
-  font-size: var(--body-font-size-m);
-  font-weight: var(--font-weight-medium);
-  line-height: var(--line-height-m);
-}
-
-.hero.ies :is(a, button).button.primary {
-  border-color: var(--ies-blue);
-  background: var(--ies-blue);
-  color: #fff;
-}
-
-.hero.ies :is(a, button).button.primary:hover,
-.hero.ies :is(a, button).button.primary:focus-visible {
-  border-color: var(--ies-blue-hover);
-  background: var(--ies-blue-hover);
-  color: #fff;
-}
-
-.hero.ies :is(a, button).button.secondary {
-  border: 2px solid #fff;
-  background: transparent;
-  color: #fff;
-}
-
-.hero.ies :is(a, button).button.secondary:hover,
-.hero.ies :is(a, button).button.secondary:focus-visible {
-  background: #fff;
-  color: var(--ies-ink);
 }
 
 .hero.ies .hero-media img {

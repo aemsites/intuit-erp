@@ -23,7 +23,7 @@
  * dark Blueberry card: copy left, media tile right. 2 cells:
  *   1. content — an optional italic-only eyebrow, a heading (h2-h4), quote
  *      paragraph(s), a bold-only name line, a plain role line, and an
- *      optional link-only paragraph that becomes the CTA button
+ *      optional bold link paragraph that becomes the CTA button
  *   2. media — one image: the DAM "feature" asset, which already carries the
  *      Superblue tile, inset photo and customer logo
  *
@@ -606,11 +606,6 @@ function buildCardCarousel(figures) {
   return wrap;
 }
 
-function isLinkOnly(p) {
-  const only = p.children.length === 1 ? p.children[0] : null;
-  return only?.tagName === 'A' && p.textContent.trim() === only.textContent.trim();
-}
-
 function buildStory(row) {
   const [contentCell, mediaCell] = [...row.children];
   const figure = document.createElement('figure');
@@ -640,7 +635,8 @@ function buildStory(row) {
         node.remove();
         return;
       }
-      if (!ctaLink && isLinkOnly(node)) {
+      // CTA: an authored bold link, already decorated by scripts.js decorateButtons
+      if (!ctaLink && node.classList.contains('button-wrapper') && only?.tagName === 'A') {
         ctaLink = only;
         node.remove();
       }
@@ -683,7 +679,6 @@ function buildStory(row) {
   if (figcaption.childElementCount) copy.append(figcaption);
 
   if (ctaLink) {
-    ctaLink.className = 'button story-cta';
     const wrap = document.createElement('p');
     wrap.className = 'button-wrapper';
     wrap.append(ctaLink);

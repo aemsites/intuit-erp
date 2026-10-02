@@ -954,7 +954,6 @@
 
 .testimonial.story {
   --story-ink: #0d0031;
-  --story-blue: #236cff;
 
   max-width: var(--container);
   margin: 0 auto;
@@ -1041,24 +1040,6 @@
 .testimonial.story .story-attr .testimonial-title { color: #fff; }
 
 .testimonial.story .button-wrapper { margin: 0; }
-
-.testimonial.story a.button.story-cta {
-  padding: 12px 28px;
-  border-color: var(--story-blue);
-  border-radius: 999px;
-  background: var(--story-blue);
-  font-size: 14px;
-  font-weight: var(--font-weight-medium);
-  color: #fff;
-}
-
-.testimonial.story a.button.story-cta:hover,
-.testimonial.story a.button.story-cta:focus-visible {
-  border-color: #1b5be0;
-  background: #1b5be0;
-  color: #fff;
-  text-decoration: none;
-}
 
 /* media: the DAM feature asset already carries its tile, so render it plain */
 .testimonial.story .story-media {
