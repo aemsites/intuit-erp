@@ -945,4 +945,121 @@ main > .section.tabs-container:has(.tabs.vertical-panel) > div { padding: 0; }
   }
 }
 
+/* .vertical-panel.industry: light theme, 278px icon rail, light-blue panel */
+main > .section.tabs-container:has(.tabs.vertical-panel.industry) {
+  --it-surface: #d6e8f8;
+  --it-text: #0d0031;
+  --it-text-soft: #0d0031;
+  --it-accent: #236cff;
+  --it-tab-idle: transparent;
 
+  max-width: 1130px;
+  border-radius: 0;
+  background: var(--background-color);
+}
+
+.tabs-container:has(.tabs.vertical-panel.industry) .tabs-wrapper { max-width: 1130px; }
+
+.tabs-container:has(.tabs.vertical-panel.industry) .default-content-wrapper h2 {
+  font-weight: var(--font-weight-medium);
+  color: var(--it-text);
+}
+
+/* keep the injected section eyebrow at the site eyebrow size */
+.tabs-container:has(.tabs.vertical-panel.industry) .default-content-wrapper h2.section-eyebrow {
+  margin: 0;
+  padding-bottom: var(--space-m);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 14.4px;
+  letter-spacing: 1.2px;
+  color: #000;
+}
+
+.tabs.vertical-panel.industry .it-body { line-height: var(--line-height-m); }
+
+.tabs.vertical-panel.industry .it-cta {
+  color: var(--it-accent);
+  font-weight: var(--font-weight-medium);
+  text-underline-offset: 2px;
+}
+
+/* media: one picture is square-cropped below desktop (DA focal point positions it); an authored second picture replaces that crop */
+.tabs.vertical-panel.industry .it-media { display: block; }
+
+.tabs.vertical-panel.industry .it-media picture { display: block; }
+
+.tabs.vertical-panel.industry .it-media img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  border-radius: 38px;
+  object-fit: cover;
+}
+
+/* authored pair below desktop: hide the desktop composition, show the mobile one whole */
+.tabs.vertical-panel.industry .it-media picture:has(+ picture) { display: none; }
+
+.tabs.vertical-panel.industry .it-media picture + picture img {
+  aspect-ratio: auto;
+  border-radius: 0;
+  object-fit: contain;
+}
+
+/* mobile: light-blue card with Pepper tabs */
+.tabs.vertical-panel.industry {
+  box-sizing: border-box;
+  padding: var(--space-2xl) var(--space-m);
+  border-radius: 38px;
+  background: var(--it-surface);
+}
+
+.tabs.vertical-panel.industry .it-nav { gap: var(--space-2xs); }
+
+.tabs.vertical-panel.industry .it-tab {
+  min-height: 44px;
+  gap: var(--space-2xs);
+  padding: 6px 12px;
+  border-left: 0;
+  background: #f0f4f6;
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-m);
+}
+
+.tabs.vertical-panel.industry .it-tab[aria-expanded="true"] { background: #f0f4f6; }
+
+.tabs.vertical-panel.industry .it-panel.is-active {
+  gap: var(--space-l);
+  padding: var(--space-l) 0 var(--space-2xl);
+}
+
+.tabs.vertical-panel.industry .it-copy { padding: 0; margin-bottom: 0; gap: var(--space-m); }
+.tabs.vertical-panel.industry .it-heading { font-size: 28px; font-weight: var(--font-weight-medium); line-height: var(--line-height-s); }
+.tabs.vertical-panel.industry .it-copy-body { padding-top: 0; gap: var(--space-m); }
+
+@media (width >= 1024px) {
+  /* desktop: drop the mobile card, restore the rail + panel layout */
+  .tabs.vertical-panel.industry { padding: 0; border-radius: 0; background: transparent; }
+  .tabs.vertical-panel.industry .it-tab { background: var(--it-tab-idle); border-left: 3px solid transparent; }
+  .tabs.vertical-panel.industry .it-tab[aria-expanded="true"] { background: var(--it-surface); border-left-color: var(--it-accent); }
+
+  /* desktop: the composed asset shows whole; its own radius and gap apply */
+  .tabs.vertical-panel.industry .it-media img { aspect-ratio: auto; border-radius: 0; object-fit: contain; }
+
+  /* authored pair on desktop: first picture shows, mobile one hidden */
+  .tabs.vertical-panel.industry .it-media picture:has(+ picture) { display: block; }
+  .tabs.vertical-panel.industry .it-media picture + picture { display: none; }
+
+  .tabs.vertical-panel.industry .it-nav { width: 278px; gap: var(--space-3xs); }
+  .tabs.vertical-panel.industry .it-panel { left: 278px; margin-left: var(--space-3xs); }
+
+  .tabs.vertical-panel.industry .it-panel.is-active {
+    gap: var(--space-2xl);
+    padding: 44px 40px;
+    border-radius: 0 38px 38px;
+  }
+
+  .tabs.vertical-panel.industry .it-copy { gap: var(--space-2xl); }
+  .tabs.vertical-panel.industry .it-heading { max-width: 260px; font-size: 34px; }
+  .tabs.vertical-panel.industry .it-copy-body { gap: var(--space-m); padding-top: var(--space-2xs); }
+}

@@ -662,3 +662,39 @@ body.author-guide .hero .hero-copy h1,
 body.author-guide .hero .hero-copy .hero-lede {
   max-width: initial;
 }
+
+/* .ies: Blueberry hero; buttons come from the `ies` section theme (author `ies, dark-background`) */
+.section.hero-container:has(.hero.ies) { background: #0d0031; }
+
+.hero.ies .hero-copy .hero-eyebrow {
+  margin-bottom: var(--space-3xs);
+  font-size: 14px;
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+  letter-spacing: 1.82px;
+  text-transform: uppercase;
+}
+
+.hero.ies .hero-copy h1 {
+  margin: 0 0 var(--space-s);
+  font-size: 44px;
+  line-height: 1;
+  font-weight: var(--font-weight-medium);
+  max-width: 12em;
+}
+
+.hero.ies .hero-copy .hero-lede {
+  margin: 0 0 var(--space-xl);
+  font-size: var(--body-font-size-m);
+  line-height: var(--line-height-m);
+  color: #fff;
+}
+
+.hero.ies .hero-media img {
+  border-radius: 38px;
+  max-height: 555px;
+}
+
+@media (width >= 1024px) {
+  .hero.ies .hero-copy h1 { font-size: 60px; }
+}

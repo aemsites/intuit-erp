@@ -842,3 +842,148 @@
 body.author-guide .cards.icons.icons-sm .cards-card-image img {
   filter: invert(1);
 }
+
+/* .tinted: feature image on top of a tinted rounded card; CSS-only variant */
+.cards.tinted {
+  --tinted-blue: #d6e8f8;
+  --tinted-orange: #ffcec4;
+  --tinted-ink: #0d0031;
+
+  grid-template-columns: 1fr;
+  gap: var(--space-l);
+}
+
+.cards.tinted > div {
+  box-sizing: border-box;
+  border-radius: 24px;
+  overflow: hidden;
+  color: var(--tinted-ink);
+  background: #fff;
+}
+
+.cards.tinted > div:nth-child(3n + 1) { background: var(--tinted-blue); }
+.cards.tinted > div:nth-child(3n + 2) { background: var(--tinted-orange); }
+
+.cards.tinted .cards-card-image {
+  margin: 0;
+  line-height: 0;
+}
+
+.cards.tinted .cards-card-image img {
+  width: 100%;
+  aspect-ratio: 706 / 412;
+  object-fit: cover;
+  object-position: top center;
+  border-radius: 24px;
+}
+
+.cards.tinted .cards-card-body {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-xl) var(--space-xl) var(--space-2xl);
+}
+
+.cards.tinted .cards-card-body .cards-eyebrow {
+  margin: 0 0 var(--space-m);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: var(--font-weight-medium);
+  line-height: 1.2;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: inherit;
+}
+
+.cards.tinted .cards-card-body :is(h3, h4) {
+  margin: 0 0 var(--space-s);
+  font-size: 28px;
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-xs);
+  color: inherit;
+}
+
+.cards.tinted .cards-card-body p:not(.cards-eyebrow) {
+  margin: 0;
+  font-size: var(--body-font-size-m);
+  line-height: var(--line-height-m);
+  color: inherit;
+}
+
+@media (width >= 768px) {
+  .cards.tinted {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-xl);
+    max-width: 1210px;
+    margin-inline: auto; /* not `margin: 0 auto`, so block spacer-* classes still apply */
+  }
+}
+
+/* .tinted.blue: every card light blue, no image */
+.cards.tinted.blue > div { background: var(--tinted-blue); }
+
+.cards.tinted.blue .cards-card-body { padding: var(--space-2xl) var(--space-xl); }
+.cards.tinted.blue .cards-card-body .cards-eyebrow { font-size: 14px; letter-spacing: 1.82px; }
+.cards.tinted.blue .cards-card-body p:not(.cards-eyebrow) { font-size: 20px; line-height: var(--line-height-s); }
+
+@media (width >= 1024px) {
+  .cards.tinted.blue .cards-card-body { padding: 60px; }
+}
+
+/* .icons.text-grid: three columns, 36px icon, 28px title, 16px body */
+.cards.icons.text-grid {
+  --text-grid-ink: #0d0031;
+
+  max-width: 1132px;
+  gap: 78px;
+}
+
+.cards.icons.text-grid .cards-card-head { margin-bottom: var(--space-m); }
+
+.cards.icons.text-grid .cards-card-image,
+.cards.icons.text-grid .cards-card-image img {
+  width: 36px;
+  height: 36px;
+}
+
+.cards.icons.text-grid .cards-card-body h3 {
+  margin: 0 0 var(--space-2xs);
+  font-size: 28px;
+  line-height: var(--line-height-s);
+  color: var(--text-grid-ink);
+}
+
+.cards.icons.text-grid .cards-card-body p {
+  font-size: var(--body-font-size-m);
+  line-height: var(--line-height-m);
+  color: var(--text-grid-ink);
+}
+
+/* text-grid section rhythm: title 60px above, following tiles 80px below */
+.section.cards-container:has(.cards.icons.text-grid) > .default-content-wrapper h2:not(.section-eyebrow) {
+  margin: 0 0 60px;
+  font-size: 40px;
+  font-weight: var(--font-weight-medium);
+  line-height: 1;
+  text-align: center;
+  color: #0d0031;
+}
+
+.section.cards-container:has(.cards.icons.text-grid) > .default-content-wrapper p {
+  text-align: center;
+}
+
+.section.cards-container .cards-wrapper:has(.cards.icons.text-grid) + .cards-wrapper {
+  margin-top: 80px;
+}
+
+@media (width >= 1024px) {
+  .section.cards-container:has(.cards.icons.text-grid) > .default-content-wrapper h2:not(.section-eyebrow) {
+    font-size: 48px;
+  }
+}
+
+@media (width <= 768px) {
+  .cards.icons.text-grid { gap: var(--space-2xl); }
+  .cards.icons.text-grid .cards-card-body h3 { font-size: 24px; }
+  .section.cards-container .cards-wrapper:has(.cards.icons.text-grid) + .cards-wrapper { margin-top: var(--space-3xl); }
+}

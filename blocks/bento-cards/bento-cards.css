@@ -1,0 +1,228 @@
+/* bento-cards: 3-col bento grid on desktop, scroll-snap carousel below 768px */
+
+.bento-cards {
+  /* IES brand fills from the design; not yet global tokens */
+  --bento-pepper: #f0f4f6;
+  --bento-orange: #ffcec4;
+  --bento-blue: #d6e8f8;
+  --bento-blueberry: #0d0031;
+  --bento-bronze: #883f1c;
+  --bento-superblue: #236cff;
+  --bento-ink: #000730;
+  --bento-radius: 24px;
+  --bento-gap: var(--space-s);
+  --bento-peek: 16vw;
+
+  /* mobile carousel: bleed to the viewport so the next card peeks */
+  margin-inline: -16px;
+}
+
+.bento-cards .bento-track {
+  display: flex;
+  gap: var(--bento-gap);
+  padding-inline: 16px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 16px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.bento-cards .bento-track::-webkit-scrollbar { display: none; }
+
+.bento-cards .bento-track > .bento-card {
+  flex: 0 0 calc(100% - var(--bento-peek));
+  scroll-snap-align: start;
+}
+
+/* dot indicators (mobile only) */
+.bento-cards .bento-dots {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-xs);
+  margin-top: var(--space-l);
+}
+
+.bento-cards .bento-dot {
+  position: relative;
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-circle);
+  background: #a9c7ee;
+  cursor: pointer;
+}
+
+/* comfortable touch target without growing the visible dot */
+.bento-cards .bento-dot::after { content: ""; position: absolute; inset: -8px; }
+.bento-cards .bento-dot.is-active { background: var(--bento-superblue); }
+
+.bento-cards .bento-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-l);
+  box-sizing: border-box;
+  min-height: 348px;
+  padding: var(--space-l);
+  border-radius: var(--bento-radius);
+  overflow: hidden;
+  color: var(--bento-ink);
+}
+
+.bento-cards .bento-card-pepper { background: var(--bento-pepper); }
+.bento-cards .bento-card-orange { background: var(--bento-orange); }
+.bento-cards .bento-card-blue { background: var(--bento-blue); color: var(--bento-blueberry); }
+.bento-cards .bento-card-blueberry { background: var(--bento-blueberry); color: #fff; }
+
+.bento-cards .bento-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  flex: 1 1 auto;
+}
+
+.bento-cards .bento-card-icon {
+  width: 36px;
+  height: 36px;
+}
+
+.bento-cards .bento-card-icon picture,
+.bento-cards .bento-card-icon img,
+.bento-cards .bento-card-icon .icon,
+.bento-cards .bento-card-icon .icon img {
+  display: block;
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+}
+
+.bento-cards .bento-card-copy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-s);
+}
+
+.bento-cards .bento-card-copy :is(h2, h3, h4) {
+  margin: 0;
+  font-size: 28px;
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-xs);
+  color: inherit;
+}
+
+.bento-cards .bento-card-copy p {
+  margin: 0;
+  font-size: var(--body-font-size-m);
+  line-height: var(--line-height-m);
+  color: inherit;
+}
+
+/* visual tile: DAM feature images carry their own tint; fill shows behind transparent images */
+.bento-cards .bento-card-visual {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  box-sizing: border-box;
+  height: 260px;
+  margin: auto calc(var(--space-l) * -1) calc(var(--space-l) * -1);
+  border-radius: var(--bento-radius) var(--bento-radius) 0 0;
+  background: var(--bento-superblue);
+  overflow: hidden;
+}
+
+.bento-cards .bento-card-orange .bento-card-visual { background: var(--bento-bronze); }
+.bento-cards .bento-card-pepper .bento-card-visual { background: var(--bento-ink); }
+
+.bento-cards .bento-card-visual picture,
+.bento-cards .bento-card-visual img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+}
+
+@media (width >= 768px) {
+  .bento-cards { margin-inline: 0; }
+
+  /* tablet: one card per row; wide cards go side by side */
+  .bento-cards .bento-track {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-l);
+    padding-inline: 0;
+    overflow: visible;
+    scroll-snap-type: none;
+  }
+
+  .bento-cards .bento-track > .bento-card { flex: none; }
+  .bento-cards .bento-dots { display: none; }
+
+  .bento-cards .bento-card { padding: var(--space-xl); }
+
+  .bento-cards .bento-card.wide {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 46%);
+    gap: var(--space-xl);
+    padding: 8px 8px 8px var(--space-xl);
+  }
+
+  .bento-cards .bento-card.wide .bento-card-body { padding: 24px 0; }
+
+  .bento-cards .bento-card.wide .bento-card-visual {
+    height: auto;
+    min-height: 332px;
+    margin: 0;
+    border-radius: calc(var(--bento-radius) - 8px);
+  }
+}
+
+@media (width >= 1024px) {
+  /* 1210px = Figma content width at 1440 */
+  .bento-cards .bento-track {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-xl);
+    max-width: 1210px;
+    margin-inline: auto;
+  }
+
+  .bento-cards .bento-card { --bento-radius: 38px; }
+
+  .bento-cards .bento-card.narrow { grid-column: span 1; }
+  .bento-cards .bento-card.wide { grid-column: span 2; }
+
+  .bento-cards .bento-card-copy :is(h2, h3, h4) { font-size: 34px; }
+}
+
+/* section head authored as default content before the block */
+.section.bento-cards-container > .default-content-wrapper {
+  text-align: center;
+}
+
+.section.bento-cards-container > .default-content-wrapper h2:not(.section-eyebrow) {
+  margin: 0 0 var(--space-3xl);
+  font-size: 40px;
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-xs);
+  color: #0d0031;
+}
+
+@media (width >= 1024px) {
+  .section.bento-cards-container > .default-content-wrapper h2:not(.section-eyebrow) {
+    margin-bottom: 80px;
+    font-size: 56px;
+  }
+}
+
+/* .two-up: two equal cards per row; theme authored per card */
+@media (width >= 768px) {
+  .bento-cards.two-up .bento-track { grid-template-columns: repeat(2, 1fr); }
+  .bento-cards.two-up .bento-track > .bento-card { grid-column: span 1; }
+}
+
+@media (width >= 1024px) {
+  .bento-cards.two-up .bento-card { padding: 60px; }
+  .bento-cards.two-up .bento-card-copy p { font-size: 20px; line-height: var(--line-height-s); }
+}

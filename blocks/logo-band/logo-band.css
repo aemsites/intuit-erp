@@ -188,3 +188,67 @@ main > .section.logo-band-container:has(.logo-band.marquee) > div { max-width: n
 
   .logo-band.marquee .logoband-set { gap: var(--space-xl); padding-right: var(--space-xl); }
 }
+
+/* .strip: flat white logo strip, one centred row of 156x50 greyscale slots */
+.section.logo-band-container:has(.logo-band.strip) {
+  max-width: none;
+  margin: 0;
+  padding: var(--space-2xl) 0 var(--space-m);
+  border-radius: 0;
+  background: var(--background-color);
+}
+
+/* eyebrow authored via Section Metadata (eyebrow-text), injected by scripts.js */
+.section.logo-band-container:has(.logo-band.strip) > h2.section-eyebrow {
+  margin: 0 0 var(--space-m);
+  padding: 0;
+  font-family: var(--body-font-family);
+  font-size: 14px;
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+  letter-spacing: 1.82px;
+  text-transform: uppercase;
+  color: #0d0031;
+  text-align: center;
+}
+
+.logo-band.strip .logoband-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-l);
+  max-width: none;
+  margin: 0 auto;
+}
+
+.logo-band.strip .logoband-list > * {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
+  width: 156px;
+  height: 50px;
+  padding: 0;
+  margin: 0;
+}
+
+/* undo the base >=1024 75% picture width so the image centres in its slot */
+.logo-band.strip .logoband-list li picture { width: auto; }
+
+/* li picture img matches the default rule's specificity so the 50px cap wins */
+.logo-band.strip .logoband-list li picture img,
+.logo-band.strip .logoband-list li img {
+  display: block;
+  width: auto;
+  max-width: 130px;
+  height: auto;
+  max-height: 50px;
+  object-fit: contain;
+  filter: grayscale(1);
+}
+
+@media (width < 768px) {
+  .logo-band.strip .logoband-list { gap: var(--space-s); }
+  .logo-band.strip .logoband-list > * { width: calc(50% - var(--space-s)); max-width: 156px; }
+}
