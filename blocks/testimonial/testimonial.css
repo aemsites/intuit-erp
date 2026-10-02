@@ -907,7 +907,7 @@
   .testimonial.card.feature .testimonial-eyebrow { margin: 0 0 var(--space-m); }
   .testimonial.card.feature .testimonial-card blockquote { margin: 0 0 var(--space-xl); }
   .testimonial.card.feature .testimonial-card figcaption { margin: 0; }
-  .testimonial.card.feature .testimonial-footnote { margin: var(--space-xl) 0 0; font-size: var(--body-font-size-xxs); }
+  .testimonial.card.feature .testimonial-footnote { margin: var(--space-xl) 0 0; }
 
   .testimonial.card.feature .testimonial-card > picture {
     grid-column: 1;
@@ -920,8 +920,7 @@
 
   .testimonial.card.feature .testimonial-eyebrow { grid-row: 2; }
   .testimonial.card.feature .testimonial-card blockquote { grid-row: 3; font-size: 34px; line-height: var(--line-height-xs); }
-  .testimonial.card.feature .testimonial-card figcaption { font-size: var(--body-font-size-m); line-height: var(--line-height-m); }
-  .testimonial.card.feature .testimonial-card figcaption { grid-row: 4; }
+  .testimonial.card.feature .testimonial-card figcaption { grid-row: 4; font-size: var(--body-font-size-m); line-height: var(--line-height-m); }
   .testimonial.card.feature .testimonial-footnote { grid-row: 5; }
 
   .testimonial.card.feature .testimonial-eyebrow,
@@ -932,10 +931,7 @@
   }
 }
 
-
 /* .story: dark Blueberry card, copy left, Superblue media tile right; stacks below 1024px */
-
-/* the story band sits on the page background, not the default cyan section */
 .section.testimonial-container:has(.testimonial.story) {
   background: var(--background-color);
   padding: var(--section-y) 0;

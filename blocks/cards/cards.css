@@ -919,9 +919,7 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
 }
 
 /* .tinted.blue: every card light blue, no image */
-.cards.tinted.blue > div,
-.cards.tinted.blue > div:nth-child(3n + 2),
-.cards.tinted.blue > div:nth-child(3n) { background: var(--tinted-blue); }
+.cards.tinted.blue > div { background: var(--tinted-blue); }
 
 .cards.tinted.blue .cards-card-body { padding: var(--space-2xl) var(--space-xl); }
 .cards.tinted.blue .cards-card-body .cards-eyebrow { font-size: 14px; letter-spacing: 1.82px; }
