@@ -142,9 +142,7 @@
 }
 
 .bento-cards .bento-card-orange .bento-card-visual { background: var(--bento-bronze); }
-.bento-cards .bento-card-blue .bento-card-visual { background: var(--bento-superblue); }
 .bento-cards .bento-card-pepper .bento-card-visual { background: var(--bento-ink); }
-.bento-cards .bento-card-blueberry .bento-card-visual { background: var(--bento-superblue); }
 
 .bento-cards .bento-card-visual picture,
 .bento-cards .bento-card-visual img {

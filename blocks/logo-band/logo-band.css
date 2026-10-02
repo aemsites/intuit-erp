@@ -216,7 +216,6 @@ main > .section.logo-band-container:has(.logo-band.marquee) > div { max-width: n
 /* collapse the wrapper spacing between the eyebrow and the logo row (Figma: 20px) */
 .section.logo-band-container:has(.logo-band.strip) > .default-content-wrapper { margin-bottom: 0; padding-bottom: 0; }
 .section.logo-band-container:has(.logo-band.strip) > .logo-band-wrapper { margin-top: 0; padding-top: 0; }
-.logo-band.strip:not(.marquee) { padding: 0; margin: 0; }
 
 .logo-band.strip .logoband-list {
   display: flex;
@@ -237,8 +236,6 @@ main > .section.logo-band-container:has(.logo-band.marquee) > div { max-width: n
   height: 50px;
   padding: 0;
   margin: 0;
-  background: none;
-  border: 0;
 }
 
 /* li picture img matches the default rule's specificity so the 50px cap wins */

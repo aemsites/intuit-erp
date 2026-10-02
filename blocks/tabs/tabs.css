@@ -950,7 +950,6 @@ main > .section.tabs-container:has(.tabs.vertical-panel) > div { padding: 0; }
    light-blue panel rounded 38px on three corners, heading beside body + link,
    and a row of images (every picture authored in the cell) beneath. */
 main > .section.tabs-container:has(.tabs.vertical-panel.industry) {
-  --it-band: transparent;
   --it-surface: #d6e8f8;
   --it-text: #0d0031;
   --it-text-soft: #0d0031;
@@ -1013,7 +1012,7 @@ main > .section.tabs-container:has(.tabs.vertical-panel.industry) {
    picture shows whole on desktop. */
 .tabs.vertical-panel.industry .it-media { display: block; }
 
-.tabs.vertical-panel.industry .it-media picture { display: block; min-width: 0; }
+.tabs.vertical-panel.industry .it-media picture { display: block; }
 
 .tabs.vertical-panel.industry .it-media img {
   width: 100%;

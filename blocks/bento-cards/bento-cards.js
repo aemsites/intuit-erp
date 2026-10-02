@@ -28,11 +28,12 @@ function isIconNode(node) {
 
 function buildCard(row, index) {
   const [contentCell, visualCell, themeCell] = [...row.children];
-  const theme = themeCell?.textContent.trim().toLowerCase() || THEMES[index % THEMES.length];
+  const authored = themeCell?.textContent.trim().toLowerCase();
+  const theme = THEMES.includes(authored) ? authored : THEMES[index % THEMES.length];
   const visual = visualCell?.querySelector('picture, img');
 
   const card = document.createElement('div');
-  card.className = `bento-card bento-card-${THEMES.includes(theme) ? theme : THEMES[index % THEMES.length]}`;
+  card.className = `bento-card bento-card-${theme}`;
   card.classList.add(visual ? 'wide' : 'narrow');
 
   const body = document.createElement('div');

@@ -801,7 +801,6 @@
    Scoped to .testimonial.card.feature so the plain .card grid is untouched. */
 .testimonial.card.feature {
   --feature-blue: #236cff;
-  --feature-radius: 24px;
 
   display: block;
   max-width: var(--container);

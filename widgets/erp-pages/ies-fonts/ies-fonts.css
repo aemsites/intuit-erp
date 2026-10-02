@@ -87,8 +87,6 @@
 body:has(.widget.ies-fonts) {
   --body-font-family: tally, "AvenirNext forINTUIT", avenir-fallback, arial, sans-serif;
   --heading-font-family: "Tally Display", tally, "AvenirNext forINTUIT", avenir-fallback, arial, sans-serif;
-
-  font-family: var(--body-font-family);
 }
 
 /* the widget renders nothing visible */
