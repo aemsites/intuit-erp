@@ -663,11 +663,7 @@ body.author-guide .hero .hero-copy .hero-lede {
   max-width: initial;
 }
 
-/* .ies — IES brand-refresh hero (Figma ACQ-4698 Desktop→IES migration):
-   Blueberry band, 14px tracked eyebrow, 60px medium headline, 16px lede,
-   media image with a 38px radius. Buttons come from the generic `ies` section
-   theme in styles.css (author the section with `ies, dark-background`).
-   Scoped to .hero.ies / its section; the default hero is untouched. */
+/* .ies: Blueberry hero; buttons come from the `ies` section theme (author `ies, dark-background`) */
 .section.hero-container:has(.hero.ies) { background: #0d0031; }
 
 .hero.ies .hero-copy .hero-eyebrow {

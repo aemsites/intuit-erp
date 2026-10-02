@@ -1,19 +1,7 @@
 /**
- * bento-cards — tinted feature cards (Figma: ACQ-4698 "Workflows carried
- * over" section). Desktop: a 3-column bento grid. Below 768px: a horizontal
- * scroll-snap carousel (one card per view, next card peeking) with dot
- * indicators. Section eyebrow + h2 are authored as default content before
- * the block.
- *
- * Rows: one row per card, up to 3 cells:
- *   1. content — optional icon (an image or :icon-name:), a heading as the
- *      card title, then body paragraph(s)
- *   2. visual (optional) — one image. A card with a visual spans 2 of the 3
- *      grid columns ("wide"); without one it spans 1 ("narrow")
- *   3. theme (optional) — pepper | orange | blue | blueberry. When omitted,
- *      themes cycle in that order so the default 4-card layout matches the
- *      design without authors picking colours.
- * CSS: blocks/bento-cards/bento-cards.css
+ * bento-cards: desktop 3-col bento grid, mobile scroll-snap carousel.
+ * Row = card: content cell (icon, heading, body) | optional visual (makes the
+ * card "wide") | optional theme (pepper | orange | blue | blueberry).
  */
 
 const THEMES = ['pepper', 'orange', 'blue', 'blueberry'];

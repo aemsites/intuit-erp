@@ -945,10 +945,7 @@ main > .section.tabs-container:has(.tabs.vertical-panel) > div { padding: 0; }
   }
 }
 
-/* ---- .vertical-panel.industry: light IES theme (Figma ACQ-4698 "Industry depth") --
-   278px rail of 44px icon tabs (active: light-blue + Superblue left rule),
-   light-blue panel rounded 38px on three corners, heading beside body + link,
-   and a row of images (every picture authored in the cell) beneath. */
+/* .vertical-panel.industry: light theme, 278px icon rail, light-blue panel */
 main > .section.tabs-container:has(.tabs.vertical-panel.industry) {
   --it-surface: #d6e8f8;
   --it-text: #0d0031;
@@ -968,8 +965,7 @@ main > .section.tabs-container:has(.tabs.vertical-panel.industry) {
   color: var(--it-text);
 }
 
-/* the authored section eyebrow is also an h2; keep it at the site's eyebrow
-   style instead of inheriting the vertical-panel headline sizing above */
+/* keep the injected section eyebrow at the site eyebrow size */
 .tabs-container:has(.tabs.vertical-panel.industry) .default-content-wrapper h2.section-eyebrow {
   margin: 0;
   padding-bottom: var(--space-m);
@@ -1003,13 +999,7 @@ main > .section.tabs-container:has(.tabs.vertical-panel.industry) {
   text-underline-offset: 2px;
 }
 
-/* media: the DAM composed asset (two tiles side by side) renders plain at its
-   natural ratio on desktop. Below desktop, a lone picture is cropped to one
-   square tile (Figma mobile, 287x287, 38px radius) with object-fit: cover,
-   so the author's DA focal point (applied as object-position by scripts.js)
-   decides which tile shows. Authoring a second picture (the DAM mobile
-   composition) replaces that crop: it shows whole below desktop and the first
-   picture shows whole on desktop. */
+/* media: one picture is square-cropped below desktop (DA focal point positions it); an authored second picture replaces that crop */
 .tabs.vertical-panel.industry .it-media { display: block; }
 
 .tabs.vertical-panel.industry .it-media picture { display: block; }
@@ -1031,8 +1021,7 @@ main > .section.tabs-container:has(.tabs.vertical-panel.industry) {
   object-fit: contain;
 }
 
-/* mobile card (Figma 11312:15484): light-blue 38px card, Pepper tabs, 24px
-   from tab to copy, 40px below the media, 8px between collapsed tabs */
+/* mobile: light-blue card with Pepper tabs */
 .tabs.vertical-panel.industry {
   box-sizing: border-box;
   padding: var(--space-2xl) var(--space-m);

@@ -843,12 +843,7 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
   filter: invert(1);
 }
 
-/* .tinted — IES "feature tile" cards (Figma ACQ-4698): full-bleed feature
-   image on top, then eyebrow + title + body on a tinted rounded card. Card
-   fills cycle light blue / light orange / white per the design; the DAM
-   feature images carry their own tinted panel. CSS-only variant: relies on
-   the generic decorate() (image cell -> .cards-card-image, italic-only
-   paragraph -> .cards-eyebrow). Stacks to one column below 768px. */
+/* .tinted: feature image on top of a tinted rounded card; CSS-only variant */
 .cards.tinted {
   --tinted-blue: #d6e8f8;
   --tinted-orange: #ffcec4;
@@ -923,8 +918,7 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
   }
 }
 
-/* .tinted.blue — every card light blue, no image (Figma "For your accountant"
-   3 Column Cards): eyebrow + title + body on a 60px-padded tile. */
+/* .tinted.blue: every card light blue, no image */
 .cards.tinted.blue > div,
 .cards.tinted.blue > div:nth-child(3n + 2),
 .cards.tinted.blue > div:nth-child(3n) { background: var(--tinted-blue); }
@@ -937,10 +931,7 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
   .cards.tinted.blue .cards-card-body { padding: 60px; }
 }
 
-/* .icons.text-grid — Figma "Text Grid" (ACQ-4698 Beyond desktop): three
-   325px columns 78px apart, 36px icon, 28px title, 16px body, Blueberry
-   text. Builds on .icons' icon-above-title structure; stacks below 768px
-   via the .icons rules. */
+/* .icons.text-grid: three columns, 36px icon, 28px title, 16px body */
 .cards.icons.text-grid {
   --text-grid-ink: #0d0031;
 
@@ -969,9 +960,7 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
   color: var(--text-grid-ink);
 }
 
-/* section rhythm for the text-grid: Figma title block (48px, centred,
-   Blueberry) sits 60px above the grid, and a following cards block (the
-   feature tiles) sits 80px below it — no authored spacer needed */
+/* text-grid section rhythm: title 60px above, following tiles 80px below */
 .section.cards-container:has(.cards.icons.text-grid) > .default-content-wrapper h2:not(.section-eyebrow) {
   margin: 0 0 60px;
   font-size: 40px;

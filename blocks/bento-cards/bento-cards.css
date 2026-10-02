@@ -1,8 +1,4 @@
-/* bento-cards — tinted feature cards (Figma ACQ-4698 "Workflows carried over").
-   Desktop: 3-column bento grid where narrow cards span 1 and wide cards span 2,
-   so the authored order narrow/wide/wide/narrow yields the design's staggered
-   layout. Below 768px: a horizontal scroll-snap carousel, one card per view
-   with the next card peeking, plus dot indicators. 768–1023px: 2-column grid. */
+/* bento-cards: 3-col bento grid on desktop, scroll-snap carousel below 768px */
 
 .bento-cards {
   /* IES brand fills from the design; not yet global tokens */
@@ -17,8 +13,7 @@
   --bento-gap: var(--space-s);
   --bento-peek: 16vw;
 
-  /* mobile carousel: bleed to the viewport edges so the next card peeks past
-     the section gutter, then scroll-pad back so cards align with the content */
+  /* mobile carousel: bleed to the viewport so the next card peeks */
   margin-inline: -16px;
 }
 
@@ -126,9 +121,7 @@
   color: inherit;
 }
 
-/* visual panel: an inset tile the feature image fills edge to edge. DAM
-   feature images (…-card-aui-feature-ies.png) already carry their tinted
-   background; the fill colour below only shows behind a transparent image. */
+/* visual tile: DAM feature images carry their own tint; fill shows behind transparent images */
 .bento-cards .bento-card-visual {
   display: flex;
   justify-content: center;
@@ -156,8 +149,7 @@
 @media (width >= 768px) {
   .bento-cards { margin-inline: 0; }
 
-  /* tablet: one full-width card per row so narrow and wide cards align;
-     wide cards switch to the side-by-side copy/visual layout */
+  /* tablet: one card per row; wide cards go side by side */
   .bento-cards .bento-track {
     display: grid;
     grid-template-columns: 1fr;
@@ -190,8 +182,7 @@
 }
 
 @media (width >= 1024px) {
-  /* 1210px = Figma content width at 1440 (112px side margins): with the 32px
-     gap, each column is 382px and a wide card is 796px, as designed */
+  /* 1210px = Figma content width at 1440 */
   .bento-cards .bento-track {
     grid-template-columns: repeat(3, 1fr);
     gap: var(--space-xl);
@@ -227,8 +218,7 @@
   }
 }
 
-/* .two-up — two equal cards per row (Figma "2 Column Cards"); the author sets
-   the theme cell on each card (e.g. "blue"). Mobile keeps the carousel. */
+/* .two-up: two equal cards per row; theme authored per card */
 @media (width >= 768px) {
   .bento-cards.two-up .bento-track { grid-template-columns: repeat(2, 1fr); }
   .bento-cards.two-up .bento-track > .bento-card { grid-column: span 1; }

@@ -791,10 +791,7 @@ main .section.super-blue a.button.secondary:focus-visible {
   color: #000;
 }
 
-/* IES brand CTAs (Figma ACQ-4698). Opt in per section with the `ies` style:
-   bold links become the Superblue pill, italic links the outlined pill.
-   Authoring is unchanged (bold = primary, italic = secondary); only the skin
-   differs, the same way .navy / .super-blue re-skin their buttons. */
+/* `ies` section style: bold links become the Superblue pill, italic links the outlined pill */
 main .section.ies a.button,
 main .section.ies button.button {
   min-height: 48px;

@@ -795,10 +795,7 @@
   }
 }
 
-/* .card.feature — single "accountant's perspective" quote band (Figma
-   ACQ-4698): portrait photo left, eyebrow + large quote + attribution +
-   footnote right, on a Superblue card. Stacks photo-over-copy below 1024px.
-   Scoped to .testimonial.card.feature so the plain .card grid is untouched. */
+/* .card.feature: photo left, quote right on a Superblue card; stacks below 1024px */
 .testimonial.card.feature {
   --feature-blue: #236cff;
 
@@ -819,9 +816,7 @@
   color: #fff;
 }
 
-/* mobile copy (Figma 11312:15675): a 259px column 38px from the card edge
-   (28px inside the 10px frame), 40px below the photo, 16px between items,
-   60px of card padding below the footnote */
+/* mobile copy column per Figma */
 .testimonial.card.feature .testimonial-eyebrow,
 .testimonial.card.feature .testimonial-card blockquote,
 .testimonial.card.feature .testimonial-card figcaption,
@@ -829,8 +824,7 @@
   margin-inline: 28px;
 }
 
-/* the grid child is the <picture>; the <img> fills it absolutely so its
-   natural size never feeds back into the grid's row sizing */
+/* the <picture> is the grid child; the absolute <img> never feeds the row sizing */
 .testimonial.card.feature .testimonial-card > picture {
   position: relative;
   display: block;
@@ -901,9 +895,7 @@
 }
 
 @media (width >= 1024px) {
-  /* photo spans every row; the copy sits in the middle four auto rows and
-     the 1fr rows above/below absorb any spare height, so the copy is centred
-     against the photo instead of being spaced out by the photo's height */
+  /* photo spans all rows; 1fr rows above/below centre the copy against it */
   .testimonial.card.feature .testimonial-card {
     grid-template-columns: minmax(0, 3fr) minmax(0, 7fr);
     grid-template-rows: 1fr auto auto auto auto 1fr;
@@ -941,10 +933,7 @@
 }
 
 
-/* .story — "Desktop migration story" band (Figma ACQ-4698): dark Blueberry
-   card, copy left (eyebrow, title, quote glyph, quote, attribution, CTA),
-   Superblue media tile right (photo + customer logo). Stacks below 1024px.
-   Scoped to .testimonial.story; nothing here touches the other variants. */
+/* .story: dark Blueberry card, copy left, Superblue media tile right; stacks below 1024px */
 
 /* the story band sits on the page background, not the default cyan section */
 .section.testimonial-container:has(.testimonial.story) {

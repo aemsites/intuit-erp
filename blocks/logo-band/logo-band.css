@@ -189,9 +189,7 @@ main > .section.logo-band-container:has(.logo-band.marquee) > div { max-width: n
   .logo-band.marquee .logoband-set { gap: var(--space-xl); padding-right: var(--space-xl); }
 }
 
-/* .strip — flat white logo strip under the hero (Figma ACQ-4698): 14px
-   uppercase eyebrow, then one centred row of 156x50 logo slots, 24px apart,
-   logos greyscale. No card, no tinted band. Scoped to .logo-band.strip. */
+/* .strip: flat white logo strip, one centred row of 156x50 greyscale slots */
 .section.logo-band-container:has(.logo-band.strip) {
   max-width: none;
   margin: 0;
