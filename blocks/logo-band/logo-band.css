@@ -201,9 +201,11 @@ main > .section.logo-band-container:has(.logo-band.marquee) > div { max-width: n
 }
 
 .section.logo-band-container:has(.logo-band.strip) .default-content-wrapper h2,
-.section.logo-band-container:has(.logo-band.strip) .default-content-wrapper h4 {
+.section.logo-band-container:has(.logo-band.strip) .default-content-wrapper h4,
+.section.logo-band-container:has(.logo-band.strip) > h2.section-eyebrow {
   margin: 0 0 var(--space-m);
   padding: 0;
+  font-family: var(--body-font-family);
   font-size: 14px;
   font-weight: var(--font-weight-medium);
   line-height: 1.25;
