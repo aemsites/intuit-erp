@@ -791,6 +791,66 @@ main .section.super-blue a.button.secondary:focus-visible {
   color: #000;
 }
 
+/* IES brand CTAs (Figma ACQ-4698). Opt in per section with the `ies` style:
+   bold links become the Superblue pill, italic links the outlined pill.
+   Authoring is unchanged (bold = primary, italic = secondary); only the skin
+   differs, the same way .navy / .super-blue re-skin their buttons. */
+main .section.ies a.button,
+main .section.ies button.button {
+  min-height: 48px;
+  padding: 12px 20px;
+  border-width: 2px;
+  border-radius: 999px;
+  font-size: var(--body-font-size-m);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-m);
+}
+
+main .section.ies a.button.primary,
+main .section.ies button.button.primary {
+  border-color: var(--info);
+  background-color: var(--info);
+  color: #fff;
+}
+
+main .section.ies a.button.primary:hover,
+main .section.ies a.button.primary:focus-visible,
+main .section.ies button.button.primary:hover,
+main .section.ies button.button.primary:focus-visible {
+  border-color: #1b5be0;
+  background-color: #1b5be0;
+  color: #fff;
+}
+
+/* outlined pill: Blueberry on light sections, white on dark ones */
+main .section.ies a.button.secondary,
+main .section.ies button.button.secondary {
+  border-color: #0d0031;
+  background-color: transparent;
+  color: #0d0031;
+}
+
+main .section.ies a.button.secondary:hover,
+main .section.ies a.button.secondary:focus-visible,
+main .section.ies button.button.secondary:hover,
+main .section.ies button.button.secondary:focus-visible {
+  background-color: #0d0031;
+  color: #fff;
+}
+
+main .section.ies:is(.dark, .navy, .super-blue, .dark-background) a.button.secondary,
+main .section.ies:is(.dark, .navy, .super-blue, .dark-background) button.button.secondary {
+  border-color: #fff;
+  background-color: transparent;
+  color: #fff;
+}
+
+main .section.ies:is(.dark, .navy, .super-blue, .dark-background) a.button.secondary:hover,
+main .section.ies:is(.dark, .navy, .super-blue, .dark-background) a.button.secondary:focus-visible {
+  background-color: #fff;
+  color: #0d0031;
+}
+
 /* contained sections */
 main > .section.contained,
 main .fragment-wrapper .section.contained {
