@@ -104,6 +104,11 @@
   gap: var(--space-s);
 }
 
+/* heading → body: 16px on mobile, 20px from tablet up */
+@media (width >= 768px) {
+  .bento-cards .bento-card-copy { gap: var(--space-m); }
+}
+
 .bento-cards .bento-card-copy :is(h2, h3, h4) {
   margin: 0;
   font-size: 28px;
@@ -222,6 +227,17 @@
   font-weight: var(--font-weight-medium);
   line-height: var(--line-height-xs);
   color: #0d0031;
+}
+
+/* heading → subcopy: 16px on mobile, 20px from tablet up */
+.section.bento-cards-container > .default-content-wrapper h2:not(.section-eyebrow):has(+ p) {
+  margin-bottom: var(--space-s);
+}
+
+@media (width >= 768px) {
+  .section.bento-cards-container > .default-content-wrapper h2:not(.section-eyebrow):has(+ p) {
+    margin-bottom: var(--space-m);
+  }
 }
 
 @media (width >= 1024px) {

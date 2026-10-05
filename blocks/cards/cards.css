@@ -924,6 +924,11 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
   color: inherit;
 }
 
+/* heading → body: 16px on mobile, 20px from tablet up */
+@media (width >= 768px) {
+  .cards.tinted .cards-card-body :is(h3, h4) { margin-bottom: var(--space-m); }
+}
+
 .cards.tinted .cards-card-body p:not(.cards-eyebrow) {
   margin: 0;
   font-size: var(--body-font-size-m);
@@ -969,10 +974,15 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
 }
 
 .cards.icons.text-grid .cards-card-body h3 {
-  margin: 0 0 var(--space-2xs);
+  margin: 0 0 var(--space-s);
   font-size: 28px;
   line-height: var(--line-height-s);
   color: var(--text-grid-ink);
+}
+
+/* heading → body: 16px on mobile, 20px from tablet up */
+@media (width >= 768px) {
+  .cards.icons.text-grid .cards-card-body h3 { margin-bottom: var(--space-m); }
 }
 
 .cards.icons.text-grid .cards-card-body p {

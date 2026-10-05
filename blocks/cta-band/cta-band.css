@@ -113,11 +113,16 @@ main > .section.cta-band-container:has(.cta-band.simple) > div { max-width: none
 .cta-band.simple.ies .fc-title::after { content: none; }
 
 .cta-band.simple.ies .fc-title {
-  margin: 0 0 var(--space-m);
+  margin: 0 0 var(--space-s);
   font-size: 40px;
   font-weight: var(--font-weight-medium);
   line-height: 1;
   color: #0d0031;
+}
+
+/* title → body: 16px on mobile, 20px from tablet up */
+@media (width >= 768px) {
+  .cta-band.simple.ies .fc-title { margin-bottom: var(--space-m); }
 }
 
 .cta-band.simple.ies .fc-body {

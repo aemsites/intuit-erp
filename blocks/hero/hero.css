@@ -692,6 +692,11 @@ body.author-guide .hero .hero-copy .hero-lede {
   max-width: 12em;
 }
 
+/* heading → lede: 16px on mobile, 20px from tablet up */
+@media (width >= 768px) {
+  .hero.ies .hero-copy h1 { margin-bottom: var(--space-m); }
+}
+
 .hero.ies .hero-copy .hero-lede {
   margin: 0 0 var(--space-xl);
   font-size: var(--body-font-size-m);

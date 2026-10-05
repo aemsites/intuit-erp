@@ -970,6 +970,17 @@ main > .section.tabs-container:has(.tabs.vertical-panel.industry) {
   color: var(--it-text);
 }
 
+/* section heading → subcopy: 16px on mobile, 20px from tablet up */
+.tabs-container:has(.tabs.vertical-panel.industry) .default-content-wrapper h2:not(.section-eyebrow) {
+  margin-bottom: var(--space-s);
+}
+
+@media (width >= 768px) {
+  .tabs-container:has(.tabs.vertical-panel.industry) .default-content-wrapper h2:not(.section-eyebrow) {
+    margin-bottom: var(--space-m);
+  }
+}
+
 /* injected section eyebrow: 12px on mobile, 14px from tablet up (IES eyebrow scale) */
 .tabs-container:has(.tabs.vertical-panel.industry) .default-content-wrapper h2.section-eyebrow {
   margin: 0;
@@ -1047,7 +1058,11 @@ main > .section.tabs-container:has(.tabs.vertical-panel.industry) {
   padding: var(--space-l) 0 var(--space-2xl);
 }
 
-.tabs.vertical-panel.industry .it-copy { padding: 0; margin-bottom: 0; gap: var(--space-m); }
+.tabs.vertical-panel.industry .it-copy { padding: 0; margin-bottom: 0; gap: var(--space-s); }
+
+@media (width >= 768px) {
+  .tabs.vertical-panel.industry .it-copy { gap: var(--space-m); }
+}
 .tabs.vertical-panel.industry .it-heading { font-size: 28px; font-weight: var(--font-weight-medium); line-height: var(--line-height-s); }
 .tabs.vertical-panel.industry .it-copy-body { padding-top: 0; gap: var(--space-m); }
 
