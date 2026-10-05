@@ -198,18 +198,28 @@ main > .section.logo-band-container:has(.logo-band.marquee) > div { max-width: n
   background: var(--background-color);
 }
 
-/* eyebrow authored via Section Metadata (eyebrow-text), injected by scripts.js */
+/* eyebrow authored via Section Metadata (eyebrow-text), injected by scripts.js;
+   IES eyebrow scale: 12px on mobile, 14px from tablet up */
 .section.logo-band-container:has(.logo-band.strip) > h2.section-eyebrow {
-  margin: 0 0 var(--space-m);
+  margin: 0 0 var(--space-2xs);
   padding: 0;
   font-family: var(--body-font-family);
-  font-size: 14px;
+  font-size: 12px;
   font-weight: var(--font-weight-medium);
-  line-height: 1.25;
-  letter-spacing: 1.82px;
+  line-height: 1.2;
+  letter-spacing: 1.2px;
   text-transform: uppercase;
   color: #0d0031;
   text-align: center;
+}
+
+@media (width >= 768px) {
+  .section.logo-band-container:has(.logo-band.strip) > h2.section-eyebrow {
+    margin-bottom: var(--space-s);
+    font-size: 14px;
+    line-height: 1.25;
+    letter-spacing: 1.82px;
+  }
 }
 
 .logo-band.strip .logoband-list {

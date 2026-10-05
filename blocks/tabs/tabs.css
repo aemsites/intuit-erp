@@ -970,15 +970,45 @@ main > .section.tabs-container:has(.tabs.vertical-panel.industry) {
   color: var(--it-text);
 }
 
-/* keep the injected section eyebrow at the site eyebrow size */
+/* section heading: 34px below desktop (48px/1 at >=1024px); → subcopy 16px on mobile, 20px from tablet up */
+.tabs-container:has(.tabs.vertical-panel.industry) .default-content-wrapper h2:not(.section-eyebrow) {
+  margin-bottom: var(--space-s);
+  font-size: 34px;
+  line-height: var(--line-height-xs);
+}
+
+@media (width >= 768px) {
+  .tabs-container:has(.tabs.vertical-panel.industry) .default-content-wrapper h2:not(.section-eyebrow) {
+    margin-bottom: var(--space-m);
+  }
+}
+
+/* section headline: 48px/1 on desktop, matching the page's other section titles */
+@media (width >= 1024px) {
+  .tabs-container:has(.tabs.vertical-panel.industry) .default-content-wrapper h2:not(.section-eyebrow) {
+    font-size: 48px;
+    line-height: var(--line-height-none);
+  }
+}
+
+/* injected section eyebrow: 12px on mobile, 14px from tablet up (IES eyebrow scale) */
 .tabs-container:has(.tabs.vertical-panel.industry) .default-content-wrapper h2.section-eyebrow {
   margin: 0;
-  padding-bottom: var(--space-m);
+  padding-bottom: var(--space-2xs);
   font-size: 12px;
   font-weight: 500;
-  line-height: 14.4px;
+  line-height: 1.2;
   letter-spacing: 1.2px;
   color: #000;
+}
+
+@media (width >= 768px) {
+  .tabs-container:has(.tabs.vertical-panel.industry) .default-content-wrapper h2.section-eyebrow {
+    padding-bottom: var(--space-s);
+    font-size: 14px;
+    line-height: 1.25;
+    letter-spacing: 1.82px;
+  }
 }
 
 .tabs.vertical-panel.industry .it-body { line-height: var(--line-height-m); }
@@ -1038,7 +1068,11 @@ main > .section.tabs-container:has(.tabs.vertical-panel.industry) {
   padding: var(--space-l) 0 var(--space-2xl);
 }
 
-.tabs.vertical-panel.industry .it-copy { padding: 0; margin-bottom: 0; gap: var(--space-m); }
+.tabs.vertical-panel.industry .it-copy { padding: 0; margin-bottom: 0; gap: var(--space-s); }
+
+@media (width >= 768px) {
+  .tabs.vertical-panel.industry .it-copy { gap: var(--space-m); }
+}
 .tabs.vertical-panel.industry .it-heading { font-size: 28px; font-weight: var(--font-weight-medium); line-height: var(--line-height-s); }
 .tabs.vertical-panel.industry .it-copy-body { padding-top: 0; gap: var(--space-m); }
 

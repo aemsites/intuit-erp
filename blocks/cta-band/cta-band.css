@@ -82,15 +82,25 @@ main > .section.cta-band-container:has(.cta-band.simple) > div { max-width: none
   padding: 96px 24px;
 }
 
+/* IES eyebrow scale: 12px on mobile, 14px from tablet up */
 .cta-band.simple.ies .fc-eyebrow {
-  margin: 0 0 var(--space-m);
-  font-size: 14px;
+  margin: 0 0 var(--space-2xs);
+  font-size: 12px;
   font-weight: var(--font-weight-medium);
-  line-height: 1.25;
-  letter-spacing: 1.82px;
+  line-height: 1.2;
+  letter-spacing: 1.2px;
   text-transform: uppercase;
   color: #0d0031;
   opacity: 1;
+}
+
+@media (width >= 768px) {
+  .cta-band.simple.ies .fc-eyebrow {
+    margin-bottom: var(--space-s);
+    font-size: 14px;
+    line-height: 1.25;
+    letter-spacing: 1.82px;
+  }
 }
 
 .cta-band.simple.ies .fc-title,
@@ -103,19 +113,32 @@ main > .section.cta-band-container:has(.cta-band.simple) > div { max-width: none
 .cta-band.simple.ies .fc-title::after { content: none; }
 
 .cta-band.simple.ies .fc-title {
-  margin: 0 0 var(--space-m);
-  font-size: 40px;
+  margin: 0 0 var(--space-s);
+  font-size: 34px;
   font-weight: var(--font-weight-medium);
   line-height: 1;
   color: #0d0031;
 }
 
+/* title → body: 16px on mobile, 20px from tablet up */
+@media (width >= 768px) {
+  .cta-band.simple.ies .fc-title { margin-bottom: var(--space-m); }
+}
+
 .cta-band.simple.ies .fc-body {
   margin: 0;
-  font-size: 20px;
+  font-size: var(--body-font-size-m);
   font-weight: var(--font-weight-normal);
-  line-height: var(--line-height-s);
+  line-height: var(--line-height-m);
   color: #000;
+}
+
+/* body copy: 16px on mobile, 20px/1.3 from tablet up */
+@media (width >= 768px) {
+  .cta-band.simple.ies .fc-body {
+    font-size: 20px;
+    line-height: var(--line-height-s);
+  }
 }
 
 .cta-band.simple.ies .firstcall-card .button-wrapper { margin-top: 36px; }

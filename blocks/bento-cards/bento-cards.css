@@ -104,6 +104,11 @@
   gap: var(--space-s);
 }
 
+/* heading → body: 16px on mobile, 20px from tablet up */
+@media (width >= 768px) {
+  .bento-cards .bento-card-copy { gap: var(--space-m); }
+}
+
 .bento-cards .bento-card-copy :is(h2, h3, h4) {
   margin: 0;
   font-size: 28px;
@@ -201,12 +206,38 @@
   text-align: center;
 }
 
+/* IES eyebrow rhythm: 8px below the injected section eyebrow on mobile, 16px from tablet up */
+.section.bento-cards-container > .default-content-wrapper > h2.section-eyebrow {
+  padding-bottom: var(--space-2xs);
+}
+
+/* IES eyebrow scale: the injected 12px section eyebrow goes to 14px from tablet up */
+@media (width >= 768px) {
+  .section.bento-cards-container > .default-content-wrapper > h2.section-eyebrow {
+    padding-bottom: var(--space-s);
+    font-size: 14px;
+    line-height: 1.25;
+    letter-spacing: 1.82px;
+  }
+}
+
 .section.bento-cards-container > .default-content-wrapper h2:not(.section-eyebrow) {
   margin: 0 0 var(--space-3xl);
-  font-size: 40px;
+  font-size: 34px;
   font-weight: var(--font-weight-medium);
   line-height: var(--line-height-xs);
   color: #0d0031;
+}
+
+/* heading → subcopy: 16px on mobile, 20px from tablet up */
+.section.bento-cards-container > .default-content-wrapper h2:not(.section-eyebrow):has(+ p) {
+  margin-bottom: var(--space-s);
+}
+
+@media (width >= 768px) {
+  .section.bento-cards-container > .default-content-wrapper h2:not(.section-eyebrow):has(+ p) {
+    margin-bottom: var(--space-m);
+  }
 }
 
 @media (width >= 1024px) {
@@ -217,7 +248,7 @@
   }
 
   .section.bento-cards-container > .default-content-wrapper h2:not(.section-eyebrow) {
-    margin: var(--space-s) 0 var(--space-m);
+    margin: 0 0 var(--space-m);
     font-size: 48px;
     line-height: var(--line-height-none);
   }
