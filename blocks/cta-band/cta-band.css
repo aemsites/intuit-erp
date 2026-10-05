@@ -84,7 +84,7 @@ main > .section.cta-band-container:has(.cta-band.simple) > div { max-width: none
 
 /* IES eyebrow scale: 12px on mobile, 14px from tablet up */
 .cta-band.simple.ies .fc-eyebrow {
-  margin: 0 0 var(--space-s);
+  margin: 0 0 var(--space-2xs);
   font-size: 12px;
   font-weight: var(--font-weight-medium);
   line-height: 1.2;
@@ -96,6 +96,7 @@ main > .section.cta-band-container:has(.cta-band.simple) > div { max-width: none
 
 @media (width >= 768px) {
   .cta-band.simple.ies .fc-eyebrow {
+    margin-bottom: var(--space-s);
     font-size: 14px;
     line-height: 1.25;
     letter-spacing: 1.82px;

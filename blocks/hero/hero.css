@@ -667,7 +667,7 @@ body.author-guide .hero .hero-copy .hero-lede {
 .section.hero-container:has(.hero.ies) { background: #0d0031; }
 
 .hero.ies .hero-copy .hero-eyebrow {
-  margin-bottom: var(--space-s);
+  margin-bottom: var(--space-2xs);
   font-size: 12px;
   font-weight: var(--font-weight-medium);
   line-height: 1.2;
@@ -677,6 +677,7 @@ body.author-guide .hero .hero-copy .hero-lede {
 
 @media (width >= 768px) {
   .hero.ies .hero-copy .hero-eyebrow {
+    margin-bottom: var(--space-s);
     font-size: 14px;
     line-height: 1.25;
     letter-spacing: 1.82px;

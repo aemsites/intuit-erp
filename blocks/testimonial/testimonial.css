@@ -850,7 +850,7 @@
 }
 
 .testimonial.card.feature .testimonial-eyebrow {
-  margin-block: var(--space-2xl) var(--space-s);
+  margin-block: var(--space-2xl) var(--space-2xs);
   font-size: 12px;
   font-weight: var(--font-weight-medium);
   line-height: 1.2;
@@ -862,6 +862,7 @@
 /* IES eyebrow scale: 12px on mobile, 14px from tablet up */
 @media (width >= 768px) {
   .testimonial.card.feature .testimonial-eyebrow {
+    margin-bottom: var(--space-s);
     font-size: 14px;
     line-height: 1.25;
     letter-spacing: 1.82px;
@@ -988,7 +989,7 @@
 }
 
 .testimonial.story .story-eyebrow {
-  margin: 0 0 var(--space-s);
+  margin: 0 0 var(--space-2xs);
   font-size: 12px;
   font-weight: var(--font-weight-medium);
   line-height: 1.2;
@@ -1000,6 +1001,7 @@
 /* IES eyebrow scale: 12px on mobile, 14px from tablet up */
 @media (width >= 768px) {
   .testimonial.story .story-eyebrow {
+    margin-bottom: var(--space-s);
     font-size: 14px;
     line-height: 1.25;
     letter-spacing: 1.82px;

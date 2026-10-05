@@ -973,7 +973,7 @@ main > .section.tabs-container:has(.tabs.vertical-panel.industry) {
 /* injected section eyebrow: 12px on mobile, 14px from tablet up (IES eyebrow scale) */
 .tabs-container:has(.tabs.vertical-panel.industry) .default-content-wrapper h2.section-eyebrow {
   margin: 0;
-  padding-bottom: var(--space-s);
+  padding-bottom: var(--space-2xs);
   font-size: 12px;
   font-weight: 500;
   line-height: 1.2;
@@ -983,6 +983,7 @@ main > .section.tabs-container:has(.tabs.vertical-panel.industry) {
 
 @media (width >= 768px) {
   .tabs-container:has(.tabs.vertical-panel.industry) .default-content-wrapper h2.section-eyebrow {
+    padding-bottom: var(--space-s);
     font-size: 14px;
     line-height: 1.25;
     letter-spacing: 1.82px;
