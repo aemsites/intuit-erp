@@ -210,9 +210,28 @@
 }
 
 @media (width >= 1024px) {
+  /* Figma "Title block": 48/1 headline 16px under the eyebrow, 20px over the 940px subcopy, 80px to the cards */
+  .section.bento-cards-container > .default-content-wrapper {
+    padding-bottom: 0;
+    margin-bottom: var(--space-5xl);
+  }
+
   .section.bento-cards-container > .default-content-wrapper h2:not(.section-eyebrow) {
-    margin-bottom: 80px;
-    font-size: 56px;
+    margin: var(--space-s) 0 var(--space-m);
+    font-size: 48px;
+    line-height: var(--line-height-none);
+  }
+
+  .section.bento-cards-container > .default-content-wrapper h2:not(.section-eyebrow):last-child {
+    margin-bottom: 0;
+  }
+
+  .section.bento-cards-container > .default-content-wrapper p {
+    max-width: 940px;
+    margin: 0 auto;
+    font-size: 20px;
+    line-height: var(--line-height-s);
+    color: #0d0031;
   }
 }
 
