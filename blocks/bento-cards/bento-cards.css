@@ -125,14 +125,17 @@
 }
 
 /* visual tile: DAM feature images carry their own tint; fill shows behind transparent images */
+
+/* mobile: the tile sits 8px inside the card's edges (Figma), so pull the
+   negative margins back by 8px and round every corner to match */
 .bento-cards .bento-card-visual {
   display: flex;
   justify-content: center;
   align-items: flex-start;
   box-sizing: border-box;
   height: 260px;
-  margin: auto calc(var(--space-l) * -1) calc(var(--space-l) * -1);
-  border-radius: var(--bento-radius) var(--bento-radius) 0 0;
+  margin: auto calc(8px - var(--space-l)) calc(8px - var(--space-l));
+  border-radius: calc(var(--bento-radius) - 8px);
   background: var(--bento-superblue);
   overflow: hidden;
 }
