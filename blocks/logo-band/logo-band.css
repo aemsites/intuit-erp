@@ -201,7 +201,7 @@ main > .section.logo-band-container:has(.logo-band.marquee) > div { max-width: n
 /* eyebrow authored via Section Metadata (eyebrow-text), injected by scripts.js;
    IES eyebrow scale: 12px on mobile, 14px from tablet up */
 .section.logo-band-container:has(.logo-band.strip) > h2.section-eyebrow {
-  margin: 0 0 var(--space-m);
+  margin: 0 0 var(--space-s);
   padding: 0;
   font-family: var(--body-font-family);
   font-size: 12px;

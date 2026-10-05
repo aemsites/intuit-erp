@@ -667,7 +667,7 @@ body.author-guide .hero .hero-copy .hero-lede {
 .section.hero-container:has(.hero.ies) { background: #0d0031; }
 
 .hero.ies .hero-copy .hero-eyebrow {
-  margin-bottom: var(--space-3xs);
+  margin-bottom: var(--space-s);
   font-size: 12px;
   font-weight: var(--font-weight-medium);
   line-height: 1.2;

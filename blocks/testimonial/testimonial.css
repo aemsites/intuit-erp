@@ -988,7 +988,7 @@
 }
 
 .testimonial.story .story-eyebrow {
-  margin: 0 0 var(--space-m);
+  margin: 0 0 var(--space-s);
   font-size: 12px;
   font-weight: var(--font-weight-medium);
   line-height: 1.2;
@@ -1098,7 +1098,6 @@
 
   .testimonial.story .story-copy { max-width: 437px; }
 
-  .testimonial.story .story-eyebrow { margin: 0 0 var(--space-l); }
 
   .testimonial.story .story-title {
     margin: 0 0 var(--space-2xl);

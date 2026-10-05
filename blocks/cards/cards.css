@@ -883,8 +883,17 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
   padding: var(--space-xl) var(--space-xl) var(--space-2xl);
 }
 
+/* IES eyebrow rhythm: 16px below the injected section eyebrow in tinted-card sections */
+.section.cards-container:has(.cards.tinted) > .default-content-wrapper > h2.section-eyebrow {
+  padding-bottom: var(--space-s);
+}
+
+.section.cards-container:has(.cards.tinted) > .default-content-wrapper > h2.section-eyebrow + h2 {
+  margin-top: 0;
+}
+
 .cards.tinted .cards-card-body .cards-eyebrow {
-  margin: 0 0 var(--space-m);
+  margin: 0 0 var(--space-s);
   font-size: 12px;
   font-style: normal;
   font-weight: var(--font-weight-medium);
@@ -938,7 +947,6 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
   .cards.tinted.blue { max-width: 1360px; gap: var(--space-m); }
   .cards.tinted.blue > div { border-radius: 38px; }
   .cards.tinted.blue .cards-card-body { padding: 60px; }
-  .cards.tinted.blue .cards-card-body .cards-eyebrow { margin-bottom: 30px; }
 }
 
 /* .icons.text-grid: three columns, 36px icon, 28px title, 16px body */

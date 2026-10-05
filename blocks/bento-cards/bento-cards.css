@@ -201,6 +201,11 @@
   text-align: center;
 }
 
+/* IES eyebrow rhythm: 16px below the injected section eyebrow */
+.section.bento-cards-container > .default-content-wrapper > h2.section-eyebrow {
+  padding-bottom: var(--space-s);
+}
+
 /* IES eyebrow scale: the injected 12px section eyebrow goes to 14px from tablet up */
 @media (width >= 768px) {
   .section.bento-cards-container > .default-content-wrapper > h2.section-eyebrow {
@@ -226,7 +231,7 @@
   }
 
   .section.bento-cards-container > .default-content-wrapper h2:not(.section-eyebrow) {
-    margin: var(--space-s) 0 var(--space-m);
+    margin: 0 0 var(--space-m);
     font-size: 48px;
     line-height: var(--line-height-none);
   }
