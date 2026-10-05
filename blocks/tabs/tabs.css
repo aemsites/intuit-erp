@@ -960,6 +960,11 @@ main > .section.tabs-container:has(.tabs.vertical-panel.industry) {
 
 .tabs-container:has(.tabs.vertical-panel.industry) .tabs-wrapper { max-width: 1130px; }
 
+/* the shared vertical-panel section rule pads 20px inside the 1130px cap; Figma's 1130 is the content width */
+@media (width >= 1024px) {
+  main > .section.tabs-container:has(.tabs.vertical-panel.industry) { padding-inline: 0; }
+}
+
 .tabs-container:has(.tabs.vertical-panel.industry) .default-content-wrapper h2 {
   font-weight: var(--font-weight-medium);
   color: var(--it-text);

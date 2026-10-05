@@ -926,7 +926,10 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
 .cards.tinted.blue .cards-card-body p:not(.cards-eyebrow) { font-size: 20px; line-height: var(--line-height-s); }
 
 @media (width >= 1024px) {
+  .cards.tinted.blue { max-width: 1360px; gap: var(--space-m); }
+  .cards.tinted.blue > div { border-radius: 38px; }
   .cards.tinted.blue .cards-card-body { padding: 60px; }
+  .cards.tinted.blue .cards-card-body .cards-eyebrow { margin-bottom: 30px; }
 }
 
 /* .icons.text-grid: three columns, 36px icon, 28px title, 16px body */
