@@ -1022,7 +1022,9 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
 /* tinted-blue section title: 34px below desktop, 48px/1 at >=1024px, like the page's other section titles */
 .section.cards-container:has(.cards.tinted.blue) > .default-content-wrapper h2:not(.section-eyebrow) {
   font-size: 34px;
+  font-weight: var(--font-weight-medium);
   line-height: var(--line-height-xs);
+  color: #0d0031;
 }
 
 @media (width >= 1024px) {
