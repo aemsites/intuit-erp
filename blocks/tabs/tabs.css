@@ -970,15 +970,23 @@ main > .section.tabs-container:has(.tabs.vertical-panel.industry) {
   color: var(--it-text);
 }
 
-/* keep the injected section eyebrow at the site eyebrow size */
+/* injected section eyebrow: 12px on mobile, 14px from tablet up (IES eyebrow scale) */
 .tabs-container:has(.tabs.vertical-panel.industry) .default-content-wrapper h2.section-eyebrow {
   margin: 0;
   padding-bottom: var(--space-m);
   font-size: 12px;
   font-weight: 500;
-  line-height: 14.4px;
+  line-height: 1.2;
   letter-spacing: 1.2px;
   color: #000;
+}
+
+@media (width >= 768px) {
+  .tabs-container:has(.tabs.vertical-panel.industry) .default-content-wrapper h2.section-eyebrow {
+    font-size: 14px;
+    line-height: 1.25;
+    letter-spacing: 1.82px;
+  }
 }
 
 .tabs.vertical-panel.industry .it-body { line-height: var(--line-height-m); }

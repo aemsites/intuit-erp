@@ -894,6 +894,16 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
   color: inherit;
 }
 
+/* IES eyebrow scale: 12px on mobile, 14px from tablet up — card eyebrows and the injected section eyebrow */
+@media (width >= 768px) {
+  .cards.tinted .cards-card-body .cards-eyebrow,
+  .section.cards-container:has(.cards.tinted) > .default-content-wrapper > h2.section-eyebrow {
+    font-size: 14px;
+    line-height: 1.25;
+    letter-spacing: 1.82px;
+  }
+}
+
 .cards.tinted .cards-card-body :is(h3, h4) {
   margin: 0 0 var(--space-s);
   font-size: 28px;
@@ -922,7 +932,6 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
 .cards.tinted.blue > div { background: var(--tinted-blue); }
 
 .cards.tinted.blue .cards-card-body { padding: var(--space-2xl) var(--space-xl); }
-.cards.tinted.blue .cards-card-body .cards-eyebrow { font-size: 14px; letter-spacing: 1.82px; }
 .cards.tinted.blue .cards-card-body p:not(.cards-eyebrow) { font-size: 20px; line-height: var(--line-height-s); }
 
 @media (width >= 1024px) {

@@ -851,12 +851,21 @@
 
 .testimonial.card.feature .testimonial-eyebrow {
   margin-block: var(--space-2xl) var(--space-s);
-  font-size: var(--body-font-size-xs);
+  font-size: 12px;
   font-weight: var(--font-weight-medium);
-  line-height: 1.25;
-  letter-spacing: 1.82px;
+  line-height: 1.2;
+  letter-spacing: 1.2px;
   text-transform: uppercase;
   color: #fff;
+}
+
+/* IES eyebrow scale: 12px on mobile, 14px from tablet up */
+@media (width >= 768px) {
+  .testimonial.card.feature .testimonial-eyebrow {
+    font-size: 14px;
+    line-height: 1.25;
+    letter-spacing: 1.82px;
+  }
 }
 
 .testimonial.card.feature .testimonial-card blockquote {
@@ -988,6 +997,15 @@
   color: #fff;
 }
 
+/* IES eyebrow scale: 12px on mobile, 14px from tablet up */
+@media (width >= 768px) {
+  .testimonial.story .story-eyebrow {
+    font-size: 14px;
+    line-height: 1.25;
+    letter-spacing: 1.82px;
+  }
+}
+
 .testimonial.story .story-title {
   margin: 0 0 var(--space-l);
   font-size: 28px;
@@ -1080,12 +1098,7 @@
 
   .testimonial.story .story-copy { max-width: 437px; }
 
-  .testimonial.story .story-eyebrow {
-    margin: 0 0 var(--space-l);
-    font-size: var(--body-font-size-xs);
-    line-height: 1.25;
-    letter-spacing: 1.82px;
-  }
+  .testimonial.story .story-eyebrow { margin: 0 0 var(--space-l); }
 
   .testimonial.story .story-title {
     margin: 0 0 var(--space-2xl);

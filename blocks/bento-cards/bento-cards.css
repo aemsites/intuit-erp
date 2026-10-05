@@ -201,6 +201,15 @@
   text-align: center;
 }
 
+/* IES eyebrow scale: the injected 12px section eyebrow goes to 14px from tablet up */
+@media (width >= 768px) {
+  .section.bento-cards-container > .default-content-wrapper > h2.section-eyebrow {
+    font-size: 14px;
+    line-height: 1.25;
+    letter-spacing: 1.82px;
+  }
+}
+
 .section.bento-cards-container > .default-content-wrapper h2:not(.section-eyebrow) {
   margin: 0 0 var(--space-3xl);
   font-size: 40px;
