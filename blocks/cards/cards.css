@@ -949,7 +949,11 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
 .cards.tinted.blue > div { background: var(--tinted-blue); }
 
 .cards.tinted.blue .cards-card-body { padding: var(--space-2xl) var(--space-xl); }
-.cards.tinted.blue .cards-card-body p:not(.cards-eyebrow) { font-size: 20px; line-height: var(--line-height-s); }
+
+/* body copy: 16px on mobile (inherited from .tinted), 20px/1.3 from tablet up */
+@media (width >= 768px) {
+  .cards.tinted.blue .cards-card-body p:not(.cards-eyebrow) { font-size: 20px; line-height: var(--line-height-s); }
+}
 
 @media (width >= 1024px) {
   .cards.tinted.blue { max-width: 1360px; gap: var(--space-m); }
