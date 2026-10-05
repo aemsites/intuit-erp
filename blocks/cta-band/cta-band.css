@@ -114,7 +114,7 @@ main > .section.cta-band-container:has(.cta-band.simple) > div { max-width: none
 
 .cta-band.simple.ies .fc-title {
   margin: 0 0 var(--space-s);
-  font-size: 40px;
+  font-size: 34px;
   font-weight: var(--font-weight-medium);
   line-height: 1;
   color: #0d0031;

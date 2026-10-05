@@ -223,7 +223,7 @@
 
 .section.bento-cards-container > .default-content-wrapper h2:not(.section-eyebrow) {
   margin: 0 0 var(--space-3xl);
-  font-size: 40px;
+  font-size: 34px;
   font-weight: var(--font-weight-medium);
   line-height: var(--line-height-xs);
   color: #0d0031;
