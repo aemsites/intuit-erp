@@ -699,6 +699,7 @@ body.author-guide .hero .hero-copy .hero-lede {
 
 .hero.ies .hero-copy .hero-lede {
   margin: 0 0 var(--space-xl);
+  max-width: 36em; /* = the h1's 12em at both breakpoints (60/20px and 48/16px), so lede and heading share a width */
   font-size: var(--body-font-size-m);
   line-height: var(--line-height-m);
   color: #fff;
