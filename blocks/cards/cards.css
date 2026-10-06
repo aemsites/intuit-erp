@@ -947,6 +947,12 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
   }
 }
 
+/* Figma "Card (3 Col)": 46px thumbnail → eyebrow, 60px copy side and bottom insets, 28px/1.3 title */
+@media (width >= 1024px) {
+  .cards.tinted .cards-card-body { padding: 46px 60px 60px; }
+  .cards.tinted .cards-card-body :is(h3, h4) { line-height: var(--line-height-s); }
+}
+
 /* .tinted.blue: every card light blue, no image */
 .cards.tinted.blue > div { background: var(--tinted-blue); }
 
