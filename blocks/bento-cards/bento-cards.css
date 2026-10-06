@@ -269,7 +269,22 @@
   }
 }
 
-/* .two-up: two equal cards per row; theme authored per card */
+/* .two-up: two equal cards per row; theme authored per card.
+   Below 768px the two cards stack instead of using the swipe carousel. */
+@media (width < 768px) {
+  .bento-cards.two-up { margin-inline: 0; }
+
+  .bento-cards.two-up .bento-track {
+    flex-direction: column;
+    padding-inline: 0;
+    overflow: visible;
+    scroll-snap-type: none;
+  }
+
+  .bento-cards.two-up .bento-track > .bento-card { flex: none; }
+  .bento-cards.two-up .bento-dots { display: none; }
+}
+
 @media (width >= 768px) {
   .bento-cards.two-up .bento-track { grid-template-columns: repeat(2, 1fr); }
   .bento-cards.two-up .bento-track > .bento-card { grid-column: span 1; }
