@@ -99,5 +99,22 @@ body:has(.widget.ies-fonts) .header .nav-cta:hover {
   border-color: #1b5be0;
 }
 
+/* "Schedule a call" modal: the Marketo submit button follows the same IES pill.
+   !important matches blocks/form/form.css, which needs it to beat Marketo's injected styles. */
+/* stylelint-disable selector-class-pattern -- .mkto* class names are Marketo's */
+body:has(.widget.ies-fonts) .modal dialog .mktoButton {
+  min-height: 48px;
+  border-radius: 999px !important;
+  background: var(--info) !important;
+  color: #fff !important;
+  font-weight: var(--font-weight-medium) !important;
+}
+
+body:has(.widget.ies-fonts) .modal dialog .mktoButton:hover,
+body:has(.widget.ies-fonts) .modal dialog .mktoButton:focus-visible {
+  background: #1b5be0 !important;
+}
+/* stylelint-enable selector-class-pattern */
+
 /* the widget renders nothing visible */
 .widget.ies-fonts { display: none; }
