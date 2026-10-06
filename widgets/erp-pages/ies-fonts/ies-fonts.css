@@ -82,5 +82,22 @@ body:has(.widget.ies-fonts) {
   --heading-font-family: "Tally Display", tally, "AvenirNext forINTUIT", avenir-fallback, arial, sans-serif;
 }
 
+/* IES header: the "Schedule a call" CTA becomes the Superblue compact pill of the IES
+   header design, again only while the widget is on the page */
+body:has(.widget.ies-fonts) .header .nav-cta {
+  height: 48px;
+  padding: 0 var(--space-m);
+  font-size: 14px;
+  line-height: 1.1;
+  border-color: var(--info);
+  border-radius: 999px;
+  background: var(--info);
+}
+
+body:has(.widget.ies-fonts) .header .nav-cta:hover {
+  background: #1b5be0;
+  border-color: #1b5be0;
+}
+
 /* the widget renders nothing visible */
 .widget.ies-fonts { display: none; }
