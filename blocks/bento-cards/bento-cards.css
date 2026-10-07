@@ -65,7 +65,7 @@
   gap: var(--space-l);
   box-sizing: border-box;
   min-height: 348px;
-  padding: var(--space-l);
+  padding: var(--space-m); /* 20px on mobile; 32px from tablet, 60px on two-up desktop */
   border-radius: var(--bento-radius);
   overflow: hidden;
   color: var(--bento-ink);
@@ -302,7 +302,7 @@
     scroll-snap-type: none;
   }
 
-  .bento-cards.two-up .bento-track > .bento-card { flex: none; }
+  .bento-cards.two-up .bento-track > .bento-card { flex: none; min-height: 0; } /* no visual tile: let the copy set the height */
   .bento-cards.two-up .bento-dots { display: none; }
 }
 
