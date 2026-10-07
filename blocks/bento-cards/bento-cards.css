@@ -269,6 +269,11 @@
     line-height: var(--line-height-s);
     color: #0d0031;
   }
+
+  /* UAT: the two-up section's title block sits 40px above its cards, not 80px */
+  .section.bento-cards-container:has(.bento-cards.two-up) > .default-content-wrapper {
+    margin-bottom: var(--space-2xl);
+  }
 }
 
 /* .two-up: two equal cards per row; theme authored per card.
