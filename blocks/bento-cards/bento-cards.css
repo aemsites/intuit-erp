@@ -79,8 +79,12 @@
 .bento-cards .bento-card-body {
   display: flex;
   flex-direction: column;
-  gap: 30px;
+  gap: var(--space-m); /* icon → copy: 20px on mobile, 30px from tablet up */
   flex: 1 1 auto;
+}
+
+@media (width >= 768px) {
+  .bento-cards .bento-card-body { gap: 30px; }
 }
 
 .bento-cards .bento-card-icon {
