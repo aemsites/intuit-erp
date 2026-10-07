@@ -978,6 +978,21 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
   gap: 78px;
 }
 
+/* tablet: two items per row, the odd one left-aligned (like the tinted cards below); three from desktop */
+@media (width >= 768px) {
+  .cards.icons.text-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-2xl);
+  }
+}
+
+@media (width >= 1024px) {
+  .cards.icons.text-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 78px;
+  }
+}
+
 .cards.icons.text-grid .cards-card-head { margin-bottom: var(--space-m); }
 
 .cards.icons.text-grid .cards-card-image,
@@ -1071,7 +1086,7 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
   }
 }
 
-@media (width <= 768px) {
+@media (width < 768px) {
   .cards.icons.text-grid { gap: var(--space-m); } /* 20px between list items on mobile */
   .cards.icons.text-grid .cards-card-body h3 { font-size: 24px; }
 }
