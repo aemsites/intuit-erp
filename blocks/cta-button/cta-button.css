@@ -1,0 +1,43 @@
+/* cta-button — Figma "01 - Button (Web + Mobile)" Large/Primary: 260×48,
+   #e56c1d, radius 4, 16/24 Demi white, centered; full width on mobile. */
+.cta-button-wrapper { margin-top: 80px; }
+
+.side-by-side-wrapper + .cta-button-wrapper,
+.icon-cards-wrapper + .cta-button-wrapper,
+.feature-list-wrapper + .cta-button-wrapper { margin-top: 40px; }
+
+.cta-button {
+  display: flex;
+  justify-content: center;
+}
+
+.cta-button .button-wrapper {
+  width: 100%;
+  margin: 0;
+}
+
+.cta-button a.button {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 48px;
+  padding: 8px 28px;
+  border: 0;
+  border-radius: 4px;
+  background: #e56c1d;
+  color: #fff;
+  font-size: 16px;
+  font-weight: var(--font-weight-semibold);
+  line-height: 24px;
+}
+
+.cta-button a.button:hover,
+.cta-button a.button:focus-visible {
+  background: #c95d17;
+  color: #fff;
+  text-decoration: none;
+}
+
+@media (width >= 768px) {
+  .cta-button .button-wrapper { width: auto; }
+  .cta-button a.button { width: auto; min-width: 260px; }
+}

@@ -1,0 +1,131 @@
+/* side-by-side — Figma "01 - Side by Side (Web)": 1350×464 panel, radius 16,
+   padding 32, gap 32; copy padded 0 20px (logo 16px tall, 34/44 Medium title,
+   16/24 body); media 562×400 with an 8px-radius poster. Background approximates
+   the designed raster gradient (pale green → aqua → sky blue). */
+.side-by-side-wrapper { margin-top: 80px; }
+.section-heading-wrapper + .side-by-side-wrapper { margin-top: 40px; }
+
+.side-by-side {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px 20px;
+  border-radius: 16px;
+  background:
+    radial-gradient(120% 110% at 100% 100%, #61bcfe 0%, rgb(97 188 254 / 0%) 55%),
+    linear-gradient(112deg, #fdfffa 0%, #f2ffe3 28%, #effeec 45%, #c5f9fd 78%, #9eeef8 100%);
+  color: #2b3135;
+}
+
+.side-by-side .sbs-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.side-by-side .sbs-copy > * { margin: 0; }
+
+.side-by-side .sbs-logo {
+  display: flex;
+  height: 16px;
+}
+
+.side-by-side .sbs-logo .icon,
+.side-by-side .sbs-logo img {
+  display: block;
+  width: auto;
+  height: 16px;
+}
+
+.side-by-side .sbs-logo .icon img { height: 100%; }
+
+.side-by-side .sbs-title {
+  font-size: 28px;
+  font-weight: var(--font-weight-medium);
+  line-height: 36px;
+  color: #2b3135;
+}
+
+.side-by-side .sbs-body {
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.side-by-side .sbs-media {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.side-by-side .sbs-media picture,
+.side-by-side .sbs-media img,
+.side-by-side .sbs-media video {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+
+.side-by-side .sbs-play {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.side-by-side .sbs-play-icon {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.side-by-side .sbs-play-icon svg {
+  width: 64px;
+  height: 64px;
+  filter: drop-shadow(0 4px 12px rgb(0 0 0 / 25%));
+  transition: transform 0.2s ease;
+}
+
+.side-by-side .sbs-play:hover .sbs-play-icon svg,
+.side-by-side .sbs-play:focus-visible .sbs-play-icon svg { transform: scale(1.06); }
+
+.side-by-side .sbs-media video { aspect-ratio: 16 / 9; background: #000; }
+
+@media (width >= 768px) {
+  .side-by-side { padding: 32px; }
+  .side-by-side .sbs-title { font-size: 34px; line-height: 44px; }
+}
+
+@media (width >= 1024px) {
+  .side-by-side {
+    flex-direction: row;
+    align-items: center;
+    gap: 32px;
+    min-height: 464px;
+  }
+
+  .side-by-side .sbs-copy {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 0 20px;
+  }
+
+  .side-by-side .sbs-media {
+    flex: 0 0 48%;
+    max-width: 562px;
+    padding-left: 20px;
+  }
+}
+
+@media (width >= 1440px) {
+  .side-by-side .sbs-media { flex-basis: 562px; }
+}

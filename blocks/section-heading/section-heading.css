@@ -1,0 +1,51 @@
+/* section-heading — Figma "Section Heading": eyebrow 16/24 Medium #236cff,
+   heading 48/60 Medium (.compact: 40/52), body 16/24 (.lead: 20/28) max 854px,
+   all centered on desktop; left-aligned on mobile per the mobile frame. */
+.section-heading-wrapper { margin-top: 80px; }
+.mega-hero-wrapper + .section-heading-wrapper { margin-top: 0; }
+
+.section-heading-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  color: #2b3135;
+  text-align: left;
+}
+
+.section-heading-copy > * { margin: 0; }
+
+.section-heading-eyebrow {
+  font-size: 12px;
+  font-weight: var(--font-weight-medium);
+  line-height: 16px;
+  letter-spacing: 0.24px;
+  text-transform: uppercase;
+  color: #236cff;
+  margin-bottom: 4px;
+}
+
+.section-heading-title {
+  font-size: 34px;
+  font-weight: var(--font-weight-medium);
+  line-height: 44px;
+  color: #2b3135;
+}
+
+.section-heading-body {
+  font-size: 16px;
+  line-height: 24px;
+}
+
+@media (width >= 768px) {
+  .section-heading-copy { align-items: center; text-align: center; }
+  .section-heading-eyebrow { font-size: 16px; line-height: 24px; letter-spacing: 0; margin-bottom: 0; }
+  .section-heading-title { font-size: 40px; line-height: 52px; }
+  .section-heading-body { max-width: 854px; }
+  .section-heading.lead .section-heading-body { font-size: 20px; line-height: 28px; }
+}
+
+@media (width >= 1024px) {
+  .section-heading-title { font-size: 48px; line-height: 60px; }
+  .section-heading.compact .section-heading-title { font-size: 40px; line-height: 52px; }
+}

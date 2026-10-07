@@ -1,0 +1,44 @@
+/* legal-disclaimers — Figma "disclaimer-group": 1120px column, padding-top 80,
+   title 16/24 Demi #2b77cc centered (pb 20), items 12/16 #393a3d (py 10). */
+.legal-disclaimers-wrapper { margin-top: 80px; }
+.section.legal-disclaimers-container > .legal-disclaimers-wrapper { max-width: 1200px; padding-bottom: 112px; }
+
+.legal-disclaimers {
+  display: flex;
+  flex-direction: column;
+  color: #393a3d;
+}
+
+.legal-disclaimers .legal-title {
+  padding-bottom: 20px;
+  text-align: center;
+}
+
+.legal-disclaimers .legal-title p {
+  margin: 0;
+  font-size: 14px;
+  font-weight: var(--font-weight-semibold);
+  line-height: 21px;
+  color: #2b77cc;
+}
+
+.legal-disclaimers .legal-item { padding: 10px 0; }
+
+.legal-disclaimers .legal-item p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.legal-disclaimers .legal-item p + p { margin-top: 16px; }
+
+.legal-disclaimers .legal-item strong { font-weight: var(--font-weight-semibold); }
+
+.legal-disclaimers .legal-item a:any-link {
+  color: inherit;
+  text-decoration: underline;
+}
+
+@media (width >= 768px) {
+  .legal-disclaimers .legal-title p { font-size: 16px; line-height: 24px; }
+}

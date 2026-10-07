@@ -1,0 +1,82 @@
+/* recovery-cta — Figma "Recovery CTA": 1200px #eff4f9 panel, radius 12,
+   padding 40px 0, gap 32; copy 800px centered (34/44 Demi title, 16/24 body,
+   gap 16); persimmon button. Mobile: title + full-width button only. */
+.recovery-cta-wrapper { margin-top: 80px; }
+.section.recovery-cta-container > .recovery-cta-wrapper { max-width: 1280px; }
+
+.recovery-cta {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+  padding: 40px 20px;
+  border-radius: 12px;
+  background: #eff4f9;
+  color: #2b3135;
+  text-align: center;
+}
+
+.recovery-cta .recovery-cta-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 800px;
+}
+
+.recovery-cta .recovery-cta-copy > * { margin: 0; }
+
+.recovery-cta .recovery-cta-title {
+  font-size: 20px;
+  font-weight: var(--font-weight-semibold);
+  line-height: 26px;
+  color: #2b3135;
+}
+
+.recovery-cta .recovery-cta-body {
+  display: none;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.recovery-cta .recovery-cta-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px;
+  width: 100%;
+  max-width: 800px;
+}
+
+.recovery-cta .recovery-cta-actions p { margin: 0; width: 100%; }
+
+.recovery-cta .recovery-cta-actions a.button {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 120px;
+  min-height: 48px;
+  padding: 8px 28px;
+  border: 0;
+  border-radius: 4px;
+  background: #e56c1d;
+  color: #fff;
+  font-size: 16px;
+  font-weight: var(--font-weight-semibold);
+  line-height: 24px;
+}
+
+.recovery-cta .recovery-cta-actions a.button:hover,
+.recovery-cta .recovery-cta-actions a.button:focus-visible {
+  background: #c95d17;
+  color: #fff;
+  text-decoration: none;
+}
+
+@media (width >= 768px) {
+  .recovery-cta { padding: 40px; }
+  .recovery-cta .recovery-cta-title { font-size: 34px; line-height: 44px; }
+  .recovery-cta .recovery-cta-body { display: block; }
+  .recovery-cta .recovery-cta-actions p { width: auto; }
+  .recovery-cta .recovery-cta-actions a.button { width: auto; }
+}

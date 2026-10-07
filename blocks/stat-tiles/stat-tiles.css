@@ -1,0 +1,60 @@
+/* stat-tiles — Figma "Stats": 1440×170 wintermint band, four 305px tiles,
+   gap 20, figure 60/76 Demi gradient (#236cff → #00254a), label 20/28 Demi. */
+.section.stat-tiles-container { background: #eff4f9; }
+.section.stat-tiles-container > .stat-tiles-wrapper { max-width: none; padding: 0; }
+
+.stat-tiles { display: none; }
+
+@media (width >= 768px) {
+  .stat-tiles {
+    box-sizing: border-box;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    max-width: 1440px;
+    min-height: 170px;
+    margin: 0 auto;
+    padding: 20px 40px;
+  }
+
+  .stat-tiles .stat-tile {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    flex: 0 1 305px;
+    min-height: 130px;
+    padding: 0 20px;
+    border-radius: 16px;
+    text-align: center;
+  }
+
+  .stat-tiles .stat-tile > p { margin: 0; }
+
+  .stat-tiles .stat-tile-figure {
+    font-size: 48px;
+    font-weight: var(--font-weight-semibold);
+    line-height: 62px;
+    letter-spacing: -1.44px;
+    background: linear-gradient(180deg, #236cff 0%, #00254a 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: #00254a;
+  }
+
+  .stat-tiles .stat-tile-label {
+    padding: 8px 0;
+    font-size: 18px;
+    font-weight: var(--font-weight-semibold);
+    line-height: 26px;
+    color: #727e85;
+  }
+}
+
+@media (width >= 1200px) {
+  .stat-tiles .stat-tile-figure { font-size: 60px; line-height: 76px; letter-spacing: -1.8px; }
+  .stat-tiles .stat-tile-label { font-size: 20px; line-height: 28px; }
+}

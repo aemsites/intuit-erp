@@ -1,0 +1,160 @@
+/* case-study-cards — Figma "Testimonial": wintermint band (padding 80), three
+   cards in a 1000px row, gap 20; card = 160px photo, copy padding 20 gap 16
+   (eyebrow 14/20 #5d686f, firm 20/28 Demi, role 14/20, divider, quote 16/24,
+   link 16/24 Demi #205ea3), all centered. Mobile: 295px cards, dot carousel. */
+.section.case-study-cards-container {
+  background: #eff4f9;
+  padding: 80px 0;
+}
+
+.section.case-study-cards-container .section-heading-wrapper { margin-top: 0; }
+.section.case-study-cards-container .section-heading-wrapper + .case-study-cards-wrapper { margin-top: 40px; }
+
+.case-study-cards .case-track {
+  display: flex;
+  gap: 20px;
+  margin: 0 -24px;
+  padding: 2px 24px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.case-study-cards .case-track::-webkit-scrollbar { display: none; }
+
+.case-study-cards .case-card {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 295px;
+  border: 1px solid #c3ced5;
+  border-radius: 16px;
+  background: #fff;
+  color: #2b3135;
+  overflow: hidden;
+  scroll-snap-align: center;
+}
+
+.case-study-cards .case-card-media {
+  height: 160px;
+  background: #eff4f9;
+}
+
+.case-study-cards .case-card-media picture,
+.case-study-cards .case-card-media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.case-study-cards .case-card-copy {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  gap: 16px;
+  padding: 20px;
+  text-align: center;
+}
+
+.case-study-cards .case-card-copy p,
+.case-study-cards .case-card-copy h3 { margin: 0; }
+
+.case-study-cards .case-card-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #c3ced5;
+}
+
+.case-study-cards .case-card-eyebrow {
+  font-size: 14px;
+  line-height: 20px;
+  color: #5d686f;
+}
+
+.case-study-cards .case-card-firm {
+  font-size: 20px;
+  font-weight: var(--font-weight-semibold);
+  line-height: 28px;
+  color: #2b3135;
+}
+
+.case-study-cards .case-card-role {
+  font-size: 14px;
+  line-height: 20px;
+  color: #21262a;
+}
+
+.case-study-cards .case-card-quote {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  gap: 12px;
+}
+
+.case-study-cards .case-card-quote p {
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.case-study-cards .case-card-cta { padding: 4px 0 6px; }
+
+.case-study-cards a.case-card-link:any-link {
+  font-size: 16px;
+  font-weight: var(--font-weight-semibold);
+  line-height: 24px;
+  color: #205ea3;
+  text-decoration: none;
+}
+
+.case-study-cards a.case-card-link:hover,
+.case-study-cards a.case-card-link:focus-visible { text-decoration: underline; }
+
+.case-study-cards .dot-carousel-nav {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding-top: 16px;
+}
+
+.case-study-cards .dot-carousel-dot {
+  box-sizing: border-box;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+}
+
+.case-study-cards .dot-carousel-dot::before {
+  content: "";
+  display: block;
+  width: 12px;
+  height: 12px;
+  margin: 4px;
+  border: 1.5px solid #236cff;
+  border-radius: 50%;
+}
+
+.case-study-cards .dot-carousel-dot[aria-selected="true"]::before { background: #236cff; }
+
+@media (width >= 768px) {
+  .case-study-cards .case-track {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 0;
+    overflow: visible;
+    scroll-snap-type: none;
+  }
+
+  .case-study-cards .case-card { flex: none; }
+  .case-study-cards .dot-carousel-nav { display: none; }
+}

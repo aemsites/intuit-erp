@@ -1,0 +1,207 @@
+/* icon-cards — Figma "04 - Small Card (Web)" (305×200, padding 24, icon 24,
+   gap 20, border #c3ced5, radius 16) with the mobile "Accordion Bundle" look,
+   plus .stacked (icon in a 64px circle, centered 20/28 title). */
+.icon-cards-wrapper { margin-top: 80px; }
+.section-heading-wrapper + .icon-cards-wrapper { margin-top: 40px; }
+.award-band-wrapper + .icon-cards-wrapper { margin-top: 0; }
+
+.icon-cards {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+}
+
+.icon-cards .icon-card {
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  column-gap: 20px;
+  align-items: start;
+  width: 100%;
+  min-height: 200px;
+  padding: 24px;
+  border: 1px solid #c3ced5;
+  border-radius: 16px;
+  background: #fff;
+  color: #2b3135;
+}
+
+.icon-cards .icon-card-icon {
+  grid-row: 1;
+  grid-column: 1;
+  width: 24px;
+  height: 24px;
+}
+
+.icon-cards .icon-card-icon .icon,
+.icon-cards .icon-card-icon img {
+  display: block;
+  width: 24px;
+  height: 24px;
+}
+
+.icon-cards .icon-card-title {
+  grid-row: 1;
+  grid-column: 2;
+  margin: 0;
+  font-size: 16px;
+  font-weight: var(--font-weight-semibold);
+  line-height: 24px;
+  color: #2b3135;
+}
+
+.icon-cards .icon-card-toggle {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: default;
+}
+
+.icon-cards .icon-card-panel {
+  grid-row: 2;
+  grid-column: 2;
+  margin-top: 16px;
+}
+
+.icon-cards .icon-card-panel > p {
+  margin: 0;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.icon-cards .icon-card-panel > p + p { margin-top: 12px; }
+
+/* --- mobile: default variant collapses into the Figma accordion bundle --- */
+@media (width < 768px) {
+  .icon-cards:not(.stacked) {
+    display: block;
+    border: 1px solid #c3ced5;
+    border-radius: 4px;
+  }
+
+  .icon-cards:not(.stacked) .icon-card {
+    grid-template-columns: 20px minmax(0, 1fr) 20px;
+    column-gap: 8px;
+    min-height: 0;
+    padding: 16px 26px;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .icon-cards:not(.stacked) .icon-card + .icon-card { border-top: 1px solid #c3ced5; }
+
+  .icon-cards:not(.stacked) .icon-card-icon,
+  .icon-cards:not(.stacked) .icon-card-icon .icon,
+  .icon-cards:not(.stacked) .icon-card-icon img {
+    width: 20px;
+    height: 20px;
+  }
+
+  .icon-cards:not(.stacked) .icon-card-title {
+    grid-column: 2 / span 2;
+    font-size: 14px;
+    line-height: 20px;
+    color: #21262a;
+  }
+
+  .icon-cards:not(.stacked) .icon-card-toggle {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 20px;
+    column-gap: 8px;
+    align-items: start;
+    cursor: pointer;
+  }
+
+  .icon-cards:not(.stacked) .icon-card-toggle::after {
+    content: "";
+    width: 20px;
+    height: 20px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M5 7.5l5 5 5-5' stroke='%2321262a' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 20px no-repeat;
+    transition: transform 0.2s ease;
+  }
+
+  .icon-cards:not(.stacked) .icon-card.is-open .icon-card-toggle::after { transform: rotate(180deg); }
+
+  .icon-cards:not(.stacked) .icon-card-panel {
+    display: none;
+    grid-column: 2 / span 2;
+    margin-top: 12px;
+  }
+
+  .icon-cards:not(.stacked) .icon-card.is-open .icon-card-panel { display: block; }
+
+  .icon-cards:not(.stacked) .icon-card-panel > p {
+    font-size: 14px;
+    line-height: 20px;
+    color: #21262a;
+  }
+}
+
+@media (width >= 768px) {
+  .icon-cards .icon-card { width: calc(50% - 10px); }
+}
+
+@media (width >= 1200px) {
+  .icon-cards .icon-card { width: 305px; }
+}
+
+/* --- .stacked: Figma "00 - Card Bundle (Web)" --- */
+.icon-cards.stacked {
+  flex-direction: column;
+  align-items: stretch;
+  max-width: 1160px;
+  margin: 0 auto;
+}
+
+.icon-cards.stacked .icon-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  min-height: 0;
+  padding: 20px 0 0;
+}
+
+.icon-cards.stacked .icon-card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #f0f4f6;
+}
+
+.icon-cards.stacked .icon-card-icon .icon,
+.icon-cards.stacked .icon-card-icon img {
+  width: 32px;
+  height: 32px;
+}
+
+.icon-cards.stacked .icon-card-title {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 20px 20px 0;
+  font-size: 20px;
+  line-height: 28px;
+  text-align: center;
+}
+
+.icon-cards.stacked .icon-card-panel {
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  padding: 16px 20px 20px;
+}
+
+@media (width >= 768px) {
+  .icon-cards.stacked { flex-direction: row; align-items: stretch; }
+  .icon-cards.stacked .icon-card { flex: 1 1 0; width: auto; }
+}

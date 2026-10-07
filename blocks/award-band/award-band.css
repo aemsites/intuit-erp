@@ -1,0 +1,62 @@
+/* award-band — Figma "Ratings" (stars 24px, gap 4; link 16/24 Demi #205ea3) and
+   "G2 Awards" (78×90 badges, gap 19.5, padding 20px 0 40px). Desktop-only. */
+.award-band-wrapper { margin-top: 12px; }
+
+.award-band { display: none; }
+
+@media (width >= 768px) {
+  .award-band {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .award-band .award-rating {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .award-band .award-stars {
+    display: inline-flex;
+    gap: 4px;
+  }
+
+  .award-band .award-star {
+    display: block;
+    width: 24px;
+    height: 24px;
+  }
+
+  .award-band a.award-link:any-link {
+    font-size: 16px;
+    font-weight: var(--font-weight-semibold);
+    line-height: 24px;
+    color: #205ea3;
+    text-decoration: none;
+  }
+
+  .award-band a.award-link:hover,
+  .award-band a.award-link:focus-visible { text-decoration: underline; }
+
+  .award-band .award-badges {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 19.5px;
+    padding: 20px 0 40px;
+  }
+
+  .award-band .award-badges .icon,
+  .award-band .award-badges img {
+    display: block;
+    width: 78px;
+    height: 90px;
+  }
+
+  .award-band .award-badges .icon img { width: 100%; height: 100%; }
+}
