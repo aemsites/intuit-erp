@@ -1084,8 +1084,9 @@
 }
 
 @media (width >= 1024px) {
+  /* UAT: 80px above and below the card (Figma had 150px on top) */
   .section.testimonial-container:has(.testimonial.story) {
-    padding: 150px 0 var(--space-5xl);
+    padding: var(--space-5xl) 0;
   }
 
   .testimonial.story { max-width: 1360px; }
