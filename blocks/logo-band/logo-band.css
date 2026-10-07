@@ -214,8 +214,9 @@ main > .section.logo-band-container:has(.logo-band.marquee) > div { max-width: n
 }
 
 @media (width >= 768px) {
+  /* UAT: 30px between the eyebrow and the logo row from tablet up */
   .section.logo-band-container:has(.logo-band.strip) > h2.section-eyebrow {
-    margin-bottom: var(--space-s);
+    margin-bottom: 30px;
     font-size: 14px;
     line-height: 1.25;
     letter-spacing: 1.82px;
