@@ -193,7 +193,7 @@ main > .section.logo-band-container:has(.logo-band.marquee) > div { max-width: n
 .section.logo-band-container:has(.logo-band.strip) {
   max-width: none;
   margin: 0;
-  padding: var(--space-2xl) 0 var(--space-m);
+  padding: var(--space-5xl) 0 var(--space-m);
   border-radius: 0;
   background: var(--background-color);
 }
