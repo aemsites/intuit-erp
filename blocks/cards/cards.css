@@ -850,7 +850,7 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
   --tinted-ink: #0d0031;
 
   grid-template-columns: 1fr;
-  gap: var(--space-l);
+  gap: var(--space-m); /* 20px between cards at every breakpoint */
 }
 
 .cards.tinted > div {
@@ -942,7 +942,6 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
 @media (width >= 768px) {
   .cards.tinted {
     grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-xl);
     max-width: 1210px;
     margin-inline: auto; /* not `margin: 0 auto`, so block spacer-* classes still apply */
   }
@@ -966,7 +965,7 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
 }
 
 @media (width >= 1024px) {
-  .cards.tinted.blue { max-width: 1360px; gap: var(--space-m); }
+  .cards.tinted.blue { max-width: 1360px; }
   .cards.tinted.blue > div { border-radius: 38px; }
   .cards.tinted.blue .cards-card-body { padding: 60px; }
 }
