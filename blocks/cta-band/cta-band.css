@@ -77,7 +77,7 @@ main > .section.cta-band-container:has(.cta-band.simple) > div { max-width: none
 /* .ies: white sign-off band, centred 900px column, builds on .simple */
 .cta-band.simple.ies { background: var(--background-color); }
 
-/* UAT: 80px above and below the copy on mobile/tablet, 120px from desktop (below) */
+/* 80px above and below the copy; 120px from desktop */
 .cta-band.simple.ies .firstcall-grid {
   max-width: 900px;
   padding: var(--space-5xl) 24px;

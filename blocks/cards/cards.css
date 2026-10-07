@@ -998,18 +998,16 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
   color: var(--text-grid-ink);
 }
 
-/* UAT: the IES "Beyond Desktop" section (icon text-grid + tinted cards) has 80px above its
-   eyebrow and below its last cards. Section-metadata padding classes can't express 80px and the
-   global 2rem wrapper padding would stack on top, so the section owns both values. */
+/* icon text-grid section: 60px above the eyebrow and below the last cards (80px from desktop) */
 .section.cards-container:has(.cards.icons.text-grid) {
-  padding-block: 60px; /* UAT: 60px on mobile/tablet, 80px from desktop (below) */
+  padding-block: 60px;
 }
 
 .section.cards-container:has(.cards.icons.text-grid) > .default-content-wrapper {
   padding-block: 0;
 }
 
-/* text-grid section rhythm (UAT): title 40px above the icon list, tinted tiles 60px below it */
+/* text-grid section rhythm: title 40px above the icon list; tinted tiles 40px below it (60px from desktop) */
 .section.cards-container:has(.cards.icons.text-grid) > .default-content-wrapper h2:not(.section-eyebrow) {
   margin: 0 0 var(--space-2xl);
   font-size: 34px;
@@ -1024,7 +1022,7 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
 }
 
 .section.cards-container .cards-wrapper:has(.cards.icons.text-grid) + .cards-wrapper {
-  margin-top: var(--space-2xl); /* UAT: 40px on mobile/tablet, 60px from desktop (below) */
+  margin-top: var(--space-2xl);
 }
 
 @media (width >= 1024px) {
@@ -1036,11 +1034,10 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
   }
 }
 
-/* UAT: IES tinted-blue section ("For your accountant") rhythm — 80px above the eyebrow, no stacked
-   2rem wrapper padding, 40px from the title to the cards and from the cards to the button, and the
-   button closes the section. Section-metadata padding classes can't express 80px. */
+/* tinted-blue section: 60px above the eyebrow (80px from desktop), no stacked wrapper padding,
+   20px title → cards and cards → button (40px from desktop); the button closes the section */
 .section.cards-container:has(.cards.tinted.blue) {
-  padding-top: 60px; /* UAT: 60px on mobile/tablet, 80px from desktop (below) */
+  padding-top: 60px;
 }
 
 .section.cards-container:has(.cards.tinted.blue) > .default-content-wrapper {
