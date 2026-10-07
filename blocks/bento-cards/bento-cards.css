@@ -288,7 +288,8 @@
 }
 
 @media (width >= 768px) {
-  .bento-cards.two-up .bento-track { grid-template-columns: repeat(2, 1fr); }
+  /* UAT: two-up cards sit 20px apart (the 3-col bento keeps its wider gap) */
+  .bento-cards.two-up .bento-track { grid-template-columns: repeat(2, 1fr); gap: var(--space-m); }
   .bento-cards.two-up .bento-track > .bento-card { grid-column: span 1; }
 }
 
