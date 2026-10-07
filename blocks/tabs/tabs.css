@@ -962,7 +962,9 @@ main > .section.tabs-container:has(.tabs.vertical-panel.industry) {
 
 /* the shared vertical-panel section rule pads 20px inside the 1130px cap; Figma's 1130 is the content width */
 @media (width >= 1024px) {
-  main > .section.tabs-container:has(.tabs.vertical-panel.industry) { padding-inline: 0; }
+  /* UAT: 80px above the eyebrow (the base vertical-panel uses 120px) and 40px between the title block and the tabs */
+  main > .section.tabs-container:has(.tabs.vertical-panel.industry) { padding-inline: 0; padding-top: var(--space-5xl); }
+  .tabs.vertical-panel.industry { margin-top: var(--space-2xl); }
 }
 
 .tabs-container:has(.tabs.vertical-panel.industry) .default-content-wrapper h2 {
