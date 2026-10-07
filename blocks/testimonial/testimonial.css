@@ -909,6 +909,11 @@
   color: #fff;
 }
 
+/* .tight (UAT): 80px below the card on mobile/tablet */
+.section.testimonial-container:has(.testimonial.card.feature.tight) {
+  padding-bottom: var(--space-5xl);
+}
+
 @media (width >= 1024px) {
   /* .tight: Figma places this card 20px under the previous section, 120px above the next title (UAT; Figma had 150px) */
   .section.testimonial-container:has(.testimonial.card.feature.tight) {
@@ -958,7 +963,7 @@
 /* .story: dark Blueberry card, copy left, Superblue media tile right; stacks below 1024px */
 .section.testimonial-container:has(.testimonial.story) {
   background: var(--background-color);
-  padding: var(--section-y) 0;
+  padding: 60px 0; /* UAT: 60px above and below the card on mobile/tablet, 80px from desktop */
 }
 
 .testimonial.story {
