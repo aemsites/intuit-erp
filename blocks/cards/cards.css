@@ -1033,8 +1033,24 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
   }
 }
 
+/* UAT: IES tinted-blue section ("For your accountant") rhythm — 80px above the eyebrow, no stacked
+   2rem wrapper padding, 40px from the title to the cards and from the cards to the button, and the
+   button closes the section. Section-metadata padding classes can't express 80px. */
+.section.cards-container:has(.cards.tinted.blue) {
+  padding-top: var(--space-5xl);
+}
+
+.section.cards-container:has(.cards.tinted.blue) > .default-content-wrapper {
+  padding-block: 0;
+}
+
+.section.cards-container:has(.cards.tinted.blue) > .default-content-wrapper > .button-wrapper {
+  margin: var(--space-2xl) 0 0;
+}
+
 /* tinted-blue section title: 34px below desktop, 48px/1 at >=1024px, like the page's other section titles */
 .section.cards-container:has(.cards.tinted.blue) > .default-content-wrapper h2:not(.section-eyebrow) {
+  margin-bottom: var(--space-2xl);
   font-size: 34px;
   font-weight: var(--font-weight-medium);
   line-height: var(--line-height-xs);
