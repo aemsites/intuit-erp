@@ -961,6 +961,10 @@ main > .section.tabs-container:has(.tabs.vertical-panel.industry) {
 .tabs-container:has(.tabs.vertical-panel.industry) .tabs-wrapper { max-width: 1130px; }
 
 /* the shared vertical-panel section rule pads 20px inside the 1130px cap; Figma's 1130 is the content width */
+
+/* UAT: 60px above the eyebrow on mobile/tablet (the base vertical-panel uses 80px) */
+main > .section.tabs-container:has(.tabs.vertical-panel.industry) { padding-top: 60px; }
+
 @media (width >= 1024px) {
   /* UAT: 80px above the eyebrow (the base vertical-panel uses 120px) and 40px between the title block and the tabs */
   main > .section.tabs-container:has(.tabs.vertical-panel.industry) { padding-inline: 0; padding-top: var(--space-5xl); }
