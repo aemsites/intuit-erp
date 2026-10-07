@@ -1003,6 +1003,17 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
   color: var(--text-grid-ink);
 }
 
+/* UAT: the IES "Beyond Desktop" section (icon text-grid + tinted cards) has 80px above its
+   eyebrow and below its last cards. Section-metadata padding classes can't express 80px and the
+   global 2rem wrapper padding would stack on top, so the section owns both values. */
+.section.cards-container:has(.cards.icons.text-grid) {
+  padding-block: var(--space-5xl);
+}
+
+.section.cards-container:has(.cards.icons.text-grid) > .default-content-wrapper {
+  padding-top: 0;
+}
+
 /* text-grid section rhythm: title 60px above, following tiles 80px below */
 .section.cards-container:has(.cards.icons.text-grid) > .default-content-wrapper h2:not(.section-eyebrow) {
   margin: 0 0 60px;
