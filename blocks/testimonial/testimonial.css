@@ -910,9 +910,9 @@
 }
 
 @media (width >= 1024px) {
-  /* .tight: Figma places this card 20px under the previous section, 150px above the next title */
+  /* .tight: Figma places this card 20px under the previous section, 120px above the next title (UAT; Figma had 150px) */
   .section.testimonial-container:has(.testimonial.card.feature.tight) {
-    padding: var(--space-m) 0 150px;
+    padding: var(--space-m) 0 120px;
   }
 
   /* Figma: 386px photo inset 20px, copy column padded 80px; 1fr rows above/below
