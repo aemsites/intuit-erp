@@ -938,9 +938,10 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
   color: inherit;
 }
 
+/* tablet: two cards per row, the odd card left-aligned with space on the right; three per row from desktop */
 @media (width >= 768px) {
   .cards.tinted {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: var(--space-xl);
     max-width: 1210px;
     margin-inline: auto; /* not `margin: 0 auto`, so block spacer-* classes still apply */
@@ -949,6 +950,7 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
 
 /* Figma "Card (3 Col)": 46px thumbnail → eyebrow, 60px copy side and bottom insets, 28px/1.3 title */
 @media (width >= 1024px) {
+  .cards.tinted { grid-template-columns: repeat(3, 1fr); }
   .cards.tinted .cards-card-body { padding: 46px 60px 60px; }
   .cards.tinted .cards-card-body :is(h3, h4) { line-height: var(--line-height-s); }
 }
