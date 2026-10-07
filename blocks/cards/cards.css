@@ -1071,6 +1071,6 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
 }
 
 @media (width <= 768px) {
-  .cards.icons.text-grid { gap: var(--space-2xl); }
+  .cards.icons.text-grid { gap: var(--space-m); } /* 20px between list items on mobile */
   .cards.icons.text-grid .cards-card-body h3 { font-size: 24px; }
 }

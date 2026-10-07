@@ -65,7 +65,7 @@
   gap: var(--space-l);
   box-sizing: border-box;
   min-height: 348px;
-  padding: var(--space-l);
+  padding: var(--space-m); /* 20px on mobile; 32px from tablet, 60px on two-up desktop */
   border-radius: var(--bento-radius);
   overflow: hidden;
   color: var(--bento-ink);
@@ -260,10 +260,10 @@
 }
 
 @media (width >= 1024px) {
-  /* Figma "Title block": 48/1 headline 16px under the eyebrow, 20px over the 940px subcopy, 80px to the cards */
+  /* "Title block": 48/1 headline 16px under the eyebrow, 20px over the 940px subcopy, 40px to the cards */
   .section.bento-cards-container > .default-content-wrapper {
     padding-bottom: 0;
-    margin-bottom: var(--space-5xl);
+    margin-bottom: var(--space-2xl); /* 40px from the title block to the cards (20px below desktop) */
   }
 
   .section.bento-cards-container > .default-content-wrapper h2:not(.section-eyebrow) {
@@ -283,11 +283,6 @@
     line-height: var(--line-height-s);
     color: #0d0031;
   }
-
-  /* two-up: 40px from the title block to the cards */
-  .section.bento-cards-container:has(.bento-cards.two-up) > .default-content-wrapper {
-    margin-bottom: var(--space-2xl);
-  }
 }
 
 /* .two-up: two equal cards per row; theme authored per card.
@@ -302,7 +297,7 @@
     scroll-snap-type: none;
   }
 
-  .bento-cards.two-up .bento-track > .bento-card { flex: none; }
+  .bento-cards.two-up .bento-track > .bento-card { flex: none; min-height: 0; } /* no visual tile: let the copy set the height */
   .bento-cards.two-up .bento-dots { display: none; }
 }
 
