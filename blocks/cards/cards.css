@@ -986,15 +986,10 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
 }
 
 .cards.icons.text-grid .cards-card-body h3 {
-  margin: 0 0 var(--space-s);
+  margin: 0 0 var(--space-2xs);
   font-size: 28px;
   line-height: var(--line-height-s);
   color: var(--text-grid-ink);
-}
-
-/* heading → body: 16px on mobile, 20px from tablet up */
-@media (width >= 768px) {
-  .cards.icons.text-grid .cards-card-body h3 { margin-bottom: var(--space-m); }
 }
 
 .cards.icons.text-grid .cards-card-body p {
@@ -1011,12 +1006,12 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
 }
 
 .section.cards-container:has(.cards.icons.text-grid) > .default-content-wrapper {
-  padding-top: 0;
+  padding-block: 0;
 }
 
-/* text-grid section rhythm: title 60px above, following tiles 80px below */
+/* text-grid section rhythm (UAT): title 40px above the icon list, tinted tiles 60px below it */
 .section.cards-container:has(.cards.icons.text-grid) > .default-content-wrapper h2:not(.section-eyebrow) {
-  margin: 0 0 60px;
+  margin: 0 0 var(--space-2xl);
   font-size: 34px;
   font-weight: var(--font-weight-medium);
   line-height: 1;
@@ -1029,7 +1024,7 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
 }
 
 .section.cards-container .cards-wrapper:has(.cards.icons.text-grid) + .cards-wrapper {
-  margin-top: 80px;
+  margin-top: 60px;
 }
 
 @media (width >= 1024px) {
