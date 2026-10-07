@@ -79,8 +79,12 @@
 .bento-cards .bento-card-body {
   display: flex;
   flex-direction: column;
-  gap: 30px;
+  gap: var(--space-m); /* icon → copy: 20px on mobile, 30px from tablet up */
   flex: 1 1 auto;
+}
+
+@media (width >= 768px) {
+  .bento-cards .bento-card-body { gap: 30px; }
 }
 
 .bento-cards .bento-card-icon {
@@ -214,6 +218,16 @@
 
 .section.bento-cards-container > .default-content-wrapper h2:not(.section-eyebrow):last-child {
   margin-bottom: 0;
+}
+
+/* two-up section ("Migration & Onboarding") starts 80px below the logo strip (120px from desktop);
+   section-metadata padding classes can't express these values */
+.section.bento-cards-container:has(.bento-cards.two-up) {
+  padding-top: var(--space-5xl);
+}
+
+@media (width >= 1024px) {
+  .section.bento-cards-container:has(.bento-cards.two-up) { padding-top: 120px; }
 }
 
 /* 3-col bento section ends 60px below its cards (80px from desktop) */
