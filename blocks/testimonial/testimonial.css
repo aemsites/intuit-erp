@@ -1048,6 +1048,7 @@
 .testimonial.story .story-attr {
   display: flex;
   flex-wrap: wrap;
+  align-items: baseline;
   gap: 0 var(--space-3xs);
   margin: 0 0 var(--space-xl);
   font-size: 12px;
@@ -1055,13 +1056,16 @@
   color: #fff;
 }
 
-.testimonial.story .story-attr .testimonial-name {
-  font-weight: var(--font-weight-bold);
+/* name and role share the figcaption's size so they sit on one baseline */
+.testimonial.story .story-attr .testimonial-name,
+.testimonial.story .story-attr .testimonial-title {
+  font-size: inherit;
+  line-height: inherit;
   color: #fff;
 }
 
+.testimonial.story .story-attr .testimonial-name { font-weight: var(--font-weight-bold); }
 .testimonial.story .story-attr .testimonial-name:not(:last-child)::after { content: ","; }
-.testimonial.story .story-attr .testimonial-title { color: #fff; }
 
 .testimonial.story .button-wrapper { margin: 0; }
 
