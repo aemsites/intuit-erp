@@ -1002,7 +1002,7 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
    eyebrow and below its last cards. Section-metadata padding classes can't express 80px and the
    global 2rem wrapper padding would stack on top, so the section owns both values. */
 .section.cards-container:has(.cards.icons.text-grid) {
-  padding-block: var(--space-5xl);
+  padding-block: 60px; /* UAT: 60px on mobile/tablet, 80px from desktop (below) */
 }
 
 .section.cards-container:has(.cards.icons.text-grid) > .default-content-wrapper {
@@ -1024,10 +1024,13 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
 }
 
 .section.cards-container .cards-wrapper:has(.cards.icons.text-grid) + .cards-wrapper {
-  margin-top: 60px;
+  margin-top: var(--space-2xl); /* UAT: 40px on mobile/tablet, 60px from desktop (below) */
 }
 
 @media (width >= 1024px) {
+  .section.cards-container:has(.cards.icons.text-grid) { padding-block: var(--space-5xl); }
+  .section.cards-container .cards-wrapper:has(.cards.icons.text-grid) + .cards-wrapper { margin-top: 60px; }
+
   .section.cards-container:has(.cards.icons.text-grid) > .default-content-wrapper h2:not(.section-eyebrow) {
     font-size: 48px;
   }
@@ -1037,20 +1040,22 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
    2rem wrapper padding, 40px from the title to the cards and from the cards to the button, and the
    button closes the section. Section-metadata padding classes can't express 80px. */
 .section.cards-container:has(.cards.tinted.blue) {
-  padding-top: var(--space-5xl);
+  padding-top: 60px; /* UAT: 60px on mobile/tablet, 80px from desktop (below) */
 }
 
 .section.cards-container:has(.cards.tinted.blue) > .default-content-wrapper {
   padding-block: 0;
 }
 
+/* cards → button: 20px on mobile/tablet, 40px from desktop (below) */
 .section.cards-container:has(.cards.tinted.blue) > .default-content-wrapper > .button-wrapper {
-  margin: var(--space-2xl) 0 0;
+  margin: var(--space-m) 0 0;
 }
 
-/* tinted-blue section title: 34px below desktop, 48px/1 at >=1024px, like the page's other section titles */
+/* tinted-blue section title: 34px below desktop, 48px/1 at >=1024px, like the page's other section titles;
+   20px to the cards on mobile/tablet, 40px from desktop (below) */
 .section.cards-container:has(.cards.tinted.blue) > .default-content-wrapper h2:not(.section-eyebrow) {
-  margin-bottom: var(--space-2xl);
+  margin-bottom: var(--space-m);
   font-size: 34px;
   font-weight: var(--font-weight-medium);
   line-height: var(--line-height-xs);
@@ -1058,7 +1063,11 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
 }
 
 @media (width >= 1024px) {
+  .section.cards-container:has(.cards.tinted.blue) { padding-top: var(--space-5xl); }
+  .section.cards-container:has(.cards.tinted.blue) > .default-content-wrapper > .button-wrapper { margin-top: var(--space-2xl); }
+
   .section.cards-container:has(.cards.tinted.blue) > .default-content-wrapper h2:not(.section-eyebrow) {
+    margin-bottom: var(--space-2xl);
     font-size: 48px;
     line-height: var(--line-height-none);
   }
@@ -1067,5 +1076,4 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
 @media (width <= 768px) {
   .cards.icons.text-grid { gap: var(--space-2xl); }
   .cards.icons.text-grid .cards-card-body h3 { font-size: 24px; }
-  .section.cards-container .cards-wrapper:has(.cards.icons.text-grid) + .cards-wrapper { margin-top: var(--space-3xl); }
 }
