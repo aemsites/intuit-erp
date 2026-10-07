@@ -193,7 +193,7 @@ main > .section.logo-band-container:has(.logo-band.marquee) > div { max-width: n
 .section.logo-band-container:has(.logo-band.strip) {
   max-width: none;
   margin: 0;
-  padding: 60px 0 var(--space-m); /* 60px above the eyebrow; 80px from desktop (below) */
+  padding: 60px 0 0; /* 60px above the eyebrow (80px from desktop, below); the next section owns the gap below */
   border-radius: 0;
   background: var(--background-color);
 }

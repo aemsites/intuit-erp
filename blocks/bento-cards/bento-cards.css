@@ -220,6 +220,16 @@
   margin-bottom: 0;
 }
 
+/* two-up section ("Migration & Onboarding") starts 80px below the logo strip (120px from desktop);
+   section-metadata padding classes can't express these values */
+.section.bento-cards-container:has(.bento-cards.two-up) {
+  padding-top: var(--space-5xl);
+}
+
+@media (width >= 1024px) {
+  .section.bento-cards-container:has(.bento-cards.two-up) { padding-top: 120px; }
+}
+
 /* 3-col bento section ends 60px below its cards (80px from desktop) */
 .section.bento-cards-container:has(.bento-cards:not(.two-up)) {
   padding-bottom: 60px;
