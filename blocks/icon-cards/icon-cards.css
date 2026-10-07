@@ -153,6 +153,8 @@
 }
 
 /* --- .stacked: Figma "00 - Card Bundle (Web)" --- */
+.icon-cards-wrapper:has(> .icon-cards.stacked) { margin-bottom: 80px; }
+
 .icon-cards.stacked {
   flex-direction: column;
   align-items: stretch;
