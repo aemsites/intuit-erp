@@ -211,6 +211,12 @@
   text-align: center;
 }
 
+/* UAT: the 3-col bento section ("Workflows carried over") ends 80px below its cards;
+   section-metadata padding classes can't express 80px, so the section owns it */
+.section.bento-cards-container:has(.bento-cards:not(.two-up)) {
+  padding-bottom: var(--space-5xl);
+}
+
 /* IES eyebrow rhythm: 8px below the injected section eyebrow on mobile, 16px from tablet up */
 .section.bento-cards-container > .default-content-wrapper > h2.section-eyebrow {
   padding-bottom: var(--space-2xs);
