@@ -1,3 +1,4 @@
+// cache-probe-20261007: deployment and cache-purge verification marker.
 import {
   loadHeader,
   loadFooter,
