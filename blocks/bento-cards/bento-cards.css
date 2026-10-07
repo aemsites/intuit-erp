@@ -204,9 +204,25 @@
   .bento-cards .bento-card-copy :is(h2, h3, h4) { font-size: 34px; }
 }
 
-/* section head authored as default content before the block */
+/* section head authored as default content before the block; the global
+   2rem wrapper top padding would stack on the section's own padding, so drop it */
 .section.bento-cards-container > .default-content-wrapper {
+  padding-block: 0;
+  margin-bottom: var(--space-m); /* title block → cards; 40/80px from desktop */
   text-align: center;
+}
+
+.section.bento-cards-container > .default-content-wrapper h2:not(.section-eyebrow):last-child {
+  margin-bottom: 0;
+}
+
+/* 3-col bento section ends 60px below its cards (80px from desktop) */
+.section.bento-cards-container:has(.bento-cards:not(.two-up)) {
+  padding-bottom: 60px;
+}
+
+@media (width >= 1024px) {
+  .section.bento-cards-container:has(.bento-cards:not(.two-up)) { padding-bottom: var(--space-5xl); }
 }
 
 /* IES eyebrow rhythm: 8px below the injected section eyebrow on mobile, 16px from tablet up */
@@ -267,6 +283,11 @@
     line-height: var(--line-height-s);
     color: #0d0031;
   }
+
+  /* two-up: 40px from the title block to the cards */
+  .section.bento-cards-container:has(.bento-cards.two-up) > .default-content-wrapper {
+    margin-bottom: var(--space-2xl);
+  }
 }
 
 /* .two-up: two equal cards per row; theme authored per card.
@@ -286,7 +307,8 @@
 }
 
 @media (width >= 768px) {
-  .bento-cards.two-up .bento-track { grid-template-columns: repeat(2, 1fr); }
+  /* two-up cards sit 20px apart; the 3-col bento keeps its wider gap */
+  .bento-cards.two-up .bento-track { grid-template-columns: repeat(2, 1fr); gap: var(--space-m); }
   .bento-cards.two-up .bento-track > .bento-card { grid-column: span 1; }
 }
 

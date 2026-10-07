@@ -193,7 +193,7 @@ main > .section.logo-band-container:has(.logo-band.marquee) > div { max-width: n
 .section.logo-band-container:has(.logo-band.strip) {
   max-width: none;
   margin: 0;
-  padding: var(--space-2xl) 0 var(--space-m);
+  padding: var(--space-5xl) 0 var(--space-m);
   border-radius: 0;
   background: var(--background-color);
 }
@@ -201,7 +201,7 @@ main > .section.logo-band-container:has(.logo-band.marquee) > div { max-width: n
 /* eyebrow authored via Section Metadata (eyebrow-text), injected by scripts.js;
    IES eyebrow scale: 12px on mobile, 14px from tablet up */
 .section.logo-band-container:has(.logo-band.strip) > h2.section-eyebrow {
-  margin: 0 0 var(--space-2xs);
+  margin: 0 0 10px;
   padding: 0;
   font-family: var(--body-font-family);
   font-size: 12px;
@@ -214,8 +214,9 @@ main > .section.logo-band-container:has(.logo-band.marquee) > div { max-width: n
 }
 
 @media (width >= 768px) {
+  /* 30px between the eyebrow and the logo row from tablet up */
   .section.logo-band-container:has(.logo-band.strip) > h2.section-eyebrow {
-    margin-bottom: var(--space-s);
+    margin-bottom: 30px;
     font-size: 14px;
     line-height: 1.25;
     letter-spacing: 1.82px;

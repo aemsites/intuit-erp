@@ -986,15 +986,10 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
 }
 
 .cards.icons.text-grid .cards-card-body h3 {
-  margin: 0 0 var(--space-s);
+  margin: 0 0 var(--space-2xs);
   font-size: 28px;
   line-height: var(--line-height-s);
   color: var(--text-grid-ink);
-}
-
-/* heading → body: 16px on mobile, 20px from tablet up */
-@media (width >= 768px) {
-  .cards.icons.text-grid .cards-card-body h3 { margin-bottom: var(--space-m); }
 }
 
 .cards.icons.text-grid .cards-card-body p {
@@ -1003,9 +998,18 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
   color: var(--text-grid-ink);
 }
 
-/* text-grid section rhythm: title 60px above, following tiles 80px below */
+/* icon text-grid section: 60px above the eyebrow and below the last cards (80px from desktop) */
+.section.cards-container:has(.cards.icons.text-grid) {
+  padding-block: 60px;
+}
+
+.section.cards-container:has(.cards.icons.text-grid) > .default-content-wrapper {
+  padding-block: 0;
+}
+
+/* text-grid section rhythm: title 40px above the icon list; tinted tiles 40px below it (60px from desktop) */
 .section.cards-container:has(.cards.icons.text-grid) > .default-content-wrapper h2:not(.section-eyebrow) {
-  margin: 0 0 60px;
+  margin: 0 0 var(--space-2xl);
   font-size: 34px;
   font-weight: var(--font-weight-medium);
   line-height: 1;
@@ -1018,17 +1022,37 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
 }
 
 .section.cards-container .cards-wrapper:has(.cards.icons.text-grid) + .cards-wrapper {
-  margin-top: 80px;
+  margin-top: var(--space-2xl);
 }
 
 @media (width >= 1024px) {
+  .section.cards-container:has(.cards.icons.text-grid) { padding-block: var(--space-5xl); }
+  .section.cards-container .cards-wrapper:has(.cards.icons.text-grid) + .cards-wrapper { margin-top: 60px; }
+
   .section.cards-container:has(.cards.icons.text-grid) > .default-content-wrapper h2:not(.section-eyebrow) {
     font-size: 48px;
   }
 }
 
-/* tinted-blue section title: 34px below desktop, 48px/1 at >=1024px, like the page's other section titles */
+/* tinted-blue section: 60px above the eyebrow (80px from desktop), no stacked wrapper padding,
+   20px title → cards and cards → button (40px from desktop); the button closes the section */
+.section.cards-container:has(.cards.tinted.blue) {
+  padding-top: 60px;
+}
+
+.section.cards-container:has(.cards.tinted.blue) > .default-content-wrapper {
+  padding-block: 0;
+}
+
+/* cards → button: 20px on mobile/tablet, 40px from desktop (below) */
+.section.cards-container:has(.cards.tinted.blue) > .default-content-wrapper > .button-wrapper {
+  margin: var(--space-m) 0 0;
+}
+
+/* tinted-blue section title: 34px below desktop, 48px/1 at >=1024px, like the page's other section titles;
+   20px to the cards on mobile/tablet, 40px from desktop (below) */
 .section.cards-container:has(.cards.tinted.blue) > .default-content-wrapper h2:not(.section-eyebrow) {
+  margin-bottom: var(--space-m);
   font-size: 34px;
   font-weight: var(--font-weight-medium);
   line-height: var(--line-height-xs);
@@ -1036,7 +1060,11 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
 }
 
 @media (width >= 1024px) {
+  .section.cards-container:has(.cards.tinted.blue) { padding-top: var(--space-5xl); }
+  .section.cards-container:has(.cards.tinted.blue) > .default-content-wrapper > .button-wrapper { margin-top: var(--space-2xl); }
+
   .section.cards-container:has(.cards.tinted.blue) > .default-content-wrapper h2:not(.section-eyebrow) {
+    margin-bottom: var(--space-2xl);
     font-size: 48px;
     line-height: var(--line-height-none);
   }
@@ -1045,5 +1073,4 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
 @media (width <= 768px) {
   .cards.icons.text-grid { gap: var(--space-2xl); }
   .cards.icons.text-grid .cards-card-body h3 { font-size: 24px; }
-  .section.cards-container .cards-wrapper:has(.cards.icons.text-grid) + .cards-wrapper { margin-top: var(--space-3xl); }
 }
