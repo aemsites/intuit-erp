@@ -204,8 +204,10 @@
   .bento-cards .bento-card-copy :is(h2, h3, h4) { font-size: 34px; }
 }
 
-/* section head authored as default content before the block */
+/* section head authored as default content before the block; the global
+   2rem wrapper top padding would stack on the section's own padding, so drop it */
 .section.bento-cards-container > .default-content-wrapper {
+  padding-top: 0;
   text-align: center;
 }
 
