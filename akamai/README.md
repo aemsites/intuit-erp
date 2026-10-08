@@ -153,12 +153,8 @@ curl -s -o /dev/null -D - -H 'Pragma: akamai-x-get-cache-tags' \
 #  3. reload the page — the inlined nav reflects the change (page was purged via the union)
 ```
 
-Verify that the composed tag set includes the page and each inlined fragment's
-tags, and that Akamai Cache Manager indexes them. Test page, nav, and footer
-invalidations using separately approved test content/purges; a visible response
-header alone does not prove Fast Purge works. Adobe's automatic production
-push invalidation is scoped to the `main` origin, so a feature preview is not a
-substitute for this check.
+Verify page/nav/footer tags, Akamai indexing, and approved purge tests.
+Automatic push invalidation requires the `main` origin.
 
 Run the pure helper and mocked runtime-boundary tests with:
 
