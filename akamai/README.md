@@ -2,11 +2,6 @@
 
 **Audience:** the Akamai CDN team fronting `erp.intuit.com`.
 
-**Issue #1174 status:** the internal cache-tag visibility pragma is a candidate fix.
-The deployed worker's subrequest headers, composed-response tag indexing, and actual
-purge behavior still require validation on the Akamai staging network. Do not
-enable this candidate in production based on unit tests alone.
-
 This EdgeWorker inlines the site's **header (nav)** and **footer** fragments into the
 initial HTML document at the edge, and — critically — **forwards the `edge-cache-tag`**
 from each fragment onto the page so Adobe's **push invalidation** keeps working after
