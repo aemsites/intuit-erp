@@ -145,11 +145,6 @@ must stay external.)
 
 ## 8. Verification
 
-Use an Akamai-team-provided staging-network endpoint or routing setup for
-`erp.intuit.com`. **Do not use `stage.erp.intuit.com`: it is the legacy WordPress
-site, not an EDS staging environment.** The commands below apply only after the
-CDN team has configured staging routing; otherwise they target production.
-
 ```bash
 # Composed page has inlined <header><nav>…</nav></header> + <footer><nav>…</nav></footer>
 curl -s https://erp.intuit.com/pricing/ | grep -oE '<header>|<nav>|<footer>'
