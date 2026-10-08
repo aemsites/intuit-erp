@@ -190,9 +190,9 @@ main:focus {
    font-weight: var(--font-weight-medium);
    line-height: var(--line-height-none);
    font-family: inherit;
-   border: 2px solid var(--navy);
-   border-radius: var(--radius);
-   background: var(--navy);
+   border: 2px solid var(--info);
+   border-radius: var(--radius-pill);
+   background: var(--info);
    color: #fff;
    text-decoration: none;
    cursor: pointer;
@@ -201,8 +201,8 @@ main:focus {
 .header .nav-cta:hover {
    color: #fff;
    text-decoration: none;
-   background: var(--navy-hover);
-   border-color: var(--navy-hover);
+   background: #1b5be0;
+   border-color: #1b5be0;
 }
 
 .header .nav-cta[aria-disabled="true"] {

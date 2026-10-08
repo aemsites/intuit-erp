@@ -244,18 +244,19 @@
 
 .form:not(.hero) .mktoForm .mktoButton {
   height: 49px;
+  min-height: 48px;
   padding: 0 30px !important;
   border: 0 !important;
-  border-radius: var(--radius) !important;
-  background: var(--navy) !important;
+  border-radius: var(--radius-pill) !important;
+  background: var(--info) !important;
   color: var(--background-color) !important;
   font-size: 16px !important;
-  font-weight: 600 !important;
+  font-weight: var(--font-weight-medium) !important;
   cursor: pointer;
 }
 
 .form:not(.hero) .mktoForm .mktoButton:hover {
-  background: var(--navy-hover) !important;
+  background: #1b5be0 !important;
 }
 
 .form:not(.hero) .mktoForm .mktoError {
@@ -307,14 +308,6 @@
   .form.horizontal .mktoForm .mktoButton {
     width: auto;
   }
-}
-
-.form.info .mktoForm .mktoButton {
-  background: var(--info) !important;
-}
-
-.form.info .mktoForm .mktoButton:hover {
-  background: var(--blue-bright) !important;
 }
 
 .section.form-container:has(.form.sky) {

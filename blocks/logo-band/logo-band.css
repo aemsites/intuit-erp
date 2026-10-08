@@ -145,7 +145,7 @@
 /* variables live on the section, not the block, so both the section's own
    background and the block's descendant rules can read them */
 .section.logo-band-container:has(.logo-band.marquee) {
-  --marquee-bg: #00254a;
+  --marquee-bg: var(--navy);
   --marquee-logo-filter: brightness(0) invert(1);
 
   background: var(--marquee-bg);

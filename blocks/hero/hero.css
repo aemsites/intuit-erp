@@ -1,19 +1,9 @@
-/* hero — dark gradient lead band (all pages). CSS lifted from prototype .hero */
+/* hero — solid lead band (all pages). CSS lifted from prototype .hero */
 
 .section.hero-container {
   background: var(--navy);
   color: #fff;
   overflow: hidden;
-
-  &.gradient {
-    background: linear-gradient(135deg, #00254a 55%, #3f6fdd 75%, #b494d1 100%);
-  }
-
-  &.gradient:has(.hero.form) {
-    background:
-      linear-gradient(to bottom, rgb(4 24 57 / 0%) 62%, #041839 100%),
-      conic-gradient(from 103deg at 28.36% 120.78%, #04193C 115.9615deg, #041F53 204.2308deg, #03339C 267.2082deg, #0F44AC 273.7572deg, #2B66D0 289.9528deg, #3875E0 324.4898deg, #BB95CD 329.7278deg, #DEBCB3 334.1040deg, #041839 359.1429deg);
-  }
 }
 
 .section.hero-container.light {
@@ -159,15 +149,15 @@
 }
 
 .hero :is(a, button).button.primary {
-  background: #fff;
-  color: var(--ink-teal, #0d333f);
-  border-color: #fff;
+  background: var(--info);
+  color: #fff;
+  border-color: var(--info);
 }
 
 .hero :is(a, button).button.primary:hover,
  .hero :is(a, button).button.primary:focus-visible{
-  background: #eef4f6;
-  border-color: #eef4f6;
+  background: #1b5be0;
+  border-color: #1b5be0;
 }
 
 .hero :is(a, button).button.secondary {

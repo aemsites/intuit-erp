@@ -79,6 +79,86 @@
     url("/styles/fonts/avenir-800.woff2") format("woff2"), url("/styles/fonts/avenir-800.woff") format("woff");
 }
 
+/* Tally — 2027 IES brand refresh body/UI font, now the site-wide default
+   (see --body-font-family/--heading-font-family in styles.css). Font files
+   are shared with the widgets/erp-pages/ies-fonts widget (same family names,
+   same source files) rather than duplicated. */
+@font-face {
+  font-family: Tally;
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  src: url("/widgets/erp-pages/ies-fonts/fonts/Tally-Regular.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: Tally;
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+  src: url("/widgets/erp-pages/ies-fonts/fonts/Tally-RegularItalic.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: Tally;
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  src: url("/widgets/erp-pages/ies-fonts/fonts/Tally-Medium.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: Tally;
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+  src: url("/widgets/erp-pages/ies-fonts/fonts/Tally-MediumItalic.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: Tally;
+  font-weight: 600 700;
+  font-style: normal;
+  font-display: swap;
+  src: url("/widgets/erp-pages/ies-fonts/fonts/Tally-Bold.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: Tally;
+  font-weight: 600 700;
+  font-style: italic;
+  font-display: swap;
+  src: url("/widgets/erp-pages/ies-fonts/fonts/Tally-BoldItalic.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Tally Display";
+  font-weight: 300;
+  font-display: swap;
+  src: url("/widgets/erp-pages/ies-fonts/fonts/TallyDisplay-Light.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Tally Display";
+  font-weight: 400;
+  font-display: swap;
+  src: url("/widgets/erp-pages/ies-fonts/fonts/TallyDisplay-Regular.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Tally Display";
+  font-weight: 500;
+  font-display: swap;
+  src: url("/widgets/erp-pages/ies-fonts/fonts/TallyDisplay-Medium.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Tally Display";
+  font-weight: 600 700;
+  font-display: swap;
+  src: url("/widgets/erp-pages/ies-fonts/fonts/TallyDisplay-Bold.woff2") format("woff2");
+}
+
 /* The metric-matched fallback (avenir-fallback) lives in the eager styles.css,
    not here: fonts.css loads lazily (post-LCP on mobile), so a fallback defined
    here would not exist at first paint — exactly when it's needed, before the

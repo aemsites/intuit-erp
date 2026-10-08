@@ -18,6 +18,10 @@
  * Intuit's authorization for the AEM migration proof-of-concept (mirrored from
  * erp.intuit.com's own font kit). When it isn't available, text falls back to a
  * metric-matched local Arial (avenir-fallback), then the system sans-serif.
+ *
+ * 2027 brand refresh: primary color and font tokens below are retheme to the
+ * new IES palette (Superblue/Blueberry) and Tally type system, applied
+ * site-wide via these shared :root tokens per IES Web Design Foundations.
  */
 
 :root {
@@ -66,23 +70,25 @@
   --heading-color: #11181c;
   --text-muted: #6b6c72;
   --text-soft: #8d9096;
-  --primary: #0077c5;
+  --primary: #236cff;
 
-  /* Intuit blue */
-  --primary-dark: #055393;
-  --navy: #00254a;
+  /* IES Superblue */
+  --primary-dark: #0d0031;
 
-  /* primary CTA / dark hero */
-  --navy-hover: #001a36;
-  --navy-mid: #053d6d;
-  --hero-violet: #3b2f7a;
-  --blue-bright: #0097e6;
-  --blue-light: #34bfff;
+  /* IES Blueberry */
+  --navy: #0d0031;
+
+  /* primary CTA / dark hero — IES Blueberry */
+  --navy-hover: #1a0a4d;
+  --navy-mid: #0d0031;
+  --hero-violet: #0d0031;
+  --blue-bright: #236cff;
+  --blue-light: #d6e8f8;
   --green: #0a8543;
   --green-bright: #0fd46c;
   --info: #236cff;
-  --link-color: #0077c5;
-  --link-hover-color: #055393;
+  --link-color: #236cff;
+  --link-hover-color: #0d0031;
   --line: #d4d7dc;
 
   /* aliases used by lifted block CSS (prototype token names) */
@@ -91,9 +97,19 @@
   --sand: var(--light-color);
   --ink-teal: #0d333f;
 
-  /* fonts */
-  --body-font-family: "AvenirNext forINTUIT", avenir-fallback, arial, sans-serif;
-  --heading-font-family: var(--body-font-family);
+  /* IES brand refresh secondary palette — IES Web Design Foundations */
+  --ies-color-primary-superblue: #236cff;
+  --ies-color-primary-blueberry: #0d0031;
+  --ies-color-secondary-pepper: #f0f4f6;
+  --ies-color-secondary-light-blue: #d6e8f8;
+  --ies-color-secondary-light-orange: #ffcec4;
+  --ies-color-secondary-bronze: #883f1c;
+  --ies-gradient-primary: linear-gradient(180deg, #236cff 0%, #0d0031 100%);
+
+  /* fonts — Tally type system (2027 IES brand refresh). Font files/faces are
+     declared in fonts.css (shared with the widgets/erp-pages/ies-fonts widget). */
+  --body-font-family: tally, avenir-fallback, arial, sans-serif;
+  --heading-font-family: "Tally Display", var(--body-font-family);
 
   /* body sizes */
   --body-font-size-m: 16px;
@@ -117,14 +133,17 @@
   --nav-height: 92px;
   --container: 1380px;
   --radius: 4px;
-  --radius-card: 12px;
+  --radius-card: 16px;
   --section-y: 80px;
 
-  /* radius scale */
+  /* radius scale — IES brand refresh is rounder; Large 12->16px, plus new
+     XL/XXL steps (card max). See IES Web Design Foundations, Radius. */
   --radius-s: var(--radius);
   --radius-m: 8px;
   --radius-l: var(--radius-card);
-  --radius-xl: 16px;
+  --radius-xl: 24px;
+  --radius-xxl: 38px;
+  --radius-pill: 999px;
   --radius-circle: 50%;
 
   /* font weights */
@@ -444,18 +463,18 @@ button.button:disabled {
 
 a.button.primary,
 button.button.primary {
-  border-color: var(--text-color);
-  background-color: var(--text-color);
-  color: var(--background-color);
+  border-color: var(--info);
+  background-color: var(--info);
+  color: #fff;
 }
 
 a.button.primary:hover,
 a.button.primary:focus-visible,
 button.button.primary:hover,
 button.button.primary:focus-visible {
-  border-color: var(--dark-color);
-  background-color: var(--dark-color);
-  color: var(--light-color);
+  border-color: #1b5be0;
+  background-color: #1b5be0;
+  color: #fff;
 }
 
 a.button.primary[aria-disabled="true"],
@@ -1064,7 +1083,7 @@ button.button {
   justify-content: center;
   height: 44px;
   padding: 0 30px;
-  border-radius: var(--radius);
+  border-radius: var(--radius-pill);
   font-family: inherit;
   font-size: 16px;
   font-weight: 600;
@@ -1077,14 +1096,14 @@ button.button {
 
 a.button.primary,
 button.button.primary {
-  background: var(--navy);
+  background-color: var(--info);
   color: #fff;
-  border-color: var(--navy);
+  border-color: var(--info);
 }
 
 a.button.primary:hover {
-  background: var(--navy-hover);
-  border-color: var(--navy-hover);
+  background: #1b5be0;
+  border-color: #1b5be0;
 }
 
 a.button.secondary,
