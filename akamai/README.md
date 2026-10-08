@@ -149,7 +149,7 @@ curl -s -o /dev/null -D - -H 'Pragma: akamai-x-get-cache-tags' \
 
 # Push-invalidation smoke test:
 #  1. load a page (warms edge cache, now carries the nav's edge-cache-tag)
-#  2. with separate approval, change a test nav fragment and publish
+#  2. change /nav content in DA and publish (aem.live Fast-Purges the nav's tag)
 #  3. reload the page — the inlined nav reflects the change (page was purged via the union)
 ```
 
