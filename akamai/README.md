@@ -114,12 +114,11 @@ akamai/
 ```bash
 npx esbuild akamai/src/main.js --bundle --format=esm \
   --external:http-request --external:create-response --external:streams --external:log \
-  --external:encoding \
   --outfile=dist/main.js
 cp akamai/bundle.json dist/ && tar -C dist -czf akamai-inline.tgz main.js bundle.json
 ```
 
-(The `http-request`, `create-response`, `streams`, `log`, and `encoding` modules are Akamai built-ins and
+(The `http-request`, `create-response`, `streams`, `log` modules are Akamai built-ins and
 must stay external.)
 
 ## 6. Property Manager requirements (your side)
