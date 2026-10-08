@@ -79,8 +79,7 @@ the composed response is cached and indexed for tag-based purging.
 
 If the page or a successfully fetched fragment has no usable cache tags, the worker
 logs `inline: <page|nav|footer> response is missing edge-cache-tag`. The diagnostic
-contains only the response role, not URLs or authorization values. Existing
-inlining behavior is unchanged, so these warnings must be resolved before rollout.
+contains only the response role, not URLs or authorization values.
 
 > The site-auth token is read from a Property Manager user variable
 > **`PMUSER_ORIGIN_AUTH`** (see `src/main.js` → `forwardHeaders`). Keep the secret in
