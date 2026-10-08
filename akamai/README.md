@@ -1,6 +1,11 @@
 # Akamai EdgeWorker — inline header & footer into the HTML payload
 
-**Audience:** the Akamai CDN team fronting `stage.erp.intuit.com` (and, later, production).
+**Audience:** the Akamai CDN team fronting `erp.intuit.com`.
+
+**Issue #1174 status:** the internal cache-tag visibility pragma is a candidate fix.
+The deployed worker's subrequest headers, composed-response tag indexing, and actual
+purge behavior still require validation on the Akamai staging network. Do not
+enable this candidate in production based on unit tests alone.
 
 This EdgeWorker inlines the site's **header (nav)** and **footer** fragments into the
 initial HTML document at the edge, and — critically — **forwards the `edge-cache-tag`**
@@ -68,7 +73,19 @@ property's own origin request headers):
 | `X-Forwarded-Host` | the incoming host (`{{builtin.AK_HOST}}`) | aem.live routing |
 | `X-BYO-CDN-Type` | `akamai` | makes aem.live emit `Edge-Cache-Tag` (Akamai format) |
 | `X-Push-Invalidation` | `enabled` | opt into push invalidation |
+| `Pragma` | `akamai-x-get-cache-tags` | request visible tags on every internal page/nav/footer response |
 | `Authorization` | `token <site-auth>` | origin **site-auth is ON** — every subrequest 401s without it |
+
+The worker requests tag visibility independently of the client's headers. It does
+not forward arbitrary client debug pragmas. Akamai's **Cache Tag Visibility** must
+allow the pragma to expose tags on the internal subrequest paths (for example,
+`PRAGMA_HEADER`). This controls header visibility; it does not establish whether
+the composed response is cached and indexed for tag-based purging.
+
+If the page or a successfully fetched fragment has no usable cache tags, the worker
+logs `inline: <page|nav|footer> response is missing edge-cache-tag`. The diagnostic
+contains only the response role, not URLs or authorization values. Existing
+inlining behavior is unchanged, so these warnings must be resolved before rollout.
 
 > The site-auth token is read from a Property Manager user variable
 > **`PMUSER_ORIGIN_AUTH`** (see `src/main.js` → `forwardHeaders`). Keep the secret in
@@ -97,11 +114,12 @@ akamai/
 ```bash
 npx esbuild akamai/src/main.js --bundle --format=esm \
   --external:http-request --external:create-response --external:streams --external:log \
+  --external:encoding \
   --outfile=dist/main.js
 cp akamai/bundle.json dist/ && tar -C dist -czf akamai-inline.tgz main.js bundle.json
 ```
 
-(The `http-request`, `create-response`, `streams`, `log` modules are Akamai built-ins and
+(The `http-request`, `create-response`, `streams`, `log`, and `encoding` modules are Akamai built-ins and
 must stay external.)
 
 ## 6. Property Manager requirements (your side)
@@ -116,6 +134,8 @@ must stay external.)
 4. **Honor the response `Edge-Cache-Tag` for Fast Purge tag indexing** (see Open items #1).
 5. Keep the existing **Fast Purge** credentials wired (Delete by URL + Delete by cache tag)
    — this is the standard aem.live Akamai push-invalidation setup; no change needed.
+6. **Allow internal cache-tag visibility** for the page and fragment subrequests,
+   and verify their tags reach the worker before testing the composed response.
 
 ## 7. EdgeWorkers limits this design respects
 
@@ -126,17 +146,42 @@ must stay external.)
 
 ## 8. Verification
 
+Use an Akamai-team-provided staging-network endpoint or routing setup for
+`erp.intuit.com`. **Do not use `stage.erp.intuit.com`: it is the legacy WordPress
+site, not an EDS staging environment.** The commands below apply only after the
+CDN team has configured staging routing; otherwise they target production.
+
 ```bash
 # Composed page has inlined <header><nav>…</nav></header> + <footer><nav>…</nav></footer>
-curl -s https://stage.erp.intuit.com/accounting/ | grep -oE '<header>|<nav>|<footer>'
+curl -s https://erp.intuit.com/pricing/ | grep -oE '<header>|<nav>|<footer>'
+
+# Request visible tags for the composed response.
+curl -s -o /dev/null -D - -H 'Pragma: akamai-x-get-cache-tags' \
+  https://erp.intuit.com/pricing/ | grep -iE '^(HTTP|edge-cache-tag)'
 
 # Push-invalidation smoke test:
 #  1. load a page (warms edge cache, now carries the nav's edge-cache-tag)
-#  2. change /nav content in DA and publish (aem.live Fast-Purges the nav's tag)
+#  2. with separate approval, change a test nav fragment and publish
 #  3. reload the page — the inlined nav reflects the change (page was purged via the union)
 ```
 
-Unit tests for the pure logic live in the site repo: `npm test` → `test/akamai-inline.test.js`.
+Verify that the composed tag set includes the page and each inlined fragment's
+tags, and that Akamai Cache Manager indexes them. Test page, nav, and footer
+invalidations using separately approved test content/purges; a visible response
+header alone does not prove Fast Purge works. Adobe's automatic production
+push invalidation is scoped to the `main` origin, so a feature preview is not a
+substitute for this check.
+
+Run the pure helper and mocked runtime-boundary tests with:
+
+```bash
+npm test -- test/akamai-inline.test.js test/akamai-worker.test.js
+```
+
+The runtime-boundary tests exercise `responseProvider`, including a simulated
+property that exposes tags only when the internal request supplies the pragma.
+The Akamai built-ins are mapped to test doubles in `vitest.config.js`. These tests
+do not confirm how the deployed Akamai property exposes, caches, or indexes tags.
 
 ## 9. Open validation items
 
@@ -146,9 +191,14 @@ Unit tests for the pure logic live in the site repo: `npm test` → `test/akamai
    handler / PMUSER variable feeding a Property Manager **Cache Tag** behavior instead.
 2. **responseProvider cacheability** — verify the composed page is actually cached at the edge.
 3. **Attach scope** — verify the worker never runs on `*.plain.html` / JSON / assets.
+4. **Internal tag visibility** — confirm page/nav/footer subresponses expose tags
+   to `httpRequest()` with the candidate pragma and effective property settings.
 
 ## 10. Rollout
 
 The front-end change (consume-inlined-else-fetch) is **backward-compatible** and ships first;
 it no-ops until this worker starts injecting markup. Then: enable the worker on the Akamai
-**staging** network → validate §8 → `stage.erp.intuit.com` → production.
+**staging** network → validate §8, including tag indexing and real purge behavior
+→ obtain rollout approval → production. Keep the worker-disabled workaround
+until those checks pass. Deployments, content publication, and purges require
+separate approval.
