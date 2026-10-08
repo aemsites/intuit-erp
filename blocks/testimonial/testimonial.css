@@ -102,7 +102,7 @@
 }
 
 /* the class lands on the <picture>, whose height doesn't constrain the <img>
-   inside it — without this the customer logo renders at its natural size. */
+   inside it — without this the customer logo renders at its natural size.*/
 .testimonial.video .video-logo img {
   display: block;
   height: 100%;
