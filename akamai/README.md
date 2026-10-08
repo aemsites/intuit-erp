@@ -181,8 +181,4 @@ do not confirm how the deployed Akamai property exposes, caches, or indexes tags
 ## 10. Rollout
 
 The front-end change (consume-inlined-else-fetch) is **backward-compatible** and ships first;
-it no-ops until this worker starts injecting markup. Then: enable the worker on the Akamai
-**staging** network → validate §8, including tag indexing and real purge behavior
-→ obtain rollout approval → production. Keep the worker-disabled workaround
-until those checks pass. Deployments, content publication, and purges require
-separate approval.
+it no-ops until this worker starts injecting markup.
