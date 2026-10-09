@@ -621,11 +621,152 @@
   }
 }
 
-main.blog-article > .section:not(.blog-hero, .blog-toc-rail, .blog-rail, .blog-cards-container, .full-bleed) {
+/* 740px is the readable measure for article body copy. `.blog-prehero` is
+   excluded alongside `.blog-hero`: sections authored above the H1 are banner
+   content, not body copy, and the grid already spans them full width
+   (`grid-column: 1 / -1` above). */
+main.blog-article > .section:not(.blog-hero, .blog-prehero, .blog-toc-rail, .blog-rail, .blog-cards-container, .full-bleed) {
   max-width: 740px;
   margin: 0 auto;
 }
-  
+
+/* Banner sections need a container of their own, otherwise the exclusion above
+   leaves them running the full viewport. 1440px matches `.blog-cards-grid`.
+   `.full-bleed` preheros manage their own edge-to-edge background. */
+main.blog-article > .blog-prehero:not(.full-bleed) {
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+/* `!important` is required here: the section carries `data-background`, which
+   decorateSectionBackgrounds() (scripts.js) copies into an inline style. */
+main.blog-article > .blog-prehero.colored-background,
+main.blog-article > .blog-prehero.light-background {
+  background: #fff !important;
+}
+
+/* The authored `70-30` class makes media-text.js write `--split` as an inline
+   style on the block, and an inline custom property cannot be overridden from a
+   stylesheet — so set `grid-template-columns` on the row instead. */
+main.blog-article > .blog-prehero .media-text .media-row {
+  grid-template-columns: 1fr 1fr;
+}
+
+main.blog-article > .blog-prehero .media-text .media-copy,
+main.blog-article > .blog-prehero .media-text .media-visual {
+  padding: 0 40px;
+}
+
+/* The 40px column padding supplies the separation between columns, so the
+   inherited gap would offset the asset column. Centring absorbs the height
+   difference between the copy and the taller cover art. */
+main.blog-article > .blog-prehero .media-text .media-row {
+  align-items: center;
+  gap: 0;
+}
+
+/* The lead heading is authored as an h2, which would otherwise inherit the
+   article's 34px body scale. */
+main.blog-article > .blog-prehero .media-copy h2 {
+  margin-bottom: 24px;
+  color: #393a3d;
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 60px;
+}
+
+/* Cover art is not stretched to fill its column. */
+main.blog-article > .blog-prehero .media-visual img {
+  width: 100%;
+  max-width: 427px;
+  height: auto;
+}
+
+/* The stat band is a plain full-width image with no media-text block, so the
+   inset is applied to the section. `box-sizing` is needed because these
+   sections are `content-box` grid items, where padding would shrink the
+   content box rather than inset it. */
+main.blog-article > .blog-prehero:not(:has(.media-text)) {
+  box-sizing: border-box;
+  padding: 0 40px;
+}
+
+/* The wrapper carries its own 40px padding and cap, which would inset the band
+   a second time. */
+main.blog-article > .blog-prehero:not(:has(.media-text)) > .default-content-wrapper {
+  max-width: none;
+  padding: 0;
+}
+
+/* Body images are capped to 90% with vertical margins by the `width >= 1024px`
+   block above. The stat band is a banner, not body copy. */
+main.blog-article
+  > .blog-prehero:not(:has(.media-text))
+  > .default-content-wrapper
+  picture
+  > img {
+  max-width: 100%;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+/* The site-wide `a.button` primary is navy and the secondary an outline. The
+   banner CTAs use the blue/grey pair instead, scoped to the pre-hero so the
+   global tokens are untouched. */
+main.blog-article > .blog-prehero .button-wrapper {
+  gap: 20px;
+}
+
+main.blog-article > .blog-prehero a.button.primary,
+main.blog-article > .blog-prehero a.button.secondary {
+  min-height: 48px;
+  border: 0;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+main.blog-article > .blog-prehero a.button.primary {
+  background-color: #0665ae;
+  padding: 0 20px;
+  color: #fff;
+}
+
+main.blog-article > .blog-prehero a.button.primary:hover,
+main.blog-article > .blog-prehero a.button.primary:focus-visible {
+  background-color: var(--primary-dark);
+  color: #fff;
+}
+
+main.blog-article > .blog-prehero a.button.secondary {
+  background-color: #d4d7dc;
+  padding: 0 28px;
+  color: #000;
+}
+
+main.blog-article > .blog-prehero a.button.secondary:hover,
+main.blog-article > .blog-prehero a.button.secondary:focus-visible {
+  background-color: #c2c6cd;
+  color: #000;
+}
+
+/* Below the stacking breakpoint the columns are full width, so the desktop
+   caps and insets no longer apply. */
+@media (width <= 1024px) {
+  main.blog-article > .blog-prehero .media-text .media-copy,
+  main.blog-article > .blog-prehero .media-text .media-visual {
+    padding: 0;
+  }
+
+  main.blog-article > .blog-prehero .media-visual img {
+    max-width: 100%;
+  }
+
+  main.blog-article > .blog-prehero .media-copy h2 {
+    font-size: 34px;
+    line-height: 40.8px;
+  }
+}
+
 main:is(.blog-article, .case-study) > .section:not(.blog-hero, .blog-toc-rail, .blog-rail, [class*="padding-"]):has(.block) {
   background: #fff;
   padding: 0;
