@@ -51,6 +51,7 @@ function forwardHeaders(request) {
     'x-forwarded-host': [request.host],
     'x-byo-cdn-type': [CDN_TYPE],
     'x-push-invalidation': ['enabled'],
+    pragma: ['akamai-x-get-cache-tags'],
   };
   // aem.live site-auth token. Kept in Property Manager (PMUSER_ORIGIN_AUTH), never
   // in worker code. Omit the behavior/variable if the origin has no site-auth.
@@ -115,6 +116,7 @@ export async function responseProvider(request) {
 
   let html = await page.text();
   const cacheKeys = createCacheKeys(headerBag(page));
+  if (!cacheKeys.size) logger.log('inline: %s response is missing edge-cache-tag', 'page');
   const { navPath, footerPath } = resolveFragmentPaths(html);
 
   // 3. Fetch nav + footer in parallel (no-ops when a path is null — e.g. hidden
@@ -127,11 +129,15 @@ export async function responseProvider(request) {
   // 4. Inline each fragment and union its cache tag into the page's — this is what
   //    keeps push invalidation correct after inlining.
   if (nav) {
-    mergeCacheKeys(cacheKeys, headerBag(nav));
+    const headers = headerBag(nav);
+    if (!createCacheKeys(headers).size) logger.log('inline: %s response is missing edge-cache-tag', 'nav');
+    mergeCacheKeys(cacheKeys, headers);
     html = inlineTag(html, 'header', await nav.text());
   }
   if (footer) {
-    mergeCacheKeys(cacheKeys, headerBag(footer));
+    const headers = headerBag(footer);
+    if (!createCacheKeys(headers).size) logger.log('inline: %s response is missing edge-cache-tag', 'footer');
+    mergeCacheKeys(cacheKeys, headers);
     html = inlineTag(html, 'footer', await footer.text());
   }
 
