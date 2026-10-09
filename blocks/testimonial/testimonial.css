@@ -909,10 +909,15 @@
   color: #fff;
 }
 
+/* .tight: 80px below the card (desktop values below) */
+.section.testimonial-container:has(.testimonial.card.feature.tight) {
+  padding-bottom: var(--space-5xl);
+}
+
 @media (width >= 1024px) {
-  /* .tight: Figma places this card 20px under the previous section, 150px above the next title */
+  /* .tight: 20px under the previous section, 120px above the next title */
   .section.testimonial-container:has(.testimonial.card.feature.tight) {
-    padding: var(--space-m) 0 150px;
+    padding: var(--space-m) 0 120px;
   }
 
   /* Figma: 386px photo inset 20px, copy column padded 80px; 1fr rows above/below
@@ -958,7 +963,7 @@
 /* .story: dark Blueberry card, copy left, Superblue media tile right; stacks below 1024px */
 .section.testimonial-container:has(.testimonial.story) {
   background: var(--background-color);
-  padding: var(--section-y) 0;
+  padding: 60px 0; /* 80px from desktop */
 }
 
 .testimonial.story {
@@ -1043,6 +1048,7 @@
 .testimonial.story .story-attr {
   display: flex;
   flex-wrap: wrap;
+  align-items: baseline;
   gap: 0 var(--space-3xs);
   margin: 0 0 var(--space-xl);
   font-size: 12px;
@@ -1050,13 +1056,16 @@
   color: #fff;
 }
 
-.testimonial.story .story-attr .testimonial-name {
-  font-weight: var(--font-weight-bold);
+/* name and role share the figcaption's size so they sit on one baseline */
+.testimonial.story .story-attr .testimonial-name,
+.testimonial.story .story-attr .testimonial-title {
+  font-size: inherit;
+  line-height: inherit;
   color: #fff;
 }
 
+.testimonial.story .story-attr .testimonial-name { font-weight: var(--font-weight-bold); }
 .testimonial.story .story-attr .testimonial-name:not(:last-child)::after { content: ","; }
-.testimonial.story .story-attr .testimonial-title { color: #fff; }
 
 .testimonial.story .button-wrapper { margin: 0; }
 
@@ -1084,8 +1093,9 @@
 }
 
 @media (width >= 1024px) {
+  /* 80px above and below the card */
   .section.testimonial-container:has(.testimonial.story) {
-    padding: 150px 0 var(--space-5xl);
+    padding: var(--space-5xl) 0;
   }
 
   .testimonial.story { max-width: 1360px; }

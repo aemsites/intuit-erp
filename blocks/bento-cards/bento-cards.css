@@ -65,7 +65,7 @@
   gap: var(--space-l);
   box-sizing: border-box;
   min-height: 348px;
-  padding: var(--space-l);
+  padding: var(--space-m); /* 20px on mobile; 32px from tablet, 60px on two-up desktop */
   border-radius: var(--bento-radius);
   overflow: hidden;
   color: var(--bento-ink);
@@ -79,8 +79,12 @@
 .bento-cards .bento-card-body {
   display: flex;
   flex-direction: column;
-  gap: 30px;
+  gap: var(--space-m); /* icon → copy: 20px on mobile, 30px from tablet up */
   flex: 1 1 auto;
+}
+
+@media (width >= 768px) {
+  .bento-cards .bento-card-body { gap: 30px; }
 }
 
 .bento-cards .bento-card-icon {
@@ -204,9 +208,35 @@
   .bento-cards .bento-card-copy :is(h2, h3, h4) { font-size: 34px; }
 }
 
-/* section head authored as default content before the block */
+/* section head authored as default content before the block; the global
+   2rem wrapper top padding would stack on the section's own padding, so drop it */
 .section.bento-cards-container > .default-content-wrapper {
+  padding-block: 0;
+  margin-bottom: var(--space-m); /* title block → cards; 40/80px from desktop */
   text-align: center;
+}
+
+.section.bento-cards-container > .default-content-wrapper h2:not(.section-eyebrow):last-child {
+  margin-bottom: 0;
+}
+
+/* two-up section ("Migration & Onboarding") starts 80px below the logo strip (120px from desktop);
+   section-metadata padding classes can't express these values */
+.section.bento-cards-container:has(.bento-cards.two-up) {
+  padding-top: var(--space-5xl);
+}
+
+@media (width >= 1024px) {
+  .section.bento-cards-container:has(.bento-cards.two-up) { padding-top: 120px; }
+}
+
+/* 3-col bento section ends 60px below its cards (80px from desktop) */
+.section.bento-cards-container:has(.bento-cards:not(.two-up)) {
+  padding-bottom: 60px;
+}
+
+@media (width >= 1024px) {
+  .section.bento-cards-container:has(.bento-cards:not(.two-up)) { padding-bottom: var(--space-5xl); }
 }
 
 /* IES eyebrow rhythm: 8px below the injected section eyebrow on mobile, 16px from tablet up */
@@ -244,10 +274,10 @@
 }
 
 @media (width >= 1024px) {
-  /* Figma "Title block": 48/1 headline 16px under the eyebrow, 20px over the 940px subcopy, 80px to the cards */
+  /* "Title block": 48/1 headline 16px under the eyebrow, 20px over the 940px subcopy, 40px to the cards */
   .section.bento-cards-container > .default-content-wrapper {
     padding-bottom: 0;
-    margin-bottom: var(--space-5xl);
+    margin-bottom: var(--space-2xl); /* 40px from the title block to the cards (20px below desktop) */
   }
 
   .section.bento-cards-container > .default-content-wrapper h2:not(.section-eyebrow) {
@@ -281,12 +311,13 @@
     scroll-snap-type: none;
   }
 
-  .bento-cards.two-up .bento-track > .bento-card { flex: none; }
+  .bento-cards.two-up .bento-track > .bento-card { flex: none; min-height: 0; } /* no visual tile: let the copy set the height */
   .bento-cards.two-up .bento-dots { display: none; }
 }
 
 @media (width >= 768px) {
-  .bento-cards.two-up .bento-track { grid-template-columns: repeat(2, 1fr); }
+  /* two-up cards sit 20px apart; the 3-col bento keeps its wider gap */
+  .bento-cards.two-up .bento-track { grid-template-columns: repeat(2, 1fr); gap: var(--space-m); }
   .bento-cards.two-up .bento-track > .bento-card { grid-column: span 1; }
 }
 

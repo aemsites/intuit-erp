@@ -1423,3 +1423,187 @@ body.author-guide > main > .section > .default-content-wrapper :is(h1, h2, h3, h
 :where(main > .section.large-text, main .fragment-wrapper .section.large-text) > .default-content-wrapper :is(h3, h4, h5, h6) {
   margin-bottom: 2rem;
 }
+
+/* Block-scoped size helpers */
+main .block[data-block-status].h1-size-xs h1,
+main .block[data-block-status].h2-size-xs h2,
+main .block[data-block-status].h3-size-xs h3,
+main .block[data-block-status].h4-size-xs h4,
+main .block[data-block-status].h5-size-xs h5,
+main .block[data-block-status].h6-size-xs h6 {
+  font-size: var(--heading-font-size-xs);
+}
+
+main .block[data-block-status].h1-size-s h1,
+main .block[data-block-status].h2-size-s h2,
+main .block[data-block-status].h3-size-s h3,
+main .block[data-block-status].h4-size-s h4,
+main .block[data-block-status].h5-size-s h5,
+main .block[data-block-status].h6-size-s h6 {
+  font-size: var(--heading-font-size-s);
+}
+
+main .block[data-block-status].h1-size-m h1,
+main .block[data-block-status].h2-size-m h2,
+main .block[data-block-status].h3-size-m h3,
+main .block[data-block-status].h4-size-m h4,
+main .block[data-block-status].h5-size-m h5,
+main .block[data-block-status].h6-size-m h6 {
+  font-size: var(--heading-font-size-m);
+}
+
+main .block[data-block-status].h1-size-l h1,
+main .block[data-block-status].h2-size-l h2,
+main .block[data-block-status].h3-size-l h3,
+main .block[data-block-status].h4-size-l h4,
+main .block[data-block-status].h5-size-l h5,
+main .block[data-block-status].h6-size-l h6 {
+  font-size: var(--heading-font-size-l);
+}
+
+main .block[data-block-status].h1-size-xl h1,
+main .block[data-block-status].h2-size-xl h2,
+main .block[data-block-status].h3-size-xl h3,
+main .block[data-block-status].h4-size-xl h4,
+main .block[data-block-status].h5-size-xl h5,
+main .block[data-block-status].h6-size-xl h6 {
+  font-size: var(--heading-font-size-xl);
+}
+
+main .block[data-block-status].h1-size-xxl h1,
+main .block[data-block-status].h2-size-xxl h2,
+main .block[data-block-status].h3-size-xxl h3,
+main .block[data-block-status].h4-size-xxl h4,
+main .block[data-block-status].h5-size-xxl h5,
+main .block[data-block-status].h6-size-xxl h6 {
+  font-size: var(--heading-font-size-xxl);
+}
+
+/* Section-scoped size helpers (excludes blocks) */
+main .section[data-section-status].h1-size-xs h1:not(.block h1),
+main .section[data-section-status].h2-size-xs h2:not(.block h2),
+main .section[data-section-status].h3-size-xs h3:not(.block h3),
+main .section[data-section-status].h4-size-xs h4:not(.block h4),
+main .section[data-section-status].h5-size-xs h5:not(.block h5),
+main .section[data-section-status].h6-size-xs h6:not(.block h6) {
+  font-size: var(--heading-font-size-xs);
+}
+
+main .section[data-section-status].h1-size-s h1:not(.block h1),
+main .section[data-section-status].h2-size-s h2:not(.block h2),
+main .section[data-section-status].h3-size-s h3:not(.block h3),
+main .section[data-section-status].h4-size-s h4:not(.block h4),
+main .section[data-section-status].h5-size-s h5:not(.block h5),
+main .section[data-section-status].h6-size-s h6:not(.block h6) {
+  font-size: var(--heading-font-size-s);
+}
+
+main .section[data-section-status].h1-size-m h1:not(.block h1),
+main .section[data-section-status].h2-size-m h2:not(.block h2),
+main .section[data-section-status].h3-size-m h3:not(.block h3),
+main .section[data-section-status].h4-size-m h4:not(.block h4),
+main .section[data-section-status].h5-size-m h5:not(.block h5),
+main .section[data-section-status].h6-size-m h6:not(.block h6) {
+  font-size: var(--heading-font-size-m);
+}
+
+main .section[data-section-status].h1-size-l h1:not(.block h1),
+main .section[data-section-status].h2-size-l h2:not(.block h2),
+main .section[data-section-status].h3-size-l h3:not(.block h3),
+main .section[data-section-status].h4-size-l h4:not(.block h4),
+main .section[data-section-status].h5-size-l h5:not(.block h5),
+main .section[data-section-status].h6-size-l h6:not(.block h6) {
+  font-size: var(--heading-font-size-l);
+}
+
+main .section[data-section-status].h1-size-xl h1:not(.block h1),
+main .section[data-section-status].h2-size-xl h2:not(.block h2),
+main .section[data-section-status].h3-size-xl h3:not(.block h3),
+main .section[data-section-status].h4-size-xl h4:not(.block h4),
+main .section[data-section-status].h5-size-xl h5:not(.block h5),
+main .section[data-section-status].h6-size-xl h6:not(.block h6) {
+  font-size: var(--heading-font-size-xl);
+}
+
+main .section[data-section-status].h1-size-xxl h1:not(.block h1),
+main .section[data-section-status].h2-size-xxl h2:not(.block h2),
+main .section[data-section-status].h3-size-xxl h3:not(.block h3),
+main .section[data-section-status].h4-size-xxl h4:not(.block h4),
+main .section[data-section-status].h5-size-xxl h5:not(.block h5),
+main .section[data-section-status].h6-size-xxl h6:not(.block h6) {
+  font-size: var(--heading-font-size-xxl);
+}
+
+/* Block-scoped weight helpers */
+main .block[data-block-status].h1-font-weight-normal h1,
+main .block[data-block-status].h2-font-weight-normal h2,
+main .block[data-block-status].h3-font-weight-normal h3,
+main .block[data-block-status].h4-font-weight-normal h4,
+main .block[data-block-status].h5-font-weight-normal h5,
+main .block[data-block-status].h6-font-weight-normal h6 {
+  font-weight: var(--font-weight-normal);
+}
+
+main .block[data-block-status].h1-font-weight-medium h1,
+main .block[data-block-status].h2-font-weight-medium h2,
+main .block[data-block-status].h3-font-weight-medium h3,
+main .block[data-block-status].h4-font-weight-medium h4,
+main .block[data-block-status].h5-font-weight-medium h5,
+main .block[data-block-status].h6-font-weight-medium h6 {
+  font-weight: var(--font-weight-medium);
+}
+
+main .block[data-block-status].h1-font-weight-semibold h1,
+main .block[data-block-status].h2-font-weight-semibold h2,
+main .block[data-block-status].h3-font-weight-semibold h3,
+main .block[data-block-status].h4-font-weight-semibold h4,
+main .block[data-block-status].h5-font-weight-semibold h5,
+main .block[data-block-status].h6-font-weight-semibold h6 {
+  font-weight: var(--font-weight-semibold);
+}
+
+main .block[data-block-status].h1-font-weight-bold h1,
+main .block[data-block-status].h2-font-weight-bold h2,
+main .block[data-block-status].h3-font-weight-bold h3,
+main .block[data-block-status].h4-font-weight-bold h4,
+main .block[data-block-status].h5-font-weight-bold h5,
+main .block[data-block-status].h6-font-weight-bold h6 {
+  font-weight: var(--font-weight-bold);
+}
+
+/* Section-scoped weight helpers (excludes blocks) */
+main .section[data-section-status].h1-font-weight-normal h1:not(.block h1),
+main .section[data-section-status].h2-font-weight-normal h2:not(.block h2),
+main .section[data-section-status].h3-font-weight-normal h3:not(.block h3),
+main .section[data-section-status].h4-font-weight-normal h4:not(.block h4),
+main .section[data-section-status].h5-font-weight-normal h5:not(.block h5),
+main .section[data-section-status].h6-font-weight-normal h6:not(.block h6) {
+  font-weight: var(--font-weight-normal);
+}
+
+main .section[data-section-status].h1-font-weight-medium h1:not(.block h1),
+main .section[data-section-status].h2-font-weight-medium h2:not(.block h2),
+main .section[data-section-status].h3-font-weight-medium h3:not(.block h3),
+main .section[data-section-status].h4-font-weight-medium h4:not(.block h4),
+main .section[data-section-status].h5-font-weight-medium h5:not(.block h5),
+main .section[data-section-status].h6-font-weight-medium h6:not(.block h6) {
+  font-weight: var(--font-weight-medium);
+}
+
+main .section[data-section-status].h1-font-weight-semibold h1:not(.block h1),
+main .section[data-section-status].h2-font-weight-semibold h2:not(.block h2),
+main .section[data-section-status].h3-font-weight-semibold h3:not(.block h3),
+main .section[data-section-status].h4-font-weight-semibold h4:not(.block h4),
+main .section[data-section-status].h5-font-weight-semibold h5:not(.block h5),
+main .section[data-section-status].h6-font-weight-semibold h6:not(.block h6) {
+  font-weight: var(--font-weight-semibold);
+}
+
+main .section[data-section-status].h1-font-weight-bold h1:not(.block h1),
+main .section[data-section-status].h2-font-weight-bold h2:not(.block h2),
+main .section[data-section-status].h3-font-weight-bold h3:not(.block h3),
+main .section[data-section-status].h4-font-weight-bold h4:not(.block h4),
+main .section[data-section-status].h5-font-weight-bold h5:not(.block h5),
+main .section[data-section-status].h6-font-weight-bold h6:not(.block h6) {
+  font-weight: var(--font-weight-bold);
+}

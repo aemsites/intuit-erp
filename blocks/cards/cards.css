@@ -850,7 +850,7 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
   --tinted-ink: #0d0031;
 
   grid-template-columns: 1fr;
-  gap: var(--space-l);
+  gap: var(--space-m); /* 20px between cards at every breakpoint */
 }
 
 .cards.tinted > div {
@@ -938,10 +938,10 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
   color: inherit;
 }
 
+/* tablet: two cards per row, the odd card left-aligned with space on the right; three per row from desktop */
 @media (width >= 768px) {
   .cards.tinted {
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--space-xl);
+    grid-template-columns: repeat(2, 1fr);
     max-width: 1210px;
     margin-inline: auto; /* not `margin: 0 auto`, so block spacer-* classes still apply */
   }
@@ -949,6 +949,7 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
 
 /* Figma "Card (3 Col)": 46px thumbnail → eyebrow, 60px copy side and bottom insets, 28px/1.3 title */
 @media (width >= 1024px) {
+  .cards.tinted { grid-template-columns: repeat(3, 1fr); max-width: 1130px; } /* Figma: 3 × 363px cards, 20px gutters */
   .cards.tinted .cards-card-body { padding: 46px 60px 60px; }
   .cards.tinted .cards-card-body :is(h3, h4) { line-height: var(--line-height-s); }
 }
@@ -964,7 +965,7 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
 }
 
 @media (width >= 1024px) {
-  .cards.tinted.blue { max-width: 1360px; gap: var(--space-m); }
+  .cards.tinted.blue { max-width: 1360px; }
   .cards.tinted.blue > div { border-radius: 38px; }
   .cards.tinted.blue .cards-card-body { padding: 60px; }
 }
@@ -977,6 +978,21 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
   gap: 78px;
 }
 
+/* tablet: two items per row, the odd one left-aligned (like the tinted cards below); three from desktop */
+@media (width >= 768px) {
+  .cards.icons.text-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-2xl);
+  }
+}
+
+@media (width >= 1024px) {
+  .cards.icons.text-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 78px;
+  }
+}
+
 .cards.icons.text-grid .cards-card-head { margin-bottom: var(--space-m); }
 
 .cards.icons.text-grid .cards-card-image,
@@ -986,15 +1002,10 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
 }
 
 .cards.icons.text-grid .cards-card-body h3 {
-  margin: 0 0 var(--space-s);
+  margin: 0 0 var(--space-2xs);
   font-size: 28px;
   line-height: var(--line-height-s);
   color: var(--text-grid-ink);
-}
-
-/* heading → body: 16px on mobile, 20px from tablet up */
-@media (width >= 768px) {
-  .cards.icons.text-grid .cards-card-body h3 { margin-bottom: var(--space-m); }
 }
 
 .cards.icons.text-grid .cards-card-body p {
@@ -1003,9 +1014,18 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
   color: var(--text-grid-ink);
 }
 
-/* text-grid section rhythm: title 60px above, following tiles 80px below */
+/* icon text-grid section: 60px above the eyebrow and below the last cards (80px from desktop) */
+.section.cards-container:has(.cards.icons.text-grid) {
+  padding-block: 60px;
+}
+
+.section.cards-container:has(.cards.icons.text-grid) > .default-content-wrapper {
+  padding-block: 0;
+}
+
+/* text-grid section rhythm: title 40px above the icon list; tinted tiles 40px below it (60px from desktop) */
 .section.cards-container:has(.cards.icons.text-grid) > .default-content-wrapper h2:not(.section-eyebrow) {
-  margin: 0 0 60px;
+  margin: 0 0 var(--space-2xl);
   font-size: 34px;
   font-weight: var(--font-weight-medium);
   line-height: 1;
@@ -1018,17 +1038,37 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
 }
 
 .section.cards-container .cards-wrapper:has(.cards.icons.text-grid) + .cards-wrapper {
-  margin-top: 80px;
+  margin-top: var(--space-2xl);
 }
 
 @media (width >= 1024px) {
+  .section.cards-container:has(.cards.icons.text-grid) { padding-block: var(--space-5xl); }
+  .section.cards-container .cards-wrapper:has(.cards.icons.text-grid) + .cards-wrapper { margin-top: 60px; }
+
   .section.cards-container:has(.cards.icons.text-grid) > .default-content-wrapper h2:not(.section-eyebrow) {
     font-size: 48px;
   }
 }
 
-/* tinted-blue section title: 34px below desktop, 48px/1 at >=1024px, like the page's other section titles */
+/* tinted-blue section: 60px above the eyebrow (80px from desktop), no stacked wrapper padding,
+   20px title → cards and cards → button (40px from desktop); the button closes the section */
+.section.cards-container:has(.cards.tinted.blue) {
+  padding-top: 60px;
+}
+
+.section.cards-container:has(.cards.tinted.blue) > .default-content-wrapper {
+  padding-block: 0;
+}
+
+/* cards → button: 20px on mobile/tablet, 40px from desktop (below) */
+.section.cards-container:has(.cards.tinted.blue) > .default-content-wrapper > .button-wrapper {
+  margin: var(--space-m) 0 0;
+}
+
+/* tinted-blue section title: 34px below desktop, 48px/1 at >=1024px, like the page's other section titles;
+   20px to the cards on mobile/tablet, 40px from desktop (below) */
 .section.cards-container:has(.cards.tinted.blue) > .default-content-wrapper h2:not(.section-eyebrow) {
+  margin-bottom: var(--space-m);
   font-size: 34px;
   font-weight: var(--font-weight-medium);
   line-height: var(--line-height-xs);
@@ -1036,14 +1076,17 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
 }
 
 @media (width >= 1024px) {
+  .section.cards-container:has(.cards.tinted.blue) { padding-top: var(--space-5xl); }
+  .section.cards-container:has(.cards.tinted.blue) > .default-content-wrapper > .button-wrapper { margin-top: var(--space-2xl); }
+
   .section.cards-container:has(.cards.tinted.blue) > .default-content-wrapper h2:not(.section-eyebrow) {
+    margin-bottom: var(--space-2xl);
     font-size: 48px;
     line-height: var(--line-height-none);
   }
 }
 
-@media (width <= 768px) {
-  .cards.icons.text-grid { gap: var(--space-2xl); }
+@media (width < 768px) {
+  .cards.icons.text-grid { gap: var(--space-m); } /* 20px between list items on mobile */
   .cards.icons.text-grid .cards-card-body h3 { font-size: 24px; }
-  .section.cards-container .cards-wrapper:has(.cards.icons.text-grid) + .cards-wrapper { margin-top: var(--space-3xl); }
 }

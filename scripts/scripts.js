@@ -300,6 +300,14 @@ function decorateButtons(main) {
   });
 }
 
+// Converts authored title to aria-label for all links & buttons
+function decorateLinkTitles(root) {
+  root.querySelectorAll('a[title]').forEach((link) => {
+    link.setAttribute('aria-label', link.getAttribute('title'));
+    link.removeAttribute('title');
+  });
+}
+
 const IMAGE_EXT_RE = /\.(jpe?g|png|gif|webp)(\?|$)/i;
 const HEX_RE = /#([\da-f]{6}|[\da-f]{3})\b/gi;
 
@@ -431,6 +439,7 @@ function decorateVideoLinks(main) {
  * @param {Element} main The fully decorated page content
  */
 export function decorateExternalLinks(main) {
+  decorateLinkTitles(main);
   decorateLinkTargets(main);
   main.querySelectorAll('a[href^="http"]').forEach((link) => {
     if (link.target) return;
@@ -468,6 +477,7 @@ export function decorateMain(main) {
   decorateSectionBackgrounds(main);
   decorateSectionEyebrows(main);
   decorateBlocks(main);
+  decorateLinkTitles(main);
   decorateButtons(main);
   decorateVideoLinks(main);
   decorateFocalPoints(main);
@@ -572,7 +582,7 @@ async function loadLazy(doc) {
   // opt out of the global header/footer via the `hide-header` / `hide-footer` metadata
   const headerEl = doc.querySelector('header');
   if (headerEl && document.body.classList.contains('hide-header')) headerEl.remove();
-  else loadHeader(headerEl);
+  else loadHeader(headerEl).then(() => decorateLinkTitles(headerEl));
 
   const main = doc.querySelector('main');
   // Below-the-fold personalization/experimentation
@@ -617,7 +627,7 @@ async function loadLazy(doc) {
 
   const footerEl = doc.querySelector('footer');
   if (footerEl && document.body.classList.contains('hide-footer')) footerEl.remove();
-  else loadFooter(footerEl);
+  else loadFooter(footerEl).then(() => decorateLinkTitles(footerEl));
 
   // Persistent bottom-right sales widget ("Contact us" / "Talk to sales") — see
   // CONTACT_US_WAIT_MS above for why this waits on a pending personalization decision.
