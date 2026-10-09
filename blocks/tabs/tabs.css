@@ -650,14 +650,14 @@
 }
 
 .section.tabs-container:has(.tabs.vertical-panel.dark) {
-  --it-band: #fff;
-  --it-surface: #fff;
-  --it-text: var(--heading-color);
-  --it-text-soft: var(--text-muted);
+  --it-band: var(--navy);
+  --it-surface: #001d3c;
+  --it-text: #fff;
+  --it-text-soft: rgb(255 255 255 / 90%);
   --it-accent: var(--info);
-  --it-tab-idle: #fff;
+  --it-tab-idle: var(--navy);
 
-  background-color: #fff;
+  background-color: var(--navy);
 }
 
 .section.tabs-container:has(.tabs.vertical-panel) {
