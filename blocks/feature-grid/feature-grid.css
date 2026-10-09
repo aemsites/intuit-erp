@@ -100,7 +100,7 @@
 
 .feature-grid .feature-cta {
   display: inline-block; align-self: flex-start; background: transparent; border: 1.5px solid #fff;
-  color: #fff; padding: var(--space-xs) var(--space-l); border-radius: 6px; font-weight: var(--font-weight-semibold); font-size: 0.95rem;
+  color: #fff; padding: var(--space-xs) var(--space-l); border-radius: var(--radius-pill); font-weight: var(--font-weight-semibold); font-size: 0.95rem;
   text-decoration: none; cursor: pointer; transition: background 0.2s ease, color 0.2s ease;
 }
 .feature-grid .feature-cta:hover { background: #fff; color: var(--navy); }

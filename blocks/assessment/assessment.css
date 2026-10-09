@@ -114,7 +114,7 @@ main .section .assessment a.button.assessment-cta {
   border-color: var(--assessment-cta);
   background-color: var(--assessment-cta);
   color: #fff;
-  border-radius: 8px;
+  border-radius: var(--radius-pill);
   padding: 14px 28px;
   font-size: 17px;
 

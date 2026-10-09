@@ -124,7 +124,7 @@ a.button.secondary.skip-to-main:focus {
   clip-path: none;
   white-space: normal;
   transform: translateX(-50%);
-  border-radius: var(--radius);
+  border-radius: var(--radius-pill);
   color: var(--ink-teal, #0d333f);
   box-shadow: 0 2px 8px rgb(0 0 0 / 20%);
   outline: 2px solid var(--navy);
@@ -466,7 +466,7 @@ main:focus {
       height: 48px;
       padding: 0 var(--space-3xl) 0 var(--space-m);
       box-sizing: border-box;
-      border-radius: var(--radius);
+      border-radius: var(--radius-pill);
       background: var(--navy);
       color: #fff;
       font-size: 16px;
@@ -509,7 +509,7 @@ main:focus {
       box-sizing: border-box;
       background: none;
       border: 1px solid var(--text);
-      border-radius: var(--radius);
+      border-radius: var(--radius-pill);
       padding: 0;
       cursor: pointer;
    }

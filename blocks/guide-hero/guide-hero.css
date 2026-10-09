@@ -118,7 +118,7 @@
   white-space: normal;
   text-align: center;
   border: 2px solid var(--navy);
-  border-radius: var(--radius);
+  border-radius: var(--radius-pill);
   background: none;
   color: var(--navy);
   font-size: 16px;
