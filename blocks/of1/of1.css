@@ -1,0 +1,392 @@
+/* ============================================================
+   OF1 Generative Block — Intuit Enterprise Suite
+
+   Brand-aligned styling for the OF1 block's own UI: search landing
+   (title, input, chips), loading skeleton, follow-up suggestions,
+   and the entrance animation on generated sections.
+
+   Per-section visual design (hero/cards/tables/columns) belongs to
+   each template's own stylesheet injected by the OF1 client SDK.
+   ============================================================ */
+
+/* ─── Brand Token Mapping ─────────────────────────────────── */
+
+.of1,
+.generated-section,
+.generative-suggestions,
+.generative-breadcrumb {
+  --primary:        #0077c5;
+  --primary-hover:  #055393;
+  --text:           #21262a;
+  --text-secondary: #6b6c72;
+  --surface:        #fff;
+  --surface-muted:  #f7f8f3;
+  --surface-dark:   #0d2035;
+  --accent:         #0077c5;
+  --border:         #d4d7dc;
+  --radius:         4px;
+  --radius-card:    12px;
+  --radius-pill:    30px;
+  --font-heading:   "AvenirNext forINTUIT", avenir-fallback, arial, sans-serif;
+  --font-body:      "AvenirNext forINTUIT", avenir-fallback, arial, sans-serif;
+  --font-mono:      'SF Mono', 'Fira Code', monospace;
+  --shadow-card:    0 2px 8px rgb(0 0 0 / 6%);
+  --shadow-lift:    0 8px 24px rgb(0 0 0 / 10%);
+  --transition:     0.2s ease-out;
+}
+
+/* ─── Container & Layout ──────────────────────────────────── */
+
+.section.of1-container {
+  padding: 0;
+}
+
+.of1-wrapper {
+  max-width: 100% !important;
+  margin: 0;
+  padding: 0 !important;
+}
+
+/* ─── Search Landing UI ────────────────────────────────────── */
+
+.of1-search-ui {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - var(--nav-height, 92px));
+  padding: 96px 24px 72px;
+  background: var(--surface);
+  text-align: center;
+}
+
+.of1-title {
+  font-family: var(--font-heading);
+  font-size: clamp(2.25rem, 5vw, 3rem);
+  font-weight: 700;
+  color: #11181c;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  margin: 0 auto 12px;
+  text-align: center;
+  width: 100%;
+}
+
+.of1-subtitle {
+  font-family: var(--font-body);
+  font-size: 1.0625rem;
+  color: var(--text-secondary);
+  margin: 0 auto 40px;
+  max-width: 520px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+/* ─── Input & Submit ──────────────────────────────────────── */
+
+.of1-input-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.of1-input {
+  width: 100%;
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 16px 60px 16px 24px;
+  line-height: 1.4;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.of1-input::placeholder {
+  color: #8d9096;
+}
+
+.of1-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgb(0 119 197 / 12%);
+}
+
+.of1-submit {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background var(--transition), transform var(--transition);
+}
+
+.of1-submit:hover {
+  background: var(--primary-hover);
+  transform: translateY(-50%) scale(1.05);
+}
+
+/* ─── Quick Suggestion Chips ──────────────────────────────── */
+
+.of1-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 28px;
+  max-width: 700px;
+}
+
+.of1-chip {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition), color var(--transition);
+}
+
+.of1-chip:hover {
+  background: #eff4f9;
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+/* ─── Loading Skeleton ────────────────────────────────────── */
+
+.of1-skeleton-wrap {
+  padding: 48px 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.of1-skeleton {
+  background: var(--surface-muted);
+  border-radius: var(--radius-card);
+  animation: of1-shimmer 1.5s ease-in-out infinite;
+}
+
+.of1-skeleton-hero {
+  width: 100%;
+  height: 320px;
+  border-radius: var(--radius-card);
+  margin-bottom: 32px;
+}
+
+.of1-skeleton-heading {
+  width: 60%;
+  height: 28px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.of1-skeleton-text {
+  width: 90%;
+  height: 16px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+
+.of1-skeleton-text.short {
+  width: 45%;
+}
+
+.of1-skeleton-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-top: 32px;
+}
+
+.of1-skeleton-card {
+  height: 220px;
+  border-radius: var(--radius-card);
+}
+
+@keyframes of1-shimmer {
+  0% { opacity: 0.4; }
+  50% { opacity: 0.7; }
+  100% { opacity: 0.4; }
+}
+
+/* ─── Generated Sections ──────────────────────────────────── */
+
+.generated-section {
+  animation: of1-fade-in 0.4s ease-out both;
+}
+
+@keyframes of1-fade-in {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── Follow-up Suggestions ───────────────────────────────── */
+
+.generative-suggestions {
+  padding: 40px 24px;
+  text-align: center;
+}
+
+.generative-suggestions.dimmed {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.suggestion-input-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+}
+
+.suggestions-header {
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  opacity: 0.7;
+}
+
+.suggestion-custom {
+  position: relative;
+  width: 600px;
+  max-width: 100%;
+}
+
+.suggestion-input {
+  width: 100%;
+  font-family: var(--font-body);
+  font-size: 15px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 16px 56px 16px 20px;
+  line-height: 1.4;
+  outline: none;
+  background: transparent;
+  color: inherit;
+  -webkit-appearance: none;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.suggestion-input::placeholder {
+  color: #8d9096;
+}
+
+.suggestion-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgb(0 119 197 / 12%);
+}
+
+.suggestion-submit {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--primary);
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background var(--transition);
+}
+
+.suggestion-submit:hover {
+  background: var(--primary-hover);
+}
+
+.suggestion-submit svg {
+  width: 16px;
+  height: 16px;
+  stroke: #fff;
+}
+
+.suggestions-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+}
+
+.suggestion-btn {
+  display: inline-flex;
+  align-items: center;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: inherit;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition), color var(--transition);
+}
+
+.suggestion-btn:hover {
+  background: #eff4f9;
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.suggestion-restart {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-body);
+  font-size: 11px;
+  opacity: 0.6;
+  text-decoration: underline;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  padding: 8px 12px;
+}
+
+.suggestion-restart:hover {
+  opacity: 1;
+}
+
+/* ─── Responsive ──────────────────────────────────────────── */
+
+@media (width < 768px) {
+  .of1-search-ui {
+    padding: 64px 16px 48px;
+  }
+
+  .of1-title {
+    font-size: 2rem;
+  }
+
+  .of1-skeleton-card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .of1-skeleton-hero {
+    height: 200px;
+  }
+}
