@@ -252,3 +252,88 @@ describe('footer cookie preferences — scroll pinning', () => {
     expect(scrollTo).not.toHaveBeenCalled();
   });
 });
+
+describe('footer cookie preferences — anchor and OneTrust/intuit_gdpr fallback (#705)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    document.head.innerHTML = '';
+    document.body.innerHTML = '';
+    resetTrackingState();
+    window.scrollTo = vi.fn();
+    stubFetch();
+  });
+  afterEach(() => {
+    vi.clearAllTimers();
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+    delete window.OneTrust;
+    delete window.intuit_gdpr;
+    delete window.scrollTo;
+  });
+
+  it('renders "Manage cookies" as an anchor without the OneTrust class hook', async () => {
+    const block = await buildFooter();
+    const link = block.querySelector('.footer-copy-btn');
+
+    expect(link.tagName).toBe('A');
+    expect(link.getAttribute('href')).toBe('#');
+    expect(link.classList.contains('ot-sdk-show-settings')).toBe(false);
+    expect(block.querySelector('.ot-sdk-show-settings')).toBeNull();
+    expect(link.textContent.trim()).toBe('Manage cookies');
+  });
+
+  it('opens OneTrust when the SDK is loaded and does not hit the fallback', async () => {
+    window.OneTrust = {
+      ToggleInfoDisplay: vi.fn(),
+      getGeolocationData: () => ({ country: 'US', state: 'TX' }),
+    };
+    window.intuit_gdpr = { showCookiePreference: vi.fn() };
+    const block = await buildFooter();
+
+    const notCancelled = clickManageCookies(block);
+
+    expect(window.OneTrust.ToggleInfoDisplay).toHaveBeenCalledTimes(1);
+    expect(window.intuit_gdpr.showCookiePreference).not.toHaveBeenCalled();
+    expect(notCancelled).toBe(false);
+  });
+
+  it('falls back to intuit_gdpr when the OneTrust SDK failed to load', async () => {
+    window.intuit_gdpr = { showCookiePreference: vi.fn() };
+    const block = await buildFooter();
+
+    clickManageCookies(block);
+
+    expect(window.intuit_gdpr.showCookiePreference).toHaveBeenCalledTimes(1);
+  });
+
+  it('falls back to intuit_gdpr when OneTrust exists without ToggleInfoDisplay', async () => {
+    window.OneTrust = {};
+    window.intuit_gdpr = { showCookiePreference: vi.fn() };
+    const block = await buildFooter();
+
+    clickManageCookies(block);
+
+    expect(window.intuit_gdpr.showCookiePreference).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not throw when neither consent SDK is present', async () => {
+    const block = await buildFooter();
+
+    expect(() => clickManageCookies(block)).not.toThrow();
+    expect(block.querySelector('.footer-copy-btn')
+      .dispatchEvent(new window.MouseEvent('click', { bubbles: true, cancelable: true })))
+      .toBe(false);
+  });
+
+  it('keeps the "Manage cookies" label for non-California visitors', async () => {
+    window.OneTrust = {
+      ToggleInfoDisplay: vi.fn(),
+      getGeolocationData: () => ({ country: 'US', state: 'TX' }),
+    };
+    const block = await buildFooter();
+
+    vi.advanceTimersByTime(1000);
+
+    expect(block.querySelector('.footer-copy-btn').textContent.trim()).toBe('Manage cookies');
+  });
+});
