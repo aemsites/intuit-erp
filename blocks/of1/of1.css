@@ -1,12 +1,11 @@
 /* ============================================================
    OF1 Generative Block — Intuit Enterprise Suite
 
-   Brand-aligned styling for the OF1 block's own UI: search landing
-   (title, input, chips), loading skeleton, follow-up suggestions,
-   and the entrance animation on generated sections.
-
-   Per-section visual design (hero/cards/tables/columns) belongs to
-   each template's own stylesheet injected by the OF1 client SDK.
+   Brand-aligned styling for the OF1 block UI: search landing
+   (title, input, chips), loading skeleton, follow-up suggestion
+   controls, plus brand tokens and entrance animation on each
+   generated section. Per-section visual design belongs to each
+   template's own stylesheet (injected by the OF1 client SDK).
    ============================================================ */
 
 /* ─── Brand Token Mapping ─────────────────────────────────── */
@@ -19,10 +18,10 @@
   --primary-hover:  #055393;
   --text:           #21262a;
   --text-secondary: #6b6c72;
-  --surface:        #fff;
+  --surface:        #ffffff;
   --surface-muted:  #f7f8f3;
   --surface-dark:   #0d2035;
-  --accent:         #0077c5;
+  --accent:         #236cff;
   --border:         #d4d7dc;
   --radius:         4px;
   --radius-card:    12px;
@@ -30,8 +29,8 @@
   --font-heading:   "AvenirNext forINTUIT", avenir-fallback, arial, sans-serif;
   --font-body:      "AvenirNext forINTUIT", avenir-fallback, arial, sans-serif;
   --font-mono:      'SF Mono', 'Fira Code', monospace;
-  --shadow-card:    0 2px 8px rgb(0 0 0 / 6%);
-  --shadow-lift:    0 8px 24px rgb(0 0 0 / 10%);
+  --shadow-card:    0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-lift:    0 8px 24px rgba(0, 0, 0, 0.10);
   --transition:     0.2s ease-out;
 }
 
@@ -111,7 +110,7 @@
 .of1-input:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgb(0 119 197 / 12%);
+  box-shadow: 0 0 0 3px rgba(0, 119, 197, 0.12);
 }
 
 .of1-submit {
@@ -221,7 +220,7 @@
 
 @keyframes of1-shimmer {
   0% { opacity: 0.4; }
-  50% { opacity: 0.7; }
+  50% { opacity: 0.8; }
   100% { opacity: 0.4; }
 }
 
@@ -293,7 +292,7 @@
 
 .suggestion-input:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgb(0 119 197 / 12%);
+  box-shadow: 0 0 0 3px rgba(0, 119, 197, 0.12);
 }
 
 .suggestion-submit {
