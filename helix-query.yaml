@@ -1,0 +1,11 @@
+version: 1
+indices:
+  of1-knowledge:
+    include:
+      - '/of1/knowledge/**'
+      - '/templates/**'
+    target: /query-index.json
+    properties:
+      title:
+        select: head > meta[property="og:title"]
+        value: attribute(el, "content")
