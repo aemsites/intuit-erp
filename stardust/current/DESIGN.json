@@ -1,0 +1,117 @@
+{
+  "_provenance": {
+    "tool": "stardust:extract",
+    "origin": "https://of1--intuit-erp--aemsites.aem.page",
+    "extractedAt": "2026-10-13T14:23:45Z",
+    "pagesAnalyzed": ["index", "accounting", "account-management"]
+  },
+  "name": "Intuit Enterprise Suite",
+  "description": "Enterprise-grade ERP finance platform by Intuit",
+  "colors": {
+    "primary": "#0077c5",
+    "primary-hover": "#055393",
+    "brand-blue": "#236CFF",
+    "text": "#21262a",
+    "heading": "#11181c",
+    "muted": "#6b6c72",
+    "background": "#ffffff",
+    "surface": "#f7f8f3",
+    "surface-alt": "#f0f4f6",
+    "surface-hero": "#eff4f9",
+    "dark-section": "#0d2035"
+  },
+  "typography": {
+    "display": {
+      "fontFamily": "\"AvenirNext forINTUIT\", avenir-fallback, arial, sans-serif",
+      "fontSize": "48px",
+      "fontWeight": 700,
+      "lineHeight": 1.15
+    },
+    "headline": {
+      "fontFamily": "\"AvenirNext forINTUIT\", avenir-fallback, arial, sans-serif",
+      "fontSize": "38px",
+      "fontWeight": 700,
+      "lineHeight": 1.2
+    },
+    "title": {
+      "fontFamily": "\"AvenirNext forINTUIT\", avenir-fallback, arial, sans-serif",
+      "fontSize": "30px",
+      "fontWeight": 600,
+      "lineHeight": 1.3
+    },
+    "body": {
+      "fontFamily": "\"AvenirNext forINTUIT\", avenir-fallback, arial, sans-serif",
+      "fontSize": "16px",
+      "fontWeight": 400,
+      "lineHeight": 1.5
+    },
+    "label": {
+      "fontFamily": "\"AvenirNext forINTUIT\", avenir-fallback, arial, sans-serif",
+      "fontSize": "14px",
+      "fontWeight": 600,
+      "lineHeight": 1.4,
+      "letterSpacing": "normal"
+    }
+  },
+  "rounded": {
+    "sm": "4px",
+    "md": "8px",
+    "lg": "12px",
+    "xl": "16px",
+    "circle": "50%"
+  },
+  "spacing": {
+    "sm": "8px",
+    "md": "16px",
+    "lg": "24px",
+    "xl": "32px",
+    "xxl": "48px"
+  },
+  "components": {
+    "button-primary": {
+      "backgroundColor": "{colors.primary}",
+      "textColor": "{colors.background}",
+      "rounded": "{rounded.sm}",
+      "padding": "12px 24px"
+    },
+    "button-primary-hover": {
+      "backgroundColor": "{colors.primary-hover}",
+      "textColor": "{colors.background}"
+    },
+    "button-secondary": {
+      "backgroundColor": "{colors.background}",
+      "textColor": "{colors.text}",
+      "rounded": "{rounded.sm}",
+      "padding": "12px 24px"
+    },
+    "card": {
+      "backgroundColor": "{colors.background}",
+      "rounded": "{rounded.lg}",
+      "padding": "24px"
+    }
+  },
+  "extensions": {
+    "componentStyle": "clean-professional",
+    "motifs": {
+      "radius": {
+        "default": "4px",
+        "card": "12px",
+        "scale": { "s": "4px", "m": "8px", "l": "12px", "xl": "16px", "circle": "50%" }
+      },
+      "shadows": [],
+      "patterns": ["card", "hero-with-stats", "tabbed-features", "FAQ-accordion", "contact-form", "dark-band"]
+    },
+    "voice": {
+      "register": "brand",
+      "tone": "professional, confident, clear",
+      "heroHeadline": "Enterprise-grade finance built to scale",
+      "ctaSamples": ["Schedule a call", "For accountants", "Explore agents"],
+      "heroImage": "https://of1--intuit-erp--aemsites.aem.page/media_15d88d0defedd14c79123557e7c778cfd4bffbf29.png?width=1200&format=pjpg&optimize=medium"
+    },
+    "privateFont": {
+      "family": "AvenirNext forINTUIT",
+      "fallback": "avenir-fallback, arial, sans-serif",
+      "note": "Proprietary Intuit typeface; cannot be redistributed"
+    }
+  }
+}
