@@ -193,13 +193,9 @@ main > .section.logo-band-container:has(.logo-band.marquee) > div { max-width: n
 .section.logo-band-container:has(.logo-band.strip) {
   max-width: none;
   margin: 0;
-  padding: 60px 0 0; /* 60px above the eyebrow (80px from desktop, below); the next section owns the gap below */
+  padding: 40px 0 0; /* 40px above the eyebrow; the next section owns the gap below */
   border-radius: 0;
   background: var(--background-color);
-}
-
-@media (width >= 1024px) {
-  .section.logo-band-container:has(.logo-band.strip) { padding-top: var(--space-5xl); }
 }
 
 /* eyebrow authored via Section Metadata (eyebrow-text), injected by scripts.js;
