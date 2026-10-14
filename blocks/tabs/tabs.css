@@ -674,7 +674,7 @@
 
 .tabs-container:has(.tabs.vertical-panel) .tabs-wrapper { max-width: 1160px; margin: 0 auto; }
 
-.tabs-container:has(.tabs.vertical-panel) .default-content-wrapper h2 {
+:where(.tabs-container:has(.tabs.vertical-panel) .default-content-wrapper) h2 {
   font-size: 28px; line-height: var(--line-height-m); font-weight: var(--font-weight-normal); color: var(--it-text);
   text-align: center; margin: 0 0 var(--space-m);
 }
@@ -837,7 +837,7 @@
 @media (width >= 1024px) {
   main > .section.tabs-container:has(.tabs.vertical-panel) { padding: 120px 20px 60px; }
 
-  .tabs-container:has(.tabs.vertical-panel) .default-content-wrapper h2 { font-size: 34px; line-height: var(--line-height-m); }
+  :where(.tabs-container:has(.tabs.vertical-panel) .default-content-wrapper) h2 { font-size: 34px; line-height: var(--line-height-m); }
 
   .tabs.vertical-panel { position: relative; margin-top: 60px; }
 
@@ -872,7 +872,7 @@
 }
 
 @media (width >= 1200px) {
-  .tabs-container:has(.tabs.vertical-panel) .default-content-wrapper h2 { font-size: 40px; line-height: 56px; }
+  :where(.tabs-container:has(.tabs.vertical-panel) .default-content-wrapper) h2 { font-size: 40px; line-height: 56px; }
   .tabs-container:has(.tabs.vertical-panel) .default-content-wrapper p { font-size: 20px; line-height: 28px; }
   .tabs.vertical-panel .it-heading { font-size: 34px; line-height: 36px; }
 }
@@ -971,13 +971,13 @@ main > .section.tabs-container:has(.tabs.vertical-panel.industry) { padding-top:
   .tabs.vertical-panel.industry { margin-top: var(--space-2xl); }
 }
 
-.tabs-container:has(.tabs.vertical-panel.industry) .default-content-wrapper h2 {
+:where(.tabs-container:has(.tabs.vertical-panel.industry) .default-content-wrapper) h2 {
   font-weight: var(--font-weight-medium);
   color: var(--it-text);
 }
 
 /* section heading: 34px below desktop (48px/1 at >=1024px); → subcopy 16px on mobile, 20px from tablet up */
-.tabs-container:has(.tabs.vertical-panel.industry) .default-content-wrapper h2:not(.section-eyebrow) {
+:where(.tabs-container:has(.tabs.vertical-panel.industry) .default-content-wrapper) h2:not(.section-eyebrow) {
   margin-bottom: var(--space-s);
   font-size: 34px;
   line-height: var(--line-height-xs);
@@ -991,7 +991,7 @@ main > .section.tabs-container:has(.tabs.vertical-panel.industry) { padding-top:
 
 /* section headline: 48px/1 on desktop, matching the page's other section titles */
 @media (width >= 1024px) {
-  .tabs-container:has(.tabs.vertical-panel.industry) .default-content-wrapper h2:not(.section-eyebrow) {
+  :where(.tabs-container:has(.tabs.vertical-panel.industry) .default-content-wrapper) h2:not(.section-eyebrow) {
     font-size: 48px;
     line-height: var(--line-height-none);
   }

@@ -684,7 +684,7 @@
   font-size: var(--heading-font-size-xs);
 }
 
-.section.cards-container:has(.cards.accent.carousel) .default-content-wrapper h2 {
+.cards-container:has(.accent.carousel) .default-content-wrapper h2 {
   font-size: 40px;
   font-weight: var(--font-weight-bold);
 }
@@ -1024,7 +1024,7 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
 }
 
 /* text-grid section rhythm: title 40px above the icon list; tinted tiles 40px below it (60px from desktop) */
-.section.cards-container:has(.cards.icons.text-grid) > .default-content-wrapper h2:not(.section-eyebrow) {
+:where(.section.cards-container:has(.cards.icons.text-grid) > .default-content-wrapper) h2:not(.section-eyebrow) {
   margin: 0 0 var(--space-2xl);
   font-size: 34px;
   font-weight: var(--font-weight-medium);
@@ -1045,7 +1045,7 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
   .section.cards-container:has(.cards.icons.text-grid) { padding-block: var(--space-5xl); }
   .section.cards-container .cards-wrapper:has(.cards.icons.text-grid) + .cards-wrapper { margin-top: 60px; }
 
-  .section.cards-container:has(.cards.icons.text-grid) > .default-content-wrapper h2:not(.section-eyebrow) {
+  :where(.section.cards-container:has(.cards.icons.text-grid) > .default-content-wrapper) h2:not(.section-eyebrow) {
     font-size: 48px;
   }
 }
@@ -1067,7 +1067,7 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
 
 /* tinted-blue section title: 34px below desktop, 48px/1 at >=1024px, like the page's other section titles;
    20px to the cards on mobile/tablet, 40px from desktop (below) */
-.section.cards-container:has(.cards.tinted.blue) > .default-content-wrapper h2:not(.section-eyebrow) {
+:where(.cards-container:has(.cards.tinted.blue) > .default-content-wrapper) h2:not(.section-eyebrow) {
   margin-bottom: var(--space-m);
   font-size: 34px;
   font-weight: var(--font-weight-medium);
@@ -1079,7 +1079,7 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
   .section.cards-container:has(.cards.tinted.blue) { padding-top: var(--space-5xl); }
   .section.cards-container:has(.cards.tinted.blue) > .default-content-wrapper > .button-wrapper { margin-top: var(--space-2xl); }
 
-  .section.cards-container:has(.cards.tinted.blue) > .default-content-wrapper h2:not(.section-eyebrow) {
+  :where(.cards-container:has(.cards.tinted.blue) > .default-content-wrapper) h2:not(.section-eyebrow) {
     margin-bottom: var(--space-2xl);
     font-size: 48px;
     line-height: var(--line-height-none);
