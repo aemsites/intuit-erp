@@ -1203,90 +1203,91 @@ body.blog-home .section:not(:first-of-type)>.default-content-wrapper> :is(h1, h2
 }
 
 
+/* section/block spacing scale: s 16px, m 20px, l 40px, xl 60px, xxl 80px, xxxl 120px, xxxxl 160px */
 main > .section.spacer-top-s,
-main .fragment-wrapper .section.spacer-top-s { margin-top: 1rem; }
+main .fragment-wrapper .section.spacer-top-s { margin-top: 16px; }
 
 main > .section.spacer-top-m,
-main .fragment-wrapper .section.spacer-top-m { margin-top: 1.5rem; }
+main .fragment-wrapper .section.spacer-top-m { margin-top: 20px; }
 
 main > .section.spacer-top-l,
-main .fragment-wrapper .section.spacer-top-l { margin-top: 2.5rem; }
+main .fragment-wrapper .section.spacer-top-l { margin-top: 40px; }
 
 main > .section.spacer-top-xl,
-main .fragment-wrapper .section.spacer-top-xl { margin-top: 4rem; }
+main .fragment-wrapper .section.spacer-top-xl { margin-top: 60px; }
 
 main > .section.spacer-top-xxl,
-main .fragment-wrapper .section.spacer-top-xxl { margin-top: 6rem; }
+main .fragment-wrapper .section.spacer-top-xxl { margin-top: 80px; }
 
 main > .section.spacer-bottom-s,
-main .fragment-wrapper .section.spacer-bottom-s { margin-bottom: 1rem; }
+main .fragment-wrapper .section.spacer-bottom-s { margin-bottom: 16px; }
 
 main > .section.spacer-bottom-m,
-main .fragment-wrapper .section.spacer-bottom-m { margin-bottom: 1.5rem; }
+main .fragment-wrapper .section.spacer-bottom-m { margin-bottom: 20px; }
 
 main > .section.spacer-bottom-l,
-main .fragment-wrapper .section.spacer-bottom-l { margin-bottom: 2.5rem; }
+main .fragment-wrapper .section.spacer-bottom-l { margin-bottom: 40px; }
 
 main > .section.spacer-bottom-xl,
-main .fragment-wrapper .section.spacer-bottom-xl { margin-bottom: 4rem; }
+main .fragment-wrapper .section.spacer-bottom-xl { margin-bottom: 60px; }
 
 main > .section.spacer-bottom-xxl,
-main .fragment-wrapper .section.spacer-bottom-xxl { margin-bottom: 6rem; }
+main .fragment-wrapper .section.spacer-bottom-xxl { margin-bottom: 80px; }
 
 main > .section.spacer-bottom-xxxl,
-main .fragment-wrapper .section.spacer-bottom-xxxl { margin-bottom: 8rem; }
+main .fragment-wrapper .section.spacer-bottom-xxxl { margin-bottom: 120px; }
 
 main > .section.spacer-bottom-xxxxl,
-main .fragment-wrapper .section.spacer-bottom-xxxxl { margin-bottom: 10rem; }
+main .fragment-wrapper .section.spacer-bottom-xxxxl { margin-bottom: 160px; }
 
-:where(main > .section, main .fragment-wrapper .section) .block.spacer-top-s { margin-top: 1rem; }
-:where(main > .section, main .fragment-wrapper .section) .block.spacer-top-m { margin-top: 1.5rem; }
-:where(main > .section, main .fragment-wrapper .section) .block.spacer-top-l { margin-top: 2.5rem; }
-:where(main > .section, main .fragment-wrapper .section) .block.spacer-top-xl { margin-top: 4rem; }
-:where(main > .section, main .fragment-wrapper .section) .block.spacer-top-xxl { margin-top: 6rem; }
-:where(main > .section, main .fragment-wrapper .section) .block.spacer-bottom-s { margin-bottom: 1rem; }
-:where(main > .section, main .fragment-wrapper .section) .block.spacer-bottom-m { margin-bottom: 1.5rem; }
-:where(main > .section, main .fragment-wrapper .section) .block.spacer-bottom-l { margin-bottom: 2.5rem; }
-:where(main > .section, main .fragment-wrapper .section) .block.spacer-bottom-xl { margin-bottom: 4rem; }
-:where(main > .section, main .fragment-wrapper .section) .block.spacer-bottom-xxl { margin-bottom: 6rem; }
-:where(main > .section, main .fragment-wrapper .section) .block.spacer-bottom-xxxl { margin-bottom: 8rem; }
-:where(main > .section, main .fragment-wrapper .section) .block.spacer-bottom-xxxxl { margin-bottom: 10rem; }
+:where(main > .section, main .fragment-wrapper .section) .block.spacer-top-s { margin-top: 16px; }
+:where(main > .section, main .fragment-wrapper .section) .block.spacer-top-m { margin-top: 20px; }
+:where(main > .section, main .fragment-wrapper .section) .block.spacer-top-l { margin-top: 40px; }
+:where(main > .section, main .fragment-wrapper .section) .block.spacer-top-xl { margin-top: 60px; }
+:where(main > .section, main .fragment-wrapper .section) .block.spacer-top-xxl { margin-top: 80px; }
+:where(main > .section, main .fragment-wrapper .section) .block.spacer-bottom-s { margin-bottom: 16px; }
+:where(main > .section, main .fragment-wrapper .section) .block.spacer-bottom-m { margin-bottom: 20px; }
+:where(main > .section, main .fragment-wrapper .section) .block.spacer-bottom-l { margin-bottom: 40px; }
+:where(main > .section, main .fragment-wrapper .section) .block.spacer-bottom-xl { margin-bottom: 60px; }
+:where(main > .section, main .fragment-wrapper .section) .block.spacer-bottom-xxl { margin-bottom: 80px; }
+:where(main > .section, main .fragment-wrapper .section) .block.spacer-bottom-xxxl { margin-bottom: 120px; }
+:where(main > .section, main .fragment-wrapper .section) .block.spacer-bottom-xxxxl { margin-bottom: 160px; }
 
 main > .section.padding-top-s,
-main .fragment-wrapper .section.padding-top-s { padding-top: 1rem; }
+main .fragment-wrapper .section.padding-top-s { padding-top: 16px; }
 
 main > .section.padding-top-m,
-main .fragment-wrapper .section.padding-top-m { padding-top: 1.5rem; }
+main .fragment-wrapper .section.padding-top-m { padding-top: 20px; }
 
 main > .section.padding-top-l,
-main .fragment-wrapper .section.padding-top-l { padding-top: 2.5rem; }
+main .fragment-wrapper .section.padding-top-l { padding-top: 40px; }
 
 main > .section.padding-top-xl,
-main .fragment-wrapper .section.padding-top-xl { padding-top: 4rem; }
+main .fragment-wrapper .section.padding-top-xl { padding-top: 60px; }
 
 main > .section.padding-top-xxl,
-main .fragment-wrapper .section.padding-top-xxl { padding-top: 6rem; }
+main .fragment-wrapper .section.padding-top-xxl { padding-top: 80px; }
 
 main > .section.padding-bottom-s,
-main .fragment-wrapper .section.padding-bottom-s { padding-bottom: 1rem; }
+main .fragment-wrapper .section.padding-bottom-s { padding-bottom: 16px; }
 
 main > .section.padding-bottom-m,
-main .fragment-wrapper .section.padding-bottom-m { padding-bottom: 1.5rem; }
+main .fragment-wrapper .section.padding-bottom-m { padding-bottom: 20px; }
 
 main > .section.padding-bottom-l,
-main .fragment-wrapper .section.padding-bottom-l { padding-bottom: 2.5rem; }
+main .fragment-wrapper .section.padding-bottom-l { padding-bottom: 40px; }
 
 main > .section.padding-bottom-xl,
-main .fragment-wrapper .section.padding-bottom-xl { padding-bottom: 4rem; }
+main .fragment-wrapper .section.padding-bottom-xl { padding-bottom: 60px; }
 
 main > .section.padding-bottom-xxl,
-main .fragment-wrapper .section.padding-bottom-xxl { padding-bottom: 6rem; }
+main .fragment-wrapper .section.padding-bottom-xxl { padding-bottom: 80px; }
 
 main > .section.padding-bottom-xxxl,
-main .fragment-wrapper .section.padding-bottom-xxxl { padding-bottom: 8rem; }
+main .fragment-wrapper .section.padding-bottom-xxxl { padding-bottom: 120px; }
 
 main > .section.padding-bottom-xxxxl,
-main .fragment-wrapper .section.padding-bottom-xxxxl { padding-bottom: 10rem; }
+main .fragment-wrapper .section.padding-bottom-xxxxl { padding-bottom: 160px; }
 
 :where(main > .section, main .fragment-wrapper .section) .block.padding-top-s { padding-top: 1rem; }
 :where(main > .section, main .fragment-wrapper .section) .block.padding-top-m { padding-top: 1.5rem; }

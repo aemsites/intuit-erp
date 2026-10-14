@@ -227,7 +227,7 @@
    See decorateFeatures in comparison-table.js. ---- */
 .section.comparison-table-container:has(.comparison-table.features) {
   background: #eff4f9;
-  padding: var(--space-xl) 0;
+  padding: 40px 0;
 }
 
 .comparison-table-container:has(.comparison-table.features) .default-content-wrapper:first-of-type h2 {
