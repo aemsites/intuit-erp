@@ -19,13 +19,18 @@
  *   italic-only line renders as the eyebrow, the first plain paragraph after
  *   the bold name is the role, and any further paragraphs are a footnote.
  *
- * Variant .story (Figma ACQ-4698 "Desktop migration story") — one row, a
- * dark Blueberry card: copy left, media tile right. 2 cells:
+ * Variant .story (Figma ACQ-4698 "Desktop migration story") — one or more
+ * rows, each a dark Blueberry card: copy left, media tile right. 2-3 cells:
  *   1. content — an optional italic-only eyebrow, a heading (h2-h4), quote
  *      paragraph(s), a bold-only name line, a plain role line, and an
  *      optional bold link paragraph that becomes the CTA button
  *   2. media — one image: the DAM "feature" asset, which already carries the
  *      Superblue tile, inset photo and customer logo
+ *   3. disclaimer (optional) — small centred legal copy rendered as a band
+ *      across the bottom of the card (Figma IES Manufacturing "VOC set")
+ *   Two or more rows render as a one-at-a-time carousel with dot pagination
+ *   and prev/next arrows (same controls as .card.carousel); one row renders
+ *   the card alone.
  *
  * Variant .video (index) — one or more rows, each row 1-2 cells:
  *   1. media — poster <img>, optionally a second image (customer logo)
@@ -607,7 +612,7 @@ function buildCardCarousel(figures) {
 }
 
 function buildStory(row) {
-  const [contentCell, mediaCell] = [...row.children];
+  const [contentCell, mediaCell, noteCell] = [...row.children];
   const figure = document.createElement('figure');
   figure.className = 'testimonial-card story-card';
 
@@ -697,6 +702,16 @@ function buildStory(row) {
     figure.append(tile);
   }
 
+  if (noteCell && noteCell.textContent.trim()) {
+    const note = document.createElement('p');
+    note.className = 'story-disclaimer';
+    const paras = [...noteCell.querySelectorAll('p')];
+    note.innerHTML = paras.length
+      ? paras.map((p) => p.innerHTML).join('<br>')
+      : noteCell.innerHTML;
+    figure.append(note);
+  }
+
   return figure;
 }
 
@@ -721,9 +736,11 @@ export default function decorate(block) {
   }
 
   if (block.classList.contains('story')) {
-    const row = block.querySelector(':scope > div');
-    if (!row) return;
-    block.replaceChildren(buildStory(row));
+    const rows = [...block.querySelectorAll(':scope > div')];
+    if (!rows.length) return;
+    const figures = rows.map(buildStory);
+    // 2+ stories page one at a time; a lone story needs no controls
+    block.replaceChildren(figures.length > 1 ? buildCardCarousel(figures) : figures[0]);
     track();
     return;
   }

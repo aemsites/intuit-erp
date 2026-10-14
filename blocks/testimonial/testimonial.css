@@ -1136,3 +1136,95 @@
   .testimonial.story .story-media,
   .testimonial.story .testimonial-photo { border-radius: 38px; }
 }
+
+/* .story with 2+ rows: one-at-a-time carousel (shares buildCardCarousel).
+   Figma IES Manufacturing "VOC set": disclaimer band across the card's foot,
+   then dots + 60px Superblue arrows right-aligned beneath the card. */
+.testimonial.story .testimonial-carousel-viewport { overflow: hidden; }
+
+.testimonial.story .testimonial-carousel-track {
+  display: flex;
+  transition: transform 0.4s cubic-bezier(0.35, 0, 0.25, 1);
+}
+
+.testimonial.story .testimonial-carousel-track .story-card {
+  flex: 0 0 100%;
+  width: 100%;
+  min-width: 0;
+}
+
+/* Figma: 30px of air above and below the disclaimer instead of the card's full inset */
+.testimonial.story .story-card:has(.story-disclaimer) {
+  row-gap: 30px;
+  padding-bottom: 30px;
+}
+
+.testimonial.story .story-disclaimer {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.1;
+  text-align: center;
+  color: #fff;
+}
+
+.testimonial.story .testimonial-carousel-nav {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-m);
+  padding-top: var(--space-m);
+}
+
+.testimonial.story .testimonial-dots {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.testimonial.story .testimonial-dot {
+  width: 10px;
+  height: 10px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-circle);
+  background: #aecbff;
+  cursor: pointer;
+}
+
+.testimonial.story .testimonial-dot.is-active { background: var(--ies-color-primary-superblue, #236cff); }
+
+.testimonial.story .testimonial-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-circle);
+  background: var(--ies-color-primary-superblue, #236cff);
+  color: #fff;
+  cursor: pointer;
+}
+
+.testimonial.story .testimonial-arrow::before {
+  content: "";
+  width: 18px;
+  height: 18px;
+  background: currentcolor;
+  mask: var(--tc-chevron) center / 18px no-repeat;
+  -webkit-mask: var(--tc-chevron) center / 18px no-repeat;
+}
+
+.testimonial.story .testimonial-arrow:hover:not(:disabled),
+.testimonial.story .testimonial-arrow:focus-visible:not(:disabled) { background: #0d0031; }
+
+.testimonial.story .testimonial-arrow:disabled { background: #bfd4f4; cursor: default; }
+
+@media (width >= 768px) {
+  .testimonial.story .testimonial-carousel-nav { gap: 40px; padding-top: 40px; }
+  .testimonial.story .testimonial-dots { gap: 20px; }
+  .testimonial.story .testimonial-dot { width: 12px; height: 12px; }
+  .testimonial.story .testimonial-arrow { width: 60px; height: 60px; }
+}
