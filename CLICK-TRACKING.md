@@ -116,6 +116,12 @@ its own trail leaf.
 
 Page-scoped rows win over a global row with the same id. Blank residue cells defer to code.
 
+**Authoring.** Maintain these overrides with the **Tracking Inspector** DA panel
+([`tools/plugins/tracking/`](tools/plugins/tracking/README.md)), which inventories a page's rendered
+targets so authors never hand-derive an id — or, headless or without the panel, the
+[`edit-click-tracking-overrides`](experience-workspace/skills/edit-click-tracking-overrides.md) skill,
+which writes the same rows through the same ETag-safe save → preview → publish lifecycle.
+
 Supported residue columns are `object`, `object-detail`, `action`, `ui-object`,
 `ui-object-detail`, `ui-action`, `ui-access-point`, `wa-link`, `custom-properties`, and `survey`.
 `custom-properties` and `survey` use newline- or semicolon-separated `key=value` pairs in the sheet.
