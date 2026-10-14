@@ -263,6 +263,17 @@ describe('decorate — live Marketo form', () => {
     );
   });
 
+  it('warns and skips the form when no Munchkin id resolves', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    getSiteConfig.mockResolvedValue({});
+    const block = make([['formId', '1058']]);
+    await decorate(block);
+    await flush();
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('1058'));
+    expect(window.MktoForms2.loadForm).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
   it('loads ZoomInfo FormComplete by default', async () => {
     delete window.ziFcInstalled;
     delete window.ZIProjectKey;

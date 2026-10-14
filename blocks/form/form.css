@@ -322,6 +322,18 @@
   padding: var(--section-y) 0;
 }
 
+/* boxed band matches prod's --sky-blue (#e0edff), which differs from .sky (#eaf3fb) above */
+.section.form-container:has(.form.boxed) {
+  background: var(--sky-blue);
+  padding: 60px 40px 40px;
+}
+
+@media (width < 768px) {
+  .section.form-container:has(.form.boxed) {
+    padding-inline: 20px;
+  }
+}
+
 .section.sky .section.form-container {
   background: var(--sky-blue);
 }

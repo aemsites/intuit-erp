@@ -604,7 +604,11 @@ export const getMappedHiddenFields = (configObj) => {
 async function embedMarketoForm(formEl, cfg, config, env) {
   // generate an load Forms2 script URL.
   const munchkin = config.munchkinId || cfg[MARKETO_MUNCHKIN_KEYS[env]] || cfg['marketo.munchkin'];
-  if (!munchkin) return;
+  if (!munchkin) {
+    // eslint-disable-next-line no-console
+    console.warn(`form: Marketo form ${config.formId} was not rendered because no Munchkin id resolved for env "${env}" (set marketo.munchkin in site-config)`);
+    return;
+  }
   const host = `//${munchkin.toLowerCase()}.mktoweb.com`;
   const forms2Src = `${host}/js/forms2/js/forms2.min.js`;
 
