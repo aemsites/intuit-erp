@@ -963,7 +963,7 @@
 /* .story: dark Blueberry card, copy left, Superblue media tile right; stacks below 1024px */
 .section.testimonial-container:has(.testimonial.story) {
   background: var(--background-color);
-  padding: 60px 0; /* 80px from desktop */
+  padding: 40px 0;
 }
 
 .testimonial.story {
@@ -1093,11 +1093,6 @@
 }
 
 @media (width >= 1024px) {
-  /* 80px above and below the card */
-  .section.testimonial-container:has(.testimonial.story) {
-    padding: var(--space-5xl) 0;
-  }
-
   .testimonial.story { max-width: 1360px; }
 
   /* Figma: 437px copy and 555px tile pinned to the 115px card insets */
