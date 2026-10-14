@@ -186,7 +186,7 @@ describe('cardEl', () => {
     expect(el.querySelector('img').getAttribute('src')).toContain('width=750');
     expect(el.querySelector('source[media="(min-width: 768px)"]').getAttribute('srcset')).toContain('width=2000');
   });
-  it('renders a featured card with the featured class and a larger image request', () => {
+  it('renders a featured card with the featured class and the same image request as other cards', () => {
     const el = cardEl(data[0], true);
     expect(el.classList.contains('featured')).toBe(true);
     expect(el.querySelector('img').getAttribute('src')).toContain('width=750');

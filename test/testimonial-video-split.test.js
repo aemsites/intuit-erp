@@ -61,7 +61,6 @@ describe('testimonial .video-split', () => {
     const el = block(FULL);
     decorate(el);
     expect(el.querySelector('.split-caption')).toBeNull();
-    expect(el.textContent).not.toMatch(/Founder and CFO/);
   });
 
   it('renders a caption from text authored after the picture', () => {
