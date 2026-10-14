@@ -1,5 +1,10 @@
-import { describe, it, expect } from 'vitest';
+import {
+  describe, it, expect, vi,
+} from 'vitest';
 import decorate, { buildVideoFrame, buildVideoSection } from '../blocks/testimonial/testimonial.js';
+
+// scripts.js runs loadPage() on import; stub it so nothing outlives the tests
+vi.mock('../scripts/scripts.js', () => ({ openVideoModal: vi.fn() }));
 
 function cells(html) {
   const row = document.createElement('div');
@@ -12,10 +17,13 @@ function rows(n) {
   for (let i = 0; i < n; i += 1) {
     const r = document.createElement('div');
     r.innerHTML = `
-      <div><img src="/p${i}.jpg" alt="Speaker ${i}"></div>
-      <div>Eyebrow ${i}</div><div>Quote ${i}</div>
-      <div>Name ${i} <a href="/s${i}">See their story</a></div>
-      <div>https://www.youtube.com/watch?v=id${i}</div>`;
+      <div><p><picture><img src="/p${i}.jpg" alt="Speaker ${i}"></picture></p></div>
+      <div>
+        <p><em>Eyebrow ${i}</em></p>
+        <p>Quote ${i}</p>
+        <p>Name ${i} <a href="/s${i}">See their story</a></p>
+        <p>https://www.youtube.com/watch?v=id${i}</p>
+      </div>`;
     wrap.append(r);
   }
   return [...wrap.children];
@@ -24,11 +32,13 @@ function rows(n) {
 describe('buildVideoFrame', () => {
   it('builds a caption with eyebrow, quote and attribution link', () => {
     const frame = buildVideoFrame(cells(`
-      <div><img src="/caleb.jpg"></div>
-      <div>Professional Services</div>
-      <div>Unified 9 entities and cut accounting time by 50%*</div>
-      <div>Caleb McDaniels, CFO Rhodes Companies <a href="/blog/case-study/rhodes">See their story</a></div>
-      <div>https://www.youtube.com/watch?v=gpHd4jd6dTk</div>`));
+      <div><p><picture><img src="/caleb.jpg" alt="Caleb McDaniels"></picture></p></div>
+      <div>
+        <p><em>Professional Services</em></p>
+        <p>Unified 9 entities and cut accounting time by 50%*</p>
+        <p>Caleb McDaniels, CFO Rhodes Companies <a href="/blog/case-study/rhodes">See their story</a></p>
+        <p>https://www.youtube.com/watch?v=gpHd4jd6dTk</p>
+      </div>`));
     expect(frame.classList.contains('video-frame')).toBe(true);
     expect(frame.querySelector('.video-eyebrow').textContent).toBe('Professional Services');
     expect(frame.querySelector('.video-quote').textContent).toContain('Unified 9 entities');
@@ -36,15 +46,19 @@ describe('buildVideoFrame', () => {
     expect(frame.querySelector('.video-play')).not.toBeNull();
   });
 
-  it('uses an inline mp4 background when an mp4 cell is present, and renders a logo overlay', () => {
+  it('uses an inline mp4 background when an mp4 link is authored, and renders a logo overlay', () => {
     const frame = buildVideoFrame(cells(`
-      <div><img src="/caleb.jpg"></div>
-      <div>Professional Services</div>
-      <div>Q</div>
-      <div>Caleb</div>
-      <div>https://www.youtube.com/watch?v=gpHd4jd6dTk</div>
-      <div><a href="https://erp.intuit.com/x/case-study-rhodes-cutdown-video-ies-us-en-sm.mp4">video</a></div>
-      <div><img src="/rhodes-logo.png"></div>`));
+      <div>
+        <p><picture><img src="/caleb.jpg" alt="Caleb McDaniels"></picture></p>
+        <p><picture><img src="/rhodes-logo.png" alt="Rhodes Companies"></picture></p>
+      </div>
+      <div>
+        <p><em>Professional Services</em></p>
+        <p>Unified 9 entities and cut accounting time by 50%*</p>
+        <p>Caleb McDaniels, CFO Rhodes Companies <a href="/blog/case-study/rhodes">See their story</a></p>
+        <p>https://www.youtube.com/watch?v=gpHd4jd6dTk</p>
+        <p><a href="/media/videos/case-study-rhodes-cutdown-video-ies-us-en-sm.mp4">Video</a></p>
+      </div>`));
     const bg = frame.querySelector('.video-bg');
     expect(bg.tagName).toBe('VIDEO');
     expect(bg.getAttribute('src')).toContain('case-study-rhodes-cutdown-video');

@@ -163,21 +163,15 @@ describe('comparison-table decorate', () => {
     expect(popover.textContent).toBe('Row/field level permissions.');
   });
 
-  it('sets a data-adaptive attribute on the block for mobile card CSS', () => {
-    const block = make(row('', 'A', 'B', 'C', 'D'));
-    decorate(block);
-    expect(block.hasAttribute('data-adaptive')).toBe(true);
-  });
-
-  it('tags each value cell with data-label matching its column header', () => {
+  it('scrolls the table horizontally on mobile instead of reflowing it into cards', () => {
     const block = make([
       row('', 'Intuit Enterprise Suite', 'NetSuite', 'Sage Intacct', 'MS Dynamics'),
       row('Implementation'),
       row('Onboarding timeline', 'Less than 2 months', '6 months', '4 months', '6 months'),
     ].join(''));
     decorate(block);
-    const tds = block.querySelectorAll('tbody tr:not(.cmp-band):not(.cmp-head) td');
-    expect(tds[0].dataset.label).toBe('Intuit Enterprise Suite');
-    expect(tds[3].dataset.label).toBe('MS Dynamics');
+    expect(block.querySelector('.cmp-table-scroll > table')).not.toBeNull();
+    expect(block.hasAttribute('data-adaptive')).toBe(false);
+    expect(block.querySelectorAll('td[data-label]').length).toBe(0);
   });
 });

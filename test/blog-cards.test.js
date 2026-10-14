@@ -167,7 +167,8 @@ describe('cardEl', () => {
     expect(el.getAttribute('href')).toBe('/blog/financials/a');
     const img = el.querySelector('img');
     expect(img.getAttribute('src')).toContain('/a.jpg');
-    expect(img.getAttribute('src')).toContain('width=400');
+    expect(img.getAttribute('src')).toContain('width=750');
+    expect(el.querySelector('source[media="(min-width: 768px)"]').getAttribute('srcset')).toContain('width=2000');
     expect(el.textContent).toContain('A');
   });
   it('renders category, title and date in the source card\'s order', () => {
@@ -179,10 +180,11 @@ describe('cardEl', () => {
     const el = cardEl({ path: '/blog/erp', title: 'Listing' });
     expect(el.querySelector('.blog-card-category')).toBeNull();
   });
-  it('is not featured by default (no featured class, smaller image request)', () => {
+  it('is not featured by default, and requests the same image sizes as a featured card', () => {
     const el = cardEl(data[0]);
     expect(el.className).not.toContain('featured');
-    expect(el.querySelector('img').getAttribute('src')).toContain('width=400');
+    expect(el.querySelector('img').getAttribute('src')).toContain('width=750');
+    expect(el.querySelector('source[media="(min-width: 768px)"]').getAttribute('srcset')).toContain('width=2000');
   });
   it('renders a featured card with the featured class and a larger image request', () => {
     const el = cardEl(data[0], true);

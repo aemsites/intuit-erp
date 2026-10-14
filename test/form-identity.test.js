@@ -3,6 +3,13 @@ import {
 } from 'vitest';
 import { trackFormSubmit, getTraitData } from '../blocks/form/form.js';
 
+// form.js imports scripts.js, which runs loadPage() on import; stub it (as
+// lead-form-config.test.js does) so nothing outlives the tests
+vi.mock('../scripts/scripts.js', () => ({
+  decorateExternalLinks: vi.fn(),
+  getSiteConfig: vi.fn(() => Promise.resolve({})),
+}));
+
 describe('getTraitData', () => {
   it('maps Marketo field names to ECS identity traits', () => {
     const traits = getTraitData({
