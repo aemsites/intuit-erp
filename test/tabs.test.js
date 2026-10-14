@@ -223,14 +223,14 @@ describe('tabs.vertical: disclosure accordion, shared media column', () => {
   });
 });
 
-describe('tabs.navy: dark rail (desktop) / accordion (mobile)', () => {
-  function makeNavy() {
-    return make('navy', row(':construction: Construction', '<h3>Protect profit</h3><p>Body copy.</p><p><a href="/construction/">Explore</a></p><img src="/dash.png" alt=""><blockquote>Great product.</blockquote><cite>Scott, RedHammer</cite>')
+describe('tabs.vertical-panel.dark: dark rail (desktop) / accordion (mobile)', () => {
+  function makeDark() {
+    return make('vertical-panel dark', row(':construction: Construction', '<h3>Protect profit</h3><p>Body copy.</p><p><a href="/construction/">Explore</a></p><img src="/dash.png" alt=""><blockquote>Great product.</blockquote><cite>Scott, RedHammer</cite>')
       + row('Nonprofit', '<h3>H2</h3><p>B2</p>'));
   }
 
   it('builds N tabs + N panels (disclosure pattern, no tablist role)', () => {
-    const block = makeNavy();
+    const block = makeDark();
     decorate(block);
     expect(block.querySelector('[role="tablist"]')).toBeNull();
     const tabs = block.querySelectorAll('.it-tab');
@@ -241,7 +241,7 @@ describe('tabs.navy: dark rail (desktop) / accordion (mobile)', () => {
   });
 
   it('renders icon, media, quote/attribution, and CTA from authored content', () => {
-    const block = makeNavy();
+    const block = makeDark();
     decorate(block);
     const tab = block.querySelectorAll('.it-tab')[0];
     const panel = block.querySelectorAll('.it-panel')[0];
@@ -254,7 +254,7 @@ describe('tabs.navy: dark rail (desktop) / accordion (mobile)', () => {
 
   it('re-clicking the open tab collapses it on mobile but not on desktop', () => {
     setViewport(390);
-    const block = makeNavy();
+    const block = makeDark();
     decorate(block);
     const tabs = block.querySelectorAll('.it-tab');
     const panels = block.querySelectorAll('.it-panel');
@@ -263,7 +263,7 @@ describe('tabs.navy: dark rail (desktop) / accordion (mobile)', () => {
     expect(tabs[0].getAttribute('aria-expanded')).toBe('false');
 
     setViewport(1440);
-    const desktopBlock = makeNavy();
+    const desktopBlock = makeDark();
     decorate(desktopBlock);
     const dTabs = desktopBlock.querySelectorAll('.it-tab');
     const dPanels = desktopBlock.querySelectorAll('.it-panel');

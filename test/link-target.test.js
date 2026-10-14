@@ -8,9 +8,11 @@ vi.mock('../scripts/aem.js', async (importOriginal) => {
   return {
     ...actual,
     getMetadata: vi.fn((name) => (name === 'hide-contact-widget' ? 'yes' : '')),
-    loadFooter: vi.fn(),
-    loadHeader: vi.fn(),
-    loadSections: vi.fn(),
+    // scripts.js runs loadPage() on import; a never-settling promise parks it
+    // here so it can't throw after the tests finish
+    loadFooter: vi.fn(() => new Promise(() => {})),
+    loadHeader: vi.fn(() => new Promise(() => {})),
+    loadSections: vi.fn(() => new Promise(() => {})),
   };
 });
 

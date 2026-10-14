@@ -1,4 +1,6 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import {
+  describe, it, expect, vi, beforeEach,
+} from 'vitest';
 import {
   deriveForCta, trackingKey, trackAs, stampTrail, stampInteraction, resetTrackingState,
 } from '../scripts/tracking.js';
@@ -6,6 +8,15 @@ import { computeTrackingPayload } from '../scripts/diff/tracker-replica.mjs';
 import decorateFaq from '../blocks/faq/faq.js';
 import decorateCards from '../blocks/cards/cards.js';
 import decorateVideo from '../blocks/video/video.js';
+
+// blocks/video/video.js imports scripts.js, which runs loadPage() on import; a never-settling
+// promise parks it at the header/sections so it can't throw after the tests finish
+vi.mock('../scripts/aem.js', async (importOriginal) => ({
+  ...(await importOriginal()),
+  loadHeader: vi.fn(() => new Promise(() => {})),
+  loadFooter: vi.fn(() => new Promise(() => {})),
+  loadSections: vi.fn(() => new Promise(() => {})),
+}));
 
 // Derive matrix — realistic CTA shapes observed across the documented
 // reference pages (homepage, /pricing/, /accounting/multi-entity/, a /blog/

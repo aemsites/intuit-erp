@@ -4,14 +4,15 @@ import { describe, expect, it } from 'vitest';
 const eagerStyles = readFileSync('styles/styles.css', 'utf8');
 
 describe('third-party mobile CLS guards', () => {
-  it('gives the active 1Mind launcher its settled mobile shell dimensions', () => {
+  it('keeps the active 1Mind mobile shell hidden and positioned until ready, without forcing a size', () => {
     const mobileRule = eagerStyles.match(
       /@media \(width < 768px\)\s*{[\s\S]*?html\.onemind-active #onemind-widget\s*{([^}]*)}/,
     );
 
     expect(mobileRule).toBeTruthy();
-    expect(mobileRule[1]).toContain('width: 214px !important;');
-    expect(mobileRule[1]).toContain('height: 90px !important;');
+    // 6f74142 dropped the forced 214x90 shell; the widget sizes itself
+    expect(mobileRule[1]).not.toMatch(/(^|[\s;])width:/);
+    expect(mobileRule[1]).not.toMatch(/(^|[\s;])height:/);
     expect(mobileRule[1]).toContain('right: 12px !important;');
     expect(mobileRule[1]).toContain('bottom: 12px !important;');
     expect(mobileRule[1]).toContain('visibility: hidden !important;');

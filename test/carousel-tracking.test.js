@@ -1,5 +1,5 @@
 import {
-  describe, it, expect, beforeEach,
+  describe, it, expect, vi, beforeEach,
 } from 'vitest';
 // Real-render wiring guard for the carousel's spotlight-testimonial thumbnail chevrons. Prod
 // tags the ‹/› controls with the authored id testimonial|thumbnail_{left,right}_chevron (+ a
@@ -9,6 +9,16 @@ import {
   initTracking, resetTrackingState, stampInteraction, trackIdOf,
 } from '../scripts/tracking.js';
 import { computeTrackingPayload } from '../scripts/diff/tracker-replica.mjs';
+
+// blocks/carousel/carousel.js imports scripts.js, which runs loadPage() on import; a
+// never-settling promise parks it at the header/sections so it can't throw after
+// the tests finish
+vi.mock('../scripts/aem.js', async (importOriginal) => ({
+  ...(await importOriginal()),
+  loadHeader: vi.fn(() => new Promise(() => {})),
+  loadFooter: vi.fn(() => new Promise(() => {})),
+  loadSections: vi.fn(() => new Promise(() => {})),
+}));
 
 const { default: decorate } = await import('../blocks/carousel/carousel.js');
 

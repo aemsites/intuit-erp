@@ -1,5 +1,5 @@
 import {
-  describe, it, expect, vi, beforeEach,
+  describe, it, expect, vi, beforeEach, afterEach,
 } from 'vitest';
 
 // createOptimizedPicture pulls in the full aem.js; stub it to a bare img.
@@ -91,7 +91,15 @@ function make(variant) {
 }
 
 describe('event-cards', () => {
-  beforeEach(() => { window.innerWidth = 1440; });
+  beforeEach(() => {
+    window.innerWidth = 1440;
+    // upcoming events dated before today are hidden, so pin "today" ahead of
+    // every fixture date; only Date is faked, so timers and promises run as usual
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-07-01T12:00:00'));
+  });
+
+  afterEach(() => { vi.useRealTimers(); });
 
   it('renders only the events matching the bucket', async () => {
     const decorate = await loadBlock();
@@ -104,6 +112,15 @@ describe('event-cards', () => {
     await decorate(onDemand);
     expect([...onDemand.querySelectorAll('.event-card h3')].map((h) => h.textContent))
       .toEqual(['Recorded webinar']);
+  });
+
+  it('hides upcoming events whose date has passed', async () => {
+    vi.setSystemTime(new Date('2026-08-01T12:00:00'));
+    const decorate = await loadBlock();
+    const block = make('upcoming');
+    await decorate(block);
+    expect([...block.querySelectorAll('.event-card h3')].map((h) => h.textContent))
+      .toEqual(['Later event']);
   });
 
   it('skips untitled index rows such as the /events listing page', async () => {
