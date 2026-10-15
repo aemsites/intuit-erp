@@ -397,8 +397,10 @@
   .comparison-table .cf-card { padding: 40px 60px; }
 }
 
-/* desktop (Figma 14074-13996): 48px headline, 20px subcopy, 20/16 rows, full-size lockups */
+/* desktop (Figma 14074-13996): 80px section inset, 48px headline, 20px subcopy, 20/16 rows, full-size lockups */
 @media (width >= 1024px) {
+  .section.comparison-table-container:has(.comparison-table.features) { padding: 80px 0; }
+
   .comparison-table-container:has(.comparison-table.features) .default-content-wrapper:first-of-type h2 {
     margin-bottom: 20px;
     font-size: 48px;
