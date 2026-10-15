@@ -873,7 +873,17 @@ main > .section.contained,
 main .fragment-wrapper .section.contained {
   margin: 40px auto;
   max-width: 1360px;
-  border-radius: 6px;
+  border-radius: 30px;
+}
+
+@media (width >= 768px) {
+  main > .section.contained,
+  main .fragment-wrapper .section.contained { border-radius: 24px; }
+}
+
+@media (width >= 1024px) {
+  main > .section.contained,
+  main .fragment-wrapper .section.contained { border-radius: 38px; }
 }
 
 /* case-studies index intro (Template: "Case Studies Index" metadata -> body.case-studies-index) */
