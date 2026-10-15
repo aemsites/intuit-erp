@@ -932,3 +932,12 @@
 
   .media-text.checklist .media-row { gap: 100px; }
 }
+
+/* inside a contained section the card already supplies the 40px / 20px
+   gutters, so the checklist wrapper adds none of its own below desktop */
+@media (width < 1024px) {
+  .section.contained.media-text-container:has(.media-text.checklist) > .media-text-wrapper {
+    padding-left: 0;
+    padding-right: 0;
+  }
+}

@@ -868,22 +868,70 @@ main .section.ies:is(.dark, .navy, .super-blue, .dark-background) a.button.secon
   color: #0d0031;
 }
 
-/* contained sections */
+/* contained sections: a rounded card inset from the viewport — 20px gutters on
+   phones, 40px from tablet, centred at 1360px max on desktop (Figma IES
+   Manufacturing "Banners": tablet 15076-47792, mobile 15095-64995) */
 main > .section.contained,
 main .fragment-wrapper .section.contained {
-  margin: 40px auto;
+  margin: 40px 20px;
   max-width: 1360px;
   border-radius: 30px;
 }
 
 @media (width >= 768px) {
   main > .section.contained,
-  main .fragment-wrapper .section.contained { border-radius: 24px; }
+  main .fragment-wrapper .section.contained {
+    margin: 40px;
+    border-radius: 24px;
+  }
 }
 
 @media (width >= 1024px) {
   main > .section.contained,
-  main .fragment-wrapper .section.contained { border-radius: 38px; }
+  main .fragment-wrapper .section.contained {
+    margin: 40px auto;
+    max-width: min(1360px, calc(100% - 80px));
+    border-radius: 38px;
+  }
+}
+
+/* IES banner inset inside a contained colored section: tablet 60px above/below
+   with the copy 90px from the card edge, phones 80px above/below and 20px in */
+main > .section.contained.ies.colored-background,
+main .fragment-wrapper .section.contained.ies.colored-background {
+  padding-top: 80px;
+  padding-bottom: 80px;
+
+  > div.default-content-wrapper {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+}
+
+@media (width >= 768px) {
+  main > .section.contained.ies.colored-background,
+  main .fragment-wrapper .section.contained.ies.colored-background {
+    padding-top: 60px;
+    padding-bottom: 60px;
+
+    > div.default-content-wrapper {
+      padding-left: 90px;
+      padding-right: 90px;
+    }
+  }
+}
+
+@media (width >= 1024px) {
+  main > .section.contained.ies.colored-background,
+  main .fragment-wrapper .section.contained.ies.colored-background {
+    padding-top: 3rem;
+    padding-bottom: 3rem;
+
+    > div.default-content-wrapper {
+      padding-left: 40px;
+      padding-right: 40px;
+    }
+  }
 }
 
 /* case-studies index intro (Template: "Case Studies Index" metadata -> body.case-studies-index) */
