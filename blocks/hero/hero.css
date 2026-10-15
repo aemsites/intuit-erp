@@ -722,15 +722,9 @@ body.author-guide .hero .hero-copy .hero-lede {
   .hero.ies .hero-copy h1 { font-size: 60px; }
 }
 
-/* .ies.glow: the "One Intuit" rethemed hero — Superblue band with the IES radial glow (Blueberry
-   core, bright blue rim, peach wash at the foot). The media sits in a light-blue 1280/900 tile with the
-   product UI inset top-left and cropped at the tile's bottom edge, at every width. Figma .50-50 frames:
-   mobile stacks the lockup over the tile (30px radius) with 40px rhythm and full-width pills; tablet
-   keeps the stack with 60px rhythm, 38px radius and inline pills; desktop (.Static) is a 640 | 80 | 640
-   split with 80px above and below. */
+/* .ies.glow: Superblue band with the IES radial glow; light-blue media tile; 640 | 80 | 640 on desktop */
 
-/* the glow is Figma's own gradient export (blocks/hero/ies-glow-bg.webp, 1440 wide, ~1:0.56),
-   placed as the design does: full width, 132.83% tall, centred, over the Superblue fill */
+/* gradient export from the design, placed full width, 132.83% tall, centred */
 .section.hero-container:has(.hero.ies.glow) {
   background: url("./ies-glow-bg.webp") 50% 50% / 100% 132.83% no-repeat, #236cff;
 }
@@ -753,7 +747,7 @@ body.author-guide .hero .hero-copy .hero-lede {
   line-height: 1.4;
 }
 
-/* pills: 14px label, full width and stacked on mobile */
+/* pills: full width on mobile */
 .hero.ies.glow .hero-actions { gap: var(--space-m); }
 
 .section.hero-container:has(.hero.ies.glow) :is(a, button).button {
@@ -765,7 +759,7 @@ body.author-guide .hero .hero-copy .hero-lede {
 .hero.ies.glow .hero-media {
   box-sizing: border-box;
   aspect-ratio: 1280 / 900;
-  padding: 4.7% 0 0 18.1%; /* desktop: 30px / 116px of a 640-wide tile (percentages resolve against width) */
+  padding: 4.7% 0 0 18.1%; /* 30px / 116px of a 640px tile */
   border-radius: 30px;
   background: #d6e8f8;
   overflow: hidden;
@@ -781,7 +775,7 @@ body.author-guide .hero .hero-copy .hero-lede {
   border-radius: 16px 0 0;
 }
 
-/* white primary pill on the dark band; the secondary stays the white outline */
+/* white pills on the dark band */
 .section.hero-container:has(.hero.ies.glow) :is(a, button).button.primary {
   border-color: #fff;
   background-color: #fff;
@@ -824,7 +818,6 @@ body.author-guide .hero .hero-copy .hero-lede {
     line-height: 1.4;
   }
 
-  /* inline pills from tablet up (the base hero stacks them until 1024) */
   .hero.ies.glow .hero-actions {
     flex-direction: row;
     align-items: center;
@@ -840,7 +833,6 @@ body.author-guide .hero .hero-copy .hero-lede {
 }
 
 @media (width >= 1024px) {
-  /* Figma .Static frame: 1440 wide, 40px gutters, lockup 640 | 80 gap | media 640, 80px above and below */
   .hero.ies.glow .hero-grid {
     grid-template-columns: 1fr 1fr;
     gap: var(--space-5xl);

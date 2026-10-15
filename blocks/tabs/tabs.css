@@ -1110,10 +1110,7 @@ main > .section.tabs-container:has(.tabs.vertical-panel.industry) { padding-top:
 }
 
 
-/* .vertical-panel.questions: the "One Intuit" FAQ panel — white tab list (225px, 0.5px dividers,
-   Superblue left rule on the open tab) beside an unboxed panel: question | answer in two columns,
-   then logo tile + quote tile on the left and a tall photo on the right (468 | 20 | 468, 24px radii).
-   Below 1024px it is the shared vertical-panel accordion with the same tiles stacked. */
+/* .vertical-panel.questions: white tab list beside an unboxed question | answer panel with logo, quote and photo tiles */
 main > .section.tabs-container:has(.tabs.vertical-panel.questions) {
   --it-surface: #fff;
   --it-text: #000;
@@ -1121,7 +1118,7 @@ main > .section.tabs-container:has(.tabs.vertical-panel.questions) {
   --it-accent: #236cff;
   --it-tab-idle: #fff;
 
-  width: 100%; /* the base vertical-panel shaves 12px a side; this one uses the section gutters */
+  width: 100%;
   padding-top: var(--space-m);
   padding-bottom: var(--space-m);
 }
@@ -1139,8 +1136,7 @@ main > .section.tabs-container:has(.tabs.vertical-panel.questions) {
   color: #0d0031;
 }
 
-/* accordion (mobile/tablet): 44px heads, 14px label, 24px chevron; the open head loses its
-   divider, closed heads keep a hairline; 32px between items on mobile */
+/* accordion below desktop */
 .tabs.vertical-panel.questions .it-nav { gap: var(--space-xl); }
 .tabs.vertical-panel.questions .it-item { display: flex; flex-direction: column; }
 
@@ -1169,7 +1165,7 @@ main > .section.tabs-container:has(.tabs.vertical-panel.questions) {
 .tabs.vertical-panel.questions .it-copy {
   gap: var(--space-m);
   padding: var(--space-2xs) 0 0;
-  margin: 0 0 14px; /* + the 16px panel gap = 30px to the first tile */
+  margin: 0 0 14px;
 }
 
 .tabs.vertical-panel.questions .it-heading {
@@ -1182,8 +1178,7 @@ main > .section.tabs-container:has(.tabs.vertical-panel.questions) {
 .tabs.vertical-panel.questions .it-copy-body { padding-top: 0; }
 .tabs.vertical-panel.questions .it-body { margin: 0; line-height: 1.4; color: #000; }
 
-/* the two authored pictures become siblings of the quote so the grid can place them; when stacked
-   the order is logo, quote, photo (the DOM has both pictures before the quote) */
+/* pictures become grid/flex siblings of the quote; stacked order is logo, quote, photo */
 .tabs.vertical-panel.questions .it-media { display: contents; }
 
 .tabs.vertical-panel.questions .it-media picture {
@@ -1208,7 +1203,7 @@ main > .section.tabs-container:has(.tabs.vertical-panel.questions) {
   object-fit: cover;
 }
 
-/* logo tile: bronze field, logo contained inside it */
+/* logo tile */
 .tabs.vertical-panel.questions .it-media picture:first-child {
   height: 96px;
   background: #883f1c;
@@ -1220,7 +1215,7 @@ main > .section.tabs-container:has(.tabs.vertical-panel.questions) {
   object-fit: contain;
 }
 
-/* photo tile: 4:3 when stacked, 468 x 520 beside the quote on desktop */
+/* photo tile */
 .tabs.vertical-panel.questions .it-media picture:last-child:not(:first-child) {
   aspect-ratio: 4 / 3;
   background: #d6e8f8;
@@ -1265,7 +1260,7 @@ main > .section.tabs-container:has(.tabs.vertical-panel.questions) {
 
 .tabs.vertical-panel.questions .it-quote .it-cta:hover { text-decoration: none; }
 
-/* tablet: 80px gutters, heads hug their label, closed heads stack without a gap */
+/* tablet */
 @media (768px <= width < 1024px) {
   .tabs-container:has(.tabs.vertical-panel.questions) .tabs-wrapper { padding-inline: 60px; }
   .tabs.vertical-panel.questions .it-nav { gap: 0; }
