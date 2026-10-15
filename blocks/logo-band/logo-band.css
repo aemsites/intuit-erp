@@ -81,8 +81,8 @@
   }
 }
 
-.section.logo-band-container:has(.logo-band:not(.marquee)) .default-content-wrapper h2,
-.section.logo-band-container:has(.logo-band:not(.marquee)) .default-content-wrapper h4 {
+.logo-band-container:has(.logo-band:not(.marquee)) .default-content-wrapper h2,
+.logo-band-container:has(.logo-band:not(.marquee)) .default-content-wrapper h4 {
   font-size: 28px;
   line-height: var(--line-height-m);
   font-weight: var(--font-weight-normal);
@@ -107,8 +107,8 @@
 @media (width >= 1024px) {
   .section.logo-band-container:has(.logo-band:not(.marquee)) { padding: var(--space-5xl) 0; }
 
-  .section.logo-band-container:has(.logo-band:not(.marquee)) .default-content-wrapper h2,
-  .section.logo-band-container:has(.logo-band:not(.marquee)) .default-content-wrapper h4 {
+  .logo-band-container:has(.logo-band:not(.marquee)) .default-content-wrapper h2,
+  .logo-band-container:has(.logo-band:not(.marquee)) .default-content-wrapper h4 {
     font-size: 34px;
   }
 
@@ -130,8 +130,8 @@
 }
 
 @media (width >= 1200px) {
-  .section.logo-band-container:has(.logo-band:not(.marquee)) .default-content-wrapper h2,
-  .section.logo-band-container:has(.logo-band:not(.marquee)) .default-content-wrapper h4 {
+  .logo-band-container:has(.logo-band:not(.marquee)) .default-content-wrapper h2,
+  .logo-band-container:has(.logo-band:not(.marquee)) .default-content-wrapper h4 {
     font-size: 40px;
   }
 
