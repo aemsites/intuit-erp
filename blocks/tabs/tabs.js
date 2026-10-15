@@ -596,7 +596,7 @@ function activateVp(tabs, panels, index, focusIndex = index) {
 
 function renderVerticalPanel(block, items) {
   const tabs = items.map(buildVpTab);
-  const multiMedia = block.classList.contains('industry');
+  const multiMedia = block.classList.contains('industry') || block.classList.contains('questions');
   const panels = items.map((item, i) => buildVpPanel(item, i, { multiMedia }));
   tabs.forEach((tab, i) => tab.setAttribute('aria-controls', panels[i].id));
 
