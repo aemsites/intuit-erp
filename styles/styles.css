@@ -821,24 +821,6 @@ main .section.ies button.button.primary:focus-visible {
   color: #fff;
 }
 
-/* on a Superblue section (`super-blue` style or a #236CFF background) the
-   Superblue pill would disappear, so the primary goes Blueberry there */
-main .section.ies:is(.super-blue, [data-background="#236cff" i]) a.button.primary,
-main .section.ies:is(.super-blue, [data-background="#236cff" i]) button.button.primary {
-  border-color: #0d0031;
-  background-color: #0d0031;
-  color: #fff;
-}
-
-main .section.ies:is(.super-blue, [data-background="#236cff" i]) a.button.primary:hover,
-main .section.ies:is(.super-blue, [data-background="#236cff" i]) a.button.primary:focus-visible,
-main .section.ies:is(.super-blue, [data-background="#236cff" i]) button.button.primary:hover,
-main .section.ies:is(.super-blue, [data-background="#236cff" i]) button.button.primary:focus-visible {
-  border-color: #fff;
-  background-color: #fff;
-  color: #0d0031;
-}
-
 /* outlined pill: Blueberry on light sections, white on dark ones */
 main .section.ies a.button.secondary,
 main .section.ies button.button.secondary {
