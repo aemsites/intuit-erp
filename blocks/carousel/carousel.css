@@ -206,7 +206,7 @@
 }
 
 .carousel.testimonial .testi-title {
-  margin: 0 0 var(--space-m); font-size: var(--testi-quote); line-height: var(--testi-quote-lh);
+  margin: 0 0 var(--space-m); font-size: var(--testi-quote); line-height: var(--testi-quote-lh); color: var(--testi-text);
 }
 
 /* with a title present the quote steps down to the attribution's scale */

@@ -54,13 +54,13 @@ function pic(cell) {
   return p ? (p.closest('picture') || p) : null;
 }
 
-// Normalized to h3 regardless of the authored level so an author who picks
-// h1/h2 can't collide with the page's own heading hierarchy.
+// Preserves the authored heading level (h1-h6) to maintain document hierarchy.
 function extractHeading(cell) {
   const first = cell?.firstElementChild;
-  if (!first || !/^H[1-4]$/.test(first.tagName)) return null;
+  if (!first || !/^H[1-6]$/.test(first.tagName)) return null;
+  const tag = first.tagName.toLowerCase();
   first.remove();
-  const h = document.createElement('h3');
+  const h = document.createElement(tag);
   h.className = 'testimonial-heading';
   h.innerHTML = first.innerHTML;
   return h;
@@ -438,9 +438,10 @@ function buildVideoSplit(cells) {
 
   const copy = document.createElement('div');
   copy.className = 'split-copy';
-  const heading = contentCell ? contentCell.querySelector('h1, h2, h3, h4') : null;
+  const heading = contentCell ? contentCell.querySelector('h1, h2, h3, h4, h5, h6') : null;
   if (heading) {
-    const h = document.createElement('h2');
+    const tag = heading.tagName.toLowerCase();
+    const h = document.createElement(tag);
     h.className = 'split-title';
     h.innerHTML = heading.innerHTML;
     copy.append(h);
@@ -620,8 +621,9 @@ function buildStory(row) {
   let ctaLink = null;
   if (contentCell) {
     [...contentCell.children].forEach((node) => {
-      if (!headingEl && /^H[1-4]$/.test(node.tagName)) {
-        headingEl = document.createElement('h3');
+      if (!headingEl && /^H[1-6]$/.test(node.tagName)) {
+        const tag = node.tagName.toLowerCase();
+        headingEl = document.createElement(tag);
         headingEl.className = 'story-title';
         headingEl.innerHTML = node.innerHTML;
         node.remove();
