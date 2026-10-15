@@ -63,6 +63,8 @@ function buildCard(row) {
     title: null, tagText: '', bodyParagraphs: [], ctaLink: null,
   };
   const titleText = titleEl ? titleEl.textContent.trim() : '';
+  // one authored heading is rendered in both the preview and expanded states
+  const expandedTitleEl = titleText ? titleEl.cloneNode(true) : null;
 
   const card = document.createElement('div');
   card.className = 'feature-card';
@@ -91,12 +93,7 @@ function buildCard(row) {
     tag.textContent = tagText;
     preview.append(tag);
   }
-  if (titleText) {
-    const title = document.createElement('h3');
-    title.className = 'feature-title';
-    title.textContent = titleText;
-    preview.append(title);
-  }
+  if (titleText) preview.append(titleEl);
   preview.setAttribute('aria-hidden', 'false');
   card.append(preview);
 
@@ -134,11 +131,9 @@ function buildCard(row) {
     tag.textContent = tagText;
     expandedText.append(tag);
   }
-  if (titleText) {
-    const title2 = document.createElement('h3');
-    title2.className = 'feature-title';
-    title2.textContent = titleText;
-    expandedText.append(title2);
+  if (expandedTitleEl) {
+    expandedTitleEl.removeAttribute('id');
+    expandedText.append(expandedTitleEl);
   }
   bodyParagraphs.forEach((p) => {
     const body = document.createElement('p');
