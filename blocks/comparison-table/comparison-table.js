@@ -339,9 +339,113 @@ function decorateSimple(block) {
   block.replaceChildren(wrap);
 }
 
+/**
+ * `.features` variant — logos above a white card; rows are
+ * [label (+ description after a <br> or in a 2nd <p>), value, value…].
+ * Row 1 = column headers (a leading empty label cell is optional); a
+ * single-cell row starts a new card with that text as its heading.
+ * Values: check/yes → check, dash/no/empty → dash, partial → dot, else text.
+ * @param {Element} block
+ */
+function decorateFeatures(block) {
+  const rows = [...block.children];
+  if (!rows.length) return;
+  const ncol = Math.max(...rows.map((r) => r.children.length));
+  const nval = Math.max(1, ncol - 1);
+  block.style.setProperty('--cf-cols', nval);
+
+  const head = document.createElement('div');
+  head.className = 'cf-head';
+  const spacer = document.createElement('div');
+  spacer.className = 'cf-head-label';
+  head.append(spacer);
+  const headCells = [...rows[0].children];
+  headCells.slice(Math.max(0, headCells.length - nval)).forEach((cell) => {
+    const col = document.createElement('div');
+    col.className = 'cf-col-title';
+    col.append(...cell.childNodes);
+    head.append(col);
+  });
+
+  const wrap = document.createElement('div');
+  wrap.className = 'cmp-features';
+  wrap.append(head);
+
+  let card = null;
+  const newCard = () => {
+    card = document.createElement('div');
+    card.className = 'cf-card';
+    wrap.append(card);
+  };
+
+  rows.slice(1).forEach((row) => {
+    const cells = [...row.children];
+    if (cells.length === 1) {
+      const group = document.createElement('p');
+      group.className = 'cf-group';
+      group.textContent = cells[0].textContent.trim();
+      wrap.append(group);
+      newCard();
+      return;
+    }
+    if (!card) newCard();
+
+    const [labelCell, ...valueCells] = cells;
+    const tr = document.createElement('div');
+    tr.className = 'cf-row';
+
+    const title = document.createElement('div');
+    title.className = 'cf-title';
+    const paras = [...labelCell.querySelectorAll('p')];
+    const html = paras.length ? paras.map((p) => p.innerHTML).join('<br>') : labelCell.innerHTML;
+    const [labelHtml, ...rest] = html.split(/<br\s*\/?>/i);
+    const label = document.createElement('p');
+    label.className = 'cf-label';
+    label.innerHTML = labelHtml.trim();
+    title.append(label);
+    const descHtml = rest.join('<br>').trim();
+    if (descHtml) {
+      const desc = document.createElement('p');
+      desc.className = 'cf-desc';
+      desc.innerHTML = descHtml;
+      title.append(desc);
+    }
+    tr.append(title);
+
+    for (let i = 0; i < nval; i += 1) {
+      const cell = valueCells[i];
+      const { icon, text } = markerOf(cell ? cell.textContent : '');
+      const entry = document.createElement('div');
+      entry.className = 'cf-entry';
+      const isDash = !text && icon !== 'check' && icon !== 'dot';
+      if (icon === 'check' && !text) {
+        entry.innerHTML = '<span class="cf-check" role="img" aria-label="Included"></span>';
+      } else if (icon === 'x' || isDash || ['–', '-', '—'].includes(text)) {
+        entry.innerHTML = '<span class="cf-dash" role="img" aria-label="Not included"></span>';
+      } else {
+        if (icon) {
+          const ic = document.createElement('span');
+          ic.className = `cf-ic cf-${icon}`;
+          entry.append(ic);
+        }
+        const p = document.createElement('p');
+        p.textContent = text;
+        entry.append(p);
+      }
+      tr.append(entry);
+    }
+    card.append(tr);
+  });
+
+  block.replaceChildren(wrap);
+}
+
 export default function decorate(block) {
   if (block.classList.contains('simple')) {
     decorateSimple(block); return;
+  }
+  if (block.classList.contains('features')) {
+    decorateFeatures(block); return;
   }
 
   const rows = [...block.children];
