@@ -1,6 +1,6 @@
 .section.media-text-container {
   background: #fff;
-  padding: 35px 0;
+  padding: 40px 0;
 }
 
 .section.media-text-container:has(.media-text.tint) {
