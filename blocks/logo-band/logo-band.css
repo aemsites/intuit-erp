@@ -139,9 +139,7 @@
 }
 
 /* logo-band.marquee — infinite scrolling logo band. .light swaps it to a
-   white band of 112px square brandmark tiles (Figma "Brandmark area"),
-   greyscale at rest and full colour on hover, instead of the default
-   navy/inverted strip. */
+   white band of 112px brandmark tiles, greyscale until hovered. */
 .logo-band.marquee.light { padding: 20px 0 var(--section-y); }
 
 /* variables live on the section, not the block, so both the section's own
@@ -168,9 +166,7 @@ main > .section.logo-band-container:has(.logo-band.marquee) > div { max-width: n
 
 .logo-band.marquee img { height: 32px; width: auto; filter: var(--marquee-logo-filter); flex: 0 0 auto; }
 
-/* .light tiles: each logo is authored as a 112x112 brandmark box with its own
-   inner padding, so the image renders at the tile size on every breakpoint
-   (Figma desktop and mobile both use 112px tiles with a 20px gap) */
+/* .light logos are authored as 112x112 tiles; same size on every breakpoint */
 .logo-band.marquee.light .logoband-set { gap: var(--space-m); padding-right: var(--space-m); }
 
 .logo-band.marquee.light img {
@@ -180,8 +176,7 @@ main > .section.logo-band-container:has(.logo-band.marquee) > div { max-width: n
   transition: filter 0.3s ease;
 }
 
-/* hover reveals the full-colour brandmark; the band pauses so it can be
-   hovered at all, and resumes when the pointer leaves */
+/* colour on hover; pause the band so the logo stays under the pointer */
 .logo-band.marquee.light img:hover { filter: none; }
 
 .logo-band.marquee.light .logoband-viewport:hover .logoband-track { animation-play-state: paused; }
