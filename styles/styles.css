@@ -872,7 +872,7 @@ main .section.ies:is(.dark, .navy, .super-blue, .dark-background) a.button.secon
 main > .section.contained,
 main .fragment-wrapper .section.contained {
   margin: 40px auto;
-  max-width: 1400px;
+  max-width: 1360px;
   border-radius: 6px;
 }
 
