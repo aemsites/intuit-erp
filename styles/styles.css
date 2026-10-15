@@ -1289,6 +1289,35 @@ main .fragment-wrapper .section.padding-bottom-xxxl { padding-bottom: 120px; }
 main > .section.padding-bottom-xxxxl,
 main .fragment-wrapper .section.padding-bottom-xxxxl { padding-bottom: 160px; }
 
+/* zero tokens: strip a section's or block's own vertical margin/padding on that
+   side (e.g. the 40px a testimonial or logo-band section sets for itself).
+   !important on purpose — they must beat block CSS of any specificity. */
+main > .section.spacer-top-0,
+main > .section.spacer-0,
+main .fragment-wrapper .section.spacer-top-0,
+main .fragment-wrapper .section.spacer-0 {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+main > .section.spacer-bottom-0,
+main > .section.spacer-0,
+main .fragment-wrapper .section.spacer-bottom-0,
+main .fragment-wrapper .section.spacer-0 {
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+:where(main > .section, main .fragment-wrapper .section) :is(.block.spacer-top-0, .block.spacer-0) {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+:where(main > .section, main .fragment-wrapper .section) :is(.block.spacer-bottom-0, .block.spacer-0) {
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+}
+
 :where(main > .section, main .fragment-wrapper .section) .block.padding-top-s { padding-top: 1rem; }
 :where(main > .section, main .fragment-wrapper .section) .block.padding-top-m { padding-top: 1.5rem; }
 :where(main > .section, main .fragment-wrapper .section) .block.padding-top-l { padding-top: 2.5rem; }
