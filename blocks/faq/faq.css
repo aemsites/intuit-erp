@@ -1,6 +1,23 @@
 .section.faq-container {
   background: #fff;
-  padding: 20px 0 var(--section-y);
+  padding: 40px 0;
+}
+
+.section.faq-container > .default-content-wrapper {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+/* eyebrow authored as the paragraph right above the heading */
+.faq-container .default-content-wrapper > p:has(+ h2, + h3) {
+  margin: 0 0 var(--space-s);
+  font-size: 14px;
+  line-height: 1.25;
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 1.82px;
+  text-transform: uppercase;
+  text-align: center;
+  color: #0d0031;
 }
 
 .section.faq-container:has(.faq.cmp) {
@@ -14,7 +31,7 @@
   line-height: 60px;
   font-weight: var(--font-weight-normal);
   text-align: center;
-  margin: 0 0 60px;
+  margin: 0 0 var(--space-2xl);
   color: var(--heading);
 }
 
@@ -23,7 +40,7 @@
 }
 
 .faq .faq-list {
-  max-width: 780px;
+  max-width: 900px;
   margin: 0 auto;
   border-top: 1px solid rgb(0 0 0 / 20%);
 }
@@ -107,7 +124,7 @@
 }
 
 .faq .faq-toggle[aria-expanded="true"]+.faq-panel .faq-answer {
-  padding-top: var(--space-2xs);
+  padding-top: var(--space-m);
   opacity: 1;
   transition: opacity 0.4s ease 0.25s;
 }
@@ -123,6 +140,10 @@
 
 .faq .faq-answer li {
   margin-bottom: var(--space-2xs);
+}
+
+.faq .faq-answer > :last-child {
+  margin-bottom: 0;
 }
 
 /* In-copy links inside an answer take the source site's link blue rather than the
