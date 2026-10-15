@@ -87,27 +87,30 @@
 }
 
 .media-text .media-copy .media-callout {
-  background: var(--wintermint);
-  border-left: 4px solid var(--primary);
-  border-radius: var(--radius);
-  padding: var(--space-m);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-s);
+  background: #f0f4f6;
+  border-radius: 38px;
+  padding: 40px 30px;
   margin-top: var(--space-l);
 }
 
 .media-text .media-copy .media-callout-label {
-  margin: 0 0 var(--space-s);
-  font-size: 12px;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.25;
   font-weight: var(--font-weight-medium);
-  letter-spacing: 1.2px;
+  letter-spacing: 1.82px;
   text-transform: uppercase;
-  color: var(--heading);
+  color: #0d0031;
 }
 
 .media-text .media-copy .media-callout-body {
   margin: 0;
   font-size: 16px;
-  line-height: var(--line-height-l);
-  color: var(--text);
+  line-height: 1.4;
+  color: #000;
 }
 
 .media-text .media-copy h2,
