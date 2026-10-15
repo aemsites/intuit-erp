@@ -1185,6 +1185,12 @@ body.blog-home .section:not(:first-of-type)>.default-content-wrapper> :is(h1, h2
 }
 
 
+/* `none` zeroes that side so an authored section or block sits flush against its neighbour.
+   The none sizes are !important on purpose: they must also beat block CSS that owns a section's
+   spacing (the IES blocks do), otherwise an author has no way to switch that spacing off. */
+main > .section.spacer-top-none,
+main .fragment-wrapper .section.spacer-top-none { margin-top: 0 !important; }
+
 main > .section.spacer-top-s,
 main .fragment-wrapper .section.spacer-top-s { margin-top: 1rem; }
 
@@ -1199,6 +1205,9 @@ main .fragment-wrapper .section.spacer-top-xl { margin-top: 4rem; }
 
 main > .section.spacer-top-xxl,
 main .fragment-wrapper .section.spacer-top-xxl { margin-top: 6rem; }
+
+main > .section.spacer-bottom-none,
+main .fragment-wrapper .section.spacer-bottom-none { margin-bottom: 0 !important; }
 
 main > .section.spacer-bottom-s,
 main .fragment-wrapper .section.spacer-bottom-s { margin-bottom: 1rem; }
@@ -1221,11 +1230,13 @@ main .fragment-wrapper .section.spacer-bottom-xxxl { margin-bottom: 8rem; }
 main > .section.spacer-bottom-xxxxl,
 main .fragment-wrapper .section.spacer-bottom-xxxxl { margin-bottom: 10rem; }
 
+:where(main > .section, main .fragment-wrapper .section) .block.spacer-top-none { margin-top: 0 !important; }
 :where(main > .section, main .fragment-wrapper .section) .block.spacer-top-s { margin-top: 1rem; }
 :where(main > .section, main .fragment-wrapper .section) .block.spacer-top-m { margin-top: 1.5rem; }
 :where(main > .section, main .fragment-wrapper .section) .block.spacer-top-l { margin-top: 2.5rem; }
 :where(main > .section, main .fragment-wrapper .section) .block.spacer-top-xl { margin-top: 4rem; }
 :where(main > .section, main .fragment-wrapper .section) .block.spacer-top-xxl { margin-top: 6rem; }
+:where(main > .section, main .fragment-wrapper .section) .block.spacer-bottom-none { margin-bottom: 0 !important; }
 :where(main > .section, main .fragment-wrapper .section) .block.spacer-bottom-s { margin-bottom: 1rem; }
 :where(main > .section, main .fragment-wrapper .section) .block.spacer-bottom-m { margin-bottom: 1.5rem; }
 :where(main > .section, main .fragment-wrapper .section) .block.spacer-bottom-l { margin-bottom: 2.5rem; }
@@ -1233,6 +1244,9 @@ main .fragment-wrapper .section.spacer-bottom-xxxxl { margin-bottom: 10rem; }
 :where(main > .section, main .fragment-wrapper .section) .block.spacer-bottom-xxl { margin-bottom: 6rem; }
 :where(main > .section, main .fragment-wrapper .section) .block.spacer-bottom-xxxl { margin-bottom: 8rem; }
 :where(main > .section, main .fragment-wrapper .section) .block.spacer-bottom-xxxxl { margin-bottom: 10rem; }
+
+main > .section.padding-top-none,
+main .fragment-wrapper .section.padding-top-none { padding-top: 0 !important; }
 
 main > .section.padding-top-s,
 main .fragment-wrapper .section.padding-top-s { padding-top: 1rem; }
@@ -1248,6 +1262,9 @@ main .fragment-wrapper .section.padding-top-xl { padding-top: 4rem; }
 
 main > .section.padding-top-xxl,
 main .fragment-wrapper .section.padding-top-xxl { padding-top: 6rem; }
+
+main > .section.padding-bottom-none,
+main .fragment-wrapper .section.padding-bottom-none { padding-bottom: 0 !important; }
 
 main > .section.padding-bottom-s,
 main .fragment-wrapper .section.padding-bottom-s { padding-bottom: 1rem; }
@@ -1270,11 +1287,13 @@ main .fragment-wrapper .section.padding-bottom-xxxl { padding-bottom: 8rem; }
 main > .section.padding-bottom-xxxxl,
 main .fragment-wrapper .section.padding-bottom-xxxxl { padding-bottom: 10rem; }
 
+:where(main > .section, main .fragment-wrapper .section) .block.padding-top-none { padding-top: 0 !important; }
 :where(main > .section, main .fragment-wrapper .section) .block.padding-top-s { padding-top: 1rem; }
 :where(main > .section, main .fragment-wrapper .section) .block.padding-top-m { padding-top: 1.5rem; }
 :where(main > .section, main .fragment-wrapper .section) .block.padding-top-l { padding-top: 2.5rem; }
 :where(main > .section, main .fragment-wrapper .section) .block.padding-top-xl { padding-top: 4rem; }
 :where(main > .section, main .fragment-wrapper .section) .block.padding-top-xxl { padding-top: 6rem; }
+:where(main > .section, main .fragment-wrapper .section) .block.padding-bottom-none { padding-bottom: 0 !important; }
 :where(main > .section, main .fragment-wrapper .section) .block.padding-bottom-s { padding-bottom: 1rem; }
 :where(main > .section, main .fragment-wrapper .section) .block.padding-bottom-m { padding-bottom: 1.5rem; }
 :where(main > .section, main .fragment-wrapper .section) .block.padding-bottom-l { padding-bottom: 2.5rem; }
@@ -1282,6 +1301,107 @@ main .fragment-wrapper .section.padding-bottom-xxxxl { padding-bottom: 10rem; }
 :where(main > .section, main .fragment-wrapper .section) .block.padding-bottom-xxl { padding-bottom: 6rem; }
 :where(main > .section, main .fragment-wrapper .section) .block.padding-bottom-xxxl { padding-bottom: 8rem; }
 :where(main > .section, main .fragment-wrapper .section) .block.padding-bottom-xxxxl { padding-bottom: 10rem; }
+
+/* force-*: sized spacing that overrides block CSS. The plain sized classes lose to blocks that own
+   their section's spacing (the IES blocks do); use a force-* class when an author deliberately wants a
+   different value there. Same sizes; `none` already forces, so it has no force- twin. Kept after every
+   `none` rule so that, if both are authored on one section, the force- size wins. */
+main > .section.force-padding-top-s,
+main .fragment-wrapper .section.force-padding-top-s { padding-top: 1rem !important; }
+
+main > .section.force-padding-top-m,
+main .fragment-wrapper .section.force-padding-top-m { padding-top: 1.5rem !important; }
+
+main > .section.force-padding-top-l,
+main .fragment-wrapper .section.force-padding-top-l { padding-top: 2.5rem !important; }
+
+main > .section.force-padding-top-xl,
+main .fragment-wrapper .section.force-padding-top-xl { padding-top: 4rem !important; }
+
+main > .section.force-padding-top-xxl,
+main .fragment-wrapper .section.force-padding-top-xxl { padding-top: 6rem !important; }
+
+main > .section.force-padding-top-section,
+main .fragment-wrapper .section.force-padding-top-section { padding-top: var(--section-y) !important; }
+
+main > .section.force-spacer-top-s,
+main .fragment-wrapper .section.force-spacer-top-s { margin-top: 1rem !important; }
+
+main > .section.force-spacer-top-m,
+main .fragment-wrapper .section.force-spacer-top-m { margin-top: 1.5rem !important; }
+
+main > .section.force-spacer-top-l,
+main .fragment-wrapper .section.force-spacer-top-l { margin-top: 2.5rem !important; }
+
+main > .section.force-spacer-top-xl,
+main .fragment-wrapper .section.force-spacer-top-xl { margin-top: 4rem !important; }
+
+main > .section.force-spacer-top-xxl,
+main .fragment-wrapper .section.force-spacer-top-xxl { margin-top: 6rem !important; }
+
+main > .section.force-spacer-top-section,
+main .fragment-wrapper .section.force-spacer-top-section { margin-top: var(--section-y) !important; }
+
+main > .section.force-padding-bottom-s,
+main .fragment-wrapper .section.force-padding-bottom-s { padding-bottom: 1rem !important; }
+
+main > .section.force-padding-bottom-m,
+main .fragment-wrapper .section.force-padding-bottom-m { padding-bottom: 1.5rem !important; }
+
+main > .section.force-padding-bottom-l,
+main .fragment-wrapper .section.force-padding-bottom-l { padding-bottom: 2.5rem !important; }
+
+main > .section.force-padding-bottom-xl,
+main .fragment-wrapper .section.force-padding-bottom-xl { padding-bottom: 4rem !important; }
+
+main > .section.force-padding-bottom-xxl,
+main .fragment-wrapper .section.force-padding-bottom-xxl { padding-bottom: 6rem !important; }
+
+main > .section.force-padding-bottom-section,
+main .fragment-wrapper .section.force-padding-bottom-section { padding-bottom: var(--section-y) !important; }
+
+main > .section.force-spacer-bottom-s,
+main .fragment-wrapper .section.force-spacer-bottom-s { margin-bottom: 1rem !important; }
+
+main > .section.force-spacer-bottom-m,
+main .fragment-wrapper .section.force-spacer-bottom-m { margin-bottom: 1.5rem !important; }
+
+main > .section.force-spacer-bottom-l,
+main .fragment-wrapper .section.force-spacer-bottom-l { margin-bottom: 2.5rem !important; }
+
+main > .section.force-spacer-bottom-xl,
+main .fragment-wrapper .section.force-spacer-bottom-xl { margin-bottom: 4rem !important; }
+
+main > .section.force-spacer-bottom-xxl,
+main .fragment-wrapper .section.force-spacer-bottom-xxl { margin-bottom: 6rem !important; }
+
+main > .section.force-spacer-bottom-section,
+main .fragment-wrapper .section.force-spacer-bottom-section { margin-bottom: var(--section-y) !important; }
+
+:where(main > .section, main .fragment-wrapper .section) .block.force-padding-top-s { padding-top: 1rem !important; }
+:where(main > .section, main .fragment-wrapper .section) .block.force-padding-top-m { padding-top: 1.5rem !important; }
+:where(main > .section, main .fragment-wrapper .section) .block.force-padding-top-l { padding-top: 2.5rem !important; }
+:where(main > .section, main .fragment-wrapper .section) .block.force-padding-top-xl { padding-top: 4rem !important; }
+:where(main > .section, main .fragment-wrapper .section) .block.force-padding-top-xxl { padding-top: 6rem !important; }
+:where(main > .section, main .fragment-wrapper .section) .block.force-padding-top-section { padding-top: var(--section-y) !important; }
+:where(main > .section, main .fragment-wrapper .section) .block.force-spacer-top-s { margin-top: 1rem !important; }
+:where(main > .section, main .fragment-wrapper .section) .block.force-spacer-top-m { margin-top: 1.5rem !important; }
+:where(main > .section, main .fragment-wrapper .section) .block.force-spacer-top-l { margin-top: 2.5rem !important; }
+:where(main > .section, main .fragment-wrapper .section) .block.force-spacer-top-xl { margin-top: 4rem !important; }
+:where(main > .section, main .fragment-wrapper .section) .block.force-spacer-top-xxl { margin-top: 6rem !important; }
+:where(main > .section, main .fragment-wrapper .section) .block.force-spacer-top-section { margin-top: var(--section-y) !important; }
+:where(main > .section, main .fragment-wrapper .section) .block.force-padding-bottom-s { padding-bottom: 1rem !important; }
+:where(main > .section, main .fragment-wrapper .section) .block.force-padding-bottom-m { padding-bottom: 1.5rem !important; }
+:where(main > .section, main .fragment-wrapper .section) .block.force-padding-bottom-l { padding-bottom: 2.5rem !important; }
+:where(main > .section, main .fragment-wrapper .section) .block.force-padding-bottom-xl { padding-bottom: 4rem !important; }
+:where(main > .section, main .fragment-wrapper .section) .block.force-padding-bottom-xxl { padding-bottom: 6rem !important; }
+:where(main > .section, main .fragment-wrapper .section) .block.force-padding-bottom-section { padding-bottom: var(--section-y) !important; }
+:where(main > .section, main .fragment-wrapper .section) .block.force-spacer-bottom-s { margin-bottom: 1rem !important; }
+:where(main > .section, main .fragment-wrapper .section) .block.force-spacer-bottom-m { margin-bottom: 1.5rem !important; }
+:where(main > .section, main .fragment-wrapper .section) .block.force-spacer-bottom-l { margin-bottom: 2.5rem !important; }
+:where(main > .section, main .fragment-wrapper .section) .block.force-spacer-bottom-xl { margin-bottom: 4rem !important; }
+:where(main > .section, main .fragment-wrapper .section) .block.force-spacer-bottom-xxl { margin-bottom: 6rem !important; }
+:where(main > .section, main .fragment-wrapper .section) .block.force-spacer-bottom-section { margin-bottom: var(--section-y) !important; }
 
 :where(main > .section, main .fragment-wrapper .section) > .default-content-wrapper > .button-wrapper {
   margin-top: 2rem;
