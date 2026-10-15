@@ -899,3 +899,36 @@
     font-size: 32px;
   }
 }
+
+/* .checklist frame per the One Intuit Page Rethemed Figma (desktop 6456-54964,
+   tablet 6308-89849, mobile 6319-102985): 20px above/below and 20px gutters on
+   phones, 40px gutters from tablet, and on desktop 40px above/below with the
+   two 555px columns 100px apart inside a 1210px frame (115px gutters at 1440). */
+.section.media-text-container:has(.media-text.checklist) { padding: 20px 0; }
+
+.section.media-text-container:has(.media-text.checklist) > .media-text-wrapper {
+  max-width: none;
+  padding: 0 20px;
+}
+
+.media-text.checklist .media-row {
+  gap: 30px;
+  padding: 0;
+}
+
+@media (width >= 768px) {
+  .section.media-text-container:has(.media-text.checklist) > .media-text-wrapper { padding: 0 40px; }
+  .media-text.checklist .media-row { gap: 32px; }
+}
+
+@media (width >= 1024px) {
+  .section.media-text-container:has(.media-text.checklist) { padding: 40px 0; }
+
+  /* content-box: 1210px of content plus the 40px gutters on each side */
+  .section.media-text-container:has(.media-text.checklist) > .media-text-wrapper {
+    max-width: 1210px;
+    margin: 0 auto;
+  }
+
+  .media-text.checklist .media-row { gap: 100px; }
+}
