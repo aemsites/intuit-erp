@@ -721,3 +721,138 @@ body.author-guide .hero .hero-copy .hero-lede {
 @media (width >= 1024px) {
   .hero.ies .hero-copy h1 { font-size: 60px; }
 }
+
+/* .ies.glow: the "One Intuit" rethemed hero — Superblue band with the IES radial glow (Blueberry
+   core, bright blue rim, peach wash at the foot). The media sits in a light-blue 1280/900 tile with the
+   product UI inset top-left and cropped at the tile's bottom edge, at every width. Figma .50-50 frames:
+   mobile stacks the lockup over the tile (30px radius) with 40px rhythm and full-width pills; tablet
+   keeps the stack with 60px rhythm, 38px radius and inline pills; desktop (.Static) is a 640 | 80 | 640
+   split with 80px above and below. */
+
+/* the glow is Figma's own gradient export (blocks/hero/ies-glow-bg.webp, 1440 wide, ~1:0.56),
+   placed as the design does: full width, 132.83% tall, centred, over the Superblue fill */
+.section.hero-container:has(.hero.ies.glow) {
+  background: url("./ies-glow-bg.webp") 50% 50% / 100% 132.83% no-repeat, #236cff;
+}
+
+.hero.ies.glow .hero-grid {
+  gap: var(--space-2xl);
+  padding-top: var(--space-2xl);
+  padding-bottom: var(--space-2xl);
+}
+
+.hero.ies.glow .hero-copy .hero-eyebrow {
+  line-height: 1.25;
+  letter-spacing: 1.56px;
+}
+
+.hero.ies.glow .hero-copy h1 { margin-bottom: var(--space-s); }
+
+.hero.ies.glow .hero-copy .hero-lede {
+  margin-bottom: var(--space-xl);
+  line-height: 1.4;
+}
+
+/* pills: 14px label, full width and stacked on mobile */
+.hero.ies.glow .hero-actions { gap: var(--space-m); }
+
+.section.hero-container:has(.hero.ies.glow) :is(a, button).button {
+  width: 100%;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.hero.ies.glow .hero-media {
+  box-sizing: border-box;
+  aspect-ratio: 1280 / 900;
+  padding: 4.7% 0 0 18.1%; /* desktop: 30px / 116px of a 640-wide tile (percentages resolve against width) */
+  border-radius: 30px;
+  background: #d6e8f8;
+  overflow: hidden;
+}
+
+.hero.ies.glow .hero-media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  object-fit: cover;
+  object-position: left top;
+  border-radius: 16px 0 0;
+}
+
+/* white primary pill on the dark band; the secondary stays the white outline */
+.section.hero-container:has(.hero.ies.glow) :is(a, button).button.primary {
+  border-color: #fff;
+  background-color: #fff;
+  color: #0d0031;
+}
+
+.section.hero-container:has(.hero.ies.glow) :is(a, button).button.primary:hover,
+.section.hero-container:has(.hero.ies.glow) :is(a, button).button.primary:focus-visible {
+  border-color: #d6e8f8;
+  background-color: #d6e8f8;
+  color: #0d0031;
+}
+
+.section.hero-container:has(.hero.ies.glow) :is(a, button).button.secondary {
+  border-color: #fff;
+  background-color: transparent;
+  color: #fff;
+}
+
+.section.hero-container:has(.hero.ies.glow) :is(a, button).button.secondary:hover,
+.section.hero-container:has(.hero.ies.glow) :is(a, button).button.secondary:focus-visible {
+  background-color: #fff;
+  color: #0d0031;
+}
+
+@media (width >= 768px) {
+  .hero.ies.glow .hero-grid {
+    gap: 60px;
+    padding-top: 60px;
+    padding-bottom: 60px;
+  }
+
+  .hero.ies.glow .hero-copy { max-width: 720px; }
+  .hero.ies.glow .hero-copy .hero-eyebrow { letter-spacing: 1.82px; }
+  .hero.ies.glow .hero-copy h1 { margin-bottom: var(--space-s); }
+
+  .hero.ies.glow .hero-copy .hero-lede {
+    margin-bottom: var(--space-m);
+    font-size: var(--body-font-size-m);
+    line-height: 1.4;
+  }
+
+  /* inline pills from tablet up (the base hero stacks them until 1024) */
+  .hero.ies.glow .hero-actions {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .section.hero-container:has(.hero.ies.glow) :is(a, button).button {
+    width: auto;
+    padding-inline: 42px;
+    line-height: 1.1;
+  }
+
+  .hero.ies.glow .hero-media { border-radius: 38px; }
+}
+
+@media (width >= 1024px) {
+  /* Figma .Static frame: 1440 wide, 40px gutters, lockup 640 | 80 gap | media 640, 80px above and below */
+  .hero.ies.glow .hero-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-5xl);
+    padding-top: var(--space-5xl);
+    padding-bottom: var(--space-5xl);
+  }
+
+  .hero.ies.glow .hero-copy { max-width: none; }
+
+  .hero.ies.glow .hero-copy .hero-lede {
+    font-size: 20px;
+    line-height: var(--line-height-s);
+  }
+
+}
