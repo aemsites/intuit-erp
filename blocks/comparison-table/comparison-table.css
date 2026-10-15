@@ -220,18 +220,12 @@
   .comparison-table .cs-logo img { max-height: 32px; }
 }
 
-/* ---- .features variant (Figma IES Manufacturing "Comp chart", desktop
-   14074-13996 / tablet 15095-56686): product logos above a white 38px-radius
-   card; each row is a Blueberry label + description on the left and centred
-   Superblue checks / dashes per product column. Section head (h2 + subcopy)
-   is default content before the block. See decorateFeatures in
-   comparison-table.js. ---- */
+/* .features: logos above a white card, label + description rows, check/dash per product (see decorateFeatures) */
 .section.comparison-table-container:has(.comparison-table.features) {
   background: #eff4f9;
   padding: 40px 0;
 }
 
-/* Figma tablet: Headline 34/1.1 + 16px subcopy, 16px apart, 40px above the logos */
 .comparison-table-container:has(.comparison-table.features) .default-content-wrapper:first-of-type h2 {
   margin: 0 0 16px;
   font-size: 34px;
@@ -258,7 +252,6 @@
   margin: 0 auto;
 }
 
-/* phones: label column flexes, the product columns stay icon-wide */
 .comparison-table .cf-head,
 .comparison-table .cf-row {
   display: grid;
@@ -286,7 +279,6 @@
 .comparison-table .cf-col-title p { margin: 0; }
 .comparison-table .cf-col-title picture { display: block; line-height: 0; }
 
-/* Figma tablet lockups are half the desktop size: QuickBooks 77x19, IES 124x7 */
 .comparison-table .cf-col-title img {
   display: block;
   max-height: 20px;
@@ -355,7 +347,7 @@
   color: var(--cf-ink);
 }
 
-/* Superblue check, drawn as a mask so it needs no icon file */
+/* check drawn as a mask, no icon file */
 .comparison-table .cf-check {
   display: block;
   width: 24px;
@@ -381,8 +373,7 @@
   background: #ec8b2f;
 }
 
-/* tablet (Figma 15095-56686): 60px page gutter, three equal columns 20px
-   apart, card inset 40px 60px; type stays at the 34/16/16/14 scale */
+/* tablet (Figma 15095-56686) */
 @media (width >= 768px) {
   .comparison-table .cmp-features { width: min(100%, calc(100vw - 120px)); }
 
@@ -397,7 +388,7 @@
   .comparison-table .cf-card { padding: 40px 60px; }
 }
 
-/* desktop (Figma 14074-13996): 80px section inset, 48px headline, 20px subcopy, 20/16 rows, full-size lockups */
+/* desktop (Figma 14074-13996) */
 @media (width >= 1024px) {
   .section.comparison-table-container:has(.comparison-table.features) { padding: 80px 0; }
 

@@ -26,11 +26,8 @@
  *      optional bold link paragraph that becomes the CTA button
  *   2. media — one image: the DAM "feature" asset, which already carries the
  *      Superblue tile, inset photo and customer logo
- *   3. disclaimer (optional) — small centred legal copy rendered as a band
- *      across the bottom of the card (Figma IES Manufacturing "VOC set")
- *   Two or more rows render as a one-at-a-time carousel with dot pagination
- *   and prev/next arrows (same controls as .card.carousel); one row renders
- *   the card alone.
+ *   3. disclaimer (optional) — legal copy as a band across the card foot
+ *   2+ rows render as a carousel (same controls as .card.carousel).
  *
  * Variant .video (index) — one or more rows, each row 1-2 cells:
  *   1. media — poster <img>, optionally a second image (customer logo)
@@ -739,7 +736,6 @@ export default function decorate(block) {
     const rows = [...block.querySelectorAll(':scope > div')];
     if (!rows.length) return;
     const figures = rows.map(buildStory);
-    // 2+ stories page one at a time; a lone story needs no controls
     block.replaceChildren(figures.length > 1 ? buildCardCarousel(figures) : figures[0]);
     track();
     return;

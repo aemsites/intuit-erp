@@ -821,8 +821,7 @@ main .section.ies button.button.primary:focus-visible {
   color: #fff;
 }
 
-/* on a Superblue section (`super-blue` style or a #236CFF background) the
-   Superblue pill would disappear, so the primary goes white there */
+/* primary pill goes white on Superblue ies sections */
 main .section.ies:is(.super-blue, [data-background="#236cff" i]) a.button.primary,
 main .section.ies:is(.super-blue, [data-background="#236cff" i]) button.button.primary {
   border-color: #fff;
@@ -868,9 +867,7 @@ main .section.ies:is(.dark, .navy, .super-blue, .dark-background) a.button.secon
   color: #0d0031;
 }
 
-/* contained sections: a rounded card inset from the viewport — 20px gutters on
-   phones, 40px from tablet, centred at 1360px max on desktop (Figma IES
-   Manufacturing "Banners": tablet 15076-47792, mobile 15095-64995) */
+/* contained sections: rounded card, 20px / 40px gutters below desktop, 1360px max */
 main > .section.contained,
 main .fragment-wrapper .section.contained {
   margin: 40px 20px;
@@ -895,8 +892,7 @@ main .fragment-wrapper .section.contained {
   }
 }
 
-/* IES banner inset inside a contained colored section: tablet 60px above/below
-   with the copy 90px from the card edge, phones 80px above/below and 20px in */
+/* IES banner inset (Figma 15076-47792 tablet, 15095-64995 mobile) */
 main > .section.contained.ies.colored-background,
 main .fragment-wrapper .section.contained.ies.colored-background {
   padding-top: 80px;
@@ -1261,7 +1257,7 @@ body.blog-home .section:not(:first-of-type)>.default-content-wrapper> :is(h1, h2
 }
 
 
-/* section/block spacing scale: s 16px, m 20px, l 40px, xl 60px, xxl 80px, xxxl 120px, xxxxl 160px */
+/* spacing scale: s 16, m 20, l 40, xl 60, xxl 80, xxxl 120, xxxxl 160 */
 main > .section.spacer-top-s,
 main .fragment-wrapper .section.spacer-top-s { margin-top: 16px; }
 
@@ -1347,9 +1343,7 @@ main .fragment-wrapper .section.padding-bottom-xxxl { padding-bottom: 120px; }
 main > .section.padding-bottom-xxxxl,
 main .fragment-wrapper .section.padding-bottom-xxxxl { padding-bottom: 160px; }
 
-/* zero tokens: strip a section's or block's own vertical margin/padding on that
-   side (e.g. the 40px a testimonial or logo-band section sets for itself).
-   !important on purpose — they must beat block CSS of any specificity. */
+/* zero tokens: strip own vertical margin/padding; !important to beat block CSS */
 main > .section.spacer-top-0,
 main > .section.spacer-0,
 main .fragment-wrapper .section.spacer-top-0,

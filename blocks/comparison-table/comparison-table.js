@@ -340,18 +340,11 @@ function decorateSimple(block) {
 }
 
 /**
- * `.features` variant (Figma IES Manufacturing "Comp chart") — a feature
- * checklist: product logos above a white rounded card whose rows are
- * [feature label (+ optional description), value, value…].
- *   - Row 1 = column headers (logos/images or text). A leading empty cell for
- *     the label column is optional — when the row holds only the value-column
- *     headers the label column is implied.
- *   - A single-cell row is a group heading: it closes the current card and
- *     opens a new one beneath that heading.
- *   - Label cell: the first paragraph (or the text before a <br>) is the
- *     label; anything after it is the smaller description line.
- *   - Values go through {@link markerOf}: check glyph/keyword → Superblue
- *     check, "–"/"-"/""/"no"/cross → dash, partial → dot, else plain text.
+ * `.features` variant — logos above a white card; rows are
+ * [label (+ description after a <br> or in a 2nd <p>), value, value…].
+ * Row 1 = column headers (a leading empty label cell is optional); a
+ * single-cell row starts a new card with that text as its heading.
+ * Values: check/yes → check, dash/no/empty → dash, partial → dot, else text.
  * @param {Element} block
  */
 function decorateFeatures(block) {
@@ -367,7 +360,6 @@ function decorateFeatures(block) {
   spacer.className = 'cf-head-label';
   head.append(spacer);
   const headCells = [...rows[0].children];
-  // drop a leading label-column header cell so only value-column titles remain
   headCells.slice(Math.max(0, headCells.length - nval)).forEach((cell) => {
     const col = document.createElement('div');
     col.className = 'cf-col-title';

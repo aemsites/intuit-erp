@@ -1132,9 +1132,7 @@
   .testimonial.story .testimonial-photo { border-radius: 38px; }
 }
 
-/* .story with 2+ rows: one-at-a-time carousel (shares buildCardCarousel).
-   Figma IES Manufacturing "VOC set": disclaimer band across the card's foot,
-   then dots + 60px Superblue arrows right-aligned beneath the card. */
+/* .story with 2+ rows: carousel (buildCardCarousel) + disclaimer band */
 .testimonial.story .testimonial-carousel-viewport { overflow: hidden; }
 
 .testimonial.story .testimonial-carousel-track {
@@ -1148,7 +1146,6 @@
   min-width: 0;
 }
 
-/* the disclaimer band sits 30px below the media rather than a full grid gap away */
 .testimonial.story .story-card:has(.story-disclaimer) { row-gap: 30px; }
 
 .testimonial.story .story-disclaimer {

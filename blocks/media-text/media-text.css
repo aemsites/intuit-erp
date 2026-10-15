@@ -900,10 +900,7 @@
   }
 }
 
-/* .checklist frame per the One Intuit Page Rethemed Figma (desktop 6456-54964,
-   tablet 6308-89849, mobile 6319-102985): 20px above/below and 20px gutters on
-   phones, 40px gutters from tablet, and on desktop 40px above/below with the
-   two 555px columns 100px apart inside a 1210px frame (115px gutters at 1440). */
+/* .checklist frame (Figma: desktop 6456-54964, tablet 6308-89849, mobile 6319-102985) */
 .section.media-text-container:has(.media-text.checklist) { padding: 20px 0; }
 
 .section.media-text-container:has(.media-text.checklist) > .media-text-wrapper {
@@ -924,7 +921,6 @@
 @media (width >= 1024px) {
   .section.media-text-container:has(.media-text.checklist) { padding: 40px 0; }
 
-  /* content-box: 1210px of content plus the 40px gutters on each side */
   .section.media-text-container:has(.media-text.checklist) > .media-text-wrapper {
     max-width: 1210px;
     margin: 0 auto;
@@ -933,8 +929,7 @@
   .media-text.checklist .media-row { gap: 100px; }
 }
 
-/* inside a contained section the card already supplies the 40px / 20px
-   gutters, so the checklist wrapper adds none of its own below desktop */
+/* inside a contained card the card gutter is the only one below desktop */
 @media (width < 1024px) {
   .section.contained.media-text-container:has(.media-text.checklist) > .media-text-wrapper {
     padding-left: 0;
