@@ -1248,8 +1248,8 @@ body.blog-home .section:not(:first-of-type)>.default-content-wrapper> :is(h1, h2
 }
 
 .section > .default-content-wrapper {
-  padding-top: 2rem;
-  padding-bottom: 2rem;
+  padding-top: 2.5rem;
+  padding-bottom: 2.5rem;
 }
 
 @media (width < 768px) {
