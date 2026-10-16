@@ -223,7 +223,12 @@
 /* .features: logos above a white card, label + description rows, check/dash per product (see decorateFeatures) */
 .section.comparison-table-container:has(.comparison-table.features) {
   background: #eff4f9;
-  padding: 40px 0;
+  padding: 20px 0;
+}
+
+.comparison-table-container:has(.comparison-table.features) > .default-content-wrapper:first-of-type {
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
 .comparison-table-container:has(.comparison-table.features) .default-content-wrapper:first-of-type h2 {

@@ -213,11 +213,23 @@ main > .section.logo-band-container:has(.logo-band.marquee) > div { max-width: n
 /* .strip: flat white logo strip, one centred row of 156x50 greyscale slots */
 .section.logo-band-container:has(.logo-band.strip) {
   max-width: none;
-  margin: 0;
-  padding: 40px 0 0; /* 40px above the eyebrow; the next section owns the gap below */
+  margin: 40px 0;
+  padding: 0 0 20px;
   border-radius: 0;
   background: var(--background-color);
 }
+
+.section.logo-band-container:has(.logo-band.strip) > .default-content-wrapper { padding-bottom: 0; }
+
+.section.logo-band-container:has(.logo-band.strip) .default-content-wrapper h2 {
+  margin: 0;
+  font-size: 34px;
+  line-height: 1.1;
+  font-weight: var(--font-weight-medium);
+  color: #0d0031;
+}
+
+.logo-band.strip { margin-top: 20px; }
 
 /* eyebrow authored via Section Metadata (eyebrow-text), injected by scripts.js;
    IES eyebrow scale: 12px on mobile, 14px from tablet up */
@@ -260,7 +272,7 @@ main > .section.logo-band-container:has(.logo-band.marquee) > div { max-width: n
   align-items: center;
   box-sizing: border-box;
   width: 156px;
-  height: 50px;
+  height: 32px;
   padding: 0;
   margin: 0;
 }
@@ -275,7 +287,7 @@ main > .section.logo-band-container:has(.logo-band.marquee) > div { max-width: n
   width: auto;
   max-width: 130px;
   height: auto;
-  max-height: 50px;
+  max-height: 32px;
   object-fit: contain;
   filter: grayscale(1);
 }
@@ -285,6 +297,19 @@ main > .section.logo-band-container:has(.logo-band.marquee) > div { max-width: n
   .logo-band.strip .logoband-list > * { width: calc(50% - var(--space-s)); max-width: 156px; }
 }
 
+@media (width >= 768px) {
+  .logo-band.strip { margin-top: 32px; }
+}
+
 @media (width >= 1024px) {
   .logo-band.marquee.light { padding: 40px 0; }
+  .section.logo-band-container:has(.logo-band.strip) { padding-bottom: 40px; }
+
+  .section.logo-band-container:has(.logo-band.strip) .default-content-wrapper h2 {
+    font-size: 48px;
+    line-height: 1;
+  }
+
+  .logo-band.strip { margin-top: 60px; }
+  .logo-band.strip .logoband-list { gap: 60px; }
 }
