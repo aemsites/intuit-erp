@@ -2,10 +2,13 @@ main > .section:has(.sticky-nav) > div {
   padding: 0;
 }
 
+main > .section:has(.sticky-nav) > .default-content-wrapper { padding-top: 20px; }
+main > .section:has(.sticky-nav) > .default-content-wrapper > h2 { margin-top: 0; }
+
 .sticky-nav {
   background: #fff;
   border-bottom: 4px solid #f0f4f6;
-  margin-bottom: 5rem;
+  margin-bottom: 60px;
 }
 
 .sticky-nav.is-fixed {
@@ -104,5 +107,10 @@ body.sticky-nav-active .header .ies-secondary-nav {
 }
 
 @media (width >= 1024px) {
-  main > .section:has(.sticky-nav) > .default-content-wrapper { padding-bottom: 40px; }
+  .sticky-nav { margin-bottom: 5rem; }
+
+  main > .section:has(.sticky-nav) > .default-content-wrapper {
+    padding-top: 40px;
+    padding-bottom: 40px;
+  }
 }

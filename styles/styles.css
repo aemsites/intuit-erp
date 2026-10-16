@@ -718,8 +718,12 @@ main .section.narrow>div {
 }
 
 /* IES title block: eyebrow paragraph above the heading, subcopy below it */
+main > .section.ies:not(.colored-background) > .default-content-wrapper:has(> p:first-child + :is(h2, h3)) {
+  padding-top: 20px;
+}
+
 main > .section.ies > .default-content-wrapper > p:first-child:has(+ :is(h2, h3)) {
-  margin: 20px 0 8px;
+  margin: 0 0 8px;
   font-size: 12px;
   line-height: 1.25;
   font-weight: var(--font-weight-medium);
@@ -738,8 +742,12 @@ main > .section.ies > .default-content-wrapper > :is(h2, h3) + p:not(.button-wra
 }
 
 @media (width >= 1024px) {
+  main > .section.ies:not(.colored-background) > .default-content-wrapper:has(> p:first-child + :is(h2, h3)) {
+    padding-top: 40px;
+  }
+
   main > .section.ies > .default-content-wrapper > p:first-child:has(+ :is(h2, h3)) {
-    margin: 40px 0 16px;
+    margin: 0 0 16px;
     font-size: 14px;
     letter-spacing: 1.82px;
   }

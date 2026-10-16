@@ -1092,7 +1092,7 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
 }
 
 /* feature cards retheme (Figma 6455-52857 desktop, 6431-92253 tablet/mobile card) */
-.section.feature-cards { padding: 20px 0; }
+.section.feature-cards { padding: 40px 0 20px; }
 
 .section.feature-cards > .default-content-wrapper {
   padding-top: 0;
