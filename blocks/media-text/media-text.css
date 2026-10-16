@@ -957,3 +957,189 @@
     padding-right: 0;
   }
 }
+
+/* .compare.ies: One Intuit comparison cards (Figma 22428-8494 / 22408-21563 / 22408-20600) */
+.section.media-text-container:has(.media-text.compare.ies) {
+  background: #0d0031;
+  padding: 60px 0;
+}
+
+.section.media-text-container:has(.media-text.compare.ies) > .default-content-wrapper {
+  padding-block: 0 var(--space-m);
+}
+
+.media-text-container:has(.media-text.compare.ies) .default-content-wrapper h2 {
+  margin: 0;
+  font-size: 34px;
+  font-weight: var(--font-weight-normal);
+  line-height: 1.1;
+  color: #fff;
+  text-align: center;
+}
+
+.media-text-container:has(.media-text.compare.ies) .default-content-wrapper > :is(h3, h4, h5, h6, p) {
+  max-width: 44em;
+  margin: var(--space-s) auto 0;
+  font-family: var(--body-font-family);
+  font-size: var(--body-font-size-xs);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-m);
+  color: #fff;
+  text-align: center;
+}
+
+.media-text.compare.ies {
+  max-width: 1200px;
+  margin-inline: auto;
+}
+
+.media-text.compare.ies .compare-grid {
+  grid-template-columns: 1fr;
+  gap: var(--space-m);
+  width: auto;
+  max-width: none;
+}
+
+.media-text.compare.ies .compare-card {
+  padding: 30px 20px;
+  border-radius: 20px;
+  color: #0d0031;
+}
+
+.media-text.compare.ies .compare-card:first-child {
+  background: #f0f4f6;
+}
+
+.media-text.compare.ies .compare-card:last-child {
+  background: #d6e8f8;
+}
+
+.media-text.compare.ies .compare-card h3 {
+  margin: 0 0 var(--space-s);
+  font-size: 24px;
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-s);
+  letter-spacing: -0.72px;
+  color: #0d0031;
+}
+
+.media-text.compare.ies .compare-card ul {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-m);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.media-text.compare.ies .compare-card ul li {
+  position: relative;
+  margin: 0;
+  padding-left: 36px;
+  font-size: var(--body-font-size-xs);
+  line-height: var(--line-height-m);
+  color: #0d0031;
+}
+
+.media-text.compare.ies .compare-card ul li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 24px;
+  height: 24px;
+  background: url("/icons/icon-circle-dash-fill-blueberry.svg") no-repeat center / contain;
+}
+
+.media-text.compare.ies .compare-card:last-child ul li::before {
+  background-image: url("/icons/icon-circle-check-fill-blue.svg");
+}
+
+.media-text.compare.ies .compare-card ul li.li-check::before {
+  background-image: url("/icons/icon-circle-check-fill-blue.svg");
+}
+
+.media-text.compare.ies .compare-card ul li.li-dash::before {
+  background-image: url("/icons/icon-circle-dash-fill-blueberry.svg");
+}
+
+.media-text.compare.ies .compare-card ul li.li-x::before {
+  background-image: url("/icons/icon-circle-x-fill-blueberry.svg");
+}
+
+/* trailing footnote link, pinned to the card bottom */
+.media-text.compare.ies .compare-card > :is(p, ol):last-child:not(:first-child) {
+  max-width: none;
+  margin: auto 0 0;
+  padding-top: var(--space-m);
+  font-size: var(--body-font-size-xxs);
+  line-height: var(--line-height-m);
+  color: #000;
+}
+
+.media-text.compare.ies .compare-card > :is(p, ol):last-child:not(:first-child) a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.media-text.compare.ies .compare-card > p.button-wrapper:last-child .button {
+  height: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  color: inherit;
+  text-decoration: underline;
+}
+
+@media (width < 768px) {
+  .section.media-text-container:has(.media-text.compare.ies) > div {
+    padding-inline: var(--space-m);
+  }
+}
+
+@media (width >= 768px) {
+  .media-text.compare.ies .compare-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (width >= 1024px) {
+  .section.media-text-container:has(.media-text.compare.ies) {
+    padding: var(--space-5xl) 0;
+  }
+
+  .section.media-text-container:has(.media-text.compare.ies) > .default-content-wrapper {
+    padding-bottom: var(--space-2xl);
+  }
+
+  .media-text-container:has(.media-text.compare.ies) .default-content-wrapper h2 {
+    font-size: 48px;
+    font-weight: var(--font-weight-medium);
+    line-height: var(--line-height-none);
+  }
+
+  .media-text-container:has(.media-text.compare.ies) .default-content-wrapper > :is(h3, h4, h5, h6, p) {
+    font-size: var(--body-font-size-m);
+  }
+
+  .media-text.compare.ies .compare-grid {
+    width: 100%;
+  }
+
+  .media-text.compare.ies .compare-card {
+    padding: 60px;
+    border-radius: 38px;
+  }
+
+  .media-text.compare.ies .compare-card h3 {
+    font-size: 28px;
+    letter-spacing: 0;
+  }
+
+  .media-text.compare.ies .compare-card ul li {
+    font-size: var(--body-font-size-m);
+  }
+}

@@ -25,3 +25,7 @@
 .disclosure.white .disc-caret { display: none; } /* no caret on this variant, matching prod */
 .disclosure.white .disclosure-body { color: var(--text-color); font-size: 12px; text-align: left; opacity: 1; padding: 0; }
 .disclosure.white .disclosure-body p { margin: 0 0 var(--space-s); }
+
+.disclosure .disclosure-item {
+  scroll-margin-top: 100px;
+}

@@ -1090,3 +1090,105 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
   .cards.icons.text-grid { gap: var(--space-m); } /* 20px between list items on mobile */
   .cards.icons.text-grid .cards-card-body h3 { font-size: 24px; }
 }
+
+/* .ies: One Intuit icon tiles (Figma 22428-8481 / 22408-21512 / 22408-20549) */
+.cards.ies {
+  --ies-ink: #0d0031;
+
+  grid-template-columns: 1fr;
+  gap: var(--space-m);
+  max-width: 1360px;
+  margin-inline: auto;
+}
+
+.cards.ies > div {
+  box-sizing: border-box;
+  gap: var(--space-m);
+  padding: 30px;
+  border-radius: 20px;
+  background: #f0f4f6;
+  color: var(--ies-ink);
+}
+
+.cards.ies .cards-card-head {
+  margin: 0;
+}
+
+.cards.ies .cards-card-image,
+.cards.ies .cards-card-image img {
+  width: 36px;
+  height: 36px;
+  margin: 0;
+  object-fit: contain;
+}
+
+.cards.ies .cards-card-body h3 {
+  margin: 0 0 var(--space-s);
+  font-size: 24px;
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-s);
+  letter-spacing: -0.72px;
+  color: inherit;
+}
+
+.cards.ies .cards-card-body p {
+  margin: 0;
+  font-size: var(--body-font-size-m);
+  line-height: var(--line-height-m);
+  color: inherit;
+}
+
+.section.cards-container:has(.cards.ies) {
+  padding-block: 60px;
+}
+
+.section.cards-container:has(.cards.ies) > .default-content-wrapper {
+  padding-block: 0;
+}
+
+:where(.section.cards-container:has(.cards.ies) > .default-content-wrapper) h2:not(.section-eyebrow) {
+  margin: 0 0 var(--space-m);
+  font-size: 34px;
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-xs);
+  text-align: center;
+  color: #0d0031;
+}
+
+@media (width < 768px) {
+  .section.cards-container:has(.cards.ies) > div {
+    padding-inline: var(--space-m);
+  }
+}
+
+@media (width >= 768px) {
+  .cards.ies {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (width >= 1024px) {
+  .cards.ies {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .cards.ies > div {
+    gap: 30px;
+    border-radius: 38px;
+  }
+
+  .cards.ies .cards-card-body h3 {
+    font-size: 28px;
+    letter-spacing: 0;
+  }
+
+  .section.cards-container:has(.cards.ies) {
+    padding-block: var(--space-5xl);
+  }
+
+  :where(.section.cards-container:has(.cards.ies) > .default-content-wrapper) h2:not(.section-eyebrow) {
+    margin-bottom: var(--space-2xl);
+    font-size: 48px;
+    line-height: var(--line-height-none);
+  }
+}

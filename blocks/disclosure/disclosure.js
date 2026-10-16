@@ -31,6 +31,16 @@ export default function decorate(block) {
 
   details.append(summary, body);
 
+  // first disclosure on the page is the #disclaimer jump target; open it when targeted
+  if (!document.getElementById('disclaimer')) {
+    details.id = 'disclaimer';
+    const openIfTargeted = () => {
+      if (window.location.hash === '#disclaimer') details.open = true;
+    };
+    openIfTargeted();
+    window.addEventListener('hashchange', openIfTargeted);
+  }
+
   block.replaceChildren(details);
   return trackAs(null, block, {
     key: 'disclaimer',
