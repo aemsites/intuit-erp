@@ -1110,7 +1110,7 @@
 
 @media (width >= 1024px) {
   .section.media-text-container:has(.media-text.compare.ies) {
-    padding: var(--space-2xl) 0;
+    padding: var(--space-5xl) 0;
   }
 
   .section.media-text-container:has(.media-text.compare.ies) > .default-content-wrapper {

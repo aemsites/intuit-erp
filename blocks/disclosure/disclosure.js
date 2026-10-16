@@ -31,6 +31,18 @@ export default function decorate(block) {
 
   details.append(summary, body);
 
+  // The page's first disclosure is the `#disclaimer` jump target (footnote /
+  // source links, e.g. the compare cards' "Campfire information"); landing on
+  // it also expands the note so the reader sees the sources, not a closed bar.
+  if (!document.getElementById('disclaimer')) {
+    details.id = 'disclaimer';
+    const openIfTargeted = () => {
+      if (window.location.hash === '#disclaimer') details.open = true;
+    };
+    openIfTargeted();
+    window.addEventListener('hashchange', openIfTargeted);
+  }
+
   block.replaceChildren(details);
   return trackAs(null, block, {
     key: 'disclaimer',
