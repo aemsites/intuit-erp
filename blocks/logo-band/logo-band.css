@@ -140,7 +140,7 @@
 
 /* logo-band.marquee — infinite scrolling logo band. .light swaps it to a
    white band of 112px brandmark tiles, greyscale until hovered. */
-.logo-band.marquee.light { padding: 20px 0 var(--section-y); }
+.logo-band.marquee.light { padding: 20px 0; }
 
 /* variables live on the section, not the block, so both the section's own
    background and the block's descendant rules can read them */
@@ -203,7 +203,7 @@ main > .section.logo-band-container:has(.logo-band.marquee) > div { max-width: n
 
   .logo-band.marquee .logoband-set { gap: var(--space-xl); padding-right: var(--space-xl); }
 
-  .logo-band.marquee.light { padding-top: var(--space-2xl); }
+  .logo-band.marquee.light { padding-top: 32px; }
 
   .logo-band.marquee.light img { height: 112px; }
 
@@ -283,4 +283,8 @@ main > .section.logo-band-container:has(.logo-band.marquee) > div { max-width: n
 @media (width < 768px) {
   .logo-band.strip .logoband-list { gap: var(--space-s); }
   .logo-band.strip .logoband-list > * { width: calc(50% - var(--space-s)); max-width: 156px; }
+}
+
+@media (width >= 1024px) {
+  .logo-band.marquee.light { padding: 40px 0; }
 }
