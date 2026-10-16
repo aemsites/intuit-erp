@@ -11,6 +11,9 @@
  *               the link paragraph's own text is the title, an optional
  *               eyebrow paragraph doubles as a category label (blog rail
  *               "download" promos, e.g. fragments/right-rail)
+ *   .ies        One Intuit tinted tiles: 36px icon + heading + body on a
+ *               Pepper card, 1-up / 2-up / 4-up by breakpoint (comparison
+ *               pages "Why finance teams switch")
  * .carousel/.boxed combine with the .accent/.dark tone classes (section
  * background) independently — see cards.css.
  *
@@ -214,7 +217,8 @@ function attachFocusCursor(block) {
 }
 
 export default function decorate(block) {
-  const isIcons = block.classList.contains('icons');
+  // .ies tiles are icon cards too: small icon rendition + icon/eyebrow head row
+  const isIcons = block.classList.contains('icons') || block.classList.contains('ies');
 
   [...block.children].forEach((row) => {
     [...row.children].forEach((cell) => {
