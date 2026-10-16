@@ -155,6 +155,114 @@
   --space-5xl: 80px;
 }
 
+main :is(
+  h1.h1-size-xxl,
+  h2.h2-size-xxl,
+  h3.h3-size-xxl,
+  h4.h4-size-xxl,
+  h5.h5-size-xxl,
+  h6.h6-size-xxl
+),
+main p:is(
+  .h1-size-xxl,
+  .h2-size-xxl,
+  .h3-size-xxl,
+  .h4-size-xxl,
+  .h5-size-xxl,
+  .h6-size-xxl,
+  .p-size-xxl
+) { font-size: var(--heading-font-size-xxl); }
+
+main :is(
+  h1.h1-size-xl,
+  h2.h2-size-xl,
+  h3.h3-size-xl,
+  h4.h4-size-xl,
+  h5.h5-size-xl,
+  h6.h6-size-xl
+),
+main p:is(
+  .h1-size-xl,
+  .h2-size-xl,
+  .h3-size-xl,
+  .h4-size-xl,
+  .h5-size-xl,
+  .h6-size-xl,
+  .p-size-xl
+) { font-size: var(--heading-font-size-xl); }
+
+main :is(
+  h1.h1-size-l,
+  h2.h2-size-l,
+  h3.h3-size-l,
+  h4.h4-size-l,
+  h5.h5-size-l,
+  h6.h6-size-l
+),
+main p:is(
+  .h1-size-l,
+  .h2-size-l,
+  .h3-size-l,
+  .h4-size-l,
+  .h5-size-l,
+  .h6-size-l,
+  .p-size-l
+) { font-size: var(--heading-font-size-l); }
+
+main :is(
+  h1.h1-size-m,
+  h2.h2-size-m,
+  h3.h3-size-m,
+  h4.h4-size-m,
+  h5.h5-size-m,
+  h6.h6-size-m
+),
+main p:is(
+  .h1-size-m,
+  .h2-size-m,
+  .h3-size-m,
+  .h4-size-m,
+  .h5-size-m,
+  .h6-size-m,
+  .p-size-m
+) { font-size: var(--heading-font-size-m); }
+
+main :is(
+  h1.h1-size-s,
+  h2.h2-size-s,
+  h3.h3-size-s,
+  h4.h4-size-s,
+  h5.h5-size-s,
+  h6.h6-size-s
+),
+main p:is(
+  .h1-size-s,
+  .h2-size-s,
+  .h3-size-s,
+  .h4-size-s,
+  .h5-size-s,
+  .h6-size-s,
+  .p-size-s
+) { font-size: var(--heading-font-size-s); }
+
+main :is(
+  h1.h1-size-xs,
+  h2.h2-size-xs,
+  h3.h3-size-xs,
+  h4.h4-size-xs,
+  h5.h5-size-xs,
+  h6.h6-size-xs
+),
+main p:is(
+  .h1-size-xs,
+  .h2-size-xs,
+  .h3-size-xs,
+  .h4-size-xs,
+  .h5-size-xs,
+  .h6-size-xs,
+  .p-size-xs
+) { font-size: var(--heading-font-size-xs); }
+
 /* Metric-matched fallback for the primary webfont (local Arial, zero network),
    standing in for "AvenirNext forINTUIT" while it downloads. MUST stay in the
    eager stylesheet: fonts.css loads lazily (post-LCP on mobile), so a fallback

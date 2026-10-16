@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Sematic Styler</title>
+  <link rel="stylesheet" href="./sematic-styler.css">
+</head>
+<body class="da-extension-ds">
+  <div id="loading" class="loading-overlay" role="status" aria-label="Changes in progress"
+    aria-hidden="true" hidden>
+    <span class="loading-spinner" aria-hidden="true"></span>
+  </div>
+  <header class="da-ds-panel-header">
+    <h1 class="da-ds-title">Semantic styler</h1>
+    <button id="repair" class="da-ds-button da-ds-button-secondary" type="button">Check heading keys</button>
+  </header>
+  <main class="da-ds-content">
+    <p id="status" role="status" aria-live="polite">Select content in the document.</p>
+    <ul id="list" aria-label="Selected content"></ul>
+  </main>
+  <script type="module" src="./sematic-styler.js"></script>
+</body>
+</html>

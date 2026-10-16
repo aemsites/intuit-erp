@@ -26,6 +26,12 @@ import { isVideoLink, videoInfo } from '../blocks/video/video-info.js';
 import { isGuidePage } from '../blocks/guide-hero/guide-detect.js';
 // eslint-disable-next-line import/no-cycle
 import { applyPageExperience, applyEagerLayers } from './experience.js';
+import {
+  KEY_RE,
+  matchHeadings,
+  classesOf,
+  sizeClass,
+} from './heading-key.js';
 
 // Provider gate via the `?martech=` query param:
 //   off    -> disable ALL martech (no Tealium)
@@ -141,6 +147,57 @@ function buildWidgetAutoBlocks(main) {
     } else {
       link.replaceWith(widgetBlock);
     }
+  });
+}
+
+function applySizeTokens(scope, tokens, excludeBlocks = false) {
+  const positionedPattern = /^(p|h[1-6])-(\d+)-size-(xxl|xl|l|m|s|xs)$/;
+  const allPattern = /^(p|h[1-6])-size-(xxl|xl|l|m|s|xs)$/;
+  const positioned = new Map();
+  const all = new Map();
+  tokens.forEach((token) => {
+    const positionMatch = token.match(positionedPattern);
+    const allMatch = token.match(allPattern);
+    if (positionMatch) {
+      positioned.set(`${positionMatch[1]}-${positionMatch[2]}`, positionMatch[3]);
+    } else if (allMatch) {
+      all.set(allMatch[1], allMatch[2]);
+    }
+  });
+
+  const counts = new Map();
+  scope.querySelectorAll('p,h1,h2,h3,h4,h5,h6').forEach((el) => {
+    if (el.closest('.section-metadata') || (excludeBlocks && el.closest('.block'))) return;
+    const tag = el.tagName.toLowerCase();
+    const index = (counts.get(tag) || 0) + 1;
+    counts.set(tag, index);
+    const size = positioned.get(`${tag}-${index}`) || all.get(tag);
+    if (!size) return;
+
+    const className = sizeClass(el, size);
+    [...el.classList]
+      .filter((name) => /^(p|h[1-6])-size-(xxl|xl|l|m|s|xs)$/.test(name))
+      .forEach((name) => el.classList.remove(name));
+    el.classList.add(className);
+  });
+}
+
+// Apply legacy section sizes, style metadata for default content, and block size classes.
+function decorateHeadingSizes(main) {
+  // Continue to support existing section-metadata entries while new entries use block classes.
+  main.querySelectorAll(':scope > div').forEach((section) => {
+    const entries = [...section.attributes]
+      .filter((a) => a.name.startsWith('data-') && KEY_RE.test(a.name.slice(5)))
+      .map((a) => ({ key: a.name.slice(5), value: a.value }));
+    if (entries.length) {
+      matchHeadings(section, entries).matched
+        .forEach(({ el, entry }) => el.classList.add(...classesOf(entry.value)));
+    }
+    applySizeTokens(section, [...section.classList], true);
+  });
+
+  main.querySelectorAll(':scope > div .block').forEach((block) => {
+    applySizeTokens(block, [...block.classList]);
   });
 }
 
@@ -479,6 +536,7 @@ export function decorateMain(main) {
   decorateBlocks(main);
   decorateLinkTitles(main);
   decorateButtons(main);
+  decorateHeadingSizes(main);
   decorateVideoLinks(main);
   decorateFocalPoints(main);
 }
