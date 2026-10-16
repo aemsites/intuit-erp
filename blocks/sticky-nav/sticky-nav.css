@@ -4,15 +4,18 @@ main > .section:has(.sticky-nav) > div {
 
 main > .section:has(.sticky-nav) > .default-content-wrapper {
   padding-top: 20px;
-  padding-bottom: 20px;
+  padding-bottom: 0;
 }
 main > .section:has(.sticky-nav) > .default-content-wrapper > h2 { margin-top: 0; }
 
 .sticky-nav {
   background: #fff;
   border-bottom: 4px solid #f0f4f6;
+  padding-top: 20px;
   margin-bottom: 60px;
 }
+
+.sticky-nav.is-fixed { padding-top: 0; }
 
 .sticky-nav.is-fixed {
   position: fixed;
@@ -97,11 +100,11 @@ body.sticky-nav-active .header .ies-secondary-nav {
 }
 
 @media (width >= 768px) {
-  main > .section:has(.sticky-nav) > .default-content-wrapper { padding-bottom: 32px; }
+  .sticky-nav { padding-top: 32px; }
 
   .sticky-nav ul {
-    justify-content: center;
-    overflow-x: visible;
+    justify-content: safe center;
+    padding: 0 40px;
   }
 
   .sticky-nav a.active::after {
@@ -110,10 +113,12 @@ body.sticky-nav-active .header .ies-secondary-nav {
 }
 
 @media (width >= 1024px) {
-  .sticky-nav { margin-bottom: 5rem; }
-
-  main > .section:has(.sticky-nav) > .default-content-wrapper {
+  .sticky-nav {
     padding-top: 40px;
-    padding-bottom: 40px;
+    margin-bottom: 5rem;
   }
+
+  .sticky-nav ul { overflow-x: visible; }
+
+  main > .section:has(.sticky-nav) > .default-content-wrapper { padding-top: 40px; }
 }

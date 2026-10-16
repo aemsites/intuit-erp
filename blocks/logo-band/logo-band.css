@@ -142,6 +142,9 @@
    white band of 112px brandmark tiles, greyscale until hovered. */
 .logo-band.marquee.light { padding: 20px 0; }
 
+.section.logo-band-container:has(.logo-band.marquee.light) > .default-content-wrapper { padding-bottom: 0; }
+.section.logo-band-container:has(.logo-band.marquee.light) > .default-content-wrapper > p:last-child { margin-bottom: 0; }
+
 /* variables live on the section, not the block, so both the section's own
    background and the block's descendant rules can read them */
 .section.logo-band-container:has(.logo-band.marquee) {
