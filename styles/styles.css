@@ -1615,6 +1615,19 @@ main .section[data-section-status].h6-size-xxl h6:not(.block h6) {
   font-size: var(--heading-font-size-xxl);
 }
 
+/* Heading spacer helpers: h2-spacer-0 / h3-spacer-0 / h4-spacer-0 strip that heading's
+   top and bottom margin. Block-scoped first, then section-scoped (excludes blocks),
+   like the size helpers above. */
+main .block[data-block-status][data-block-name].h2-spacer-0 h2,
+main .block[data-block-status][data-block-name].h3-spacer-0 h3,
+main .block[data-block-status][data-block-name].h4-spacer-0 h4,
+main .section[data-section-status].h2-spacer-0 h2:not(.block h2),
+main .section[data-section-status].h3-spacer-0 h3:not(.block h3),
+main .section[data-section-status].h4-spacer-0 h4:not(.block h4) {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
 /* Block-scoped weight helpers */
 main .block[data-block-status][data-block-name].h1-font-weight-normal h1,
 main .block[data-block-status][data-block-name].h2-font-weight-normal h2,
