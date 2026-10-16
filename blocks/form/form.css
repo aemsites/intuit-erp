@@ -370,8 +370,8 @@
   color: #d5e0ec;
 }
 
-.section.form-container:has(.form.download) .default-content-wrapper h2,
-.section.form-container:has(.form.download) .default-content-wrapper h3 {
+.form-container:has(.form.download) .default-content-wrapper h2,
+.form-container:has(.form.download) .default-content-wrapper h3 {
   font-size: 32px;
   font-weight: var(--font-weight-bold);
   margin: 0 0 var(--space-s);

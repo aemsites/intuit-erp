@@ -1,6 +1,6 @@
 .section.media-text-container {
   background: #fff;
-  padding: 35px 0;
+  padding: 40px 0;
 }
 
 .section.media-text-container:has(.media-text.tint) {
@@ -87,27 +87,48 @@
 }
 
 .media-text .media-copy .media-callout {
-  background: var(--wintermint);
-  border-left: 4px solid var(--primary);
-  border-radius: var(--radius);
-  padding: var(--space-m);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-s);
+  background: #f0f4f6;
+  border-radius: 30px;
+  padding: 30px 20px;
   margin-top: var(--space-l);
 }
 
 .media-text .media-copy .media-callout-label {
-  margin: 0 0 var(--space-s);
+  margin: 0;
   font-size: 12px;
+  line-height: 1.4;
   font-weight: var(--font-weight-medium);
   letter-spacing: 1.2px;
   text-transform: uppercase;
-  color: var(--heading);
+  color: #0d0031;
 }
 
 .media-text .media-copy .media-callout-body {
   margin: 0;
   font-size: 16px;
-  line-height: var(--line-height-l);
-  color: var(--text);
+  line-height: 1.4;
+  color: #000;
+}
+
+@media (width >= 768px) {
+  .media-text .media-copy .media-callout {
+    padding: 40px 30px;
+  }
+
+  .media-text .media-copy .media-callout-label {
+    font-size: 14px;
+    line-height: 1.25;
+    letter-spacing: 1.82px;
+  }
+}
+
+@media (width >= 1024px) {
+  .media-text .media-copy .media-callout {
+    border-radius: 38px;
+  }
 }
 
 .media-text .media-copy h2,
@@ -897,5 +918,42 @@
 
   .media-text.compare .compare-card h3 {
     font-size: 32px;
+  }
+}
+
+/* .checklist frame (Figma: desktop 6456-54964, tablet 6308-89849, mobile 6319-102985) */
+.section.media-text-container:has(.media-text.checklist) { padding: 20px 0; }
+
+.section.media-text-container:has(.media-text.checklist) > .media-text-wrapper {
+  max-width: none;
+  padding: 0 20px;
+}
+
+.media-text.checklist .media-row {
+  gap: 30px;
+  padding: 0;
+}
+
+@media (width >= 768px) {
+  .section.media-text-container:has(.media-text.checklist) > .media-text-wrapper { padding: 0 40px; }
+  .media-text.checklist .media-row { gap: 32px; }
+}
+
+@media (width >= 1024px) {
+  .section.media-text-container:has(.media-text.checklist) { padding: 40px 0; }
+
+  .section.media-text-container:has(.media-text.checklist) > .media-text-wrapper {
+    max-width: 1210px;
+    margin: 0 auto;
+  }
+
+  .media-text.checklist .media-row { gap: 100px; }
+}
+
+/* inside a contained card the card gutter is the only one below desktop */
+@media (width < 1024px) {
+  .section.contained.media-text-container:has(.media-text.checklist) > .media-text-wrapper {
+    padding-left: 0;
+    padding-right: 0;
   }
 }

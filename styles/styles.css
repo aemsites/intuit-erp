@@ -821,6 +821,23 @@ main .section.ies button.button.primary:focus-visible {
   color: #fff;
 }
 
+/* primary pill goes white on Superblue ies sections */
+main .section.ies:is(.super-blue, [data-background="#236cff" i]) a.button.primary,
+main .section.ies:is(.super-blue, [data-background="#236cff" i]) button.button.primary {
+  border-color: #fff;
+  background-color: #fff;
+  color: #0d0031;
+}
+
+main .section.ies:is(.super-blue, [data-background="#236cff" i]) a.button.primary:hover,
+main .section.ies:is(.super-blue, [data-background="#236cff" i]) a.button.primary:focus-visible,
+main .section.ies:is(.super-blue, [data-background="#236cff" i]) button.button.primary:hover,
+main .section.ies:is(.super-blue, [data-background="#236cff" i]) button.button.primary:focus-visible {
+  border-color: #eff4f9;
+  background-color: #eff4f9;
+  color: #0d0031;
+}
+
 /* outlined pill: Blueberry on light sections, white on dark ones */
 main .section.ies a.button.secondary,
 main .section.ies button.button.secondary {
@@ -850,12 +867,67 @@ main .section.ies:is(.dark, .navy, .super-blue, .dark-background) a.button.secon
   color: #0d0031;
 }
 
-/* contained sections */
+/* contained sections: rounded card, 1.25rem / 2.5rem gutters below desktop, 1360px max */
 main > .section.contained,
 main .fragment-wrapper .section.contained {
-  margin: 2rem auto;
-  max-width: 1400px;
-  border-radius: 6px;
+  margin: 2.5rem 1.25rem;
+  max-width: 1360px;
+  border-radius: 30px;
+}
+
+@media (width >= 768px) {
+  main > .section.contained,
+  main .fragment-wrapper .section.contained {
+    margin: 2.5rem;
+    border-radius: 24px;
+  }
+}
+
+@media (width >= 1024px) {
+  main > .section.contained,
+  main .fragment-wrapper .section.contained {
+    margin: 2.5rem auto;
+    max-width: min(1360px, calc(100% - 5rem));
+    border-radius: 38px;
+  }
+}
+
+/* IES banner inset (Figma 15076-47792 tablet, 15095-64995 mobile) */
+main > .section.contained.ies.colored-background,
+main .fragment-wrapper .section.contained.ies.colored-background {
+  padding-top: 5rem;
+  padding-bottom: 5rem;
+
+  > div.default-content-wrapper {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+}
+
+@media (width >= 768px) {
+  main > .section.contained.ies.colored-background,
+  main .fragment-wrapper .section.contained.ies.colored-background {
+    padding-top: 3.75rem;
+    padding-bottom: 3.75rem;
+
+    > div.default-content-wrapper {
+      padding-left: 5.625rem;
+      padding-right: 5.625rem;
+    }
+  }
+}
+
+@media (width >= 1024px) {
+  main > .section.contained.ies.colored-background,
+  main .fragment-wrapper .section.contained.ies.colored-background {
+    padding-top: 3rem;
+    padding-bottom: 3rem;
+
+    > div.default-content-wrapper {
+      padding-left: 2.5rem;
+      padding-right: 2.5rem;
+    }
+  }
 }
 
 /* case-studies index intro (Template: "Case Studies Index" metadata -> body.case-studies-index) */
@@ -1185,90 +1257,118 @@ body.blog-home .section:not(:first-of-type)>.default-content-wrapper> :is(h1, h2
 }
 
 
+/* spacing scale (16px base): s 1rem, m 1.25rem, l 2.5rem, xl 3.75rem, xxl 5rem, xxxl 7.5rem, xxxxl 10rem */
 main > .section.spacer-top-s,
 main .fragment-wrapper .section.spacer-top-s { margin-top: 1rem; }
 
 main > .section.spacer-top-m,
-main .fragment-wrapper .section.spacer-top-m { margin-top: 1.5rem; }
+main .fragment-wrapper .section.spacer-top-m { margin-top: 1.25rem; }
 
 main > .section.spacer-top-l,
 main .fragment-wrapper .section.spacer-top-l { margin-top: 2.5rem; }
 
 main > .section.spacer-top-xl,
-main .fragment-wrapper .section.spacer-top-xl { margin-top: 4rem; }
+main .fragment-wrapper .section.spacer-top-xl { margin-top: 3.75rem; }
 
 main > .section.spacer-top-xxl,
-main .fragment-wrapper .section.spacer-top-xxl { margin-top: 6rem; }
+main .fragment-wrapper .section.spacer-top-xxl { margin-top: 5rem; }
 
 main > .section.spacer-bottom-s,
 main .fragment-wrapper .section.spacer-bottom-s { margin-bottom: 1rem; }
 
 main > .section.spacer-bottom-m,
-main .fragment-wrapper .section.spacer-bottom-m { margin-bottom: 1.5rem; }
+main .fragment-wrapper .section.spacer-bottom-m { margin-bottom: 1.25rem; }
 
 main > .section.spacer-bottom-l,
 main .fragment-wrapper .section.spacer-bottom-l { margin-bottom: 2.5rem; }
 
 main > .section.spacer-bottom-xl,
-main .fragment-wrapper .section.spacer-bottom-xl { margin-bottom: 4rem; }
+main .fragment-wrapper .section.spacer-bottom-xl { margin-bottom: 3.75rem; }
 
 main > .section.spacer-bottom-xxl,
-main .fragment-wrapper .section.spacer-bottom-xxl { margin-bottom: 6rem; }
+main .fragment-wrapper .section.spacer-bottom-xxl { margin-bottom: 5rem; }
 
 main > .section.spacer-bottom-xxxl,
-main .fragment-wrapper .section.spacer-bottom-xxxl { margin-bottom: 8rem; }
+main .fragment-wrapper .section.spacer-bottom-xxxl { margin-bottom: 7.5rem; }
 
 main > .section.spacer-bottom-xxxxl,
 main .fragment-wrapper .section.spacer-bottom-xxxxl { margin-bottom: 10rem; }
 
 :where(main > .section, main .fragment-wrapper .section) .block.spacer-top-s { margin-top: 1rem; }
-:where(main > .section, main .fragment-wrapper .section) .block.spacer-top-m { margin-top: 1.5rem; }
+:where(main > .section, main .fragment-wrapper .section) .block.spacer-top-m { margin-top: 1.25rem; }
 :where(main > .section, main .fragment-wrapper .section) .block.spacer-top-l { margin-top: 2.5rem; }
-:where(main > .section, main .fragment-wrapper .section) .block.spacer-top-xl { margin-top: 4rem; }
-:where(main > .section, main .fragment-wrapper .section) .block.spacer-top-xxl { margin-top: 6rem; }
+:where(main > .section, main .fragment-wrapper .section) .block.spacer-top-xl { margin-top: 3.75rem; }
+:where(main > .section, main .fragment-wrapper .section) .block.spacer-top-xxl { margin-top: 5rem; }
 :where(main > .section, main .fragment-wrapper .section) .block.spacer-bottom-s { margin-bottom: 1rem; }
-:where(main > .section, main .fragment-wrapper .section) .block.spacer-bottom-m { margin-bottom: 1.5rem; }
+:where(main > .section, main .fragment-wrapper .section) .block.spacer-bottom-m { margin-bottom: 1.25rem; }
 :where(main > .section, main .fragment-wrapper .section) .block.spacer-bottom-l { margin-bottom: 2.5rem; }
-:where(main > .section, main .fragment-wrapper .section) .block.spacer-bottom-xl { margin-bottom: 4rem; }
-:where(main > .section, main .fragment-wrapper .section) .block.spacer-bottom-xxl { margin-bottom: 6rem; }
-:where(main > .section, main .fragment-wrapper .section) .block.spacer-bottom-xxxl { margin-bottom: 8rem; }
+:where(main > .section, main .fragment-wrapper .section) .block.spacer-bottom-xl { margin-bottom: 3.75rem; }
+:where(main > .section, main .fragment-wrapper .section) .block.spacer-bottom-xxl { margin-bottom: 5rem; }
+:where(main > .section, main .fragment-wrapper .section) .block.spacer-bottom-xxxl { margin-bottom: 7.5rem; }
 :where(main > .section, main .fragment-wrapper .section) .block.spacer-bottom-xxxxl { margin-bottom: 10rem; }
 
 main > .section.padding-top-s,
 main .fragment-wrapper .section.padding-top-s { padding-top: 1rem; }
 
 main > .section.padding-top-m,
-main .fragment-wrapper .section.padding-top-m { padding-top: 1.5rem; }
+main .fragment-wrapper .section.padding-top-m { padding-top: 1.25rem; }
 
 main > .section.padding-top-l,
 main .fragment-wrapper .section.padding-top-l { padding-top: 2.5rem; }
 
 main > .section.padding-top-xl,
-main .fragment-wrapper .section.padding-top-xl { padding-top: 4rem; }
+main .fragment-wrapper .section.padding-top-xl { padding-top: 3.75rem; }
 
 main > .section.padding-top-xxl,
-main .fragment-wrapper .section.padding-top-xxl { padding-top: 6rem; }
+main .fragment-wrapper .section.padding-top-xxl { padding-top: 5rem; }
 
 main > .section.padding-bottom-s,
 main .fragment-wrapper .section.padding-bottom-s { padding-bottom: 1rem; }
 
 main > .section.padding-bottom-m,
-main .fragment-wrapper .section.padding-bottom-m { padding-bottom: 1.5rem; }
+main .fragment-wrapper .section.padding-bottom-m { padding-bottom: 1.25rem; }
 
 main > .section.padding-bottom-l,
 main .fragment-wrapper .section.padding-bottom-l { padding-bottom: 2.5rem; }
 
 main > .section.padding-bottom-xl,
-main .fragment-wrapper .section.padding-bottom-xl { padding-bottom: 4rem; }
+main .fragment-wrapper .section.padding-bottom-xl { padding-bottom: 3.75rem; }
 
 main > .section.padding-bottom-xxl,
-main .fragment-wrapper .section.padding-bottom-xxl { padding-bottom: 6rem; }
+main .fragment-wrapper .section.padding-bottom-xxl { padding-bottom: 5rem; }
 
 main > .section.padding-bottom-xxxl,
-main .fragment-wrapper .section.padding-bottom-xxxl { padding-bottom: 8rem; }
+main .fragment-wrapper .section.padding-bottom-xxxl { padding-bottom: 7.5rem; }
 
 main > .section.padding-bottom-xxxxl,
 main .fragment-wrapper .section.padding-bottom-xxxxl { padding-bottom: 10rem; }
+
+/* zero tokens: strip own vertical margin/padding; !important to beat block CSS */
+main > .section.spacer-top-0,
+main > .section.spacer-0,
+main .fragment-wrapper .section.spacer-top-0,
+main .fragment-wrapper .section.spacer-0 {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+main > .section.spacer-bottom-0,
+main > .section.spacer-0,
+main .fragment-wrapper .section.spacer-bottom-0,
+main .fragment-wrapper .section.spacer-0 {
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+:where(main > .section, main .fragment-wrapper .section) :is(.block.spacer-top-0, .block.spacer-0) {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+:where(main > .section, main .fragment-wrapper .section) :is(.block.spacer-bottom-0, .block.spacer-0) {
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+}
 
 :where(main > .section, main .fragment-wrapper .section) .block.padding-top-s { padding-top: 1rem; }
 :where(main > .section, main .fragment-wrapper .section) .block.padding-top-m { padding-top: 1.5rem; }
@@ -1406,57 +1506,57 @@ body.author-guide > main > .section > .default-content-wrapper :is(h1, h2, h3, h
 }
 
 /* Block-scoped size helpers */
-main .block[data-block-status].h1-size-xs h1,
-main .block[data-block-status].h2-size-xs h2,
-main .block[data-block-status].h3-size-xs h3,
-main .block[data-block-status].h4-size-xs h4,
-main .block[data-block-status].h5-size-xs h5,
-main .block[data-block-status].h6-size-xs h6 {
+main .block[data-block-status][data-block-name].h1-size-xs h1,
+main .block[data-block-status][data-block-name].h2-size-xs h2,
+main .block[data-block-status][data-block-name].h3-size-xs h3,
+main .block[data-block-status][data-block-name].h4-size-xs h4,
+main .block[data-block-status][data-block-name].h5-size-xs h5,
+main .block[data-block-status][data-block-name].h6-size-xs h6 {
   font-size: var(--heading-font-size-xs);
 }
 
-main .block[data-block-status].h1-size-s h1,
-main .block[data-block-status].h2-size-s h2,
-main .block[data-block-status].h3-size-s h3,
-main .block[data-block-status].h4-size-s h4,
-main .block[data-block-status].h5-size-s h5,
-main .block[data-block-status].h6-size-s h6 {
+main .block[data-block-status][data-block-name].h1-size-s h1,
+main .block[data-block-status][data-block-name].h2-size-s h2,
+main .block[data-block-status][data-block-name].h3-size-s h3,
+main .block[data-block-status][data-block-name].h4-size-s h4,
+main .block[data-block-status][data-block-name].h5-size-s h5,
+main .block[data-block-status][data-block-name].h6-size-s h6 {
   font-size: var(--heading-font-size-s);
 }
 
-main .block[data-block-status].h1-size-m h1,
-main .block[data-block-status].h2-size-m h2,
-main .block[data-block-status].h3-size-m h3,
-main .block[data-block-status].h4-size-m h4,
-main .block[data-block-status].h5-size-m h5,
-main .block[data-block-status].h6-size-m h6 {
+main .block[data-block-status][data-block-name].h1-size-m h1,
+main .block[data-block-status][data-block-name].h2-size-m h2,
+main .block[data-block-status][data-block-name].h3-size-m h3,
+main .block[data-block-status][data-block-name].h4-size-m h4,
+main .block[data-block-status][data-block-name].h5-size-m h5,
+main .block[data-block-status][data-block-name].h6-size-m h6 {
   font-size: var(--heading-font-size-m);
 }
 
-main .block[data-block-status].h1-size-l h1,
-main .block[data-block-status].h2-size-l h2,
-main .block[data-block-status].h3-size-l h3,
-main .block[data-block-status].h4-size-l h4,
-main .block[data-block-status].h5-size-l h5,
-main .block[data-block-status].h6-size-l h6 {
+main .block[data-block-status][data-block-name].h1-size-l h1,
+main .block[data-block-status][data-block-name].h2-size-l h2,
+main .block[data-block-status][data-block-name].h3-size-l h3,
+main .block[data-block-status][data-block-name].h4-size-l h4,
+main .block[data-block-status][data-block-name].h5-size-l h5,
+main .block[data-block-status][data-block-name].h6-size-l h6 {
   font-size: var(--heading-font-size-l);
 }
 
-main .block[data-block-status].h1-size-xl h1,
-main .block[data-block-status].h2-size-xl h2,
-main .block[data-block-status].h3-size-xl h3,
-main .block[data-block-status].h4-size-xl h4,
-main .block[data-block-status].h5-size-xl h5,
-main .block[data-block-status].h6-size-xl h6 {
+main .block[data-block-status][data-block-name].h1-size-xl h1,
+main .block[data-block-status][data-block-name].h2-size-xl h2,
+main .block[data-block-status][data-block-name].h3-size-xl h3,
+main .block[data-block-status][data-block-name].h4-size-xl h4,
+main .block[data-block-status][data-block-name].h5-size-xl h5,
+main .block[data-block-status][data-block-name].h6-size-xl h6 {
   font-size: var(--heading-font-size-xl);
 }
 
-main .block[data-block-status].h1-size-xxl h1,
-main .block[data-block-status].h2-size-xxl h2,
-main .block[data-block-status].h3-size-xxl h3,
-main .block[data-block-status].h4-size-xxl h4,
-main .block[data-block-status].h5-size-xxl h5,
-main .block[data-block-status].h6-size-xxl h6 {
+main .block[data-block-status][data-block-name].h1-size-xxl h1,
+main .block[data-block-status][data-block-name].h2-size-xxl h2,
+main .block[data-block-status][data-block-name].h3-size-xxl h3,
+main .block[data-block-status][data-block-name].h4-size-xxl h4,
+main .block[data-block-status][data-block-name].h5-size-xxl h5,
+main .block[data-block-status][data-block-name].h6-size-xxl h6 {
   font-size: var(--heading-font-size-xxl);
 }
 
@@ -1515,40 +1615,51 @@ main .section[data-section-status].h6-size-xxl h6:not(.block h6) {
   font-size: var(--heading-font-size-xxl);
 }
 
+/* Heading spacer helpers */
+main .block[data-block-status][data-block-name].h2-spacer-0 h2,
+main .block[data-block-status][data-block-name].h3-spacer-0 h3,
+main .block[data-block-status][data-block-name].h4-spacer-0 h4,
+main .section[data-section-status].h2-spacer-0 h2:not(.block h2),
+main .section[data-section-status].h3-spacer-0 h3:not(.block h3),
+main .section[data-section-status].h4-spacer-0 h4:not(.block h4) {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
 /* Block-scoped weight helpers */
-main .block[data-block-status].h1-font-weight-normal h1,
-main .block[data-block-status].h2-font-weight-normal h2,
-main .block[data-block-status].h3-font-weight-normal h3,
-main .block[data-block-status].h4-font-weight-normal h4,
-main .block[data-block-status].h5-font-weight-normal h5,
-main .block[data-block-status].h6-font-weight-normal h6 {
+main .block[data-block-status][data-block-name].h1-font-weight-normal h1,
+main .block[data-block-status][data-block-name].h2-font-weight-normal h2,
+main .block[data-block-status][data-block-name].h3-font-weight-normal h3,
+main .block[data-block-status][data-block-name].h4-font-weight-normal h4,
+main .block[data-block-status][data-block-name].h5-font-weight-normal h5,
+main .block[data-block-status][data-block-name].h6-font-weight-normal h6 {
   font-weight: var(--font-weight-normal);
 }
 
-main .block[data-block-status].h1-font-weight-medium h1,
-main .block[data-block-status].h2-font-weight-medium h2,
-main .block[data-block-status].h3-font-weight-medium h3,
-main .block[data-block-status].h4-font-weight-medium h4,
-main .block[data-block-status].h5-font-weight-medium h5,
-main .block[data-block-status].h6-font-weight-medium h6 {
+main .block[data-block-status][data-block-name].h1-font-weight-medium h1,
+main .block[data-block-status][data-block-name].h2-font-weight-medium h2,
+main .block[data-block-status][data-block-name].h3-font-weight-medium h3,
+main .block[data-block-status][data-block-name].h4-font-weight-medium h4,
+main .block[data-block-status][data-block-name].h5-font-weight-medium h5,
+main .block[data-block-status][data-block-name].h6-font-weight-medium h6 {
   font-weight: var(--font-weight-medium);
 }
 
-main .block[data-block-status].h1-font-weight-semibold h1,
-main .block[data-block-status].h2-font-weight-semibold h2,
-main .block[data-block-status].h3-font-weight-semibold h3,
-main .block[data-block-status].h4-font-weight-semibold h4,
-main .block[data-block-status].h5-font-weight-semibold h5,
-main .block[data-block-status].h6-font-weight-semibold h6 {
+main .block[data-block-status][data-block-name].h1-font-weight-semibold h1,
+main .block[data-block-status][data-block-name].h2-font-weight-semibold h2,
+main .block[data-block-status][data-block-name].h3-font-weight-semibold h3,
+main .block[data-block-status][data-block-name].h4-font-weight-semibold h4,
+main .block[data-block-status][data-block-name].h5-font-weight-semibold h5,
+main .block[data-block-status][data-block-name].h6-font-weight-semibold h6 {
   font-weight: var(--font-weight-semibold);
 }
 
-main .block[data-block-status].h1-font-weight-bold h1,
-main .block[data-block-status].h2-font-weight-bold h2,
-main .block[data-block-status].h3-font-weight-bold h3,
-main .block[data-block-status].h4-font-weight-bold h4,
-main .block[data-block-status].h5-font-weight-bold h5,
-main .block[data-block-status].h6-font-weight-bold h6 {
+main .block[data-block-status][data-block-name].h1-font-weight-bold h1,
+main .block[data-block-status][data-block-name].h2-font-weight-bold h2,
+main .block[data-block-status][data-block-name].h3-font-weight-bold h3,
+main .block[data-block-status][data-block-name].h4-font-weight-bold h4,
+main .block[data-block-status][data-block-name].h5-font-weight-bold h5,
+main .block[data-block-status][data-block-name].h6-font-weight-bold h6 {
   font-weight: var(--font-weight-bold);
 }
 

@@ -123,7 +123,7 @@
   padding: var(--section-y) 0;
 }
 
-.section.carousel-container:has(.carousel.testimonial.has-title) .default-content-wrapper h2 {
+.carousel-container:has(.testimonial.has-title) .default-content-wrapper h2 {
   margin: 0 0 var(--space-2xl);
   color: #fff;
   font-size: 34px;
@@ -364,7 +364,7 @@
 
   .carousel.testimonial .carousel-viewport { border-radius: var(--radius-xl); }
 
-  .section.carousel-container:has(.carousel.testimonial.has-title) .default-content-wrapper h2 {
+  .carousel-container:has(.testimonial.has-title) .default-content-wrapper h2 {
     margin-bottom: var(--space-5xl);
     font-size: 48px;
     line-height: 67.2px;
