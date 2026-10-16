@@ -88,7 +88,8 @@
 
 .feature-grid .feature-tag { font-size: 12px; line-height: 1.35; letter-spacing: 1px; color: #000; text-transform: uppercase; font-weight: var(--font-weight-medium); margin-bottom: var(--space-xs); display: block; }
 .feature-grid .feature-card.expanded .feature-tag { color: #fff; }
-.feature-grid .feature-title { font-size: 24px; font-weight: var(--font-weight-normal); color: #111; line-height: var(--line-height-s); margin: 0; padding-right: 15px; }
+.feature-grid .feature-title { font-size: var(--heading-font-size-m); font-weight: var(--font-weight-normal); color: #111; line-height: var(--line-height-s); margin: 0; padding-right: 15px; }
+.feature-grid .feature-title a:any-link { color: inherit; text-decoration: inherit; }
 
 .feature-grid .feature-card.expanded .feature-title {
   color: #fff; font-size: 1.8rem; line-height: var(--line-height-s); margin: 20px 15px 15px 0; padding-right: 15px;

@@ -7,9 +7,13 @@
  *   1. media — one image, or two (first = card face, second = revealed on
  *      expand; a single image is used for both)
  *   2. content — flowing: an optional bold-only line as the tag/eyebrow
- *      (e.g. "CLOSE MANAGEMENT"), a heading as the title, body paragraph(s),
- *      and an optional trailing link-only line as the CTA
+ *      (e.g. "CLOSE MANAGEMENT"), a heading (any level, h1-h6) as the title,
+ *      body paragraph(s), and an optional trailing link-only line as the CTA
  *      (e.g. <a href="/accounting">Find out more</a>)
+ *
+ * The authored heading is kept as authored (level, attributes, inline markup):
+ * the element itself moves to the preview state and a copy without its id goes
+ * to the expanded state.
  *
  * Cards are paired two-per-row (1&2, 3&4, ...); clicking a card expands it to
  * fill the row and shrinks its row-partner to a title-only sliver, closing
@@ -62,7 +66,7 @@ function buildCard(row) {
   } = contentCell ? parseContent(contentCell) : {
     title: null, tagText: '', bodyParagraphs: [], ctaLink: null,
   };
-  const titleText = titleEl ? titleEl.textContent.trim() : '';
+  const hasTitle = Boolean(titleEl?.textContent.trim());
 
   const card = document.createElement('div');
   card.className = 'feature-card';
@@ -91,11 +95,11 @@ function buildCard(row) {
     tag.textContent = tagText;
     preview.append(tag);
   }
-  if (titleText) {
-    const title = document.createElement('h3');
-    title.className = 'feature-title';
-    title.textContent = titleText;
-    preview.append(title);
+  // move the authored heading itself so its level, id, classes and inline
+  // markup survive decoration
+  if (hasTitle) {
+    titleEl.classList.add('feature-title');
+    preview.append(titleEl);
   }
   preview.setAttribute('aria-hidden', 'false');
   card.append(preview);
@@ -134,10 +138,10 @@ function buildCard(row) {
     tag.textContent = tagText;
     expandedText.append(tag);
   }
-  if (titleText) {
-    const title2 = document.createElement('h3');
-    title2.className = 'feature-title';
-    title2.textContent = titleText;
+  // the expanded copy drops the id so the page never has duplicate ids
+  if (hasTitle) {
+    const title2 = titleEl.cloneNode(true);
+    title2.removeAttribute('id');
     expandedText.append(title2);
   }
   bodyParagraphs.forEach((p) => {
