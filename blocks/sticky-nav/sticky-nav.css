@@ -4,7 +4,7 @@ main > .section:has(.sticky-nav) > div {
 
 main > .section:has(.sticky-nav) > .default-content-wrapper {
   padding-top: 20px;
-  padding-bottom: 18px;
+  padding-bottom: 20px;
 }
 main > .section:has(.sticky-nav) > .default-content-wrapper > h2 { margin-top: 0; }
 
