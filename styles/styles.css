@@ -703,7 +703,13 @@ main .section.narrow>div {
 }
 
 :where(main > .section, main .fragment-wrapper .section) > .default-content-wrapper > h2 {
-  font-size: 48px;
+  font-size: 34px;
+}
+
+@media (width >= 1024px) {
+  :where(main > .section, main .fragment-wrapper .section) > .default-content-wrapper > h2 {
+    font-size: 48px;
+  }
 }
 
 main .section.center>div.default-content-wrapper {
