@@ -1092,7 +1092,7 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
 }
 
 /* feature cards retheme (Figma 6455-52857 desktop, 6431-92253 tablet/mobile card) */
-.section.feature-cards { padding-bottom: 20px; }
+.section.feature-cards { padding: 20px 0; }
 
 .section.feature-cards > .default-content-wrapper {
   padding-top: 0;
@@ -1136,7 +1136,7 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
 }
 
 @media (width >= 1024px) {
-  .section.feature-cards { padding-bottom: 40px; }
+  .section.feature-cards { padding: 40px 0; }
   .section.feature-cards > .default-content-wrapper { padding-bottom: 40px; }
   .section.feature-cards .cards.icons { grid-template-columns: repeat(3, 1fr); }
 
