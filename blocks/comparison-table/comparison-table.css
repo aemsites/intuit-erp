@@ -226,6 +226,11 @@
   padding: 40px 0;
 }
 
+.comparison-table-container:has(.comparison-table.features) > .default-content-wrapper:first-of-type {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
 .comparison-table-container:has(.comparison-table.features) .default-content-wrapper:first-of-type h2 {
   margin: 0 0 16px;
   font-size: 34px;
@@ -300,7 +305,7 @@
   background: #fff;
   border: 1px solid var(--cf-line);
   border-radius: 38px;
-  padding: 20px;
+  padding: 40px 20px;
 }
 
 .comparison-table .cf-card + .cf-card { margin-top: var(--space-2xs); }

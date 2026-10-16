@@ -963,7 +963,17 @@
 /* .story: dark Blueberry card, copy left, Superblue media tile right; stacks below 1024px */
 .section.testimonial-container:has(.testimonial.story) {
   background: var(--background-color);
-  padding: 40px 0;
+  padding: 20px 0;
+}
+
+.section.testimonial-container:has(.testimonial.story) > .default-content-wrapper { padding: 20px 0; }
+
+.section.testimonial-container:has(.testimonial.story) .default-content-wrapper h2 {
+  margin: 0;
+  font-size: 34px;
+  line-height: 1.1;
+  font-weight: var(--font-weight-medium);
+  color: #0d0031;
 }
 
 .testimonial.story {
@@ -976,12 +986,12 @@
 .testimonial.story .story-card {
   display: grid;
   grid-template-columns: 1fr;
-  gap: var(--space-xl);
+  gap: var(--space-2xl);
   align-items: center;
   box-sizing: border-box;
   margin: 0;
-  padding: var(--space-l);
-  border-radius: 38px;
+  padding: 40px 30px;
+  border-radius: 30px;
   background: var(--story-ink);
   color: #fff;
   text-align: left;
@@ -1017,7 +1027,7 @@
   margin: 0 0 var(--space-l);
   font-size: 28px;
   font-weight: var(--font-weight-medium);
-  line-height: var(--line-height-xs);
+  line-height: 1.3;
   color: #fff;
 }
 
@@ -1026,9 +1036,9 @@
   position: static;
   margin: 0 0 var(--space-s);
   padding: 0;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: var(--font-weight-normal);
-  line-height: var(--line-height-m);
+  line-height: 1.3;
   color: #fff;
 }
 
@@ -1051,7 +1061,7 @@
   align-items: baseline;
   gap: 0 var(--space-3xs);
   margin: 0 0 var(--space-xl);
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1.3;
   color: #fff;
 }
@@ -1071,7 +1081,7 @@
 
 /* media: the DAM feature asset already carries its tile, so render it plain */
 .testimonial.story .story-media {
-  border-radius: 32px;
+  border-radius: 30px;
   overflow: hidden;
   line-height: 0;
 }
@@ -1083,24 +1093,34 @@
   width: 100%;
   height: auto;
   margin: 0;
-  border-radius: 32px;
+  border-radius: 30px;
 }
 
 @media (width >= 768px) {
+  .section.testimonial-container:has(.testimonial.story) > .default-content-wrapper { padding-bottom: 32px; }
   .testimonial.story .story-card { padding: var(--space-2xl); }
-  .testimonial.story .story-title { font-size: 34px; }
-  .testimonial.story .story-quote { font-size: 20px; }
 }
 
 @media (width >= 1024px) {
+  .section.testimonial-container:has(.testimonial.story) { padding: 40px 0; }
+
+  .section.contained.ies.colored-background + .section.testimonial-container:has(.testimonial.story) { padding-top: 0; }
+  .section.testimonial-container:has(.testimonial.story) > .default-content-wrapper { padding: 40px 0; }
+
+  .section.testimonial-container:has(.testimonial.story) .default-content-wrapper h2 {
+    font-size: 48px;
+    line-height: 1;
+  }
+
   .testimonial.story { max-width: 1360px; }
 
   /* Figma: 437px copy and 555px tile pinned to the 115px card insets */
   .testimonial.story .story-card {
     grid-template-columns: minmax(0, 437px) minmax(0, 555px);
     justify-content: space-between;
-    gap: var(--space-2xl);
-    padding: 40px 115px;
+    gap: 80px;
+    padding: 80px 115px;
+    border-radius: 38px;
   }
 
   .testimonial.story .story-copy { max-width: 437px; }
@@ -1109,6 +1129,7 @@
   .testimonial.story .story-title {
     margin: 0 0 var(--space-2xl);
     font-size: 40px;
+    line-height: 1.2;
   }
 
   .testimonial.story .story-quote {
