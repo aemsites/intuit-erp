@@ -2,7 +2,10 @@ main > .section:has(.sticky-nav) > div {
   padding: 0;
 }
 
-main > .section:has(.sticky-nav) > .default-content-wrapper { padding-top: 20px; }
+main > .section:has(.sticky-nav) > .default-content-wrapper {
+  padding-top: 20px;
+  padding-bottom: 18px;
+}
 main > .section:has(.sticky-nav) > .default-content-wrapper > h2 { margin-top: 0; }
 
 .sticky-nav {
