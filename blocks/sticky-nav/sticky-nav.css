@@ -100,8 +100,8 @@ body.sticky-nav-active .header .ies-secondary-nav {
   main > .section:has(.sticky-nav) > .default-content-wrapper { padding-bottom: 32px; }
 
   .sticky-nav ul {
-    justify-content: center;
-    overflow-x: visible;
+    justify-content: safe center;
+    padding: 0 40px;
   }
 
   .sticky-nav a.active::after {
@@ -116,4 +116,8 @@ body.sticky-nav-active .header .ies-secondary-nav {
     padding-top: 40px;
     padding-bottom: 40px;
   }
+}
+
+@media (width >= 1024px) {
+  .sticky-nav ul { overflow-x: visible; }
 }
