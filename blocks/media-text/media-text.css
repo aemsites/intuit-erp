@@ -960,10 +960,11 @@
 
 /* .compare.ies: One Intuit comparison cards on a Blueberry band
    (Figma desktop 22428-8494, tablet 22408-21563, mobile 22408-20600).
-   Mobile: stacked, 30px/20px inset, 20px radius; tablet: 2-up; desktop: 60px inset, 38px radius, 1200px grid. */
+   Mobile: stacked, 30px/20px inset, 20px radius; tablet: 2-up; desktop: 60px inset, 38px radius, 1200px grid.
+   Band inset: 60px top/bottom, 80px on desktop. */
 .section.media-text-container:has(.media-text.compare.ies) {
   background: #0d0031;
-  padding: var(--space-m) 0;
+  padding: 60px 0;
 }
 
 .section.media-text-container:has(.media-text.compare.ies) > .default-content-wrapper {

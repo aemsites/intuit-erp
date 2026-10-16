@@ -1137,9 +1137,9 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
   color: inherit;
 }
 
-/* section frame: 20px above the title and below the tiles (40px on desktop), 20px/40px title → tiles */
+/* section frame: 60px above the title and below the tiles (80px on desktop), 20px/40px title → tiles */
 .section.cards-container:has(.cards.ies) {
-  padding-block: var(--space-m);
+  padding-block: 60px;
 }
 
 .section.cards-container:has(.cards.ies) > .default-content-wrapper {
@@ -1188,7 +1188,7 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
   }
 
   .section.cards-container:has(.cards.ies) {
-    padding-block: var(--space-2xl);
+    padding-block: var(--space-5xl);
   }
 
   :where(.section.cards-container:has(.cards.ies) > .default-content-wrapper) h2:not(.section-eyebrow) {
