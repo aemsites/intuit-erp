@@ -962,6 +962,7 @@
 .media-text.checklist .media-copy .media-eyebrow {
   margin: 0 0 8px;
   font-size: 12px;
+  font-weight: var(--font-weight-medium);
   line-height: 1.25;
   letter-spacing: 1.56px;
   color: #000;
