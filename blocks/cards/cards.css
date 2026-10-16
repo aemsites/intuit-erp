@@ -1091,8 +1091,7 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
   .cards.icons.text-grid .cards-card-body h3 { font-size: 24px; }
 }
 
-/* .ies: One Intuit tinted icon tiles (Figma desktop 22428-8481, tablet 22408-21512, mobile 22408-20549).
-   Mobile: stacked, 20px gaps, 30px inset, 20px radius; tablet: 2-up; desktop: 4-up, 38px radius. */
+/* .ies: One Intuit icon tiles (Figma 22428-8481 / 22408-21512 / 22408-20549) */
 .cards.ies {
   --ies-ink: #0d0031;
 
@@ -1102,7 +1101,7 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
 
 .cards.ies > div {
   box-sizing: border-box;
-  gap: var(--space-m); /* icon → copy: 20px below desktop, 30px on desktop */
+  gap: var(--space-m);
   padding: 30px;
   border-radius: 20px;
   background: #f0f4f6;
@@ -1137,7 +1136,6 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
   color: inherit;
 }
 
-/* section frame: 60px above the title and below the tiles (80px on desktop), 20px/40px title → tiles */
 .section.cards-container:has(.cards.ies) {
   padding-block: 60px;
 }
@@ -1155,14 +1153,12 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
   color: #0d0031;
 }
 
-/* mobile: 20px side gutters instead of the section's 40px */
 @media (width < 768px) {
   .section.cards-container:has(.cards.ies) > div {
     padding-inline: var(--space-m);
   }
 }
 
-/* tablet: two tiles per row, each sized to its own copy */
 @media (width >= 768px) {
   .cards.ies {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1170,7 +1166,6 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
   }
 }
 
-/* desktop: four equal-height tiles, 28px/1.3 title, 38px radius */
 @media (width >= 1024px) {
   .cards.ies {
     grid-template-columns: repeat(4, minmax(0, 1fr));
