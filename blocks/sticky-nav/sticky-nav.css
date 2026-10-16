@@ -4,13 +4,14 @@ main > .section:has(.sticky-nav) > div {
 
 main > .section:has(.sticky-nav) > .default-content-wrapper {
   padding-top: 20px;
-  padding-bottom: 20px;
+  padding-bottom: 2px;
 }
 main > .section:has(.sticky-nav) > .default-content-wrapper > h2 { margin-top: 0; }
 
 .sticky-nav {
   background: #fff;
   border-bottom: 4px solid #f0f4f6;
+  padding-top: 18px;
   margin-bottom: 60px;
 }
 
@@ -97,7 +98,7 @@ body.sticky-nav-active .header .ies-secondary-nav {
 }
 
 @media (width >= 768px) {
-  main > .section:has(.sticky-nav) > .default-content-wrapper { padding-bottom: 32px; }
+  main > .section:has(.sticky-nav) > .default-content-wrapper { padding-bottom: 14px; }
 
   .sticky-nav ul {
     justify-content: safe center;
@@ -114,7 +115,7 @@ body.sticky-nav-active .header .ies-secondary-nav {
 
   main > .section:has(.sticky-nav) > .default-content-wrapper {
     padding-top: 40px;
-    padding-bottom: 40px;
+    padding-bottom: 22px;
   }
 }
 
