@@ -28,8 +28,8 @@
 .faq-container .default-content-wrapper h2,
 .faq-container .default-content-wrapper h3 {
   font-size: 48px;
-  line-height: 60px;
-  font-weight: var(--font-weight-normal);
+  line-height: 1;
+  font-weight: var(--font-weight-medium);
   text-align: center;
   margin: 0 0 var(--space-2xl);
   color: var(--heading);
@@ -60,9 +60,9 @@
   text-align: left;
   font: inherit;
   font-size: 16px;
-  line-height: 24px;
-  font-weight: var(--font-weight-semibold);
-  color: #000;
+  line-height: 1.4;
+  font-weight: var(--font-weight-medium);
+  color: #0d0031;
   display: flex;
   align-items: flex-start;
   gap: var(--space-m);
@@ -84,9 +84,9 @@
 
 .faq .faq-chevron {
   flex: 0 0 auto;
-  width: 16px;
-  height: 16px;
-  margin-top: var(--space-3xs);
+  width: 24px;
+  height: 24px;
+  margin-top: -1px;
   color: var(--text);
   transition: transform 0.24s ease-in-out, color 0.2s;
 }
@@ -117,8 +117,8 @@
 .faq .faq-answer {
   padding: 0 var(--space-2xl) var(--space-m) 0;
   font-size: 14px;
-  color: var(--text);
-  line-height: 1.43;
+  color: #000730;
+  line-height: 20px;
   opacity: 0;
   transition: opacity 0.4s ease;
 }
