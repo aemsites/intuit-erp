@@ -1164,14 +1164,12 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
 @media (width >= 768px) {
   .cards.ies {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    align-items: start;
   }
 }
 
 @media (width >= 1024px) {
   .cards.ies {
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    align-items: stretch;
   }
 
   .cards.ies > div {
