@@ -704,6 +704,7 @@ main .section.narrow>div {
 
 :where(main > .section, main .fragment-wrapper .section) > .default-content-wrapper > h2 {
   font-size: 34px;
+  font-weight: var(--font-weight-medium);
   margin-top: 0.5882em;
 }
 
