@@ -988,11 +988,16 @@
   text-align: center;
 }
 
+.media-text.compare.ies {
+  max-width: 1200px;
+  margin-inline: auto;
+}
+
 .media-text.compare.ies .compare-grid {
   grid-template-columns: 1fr;
   gap: var(--space-m);
   width: auto;
-  max-width: 1200px;
+  max-width: none;
 }
 
 .media-text.compare.ies .compare-card {

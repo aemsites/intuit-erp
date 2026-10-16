@@ -1097,6 +1097,8 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
 
   grid-template-columns: 1fr;
   gap: var(--space-m);
+  max-width: 1360px;
+  margin-inline: auto;
 }
 
 .cards.ies > div {
