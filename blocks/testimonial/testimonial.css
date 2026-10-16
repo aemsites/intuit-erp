@@ -1104,7 +1104,6 @@
 @media (width >= 1024px) {
   .section.testimonial-container:has(.testimonial.story) { padding: 40px 0; }
 
-  /* a banner card directly above: Figma stacks the two cards 80px apart */
   .section.contained.ies.colored-background + .section.testimonial-container:has(.testimonial.story) { padding-top: 0; }
   .section.testimonial-container:has(.testimonial.story) > .default-content-wrapper { padding: 40px 0; }
 

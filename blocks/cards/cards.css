@@ -1091,7 +1091,7 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
   .cards.icons.text-grid .cards-card-body h3 { font-size: 24px; }
 }
 
-/* feature cards retheme (Figma 6455-52857 desktop, 6431-92253 tablet/mobile card) */
+/* feature cards retheme */
 .section.feature-cards { padding: 40px 0 20px; }
 
 .section.feature-cards > .default-content-wrapper {

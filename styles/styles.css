@@ -717,7 +717,7 @@ main .section.narrow>div {
   }
 }
 
-/* IES title block: eyebrow paragraph above the heading, subcopy below it */
+/* IES title block */
 main > .section.ies:not(.colored-background) > .default-content-wrapper:has(> p:first-child + :is(h2, h3)) {
   padding-top: 20px;
 }
