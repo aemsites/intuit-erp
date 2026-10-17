@@ -42,7 +42,8 @@ export function parseContent(cell) {
   else if (citeParagraph) attribution = citeParagraph.textContent.trim().replace(CITE_PREFIX, '');
 
   const rest = nodes.filter((el) => el !== quote && el !== citeParagraph && el.tagName !== 'CITE');
-  const heading = rest.find((el) => /^H[2-6]$/.test(el.tagName)) || null;
+  const heading = rest.find((el) => /^H[1-6]$/.test(el.tagName)) || null;
+  const headingTag = heading ? heading.tagName.toLowerCase() : 'h3';
   const headingIndex = heading ? rest.indexOf(heading) : -1;
 
   let media = null;
@@ -74,7 +75,16 @@ export function parseContent(cell) {
   });
 
   return {
-    media, extraMedia, eyebrow, heading, bodyNodes, cta, ctaBeforeQuote, quote, attribution,
+    media,
+    extraMedia,
+    eyebrow,
+    heading,
+    headingTag,
+    bodyNodes,
+    cta,
+    ctaBeforeQuote,
+    quote,
+    attribution,
   };
 }
 
@@ -158,7 +168,7 @@ function appendCtaAndQuote(container, item, ctaClass, quoteClass) {
 
 function fillCopy(item, copy, cls) {
   if (item.eyebrow) copy.append(buildEyebrow(item, cls.eyebrow));
-  if (item.heading) copy.append(buildHeading(item, cls.headingTag, cls.heading));
+  if (item.heading) copy.append(buildHeading(item, item.headingTag, cls.heading));
   appendBody(copy, item.bodyNodes, cls.body);
   appendCtaAndQuote(copy, item, cls.cta, cls.quote);
 }
@@ -166,7 +176,7 @@ function fillCopy(item, copy, cls) {
 /* ---- base (unclassed): horizontal tablist, crossfade + directional media slide -- */
 
 const HORIZONTAL_CLASSES = {
-  eyebrow: 'eyebrow', headingTag: 'h3', heading: 'tab-h3', body: 'tab-body', cta: 'tab-cta button', quote: 'tab-quote',
+  eyebrow: 'eyebrow', heading: 'tab-h3', body: 'tab-body', cta: 'tab-cta button', quote: 'tab-quote',
 };
 
 function buildHorizontalPanel(item, index) {
@@ -289,7 +299,7 @@ function renderHorizontalTabs(block, items) {
 /* ---- .pill: vertical pill rail, true ARIA tablist ------------------------- */
 
 const PILL_CLASSES = {
-  heading: 'vt-heading', body: 'vt-body', cta: 'vt-cta button', quote: 'vt-quote', headingTag: 'h3', eyebrow: 'eyebrow',
+  heading: 'vt-heading', body: 'vt-body', cta: 'vt-cta button', quote: 'vt-quote', eyebrow: 'eyebrow',
 };
 
 function buildPillTab(item, index) {
@@ -553,7 +563,7 @@ function buildVpPanel(item, index, { multiMedia = false } = {}) {
   const copy = document.createElement('div');
   copy.className = 'it-copy';
   if (item.eyebrow) copy.append(buildEyebrow(item, 'eyebrow'));
-  if (item.heading) copy.append(buildHeading(item, 'h3', 'it-heading'));
+  if (item.heading) copy.append(buildHeading(item, item.headingTag, 'it-heading'));
 
   // The quote (if present) is always rendered as a panel-level block after
   // `.it-copy`/`.it-media`, not inside `.it-copy-body`. The CTA link has no
