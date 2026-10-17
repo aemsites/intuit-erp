@@ -104,6 +104,45 @@
   padding-block: 60px;
 }
 
+/* blue-violet wash behind and to the left of the media card, fading to white
+   (matches erp.intuit.com). Default background of the block; the `dark` and
+   `expanded` variants opt out. Values mirror `.tabs.vertical::before` in
+   tabs.css, with two deviations: the right inset is 0 (not -40px) because the
+   overflow would cause horizontal scroll at 768–1023px, where `main` only clips
+   overflow-x below 768px; and the smaller ellipse below 1024px is a best-effort
+   choice (tabs hides its wash there, so there is nothing to reuse). z-index -1
+   without `isolation`, like tabs, keeps the wash behind neighbouring content. */
+.vertical-scroll-carousel:not(.dark, .expanded) {
+  position: relative;
+}
+
+.vertical-scroll-carousel:not(.dark, .expanded)::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: -110px 0 -160px;
+  background: radial-gradient(
+    741px 467px at 87.5% 50%,
+    rgb(0 85 255 / 42%) 0%,
+    rgb(35 108 255 / 42%) 29.7%,
+    rgb(35 108 255 / 0%) 100%
+  );
+  pointer-events: none;
+}
+
+/* stacked layout (mobile + tablet): narrower ellipse so the wash spans the
+   block width instead of overflowing the 741px radius */
+@media (width < 1024px) {
+  .vertical-scroll-carousel:not(.dark, .expanded)::before {
+    background: radial-gradient(
+      100vw 467px at 87.5% 50%,
+      rgb(0 85 255 / 42%) 0%,
+      rgb(35 108 255 / 42%) 29.7%,
+      rgb(35 108 255 / 0%) 100%
+    );
+  }
+}
+
 @media (min-width: 1024px) {
   main .section.vertical-scroll-carousel-container > .vertical-scroll-carousel-wrapper {
     max-width: 1440px;
@@ -229,6 +268,16 @@
   .vertical-scroll-carousel.reverse .vsc-list {
     grid-column: 2;
     grid-row: 1;
+  }
+
+  /* media is on the left, so mirror the wash centre to follow it */
+  .vertical-scroll-carousel.reverse:not(.dark, .expanded)::before {
+    background: radial-gradient(
+      741px 467px at 12.5% 50%,
+      rgb(0 85 255 / 42%) 0%,
+      rgb(35 108 255 / 42%) 29.7%,
+      rgb(35 108 255 / 0%) 100%
+    );
   }
 
   /* single-item carousel: the source renders a lone item as a media-text
