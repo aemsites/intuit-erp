@@ -30,7 +30,17 @@ export default function decorate(block) {
       if (!target) return;
       e.preventDefault();
       setActive(a);
-      (target.closest('.section') || target).scrollIntoView({ behavior: 'smooth' });
+      const section = target.closest('.section') || target;
+      const gap = () => section.getBoundingClientRect().top - (block.offsetHeight + 16);
+      window.scrollBy({ top: gap(), behavior: 'smooth' });
+      // the header and the bar's spacer change the layout while the page
+      // scrolls, so re-align once the first scroll has settled
+      const settle = () => {
+        const delta = gap();
+        if (Math.abs(delta) > 1) window.scrollBy({ top: delta, behavior: 'smooth' });
+      };
+      if ('onscrollend' in window) window.addEventListener('scrollend', settle, { once: true });
+      else setTimeout(settle, 700);
       window.history.pushState(null, '', `#${target.id}`);
     });
   });
