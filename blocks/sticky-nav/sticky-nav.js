@@ -30,7 +30,17 @@ export default function decorate(block) {
       if (!target) return;
       e.preventDefault();
       setActive(a);
-      (target.closest('.section') || target).scrollIntoView({ behavior: 'smooth' });
+      const section = target.closest('.section') || target;
+      const gap = () => section.getBoundingClientRect().top - (block.offsetHeight + 16);
+      window.scrollBy({ top: gap(), behavior: 'smooth' });
+      // the header and the bar's spacer change the layout while the page
+      // scrolls, so re-align once the first scroll has settled
+      const settle = () => {
+        const delta = gap();
+        if (Math.abs(delta) > 1) window.scrollBy({ top: delta, behavior: 'smooth' });
+      };
+      if ('onscrollend' in window) window.addEventListener('scrollend', settle, { once: true });
+      else setTimeout(settle, 700);
       window.history.pushState(null, '', `#${target.id}`);
     });
   });
@@ -60,30 +70,31 @@ export default function decorate(block) {
   const lastSection = sections[sections.length - 1];
 
   let lastNavH = 0;
+  // active tab = the last section whose top has reached its scroll landing
+  // position (scroll-margin-top, which already clears the bar)
+  const pairs = links.map((a) => ({ a, section: targetFor(a)?.closest('.section') })).filter((p) => p.section);
+  const pickActive = () => {
+    let current = null;
+    pairs.forEach(({ a, section }) => {
+      const margin = parseFloat(getComputedStyle(section).scrollMarginTop) || lastNavH;
+      if (section.getBoundingClientRect().top <= margin + 1) current = a;
+    });
+    if (current) setActive(current);
+  };
+
   const measure = () => {
     pastStart = sentinel.getBoundingClientRect().top < 0;
     pastEnd = !!lastSection && lastSection.getBoundingClientRect().bottom < lastNavH;
+    pickActive();
     syncState();
   };
   window.addEventListener('scroll', measure, { passive: true });
-
-  let spy = null;
-  const buildSpy = (navH) => {
-    if (spy) spy.disconnect();
-    spy = new IntersectionObserver((entries) => {
-      entries.filter((en) => en.isIntersecting).forEach((en) => {
-        setActive(links.find((a) => targetFor(a) === en.target));
-      });
-    }, { rootMargin: `-${navH}px 0px -70% 0px`, threshold: 0 });
-    links.map(targetFor).filter(Boolean).forEach((t) => spy.observe(t));
-  };
 
   const syncNavH = () => {
     const navH = block.offsetHeight;
     if (!navH || navH === lastNavH) return;
     lastNavH = navH;
     document.body.style.setProperty('--sticky-nav-h', `${navH}px`);
-    buildSpy(navH);
     measure();
   };
 
