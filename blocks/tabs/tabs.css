@@ -1119,8 +1119,7 @@ main > .section.tabs-container:has(.tabs.vertical-panel.questions) {
   --it-tab-idle: #fff;
 
   width: 100%;
-  padding-top: var(--space-m);
-  padding-bottom: var(--space-m);
+  padding: 60px var(--space-m);
 }
 
 .tabs.vertical-panel.questions { margin-top: var(--space-xl); }
@@ -1154,6 +1153,10 @@ main > .section.tabs-container:has(.tabs.vertical-panel.questions) {
 
 .tabs.vertical-panel.questions .it-tab[aria-expanded="true"] { border-bottom-color: transparent; }
 .tabs.vertical-panel.questions .it-chevron { width: 24px; height: 24px; }
+
+/* open tab points up, closed tabs point down (inverse of the shared vertical-panel rule) */
+.tabs.vertical-panel.questions .it-tab[aria-expanded="true"] .it-chevron { transform: rotate(180deg); }
+.tabs.vertical-panel.questions .it-tab:not([aria-expanded="true"]) .it-chevron { transform: none; }
 
 .tabs.vertical-panel.questions .it-panel.is-active {
   gap: var(--space-s);
@@ -1190,9 +1193,9 @@ main > .section.tabs-container:has(.tabs.vertical-panel.questions) {
 }
 
 .tabs.vertical-panel.questions .it-copy { order: 0; }
-.tabs.vertical-panel.questions .it-media picture:first-child { order: 1; }
+.tabs.vertical-panel.questions .it-logo { order: 1; }
 .tabs.vertical-panel.questions .it-quote { order: 2; }
-.tabs.vertical-panel.questions .it-media picture:last-child:not(:first-child) { order: 3; }
+.tabs.vertical-panel.questions .it-photo { order: 3; }
 
 .tabs.vertical-panel.questions .it-media picture img {
   display: block;
@@ -1204,19 +1207,19 @@ main > .section.tabs-container:has(.tabs.vertical-panel.questions) {
 }
 
 /* logo tile */
-.tabs.vertical-panel.questions .it-media picture:first-child {
+.tabs.vertical-panel.questions .it-logo {
   height: 96px;
-  background: #883f1c;
+  background: var(--tile-bg, #883f1c);
 }
 
-.tabs.vertical-panel.questions .it-media picture:first-child img {
-  padding: var(--space-l) var(--space-5xl);
+.tabs.vertical-panel.questions .it-media .it-logo img {
+  padding: var(--space-m) var(--space-2xl);
   box-sizing: border-box;
   object-fit: contain;
 }
 
 /* photo tile */
-.tabs.vertical-panel.questions .it-media picture:last-child:not(:first-child) {
+.tabs.vertical-panel.questions .it-photo {
   aspect-ratio: 4 / 3;
   background: #d6e8f8;
 }
@@ -1230,14 +1233,15 @@ main > .section.tabs-container:has(.tabs.vertical-panel.questions) {
   padding: var(--space-2xl) 30px;
   border: 0;
   border-radius: 24px;
-  background: #ffcec4;
+  background: var(--tile-bg, #ffcec4);
+  color: var(--tile-fg, #0d0031);
 }
 
 .tabs.vertical-panel.questions .it-quote blockquote {
   margin: 0;
   font-size: 20px;
   line-height: var(--line-height-s);
-  color: #0d0031;
+  color: inherit;
 }
 
 .tabs.vertical-panel.questions .it-quote blockquote p { margin: 0; }
@@ -1245,33 +1249,43 @@ main > .section.tabs-container:has(.tabs.vertical-panel.questions) {
 .tabs.vertical-panel.questions .it-quote cite {
   font-size: 14px;
   line-height: 1.4;
-  color: #0d0031;
+  color: inherit;
 }
+
+.tabs.vertical-panel.questions .it-quote cite strong { font-weight: var(--font-weight-bold); }
 
 .tabs.vertical-panel.questions .it-quote .it-cta {
   margin: 0;
   font-size: 16px;
   font-weight: var(--font-weight-bold);
   line-height: 1.4;
-  color: #0d0031;
+  color: inherit;
   text-decoration: underline;
   text-underline-offset: 3px;
 }
 
 .tabs.vertical-panel.questions .it-quote .it-cta:hover { text-decoration: none; }
 
+/* per-tab tile colours, set from `logo: <name>, quote: <name>` in the label cell */
+.tabs.vertical-panel.questions .tile-blue { --tile-bg: var(--info); --tile-fg: #fff; }
+.tabs.vertical-panel.questions .tile-navy { --tile-bg: #0d0031; --tile-fg: #fff; }
+.tabs.vertical-panel.questions .tile-brown { --tile-bg: #883f1c; --tile-fg: #fff; }
+.tabs.vertical-panel.questions .tile-pink { --tile-bg: #ffcec4; --tile-fg: #0d0031; }
+.tabs.vertical-panel.questions .tile-light-blue { --tile-bg: #d6e8f8; --tile-fg: #0d0031; }
+.tabs.vertical-panel.questions .tile-gray { --tile-bg: #eef2f4; --tile-fg: #0d0031; }
+.tabs.vertical-panel.questions .tile-wintermint { --tile-bg: var(--wintermint); --tile-fg: #0d0031; }
+.tabs.vertical-panel.questions .tile-white { --tile-bg: #fff; --tile-fg: #0d0031; }
+
 /* tablet */
 @media (768px <= width < 1024px) {
-  .tabs-container:has(.tabs.vertical-panel.questions) .tabs-wrapper { padding-inline: 60px; }
+  main > .section.tabs-container:has(.tabs.vertical-panel.questions) { padding-inline: var(--space-5xl); }
   .tabs.vertical-panel.questions .it-nav { gap: 0; }
-  .tabs.vertical-panel.questions .it-tab { width: auto; align-self: flex-start; min-width: 182px; }
-  .tabs.vertical-panel.questions .it-tab[aria-expanded="false"] { width: 100%; }
   .tabs.vertical-panel.questions .it-panel.is-active { padding: 0 var(--space-m) var(--space-m); margin-bottom: var(--space-xl); }
 }
 
 @media (width >= 1024px) {
   main > .section.tabs-container:has(.tabs.vertical-panel.questions) {
-    padding: var(--space-2xl) 20px;
+    padding: var(--space-5xl) 20px;
   }
 
   .tabs-container:has(.tabs.vertical-panel.questions) .default-content-wrapper h2:not(.section-eyebrow) {
@@ -1297,8 +1311,9 @@ main > .section.tabs-container:has(.tabs.vertical-panel.questions) {
   }
 
   .tabs.vertical-panel.questions .it-tab:not([aria-expanded="true"]):hover { background: #f0f4f6; }
-  .tabs.vertical-panel.questions .it-media picture:first-child { height: auto; aspect-ratio: 468 / 128; }
-  .tabs.vertical-panel.questions .it-media picture:last-child:not(:first-child) { aspect-ratio: 468 / 520; }
+  .tabs.vertical-panel.questions .it-logo { height: auto; aspect-ratio: 468 / 128; }
+  .tabs.vertical-panel.questions .it-media .it-logo img { padding: var(--space-l) var(--space-5xl); }
+  .tabs.vertical-panel.questions .it-photo { aspect-ratio: 468 / 520; }
   .tabs.vertical-panel.questions .it-quote { gap: var(--space-m); }
   .tabs.vertical-panel.questions .it-quote blockquote { font-size: 24px; }
   .tabs.vertical-panel.questions .it-quote .it-cta { font-weight: var(--font-weight-medium); line-height: 1.3; }
@@ -1307,7 +1322,7 @@ main > .section.tabs-container:has(.tabs.vertical-panel.questions) {
 
   .tabs.vertical-panel.questions .it-panel.is-active {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     grid-template-rows: auto auto 1fr;
     gap: var(--space-m);
     padding: 0;
@@ -1334,7 +1349,52 @@ main > .section.tabs-container:has(.tabs.vertical-panel.questions) {
     padding: var(--space-2xs) 0 0 10px;
   }
 
-  .tabs.vertical-panel.questions .it-media picture:first-child { grid-column: 1; grid-row: 2; }
-  .tabs.vertical-panel.questions .it-media picture:last-child:not(:first-child) { grid-column: 2; grid-row: 2 / span 2; }
+  .tabs.vertical-panel.questions .it-logo { grid-column: 1; grid-row: 2; }
+  .tabs.vertical-panel.questions .it-photo { grid-column: 2; grid-row: 2 / span 2; }
   .tabs.vertical-panel.questions .it-quote { grid-column: 1; grid-row: 3; }
+
+  /* no logo: the quote takes the logo's row and runs alongside the photo */
+  .tabs.vertical-panel.questions .it-panel.no-logo .it-quote { grid-row: 2 / span 2; }
+}
+
+/* section-metadata spacing (spacer-* = margin, padding-* = padding) beats the
+   section defaults above; same scale as styles.css. -0 tokens already win there. */
+main > .section.tabs-container.spacer-top-s:has(.tabs.vertical-panel.questions) { margin-top: 1rem; }
+main > .section.tabs-container.spacer-top-m:has(.tabs.vertical-panel.questions) { margin-top: 1.25rem; }
+main > .section.tabs-container.spacer-top-l:has(.tabs.vertical-panel.questions) { margin-top: 2.5rem; }
+main > .section.tabs-container.spacer-top-xl:has(.tabs.vertical-panel.questions) { margin-top: 3.75rem; }
+main > .section.tabs-container.spacer-top-xxl:has(.tabs.vertical-panel.questions) { margin-top: 5rem; }
+main > .section.tabs-container.spacer-top-xxxl:has(.tabs.vertical-panel.questions) { margin-top: 7.5rem; }
+main > .section.tabs-container.spacer-bottom-s:has(.tabs.vertical-panel.questions) { margin-bottom: 1rem; }
+main > .section.tabs-container.spacer-bottom-m:has(.tabs.vertical-panel.questions) { margin-bottom: 1.25rem; }
+main > .section.tabs-container.spacer-bottom-l:has(.tabs.vertical-panel.questions) { margin-bottom: 2.5rem; }
+main > .section.tabs-container.spacer-bottom-xl:has(.tabs.vertical-panel.questions) { margin-bottom: 3.75rem; }
+main > .section.tabs-container.spacer-bottom-xxl:has(.tabs.vertical-panel.questions) { margin-bottom: 5rem; }
+main > .section.tabs-container.spacer-bottom-xxxl:has(.tabs.vertical-panel.questions) { margin-bottom: 7.5rem; }
+main > .section.tabs-container.padding-top-s:has(.tabs.vertical-panel.questions) { padding-top: 1rem; }
+main > .section.tabs-container.padding-top-m:has(.tabs.vertical-panel.questions) { padding-top: 1.25rem; }
+main > .section.tabs-container.padding-top-l:has(.tabs.vertical-panel.questions) { padding-top: 2.5rem; }
+main > .section.tabs-container.padding-top-xl:has(.tabs.vertical-panel.questions) { padding-top: 3.75rem; }
+main > .section.tabs-container.padding-top-xxl:has(.tabs.vertical-panel.questions) { padding-top: 5rem; }
+main > .section.tabs-container.padding-top-xxxl:has(.tabs.vertical-panel.questions) { padding-top: 7.5rem; }
+main > .section.tabs-container.padding-bottom-s:has(.tabs.vertical-panel.questions) { padding-bottom: 1rem; }
+main > .section.tabs-container.padding-bottom-m:has(.tabs.vertical-panel.questions) { padding-bottom: 1.25rem; }
+main > .section.tabs-container.padding-bottom-l:has(.tabs.vertical-panel.questions) { padding-bottom: 2.5rem; }
+main > .section.tabs-container.padding-bottom-xl:has(.tabs.vertical-panel.questions) { padding-bottom: 3.75rem; }
+main > .section.tabs-container.padding-bottom-xxl:has(.tabs.vertical-panel.questions) { padding-bottom: 5rem; }
+main > .section.tabs-container.padding-bottom-xxxl:has(.tabs.vertical-panel.questions) { padding-bottom: 7.5rem; }
+
+@media (width >= 1024px) {
+  main > .section.tabs-container.spacer-top-s-desktop:has(.tabs.vertical-panel.questions) { margin-top: 1rem; }
+  main > .section.tabs-container.spacer-top-m-desktop:has(.tabs.vertical-panel.questions) { margin-top: 1.25rem; }
+  main > .section.tabs-container.spacer-top-l-desktop:has(.tabs.vertical-panel.questions) { margin-top: 2.5rem; }
+  main > .section.tabs-container.spacer-top-xl-desktop:has(.tabs.vertical-panel.questions) { margin-top: 3.75rem; }
+  main > .section.tabs-container.spacer-top-xxl-desktop:has(.tabs.vertical-panel.questions) { margin-top: 5rem; }
+  main > .section.tabs-container.spacer-top-xxxl-desktop:has(.tabs.vertical-panel.questions) { margin-top: 7.5rem; }
+  main > .section.tabs-container.spacer-bottom-s-desktop:has(.tabs.vertical-panel.questions) { margin-bottom: 1rem; }
+  main > .section.tabs-container.spacer-bottom-m-desktop:has(.tabs.vertical-panel.questions) { margin-bottom: 1.25rem; }
+  main > .section.tabs-container.spacer-bottom-l-desktop:has(.tabs.vertical-panel.questions) { margin-bottom: 2.5rem; }
+  main > .section.tabs-container.spacer-bottom-xl-desktop:has(.tabs.vertical-panel.questions) { margin-bottom: 3.75rem; }
+  main > .section.tabs-container.spacer-bottom-xxl-desktop:has(.tabs.vertical-panel.questions) { margin-bottom: 5rem; }
+  main > .section.tabs-container.spacer-bottom-xxxl-desktop:has(.tabs.vertical-panel.questions) { margin-bottom: 7.5rem; }
 }
