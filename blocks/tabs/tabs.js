@@ -78,8 +78,7 @@ export function parseContent(cell) {
   };
 }
 
-// Optional tile colour tokens authored as an extra line in the label cell,
-// e.g. `logo: blue, quote: navy`. Only .vertical-panel.questions reads them.
+// optional `logo: <color>, quote: <color>` line in the label cell (.questions)
 const TILE_TOKEN = /^\s*(?:logo|quote)\s*:/i;
 
 function extractTiles(cell) {
@@ -601,9 +600,7 @@ function buildVpPanel(item, index, { multiMedia = false } = {}) {
   return panel;
 }
 
-/* .questions tiles: the logo is optional, so a lone picture is the photo; with
-   two or more the first is the logo and the last the photo. Tile colours come
-   from the label-cell tokens and fall back to the CSS defaults. */
+// .questions: a lone picture is the photo; with two, the first is the logo
 const QUESTION_TILE_COLORS = ['blue', 'navy', 'brown', 'pink', 'light-blue', 'gray', 'wintermint', 'white'];
 
 function decorateQuestionTiles(panel, item) {
@@ -614,16 +611,13 @@ function decorateQuestionTiles(panel, item) {
   if (logo) logo.classList.add('it-logo');
   panel.classList.toggle('no-logo', !logo);
 
-  const tiles = { logo, quote: panel.querySelector('.it-quote') };
-  Object.entries(tiles).forEach(([key, el]) => {
+  const targets = { logo, quote: panel.querySelector('.it-quote') };
+  Object.entries(targets).forEach(([key, el]) => {
     const color = item.tiles?.[key];
-    if (!el || !color) return;
-    if (QUESTION_TILE_COLORS.includes(color)) el.classList.add(`tile-${color}`);
-    // eslint-disable-next-line no-console
-    else console.warn(`tabs: unknown ${key} colour "${color}", use one of ${QUESTION_TILE_COLORS.join(', ')}`);
+    if (el && QUESTION_TILE_COLORS.includes(color)) el.classList.add(`tile-${color}`);
   });
 
-  // "Name, Role" attribution: the name renders bold, as in the design
+  // bold the name in a "Name, Role" attribution
   const cite = panel.querySelector('.it-quote cite');
   const comma = cite ? cite.textContent.indexOf(',') : -1;
   if (comma > 0) {

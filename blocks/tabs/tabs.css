@@ -1154,7 +1154,7 @@ main > .section.tabs-container:has(.tabs.vertical-panel.questions) {
 .tabs.vertical-panel.questions .it-tab[aria-expanded="true"] { border-bottom-color: transparent; }
 .tabs.vertical-panel.questions .it-chevron { width: 24px; height: 24px; }
 
-/* open tab points up, closed tabs point down (inverse of the shared vertical-panel rule) */
+/* open tab points up, closed tabs down */
 .tabs.vertical-panel.questions .it-tab[aria-expanded="true"] .it-chevron { transform: rotate(180deg); }
 .tabs.vertical-panel.questions .it-tab:not([aria-expanded="true"]) .it-chevron { transform: none; }
 
@@ -1266,7 +1266,7 @@ main > .section.tabs-container:has(.tabs.vertical-panel.questions) {
 
 .tabs.vertical-panel.questions .it-quote .it-cta:hover { text-decoration: none; }
 
-/* per-tab tile colours, set from `logo: <name>, quote: <name>` in the label cell */
+/* tile colours from the label-cell `logo:` / `quote:` tokens */
 .tabs.vertical-panel.questions .tile-blue { --tile-bg: var(--info); --tile-fg: #fff; }
 .tabs.vertical-panel.questions .tile-navy { --tile-bg: #0d0031; --tile-fg: #fff; }
 .tabs.vertical-panel.questions .tile-brown { --tile-bg: #883f1c; --tile-fg: #fff; }
@@ -1353,14 +1353,13 @@ main > .section.tabs-container:has(.tabs.vertical-panel.questions) {
   .tabs.vertical-panel.questions .it-photo { grid-column: 2; grid-row: 2 / span 2; }
   .tabs.vertical-panel.questions .it-quote { grid-column: 1; grid-row: 3; }
 
-  /* no logo: quote and photo share one row at the same height, quote text centred */
+  /* no logo: quote and photo share one row */
   .tabs.vertical-panel.questions .it-panel.no-logo.is-active { grid-template-rows: auto auto; }
   .tabs.vertical-panel.questions .it-panel.no-logo .it-quote { grid-row: 2; justify-content: center; }
   .tabs.vertical-panel.questions .it-panel.no-logo .it-photo { grid-row: 2; aspect-ratio: 489 / 382; }
 }
 
-/* section-metadata spacing (spacer-* = margin, padding-* = padding) beats the
-   section defaults above; same scale as styles.css. -0 tokens already win there. */
+/* section-metadata spacing has to beat the section defaults above */
 main > .section.tabs-container.spacer-top-s:has(.tabs.vertical-panel.questions) { margin-top: 1rem; }
 main > .section.tabs-container.spacer-top-m:has(.tabs.vertical-panel.questions) { margin-top: 1.25rem; }
 main > .section.tabs-container.spacer-top-l:has(.tabs.vertical-panel.questions) { margin-top: 2.5rem; }
@@ -1385,18 +1384,3 @@ main > .section.tabs-container.padding-bottom-l:has(.tabs.vertical-panel.questio
 main > .section.tabs-container.padding-bottom-xl:has(.tabs.vertical-panel.questions) { padding-bottom: 3.75rem; }
 main > .section.tabs-container.padding-bottom-xxl:has(.tabs.vertical-panel.questions) { padding-bottom: 5rem; }
 main > .section.tabs-container.padding-bottom-xxxl:has(.tabs.vertical-panel.questions) { padding-bottom: 7.5rem; }
-
-@media (width >= 1024px) {
-  main > .section.tabs-container.spacer-top-s-desktop:has(.tabs.vertical-panel.questions) { margin-top: 1rem; }
-  main > .section.tabs-container.spacer-top-m-desktop:has(.tabs.vertical-panel.questions) { margin-top: 1.25rem; }
-  main > .section.tabs-container.spacer-top-l-desktop:has(.tabs.vertical-panel.questions) { margin-top: 2.5rem; }
-  main > .section.tabs-container.spacer-top-xl-desktop:has(.tabs.vertical-panel.questions) { margin-top: 3.75rem; }
-  main > .section.tabs-container.spacer-top-xxl-desktop:has(.tabs.vertical-panel.questions) { margin-top: 5rem; }
-  main > .section.tabs-container.spacer-top-xxxl-desktop:has(.tabs.vertical-panel.questions) { margin-top: 7.5rem; }
-  main > .section.tabs-container.spacer-bottom-s-desktop:has(.tabs.vertical-panel.questions) { margin-bottom: 1rem; }
-  main > .section.tabs-container.spacer-bottom-m-desktop:has(.tabs.vertical-panel.questions) { margin-bottom: 1.25rem; }
-  main > .section.tabs-container.spacer-bottom-l-desktop:has(.tabs.vertical-panel.questions) { margin-bottom: 2.5rem; }
-  main > .section.tabs-container.spacer-bottom-xl-desktop:has(.tabs.vertical-panel.questions) { margin-bottom: 3.75rem; }
-  main > .section.tabs-container.spacer-bottom-xxl-desktop:has(.tabs.vertical-panel.questions) { margin-bottom: 5rem; }
-  main > .section.tabs-container.spacer-bottom-xxxl-desktop:has(.tabs.vertical-panel.questions) { margin-bottom: 7.5rem; }
-}
