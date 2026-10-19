@@ -2,9 +2,6 @@ import { BP_TABLET, BP_DESKTOP } from '../../scripts/breakpoints.js';
 import { slug } from '../../scripts/tracking.js';
 
 const CITE_PREFIX = /^<cite>\s*/i;
-// `<key> value` paragraphs other than <cite> are per-panel options (e.g. the
-// `.questions` tile colours) and never render as copy.
-const OPTION_PREFIX = /^<([a-z][a-z0-9-]*)>\s*/i;
 const BLOCKISH = 'picture, img, h2, h3, h4, h5, h6, p, ul, ol, blockquote';
 
 function flattenCell(cell) {
@@ -44,16 +41,7 @@ export function parseContent(cell) {
   if (citeEl) attribution = citeEl.textContent.trim();
   else if (citeParagraph) attribution = citeParagraph.textContent.trim().replace(CITE_PREFIX, '');
 
-  const options = {};
-  const optionParagraphs = nodes.filter((el) => el.tagName === 'P'
-    && el !== citeParagraph && OPTION_PREFIX.test(el.textContent.trim()));
-  optionParagraphs.forEach((el) => {
-    const text = el.textContent.trim();
-    options[text.match(OPTION_PREFIX)[1].toLowerCase()] = text.replace(OPTION_PREFIX, '').trim();
-  });
-
-  const rest = nodes.filter((el) => el !== quote && el !== citeParagraph && el.tagName !== 'CITE'
-    && !optionParagraphs.includes(el));
+  const rest = nodes.filter((el) => el !== quote && el !== citeParagraph && el.tagName !== 'CITE');
   const heading = rest.find((el) => /^H[2-6]$/.test(el.tagName)) || null;
   const headingIndex = heading ? rest.indexOf(heading) : -1;
 
@@ -62,9 +50,8 @@ export function parseContent(cell) {
   let cta = null;
   let ctaBeforeQuote = true;
   const bodyNodes = [];
-  // pictures after the first; only .vertical-panel.industry (media row) and
-  // .vertical-panel.questions (logo + photo tiles) render them, every other
-  // variant ignores them exactly as before
+  // pictures after the first; only .vertical-panel.industry renders them (as a
+  // media row), every other variant ignores them exactly as before
   const extraMedia = [];
 
   rest.forEach((el, i) => {
@@ -87,16 +74,7 @@ export function parseContent(cell) {
   });
 
   return {
-    media,
-    extraMedia,
-    eyebrow,
-    heading,
-    bodyNodes,
-    cta,
-    ctaBeforeQuote,
-    quote,
-    attribution,
-    options,
+    media, extraMedia, eyebrow, heading, bodyNodes, cta, ctaBeforeQuote, quote, attribution,
   };
 }
 
@@ -565,62 +543,7 @@ function buildVpTab(item, index) {
   return btn;
 }
 
-// One Intuit palette names accepted by the `.questions` `<logo-color>` /
-// `<quote-color>` options, besides any #hex value.
-const IES_COLORS = {
-  blueberry: '#0d0031',
-  'light-blue': '#d6e8f8',
-  bronze: '#883f1c',
-  'light-orange': '#ffcec4',
-  'super-blue': '#236cff',
-  superblue: '#236cff',
-  pepper: '#f0f4f6',
-  wintermint: '#eff4f9',
-  navy: '#00254a',
-  white: '#ffffff',
-  black: '#000000',
-};
-
-function resolveColor(value) {
-  if (!value) return null;
-  const key = value.trim().toLowerCase().replace(/\s+/g, '-');
-  const hex = IES_COLORS[key] || (/^#([0-9a-f]{3}|[0-9a-f]{6})$/.test(key) ? key : null);
-  return { css: hex || value.trim(), hex };
-}
-
-// relative luminance of a #hex colour; below ~0.45 the tile reads as dark
-function isDarkColor(hex) {
-  if (!hex) return false;
-  let h = hex.slice(1);
-  if (h.length === 3) h = h.split('').map((c) => c + c).join('');
-  const [r, g, b] = [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16) / 255);
-  return (0.2126 * r) + (0.7152 * g) + (0.0722 * b) < 0.45;
-}
-
-// .questions: one picture is the photo; two are logo tile, then photo. The logo
-// is optional, so a lone picture is never mistaken for it.
-function appendQuestionTiles(panel, item) {
-  const pics = [item.media, ...(item.extraMedia || [])].filter(Boolean);
-  const logo = pics.length > 1 ? pics[0] : null;
-  const photo = pics.length > 1 ? pics[pics.length - 1] : pics[0] || null;
-  panel.classList.toggle('has-logo', !!logo);
-  if (logo || photo) {
-    const wrap = document.createElement('div');
-    wrap.className = 'it-media';
-    if (logo) { logo.classList.add('it-logo'); wrap.append(logo); }
-    if (photo) { photo.classList.add('it-photo'); wrap.append(photo); }
-    panel.append(wrap);
-  }
-  const logoColor = resolveColor(item.options['logo-color'] || item.options['logo-bg']);
-  if (logoColor) panel.style.setProperty('--it-logo-bg', logoColor.css);
-  const quoteColor = resolveColor(item.options['quote-color'] || item.options['quote-bg']);
-  if (quoteColor) {
-    panel.style.setProperty('--it-quote-bg', quoteColor.css);
-    panel.style.setProperty('--it-quote-text', isDarkColor(quoteColor.hex) ? '#fff' : '#0d0031');
-  }
-}
-
-function buildVpPanel(item, index, { multiMedia = false, questions = false } = {}) {
+function buildVpPanel(item, index, { multiMedia = false } = {}) {
   const panel = document.createElement('div');
   panel.className = index === 0 ? 'it-panel is-active' : 'it-panel';
   panel.id = `it-panel-${index}`;
@@ -647,9 +570,7 @@ function buildVpPanel(item, index, { multiMedia = false, questions = false } = {
   copy.append(copyBody);
   panel.append(copy);
 
-  if (questions) {
-    appendQuestionTiles(panel, item);
-  } else if (item.media) {
+  if (item.media) {
     const wrap = document.createElement('div');
     wrap.className = 'it-media';
     wrap.append(item.media);
@@ -675,9 +596,8 @@ function activateVp(tabs, panels, index, focusIndex = index) {
 
 function renderVerticalPanel(block, items) {
   const tabs = items.map(buildVpTab);
-  const multiMedia = block.classList.contains('industry');
-  const questions = block.classList.contains('questions');
-  const panels = items.map((item, i) => buildVpPanel(item, i, { multiMedia, questions }));
+  const multiMedia = block.classList.contains('industry') || block.classList.contains('questions');
+  const panels = items.map((item, i) => buildVpPanel(item, i, { multiMedia }));
   tabs.forEach((tab, i) => tab.setAttribute('aria-controls', panels[i].id));
 
   const nav = document.createElement('div');
