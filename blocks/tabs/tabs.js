@@ -78,10 +78,27 @@ export function parseContent(cell) {
   };
 }
 
+// optional `logo: <color>, quote: <color>` line in the label cell (.questions)
+const TILE_TOKEN = /^\s*(?:logo|quote)\s*:/i;
+
+function extractTiles(cell) {
+  const tiles = {};
+  if (!cell) return tiles;
+  [...cell.querySelectorAll('p')].filter((p) => TILE_TOKEN.test(p.textContent)).forEach((p) => {
+    p.textContent.split(/[,;]/).forEach((pair) => {
+      const [key, value] = pair.split(':').map((s) => s && s.trim().toLowerCase());
+      if ((key === 'logo' || key === 'quote') && value) tiles[key] = value.replace(/\s+/g, '-');
+    });
+    p.remove();
+  });
+  return tiles;
+}
+
 export function parseItems(block) {
   return [...block.children].map((row) => {
     const cells = [...row.children];
-    return { ...extractLabel(cells[0]), ...parseContent(cells[1]) };
+    const tiles = extractTiles(cells[0]);
+    return { ...extractLabel(cells[0]), ...parseContent(cells[1]), tiles };
   });
 }
 
@@ -583,6 +600,34 @@ function buildVpPanel(item, index, { multiMedia = false } = {}) {
   return panel;
 }
 
+// .questions: a lone picture is the photo; with two, the first is the logo
+const QUESTION_TILE_COLORS = ['blue', 'navy', 'brown', 'pink', 'light-blue', 'gray', 'wintermint', 'white'];
+
+function decorateQuestionTiles(panel, item) {
+  const pics = [...panel.querySelectorAll('.it-media picture, .it-media > img')];
+  const photo = pics.length ? pics[pics.length - 1] : null;
+  const logo = pics.length > 1 ? pics[0] : null;
+  if (photo) photo.classList.add('it-photo');
+  if (logo) logo.classList.add('it-logo');
+  panel.classList.toggle('no-logo', !logo);
+
+  const targets = { logo, quote: panel.querySelector('.it-quote') };
+  Object.entries(targets).forEach(([key, el]) => {
+    const color = item.tiles?.[key];
+    if (el && QUESTION_TILE_COLORS.includes(color)) el.classList.add(`tile-${color}`);
+  });
+
+  // bold the name in a "Name, Role" attribution
+  const cite = panel.querySelector('.it-quote cite');
+  const comma = cite ? cite.textContent.indexOf(',') : -1;
+  if (comma > 0) {
+    const name = document.createElement('strong');
+    name.textContent = cite.textContent.slice(0, comma + 1);
+    const role = cite.textContent.slice(comma + 1);
+    cite.replaceChildren(name, role);
+  }
+}
+
 const isVpDesktop = () => !!(window.matchMedia && window.matchMedia(VP_DESKTOP_QUERY).matches);
 
 function activateVp(tabs, panels, index, focusIndex = index) {
@@ -598,6 +643,7 @@ function renderVerticalPanel(block, items) {
   const tabs = items.map(buildVpTab);
   const multiMedia = block.classList.contains('industry') || block.classList.contains('questions');
   const panels = items.map((item, i) => buildVpPanel(item, i, { multiMedia }));
+  if (block.classList.contains('questions')) panels.forEach((p, i) => decorateQuestionTiles(p, items[i]));
   tabs.forEach((tab, i) => tab.setAttribute('aria-controls', panels[i].id));
 
   const nav = document.createElement('div');
