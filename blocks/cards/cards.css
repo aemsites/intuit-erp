@@ -1290,7 +1290,7 @@ main > .section.ies.cards-container:has(> .cards-wrapper > .cards.minimal.divide
 }
 
 .section.ies .cards.minimal.divider > div {
-  justify-content: flex-start;
+  justify-content: center;
   gap: var(--space-s);
   padding: var(--space-xl) 0;
   border-right: 0;
@@ -1311,7 +1311,6 @@ main > .section.ies.cards-container:has(> .cards-wrapper > .cards.minimal.divide
   .section.ies .cards.minimal.divider { grid-template-columns: repeat(3, 1fr); }
 
   .section.ies .cards.minimal.divider > div {
-    justify-content: center;
     padding: 0 var(--space-l);
     border-bottom: 0;
     border-right: 1px solid rgb(0 0 0 / 20%);
