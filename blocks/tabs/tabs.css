@@ -1124,7 +1124,7 @@ main > .section.tabs-container:has(.tabs.vertical-panel.questions) {
 
 .tabs.vertical-panel.questions { margin-top: var(--space-xl); }
 
-.tabs-container:has(.tabs.vertical-panel.questions) .tabs-wrapper { max-width: 1220px; }
+.tabs-container:has(.tabs.vertical-panel.questions) .tabs-wrapper { max-width: 1210px; }
 
 .tabs-container:has(.tabs.vertical-panel.questions) .default-content-wrapper h2:not(.section-eyebrow) {
   margin: 0;
