@@ -1,0 +1,415 @@
+/* shopping-widget — a tabbed pricing grid. The card internals (pc-*) are
+   rendered by the shared scripts/pricing-card-render.js, so the card rules
+   below mirror blocks/pricing-cards/pricing-cards.css, re-scoped under
+   .shopping-widget per AGENTS.md's block-scoping rule. Ported from Intuit's
+   ShoppingWidget (marketing-design-system components/ShoppingWidget):
+   Card.tsx/.css, CardFlag.tsx/.css, BolderPricing.tsx. */
+
+.section.shopping-widget-container { background: #fff; padding: var(--space-2xl) 0 var(--section-y); }
+
+.shopping-widget-container .default-content-wrapper {
+  text-align: center;
+}
+
+.shopping-widget-container .default-content-wrapper h1,
+.shopping-widget-container .default-content-wrapper h2 {
+  font-size: 32px; line-height: var(--line-height-s); font-weight: var(--font-weight-bold);
+  color: #000; margin: 0 0 var(--space-l);
+}
+
+/* Tab bar: tabs sit on a shared baseline (align-items: flex-end) so the
+   taller active tab grows upward out of the container's bottom border. */
+.shopping-widget .sw-tab-list {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-3xs);
+  border-bottom: 1px solid #d4d7dc;
+  overflow-x: auto;
+}
+
+.shopping-widget .sw-tab {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  height: 52px;
+  padding: 0 var(--space-m);
+  border: 0;
+  border-radius: 16px 16px 0 0;
+  background: transparent;
+  color: #000;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: var(--font-weight-semibold);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.shopping-widget .sw-tab[aria-selected="true"] {
+  height: 60px;
+  background: #000;
+  color: #fff;
+}
+
+.shopping-widget .sw-tab-subtitle {
+  font-size: 12px;
+  font-weight: var(--font-weight-normal);
+  opacity: 0.8;
+}
+
+.shopping-widget .sw-panel {
+  padding-top: var(--space-l);
+}
+
+.shopping-widget .sw-panel:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* --- Cards (shared pc-* renderer) --- */
+
+.shopping-widget .pc-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-l);
+}
+
+@media (width >= 768px) {
+  .shopping-widget .pc-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (width >= 1024px) {
+  .shopping-widget .pc-grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-s); }
+}
+
+.shopping-widget .pc-card-container {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.shopping-widget .pc-card {
+  background: #fff;
+  flex: 1;
+  border-radius: 8px;
+  box-shadow: 0 0 0 1px #d4d7dc, 0 5px 10px 0 rgb(0 0 0 / 5%);
+  padding: var(--space-l) var(--space-l) var(--space-m) var(--space-l);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+}
+
+/* Featured card: a highlighted ring, not a border-color/dark-header change. */
+.shopping-widget .pc-card.pc-card-with-flag {
+  box-shadow: 0 0 0 2px var(--primary), 0 5px 10px 0 rgb(0 0 0 / 5%);
+}
+
+/* Non-flagged cards get a top margin so their card bodies align with
+   flagged cards' bodies, since the flag sits above the card, not inside it. */
+.shopping-widget .pc-card.pc-card-without-flag {
+  margin-top: 25px;
+}
+
+.shopping-widget .pc-flag-wrapper {
+  display: flex;
+  width: 75%;
+}
+
+.shopping-widget .pc-flag {
+  display: flex;
+  width: 100%;
+  background: var(--primary);
+  color: #fff;
+  text-transform: uppercase;
+  border-radius: 8px 8px 0 0;
+  justify-content: center;
+  align-items: center;
+  height: 25px;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 5px;
+}
+
+.shopping-widget .pc-image {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin: 0 0 var(--space-xs);
+  display: block;
+}
+
+.shopping-widget .pc-badge {
+  font-size: 10px;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.03em;
+  color: var(--text-soft);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.shopping-widget .pc-name {
+  font-size: 20px; font-weight: var(--font-weight-bold); color: #000; margin: 0;
+}
+
+/* --- Title badge --- */
+
+/* Default (inline): badge is a flex sibling pushed to the end of the name
+   row. The own-row variant below restacks it with CSS only — the DOM order
+   is identical in both modes. */
+.shopping-widget .pc-name-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-2xs);
+}
+
+.shopping-widget .pc-title-badge {
+  margin-left: auto;
+  padding: 2px var(--space-2xs);
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: var(--font-weight-semibold);
+  white-space: nowrap;
+
+  /* Placeholder colors pending real QB design-token alignment — the source
+     component takes these as props; here they are a block variant, never
+     authored content. */
+  background: #f45d00;
+  color: #fff;
+}
+
+.shopping-widget.title-badge-green .pc-title-badge {
+  background: var(--green);
+  color: #fff;
+}
+
+.shopping-widget.title-badge-blue .pc-title-badge {
+  background: var(--primary);
+  color: #fff;
+}
+
+/* title-badge-own-row variant: stack the badge above the name. */
+.shopping-widget.title-badge-own-row .pc-name-row {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.shopping-widget.title-badge-own-row .pc-title-badge {
+  order: -1;
+  margin-left: 0;
+}
+
+.shopping-widget .pc-tagline {
+  font-size: 14px; color: var(--text-soft); margin: 0 0 var(--space-xs);
+}
+
+/* Stacked price layout (default): strikethrough price above, discounted
+   price below. */
+.shopping-widget .pc-price-section {
+  display: flex;
+  flex-direction: column;
+  margin: var(--space-xs) 0 0;
+}
+
+.shopping-widget .pc-price-strike {
+  font-size: 14px; color: var(--text-soft); text-decoration: line-through;
+  margin-bottom: var(--space-3xs);
+}
+
+.shopping-widget .pc-price {
+  font-size: 32px; font-weight: var(--font-weight-bold); color: #000;
+}
+
+/* inline-price block variant: strikethrough and discounted price on one
+   line, baseline-aligned, instead of stacked. */
+.shopping-widget.inline-price .pc-price-section {
+  flex-direction: row;
+  align-items: baseline;
+  gap: var(--space-2xs);
+}
+
+.shopping-widget.inline-price .pc-price-strike {
+  margin-bottom: 0;
+}
+
+.shopping-widget .pc-cta {
+  display: inline-block;
+  text-align: center;
+  margin: var(--space-xs) 0 var(--space-s);
+  padding: 10px var(--space-m);
+  border-radius: 6px;
+  font-weight: var(--font-weight-semibold);
+  font-size: 15px;
+  background: var(--green-bright);
+  color: #000;
+  text-decoration: none;
+}
+
+/* outline-cta block variant: bordered/secondary button instead of solid. */
+.shopping-widget.outline-cta .pc-cta {
+  background: transparent;
+  color: #000;
+  border: 1px solid #000;
+}
+
+.shopping-widget .pc-ai-section {
+  margin: var(--space-s) 0;
+  padding: var(--space-s) 0;
+  border-top: 1px solid #ecedf0;
+  border-bottom: 1px solid #ecedf0;
+}
+
+.shopping-widget .pc-ai-heading {
+  display: flex; align-items: center; gap: var(--space-3xs);
+  font-size: 14px; font-weight: var(--font-weight-semibold); color: #000;
+  margin: 0 0 var(--space-xs);
+}
+
+.shopping-widget .pc-ai-icon {
+  display: inline-block; width: 14px; height: 14px;
+  background: var(--primary);
+  mask: radial-gradient(circle, #000 40%, transparent 41%) 0 0 / 60% 60%;
+  border-radius: 2px;
+}
+
+.shopping-widget .pc-ai-icon-img {
+  width: 14px; height: 14px; display: inline-block; object-fit: contain;
+}
+
+.shopping-widget .pc-ai-subtitle {
+  font-size: 12px; color: var(--text-soft); margin: 0 0 var(--space-xs);
+}
+
+.shopping-widget .pc-ai-features,
+.shopping-widget .pc-features {
+  list-style: none; margin: 0; padding: 0;
+  display: flex; flex-direction: column; gap: var(--space-2xs);
+}
+
+.shopping-widget .pc-features { margin-top: var(--space-s); }
+
+.shopping-widget .pc-ai-features li,
+.shopping-widget .pc-features li {
+  font-size: 13px; line-height: var(--line-height-m); color: #000;
+  padding-left: var(--space-s); position: relative;
+}
+
+.shopping-widget .pc-ai-features li::before,
+.shopping-widget .pc-features li::before {
+  content: ""; position: absolute; left: 0; top: 7px; width: 6px; height: 6px;
+  border-radius: 50%; background: var(--primary);
+}
+
+.shopping-widget .pc-ai-link {
+  display: inline-block;
+  font-size: 13px;
+  color: var(--primary);
+  text-decoration: underline;
+  margin-top: var(--space-2xs);
+}
+
+.shopping-widget .pc-card-error {
+  align-items: center;
+  text-align: center;
+  justify-content: center;
+  min-height: 320px;
+  color: var(--text-soft);
+}
+
+.shopping-widget .pc-error-message {
+  font-size: 14px;
+  margin: 0;
+}
+
+/* --- Step flow (static scaffold) ---
+   Values ported verbatim from the source component. The green is a
+   placeholder for the source's --color-green-rw-dark token, which has no
+   equivalent in this project's palette yet — pending design-token alignment. */
+
+.shopping-widget .sw-steps {
+  list-style: none;
+  margin: var(--space-2xl) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.shopping-widget .sw-step {
+  display: grid;
+  grid-template-columns: 2.25rem 1fr;
+  column-gap: var(--space-s);
+  align-items: start;
+}
+
+.shopping-widget .sw-step-circle {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  color: var(--green);
+  border: 1px solid var(--green);
+  font-size: 14px;
+  font-weight: var(--font-weight-semibold);
+}
+
+.shopping-widget .sw-step-active .sw-step-circle {
+  background: var(--green);
+  color: #fff;
+}
+
+.shopping-widget .sw-step-content {
+  padding-top: var(--space-2xs);
+}
+
+.shopping-widget .sw-step-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: var(--font-weight-semibold);
+  color: #000;
+}
+
+.shopping-widget .sw-step-subtitle {
+  margin: var(--space-3xs) 0 0;
+  font-size: 13px;
+  color: var(--text-soft);
+}
+
+/* Divider between steps — vertical on mobile, under the circle column. */
+.shopping-widget .sw-step-divider {
+  grid-column: 1;
+  justify-self: center;
+  width: 1px;
+  height: 24px;
+  background: var(--green);
+  opacity: 0.4;
+  margin-top: var(--space-2xs);
+}
+
+/* From 768px up the flow runs horizontally, matching the source's 45px /
+   3.5rem divider between steps. */
+@media (width >= 768px) {
+  .shopping-widget .sw-steps {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: center;
+  }
+
+  .shopping-widget .sw-step {
+    grid-template-columns: 2.25rem auto auto;
+    align-items: start;
+  }
+
+  .shopping-widget .sw-step-divider {
+    grid-column: 3;
+    justify-self: stretch;
+    width: 45px;
+    max-width: 3.5rem;
+    height: 1px;
+    margin-top: 20px;
+    margin-bottom: 30px;
+    margin-left: var(--space-s);
+  }
+}
