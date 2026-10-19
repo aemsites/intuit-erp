@@ -1269,11 +1269,11 @@ main > .section.ies.cards-container:has(> .cards-wrapper > .cards.minimal.divide
   margin-top: 0;
   margin-bottom: 0;
   padding-top: 0;
-  padding-bottom: 0;
+  padding-bottom: 20px;
 }
 
 main > .section.ies.cards-container:has(> .cards-wrapper > .cards.minimal.divider) > .default-content-wrapper > p:first-child {
-  margin: 0 0 2rem;
+  margin: 0;
   font-size: 12px;
   line-height: 1.25;
   font-weight: var(--font-weight-medium);
@@ -1305,6 +1305,14 @@ main > .section.ies.cards-container:has(> .cards-wrapper > .cards.minimal.divide
 }
 
 @media (width >= 768px) {
+  main > .section.ies.cards-container:has(> .cards-wrapper > .cards.minimal.divider) > .default-content-wrapper {
+    padding-bottom: 0;
+  }
+
+  main > .section.ies.cards-container:has(> .cards-wrapper > .cards.minimal.divider) > .default-content-wrapper > p:first-child {
+    margin-bottom: 2rem;
+  }
+
   .section.ies .cards.minimal.divider { grid-template-columns: repeat(3, 1fr); }
 
   .section.ies .cards.minimal.divider > div {

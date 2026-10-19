@@ -1355,6 +1355,24 @@ body.blog-home .section:not(:first-of-type)>.default-content-wrapper> :is(h1, h2
   padding-bottom: 2.5rem;
 }
 
+main > .section.ies.center > .default-content-wrapper:only-child:has(> p:only-child) {
+  padding-top: 16px;
+  padding-bottom: 20px;
+}
+
+@media (width >= 768px) {
+  main > .section.ies.center > .default-content-wrapper:only-child:has(> p:only-child) {
+    padding-top: 32px;
+  }
+}
+
+@media (width >= 1024px) {
+  main > .section.ies.center > .default-content-wrapper:only-child:has(> p:only-child) {
+    padding-top: 40px;
+    padding-bottom: 40px;
+  }
+}
+
 @media (width < 768px) {
   main { overflow-x: clip; }
 }
