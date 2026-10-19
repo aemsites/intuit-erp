@@ -1259,10 +1259,7 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
   }
 }
 
-/* .minimal.divider in an IES section (accolades band): eyebrow paragraph, then a logo | text row per
-   card. Section 3.75rem (60px) top / 1.25rem (20px) bottom, 2rem eyebrow-to-row; from 1024px 5rem /
-   2.5rem and 2.5rem. Cards stack with horizontal rules below 768px, sit in one 3-up row with vertical
-   rules from 768px. */
+/* .minimal.divider in an IES section: eyebrow + logo | text rows (stacked below 768px, 3-up above) */
 main > .section.ies.cards-container:has(> .cards-wrapper > .cards.minimal.divider) {
   padding-top: 3.75rem;
   padding-bottom: 1.25rem;
@@ -1300,7 +1297,6 @@ main > .section.ies.cards-container:has(> .cards-wrapper > .cards.minimal.divide
 
 .section.ies .cards.minimal.divider > div:first-child { padding-top: 0; }
 
-/* the logo keeps its natural width; only the text column shrinks */
 .section.ies .cards.minimal.divider .cards-card-image { flex: 0 0 auto; }
 
 .section.ies .cards.minimal.divider > div:last-child {

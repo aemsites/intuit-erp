@@ -297,8 +297,7 @@ function decorateSimple(block) {
   headCells.forEach((cell) => {
     const logo = document.createElement('div');
     logo.className = 'cs-logo';
-    // a header cell without an image is a text column title (e.g. a competitor
-    // with no logo): render the text as a single centred paragraph
+    // header cell without an image = text column title
     if (!cell.querySelector('picture, img')) {
       logo.classList.add('cs-text');
       const p = document.createElement('p');

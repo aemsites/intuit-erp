@@ -144,7 +144,7 @@
 .comparison-table .cs-logo { display: flex; align-items: center; justify-content: center; }
 .comparison-table .cs-logo img { max-height: 44px; width: auto; }
 
-/* text column title (header cell authored without an image): 20px/500 below 1024px, 28px on desktop */
+/* text column title (header cell without an image) */
 .comparison-table .cs-logo.cs-text p {
   margin: 0;
   font-size: 20px;
@@ -430,8 +430,7 @@
   .comparison-table .cf-entry p { font-size: 16px; }
 }
 
-/* .simple sections on the IES comparison template: 3.75rem (60px) top/bottom, 5rem (80px) from 1024px,
-   whatever the section background, with the title block starting flush at the top edge */
+/* .simple section spacing on the IES compare template */
 main > .section.comparison-table-container:has(> .comparison-table-wrapper > .comparison-table.simple) {
   padding-top: 3.75rem;
   padding-bottom: 3.75rem;
@@ -445,7 +444,6 @@ main > .section.comparison-table-container:has(> .comparison-table-wrapper > .co
   margin-top: 0;
 }
 
-/* section title: 24px/500 below 1024px, 34px on desktop; needs no h3-size or h3-font-weight section helpers */
 main > .section.comparison-table-container:has(> .comparison-table-wrapper > .comparison-table.simple) > .default-content-wrapper > h3 {
   font-size: 24px;
   font-weight: var(--font-weight-medium);

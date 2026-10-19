@@ -1167,10 +1167,7 @@
   min-width: 0;
 }
 
-/* The carousel track stretches every card to the tallest one; without explicit
-   row sizing the grid shared that slack with the disclaimer row, floating the
-   legal line mid-card. Give the slack to the media row (desktop: the copy/media
-   row) so the disclaimer stays pinned 40px / 30px above the card foot. */
+/* stretched carousel cards: keep the slack in the media row so the disclaimer stays at the foot */
 .testimonial.story .story-card:has(.story-disclaimer) {
   grid-template-rows: auto 1fr auto;
   row-gap: 40px;
