@@ -297,7 +297,16 @@ function decorateSimple(block) {
   headCells.forEach((cell) => {
     const logo = document.createElement('div');
     logo.className = 'cs-logo';
-    logo.append(...cell.childNodes);
+    // a header cell without an image is a text column title (e.g. a competitor
+    // with no logo): render the text as a single centred paragraph
+    if (!cell.querySelector('picture, img')) {
+      logo.classList.add('cs-text');
+      const p = document.createElement('p');
+      p.textContent = cell.textContent.trim();
+      logo.append(p);
+    } else {
+      logo.append(...cell.childNodes);
+    }
     head.append(logo);
   });
 
