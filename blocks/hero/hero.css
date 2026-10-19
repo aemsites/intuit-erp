@@ -764,7 +764,6 @@ body.author-guide .hero .hero-copy .hero-lede {
 .hero.ies.glow .hero-media {
   box-sizing: border-box;
   aspect-ratio: 1280 / 900;
-  padding: 4.7% 0 0 18.1%; /* 30px / 116px of a 640px tile */
   border-radius: 30px;
   background: #d6e8f8;
   overflow: hidden;
@@ -777,7 +776,6 @@ body.author-guide .hero .hero-copy .hero-lede {
   max-height: none;
   object-fit: cover;
   object-position: left top;
-  border-radius: 16px 0 0;
 }
 
 /* white pills on the dark band */
