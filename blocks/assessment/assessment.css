@@ -166,7 +166,7 @@ main .section .assessment.ies {
   /* on mobile the panel background fills the padding, so no section background shows */
   border-radius: 0;
   background-color: var(--ies-pepper);
-  padding: 40px 0;
+  padding: 60px 0;
   color: var(--ies-ink);
 }
 
