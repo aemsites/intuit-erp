@@ -431,10 +431,21 @@ main > .section.comparison-table-container:has(> .comparison-table-wrapper > .co
   margin-top: 0;
 }
 
+/* section title: 24px below 1024px, 34px on desktop (overrides the h3-size-* section helpers) */
+main > .section.comparison-table-container:has(> .comparison-table-wrapper > .comparison-table.simple) > .default-content-wrapper > h3 {
+  font-size: 24px;
+  line-height: 1.2;
+}
+
 @media (width >= 1024px) {
   main > .section.comparison-table-container:has(> .comparison-table-wrapper > .comparison-table.simple) {
     padding-top: 5rem;
     padding-bottom: 5rem;
+  }
+
+  main > .section.comparison-table-container:has(> .comparison-table-wrapper > .comparison-table.simple) > .default-content-wrapper > h3 {
+    font-size: 34px;
+    line-height: 1.1;
   }
 }
 
