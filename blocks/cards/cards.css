@@ -1260,11 +1260,12 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
 }
 
 /* .minimal.divider in an IES section (accolades band): eyebrow paragraph, then a logo | text row per
-   card. Section 60px top / 20px bottom, 32px eyebrow-to-row; from 1024px 80 / 40 and 40px. Cards stack
-   with horizontal rules below 768px, sit in one 3-up row with vertical rules from 768px. */
+   card. Section 3.75rem (60px) top / 1.25rem (20px) bottom, 2rem eyebrow-to-row; from 1024px 5rem /
+   2.5rem and 2.5rem. Cards stack with horizontal rules below 768px, sit in one 3-up row with vertical
+   rules from 768px. */
 main > .section.ies.cards-container:has(> .cards-wrapper > .cards.minimal.divider) {
-  padding-top: 60px;
-  padding-bottom: 20px;
+  padding-top: 3.75rem;
+  padding-bottom: 1.25rem;
 }
 
 main > .section.ies.cards-container:has(> .cards-wrapper > .cards.minimal.divider) > .default-content-wrapper {
@@ -1275,7 +1276,7 @@ main > .section.ies.cards-container:has(> .cards-wrapper > .cards.minimal.divide
 }
 
 main > .section.ies.cards-container:has(> .cards-wrapper > .cards.minimal.divider) > .default-content-wrapper > p:first-child {
-  margin: 0 0 var(--space-xl);
+  margin: 0 0 2rem;
   font-size: 12px;
   line-height: 1.25;
   font-weight: var(--font-weight-medium);
@@ -1326,12 +1327,12 @@ main > .section.ies.cards-container:has(> .cards-wrapper > .cards.minimal.divide
 
 @media (width >= 1024px) {
   main > .section.ies.cards-container:has(> .cards-wrapper > .cards.minimal.divider) {
-    padding-top: 80px;
-    padding-bottom: 40px;
+    padding-top: 5rem;
+    padding-bottom: 2.5rem;
   }
 
   main > .section.ies.cards-container:has(> .cards-wrapper > .cards.minimal.divider) > .default-content-wrapper > p:first-child {
-    margin-bottom: var(--space-2xl);
+    margin-bottom: 2.5rem;
     font-size: 14px;
     letter-spacing: 1.82px;
   }

@@ -15,10 +15,10 @@ main > .section:has(.sticky-nav) > .default-content-wrapper > h2 { margin-top: 0
   margin-bottom: 60px;
 }
 
-/* followed by comparison-table sections (IES compare template): 40px here + the table section's
-   own 60px / 80px top padding = 100px / 120px from the bar to the first title */
+/* followed by comparison-table sections (IES compare template): 2.5rem here + the table section's
+   own 3.75rem / 5rem top padding = 100px / 120px from the bar to the first title */
 main > .section:has(.sticky-nav):has(+ .section.comparison-table-container) .sticky-nav {
-  margin-bottom: 40px;
+  margin-bottom: 2.5rem;
 }
 
 .sticky-nav.is-fixed {
