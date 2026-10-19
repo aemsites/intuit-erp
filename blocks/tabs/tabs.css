@@ -1110,7 +1110,11 @@ main > .section.tabs-container:has(.tabs.vertical-panel.industry) { padding-top:
 }
 
 
-/* .vertical-panel.questions: white tab list beside an unboxed question | answer panel with logo, quote and photo tiles */
+/* .vertical-panel.questions: white tab list beside an unboxed question | answer panel with logo, quote
+   and photo tiles. Row: label | h3, answer, [logo picture], blockquote, <cite> line, [link], photo picture.
+   One picture is the photo (no logo tile); two are logo, then photo. Tile colours come from
+   `<logo-color> …` / `<quote-color> …` paragraphs (#hex or an IES colour name, see tabs.js); the quote
+   text flips to white on dark tiles. Section: 60px top/bottom, 80px from 1024px. */
 main > .section.tabs-container:has(.tabs.vertical-panel.questions) {
   --it-surface: #fff;
   --it-text: #000;
@@ -1119,8 +1123,8 @@ main > .section.tabs-container:has(.tabs.vertical-panel.questions) {
   --it-tab-idle: #fff;
 
   width: 100%;
-  padding-top: var(--space-m);
-  padding-bottom: var(--space-m);
+  padding-top: 60px;
+  padding-bottom: 60px;
 }
 
 .tabs.vertical-panel.questions { margin-top: var(--space-xl); }
@@ -1190,9 +1194,9 @@ main > .section.tabs-container:has(.tabs.vertical-panel.questions) {
 }
 
 .tabs.vertical-panel.questions .it-copy { order: 0; }
-.tabs.vertical-panel.questions .it-media picture:first-child { order: 1; }
+.tabs.vertical-panel.questions .it-logo { order: 1; }
 .tabs.vertical-panel.questions .it-quote { order: 2; }
-.tabs.vertical-panel.questions .it-media picture:last-child:not(:first-child) { order: 3; }
+.tabs.vertical-panel.questions .it-photo { order: 3; }
 
 .tabs.vertical-panel.questions .it-media picture img {
   display: block;
@@ -1204,40 +1208,42 @@ main > .section.tabs-container:has(.tabs.vertical-panel.questions) {
 }
 
 /* logo tile */
-.tabs.vertical-panel.questions .it-media picture:first-child {
-  height: 96px;
-  background: #883f1c;
+.tabs.vertical-panel.questions .it-logo {
+  height: 112px;
+  background: var(--it-logo-bg, #0d0031);
 }
 
-.tabs.vertical-panel.questions .it-media picture:first-child img {
-  padding: var(--space-l) var(--space-5xl);
+.tabs.vertical-panel.questions .it-media picture.it-logo img {
+  padding: var(--space-l) 30px;
   box-sizing: border-box;
   object-fit: contain;
 }
 
 /* photo tile */
-.tabs.vertical-panel.questions .it-media picture:last-child:not(:first-child) {
+.tabs.vertical-panel.questions .it-photo {
   aspect-ratio: 4 / 3;
-  background: #d6e8f8;
+  background: #f0f4f6;
 }
 
 /* quote tile */
 .tabs.vertical-panel.questions .it-quote {
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: var(--space-s);
   margin: 0;
   padding: var(--space-2xl) 30px;
   border: 0;
   border-radius: 24px;
-  background: #ffcec4;
+  background: var(--it-quote-bg, #d6e8f8);
+  color: var(--it-quote-text, #0d0031);
 }
 
 .tabs.vertical-panel.questions .it-quote blockquote {
   margin: 0;
   font-size: 20px;
   line-height: var(--line-height-s);
-  color: #0d0031;
+  color: inherit;
 }
 
 .tabs.vertical-panel.questions .it-quote blockquote p { margin: 0; }
@@ -1245,7 +1251,7 @@ main > .section.tabs-container:has(.tabs.vertical-panel.questions) {
 .tabs.vertical-panel.questions .it-quote cite {
   font-size: 14px;
   line-height: 1.4;
-  color: #0d0031;
+  color: inherit;
 }
 
 .tabs.vertical-panel.questions .it-quote .it-cta {
@@ -1253,7 +1259,7 @@ main > .section.tabs-container:has(.tabs.vertical-panel.questions) {
   font-size: 16px;
   font-weight: var(--font-weight-bold);
   line-height: 1.4;
-  color: #0d0031;
+  color: inherit;
   text-decoration: underline;
   text-underline-offset: 3px;
 }
@@ -1271,7 +1277,7 @@ main > .section.tabs-container:has(.tabs.vertical-panel.questions) {
 
 @media (width >= 1024px) {
   main > .section.tabs-container:has(.tabs.vertical-panel.questions) {
-    padding: var(--space-2xl) 20px;
+    padding: 80px 20px;
   }
 
   .tabs-container:has(.tabs.vertical-panel.questions) .default-content-wrapper h2:not(.section-eyebrow) {
@@ -1279,7 +1285,7 @@ main > .section.tabs-container:has(.tabs.vertical-panel.questions) {
     line-height: var(--line-height-none);
   }
 
-  .tabs.vertical-panel.questions { margin-top: 60px; }
+  .tabs.vertical-panel.questions { margin-top: var(--space-2xl); }
 
   .tabs.vertical-panel.questions .it-nav { width: 225px; gap: 0; }
   .tabs.vertical-panel.questions .it-item { display: contents; }
@@ -1297,8 +1303,8 @@ main > .section.tabs-container:has(.tabs.vertical-panel.questions) {
   }
 
   .tabs.vertical-panel.questions .it-tab:not([aria-expanded="true"]):hover { background: #f0f4f6; }
-  .tabs.vertical-panel.questions .it-media picture:first-child { height: auto; aspect-ratio: 468 / 128; }
-  .tabs.vertical-panel.questions .it-media picture:last-child:not(:first-child) { aspect-ratio: 468 / 520; }
+  .tabs.vertical-panel.questions .it-logo { height: auto; aspect-ratio: 468 / 128; }
+  .tabs.vertical-panel.questions .it-photo { aspect-ratio: 468 / 520; }
   .tabs.vertical-panel.questions .it-quote { gap: var(--space-m); }
   .tabs.vertical-panel.questions .it-quote blockquote { font-size: 24px; }
   .tabs.vertical-panel.questions .it-quote .it-cta { font-weight: var(--font-weight-medium); line-height: 1.3; }
@@ -1334,7 +1340,11 @@ main > .section.tabs-container:has(.tabs.vertical-panel.questions) {
     padding: var(--space-2xs) 0 0 10px;
   }
 
-  .tabs.vertical-panel.questions .it-media picture:first-child { grid-column: 1; grid-row: 2; }
-  .tabs.vertical-panel.questions .it-media picture:last-child:not(:first-child) { grid-column: 2; grid-row: 2 / span 2; }
+  .tabs.vertical-panel.questions .it-logo { grid-column: 1; grid-row: 2; }
+  .tabs.vertical-panel.questions .it-photo { grid-column: 2; grid-row: 2 / span 2; }
   .tabs.vertical-panel.questions .it-quote { grid-column: 1; grid-row: 3; }
+
+  /* no logo: the quote tile takes the whole left column beside a shorter photo */
+  .tabs.vertical-panel.questions .it-panel:not(.has-logo) .it-quote { grid-row: 2 / span 2; }
+  .tabs.vertical-panel.questions .it-panel:not(.has-logo) .it-photo { aspect-ratio: 450 / 352; }
 }
