@@ -415,3 +415,26 @@
   .comparison-table .cf-desc { font-size: 16px; }
   .comparison-table .cf-entry p { font-size: 16px; }
 }
+
+/* .simple sections on the IES comparison template: 60px top/bottom (80px from 1024px) whatever the
+   section background, with the title block starting flush at the top edge */
+main > .section.comparison-table-container:has(> .comparison-table-wrapper > .comparison-table.simple) {
+  padding-top: 60px;
+  padding-bottom: 60px;
+}
+
+main > .section.comparison-table-container:has(> .comparison-table-wrapper > .comparison-table.simple) > .default-content-wrapper {
+  padding-top: 0;
+}
+
+main > .section.comparison-table-container:has(> .comparison-table-wrapper > .comparison-table.simple) > .default-content-wrapper > :is(h2, h3):first-child {
+  margin-top: 0;
+}
+
+@media (width >= 1024px) {
+  main > .section.comparison-table-container:has(> .comparison-table-wrapper > .comparison-table.simple) {
+    padding-top: 80px;
+    padding-bottom: 80px;
+  }
+}
+
