@@ -297,7 +297,15 @@ function decorateSimple(block) {
   headCells.forEach((cell) => {
     const logo = document.createElement('div');
     logo.className = 'cs-logo';
-    logo.append(...cell.childNodes);
+    // header cell without an image = text column title
+    if (!cell.querySelector('picture, img')) {
+      logo.classList.add('cs-text');
+      const p = document.createElement('p');
+      p.textContent = cell.textContent.trim();
+      logo.append(p);
+    } else {
+      logo.append(...cell.childNodes);
+    }
     head.append(logo);
   });
 

@@ -1258,3 +1258,80 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
     line-height: var(--line-height-none);
   }
 }
+
+/* .minimal.divider in an IES section: eyebrow + logo | text rows (stacked below 768px, 3-up above) */
+main > .section.ies.cards-container:has(> .cards-wrapper > .cards.minimal.divider) {
+  padding-top: 3.75rem;
+  padding-bottom: 1.25rem;
+}
+
+main > .section.ies.cards-container:has(> .cards-wrapper > .cards.minimal.divider) > .default-content-wrapper {
+  margin-top: 0;
+  margin-bottom: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+main > .section.ies.cards-container:has(> .cards-wrapper > .cards.minimal.divider) > .default-content-wrapper > p:first-child {
+  margin: 0 0 2rem;
+  font-size: 12px;
+  line-height: 1.25;
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 1.56px;
+  text-transform: uppercase;
+  color: #0d0031;
+}
+
+.section.ies .cards.minimal.divider {
+  grid-template-columns: 1fr;
+  gap: 0;
+}
+
+.section.ies .cards.minimal.divider > div {
+  justify-content: center;
+  gap: var(--space-s);
+  padding: var(--space-xl) 0;
+  border-right: 0;
+  border-bottom: 1px solid rgb(0 0 0 / 20%);
+}
+
+.section.ies .cards.minimal.divider > div:first-child { padding-top: 0; }
+
+.section.ies .cards.minimal.divider .cards-card-image { flex: 0 0 auto; }
+
+.section.ies .cards.minimal.divider > div:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+@media (width >= 768px) {
+  .section.ies .cards.minimal.divider { grid-template-columns: repeat(3, 1fr); }
+
+  .section.ies .cards.minimal.divider > div {
+    padding: 0 var(--space-l);
+    border-bottom: 0;
+    border-right: 1px solid rgb(0 0 0 / 20%);
+  }
+
+  .section.ies .cards.minimal.divider > div:first-child { padding-left: 0; }
+
+  .section.ies .cards.minimal.divider > div:last-child {
+    padding-right: 0;
+    border-right: 0;
+  }
+}
+
+@media (width >= 1024px) {
+  main > .section.ies.cards-container:has(> .cards-wrapper > .cards.minimal.divider) {
+    padding-top: 5rem;
+    padding-bottom: 2.5rem;
+  }
+
+  main > .section.ies.cards-container:has(> .cards-wrapper > .cards.minimal.divider) > .default-content-wrapper > p:first-child {
+    margin-bottom: 2.5rem;
+    font-size: 14px;
+    letter-spacing: 1.82px;
+  }
+
+  .section.ies .cards.minimal.divider > div { padding: 0 30px; }
+}
