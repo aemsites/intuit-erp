@@ -1353,8 +1353,10 @@ main > .section.tabs-container:has(.tabs.vertical-panel.questions) {
   .tabs.vertical-panel.questions .it-photo { grid-column: 2; grid-row: 2 / span 2; }
   .tabs.vertical-panel.questions .it-quote { grid-column: 1; grid-row: 3; }
 
-  /* no logo: the quote takes the logo's row and runs alongside the photo */
-  .tabs.vertical-panel.questions .it-panel.no-logo .it-quote { grid-row: 2 / span 2; }
+  /* no logo: quote and photo share one row at the same height, quote text centred */
+  .tabs.vertical-panel.questions .it-panel.no-logo.is-active { grid-template-rows: auto auto; }
+  .tabs.vertical-panel.questions .it-panel.no-logo .it-quote { grid-row: 2; justify-content: center; }
+  .tabs.vertical-panel.questions .it-panel.no-logo .it-photo { grid-row: 2; aspect-ratio: 489 / 382; }
 }
 
 /* section-metadata spacing (spacer-* = margin, padding-* = padding) beats the
