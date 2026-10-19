@@ -149,9 +149,9 @@ main .section .assessment a.button.assessment-cta[aria-disabled="true"] {
   }
 }
 
-/* .ies: One Intuit retheme (Figma 6604-82024 / 6604-99964 / 6604-100008, tablet 6722-115860, mobile 6608-110500) */
+/* ies variant */
 
-/* the block owns its spacing (Figma: 40px band + 40px frame padding), so drop the section wrapper's cap/gutter */
+/* the block sets its own spacing, so remove the section wrapper max-width and padding */
 main .section .assessment-wrapper:has(> .assessment.ies) {
   max-width: none;
   margin-inline: 0;
@@ -163,7 +163,7 @@ main .section .assessment.ies {
   --ies-superblue: #236cff;
   --ies-pepper: #f0f4f6;
 
-  /* mobile frame shows no Superblue: the 40px band is Pepper, edge to edge */
+  /* on mobile the panel background fills the padding, so no section background shows */
   border-radius: 0;
   background-color: var(--ies-pepper);
   padding: 40px 0;

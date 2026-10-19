@@ -29,7 +29,7 @@ export default function decorate(block) {
   const rows = [...block.children];
   if (rows.length < 3) return;
 
-  // .ies: retheme starts unanswered, tracks progress, reveals the result once all are answered
+  // ies variant: no default answer, progress bar, result shown once every question is answered
   const ies = block.classList.contains('ies');
 
   const introCell = rows[0].firstElementChild;
