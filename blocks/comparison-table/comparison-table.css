@@ -431,9 +431,10 @@ main > .section.comparison-table-container:has(> .comparison-table-wrapper > .co
   margin-top: 0;
 }
 
-/* section title: 24px below 1024px, 34px on desktop (overrides the h3-size-* section helpers) */
+/* section title: 24px/500 below 1024px, 34px on desktop; no h3-size-*/h3-font-weight-* helpers needed */
 main > .section.comparison-table-container:has(> .comparison-table-wrapper > .comparison-table.simple) > .default-content-wrapper > h3 {
   font-size: 24px;
+  font-weight: var(--font-weight-medium);
   line-height: 1.2;
 }
 
