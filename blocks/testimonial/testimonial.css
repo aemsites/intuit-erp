@@ -1167,7 +1167,17 @@
   min-width: 0;
 }
 
-.testimonial.story .story-card:has(.story-disclaimer) { row-gap: 30px; }
+/* The carousel track stretches every card to the tallest one; without explicit
+   row sizing the grid shared that slack with the disclaimer row, floating the
+   legal line mid-card. Give the slack to the media row (desktop: the copy/media
+   row) so the disclaimer stays pinned 40px / 30px above the card foot. */
+.testimonial.story .story-card:has(.story-disclaimer) {
+  grid-template-rows: auto 1fr auto;
+  row-gap: 40px;
+}
+
+.testimonial.story .story-card:has(.story-disclaimer):not(:has(.story-media)) { grid-template-rows: 1fr auto; }
+.testimonial.story .story-card:has(.story-disclaimer) .story-media { align-self: end; }
 
 .testimonial.story .story-disclaimer {
   grid-column: 1 / -1;
@@ -1231,6 +1241,16 @@
 .testimonial.story .testimonial-arrow:focus-visible:not(:disabled) { background: #0d0031; }
 
 .testimonial.story .testimonial-arrow:disabled { background: #bfd4f4; cursor: default; }
+
+@media (width >= 1024px) {
+  .testimonial.story .story-card:has(.story-disclaimer) {
+    grid-template-rows: 1fr auto;
+    row-gap: 30px;
+    padding-bottom: 30px;
+  }
+
+  .testimonial.story .story-card:has(.story-disclaimer) .story-media { align-self: center; }
+}
 
 @media (width >= 768px) {
   .testimonial.story .testimonial-carousel-nav { gap: 40px; padding-top: 40px; }
