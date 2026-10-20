@@ -18,6 +18,8 @@
  *   photo left on a Superblue band, copy right. Same cells; additionally an
  *   italic-only line renders as the eyebrow, the first plain paragraph after
  *   the bold name is the role, and any further paragraphs are a footnote.
+ *   .card.feature.ies — IES retheme, same rows. An optional first row with a
+ *   single heading cell becomes the section title; 2+ cards render as a carousel.
  *
  * Variant .story (Figma ACQ-4698 "Desktop migration story") — one or more
  * rows, each a dark Blueberry card: copy left, media tile right. 2-3 cells:
@@ -65,6 +67,19 @@ function extractHeading(cell) {
   const h = document.createElement('h3');
   h.className = 'testimonial-heading';
   h.innerHTML = first.innerHTML;
+  return h;
+}
+
+// .ies: a leading one-cell heading row becomes the section title
+function takeHeadingRow(rows) {
+  const cells = rows[0] ? [...rows[0].children] : [];
+  if (cells.length !== 1 || pic(cells[0])) return null;
+  const src = cells[0].querySelector('h1, h2, h3, h4, h5, h6');
+  if (!src) return null;
+  rows.shift();
+  const h = document.createElement('h2');
+  h.className = 'testimonial-heading';
+  h.innerHTML = src.innerHTML;
   return h;
 }
 
@@ -722,12 +737,13 @@ export default function decorate(block) {
   });
   if (block.classList.contains('card')) {
     const feature = block.classList.contains('feature');
-    const figures = [...block.querySelectorAll(':scope > div')].map((row) => buildCard(row, { feature }));
-    if (block.classList.contains('carousel')) {
-      block.replaceChildren(buildCardCarousel(figures));
-    } else {
-      block.replaceChildren(...figures);
-    }
+    const ies = block.classList.contains('ies');
+    const rows = [...block.querySelectorAll(':scope > div')];
+    const heading = ies ? takeHeadingRow(rows) : null;
+    const figures = rows.map((row) => buildCard(row, { feature }));
+    const carousel = block.classList.contains('carousel') || (ies && figures.length > 1);
+    const body = carousel ? [buildCardCarousel(figures)] : figures;
+    block.replaceChildren(...(heading ? [heading] : []), ...body);
     track();
     return;
   }

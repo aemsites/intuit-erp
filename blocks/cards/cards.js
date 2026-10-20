@@ -12,6 +12,7 @@
  *               eyebrow paragraph doubles as a category label (blog rail
  *               "download" promos, e.g. fragments/right-rail)
  *   .ies        One Intuit icon tiles, 1-up / 2-up / 4-up by breakpoint
+ *   .ies-product  image + eyebrow + title + body, 1-up / 2-up by breakpoint
  * .carousel/.boxed combine with the .accent/.dark tone classes (section
  * background) independently — see cards.css.
  *
