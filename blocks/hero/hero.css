@@ -751,7 +751,7 @@ body.author-guide .hero .hero-copy .hero-lede {
 }
 
 /* pills: full width on mobile */
-.hero.ies.glow .hero-actions { gap: var(--space-m); }
+.hero.ies.glow .hero-actions { gap: var(--space-m); padding-bottom: 0; }
 
 .section.hero-container:has(.hero.ies.glow) :is(a, button).button {
   width: 100%;
