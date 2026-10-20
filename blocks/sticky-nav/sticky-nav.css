@@ -14,9 +14,9 @@ main > .section:has(.sticky-nav) > .default-content-wrapper > h2 { margin-top: 0
   margin-bottom: 60px;
 }
 
-/* 2.5rem + the comparison-table section's top padding = 100px / 120px bar-to-title */
+/* the comparison-table section's own top padding provides the bar-to-title gap */
 main > .section:has(.sticky-nav):has(+ .section.comparison-table-container) .sticky-nav {
-  margin-bottom: 2.5rem;
+  margin-bottom: 0;
 }
 
 .sticky-nav.is-fixed {
