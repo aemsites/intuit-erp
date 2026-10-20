@@ -373,8 +373,7 @@ function decorateFeatures(block) {
     const col = document.createElement('div');
     col.className = 'cf-col-title';
     col.append(...cell.childNodes);
-    // A 2nd authored image is the mobile variant: the 1st shows from 768px up,
-    // the 2nd below it. With a single image, it is used at every width.
+    // optional 2nd image = mobile variant
     const pics = [...col.querySelectorAll('picture')];
     if (pics.length > 1) {
       pics[0].classList.add('cf-pic-desktop');

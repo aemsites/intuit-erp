@@ -305,7 +305,6 @@
   max-width: min(100%, 130px);
 }
 
-/* optional 2nd header image = mobile variant (see decorateFeatures) */
 .comparison-table .cf-col-title .cf-pic-desktop { display: none; }
 .comparison-table .cf-col-title .cf-pic-mobile img { max-height: 44px; }
 
@@ -396,7 +395,7 @@
   background: #ec8b2f;
 }
 
-/* mobile (Figma 15095-65113): full-bleed square card, 140px label + 20px gaps, 40px-high logos */
+/* mobile (Figma 15095-65113) */
 @media (width < 768px) {
   .comparison-table-container:has(.comparison-table.features) .default-content-wrapper:first-of-type h2 {
     line-height: 1.2;
