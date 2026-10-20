@@ -811,10 +811,10 @@ body.author-guide .hero .hero-copy .hero-lede {
 
   .hero.ies.glow .hero-copy { max-width: 720px; }
   .hero.ies.glow .hero-copy .hero-eyebrow { letter-spacing: 1.82px; }
-  .hero.ies.glow .hero-copy h1 { margin-bottom: var(--space-s); }
+  .hero.ies.glow .hero-copy h1 { margin-bottom: var(--space-m); }
 
   .hero.ies.glow .hero-copy .hero-lede {
-    margin-bottom: var(--space-m);
+    margin-bottom: 36px;
     font-size: var(--body-font-size-m);
     line-height: 1.4;
   }
@@ -844,10 +844,8 @@ body.author-guide .hero .hero-copy .hero-lede {
   }
 
   .hero.ies.glow .hero-copy { max-width: none; }
-  .hero.ies.glow .hero-copy h1 { margin-bottom: var(--space-m); }
 
   .hero.ies.glow .hero-copy .hero-lede {
-    margin-bottom: 36px;
     font-size: 20px;
     line-height: var(--line-height-s);
   }
