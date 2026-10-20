@@ -115,8 +115,6 @@ body.sticky-nav-active .header .ies-secondary-nav {
 }
 
 @media (width >= 1024px) {
-  .sticky-nav { margin-bottom: 5rem; }
-
   main > .section:has(.sticky-nav) > .default-content-wrapper {
     padding-top: 40px;
     padding-bottom: 22px;
