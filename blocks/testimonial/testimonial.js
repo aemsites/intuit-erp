@@ -18,10 +18,8 @@
  *   photo left on a Superblue band, copy right. Same cells; additionally an
  *   italic-only line renders as the eyebrow, the first plain paragraph after
  *   the bold name is the role, and any further paragraphs are a footnote.
- *   .card.feature.ies (Figma "One Intuit Page Rethemed" testimonial) — same
- *   rows, retheme styling. An optional first row with a single cell holding
- *   only a heading becomes the section title (h2) above the cards; 2+ cards
- *   render as a carousel without needing the .carousel variant.
+ *   .card.feature.ies — IES retheme, same rows. An optional first row with a
+ *   single heading cell becomes the section title; 2+ cards render as a carousel.
  *
  * Variant .story (Figma ACQ-4698 "Desktop migration story") — one or more
  * rows, each a dark Blueberry card: copy left, media tile right. 2-3 cells:
@@ -72,8 +70,7 @@ function extractHeading(cell) {
   return h;
 }
 
-// .card.ies: a leading one-cell row holding a heading (no image) is the
-// section title, not a card. Removed from `rows` and returned as an h2.
+// .ies: a leading one-cell heading row becomes the section title
 function takeHeadingRow(rows) {
   const cells = rows[0] ? [...rows[0].children] : [];
   if (cells.length !== 1 || pic(cells[0])) return null;
@@ -744,7 +741,6 @@ export default function decorate(block) {
     const rows = [...block.querySelectorAll(':scope > div')];
     const heading = ies ? takeHeadingRow(rows) : null;
     const figures = rows.map((row) => buildCard(row, { feature }));
-    // .ies turns into a carousel on its own once there's more than one card
     const carousel = block.classList.contains('carousel') || (ies && figures.length > 1);
     const body = carousel ? [buildCardCarousel(figures)] : figures;
     block.replaceChildren(...(heading ? [heading] : []), ...body);

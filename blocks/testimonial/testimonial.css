@@ -960,30 +960,27 @@
   }
 }
 
-/* .card.feature.ies: retheme (Figma "One Intuit Page Rethemed"). Optional
-   heading row (takeHeadingRow) + auto carousel for 2+ cards. Centred copy
-   with a wide photo on tablet; desktop keeps the .feature photo-left grid. */
+/* .card.feature.ies: IES retheme; optional heading row, carousel for 2+ cards */
 .testimonial.card.feature.ies {
   --ies-muted: #95c2d2;
 }
 
-/* Figma: section 20px below on mobile (overrides .tight's 80px) */
+/* section spacing is owned by the variant */
 .section.testimonial-container:has(.testimonial.card.feature.ies) {
-  padding-bottom: var(--space-m);
+  padding-block: 60px;
 }
 
-/* heading margin doubles as the space above the card container */
 .testimonial.card.feature.ies .testimonial-heading {
   max-width: none;
   margin: 0 0 var(--space-m);
   font-size: 34px;
   font-weight: var(--font-weight-medium);
-  line-height: var(--line-height-xs);
+  line-height: 1.1;
   text-align: center;
   color: #0d0031;
 }
 
-/* attribution — mobile Body/04 12px / 150%; tablet 14px / 140%; desktop 16px / 140% */
+/* attribution */
 .testimonial.card.feature.ies .testimonial-card figcaption {
   font-size: var(--body-font-size-xxs);
   line-height: var(--line-height-l);
@@ -991,8 +988,8 @@
 
 .testimonial.card.feature.ies .testimonial-card .testimonial-name { font-weight: var(--font-weight-semibold); }
 
-/* 40px between photo and copy even without an eyebrow */
 .testimonial.card.feature.ies .testimonial-card > picture + blockquote { margin-top: var(--space-2xl); }
+.testimonial.card.feature.ies .testimonial-eyebrow { margin-bottom: var(--space-s); }
 
 .testimonial.card.feature.ies .testimonial-carousel-viewport { overflow: hidden; }
 
@@ -1010,25 +1007,25 @@
   .testimonial.card.feature.ies .testimonial-carousel-track { transition: none; }
 }
 
-/* pagination: centred dots below 1024px, dots + arrows bottom-right above */
+/* pagination */
 .testimonial.card.feature.ies .testimonial-carousel-nav {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-2xl);
-  padding-top: var(--space-xl);
+  padding-top: 30px;
 }
 
 .testimonial.card.feature.ies .testimonial-dots {
   display: flex;
   align-items: center;
-  gap: var(--space-l);
+  gap: var(--space-m);
 }
 
 .testimonial.card.feature.ies .testimonial-dot {
   position: relative;
-  width: 8px;
-  height: 8px;
+  width: 12px;
+  height: 12px;
   padding: 0;
   border: 0;
   border-radius: var(--radius-circle);
@@ -1036,7 +1033,7 @@
   cursor: pointer;
 }
 
-/* widen the tap target past the 8px dot */
+/* widen the tap target past the dot */
 .testimonial.card.feature.ies .testimonial-dot::after {
   content: "";
   position: absolute;
@@ -1053,10 +1050,8 @@
 }
 
 @media (width >= 768px) and (width < 1024px) {
-  /* Figma tablet: section 20px top/bottom, 10px outside the card, 10px gap */
-  .section.testimonial-container:has(.testimonial.card.feature.ies) { padding-block: var(--space-m); }
   .section.testimonial-container:has(.testimonial.card.feature.ies) > .testimonial-wrapper { padding-inline: 10px; }
-  .testimonial.card.feature.ies .testimonial-heading { margin-bottom: 10px; }
+  .testimonial.card.feature.ies .testimonial-heading { margin-bottom: var(--space-xl); }
 
   .testimonial.card.feature.ies .testimonial-card {
     padding: var(--space-m) var(--space-m) var(--space-2xl);
@@ -1067,19 +1062,19 @@
 
   .testimonial.card.feature.ies .testimonial-eyebrow,
   .testimonial.card.feature.ies .testimonial-card blockquote,
-  .testimonial.card.feature.ies .testimonial-card figcaption,
   .testimonial.card.feature.ies .testimonial-footnote {
-    margin-inline: var(--space-5xl);
+    margin-inline: 60px;
   }
 
-  /* Figma tablet Headline/03 at 110% */
   .testimonial.card.feature.ies .testimonial-card blockquote {
-    margin-bottom: var(--space-l);
+    margin-bottom: var(--space-m);
+    font-family: var(--heading-font-family);
     font-size: 34px;
     line-height: 1.1;
   }
 
   .testimonial.card.feature.ies .testimonial-card figcaption {
+    margin-inline: 0;
     justify-content: center;
     font-size: var(--body-font-size-xs);
     line-height: var(--line-height-m);
@@ -1087,7 +1082,7 @@
 
   .testimonial.card.feature.ies .testimonial-card .testimonial-name { font-weight: var(--font-weight-medium); }
 
-  .testimonial.card.feature.ies .testimonial-carousel-nav { padding-top: var(--space-4xl); }
+  .testimonial.card.feature.ies .testimonial-carousel-nav { padding-top: 62px; }
 }
 
 @media (width >= 1024px) {
@@ -1097,16 +1092,14 @@
     line-height: var(--line-height-none);
   }
 
+  .testimonial.card.feature.ies .testimonial-card blockquote { font-family: var(--heading-font-family); }
+
   .testimonial.card.feature.ies .testimonial-card figcaption {
     font-size: var(--body-font-size-m);
     line-height: var(--line-height-m);
   }
 
-  /* Figma desktop: section 0 top / 40px bottom; the 40px spacers above and
-     below come from section-metadata (spacer-top-l / spacer-bottom-l).
-     Card container 40px top/bottom (top = heading margin), 60px card → controls */
-  .section.testimonial-container:has(.testimonial.card.feature.ies) { padding-block: 0 var(--space-2xl); }
-  .testimonial.card.feature.ies { padding-bottom: var(--space-2xl); }
+  .section.testimonial-container:has(.testimonial.card.feature.ies) { padding-block: var(--space-5xl); }
 
   .testimonial.card.feature.ies .testimonial-carousel-nav {
     justify-content: flex-end;
