@@ -166,15 +166,15 @@ main .section .assessment.ies {
   /* on mobile the panel background fills the padding, so no section background shows */
   border-radius: 0;
   background-color: var(--ies-pepper);
-  padding: 60px 0;
+  padding: 60px 24px;
   color: var(--ies-ink);
 }
 
 main .section .assessment.ies .assessment-panel {
-  gap: 40px;
+  gap: 30px;
   border-radius: 0;
   background-color: var(--ies-pepper);
-  padding: 0 24px;
+  padding: 0;
 }
 
 main .section .assessment.ies .assessment-intro h2 {
@@ -231,7 +231,7 @@ main .section .assessment.ies .assessment-question {
   flex-direction: column;
   align-items: stretch;
   gap: 16px;
-  border-radius: 24px;
+  border-radius: 20px;
   background-color: #fff;
   padding: 20px;
 }
@@ -339,15 +339,10 @@ main .section .assessment.ies a.button.assessment-cta[aria-disabled="true"] {
     font-weight: 400;
   }
 
-  main .section .assessment.ies .assessment-questions {
-    gap: 20px;
-  }
-
   main .section .assessment.ies .assessment-question {
     flex-flow: row nowrap;
     align-items: center;
-    gap: 24px;
-    padding: 24px;
+    border-radius: 24px;
   }
 
   main .section .assessment.ies .assessment-question-text {
@@ -365,10 +360,10 @@ main .section .assessment.ies a.button.assessment-cta[aria-disabled="true"] {
   }
 
   main .section .assessment.ies .assessment-panel {
+    box-sizing: border-box;
     max-width: 1210px;
     margin-inline: auto;
     grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
-    gap: 48px;
     padding: 60px;
   }
 
