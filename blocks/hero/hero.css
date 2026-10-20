@@ -751,7 +751,7 @@ body.author-guide .hero .hero-copy .hero-lede {
 }
 
 /* pills: full width on mobile */
-.hero.ies.glow .hero-actions { gap: var(--space-m); }
+.hero.ies.glow .hero-actions { gap: var(--space-m); padding-bottom: 0; }
 
 .section.hero-container:has(.hero.ies.glow) :is(a, button).button {
   width: 100%;
@@ -811,10 +811,10 @@ body.author-guide .hero .hero-copy .hero-lede {
 
   .hero.ies.glow .hero-copy { max-width: 720px; }
   .hero.ies.glow .hero-copy .hero-eyebrow { letter-spacing: 1.82px; }
-  .hero.ies.glow .hero-copy h1 { margin-bottom: var(--space-s); }
+  .hero.ies.glow .hero-copy h1 { margin-bottom: var(--space-m); }
 
   .hero.ies.glow .hero-copy .hero-lede {
-    margin-bottom: var(--space-m);
+    margin-bottom: 36px;
     font-size: var(--body-font-size-m);
     line-height: 1.4;
   }
@@ -834,6 +834,8 @@ body.author-guide .hero .hero-copy .hero-lede {
 }
 
 @media (width >= 1024px) {
+  .section.hero-container:has(.hero.ies.glow) :is(a, button).button { font-size: 16px; }
+
   .hero.ies.glow .hero-grid {
     grid-template-columns: 1fr 1fr;
     gap: var(--space-5xl);

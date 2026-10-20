@@ -1492,7 +1492,7 @@ main > .section.tabs-container:has(.tabs.vertical-panel.questions) {
   }
 
   .tabs.vertical-panel.questions .it-tab:not([aria-expanded="true"]):hover { background: #f0f4f6; }
-  .tabs.vertical-panel.questions .it-logo { height: auto; aspect-ratio: 468 / 128; }
+  .tabs.vertical-panel.questions .it-logo { height: 120px; }
   .tabs.vertical-panel.questions .it-media .it-logo img { padding: var(--space-l) var(--space-5xl); }
   .tabs.vertical-panel.questions .it-photo { aspect-ratio: 468 / 520; }
   .tabs.vertical-panel.questions .it-quote { gap: var(--space-m); }
