@@ -77,7 +77,7 @@ body.sticky-nav-active .header .ies-secondary-nav {
   position: relative;
   display: block;
   padding: 0 0 18px;
-  font-size: 16px;
+  font-size: 14px;
   line-height: 1.4;
   color: #0d0031;
   text-decoration: none;
@@ -123,4 +123,6 @@ body.sticky-nav-active .header .ies-secondary-nav {
 
 @media (width >= 1024px) {
   .sticky-nav ul { overflow-x: visible; }
+
+  .sticky-nav a { font-size: 16px; }
 }

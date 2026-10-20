@@ -1257,7 +1257,7 @@ main > .section.tabs-container:has(.tabs.vertical-panel.questions) {
 .tabs.vertical-panel.questions .it-quote .it-cta {
   margin: 0;
   font-size: 16px;
-  font-weight: var(--font-weight-bold);
+  font-weight: var(--font-weight-medium);
   line-height: 1.4;
   color: inherit;
   text-decoration: underline;
@@ -1316,7 +1316,7 @@ main > .section.tabs-container:has(.tabs.vertical-panel.questions) {
   .tabs.vertical-panel.questions .it-photo { aspect-ratio: 468 / 520; }
   .tabs.vertical-panel.questions .it-quote { gap: var(--space-m); }
   .tabs.vertical-panel.questions .it-quote blockquote { font-size: 24px; }
-  .tabs.vertical-panel.questions .it-quote .it-cta { font-weight: var(--font-weight-medium); line-height: 1.3; }
+  .tabs.vertical-panel.questions .it-quote .it-cta { line-height: 1.3; }
 
   .tabs.vertical-panel.questions .it-panel { left: 225px; margin-left: var(--space-2xl); }
 

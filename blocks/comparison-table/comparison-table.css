@@ -161,7 +161,7 @@
 .comparison-table .cs-card {
   background: #fff;
   border: 1px solid var(--line);
-  border-radius: var(--radius-xl);
+  border-radius: 30px;
   overflow: hidden;
 }
 

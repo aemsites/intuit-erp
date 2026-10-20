@@ -307,6 +307,15 @@ main .section .assessment.ies a.button.assessment-cta {
   line-height: 1.4;
 }
 
+@media (width < 768px) {
+  main .section .assessment.ies a.button.assessment-cta {
+    flex: 1 1 100%;
+    width: 100%;
+    box-sizing: border-box;
+    text-align: center;
+  }
+}
+
 main .section .assessment.ies a.button.assessment-cta:hover,
 main .section .assessment.ies a.button.assessment-cta:focus-visible {
   border-color: #1b5be0;
@@ -329,10 +338,6 @@ main .section .assessment.ies a.button.assessment-cta[aria-disabled="true"] {
   main .section .assessment.ies .assessment-panel {
     border-radius: 40px;
     padding: 40px;
-  }
-
-  main .section .assessment.ies .assessment-intro h2 {
-    font-size: 36px;
   }
 
   main .section .assessment.ies .assessment-progress-label {
