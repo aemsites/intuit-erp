@@ -960,6 +960,189 @@
   }
 }
 
+/* .card.feature.ies: retheme (Figma "One Intuit Page Rethemed"). Optional
+   heading row (takeHeadingRow) + auto carousel for 2+ cards. Centred copy
+   with a wide photo on tablet; desktop keeps the .feature photo-left grid. */
+.testimonial.card.feature.ies {
+  --ies-muted: #95c2d2;
+}
+
+/* Figma: section 20px below on mobile (overrides .tight's 80px) */
+.section.testimonial-container:has(.testimonial.card.feature.ies) {
+  padding-bottom: var(--space-m);
+}
+
+/* heading margin doubles as the space above the card container */
+.testimonial.card.feature.ies .testimonial-heading {
+  max-width: none;
+  margin: 0 0 var(--space-m);
+  font-size: 34px;
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-xs);
+  text-align: center;
+  color: #0d0031;
+}
+
+/* attribution — mobile Body/04 12px / 150%; tablet 14px / 140%; desktop 16px / 140% */
+.testimonial.card.feature.ies .testimonial-card figcaption {
+  font-size: var(--body-font-size-xxs);
+  line-height: var(--line-height-l);
+}
+
+.testimonial.card.feature.ies .testimonial-card .testimonial-name { font-weight: var(--font-weight-semibold); }
+
+/* 40px between photo and copy even without an eyebrow */
+.testimonial.card.feature.ies .testimonial-card > picture + blockquote { margin-top: var(--space-2xl); }
+
+.testimonial.card.feature.ies .testimonial-carousel-viewport { overflow: hidden; }
+
+.testimonial.card.feature.ies .testimonial-carousel-track {
+  display: flex;
+  transition: transform 0.4s cubic-bezier(0.35, 0, 0.25, 1);
+}
+
+.testimonial.card.feature.ies .testimonial-carousel-track .testimonial-card {
+  flex: 0 0 100%;
+  min-width: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .testimonial.card.feature.ies .testimonial-carousel-track { transition: none; }
+}
+
+/* pagination: centred dots below 1024px, dots + arrows bottom-right above */
+.testimonial.card.feature.ies .testimonial-carousel-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2xl);
+  padding-top: var(--space-xl);
+}
+
+.testimonial.card.feature.ies .testimonial-dots {
+  display: flex;
+  align-items: center;
+  gap: var(--space-l);
+}
+
+.testimonial.card.feature.ies .testimonial-dot {
+  position: relative;
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-circle);
+  background: var(--ies-muted);
+  cursor: pointer;
+}
+
+/* widen the tap target past the 8px dot */
+.testimonial.card.feature.ies .testimonial-dot::after {
+  content: "";
+  position: absolute;
+  inset: -10px;
+}
+
+.testimonial.card.feature.ies .testimonial-dot.is-active { background: var(--feature-blue); }
+.testimonial.card.feature.ies .testimonial-arrow { display: none; }
+
+.testimonial.card.feature.ies .testimonial-dot:focus-visible,
+.testimonial.card.feature.ies .testimonial-arrow:focus-visible {
+  outline: 2px solid #0d0031;
+  outline-offset: 3px;
+}
+
+@media (width >= 768px) and (width < 1024px) {
+  /* Figma tablet: section 20px top/bottom, 10px outside the card, 10px gap */
+  .section.testimonial-container:has(.testimonial.card.feature.ies) { padding-block: var(--space-m); }
+  .section.testimonial-container:has(.testimonial.card.feature.ies) > .testimonial-wrapper { padding-inline: 10px; }
+  .testimonial.card.feature.ies .testimonial-heading { margin-bottom: 10px; }
+
+  .testimonial.card.feature.ies .testimonial-card {
+    padding: var(--space-m) var(--space-m) var(--space-2xl);
+    text-align: center;
+  }
+
+  .testimonial.card.feature.ies .testimonial-card > picture { aspect-ratio: 708 / 312; }
+
+  .testimonial.card.feature.ies .testimonial-eyebrow,
+  .testimonial.card.feature.ies .testimonial-card blockquote,
+  .testimonial.card.feature.ies .testimonial-card figcaption,
+  .testimonial.card.feature.ies .testimonial-footnote {
+    margin-inline: var(--space-5xl);
+  }
+
+  /* Figma tablet Headline/03 at 110% */
+  .testimonial.card.feature.ies .testimonial-card blockquote {
+    margin-bottom: var(--space-l);
+    font-size: 34px;
+    line-height: 1.1;
+  }
+
+  .testimonial.card.feature.ies .testimonial-card figcaption {
+    justify-content: center;
+    font-size: var(--body-font-size-xs);
+    line-height: var(--line-height-m);
+  }
+
+  .testimonial.card.feature.ies .testimonial-card .testimonial-name { font-weight: var(--font-weight-medium); }
+
+  .testimonial.card.feature.ies .testimonial-carousel-nav { padding-top: var(--space-4xl); }
+}
+
+@media (width >= 1024px) {
+  .testimonial.card.feature.ies .testimonial-heading {
+    margin-bottom: var(--space-2xl);
+    font-size: 48px;
+    line-height: var(--line-height-none);
+  }
+
+  .testimonial.card.feature.ies .testimonial-card figcaption {
+    font-size: var(--body-font-size-m);
+    line-height: var(--line-height-m);
+  }
+
+  /* Figma desktop: section 0 top / 40px bottom; the 40px spacers above and
+     below come from section-metadata (spacer-top-l / spacer-bottom-l).
+     Card container 40px top/bottom (top = heading margin), 60px card → controls */
+  .section.testimonial-container:has(.testimonial.card.feature.ies) { padding-block: 0 var(--space-2xl); }
+  .testimonial.card.feature.ies { padding-bottom: var(--space-2xl); }
+
+  .testimonial.card.feature.ies .testimonial-carousel-nav {
+    justify-content: flex-end;
+    padding-top: 60px;
+  }
+
+  .testimonial.card.feature.ies .testimonial-dots { gap: 22px; }
+  .testimonial.card.feature.ies .testimonial-dot { width: 10px; height: 10px; }
+
+  .testimonial.card.feature.ies .testimonial-arrow {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-circle);
+    background: var(--feature-blue);
+    color: #fff;
+    cursor: pointer;
+  }
+
+  .testimonial.card.feature.ies .testimonial-arrow::before {
+    content: "";
+    width: 18px;
+    height: 18px;
+    background: currentcolor;
+    mask: var(--tc-chevron) center / 18px no-repeat;
+    -webkit-mask: var(--tc-chevron) center / 18px no-repeat;
+  }
+
+  .testimonial.card.feature.ies .testimonial-arrow:hover:not(:disabled) { background: #0d0031; }
+  .testimonial.card.feature.ies .testimonial-arrow:disabled { background: var(--ies-muted); cursor: default; }
+}
+
 /* .story: dark Blueberry card, copy left, Superblue media tile right; stacks below 1024px */
 .section.testimonial-container:has(.testimonial.story) {
   background: var(--background-color);

@@ -18,6 +18,10 @@
  *   photo left on a Superblue band, copy right. Same cells; additionally an
  *   italic-only line renders as the eyebrow, the first plain paragraph after
  *   the bold name is the role, and any further paragraphs are a footnote.
+ *   .card.feature.ies (Figma "One Intuit Page Rethemed" testimonial) — same
+ *   rows, retheme styling. An optional first row with a single cell holding
+ *   only a heading becomes the section title (h2) above the cards; 2+ cards
+ *   render as a carousel without needing the .carousel variant.
  *
  * Variant .story (Figma ACQ-4698 "Desktop migration story") — one or more
  * rows, each a dark Blueberry card: copy left, media tile right. 2-3 cells:
@@ -65,6 +69,20 @@ function extractHeading(cell) {
   const h = document.createElement('h3');
   h.className = 'testimonial-heading';
   h.innerHTML = first.innerHTML;
+  return h;
+}
+
+// .card.ies: a leading one-cell row holding a heading (no image) is the
+// section title, not a card. Removed from `rows` and returned as an h2.
+function takeHeadingRow(rows) {
+  const cells = rows[0] ? [...rows[0].children] : [];
+  if (cells.length !== 1 || pic(cells[0])) return null;
+  const src = cells[0].querySelector('h1, h2, h3, h4, h5, h6');
+  if (!src) return null;
+  rows.shift();
+  const h = document.createElement('h2');
+  h.className = 'testimonial-heading';
+  h.innerHTML = src.innerHTML;
   return h;
 }
 
@@ -722,12 +740,14 @@ export default function decorate(block) {
   });
   if (block.classList.contains('card')) {
     const feature = block.classList.contains('feature');
-    const figures = [...block.querySelectorAll(':scope > div')].map((row) => buildCard(row, { feature }));
-    if (block.classList.contains('carousel')) {
-      block.replaceChildren(buildCardCarousel(figures));
-    } else {
-      block.replaceChildren(...figures);
-    }
+    const ies = block.classList.contains('ies');
+    const rows = [...block.querySelectorAll(':scope > div')];
+    const heading = ies ? takeHeadingRow(rows) : null;
+    const figures = rows.map((row) => buildCard(row, { feature }));
+    // .ies turns into a carousel on its own once there's more than one card
+    const carousel = block.classList.contains('carousel') || (ies && figures.length > 1);
+    const body = carousel ? [buildCardCarousel(figures)] : figures;
+    block.replaceChildren(...(heading ? [heading] : []), ...body);
     track();
     return;
   }
