@@ -730,10 +730,38 @@ main > .section:where(.tabs-container:has(.tabs.ies)) { margin: 0; padding: var(
 
 .tabs.vertical.ies .vt-acc.is-stacked ~ .vt-media-col { display: none; }
 
+@media (width < 1024px) {
+  .section.tabs-container:has(.tabs.vertical.ies) > .default-content-wrapper,
+  .tabs.vertical.ies .tabs-header { margin-bottom: var(--space-m); }
+
+  .section.tabs-container:has(.tabs.vertical.ies) > .default-content-wrapper > h6,
+  .tabs.vertical.ies .tabs-eyebrow {
+    margin-bottom: 8px;
+    line-height: 1.25;
+    letter-spacing: 1.56px;
+  }
+
+  .section.tabs-container:has(.tabs.vertical.ies) > .default-content-wrapper > h2,
+  .tabs.vertical.ies .tabs-title { line-height: 1.2; }
+
+  .section.tabs-container:has(.tabs.vertical.ies) > .default-content-wrapper > p,
+  .tabs.vertical.ies .tabs-subtitle { line-height: 1.4; }
+}
+
 @media (768px <= width < 1024px) {
   .section.tabs-container:has(.tabs.vertical.ies) > div { max-width: 560px; }
 
-  .tabs.vertical.ies .tabs-header { margin-bottom: 60px; }
+  .section.tabs-container:has(.tabs.vertical.ies) > .default-content-wrapper > h6,
+  .tabs.vertical.ies .tabs-eyebrow {
+    line-height: 1.1;
+    letter-spacing: 0;
+  }
+
+  .section.tabs-container:has(.tabs.vertical.ies) > .default-content-wrapper > p,
+  .tabs.vertical.ies .tabs-subtitle {
+    padding-inline: 60px;
+    line-height: 1.1;
+  }
 
   .tabs.vertical.ies { display: block; }
 }
