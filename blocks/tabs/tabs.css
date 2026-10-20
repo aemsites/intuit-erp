@@ -671,7 +671,7 @@ main > .section:where(.tabs-container:has(.tabs.ies)) { margin: 0; padding: var(
 .section.tabs-container:has(.tabs.vertical.ies) > .default-content-wrapper > h2,
 .tabs.vertical.ies .tabs-title {
   margin-bottom: var(--space-s);
-  font-size: 32px;
+  font-size: 34px;
   font-weight: var(--font-weight-medium);
   line-height: 1.25;
   color: var(--heading);
@@ -741,10 +741,20 @@ main > .section:where(.tabs-container:has(.tabs.ies)) { margin: 0; padding: var(
 @media (width >= 1024px) {
   main > .section:where(.tabs-container:has(.tabs.ies)) { padding: var(--space-2xl) 0; }
 
+  .section.tabs-container:has(.tabs.vertical.ies) > .default-content-wrapper > h6,
+  .tabs.vertical.ies .tabs-eyebrow {
+    font-size: 14px;
+  }
+
   .section.tabs-container:has(.tabs.vertical.ies) > .default-content-wrapper > h2,
   .tabs.vertical.ies .tabs-title {
-    font-size: 40px;
+    font-size: 48px;
     line-height: 1.2;
+  }
+
+  .section.tabs-container:has(.tabs.vertical.ies) > .default-content-wrapper > p,
+  .tabs.vertical.ies .tabs-subtitle {
+    font-size: 20px;
   }
 
   .tabs.vertical.ies {
@@ -759,9 +769,11 @@ main > .section:where(.tabs-container:has(.tabs.ies)) { margin: 0; padding: var(
     line-height: 1.33;
   }
 
+  .tabs.vertical.ies .vt-tab-label { font-size: 28px; }
+
   .tabs.vertical.ies .vt-body {
     margin: 0;
-    font-size: 14px;
+    font-size: 16px;
     line-height: 20px;
   }
 
