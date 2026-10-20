@@ -1265,6 +1265,11 @@ main > .section.ies.cards-container:has(> .cards-wrapper > .cards.minimal.divide
   padding-bottom: 1.25rem;
 }
 
+main > .section.ies.cards-container:has(> .cards-wrapper > .cards.minimal.divider) > div,
+main > .section.ies.cards-container:has(> .cards-wrapper > .cards.minimal.divider) + .section > .default-content-wrapper {
+  max-width: 1130px;
+}
+
 main > .section.ies.cards-container:has(> .cards-wrapper > .cards.minimal.divider) > .default-content-wrapper {
   margin-top: 0;
   margin-bottom: 0;
