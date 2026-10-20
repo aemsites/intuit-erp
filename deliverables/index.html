@@ -125,7 +125,7 @@
 </div>
 
 <h2>Configuration — edit in DA</h2>
-<p>Brand voice, personas and suggestion chips are DA documents and sheets; only config.json (plus cta-template.json in pipeline mode) lives in git. Edit, preview, then re-sync the tenant.</p>
+<p>Brand voice, personas and suggestion chips are DA documents and sheets; the config is a DA sheet too — nothing is stored in git. Edit, preview, then re-sync the tenant.</p>
 <div class="links">
   <a href="https://da.live/edit#/aemsites/intuit-erp/of1/brand-voice"><span class="badge badge--orange">DA doc</span> Brand voice</a>
   <a href="https://da.live/sheet#/aemsites/intuit-erp/of1/config/personas"><span class="badge badge--orange">DA sheet</span> Personas</a>
@@ -133,7 +133,7 @@
   <a href="https://da.live/edit#/aemsites/intuit-erp/of1"><span class="badge badge--orange">DA doc</span> OF1 page (title / subtitle / placeholder)</a>
   <a href="https://da.live/#/aemsites/intuit-erp/templates"><span class="badge badge--orange">DA folder</span> Templates</a>
   <a href="https://da.live/#/aemsites/intuit-erp/of1/knowledge"><span class="badge badge--orange">DA folder</span> Knowledge pages</a>
-  <a href="https://of1--intuit-erp--aemsites.aem.page/of1/config/config.json"><span class="badge badge--blue">Git</span> config.json</a>
+  <a href="https://da.live/sheet#/aemsites/intuit-erp/of1/config/config"><span class="badge badge--orange">DA sheet</span> Config sheet</a>
 </div>
 
 <h2>What worked</h2>
@@ -151,11 +151,11 @@
 <tr style="border-bottom:1px solid var(--border);"><td style="padding:6px 8px;">of1-check-dependencies</td><td style="color:var(--accent);">done</td><td style="color:var(--dim);">deps OK; repo aemsites/intuit-erp branch of1; domain main--intuit-erp--aemsites.aem.page; DA list 200</td></tr>
 <tr style="border-bottom:1px solid var(--border);"><td style="padding:6px 8px;">of1-extract-brand-voice</td><td style="color:var(--accent);">done</td><td style="color:var(--dim);">Brand voice written to DA /of1/brand-voice: professional, confident, direct, approachable, outcome-driven. 14 words we use, 12 words we avoid.</td></tr>
 <tr style="border-bottom:1px solid var(--border);"><td style="padding:6px 8px;">of1-extract-content</td><td style="color:var(--accent);">done</td><td style="color:var(--dim);">Content: 18 knowledge pages published to DA under of1/knowledge/ (0 images rehosted - preview CDN returned 401). 5 personas written to DA sheet /of1/config/personas.</td></tr>
-<tr style="border-bottom:1px solid var(--border);"><td style="padding:6px 8px;">of1-publish</td><td style="color:var(--orange);">failed</td><td style="color:var(--dim);">Check 4 failed: browser GET /of1 returned HTTP 401 (site token); header/footer/of1 block/title not rendered, chips 0. Checks 1-3,5-7 passed.</td></tr>
+<tr style="border-bottom:1px solid var(--border);"><td style="padding:6px 8px;">of1-publish</td><td style="color:var(--orange);">failed</td><td style="color:var(--dim);">Check 1 failed: of1/config/config.json and of1/config/cta-template.json tracked in git (config must live in DA); run of1-migrate / of1-check-dependencies step 3b, then re-run of1-publish</td></tr>
 <tr style="border-bottom:1px solid var(--border);"><td style="padding:6px 8px;">of1-style-generative-block</td><td style="color:var(--dim);">review</td><td style="color:var(--dim);">OF1 page is live with brand-aligned block styling. DA content PUT+previewed (of1.plain.html 200 with engine row). Block JS/CSS deployed (200). Browser preview returns 401 (DA auth required — expected for DA-sourced sites; content verified via curl with auth header). Open it in an authenticated browser, try the search chips, and review the design.</td></tr>
 </table>
 <div style="font-size:12px;margin-bottom:12px;">
-  <div>Sync: <span style="color:var(--accent);">ok: true</span> &bull; synced: config, brand-voice, suggestions, cta-template, templates, content &bull; content indexed: 259</div>
+  <div>Sync (preview): <span style="color:var(--accent);">ok: true</span> &bull; synced: config, brand-voice, suggestions, cta-template, templates, content &bull; content indexed: 259</div>
 </div>
 <div style="font-size:12px;margin-bottom:16px;">
   <div>Tenant ready: <span style="color:var(--accent);">true</span></div>
