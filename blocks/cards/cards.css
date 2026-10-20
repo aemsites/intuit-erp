@@ -1351,7 +1351,7 @@ main > .section.cards-container:has(.cards.ies-product) {
   display: flex;
   flex-direction: column;
   gap: var(--space-xl);
-  padding-block: 60px;
+  padding-block: var(--space-m);
   background: #fff;
 }
 
@@ -1489,7 +1489,7 @@ main > .section.cards-container:has(.cards.ies-product) > .default-content-wrapp
 
 @media (width >= 1024px) {
   main > .section.cards-container:has(.cards.ies-product) {
-    padding-block: var(--space-5xl);
+    padding-block: var(--space-2xl);
   }
 
   main > .section.cards-container:has(.cards.ies-product) > .default-content-wrapper > p:first-child:has(+ h2) {

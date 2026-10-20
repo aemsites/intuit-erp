@@ -967,7 +967,7 @@
 
 /* section spacing is owned by the variant */
 .section.testimonial-container:has(.testimonial.card.feature.ies) {
-  padding-block: 60px;
+  padding-block: var(--space-m);
 }
 
 .testimonial.card.feature.ies .testimonial-heading {
@@ -1099,7 +1099,7 @@
     line-height: var(--line-height-m);
   }
 
-  .section.testimonial-container:has(.testimonial.card.feature.ies) { padding-block: var(--space-5xl); }
+  .section.testimonial-container:has(.testimonial.card.feature.ies) { padding-block: var(--space-2xl); }
 
   .testimonial.card.feature.ies .testimonial-carousel-nav {
     justify-content: flex-end;
