@@ -221,3 +221,43 @@
   .stat-band.glance .glance-list { padding-left: var(--space-l); }
   .stat-band.glance .glance-list li { font-size: 18px; line-height: var(--line-height-m); }
 }
+
+/* --- .stat-band.ies: static grid of light-blue cards, 1/2/3 columns --- */
+.section.stat-band-container:has(.stat-band.ies) { padding: 60px 0; }
+.stat-band-container:has(.stat-band.ies) > .default-content-wrapper { padding-top: 0; padding-bottom: 0; }
+
+.stat-band-container:has(.stat-band.ies) .default-content-wrapper h2 {
+  font-size: 34px; line-height: var(--line-height-xs); font-weight: var(--font-weight-medium); color: var(--heading);
+  margin: 0 0 var(--space-xl);
+}
+
+.stat-band.ies .stats-grid { display: grid; grid-template-columns: 1fr; gap: var(--space-m); }
+.stat-band.ies .stat { background: #d6e7f7; border-radius: var(--space-2xl); padding: 30px; gap: 0; }
+
+.stat-band.ies .stat-eyebrow {
+  font-size: 12px; line-height: var(--line-height-s); font-weight: var(--font-weight-medium); letter-spacing: 1.2px;
+  text-transform: uppercase; color: var(--heading); margin: 0 0 30px;
+}
+
+.stat-band.ies .stat-num {
+  font-size: 48px; line-height: var(--line-height-xs); font-weight: var(--font-weight-normal); color: var(--info);
+  margin: 0 0 var(--space-2xs);
+}
+
+.stat-band.ies .stat-desc { font-size: 16px; line-height: var(--line-height-l); font-weight: var(--font-weight-normal); color: var(--heading); }
+.stat-band.ies .stat-foot { margin-top: 30px; }
+.stat-band.ies .stat-co { font-size: 14px; line-height: var(--line-height-l); font-weight: var(--font-weight-medium); color: #000; }
+
+@media (width >= 768px) {
+  .stat-band-container:has(.stat-band.ies) .default-content-wrapper h2 { margin-bottom: var(--space-2xl); }
+  .stat-band.ies .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .stat-band.ies .stat { padding: var(--space-2xl); }
+  .stat-band.ies .stat-eyebrow { font-size: 14px; margin-bottom: var(--space-m); }
+  .stat-band.ies .stat-foot { margin-top: var(--space-m); }
+}
+
+@media (width >= 1024px) {
+  .section.stat-band-container:has(.stat-band.ies) { padding: var(--space-5xl) 0; }
+  .stat-band-container:has(.stat-band.ies) .default-content-wrapper h2 { font-size: 48px; }
+  .stat-band.ies .stats-grid { grid-template-columns: repeat(3, 1fr); }
+}

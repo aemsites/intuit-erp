@@ -409,6 +409,8 @@ function renderPillTabs(block, items) {
 /* ---- .vertical: disclosure accordion, shared media column ----------------- */
 
 const VERTICAL_STACKED_QUERY = `(width < ${BP_TABLET}px)`;
+// .vertical.ies keeps the stacked list through tablet, accordion from desktop up
+const IES_STACKED_QUERY = `(width < ${BP_DESKTOP}px)`;
 
 function renderVerticalAccordion(block, items) {
   const acc = document.createElement('div');
@@ -484,7 +486,7 @@ function renderVerticalAccordion(block, items) {
     medias.forEach((m, i) => m.classList.toggle('is-active', i === index));
   };
 
-  const mq = window.matchMedia(VERTICAL_STACKED_QUERY);
+  const mq = window.matchMedia(block.classList.contains('ies') ? IES_STACKED_QUERY : VERTICAL_STACKED_QUERY);
 
   const applyMode = () => {
     const stacked = mq.matches;
@@ -705,10 +707,41 @@ function renderVerticalPanel(block, items) {
   }
 }
 
+// .ies: an optional first row with a single cell holding a heading becomes the
+// block header — copy before the heading is the eyebrow, copy after it the subtitle.
+// A leading h6 followed by another heading is treated as the eyebrow.
+function extractIesHeader(block) {
+  const row = block.firstElementChild;
+  if (!row || row.children.length !== 1) return null;
+  const cell = row.firstElementChild;
+  flattenCell(cell);
+  const nodes = [...cell.children].filter((el) => el.textContent.trim());
+  const headings = nodes.filter((el) => /^H[1-6]$/.test(el.tagName));
+  const title = headings.find((el) => el.tagName !== 'H6') || headings[0];
+  if (!title) return null;
+
+  const titleIndex = nodes.indexOf(title);
+  const header = document.createElement('div');
+  header.className = 'tabs-header';
+  nodes.forEach((el, i) => {
+    if (i < titleIndex) el.classList.add('tabs-eyebrow');
+    else if (i === titleIndex) el.classList.add('tabs-title');
+    else el.classList.add('tabs-subtitle');
+    header.append(el);
+  });
+  row.remove();
+  return header;
+}
+
 export default function decorate(block) {
+  const ies = block.classList.contains('ies');
+  // `ies` is authored on its own; it builds on the vertical accordion without the glow
+  if (ies) block.classList.add('vertical', 'no-gradient');
+  const header = ies ? extractIesHeader(block) : null;
   const items = parseItems(block);
   if (block.classList.contains('pill')) renderPillTabs(block, items);
   else if (block.classList.contains('vertical')) renderVerticalAccordion(block, items);
   else if (block.classList.contains('vertical-panel')) renderVerticalPanel(block, items);
   else renderHorizontalTabs(block, items);
+  if (header) block.prepend(header);
 }

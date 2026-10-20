@@ -15,6 +15,8 @@
  * .stat-band.light: the same static grid on a white band, stats in super-blue
  * .stat-band.simple: number/description — the same static grid as .dark, but a
  *   single bordered white box on the page background, columns split by dividers.
+ * .stat-band.ies: the same static grid as .dark, with the segment shown as an
+ *   eyebrow above the number.
  * .stat-band.plain (research guide stat trios): number/description —
  *   the same static grid as .dark, but light bordered boxes on the page
  *   background instead of a navy band.
@@ -274,7 +276,8 @@ export default function decorate(block) {
     return;
   }
 
-  const staticGrid = ['dark', 'light', 'simple'].some((v) => block.classList.contains(v));
+  const ies = block.classList.contains('ies');
+  const staticGrid = ies || ['dark', 'light', 'simple'].some((v) => block.classList.contains(v));
   const track = document.createElement('div');
   track.className = staticGrid ? 'stats-grid' : 'stats-track';
 
@@ -287,6 +290,12 @@ export default function decorate(block) {
 
     const stat = document.createElement('div');
     stat.className = 'stat';
+    if (ies && segmentText) {
+      const eyebrow = document.createElement('p');
+      eyebrow.className = 'stat-eyebrow';
+      eyebrow.textContent = segmentText;
+      stat.append(eyebrow);
+    }
     // number+desc and company+segment are grouped so the card's flex gap falls
     // between the two blocks, as upstream (.os-card-header / .os-card-footer)
     const head = document.createElement('div');
@@ -311,7 +320,7 @@ export default function decorate(block) {
       co.textContent = companyText;
       footer.append(co);
     }
-    if (segmentText) {
+    if (segmentText && !ies) {
       const seg = document.createElement('p');
       seg.className = 'stat-seg';
       seg.textContent = segmentText;
