@@ -1030,6 +1030,10 @@ main .fragment-wrapper .section.contained.ies.colored-background {
       font-size: 40px;
       line-height: 1.2;
     }
+
+    > div.default-content-wrapper a.button {
+      font-size: 16px;
+    }
   }
 }
 
