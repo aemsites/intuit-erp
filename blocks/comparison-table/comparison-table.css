@@ -305,6 +305,10 @@
   max-width: min(100%, 130px);
 }
 
+/* optional 2nd header image = mobile variant (see decorateFeatures) */
+.comparison-table .cf-col-title .cf-pic-desktop { display: none; }
+.comparison-table .cf-col-title .cf-pic-mobile img { max-height: 44px; }
+
 .comparison-table .cf-group {
   margin: var(--space-m) 0 var(--space-2xs);
   font-size: 20px;
@@ -404,6 +408,8 @@
 
   .comparison-table .cf-head { padding: 0 60px; }
   .comparison-table .cf-col-title { min-height: 44px; }
+  .comparison-table .cf-col-title .cf-pic-desktop { display: block; }
+  .comparison-table .cf-col-title .cf-pic-mobile { display: none; }
   .comparison-table .cf-card { padding: 40px 60px; }
 }
 

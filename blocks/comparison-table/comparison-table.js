@@ -350,7 +350,8 @@ function decorateSimple(block) {
 /**
  * `.features` variant — logos above a white card; rows are
  * [label (+ description after a <br> or in a 2nd <p>), value, value…].
- * Row 1 = column headers (a leading empty label cell is optional); a
+ * Row 1 = column headers (a leading empty label cell is optional); a header
+ * cell may hold a 2nd image, used instead of the 1st below 768px; a
  * single-cell row starts a new card with that text as its heading.
  * Values: check/yes → check, dash/no/empty → dash, partial → dot, else text.
  * @param {Element} block
@@ -372,6 +373,14 @@ function decorateFeatures(block) {
     const col = document.createElement('div');
     col.className = 'cf-col-title';
     col.append(...cell.childNodes);
+    // A 2nd authored image is the mobile variant: the 1st shows from 768px up,
+    // the 2nd below it. With a single image, it is used at every width.
+    const pics = [...col.querySelectorAll('picture')];
+    if (pics.length > 1) {
+      pics[0].classList.add('cf-pic-desktop');
+      pics[1].classList.add('cf-pic-mobile');
+      pics.slice(2).forEach((p) => p.remove());
+    }
     head.append(col);
   });
 
