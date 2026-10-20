@@ -305,6 +305,9 @@
   max-width: min(100%, 130px);
 }
 
+.comparison-table .cf-col-title .cf-pic-desktop { display: none; }
+.comparison-table .cf-col-title .cf-pic-mobile img { max-height: 44px; }
+
 .comparison-table .cf-group {
   margin: var(--space-m) 0 var(--space-2xs);
   font-size: 20px;
@@ -392,6 +395,30 @@
   background: #ec8b2f;
 }
 
+/* mobile (Figma 15095-65113) */
+@media (width < 768px) {
+  .comparison-table-container:has(.comparison-table.features) .default-content-wrapper:first-of-type h2 {
+    line-height: 1.2;
+  }
+
+  .comparison-table .cmp-features { margin-inline: -20px; }
+
+  .comparison-table .cf-head,
+  .comparison-table .cf-row {
+    grid-template-columns: 140px repeat(var(--cf-cols, 2), minmax(0, 1fr));
+    gap: 20px;
+  }
+
+  .comparison-table .cf-head { padding: 0 21px; }
+  .comparison-table .cf-card { border-radius: 0; }
+
+  .comparison-table .cf-col-title .cf-pic-mobile img {
+    height: 40px;
+    max-height: none;
+    max-width: 100%;
+  }
+}
+
 /* tablet (Figma 15095-56686) */
 @media (width >= 768px) {
   .comparison-table .cmp-features { width: min(100%, calc(100vw - 120px)); }
@@ -404,6 +431,8 @@
 
   .comparison-table .cf-head { padding: 0 60px; }
   .comparison-table .cf-col-title { min-height: 44px; }
+  .comparison-table .cf-col-title .cf-pic-desktop { display: block; }
+  .comparison-table .cf-col-title .cf-pic-mobile { display: none; }
   .comparison-table .cf-card { padding: 40px 60px; }
 }
 
