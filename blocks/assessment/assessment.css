@@ -307,7 +307,6 @@ main .section .assessment.ies a.button.assessment-cta {
   line-height: 1.4;
 }
 
-/* mobile: the CTA wraps under the message and spans the panel, label centred */
 @media (width < 768px) {
   main .section .assessment.ies a.button.assessment-cta {
     flex: 1 1 100%;
