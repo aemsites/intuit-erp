@@ -834,6 +834,8 @@ body.author-guide .hero .hero-copy .hero-lede {
 }
 
 @media (width >= 1024px) {
+  .section.hero-container:has(.hero.ies.glow) :is(a, button).button { font-size: 16px; }
+
   .hero.ies.glow .hero-grid {
     grid-template-columns: 1fr 1fr;
     gap: var(--space-5xl);

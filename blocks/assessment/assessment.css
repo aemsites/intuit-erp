@@ -302,7 +302,7 @@ main .section .assessment.ies a.button.assessment-cta {
   background-color: var(--ies-superblue);
   padding: 12px 20px;
   color: #fff;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: var(--font-weight-medium);
   line-height: 1.4;
 }
@@ -362,6 +362,10 @@ main .section .assessment.ies a.button.assessment-cta[aria-disabled="true"] {
 @media (width >= 1024px) {
   main .section .assessment.ies {
     padding-inline: 115px;
+  }
+
+  main .section .assessment.ies a.button.assessment-cta {
+    font-size: 16px;
   }
 
   main .section .assessment.ies .assessment-panel {

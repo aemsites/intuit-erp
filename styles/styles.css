@@ -853,9 +853,16 @@ main .section.ies button.button {
   padding: 12px 20px;
   border-width: 2px;
   border-radius: 999px;
-  font-size: var(--body-font-size-m);
+  font-size: 14px;
   font-weight: var(--font-weight-medium);
   line-height: var(--line-height-m);
+}
+
+@media (width >= 1024px) {
+  main .section.ies a.button,
+  main .section.ies button.button {
+    font-size: 16px;
+  }
 }
 
 main .section.ies a.button.primary,
