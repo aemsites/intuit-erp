@@ -985,6 +985,25 @@
 }
 
 .media-text.checklist .media-copy .media-callout { margin-top: 30px; }
+
+/* badge: inline code in a list item renders as a small pill */
+.media-text.checklist .media-copy > ul > li code {
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box;
+  height: var(--space-m);
+  margin-inline-start: var(--space-2xs);
+  padding: var(--space-3xs);
+  border-radius: 20px;
+  background: #cffeff;
+  color: #0d0031;
+  font-family: inherit;
+  font-size: var(--body-font-size-xxs);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.1;
+  vertical-align: middle;
+  white-space: nowrap;
+}
 .media-text.checklist .media-visual img { border-radius: 30px; }
 
 @media (width < 1024px) {

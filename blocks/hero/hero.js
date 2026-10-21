@@ -61,6 +61,38 @@ function openVideoModal(embedUrl, title) {
   document.body.append(overlay);
 }
 
+/**
+ * Builds the video text link; a trailing "(m:ss)" is split off as the duration.
+ * @param {HTMLAnchorElement} a authored video link
+ * @param {{provider:string,id:string,embedUrl:string}} info parsed video URL
+ * @returns {HTMLDivElement}
+ */
+function buildVideoLink(a, info) {
+  const [, text, duration] = a.textContent.trim().match(/^(.*?)\s*(\(\d{1,2}:\d{2}(?::\d{2})?\))?$/);
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'hero-video-link';
+  btn.setAttribute('data-track-id', `hero:${info.provider}-${info.id}`);
+  btn.setAttribute('data-video-src', a.getAttribute('href'));
+
+  const label = document.createElement('span');
+  label.className = 'hero-video-link-text';
+  label.textContent = text;
+  btn.append(label);
+  if (duration) {
+    const time = document.createElement('span');
+    time.className = 'hero-video-link-duration';
+    time.textContent = duration;
+    btn.append(time);
+  }
+  btn.addEventListener('click', () => openVideoModal(info.embedUrl, text));
+
+  const wrap = document.createElement('div');
+  wrap.className = 'hero-video-link-wrapper';
+  wrap.append(btn);
+  return wrap;
+}
+
 async function leadCard(path) {
   const wrap = document.createElement('div');
   wrap.className = 'hero-form';
@@ -208,6 +240,7 @@ export default async function decorate(block) {
   // right-hand media column.
   const isCentered = block.classList.contains('centered');
   const isGradient = block.classList.contains('gradient');
+  const isVideoLink = block.classList.contains('video-link');
   const rows = [...block.children];
 
   if (isGradient) {
@@ -265,10 +298,13 @@ export default async function decorate(block) {
   if (ctas.length) {
     const actions = document.createElement('p');
     actions.className = 'button-wrapper hero-actions';
+    let videoLink = null;
     ctas.forEach((p) => {
       p.querySelectorAll('a').forEach((a) => {
         const info = parseVideoUrl(a.href);
-        if (info) {
+        if (info && isVideoLink && !videoLink) {
+          videoLink = buildVideoLink(a, info);
+        } else if (info) {
           const btn = document.createElement('button');
           btn.type = 'button';
           btn.className = a.className; // carries `button primary` from decorateButtons
@@ -283,7 +319,12 @@ export default async function decorate(block) {
         }
       });
     });
-    ctas[0].replaceWith(actions);
+    if (actions.children.length) {
+      ctas[0].replaceWith(actions);
+      if (videoLink) actions.after(videoLink);
+    } else {
+      ctas[0].replaceWith(videoLink);
+    }
     ctas.slice(1).forEach((p) => p.remove());
   }
 

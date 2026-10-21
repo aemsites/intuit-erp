@@ -30,6 +30,7 @@
  *      Superblue tile, inset photo and customer logo
  *   3. disclaimer (optional) — legal copy as a band across the card foot
  *   2+ rows render as a carousel (same controls as .card.carousel).
+ *   .story.video-cta — video CTAs open in a modal.
  *
  * Variant .video (index) — one or more rows, each row 1-2 cells:
  *   1. media — poster <img>, optionally a second image (customer logo)
@@ -51,6 +52,7 @@
 
 import { trackAs } from '../../scripts/tracking.js';
 import { openVideoModal } from '../../scripts/scripts.js';
+import { videoInfo } from '../video/video-info.js';
 
 function pic(cell) {
   if (!cell) return null;
@@ -623,7 +625,22 @@ function buildCardCarousel(figures) {
   return wrap;
 }
 
-function buildStory(row) {
+// .story.video-cta: video CTAs open in the modal instead of navigating
+function toVideoButton(a) {
+  const info = videoInfo(a.getAttribute('href'));
+  if (!info) return a;
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  [...a.attributes].forEach((attr) => {
+    if (!['href', 'target', 'rel'].includes(attr.name)) btn.setAttribute(attr.name, attr.value);
+  });
+  btn.textContent = a.textContent.trim();
+  btn.setAttribute('data-video-src', a.getAttribute('href'));
+  btn.addEventListener('click', () => openVideoModal(info.embedUrl, btn.textContent));
+  return btn;
+}
+
+function buildStory(row, { videoModal = false } = {}) {
   const [contentCell, mediaCell, noteCell] = [...row.children];
   const figure = document.createElement('figure');
   figure.className = 'testimonial-card story-card';
@@ -698,7 +715,7 @@ function buildStory(row) {
   if (ctaLink) {
     const wrap = document.createElement('p');
     wrap.className = 'button-wrapper';
-    wrap.append(ctaLink);
+    wrap.append(videoModal ? toVideoButton(ctaLink) : ctaLink);
     copy.append(wrap);
   }
   figure.append(copy);
@@ -751,7 +768,8 @@ export default function decorate(block) {
   if (block.classList.contains('story')) {
     const rows = [...block.querySelectorAll(':scope > div')];
     if (!rows.length) return;
-    const figures = rows.map(buildStory);
+    const videoModal = block.classList.contains('video-cta');
+    const figures = rows.map((row) => buildStory(row, { videoModal }));
     block.replaceChildren(figures.length > 1 ? buildCardCarousel(figures) : figures[0]);
     track();
     return;
