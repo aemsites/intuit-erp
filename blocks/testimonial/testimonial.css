@@ -1436,3 +1436,30 @@
   .testimonial.story .testimonial-carousel-nav { justify-content: center; }
   .testimonial.story .testimonial-arrow { display: none; }
 }
+
+/* .story.video-cta: pill button, full width below 1024px */
+.testimonial.story.video-cta .button-wrapper :is(a, button).button {
+  width: 100%;
+  min-width: 100px;
+  min-height: 48px;
+  padding: 0 42px;
+  border: 0;
+  border-radius: 9999px;
+  background-color: var(--info, #236cff);
+  color: #fff;
+  font-size: 14px;
+  font-weight: var(--font-weight-medium);
+  line-height: 1.1;
+  text-align: center;
+}
+
+.testimonial.story.video-cta .button-wrapper :is(a, button).button:hover,
+.testimonial.story.video-cta .button-wrapper :is(a, button).button:focus-visible {
+  background-color: #1b5be0;
+  color: #fff;
+  text-decoration: none;
+}
+
+@media (width >= 1024px) {
+  .testimonial.story.video-cta .button-wrapper :is(a, button).button { width: auto; }
+}
