@@ -1,5 +1,4 @@
-/* Publishes the brand strip's visible height as --sgn-nav-top on the header so the
-   widget CSS can keep the fixed global nav under the strip until it scrolls away. */
+/* Sets --sgn-nav-top to the brand strip's visible height so the fixed nav sits under it */
 export default function decorate() {
   let stripHeight = 0;
   let ticking = false;
@@ -28,8 +27,6 @@ export default function decorate() {
   window.addEventListener('scroll', schedule, { passive: true });
   window.addEventListener('resize', measure, { passive: true });
 
-  // The widget runs while the nav fragment is still loading, before the header
-  // chrome exists, so measure once the chrome has been rendered.
   const observer = new MutationObserver(() => {
     if (!header()?.querySelector('.ies-nav')) return;
     observer.disconnect();

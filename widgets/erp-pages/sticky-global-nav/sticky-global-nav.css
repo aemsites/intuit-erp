@@ -1,9 +1,4 @@
-/* sticky-global-nav widget: on Resource Center pages the header normally lets the
-   global nav scroll away and slides the secondary nav up to the top. Pages that
-   embed this widget keep the global nav fixed and pin the secondary nav below it.
-   --sgn-nav-top is the brand strip's remaining height (set by sticky-global-nav.js),
-   so the nav sits under the strip at the top of the page and slides to 0 as the
-   strip scrolls away, matching the header's behaviour everywhere else. */
+/* sticky-global-nav widget: keeps the global nav fixed on Resource Center pages */
 
 header .header.has-secondary-nav {
   --sgn-nav-top: 0px; /* stylelint-disable-line length-zero-no-unit */
@@ -18,8 +13,7 @@ header .header.has-secondary-nav .ies-nav-spacer {
   height: 56px;
 }
 
-/* header.js animates the secondary nav's inline `top` toward 0 as the page
-   scrolls; !important is the only way to hold it under the fixed global nav. */
+/* overrides the inline top header.js animates on scroll */
 header .header.has-secondary-nav .ies-secondary-nav {
   top: calc(var(--sgn-nav-top) + 56px) !important;
 }
