@@ -228,7 +228,7 @@ main > .section.logo-band-container:has(.logo-band.marquee) > div { max-width: n
    title block keeps its own 20px when an eyebrow is present */
 @media (width < 1024px) {
   .section.logo-band-container:has(.logo-band.strip) > .default-content-wrapper:not(:has(> p:first-child + :is(h2, h3))) {
-    padding-top: 20px;
+    padding-top: var(--space-m);
   }
 }
 
