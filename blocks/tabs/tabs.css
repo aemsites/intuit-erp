@@ -686,7 +686,11 @@ main > .section:where(.tabs-container:has(.tabs.ies)) { margin: 0; padding: var(
 
 .tabs.vertical.ies .tabs-header { grid-column: 1 / -1; }
 
-.tabs.vertical.ies .vt-acc.is-stacked { gap: calc(var(--space-2xl) + var(--space-m)); }
+.tabs.vertical.ies .vt-acc.is-stacked { gap: var(--space-2xl); }
+
+@media (768px <= width < 1024px) {
+  .tabs.vertical.ies .vt-acc.is-stacked { gap: calc(var(--space-2xl) + var(--space-m)); }
+}
 
 .tabs.vertical.ies .vt-acc.is-stacked .vt-item,
 .tabs.vertical.ies .vt-acc.is-stacked .vt-item.is-open {
