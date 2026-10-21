@@ -1,6 +1,7 @@
 helix-importer-ui
 *.min.js
 plugins/experimentation
+plugins/sematic-styler
 plugins/martech
 scripts/martech
 vitest.config.js

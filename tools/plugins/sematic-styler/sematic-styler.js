@@ -1,3 +1,4 @@
+// eslint-disable-next-line import/no-unresolved -- DA SDK is loaded from its hosted URL.
 import DA_SDK from 'https://da.live/nx/utils/sdk.js';
 import {
   headingInfo, currentStyle, setHeadingSize, repairAll, removeOrphan,
@@ -8,9 +9,21 @@ const POLL_MS = 1000;
 const TIMEOUT_MS = 900;
 const TREE_REFRESH_MS = 3000;
 const ROLES = {
-  h1: 'heading 1', h2: 'heading 2', h3: 'heading 3', h4: 'heading 4', h5: 'heading 5', h6: 'heading 6',
-  p: 'paragraph', a: 'link', img: 'image', picture: 'image', ul: 'bulleted list', ol: 'numbered list',
-  li: 'list item', strong: 'bold', em: 'italic',
+  h1: 'heading 1',
+  h2: 'heading 2',
+  h3: 'heading 3',
+  h4: 'heading 4',
+  h5: 'heading 5',
+  h6: 'heading 6',
+  p: 'paragraph',
+  a: 'link',
+  img: 'image',
+  picture: 'image',
+  ul: 'bulleted list',
+  ol: 'numbered list',
+  li: 'list item',
+  strong: 'bold',
+  em: 'italic',
 };
 
 // eslint-disable-next-line no-console
@@ -191,9 +204,12 @@ function render(list, tree, sdk, status, setLoading, selectionChanged) {
     sectionDetails.className = 'tree-section-details';
     sectionDetails.dataset.sectionIndex = sectionIndex;
     const selected = groups.some((group) => group.elements.some((element) => element.selected));
-    sectionDetails.open = expanded.has(sectionIndex)
-      ? (selectionChanged ? expanded.get(sectionIndex) || selected : expanded.get(sectionIndex))
-      : selected;
+    if (expanded.has(sectionIndex)) {
+      sectionDetails.open = expanded.get(sectionIndex);
+      if (selectionChanged && selected) sectionDetails.open = true;
+    } else {
+      sectionDetails.open = selected;
+    }
     sectionName.className = 'tree-section-title';
     sectionLabel.textContent = `Section ${sectionIndex}`;
     sectionChevron.className = 'tree-section-chevron';

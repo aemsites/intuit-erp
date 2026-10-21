@@ -1,5 +1,7 @@
-// Stable per-heading key: hash of the structural path inside its section, shared by the DA plugin and the page.
-// decorateSections wraps blocks in classless divs; `<block>-wrapper` is only added later by decorateBlocks.
+// Stable per-heading key: hash of the structural path inside its section, shared by
+// the DA plugin and the page.
+// decorateSections wraps blocks in classless divs; `<block>-wrapper` is only added later
+// by decorateBlocks.
 const isWrapper = (n) => n.classList.contains('default-content-wrapper')
   || [...n.classList].some((c) => c.endsWith('-wrapper'))
   || (n.tagName === 'DIV' && !n.className && n.parentElement?.matches('main > div'));
