@@ -98,6 +98,8 @@
   padding-bottom: 2rem;
 }
 
+.hero.ies .hero-actions { padding-bottom: 0; }
+
 .hero .hero-copy .hero-actions ~ p {
   font-size: var(--heading-font-size-l);
   font-family: var(--heading-font-family);

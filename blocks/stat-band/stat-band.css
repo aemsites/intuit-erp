@@ -232,7 +232,7 @@
 }
 
 .stat-band.ies .stats-grid { display: grid; grid-template-columns: 1fr; gap: var(--space-m); }
-.stat-band.ies .stat { background: #d6e7f7; border-radius: var(--space-2xl); padding: 30px; gap: 0; }
+.stat-band.ies .stat { background: #f0f4f6; border-radius: var(--space-2xl); padding: 30px; gap: 0; }
 
 .stat-band.ies .stat-eyebrow {
   font-size: 12px; line-height: var(--line-height-s); font-weight: var(--font-weight-medium); letter-spacing: 1.2px;
