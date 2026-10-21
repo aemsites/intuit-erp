@@ -1441,13 +1441,13 @@
 .testimonial.story.video-cta .button-wrapper :is(a, button).button {
   width: 100%;
   min-width: 100px;
-  min-height: 48px;
+  min-height: var(--space-3xl);
   padding: 0 42px;
   border: 0;
   border-radius: 9999px;
   background-color: var(--info, #236cff);
   color: #fff;
-  font-size: 14px;
+  font-size: var(--body-font-size-xs);
   font-weight: var(--font-weight-medium);
   line-height: 1.1;
   text-align: center;

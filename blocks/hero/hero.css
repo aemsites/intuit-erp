@@ -857,7 +857,7 @@ body.author-guide .hero .hero-copy .hero-lede {
 
 .hero.video-link .hero-video-link-wrapper {
   margin-top: var(--space-m);
-  padding-bottom: 2rem;
+  padding-bottom: var(--space-xl);
 }
 
 .hero.ies.glow.video-link .hero-video-link-wrapper { padding-bottom: 0; }
@@ -871,9 +871,9 @@ body.author-guide .hero .hero-copy .hero-lede {
   background: none;
   color: var(--info, #236cff);
   font: inherit;
-  font-size: 16px;
+  font-size: var(--body-font-size-m);
   font-weight: var(--font-weight-medium);
-  line-height: 1.4;
+  line-height: var(--line-height-m);
   text-align: start;
   cursor: pointer;
 }
@@ -881,8 +881,8 @@ body.author-guide .hero .hero-copy .hero-lede {
 .hero.video-link .hero-video-link::before {
   content: "";
   flex: 0 0 auto;
-  width: 24px;
-  height: 24px;
+  width: var(--space-l);
+  height: var(--space-l);
   background-color: var(--info, #236cff);
   mask: center / contain no-repeat url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8Z"/><path d="M11.6 8.2A1 1 0 0 0 10 9v6a1 1 0 0 0 1.6.8l4-3a1 1 0 0 0 0-1.6Z"/></svg>');
 }
@@ -898,8 +898,8 @@ body.author-guide .hero .hero-copy .hero-lede {
 
 .hero.video-link .hero-video-link:focus-visible {
   outline: 2px solid currentcolor;
-  outline-offset: 4px;
-  border-radius: 4px;
+  outline-offset: var(--space-3xs);
+  border-radius: var(--radius);
 }
 
 .hero.video-link .hero-video-link-duration { white-space: nowrap; }
@@ -908,7 +908,7 @@ body.author-guide .hero .hero-copy .hero-lede {
 @media (width < 768px) {
   .hero.video-link .hero-video-link {
     display: inline-grid;
-    grid-template-columns: 24px auto;
+    grid-template-columns: var(--space-l) auto;
     column-gap: 7px;
     align-items: start;
   }
