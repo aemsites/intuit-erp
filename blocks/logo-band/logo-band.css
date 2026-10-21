@@ -224,6 +224,14 @@ main > .section.logo-band-container:has(.logo-band.marquee) > div { max-width: n
 
 .section.logo-band-container:has(.logo-band.strip) > .default-content-wrapper { padding-bottom: 0; }
 
+/* without an eyebrow the global 2.5rem wrapper padding would apply; the IES
+   title block keeps its own 20px when an eyebrow is present */
+@media (width < 1024px) {
+  .section.logo-band-container:has(.logo-band.strip) > .default-content-wrapper:not(:has(> p:first-child + :is(h2, h3))) {
+    padding-top: 20px;
+  }
+}
+
 .section.logo-band-container:has(.logo-band.strip) .default-content-wrapper h2 {
   margin: 0;
   font-size: 34px;
