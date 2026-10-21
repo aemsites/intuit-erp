@@ -1,0 +1,28 @@
+/* sticky-global-nav widget: on Resource Center pages the header normally lets the
+   global nav scroll away and slides the secondary nav up to the top. Pages that
+   embed this widget keep the global nav fixed and pin the secondary nav below it. */
+
+header .header.has-secondary-nav .ies-nav {
+  position: fixed;
+  top: 0;
+}
+
+header .header.has-secondary-nav .ies-nav-spacer {
+  height: 56px;
+}
+
+/* header.js animates the secondary nav's inline `top` toward 0 as the page
+   scrolls; !important is the only way to hold it under the fixed global nav. */
+header .header.has-secondary-nav .ies-secondary-nav {
+  top: 56px !important;
+}
+
+@media (width >= 1300px) {
+  header .header.has-secondary-nav .ies-nav-spacer {
+    height: 60px;
+  }
+
+  header .header.has-secondary-nav .ies-secondary-nav {
+    top: 60px !important;
+  }
+}
