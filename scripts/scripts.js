@@ -201,6 +201,25 @@ function decorateHeadingSizes(main) {
   });
 }
 
+// Apply legacy section sizes, style metadata for default content, and block size classes.
+function decorateHeadingSizes(main) {
+  // Continue to support existing section-metadata entries while new entries use block classes.
+  main.querySelectorAll(':scope > div').forEach((section) => {
+    const entries = [...section.attributes]
+      .filter((a) => a.name.startsWith('data-') && KEY_RE.test(a.name.slice(5)))
+      .map((a) => ({ key: a.name.slice(5), value: a.value }));
+    if (entries.length) {
+      matchHeadings(section, entries).matched
+        .forEach(({ el, entry }) => el.classList.add(...classesOf(entry.value)));
+    }
+    applySizeTokens(section, [...section.classList], true);
+  });
+
+  main.querySelectorAll(':scope > div .block').forEach((block) => {
+    applySizeTokens(block, [...block.classList]);
+  });
+}
+
 /**
  * True when `el` is an authored poster-only node — a bare <picture>/<img>, or a
  * <p> that wraps only a <picture>/<img> with no other text/links. Used to pair a

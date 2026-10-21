@@ -6,7 +6,7 @@ import {
 
 const POLL_MS = 1000;
 const TIMEOUT_MS = 900;
-const MAX_HITS = 5;
+const TREE_REFRESH_MS = 3000;
 const ROLES = {
   h1: 'heading 1', h2: 'heading 2', h3: 'heading 3', h4: 'heading 4', h5: 'heading 5', h6: 'heading 6',
   p: 'paragraph', a: 'link', img: 'image', picture: 'image', ul: 'bulleted list', ol: 'numbered list',
@@ -18,8 +18,9 @@ const log = (...args) => console.log('[sematic-styler]', ...args);
 const compact = (s) => s.replace(/\s+/g, '');
 
 function blockLabel(block) {
-  const [name, ...variants] = [...block.classList];
-  return variants.length ? `${name} (${variants.join(', ')})` : name;
+  const name = [...block.classList]
+    .find((className) => !/^(?:h[1-6]|p)(?:-\d+)?-(?:size|as)-/.test(className)) || 'block';
+  return `${name[0].toUpperCase()}${name.slice(1)}`;
 }
 
 function describeNode(el) {
@@ -64,36 +65,6 @@ async function loadSource({ actions, context }) {
   return new DOMParser().parseFromString(await resp.text(), 'text/html');
 }
 
-function findEnclosingBlocks(doc, text) {
-  const needle = compact(text);
-  if (!needle) return [];
-  const sections = [...doc.querySelectorAll('main > div')];
-  return [...doc.querySelectorAll('main > div > div[class]')]
-    .filter((b) => compact(b.textContent).includes(needle))
-    .map((b) => ({ label: blockLabel(b), section: sections.indexOf(b.parentElement) + 1 }));
-}
-
-const nth = (el) => [...el.parentElement.children].indexOf(el) + 1;
-
-// Source layout: main > section > block > row > cell > element (default content has no block).
-function positionOf(el) {
-  const section = el.closest('main > div');
-  if (!section) return 'outside any section';
-  const parts = [`section ${nth(section)}`];
-  const block = el.closest('main > div > div[class]');
-  if (block) {
-    parts.push(`block ${blockLabel(block)} (#${nth(block)} in section)`);
-    const row = el.closest('main > div > div[class] > div');
-    const cell = el.closest('main > div > div[class] > div > div');
-    if (row && cell) parts.push(`row ${nth(row)}`, `col ${nth(cell)}`);
-  } else {
-    parts.push('default content');
-  }
-  const parent = el.parentElement;
-  parts.push(`child ${nth(el)} of ${parent.children.length} in <${parent.tagName.toLowerCase()}>`);
-  return parts.join(' › ');
-}
-
 function findElements(doc, { tag, full }) {
   const needle = compact(full || '');
   if (!needle) return [];
@@ -107,90 +78,150 @@ function findElements(doc, { tag, full }) {
   return hits.filter((e) => ![...e.children].some((c) => hits.includes(c)));
 }
 
-function buildRows(html, blocks, doc) {
-  const body = new DOMParser().parseFromString(html, 'text/html').body;
-  const rows = [];
-  if (blocks.length) {
-    const detail = blocks.map((b) => `${b.label} · section ${b.section}`).join('\n');
-    rows.push({ title: [...new Set(blocks.map((b) => b.label))].join(', '), detail, isScope: true });
-  } else if (body.textContent.trim()) {
-    rows.push({ title: 'Default content', detail: 'Selection is outside a block.', isScope: true });
-  }
-  // The editor only returns the selected content, so positions come from the saved source.
-  const nodes = describeContainer(body).map((n) => {
-    const hits = doc ? findElements(doc, n) : [];
-    if (!hits.length) return n;
-    const label = hits.length > 1 ? `position (${hits.length} matches)` : 'position';
-    const lines = hits.slice(0, MAX_HITS).map(positionOf).join('\n');
-    const headings = hits.slice(0, MAX_HITS).filter((e) => /^(H[1-6]|P)$/.test(e.tagName)).map(headingInfo);
-    return { ...n, detail: `${n.detail}\n${label}: ${lines}`, headings };
+function contentTree(html, doc) {
+  if (!doc) return [];
+  const body = html ? new DOMParser().parseFromString(html, 'text/html').body : null;
+  const selectedKeys = new Set(body ? describeContainer(body)
+    .flatMap((node) => findElements(doc, node))
+    .filter((el) => /^(H[1-6]|P)$/.test(el.tagName))
+    .map((el) => headingInfo(el).key) : []);
+  const sections = [...doc.querySelectorAll('main > div')];
+  return sections.map((section, index) => {
+    const groups = [];
+    [...section.children].forEach((child) => {
+      if (child.classList.contains('section-metadata')) return;
+      const block = child.matches('div[class]') ? child : null;
+      const elements = [
+        ...(child.matches('h1,h2,h3,h4,h5,h6,p') ? [child] : []),
+        ...child.querySelectorAll('h1,h2,h3,h4,h5,h6,p'),
+      ].filter((el) => !el.closest('.section-metadata')
+        && (block || !el.closest('main > div > div[class]')));
+      if (block) {
+        groups.push({
+          title: blockLabel(block),
+          elements: elements.map((el) => {
+            const heading = headingInfo(el);
+            return { ...heading, selected: selectedKeys.has(heading.key) };
+          }),
+        });
+      } else if (elements.length) {
+        groups.push({
+          title: 'Default content',
+          elements: elements.map((el) => {
+            const heading = headingInfo(el);
+            return { ...heading, selected: selectedKeys.has(heading.key) };
+          }),
+        });
+      }
+    });
+    return { sectionIndex: index + 1, groups };
   });
-  return [...rows, ...nodes];
 }
 
 function headingControl(h, sdk, status, setLoading) {
-  const wrap = document.createElement('label');
-  wrap.className = 'size';
+  const wrap = document.createElement('div');
+  const content = document.createElement('div');
+  const name = document.createElement('div');
+  const preview = document.createElement('div');
+  const controls = document.createElement('div');
+  const tag = h.el.tagName.toLowerCase();
   const target = h.block ? `${h.blockName} \u00b7 ${h.position}` : `default content \u00b7 ${h.defaultPosition}`;
-  wrap.append(`${target} `);
+  wrap.className = h.selected ? 'tree-item is-selected' : 'tree-item';
+  if (h.selected) wrap.setAttribute('aria-current', 'true');
+  content.className = 'tree-item-content';
+  name.className = 'tree-item-title';
+  name.textContent = `${tag.toUpperCase()} \u00b7 ${target}`;
+  preview.className = 'tree-item-preview';
+  preview.textContent = h.el.textContent.trim();
+  content.append(name, preview);
+  controls.className = 'tree-item-controls';
   const cur = currentStyle(h.section, h.el);
   const select = document.createElement('select');
-  select.append(new Option('no size', ''), ...SIZES.map((s) => new Option(s, s)));
+  select.setAttribute('aria-label', `Size for ${tag}: ${preview.textContent.slice(0, 40)}`);
+  select.append(new Option('Default size', ''), ...SIZES.map((size) => new Option(size, size)));
   select.value = cur.size;
-  const save = async () => {
+  let selectedSize = cur.size;
+  const remove = document.createElement('button');
+  remove.className = 'remove-class';
+  remove.type = 'button';
+  remove.setAttribute('aria-label', `Remove applied size from ${tag}`);
+  remove.title = 'Remove applied size';
+  remove.disabled = !cur.size;
+  remove.innerHTML = '<svg aria-hidden="true" viewBox="0 0 16 16"><path d="M3 4h10M6 4V2.75h4V4m2 0-.5 9H4.5L4 4m2.5 2v5m3-5v5"/></svg>';
+  const save = async (size) => {
     setLoading(true);
     try {
-      await setHeadingSize(sdk, h, select.value);
-      status.textContent = `Saved ${target}`;
+      await setHeadingSize(sdk, h, size);
+      selectedSize = size;
+      remove.disabled = !size;
+      status.textContent = size ? `Saved ${target}` : `Removed applied size from ${target}`;
     } catch (e) {
       log('save error', e);
       status.textContent = e.message;
+      select.value = selectedSize;
     } finally {
       setLoading(false);
     }
   };
-  select.addEventListener('change', save);
-  wrap.append(select);
+  select.addEventListener('change', () => save(select.value));
+  remove.addEventListener('click', () => { select.value = ''; save(''); });
+  controls.append(select, remove);
+  wrap.append(content, controls);
   return wrap;
 }
 
-function render(list, rows, sdk, status, setLoading) {
+function render(list, tree, sdk, status, setLoading, selectionChanged) {
+  if (!tree.length) { list.replaceChildren(); return; }
+  const expanded = new Map([...list.querySelectorAll('.tree-section-details')]
+    .map((details) => [Number(details.dataset.sectionIndex), details.open]));
   const card = document.createElement('li');
   const title = document.createElement('div');
-  const disclosure = document.createElement('details');
-  const summary = document.createElement('summary');
-  const scope = rows.find((row) => row.isScope);
-  title.className = 'role';
-  title.textContent = scope ? scope.title : 'Default content';
-  disclosure.className = 'result-details';
-  disclosure.open = true;
-  summary.textContent = 'Show selection details';
-  disclosure.append(summary);
-
-  rows.filter((row) => row !== scope).forEach(({ title: nodeTitle, detail, headings = [] }) => {
-    const group = document.createElement('div');
-    const heading = document.createElement('div');
-    group.className = 'detail-group';
-    heading.className = 'role';
-    heading.textContent = nodeTitle;
-    group.append(heading);
-    if (detail) {
-      const text = document.createElement('div');
-      text.className = 'text';
-      text.textContent = detail;
-      group.append(text);
-    }
-    group.append(...headings.map((h) => headingControl(h, sdk, status, setLoading)));
-    disclosure.append(group);
+  const treeList = document.createElement('ul');
+  title.className = 'tree-title';
+  title.textContent = 'Content tree';
+  treeList.className = 'content-tree';
+  tree.forEach(({ sectionIndex, groups }) => {
+    const sectionItem = document.createElement('li');
+    const sectionDetails = document.createElement('details');
+    const sectionName = document.createElement('summary');
+    const sectionLabel = document.createElement('span');
+    const sectionChevron = document.createElement('span');
+    const groupList = document.createElement('ul');
+    sectionItem.className = 'tree-section';
+    sectionDetails.className = 'tree-section-details';
+    sectionDetails.dataset.sectionIndex = sectionIndex;
+    const selected = groups.some((group) => group.elements.some((element) => element.selected));
+    sectionDetails.open = expanded.has(sectionIndex)
+      ? (selectionChanged ? expanded.get(sectionIndex) || selected : expanded.get(sectionIndex))
+      : selected;
+    sectionName.className = 'tree-section-title';
+    sectionLabel.textContent = `Section ${sectionIndex}`;
+    sectionChevron.className = 'tree-section-chevron';
+    sectionChevron.setAttribute('aria-hidden', 'true');
+    sectionChevron.innerHTML = '<svg viewBox="0 0 16 16"><path d="m4 6 4 4 4-4"/></svg>';
+    sectionName.append(sectionLabel, sectionChevron);
+    groupList.className = 'tree-groups';
+    groups.forEach(({ title: groupTitle, elements }) => {
+      const groupItem = document.createElement('li');
+      const groupName = document.createElement('div');
+      const elementList = document.createElement('ul');
+      groupItem.className = 'tree-group';
+      groupName.className = 'tree-group-title';
+      groupName.textContent = groupTitle;
+      elementList.className = 'tree-elements';
+      elements.forEach((h) => {
+        const elementItem = document.createElement('li');
+        elementItem.append(headingControl(h, sdk, status, setLoading));
+        elementList.append(elementItem);
+      });
+      groupItem.append(groupName, elementList);
+      groupList.append(groupItem);
+    });
+    sectionDetails.append(sectionName, groupList);
+    sectionItem.append(sectionDetails);
+    treeList.append(sectionItem);
   });
-
-  if (scope?.detail) {
-    const text = document.createElement('div');
-    text.className = 'text detail-group';
-    text.textContent = scope.detail;
-    disclosure.append(text);
-  }
-  card.append(title, disclosure);
+  card.append(title, treeList);
   list.replaceChildren(card);
 }
 
@@ -268,28 +299,33 @@ export default async function init() {
     }
   });
 
-  let last;
+  let lastSelection;
+  let lastTreeRefresh = 0;
+  let sourceDoc;
   let busy = false;
   setInterval(async () => {
     if (busy || document.hidden) return;
     busy = true;
     try {
       const html = await readSelection(sdk.actions);
-      if (html === last) return;
-      last = html;
-      if (html === null) {
-        log('no selection');
-        list.replaceChildren();
-        status.textContent = 'Select content in the document.';
-        return;
+      const selectionChanged = html !== lastSelection;
+      if (selectionChanged) lastSelection = html;
+      const refreshSource = !sourceDoc || Date.now() - lastTreeRefresh >= TREE_REFRESH_MS;
+      if (!selectionChanged && !refreshSource) return;
+      if (refreshSource) {
+        const freshDoc = await loadSource(sdk);
+        lastTreeRefresh = Date.now();
+        if (freshDoc) sourceDoc = freshDoc;
+        else {
+          status.textContent = 'Unable to refresh the source. Retrying...';
+          if (!sourceDoc) return;
+        }
       }
-      const text = new DOMParser().parseFromString(html, 'text/html').body.textContent;
-      const doc = await loadSource(sdk);
-      const blocks = doc ? findEnclosingBlocks(doc, text) : [];
-      const rows = buildRows(html, blocks, doc);
-      log('selection', { html, blocks, rows });
-      render(list, rows, sdk, status, setLoading);
-      status.textContent = 'Selection found';
+      const tree = contentTree(html, sourceDoc);
+      log('selection and document tree', { html, tree });
+      render(list, tree, sdk, status, setLoading, selectionChanged);
+      if (html === null) status.textContent = 'Select content in the document.';
+      else status.textContent = tree.length ? 'Content tree loaded' : 'No sections found.';
     } catch (e) {
       log('error', e);
     } finally {
@@ -299,4 +335,3 @@ export default async function init() {
 }
 
 init();
-
