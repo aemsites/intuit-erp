@@ -1461,5 +1461,8 @@
 }
 
 @media (width >= 1024px) {
-  .testimonial.story.video-cta .button-wrapper :is(a, button).button { width: auto; }
+  .testimonial.story.video-cta .button-wrapper :is(a, button).button {
+    width: auto;
+    font-size: var(--body-font-size-m);
+  }
 }
