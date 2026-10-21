@@ -501,6 +501,13 @@ async function loadEager(doc) {
   document.documentElement.lang = 'en';
   decorateTemplateAndTheme();
 
+  // IES Brand: Apply theme-ies class and load brand CSS when theme metadata is 'ies'
+  const theme = (getMetadata('theme') || '').trim().toLowerCase();
+  if (theme === 'ies') {
+    document.body.classList.add('theme-ies');
+    loadCSS(`${window.hlx.codeBasePath}/styles/brand/ies/ies-brand.css`);
+  }
+
   if (['true', 'yes'].includes((getMetadata('events-bar') || '').trim().toLowerCase())) {
     document.body.classList.add('has-events-bar');
   }
