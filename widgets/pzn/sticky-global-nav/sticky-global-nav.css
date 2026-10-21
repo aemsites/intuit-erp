@@ -1,0 +1,35 @@
+/* sticky-global-nav widget: keeps the global nav fixed on Resource Center pages */
+
+header .header.has-secondary-nav {
+  --sgn-nav-top: 0px; /* stylelint-disable-line length-zero-no-unit */
+}
+
+header .header.has-secondary-nav .ies-nav {
+  position: fixed;
+  top: var(--sgn-nav-top);
+}
+
+header .header.has-secondary-nav .ies-nav-spacer {
+  height: 56px;
+}
+
+/* overrides the inline top header.js animates on scroll */
+header .header.has-secondary-nav .ies-secondary-nav {
+  top: calc(var(--sgn-nav-top) + 56px) !important;
+}
+
+@media (width >= 1300px) {
+  header .header.has-secondary-nav .ies-nav-spacer {
+    height: 60px;
+  }
+
+  header .header.has-secondary-nav .ies-secondary-nav {
+    top: calc(var(--sgn-nav-top) + 60px) !important;
+  }
+}
+
+@media (width >= 1024px) {
+  header .header .secondary-nav-brand {
+    font-size: 14px;
+  }
+}
