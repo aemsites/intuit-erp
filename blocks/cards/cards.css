@@ -1302,6 +1302,24 @@ main > .section.ies.cards-container:has(> .cards-wrapper > .cards.minimal.divide
 
 .section.ies .cards.minimal.divider > div:first-child { padding-top: 0; }
 
+/* accolade subcopy: 14px (3 lines at tablet) */
+.section.ies .cards.minimal.divider .cards-card-body p {
+  font-size: 14px;
+  line-height: var(--line-height-l);
+}
+
+/* footnote section right after the accolades: 10px tablet/mobile, 12px desktop */
+main > .section.ies.cards-container:has(> .cards-wrapper > .cards.minimal.divider) + .section > .default-content-wrapper p {
+  font-size: 10px;
+  line-height: var(--line-height-l);
+}
+
+@media (width >= 1024px) {
+  main > .section.ies.cards-container:has(> .cards-wrapper > .cards.minimal.divider) + .section > .default-content-wrapper p {
+    font-size: 12px;
+  }
+}
+
 .section.ies .cards.minimal.divider .cards-card-image { flex: 0 0 auto; }
 
 .section.ies .cards.minimal.divider > div:last-child {
@@ -1332,6 +1350,18 @@ main > .section.ies.cards-container:has(> .cards-wrapper > .cards.minimal.divide
     padding-right: 0;
     border-right: 0;
   }
+}
+
+/* tablet: tighter gutters and logos so the 14px subcopy wraps to 3 lines */
+@media (768px <= width < 1024px) {
+  .section.ies .cards.minimal.divider > div {
+    gap: var(--space-2xs);
+    padding: 0 var(--space-2xs);
+  }
+
+  .section.ies .cards.minimal.divider > div:first-child { padding-left: 0; }
+  .section.ies .cards.minimal.divider > div:last-child { padding-right: 0; }
+  .section.ies .cards.minimal.divider .cards-card-image img { max-width: 64px; height: auto; }
 }
 
 @media (width >= 1024px) {
