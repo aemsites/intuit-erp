@@ -1,0 +1,77 @@
+/* IES Fonts: Tally font face declarations - loaded in lazy phase */
+
+@font-face {
+  font-family: Tally;
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  src: url("/styles/brand/ies/fonts/Tally-Regular.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: Tally;
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+  src: url("/styles/brand/ies/fonts/Tally-RegularItalic.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: Tally;
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  src: url("/styles/brand/ies/fonts/Tally-Medium.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: Tally;
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+  src: url("/styles/brand/ies/fonts/Tally-MediumItalic.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: Tally;
+  font-weight: 600 700;
+  font-style: normal;
+  font-display: swap;
+  src: url("/styles/brand/ies/fonts/Tally-Bold.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: Tally;
+  font-weight: 600 700;
+  font-style: italic;
+  font-display: swap;
+  src: url("/styles/brand/ies/fonts/Tally-BoldItalic.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Tally Display";
+  font-weight: 300;
+  font-display: swap;
+  src: url("/styles/brand/ies/fonts/TallyDisplay-Light.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Tally Display";
+  font-weight: 400;
+  font-display: swap;
+  src: url("/styles/brand/ies/fonts/TallyDisplay-Regular.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Tally Display";
+  font-weight: 500;
+  font-display: swap;
+  src: url("/styles/brand/ies/fonts/TallyDisplay-Medium.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Tally Display";
+  font-weight: 600 700;
+  font-display: swap;
+  src: url("/styles/brand/ies/fonts/TallyDisplay-Bold.woff2") format("woff2");
+}
