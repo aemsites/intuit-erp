@@ -26,4 +26,8 @@ header .header.has-secondary-nav .ies-secondary-nav {
   header .header.has-secondary-nav .ies-secondary-nav {
     top: calc(var(--sgn-nav-top) + 60px) !important;
   }
+
+  header .header .secondary-nav-brand {
+    font-size: 14px;
+  }
 }
