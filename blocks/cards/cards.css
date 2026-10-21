@@ -1238,6 +1238,27 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
+  /* exactly 3 cards: 3 columns */
+  .cards.ies:has(> div:nth-child(3):last-child) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  /* icon, title and text rows line up across the 3 cards (title + one paragraph per card) */
+  .cards.ies:has(> div:nth-child(3):last-child):not(:has(.cards-card-body > :nth-child(3))) > div {
+    display: grid;
+    grid-row: span 3;
+    grid-template-rows: subgrid;
+    row-gap: 0;
+  }
+
+  .cards.ies:has(> div:nth-child(3):last-child):not(:has(.cards-card-body > :nth-child(3))) .cards-card-head {
+    margin-bottom: 30px;
+  }
+
+  .cards.ies:has(> div:nth-child(3):last-child):not(:has(.cards-card-body > :nth-child(3))) .cards-card-body {
+    display: contents;
+  }
+
   .cards.ies > div {
     gap: 30px;
     border-radius: 38px;
