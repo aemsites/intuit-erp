@@ -1,0 +1,286 @@
+/* IES Theme: Tally brand styling, activated via theme: ies metadata - loaded in eager phase */
+
+/* Apply IES font tokens when theme-ies class is present */
+body.theme-ies {
+  --body-font-family: tally, "AvenirNext forINTUIT", avenir-fallback, arial, sans-serif;
+  --heading-font-family: "Tally Display", tally, "AvenirNext forINTUIT", avenir-fallback, arial, sans-serif;
+}
+
+/* IES header: the "Schedule a call" CTA becomes the Superblue compact pill */
+body.theme-ies .header .nav-cta {
+  height: 48px;
+  padding: 0 var(--space-m);
+  font-size: 14px;
+  line-height: 1.1;
+  border-color: var(--info);
+  border-radius: 999px;
+  background: var(--info);
+}
+
+body.theme-ies .header .nav-cta:hover {
+  background: #1b5be0;
+  border-color: #1b5be0;
+}
+
+/* "Schedule a call" modal: the Marketo submit button follows the same IES pill */
+/* !important matches blocks/form/form.css, which needs it to beat Marketo's injected styles. */
+/* stylelint-disable selector-class-pattern -- .mkto* class names are Marketo's */
+body.theme-ies .modal-wrapper .modal dialog .mktoButton {
+  min-height: 48px;
+  border-radius: 999px !important;
+  background: var(--info) !important;
+  color: #fff !important;
+  font-weight: var(--font-weight-medium) !important;
+}
+
+body.theme-ies .modal-wrapper .modal dialog .mktoButton:hover,
+body.theme-ies .modal-wrapper .modal dialog .mktoButton:focus-visible {
+  background: #1b5be0 !important;
+}
+/* stylelint-enable selector-class-pattern */
+
+/* IES Title Block - automatic when theme-ies is active */
+body.theme-ies main > .section:not(.colored-background) > .default-content-wrapper:has(> p:first-child + :is(h2, h3)) {
+  padding-top: 20px;
+}
+
+body.theme-ies main > .section > .default-content-wrapper > p:first-child:has(+ :is(h2, h3)) {
+  margin: 0 0 8px;
+  font-size: 12px;
+  line-height: 1.25;
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 1.56px;
+  text-transform: uppercase;
+}
+
+body.theme-ies main > .section > .default-content-wrapper > p:first-child:has(+ :is(h2, h3)) + :is(h2, h3) {
+  margin-top: 0;
+}
+
+body.theme-ies main > .section > .default-content-wrapper > :is(h2, h3) + p:not(.button-wrapper) {
+  margin-top: 16px;
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+@media (width >= 1024px) {
+  body.theme-ies main > .section:not(.colored-background) > .default-content-wrapper:has(> p:first-child + :is(h2, h3)) {
+    padding-top: 40px;
+  }
+
+  body.theme-ies main > .section > .default-content-wrapper > p:first-child:has(+ :is(h2, h3)) {
+    margin: 0 0 16px;
+    font-size: 14px;
+    letter-spacing: 1.82px;
+  }
+
+  body.theme-ies main > .section > .default-content-wrapper > :is(h2, h3) + p:not(.button-wrapper) {
+    margin-top: 20px;
+    font-size: 20px;
+    line-height: 1.3;
+  }
+}
+
+/* IES Button Styling - Superblue pills, automatic when theme-ies is active */
+body.theme-ies main .section a.button,
+body.theme-ies main .section button.button {
+  min-height: 48px;
+  padding: 12px 20px;
+  border-width: 2px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-m);
+}
+
+@media (width >= 1024px) {
+  body.theme-ies main .section a.button,
+  body.theme-ies main .section button.button {
+    font-size: 16px;
+  }
+}
+
+body.theme-ies main .section a.button.primary,
+body.theme-ies main .section button.button.primary {
+  border-color: var(--info);
+  background-color: var(--info);
+  color: #fff;
+}
+
+body.theme-ies main .section a.button.primary:hover,
+body.theme-ies main .section a.button.primary:focus-visible,
+body.theme-ies main .section button.button.primary:hover,
+body.theme-ies main .section button.button.primary:focus-visible {
+  border-color: #1b5be0;
+  background-color: #1b5be0;
+  color: #fff;
+}
+
+/* Primary pill goes white on Superblue sections */
+body.theme-ies main .section:is(.super-blue, [data-background="#236cff" i]) a.button.primary,
+body.theme-ies main .section:is(.super-blue, [data-background="#236cff" i]) button.button.primary {
+  border-color: #fff;
+  background-color: #fff;
+  color: #0d0031;
+}
+
+body.theme-ies main .section:is(.super-blue, [data-background="#236cff" i]) a.button.primary:hover,
+body.theme-ies main .section:is(.super-blue, [data-background="#236cff" i]) a.button.primary:focus-visible,
+body.theme-ies main .section:is(.super-blue, [data-background="#236cff" i]) button.button.primary:hover,
+body.theme-ies main .section:is(.super-blue, [data-background="#236cff" i]) button.button.primary:focus-visible {
+  border-color: #eff4f9;
+  background-color: #eff4f9;
+  color: #0d0031;
+}
+
+/* Outlined pill: Blueberry on light sections, white on dark ones */
+body.theme-ies main .section a.button.secondary,
+body.theme-ies main .section button.button.secondary {
+  border-color: #0d0031;
+  background-color: transparent;
+  color: #0d0031;
+}
+
+body.theme-ies main .section a.button.secondary:hover,
+body.theme-ies main .section a.button.secondary:focus-visible,
+body.theme-ies main .section button.button.secondary:hover,
+body.theme-ies main .section button.button.secondary:focus-visible {
+  background-color: #0d0031;
+  color: #fff;
+}
+
+body.theme-ies main .section:is(.dark, .navy, .super-blue, .dark-background) a.button.secondary,
+body.theme-ies main .section:is(.dark, .navy, .super-blue, .dark-background) button.button.secondary {
+  border-color: #fff;
+  background-color: transparent;
+  color: #fff;
+}
+
+body.theme-ies main .section:is(.dark, .navy, .super-blue, .dark-background) a.button.secondary:hover,
+body.theme-ies main .section:is(.dark, .navy, .super-blue, .dark-background) a.button.secondary:focus-visible {
+  background-color: #fff;
+  color: #0d0031;
+}
+
+/* IES Banner Inset - automatic when theme-ies is active */
+body.theme-ies main > .section.contained.colored-background,
+body.theme-ies main .fragment-wrapper .section.contained.colored-background {
+  margin-top: 60px;
+  margin-bottom: 60px;
+  padding-top: 5rem;
+  padding-bottom: 5rem;
+}
+
+body.theme-ies main > .section.contained.colored-background > div.default-content-wrapper,
+body.theme-ies main .fragment-wrapper .section.contained.colored-background > div.default-content-wrapper {
+  padding: 0 1.25rem;
+}
+
+body.theme-ies main > .section.contained.colored-background > div.default-content-wrapper > p:first-child:has(+ :is(h2, h3)),
+body.theme-ies main .fragment-wrapper .section.contained.colored-background > div.default-content-wrapper > p:first-child:has(+ :is(h2, h3)) {
+  margin: 0 0 16px;
+}
+
+body.theme-ies main > .section.contained.colored-background > div.default-content-wrapper > :is(h2, h3),
+body.theme-ies main .fragment-wrapper .section.contained.colored-background > div.default-content-wrapper > :is(h2, h3) {
+  margin: 0;
+  font-size: 34px;
+  line-height: 1.1;
+  font-weight: var(--font-weight-medium);
+}
+
+body.theme-ies main > .section.contained.colored-background > div.default-content-wrapper > .button-wrapper,
+body.theme-ies main .fragment-wrapper .section.contained.colored-background > div.default-content-wrapper > .button-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  margin-top: 40px;
+}
+
+body.theme-ies main > .section.contained.colored-background > div.default-content-wrapper a.button,
+body.theme-ies main .fragment-wrapper .section.contained.colored-background > div.default-content-wrapper a.button {
+  width: 100%;
+  padding: 12px 20px;
+  font-size: 14px;
+  line-height: 1.1;
+}
+
+@media (width >= 768px) {
+  body.theme-ies main > .section.contained.colored-background,
+  body.theme-ies main .fragment-wrapper .section.contained.colored-background {
+    padding-top: 3.75rem;
+    padding-bottom: 3.75rem;
+  }
+
+  body.theme-ies main > .section.contained.colored-background > div.default-content-wrapper,
+  body.theme-ies main .fragment-wrapper .section.contained.colored-background > div.default-content-wrapper {
+    padding-left: 5.625rem;
+    padding-right: 5.625rem;
+  }
+
+  body.theme-ies main > .section.contained.colored-background > div.default-content-wrapper > .button-wrapper,
+  body.theme-ies main .fragment-wrapper .section.contained.colored-background > div.default-content-wrapper > .button-wrapper {
+    flex-direction: row;
+    justify-content: center;
+    width: auto;
+  }
+
+  body.theme-ies main > .section.contained.colored-background > div.default-content-wrapper a.button,
+  body.theme-ies main .fragment-wrapper .section.contained.colored-background > div.default-content-wrapper a.button {
+    width: auto;
+    padding-inline: 42px;
+  }
+}
+
+@media (width >= 1024px) {
+  body.theme-ies main > .section.contained.colored-background,
+  body.theme-ies main .fragment-wrapper .section.contained.colored-background {
+    margin-top: 80px;
+    margin-bottom: 80px;
+    padding-top: 5rem;
+    padding-bottom: 5rem;
+  }
+
+  body.theme-ies main > .section.contained.colored-background > div.default-content-wrapper,
+  body.theme-ies main .fragment-wrapper .section.contained.colored-background > div.default-content-wrapper {
+    max-width: 900px;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  body.theme-ies main > .section.contained.colored-background > div.default-content-wrapper > p:first-child:has(+ :is(h2, h3)),
+  body.theme-ies main .fragment-wrapper .section.contained.colored-background > div.default-content-wrapper > p:first-child:has(+ :is(h2, h3)) {
+    margin-bottom: 20px;
+  }
+
+  body.theme-ies main > .section.contained.colored-background > div.default-content-wrapper > :is(h2, h3),
+  body.theme-ies main .fragment-wrapper .section.contained.colored-background > div.default-content-wrapper > :is(h2, h3) {
+    font-size: 40px;
+    line-height: 1.2;
+  }
+
+  body.theme-ies main > .section.contained.colored-background > div.default-content-wrapper a.button,
+  body.theme-ies main .fragment-wrapper .section.contained.colored-background > div.default-content-wrapper a.button {
+    font-size: 16px;
+  }
+}
+
+/* IES Center Section - automatic when theme-ies is active */
+body.theme-ies main > .section.center > .default-content-wrapper:only-child:has(> p:only-child) {
+  padding-top: 16px;
+  padding-bottom: 20px;
+}
+
+@media (width >= 768px) {
+  body.theme-ies main > .section.center > .default-content-wrapper:only-child:has(> p:only-child) {
+    padding-top: 32px;
+  }
+}
+
+@media (width >= 1024px) {
+  body.theme-ies main > .section.center > .default-content-wrapper:only-child:has(> p:only-child) {
+    padding-top: 40px;
+    padding-bottom: 40px;
+  }
+}
