@@ -1,8 +1,8 @@
 import DA_SDK from 'https://da.live/nx/utils/sdk.js';
-import { SIZES } from '../../scripts/heading-key.js';
 import {
   headingInfo, currentStyle, setHeadingSize, repairAll, removeOrphan,
 } from './heading-styler.js';
+import { SIZES } from '../../../scripts/heading-key.js';
 
 const POLL_MS = 1000;
 const TIMEOUT_MS = 900;

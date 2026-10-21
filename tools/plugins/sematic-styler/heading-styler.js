@@ -1,6 +1,6 @@
 import {
   headingKey, parseSizeClass, matchHeadings, KEY_RE,
-} from '../../scripts/heading-key.js';
+} from '../../../scripts/heading-key.js';
 
 const HEADINGS = 'h1,h2,h3,h4,h5,h6,p';
 const POSITIONAL_CLASS_RE = /^(h[1-6]|p)-(\d+)-(?:size-(?:xxl|xl|l|m|s|xs)|as-(?:h[1-6]|p))$/;
