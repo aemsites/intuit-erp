@@ -13,6 +13,8 @@
  *               "download" promos, e.g. fragments/right-rail)
  *   .ies        One Intuit icon tiles, 1-up / 2-up / 4-up by breakpoint
  *   .ies-product  image + eyebrow + title + body, 1-up / 2-up by breakpoint
+ *   .tinted.stat  tinted cards; an optional first row with a single heading
+ *               cell becomes the section title, a card without an image a stat
  * .carousel/.boxed combine with the .accent/.dark tone classes (section
  * background) independently — see cards.css.
  *
@@ -215,8 +217,24 @@ function attachFocusCursor(block) {
   });
 }
 
+// A leading row whose only cell holds just a heading becomes an h2 title.
+function takeTitleRow(block) {
+  const row = block.firstElementChild;
+  const cells = row ? [...row.children] : [];
+  if (cells.length !== 1) return null;
+  const nodes = [...cells[0].children];
+  if (nodes.length !== 1 || !/^H[1-6]$/.test(nodes[0].tagName)) return null;
+  const title = document.createElement('h2');
+  title.className = 'cards-title';
+  title.innerHTML = nodes[0].innerHTML;
+  row.remove();
+  return title;
+}
+
 export default function decorate(block) {
   const isIcons = block.classList.contains('icons') || block.classList.contains('ies');
+  const isStat = block.classList.contains('tinted') && block.classList.contains('stat');
+  const sectionTitle = isStat ? takeTitleRow(block) : null;
 
   [...block.children].forEach((row) => {
     [...row.children].forEach((cell) => {
@@ -296,6 +314,9 @@ export default function decorate(block) {
     && !block.classList.contains('icons')) {
     attachFocusCursor(block);
   }
+  // the title sits outside the grid so it never becomes a grid item
+  if (sectionTitle) block.before(sectionTitle);
+
   // Trail: rw_cards_container|carousel|rw_card_N (the `carousel` middle only exists
   // for scroll variants; static grids are rw_cards_container|rw_card_N).
   return trackAs('rw_cards_container', block, {

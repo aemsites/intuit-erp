@@ -41,6 +41,8 @@
  *      or bare URL/id, detected by pattern rather than position. Falls back
  *      to the Rhodes Companies story clip when no video source is authored
  *      at all.
+ *   .video.ies — IES retheme; an optional first row with a single heading
+ *   cell becomes the section title.
  *
  * Variant .video-split (professional-services) — copy left, video right on a
  * tinted band. One row, 3 cells:
@@ -787,8 +789,10 @@ export default function decorate(block) {
 
   if (block.classList.contains('video')) {
     const rows = [...block.querySelectorAll(':scope > div')];
+    // .video.ies: an optional first row with a single heading cell becomes the section title
+    const titleRow = block.classList.contains('ies') ? takeHeadingRow(rows) : null;
     if (!rows.length) return;
-    const heading = extractHeading(rows[0].children[1]);
+    const heading = titleRow || extractHeading(rows[0].children[1]);
     const section = buildVideoSection(rows);
     block.replaceChildren(...(heading ? [heading] : []), section);
     track();
