@@ -10,6 +10,7 @@ const DASHBOARD_LOTTIE_ROOT_MARGIN = '500px 0px';
 const DASHBOARD_LOTTIE_FALLBACK_DELAY = 3000;
 const DASHBOARD_LOTTIE_DESKTOP_THRESHOLD = 0.1;
 const DASHBOARD_LOTTIE_MOBILE_THRESHOLD = 0.8;
+const TEASER_SECONDS = 5;
 const YOUTUBE_URL_RE = /(?:youtube(?:-nocookie)?\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/;
 const VIMEO_URL_RE = /vimeo\.com\/(?:video\/)?(\d+)/;
 
@@ -91,6 +92,63 @@ function buildVideoLink(a, info) {
   wrap.className = 'hero-video-link-wrapper';
   wrap.append(btn);
   return wrap;
+}
+
+/**
+ * Builds the .ies.video media column: a muted teaser that autoplays for
+ * TEASER_SECONDS, then pauses behind a play button. Clicking it restarts the
+ * video with sound and native controls.
+ * @param {string[]} srcs authored .mp4 URLs: desktop (1920x1080), optional
+ *   tablet/mobile (1600x900)
+ * @returns {HTMLDivElement}
+ */
+function buildTeaserVideo(srcs) {
+  const media = document.createElement('div');
+  media.className = 'hero-media hero-media-video';
+
+  const video = document.createElement('video');
+  const compact = window.matchMedia('(width < 1024px)').matches;
+  video.src = (compact && srcs[1]) || srcs[0];
+  video.muted = true;
+  video.playsInline = true;
+  video.preload = 'metadata';
+  video.setAttribute('aria-label', 'Product video');
+
+  const play = document.createElement('button');
+  play.type = 'button';
+  play.className = 'hero-video-play';
+  play.setAttribute('aria-label', 'Play video');
+  play.hidden = true;
+
+  let teasing = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const showPlay = () => { play.hidden = false; };
+
+  video.addEventListener('timeupdate', () => {
+    if (teasing && video.currentTime >= TEASER_SECONDS) {
+      teasing = false;
+      video.pause();
+      showPlay();
+    }
+  });
+  video.addEventListener('ended', showPlay);
+  play.addEventListener('click', () => {
+    teasing = false;
+    play.hidden = true;
+    video.currentTime = 0;
+    video.muted = false;
+    video.controls = true;
+    video.play().catch(showPlay);
+  });
+
+  if (teasing) {
+    video.autoplay = true;
+    video.play().catch(() => { teasing = false; showPlay(); });
+  } else {
+    showPlay();
+  }
+
+  media.append(video, play);
+  return media;
 }
 
 async function leadCard(path) {
@@ -241,6 +299,8 @@ export default async function decorate(block) {
   const isCentered = block.classList.contains('centered');
   const isGradient = block.classList.contains('gradient');
   const isVideoLink = block.classList.contains('video-link');
+  // .ies.video: the authored .mp4 link(s) become a muted teaser in the media column
+  const isIesVideo = block.classList.contains('ies') && block.classList.contains('video');
   const rows = [...block.children];
 
   if (isGradient) {
@@ -285,10 +345,12 @@ export default async function decorate(block) {
   });
 
   let videoSrc = null;
+  const videoSrcs = [];
   ctaParas.forEach((p) => {
     const a = [...p.querySelectorAll('a')].find((x) => /\.mp4(?:$|\?)/i.test(x.getAttribute('href') || ''));
     if (!a) return;
-    videoSrc = a.getAttribute('href');
+    videoSrc = videoSrc || a.getAttribute('href');
+    videoSrcs.push(a.getAttribute('href'));
     a.remove();
     if (!p.textContent.trim() && !p.querySelector('a, img, picture')) p.remove();
   });
@@ -354,6 +416,8 @@ export default async function decorate(block) {
     lockup.className = 'hero-lockup';
     lockup.append(mediaEl);
     copy.prepend(lockup);
+  } else if (isIesVideo && videoSrc) {
+    grid.append(buildTeaserVideo(videoSrcs));
   } else if (mediaEl) {
     const media = document.createElement('div');
     media.className = 'hero-media';
@@ -364,7 +428,7 @@ export default async function decorate(block) {
 
   block.replaceChildren(grid);
 
-  if (videoSrc) {
+  if (videoSrc && !isIesVideo) {
     const figure = document.createElement('div');
     figure.className = 'hero-video';
 
