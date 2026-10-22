@@ -132,8 +132,12 @@ export function buildCardFlag(title) {
 }
 
 export function buildPriceSection(product) {
-  const final = formatPrice(product?.price);
-  const regular = formatPrice(product?.strikethroughprice);
+  // Per-product JSON nests both values under `price` (`{currency, regular,
+  // final}`) rather than carrying them as flat top-level fields — see
+  // scripts/product-bus.js's fetch contract / PRODUCT-BUS-VS-STRUCTURED-
+  // CONTENT.md for the real payload shape.
+  const final = formatPrice(product?.price?.final);
+  const regular = formatPrice(product?.price?.regular);
   const showStrikethrough = Boolean(regular) && Boolean(final) && regular !== final;
 
   const section = document.createElement('div');
@@ -207,10 +211,13 @@ function renderCardBody(plan, ai) {
   body.className = 'pc-card';
   body.dataset.sku = plan.sku || '';
 
-  if (product?.image) {
+  // Per-product JSON carries images as an array of {url}, not a flat
+  // `image` string — use the first image, if any.
+  const imageUrl = product?.images?.[0]?.url;
+  if (imageUrl) {
     const img = document.createElement('img');
     img.className = 'pc-image';
-    img.src = product.image;
+    img.src = imageUrl;
     img.alt = '';
     img.loading = 'lazy';
     body.append(img);
@@ -224,9 +231,11 @@ function renderCardBody(plan, ai) {
     body.append(badge);
   }
 
+  // Per-product JSON's display name is `name`, not `title` (the older flat
+  // index-row field name).
   const name = document.createElement('h3');
   name.className = 'pc-name';
-  name.textContent = product?.title || plan.sku || '';
+  name.textContent = product?.name || plan.sku || '';
 
   // titleBadge is a flex SIBLING of the name inside one row container, never a
   // child of it — so `title-badge-own-row` can restack it with CSS alone
