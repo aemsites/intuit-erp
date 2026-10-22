@@ -152,7 +152,7 @@
   color: var(--feature-carousel-ink);
 }
 
-/* media tile: image under the animation; the image hides once the animation is ready */
+/* media tile: image under the animation; the animation fades in over it, then the image hides */
 .feature-carousel .feature-carousel-media {
   position: relative;
   aspect-ratio: 1;
@@ -170,11 +170,24 @@
 }
 
 .feature-carousel .feature-carousel-media.has-lottie picture,
-.feature-carousel .feature-carousel-media.has-lottie > img { visibility: hidden; }
+.feature-carousel .feature-carousel-media.has-lottie > img {
+  visibility: hidden;
+  transition: visibility 0s 0.4s;
+}
 
+/* an animation off show is invisible, so it isn't painted */
 .feature-carousel .feature-carousel-lottie {
   position: absolute;
   inset: 0;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.4s ease, visibility 0s 0.4s;
+}
+
+.feature-carousel .feature-carousel-media.has-lottie .feature-carousel-lottie {
+  visibility: visible;
+  opacity: 1;
+  transition: opacity 0.4s ease;
 }
 
 /* dots: the active one stretches into a pill that fills over the slide's duration */
@@ -231,7 +244,11 @@
 
 @media (prefers-reduced-motion: reduce) {
   .feature-carousel .feature-carousel-track,
-  .feature-carousel .feature-carousel-dot { transition: none; }
+  .feature-carousel .feature-carousel-dot,
+  .feature-carousel .feature-carousel-lottie,
+  .feature-carousel .feature-carousel-media.has-lottie .feature-carousel-lottie,
+  .feature-carousel .feature-carousel-media picture,
+  .feature-carousel .feature-carousel-media > img { transition: none; }
 }
 
 /* tablet: wider slides, 14px eyebrow, 30px media radius */

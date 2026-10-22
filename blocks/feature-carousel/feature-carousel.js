@@ -10,8 +10,10 @@
  *     1. content — an italic-only eyebrow, a heading (title), body
  *        paragraph(s), a bold link (button), then an optional stat paragraph
  *        and an optional plain link
- *     2. media — a link to a Lottie .json and/or an image; the image shows
- *        while the animation loads, if it fails, and for reduced motion
+ *     2. media — a link to a Lottie .json and/or an image; the image stands
+ *        in for the animation on slides that aren't on show, while it loads,
+ *        if it fails, and for reduced motion. Without an image, those slides
+ *        hold a middle frame of the animation instead
  *     3. color — the slide's color: blueberry, white, superblue or bronze
  *
  * Variants:
@@ -27,6 +29,8 @@ import { trackAs } from '../../scripts/tracking.js';
 
 const SLIDE_DURATION = 10000; // ms
 const SWIPE_THRESHOLD = 40; // px
+const TRACK_SETTLE = 700; // ms, a little over the track's slide transition
+const WARM_MARGIN = '600px'; // how far ahead of the viewport the first animation is built
 const LOTTIE_PLAYER_URL = 'https://cdn.jsdelivr.net/npm/lottie-web@5.12.2/build/player/lottie_light.min.js/+esm';
 const LOTTIE_RE = /\.json(?:$|\?)/i;
 
@@ -117,6 +121,7 @@ export default async function decorate(block) {
     row.setAttribute('aria-label', `${i + 1} of ${rows.length}`);
     if (copyCell) decorateCopy(copyCell);
     const lottieSrc = mediaCell ? decorateMedia(mediaCell) : '';
+    const poster = !!mediaCell?.querySelector('picture, img');
     track.append(row);
 
     const dot = document.createElement('button');
@@ -127,7 +132,7 @@ export default async function decorate(block) {
     dots.append(dot);
 
     return {
-      row, media: mediaCell, dot, lottieSrc, animation: null, loading: null,
+      row, media: mediaCell, dot, lottieSrc, poster, animation: null, ready: null,
     };
   });
 
@@ -156,64 +161,126 @@ export default async function decorate(block) {
   let index = 0;
   let current = slides[0].row; // the track element on show: a slide or an edge copy
 
-  // Loads a slide's animation once; resolves to the Lottie instance or null.
-  const loadAnimation = (slide) => {
+  // Lottie: each slide's animation is built once, while the browser is idle,
+  // and then kept. Only the slide on show plays; the rest are paused behind
+  // their image or, with no image to stand in, held on a middle frame.
+  let live = null; // the slide whose animation is on show
+  let activation = 0; // bumped by every goTo so stale async steps bail out
+
+  const whenIdle = (fn) => (window.requestIdleCallback
+    ? window.requestIdleCallback(fn, { timeout: 2000 })
+    : setTimeout(fn, 200));
+
+  const middleFrame = (animation) => Math.floor(animation.totalFrames / 2);
+
+  // fades a media tile's animation in over its image, or back out
+  const show = (media) => {
+    if (media.classList.contains('has-lottie')) return;
+    // eslint-disable-next-line no-void -- force a reflow so the fade runs
+    void media.offsetWidth;
+    media.classList.add('has-lottie');
+  };
+  const hide = (media) => media.classList.remove('has-lottie');
+
+  const createAnimation = async (media, animationData) => {
+    const lottie = await loadPlayer();
+    const holder = document.createElement('div');
+    holder.className = 'feature-carousel-lottie';
+    holder.setAttribute('aria-hidden', 'true');
+    media.append(holder);
+    const animation = lottie.loadAnimation({
+      container: holder, renderer: 'svg', loop: false, autoplay: false, animationData,
+    });
+    // draw only the file's own frames, not one per screen refresh
+    animation.setSubframe(false);
+    if (!animation.isLoaded) {
+      await new Promise((resolve) => {
+        animation.addEventListener('DOMLoaded', resolve, { once: true });
+      });
+    }
+    return animation;
+  };
+
+  // resolves to the slide's animation, building it the first time, or null
+  const ensureAnimation = (slide) => {
     if (!slide.lottieSrc || !slide.media) return Promise.resolve(null);
-    slide.loading ??= (async () => {
+    slide.ready ??= (async () => {
       try {
-        const [lottie, res] = await Promise.all([loadPlayer(), fetch(slide.lottieSrc)]);
+        const res = await fetch(slide.lottieSrc);
         if (!res.ok) return null;
         const animationData = await res.json();
-        const holder = document.createElement('div');
-        holder.className = 'feature-carousel-lottie';
-        holder.setAttribute('aria-hidden', 'true');
-        slide.media.append(holder);
-        const animation = lottie.loadAnimation({
-          container: holder, renderer: 'svg', loop: false, autoplay: false, animationData,
-        });
-        if (!animation.isLoaded) {
-          await new Promise((resolve) => { animation.addEventListener('DOMLoaded', resolve); });
-        }
-        slide.media.classList.add('has-lottie');
+        const animation = await createAnimation(slide.media, animationData);
         slide.animation = animation;
-        // the edge copy shows the first frame
-        if (slide.copyMedia) {
-          const copyHolder = holder.cloneNode(false);
-          slide.copyMedia.append(copyHolder);
-          const still = lottie.loadAnimation({
-            container: copyHolder, renderer: 'svg', loop: false, autoplay: false, animationData,
-          });
-          const showStill = () => {
-            still.goToAndStop(0, true);
-            slide.copyMedia.classList.add('has-lottie');
-          };
-          if (still.isLoaded) showStill();
-          else still.addEventListener('DOMLoaded', showStill);
+        if (!slide.poster) {
+          // nothing to stand in for it: hold a middle frame, and give the
+          // edge copy a still of its own
+          animation.goToAndStop(middleFrame(animation), true);
+          show(slide.media);
+          if (slide.copyMedia) {
+            const still = await createAnimation(slide.copyMedia, animationData);
+            still.goToAndStop(middleFrame(still), true);
+            show(slide.copyMedia);
+          }
         }
         return animation;
       } catch {
         return null; // the image (if any) stays visible
       }
     })();
-    return slide.loading;
+    return slide.ready;
   };
+
+  const prepare = (slide) => whenIdle(() => ensureAnimation(slide));
+
+  // takes a slide off show: its image (or a middle frame) stands in again
+  const park = (slide) => {
+    if (live === slide) live = null;
+    const { animation } = slide;
+    if (!animation) return;
+    if (slide.poster) {
+      animation.pause();
+      hide(slide.media);
+    } else {
+      animation.goToAndStop(middleFrame(animation), true);
+    }
+  };
+
+  // resolves once the track has finished sliding
+  const settled = () => new Promise((resolve) => {
+    let timer;
+    const onEnd = (e) => {
+      if (e.target !== track) return;
+      clearTimeout(timer);
+      track.removeEventListener('transitionend', onEnd);
+      resolve();
+    };
+    timer = setTimeout(() => {
+      track.removeEventListener('transitionend', onEnd);
+      resolve();
+    }, TRACK_SETTLE);
+    track.addEventListener('transitionend', onEnd);
+  });
 
   const durationFor = (slide) => {
     const seconds = useLottieLength ? slide.animation?.getDuration() : 0;
     return seconds ? seconds * 1000 : SLIDE_DURATION;
   };
 
-  // centre `current` on the block (the viewport bleeds past it to show neighbours)
+  // centre `current` on the block (the viewport bleeds past it to show
+  // neighbours); returns whether the track moves
   const center = (animate = true) => {
     const blockBox = block.getBoundingClientRect();
     const mid = blockBox.left + blockBox.width / 2 - viewport.getBoundingClientRect().left;
+    const transform = `translateX(${mid - (current.offsetLeft + current.offsetWidth / 2)}px)`;
+    const moved = track.style.transform !== transform;
     if (!animate) track.style.transition = 'none';
-    track.style.transform = `translateX(${mid - (current.offsetLeft + current.offsetWidth / 2)}px)`;
+    track.style.transform = transform;
     if (!animate) {
       // eslint-disable-next-line no-void -- apply the jump before transitions come back
       void track.offsetWidth;
       track.style.transition = '';
     }
+    return moved;
   };
 
   // after sliding onto an edge copy, jump to the real slide it stands for
@@ -229,10 +296,11 @@ export default async function decorate(block) {
   const animationPaused = () => pauses.has('offscreen') || pauses.has('hidden');
 
   const goTo = async (next) => {
-    const prev = slides[index];
-    prev.animation?.stop();
+    activation += 1;
+    const token = activation;
     index = (next + slides.length) % slides.length;
     const slide = slides[index];
+    slides.forEach((s) => { if (s !== slide) park(s); });
     if (looped && next >= slides.length) current = track.lastElementChild;
     else if (looped && next < 0) current = track.firstElementChild;
     else current = slide.row;
@@ -245,7 +313,7 @@ export default async function decorate(block) {
       if (active) s.dot.setAttribute('aria-current', 'true');
       else s.dot.removeAttribute('aria-current');
     });
-    center();
+    const moved = center();
 
     // restart the progress fill; its animationend advances the carousel
     slide.dot.style.setProperty('--feature-carousel-duration', `${durationFor(slide)}ms`);
@@ -254,23 +322,33 @@ export default async function decorate(block) {
     void slide.dot.offsetWidth;
     slide.dot.classList.add('is-active');
 
-    const animation = await loadAnimation(slide);
-    if (!animation || slide !== slides[index]) return;
+    // with reduced motion the image is enough
+    if (reduceMotion && slide.poster) return;
+    // keep the slide transition smooth: don't build an animation while the
+    // track moves, and when arriving on an edge copy, fade in on the real
+    // slide the track jumps back to
+    if (moved && (!slide.ready || current.classList.contains('is-clone'))) {
+      await settled();
+      if (token !== activation) return;
+    }
+    const animation = await ensureAnimation(slide);
+    if (!animation || token !== activation) return;
     if (useLottieLength) {
       slide.dot.style.setProperty('--feature-carousel-duration', `${durationFor(slide)}ms`);
     }
-    if (reduceMotion || animationPaused()) animation.goToAndStop(0, true);
+    if (reduceMotion) animation.goToAndStop(middleFrame(animation), true);
+    else if (animationPaused()) animation.goToAndStop(0, true);
     else animation.goToAndPlay(0, true);
-    // warm the next slide's animation so it is ready when it shows
-    loadAnimation(slides[(index + 1) % slides.length]);
+    show(slide.media);
+    live = slide;
+    if (!reduceMotion) prepare(slides[(index + 1) % slides.length]);
   };
 
   const setPaused = (reason, on) => {
     if (on) pauses.add(reason); else pauses.delete(reason);
     block.classList.toggle('is-paused', pauses.size > 0);
-    const { animation } = slides[index];
-    if (!animation || reduceMotion) return;
-    if (animationPaused()) animation.pause(); else animation.play();
+    if (!live || reduceMotion) return;
+    if (animationPaused()) live.animation.pause(); else live.animation.play();
   };
   if (reduceMotion) block.classList.add('no-autoplay');
 
@@ -307,6 +385,15 @@ export default async function decorate(block) {
   // start once the block is on screen; pause while it is off screen
   setPaused('offscreen', true);
   if (window.IntersectionObserver) {
+    // build the first animation shortly before the block scrolls into view
+    if (!(reduceMotion && slides[0].poster)) {
+      const warm = new IntersectionObserver(([entry]) => {
+        if (!entry.isIntersecting) return;
+        warm.disconnect();
+        prepare(slides[0]);
+      }, { rootMargin: `${WARM_MARGIN} 0px` });
+      warm.observe(block);
+    }
     let started = false;
     new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting && !started) {
