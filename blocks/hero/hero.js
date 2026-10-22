@@ -94,7 +94,6 @@ function buildVideoLink(a, info) {
   return wrap;
 }
 
-/** Muted teaser that pauses after TEASER_SECONDS behind a play button. */
 function buildTeaserVideo(srcs, posters) {
   const media = document.createElement('div');
   media.className = 'hero-media hero-media-video';

@@ -918,7 +918,6 @@ body.author-guide .hero .hero-copy .hero-lede {
   .hero.video-link .hero-video-link::before { grid-row: span 2; }
 }
 
-/* .ies.video: 16:9 muted teaser, 24px radius on desktop, 20px below 1024 */
 .hero.ies.video .hero-grid {
   gap: var(--space-2xl);
   padding-top: var(--space-2xl);
