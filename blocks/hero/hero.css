@@ -921,9 +921,9 @@ body.author-guide .hero .hero-copy .hero-lede {
 /* .ies.video: Blueberry hero with a 16:9 muted teaser (autoplays 5s, then play button).
    Desktop 600 | 640x360 media at 24px radius; stacked below 1024 at 20px radius. */
 .hero.ies.video .hero-grid {
-  gap: 40px;
-  padding-top: 40px;
-  padding-bottom: 40px;
+  gap: var(--space-2xl);
+  padding-top: var(--space-2xl);
+  padding-bottom: var(--space-2xl);
 }
 
 .hero.ies.video .hero-copy .hero-lede { margin-bottom: var(--space-l); }
@@ -965,7 +965,7 @@ body.author-guide .hero .hero-copy .hero-lede {
   content: "";
   width: 72px;
   height: 72px;
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   background:
     center / 28px no-repeat url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%230d0031" d="M8 5.5v13a1 1 0 0 0 1.5.86l11-6.5a1 1 0 0 0 0-1.72l-11-6.5A1 1 0 0 0 8 5.5Z"/></svg>'),
     #fff;
@@ -977,7 +977,7 @@ body.author-guide .hero .hero-copy .hero-lede {
 
 .hero.ies.video .hero-video-play:focus-visible {
   outline: 2px solid #fff;
-  outline-offset: -6px;
+  outline-offset: calc(-1 * var(--space-2xs));
 }
 
 @media (width >= 768px) {
@@ -1003,8 +1003,8 @@ body.author-guide .hero .hero-copy .hero-lede {
   .hero.ies.video .hero-grid {
     grid-template-columns: minmax(0, 1fr) minmax(0, 640px);
     gap: var(--space-5xl);
-    padding-top: 80px;
-    padding-bottom: 80px;
+    padding-top: var(--space-5xl);
+    padding-bottom: var(--space-5xl);
   }
 
   .hero.ies.video .hero-copy { max-width: 600px; }
