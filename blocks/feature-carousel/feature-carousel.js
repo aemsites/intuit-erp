@@ -27,7 +27,7 @@
 import { toClassName } from '../../scripts/aem.js';
 import { trackAs } from '../../scripts/tracking.js';
 
-const SLIDE_DURATION = 10000; // ms
+const SLIDE_DURATION = 12000; // ms
 const SWIPE_THRESHOLD = 40; // px
 const TRACK_SETTLE = 700; // ms, a little over the track's slide transition
 const WARM_MARGIN = '600px'; // how far ahead of the viewport the first animation is built
