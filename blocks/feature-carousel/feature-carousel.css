@@ -313,7 +313,7 @@
   .feature-carousel .feature-carousel-dots { margin-top: var(--space-2xl); }
 }
 
-/* wide desktop: the slide grows up to 1360px and its content scales with it, keeping the 1140px layout's proportions */
+/* wide desktop: the slide grows up to 1360px; media, padding and spacing scale with it, text keeps its sizes */
 @media (width >= 1440px) {
   .feature-carousel {
     --feature-carousel-slide-width: min(1360px, 100vw - 2 * (var(--feature-carousel-gap) + var(--feature-carousel-peek)));
@@ -329,33 +329,4 @@
   }
 
   .feature-carousel .feature-carousel-media { border-radius: calc(30 * var(--feature-carousel-unit)); }
-  .feature-carousel .feature-carousel-copy { padding-block: calc(32 * var(--feature-carousel-unit)); }
-
-  .feature-carousel .feature-carousel-eyebrow {
-    margin-bottom: calc(16 * var(--feature-carousel-unit));
-    font-size: calc(14 * var(--feature-carousel-unit));
-    letter-spacing: calc(1.82 * var(--feature-carousel-unit));
-  }
-
-  .feature-carousel .feature-carousel-heading {
-    margin-bottom: calc(20 * var(--feature-carousel-unit));
-    font-size: calc(40 * var(--feature-carousel-unit));
-  }
-
-  .feature-carousel .feature-carousel-body { font-size: calc(16 * var(--feature-carousel-unit)); }
-  .feature-carousel .feature-carousel-copy .button-wrapper { margin-top: calc(36 * var(--feature-carousel-unit)); }
-
-  .feature-carousel .feature-carousel-copy .button-wrapper a.button {
-    min-height: calc(48 * var(--feature-carousel-unit));
-    padding: 0 calc(42 * var(--feature-carousel-unit));
-    font-size: calc(16 * var(--feature-carousel-unit));
-  }
-
-  .feature-carousel .feature-carousel-stat {
-    margin-top: calc(32 * var(--feature-carousel-unit));
-    font-size: calc(24 * var(--feature-carousel-unit));
-  }
-
-  .feature-carousel .feature-carousel-link { margin-top: calc(12 * var(--feature-carousel-unit)); }
-  .feature-carousel .feature-carousel-link a { font-size: calc(16 * var(--feature-carousel-unit)); }
 }
