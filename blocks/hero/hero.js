@@ -95,13 +95,15 @@ function buildVideoLink(a, info) {
 }
 
 /** Muted teaser that pauses after TEASER_SECONDS behind a play button. */
-function buildTeaserVideo(srcs) {
+function buildTeaserVideo(srcs, posters) {
   const media = document.createElement('div');
   media.className = 'hero-media hero-media-video';
 
   const video = document.createElement('video');
   const compact = window.matchMedia('(width < 1024px)').matches;
   video.src = (compact && srcs[1]) || srcs[0];
+  const poster = (compact && posters[1]) || posters[0];
+  if (poster) video.poster = poster;
   video.muted = true;
   video.playsInline = true;
   video.preload = 'metadata';
@@ -338,12 +340,22 @@ export default async function decorate(block) {
 
   let videoSrc = null;
   const videoSrcs = [];
+  const posterSrcs = [];
   ctaParas.forEach((p) => {
-    const a = [...p.querySelectorAll('a')].find((x) => /\.mp4(?:$|\?)/i.test(x.getAttribute('href') || ''));
-    if (!a) return;
-    videoSrc = videoSrc || a.getAttribute('href');
-    videoSrcs.push(a.getAttribute('href'));
-    a.remove();
+    const links = [...p.querySelectorAll('a')];
+    const a = links.find((x) => /\.mp4(?:$|\?)/i.test(x.getAttribute('href') || ''));
+    const poster = isIesVideo
+      && links.find((x) => /\.(?:jpe?g|png|webp)(?:$|\?)/i.test(x.getAttribute('href') || ''));
+    if (!a && !poster) return;
+    if (a) {
+      videoSrc = videoSrc || a.getAttribute('href');
+      videoSrcs.push(a.getAttribute('href'));
+      a.remove();
+    }
+    if (poster) {
+      posterSrcs.push(poster.getAttribute('href'));
+      poster.remove();
+    }
     if (!p.textContent.trim() && !p.querySelector('a, img, picture')) p.remove();
   });
 
@@ -409,7 +421,7 @@ export default async function decorate(block) {
     lockup.append(mediaEl);
     copy.prepend(lockup);
   } else if (isIesVideo && videoSrc) {
-    grid.append(buildTeaserVideo(videoSrcs));
+    grid.append(buildTeaserVideo(videoSrcs, posterSrcs));
   } else if (mediaEl) {
     const media = document.createElement('div');
     media.className = 'hero-media';
