@@ -91,8 +91,6 @@ export default function decorate(block) {
   play.setAttribute('aria-hidden', 'true');
   preview.append(play);
 
-  console.log(block);
-
   const open = block.classList.contains('inline')
     ? () => playInline(preview, info.embedUrl, alt)
     : () => openVideoModal(info.embedUrl, alt);

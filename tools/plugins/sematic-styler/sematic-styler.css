@@ -333,7 +333,7 @@
 
 .tree-item-controls select {
   min-width: 104px;
-  min-height: 32px;
+  min-height: 16px;
   padding: 4px 24px 4px 8px;
   border: 1px solid var(--ds-border-strong);
   border-radius: var(--s2-corner-radius-400);

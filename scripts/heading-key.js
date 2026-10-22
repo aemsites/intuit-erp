@@ -1,7 +1,7 @@
-// Stable per-heading key: hash of the structural path inside its section, shared by
-// the DA plugin and the page.
-// decorateSections wraps blocks in classless divs; `<block>-wrapper` is only added later
-// by decorateBlocks.
+// Stable per-heading key: hash of the structural path inside its section,
+// shared by the DA plugin and the page.
+// decorateSections wraps blocks in classless divs;
+// `<block>-wrapper` is only added later by decorateBlocks.
 const isWrapper = (n) => n.classList.contains('default-content-wrapper')
   || [...n.classList].some((c) => c.endsWith('-wrapper'))
   || (n.tagName === 'DIV' && !n.className && n.parentElement?.matches('main > div'));
@@ -22,16 +22,6 @@ const sameTagIndex = (el) => {
   return logicalChildren(parent).filter((c) => c.tagName === el.tagName).indexOf(el) + 1;
 };
 
-/** FNV-1a 32-bit as 6 base36 chars. */
-export function hash(s) {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < s.length; i += 1) {
-    h ^= s.charCodeAt(i);
-    h = Math.imul(h, 0x01000193);
-  }
-  return (h >>> 0).toString(36).padStart(6, '0').slice(0, 6);
-}
-
 export function structurePath(el, section) {
   const parts = [];
   let node = el;
@@ -44,12 +34,35 @@ export function structurePath(el, section) {
 
 const HEADINGS = 'h1,h2,h3,h4,h5,h6,p';
 
-export const fingerprint = (el) => hash(el.textContent.trim().toLowerCase().replace(/\s+/g, ' '));
+const normalizedText = (el) => el.textContent.trim().toLowerCase().replace(/\s+/g, ' ');
+const encodeKeyPart = (value) => encodeURIComponent(value).replace(/~/g, '%7E');
 
-/** `level-structureHash-textHash`; either hash alone still finds an edited or moved heading. */
-export const headingKey = (el, section) => `${el.tagName.toLowerCase()}-${hash(structurePath(el, section))}-${fingerprint(el)}`;
+/** `level~encoded-structure~encoded-text`; either field still finds an edited or moved heading. */
+export const headingKey = (el, section) => `${el.tagName.toLowerCase()}~${encodeKeyPart(structurePath(el, section))}~${encodeKeyPart(normalizedText(el))}`;
 
-export const KEY_RE = /^(h[1-6]|p)-[a-z0-9]{6}-[a-z0-9]{6}$/;
+const LEGACY_KEY_RE = /^(h[1-6]|p)-[a-z0-9]{6}-[a-z0-9]{6}$/;
+export const KEY_RE = /^(?:(?:h[1-6]|p)-[a-z0-9]{6}-[a-z0-9]{6}|(?:h[1-6]|p)~[^~]*~[^~]*)$/;
+
+export const parseHeadingKey = (key) => {
+  if (LEGACY_KEY_RE.test(key)) {
+    const [level, structure, text] = key.split('-');
+    return {
+      level, structure, text, legacy: true,
+    };
+  }
+  const match = /^(h[1-6]|p)~([^~]*)~([^~]*)$/.exec(key);
+  if (!match) return null;
+  try {
+    return {
+      level: match[1],
+      structure: decodeURIComponent(match[2]),
+      text: decodeURIComponent(match[3]),
+      legacy: false,
+    };
+  } catch {
+    return null;
+  }
+};
 
 export const SIZES = ['xs', 's', 'm', 'l', 'xl', 'xxl'];
 // Each target uses its own tag in the applied size class.
@@ -85,12 +98,15 @@ export function matchHeadings(section, entries) {
     }
   });
   // Text first: an unchanged text is stronger evidence than an unchanged position.
-  [2, 1].forEach((part) => {
+  ['text', 'structure'].forEach((part) => {
     [...pending].forEach((h) => {
-      const [level, ...hashes] = h.key.split('-');
+      const headingParts = parseHeadingKey(h.key);
+      if (!headingParts || headingParts.legacy) return;
       const entry = [...left.values()].find((e) => {
-        const [l, ...hs] = e.key.split('-');
-        return l === level && hs[part - 1] === hashes[part - 1];
+        const entryParts = parseHeadingKey(e.key);
+        return entryParts && !entryParts.legacy
+          && entryParts.level === headingParts.level
+          && entryParts[part] === headingParts[part];
       });
       if (!entry) return;
       matched.push({ ...h, entry });

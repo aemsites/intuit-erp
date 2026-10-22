@@ -1,5 +1,5 @@
 import {
-  headingKey, parseSizeClass, matchHeadings, KEY_RE,
+  headingKey, parseHeadingKey, parseSizeClass, matchHeadings, KEY_RE,
 } from '../../../scripts/heading-key.js';
 
 const HEADINGS = 'h1,h2,h3,h4,h5,h6,p';
@@ -194,18 +194,19 @@ function removePositionStyle(container, tag, index) {
 function removeRetaggedStyles(section) {
   const entries = entriesOf(section);
   const headings = [...section.querySelectorAll(HEADINGS)];
-  const current = headings.map((el) => ({ el, key: headingKey(el, section).split('-') }));
-  const oldKeys = entries.map(({ key }) => key.split('-'));
+  const current = headings.map((el) => ({ el, key: parseHeadingKey(headingKey(el, section)) }));
+  const oldKeys = entries.map(({ key }) => parseHeadingKey(key));
   const removed = [];
 
   current.forEach(({ el, key }) => {
-    const sameText = (parts) => parts[2] === key[2];
-    const oldLevels = oldKeys.filter((parts) => parts[0] !== key[0] && sameText(parts));
-    const newMatches = current.filter((candidate) => candidate.key[0] === key[0]
+    const sameText = (parts) => parts && !parts.legacy && parts.text === key.text;
+    const oldLevels = oldKeys.filter((parts) => parts && !parts.legacy
+      && parts.level !== key.level && sameText(parts));
+    const newMatches = current.filter((candidate) => candidate.key.level === key.level
       && sameText(candidate.key));
     if (oldLevels.length !== 1 || newMatches.length !== 1) return;
 
-    const oldTag = oldLevels[0][0];
+    const oldTag = oldLevels[0].level;
     const sectionElements = [...section.querySelectorAll(HEADINGS)]
       .filter((heading) => !heading.closest('.section-metadata'));
     const sectionIndex = positionalIndexBefore(el, oldTag, sectionElements);
@@ -286,8 +287,8 @@ export async function setHeadingSize(sdk, { sectionIndex, key }, size) {
 }
 
 /** Re-keys edited or moved headings, saves if changed, returns orphaned entries. */
-export async function repairAll(sdk) {
-  const doc = await loadDoc(sdk);
+export async function repairAll(sdk, sourceDoc) {
+  const doc = sourceDoc || await loadDoc(sdk);
   const total = { rekeyed: [], orphaned: [], cleaned: [] };
   sectionsOf(doc).forEach((section, i) => {
     total.cleaned.push(...removeRetaggedStyles(section)
