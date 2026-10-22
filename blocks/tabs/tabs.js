@@ -612,6 +612,18 @@ function buildVpPanel(item, index, { multiMedia = false } = {}) {
   return panel;
 }
 
+// bold the name in a "Name, Role" attribution (.questions, .blueberry)
+function boldCiteName(panel) {
+  const cite = panel.querySelector('.it-quote cite');
+  const comma = cite ? cite.textContent.indexOf(',') : -1;
+  if (comma > 0) {
+    const name = document.createElement('strong');
+    name.textContent = cite.textContent.slice(0, comma + 1);
+    const role = cite.textContent.slice(comma + 1);
+    cite.replaceChildren(name, role);
+  }
+}
+
 // .questions: a lone picture is the photo; with two, the first is the logo
 const QUESTION_TILE_COLORS = ['blue', 'navy', 'brown', 'pink', 'light-blue', 'gray', 'wintermint', 'white'];
 
@@ -629,15 +641,7 @@ function decorateQuestionTiles(panel, item) {
     if (el && QUESTION_TILE_COLORS.includes(color)) el.classList.add(`tile-${color}`);
   });
 
-  // bold the name in a "Name, Role" attribution
-  const cite = panel.querySelector('.it-quote cite');
-  const comma = cite ? cite.textContent.indexOf(',') : -1;
-  if (comma > 0) {
-    const name = document.createElement('strong');
-    name.textContent = cite.textContent.slice(0, comma + 1);
-    const role = cite.textContent.slice(comma + 1);
-    cite.replaceChildren(name, role);
-  }
+  boldCiteName(panel);
 }
 
 const isVpDesktop = () => !!(window.matchMedia && window.matchMedia(VP_DESKTOP_QUERY).matches);
@@ -656,6 +660,7 @@ function renderVerticalPanel(block, items) {
   const multiMedia = block.classList.contains('industry') || block.classList.contains('questions');
   const panels = items.map((item, i) => buildVpPanel(item, i, { multiMedia }));
   if (block.classList.contains('questions')) panels.forEach((p, i) => decorateQuestionTiles(p, items[i]));
+  if (block.classList.contains('blueberry')) panels.forEach(boldCiteName);
   tabs.forEach((tab, i) => tab.setAttribute('aria-controls', panels[i].id));
 
   const nav = document.createElement('div');
