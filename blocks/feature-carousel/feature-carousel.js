@@ -77,6 +77,11 @@ function decorateCopy(cell) {
       node.classList.add('feature-carousel-stat');
     }
   });
+  // the button and the story link open in a new tab
+  cell.querySelectorAll('.button-wrapper a[href], .feature-carousel-link a[href]').forEach((a) => {
+    a.target = '_blank';
+    a.relList.add('noopener');
+  });
 }
 
 function decorateMedia(cell) {
