@@ -1,9 +1,46 @@
 /* IES Theme: Tally brand styling, activated via theme: ies metadata - loaded in eager phase */
 
+/* Metric-matched fallback for Tally fonts (local Arial, zero network),
+   standing in for Tally/Tally Display while they download. MUST stay in the
+   eager stylesheet to prevent layout shift when the actual fonts load.
+   size-adjust computed to match Tally metrics vs. Arial. */
+/* Regular */
+@font-face {
+  font-family: tally-fallback;
+  font-weight: 400;
+  src: local('Arial');
+  size-adjust: 100%;
+  ascent-override: 96.91%;
+  descent-override: 25.5%;
+  line-gap-override: 0%;
+}
+
+/* Medium: needs Tally-Medium.woff2 to compute */
+@font-face {
+  font-family: tally-fallback;
+  font-weight: 500;
+  src: local('Arial');
+  size-adjust: 103%; /* placeholder */
+  ascent-override: 96.91%;
+  descent-override: 25.5%;
+  line-gap-override: 0%;
+}
+
+/* SemiBold/Bold: needs Tally-Bold.woff2 to compute */
+@font-face {
+  font-family: tally-fallback;
+  font-weight: 600 700;
+  src: local('Arial Bold');
+  size-adjust: 100%; /* placeholder */
+  ascent-override: 96.91%;
+  descent-override: 25.5%;
+  line-gap-override: 0%;
+}
+
 /* Apply IES font tokens when theme-ies class is present */
 body.theme-ies {
-  --body-font-family: tally, "AvenirNext forINTUIT", avenir-fallback, arial, sans-serif;
-  --heading-font-family: "Tally Display", tally, "AvenirNext forINTUIT", avenir-fallback, arial, sans-serif;
+  --body-font-family: tally, tally-fallback, "AvenirNext forINTUIT", avenir-fallback, arial, sans-serif;
+  --heading-font-family: "Tally Display", tally, tally-fallback, "AvenirNext forINTUIT", avenir-fallback, arial, sans-serif;
 }
 
 /* IES header: the "Schedule a call" CTA becomes the Superblue compact pill */
