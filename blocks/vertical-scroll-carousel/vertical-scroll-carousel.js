@@ -62,9 +62,9 @@ function buildMedia(cell) {
 
 /**
  * Build one tab: a heading button (the clickable control) plus its always-visible
- * body. The button is wrapped in an `<h3>` so the item keeps its place in the
- * page's heading outline (matching upstream, which renders these as `<h3>`)
- * without losing the interactive tab control. Returns { item, heading }.
+ * body. The button is wrapped in a heading element so the item keeps its place in
+ * the page's heading outline. The wrapper uses the authored heading level (h1-h6)
+ * or defaults to h3 without losing the interactive tab control. Returns { item, heading }.
  */
 function buildTab(headingCell, bodyCell, index) {
   const item = document.createElement('div');
@@ -77,7 +77,14 @@ function buildTab(headingCell, bodyCell, index) {
   heading.id = `vsc-tab-${index}`;
   heading.textContent = headingCell ? headingCell.textContent.trim() : '';
 
-  const headingWrap = document.createElement('h3');
+  // Preserve the authored heading level (h1-h6), or default to h3
+  let headingTag = 'h3';
+  if (headingCell) {
+    const titleText = headingCell.querySelector('h1, h2, h3, h4, h5, h6');
+    if (titleText) headingTag = titleText.tagName.toLowerCase();
+  }
+
+  const headingWrap = document.createElement(headingTag);
   headingWrap.className = 'vsc-heading-wrap';
   headingWrap.append(heading);
   item.append(headingWrap);

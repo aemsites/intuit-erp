@@ -153,7 +153,8 @@ function normalizeTestimonial(slide) {
   body.className = 'testi-body';
 
   if (title) {
-    const t = document.createElement('p');
+    const tag = title.tagName.toLowerCase();
+    const t = document.createElement(tag);
     t.className = 'testi-title';
     t.append(...title.childNodes);
     body.append(t);
