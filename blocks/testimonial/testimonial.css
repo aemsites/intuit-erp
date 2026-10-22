@@ -384,6 +384,38 @@
   margin: 0 auto 16px;
 }
 
+/* .video.ies: 20px section padding (40px from desktop); the title row is styled like the other IES section titles */
+.section.testimonial-container:has(.testimonial.video.ies) { padding-block: var(--space-m); }
+
+.testimonial.video.ies :is(.video-switcher, > .video-frame) { border-radius: var(--radius-xl); }
+
+.testimonial.video.ies .testimonial-heading {
+  max-width: none;
+  margin: 0 0 var(--space-xl);
+  font-size: 28px;
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-s);
+  text-align: center;
+  color: #0d0031;
+}
+
+@media (width >= 768px) {
+  .testimonial.video.ies .testimonial-heading {
+    font-size: 34px;
+    line-height: var(--line-height-xs);
+  }
+}
+
+@media (width >= 1024px) {
+  .section.testimonial-container:has(.testimonial.video.ies) { padding-block: var(--space-2xl); }
+
+  .testimonial.video.ies .testimonial-heading {
+    margin-bottom: var(--space-2xl);
+    font-size: var(--heading-font-size-xxl);
+    line-height: var(--line-height-none);
+  }
+}
+
 .testimonial:not(.video) .cmp-testi-grid {
   display: grid;
   gap: var(--space-3xl);
