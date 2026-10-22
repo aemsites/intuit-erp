@@ -118,6 +118,16 @@ async function loadFonts() {
   } catch (e) {
     // do nothing
   }
+
+  // Load IES fonts if theme is active
+  if (document.body.classList.contains('theme-ies')) {
+    await loadCSS(`${window.hlx.codeBasePath}/styles/brand/ies/ies-fonts.css`);
+    try {
+      if (!window.location.hostname.includes('localhost')) sessionStorage.setItem('ies-fonts-loaded', 'true');
+    } catch (e) {
+      // do nothing
+    }
+  }
 }
 
 /**
@@ -573,7 +583,11 @@ async function loadEager(doc) {
 
   try {
     /* if desktop (proxy for fast connection) or fonts already loaded, load fonts.css */
-    if (window.innerWidth >= 900 || sessionStorage.getItem('fonts-loaded')) {
+    const shouldLoadFontsEager = window.innerWidth >= 900 || sessionStorage.getItem('fonts-loaded');
+    const shouldLoadIESFontsEager = document.body.classList.contains('theme-ies')
+      && (window.innerWidth >= 900 || sessionStorage.getItem('ies-fonts-loaded'));
+
+    if (shouldLoadFontsEager || shouldLoadIESFontsEager) {
       loadFonts();
     }
   } catch (e) {
@@ -659,11 +673,6 @@ async function loadLazy(doc) {
   if (MARTECH_PROVIDER === 'tealium') {
     if (experienceTracking) await experienceTracking;
     try { await tealium.lazy(); } catch (e) { /* non-fatal */ }
-  }
-
-  // IES Fonts: Load font files in lazy phase if theme is active
-  if (document.body.classList.contains('theme-ies')) {
-    loadCSS(`${window.hlx.codeBasePath}/styles/brand/ies/ies-fonts.css`);
   }
 
   loadCSS(`${window.hlx.codeBasePath}/styles/lazy-styles.css`);
