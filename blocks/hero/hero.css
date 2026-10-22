@@ -1020,7 +1020,7 @@ body.author-guide .hero .hero-copy .hero-lede {
 
 @media (width >= 1024px) {
   .hero.ies.video .hero-grid {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 640px);
+    grid-template-columns: 1fr 1fr;
     gap: var(--space-5xl);
     padding-top: var(--space-5xl);
     padding-bottom: var(--space-5xl);
@@ -1029,4 +1029,11 @@ body.author-guide .hero .hero-copy .hero-lede {
   .hero.ies.video .hero-copy { max-width: 600px; }
 
   .hero.ies.video .hero-media-video { border-radius: 24px; }
+}
+
+@media (width >= 1440px) {
+  .hero.ies.video .hero-grid {
+    grid-template-columns: 600px 640px;
+    justify-content: space-between;
+  }
 }
