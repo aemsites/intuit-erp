@@ -9,7 +9,7 @@
   font-family: tally-fallback;
   font-weight: 400;
   src: local('Arial');
-  size-adjust: 100%;
+  size-adjust: 97.5%;
   ascent-override: 96.91%;
   descent-override: 25.5%;
   line-gap-override: 0%;
@@ -20,7 +20,7 @@
   font-family: tally-fallback;
   font-weight: 500;
   src: local('Arial');
-  size-adjust: 103%; /* placeholder */
+  size-adjust: 103%;
   ascent-override: 96.91%;
   descent-override: 25.5%;
   line-gap-override: 0%;
@@ -31,7 +31,18 @@
   font-family: tally-fallback;
   font-weight: 600 700;
   src: local('Arial Bold');
-  size-adjust: 100%; /* placeholder */
+  size-adjust: 100%;
+  ascent-override: 96.91%;
+  descent-override: 25.5%;
+  line-gap-override: 0%;
+}
+
+/* Medium: needs Tally Display-Medium.woff2 to compute */
+@font-face {
+  font-family: tally-display-fallback;
+  font-weight: 500;
+  src: local('Arial');
+  size-adjust: 93%;
   ascent-override: 96.91%;
   descent-override: 25.5%;
   line-gap-override: 0%;
@@ -40,7 +51,7 @@
 /* Apply IES font tokens when theme-ies class is present */
 body.theme-ies {
   --body-font-family: tally, tally-fallback, "AvenirNext forINTUIT", avenir-fallback, arial, sans-serif;
-  --heading-font-family: "Tally Display", tally, tally-fallback, "AvenirNext forINTUIT", avenir-fallback, arial, sans-serif;
+  --heading-font-family: "Tally Display", tally, tally-display-fallback, "AvenirNext forINTUIT", avenir-fallback, arial, sans-serif;
 }
 
 /* IES header: the "Schedule a call" CTA becomes the Superblue compact pill */
