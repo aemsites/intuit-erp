@@ -316,6 +316,18 @@ export default async function decorate(block) {
     [...cell.childNodes].forEach((n) => copy.append(n));
   });
 
+  // .ies.video: authored images are the video posters (desktop, then < 1024px)
+  const posterSrcs = [];
+  if (isIesVideo) {
+    copy.querySelectorAll('img').forEach((img) => {
+      posterSrcs.push(img.src);
+      const el = img.closest('picture') || img;
+      const host = el.parentElement;
+      el.remove();
+      if (host !== copy && !host.textContent.trim() && !host.querySelector('img, picture')) host.remove();
+    });
+  }
+
   const rawMedia = copy.querySelector('picture, img');
   let mediaEl = null;
   if (rawMedia) {
@@ -340,22 +352,12 @@ export default async function decorate(block) {
 
   let videoSrc = null;
   const videoSrcs = [];
-  const posterSrcs = [];
   ctaParas.forEach((p) => {
-    const links = [...p.querySelectorAll('a')];
-    const a = links.find((x) => /\.mp4(?:$|\?)/i.test(x.getAttribute('href') || ''));
-    const poster = isIesVideo
-      && links.find((x) => /\.(?:jpe?g|png|webp)(?:$|\?)/i.test(x.getAttribute('href') || ''));
-    if (!a && !poster) return;
-    if (a) {
-      videoSrc = videoSrc || a.getAttribute('href');
-      videoSrcs.push(a.getAttribute('href'));
-      a.remove();
-    }
-    if (poster) {
-      posterSrcs.push(poster.getAttribute('href'));
-      poster.remove();
-    }
+    const a = [...p.querySelectorAll('a')].find((x) => /\.mp4(?:$|\?)/i.test(x.getAttribute('href') || ''));
+    if (!a) return;
+    videoSrc = videoSrc || a.getAttribute('href');
+    videoSrcs.push(a.getAttribute('href'));
+    a.remove();
     if (!p.textContent.trim() && !p.querySelector('a, img, picture')) p.remove();
   });
 
