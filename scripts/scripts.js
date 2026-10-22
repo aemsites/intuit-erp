@@ -501,6 +501,13 @@ async function loadEager(doc) {
   document.documentElement.lang = 'en';
   decorateTemplateAndTheme();
 
+  // IES Brand: Apply theme-ies class and load theme CSS when theme metadata is 'ies'
+  const theme = (getMetadata('theme') || '').trim().toLowerCase();
+  if (theme === 'ies') {
+    document.body.classList.add('theme-ies');
+    loadCSS(`${window.hlx.codeBasePath}/styles/brand/ies/ies-theme.css`);
+  }
+
   if (['true', 'yes'].includes((getMetadata('events-bar') || '').trim().toLowerCase())) {
     document.body.classList.add('has-events-bar');
   }
@@ -652,6 +659,11 @@ async function loadLazy(doc) {
   if (MARTECH_PROVIDER === 'tealium') {
     if (experienceTracking) await experienceTracking;
     try { await tealium.lazy(); } catch (e) { /* non-fatal */ }
+  }
+
+  // IES Fonts: Load font files in lazy phase if theme is active
+  if (document.body.classList.contains('theme-ies')) {
+    loadCSS(`${window.hlx.codeBasePath}/styles/brand/ies/ies-fonts.css`);
   }
 
   loadCSS(`${window.hlx.codeBasePath}/styles/lazy-styles.css`);

@@ -106,9 +106,12 @@ function decorateCard(row) {
   if (em && em.textContent.trim()) category = em.textContent.trim();
 
   let title = '';
+  let headingTag = 'h3';
   const heading = bodyCell.querySelector('h1,h2,h3,h4,h5,h6');
-  if (heading) title = heading.textContent.trim();
-  else {
+  if (heading) {
+    title = heading.textContent.trim();
+    headingTag = heading.tagName.toLowerCase();
+  } else {
     // Prefer a paragraph that isn't the category's own. Skip on `contains`, not
     // identity: when the label and title share one paragraph ("_Customer_ Real
     // title"), an identity check picks that paragraph for neither card — the
@@ -142,7 +145,7 @@ function decorateCard(row) {
     body.append(tag);
   }
   if (title) {
-    const h = document.createElement('h3');
+    const h = document.createElement(headingTag);
     h.className = 'cards-video-gallery-title';
     h.textContent = title;
     body.append(h);
