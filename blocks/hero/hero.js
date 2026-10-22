@@ -94,14 +94,7 @@ function buildVideoLink(a, info) {
   return wrap;
 }
 
-/**
- * Builds the .ies.video media column: a muted teaser that autoplays for
- * TEASER_SECONDS, then pauses behind a play button. Clicking it restarts the
- * video with sound and native controls.
- * @param {string[]} srcs authored .mp4 URLs: desktop (1920x1080), optional
- *   tablet/mobile (1600x900)
- * @returns {HTMLDivElement}
- */
+/** Muted teaser that pauses after TEASER_SECONDS behind a play button. */
 function buildTeaserVideo(srcs) {
   const media = document.createElement('div');
   media.className = 'hero-media hero-media-video';
@@ -299,7 +292,6 @@ export default async function decorate(block) {
   const isCentered = block.classList.contains('centered');
   const isGradient = block.classList.contains('gradient');
   const isVideoLink = block.classList.contains('video-link');
-  // .ies.video: the authored .mp4 link(s) become a muted teaser in the media column
   const isIesVideo = block.classList.contains('ies') && block.classList.contains('video');
   const rows = [...block.children];
 

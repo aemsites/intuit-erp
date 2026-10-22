@@ -918,8 +918,7 @@ body.author-guide .hero .hero-copy .hero-lede {
   .hero.video-link .hero-video-link::before { grid-row: span 2; }
 }
 
-/* .ies.video: Blueberry hero with a 16:9 muted teaser (autoplays 5s, then play button).
-   Desktop 600 | 640x360 media at 24px radius; stacked below 1024 at 20px radius. */
+/* .ies.video: 16:9 muted teaser, 24px radius on desktop, 20px below 1024 */
 .hero.ies.video .hero-grid {
   gap: var(--space-2xl);
   padding-top: var(--space-2xl);
