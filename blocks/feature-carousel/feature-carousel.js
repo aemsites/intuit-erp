@@ -219,8 +219,7 @@ export default async function decorate(block) {
     return animation;
   };
 
-  // a muted inline video behind the same calls the Lottie player takes
-  // (its "frames" are seconds)
+  // a muted video behind the Lottie calls the carousel uses (frames are seconds)
   const createVideo = async (media, src) => {
     const video = document.createElement('video');
     video.className = 'feature-carousel-motion';

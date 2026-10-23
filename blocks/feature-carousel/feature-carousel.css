@@ -119,7 +119,7 @@
   text-decoration: underline;
 }
 
-/* button color per slide color; .section outranks the global "main .section.ies a.button.primary" */
+/* .section outranks the global "main .section.ies a.button.primary" */
 .section .feature-carousel .feature-carousel-slide a.button {
   border-color: var(--info, #236cff);
   background: var(--info, #236cff);
@@ -154,7 +154,6 @@
   color: var(--feature-carousel-ink);
 }
 
-/* an authored button color (btn: <color>) wins over the slide's default */
 .section .feature-carousel .feature-carousel-slide.feature-carousel-btn-superblue a.button {
   border-color: var(--info, #236cff);
   background: var(--info, #236cff);

@@ -495,7 +495,7 @@
   .testimonial.video.ies .video-thumb:hover { opacity: 1; }
 }
 
-/* the desktop layout needs the full width; below 1200 the tablet one stays */
+/* desktop layout from 1200; below it the tablet one stays */
 @media (width >= 1200px) {
   .testimonial.video.ies .video-switcher .video-quote {
     font-family: var(--tv-display-font);
