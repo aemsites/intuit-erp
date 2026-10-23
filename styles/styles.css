@@ -1368,6 +1368,7 @@ body.blog-home .section:not(:first-of-type)>.default-content-wrapper> :is(h1, h2
 }
 
 main > .section.ies.center > .default-content-wrapper:only-child:has(> p:only-child) {
+  max-width: 1180px;
   padding-top: 16px;
   padding-bottom: 20px;
 }
