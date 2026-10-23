@@ -23,7 +23,7 @@
 .disclosure.white .disclosure-item summary { color: #0d0031; font-size: 16px; line-height: 1.4; font-weight: var(--font-weight-medium); padding: 0; }
 .disclosure.white .disclosure-item[open] summary { padding: 0 0 var(--space-l); }
 .disclosure.white .disc-caret { display: inline-block; margin-left: 8px; }
-.disclosure.white .disclosure-body { color: #000730; font-size: 12px; line-height: 1.4; text-align: left; opacity: 1; padding: 0; }
+.disclosure.white .disclosure-body { color: #000730; font-size: 14px; line-height: 1.4; text-align: left; opacity: 1; padding: 0; }
 
 @media (width >= 1024px) {
   .section.disclosure-container:has(.disclosure.white) { padding: 40px 0; }
