@@ -76,8 +76,12 @@ export default function decorate(block) {
   const pickActive = () => {
     let current = null;
     pairs.forEach(({ a, section }) => {
+      const rect = section.getBoundingClientRect();
+      // sections that have not loaded yet are display:none and report a zero
+      // rect, which would otherwise read as "already scrolled past"
+      if (!rect.height) return;
       const margin = parseFloat(getComputedStyle(section).scrollMarginTop) || lastNavH;
-      if (section.getBoundingClientRect().top <= margin + 1) current = a;
+      if (rect.top <= margin + 1) current = a;
     });
     if (current) setActive(current);
   };
