@@ -222,10 +222,13 @@
 }
 
 .feature-carousel .feature-carousel-dot.is-active .feature-carousel-dot-fill {
-  animation: feature-carousel-progress var(--feature-carousel-duration, 10s) linear forwards;
+  animation: feature-carousel-progress var(--feature-carousel-duration, 35s) linear forwards;
 }
 
-.feature-carousel.is-paused .feature-carousel-dot-fill { animation-play-state: paused; }
+/* matches the rule above so its animation shorthand doesn't reset the play state */
+.feature-carousel.is-paused .feature-carousel-dot.is-active .feature-carousel-dot-fill {
+  animation-play-state: paused;
+}
 
 .feature-carousel.no-autoplay .feature-carousel-dot.is-active .feature-carousel-dot-fill {
   animation: none;

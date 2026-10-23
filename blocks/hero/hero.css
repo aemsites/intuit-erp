@@ -727,25 +727,46 @@ body.author-guide .hero .hero-copy .hero-lede {
   .hero.ies .hero-copy h1 { font-size: 60px; }
 }
 
-/* .ies.arcs: Blueberry band with the arcs background image; each breakpoint crops it differently */
 .section.hero-container:has(.hero.ies.arcs) {
+  position: relative;
+  isolation: isolate;
+  background: #0d0031;
+
+  /* clip sideways only, so the layer can reach the logo band */
+  overflow: clip visible;
+}
+
+.section.hero-container:has(.hero.ies.arcs)::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 calc(-1 * var(--hero-arcs-tail, 0px));
+  z-index: -1;
   background: url("./ies-arcs-bg.webp") 47.7% 23.2% / 302.86% 153.32% no-repeat, #0d0031;
 }
 
+.section.hero-container:has(.hero.ies.arcs) + .section.logo-band-container:has(.logo-band.marquee:not(.light)) {
+  --marquee-bg: transparent;
+
+  position: relative;
+}
+
 @media (width >= 768px) {
-  .section.hero-container:has(.hero.ies.arcs) {
-    background: url("./ies-arcs-bg.webp") 50% 11.2% / 256.3% 110.57% no-repeat, #0d0031;
+  .section.hero-container:has(.hero.ies.arcs)::before {
+    background:
+      url("./ies-arcs-bg.webp")
+      50% calc(11.16% - 0.1116 * var(--hero-arcs-tail, 0px))
+      / 256.3% calc((100% - var(--hero-arcs-tail, 0px)) * 1.1057)
+      no-repeat,
+      #0d0031;
   }
 }
 
-/* desktop: the band also fades out at the bottom */
 @media (width >= 1024px) {
-  .section.hero-container:has(.hero.ies.arcs) {
-    background:
-      linear-gradient(to bottom, rgb(13 0 49 / 0%) calc(100% - var(--space-5xl)), #0d0031 100%),
-      url("./ies-arcs-bg.webp") 47.5% 27.4% / 135.33% 171.23% no-repeat,
-      #0d0031;
+  .section.hero-container:has(.hero.ies.arcs)::before {
+    background: url("./ies-arcs-bg.webp") 47.5% 27.4% / 135.33% 171.23% no-repeat, #0d0031;
   }
+ 
+  .hero.ies.arcs .hero-grid { padding-block: 120px; }
 }
 
 /* .ies.glow: Superblue band with the IES radial glow; light-blue media tile; 640 | 80 | 640 on desktop */

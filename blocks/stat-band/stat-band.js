@@ -215,7 +215,7 @@ function buildCarousel(block, track) {
   trackAs(null, block, { key: 'stat-band', payload: scrollArrowPayload });
 }
 
-const AUTOPLAY_MS = 12000;
+const AUTOPLAY_MS = 30000; // ms each page stays up
 
 /**
  * Autoplay-only carousel: the active dot's fill animation is the timer, and its

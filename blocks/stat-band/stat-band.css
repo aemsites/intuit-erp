@@ -385,7 +385,7 @@
 }
 
 .stat-band.carousel .stats-dot.active .stats-dot-fill {
-  animation: stat-band-progress var(--autoplay-duration, 12s) linear forwards;
+  animation: stat-band-progress var(--autoplay-duration, 30s) linear forwards;
 }
 .stat-band.carousel.is-paused .stats-dot.active .stats-dot-fill { animation-play-state: paused; }
 

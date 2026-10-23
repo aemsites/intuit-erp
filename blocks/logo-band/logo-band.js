@@ -6,6 +6,7 @@
  *             from erp.intuit.com's #ies-slider: duplicate the logo set until
  *             it's wider than the viewport, clone that set once more for a
  *             seamless loop, then animate by the measured pixel distance.
+ *             .marquee.ies sizes it for the IES ticker (CSS only).
  * Authoring: any number of logo images anywhere in the block (any row/cell
  * layout), in any order; a trailing text link is also supported.
  * CSS: blocks/logo-band/logo-band.css

@@ -22,12 +22,14 @@
  *
  * Auto-advance pauses on hover, keyboard focus, a hidden tab, and while the
  * block is off screen; it is off entirely for prefers-reduced-motion.
+ * Hovering the active slide pauses its animation; clicking the active dot
+ * pauses or resumes the carousel (any slide change resumes it).
  * CSS: blocks/feature-carousel/feature-carousel.css
  */
 import { toClassName } from '../../scripts/aem.js';
 import { trackAs } from '../../scripts/tracking.js';
 
-const SLIDE_DURATION = 12000; // ms
+const SLIDE_DURATION = 35000; // ms
 const SWIPE_THRESHOLD = 40; // px
 const TRACK_SETTLE = 700; // ms, a little over the track's slide transition
 const WARM_MARGIN = '600px'; // how far ahead of the viewport the first animation is built
@@ -80,11 +82,6 @@ function decorateCopy(cell) {
     } else {
       node.classList.add('feature-carousel-stat');
     }
-  });
-  // the button and the story link open in a new tab
-  cell.querySelectorAll('.button-wrapper a[href], .feature-carousel-link a[href]').forEach((a) => {
-    a.target = '_blank';
-    a.relList.add('noopener');
   });
 }
 
@@ -293,7 +290,14 @@ export default async function decorate(block) {
   // pause reasons are tracked separately so one ending doesn't resume another;
   // hover and focus only hold the auto-advance, the animation keeps playing
   const pauses = new Set();
-  const animationPaused = () => pauses.has('offscreen') || pauses.has('hidden');
+  const ANIMATION_PAUSES = ['offscreen', 'hidden', 'card', 'user'];
+  const animationPaused = () => ANIMATION_PAUSES.some((reason) => pauses.has(reason));
+
+  const labelDots = () => slides.forEach((s, i) => {
+    let label = `Show slide ${i + 1}`;
+    if (i === index && !reduceMotion) label = pauses.has('user') ? 'Resume carousel' : 'Pause carousel';
+    s.dot.setAttribute('aria-label', label);
+  });
 
   const goTo = async (next) => {
     activation += 1;
@@ -313,6 +317,10 @@ export default async function decorate(block) {
       if (active) s.dot.setAttribute('aria-current', 'true');
       else s.dot.removeAttribute('aria-current');
     });
+    pauses.delete('card');
+    pauses.delete('user');
+    block.classList.toggle('is-paused', pauses.size > 0);
+    labelDots();
     const moved = center();
 
     // restart the progress fill; its animationend advances the carousel
@@ -355,11 +363,29 @@ export default async function decorate(block) {
   dots.addEventListener('animationend', (e) => {
     if (e.target.classList.contains('feature-carousel-dot-fill')) goTo(index + 1);
   });
-  slides.forEach((s, i) => s.dot.addEventListener('click', () => goTo(i)));
+  slides.forEach((s, i) => {
+    s.dot.addEventListener('click', () => {
+      if (i !== index || reduceMotion) {
+        goTo(i);
+        return;
+      }
+      setPaused('user', !pauses.has('user'));
+      labelDots();
+    });
+    s.row.addEventListener('pointerenter', (e) => {
+      if (e.pointerType === 'mouse') setPaused('card', true);
+    });
+    s.row.addEventListener('pointerleave', (e) => {
+      if (e.pointerType === 'mouse') setPaused('card', false);
+    });
+  });
 
   block.addEventListener('pointerenter', () => setPaused('hover', true));
   block.addEventListener('pointerleave', () => setPaused('hover', false));
-  block.addEventListener('focusin', () => setPaused('focus', true));
+  // keyboard focus only: a mouse click on a dot also focuses it
+  block.addEventListener('focusin', (e) => {
+    if (e.target.matches(':focus-visible')) setPaused('focus', true);
+  });
   block.addEventListener('focusout', (e) => {
     if (!block.contains(e.relatedTarget)) setPaused('focus', false);
   });

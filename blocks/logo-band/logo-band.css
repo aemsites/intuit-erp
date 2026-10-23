@@ -213,6 +213,16 @@ main > .section.logo-band-container:has(.logo-band.marquee) > div { max-width: n
   .logo-band.marquee.light .logoband-set { gap: var(--space-m); padding-right: var(--space-m); }
 }
 
+.logo-band.marquee.ies { padding: 10px 0; }
+.logo-band.marquee.ies img { height: 50px; }
+.logo-band.marquee.ies .logoband-set { gap: 50px; padding-right: 50px; }
+
+@media (width >= 768px) {
+  .logo-band.marquee.ies { padding: 0 0 30px; }
+  .logo-band.marquee.ies img { height: 60px; }
+  .logo-band.marquee.ies .logoband-set { gap: 60px; padding-right: 60px; }
+}
+
 /* .strip: flat white logo strip, one centred row of 156x50 greyscale slots */
 .section.logo-band-container:has(.logo-band.strip) {
   max-width: none;
