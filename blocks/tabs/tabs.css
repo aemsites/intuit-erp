@@ -1572,6 +1572,7 @@ main > .section.tabs-container.padding-bottom-xxxl:has(.tabs.vertical-panel.ques
   --it-surface: transparent;
   --it-tab-idle: transparent;
   --it-rule: 0.5px solid rgb(255 255 255 / 30%);
+  --it-media-radius: 24px;
 
   background-color: var(--it-band);
 }
@@ -1671,7 +1672,17 @@ main > .section.tabs-container:has(.tabs.vertical-panel.dark.blueberry) > .defau
 .tabs.vertical-panel.dark.blueberry .it-media img {
   width: 100%;
   aspect-ratio: 1460 / 1000;
-  border-radius: 24px;
+  border-radius: var(--it-media-radius);
+}
+
+/* per-viewport pictures: desktop, tablet, mobile */
+.tabs.vertical-panel.dark.blueberry .it-media picture { display: block; }
+.tabs.vertical-panel.dark.blueberry .it-media picture:not(:last-child) { display: none; }
+
+.tabs.vertical-panel.dark.blueberry .it-media picture:not(:only-child) img {
+  height: auto;
+  aspect-ratio: auto;
+  object-fit: contain;
 }
 
 .tabs.vertical-panel.dark.blueberry .it-quote {
@@ -1728,7 +1739,15 @@ main > .section.tabs-container:has(.tabs.vertical-panel.dark.blueberry) > .defau
   .tabs.vertical-panel.dark.blueberry .it-copy-body { gap: var(--space-2xs); }
 }
 
+@media (768px <= width < 1024px) {
+  /* tablet: middle picture */
+  .tabs.vertical-panel.dark.blueberry .it-media picture:nth-child(2):nth-last-child(2) { display: block; }
+  .tabs.vertical-panel.dark.blueberry .it-media picture:nth-child(3):last-child { display: none; }
+}
+
 @media (width >= 1024px) {
+  .section.tabs-container:has(.tabs.vertical-panel.dark.blueberry) { --it-media-radius: 38px; }
+
   main > .section.tabs-container:has(.tabs.vertical-panel.dark.blueberry) { padding: var(--space-5xl) var(--space-2xl) 120px; }
 
   main > .section.tabs-container:has(.tabs.vertical-panel.dark.blueberry) > .default-content-wrapper {
@@ -1785,10 +1804,11 @@ main > .section.tabs-container:has(.tabs.vertical-panel.dark.blueberry) > .defau
 
   .tabs.vertical-panel.dark.blueberry .it-copy-body { flex: 0 1 450px; max-width: 450px; gap: var(--space-s); }
 
-  .tabs.vertical-panel.dark.blueberry .it-media img {
-    aspect-ratio: 1840 / 1000;
-    border-radius: 38px;
-  }
+  .tabs.vertical-panel.dark.blueberry .it-media img { aspect-ratio: 1840 / 1000; }
+
+  /* desktop: first picture */
+  .tabs.vertical-panel.dark.blueberry .it-media picture:first-child { display: block; }
+  .tabs.vertical-panel.dark.blueberry .it-media picture:not(:first-child) { display: none; }
 
   .tabs.vertical-panel.dark.blueberry .it-quote blockquote { letter-spacing: 0; }
 
