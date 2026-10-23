@@ -51,8 +51,7 @@ export function parseContent(cell) {
   let cta = null;
   let ctaBeforeQuote = true;
   const bodyNodes = [];
-  // pictures after the first; only .vertical-panel.industry renders them (as a
-  // media row), every other variant ignores them exactly as before
+  // extra pictures, rendered only by .industry, .questions and .blueberry
   const extraMedia = [];
 
   rest.forEach((el, i) => {
@@ -657,7 +656,7 @@ function activateVp(tabs, panels, index, focusIndex = index) {
 
 function renderVerticalPanel(block, items) {
   const tabs = items.map(buildVpTab);
-  const multiMedia = block.classList.contains('industry') || block.classList.contains('questions');
+  const multiMedia = ['industry', 'questions', 'blueberry'].some((v) => block.classList.contains(v));
   const panels = items.map((item, i) => buildVpPanel(item, i, { multiMedia }));
   if (block.classList.contains('questions')) panels.forEach((p, i) => decorateQuestionTiles(p, items[i]));
   if (block.classList.contains('blueberry')) panels.forEach(boldCiteName);

@@ -1,6 +1,6 @@
 /**
  * feature-carousel — auto-advancing slides: copy on one side, a Lottie
- * animation (or an image) on the other. Neighbouring slides peek in at the
+ * animation, a video or an image on the other. Neighbouring slides peek in at the
  * edges; the active dot fills as a progress bar, then the next slide shows.
  *
  * Rows:
@@ -10,15 +10,17 @@
  *     1. content — an italic-only eyebrow, a heading (title), body
  *        paragraph(s), a bold link (button), then an optional stat paragraph
  *        and an optional plain link
- *     2. media — a link to a Lottie .json and/or an image; the image stands
- *        in for the animation on slides that aren't on show, while it loads,
- *        if it fails, and for reduced motion. Without an image, those slides
- *        hold a middle frame of the animation instead
- *     3. color — the slide's color: blueberry, white, superblue or bronze
+ *     2. media — a link to a Lottie .json or an .mp4/.webm video, and/or an
+ *        image; the image stands in for the animation on slides that aren't
+ *        on show, while it loads, if it fails, and for reduced motion. Without
+ *        an image, those slides hold a middle frame of the animation instead
+ *     3. color — the slide's color: blueberry, white, superblue or bronze; or
+ *        "bg: <color>, btn: <color>" to also set the button (otherwise it
+ *        follows the slide color)
  *
  * Variants:
- *   .lottie-length  each slide stays up for its animation's length instead of
- *                   the fixed SLIDE_DURATION
+ *   .lottie-length  each slide stays up for its animation's (or video's) length
+ *                   instead of the fixed SLIDE_DURATION
  *
  * Auto-advance pauses on hover, keyboard focus, a hidden tab, and while the
  * block is off screen; it is off entirely for prefers-reduced-motion.
@@ -35,6 +37,8 @@ const TRACK_SETTLE = 700; // ms, a little over the track's slide transition
 const WARM_MARGIN = '600px'; // how far ahead of the viewport the first animation is built
 const LOTTIE_PLAYER_URL = 'https://cdn.jsdelivr.net/npm/lottie-web@5.12.2/build/player/lottie_light.min.js/+esm';
 const LOTTIE_RE = /\.json(?:$|\?)/i;
+const VIDEO_RE = /\.(?:mp4|webm)(?:$|\?)/i;
+const isMotion = (href) => LOTTIE_RE.test(href) || VIDEO_RE.test(href);
 
 let playerPromise;
 const loadPlayer = () => {
@@ -85,11 +89,27 @@ function decorateCopy(cell) {
   });
 }
 
+const COLOR_KEYS = {
+  bg: 'bg', background: 'bg', btn: 'btn', button: 'btn',
+};
+
+// "blueberry" or "bg: blueberry, btn: white" → { bg: 'blueberry', btn: 'white' }
+function parseColors(text) {
+  const colors = {};
+  text.split(/[,;]/).forEach((part) => {
+    const [key, value] = part.includes(':') ? part.split(':') : ['bg', part];
+    const name = toClassName(value || '');
+    const which = COLOR_KEYS[toClassName(key)];
+    if (name && which) colors[which] = name;
+  });
+  return colors;
+}
+
 function decorateMedia(cell) {
   cell.className = 'feature-carousel-media';
-  const link = [...cell.querySelectorAll('a[href]')].find((a) => LOTTIE_RE.test(a.getAttribute('href')));
+  const link = [...cell.querySelectorAll('a[href]')].find((a) => isMotion(a.getAttribute('href')));
   const text = cell.textContent.trim();
-  const src = link?.href || (LOTTIE_RE.test(text) && !cell.querySelector('picture, img') ? text : '');
+  const src = link?.href || (isMotion(text) && !cell.querySelector('picture, img') ? text : '');
   const picture = cell.querySelector('picture, img');
   cell.replaceChildren(...(picture ? [picture.closest('picture') || picture] : []));
   return src;
@@ -109,15 +129,16 @@ export default async function decorate(block) {
 
   const slides = rows.map((row, i) => {
     const [copyCell, mediaCell, colorCell] = [...row.children];
-    const color = toClassName(colorCell?.textContent.trim() || '');
+    const { bg, btn } = parseColors(colorCell?.textContent.trim() || '');
     colorCell?.remove();
     row.className = 'feature-carousel-slide';
-    if (color) row.classList.add(`feature-carousel-${color}`);
+    if (bg) row.classList.add(`feature-carousel-${bg}`);
+    if (btn) row.classList.add(`feature-carousel-btn-${btn}`);
     row.setAttribute('role', 'group');
     row.setAttribute('aria-roledescription', 'slide');
     row.setAttribute('aria-label', `${i + 1} of ${rows.length}`);
     if (copyCell) decorateCopy(copyCell);
-    const lottieSrc = mediaCell ? decorateMedia(mediaCell) : '';
+    const mediaSrc = mediaCell ? decorateMedia(mediaCell) : '';
     const poster = !!mediaCell?.querySelector('picture, img');
     track.append(row);
 
@@ -129,7 +150,7 @@ export default async function decorate(block) {
     dots.append(dot);
 
     return {
-      row, media: mediaCell, dot, lottieSrc, poster, animation: null, ready: null,
+      row, media: mediaCell, dot, mediaSrc, poster, animation: null, ready: null,
     };
   });
 
@@ -158,8 +179,8 @@ export default async function decorate(block) {
   let index = 0;
   let current = slides[0].row; // the track element on show: a slide or an edge copy
 
-  // Lottie: each slide's animation is built once, while the browser is idle,
-  // and then kept. Only the slide on show plays; the rest are paused behind
+  // Each slide's animation (Lottie or video) is built once, while the browser
+  // is idle, and then kept. Only the slide on show plays; the rest are paused behind
   // their image or, with no image to stand in, held on a middle frame.
   let live = null; // the slide whose animation is on show
   let activation = 0; // bumped by every goTo so stale async steps bail out
@@ -172,17 +193,17 @@ export default async function decorate(block) {
 
   // fades a media tile's animation in over its image, or back out
   const show = (media) => {
-    if (media.classList.contains('has-lottie')) return;
+    if (media.classList.contains('has-motion')) return;
     // eslint-disable-next-line no-void -- force a reflow so the fade runs
     void media.offsetWidth;
-    media.classList.add('has-lottie');
+    media.classList.add('has-motion');
   };
-  const hide = (media) => media.classList.remove('has-lottie');
+  const hide = (media) => media.classList.remove('has-motion');
 
   const createAnimation = async (media, animationData) => {
     const lottie = await loadPlayer();
     const holder = document.createElement('div');
-    holder.className = 'feature-carousel-lottie';
+    holder.className = 'feature-carousel-motion';
     holder.setAttribute('aria-hidden', 'true');
     media.append(holder);
     const animation = lottie.loadAnimation({
@@ -198,15 +219,58 @@ export default async function decorate(block) {
     return animation;
   };
 
+  // a muted video behind the Lottie calls the carousel uses (frames are seconds)
+  const createVideo = async (media, src) => {
+    const video = document.createElement('video');
+    video.className = 'feature-carousel-motion';
+    video.setAttribute('aria-hidden', 'true');
+    video.muted = true;
+    video.playsInline = true;
+    video.disablePictureInPicture = true;
+    video.preload = 'auto';
+    video.src = src;
+    media.append(video);
+    try {
+      await new Promise((resolve, reject) => {
+        video.addEventListener('loadeddata', resolve, { once: true });
+        video.addEventListener('error', reject, { once: true });
+      });
+    } catch (error) {
+      video.remove();
+      throw error;
+    }
+    const play = () => video.play().catch(() => {});
+    return {
+      totalFrames: video.duration,
+      getDuration: () => video.duration,
+      play,
+      pause: () => video.pause(),
+      goToAndPlay: (time) => {
+        video.currentTime = time;
+        play();
+      },
+      goToAndStop: (time) => {
+        video.currentTime = time;
+        video.pause();
+      },
+    };
+  };
+
   // resolves to the slide's animation, building it the first time, or null
   const ensureAnimation = (slide) => {
-    if (!slide.lottieSrc || !slide.media) return Promise.resolve(null);
+    if (!slide.mediaSrc || !slide.media) return Promise.resolve(null);
     slide.ready ??= (async () => {
       try {
-        const res = await fetch(slide.lottieSrc);
-        if (!res.ok) return null;
-        const animationData = await res.json();
-        const animation = await createAnimation(slide.media, animationData);
+        let build;
+        if (VIDEO_RE.test(slide.mediaSrc)) {
+          build = (media) => createVideo(media, slide.mediaSrc);
+        } else {
+          const res = await fetch(slide.mediaSrc);
+          if (!res.ok) return null;
+          const animationData = await res.json();
+          build = (media) => createAnimation(media, animationData);
+        }
+        const animation = await build(slide.media);
         slide.animation = animation;
         if (!slide.poster) {
           // nothing to stand in for it: hold a middle frame, and give the
@@ -214,7 +278,7 @@ export default async function decorate(block) {
           animation.goToAndStop(middleFrame(animation), true);
           show(slide.media);
           if (slide.copyMedia) {
-            const still = await createAnimation(slide.copyMedia, animationData);
+            const still = await build(slide.copyMedia);
             still.goToAndStop(middleFrame(still), true);
             show(slide.copyMedia);
           }
