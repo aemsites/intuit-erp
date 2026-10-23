@@ -23,7 +23,8 @@
  * Auto-advance pauses on hover, keyboard focus, a hidden tab, and while the
  * block is off screen; it is off entirely for prefers-reduced-motion.
  * Hovering the slide on show also pauses its animation, and clicking the
- * active dot pauses (or resumes) the carousel until clicked again.
+ * active dot pauses (or resumes) the carousel until clicked again or another
+ * slide is shown.
  * CSS: blocks/feature-carousel/feature-carousel.css
  */
 import { toClassName } from '../../scripts/aem.js';
@@ -318,10 +319,11 @@ export default async function decorate(block) {
       if (active) s.dot.setAttribute('aria-current', 'true');
       else s.dot.removeAttribute('aria-current');
     });
-    labelDots();
-    // the hovered card is no longer the one on show
+    // a new slide starts fresh: the hovered card is gone and a user pause ends
     pauses.delete('card');
+    pauses.delete('user');
     block.classList.toggle('is-paused', pauses.size > 0);
+    labelDots();
     const moved = center();
 
     // restart the progress fill; its animationend advances the carousel
