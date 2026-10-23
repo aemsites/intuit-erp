@@ -322,6 +322,27 @@ export function buildVideoFrame(cells, opts = {}) {
   return frame;
 }
 
+// Wraps the leading "Name, Role" text of an attribution paragraph in
+// .video-name / .video-role spans (split at the first comma) so CSS can style
+// them apart; the link and anything after it are kept untouched.
+function attributionHtml(attribution) {
+  if (!attribution) return '';
+  const p = attribution.cloneNode(true);
+  const lead = p.firstChild;
+  if (lead?.nodeType !== Node.TEXT_NODE) return p.innerHTML;
+  const text = lead.textContent;
+  const comma = text.indexOf(',');
+  if (comma === -1 || !text.slice(0, comma).trim()) return p.innerHTML;
+  const name = document.createElement('span');
+  name.className = 'video-name';
+  name.textContent = text.slice(0, comma).trim();
+  const role = document.createElement('span');
+  role.className = 'video-role';
+  role.textContent = text.slice(comma + 1).trim();
+  lead.replaceWith(name, ', ', role, ' ');
+  return p.innerHTML;
+}
+
 // Per-story caption data for the shared switcher info bar.
 function storyData(cells) {
   const [mediaCell, contentCell] = cells;
@@ -332,7 +353,7 @@ function storyData(cells) {
     avatarAlt: posterEl ? (posterEl.getAttribute('alt') || '') : '',
     eyebrow,
     quote: quoteParas.map((p) => p.textContent.trim()).join(' '),
-    attrHtml: attribution ? attribution.innerHTML : '',
+    attrHtml: attributionHtml(attribution),
   };
 }
 
@@ -386,9 +407,15 @@ function buildThumb(row, index, frameId) {
  * bar (`.video-caption`) holding the active story's avatar + eyebrow/quote/
  * attribution and the speaker-avatar thumbnail tabs that switch stories.
  * @param {Element[]} rows the block's `:scope > div` story rows
- * @returns {HTMLElement} a `.video-frame` (single) or `.video-switcher` (many)
+ * @param {{ies?:boolean}} [opts] when ies is true the active story's thumb is
+ *   hidden (only the other stories are offered) and the switcher is wrapped in
+ *   a `.video-carousel` with `.video-dots` pagination (shown below 1024px,
+ *   where the thumbs are hidden) and horizontal swipe on the stage
+ * @returns {HTMLElement} a `.video-frame` (single), `.video-switcher` (many)
+ *   or, with ies, a `.video-carousel` wrapping the switcher and dots
  */
-export function buildVideoSection(rows) {
+export function buildVideoSection(rows, opts = {}) {
+  const { ies = false } = opts;
   if (rows.length <= 1) return buildVideoFrame([...(rows[0]?.children || [])]);
 
   const stories = rows.map((r) => [...r.children]);
@@ -414,36 +441,107 @@ export function buildVideoSection(rows) {
   thumbsWrap.append(...thumbs);
   bar.append(thumbsWrap);
 
+  // .ies: one pagination dot per story, kept in sync with the thumbs
+  const dots = ies ? rows.map((r, i) => {
+    const dot = document.createElement('button');
+    dot.type = 'button';
+    dot.className = 'video-dot';
+    dot.setAttribute('role', 'tab');
+    dot.setAttribute('aria-controls', frames[i].id);
+    dot.setAttribute('aria-label', `Show customer story ${i + 1} of ${rows.length}`);
+    return dot;
+  }) : [];
+
+  let current = 0;
   function activate(idx) {
+    current = idx;
+    // .ies hides the active story's thumb, so the first visible one takes the tab stop
+    const focusable = ies ? thumbs.findIndex((t, i) => i !== idx) : idx;
     thumbs.forEach((t, i) => {
       t.setAttribute('aria-selected', i === idx ? 'true' : 'false');
-      t.tabIndex = i === idx ? 0 : -1;
+      t.tabIndex = i === focusable ? 0 : -1;
+      if (ies) t.hidden = i === idx;
+    });
+    dots.forEach((d, i) => {
+      d.classList.toggle('is-active', i === idx);
+      d.setAttribute('aria-selected', i === idx ? 'true' : 'false');
+      d.tabIndex = i === idx ? 0 : -1;
     });
     frames.forEach((f, i) => f.classList.toggle('is-active', i === idx));
     fillCaption(bar, data[idx]);
   }
   thumbsWrap.addEventListener('click', (e) => {
     const btn = e.target.closest('.video-thumb');
-    if (btn) activate(thumbs.indexOf(btn));
+    if (!btn) return;
+    const hadFocus = btn === document.activeElement;
+    activate(thumbs.indexOf(btn));
+    // the clicked thumb is now hidden — keep keyboard focus in the tablist
+    if (ies && hadFocus) thumbs.find((t) => !t.hidden)?.focus();
   });
   thumbsWrap.addEventListener('keydown', (e) => {
-    const cur = thumbs.indexOf(document.activeElement);
+    const visible = thumbs.filter((t) => !t.hidden);
+    const cur = visible.indexOf(document.activeElement);
     if (cur === -1) return;
     let next = null;
-    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next = (cur + 1) % thumbs.length;
-    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') next = (cur - 1 + thumbs.length) % thumbs.length;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next = (cur + 1) % visible.length;
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') next = (cur - 1 + visible.length) % visible.length;
     else if (e.key === 'Home') next = 0;
-    else if (e.key === 'End') next = thumbs.length - 1;
+    else if (e.key === 'End') next = visible.length - 1;
     if (next === null) return;
     e.preventDefault();
-    activate(next);
-    thumbs[next].focus();
+    if (ies) {
+      // the active thumb is hidden, so arrows only move focus; Enter/Space switch
+      visible.forEach((t, i) => { t.tabIndex = i === next ? 0 : -1; });
+      visible[next].focus();
+      return;
+    }
+    activate(thumbs.indexOf(visible[next]));
+    visible[next].focus();
   });
 
   const section = document.createElement('div');
   section.className = 'video-switcher';
   section.append(stage, bar);
-  return section;
+  if (!ies) {
+    activate(0);
+    return section;
+  }
+
+  const dotsWrap = document.createElement('div');
+  dotsWrap.className = 'video-dots';
+  dotsWrap.setAttribute('role', 'tablist');
+  dotsWrap.setAttribute('aria-label', 'Customer stories');
+  dotsWrap.append(...dots);
+  dots.forEach((d, i) => d.addEventListener('click', () => activate(i)));
+  dotsWrap.addEventListener('keydown', (e) => {
+    let next = null;
+    if (e.key === 'ArrowRight') next = (current + 1) % dots.length;
+    else if (e.key === 'ArrowLeft') next = (current - 1 + dots.length) % dots.length;
+    else if (e.key === 'Home') next = 0;
+    else if (e.key === 'End') next = dots.length - 1;
+    if (next === null) return;
+    e.preventDefault();
+    activate(next);
+    dots[next].focus();
+  });
+
+  // horizontal swipe on the stage (the dots' companion below 1024px)
+  let startX = null;
+  stage.addEventListener('pointerdown', (e) => { startX = e.clientX; });
+  stage.addEventListener('pointerup', (e) => {
+    if (startX === null) return;
+    const dx = e.clientX - startX;
+    startX = null;
+    if (Math.abs(dx) <= 40) return;
+    activate((current + (dx < 0 ? 1 : -1) + frames.length) % frames.length);
+  });
+  stage.addEventListener('pointercancel', () => { startX = null; });
+
+  activate(0);
+  const carousel = document.createElement('div');
+  carousel.className = 'video-carousel';
+  carousel.append(section, dotsWrap);
+  return carousel;
 }
 
 /**
@@ -793,7 +891,7 @@ export default function decorate(block) {
     const titleRow = block.classList.contains('ies') ? takeHeadingRow(rows) : null;
     if (!rows.length) return;
     const heading = titleRow || extractHeading(rows[0].children[1]);
-    const section = buildVideoSection(rows);
+    const section = buildVideoSection(rows, { ies: block.classList.contains('ies') });
     block.replaceChildren(...(heading ? [heading] : []), section);
     track();
     return;

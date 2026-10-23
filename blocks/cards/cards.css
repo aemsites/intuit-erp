@@ -1011,6 +1011,15 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
 .cards.tinted.stat .cards-card-body .cards-eyebrow { margin-bottom: 30px; }
 .cards.tinted.stat .cards-card-body :is(h3, h4) { line-height: var(--line-height-s); }
 
+/* footnote markers: raised without opening up the line they sit on */
+.cards.tinted.stat sup {
+  position: relative;
+  top: -0.6em;
+  font-size: 0.645em;
+  line-height: 0;
+  vertical-align: baseline;
+}
+
 .cards.tinted.stat > div:not(:has(.cards-card-image)) {
   display: flex;
   flex-direction: column;
@@ -1023,6 +1032,7 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
 
 .cards.tinted.stat > div:not(:has(.cards-card-image)) .cards-card-body > * {
   margin: 0;
+  font-family: var(--heading-font-family);
   font-size: var(--heading-font-size-m);
   font-weight: var(--font-weight-normal);
   line-height: var(--line-height-s);

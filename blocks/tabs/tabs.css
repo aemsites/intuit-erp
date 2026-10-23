@@ -1571,7 +1571,7 @@ main > .section.tabs-container.padding-bottom-xxxl:has(.tabs.vertical-panel.ques
   --it-band: #0d0031;
   --it-surface: transparent;
   --it-tab-idle: transparent;
-  --it-rule: 0.5px solid #e2e9ed;
+  --it-rule: 0.5px solid rgb(255 255 255 / 30%);
 
   background-color: var(--it-band);
 }
@@ -1729,7 +1729,7 @@ main > .section.tabs-container:has(.tabs.vertical-panel.dark.blueberry) > .defau
 }
 
 @media (width >= 1024px) {
-  main > .section.tabs-container:has(.tabs.vertical-panel.dark.blueberry) { padding: var(--space-5xl) var(--space-2xl); }
+  main > .section.tabs-container:has(.tabs.vertical-panel.dark.blueberry) { padding: var(--space-5xl) var(--space-2xl) 120px; }
 
   main > .section.tabs-container:has(.tabs.vertical-panel.dark.blueberry) > .default-content-wrapper {
     gap: var(--space-m);
@@ -1768,7 +1768,7 @@ main > .section.tabs-container:has(.tabs.vertical-panel.dark.blueberry) > .defau
   .tabs.vertical-panel.dark.blueberry .it-panel { left: 290px; margin-left: 0; }
 
   .tabs.vertical-panel.dark.blueberry .it-panel.is-active {
-    gap: var(--space-xl);
+    gap: var(--space-2xl);
     margin-bottom: 0;
     padding: var(--space-2xs) 0 0;
     border-radius: 0;
@@ -1777,14 +1777,13 @@ main > .section.tabs-container:has(.tabs.vertical-panel.dark.blueberry) > .defau
   .tabs.vertical-panel.dark.blueberry .it-copy { gap: var(--space-m); padding: 0; }
 
   .tabs.vertical-panel.dark.blueberry .it-heading {
-    flex: 1 1 0;
-    max-width: none;
-    padding-right: var(--space-2xl);
+    flex: 0 1 450px;
+    max-width: 450px;
     font-size: 40px;
     line-height: var(--line-height-xs);
   }
 
-  .tabs.vertical-panel.dark.blueberry .it-copy-body { flex: 1 1 0; gap: var(--space-s); }
+  .tabs.vertical-panel.dark.blueberry .it-copy-body { flex: 0 1 450px; max-width: 450px; gap: var(--space-s); }
 
   .tabs.vertical-panel.dark.blueberry .it-media img {
     aspect-ratio: 1840 / 1000;
