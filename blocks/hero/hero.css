@@ -1060,3 +1060,29 @@ body.author-guide .hero .hero-copy .hero-lede {
     justify-content: space-between;
   }
 }
+
+/* .homepage: 640 | 80 | 640 lockup with a 640x426 tile, per the homepage design */
+@media (width >= 1024px) {
+  .hero.ies.video.homepage .hero-copy { max-width: 640px; }
+
+  .hero.ies.video.homepage .hero-media-video {
+    aspect-ratio: 640 / 426;
+    border-radius: 38px;
+  }
+
+  .hero.ies.video.homepage .hero-actions :is(a, button).button.primary { padding-inline: 42px; }
+
+  .hero.ies.video.homepage .hero-actions :is(a, button).button.icon-video { gap: 8px; }
+
+  .hero.ies.video.homepage .hero-actions :is(a, button).button.icon-video::before {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+@media (width >= 1440px) {
+  .hero.ies.video.homepage .hero-grid {
+    grid-template-columns: 640px 640px;
+    gap: 80px;
+  }
+}
