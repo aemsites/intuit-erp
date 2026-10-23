@@ -515,6 +515,12 @@
   .testimonial.video.ies .video-thumbs { display: none; }
 }
 
+/* mobile: the caption card below the video is Blueberry, as in the design (also keeps
+   the grey eyebrow above AA contrast) */
+@media (width < 768px) {
+  .testimonial.video.ies .video-switcher { background: #0d0031; }
+}
+
 .testimonial.video.ies .testimonial-heading {
   font-family: var(--tv-display-font);
   max-width: none;
