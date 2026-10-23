@@ -766,7 +766,9 @@ body.author-guide .hero .hero-copy .hero-lede {
     background: url("./ies-arcs-bg.webp") 47.5% 27.4% / 135.33% 171.23% no-repeat, #0d0031;
   }
  
-  .hero.ies.arcs .hero-grid { padding-block: 120px; }
+  /* the .video selector outranks the .ies.video grid padding further down */
+  .hero.ies.arcs .hero-grid,
+  .hero.ies.video.arcs .hero-grid { padding-block: 120px; }
 }
 
 /* .ies.glow: Superblue band with the IES radial glow; light-blue media tile; 640 | 80 | 640 on desktop */

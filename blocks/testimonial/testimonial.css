@@ -463,12 +463,55 @@
 
   .testimonial.video.ies .video-switcher .video-name { font-weight: var(--font-weight-bold); }
   .testimonial.video.ies .video-switcher .video-attr a { font-weight: var(--font-weight-medium); }
+
+  .testimonial.video.ies .video-stage { aspect-ratio: 688 / 640; }
+
+  .testimonial.video.ies .video-switcher > .video-caption {
+    inset: auto 10px 10px;
+    gap: var(--space-l);
+    padding: var(--space-l) 28px;
+    border-radius: 32px;
+  }
+
+  .testimonial.video.ies .video-switcher .video-avatar {
+    width: 100px;
+    height: 126px;
+    border-radius: var(--radius-l);
+  }
 }
 
 @media (width >= 1024px) {
+  .testimonial.video.ies .video-thumbs { gap: var(--space-s); }
+
+  .testimonial.video.ies .video-thumb,
+  .testimonial.video.ies .video-thumb[aria-selected="true"] {
+    width: 78px;
+    height: 98px;
+    border-color: transparent;
+    border-radius: var(--radius-l);
+    opacity: 0.6;
+  }
+
+  .testimonial.video.ies .video-thumb:hover { opacity: 1; }
+}
+
+/* the desktop layout needs the full width; below 1200 the tablet one stays */
+@media (width >= 1200px) {
   .testimonial.video.ies .video-switcher .video-quote {
     font-family: var(--tv-display-font);
     font-size: 28px;
+  }
+
+  .testimonial.video.ies .video-stage { aspect-ratio: 1200 / 640; }
+
+  .testimonial.video.ies .video-switcher > .video-caption {
+    inset: auto var(--space-2xs) var(--space-2xs);
+    border-radius: 30px;
+  }
+
+  .testimonial.video.ies .video-switcher .video-avatar {
+    width: 80px;
+    height: 100px;
   }
 }
 
