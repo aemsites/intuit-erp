@@ -1061,14 +1061,18 @@ body.author-guide .hero .hero-copy .hero-lede {
   }
 }
 
-/* .homepage: 640 | 80 | 640 lockup with a 640x426 tile, per the homepage design */
+/* .homepage: 3:2 tile (688x458 on tablet, 640x426 on desktop), 640 | 80 | 640 lockup on desktop */
+@media (width >= 768px) {
+  .hero.ies.video.homepage .hero-media-video {
+    aspect-ratio: 640 / 426;
+    border-radius: 30px;
+  }
+}
+
 @media (width >= 1024px) {
   .hero.ies.video.homepage .hero-copy { max-width: 640px; }
 
-  .hero.ies.video.homepage .hero-media-video {
-    aspect-ratio: 640 / 426;
-    border-radius: 38px;
-  }
+  .hero.ies.video.homepage .hero-media-video { border-radius: 38px; }
 
   .hero.ies.video.homepage .hero-actions :is(a, button).button.primary { padding-inline: 42px; }
 
