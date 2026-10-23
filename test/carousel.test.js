@@ -1,5 +1,16 @@
-import { describe, it, expect } from 'vitest';
+import {
+  describe, it, expect, vi,
+} from 'vitest';
 import decorate from '../blocks/carousel/carousel.js';
+
+// blocks/carousel/carousel.js imports scripts.js, which runs loadPage() on import; a never-settling
+// promise parks it at the header/sections so it can't throw after the tests finish
+vi.mock('../scripts/aem.js', async (importOriginal) => ({
+  ...(await importOriginal()),
+  loadHeader: vi.fn(() => new Promise(() => {})),
+  loadFooter: vi.fn(() => new Promise(() => {})),
+  loadSections: vi.fn(() => new Promise(() => {})),
+}));
 
 function make(n) {
   const block = document.createElement('div');

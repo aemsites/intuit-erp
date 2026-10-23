@@ -1,5 +1,17 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import {
+  describe, it, expect, vi, beforeEach,
+} from 'vitest';
 import decorate from '../blocks/carousel/carousel.js';
+
+// blocks/carousel/carousel.js imports scripts.js, which runs loadPage() on import; a
+// never-settling promise parks it at the header/sections so it can't throw after
+// the tests finish (openVideoModal stays real)
+vi.mock('../scripts/aem.js', async (importOriginal) => ({
+  ...(await importOriginal()),
+  loadHeader: vi.fn(() => new Promise(() => {})),
+  loadFooter: vi.fn(() => new Promise(() => {})),
+  loadSections: vi.fn(() => new Promise(() => {})),
+}));
 
 // the three shapes authors have actually produced for this block
 const FOUR_CELL = `<div>

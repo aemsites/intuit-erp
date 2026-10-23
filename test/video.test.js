@@ -1,5 +1,17 @@
-import { describe, it, expect } from 'vitest';
+import {
+  describe, it, expect, vi,
+} from 'vitest';
 import decorate, { videoInfo, isVideoLink, posterFor } from '../blocks/video/video.js';
+
+// blocks/video/video.js imports scripts.js, which runs loadPage() on import; a
+// never-settling promise parks it at the header/sections so it can't throw after
+// the tests finish (openVideoModal stays real)
+vi.mock('../scripts/aem.js', async (importOriginal) => ({
+  ...(await importOriginal()),
+  loadHeader: vi.fn(() => new Promise(() => {})),
+  loadFooter: vi.fn(() => new Promise(() => {})),
+  loadSections: vi.fn(() => new Promise(() => {})),
+}));
 
 function makeVideoBlock(linkText, href) {
   const block = document.createElement('div');
