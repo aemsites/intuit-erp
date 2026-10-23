@@ -285,6 +285,20 @@ export function enhanceDashboardAnimation(media, picture, {
   visibleObserver.observe(media);
 }
 
+/**
+ * .ies.arcs: stretches the section's background layer behind a logo-band
+ * marquee right after it, tracking the band's height (see hero.css).
+ * @param {Element} block The hero block
+ */
+function extendArcsBackground(block) {
+  const section = block.closest('.section');
+  const tail = section?.nextElementSibling;
+  if (!tail?.querySelector('.logo-band.marquee:not(.light)') || !window.ResizeObserver) return;
+  new ResizeObserver(() => {
+    section.style.setProperty('--hero-arcs-tail', `${tail.offsetHeight}px`);
+  }).observe(tail);
+}
+
 export default async function decorate(block) {
   const isForm = block.classList.contains('form');
   // .centered is a single-column hero (ai-agents): the media cell is a small
@@ -295,6 +309,8 @@ export default async function decorate(block) {
   const isVideoLink = block.classList.contains('video-link');
   const isIesVideo = block.classList.contains('ies') && block.classList.contains('video');
   const rows = [...block.children];
+
+  if (block.classList.contains('ies') && block.classList.contains('arcs')) extendArcsBackground(block);
 
   if (isGradient) {
     block.closest('.section').classList.add('gradient');
