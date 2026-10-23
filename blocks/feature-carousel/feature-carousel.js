@@ -22,9 +22,8 @@
  *
  * Auto-advance pauses on hover, keyboard focus, a hidden tab, and while the
  * block is off screen; it is off entirely for prefers-reduced-motion.
- * Hovering the slide on show also pauses its animation, and clicking the
- * active dot pauses (or resumes) the carousel until clicked again or another
- * slide is shown.
+ * Hovering the active slide pauses its animation; clicking the active dot
+ * pauses or resumes the carousel (any slide change resumes it).
  * CSS: blocks/feature-carousel/feature-carousel.css
  */
 import { toClassName } from '../../scripts/aem.js';
@@ -294,7 +293,6 @@ export default async function decorate(block) {
   const ANIMATION_PAUSES = ['offscreen', 'hidden', 'card', 'user'];
   const animationPaused = () => ANIMATION_PAUSES.some((reason) => pauses.has(reason));
 
-  // the active dot pauses and resumes; the others show their slide
   const labelDots = () => slides.forEach((s, i) => {
     let label = `Show slide ${i + 1}`;
     if (i === index && !reduceMotion) label = pauses.has('user') ? 'Resume carousel' : 'Pause carousel';
@@ -319,7 +317,6 @@ export default async function decorate(block) {
       if (active) s.dot.setAttribute('aria-current', 'true');
       else s.dot.removeAttribute('aria-current');
     });
-    // a new slide starts fresh: the hovered card is gone and a user pause ends
     pauses.delete('card');
     pauses.delete('user');
     block.classList.toggle('is-paused', pauses.size > 0);
@@ -375,7 +372,6 @@ export default async function decorate(block) {
       setPaused('user', !pauses.has('user'));
       labelDots();
     });
-    // only the slide on show takes the pointer (the rest are inert)
     s.row.addEventListener('pointerenter', (e) => {
       if (e.pointerType === 'mouse') setPaused('card', true);
     });

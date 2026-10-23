@@ -1011,7 +1011,6 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
 .cards.tinted.stat .cards-card-body .cards-eyebrow { margin-bottom: 30px; }
 .cards.tinted.stat .cards-card-body :is(h3, h4) { line-height: var(--line-height-s); }
 
-/* footnote markers: raised without opening up the line they sit on */
 .cards.tinted.stat sup {
   position: relative;
   top: -0.6em;

@@ -727,16 +727,12 @@ body.author-guide .hero .hero-copy .hero-lede {
   .hero.ies .hero-copy h1 { font-size: 60px; }
 }
 
-/* .ies.arcs: Blueberry band with the arcs background image; each breakpoint crops it
-   differently. The image sits on its own layer, which also reaches behind a logo-band
-   marquee right after the hero (--hero-arcs-tail, set by hero.js) so both read as one band.
-   Mobile and desktop crops are measured on hero + logo band together */
 .section.hero-container:has(.hero.ies.arcs) {
   position: relative;
   isolation: isolate;
   background: #0d0031;
 
-  /* still clip sideways, but let the background layer run down behind the logo band */
+  /* clip sideways only, so the layer can reach the logo band */
   overflow: clip visible;
 }
 
@@ -748,15 +744,12 @@ body.author-guide .hero .hero-copy .hero-lede {
   background: url("./ies-arcs-bg.webp") 47.7% 23.2% / 302.86% 153.32% no-repeat, #0d0031;
 }
 
-/* the logo band lets the hero's image show through (painted after the hero, so above it) */
 .section.hero-container:has(.hero.ies.arcs) + .section.logo-band-container:has(.logo-band.marquee:not(.light)) {
   --marquee-bg: transparent;
 
   position: relative;
 }
 
-/* tablet: the crop is measured on the hero alone, so it is sized against the hero's
-   height (the layer minus the tail) and the image simply carries on below it */
 @media (width >= 768px) {
   .section.hero-container:has(.hero.ies.arcs)::before {
     background:

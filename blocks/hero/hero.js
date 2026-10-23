@@ -285,11 +285,6 @@ export function enhanceDashboardAnimation(media, picture, {
   visibleObserver.observe(media);
 }
 
-/**
- * .ies.arcs: stretches the section's background layer behind a logo-band
- * marquee right after it, tracking the band's height (see hero.css).
- * @param {Element} block The hero block
- */
 function extendArcsBackground(block) {
   const section = block.closest('.section');
   const tail = section?.nextElementSibling;

@@ -225,7 +225,7 @@
   animation: feature-carousel-progress var(--feature-carousel-duration, 35s) linear forwards;
 }
 
-/* as specific as the rule above, whose animation shorthand would otherwise reset the play state */
+/* matches the rule above so its animation shorthand doesn't reset the play state */
 .feature-carousel.is-paused .feature-carousel-dot.is-active .feature-carousel-dot-fill {
   animation-play-state: paused;
 }

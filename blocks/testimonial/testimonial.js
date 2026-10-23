@@ -322,9 +322,6 @@ export function buildVideoFrame(cells, opts = {}) {
   return frame;
 }
 
-// Wraps the leading "Name, Role" text of an attribution paragraph in
-// .video-name / .video-role spans (split at the first comma) so CSS can style
-// them apart; the link and anything after it are kept untouched.
 function attributionHtml(attribution) {
   if (!attribution) return '';
   const p = attribution.cloneNode(true);
@@ -407,12 +404,8 @@ function buildThumb(row, index, frameId) {
  * bar (`.video-caption`) holding the active story's avatar + eyebrow/quote/
  * attribution and the speaker-avatar thumbnail tabs that switch stories.
  * @param {Element[]} rows the block's `:scope > div` story rows
- * @param {{ies?:boolean}} [opts] when ies is true the active story's thumb is
- *   hidden (only the other stories are offered) and the switcher is wrapped in
- *   a `.video-carousel` with `.video-dots` pagination (shown below 1024px,
- *   where the thumbs are hidden) and horizontal swipe on the stage
- * @returns {HTMLElement} a `.video-frame` (single), `.video-switcher` (many)
- *   or, with ies, a `.video-carousel` wrapping the switcher and dots
+ * @param {{ies?:boolean}} [opts] ies: hide the active thumb, add dots and swipe
+ * @returns {HTMLElement} a `.video-frame`, `.video-switcher` or `.video-carousel`
  */
 export function buildVideoSection(rows, opts = {}) {
   const { ies = false } = opts;
@@ -441,7 +434,6 @@ export function buildVideoSection(rows, opts = {}) {
   thumbsWrap.append(...thumbs);
   bar.append(thumbsWrap);
 
-  // .ies: one pagination dot per story, kept in sync with the thumbs
   const dots = ies ? rows.map((r, i) => {
     const dot = document.createElement('button');
     dot.type = 'button';
@@ -455,7 +447,6 @@ export function buildVideoSection(rows, opts = {}) {
   let current = 0;
   function activate(idx) {
     current = idx;
-    // .ies hides the active story's thumb, so the first visible one takes the tab stop
     const focusable = ies ? thumbs.findIndex((t, i) => i !== idx) : idx;
     thumbs.forEach((t, i) => {
       t.setAttribute('aria-selected', i === idx ? 'true' : 'false');
@@ -475,7 +466,6 @@ export function buildVideoSection(rows, opts = {}) {
     if (!btn) return;
     const hadFocus = btn === document.activeElement;
     activate(thumbs.indexOf(btn));
-    // the clicked thumb is now hidden — keep keyboard focus in the tablist
     if (ies && hadFocus) thumbs.find((t) => !t.hidden)?.focus();
   });
   thumbsWrap.addEventListener('keydown', (e) => {
@@ -490,7 +480,6 @@ export function buildVideoSection(rows, opts = {}) {
     if (next === null) return;
     e.preventDefault();
     if (ies) {
-      // the active thumb is hidden, so arrows only move focus; Enter/Space switch
       visible.forEach((t, i) => { t.tabIndex = i === next ? 0 : -1; });
       visible[next].focus();
       return;
@@ -525,7 +514,6 @@ export function buildVideoSection(rows, opts = {}) {
     dots[next].focus();
   });
 
-  // horizontal swipe on the stage (the dots' companion below 1024px)
   let startX = null;
   stage.addEventListener('pointerdown', (e) => { startX = e.clientX; });
   stage.addEventListener('pointerup', (e) => {

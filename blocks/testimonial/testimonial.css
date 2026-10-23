@@ -387,7 +387,6 @@
 /* .video.ies: 20px section padding (40px from desktop); the title row is styled like the other IES section titles */
 .section.testimonial-container:has(.testimonial.video.ies) { padding-block: var(--space-m); }
 
-/* Tally throughout: Tally Display for the title, Tally for the caption copy */
 .testimonial.video.ies {
   --tv-font: tally, tally-fallback, "AvenirNext forINTUIT", avenir-fallback, arial, sans-serif;
   --tv-display-font: "Tally Display", tally, tally-display-fallback, "AvenirNext forINTUIT", avenir-fallback, arial, sans-serif;
@@ -398,9 +397,6 @@
 
 .testimonial.video.ies :is(.video-switcher, > .video-frame) { border-radius: 32px; }
 
-/* caption type (Figma "Case Study Customers"). Mobile is all Avenir; from
-   tablet: Tally Medium eyebrow, Tally quote (Tally Display from desktop),
-   Tally Display name/link and an Avenir role */
 .testimonial.video.ies .video-switcher .video-eyebrow {
   margin: 0 0 var(--space-xs);
   font-family: var(--tv-avenir-font);
@@ -476,10 +472,8 @@
   }
 }
 
-/* the active story is already on stage, so its thumb isn't offered again */
 .testimonial.video.ies .video-thumb[hidden] { display: none; }
 
-/* pagination (tablet + mobile only; desktop switches via the thumbs) */
 .testimonial.video.ies .video-dots {
   display: flex;
   justify-content: center;
@@ -515,8 +509,6 @@
   .testimonial.video.ies .video-thumbs { display: none; }
 }
 
-/* mobile: the caption card below the video is Blueberry, as in the design (also keeps
-   the grey eyebrow above AA contrast) */
 @media (width < 768px) {
   .testimonial.video.ies .video-switcher { background: #0d0031; }
 }
