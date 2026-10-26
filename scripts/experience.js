@@ -4,7 +4,12 @@
 // call for the swapped-in content's own section/block slots (recursion-safe).
 
 import { getMetadata } from './aem.js';
+import { observeInteract, resolveAepPersonalization } from './aep-pzn.js';
+
 import { buildIntentContext, getIntentProfile } from './of1-intent.js';
+
+// Start watching the Web SDK's interact call before Tealium can load it.
+observeInteract();
 
 // Perf telemetry is sampled before any observers/marks/measures are installed, keeping
 // unsampled views off the LCP path. `?perf=on` forces instrumentation and console output.
@@ -291,9 +296,22 @@ export function buildPerfPayload({
 
 // --- Endpoint + fetch primitives -------------------------------------------
 
-// API base: `experience-api-base` metadata override, else same-origin /api (Akamai-fronted).
+// Local-dev only: `?experience-api-base=<https url or /path>` on localhost/127.0.0.1, so a local
+// page can reach a real orchestrator (e.g. https://erp.intuit.com/api) without editing the page's
+// metadata. Never honoured on any other host: a link could otherwise point a visitor's decision
+// request (which carries their ivid and context) at an arbitrary origin.
+export function localApiBaseOverride(hostname, search) {
+  if (hostname !== 'localhost' && hostname !== '127.0.0.1') return '';
+  const value = new URLSearchParams(search).get('experience-api-base') || '';
+  return /^(https?:\/\/|\/(?!\/))/.test(value) ? value : '';
+}
+
+// API base: `experience-api-base` metadata override, else (local dev only) the URL parameter,
+// else same-origin /api (Akamai-fronted).
 export function apiBase() {
-  return (getMetadata('experience-api-base') || '/api').replace(/\/+$/, '');
+  const local = typeof window === 'undefined'
+    ? '' : localApiBaseOverride(window.location.hostname, window.location.search);
+  return (getMetadata('experience-api-base') || local || '/api').replace(/\/+$/, '');
 }
 
 // Normalizes an UNTRUSTED response ref to a SAFE same-origin root-absolute path (or null).
@@ -468,20 +486,36 @@ export function collectExperiments(root, skip) {
 // Dropped when the same target also carries an experiment (IXP wins).
 export function collectSlots(root, skip) {
   const sections = [];
-  if (root.matches?.('[data-pzn]') && root !== skip) sections.push(root);
-  root.querySelectorAll('[data-pzn]').forEach((s) => { if (s !== skip) sections.push(s); });
+  const target = '[data-pzn], [data-pzn-rules]';
+  if (root.matches?.(target) && root !== skip) sections.push(root);
+  root.querySelectorAll(target).forEach((s) => { if (s !== skip) sections.push(s); });
 
   const slots = [];
   sections.forEach((section) => {
-    const placement = section.dataset.pzn;
+    // `pzn-rules` (AEP segment + AEM rules json) wins over `pzn` (intuit-orchestrator) when a
+    // section carries both; only `pzn` on its own is orchestrator-based.
+    const rulesName = section.dataset.pznRules;
+    const placement = rulesName || section.dataset.pzn;
     if (!placement) return;
     if (section.dataset.exp && sameTargetAsExp(section)) return;
     const block = section.dataset.pznBlock;
     const el = block ? resolveBlock(section, block) : section;
     const append = section.dataset.pznMode === 'append';
-    if (el) slots.push({ el, placement, append });
+    if (el) {
+      slots.push({
+        el, placement, append, ...(rulesName && { rules: true }),
+      });
+    }
   });
   return slots;
+}
+
+// data-pzn-rules placement names under `root` (de-duped): the AEP-segment + rules-json targets,
+// resolved by scripts/aep-pzn.js rather than intuit-orchestrator.
+export function collectRulesPlacements(root) {
+  if (!root) return [];
+  const rules = collectSlots(root).filter((slot) => slot.rules);
+  return [...new Set(rules.map((slot) => slot.placement))];
 }
 
 // The single call's lists: page metadata + all section/block ids/names, de-duped,
@@ -498,7 +532,9 @@ export function collectRequest(doc = document) {
   const main = doc.querySelector('main');
   if (main) {
     collectExperiments(main).forEach(({ id }) => experimentIds.add(id));
-    collectSlots(main).forEach(({ placement }) => accessPointNames.add(placement));
+    collectSlots(main).forEach(({ placement, rules }) => {
+      if (!rules) accessPointNames.add(placement);
+    });
   }
   return { experimentIds: [...experimentIds], accessPointNames: [...accessPointNames] };
 }
@@ -538,9 +574,10 @@ function previewOrchestratorQuery(opts, context) {
   return '';
 }
 
-// POSTs the request; returns the parsed response or null (fail-open) on any failure.
+// intuit-orchestrator POST (experiments + `pzn`-only placements). Returns the parsed response or
+// null (fail-open) on any failure.
 // With `signal` the caller owns the deadline, else `timeoutMs` applies.
-export async function fetchExperience({ experimentIds, accessPointNames }, context, opts = {}) {
+async function fetchOrchestrator({ experimentIds, accessPointNames }, context, opts = {}) {
   const { signal: externalSignal, timeoutMs = 1500 } = opts;
   let signal = externalSignal;
   let timer;
@@ -575,6 +612,10 @@ export async function fetchExperience({ experimentIds, accessPointNames }, conte
     const apiRoot = (opts.baseUrl || apiBase()).replace(/\/+$/, '');
     const previewQs = previewOrchestratorQuery(opts, context);
     const target = `${apiRoot}/intuit-orchestrator${previewQs ? `?${previewQs}` : ''}`;
+    if (apiRoot !== '/api') {
+      // eslint-disable-next-line no-console
+      console.log(`[experience] orchestrator target (api base overridden): ${target}`);
+    }
     const res = await fetch(target, {
       method: 'POST',
       credentials: 'include',
@@ -851,7 +892,12 @@ async function applyPznSlot(response, placement, stampTarget, applyContent, reco
     return false;
   }
   const path = casToPath(d.contentId);
-  if (!path || !(await applyContent(path))) return false;
+  // eslint-disable-next-line no-console
+  console.log(`[aep-pzn] applying "${placement}": contentId=${d.contentId} -> path=${path}`);
+  const applied = !!path && await applyContent(path);
+  // eslint-disable-next-line no-console
+  console.log(`[aep-pzn] "${placement}" fragment ${applied ? 'swapped in' : 'NOT applied (fetch/decorate failed)'}`);
+  if (!applied) return false;
   if (track) {
     if (rec) record([rec]);
     stampPzn(stampTarget, rec);
@@ -908,6 +954,29 @@ export function mergeExperience(base, extra) {
   };
 }
 
+// One seam for every decision source, merged into a single orchestrator-shaped response:
+//   - experiments + `pzn` placements -> intuit-orchestrator (fetchOrchestrator above)
+//   - `pzn-rules` placements         -> AEP Edge segment + AEM rules json (scripts/aep-pzn.js)
+// The two run in parallel and fail open independently. A page with only `pzn-rules` targets never
+// calls the orchestrator, and a page with only `pzn` targets never calls the AEP Fetch API.
+export async function fetchExperience(
+  { experimentIds, accessPointNames, rulesPlacements = [] },
+  context,
+  opts = {},
+) {
+  const rulesOnly = rulesPlacements.length && !experimentIds.length && !accessPointNames.length;
+  const [orchestrated, ruled] = await Promise.all([
+    rulesOnly ? null : fetchOrchestrator({ experimentIds, accessPointNames }, context, opts),
+    rulesPlacements.length
+      ? resolveAepPersonalization(rulesPlacements, {
+        signal: opts.signal,
+        ...(opts.timeoutMs && { timeoutMs: opts.timeoutMs }),
+      })
+      : null,
+  ]);
+  return mergeExperience(orchestrated, ruled);
+}
+
 // Section/block-ONLY request for `root` (no page-level metadata) — the omission keeps the
 // post-swap call recursion-safe: a variation's page-level tags are never re-collected.
 export function collectSwapRequest(root) {
@@ -915,7 +984,9 @@ export function collectSwapRequest(root) {
   const accessPointNames = new Set();
   if (root) {
     collectExperiments(root).forEach(({ id }) => experimentIds.add(id));
-    collectSlots(root).forEach(({ placement }) => accessPointNames.add(placement));
+    collectSlots(root).forEach(({ placement, rules }) => {
+      if (!rules) accessPointNames.add(placement);
+    });
   }
   return { experimentIds: [...experimentIds], accessPointNames: [...accessPointNames] };
 }
@@ -927,12 +998,16 @@ export function resolveSwappedSlots(doc, { timeoutMs = 1500 } = {}) {
   const main = doc?.querySelector('main');
   const noop = { firstSectionAffected: false, done: Promise.resolve() };
   if (!main) return noop;
-  const req = collectSwapRequest(main);
-  if (!req.experimentIds.length && !req.accessPointNames.length) return noop;
-  const firstReq = collectSwapRequest(main.querySelector('.section'));
-  const firstSectionAffected = !!(
-    firstReq.experimentIds.length || firstReq.accessPointNames.length
+  const swapRequest = (root) => ({
+    ...collectSwapRequest(root),
+    rulesPlacements: collectRulesPlacements(root),
+  });
+  const hasTargets = (r) => !!(
+    r.experimentIds.length || r.accessPointNames.length || r.rulesPlacements.length
   );
+  const req = swapRequest(main);
+  if (!hasTargets(req)) return noop;
+  const firstSectionAffected = hasTargets(swapRequest(main.querySelector('.section')));
   const done = (async () => {
     try {
       const extra = await fetchExperience(req, buildContext(), { timeoutMs });
@@ -958,8 +1033,12 @@ export async function applyPageExperience(doc) {
   if (window.hlx.pageExperienceApplied) return false;
   window.hlx.pageExperienceApplied = true;
   perfMark('exp:eager-start');
-  const request = collectRequest(doc);
-  if (!request.experimentIds.length && !request.accessPointNames.length) return false;
+  const request = {
+    ...collectRequest(doc),
+    rulesPlacements: collectRulesPlacements(doc.querySelector('main')),
+  };
+  if (!request.experimentIds.length && !request.accessPointNames.length
+    && !request.rulesPlacements.length) return false;
   const decisionController = new AbortController();
   const decisionTimer = setTimeout(() => decisionController.abort(), DECISION_DEADLINE_MS);
   const responsePromise = fetchExperience(request, buildContext(), {
@@ -978,7 +1057,11 @@ export async function applyPageExperience(doc) {
     const response = await withTimeout(responsePromise, EAGER_DEADLINE_MS);
     perfMark('exp:decision-ready');
     perfMeasure('exp:eager-decision', 'exp:eager-start', 'exp:decision-ready');
-    if (!response) return false;
+    if (!response) {
+      // eslint-disable-next-line no-console
+      console.log(`[aep-pzn] no decision within the ${EAGER_DEADLINE_MS}ms eager budget (or none matched) -> baseline above-the-fold; a late decision only reaches below-the-fold sections`);
+      return false;
+    }
     perfMark('exp:page-swap:start');
     const applied = await applyPage(doc, response, eagerController.signal);
     perfMark('exp:page-swap:end');
@@ -993,7 +1076,11 @@ export async function applyPageExperience(doc) {
 // (blocking paint only if the first section is affected), then swap the first/LCP section.
 export async function applyEagerLayers(doc, pageSwapped) {
   const main = doc.querySelector('main');
-  if (!main || !window.hlx?.experienceResponse) return;
+  if (!main || !window.hlx?.experienceResponse) {
+    // eslint-disable-next-line no-console
+    console.log('[aep-pzn] applyEagerLayers: no experience response yet -> first section stays baseline');
+    return;
+  }
   if (pageSwapped) {
     const swap = resolveSwappedSlots(doc, { timeoutMs: DECISION_DEADLINE_MS });
     window.hlx.experienceSwapResolved = swap.done;
