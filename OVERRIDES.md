@@ -56,10 +56,13 @@ ones this site's code actually reads.
 | `experience-api-base` | Overrides the decision-API base URL for local/QA | URL/path (default `/api`; trailing slashes stripped) | [scripts/experience.js](scripts/experience.js) |
 | `?experience-api-base=` | Local-dev URL override of the decision-API base | `https://…` or `/path`; honoured **only** on `localhost`/`127.0.0.1` (page metadata still wins). Example: `?experience-api-base=https%3A%2F%2Ferp.intuit.com%2Fapi` sends orchestrator calls to `https://erp.intuit.com/api/intuit-orchestrator`. Cross-origin, so the browser needs CORS to allow it | [scripts/experience.js](scripts/experience.js) |
 
-> The orchestrator call only fires when the page has at least one experiment id or access-point name
-> (page metadata **or** the section tags below). `experiment-id` / `personalization-id` are **not
-> currently authored on any page**, so today no orchestrator call is made — these document available
-> capability, not live config.
+> The orchestrator call only fires when the page has at least one experiment id or `pzn` access-point
+> name (page metadata **or** the `Exp` / `Pzn` section tags below). A `Pzn Rules` section does **not**
+> use the orchestrator: it triggers one AEP Fetch API call instead (see the `Pzn Rules` row below). A
+> page with both kinds makes one call to each backend, in parallel; a page with only one kind calls
+> only that backend. `experiment-id` / `personalization-id` are **not currently authored on any
+> page**, so today no orchestrator call is made — these document available capability, not live
+> config.
 
 There is also the **aem-experimentation plugin** convention (loaded only when present): `experiment` /
 `experiment-*` (e.g. `experiment-variants`), `campaign-*`, `audience-*` metadata, `campaign:` /
@@ -129,13 +132,15 @@ section, and **every other key** becomes a `data-<key>` attribute the client cod
 | `Exp` | `data-exp` | Section-scoped experiment id (numeric); section-level content swap |
 | `Exp Block` | `data-exp-block` | Scopes that experiment to the block whose `data-block-name` matches, instead of the whole section |
 | `Pzn` | `data-pzn` | Section-scoped personalization access-point name, resolved by **intuit-orchestrator** (used when the section has no `Pzn Rules`) |
-| `Pzn Rules` | `data-pzn-rules` | Section-scoped personalization resolved from the visitor's **AEP Edge segment** and an AEM rules sheet at `/drafts/megha/<value>.json` (columns `SegmentId`, `ContentId` = fragment path, `SegmentPriority`; if the visitor is in several listed segments the row with the **highest** `SegmentPriority` number wins, a row without a number ranks lowest, ties keep sheet order; see [scripts/aep-pzn.js](scripts/aep-pzn.js)). No orchestrator call is made for it. Takes precedence over `Pzn` if a section has both. Combines with `Pzn Block` / `Pzn Mode`. The AEP Fetch API is called at most once per page, however many sections use it |
+| `Pzn Rules` | `data-pzn-rules` | Section-scoped personalization resolved from the visitor's **AEP Edge segment** and an AEM rules sheet at `<RULES_BASE>/<value>.json` (`RULES_BASE` is currently the test path `/drafts/megha` in [scripts/aep-pzn.js](scripts/aep-pzn.js) — point it at a published location before release) (columns `SegmentId`, `ContentId` = fragment path, `SegmentPriority`; if the visitor is in several listed segments the row with the **highest** `SegmentPriority` number wins, a row without a number ranks lowest, ties keep sheet order; see [scripts/aep-pzn.js](scripts/aep-pzn.js)). No orchestrator call is made for it. Takes precedence over `Pzn` if a section has both. Combines with `Pzn Block` / `Pzn Mode`. The AEP Fetch API is called at most once per page, however many sections use it |
 | `Pzn Block` | `data-pzn-block` | Scopes personalization to a named block |
 | `Exp Mode` | `data-exp-mode` | `append` = the experiment fragment is **appended** to the slot, not swapped in (additive behavior/code widgets). Any other value / absent = swap (default) |
 | `Pzn Mode` | `data-pzn-mode` | `append` = the personalization fragment is **appended** to the slot, not swapped in (additive behavior/code widgets). Any other value / absent = swap (default) |
 
 The `Exp*` / `Pzn*` rows are read by [scripts/experience.js](scripts/experience.js) but are **not
-currently present in authored content** — only `Style` and `Background` are used today.
+currently present in published authored content** — only `Style` and `Background` are used there
+today. Test drafts do use them, for example `/drafts/megha/index-copy` (`Pzn Rules` + `Pzn Block` on
+its hero section).
 
 > IXP/experiment wins over personalization when both target the same scope (whole-section, or the same
 > named block); scoped to different blocks, both run independently.
@@ -215,7 +220,7 @@ Defaults (this project passes no overrides), in [plugins/experimentation/src/ind
 
 | Cookie | Role | Source |
 | --- | --- | --- |
-| `ivid` | First-party visitor id feeding personalization / Tealium / logging. **Cookie is the only source** — the old `?ivid=` URL override was removed | [scripts/experience.js](scripts/experience.js), [scripts/erp-logging.js](scripts/erp-logging.js), [plugins/tealium-martech/src/index.js](plugins/tealium-martech/src/index.js) |
+| `ivid` | First-party visitor id feeding personalization / Tealium / logging, and sent as the `IVID` identity to the AEP Fetch API for `Pzn Rules` sections (no call is made without it). **Cookie is the only source** — the old `?ivid=` URL override was removed | [scripts/experience.js](scripts/experience.js), [scripts/aep-pzn.js](scripts/aep-pzn.js), [scripts/erp-logging.js](scripts/erp-logging.js), [plugins/tealium-martech/src/index.js](plugins/tealium-martech/src/index.js) |
 | `OptanonConsent` | OneTrust consent groups; gates analytics/personalization (pairs with `?martech=local`) | [plugins/tealium-martech/src/index.js](plugins/tealium-martech/src/index.js) |
 | `AKES_GEO` | Akamai edge geo signal (only present behind Akamai) | [plugins/tealium-martech/src/index.js](plugins/tealium-martech/src/index.js) |
 
