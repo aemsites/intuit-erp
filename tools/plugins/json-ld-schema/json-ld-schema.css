@@ -1,0 +1,97 @@
+body {
+  margin: 0;
+  font-family: 'Adobe Clean', adobe-clean, sans-serif;
+}
+
+main {
+  padding: 20px;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.status,
+.note,
+.summary {
+  margin: 0;
+  font-size: 14px;
+}
+
+.status.error {
+  color: #b00020;
+}
+
+.note {
+  color: #b06000;
+}
+
+.summary {
+  font-weight: 600;
+}
+
+.faq-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 30vh;
+  overflow: auto;
+}
+
+.faq-list li {
+  padding: 8px 12px;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.faq-question {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.faq-answer {
+  margin: 0;
+  font-size: 13px;
+  color: #444;
+}
+
+.preview {
+  margin: 0;
+  padding: 12px;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.4;
+  max-height: 40vh;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+.copy-btn,
+button {
+  align-self: flex-start;
+  font-family: inherit;
+  font-size: 14px;
+  padding: 6px 14px;
+  cursor: pointer;
+  border: 0;
+  background: #0265dc;
+  color: #fff;
+  border-radius: 20px;
+}
+
+.fallback-textarea {
+  width: 100%;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+}
