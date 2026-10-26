@@ -5,8 +5,12 @@
 />
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 
+<!-- Warm the connection for the eager AEP Fetch API lookup (scripts/aep-pzn.js). `crossorigin`
+     matches the credential-less CORS fetch(); without it the browser opens a second connection. -->
+<link rel="preconnect" href="https://aec.intuit.com" crossorigin>
 <link rel="modulepreload" nonce="aem" href="/blocks/fragment/fragment.js">
 <link rel="modulepreload" nonce="aem" href="/scripts/experience.js">
+<link rel="modulepreload" nonce="aem" href="/scripts/aep-pzn.js">
 <link rel="modulepreload" nonce="aem" href="/scripts/tracking.js">
 <!-- Uncomment to enable AEP (Adobe Web SDK) in parallel with Tealium. -->
 <!-- <link rel="modulepreload" href="/plugins/martech/src/index.js" nonce="aem"/> -->
