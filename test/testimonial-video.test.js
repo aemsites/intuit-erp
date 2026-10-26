@@ -1,4 +1,6 @@
-import { describe, it, expect } from 'vitest';
+import {
+  describe, it, expect, vi, beforeEach, afterEach,
+} from 'vitest';
 import decorate, { buildVideoFrame, buildVideoSection } from '../blocks/testimonial/testimonial.js';
 
 function cells(html) {
@@ -141,5 +143,86 @@ describe('.video heading promotion via decorate()', () => {
     decorate(block);
     expect(block.querySelector('.testimonial-heading')).toBeNull();
     expect(block.querySelector('.video-frame')).not.toBeNull();
+  });
+});
+
+describe('background clip loading and playback', () => {
+  function mp4Rows(n) {
+    const wrap = document.createElement('div');
+    for (let i = 0; i < n; i += 1) {
+      const r = document.createElement('div');
+      r.innerHTML = `
+        <div><picture><img src="/p${i}.jpg" alt="Speaker ${i}"></picture><picture><img src="/l${i}.png" alt="Logo ${i}"></picture></div>
+        <div>
+          <p><em>Eyebrow ${i}</em></p>
+          <p>Quote ${i}</p>
+          <p>Name ${i} <a href="/s${i}">See their story</a></p>
+          <p>https://www.youtube.com/watch?v=id${i}</p>
+          <p><a href="/media/videos/clip-${i}.mp4">Video</a></p>
+        </div>`;
+      wrap.append(r);
+    }
+    return [...wrap.children];
+  }
+
+  let played;
+  let paused;
+  beforeEach(() => {
+    played = [];
+    paused = [];
+    vi.spyOn(HTMLMediaElement.prototype, 'play').mockImplementation(function play() {
+      played.push(this.getAttribute('src'));
+      Object.defineProperty(this, 'paused', { value: false, configurable: true });
+      return Promise.resolve();
+    });
+    vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(function pause() {
+      paused.push(this.getAttribute('src'));
+      Object.defineProperty(this, 'paused', { value: true, configurable: true });
+    });
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+    delete window.IntersectionObserver;
+  });
+
+  it('builds clips with preload="none" and no autoplay attribute, so nothing downloads up front', () => {
+    const el = buildVideoSection(mp4Rows(3), { ies: true });
+    const videos = el.querySelectorAll('video.video-bg');
+    expect(videos.length).toBe(3);
+    videos.forEach((v) => {
+      expect(v.preload).toBe('none');
+      expect(v.autoplay).toBe(false);
+      expect(v.muted).toBe(true);
+      expect(v.loop).toBe(true);
+    });
+  });
+
+  it('plays only the active story, and switches playback with the story', () => {
+    const el = buildVideoSection(mp4Rows(3));
+    expect([...new Set(played)]).toEqual(['/media/videos/clip-0.mp4']);
+    el.querySelectorAll('.video-thumb')[2].click();
+    expect(played.at(-1)).toBe('/media/videos/clip-2.mp4');
+    expect(paused).toContain('/media/videos/clip-0.mp4');
+    expect(played).not.toContain('/media/videos/clip-1.mp4');
+  });
+
+  it('waits for the block to near the viewport, and pauses it again off screen', () => {
+    let callback;
+    window.IntersectionObserver = class {
+      constructor(cb, opts) { callback = cb; this.opts = opts; }
+
+      observe() {}
+    };
+    buildVideoSection(mp4Rows(3), { ies: true });
+    expect(played).toEqual([]);
+    callback([{ isIntersecting: true }]);
+    expect([...new Set(played)]).toEqual(['/media/videos/clip-0.mp4']);
+    callback([{ isIntersecting: false }]);
+    expect(paused).toContain('/media/videos/clip-0.mp4');
+  });
+
+  it('a single story frame still plays its clip on its own', () => {
+    buildVideoFrame([...mp4Rows(1)[0].children]);
+    expect([...new Set(played)]).toEqual(['/media/videos/clip-0.mp4']);
   });
 });

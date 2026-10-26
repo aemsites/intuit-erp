@@ -95,6 +95,33 @@ const STORY_YOUTUBE_ID = 'gpHd4jd6dTk';
 // shared modal opener (scripts.js).
 const playVideo = (videoId) => openVideoModal(`https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`, 'Customer story video');
 
+const VIDEO_PLAY_MARGIN = '200px 0px';
+
+// autoplay may be blocked or unimplemented (jsdom) — swallow either way
+function safePlay(video) {
+  try { const p = video.play(); if (p && p.catch) p.catch(() => {}); } catch { /* noop */ }
+}
+
+// Plays only the active clip while `root` is near the viewport; returns a re-sync fn.
+function autoplayInView(root, activeVideo) {
+  let inView = !window.IntersectionObserver;
+  const sync = () => {
+    const active = activeVideo();
+    root.querySelectorAll('video.video-bg').forEach((v) => {
+      if (inView && v === active) safePlay(v);
+      else if (!v.paused) v.pause();
+    });
+  };
+  if (window.IntersectionObserver) {
+    new IntersectionObserver(([entry]) => {
+      inView = entry.isIntersecting;
+      sync();
+    }, { rootMargin: VIDEO_PLAY_MARGIN }).observe(root);
+  }
+  sync();
+  return sync;
+}
+
 // Parse a YouTube watch/short/embed URL into its id; '' if not a URL (a bare
 // id authored directly is returned as-is by the caller's fallback).
 function ytId(url) {
@@ -239,12 +266,13 @@ function parseVideoContent(cell) {
  * photo as a static background, and no authored source at all falls back to
  * the Rhodes clip. The centered play button opens the full video in a modal.
  * @param {Element[]} cells the row's cells
- * @param {{caption?:boolean}} [opts] when caption is false the in-frame
- *   caption is omitted (the switcher renders a shared caption bar instead)
+ * @param {{caption?:boolean, autoplay?:boolean}} [opts] when caption is false the
+ *   in-frame caption is omitted (the switcher renders a shared caption bar instead);
+ *   autoplay false leaves playback to the caller
  * @returns {HTMLDivElement} the `.video-frame`
  */
 export function buildVideoFrame(cells, opts = {}) {
-  const { caption = true } = opts;
+  const { caption = true, autoplay = true } = opts;
   const [mediaCell, contentCell] = cells;
   const imgs = mediaCell ? [...mediaCell.querySelectorAll('img')] : [];
   const posterImg = imgs[0];
@@ -267,7 +295,7 @@ export function buildVideoFrame(cells, opts = {}) {
     if (posterImg) bg.poster = posterImg.currentSrc || posterImg.src;
     bg.muted = true;
     bg.loop = true;
-    bg.autoplay = true;
+    bg.preload = 'none';
     bg.playsInline = true;
     bg.setAttribute('aria-hidden', 'true');
   } else if (youtubeRaw) {
@@ -283,7 +311,7 @@ export function buildVideoFrame(cells, opts = {}) {
     if (posterImg) bg.poster = posterImg.currentSrc || posterImg.src;
     bg.muted = true;
     bg.loop = true;
-    bg.autoplay = true;
+    bg.preload = 'none';
     bg.playsInline = true;
     bg.setAttribute('aria-hidden', 'true');
   }
@@ -315,10 +343,7 @@ export function buildVideoFrame(cells, opts = {}) {
     parts.push(cap);
   }
   frame.append(...parts);
-  if (bg.tagName === 'VIDEO') {
-    // autoplay may be blocked or unimplemented (jsdom) — swallow either way
-    try { const p = bg.play(); if (p && p.catch) p.catch(() => {}); } catch { /* noop */ }
-  }
+  if (autoplay && bg.tagName === 'VIDEO') autoplayInView(frame, () => bg);
   return frame;
 }
 
@@ -413,7 +438,7 @@ export function buildVideoSection(rows, opts = {}) {
 
   const stories = rows.map((r) => [...r.children]);
   const frames = stories.map((cells, i) => {
-    const f = buildVideoFrame(cells, { caption: false });
+    const f = buildVideoFrame(cells, { caption: false, autoplay: false });
     f.id = `video-story-${i}`;
     f.classList.toggle('is-active', i === 0);
     return f;
@@ -445,6 +470,7 @@ export function buildVideoSection(rows, opts = {}) {
   }) : [];
 
   let current = 0;
+  let syncPlayback = () => {};
   function activate(idx) {
     current = idx;
     const focusable = ies ? thumbs.findIndex((t, i) => i !== idx) : idx;
@@ -460,6 +486,7 @@ export function buildVideoSection(rows, opts = {}) {
     });
     frames.forEach((f, i) => f.classList.toggle('is-active', i === idx));
     fillCaption(bar, data[idx]);
+    syncPlayback();
   }
   thumbsWrap.addEventListener('click', (e) => {
     const btn = e.target.closest('.video-thumb');
@@ -491,6 +518,7 @@ export function buildVideoSection(rows, opts = {}) {
   const section = document.createElement('div');
   section.className = 'video-switcher';
   section.append(stage, bar);
+  syncPlayback = autoplayInView(stage, () => frames[current].querySelector('video.video-bg'));
   if (!ies) {
     activate(0);
     return section;
