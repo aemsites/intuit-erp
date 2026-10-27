@@ -18,6 +18,8 @@
  *   photo left on a Superblue band, copy right. Same cells; additionally an
  *   italic-only line renders as the eyebrow, the first plain paragraph after
  *   the bold name is the role, and any further paragraphs are a footnote.
+ *   .card.feature.ies — IES retheme, same rows. An optional first row with a
+ *   single heading cell becomes the section title; 2+ cards render as a carousel.
  *
  * Variant .story (Figma ACQ-4698 "Desktop migration story") — one or more
  * rows, each a dark Blueberry card: copy left, media tile right. 2-3 cells:
@@ -28,6 +30,7 @@
  *      Superblue tile, inset photo and customer logo
  *   3. disclaimer (optional) — legal copy as a band across the card foot
  *   2+ rows render as a carousel (same controls as .card.carousel).
+ *   .story.video-cta — video CTAs open in a modal.
  *
  * Variant .video (index) — one or more rows, each row 1-2 cells:
  *   1. media — poster <img>, optionally a second image (customer logo)
@@ -38,6 +41,8 @@
  *      or bare URL/id, detected by pattern rather than position. Falls back
  *      to the Rhodes Companies story clip when no video source is authored
  *      at all.
+ *   .video.ies — IES retheme; an optional first row with a single heading
+ *   cell becomes the section title.
  *
  * Variant .video-split (professional-services) — copy left, video right on a
  * tinted band. One row, 3 cells:
@@ -49,6 +54,7 @@
 
 import { trackAs } from '../../scripts/tracking.js';
 import { openVideoModal } from '../../scripts/scripts.js';
+import { videoInfo } from '../video/video-info.js';
 
 function pic(cell) {
   if (!cell) return null;
@@ -56,15 +62,28 @@ function pic(cell) {
   return p ? (p.closest('picture') || p) : null;
 }
 
-// Normalized to h3 regardless of the authored level so an author who picks
-// h1/h2 can't collide with the page's own heading hierarchy.
+// Preserves the authored heading level (h1-h6) to maintain document hierarchy.
 function extractHeading(cell) {
   const first = cell?.firstElementChild;
-  if (!first || !/^H[1-4]$/.test(first.tagName)) return null;
+  if (!first || !/^H[1-6]$/.test(first.tagName)) return null;
+  const tag = first.tagName.toLowerCase();
   first.remove();
-  const h = document.createElement('h3');
+  const h = document.createElement(tag);
   h.className = 'testimonial-heading';
   h.innerHTML = first.innerHTML;
+  return h;
+}
+
+// .ies: a leading one-cell heading row becomes the section title
+function takeHeadingRow(rows) {
+  const cells = rows[0] ? [...rows[0].children] : [];
+  if (cells.length !== 1 || pic(cells[0])) return null;
+  const src = cells[0].querySelector('h1, h2, h3, h4, h5, h6');
+  if (!src) return null;
+  rows.shift();
+  const h = document.createElement('h2');
+  h.className = 'testimonial-heading';
+  h.innerHTML = src.innerHTML;
   return h;
 }
 
@@ -75,6 +94,33 @@ const STORY_YOUTUBE_ID = 'gpHd4jd6dTk';
 // Build the autoplay embed URL for a bare YouTube id, then hand off to the
 // shared modal opener (scripts.js).
 const playVideo = (videoId) => openVideoModal(`https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`, 'Customer story video');
+
+const VIDEO_PLAY_MARGIN = '200px 0px';
+
+// autoplay may be blocked or unimplemented (jsdom) — swallow either way
+function safePlay(video) {
+  try { const p = video.play(); if (p && p.catch) p.catch(() => {}); } catch { /* noop */ }
+}
+
+// Plays only the active clip while `root` is near the viewport; returns a re-sync fn.
+function autoplayInView(root, activeVideo) {
+  let inView = !window.IntersectionObserver;
+  const sync = () => {
+    const active = activeVideo();
+    root.querySelectorAll('video.video-bg').forEach((v) => {
+      if (inView && v === active) safePlay(v);
+      else if (!v.paused) v.pause();
+    });
+  };
+  if (window.IntersectionObserver) {
+    new IntersectionObserver(([entry]) => {
+      inView = entry.isIntersecting;
+      sync();
+    }, { rootMargin: VIDEO_PLAY_MARGIN }).observe(root);
+  }
+  sync();
+  return sync;
+}
 
 // Parse a YouTube watch/short/embed URL into its id; '' if not a URL (a bare
 // id authored directly is returned as-is by the caller's fallback).
@@ -220,12 +266,13 @@ function parseVideoContent(cell) {
  * photo as a static background, and no authored source at all falls back to
  * the Rhodes clip. The centered play button opens the full video in a modal.
  * @param {Element[]} cells the row's cells
- * @param {{caption?:boolean}} [opts] when caption is false the in-frame
- *   caption is omitted (the switcher renders a shared caption bar instead)
+ * @param {{caption?:boolean, autoplay?:boolean}} [opts] when caption is false the
+ *   in-frame caption is omitted (the switcher renders a shared caption bar instead);
+ *   autoplay false leaves playback to the caller
  * @returns {HTMLDivElement} the `.video-frame`
  */
 export function buildVideoFrame(cells, opts = {}) {
-  const { caption = true } = opts;
+  const { caption = true, autoplay = true } = opts;
   const [mediaCell, contentCell] = cells;
   const imgs = mediaCell ? [...mediaCell.querySelectorAll('img')] : [];
   const posterImg = imgs[0];
@@ -248,7 +295,7 @@ export function buildVideoFrame(cells, opts = {}) {
     if (posterImg) bg.poster = posterImg.currentSrc || posterImg.src;
     bg.muted = true;
     bg.loop = true;
-    bg.autoplay = true;
+    bg.preload = 'none';
     bg.playsInline = true;
     bg.setAttribute('aria-hidden', 'true');
   } else if (youtubeRaw) {
@@ -264,7 +311,7 @@ export function buildVideoFrame(cells, opts = {}) {
     if (posterImg) bg.poster = posterImg.currentSrc || posterImg.src;
     bg.muted = true;
     bg.loop = true;
-    bg.autoplay = true;
+    bg.preload = 'none';
     bg.playsInline = true;
     bg.setAttribute('aria-hidden', 'true');
   }
@@ -296,11 +343,26 @@ export function buildVideoFrame(cells, opts = {}) {
     parts.push(cap);
   }
   frame.append(...parts);
-  if (bg.tagName === 'VIDEO') {
-    // autoplay may be blocked or unimplemented (jsdom) — swallow either way
-    try { const p = bg.play(); if (p && p.catch) p.catch(() => {}); } catch { /* noop */ }
-  }
+  if (autoplay && bg.tagName === 'VIDEO') autoplayInView(frame, () => bg);
   return frame;
+}
+
+function attributionHtml(attribution) {
+  if (!attribution) return '';
+  const p = attribution.cloneNode(true);
+  const lead = p.firstChild;
+  if (lead?.nodeType !== Node.TEXT_NODE) return p.innerHTML;
+  const text = lead.textContent;
+  const comma = text.indexOf(',');
+  if (comma === -1 || !text.slice(0, comma).trim()) return p.innerHTML;
+  const name = document.createElement('span');
+  name.className = 'video-name';
+  name.textContent = text.slice(0, comma).trim();
+  const role = document.createElement('span');
+  role.className = 'video-role';
+  role.textContent = text.slice(comma + 1).trim();
+  lead.replaceWith(name, ', ', role, ' ');
+  return p.innerHTML;
 }
 
 // Per-story caption data for the shared switcher info bar.
@@ -313,7 +375,7 @@ function storyData(cells) {
     avatarAlt: posterEl ? (posterEl.getAttribute('alt') || '') : '',
     eyebrow,
     quote: quoteParas.map((p) => p.textContent.trim()).join(' '),
-    attrHtml: attribution ? attribution.innerHTML : '',
+    attrHtml: attributionHtml(attribution),
   };
 }
 
@@ -367,14 +429,16 @@ function buildThumb(row, index, frameId) {
  * bar (`.video-caption`) holding the active story's avatar + eyebrow/quote/
  * attribution and the speaker-avatar thumbnail tabs that switch stories.
  * @param {Element[]} rows the block's `:scope > div` story rows
- * @returns {HTMLElement} a `.video-frame` (single) or `.video-switcher` (many)
+ * @param {{ies?:boolean}} [opts] ies: hide the active thumb, add dots and swipe
+ * @returns {HTMLElement} a `.video-frame`, `.video-switcher` or `.video-carousel`
  */
-export function buildVideoSection(rows) {
+export function buildVideoSection(rows, opts = {}) {
+  const { ies = false } = opts;
   if (rows.length <= 1) return buildVideoFrame([...(rows[0]?.children || [])]);
 
   const stories = rows.map((r) => [...r.children]);
   const frames = stories.map((cells, i) => {
-    const f = buildVideoFrame(cells, { caption: false });
+    const f = buildVideoFrame(cells, { caption: false, autoplay: false });
     f.id = `video-story-${i}`;
     f.classList.toggle('is-active', i === 0);
     return f;
@@ -395,36 +459,105 @@ export function buildVideoSection(rows) {
   thumbsWrap.append(...thumbs);
   bar.append(thumbsWrap);
 
+  const dots = ies ? rows.map((r, i) => {
+    const dot = document.createElement('button');
+    dot.type = 'button';
+    dot.className = 'video-dot';
+    dot.setAttribute('role', 'tab');
+    dot.setAttribute('aria-controls', frames[i].id);
+    dot.setAttribute('aria-label', `Show customer story ${i + 1} of ${rows.length}`);
+    return dot;
+  }) : [];
+
+  let current = 0;
+  let syncPlayback = () => {};
   function activate(idx) {
+    current = idx;
+    const focusable = ies ? thumbs.findIndex((t, i) => i !== idx) : idx;
     thumbs.forEach((t, i) => {
       t.setAttribute('aria-selected', i === idx ? 'true' : 'false');
-      t.tabIndex = i === idx ? 0 : -1;
+      t.tabIndex = i === focusable ? 0 : -1;
+      if (ies) t.hidden = i === idx;
+    });
+    dots.forEach((d, i) => {
+      d.classList.toggle('is-active', i === idx);
+      d.setAttribute('aria-selected', i === idx ? 'true' : 'false');
+      d.tabIndex = i === idx ? 0 : -1;
     });
     frames.forEach((f, i) => f.classList.toggle('is-active', i === idx));
     fillCaption(bar, data[idx]);
+    syncPlayback();
   }
   thumbsWrap.addEventListener('click', (e) => {
     const btn = e.target.closest('.video-thumb');
-    if (btn) activate(thumbs.indexOf(btn));
+    if (!btn) return;
+    const hadFocus = btn === document.activeElement;
+    activate(thumbs.indexOf(btn));
+    if (ies && hadFocus) thumbs.find((t) => !t.hidden)?.focus();
   });
   thumbsWrap.addEventListener('keydown', (e) => {
-    const cur = thumbs.indexOf(document.activeElement);
+    const visible = thumbs.filter((t) => !t.hidden);
+    const cur = visible.indexOf(document.activeElement);
     if (cur === -1) return;
     let next = null;
-    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next = (cur + 1) % thumbs.length;
-    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') next = (cur - 1 + thumbs.length) % thumbs.length;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next = (cur + 1) % visible.length;
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') next = (cur - 1 + visible.length) % visible.length;
     else if (e.key === 'Home') next = 0;
-    else if (e.key === 'End') next = thumbs.length - 1;
+    else if (e.key === 'End') next = visible.length - 1;
     if (next === null) return;
     e.preventDefault();
-    activate(next);
-    thumbs[next].focus();
+    if (ies) {
+      visible.forEach((t, i) => { t.tabIndex = i === next ? 0 : -1; });
+      visible[next].focus();
+      return;
+    }
+    activate(thumbs.indexOf(visible[next]));
+    visible[next].focus();
   });
 
   const section = document.createElement('div');
   section.className = 'video-switcher';
   section.append(stage, bar);
-  return section;
+  syncPlayback = autoplayInView(stage, () => frames[current].querySelector('video.video-bg'));
+  if (!ies) {
+    activate(0);
+    return section;
+  }
+
+  const dotsWrap = document.createElement('div');
+  dotsWrap.className = 'video-dots';
+  dotsWrap.setAttribute('role', 'tablist');
+  dotsWrap.setAttribute('aria-label', 'Customer stories');
+  dotsWrap.append(...dots);
+  dots.forEach((d, i) => d.addEventListener('click', () => activate(i)));
+  dotsWrap.addEventListener('keydown', (e) => {
+    let next = null;
+    if (e.key === 'ArrowRight') next = (current + 1) % dots.length;
+    else if (e.key === 'ArrowLeft') next = (current - 1 + dots.length) % dots.length;
+    else if (e.key === 'Home') next = 0;
+    else if (e.key === 'End') next = dots.length - 1;
+    if (next === null) return;
+    e.preventDefault();
+    activate(next);
+    dots[next].focus();
+  });
+
+  let startX = null;
+  stage.addEventListener('pointerdown', (e) => { startX = e.clientX; });
+  stage.addEventListener('pointerup', (e) => {
+    if (startX === null) return;
+    const dx = e.clientX - startX;
+    startX = null;
+    if (Math.abs(dx) <= 40) return;
+    activate((current + (dx < 0 ? 1 : -1) + frames.length) % frames.length);
+  });
+  stage.addEventListener('pointercancel', () => { startX = null; });
+
+  activate(0);
+  const carousel = document.createElement('div');
+  carousel.className = 'video-carousel';
+  carousel.append(section, dotsWrap);
+  return carousel;
 }
 
 /**
@@ -440,9 +573,10 @@ function buildVideoSplit(cells) {
 
   const copy = document.createElement('div');
   copy.className = 'split-copy';
-  const heading = contentCell ? contentCell.querySelector('h1, h2, h3, h4') : null;
+  const heading = contentCell ? contentCell.querySelector('h1, h2, h3, h4, h5, h6') : null;
   if (heading) {
-    const h = document.createElement('h2');
+    const tag = heading.tagName.toLowerCase();
+    const h = document.createElement(tag);
     h.className = 'split-title';
     h.innerHTML = heading.innerHTML;
     copy.append(h);
@@ -608,7 +742,22 @@ function buildCardCarousel(figures) {
   return wrap;
 }
 
-function buildStory(row) {
+// .story.video-cta: video CTAs open in the modal instead of navigating
+function toVideoButton(a) {
+  const info = videoInfo(a.getAttribute('href'));
+  if (!info) return a;
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  [...a.attributes].forEach((attr) => {
+    if (!['href', 'target', 'rel'].includes(attr.name)) btn.setAttribute(attr.name, attr.value);
+  });
+  btn.textContent = a.textContent.trim();
+  btn.setAttribute('data-video-src', a.getAttribute('href'));
+  btn.addEventListener('click', () => openVideoModal(info.embedUrl, btn.textContent));
+  return btn;
+}
+
+function buildStory(row, { videoModal = false } = {}) {
   const [contentCell, mediaCell, noteCell] = [...row.children];
   const figure = document.createElement('figure');
   figure.className = 'testimonial-card story-card';
@@ -622,8 +771,9 @@ function buildStory(row) {
   let ctaLink = null;
   if (contentCell) {
     [...contentCell.children].forEach((node) => {
-      if (!headingEl && /^H[1-4]$/.test(node.tagName)) {
-        headingEl = document.createElement('h3');
+      if (!headingEl && /^H[1-6]$/.test(node.tagName)) {
+        const tag = node.tagName.toLowerCase();
+        headingEl = document.createElement(tag);
         headingEl.className = 'story-title';
         headingEl.innerHTML = node.innerHTML;
         node.remove();
@@ -683,7 +833,7 @@ function buildStory(row) {
   if (ctaLink) {
     const wrap = document.createElement('p');
     wrap.className = 'button-wrapper';
-    wrap.append(ctaLink);
+    wrap.append(videoModal ? toVideoButton(ctaLink) : ctaLink);
     copy.append(wrap);
   }
   figure.append(copy);
@@ -722,12 +872,13 @@ export default function decorate(block) {
   });
   if (block.classList.contains('card')) {
     const feature = block.classList.contains('feature');
-    const figures = [...block.querySelectorAll(':scope > div')].map((row) => buildCard(row, { feature }));
-    if (block.classList.contains('carousel')) {
-      block.replaceChildren(buildCardCarousel(figures));
-    } else {
-      block.replaceChildren(...figures);
-    }
+    const ies = block.classList.contains('ies');
+    const rows = [...block.querySelectorAll(':scope > div')];
+    const heading = ies ? takeHeadingRow(rows) : null;
+    const figures = rows.map((row) => buildCard(row, { feature }));
+    const carousel = block.classList.contains('carousel') || (ies && figures.length > 1);
+    const body = carousel ? [buildCardCarousel(figures)] : figures;
+    block.replaceChildren(...(heading ? [heading] : []), ...body);
     track();
     return;
   }
@@ -735,7 +886,8 @@ export default function decorate(block) {
   if (block.classList.contains('story')) {
     const rows = [...block.querySelectorAll(':scope > div')];
     if (!rows.length) return;
-    const figures = rows.map(buildStory);
+    const videoModal = block.classList.contains('video-cta');
+    const figures = rows.map((row) => buildStory(row, { videoModal }));
     block.replaceChildren(figures.length > 1 ? buildCardCarousel(figures) : figures[0]);
     track();
     return;
@@ -751,9 +903,11 @@ export default function decorate(block) {
 
   if (block.classList.contains('video')) {
     const rows = [...block.querySelectorAll(':scope > div')];
+    // .video.ies: an optional first row with a single heading cell becomes the section title
+    const titleRow = block.classList.contains('ies') ? takeHeadingRow(rows) : null;
     if (!rows.length) return;
-    const heading = extractHeading(rows[0].children[1]);
-    const section = buildVideoSection(rows);
+    const heading = titleRow || extractHeading(rows[0].children[1]);
+    const section = buildVideoSection(rows, { ies: block.classList.contains('ies') });
     block.replaceChildren(...(heading ? [heading] : []), section);
     track();
     return;

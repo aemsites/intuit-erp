@@ -1,6 +1,6 @@
 .section.faq-container {
   background: #fff;
-  padding: 40px 0;
+  padding: 20px 0;
 }
 
 .section.faq-container > .default-content-wrapper {
@@ -181,4 +181,8 @@
   .faq .faq-chevron {
     transition: none;
   }
+}
+
+@media (width >= 1024px) {
+  .section.faq-container { padding: 40px 0; }
 }

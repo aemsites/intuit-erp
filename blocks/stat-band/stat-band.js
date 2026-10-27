@@ -15,6 +15,10 @@
  * .stat-band.light: the same static grid on a white band, stats in super-blue
  * .stat-band.simple: number/description — the same static grid as .dark, but a
  *   single bordered white box on the page background, columns split by dividers.
+ * .stat-band.ies: the same static grid as .dark, with the segment shown as an
+ *   eyebrow above the number.
+ * .stat-band.ies.carousel: the ies cards as an auto-advancing carousel
+ *   (4 / 2 / 1 cards per view, new page every 5s).
  * .stat-band.plain (research guide stat trios): number/description —
  *   the same static grid as .dark, but light bordered boxes on the page
  *   background instead of a navy band.
@@ -97,6 +101,17 @@ function cardsPerView() {
   return 4;
 }
 
+// upstream orders the disclaimer above the paging controls, but EDS authors it
+// as a default-content sibling after the block — pull it in when present
+function moveFoot(block) {
+  const foot = block.parentElement?.nextElementSibling?.querySelector(':scope > p');
+  if (!foot) return;
+  const wrapper = foot.closest('.default-content-wrapper');
+  foot.classList.add('stats-foot');
+  block.append(foot);
+  if (wrapper && !wrapper.children.length) wrapper.remove();
+}
+
 function buildCarousel(block, track) {
   const viewport = document.createElement('div');
   viewport.className = 'stats-viewport';
@@ -122,15 +137,7 @@ function buildCarousel(block, track) {
   controls.className = 'stats-controls';
   controls.append(dots, nav);
 
-  // upstream orders the disclaimer above the paging controls, but EDS authors it
-  // as a default-content sibling after the block — pull it in when present
-  const foot = block.parentElement?.nextElementSibling?.querySelector(':scope > p');
-  if (foot) {
-    const wrapper = foot.closest('.default-content-wrapper');
-    foot.classList.add('stats-foot');
-    block.append(foot);
-    if (wrapper && !wrapper.children.length) wrapper.remove();
-  }
+  moveFoot(block);
   block.append(controls);
 
   const cards = [...track.children];
@@ -208,6 +215,99 @@ function buildCarousel(block, track) {
   trackAs(null, block, { key: 'stat-band', payload: scrollArrowPayload });
 }
 
+const AUTOPLAY_MS = 30000; // ms each page stays up
+
+/**
+ * Autoplay-only carousel: the active dot's fill animation is the timer, and its
+ * animationend advances the page. The dots are display-only.
+ */
+function buildAutoCarousel(block, track) {
+  const viewport = document.createElement('div');
+  viewport.className = 'stats-viewport';
+  track.before(viewport);
+  viewport.append(track);
+  moveFoot(block);
+
+  const dots = document.createElement('div');
+  dots.className = 'stats-progress';
+  dots.setAttribute('aria-hidden', 'true');
+  block.append(dots);
+  block.style.setProperty('--autoplay-duration', `${AUTOPLAY_MS}ms`);
+
+  const cards = [...track.children];
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  let perView = 1;
+  let pages = 1;
+  let visibleWidth = 0;
+  let current = 0;
+  let inView = false;
+
+  function setPaused() {
+    const paused = !inView || reduceMotion.matches || pages < 2;
+    block.classList.toggle('is-paused', paused);
+  }
+
+  function offsetFor(page) {
+    const card = cards[page * perView];
+    const max = Math.max(0, track.scrollWidth - track.clientWidth);
+    return card ? Math.min(card.offsetLeft, max) : 0;
+  }
+
+  function render() {
+    const offset = offsetFor(current);
+    track.style.transform = `translateX(-${offset}px)`;
+    cards.forEach((card) => {
+      const left = card.offsetLeft - offset;
+      const visible = left >= -1 && left + card.offsetWidth <= visibleWidth + 1;
+      card.toggleAttribute('inert', !visible);
+      card.setAttribute('aria-hidden', String(!visible));
+    });
+    [...dots.children].forEach((dot, i) => dot.classList.toggle('active', i === current));
+  }
+
+  function goTo(idx) {
+    current = ((idx % pages) + pages) % pages;
+    render();
+  }
+
+  function buildDots() {
+    dots.replaceChildren();
+    for (let i = 0; i < pages; i += 1) {
+      const dot = document.createElement('span');
+      dot.className = 'stats-dot';
+      const fill = document.createElement('span');
+      fill.className = 'stats-dot-fill';
+      dot.append(fill);
+      dots.append(dot);
+    }
+  }
+
+  function measure() {
+    perView = parseInt(getComputedStyle(block).getPropertyValue('--cards-per-view'), 10) || 1;
+    visibleWidth = track.clientWidth;
+    const nextPages = Math.ceil(cards.length / perView);
+    if (nextPages !== pages || !dots.children.length) {
+      pages = nextPages;
+      buildDots();
+    }
+    current = Math.min(current, pages - 1);
+    block.classList.toggle('is-static', pages < 2);
+    setPaused();
+    render();
+  }
+
+  dots.addEventListener('animationend', () => goTo(current + 1));
+  reduceMotion.addEventListener('change', setPaused);
+
+  new IntersectionObserver(([entry]) => {
+    inView = entry.isIntersecting;
+    setPaused();
+  }, { threshold: 0.4 }).observe(block);
+
+  // sections stay hidden until loaded, so measure once the viewport has a size
+  new ResizeObserver(() => { if (viewport.clientWidth) measure(); }).observe(viewport);
+}
+
 export default function decorate(block) {
   const rows = [...block.children];
 
@@ -274,7 +374,10 @@ export default function decorate(block) {
     return;
   }
 
-  const staticGrid = ['dark', 'light', 'simple'].some((v) => block.classList.contains(v));
+  const carousel = block.classList.contains('carousel');
+  const ies = carousel || block.classList.contains('ies');
+  const staticGrid = !carousel
+    && (ies || ['dark', 'light', 'simple'].some((v) => block.classList.contains(v)));
   const track = document.createElement('div');
   track.className = staticGrid ? 'stats-grid' : 'stats-track';
 
@@ -287,6 +390,12 @@ export default function decorate(block) {
 
     const stat = document.createElement('div');
     stat.className = 'stat';
+    if (ies && segmentText) {
+      const eyebrow = document.createElement('p');
+      eyebrow.className = 'stat-eyebrow';
+      eyebrow.textContent = segmentText;
+      stat.append(eyebrow);
+    }
     // number+desc and company+segment are grouped so the card's flex gap falls
     // between the two blocks, as upstream (.os-card-header / .os-card-footer)
     const head = document.createElement('div');
@@ -311,7 +420,7 @@ export default function decorate(block) {
       co.textContent = companyText;
       footer.append(co);
     }
-    if (segmentText) {
+    if (segmentText && !ies) {
       const seg = document.createElement('p');
       seg.className = 'stat-seg';
       seg.textContent = segmentText;
@@ -323,5 +432,6 @@ export default function decorate(block) {
 
   block.replaceChildren(track);
 
-  if (!staticGrid) buildCarousel(block, track);
+  if (carousel) buildAutoCarousel(block, track);
+  else if (!staticGrid) buildCarousel(block, track);
 }

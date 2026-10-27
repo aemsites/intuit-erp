@@ -297,7 +297,15 @@ function decorateSimple(block) {
   headCells.forEach((cell) => {
     const logo = document.createElement('div');
     logo.className = 'cs-logo';
-    logo.append(...cell.childNodes);
+    // header cell without an image = text column title
+    if (!cell.querySelector('picture, img')) {
+      logo.classList.add('cs-text');
+      const p = document.createElement('p');
+      p.textContent = cell.textContent.trim();
+      logo.append(p);
+    } else {
+      logo.append(...cell.childNodes);
+    }
     head.append(logo);
   });
 
@@ -342,7 +350,8 @@ function decorateSimple(block) {
 /**
  * `.features` variant — logos above a white card; rows are
  * [label (+ description after a <br> or in a 2nd <p>), value, value…].
- * Row 1 = column headers (a leading empty label cell is optional); a
+ * Row 1 = column headers (a leading empty label cell is optional); a header
+ * cell may hold a 2nd image, used instead of the 1st below 768px; a
  * single-cell row starts a new card with that text as its heading.
  * Values: check/yes → check, dash/no/empty → dash, partial → dot, else text.
  * @param {Element} block
@@ -364,6 +373,13 @@ function decorateFeatures(block) {
     const col = document.createElement('div');
     col.className = 'cf-col-title';
     col.append(...cell.childNodes);
+    // optional 2nd image = mobile variant
+    const pics = [...col.querySelectorAll('picture')];
+    if (pics.length > 1) {
+      pics[0].classList.add('cf-pic-desktop');
+      pics[1].classList.add('cf-pic-mobile');
+      pics.slice(2).forEach((p) => p.remove());
+    }
     head.append(col);
   });
 

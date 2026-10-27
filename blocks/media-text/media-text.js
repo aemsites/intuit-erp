@@ -19,6 +19,7 @@
  *   .power     feature-list + media (erp-solutions "Powering complex …")
  *   .compare   2-up alternating-skin comparison cards, media pinned to the
  *              card bottom (erp-solutions "Move to a modern ERP" / solution-cards)
+ *   .compare.ies  One Intuit comparison cards; a trailing link paragraph is a footnote
  *   NN-NN      column width split for the default/reverse rows, e.g. `(70-30)`
  *              gives the text column 70% and the media column 30%. Still
  *              stacks to a single column below 769px like the default split.

@@ -140,7 +140,10 @@
 
 /* logo-band.marquee — infinite scrolling logo band. .light swaps it to a
    white band of 112px brandmark tiles, greyscale until hovered. */
-.logo-band.marquee.light { padding: 20px 0 var(--section-y); }
+.logo-band.marquee.light { padding: 20px 0; }
+
+.section.logo-band-container:has(.logo-band.marquee.light) > .default-content-wrapper { padding-bottom: 0; }
+.section.logo-band-container:has(.logo-band.marquee.light) > .default-content-wrapper > p:last-child { margin-bottom: 0; }
 
 /* variables live on the section, not the block, so both the section's own
    background and the block's descendant rules can read them */
@@ -203,21 +206,51 @@ main > .section.logo-band-container:has(.logo-band.marquee) > div { max-width: n
 
   .logo-band.marquee .logoband-set { gap: var(--space-xl); padding-right: var(--space-xl); }
 
-  .logo-band.marquee.light { padding-top: var(--space-2xl); }
+  .logo-band.marquee.light { padding-top: 32px; }
 
   .logo-band.marquee.light img { height: 112px; }
 
   .logo-band.marquee.light .logoband-set { gap: var(--space-m); padding-right: var(--space-m); }
 }
 
+.logo-band.marquee.ies { padding: 10px 0; }
+.logo-band.marquee.ies img { height: 50px; }
+.logo-band.marquee.ies .logoband-set { gap: 50px; padding-right: 50px; }
+
+@media (width >= 768px) {
+  .logo-band.marquee.ies { padding: 0 0 30px; }
+  .logo-band.marquee.ies img { height: 60px; }
+  .logo-band.marquee.ies .logoband-set { gap: 60px; padding-right: 60px; }
+}
+
 /* .strip: flat white logo strip, one centred row of 156x50 greyscale slots */
 .section.logo-band-container:has(.logo-band.strip) {
   max-width: none;
-  margin: 0;
-  padding: 40px 0 0; /* 40px above the eyebrow; the next section owns the gap below */
+  margin: 40px 0;
+  padding: 0 0 20px;
   border-radius: 0;
   background: var(--background-color);
 }
+
+.section.logo-band-container:has(.logo-band.strip) > .default-content-wrapper { padding-bottom: 0; }
+
+/* without an eyebrow the global 2.5rem wrapper padding would apply; the IES
+   title block keeps its own 20px when an eyebrow is present */
+@media (width < 1024px) {
+  .section.logo-band-container:has(.logo-band.strip) > .default-content-wrapper:not(:has(> p:first-child + :is(h2, h3))) {
+    padding-top: var(--space-m);
+  }
+}
+
+.section.logo-band-container:has(.logo-band.strip) .default-content-wrapper h2 {
+  margin: 0;
+  font-size: 34px;
+  line-height: 1.1;
+  font-weight: var(--font-weight-medium);
+  color: #0d0031;
+}
+
+.logo-band.strip { margin-top: 20px; }
 
 /* eyebrow authored via Section Metadata (eyebrow-text), injected by scripts.js;
    IES eyebrow scale: 12px on mobile, 14px from tablet up */
@@ -260,7 +293,7 @@ main > .section.logo-band-container:has(.logo-band.marquee) > div { max-width: n
   align-items: center;
   box-sizing: border-box;
   width: 156px;
-  height: 50px;
+  height: 32px;
   padding: 0;
   margin: 0;
 }
@@ -275,7 +308,7 @@ main > .section.logo-band-container:has(.logo-band.marquee) > div { max-width: n
   width: auto;
   max-width: 130px;
   height: auto;
-  max-height: 50px;
+  max-height: 32px;
   object-fit: contain;
   filter: grayscale(1);
 }
@@ -283,4 +316,21 @@ main > .section.logo-band-container:has(.logo-band.marquee) > div { max-width: n
 @media (width < 768px) {
   .logo-band.strip .logoband-list { gap: var(--space-s); }
   .logo-band.strip .logoband-list > * { width: calc(50% - var(--space-s)); max-width: 156px; }
+}
+
+@media (width >= 768px) {
+  .logo-band.strip { margin-top: 32px; }
+}
+
+@media (width >= 1024px) {
+  .logo-band.marquee.light { padding: 40px 0; }
+  .section.logo-band-container:has(.logo-band.strip) { padding-bottom: 40px; }
+
+  .section.logo-band-container:has(.logo-band.strip) .default-content-wrapper h2 {
+    font-size: 48px;
+    line-height: 1;
+  }
+
+  .logo-band.strip { margin-top: 60px; }
+  .logo-band.strip .logoband-list { gap: 60px; }
 }

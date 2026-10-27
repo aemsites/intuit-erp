@@ -10,6 +10,7 @@ const DASHBOARD_LOTTIE_ROOT_MARGIN = '500px 0px';
 const DASHBOARD_LOTTIE_FALLBACK_DELAY = 3000;
 const DASHBOARD_LOTTIE_DESKTOP_THRESHOLD = 0.1;
 const DASHBOARD_LOTTIE_MOBILE_THRESHOLD = 0.8;
+const TEASER_SECONDS = 5;
 const YOUTUBE_URL_RE = /(?:youtube(?:-nocookie)?\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/;
 const VIMEO_URL_RE = /vimeo\.com\/(?:video\/)?(\d+)/;
 
@@ -59,6 +60,89 @@ function openVideoModal(embedUrl, title) {
   overlay.querySelector('.video-modal-close').addEventListener('click', close);
   document.addEventListener('keydown', onKey);
   document.body.append(overlay);
+}
+
+/**
+ * Builds the video text link; a trailing "(m:ss)" is split off as the duration.
+ * @param {HTMLAnchorElement} a authored video link
+ * @param {{provider:string,id:string,embedUrl:string}} info parsed video URL
+ * @returns {HTMLDivElement}
+ */
+function buildVideoLink(a, info) {
+  const [, text, duration] = a.textContent.trim().match(/^(.*?)\s*(\(\d{1,2}:\d{2}(?::\d{2})?\))?$/);
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'hero-video-link';
+  btn.setAttribute('data-track-id', `hero:${info.provider}-${info.id}`);
+  btn.setAttribute('data-video-src', a.getAttribute('href'));
+
+  const label = document.createElement('span');
+  label.className = 'hero-video-link-text';
+  label.textContent = text;
+  btn.append(label);
+  if (duration) {
+    const time = document.createElement('span');
+    time.className = 'hero-video-link-duration';
+    time.textContent = duration;
+    btn.append(time);
+  }
+  btn.addEventListener('click', () => openVideoModal(info.embedUrl, text));
+
+  const wrap = document.createElement('div');
+  wrap.className = 'hero-video-link-wrapper';
+  wrap.append(btn);
+  return wrap;
+}
+
+function buildTeaserVideo(srcs, posters) {
+  const media = document.createElement('div');
+  media.className = 'hero-media hero-media-video';
+
+  const video = document.createElement('video');
+  const compact = window.matchMedia('(width < 1024px)').matches;
+  video.src = (compact && srcs[1]) || srcs[0];
+  const poster = (compact && posters[1]) || posters[0];
+  if (poster) video.poster = poster;
+  video.muted = true;
+  video.playsInline = true;
+  video.preload = 'metadata';
+  video.setAttribute('aria-label', 'Product video');
+
+  const play = document.createElement('button');
+  play.type = 'button';
+  play.className = 'hero-video-play';
+  play.setAttribute('aria-label', 'Play video');
+  play.hidden = true;
+
+  let teasing = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const showPlay = () => { play.hidden = false; };
+
+  video.addEventListener('timeupdate', () => {
+    if (teasing && video.currentTime >= TEASER_SECONDS) {
+      teasing = false;
+      video.pause();
+      showPlay();
+    }
+  });
+  video.addEventListener('ended', showPlay);
+  play.addEventListener('click', () => {
+    teasing = false;
+    play.hidden = true;
+    video.currentTime = 0;
+    video.muted = false;
+    video.controls = true;
+    video.play().catch(showPlay);
+  });
+
+  if (teasing) {
+    video.autoplay = true;
+    video.play().catch(() => { teasing = false; showPlay(); });
+  } else {
+    showPlay();
+  }
+
+  media.append(video, play);
+  return media;
 }
 
 async function leadCard(path) {
@@ -201,6 +285,15 @@ export function enhanceDashboardAnimation(media, picture, {
   visibleObserver.observe(media);
 }
 
+function extendArcsBackground(block) {
+  const section = block.closest('.section');
+  const tail = section?.nextElementSibling;
+  if (!tail?.querySelector('.logo-band.marquee:not(.light)') || !window.ResizeObserver) return;
+  new ResizeObserver(() => {
+    section.style.setProperty('--hero-arcs-tail', `${tail.offsetHeight}px`);
+  }).observe(tail);
+}
+
 export default async function decorate(block) {
   const isForm = block.classList.contains('form');
   // .centered is a single-column hero (ai-agents): the media cell is a small
@@ -208,7 +301,11 @@ export default async function decorate(block) {
   // right-hand media column.
   const isCentered = block.classList.contains('centered');
   const isGradient = block.classList.contains('gradient');
+  const isVideoLink = block.classList.contains('video-link');
+  const isIesVideo = block.classList.contains('ies') && block.classList.contains('video');
   const rows = [...block.children];
+
+  if (block.classList.contains('ies') && block.classList.contains('arcs')) extendArcsBackground(block);
 
   if (isGradient) {
     block.closest('.section').classList.add('gradient');
@@ -228,6 +325,18 @@ export default async function decorate(block) {
     }
     [...cell.childNodes].forEach((n) => copy.append(n));
   });
+
+  // .ies.video: authored images are the video posters (desktop, then < 1024px)
+  const posterSrcs = [];
+  if (isIesVideo) {
+    copy.querySelectorAll('img').forEach((img) => {
+      posterSrcs.push(img.src);
+      const el = img.closest('picture') || img;
+      const host = el.parentElement;
+      el.remove();
+      if (host !== copy && !host.textContent.trim() && !host.querySelector('img, picture')) host.remove();
+    });
+  }
 
   const rawMedia = copy.querySelector('picture, img');
   let mediaEl = null;
@@ -252,10 +361,12 @@ export default async function decorate(block) {
   });
 
   let videoSrc = null;
+  const videoSrcs = [];
   ctaParas.forEach((p) => {
     const a = [...p.querySelectorAll('a')].find((x) => /\.mp4(?:$|\?)/i.test(x.getAttribute('href') || ''));
     if (!a) return;
-    videoSrc = a.getAttribute('href');
+    videoSrc = videoSrc || a.getAttribute('href');
+    videoSrcs.push(a.getAttribute('href'));
     a.remove();
     if (!p.textContent.trim() && !p.querySelector('a, img, picture')) p.remove();
   });
@@ -265,10 +376,13 @@ export default async function decorate(block) {
   if (ctas.length) {
     const actions = document.createElement('p');
     actions.className = 'button-wrapper hero-actions';
+    let videoLink = null;
     ctas.forEach((p) => {
       p.querySelectorAll('a').forEach((a) => {
         const info = parseVideoUrl(a.href);
-        if (info) {
+        if (info && isVideoLink && !videoLink) {
+          videoLink = buildVideoLink(a, info);
+        } else if (info) {
           const btn = document.createElement('button');
           btn.type = 'button';
           btn.className = a.className; // carries `button primary` from decorateButtons
@@ -283,7 +397,12 @@ export default async function decorate(block) {
         }
       });
     });
-    ctas[0].replaceWith(actions);
+    if (actions.children.length) {
+      ctas[0].replaceWith(actions);
+      if (videoLink) actions.after(videoLink);
+    } else {
+      ctas[0].replaceWith(videoLink);
+    }
     ctas.slice(1).forEach((p) => p.remove());
   }
 
@@ -313,6 +432,8 @@ export default async function decorate(block) {
     lockup.className = 'hero-lockup';
     lockup.append(mediaEl);
     copy.prepend(lockup);
+  } else if (isIesVideo && videoSrc) {
+    grid.append(buildTeaserVideo(videoSrcs, posterSrcs));
   } else if (mediaEl) {
     const media = document.createElement('div');
     media.className = 'hero-media';
@@ -323,7 +444,7 @@ export default async function decorate(block) {
 
   block.replaceChildren(grid);
 
-  if (videoSrc) {
+  if (videoSrc && !isIesVideo) {
     const figure = document.createElement('div');
     figure.className = 'hero-video';
 

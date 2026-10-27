@@ -42,7 +42,8 @@ export function parseContent(cell) {
   else if (citeParagraph) attribution = citeParagraph.textContent.trim().replace(CITE_PREFIX, '');
 
   const rest = nodes.filter((el) => el !== quote && el !== citeParagraph && el.tagName !== 'CITE');
-  const heading = rest.find((el) => /^H[2-6]$/.test(el.tagName)) || null;
+  const heading = rest.find((el) => /^H[1-6]$/.test(el.tagName)) || null;
+  const headingTag = heading ? heading.tagName.toLowerCase() : 'h3';
   const headingIndex = heading ? rest.indexOf(heading) : -1;
 
   let media = null;
@@ -50,8 +51,7 @@ export function parseContent(cell) {
   let cta = null;
   let ctaBeforeQuote = true;
   const bodyNodes = [];
-  // pictures after the first; only .vertical-panel.industry renders them (as a
-  // media row), every other variant ignores them exactly as before
+  // extra pictures, rendered only by .industry, .questions and .blueberry
   const extraMedia = [];
 
   rest.forEach((el, i) => {
@@ -74,14 +74,40 @@ export function parseContent(cell) {
   });
 
   return {
-    media, extraMedia, eyebrow, heading, bodyNodes, cta, ctaBeforeQuote, quote, attribution,
+    media,
+    extraMedia,
+    eyebrow,
+    heading,
+    headingTag,
+    bodyNodes,
+    cta,
+    ctaBeforeQuote,
+    quote,
+    attribution,
   };
+}
+
+// optional `logo: <color>, quote: <color>` line in the label cell (.questions)
+const TILE_TOKEN = /^\s*(?:logo|quote)\s*:/i;
+
+function extractTiles(cell) {
+  const tiles = {};
+  if (!cell) return tiles;
+  [...cell.querySelectorAll('p')].filter((p) => TILE_TOKEN.test(p.textContent)).forEach((p) => {
+    p.textContent.split(/[,;]/).forEach((pair) => {
+      const [key, value] = pair.split(':').map((s) => s && s.trim().toLowerCase());
+      if ((key === 'logo' || key === 'quote') && value) tiles[key] = value.replace(/\s+/g, '-');
+    });
+    p.remove();
+  });
+  return tiles;
 }
 
 export function parseItems(block) {
   return [...block.children].map((row) => {
     const cells = [...row.children];
-    return { ...extractLabel(cells[0]), ...parseContent(cells[1]) };
+    const tiles = extractTiles(cells[0]);
+    return { ...extractLabel(cells[0]), ...parseContent(cells[1]), tiles };
   });
 }
 
@@ -158,7 +184,7 @@ function appendCtaAndQuote(container, item, ctaClass, quoteClass) {
 
 function fillCopy(item, copy, cls) {
   if (item.eyebrow) copy.append(buildEyebrow(item, cls.eyebrow));
-  if (item.heading) copy.append(buildHeading(item, cls.headingTag, cls.heading));
+  if (item.heading) copy.append(buildHeading(item, item.headingTag, cls.heading));
   appendBody(copy, item.bodyNodes, cls.body);
   appendCtaAndQuote(copy, item, cls.cta, cls.quote);
 }
@@ -166,7 +192,7 @@ function fillCopy(item, copy, cls) {
 /* ---- base (unclassed): horizontal tablist, crossfade + directional media slide -- */
 
 const HORIZONTAL_CLASSES = {
-  eyebrow: 'eyebrow', headingTag: 'h3', heading: 'tab-h3', body: 'tab-body', cta: 'tab-cta button', quote: 'tab-quote',
+  eyebrow: 'eyebrow', heading: 'tab-h3', body: 'tab-body', cta: 'tab-cta button', quote: 'tab-quote',
 };
 
 function buildHorizontalPanel(item, index) {
@@ -289,7 +315,7 @@ function renderHorizontalTabs(block, items) {
 /* ---- .pill: vertical pill rail, true ARIA tablist ------------------------- */
 
 const PILL_CLASSES = {
-  heading: 'vt-heading', body: 'vt-body', cta: 'vt-cta button', quote: 'vt-quote', headingTag: 'h3', eyebrow: 'eyebrow',
+  heading: 'vt-heading', body: 'vt-body', cta: 'vt-cta button', quote: 'vt-quote', eyebrow: 'eyebrow',
 };
 
 function buildPillTab(item, index) {
@@ -392,6 +418,8 @@ function renderPillTabs(block, items) {
 /* ---- .vertical: disclosure accordion, shared media column ----------------- */
 
 const VERTICAL_STACKED_QUERY = `(width < ${BP_TABLET}px)`;
+// .vertical.ies keeps the stacked list through tablet, accordion from desktop up
+const IES_STACKED_QUERY = `(width < ${BP_DESKTOP}px)`;
 
 function renderVerticalAccordion(block, items) {
   const acc = document.createElement('div');
@@ -467,7 +495,7 @@ function renderVerticalAccordion(block, items) {
     medias.forEach((m, i) => m.classList.toggle('is-active', i === index));
   };
 
-  const mq = window.matchMedia(VERTICAL_STACKED_QUERY);
+  const mq = window.matchMedia(block.classList.contains('ies') ? IES_STACKED_QUERY : VERTICAL_STACKED_QUERY);
 
   const applyMode = () => {
     const stacked = mq.matches;
@@ -553,7 +581,7 @@ function buildVpPanel(item, index, { multiMedia = false } = {}) {
   const copy = document.createElement('div');
   copy.className = 'it-copy';
   if (item.eyebrow) copy.append(buildEyebrow(item, 'eyebrow'));
-  if (item.heading) copy.append(buildHeading(item, 'h3', 'it-heading'));
+  if (item.heading) copy.append(buildHeading(item, item.headingTag, 'it-heading'));
 
   // The quote (if present) is always rendered as a panel-level block after
   // `.it-copy`/`.it-media`, not inside `.it-copy-body`. The CTA link has no
@@ -583,6 +611,38 @@ function buildVpPanel(item, index, { multiMedia = false } = {}) {
   return panel;
 }
 
+// bold the name in a "Name, Role" attribution (.questions, .blueberry)
+function boldCiteName(panel) {
+  const cite = panel.querySelector('.it-quote cite');
+  const comma = cite ? cite.textContent.indexOf(',') : -1;
+  if (comma > 0) {
+    const name = document.createElement('strong');
+    name.textContent = cite.textContent.slice(0, comma + 1);
+    const role = cite.textContent.slice(comma + 1);
+    cite.replaceChildren(name, role);
+  }
+}
+
+// .questions: a lone picture is the photo; with two, the first is the logo
+const QUESTION_TILE_COLORS = ['blue', 'navy', 'brown', 'pink', 'light-blue', 'gray', 'wintermint', 'white'];
+
+function decorateQuestionTiles(panel, item) {
+  const pics = [...panel.querySelectorAll('.it-media picture, .it-media > img')];
+  const photo = pics.length ? pics[pics.length - 1] : null;
+  const logo = pics.length > 1 ? pics[0] : null;
+  if (photo) photo.classList.add('it-photo');
+  if (logo) logo.classList.add('it-logo');
+  panel.classList.toggle('no-logo', !logo);
+
+  const targets = { logo, quote: panel.querySelector('.it-quote') };
+  Object.entries(targets).forEach(([key, el]) => {
+    const color = item.tiles?.[key];
+    if (el && QUESTION_TILE_COLORS.includes(color)) el.classList.add(`tile-${color}`);
+  });
+
+  boldCiteName(panel);
+}
+
 const isVpDesktop = () => !!(window.matchMedia && window.matchMedia(VP_DESKTOP_QUERY).matches);
 
 function activateVp(tabs, panels, index, focusIndex = index) {
@@ -596,8 +656,10 @@ function activateVp(tabs, panels, index, focusIndex = index) {
 
 function renderVerticalPanel(block, items) {
   const tabs = items.map(buildVpTab);
-  const multiMedia = block.classList.contains('industry') || block.classList.contains('questions');
+  const multiMedia = ['industry', 'questions', 'blueberry'].some((v) => block.classList.contains(v));
   const panels = items.map((item, i) => buildVpPanel(item, i, { multiMedia }));
+  if (block.classList.contains('questions')) panels.forEach((p, i) => decorateQuestionTiles(p, items[i]));
+  if (block.classList.contains('blueberry')) panels.forEach(boldCiteName);
   tabs.forEach((tab, i) => tab.setAttribute('aria-controls', panels[i].id));
 
   const nav = document.createElement('div');
@@ -659,10 +721,41 @@ function renderVerticalPanel(block, items) {
   }
 }
 
+// .ies: an optional first row with a single cell holding a heading becomes the
+// block header — copy before the heading is the eyebrow, copy after it the subtitle.
+// A leading h6 followed by another heading is treated as the eyebrow.
+function extractIesHeader(block) {
+  const row = block.firstElementChild;
+  if (!row || row.children.length !== 1) return null;
+  const cell = row.firstElementChild;
+  flattenCell(cell);
+  const nodes = [...cell.children].filter((el) => el.textContent.trim());
+  const headings = nodes.filter((el) => /^H[1-6]$/.test(el.tagName));
+  const title = headings.find((el) => el.tagName !== 'H6') || headings[0];
+  if (!title) return null;
+
+  const titleIndex = nodes.indexOf(title);
+  const header = document.createElement('div');
+  header.className = 'tabs-header';
+  nodes.forEach((el, i) => {
+    if (i < titleIndex) el.classList.add('tabs-eyebrow');
+    else if (i === titleIndex) el.classList.add('tabs-title');
+    else el.classList.add('tabs-subtitle');
+    header.append(el);
+  });
+  row.remove();
+  return header;
+}
+
 export default function decorate(block) {
+  const ies = block.classList.contains('ies');
+  // `ies` is authored on its own; it builds on the vertical accordion without the glow
+  if (ies) block.classList.add('vertical', 'no-gradient');
+  const header = ies ? extractIesHeader(block) : null;
   const items = parseItems(block);
   if (block.classList.contains('pill')) renderPillTabs(block, items);
   else if (block.classList.contains('vertical')) renderVerticalAccordion(block, items);
   else if (block.classList.contains('vertical-panel')) renderVerticalPanel(block, items);
   else renderHorizontalTabs(block, items);
+  if (header) block.prepend(header);
 }

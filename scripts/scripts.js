@@ -124,6 +124,16 @@ async function loadFonts() {
   } catch (e) {
     // do nothing
   }
+
+  // Load IES fonts if theme is active
+  if (document.body.classList.contains('theme-ies')) {
+    await loadCSS(`${window.hlx.codeBasePath}/styles/brand/ies/ies-fonts.css`);
+    try {
+      if (!window.location.hostname.includes('localhost')) sessionStorage.setItem('ies-fonts-loaded', 'true');
+    } catch (e) {
+      // do nothing
+    }
+  }
 }
 
 /**
@@ -559,6 +569,13 @@ async function loadEager(doc) {
   document.documentElement.lang = 'en';
   decorateTemplateAndTheme();
 
+  // IES Brand: Apply theme-ies class and load theme CSS when theme metadata is 'ies'
+  const theme = (getMetadata('theme') || '').trim().toLowerCase();
+  if (theme === 'ies') {
+    document.body.classList.add('theme-ies');
+    loadCSS(`${window.hlx.codeBasePath}/styles/brand/ies/ies-theme.css`);
+  }
+
   if (['true', 'yes'].includes((getMetadata('events-bar') || '').trim().toLowerCase())) {
     document.body.classList.add('has-events-bar');
   }
@@ -624,7 +641,11 @@ async function loadEager(doc) {
 
   try {
     /* if desktop (proxy for fast connection) or fonts already loaded, load fonts.css */
-    if (window.innerWidth >= 900 || sessionStorage.getItem('fonts-loaded')) {
+    const shouldLoadFontsEager = window.innerWidth >= 900 || sessionStorage.getItem('fonts-loaded');
+    const shouldLoadIESFontsEager = document.body.classList.contains('theme-ies')
+      && (window.innerWidth >= 900 || sessionStorage.getItem('ies-fonts-loaded'));
+
+    if (shouldLoadFontsEager || shouldLoadIESFontsEager) {
       loadFonts();
     }
   } catch (e) {

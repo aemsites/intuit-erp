@@ -52,7 +52,8 @@
    was when the button was the direct child */
 .vertical-scroll-carousel .vsc-heading-wrap {
   margin: 0;
-  font: inherit;
+  font-size: 24px;
+  font-weight: var(--font-weight-medium);
 }
 
 .vertical-scroll-carousel .vsc-heading {
@@ -66,8 +67,6 @@
   text-align: left;
   cursor: pointer;
   font-family: inherit;
-  font-size: 24px;
-  font-weight: var(--font-weight-medium);
   line-height: var(--line-height-s);
   color: #000;
   transition: color 0.3s ease-in-out;
@@ -148,8 +147,11 @@
     border-radius: 4px 0 0 4px;
   }
 
-  .vertical-scroll-carousel .vsc-heading {
+  .vertical-scroll-carousel .vsc-heading-wrap {
     font-size: 28px;
+  }
+
+  .vertical-scroll-carousel .vsc-heading {
     color: #5d686f;
   }
 
