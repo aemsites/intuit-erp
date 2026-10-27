@@ -12,6 +12,9 @@ const TIMEOUT_MS = 900;
 const ACTIVE_REFRESH_MS = 2000;
 const IDLE_REFRESH_MS = 3000;
 const ACTIVE_WINDOW_MS = 10000;
+const CONFIG_REFRESH_MS = 10000;
+// The library sheet row that registers this plugin in the site config.
+const PLUGIN_ROW = /sem(?:an)?tic[\s-]*styler/i;
 const ROLES = {
   h1: 'heading 1',
   h2: 'heading 2',
@@ -83,6 +86,37 @@ async function loadSource({ actions, context }) {
   return { text, doc: new DOMParser().parseFromString(text, 'text/html') };
 }
 
+// `Cards (wide)` -> `cards`: variants don't matter, only the block name.
+const blockName = (name) => name.replace(/\(.*\)/, '').trim().toLowerCase().replace(/\s+/g, '-');
+
+/**
+ * Block names listed in the `include` column of this plugin's row in the site config's
+ * `library` sheet (the one with `title`, `path` and `ref`). Only those blocks are editable.
+ * Returns null, leaving every block editable, when the column is empty, and undefined when the
+ * config can't be read so callers can retry instead of briefly showing every block.
+ */
+async function loadEditableBlocks({ actions, context }) {
+  try {
+    const resp = await actions.daFetch(`https://admin.da.live/config/${context.org}/${context.repo}/`, { cache: 'no-store' });
+    if (!resp.ok) {
+      log('config fetch failed', resp.status);
+      return undefined;
+    }
+    const config = await resp.json();
+    // Sheet names and column headers keep the author's casing, so match them case-insensitively.
+    const sheet = Object.entries(config).find(([name]) => name.toLowerCase() === 'library')?.[1];
+    const rows = (sheet?.data || []).map((r) => Object.fromEntries(Object.entries(r)
+      .map(([k, v]) => [k.trim().toLowerCase(), v])));
+    const row = rows.find((r) => PLUGIN_ROW.test(`${r.path || ''} ${r.ref || ''} ${r.title || ''}`));
+    if (!row) log('no library row for this plugin', { sheets: Object.keys(config), rows });
+    const include = String(row?.include ?? '').split(/[,\n]/).map(blockName).filter(Boolean);
+    return include.length ? new Set(include) : null;
+  } catch (e) {
+    log('config error', e);
+    return undefined;
+  }
+}
+
 function findElements(doc, { tag, full }) {
   const needle = compact(full || '');
   if (!needle) return [];
@@ -96,7 +130,7 @@ function findElements(doc, { tag, full }) {
   return hits.filter((e) => ![...e.children].some((c) => hits.includes(c)));
 }
 
-function contentTree(html, doc) {
+function contentTree(html, doc, editableBlocks) {
   if (!doc) return [];
   const body = html ? new DOMParser().parseFromString(html, 'text/html').body : null;
   const selectedKeys = new Set(body ? describeContainer(body)
@@ -109,6 +143,9 @@ function contentTree(html, doc) {
     [...section.children].forEach((child) => {
       if (child.classList.contains('section-metadata', 'metadata', 'library-metadata')) return;
       const block = child.matches('div[class]') ? child : null;
+      // With an `include` list only those blocks are editable, so default content is left out too.
+      // The first class of a source block is its name; the rest are variants.
+      if (editableBlocks && !(block && editableBlocks.has(block.classList[0]))) return;
       const elements = [
         ...(child.matches('h1,h2,h3,h4,h5,h6,p') ? [child] : []),
         ...child.querySelectorAll('h1,h2,h3,h4,h5,h6,p'),
@@ -133,7 +170,7 @@ function contentTree(html, doc) {
       }
     });
     return { sectionIndex: index + 1, groups };
-  });
+  }).filter(({ groups }) => !editableBlocks || groups.length);
 }
 
 function headingControl(h, sdk, status, setLoading, pendingSizes) {
@@ -289,12 +326,28 @@ function renderOrphans(list, orphans, sdk, status, setLoading) {
   list.replaceChildren(card);
 }
 
-// getSelection never settles when the selection is empty, so race it with a timeout.
+// Older hosts never settle getSelection on an empty selection and newer ones reject, so treat
+// both as "nothing selected".
 function readSelection(actions) {
   return Promise.race([
-    actions.getSelection(),
+    actions.getSelection().catch(() => null),
     new Promise((resolve) => { setTimeout(() => resolve(null), TIMEOUT_MS); }),
   ]);
+}
+
+// The canvas host pushes the editor's live HTML in its preview form, which folds section
+// metadata into section classes. Graft the source's section metadata back so sizes and heading
+// keys still resolve; skip it while the section count differs and the source is catching up.
+function liveTreeDoc(liveHtml, sourceDoc) {
+  const doc = new DOMParser().parseFromString(liveHtml, 'text/html');
+  const liveSections = [...doc.querySelectorAll('main > div')];
+  const sourceSections = [...sourceDoc.querySelectorAll('main > div')];
+  if (liveSections.length !== sourceSections.length) return doc;
+  liveSections.forEach((section, i) => {
+    const meta = sourceSections[i].querySelector(':scope > .section-metadata');
+    if (meta) section.append(doc.importNode(meta, true));
+  });
+  return doc;
 }
 
 export default async function init() {
@@ -306,6 +359,8 @@ export default async function init() {
     loading.setAttribute('aria-hidden', String(!visible));
   };
   const sdk = await DA_SDK;
+  // Undefined until the config has been read; the tree stays empty until then.
+  let editableBlocks;
   log('SDK ready', sdk.context, Object.keys(sdk.actions));
 
   document.getElementById('repair').addEventListener('click', async () => {
@@ -328,11 +383,13 @@ export default async function init() {
   let lastChange = 0;
   let sourceDoc;
   let sourceText;
+  let liveHtml = null;
   const pendingSizes = new Map();
 
   const update = (selectionChanged) => {
-    if (!sourceDoc) return;
-    const tree = contentTree(selection, sourceDoc);
+    if (!sourceDoc || editableBlocks === undefined) return;
+    const doc = liveHtml ? liveTreeDoc(liveHtml, sourceDoc) : sourceDoc;
+    const tree = contentTree(selection, doc, editableBlocks);
     log('selection and document tree', { html: selection, tree });
     render(list, tree, sdk, status, setLoading, selectionChanged, pendingSizes);
     if (selection === null) status.textContent = 'Select content in the document.';
@@ -382,6 +439,39 @@ export default async function init() {
     setTimeout(watchSource, active ? ACTIVE_REFRESH_MS : IDLE_REFRESH_MS);
   };
   watchSource();
+
+  // Config watcher: picks up `include` changes without reopening the plugin. Retries quickly
+  // until the first read succeeds, since nothing is rendered before then.
+  const watchConfig = async () => {
+    if (!document.hidden) {
+      const fresh = await loadEditableBlocks(sdk);
+      const key = (set) => (set ? [...set].sort().join() : '');
+      if (fresh !== undefined
+        && (editableBlocks === undefined || key(fresh) !== key(editableBlocks))) {
+        editableBlocks = fresh;
+        log('editable blocks', editableBlocks ? [...editableBlocks] : 'all');
+        update(false);
+      }
+    }
+    setTimeout(watchConfig, editableBlocks === undefined ? POLL_MS : CONFIG_REFRESH_MS);
+  };
+  await watchConfig();
+
+  // Live watcher: hosts that support it (the canvas editor) push the editor HTML on every edit,
+  // so the tree follows typing instead of waiting for DA to save the source.
+  if (sdk.capabilities?.liveDocument && sdk.actions.subscribeLiveDocument) {
+    sdk.actions.subscribeLiveDocument(({ html }) => {
+      if (html === liveHtml) return;
+      liveHtml = html;
+      lastChange = Date.now();
+      try {
+        update(false);
+      } catch (e) {
+        log('live document error', e);
+      }
+    });
+  }
+  log('live document', sdk.capabilities?.liveDocument ? 'subscribed' : 'not supported by this editor');
 
   // Selection watcher: highlights the selected content and checks the source right away.
   let selectionBusy = false;
