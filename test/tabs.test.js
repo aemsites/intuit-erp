@@ -1,7 +1,7 @@
 import {
   describe, it, expect, beforeEach,
 } from 'vitest';
-import decorate, { parseItems, parseContent } from '../blocks/tabs/tabs.js';
+import decorate, { parseItems, parseContent, defaultIndex } from '../blocks/tabs/tabs.js';
 
 // jsdom doesn't implement scrollIntoView; the base variant calls it on tab switch
 Element.prototype.scrollIntoView = Element.prototype.scrollIntoView || (() => {});
@@ -315,5 +315,107 @@ describe('tabs.vertical-panel: CTA placement relative to the quote', () => {
     const block = makeVerticalPanel('');
     expect(() => decorate(block)).not.toThrow();
     expect(block.querySelectorAll('.it-panel')).toHaveLength(1);
+  });
+});
+
+describe('tabs: authored `open: true` default tab', () => {
+  function rows() {
+    return row('First', '<h3>H1</h3><p>B1</p>')
+      + row('<p>Second</p><p>open: true</p>', '<h3>H2</h3><p>B2</p>')
+      + row('Third', '<h3>H3</h3><p>B3</p>');
+  }
+
+  it('reads the marker and keeps it out of the tab label', () => {
+    const items = parseItems(make('', rows()));
+    expect(items.map((i) => i.open)).toEqual([false, true, false]);
+    expect(items[1].label).toBe('Second');
+    expect(defaultIndex(items)).toBe(1);
+  });
+
+  it('strips `open: false` from the label without opening that tab', () => {
+    const items = parseItems(make('', row('A', '<p>a</p>') + row('<p>B</p><p>open: false</p>', '<p>b</p>')));
+    expect(items[1].label).toBe('B');
+    expect(items[1].open).toBe(false);
+    expect(defaultIndex(items)).toBe(0);
+  });
+
+  it('falls back to the first tab when no row is marked', () => {
+    expect(defaultIndex(parseItems(make('', row('A', '<p>a</p>') + row('B', '<p>b</p>'))))).toBe(0);
+  });
+
+  it('base: opens the marked tab and parks the others around it', () => {
+    const block = make('', rows());
+    decorate(block);
+    const tabs = block.querySelectorAll('.tab');
+    const panels = block.querySelectorAll('.tab-panel');
+    expect(tabs[1].getAttribute('aria-selected')).toBe('true');
+    expect(tabs[0].classList.contains('active')).toBe(false);
+    expect(panels[1].classList.contains('is-active')).toBe(true);
+    expect(panels[0].classList.contains('is-before')).toBe(true);
+    expect(panels[2].classList.contains('is-after')).toBe(true);
+  });
+
+  it('pill: opens the marked tab', () => {
+    const block = make('pill', rows());
+    decorate(block);
+    const tabs = block.querySelectorAll('.vt-tab');
+    expect(tabs[1].getAttribute('aria-selected')).toBe('true');
+    expect(tabs[1].tabIndex).toBe(0);
+    expect(tabs[0].tabIndex).toBe(-1);
+    expect(block.querySelectorAll('.vt-panel')[1].classList.contains('is-active')).toBe(true);
+  });
+
+  it('vertical: opens the marked item', () => {
+    const block = make('vertical', rows());
+    decorate(block);
+    const items = block.querySelectorAll('.vt-item');
+    expect(items[1].classList.contains('is-open')).toBe(true);
+    expect(items[0].classList.contains('is-open')).toBe(false);
+    expect(block.querySelectorAll('.vt-region')[0].hidden).toBe(true);
+  });
+
+  it('vertical-panel: opens the marked tab on desktop and mobile', () => {
+    [1440, 375].forEach((width) => {
+      setViewport(width);
+      const block = make('vertical-panel dark blueberry', rows());
+      decorate(block);
+      const tabs = block.querySelectorAll('.it-tab');
+      expect(tabs[1].getAttribute('aria-expanded')).toBe('true');
+      expect(tabs[0].getAttribute('aria-expanded')).toBe('false');
+      expect(block.querySelectorAll('.it-panel')[1].classList.contains('is-active')).toBe(true);
+      expect(block.querySelectorAll('.it-panel')[0].classList.contains('is-active')).toBe(false);
+    });
+  });
+});
+
+describe('tabs.vertical-panel: mobile accordion scrolls the opened tab into view', () => {
+  function setup(width) {
+    setViewport(width);
+    const calls = [];
+    window.scrollTo = (opts) => calls.push(opts);
+    window.requestAnimationFrame = (cb) => { cb(); return 0; };
+    const block = make('vertical-panel dark blueberry', row('A', '<h3>H1</h3><p>B1</p>') + row('B', '<h3>H2</h3><p>B2</p>'));
+    document.body.append(block);
+    decorate(block);
+    return { block, calls };
+  }
+
+  it('scrolls when a tab opens on mobile', () => {
+    const { block, calls } = setup(375);
+    block.querySelectorAll('.it-tab')[1].click();
+    expect(calls).toHaveLength(1);
+    block.remove();
+  });
+
+  it('does not scroll when collapsing on mobile or switching on desktop', () => {
+    const mobile = setup(375);
+    mobile.block.querySelectorAll('.it-tab')[0].click();
+    expect(mobile.calls).toHaveLength(0);
+    mobile.block.remove();
+
+    const desktop = setup(1440);
+    desktop.block.querySelectorAll('.it-tab')[1].click();
+    expect(desktop.calls).toHaveLength(0);
+    desktop.block.remove();
   });
 });

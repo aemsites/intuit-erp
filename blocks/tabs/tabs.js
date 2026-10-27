@@ -103,12 +103,37 @@ function extractTiles(cell) {
   return tiles;
 }
 
+// optional `open: true` line in the label cell marks the tab shown open on load (all variants);
+// any `open: <value>` line is stripped from the label, only true/yes opens the tab
+const OPEN_TOKEN = /^\s*open\s*:\s*(\S*)\s*$/i;
+
+function extractOpen(cell) {
+  if (!cell) return false;
+  let open = false;
+  [...cell.querySelectorAll('p')].forEach((p) => {
+    const match = OPEN_TOKEN.exec(p.textContent);
+    if (!match) return;
+    if (/^(true|yes)$/i.test(match[1])) open = true;
+    p.remove();
+  });
+  return open;
+}
+
 export function parseItems(block) {
   return [...block.children].map((row) => {
     const cells = [...row.children];
     const tiles = extractTiles(cells[0]);
-    return { ...extractLabel(cells[0]), ...parseContent(cells[1]), tiles };
+    const open = extractOpen(cells[0]);
+    return {
+      ...extractLabel(cells[0]), ...parseContent(cells[1]), tiles, open,
+    };
   });
+}
+
+// first item authored `open: true`, else the first tab
+export function defaultIndex(items) {
+  const idx = items.findIndex((item) => item.open);
+  return idx === -1 ? 0 : idx;
 }
 
 function appendBody(container, bodyNodes, className) {
@@ -263,7 +288,7 @@ function renderHorizontalTabs(block, items) {
     nextBtn.disabled = tablist.scrollLeft >= max;
   };
 
-  const select = (idx) => {
+  const select = (idx, { scroll = true } = {}) => {
     tabButtons.forEach((b, i) => {
       b.classList.toggle('active', i === idx);
       b.setAttribute('aria-selected', i === idx ? 'true' : 'false');
@@ -273,9 +298,10 @@ function renderHorizontalTabs(block, items) {
       p.classList.toggle('is-before', i < idx);
       p.classList.toggle('is-after', i > idx);
     });
-    tabButtons[idx].scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+    if (scroll) tabButtons[idx].scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
   };
-  panels.forEach((p, i) => p.classList.toggle('is-after', i > 0));
+  // no scrollIntoView on load, it would jump the page to the block
+  select(defaultIndex(items), { scroll: false });
 
   prevBtn.addEventListener('click', () => select(Math.max(0, activeIndex() - 1)));
   nextBtn.addEventListener('click', () => select(Math.min(tabButtons.length - 1, activeIndex() + 1)));
@@ -412,6 +438,7 @@ function renderPillTabs(block, items) {
     tabs[next].focus();
   });
 
+  activate(defaultIndex(items));
   block.replaceChildren(nav, panelsWrap);
 }
 
@@ -431,9 +458,10 @@ function renderVerticalAccordion(block, items) {
   const headers = [];
   const regions = [];
   const medias = [];
+  const initialIndex = defaultIndex(items);
 
   items.forEach((item, i) => {
-    const open = i === 0;
+    const open = i === initialIndex;
 
     const wrap = document.createElement('div');
     wrap.className = open ? 'vt-item is-open' : 'vt-item';
@@ -485,7 +513,7 @@ function renderVerticalAccordion(block, items) {
   });
 
   const wraps = [...acc.children];
-  let openIndex = 0;
+  let openIndex = initialIndex;
 
   const setOpen = (index) => {
     openIndex = index;
@@ -654,6 +682,18 @@ function activateVp(tabs, panels, index, focusIndex = index) {
   panels.forEach((panel, i) => panel.classList.toggle('is-active', i === index));
 }
 
+// mobile accordion: once a tab opens, bring it below the fixed header when the
+// tab or its panel ends up outside the viewport (e.g. a panel above it collapsed)
+function revealVpTab(tab, panel) {
+  const navHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-height')) || 0;
+  const offset = navHeight + 8;
+  const { top } = tab.getBoundingClientRect();
+  const { bottom } = panel.getBoundingClientRect();
+  if (top >= offset && bottom <= window.innerHeight) return;
+  const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  window.scrollTo({ top: window.scrollY + top - offset, behavior: reduce ? 'auto' : 'smooth' });
+}
+
 function renderVerticalPanel(block, items) {
   const tabs = items.map(buildVpTab);
   const multiMedia = ['industry', 'questions', 'blueberry'].some((v) => block.classList.contains(v));
@@ -682,9 +722,11 @@ function renderVerticalPanel(block, items) {
     if (!btn) return;
     const idx = tabs.indexOf(btn);
     if (idx === -1) return;
-    const collapse = !isVpDesktop() && btn.getAttribute('aria-expanded') === 'true';
+    const mobile = !isVpDesktop();
+    const collapse = mobile && btn.getAttribute('aria-expanded') === 'true';
     activateVp(tabs, panels, collapse ? -1 : idx, idx);
     syncHeight();
+    if (mobile && !collapse) requestAnimationFrame(() => revealVpTab(btn, panels[idx]));
   });
 
   nav.addEventListener('keydown', (e) => {
@@ -702,6 +744,7 @@ function renderVerticalPanel(block, items) {
     syncHeight();
   });
 
+  activateVp(tabs, panels, defaultIndex(items));
   block.replaceChildren(nav);
   syncHeight();
   window.addEventListener('resize', () => {
