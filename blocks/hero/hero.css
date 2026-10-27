@@ -1061,7 +1061,10 @@ body.author-guide .hero .hero-copy .hero-lede {
   }
 }
 
-/* .homepage: 3:2 tile (688x458 on tablet, 640x426 on desktop), 640 | 80 | 640 lockup on desktop */
+/* .homepage: ~3:2 tile, 335x223 on mobile, 688x458 on tablet, 640x426 on desktop; 640 | 80 | 640 lockup on desktop.
+   Each breakpoint uses its own design ratio so the tile lands on whole pixels at the design widths. */
+.hero.ies.video.homepage .hero-media-video { aspect-ratio: 335 / 223; }
+
 @media (width >= 768px) {
   .hero.ies.video.homepage .hero-copy .hero-eyebrow { margin-bottom: 8px; }
   .hero.ies.video.homepage .hero-copy h1 { margin-bottom: 16px; }
@@ -1072,7 +1075,7 @@ body.author-guide .hero .hero-copy .hero-lede {
   }
 
   .hero.ies.video.homepage .hero-media-video {
-    aspect-ratio: 640 / 426;
+    aspect-ratio: 688 / 458;
     border-radius: 30px;
   }
 }
@@ -1087,7 +1090,10 @@ body.author-guide .hero .hero-copy .hero-lede {
     line-height: 1.3;
   }
 
-  .hero.ies.video.homepage .hero-media-video { border-radius: 38px; }
+  .hero.ies.video.homepage .hero-media-video {
+    aspect-ratio: 640 / 426;
+    border-radius: 38px;
+  }
 
   .hero.ies.video.homepage .hero-actions :is(a, button).button.primary { padding-inline: 42px; }
 
