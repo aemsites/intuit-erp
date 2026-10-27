@@ -161,7 +161,7 @@ function headingControl(h, sdk, status, setLoading, pendingSizes) {
   remove.setAttribute('aria-label', `Remove applied size from ${tag}`);
   remove.title = 'Remove applied size';
   remove.disabled = !select.value;
-  remove.innerHTML = '<svg aria-hidden="true" viewBox="0 0 16 16"><path d="M3 4h10M6 4V2.75h4V4m2 0-.5 9H4.5L4 4m2.5 2v5m3-5v5"/></svg>';
+  remove.innerHTML = '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M22.719 12A10.719 10.719 0 0 1 1.28 12h.838a9.916 9.916 0 1 0 1.373-5H8v1H2V2h1v4.2A10.71 10.71 0 0 1 22.719 12z"/></svg>';
   const save = async (size) => {
     pendingSizes.set(id, size);
     setLoading(true);
