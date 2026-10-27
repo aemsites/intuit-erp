@@ -28,4 +28,19 @@ describe('disclosure click tracking', () => {
     stampInteraction({ target: summary });
     expect(summary.getAttribute('data-object-detail')).toBe('disclaimer|close');
   });
+
+  it('does not emit expand/collapse metadata for the expanded variation', () => {
+    document.body.innerHTML = '<main><div class="disclosure expanded block">'
+      + '<div><div>Important pricing details and product information</div></div>'
+      + '<div><div><p>Terms <a href="https://example.com/terms">terms link</a></p></div></div></div></main>';
+    const block = document.querySelector('.disclosure');
+    decorate(block);
+    const link = block.querySelector('a[href]');
+
+    expect(block.querySelector('summary')).toBeNull();
+    expect(block.querySelector('.disclosure-title').hasAttribute('data-track-id')).toBe(false);
+    expect(link.hasAttribute('data-track-id')).toBe(true);
+    stampInteraction({ target: link });
+    expect(link.getAttribute('data-object-detail') || '').not.toMatch(/^disclaimer\|(open|close)$/);
+  });
 });
