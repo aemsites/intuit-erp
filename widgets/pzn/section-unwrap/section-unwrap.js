@@ -4,12 +4,24 @@
 // The other blocks in the fragment (e.g. a hero video) finish loading before the swap inserts it.
 const MAX_FRAMES = 600;
 
+// Mirrors the hero's extendArcsBackground: it ran while the fragment was detached (no next
+// section to measure), so re-measure the logo band now that the hero sits in the page section.
+function extendArcsTail(section) {
+  if (!section.querySelector('.hero.ies.arcs')) return;
+  const tail = section.nextElementSibling;
+  if (!tail?.querySelector('.logo-band.marquee:not(.light)') || !window.ResizeObserver) return;
+  new ResizeObserver(() => {
+    section.style.setProperty('--hero-arcs-tail', `${tail.offsetHeight}px`);
+  }).observe(tail);
+}
+
 function unwrap(widget) {
   const inner = widget.closest('.section');
   const outer = inner?.parentElement?.closest('.section');
   (widget.closest('.section-unwrap-wrapper') || widget).remove();
   if (!inner || !outer || inner.parentElement !== outer) return;
   inner.replaceWith(...inner.childNodes);
+  extendArcsTail(outer);
 }
 
 export default function decorate(widget) {
