@@ -156,7 +156,62 @@
   --space-5xl: 80px;
 }
 
-main :is(
+main .block[data-block-status][data-block-name] h1.h1-size-xs,
+main .block[data-block-status][data-block-name] h2.h2-size-xs,
+main .block[data-block-status][data-block-name] h3.h3-size-xs,
+main .block[data-block-status][data-block-name] h4.h4-size-xs,
+main .block[data-block-status][data-block-name] h5.h5-size-xs,
+main .block[data-block-status][data-block-name] h6.h6-size-xs, 
+main .block[data-block-status][data-block-name] p.p-size-xs {
+  font-size: var(--heading-font-size-xs);
+}
+main .block[data-block-status][data-block-name] h1.h1-size-s,
+main .block[data-block-status][data-block-name] h2.h2-size-s,
+main .block[data-block-status][data-block-name] h3.h3-size-s,
+main .block[data-block-status][data-block-name] h4.h4-size-s,
+main .block[data-block-status][data-block-name] h5.h5-size-s,
+main .block[data-block-status][data-block-name] h6.h6-size-s, 
+main .block[data-block-status][data-block-name] p.p-size-s {
+  font-size: var(--heading-font-size-s);
+}
+main .block[data-block-status][data-block-name] h1.h1-size-m,
+main .block[data-block-status][data-block-name] h2.h2-size-m,
+main .block[data-block-status][data-block-name] h3.h3-size-m,
+main .block[data-block-status][data-block-name] h4.h4-size-m,
+main .block[data-block-status][data-block-name] h5.h5-size-m,
+main .block[data-block-status][data-block-name] h6.h6-size-m, 
+main .block[data-block-status][data-block-name] p.p-size-m {
+  font-size: var(--heading-font-size-m);
+}
+main .block[data-block-status][data-block-name] h1.h1-size-l,
+main .block[data-block-status][data-block-name] h2.h2-size-l,
+main .block[data-block-status][data-block-name] h3.h3-size-l,
+main .block[data-block-status][data-block-name] h4.h4-size-l,
+main .block[data-block-status][data-block-name] h5.h5-size-l,
+main .block[data-block-status][data-block-name] h6.h6-size-l, 
+main .block[data-block-status][data-block-name] p.p-size-l {
+  font-size: var(--heading-font-size-l);
+}
+main .block[data-block-status][data-block-name] h1.h1-size-xl,
+main .block[data-block-status][data-block-name] h2.h2-size-xl,
+main .block[data-block-status][data-block-name] h3.h3-size-xl,
+main .block[data-block-status][data-block-name] h4.h4-size-xl,
+main .block[data-block-status][data-block-name] h5.h5-size-xl,
+main .block[data-block-status][data-block-name] h6.h6-size-xl, 
+main .block[data-block-status][data-block-name] p.p-size-xl {
+  font-size: var(--heading-font-size-xl);
+}
+main .block[data-block-status][data-block-name] h1.h1-size-xll,
+main .block[data-block-status][data-block-name] h2.h2-size-xll,
+main .block[data-block-status][data-block-name] h3.h3-size-xll,
+main .block[data-block-status][data-block-name] h4.h4-size-xll,
+main .block[data-block-status][data-block-name] h5.h5-size-xll,
+main .block[data-block-status][data-block-name] h6.h6-size-xll, 
+main .block[data-block-status][data-block-name] p.p-size-xll {
+  font-size: var(--heading-font-size-xll);
+}
+
+/* main :is(
   h1.h1-size-xxl,
   h2.h2-size-xxl,
   h3.h3-size-xxl,
@@ -262,7 +317,7 @@ main p:is(
   .h5-size-xs,
   .h6-size-xs,
   .p-size-xs
-) { font-size: var(--heading-font-size-xs); }
+) { font-size: var(--heading-font-size-xs); } */
 
 /* Metric-matched fallback for the primary webfont (local Arial, zero network),
    standing in for "AvenirNext forINTUIT" while it downloads. MUST stay in the
@@ -1747,16 +1802,16 @@ body.author-guide > main > .section > .default-content-wrapper :is(h1, h2, h3, h
 }
 
 /* Block-scoped size helpers */
-main .block[data-block-status][data-block-name].h1-size-xs h1,
+/* main .block[data-block-status][data-block-name].h1-size-xs h1,
 main .block[data-block-status][data-block-name].h2-size-xs h2,
 main .block[data-block-status][data-block-name].h3-size-xs h3,
 main .block[data-block-status][data-block-name].h4-size-xs h4,
 main .block[data-block-status][data-block-name].h5-size-xs h5,
 main .block[data-block-status][data-block-name].h6-size-xs h6 {
   font-size: var(--heading-font-size-xs);
-}
+} */
 
-main .block[data-block-status][data-block-name].h1-size-s h1,
+/* main .block[data-block-status][data-block-name].h1-size-s h1,
 main .block[data-block-status][data-block-name].h2-size-s h2,
 main .block[data-block-status][data-block-name].h3-size-s h3,
 main .block[data-block-status][data-block-name].h4-size-s h4,
@@ -1802,7 +1857,7 @@ main .block[data-block-status][data-block-name].h6-size-xxl h6 {
 }
 
 /* Section-scoped size helpers (excludes blocks) */
-main .section[data-section-status].h1-size-xs h1:not(.block h1),
+/* main .section[data-section-status].h1-size-xs h1:not(.block h1),
 main .section[data-section-status].h2-size-xs h2:not(.block h2),
 main .section[data-section-status].h3-size-xs h3:not(.block h3),
 main .section[data-section-status].h4-size-xs h4:not(.block h4),
@@ -1854,7 +1909,7 @@ main .section[data-section-status].h4-size-xxl h4:not(.block h4),
 main .section[data-section-status].h5-size-xxl h5:not(.block h5),
 main .section[data-section-status].h6-size-xxl h6:not(.block h6) {
   font-size: var(--heading-font-size-xxl);
-}
+} */
 
 /* Heading spacer helpers */
 main .block[data-block-status][data-block-name].h2-spacer-0 h2,

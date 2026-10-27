@@ -7,7 +7,11 @@ import {
 
 const POLL_MS = 1000;
 const TIMEOUT_MS = 900;
-const TREE_REFRESH_MS = 3000;
+// DA persists editor changes to the source with a delay, so check the source more often for a
+// while after any change is seen, and back off once the page is idle.
+const ACTIVE_REFRESH_MS = 2000;
+const IDLE_REFRESH_MS = 3000;
+const ACTIVE_WINDOW_MS = 10000;
 const ROLES = {
   h1: 'heading 1',
   h2: 'heading 2',
@@ -70,12 +74,13 @@ function describeTable(table) {
 
 async function loadSource({ actions, context }) {
   const path = (context.path || '/').replace(/\.html$/, '').replace(/\/$/, '') || '/index';
-  const resp = await actions.daFetch(`https://admin.da.live/source/${context.org}/${context.repo}${path}.html`);
+  const resp = await actions.daFetch(`https://admin.da.live/source/${context.org}/${context.repo}${path}.html`, { cache: 'no-store' });
   if (!resp.ok) {
     log('source fetch failed', resp.status);
     return null;
   }
-  return new DOMParser().parseFromString(await resp.text(), 'text/html');
+  const text = await resp.text();
+  return { text, doc: new DOMParser().parseFromString(text, 'text/html') };
 }
 
 function findElements(doc, { tag, full }) {
@@ -102,12 +107,12 @@ function contentTree(html, doc) {
   return sections.map((section, index) => {
     const groups = [];
     [...section.children].forEach((child) => {
-      if (child.classList.contains('section-metadata')) return;
+      if (child.classList.contains('section-metadata', 'metadata', 'library-metadata')) return;
       const block = child.matches('div[class]') ? child : null;
       const elements = [
         ...(child.matches('h1,h2,h3,h4,h5,h6,p') ? [child] : []),
         ...child.querySelectorAll('h1,h2,h3,h4,h5,h6,p'),
-      ].filter((el) => !el.closest('.section-metadata')
+      ].filter((el) => !el.closest('section-metadata', 'metadata', 'library-metadata')
         && (block || !el.closest('main > div > div[class]')));
       if (block) {
         groups.push({
@@ -161,7 +166,7 @@ function headingControl(h, sdk, status, setLoading, pendingSizes) {
   remove.setAttribute('aria-label', `Remove applied size from ${tag}`);
   remove.title = 'Remove applied size';
   remove.disabled = !select.value;
-  remove.innerHTML = '<svg aria-hidden="true" viewBox="0 0 16 16"><path d="M3 4h10M6 4V2.75h4V4m2 0-.5 9H4.5L4 4m2.5 2v5m3-5v5"/></svg>';
+  remove.innerHTML = '<svg aria-hidden="true" viewBox="0 0 16 16"><path d="M13.5 8A5.5 5.5 0 1 1 8 2.5V1M8 2.5L6 4.5l2 2"/></svg>';
   const save = async (size) => {
     pendingSizes.set(id, size);
     setLoading(true);
@@ -319,48 +324,81 @@ export default async function init() {
     }
   });
 
-  let lastSelection;
-  let lastTreeRefresh = 0;
+  let selection = null;
+  let lastChange = 0;
   let sourceDoc;
-  let busy = false;
+  let sourceText;
   const pendingSizes = new Map();
+
+  const update = (selectionChanged) => {
+    if (!sourceDoc) return;
+    const tree = contentTree(selection, sourceDoc);
+    log('selection and document tree', { html: selection, tree });
+    render(list, tree, sdk, status, setLoading, selectionChanged, pendingSizes);
+    if (selection === null) status.textContent = 'Select content in the document.';
+    else status.textContent = tree.length ? 'Content tree loaded' : 'No sections found.';
+  };
+
+  // Content watcher: re-keys headings and refreshes the tree whenever the source changes,
+  // independent of the editor selection.
+  let sourceBusy = false;
+  const checkSource = async () => {
+    if (sourceBusy || document.hidden) return;
+    sourceBusy = true;
+    try {
+      const fresh = await loadSource(sdk);
+      if (!fresh) {
+        status.textContent = 'Unable to refresh the source. Retrying...';
+        return;
+      }
+      if (fresh.text === sourceText) return;
+      lastChange = Date.now();
+      try {
+        await repairAll(sdk, fresh.doc);
+      } catch (e) {
+        log('repair error', e);
+      }
+      sourceDoc = fresh.doc;
+      const sections = [...sourceDoc.querySelectorAll('main > div')];
+      pendingSizes.forEach((size, id) => {
+        const [sectionIndex, key] = id.split(':');
+        const section = sections[Number(sectionIndex) - 1];
+        const el = section && [...section.querySelectorAll('h1,h2,h3,h4,h5,h6,p')]
+          .find((candidate) => headingInfo(candidate).key === key);
+        if (!el || currentStyle(section, el).size === size) pendingSizes.delete(id);
+      });
+      update(false);
+      // Only mark the source as seen once rendered, so a failure retries on the next check.
+      sourceText = fresh.text;
+    } catch (e) {
+      log('source error', e);
+    } finally {
+      sourceBusy = false;
+    }
+  };
+  const watchSource = async () => {
+    await checkSource();
+    const active = Date.now() - lastChange < ACTIVE_WINDOW_MS;
+    setTimeout(watchSource, active ? ACTIVE_REFRESH_MS : IDLE_REFRESH_MS);
+  };
+  watchSource();
+
+  // Selection watcher: highlights the selected content and checks the source right away.
+  let selectionBusy = false;
   setInterval(async () => {
-    if (busy || document.hidden) return;
-    busy = true;
+    if (selectionBusy || document.hidden) return;
+    selectionBusy = true;
     try {
       const html = await readSelection(sdk.actions);
-      const selectionChanged = html !== lastSelection;
-      if (selectionChanged) lastSelection = html;
-      const refreshSource = !sourceDoc || Date.now() - lastTreeRefresh >= TREE_REFRESH_MS;
-      if (!selectionChanged && !refreshSource) return;
-      if (refreshSource) {
-        const freshDoc = await loadSource(sdk);
-        lastTreeRefresh = Date.now();
-        if (freshDoc) {
-          await repairAll(sdk, freshDoc);
-          sourceDoc = freshDoc;
-          const sections = [...sourceDoc.querySelectorAll('main > div')];
-          pendingSizes.forEach((size, id) => {
-            const [sectionIndex, key] = id.split(':');
-            const section = sections[Number(sectionIndex) - 1];
-            const el = section && [...section.querySelectorAll('h1,h2,h3,h4,h5,h6,p')]
-              .find((candidate) => headingInfo(candidate).key === key);
-            if (!el || currentStyle(section, el).size === size) pendingSizes.delete(id);
-          });
-        } else {
-          status.textContent = 'Unable to refresh the source. Retrying...';
-          if (!sourceDoc) return;
-        }
-      }
-      const tree = contentTree(html, sourceDoc);
-      log('selection and document tree', { html, tree });
-      render(list, tree, sdk, status, setLoading, selectionChanged, pendingSizes);
-      if (html === null) status.textContent = 'Select content in the document.';
-      else status.textContent = tree.length ? 'Content tree loaded' : 'No sections found.';
+      if (html === selection) return;
+      selection = html;
+      lastChange = Date.now();
+      update(true);
+      checkSource();
     } catch (e) {
-      log('error', e);
+      log('selection error', e);
     } finally {
-      busy = false;
+      selectionBusy = false;
     }
   }, POLL_MS);
 }
