@@ -30,6 +30,7 @@
   margin: 0; color: #fff; text-align: center; padding: var(--space-2xl) 0; font-size: 13.33px; font-weight: var(--font-weight-semibold);
 }
 .disclosure.light.expanded .disclosure-title { color: var(--navy); }
+
 .disclosure.white.expanded .disclosure-title {
   color: #0d0031; font-size: 16px; line-height: 1.4; font-weight: var(--font-weight-medium); padding: 0 0 var(--space-l);
 }
