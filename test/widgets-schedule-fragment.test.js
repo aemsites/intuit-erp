@@ -2,8 +2,6 @@ import {
   describe, it, expect, vi, afterEach,
 } from 'vitest';
 
-// The widget imports openModal; stub the modal (and the fragment loader it pulls in) so importing
-// the widget doesn't load the modal/fragment → scripts.js graph (which runs loadPage on import).
 vi.mock('../blocks/modal/modal.js', () => ({
   createModal: vi.fn(async () => null),
   openModal: vi.fn(() => Promise.resolve(null)),
@@ -42,7 +40,6 @@ describe('schedule-fragment: resolveFragmentPath', () => {
   });
 });
 
-// Each test uses its own trigger selector: document capture listeners persist across tests.
 describe('schedule-fragment: decorate repoints the schedule modal', () => {
   it('opens the configured fragment instead of the baseline schedule modal', async () => {
     document.body.innerHTML = '<div class="widget"></div>';
@@ -51,7 +48,6 @@ describe('schedule-fragment: decorate repoints the schedule modal', () => {
     widget.dataset.trigger = '.sf-test-cta';
     await decorate(widget);
 
-    // The CTA renders after the widget decorates; the capture-phase handler still claims it.
     document.body.insertAdjacentHTML('beforeend', '<a class="sf-test-cta" href="#schedule">Schedule a call</a>');
     const cta = document.querySelector('.sf-test-cta');
     const baseline = vi.fn();
