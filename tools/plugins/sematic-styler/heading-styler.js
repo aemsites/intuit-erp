@@ -6,6 +6,13 @@ const HEADINGS = 'h1,h2,h3,h4,h5,h6,p';
 const POSITIONAL_CLASS_RE = new RegExp(
   `^(h[1-6]|p)-([0-9]+)-(?:size-(?:${SIZE_PATTERN})|as-(?:h[1-6]|p))$`,
 );
+// Tag-wide paragraph sizes are written as the bare body class (`body-4`); positional ones keep
+// their tag (`p-1-size-body-4`). The older `p-size-body-4` form is still read.
+const BODY_CLASS_RE = /^body-[1-4]$/;
+const tagWideClass = (tag, size) => (tag === 'p' && BODY_CLASS_RE.test(size)
+  ? size : `${tag}-size-${size}`);
+const tagWideSize = (tag, token) => (tag === 'p' && BODY_CLASS_RE.test(token) ? token
+  : token.match(new RegExp(`^${tag}-size-(${SIZE_PATTERN})$`))?.[1]);
 const rowKey = (row) => row.children[0]?.textContent.trim().toLowerCase();
 const blockOf = (el) => el.closest('main > div > div[class]');
 const tagName = (el) => el.tagName.toLowerCase();
@@ -28,10 +35,9 @@ function blockStyle(block, el) {
   const key = positionKey(el, block);
   const tag = tagName(el);
   const specificPattern = new RegExp(`^${key}-size-(${SIZE_PATTERN})$`);
-  const allPattern = new RegExp(`^${tag}-size-(${SIZE_PATTERN})$`);
   const names = [...block.classList];
   const specific = names.map((name) => name.match(specificPattern)).find(Boolean)?.[1];
-  const all = names.map((name) => name.match(allPattern)).find(Boolean)?.[1];
+  const all = names.map((name) => tagWideSize(tag, name)).find(Boolean);
   const size = specific || all;
   return size ? parseSizeClass(`${tag}-size-${size}`) : null;
 }
@@ -104,11 +110,9 @@ function defaultStyle(section, el) {
   const specific = tokens.find((token) => (
     new RegExp(`^${key}-size-(${SIZE_PATTERN})$`).test(token)
   ));
-  const general = tokens.find((token) => (
-    new RegExp(`^${tag}-size-(${SIZE_PATTERN})$`).test(token)
-  ));
-  const className = specific || general;
-  return className ? parseSizeClass(className) : null;
+  const general = tokens.map((token) => tagWideSize(tag, token)).find(Boolean);
+  if (specific) return parseSizeClass(specific);
+  return general ? parseSizeClass(`${tag}-size-${general}`) : null;
 }
 
 function setDefaultStyle(section, el, size) {
@@ -296,7 +300,10 @@ function applySizes(doc, targets, size) {
 }
 
 // Any size for `tag`, tag-wide (`h3-size-xs`) or positional (`h3-2-size-xs`, `h3-2-as-h2`).
-const tagStyleRe = (tag) => new RegExp(`^${tag}(?:-[0-9]+)?-(?:size|as)-`);
+// Paragraphs also own the bare tag-wide body class (`body-4`).
+const tagStyleRe = (tag) => new RegExp(
+  `^${tag}(?:-[0-9]+)?-(?:size|as)-${tag === 'p' ? '|^body-[1-4]$' : ''}`,
+);
 
 // One tag-wide class per container replaces the tag's existing sizes, so applying again or
 // switching size updates the same class instead of adding another.
@@ -311,12 +318,12 @@ function applyTagSize(doc, targets, size) {
     blocks.forEach((block) => {
       [...block.classList].filter((name) => re.test(name))
         .forEach((name) => block.classList.remove(name));
-      block.classList.add(`${tag}-size-${size}`);
+      block.classList.add(tagWideClass(tag, size));
     });
     sections.forEach((section) => {
       const tokens = findRow(section, 'style')?.children[1]?.textContent
         .split(/[\s,]+/).filter(Boolean) || [];
-      const next = [...tokens.filter((token) => !re.test(token)), `${tag}-size-${size}`];
+      const next = [...tokens.filter((token) => !re.test(token)), tagWideClass(tag, size)];
       setRow(section, 'style', next.join(', '));
     });
   });
@@ -325,7 +332,7 @@ function applyTagSize(doc, targets, size) {
 }
 
 // Every size for any tag, tag-wide or positional.
-const ANY_STYLE_RE = /^(?:h[1-6]|p)(?:-[0-9]+)?-(?:size|as)-/;
+const ANY_STYLE_RE = /^(?:(?:h[1-6]|p)(?:-[0-9]+)?-(?:size|as)-|body-[1-4]$)/;
 
 // Clears every size from the targets' blocks and, for default content, the section style row.
 function clearSizes(doc, targets) {

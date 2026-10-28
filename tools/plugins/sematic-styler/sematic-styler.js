@@ -40,7 +40,8 @@ const compact = (s) => s.replace(/\s+/g, '');
 
 function blockLabel(block) {
   const name = [...block.classList]
-    .find((className) => !/^(?:h[1-6]|p)(?:-\d+)?-(?:size|as)-/.test(className)) || 'block';
+    .find((className) => !/^(?:(?:h[1-6]|p)(?:-\d+)?-(?:size|as)-|body-[1-4]$)/.test(className))
+    || 'block';
   return `${name[0].toUpperCase()}${name.slice(1)}`;
 }
 
@@ -174,7 +175,7 @@ function contentTree(html, doc, editableBlocks) {
   }).filter(({ groups }) => !editableBlocks || groups.length);
 }
 
-function headingControl(h, sdk, status, setLoading, pendingSizes, peers, rerender) {
+function headingControl(h, sdk, status, setLoading, pendingSizes, locked) {
   const wrap = document.createElement('div');
   const content = document.createElement('div');
   const name = document.createElement('div');
@@ -208,16 +209,13 @@ function headingControl(h, sdk, status, setLoading, pendingSizes, peers, rerende
   remove.setAttribute('aria-label', `Remove applied size from ${tag}`);
   remove.title = 'Remove applied size';
   remove.disabled = !select.value;
+  // A section-wide paragraph size owns every paragraph while it's on.
+  if (locked) {
+    wrap.classList.add('is-locked');
+    select.disabled = true;
+    remove.disabled = true;
+  }
   remove.innerHTML = '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M22.719 12A10.719 10.719 0 0 1 1.28 12h.838a9.916 9.916 0 1 0 1.373-5H8v1H2V2h1v4.2A10.71 10.71 0 0 1 22.719 12z"/></svg>';
-  const applyAll = document.createElement('button');
-  applyAll.className = 'apply-all';
-  applyAll.type = 'button';
-  const tagLabel = tag.toUpperCase();
-  applyAll.setAttribute('aria-label', `Apply this size to every ${tagLabel} in this section`);
-  applyAll.title = `Apply to all ${tagLabel}s in this section`;
-  applyAll.disabled = !select.value;
-  applyAll.innerHTML = '<svg aria-hidden="true" viewBox="0 0 24 24">'
-    + '<path d="M4 7h11M4 12h11M4 17h7M15 16l3 3 5-6"/></svg>';
   const save = async (size) => {
     pendingSizes.set(id, size);
     setLoading(true);
@@ -226,7 +224,6 @@ function headingControl(h, sdk, status, setLoading, pendingSizes, peers, rerende
       selectedSize = size;
       pendingSizes.set(id, size);
       remove.disabled = !size;
-      applyAll.disabled = !size;
       status.textContent = size ? `Saved ${target}` : `Removed applied size from ${target}`;
     } catch (e) {
       log('save error', e);
@@ -239,37 +236,111 @@ function headingControl(h, sdk, status, setLoading, pendingSizes, peers, rerende
   };
   select.addEventListener('change', () => save(select.value));
   remove.addEventListener('click', () => { select.value = ''; save(''); });
-  applyAll.addEventListener('click', async () => {
-    const size = select.value;
-    if (!size) return;
-    const ids = peers.map((peer) => `${peer.sectionIndex}:${peer.key}`);
-    const previous = new Map(ids.filter((peerId) => pendingSizes.has(peerId))
-      .map((peerId) => [peerId, pendingSizes.get(peerId)]));
-    ids.forEach((peerId) => pendingSizes.set(peerId, size));
+  controls.append(select, remove);
+  wrap.append(content, controls);
+  return wrap;
+}
+
+const sizeOf = (h, pendingSizes) => {
+  const id = `${h.sectionIndex}:${h.key}`;
+  return pendingSizes.has(id) ? pendingSizes.get(id) : currentStyle(h.section, h.el).size;
+};
+
+/**
+ * First row of a section: when "Apply to all Paragraphs" is checked, the chosen size is applied
+ * to every paragraph in the section and the paragraphs' own controls are disabled.
+ */
+function paragraphAllControl(sectionIndex, paragraphs, ui) {
+  const {
+    sdk, status, setLoading, pendingSizes, paragraphAll, rerender,
+  } = ui;
+  const item = document.createElement('li');
+  const wrap = document.createElement('div');
+  const label = document.createElement('label');
+  const checkbox = document.createElement('input');
+  const controls = document.createElement('div');
+  const select = document.createElement('select');
+  item.className = 'tree-group';
+  wrap.className = 'tree-item apply-all-row';
+  label.className = 'apply-all-label';
+  checkbox.type = 'checkbox';
+  checkbox.checked = paragraphAll.has(sectionIndex);
+  label.append(checkbox, 'Apply to all Paragraphs');
+  controls.className = 'tree-item-controls';
+  const current = paragraphs.map((h) => sizeOf(h, pendingSizes));
+  const common = current.every((size) => size === current[0]) ? current[0] : '';
+  const value = paragraphAll.get(sectionIndex) || common;
+  const sizes = sizesFor('p');
+  const options = value && !sizes.includes(value) ? [...sizes, value] : sizes;
+  const placeholder = new Option('Choose size', '');
+  placeholder.disabled = true;
+  select.append(placeholder, ...options.map((size) => new Option(size, size)));
+  select.value = value;
+  select.disabled = !checkbox.checked;
+  select.setAttribute('aria-label', `Size for all paragraphs in section ${sectionIndex}`);
+
+  const apply = async (size) => {
+    const ids = paragraphs.map((h) => `${h.sectionIndex}:${h.key}`);
+    const previous = new Map(ids.filter((id) => pendingSizes.has(id))
+      .map((id) => [id, pendingSizes.get(id)]));
+    ids.forEach((id) => pendingSizes.set(id, size));
     setLoading(true);
     try {
-      const count = await setHeadingSizes(sdk, peers, size);
-      status.textContent = `Applied ${size} to ${count} ${tagLabel} in section ${h.sectionIndex}`;
+      const count = await setHeadingSizes(sdk, paragraphs, size);
+      status.textContent = `Applied ${size} to ${count} P in section ${sectionIndex}`;
     } catch (e) {
       log('apply all error', e);
       status.textContent = e.message;
-      ids.forEach((peerId) => {
-        if (previous.has(peerId)) pendingSizes.set(peerId, previous.get(peerId));
-        else pendingSizes.delete(peerId);
+      ids.forEach((id) => {
+        if (previous.has(id)) pendingSizes.set(id, previous.get(id));
+        else pendingSizes.delete(id);
       });
     } finally {
       setLoading(false);
       rerender();
     }
+  };
+  checkbox.addEventListener('change', () => {
+    if (!checkbox.checked) {
+      paragraphAll.delete(sectionIndex);
+      rerender();
+      return;
+    }
+    paragraphAll.set(sectionIndex, select.value);
+    if (select.value) apply(select.value);
+    else rerender();
   });
-  controls.append(select, remove, applyAll);
-  wrap.append(content, controls);
-  return wrap;
+  select.addEventListener('change', () => {
+    paragraphAll.set(sectionIndex, select.value);
+    apply(select.value);
+  });
+  controls.append(select);
+  wrap.append(label, controls);
+  item.append(wrap);
+  return item;
 }
 
-function render(list, tree, sdk, status, setLoading, selectionChanged, pendingSizes) {
+function render(
+  list,
+  tree,
+  sdk,
+  status,
+  setLoading,
+  selectionChanged,
+  pendingSizes,
+  paragraphAll,
+) {
   if (!tree.length) { list.replaceChildren(); return; }
-  const rerender = () => render(list, tree, sdk, status, setLoading, false, pendingSizes);
+  const rerender = () => render(
+    list,
+    tree,
+    sdk,
+    status,
+    setLoading,
+    false,
+    pendingSizes,
+    paragraphAll,
+  );
   const expanded = new Map([...list.querySelectorAll('.tree-section-details')]
     .map((details) => [Number(details.dataset.sectionIndex), details.open]));
   const card = document.createElement('li');
@@ -319,6 +390,7 @@ function render(list, tree, sdk, status, setLoading, selectionChanged, pendingSi
       const previous = new Map(ids.filter((id) => pendingSizes.has(id))
         .map((id) => [id, pendingSizes.get(id)]));
       ids.forEach((id) => pendingSizes.set(id, ''));
+      paragraphAll.delete(sectionIndex);
       setLoading(true);
       try {
         await clearHeadingSizes(sdk, sectionElements);
@@ -336,6 +408,13 @@ function render(list, tree, sdk, status, setLoading, selectionChanged, pendingSi
       }
     });
     sectionName.append(sectionLabel, resetSection, sectionChevron);
+    const paragraphs = sectionElements.filter((h) => h.el.tagName === 'P');
+    const paragraphsLocked = paragraphAll.has(sectionIndex);
+    if (paragraphs.length) {
+      groupList.append(paragraphAllControl(sectionIndex, paragraphs, {
+        sdk, status, setLoading, pendingSizes, paragraphAll, rerender,
+      }));
+    }
     groups.forEach(({ title: groupTitle, elements }) => {
       const groupItem = document.createElement('li');
       const groupName = document.createElement('div');
@@ -346,10 +425,8 @@ function render(list, tree, sdk, status, setLoading, selectionChanged, pendingSi
       elementList.className = 'tree-elements';
       elements.forEach((h) => {
         const elementItem = document.createElement('li');
-        const peers = sectionElements.filter((peer) => peer.el.tagName === h.el.tagName);
-        elementItem.append(
-          headingControl(h, sdk, status, setLoading, pendingSizes, peers, rerender),
-        );
+        const locked = paragraphsLocked && h.el.tagName === 'P';
+        elementItem.append(headingControl(h, sdk, status, setLoading, pendingSizes, locked));
         elementList.append(elementItem);
       });
       groupItem.append(groupName, elementList);
@@ -461,13 +538,15 @@ export default async function init() {
   let sourceText;
   let liveHtml = null;
   const pendingSizes = new Map();
+  // Sections with "Apply to all Paragraphs" checked, mapped to the size chosen there.
+  const paragraphAll = new Map();
 
   const update = (selectionChanged) => {
     if (!sourceDoc || editableBlocks === undefined) return;
     const doc = liveHtml ? liveTreeDoc(liveHtml, sourceDoc) : sourceDoc;
     const tree = contentTree(selection, doc, editableBlocks);
     log('selection and document tree', { html: selection, tree });
-    render(list, tree, sdk, status, setLoading, selectionChanged, pendingSizes);
+    render(list, tree, sdk, status, setLoading, selectionChanged, pendingSizes, paragraphAll);
     if (selection === null) status.textContent = 'Select content in the document.';
     else status.textContent = tree.length ? 'Content tree loaded' : 'No sections found.';
   };

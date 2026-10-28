@@ -278,7 +278,7 @@
 }
 
 .tree-groups {
-  padding: 0 var(--s2-spacing-100) var(--s2-spacing-100);
+  padding: var(--s2-spacing-100) var(--s2-spacing-100);
 }
 
 .tree-group + .tree-group {
@@ -359,14 +359,43 @@
   font-size: var(--s2-body-size-s);
 }
 
+.tree-item-controls select:disabled {
+  cursor: not-allowed;
+  opacity: .45;
+}
+
+.tree-item.is-locked .tree-item-content {
+  opacity: .6;
+}
+
+.apply-all-row {
+  background: var(--ds-surface);
+}
+
+.apply-all-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ds-text);
+  font-size: var(--s2-body-size-xs);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.apply-all-label input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--ds-accent);
+}
+
 .tree-item-controls select:focus {
   outline: none;
   border-color: var(--s2-blue-800);
   box-shadow: 0 0 0 1px var(--s2-blue-800);
 }
 
-.remove-class,
-.apply-all {
+.remove-class {
   display: grid;
   width: 32px;
   height: 32px;
@@ -385,20 +414,12 @@
   color: var(--ds-danger);
 }
 
-.apply-all:hover:not(:disabled) {
-  border-color: var(--s2-blue-800);
-  background: var(--s2-blue-100);
-  color: var(--ds-accent);
-}
-
-.remove-class:disabled,
-.apply-all:disabled {
+.remove-class:disabled {
   cursor: not-allowed;
   opacity: .45;
 }
 
-.remove-class svg,
-.apply-all svg {
+.remove-class svg {
   width: 16px;
   height: 16px;
   fill: none;

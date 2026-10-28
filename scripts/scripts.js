@@ -174,6 +174,9 @@ function applySizeTokens(scope, tokens, excludeBlocks = false) {
       positioned.set(`${positionMatch[1]}-${positionMatch[2]}`, positionMatch[3]);
     } else if (allMatch) {
       all.set(allMatch[1], allMatch[2]);
+    } else if (/^body-[1-4]$/.test(token)) {
+      // A bare body class on a block or section sizes all of its paragraphs.
+      all.set('p', token);
     }
   });
 
