@@ -27,6 +27,7 @@ import {
   pznDecision,
 } from './experience.js';
 import { loadSections, getMetadata } from './aem.js';
+import { bindScheduleLinks } from './schedule-modal.js';
 // eslint-disable-next-line import/no-cycle
 import { decorateMain } from './scripts.js';
 
@@ -188,6 +189,7 @@ async function swapAndDecorate(path, signal) {
   const main = document.querySelector('main');
   decorateMain(main);
   await loadSections(main);
+  bindScheduleLinks(main);
   return true;
 }
 
@@ -197,6 +199,14 @@ function snapshotBaselines(targets) {
     if (t.scope === 'page') return;
     const el = resolveEl(t);
     if (el) baseline.set(t.key, el.innerHTML);
+  });
+}
+
+function restoreBaseline(el, html) {
+  el.innerHTML = html;
+  // Snapshots preserve binding markers, but not the listeners on the old nodes.
+  el.querySelectorAll('[data-schedule-bound]').forEach((a) => {
+    a.removeAttribute('data-schedule-bound');
   });
 }
 
@@ -233,7 +243,8 @@ export async function applyVariant(target, path) {
     const el = resolveEl(target);
     if (!el) return { applied: false, reason: 'Target not found on the page.' };
     if (baseline.has(target.key)) {
-      el.innerHTML = baseline.get(target.key);
+      restoreBaseline(el, baseline.get(target.key));
+      bindScheduleLinks(el);
       return { applied: true };
     }
     return resetToBaseline();
@@ -251,8 +262,9 @@ export async function applyVariant(target, path) {
   if (!el) return { applied: false, reason: 'Target not found on the page.' };
   // Start from the authored content each time so switching variants (and append mode)
   // never stacks fragments.
-  if (baseline.has(target.key)) el.innerHTML = baseline.get(target.key);
+  if (baseline.has(target.key)) restoreBaseline(el, baseline.get(target.key));
   const ok = await applyFragment(el, p, { append: target.mode === 'append' });
+  bindScheduleLinks(el);
   return { applied: ok, reason: ok ? undefined : await describeFragmentFailure(p) };
 }
 
@@ -331,6 +343,7 @@ export async function simulateContext(context, opts = {}) {
       await loadSections(main);
     }
     await applyLayer(main, response, { track: false });
+    bindScheduleLinks(main);
   } finally {
     if (window.hlx) window.hlx.experienceResponse = prev; // don't disturb the runtime cache
   }
