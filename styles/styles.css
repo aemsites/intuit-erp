@@ -97,10 +97,12 @@
   --heading-font-family: var(--body-font-family);
 
   /* body sizes */
+  --body-font-size-l: 20px;
   --body-font-size-m: 16px;
   --body-font-size-s: 15px;
   --body-font-size-xs: 14px;
   --body-font-size-xxs: 12px;
+  --body-l: var(--body-font-size-l);
   --body-m: var(--body-font-size-m);
   --body-s: var(--body-font-size-s);
   --body-xs: var(--body-font-size-xs);
@@ -1838,6 +1840,11 @@ main .section[data-section-status].h6-font-weight-bold h6:not(.block h6) {
 }
 
 /* Paragraph size helpers */
+main .block[data-block-status][data-block-name].body-l p,
+main .section[data-section-status].body-l p:not(.block p) {
+  font-size: var(--body-l);
+}
+
 main .block[data-block-status][data-block-name].body-m p,
 main .section[data-section-status].body-m p:not(.block p) {
   font-size: var(--body-m);
