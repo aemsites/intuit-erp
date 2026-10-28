@@ -65,8 +65,14 @@ export const parseHeadingKey = (key) => {
 };
 
 export const SIZES = ['xs', 's', 'm', 'l', 'xl', 'xxl'];
-// Each target uses its own tag in the applied size class.
-export const sizeClass = (el, size) => `${el.tagName.toLowerCase()}-size-${size}`;
+// Paragraphs use the body scale instead of the heading sizes.
+export const BODY_SIZES = ['body-1', 'body-2', 'body-3', 'body-4'];
+export const sizesFor = (tag) => (tag.toLowerCase() === 'p' ? BODY_SIZES : SIZES);
+// Alternation for every size a token can carry, for building size class patterns.
+export const SIZE_PATTERN = 'xxl|xl|l|m|s|xs|body-[1-4]';
+// Body sizes are applied as-is (`body-1`); headings use their own tag (`h3-size-xl`).
+export const sizeClass = (el, size) => (/^body-[1-4]$/.test(size)
+  ? size : `${el.tagName.toLowerCase()}-size-${size}`);
 
 // Also accepts the legacy `h2sizexxl` form and normalizes it to `h2-size-xxl`.
 const LEGACY_RE = /^(h[1-6])size(xxl|xl|l|m|s|xs)$/;
@@ -75,7 +81,7 @@ export const classesOf = (value = '') => value.split(/[\s,]+/).filter(Boolean)
 
 /** `h3-size-xl` -> { as: 'h3', size: 'xl' }; empty strings when it doesn't match. */
 export function parseSizeClass(cls = '') {
-  const m = /^(p|h[1-6])-size-(xxl|xl|l|m|s|xs)$/.exec(classesOf(cls)[0] || '');
+  const m = new RegExp(`^(p|h[1-6])-size-(${SIZE_PATTERN})$`).exec(classesOf(cls)[0] || '');
   return { as: m?.[1] || '', size: m?.[2] || '' };
 }
 

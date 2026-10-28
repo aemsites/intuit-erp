@@ -1,8 +1,9 @@
 // eslint-disable-next-line import/no-unresolved -- SDK is loaded directly from DA's hosted module.
 import DA_SDK from 'https://da.live/nx/utils/sdk.js';
-import { SIZES } from '../../../scripts/heading-key.js';
+import { sizesFor } from '../../../scripts/heading-key.js';
 import {
-  headingInfo, currentStyle, setHeadingSize, repairAll, removeOrphan,
+  headingInfo, currentStyle, setHeadingSize, setHeadingSizes, clearHeadingSizes, repairAll,
+  removeOrphan,
 } from './heading-styler.js';
 
 const POLL_MS = 1000;
@@ -173,7 +174,7 @@ function contentTree(html, doc, editableBlocks) {
   }).filter(({ groups }) => !editableBlocks || groups.length);
 }
 
-function headingControl(h, sdk, status, setLoading, pendingSizes) {
+function headingControl(h, sdk, status, setLoading, pendingSizes, peers, rerender) {
   const wrap = document.createElement('div');
   const content = document.createElement('div');
   const name = document.createElement('div');
@@ -194,8 +195,12 @@ function headingControl(h, sdk, status, setLoading, pendingSizes) {
   const cur = currentStyle(h.section, h.el);
   const select = document.createElement('select');
   select.setAttribute('aria-label', `Size for ${tag}: ${preview.textContent.slice(0, 40)}`);
-  select.append(new Option('Default size', ''), ...SIZES.map((size) => new Option(size, size)));
-  select.value = pendingSizes.has(id) ? pendingSizes.get(id) : cur.size;
+  const sizes = sizesFor(tag);
+  const value = pendingSizes.has(id) ? pendingSizes.get(id) : cur.size;
+  // Keep a size from before the current scale (e.g. `p-size-m`) visible instead of hiding it.
+  const options = value && !sizes.includes(value) ? [...sizes, value] : sizes;
+  select.append(new Option('Default size', ''), ...options.map((size) => new Option(size, size)));
+  select.value = value;
   let selectedSize = select.value;
   const remove = document.createElement('button');
   remove.className = 'remove-class';
@@ -204,6 +209,15 @@ function headingControl(h, sdk, status, setLoading, pendingSizes) {
   remove.title = 'Remove applied size';
   remove.disabled = !select.value;
   remove.innerHTML = '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M22.719 12A10.719 10.719 0 0 1 1.28 12h.838a9.916 9.916 0 1 0 1.373-5H8v1H2V2h1v4.2A10.71 10.71 0 0 1 22.719 12z"/></svg>';
+  const applyAll = document.createElement('button');
+  applyAll.className = 'apply-all';
+  applyAll.type = 'button';
+  const tagLabel = tag.toUpperCase();
+  applyAll.setAttribute('aria-label', `Apply this size to every ${tagLabel} in this section`);
+  applyAll.title = `Apply to all ${tagLabel}s in this section`;
+  applyAll.disabled = !select.value;
+  applyAll.innerHTML = '<svg aria-hidden="true" viewBox="0 0 24 24">'
+    + '<path d="M4 7h11M4 12h11M4 17h7M15 16l3 3 5-6"/></svg>';
   const save = async (size) => {
     pendingSizes.set(id, size);
     setLoading(true);
@@ -212,6 +226,7 @@ function headingControl(h, sdk, status, setLoading, pendingSizes) {
       selectedSize = size;
       pendingSizes.set(id, size);
       remove.disabled = !size;
+      applyAll.disabled = !size;
       status.textContent = size ? `Saved ${target}` : `Removed applied size from ${target}`;
     } catch (e) {
       log('save error', e);
@@ -224,13 +239,37 @@ function headingControl(h, sdk, status, setLoading, pendingSizes) {
   };
   select.addEventListener('change', () => save(select.value));
   remove.addEventListener('click', () => { select.value = ''; save(''); });
-  controls.append(select, remove);
+  applyAll.addEventListener('click', async () => {
+    const size = select.value;
+    if (!size) return;
+    const ids = peers.map((peer) => `${peer.sectionIndex}:${peer.key}`);
+    const previous = new Map(ids.filter((peerId) => pendingSizes.has(peerId))
+      .map((peerId) => [peerId, pendingSizes.get(peerId)]));
+    ids.forEach((peerId) => pendingSizes.set(peerId, size));
+    setLoading(true);
+    try {
+      const count = await setHeadingSizes(sdk, peers, size);
+      status.textContent = `Applied ${size} to ${count} ${tagLabel} in section ${h.sectionIndex}`;
+    } catch (e) {
+      log('apply all error', e);
+      status.textContent = e.message;
+      ids.forEach((peerId) => {
+        if (previous.has(peerId)) pendingSizes.set(peerId, previous.get(peerId));
+        else pendingSizes.delete(peerId);
+      });
+    } finally {
+      setLoading(false);
+      rerender();
+    }
+  });
+  controls.append(select, remove, applyAll);
   wrap.append(content, controls);
   return wrap;
 }
 
 function render(list, tree, sdk, status, setLoading, selectionChanged, pendingSizes) {
   if (!tree.length) { list.replaceChildren(); return; }
+  const rerender = () => render(list, tree, sdk, status, setLoading, false, pendingSizes);
   const expanded = new Map([...list.querySelectorAll('.tree-section-details')]
     .map((details) => [Number(details.dataset.sectionIndex), details.open]));
   const card = document.createElement('li');
@@ -261,8 +300,42 @@ function render(list, tree, sdk, status, setLoading, selectionChanged, pendingSi
     sectionChevron.className = 'tree-section-chevron';
     sectionChevron.setAttribute('aria-hidden', 'true');
     sectionChevron.innerHTML = '<svg viewBox="0 0 16 16"><path d="m4 6 4 4 4-4"/></svg>';
-    sectionName.append(sectionLabel, sectionChevron);
     groupList.className = 'tree-groups';
+    const sectionElements = groups.flatMap((group) => group.elements);
+    const resetSection = document.createElement('button');
+    resetSection.className = 'da-ds-button da-ds-button-secondary reset-section';
+    resetSection.type = 'button';
+    resetSection.textContent = 'Reset all';
+    resetSection.setAttribute('aria-label', `Remove all applied sizes in section ${sectionIndex}`);
+    resetSection.disabled = !sectionElements.some((h) => {
+      const id = `${h.sectionIndex}:${h.key}`;
+      return pendingSizes.has(id) ? pendingSizes.get(id) : currentStyle(h.section, h.el).size;
+    });
+    // The button sits in the summary, so keep its clicks from toggling the section.
+    resetSection.addEventListener('click', async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const ids = sectionElements.map((h) => `${h.sectionIndex}:${h.key}`);
+      const previous = new Map(ids.filter((id) => pendingSizes.has(id))
+        .map((id) => [id, pendingSizes.get(id)]));
+      ids.forEach((id) => pendingSizes.set(id, ''));
+      setLoading(true);
+      try {
+        await clearHeadingSizes(sdk, sectionElements);
+        status.textContent = `Removed all applied sizes from section ${sectionIndex}`;
+      } catch (err) {
+        log('reset section error', err);
+        status.textContent = err.message;
+        ids.forEach((id) => {
+          if (previous.has(id)) pendingSizes.set(id, previous.get(id));
+          else pendingSizes.delete(id);
+        });
+      } finally {
+        setLoading(false);
+        rerender();
+      }
+    });
+    sectionName.append(sectionLabel, resetSection, sectionChevron);
     groups.forEach(({ title: groupTitle, elements }) => {
       const groupItem = document.createElement('li');
       const groupName = document.createElement('div');
@@ -273,7 +346,10 @@ function render(list, tree, sdk, status, setLoading, selectionChanged, pendingSi
       elementList.className = 'tree-elements';
       elements.forEach((h) => {
         const elementItem = document.createElement('li');
-        elementItem.append(headingControl(h, sdk, status, setLoading, pendingSizes));
+        const peers = sectionElements.filter((peer) => peer.el.tagName === h.el.tagName);
+        elementItem.append(
+          headingControl(h, sdk, status, setLoading, pendingSizes, peers, rerender),
+        );
         elementList.append(elementItem);
       });
       groupItem.append(groupName, elementList);

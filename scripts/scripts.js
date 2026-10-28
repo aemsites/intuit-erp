@@ -31,6 +31,7 @@ import {
   matchHeadings,
   classesOf,
   sizeClass,
+  SIZE_PATTERN,
 } from './heading-key.js';
 
 // Provider gate via the `?martech=` query param:
@@ -161,8 +162,9 @@ function buildWidgetAutoBlocks(main) {
 }
 
 function applySizeTokens(scope, tokens, excludeBlocks = false) {
-  const positionedPattern = /^(p|h[1-6])-(\d+)-size-(xxl|xl|l|m|s|xs)$/;
-  const allPattern = /^(p|h[1-6])-size-(xxl|xl|l|m|s|xs)$/;
+  const positionedPattern = new RegExp(`^(p|h[1-6])-([0-9]+)-size-(${SIZE_PATTERN})$`);
+  const allPattern = new RegExp(`^(p|h[1-6])-size-(${SIZE_PATTERN})$`);
+  const appliedPattern = new RegExp(`^(?:(?:p|h[1-6])-size-(?:${SIZE_PATTERN})|body-[1-4])$`);
   const positioned = new Map();
   const all = new Map();
   tokens.forEach((token) => {
@@ -186,7 +188,7 @@ function applySizeTokens(scope, tokens, excludeBlocks = false) {
 
     const className = sizeClass(el, size);
     [...el.classList]
-      .filter((name) => /^(p|h[1-6])-size-(xxl|xl|l|m|s|xs)$/.test(name))
+      .filter((name) => appliedPattern.test(name))
       .forEach((name) => el.classList.remove(name));
     el.classList.add(className);
   });

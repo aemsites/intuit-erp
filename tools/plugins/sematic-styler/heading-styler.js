@@ -1,9 +1,11 @@
 import {
-  headingKey, parseHeadingKey, parseSizeClass, matchHeadings, KEY_RE,
+  headingKey, parseHeadingKey, parseSizeClass, matchHeadings, KEY_RE, SIZE_PATTERN,
 } from '../../../scripts/heading-key.js';
 
 const HEADINGS = 'h1,h2,h3,h4,h5,h6,p';
-const POSITIONAL_CLASS_RE = /^(h[1-6]|p)-(\d+)-(?:size-(?:xxl|xl|l|m|s|xs)|as-(?:h[1-6]|p))$/;
+const POSITIONAL_CLASS_RE = new RegExp(
+  `^(h[1-6]|p)-([0-9]+)-(?:size-(?:${SIZE_PATTERN})|as-(?:h[1-6]|p))$`,
+);
 const rowKey = (row) => row.children[0]?.textContent.trim().toLowerCase();
 const blockOf = (el) => el.closest('main > div > div[class]');
 const tagName = (el) => el.tagName.toLowerCase();
@@ -25,8 +27,8 @@ function blockStyle(block, el) {
   if (!block) return null;
   const key = positionKey(el, block);
   const tag = tagName(el);
-  const specificPattern = new RegExp(`^${key}-size-(xxl|xl|l|m|s|xs)$`);
-  const allPattern = new RegExp(`^${tag}-size-(xxl|xl|l|m|s|xs)$`);
+  const specificPattern = new RegExp(`^${key}-size-(${SIZE_PATTERN})$`);
+  const allPattern = new RegExp(`^${tag}-size-(${SIZE_PATTERN})$`);
   const names = [...block.classList];
   const specific = names.map((name) => name.match(specificPattern)).find(Boolean)?.[1];
   const all = names.map((name) => name.match(allPattern)).find(Boolean)?.[1];
@@ -100,10 +102,10 @@ function defaultStyle(section, el) {
   const tag = tagName(el);
   const key = defaultPositionKey(el, section);
   const specific = tokens.find((token) => (
-    new RegExp(`^${key}-size-(xxl|xl|l|m|s|xs)$`).test(token)
+    new RegExp(`^${key}-size-(${SIZE_PATTERN})$`).test(token)
   ));
   const general = tokens.find((token) => (
-    new RegExp(`^${tag}-size-(xxl|xl|l|m|s|xs)$`).test(token)
+    new RegExp(`^${tag}-size-(${SIZE_PATTERN})$`).test(token)
   ));
   const className = specific || general;
   return className ? parseSizeClass(className) : null;
@@ -268,22 +270,111 @@ export function currentStyle(section, el) {
     || parseSizeClass(matchOf(section, el)?.entry.value);
 }
 
+// Resolves every target before changing any, since positions shift once a style row is removed.
+function resolveTargets(doc, targets) {
+  return targets.map(({ sectionIndex, key }) => {
+    const section = sectionsOf(doc)[sectionIndex - 1];
+    const el = section && [...section.querySelectorAll(HEADINGS)]
+      .find((h) => headingKey(h, section) === key);
+    return el && { section, el };
+  }).filter(Boolean);
+}
+
+function applySizes(doc, targets, size) {
+  const found = resolveTargets(doc, targets);
+  found.forEach(({ section, el }) => {
+    const block = blockOf(el);
+    matchOf(section, el)?.entry.row.remove();
+    if (block) {
+      setBlockStyle(block, el, size);
+      removeEmptyMetadata(section);
+    } else {
+      setDefaultStyle(section, el, size);
+    }
+  });
+  return found.length;
+}
+
+// Any size for `tag`, tag-wide (`h3-size-xs`) or positional (`h3-2-size-xs`, `h3-2-as-h2`).
+const tagStyleRe = (tag) => new RegExp(`^${tag}(?:-[0-9]+)?-(?:size|as)-`);
+
+// One tag-wide class per container replaces the tag's existing sizes, so applying again or
+// switching size updates the same class instead of adding another.
+function applyTagSize(doc, targets, size) {
+  const found = resolveTargets(doc, targets);
+  found.forEach(({ section, el }) => matchOf(section, el)?.entry.row.remove());
+  const blocks = new Set(found.map(({ el }) => blockOf(el)).filter(Boolean));
+  const sections = new Set(found.filter(({ el }) => !blockOf(el)).map(({ section }) => section));
+  const tags = new Set(found.map(({ el }) => tagName(el)));
+  tags.forEach((tag) => {
+    const re = tagStyleRe(tag);
+    blocks.forEach((block) => {
+      [...block.classList].filter((name) => re.test(name))
+        .forEach((name) => block.classList.remove(name));
+      block.classList.add(`${tag}-size-${size}`);
+    });
+    sections.forEach((section) => {
+      const tokens = findRow(section, 'style')?.children[1]?.textContent
+        .split(/[\s,]+/).filter(Boolean) || [];
+      const next = [...tokens.filter((token) => !re.test(token)), `${tag}-size-${size}`];
+      setRow(section, 'style', next.join(', '));
+    });
+  });
+  found.forEach(({ section }) => removeEmptyMetadata(section));
+  return found.length;
+}
+
+// Every size for any tag, tag-wide or positional.
+const ANY_STYLE_RE = /^(?:h[1-6]|p)(?:-[0-9]+)?-(?:size|as)-/;
+
+// Clears every size from the targets' blocks and, for default content, the section style row.
+function clearSizes(doc, targets) {
+  const found = resolveTargets(doc, targets);
+  found.forEach(({ section, el }) => matchOf(section, el)?.entry.row.remove());
+  new Set(found.map(({ el }) => blockOf(el)).filter(Boolean)).forEach((block) => {
+    [...block.classList].filter((name) => ANY_STYLE_RE.test(name))
+      .forEach((name) => block.classList.remove(name));
+  });
+  const sections = new Set(found.filter(({ el }) => !blockOf(el)).map(({ section }) => section));
+  sections.forEach((section) => {
+    const styleRow = findRow(section, 'style');
+    const tokens = styleRow?.children[1]?.textContent.split(/[\s,]+/).filter(Boolean) || [];
+    const next = tokens.filter((token) => !ANY_STYLE_RE.test(token));
+    if (next.length) setRow(section, 'style', next.join(', '));
+    else styleRow?.remove();
+  });
+  found.forEach(({ section }) => removeEmptyMetadata(section));
+  return found.length;
+}
+
 /** Re-reads the source before writing so edits made since the selection aren't overwritten. */
-export async function setHeadingSize(sdk, { sectionIndex, key }, size) {
+export async function setHeadingSize(sdk, target, size) {
   const doc = await loadDoc(sdk);
-  const section = sectionsOf(doc)[sectionIndex - 1];
-  const el = section && [...section.querySelectorAll(HEADINGS)]
-    .find((h) => headingKey(h, section) === key);
-  if (!el) throw new Error('Element moved since selection. Reselect it.');
-  const block = blockOf(el);
-  matchOf(section, el)?.entry.row.remove();
-  if (block) {
-    setBlockStyle(block, el, size);
-    removeEmptyMetadata(section);
-  } else {
-    setDefaultStyle(section, el, size);
+  if (!applySizes(doc, [target], size)) {
+    throw new Error('Element moved since selection. Reselect it.');
   }
   await saveDoc(sdk, doc);
+}
+
+/**
+ * Applies one size to every target's tag as a tag-wide class (`h3-size-xs`) on each block, or in
+ * the section style row for default content, in a single save; returns how many were found.
+ */
+export async function setHeadingSizes(sdk, targets, size) {
+  const doc = await loadDoc(sdk);
+  const count = applyTagSize(doc, targets, size);
+  if (!count) throw new Error('Elements moved since selection. Reselect them.');
+  await saveDoc(sdk, doc);
+  return count;
+}
+
+/** Removes every applied size from the targets' blocks and default content in a single save. */
+export async function clearHeadingSizes(sdk, targets) {
+  const doc = await loadDoc(sdk);
+  const count = clearSizes(doc, targets);
+  if (!count) throw new Error('Elements moved since selection. Reselect them.');
+  await saveDoc(sdk, doc);
+  return count;
 }
 
 /** Re-keys edited or moved headings, saves if changed, returns orphaned entries. */
