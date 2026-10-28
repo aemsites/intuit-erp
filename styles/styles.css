@@ -171,6 +171,7 @@ main .block[data-block-status][data-block-name] h6.h6-size-xs,
 main .block[data-block-status][data-block-name] p.p-size-xs {
   font-size: var(--heading-font-size-xs);
 }
+
 main .block[data-block-status][data-block-name] h1.h1-size-s,
 main .block[data-block-status][data-block-name] h2.h2-size-s,
 main .block[data-block-status][data-block-name] h3.h3-size-s,
@@ -180,6 +181,7 @@ main .block[data-block-status][data-block-name] h6.h6-size-s,
 main .block[data-block-status][data-block-name] p.p-size-s {
   font-size: var(--heading-font-size-s);
 }
+
 main .block[data-block-status][data-block-name] h1.h1-size-m,
 main .block[data-block-status][data-block-name] h2.h2-size-m,
 main .block[data-block-status][data-block-name] h3.h3-size-m,
@@ -189,6 +191,7 @@ main .block[data-block-status][data-block-name] h6.h6-size-m,
 main .block[data-block-status][data-block-name] p.p-size-m {
   font-size: var(--heading-font-size-m);
 }
+
 main .block[data-block-status][data-block-name] h1.h1-size-l,
 main .block[data-block-status][data-block-name] h2.h2-size-l,
 main .block[data-block-status][data-block-name] h3.h3-size-l,
@@ -198,6 +201,7 @@ main .block[data-block-status][data-block-name] h6.h6-size-l,
 main .block[data-block-status][data-block-name] p.p-size-l {
   font-size: var(--heading-font-size-l);
 }
+
 main .block[data-block-status][data-block-name] h1.h1-size-xl,
 main .block[data-block-status][data-block-name] h2.h2-size-xl,
 main .block[data-block-status][data-block-name] h3.h3-size-xl,
@@ -207,6 +211,7 @@ main .block[data-block-status][data-block-name] h6.h6-size-xl,
 main .block[data-block-status][data-block-name] p.p-size-xl {
   font-size: var(--heading-font-size-xl);
 }
+
 main .block[data-block-status][data-block-name] h1.h1-size-xll,
 main .block[data-block-status][data-block-name] h2.h2-size-xll,
 main .block[data-block-status][data-block-name] h3.h3-size-xll,
@@ -221,14 +226,17 @@ main .block[data-block-status][data-block-name] p.body-1,
 main .default-content-wrapper p.body-1 {
   font-size: var(--font-size-body-1);
 }
+
 main .block[data-block-status][data-block-name] p.body-2,
 main .default-content-wrapper p.body-2 {
   font-size: var(--font-size-body-2);
 }
+
 main .block[data-block-status][data-block-name] p.body-3,
 main .default-content-wrapper p.body-3 {
   font-size: var(--font-size-body-3);
 }
+
 main .block[data-block-status][data-block-name] p.body-4,
 main .default-content-wrapper p.body-4 {
   font-size: var(--font-size-body-4);
@@ -1825,6 +1833,7 @@ body.author-guide > main > .section > .default-content-wrapper :is(h1, h2, h3, h
 }
 
 /* Block-scoped size helpers */
+
 /* main .block[data-block-status][data-block-name].h1-size-xs h1,
 main .block[data-block-status][data-block-name].h2-size-xs h2,
 main .block[data-block-status][data-block-name].h3-size-xs h3,
@@ -1880,6 +1889,7 @@ main .block[data-block-status][data-block-name].h6-size-xxl h6 {
 }
 
 /* Section-scoped size helpers (excludes blocks) */
+
 /* main .section[data-section-status].h1-size-xs h1:not(.block h1),
 main .section[data-section-status].h2-size-xs h2:not(.block h2),
 main .section[data-section-status].h3-size-xs h3:not(.block h3),
