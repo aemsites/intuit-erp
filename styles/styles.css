@@ -102,6 +102,11 @@
   --body-font-size-xs: 14px;
   --body-font-size-xxs: 12px;
 
+  --body-1: 20px;
+  --body-2: 16px;
+  --body-3: 14px;
+  --body-4: 12px;
+  
   /* heading sizes */
   --heading-font-size-xxl: 48px;
 
@@ -1831,4 +1836,25 @@ main .section[data-section-status].h4-font-weight-bold h4:not(.block h4),
 main .section[data-section-status].h5-font-weight-bold h5:not(.block h5),
 main .section[data-section-status].h6-font-weight-bold h6:not(.block h6) {
   font-weight: var(--font-weight-bold);
+}
+
+/* Paragraph size helpers */
+main .block[data-block-status][data-block-name].body-1 p,
+main .section[data-section-status].body-1 p:not(.block p) {
+  font-size: var(--body-1);
+}
+
+main .block[data-block-status][data-block-name].body-2 p,
+main .section[data-section-status].body-2 p:not(.block p) {
+  font-size: var(--body-2);
+}
+
+main .block[data-block-status][data-block-name].body-3 p,
+main .section[data-section-status].body-3 p:not(.block p) {
+  font-size: var(--body-3);
+}
+
+main .block[data-block-status][data-block-name].body-4 p,
+main .section[data-section-status].body-4 p:not(.block p) {
+  font-size: var(--body-4);
 }
