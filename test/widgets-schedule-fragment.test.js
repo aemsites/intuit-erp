@@ -20,7 +20,6 @@ import { openModal } from '../blocks/modal/modal.js';
 
 afterEach(() => {
   document.body.innerHTML = '';
-  delete document.documentElement.dataset.scheduleFragmentBound;
   vi.clearAllMocks();
 });
 
@@ -78,11 +77,39 @@ describe('schedule-fragment: decorate repoints the schedule modal', () => {
     const widget = document.querySelector('.widget');
     widget.dataset.trigger = '.sf-cp-cta';
     await decorate(widget);
-    expect(document.documentElement.dataset.scheduleFragmentBound).toBeUndefined();
+    await click(document.querySelector('.sf-cp-cta'));
+    expect(openModal).not.toHaveBeenCalled();
 
     widget.dataset.fragment = '/fragments/pzn/test/form-cp';
     await decorate(widget);
     await click(document.querySelector('.sf-cp-cta'));
     expect(openModal).not.toHaveBeenCalled();
+  });
+
+  it('follows the variant swapped in last, and falls back when it is removed', async () => {
+    document.body.innerHTML = '<section class="slot"></section><a class="sf-swap-cta" href="#schedule">x</a>';
+    const slot = document.querySelector('.slot');
+    const swapIn = async (fragment) => {
+      slot.innerHTML = '<div class="widget"></div>';
+      const widget = slot.querySelector('.widget');
+      widget.dataset.fragment = fragment;
+      widget.dataset.trigger = '.sf-swap-cta';
+      await decorate(widget);
+    };
+    const cta = document.querySelector('.sf-swap-cta');
+
+    await swapIn('/fragments/pzn/test/form-nttf');
+    await click(cta);
+    await swapIn('/fragments/pzn/test/form-dsk');
+    await click(cta);
+    expect(openModal).toHaveBeenNthCalledWith(1, '/fragments/pzn/test/form-nttf');
+    expect(openModal).toHaveBeenNthCalledWith(2, '/fragments/pzn/test/form-dsk');
+
+    slot.innerHTML = '';
+    const baseline = vi.fn();
+    cta.addEventListener('click', baseline);
+    await click(cta);
+    expect(openModal).toHaveBeenCalledTimes(2);
+    expect(baseline).toHaveBeenCalledTimes(1);
   });
 });
