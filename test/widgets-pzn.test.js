@@ -33,11 +33,16 @@ import {
 } from '../widgets/pzn/web-survey/web-survey.js';
 // eslint-disable-next-line import/first
 import decorateSmartform, { appendDisclaimer } from '../widgets/pzn/smartform/smartform.js';
+// eslint-disable-next-line import/first
+import decorateScheduleFragment, {
+  resolveFragmentPath,
+} from '../widgets/pzn/schedule-fragment/schedule-fragment.js';
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 afterEach(() => {
   document.body.innerHTML = '';
   delete document.documentElement.dataset.chilipiperBound;
+  delete document.documentElement.dataset.scheduleFragmentBound;
   vi.clearAllMocks();
   ['wsp_accepted', 'wsp_declined', 'wsp_displayed', 'ivid'].forEach((c) => {
     document.cookie = `${c}=; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
@@ -274,5 +279,69 @@ describe('smartform: decorate defers ZoomInfo until the Marketo form is present'
     expect(typeof window._zi_fc?.onMatch).toBe('function');
     window._zi_fc.onMatch({});
     expect(form.querySelector('.zi-formcomplete-msg')).toBeTruthy();
+  });
+});
+
+describe('schedule-fragment: resolveFragmentPath', () => {
+  it('keeps absolute paths and resolves bare names under /fragments/', () => {
+    expect(resolveFragmentPath('/fragments/pzn/x/form-a')).toBe('/fragments/pzn/x/form-a');
+    expect(resolveFragmentPath('schedule-call-vertical')).toBe('/fragments/schedule-call-vertical');
+  });
+  it('returns null when no fragment is configured', () => {
+    expect(resolveFragmentPath('')).toBeNull();
+    expect(resolveFragmentPath(undefined)).toBeNull();
+  });
+});
+
+describe('schedule-fragment: decorate repoints the schedule modal', () => {
+  const click = async (el) => {
+    el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    await new Promise((resolve) => { setTimeout(resolve, 0); });
+  };
+
+  it('opens the configured fragment instead of the baseline schedule modal', async () => {
+    document.body.innerHTML = '<div class="widget"></div>';
+    const widget = document.querySelector('.widget');
+    widget.dataset.fragment = '/fragments/pzn/test/form-variant';
+    widget.dataset.trigger = '.sf-test-cta';
+    await decorateScheduleFragment(widget);
+
+    // The CTA renders after the widget decorates; the capture-phase handler still claims it.
+    document.body.insertAdjacentHTML('beforeend', '<a class="sf-test-cta" href="#schedule">Schedule a call</a>');
+    const cta = document.querySelector('.sf-test-cta');
+    const baseline = vi.fn();
+    cta.addEventListener('click', baseline);
+
+    await click(cta);
+    expect(openModal).toHaveBeenCalledWith('/fragments/pzn/test/form-variant');
+    expect(baseline).not.toHaveBeenCalled();
+  });
+
+  it('defaults to every #schedule link (relative or absolute)', async () => {
+    // (The header nav CTA is in the default selector too; it's not clicked here because the
+    // ChiliPiper tests above leave a document listener that claims `header .nav-cta`.)
+    document.body.innerHTML = '<div class="widget"></div><a class="cta-a" href="#schedule">A</a>'
+      + '<a class="cta-b" href="https://erp.intuit.com/x#schedule">B</a>';
+    const widget = document.querySelector('.widget');
+    widget.dataset.fragment = 'pzn/test/form-default';
+    await decorateScheduleFragment(widget);
+
+    await click(document.querySelector('.cta-a'));
+    await click(document.querySelector('.cta-b'));
+    expect(openModal).toHaveBeenCalledTimes(2);
+    expect(openModal).toHaveBeenNthCalledWith(1, '/fragments/pzn/test/form-default');
+  });
+
+  it('leaves CTAs alone when no fragment is configured, and yields to a ChiliPiper claim', async () => {
+    document.body.innerHTML = '<div class="widget"></div><a class="sf-cp-cta" href="#schedule" data-chilipiper-trigger="true">x</a>';
+    const empty = document.querySelector('.widget');
+    empty.dataset.trigger = '.sf-cp-cta';
+    await decorateScheduleFragment(empty);
+    expect(document.documentElement.dataset.scheduleFragmentBound).toBeUndefined();
+
+    empty.dataset.fragment = '/fragments/pzn/test/form-cp';
+    await decorateScheduleFragment(empty);
+    await click(document.querySelector('.sf-cp-cta'));
+    expect(openModal).not.toHaveBeenCalled();
   });
 });

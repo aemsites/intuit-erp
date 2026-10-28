@@ -1,0 +1,4 @@
+/* Behavior-only widget block renders nothing; the form opens in the shared modal. */
+.schedule-fragment {
+  display: none;
+}
