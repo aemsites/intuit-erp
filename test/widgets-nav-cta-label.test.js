@@ -18,7 +18,18 @@ afterEach(() => {
 });
 
 describe('nav-cta-label: resolveLabel', () => {
-  it('prefers the label param, else the first #schedule link in the section', async () => {
+  it('uses the hero primary button, even when it is not the schedule link', async () => {
+    const { resolveLabel } = await load();
+    document.body.innerHTML = '<div class="section"><p><strong><a href="https://youtu.be/x">See a demo</a></strong>'
+      + '<em><a href="#schedule">Talk to sales</a></em></p><div class="widget"></div></div>';
+    expect(resolveLabel(document.querySelector('.widget'))).toBe('See a demo');
+
+    document.body.innerHTML = '<div class="section"><p class="hero-actions"><button class="button primary icon-video">See a demo</button>'
+      + '<a class="button secondary" href="#schedule">Talk to sales</a></p><div class="widget"></div></div>';
+    expect(resolveLabel(document.querySelector('.widget'))).toBe('See a demo');
+  });
+
+  it('prefers the label param, else falls back to the first #schedule link', async () => {
     const { resolveLabel } = await load();
     document.body.innerHTML = '<div class="section"><a href="https://youtu.be/x">See a demo</a>'
       + '<a href="#schedule">Talk to sales</a><div class="widget"></div></div>';
