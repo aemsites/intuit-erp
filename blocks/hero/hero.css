@@ -1112,189 +1112,54 @@ body.author-guide .hero .hero-copy .hero-lede {
   }
 }
 
-/* .form.rethemed: One Intuit glow hero + lead card */
-/* stylelint-disable selector-class-pattern -- .mkto* class names are Marketo's */
-.section.hero-container:has(.hero.form.rethemed) {
-  background: url("./rethemed-bg.webp") -162.38vw -8.94vw / 480.83vw 270.5vw no-repeat, #0d0031;
+/* .form.lead: One Intuit glow hero + lead card shell */
+.section.hero-container:has(.hero.form.lead) {
+  background: url("./lead-bg.webp") -162.38vw -8.94vw / 480.83vw 270.5vw no-repeat, #0d0031;
 }
 
-.hero.form.rethemed .hero-grid { gap: var(--space-m); }
+.hero.form.lead .hero-grid { gap: var(--space-m); }
 
-.hero.form.rethemed .hero-copy h1 {
+.hero.form.lead .hero-copy h1 {
   font-size: 34px;
   line-height: 1.1;
   font-weight: var(--font-weight-medium);
 }
 
-.hero.form.rethemed .hero-form {
-  padding: var(--space-m);
-  border-radius: 24px;
-  box-shadow: 0 2px 8px rgb(0 0 0 / 20%);
-  color: #000;
-}
-
-.hero.form.rethemed .hero-form .section > .default-content-wrapper { padding-block: 0; }
-
-.hero.form.rethemed .hero-form :is(.default-content-wrapper h2, .form .form-header) {
-  margin: 0 0 var(--space-m);
-  font-size: var(--heading-font-size-m);
-  line-height: 1.1;
-  font-weight: var(--font-weight-medium);
-  color: #000;
-  text-align: left;
-}
-
-.hero.form.rethemed .hero-form :is(.default-content-wrapper p, .form .form-subheader) {
-  margin: 0 0 var(--space-m);
-  font-size: var(--body-font-size-xs);
-  line-height: 1.1;
-  color: #000;
-  text-align: left;
-}
-
-.hero.form.rethemed .hero-form .default-content-wrapper p a {
-  color: var(--info);
-  font-weight: var(--font-weight-medium);
-  text-decoration: underline;
-}
-
-.hero.form.rethemed .hero-form .form .mktoForm > .mktoFormRow {
-  margin-bottom: var(--space-m);
-}
-
-.hero.form.rethemed .hero-form .form .mktoForm :is(input, select, textarea).mktoField {
-  background: rgb(244 245 248 / 50%) !important;
-  border-bottom: 1px solid var(--dark-color) !important;
-  padding-inline: var(--space-2xs);
-  font-weight: var(--font-weight-medium);
-  color: #393a3d;
-}
-
-.hero.form.rethemed .hero-form .form .mktoForm :is(input, select, textarea).mktoField::placeholder {
-  color: #393a3d;
-  opacity: 1;
-}
-
-.hero.form.rethemed .hero-form .form .mktoForm :is(input, select, textarea).mktoField:focus {
-  border-bottom: 2px solid var(--info) !important;
-}
-
-.hero.form.rethemed .hero-form .form .mktoForm input[type="checkbox"] {
-  width: 20px;
-  height: 20px;
-  accent-color: var(--info);
-}
-
-.hero.form.rethemed .hero-form .form .mktoForm :is(.mktoCheckboxList, .mktoCheckboxList label) {
-  font-size: var(--body-font-size-m);
-  line-height: 1.1;
-  color: #393a3d;
-}
-
-.hero.form.rethemed .hero-form .form .form-disclaimer,
-.hero.form.rethemed .hero-form .form .form-disclaimer p {
-  font-size: var(--body-font-size-xxs);
-  line-height: 1.1;
-  color: #000;
-}
-
-.hero.form.rethemed .hero-form .form .form-disclaimer a {
-  color: var(--info);
-  font-weight: var(--font-weight-medium);
-  text-decoration: none;
-}
-
-.hero.form.rethemed .hero-form .form .mktoForm .mktoButtonRow {
-  margin-top: var(--space-m);
-}
-
-.hero.form.rethemed .hero-form .form .mktoForm .mktoButton {
-  min-width: 120px;
-  height: auto;
-  min-height: 52px;
-  padding: 0 28px !important;
-  border-radius: 999px !important;
-  background: var(--info) !important;
-  font-size: var(--body-font-size-m) !important;
-  font-weight: var(--font-weight-medium) !important;
-}
-
-.hero.form.rethemed .hero-form .form .mktoForm .mktoButton:is(:hover, :focus-visible) {
-  background: #1b5be0 !important;
+.hero.form.lead .hero-form {
+  padding: var(--space-2xl) var(--space-m);
+  border-radius: 38px;
+  box-shadow: 0 0 16px rgb(135 186 255 / 30%);
+  color: #0d0031;
 }
 
 @media (width >= 768px) {
-  .section.hero-container:has(.hero.form.rethemed) {
-    background: url("./rethemed-bg.webp") -71.43vw -1.64vw / 213.06vw 142.43vw no-repeat, #0d0031;
+  .section.hero-container:has(.hero.form.lead) {
+    background: url("./lead-bg.webp") -71.43vw -1.64vw / 213.06vw 142.43vw no-repeat, #0d0031;
   }
 
-  .hero.form.rethemed .hero-grid {
+  .hero.form.lead .hero-grid {
     gap: var(--space-2xl);
     padding-block: 60px;
   }
 
-  .hero.form.rethemed .hero-copy h1 {
+  .hero.form.lead .hero-copy h1 {
     font-size: var(--heading-font-size-xxl);
     line-height: var(--line-height-none);
   }
-
-  .hero.form.rethemed .hero-form {
-    padding: var(--space-2xl);
-    border-radius: 38px;
-  }
-
-  .hero.form.rethemed .hero-form :is(.default-content-wrapper h2, .form .form-header),
-  .hero.form.rethemed .hero-form :is(.default-content-wrapper p, .form .form-subheader),
-  .hero.form.rethemed .hero-form .form .form-disclaimer,
-  .hero.form.rethemed .hero-form .form .form-disclaimer p {
-    text-align: center;
-  }
-
-  .hero.form.rethemed .hero-form :is(.default-content-wrapper p, .form .form-subheader) {
-    font-size: var(--body-font-size-m);
-  }
-
-  .hero.form.rethemed .hero-form .form .mktoForm .mktoButtonWrap {
-    display: flex;
-    justify-content: center;
-  }
-
-  .hero.form.rethemed .hero-form .form .mktoForm .mktoButton { width: auto; }
 }
 
 @media (width >= 1024px) {
-  .section.hero-container:has(.hero.form.rethemed) {
-    background: url("./rethemed-bg.webp") 6.13% 71.39% / 195.38% 133.91% no-repeat, #0d0031;
+  .section.hero-container:has(.hero.form.lead) {
+    background: url("./lead-bg.webp") 6.13% 71.39% / 195.38% 133.91% no-repeat, #0d0031;
   }
 
-  .hero.form.rethemed .hero-grid {
+  .hero.form.lead .hero-grid {
     grid-template-columns: minmax(0, 600px) minmax(0, 555px);
     justify-content: space-between;
     padding-block: var(--space-5xl);
   }
 
-  .hero.form.rethemed .hero-copy h1 { font-size: 60px; }
+  .hero.form.lead .hero-copy h1 { font-size: 60px; }
 
-  .hero.form.rethemed .hero-form { box-shadow: 0 0 16px rgb(135 186 255 / 30%); }
-
-  .hero.form.rethemed .hero-form :is(.default-content-wrapper h2, .form .form-header) { font-size: 34px; }
-
-  .hero.form.rethemed .hero-form :is(.default-content-wrapper h2, .form .form-header),
-  .hero.form.rethemed .hero-form :is(.default-content-wrapper p, .form .form-subheader),
-  .hero.form.rethemed .hero-form .form .form-disclaimer,
-  .hero.form.rethemed .hero-form .form .form-disclaimer p {
-    text-align: left;
-  }
-
-  .hero.form.rethemed .hero-form :is(.default-content-wrapper p, .form .form-subheader) {
-    font-size: var(--body-font-size-xs);
-  }
-
-  .hero.form.rethemed .hero-form .form .mktoForm .mktoButtonWrap { justify-content: flex-start; }
-
-  .hero.form.rethemed .hero-form .form .mktoForm .mktoButton {
-    min-height: 56px;
-    padding: 0 36px !important;
-  }
+  .hero.form.lead .hero-form { padding: var(--space-2xl); }
 }
-/* stylelint-enable selector-class-pattern */

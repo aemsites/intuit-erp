@@ -437,3 +437,116 @@
   font-family: "Avenir Next forINTUIT", "Avenir Next", Futura, sans-serif;
   color: #000;
 }
+
+/* .lead: One Intuit lead card */
+.section:has(> .form-wrapper > .form.lead) > .default-content-wrapper {
+  padding-block: 0;
+  text-align: left;
+}
+
+.section:has(> .form-wrapper > .form.lead) > .default-content-wrapper h2 {
+  margin: 0 0 var(--space-m);
+  font-size: var(--heading-font-size-m);
+  line-height: var(--line-height-s);
+  font-weight: var(--font-weight-medium);
+  color: #0d0031;
+  text-align: left;
+}
+
+.section:has(> .form-wrapper > .form.lead) > .default-content-wrapper p {
+  max-width: none;
+  margin: 0 0 var(--space-m);
+  font-size: var(--body-font-size-m);
+  line-height: var(--line-height-m);
+  color: #0d0031;
+  text-align: left;
+}
+
+.section:has(> .form-wrapper > .form.lead) > .default-content-wrapper p:has(+ p) {
+  margin-bottom: var(--space-s);
+}
+
+.section:has(> .form-wrapper > .form.lead) > .default-content-wrapper p a {
+  color: var(--info);
+  font-weight: var(--font-weight-medium);
+  text-decoration: underline;
+}
+
+.form-wrapper > .form.lead:not(.hero) .mktoForm > .mktoFormRow {
+  margin-bottom: var(--space-m);
+}
+
+/* Marketo sets margin-bottom: 10px inline on each column */
+.form-wrapper > .form.lead:not(.hero) .mktoForm .mktoFormCol {
+  margin-bottom: 0 !important;
+}
+
+.form-wrapper > .form.lead:not(.hero) .mktoForm :is(input, select, textarea).mktoField {
+  height: auto;
+  padding: var(--space-s) var(--space-2xs);
+  background: var(--pepper) !important;
+  border-bottom: 1px solid var(--dark-color) !important;
+  font-size: var(--body-font-size-m);
+  line-height: var(--line-height-m);
+  color: #0d0031;
+}
+
+.form-wrapper > .form.lead:not(.hero) .mktoForm :is(input, textarea).mktoField::placeholder {
+  color: var(--dark-color);
+  opacity: 1;
+}
+
+.form-wrapper > .form.lead:not(.hero) .mktoForm :is(input, select, textarea).mktoField:focus {
+  border-bottom: 2px solid var(--info) !important;
+}
+
+.form-wrapper > .form.lead:not(.hero) .form-disclaimer,
+.form-wrapper > .form.lead:not(.hero) .form-disclaimer p {
+  font-size: var(--body-font-size-xxs);
+  line-height: var(--line-height-m);
+  color: #0d0031;
+  text-align: left;
+}
+
+.form-wrapper > .form.lead:not(.hero) .mktoForm > .form-disclaimer {
+  margin: 0 0 var(--space-m);
+}
+
+.form-wrapper > .form.lead:not(.hero) .form-disclaimer p:not(:last-child) {
+  margin-bottom: var(--space-s);
+}
+
+.form-wrapper > .form.lead:not(.hero) .form-disclaimer a {
+  color: var(--info);
+  text-decoration: underline;
+}
+
+.form-wrapper > .form.lead:not(.hero) .form-disclaimer p:first-child a {
+  text-decoration: none;
+}
+
+.form-wrapper > .form.lead:not(.hero) .mktoForm .mktoButtonRow {
+  margin-top: 0;
+}
+
+.form-wrapper > .form.lead:not(.hero) .mktoForm .mktoButton {
+  width: 100%;
+  height: auto;
+  min-height: 56px;
+  padding: 0 36px !important;
+  border-radius: 999px !important;
+  background: var(--info) !important;
+  font-size: var(--body-font-size-m) !important;
+  font-weight: var(--font-weight-medium) !important;
+}
+
+.form-wrapper > .form.lead:not(.hero) .mktoForm .mktoButton:is(:hover, :focus-visible) {
+  background: #1b5be0 !important;
+}
+
+@media (width >= 1024px) {
+  .section:has(> .form-wrapper > .form.lead) > .default-content-wrapper h2 {
+    font-size: 34px;
+    line-height: var(--line-height-xs);
+  }
+}
