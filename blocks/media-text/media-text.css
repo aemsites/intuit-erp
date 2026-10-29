@@ -1347,7 +1347,7 @@
 
   .media-text.ies:not(.center, .compare) .media-title > *,
   .media-text-container:has(.media-text.ies:not(.center, .compare)) .default-content-wrapper h2 {
-    font-size: 48px;
+    font-size: var(--heading-font-size-xxl);
     line-height: var(--line-height-none);
   }
 

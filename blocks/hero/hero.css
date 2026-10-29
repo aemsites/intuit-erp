@@ -1137,7 +1137,7 @@ body.author-guide .hero .hero-copy .hero-lede {
 
 .hero.form.rethemed .hero-form :is(.default-content-wrapper h2, .form .form-header) {
   margin: 0 0 var(--space-m);
-  font-size: 24px;
+  font-size: var(--heading-font-size-m);
   line-height: 1.1;
   font-weight: var(--font-weight-medium);
   color: #000;
@@ -1146,7 +1146,7 @@ body.author-guide .hero .hero-copy .hero-lede {
 
 .hero.form.rethemed .hero-form :is(.default-content-wrapper p, .form .form-subheader) {
   margin: 0 0 var(--space-m);
-  font-size: 14px;
+  font-size: var(--body-font-size-xs);
   line-height: 1.1;
   color: #000;
   text-align: left;
@@ -1186,14 +1186,14 @@ body.author-guide .hero .hero-copy .hero-lede {
 }
 
 .hero.form.rethemed .hero-form .form .mktoForm :is(.mktoCheckboxList, .mktoCheckboxList label) {
-  font-size: 16px;
+  font-size: var(--body-font-size-m);
   line-height: 1.1;
   color: #393a3d;
 }
 
 .hero.form.rethemed .hero-form .form .form-disclaimer,
 .hero.form.rethemed .hero-form .form .form-disclaimer p {
-  font-size: 12px;
+  font-size: var(--body-font-size-xxs);
   line-height: 1.1;
   color: #000;
 }
@@ -1215,7 +1215,7 @@ body.author-guide .hero .hero-copy .hero-lede {
   padding: 0 28px !important;
   border-radius: 999px !important;
   background: var(--info) !important;
-  font-size: 16px !important;
+  font-size: var(--body-font-size-m) !important;
   font-weight: var(--font-weight-medium) !important;
 }
 
@@ -1234,7 +1234,7 @@ body.author-guide .hero .hero-copy .hero-lede {
   }
 
   .hero.form.rethemed .hero-copy h1 {
-    font-size: 48px;
+    font-size: var(--heading-font-size-xxl);
     line-height: var(--line-height-none);
   }
 
@@ -1251,7 +1251,7 @@ body.author-guide .hero .hero-copy .hero-lede {
   }
 
   .hero.form.rethemed .hero-form :is(.default-content-wrapper p, .form .form-subheader) {
-    font-size: 16px;
+    font-size: var(--body-font-size-m);
   }
 
   .hero.form.rethemed .hero-form .form .mktoForm .mktoButtonWrap {
@@ -1287,7 +1287,7 @@ body.author-guide .hero .hero-copy .hero-lede {
   }
 
   .hero.form.rethemed .hero-form :is(.default-content-wrapper p, .form .form-subheader) {
-    font-size: 14px;
+    font-size: var(--body-font-size-xs);
   }
 
   .hero.form.rethemed .hero-form .form .mktoForm .mktoButtonWrap { justify-content: flex-start; }
