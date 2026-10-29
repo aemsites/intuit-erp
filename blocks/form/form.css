@@ -463,7 +463,7 @@
 }
 
 .section:has(> .form-wrapper > .form.lead) > .default-content-wrapper p:has(+ p) {
-  margin-bottom: var(--space-s);
+  margin-bottom: 15.4px;
 }
 
 .section:has(> .form-wrapper > .form.lead) > .default-content-wrapper p a {
@@ -483,7 +483,9 @@
 
 .form-wrapper > .form.lead:not(.hero) .mktoForm :is(input, select, textarea).mktoField {
   height: auto;
-  padding: var(--space-s) var(--space-2xs);
+
+  /* bottom padding absorbs the border, as Figma strokes sit inside the 54.4px field */
+  padding: var(--space-s) var(--space-2xs) calc(var(--space-s) - 1px);
   background: var(--pepper) !important;
   border-bottom: 1px solid var(--dark-color) !important;
   font-size: var(--body-font-size-m);
@@ -497,6 +499,7 @@
 }
 
 .form-wrapper > .form.lead:not(.hero) .mktoForm :is(input, select, textarea).mktoField:focus {
+  padding-bottom: calc(var(--space-s) - 2px);
   border-bottom: 2px solid var(--info) !important;
 }
 
@@ -513,7 +516,7 @@
 }
 
 .form-wrapper > .form.lead:not(.hero) .form-disclaimer p:not(:last-child) {
-  margin-bottom: var(--space-s);
+  margin-bottom: 1lh;
 }
 
 .form-wrapper > .form.lead:not(.hero) .form-disclaimer a {

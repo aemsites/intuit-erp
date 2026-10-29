@@ -1420,7 +1420,10 @@
     line-height: var(--line-height-xs);
   }
 
-  .media-text.ies:not(.center, .compare) .media-copy .media-link,
+  .media-text.ies:not(.center, .compare) .media-copy .media-link {
+    margin-top: 36px;
+  }
+
   .media-text.ies:not(.center, .compare) .media-copy .button-wrapper {
     margin-top: var(--space-2xl);
   }

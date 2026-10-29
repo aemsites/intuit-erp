@@ -1114,7 +1114,7 @@ body.author-guide .hero .hero-copy .hero-lede {
 
 /* .form.lead: One Intuit glow hero + lead card shell */
 .section.hero-container:has(.hero.form.lead) {
-  background: url("./lead-bg.webp") -162.38vw -8.94vw / 480.83vw 270.5vw no-repeat, #0d0031;
+  background: url("./lead-bg.webp") -162.38vw -9.6vw / 480.83vw 291.2vw no-repeat, #0d0031;
 }
 
 .hero.form.lead .hero-grid { gap: var(--space-m); }
