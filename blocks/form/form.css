@@ -544,9 +544,15 @@
   background: #1b5be0 !important;
 }
 
+@media (width >= 768px) {
+  .form-wrapper > .form.lead:not(.hero) .mktoForm .mktoButton { width: auto; }
+}
+
 @media (width >= 1024px) {
   .section:has(> .form-wrapper > .form.lead) > .default-content-wrapper h2 {
     font-size: 34px;
     line-height: var(--line-height-xs);
   }
+
+  .form-wrapper > .form.lead:not(.hero) .mktoForm .mktoButton { width: 100%; }
 }

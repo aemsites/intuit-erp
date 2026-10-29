@@ -1146,6 +1146,8 @@ body.author-guide .hero .hero-copy .hero-lede {
     font-size: var(--heading-font-size-xxl);
     line-height: var(--line-height-none);
   }
+
+  .hero.form.lead .hero-form { padding: var(--space-2xl); }
 }
 
 @media (width >= 1024px) {
@@ -1161,5 +1163,4 @@ body.author-guide .hero .hero-copy .hero-lede {
 
   .hero.form.lead .hero-copy h1 { font-size: 60px; }
 
-  .hero.form.lead .hero-form { padding: var(--space-2xl); }
 }
