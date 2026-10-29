@@ -15,6 +15,7 @@
  *   .cyan      pale-cyan band skin (pricing "Switch now and save")
  *   .agave     pale-blue band skin (ai-agents "From questions to clarity")
  *   .center    text-only, centered single column (pricing "Built for the way")
+ *   .center.ies   One Intuit skin for .center (light-blue band)
  *   .cards     2-up cards, media below text (index "migration path")
  *   .power     feature-list + media (erp-solutions "Powering complex …")
  *   .compare   2-up alternating-skin comparison cards, media pinned to the

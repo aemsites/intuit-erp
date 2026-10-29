@@ -207,6 +207,62 @@
   color: var(--text);
 }
 
+/* .center.ies: One Intuit title block (Figma 7918-56786 / 7933-62689) */
+.section.media-text-container:has(.media-text.center.ies) {
+  --center-ies-bg: var(--agave-band);
+  --center-ies-ink: #0d0031;
+  --center-ies-py: 60px;
+  --center-ies-gutter: var(--space-m);
+  --center-ies-gap: var(--space-s);
+  --center-ies-title-size: 34px;
+  --center-ies-title-lh: var(--line-height-xs);
+  --center-ies-body-size: var(--body-font-size-m);
+  --center-ies-body-lh: var(--line-height-m);
+
+  background: var(--center-ies-bg);
+  padding: var(--center-ies-py) 0;
+}
+
+.section.media-text-container:has(.media-text.center.ies) > div {
+  padding-inline: var(--center-ies-gutter);
+}
+
+.media-text.center.ies .media-center {
+  display: flex;
+  flex-direction: column;
+  gap: var(--center-ies-gap);
+  max-width: 1210px;
+  margin-inline: auto;
+}
+
+.media-text.center.ies .media-center h2 {
+  margin: 0;
+  font-size: var(--center-ies-title-size);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--center-ies-title-lh);
+  color: var(--center-ies-ink);
+}
+
+.media-text.center.ies .media-center .media-body {
+  max-width: none;
+  margin: 0;
+  font-size: var(--center-ies-body-size);
+  line-height: var(--center-ies-body-lh);
+  color: var(--center-ies-ink);
+}
+
+@media (width >= 1024px) {
+  .section.media-text-container:has(.media-text.center.ies) {
+    --center-ies-py: var(--space-5xl);
+    --center-ies-gutter: var(--space-2xl);
+    --center-ies-gap: var(--space-m);
+    --center-ies-title-size: var(--heading-font-size-xxl);
+    --center-ies-title-lh: var(--line-height-none);
+    --center-ies-body-size: var(--body-font-size-l);
+    --center-ies-body-lh: var(--line-height-s);
+  }
+}
+
 .section.media-text-container:has(.media-text.dark) {
   background: var(--navy);
   padding: var(--section-y) 0;
