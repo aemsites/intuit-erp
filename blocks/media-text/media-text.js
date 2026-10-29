@@ -20,6 +20,9 @@
  *   .compare   2-up alternating-skin comparison cards, media pinned to the
  *              card bottom (erp-solutions "Move to a modern ERP" / solution-cards)
  *   .compare.ies  One Intuit comparison cards; a trailing link paragraph is a footnote
+ *   .ies       One Intuit split rows (e.g. `reverse, ies`): an optional first row with a
+ *              single heading-only cell becomes the block title; rows take an optional
+ *              eyebrow and an optional trailing text link
  *   NN-NN      column width split for the default/reverse rows, e.g. `(70-30)`
  *              gives the text column 70% and the media column 30%. Still
  *              stacks to a single column below 769px like the default split.
@@ -85,7 +88,14 @@ function buildCopy(textCell, { newTabCta = false } = {}) {
   const eyebrowPs = [];
   [...copy.querySelectorAll('p')].forEach((p) => {
     if (p.classList.contains('button-wrapper')) return;
-    if (p.querySelector('a')) return;
+    if (p.querySelector('a')) {
+      // a plain (non-button) link paragraph after the heading is a trailing text link
+      // eslint-disable-next-line no-bitwise -- compareDocumentPosition returns a bitmask
+      if (heading && (p.compareDocumentPosition(heading) & Node.DOCUMENT_POSITION_PRECEDING)) {
+        p.classList.add('media-link');
+      }
+      return;
+    }
     const lead = calloutLead(p);
     if (lead) {
       const callout = document.createElement('div');
@@ -296,6 +306,16 @@ export default function decorate(block) {
 
   // default / reverse / cyan — media+text split rows
   const frag = document.createDocumentFragment();
+  // .ies: a first row that is a single heading-only cell is the block title
+  const [firstCell, ...extraCells] = rows[0] ? [...rows[0].children] : [];
+  if (block.classList.contains('ies') && firstCell && !extraCells.length
+    && firstCell.querySelector('h1, h2, h3') && !firstCell.querySelector('picture, img')) {
+    const title = document.createElement('div');
+    title.className = 'media-title';
+    [...firstCell.childNodes].forEach((n) => title.append(n));
+    frag.append(title);
+    rows.shift();
+  }
   rows.forEach((row, i) => {
     const cells = [...row.children];
     // The text cell can carry its own small icon image (e.g. business-forecasting),
