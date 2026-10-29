@@ -212,14 +212,14 @@ main .block[data-block-status][data-block-name] p.p-size-xl {
   font-size: var(--heading-font-size-xl);
 }
 
-main .block[data-block-status][data-block-name] h1.h1-size-xll,
-main .block[data-block-status][data-block-name] h2.h2-size-xll,
-main .block[data-block-status][data-block-name] h3.h3-size-xll,
-main .block[data-block-status][data-block-name] h4.h4-size-xll,
-main .block[data-block-status][data-block-name] h5.h5-size-xll,
-main .block[data-block-status][data-block-name] h6.h6-size-xll, 
-main .block[data-block-status][data-block-name] p.p-size-xll {
-  font-size: var(--heading-font-size-xll);
+main .block[data-block-status][data-block-name] h1.h1-size-xxl,
+main .block[data-block-status][data-block-name] h2.h2-size-xxl,
+main .block[data-block-status][data-block-name] h3.h3-size-xxl,
+main .block[data-block-status][data-block-name] h4.h4-size-xxl,
+main .block[data-block-status][data-block-name] h5.h5-size-xxl,
+main .block[data-block-status][data-block-name] h6.h6-size-xxl, 
+main .block[data-block-status][data-block-name] p.p-size-xxl {
+  font-size: var(--heading-font-size-xxl);
 }
 
 main .block[data-block-status][data-block-name] p.body-1,
@@ -242,113 +242,61 @@ main .default-content-wrapper p.body-4 {
   font-size: var(--font-size-body-4);
 }
 
-/* main :is(
-  h1.h1-size-xxl,
-  h2.h2-size-xxl,
-  h3.h3-size-xxl,
-  h4.h4-size-xxl,
-  h5.h5-size-xxl,
-  h6.h6-size-xxl
-),
-main p:is(
-  .h1-size-xxl,
-  .h2-size-xxl,
-  .h3-size-xxl,
-  .h4-size-xxl,
-  .h5-size-xxl,
-  .h6-size-xxl,
-  .p-size-xxl
-) { font-size: var(--heading-font-size-xxl); }
+/* default content sizes applied by the semantic styler via the section style row */
 
-main :is(
-  h1.h1-size-xl,
-  h2.h2-size-xl,
-  h3.h3-size-xl,
-  h4.h4-size-xl,
-  h5.h5-size-xl,
-  h6.h6-size-xl
-),
-main p:is(
-  .h1-size-xl,
-  .h2-size-xl,
-  .h3-size-xl,
-  .h4-size-xl,
-  .h5-size-xl,
-  .h6-size-xl,
-  .p-size-xl
-) { font-size: var(--heading-font-size-xl); }
+main .section[data-section-status] .default-content-wrapper h1.h1-size-xs,
+main .section[data-section-status] .default-content-wrapper h2.h2-size-xs,
+main .section[data-section-status] .default-content-wrapper h3.h3-size-xs,
+main .section[data-section-status] .default-content-wrapper h4.h4-size-xs,
+main .section[data-section-status] .default-content-wrapper h5.h5-size-xs,
+main .section[data-section-status] .default-content-wrapper h6.h6-size-xs {
+  font-size: var(--heading-font-size-xs);
+}
 
-main :is(
-  h1.h1-size-l,
-  h2.h2-size-l,
-  h3.h3-size-l,
-  h4.h4-size-l,
-  h5.h5-size-l,
-  h6.h6-size-l
-),
-main p:is(
-  .h1-size-l,
-  .h2-size-l,
-  .h3-size-l,
-  .h4-size-l,
-  .h5-size-l,
-  .h6-size-l,
-  .p-size-l
-) { font-size: var(--heading-font-size-l); }
+main .section[data-section-status] .default-content-wrapper h1.h1-size-s,
+main .section[data-section-status] .default-content-wrapper h2.h2-size-s,
+main .section[data-section-status] .default-content-wrapper h3.h3-size-s,
+main .section[data-section-status] .default-content-wrapper h4.h4-size-s,
+main .section[data-section-status] .default-content-wrapper h5.h5-size-s,
+main .section[data-section-status] .default-content-wrapper h6.h6-size-s {
+  font-size: var(--heading-font-size-s);
+}
 
-main :is(
-  h1.h1-size-m,
-  h2.h2-size-m,
-  h3.h3-size-m,
-  h4.h4-size-m,
-  h5.h5-size-m,
-  h6.h6-size-m
-),
-main p:is(
-  .h1-size-m,
-  .h2-size-m,
-  .h3-size-m,
-  .h4-size-m,
-  .h5-size-m,
-  .h6-size-m,
-  .p-size-m
-) { font-size: var(--heading-font-size-m); }
+main .section[data-section-status] .default-content-wrapper h1.h1-size-m,
+main .section[data-section-status] .default-content-wrapper h2.h2-size-m,
+main .section[data-section-status] .default-content-wrapper h3.h3-size-m,
+main .section[data-section-status] .default-content-wrapper h4.h4-size-m,
+main .section[data-section-status] .default-content-wrapper h5.h5-size-m,
+main .section[data-section-status] .default-content-wrapper h6.h6-size-m {
+  font-size: var(--heading-font-size-m);
+}
 
-main :is(
-  h1.h1-size-s,
-  h2.h2-size-s,
-  h3.h3-size-s,
-  h4.h4-size-s,
-  h5.h5-size-s,
-  h6.h6-size-s
-),
-main p:is(
-  .h1-size-s,
-  .h2-size-s,
-  .h3-size-s,
-  .h4-size-s,
-  .h5-size-s,
-  .h6-size-s,
-  .p-size-s
-) { font-size: var(--heading-font-size-s); }
+main .section[data-section-status] .default-content-wrapper h1.h1-size-l,
+main .section[data-section-status] .default-content-wrapper h2.h2-size-l,
+main .section[data-section-status] .default-content-wrapper h3.h3-size-l,
+main .section[data-section-status] .default-content-wrapper h4.h4-size-l,
+main .section[data-section-status] .default-content-wrapper h5.h5-size-l,
+main .section[data-section-status] .default-content-wrapper h6.h6-size-l {
+  font-size: var(--heading-font-size-l);
+}
 
-main :is(
-  h1.h1-size-xs,
-  h2.h2-size-xs,
-  h3.h3-size-xs,
-  h4.h4-size-xs,
-  h5.h5-size-xs,
-  h6.h6-size-xs
-),
-main p:is(
-  .h1-size-xs,
-  .h2-size-xs,
-  .h3-size-xs,
-  .h4-size-xs,
-  .h5-size-xs,
-  .h6-size-xs,
-  .p-size-xs
-) { font-size: var(--heading-font-size-xs); } */
+main .section[data-section-status] .default-content-wrapper h1.h1-size-xl,
+main .section[data-section-status] .default-content-wrapper h2.h2-size-xl,
+main .section[data-section-status] .default-content-wrapper h3.h3-size-xl,
+main .section[data-section-status] .default-content-wrapper h4.h4-size-xl,
+main .section[data-section-status] .default-content-wrapper h5.h5-size-xl,
+main .section[data-section-status] .default-content-wrapper h6.h6-size-xl {
+  font-size: var(--heading-font-size-xl);
+}
+
+main .section[data-section-status] .default-content-wrapper h1.h1-size-xxl,
+main .section[data-section-status] .default-content-wrapper h2.h2-size-xxl,
+main .section[data-section-status] .default-content-wrapper h3.h3-size-xxl,
+main .section[data-section-status] .default-content-wrapper h4.h4-size-xxl,
+main .section[data-section-status] .default-content-wrapper h5.h5-size-xxl,
+main .section[data-section-status] .default-content-wrapper h6.h6-size-xxl {
+  font-size: var(--heading-font-size-xxl);
+}
 
 /* Metric-matched fallback for the primary webfont (local Arial, zero network),
    standing in for "AvenirNext forINTUIT" while it downloads. MUST stay in the
