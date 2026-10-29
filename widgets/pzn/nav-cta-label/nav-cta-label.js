@@ -1,12 +1,12 @@
 /**
  * PZN widget: sets the header "Schedule a call" CTA label to match the variant's hero CTA.
- * Params: label (optional). Without it, the primary button in the widget's section is used,
- * falling back to the first #schedule link.
+ * Params: label (optional). Without it, the section's #schedule button is used (the primary one
+ * when several link to #schedule), since the nav CTA opens the same schedule form.
  */
 const NAV_TEXT = 'header .nav-cta .nav-cta-text';
-// Authored (strong > a) or decorated (.button.primary, incl. the hero's video button).
-const PRIMARY_BUTTON = '.button.primary, strong > a';
 const SCHEDULE_LINK = 'a[href$="#schedule"]';
+// Authored (strong > a) or decorated (a.button.primary) primary button.
+const PRIMARY_SCHEDULE = `a.button.primary[href$="#schedule"], strong > ${SCHEDULE_LINK}`;
 
 let active = null;
 let original = null;
@@ -16,7 +16,7 @@ export function resolveLabel(widget) {
   const label = (widget.dataset.label || '').trim();
   if (label) return label;
   const section = widget.closest('.section');
-  const link = section?.querySelector(PRIMARY_BUTTON) || section?.querySelector(SCHEDULE_LINK);
+  const link = section?.querySelector(PRIMARY_SCHEDULE) || section?.querySelector(SCHEDULE_LINK);
   return link?.textContent.trim() || null;
 }
 

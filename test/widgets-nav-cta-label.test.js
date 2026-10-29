@@ -18,15 +18,26 @@ afterEach(() => {
 });
 
 describe('nav-cta-label: resolveLabel', () => {
-  it('uses the hero primary button, even when it is not the schedule link', async () => {
+  it('uses the #schedule button, skipping a primary that opens a video', async () => {
     const { resolveLabel } = await load();
     document.body.innerHTML = '<div class="section"><p><strong><a href="https://youtu.be/x">See a demo</a></strong>'
       + '<em><a href="#schedule">Talk to sales</a></em></p><div class="widget"></div></div>';
-    expect(resolveLabel(document.querySelector('.widget'))).toBe('See a demo');
+    expect(resolveLabel(document.querySelector('.widget'))).toBe('Talk to sales');
 
     document.body.innerHTML = '<div class="section"><p class="hero-actions"><button class="button primary icon-video">See a demo</button>'
       + '<a class="button secondary" href="#schedule">Talk to sales</a></p><div class="widget"></div></div>';
-    expect(resolveLabel(document.querySelector('.widget'))).toBe('See a demo');
+    expect(resolveLabel(document.querySelector('.widget'))).toBe('Talk to sales');
+  });
+
+  it('prefers the primary #schedule button when both buttons link to #schedule', async () => {
+    const { resolveLabel } = await load();
+    document.body.innerHTML = '<div class="section"><p><em><a href="#schedule">Talk to your account team</a></em>'
+      + '<strong><a href="#schedule">See your upgrade path</a></strong></p><div class="widget"></div></div>';
+    expect(resolveLabel(document.querySelector('.widget'))).toBe('See your upgrade path');
+
+    document.body.innerHTML = '<div class="section"><p class="hero-actions"><a class="button primary" href="#schedule">Get your migration plan</a>'
+      + '<a class="button secondary" href="#schedule">Talk to your account team</a></p><div class="widget"></div></div>';
+    expect(resolveLabel(document.querySelector('.widget'))).toBe('Get your migration plan');
   });
 
   it('prefers the label param, else falls back to the first #schedule link', async () => {
