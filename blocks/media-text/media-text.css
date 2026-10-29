@@ -1274,7 +1274,7 @@
   }
 }
 
-/* .ies split rows: One Intuit "Why IES" (Figma 7918-54716 / 7933-61615 / 7918-58979) */
+/* .ies split rows: One Intuit "Why IES" (Figma 7918-54716 / 7933-61615 / 7918-58979; spacing 7918-54779 / 7933-61646) */
 .media-text.ies:not(.center, .compare) {
   max-width: 1210px;
   margin-inline: auto;
