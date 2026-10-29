@@ -16,6 +16,8 @@ const ACTIVE_WINDOW_MS = 10000;
 const CONFIG_REFRESH_MS = 10000;
 // The library sheet row that registers this plugin in the site config.
 const PLUGIN_ROW = /sem(?:an)?tic[\s-]*styler/i;
+// Metadata blocks configure the page or section, so they never show in the tree.
+const METADATA = '.section-metadata, .metadata, .library-metadata';
 const ROLES = {
   h1: 'heading 1',
   h2: 'heading 2',
@@ -94,8 +96,8 @@ const blockName = (name) => name.replace(/\(.*\)/, '').trim().toLowerCase().repl
 /**
  * Block names listed in the `include` column of this plugin's row in the site config's
  * `library` sheet (the one with `title`, `path` and `ref`). Only those blocks are editable.
- * Returns null, leaving every block editable, when the column is empty, and undefined when the
- * config can't be read so callers can retry instead of briefly showing every block.
+ * Returns null, leaving every block editable, when the column is empty or `all`, and undefined
+ * when the config can't be read so callers can retry instead of briefly showing every block.
  */
 async function loadEditableBlocks({ actions, context }) {
   try {
@@ -112,7 +114,9 @@ async function loadEditableBlocks({ actions, context }) {
     const row = rows.find((r) => PLUGIN_ROW.test(`${r.path || ''} ${r.ref || ''} ${r.title || ''}`));
     if (!row) log('no library row for this plugin', { sheets: Object.keys(config), rows });
     const include = String(row?.include ?? '').split(/[,\n]/).map(blockName).filter(Boolean);
-    return include.length ? new Set(include) : null;
+    // `all` (or `*`) makes every block and default content editable, same as an empty column.
+    if (!include.length || include.some((name) => name === 'all')) return null;
+    return new Set(include);
   } catch (e) {
     log('config error', e);
     return undefined;
@@ -143,7 +147,7 @@ function contentTree(html, doc, editableBlocks) {
   return sections.map((section, index) => {
     const groups = [];
     [...section.children].forEach((child) => {
-      if (child.classList.contains('section-metadata', 'metadata', 'library-metadata')) return;
+      if (child.matches(METADATA)) return;
       const block = child.matches('div[class]') ? child : null;
       // With an `include` list only those blocks are editable, so default content is left out too.
       // The first class of a source block is its name; the rest are variants.
@@ -151,7 +155,7 @@ function contentTree(html, doc, editableBlocks) {
       const elements = [
         ...(child.matches('h1,h2,h3,h4,h5,h6,p') ? [child] : []),
         ...child.querySelectorAll('h1,h2,h3,h4,h5,h6,p'),
-      ].filter((el) => !el.closest('section-metadata', 'metadata', 'library-metadata')
+      ].filter((el) => !el.closest(METADATA)
         && (block || !el.closest('main > div > div[class]')));
       if (block) {
         groups.push({
