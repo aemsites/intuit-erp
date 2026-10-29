@@ -5,7 +5,6 @@ import {
 const HEADER = '<header><button type="button" class="nav-cta"><span class="nav-cta-text">Schedule a call</span></button></header>';
 const flush = () => new Promise((resolve) => { setTimeout(resolve, 0); });
 
-// Fresh module per test: the widget keeps the baseline label and active variant in module state.
 const load = async () => {
   vi.resetModules();
   return import('../widgets/pzn/nav-cta-label/nav-cta-label.js');
