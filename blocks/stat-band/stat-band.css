@@ -177,10 +177,14 @@
 .stat-band.dark.blueberry .stats-foot { max-width: 1210px; margin-inline: auto; }
 .stat-band.dark.blueberry .stats-foot p + p { margin-top: var(--space-2xs); }
 
+/* tablet: two-up grid, third stat wraps under the first (Figma 8129-63821) */
 @media (768px <= width < 1024px) {
   .section.stat-band-container:has(.stat-band.dark.blueberry) {
-    --blueberry-grid-cols: repeat(3, 1fr);
-    --blueberry-grid-gap: var(--space-m);
+    --blueberry-gutter: var(--space-2xl);
+    --blueberry-grid-cols: repeat(2, 1fr);
+    --blueberry-grid-gap: var(--space-2xl);
+    --blueberry-desc-size: var(--body-font-size-m);
+    --blueberry-desc-lh: var(--line-height-m);
   }
 }
 
