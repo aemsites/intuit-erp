@@ -126,10 +126,10 @@
   --blueberry-title-size: 34px;
   --blueberry-title-lh: var(--line-height-xs);
   --blueberry-grid-cols: 1fr;
-  --blueberry-grid-gap: 60px;
+  --blueberry-grid-gap: 40px;
   --blueberry-num-size: var(--heading-font-size-xxl);
   --blueberry-num-lh: var(--line-height-none);
-  --blueberry-desc-size: var(--body-font-size-l);
+  --blueberry-desc-size: var(--body-font-size-m);
   --blueberry-desc-lh: var(--line-height-s);
 
   background: var(--blueberry-bg);
