@@ -511,6 +511,24 @@ function iesCell(cell) {
 }
 
 /**
+ * Footnote paragraph with only its leading number superscripted, whether the
+ * author wrapped the whole line, just the number, or nothing.
+ * @param {Element} p
+ */
+function superscriptNote(p) {
+  p.querySelectorAll('sup').forEach((s) => s.replaceWith(...s.childNodes));
+  p.normalize();
+  const { firstChild: first } = p;
+  const m = first?.nodeType === Node.TEXT_NODE && first.textContent.match(/^\s*(\d+)\s*/);
+  if (!m) return;
+  const [match, num] = m;
+  first.textContent = first.textContent.slice(match.length);
+  const sup = document.createElement('sup');
+  sup.textContent = num;
+  p.prepend(sup, ' ');
+}
+
+/**
  * `.ies` variant — one card per group, authored like the default variant;
  * below 768px the card bodies scroll sideways together.
  * @param {Element} block
@@ -601,7 +619,10 @@ function decorateIes(block) {
     const target = (supEl && supEl.closest('.ci-card')) || cards[0];
     const foot = document.createElement('div');
     foot.className = 'ci-foot';
-    footPs.forEach((p) => foot.append(p)); // append moves the node out of its wrapper
+    footPs.forEach((p) => {
+      superscriptNote(p);
+      foot.append(p); // append moves the node out of its wrapper
+    });
     target.querySelector('.ci-body').append(foot);
     section.querySelectorAll('.default-content-wrapper').forEach((w) => {
       if (!w.textContent.trim() && !w.querySelector('img, picture, svg')) w.remove();
