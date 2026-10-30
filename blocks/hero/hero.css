@@ -723,6 +723,14 @@ body.author-guide .hero .hero-copy .hero-lede {
   max-height: 555px;
 }
 
+/* tablet: 60px top/bottom instead of the shared 40px stacked padding */
+@media (768px <= width < 1024px) {
+  .hero.ies .hero-grid {
+    padding-top: 60px;
+    padding-bottom: 60px;
+  }
+}
+
 @media (width >= 1024px) {
   .hero.ies .hero-copy h1 { font-size: 60px; }
 }
