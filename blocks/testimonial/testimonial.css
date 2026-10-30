@@ -1270,7 +1270,7 @@
 }
 
 @media (width >= 768px) and (width < 1024px) {
-  .section.testimonial-container:has(.testimonial.card.feature.ies) > .testimonial-wrapper { padding-inline: 10px; }
+  .section.testimonial-container:has(.testimonial.card.feature.ies) > .testimonial-wrapper { padding-inline: var(--space-2xl); }
   .testimonial.card.feature.ies .testimonial-heading { margin-bottom: var(--space-xl); }
 
   .testimonial.card.feature.ies .testimonial-card {
