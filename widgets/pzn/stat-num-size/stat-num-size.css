@@ -1,0 +1,11 @@
+/* stat-num-size widget: smaller stat numbers in the PZN proof carousel on desktop */
+
+.stat-num-size {
+  display: none;
+}
+
+@media (width >= 1024px) {
+  .section:has(.stat-num-size) .stat-band.carousel {
+    --carousel-num-size: 54px;
+  }
+}
