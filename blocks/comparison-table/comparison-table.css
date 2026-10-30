@@ -106,7 +106,7 @@
   content: ""; position: absolute; left: 3px; top: 0; width: 4px; height: 8px;
   border: solid var(--primary); border-width: 0 2px 2px 0; transform: rotate(45deg);
 }
-.comparison-table .ct-legend .ct-dash { margin-right: var(--space-3xs); }
+.comparison-table .ct-legend :is(.ct-dash, .ct-x) { margin-right: var(--space-3xs); }
 
 /* Mobile matches the original: the table scrolls horizontally inside
    .cmp-table-scroll rather than reflowing. The group band and footnote are
@@ -491,3 +491,335 @@ main > .section.comparison-table-container:has(> .comparison-table-wrapper > .co
   }
 }
 
+
+/* .ies variant */
+.section.comparison-table-container:has(.comparison-table.ies) {
+  --ci-ink: #0d0031;
+  --ci-dot: #ec8b2f;
+  --ci-cross: #000;
+  --ci-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M19.4256 6.0102C20.1059 6.69047 20.1059 7.7934 19.4256 8.47367L10.9095 16.9898C10.5828 17.3165 10.1398 17.5 9.67778 17.5C9.2158 17.5 8.77273 17.3165 8.44605 16.9898L4.57508 13.1188C3.89482 12.4386 3.89482 11.3356 4.57508 10.6554C5.25535 9.97509 6.35828 9.97509 7.03855 10.6554L9.67778 13.2946L16.9622 6.0102C17.6424 5.32993 18.7454 5.32993 19.4256 6.0102Z'/%3E%3C/svg%3E");
+
+  display: flow-root;
+  padding: 0 0 3.75rem;
+  background: var(--pepper);
+}
+
+.comparison-table-container:has(.comparison-table.ies) > .default-content-wrapper {
+  padding-block: 0;
+}
+
+.comparison-table-container:has(.comparison-table.ies) > .default-content-wrapper:last-of-type {
+  margin-top: 0;
+}
+
+.comparison-table-container:has(.comparison-table.ies) > .default-content-wrapper:first-of-type h2 {
+  max-width: 70.625rem;
+  margin: 3.75rem auto var(--space-m);
+  font-size: 2.125rem;
+  font-weight: var(--font-weight-medium);
+  line-height: 1.1;
+  color: var(--ci-ink);
+}
+
+.comparison-table-container:has(.comparison-table.ies) > .comparison-table-wrapper {
+  max-width: 90rem;
+  padding: var(--space-m) var(--space-m) 0;
+}
+
+.comparison-table.ies .ci-card {
+  overflow: hidden;
+  border-radius: var(--radius-card);
+  background: var(--background-color);
+}
+
+.comparison-table.ies .ci-card + .ci-card {
+  margin-top: var(--space-m);
+}
+
+.comparison-table.ies .ci-band {
+  margin: 0;
+  padding: 0.625rem var(--space-s);
+  background: var(--info);
+  font-size: var(--body-font-size-m);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-l);
+  color: var(--background-color);
+}
+
+.comparison-table.ies .ci-body {
+  overflow-x: auto;
+  padding: 0 0.875rem;
+}
+
+.comparison-table.ies .ci-table {
+  width: 100%;
+  min-width: 46.25rem;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.comparison-table.ies .ci-table .ci-col-label {
+  width: 13.25rem;
+}
+
+.comparison-table.ies .ci-table th,
+.comparison-table.ies .ci-table td {
+  padding: var(--space-m) 0.375rem;
+  font-size: var(--body-font-size-xs);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-m);
+  color: var(--ci-ink);
+  text-align: center;
+  vertical-align: middle;
+}
+
+.comparison-table.ies .ci-table thead tr {
+  height: var(--space-5xl);
+  border-bottom: 1px solid var(--line);
+}
+
+.comparison-table.ies .ci-table thead th {
+  padding-block: 0;
+}
+
+.comparison-table.ies .ci-table thead th,
+.comparison-table.ies .ci-table th[scope="row"] {
+  font-weight: var(--font-weight-medium);
+}
+
+.comparison-table.ies .ci-table th[scope="row"] {
+  text-align: left;
+}
+
+.comparison-table.ies .ci-table td p {
+  margin: var(--space-3xs) 0 0;
+}
+
+.comparison-table.ies .ci-ic {
+  display: block;
+  margin: 0 auto;
+}
+
+.comparison-table.ies .ci-check,
+.comparison-table.ies .ci-dot {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.comparison-table.ies .ci-check,
+.comparison-table.ies .ct-legend .ck {
+  background: var(--info);
+  mask: var(--ci-check) center / contain no-repeat;
+  -webkit-mask: var(--ci-check) center / contain no-repeat;
+}
+
+.comparison-table.ies .ci-dot {
+  position: relative;
+}
+
+.comparison-table.ies .ci-dot::after {
+  content: "";
+  position: absolute;
+  inset: var(--space-3xs);
+  border-radius: var(--radius-circle);
+  background: var(--ci-dot);
+}
+
+/* cross: --s is the box, the bars scale with it */
+.comparison-table.ies .ci-x {
+  --s: 1.25rem;
+}
+
+.comparison-table.ies .ct-legend :is(.ct-dash, .ct-x) {
+  --s: 1rem;
+
+  font-size: 0;
+}
+
+.comparison-table.ies .ci-x,
+.comparison-table.ies .ct-legend :is(.ct-dash, .ct-x) {
+  position: relative;
+  width: var(--s);
+  height: var(--s);
+}
+
+.comparison-table.ies .ci-x::before,
+.comparison-table.ies .ci-x::after,
+.comparison-table.ies .ct-legend :is(.ct-dash, .ct-x)::before,
+.comparison-table.ies .ct-legend :is(.ct-dash, .ct-x)::after {
+  content: "";
+  position: absolute;
+  top: calc(var(--s) * 0.4313);
+  left: calc(var(--s) * 0.1375);
+  width: calc(var(--s) * 0.725);
+  height: calc(var(--s) * 0.1375);
+  border-radius: 2px;
+  background: var(--ci-cross);
+  transform: rotate(45deg);
+}
+
+.comparison-table.ies .ci-x::after,
+.comparison-table.ies .ct-legend :is(.ct-dash, .ct-x)::after {
+  transform: rotate(-45deg);
+}
+
+.comparison-table.ies .ci-foot {
+  position: sticky;
+  left: 0.375rem;
+  width: calc(100vw - 5.75rem);
+  padding: var(--space-m) 0;
+  font-size: var(--body-font-size-xxs);
+  line-height: var(--line-height-m);
+  color: var(--ci-ink);
+}
+
+.comparison-table.ies .ci-foot p {
+  margin: 0 0 var(--space-3xs);
+  font-size: var(--body-font-size-xxs);
+}
+
+.comparison-table.ies .ci-foot sup {
+  font-size: inherit;
+  line-height: inherit;
+  vertical-align: baseline;
+}
+
+.comparison-table.ies .ci-foot a {
+  color: var(--info);
+  text-decoration: underline;
+}
+
+.comparison-table.ies .ct-legend {
+  margin: var(--space-l) 0 0;
+  font-size: var(--body-font-size-xxs);
+  line-height: var(--line-height-m);
+  color: var(--ci-ink);
+}
+
+.comparison-table.ies .ct-legend .ct-legend-item-wrap > summary {
+  font-size: var(--body-font-size-xs);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-m);
+  color: var(--info);
+  text-decoration: underline;
+}
+
+.comparison-table.ies .ct-legend .ct-legend-body {
+  margin-top: var(--space-xs);
+  font-size: var(--body-font-size-xxs);
+  color: var(--ci-ink);
+}
+
+.comparison-table.ies .ct-legend .ct-legend-item {
+  display: block;
+}
+
+.comparison-table.ies .ct-legend .ct-legend-item + .ct-legend-item {
+  margin-top: var(--space-3xs);
+}
+
+.comparison-table.ies .ct-legend .ct-legend-item strong {
+  font-weight: var(--font-weight-medium);
+}
+
+.comparison-table.ies .ct-legend :is(.ck, .ct-dash, .ct-x) {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  margin: 0 var(--space-3xs) 0 0;
+  vertical-align: middle;
+}
+
+.comparison-table.ies .ct-legend .ck::after {
+  content: none;
+}
+
+@media (width >= 768px) {
+  .section.comparison-table-container:has(.comparison-table.ies) {
+    padding-bottom: var(--space-5xl);
+  }
+
+  .comparison-table-container:has(.comparison-table.ies) > .default-content-wrapper:first-of-type h2 {
+    margin: 3.75rem auto 0;
+  }
+
+  .comparison-table.ies .ci-band {
+    padding: 0.9375rem var(--space-m);
+    font-size: var(--heading-font-size-xs);
+    line-height: var(--line-height-s);
+  }
+
+  .comparison-table.ies .ci-table {
+    min-width: 0;
+  }
+
+  .comparison-table.ies .ci-table .ci-col-label {
+    width: 23%;
+  }
+
+  .comparison-table.ies .ci-table thead th,
+  .comparison-table.ies .ci-table th[scope="row"] {
+    font-size: var(--body-font-size-m);
+  }
+
+  .comparison-table.ies .ci-check,
+  .comparison-table.ies .ci-dot {
+    width: var(--space-l);
+    height: var(--space-l);
+  }
+
+  .comparison-table.ies .ci-dot::after {
+    inset: 0.375rem;
+  }
+
+  .comparison-table.ies .ci-x {
+    --s: var(--space-l);
+  }
+
+  .comparison-table.ies .ct-legend .ct-legend-body {
+    margin-top: var(--space-s);
+  }
+
+  .comparison-table.ies .ci-foot {
+    position: static;
+    width: auto;
+    padding-left: 0.375rem;
+  }
+}
+
+@media (width >= 1024px) {
+  .comparison-table-container:has(.comparison-table.ies) > .default-content-wrapper:first-of-type h2 {
+    margin: var(--space-5xl) auto var(--space-2xl);
+    font-size: var(--heading-font-size-xxl);
+    line-height: var(--line-height-none);
+  }
+
+  .comparison-table-container:has(.comparison-table.ies) > .comparison-table-wrapper {
+    padding: var(--space-2xl) var(--space-2xl) 0;
+  }
+
+  .comparison-table.ies .ci-card {
+    border-radius: 1.875rem;
+  }
+
+  .comparison-table.ies .ci-band {
+    padding: var(--space-s) var(--space-m);
+    font-size: var(--body-font-size-l);
+  }
+
+  .comparison-table.ies .ci-table .ci-col-label {
+    width: 20%;
+  }
+
+  .comparison-table.ies .ci-table thead tr {
+    height: 4.25rem;
+  }
+
+  .comparison-table.ies .ci-table tbody tr {
+    height: 5.625rem;
+  }
+
+  .comparison-table.ies .ci-table td {
+    font-size: var(--body-font-size-m);
+  }
+}

@@ -1018,6 +1018,7 @@
 /* .card.feature: photo left, quote right on a Superblue card; stacks below 1024px */
 .testimonial.card.feature {
   --feature-blue: #236cff;
+  --feature-blueberry: #0d0031;
 
   display: block;
   max-width: 1360px;
@@ -1173,6 +1174,10 @@
   .testimonial.card.feature .testimonial-footnote {
     grid-column: 2;
   }
+}
+
+.testimonial.card.feature.blueberry .testimonial-card {
+  background: var(--feature-blueberry);
 }
 
 /* .card.feature.ies: IES retheme; optional heading row, carousel for 2+ cards */
