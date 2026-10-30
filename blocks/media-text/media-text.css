@@ -1287,6 +1287,13 @@
   color: #000730;
 }
 
+/* tablet/mobile side gutter is 20px (global section gutter is 40px from 768px) */
+@media (width < 1024px) {
+  .section.media-text-container:has(.media-text.ies:not(.center, .compare)) > div {
+    padding-inline: var(--space-m);
+  }
+}
+
 /* block title: first-row heading, or the section default-content heading */
 .media-text.ies:not(.center, .compare) .media-title,
 .media-text-container:has(.media-text.ies:not(.center, .compare)) .default-content-wrapper {
