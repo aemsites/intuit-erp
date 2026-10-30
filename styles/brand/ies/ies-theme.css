@@ -210,6 +210,38 @@ body.theme-ies main .section:is(.dark, .navy, .super-blue, .dark-background) a.b
   color: #0d0031;
 }
 
+/* Keyboard focus ring (WCAG 2.4.7 / 1.4.11): Blueberry on light surfaces, white on dark sections */
+body.theme-ies {
+  --ies-focus-ring: #0d0031;
+}
+
+body.theme-ies main .section:is(.dark, .navy, .super-blue, .dark-background, [data-background="#236cff" i]) {
+  --ies-focus-ring: #fff;
+}
+
+/* white cards inside dark sections keep the Blueberry ring */
+body.theme-ies :is(.hero-form, .form.lead, .modal dialog) {
+  --ies-focus-ring: #0d0031;
+}
+
+body.theme-ies main .section :is(a.button, button.button):focus-visible,
+body.theme-ies .header .nav-cta:focus-visible {
+  outline: 2px solid var(--ies-focus-ring);
+  outline-offset: 2px;
+}
+
+body.theme-ies .header .nav-cta:focus-visible {
+  background: #1b5be0;
+  border-color: #1b5be0;
+}
+
+/* stylelint-disable selector-class-pattern -- .mkto* class names are Marketo's */
+body.theme-ies .mktoForm .mktoButton:focus-visible {
+  outline: 2px solid var(--ies-focus-ring) !important;
+  outline-offset: 2px;
+}
+/* stylelint-enable selector-class-pattern */
+
 /* IES Banner Inset - automatic when theme-ies is active */
 body.theme-ies main > .section.contained.colored-background,
 body.theme-ies main .fragment-wrapper .section.contained.colored-background {
