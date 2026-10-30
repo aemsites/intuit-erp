@@ -679,9 +679,7 @@ main > .section.comparison-table-container:has(> .comparison-table-wrapper > .co
 }
 
 .comparison-table.ies .ci-foot sup {
-  font-size: inherit;
-  line-height: inherit;
-  vertical-align: baseline;
+  line-height: 0;
 }
 
 .comparison-table.ies .ci-foot a {
