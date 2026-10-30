@@ -106,7 +106,7 @@
   content: ""; position: absolute; left: 3px; top: 0; width: 4px; height: 8px;
   border: solid var(--primary); border-width: 0 2px 2px 0; transform: rotate(45deg);
 }
-.comparison-table .ct-legend .ct-dash { margin-right: var(--space-3xs); }
+.comparison-table .ct-legend :is(.ct-dash, .ct-x) { margin-right: var(--space-3xs); }
 
 /* Mobile matches the original: the table scrolls horizontally inside
    .cmp-table-scroll rather than reflowing. The group band and footnote are
@@ -491,3 +491,364 @@ main > .section.comparison-table-container:has(> .comparison-table-wrapper > .co
   }
 }
 
+
+/* .ies variant: one rounded white card per group on a pepper section (see decorateIes).
+   Mobile -> tablet -> desktop follow the One Intuit Page Rethemed comparison frames. */
+.section.comparison-table-container:has(.comparison-table.ies) {
+  display: flow-root;
+  padding: 0 0 60px;
+  background: var(--pepper);
+}
+
+.comparison-table-container:has(.comparison-table.ies) > .default-content-wrapper:first-of-type h2 {
+  max-width: 1130px;
+  margin: 60px auto 20px;
+  font-size: 34px;
+  font-weight: var(--font-weight-medium);
+  line-height: 1.1;
+  color: #0d0031;
+}
+
+.comparison-table-container:has(.comparison-table.ies) > .default-content-wrapper {
+  padding-block: 0;
+}
+
+.comparison-table-container:has(.comparison-table.ies) > .default-content-wrapper:last-of-type {
+  margin-top: 0;
+}
+
+.comparison-table-container:has(.comparison-table.ies) > .comparison-table-wrapper {
+  max-width: 1440px;
+  padding: 20px 20px 0;
+}
+
+.comparison-table.ies {
+  --ci-ink: #0d0031;
+}
+
+.comparison-table.ies .ci-card {
+  overflow: hidden;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.comparison-table.ies .ci-card + .ci-card {
+  margin-top: 20px;
+}
+
+.comparison-table.ies .ci-band {
+  margin: 0;
+  padding: 10px 16px;
+  background: var(--info);
+  font-size: 16px;
+  font-weight: var(--font-weight-medium);
+  line-height: 1.5;
+  color: #fff;
+}
+
+/* the band stays put; only the table body scrolls sideways on mobile */
+.comparison-table.ies .ci-body {
+  overflow-x: auto;
+  padding: 0 14px;
+}
+
+.comparison-table.ies .ci-table {
+  width: 100%;
+  min-width: 740px;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.comparison-table.ies .ci-table .ci-col-label {
+  width: 212px;
+}
+
+.comparison-table.ies .ci-table th,
+.comparison-table.ies .ci-table td {
+  padding: 20px 6px;
+  font-size: 14px;
+  font-weight: var(--font-weight-normal);
+  line-height: 1.4;
+  color: var(--ci-ink);
+  text-align: center;
+  vertical-align: middle;
+}
+
+.comparison-table.ies .ci-table thead tr {
+  height: 80px;
+  border-bottom: 1px solid var(--line);
+}
+
+/* the header row sets its own height, so a two-line column title doesn't grow it */
+.comparison-table.ies .ci-table thead th {
+  padding-block: 0;
+}
+
+.comparison-table.ies .ci-table thead th,
+.comparison-table.ies .ci-table th[scope="row"] {
+  font-weight: var(--font-weight-medium);
+}
+
+.comparison-table.ies .ci-table th[scope="row"] {
+  text-align: left;
+}
+
+.comparison-table.ies .ci-table td p {
+  margin: 4px 0 0;
+}
+
+.comparison-table.ies .ci-ic {
+  display: block;
+  margin: 0 auto;
+}
+
+/* check drawn as a mask in superblue (Figma "Icon Check") */
+.comparison-table.ies .ci-check {
+  width: 20px;
+  height: 20px;
+  background: var(--info);
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M19.4256 6.0102C20.1059 6.69047 20.1059 7.7934 19.4256 8.47367L10.9095 16.9898C10.5828 17.3165 10.1398 17.5 9.67778 17.5C9.2158 17.5 8.77273 17.3165 8.44605 16.9898L4.57508 13.1188C3.89482 12.4386 3.89482 11.3356 4.57508 10.6554C5.25535 9.97509 6.35828 9.97509 7.03855 10.6554L9.67778 13.2946L16.9622 6.0102C17.6424 5.32993 18.7454 5.32993 19.4256 6.0102Z'/%3E%3C/svg%3E") center / contain no-repeat;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M19.4256 6.0102C20.1059 6.69047 20.1059 7.7934 19.4256 8.47367L10.9095 16.9898C10.5828 17.3165 10.1398 17.5 9.67778 17.5C9.2158 17.5 8.77273 17.3165 8.44605 16.9898L4.57508 13.1188C3.89482 12.4386 3.89482 11.3356 4.57508 10.6554C5.25535 9.97509 6.35828 9.97509 7.03855 10.6554L9.67778 13.2946L16.9622 6.0102C17.6424 5.32993 18.7454 5.32993 19.4256 6.0102Z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+/* ✗ cell: the .simple cross, sized like the check (20px on mobile, 24px from tablet) */
+.comparison-table.ies .ci-x {
+  --s: 20px;
+
+  position: relative;
+  width: var(--s);
+  height: var(--s);
+}
+
+/* "not included" dot: same orange as the .simple variant, in a box the size of the check */
+.comparison-table.ies .ci-dot {
+  position: relative;
+  width: 20px;
+  height: 20px;
+}
+
+.comparison-table.ies .ci-dot::after {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: var(--radius-circle);
+  background: #ec8b2f;
+}
+
+/* footnotes sit under the rows of the card they belong to */
+.comparison-table.ies .ci-foot {
+  position: sticky;
+  left: 6px;
+  width: calc(100vw - 92px);
+  padding: 20px 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--ci-ink);
+}
+
+.comparison-table.ies .ci-foot p {
+  margin: 0 0 4px;
+  font-size: 12px;
+}
+
+.comparison-table.ies .ci-foot sup {
+  font-size: inherit;
+  line-height: inherit;
+  vertical-align: baseline;
+}
+
+.comparison-table.ies .ci-foot a {
+  color: var(--info);
+  text-decoration: underline;
+}
+
+/* legend: "Chart definition" toggle over the key */
+.comparison-table.ies .ct-legend {
+  margin: 24px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--ci-ink);
+}
+
+.comparison-table.ies .ct-legend .ct-legend-item-wrap > summary {
+  font-size: 14px;
+  font-weight: var(--font-weight-medium);
+  line-height: 1.4;
+  color: var(--info);
+  text-decoration: underline;
+}
+
+.comparison-table.ies .ct-legend .ct-legend-body {
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--ci-ink);
+}
+
+.comparison-table.ies .ct-legend .ct-legend-item {
+  display: block;
+}
+
+.comparison-table.ies .ct-legend .ct-legend-item + .ct-legend-item {
+  margin-top: 4px;
+}
+
+.comparison-table.ies .ct-legend .ct-legend-item strong {
+  font-weight: var(--font-weight-medium);
+}
+
+.comparison-table.ies .ct-legend .ck,
+.comparison-table.ies .ct-legend :is(.ct-dash, .ct-x) {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  margin: 0 4px 0 0;
+  vertical-align: middle;
+}
+
+.comparison-table.ies .ct-legend .ck {
+  background: var(--info);
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M19.4256 6.0102C20.1059 6.69047 20.1059 7.7934 19.4256 8.47367L10.9095 16.9898C10.5828 17.3165 10.1398 17.5 9.67778 17.5C9.2158 17.5 8.77273 17.3165 8.44605 16.9898L4.57508 13.1188C3.89482 12.4386 3.89482 11.3356 4.57508 10.6554C5.25535 9.97509 6.35828 9.97509 7.03855 10.6554L9.67778 13.2946L16.9622 6.0102C17.6424 5.32993 18.7454 5.32993 19.4256 6.0102Z'/%3E%3C/svg%3E") center / contain no-repeat;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M19.4256 6.0102C20.1059 6.69047 20.1059 7.7934 19.4256 8.47367L10.9095 16.9898C10.5828 17.3165 10.1398 17.5 9.67778 17.5C9.2158 17.5 8.77273 17.3165 8.44605 16.9898L4.57508 13.1188C3.89482 12.4386 3.89482 11.3356 4.57508 10.6554C5.25535 9.97509 6.35828 9.97509 7.03855 10.6554L9.67778 13.2946L16.9622 6.0102C17.6424 5.32993 18.7454 5.32993 19.4256 6.0102Z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.comparison-table.ies .ct-legend .ck::after {
+  content: none;
+}
+
+.comparison-table.ies .ct-legend :is(.ct-dash, .ct-x) {
+  position: relative;
+  font-size: 0;
+}
+
+/* "not included" in the key: the same cross as the .simple variant (.cs-x), scaled to 16px */
+.comparison-table.ies .ci-x::before,
+.comparison-table.ies .ci-x::after,
+.comparison-table.ies .ct-legend :is(.ct-dash, .ct-x)::before,
+.comparison-table.ies .ct-legend :is(.ct-dash, .ct-x)::after {
+  content: "";
+  position: absolute;
+  top: 6.9px;
+  left: 2.2px;
+  width: 11.6px;
+  height: 2.2px;
+  border-radius: 2px;
+  background: #000;
+}
+
+.comparison-table.ies .ci-x::before,
+.comparison-table.ies .ct-legend :is(.ct-dash, .ct-x)::before {
+  transform: rotate(45deg);
+}
+
+.comparison-table.ies .ci-x::after,
+.comparison-table.ies .ct-legend :is(.ct-dash, .ct-x)::after {
+  transform: rotate(-45deg);
+}
+
+/* the table cross scales with its box (the key's stays 16px) */
+.comparison-table.ies .ci-x::before,
+.comparison-table.ies .ci-x::after {
+  top: calc(var(--s) * 0.4313);
+  left: calc(var(--s) * 0.1375);
+  width: calc(var(--s) * 0.725);
+  height: calc(var(--s) * 0.1375);
+}
+
+@media (width >= 768px) {
+  .comparison-table-container:has(.comparison-table.ies) > .default-content-wrapper:first-of-type h2 {
+    margin: 60px auto 0;
+  }
+
+  .section.comparison-table-container:has(.comparison-table.ies) {
+    padding-bottom: 80px;
+  }
+
+  .comparison-table.ies .ci-band {
+    padding: 15px 20px;
+    font-size: 18px;
+    line-height: 1.3;
+  }
+
+  .comparison-table.ies .ci-table {
+    min-width: 0;
+  }
+
+  .comparison-table.ies .ci-table .ci-col-label {
+    width: 23%;
+  }
+
+  .comparison-table.ies .ci-table th,
+  .comparison-table.ies .ci-table td {
+    font-size: 14px;
+  }
+
+  .comparison-table.ies .ci-table thead th,
+  .comparison-table.ies .ci-table th[scope="row"] {
+    font-size: 16px;
+  }
+
+  .comparison-table.ies .ci-check,
+  .comparison-table.ies .ci-dot {
+    width: 24px;
+    height: 24px;
+  }
+
+  .comparison-table.ies .ci-x {
+    --s: 24px;
+  }
+
+  .comparison-table.ies .ci-dot::after {
+    inset: 6px;
+  }
+
+  .comparison-table.ies .ct-legend .ct-legend-body {
+    margin-top: 16px;
+  }
+
+  .comparison-table.ies .ci-foot {
+    position: static;
+    width: auto;
+    padding-left: 6px;
+  }
+}
+
+@media (width >= 1024px) {
+  .section.comparison-table-container:has(.comparison-table.ies) {
+    padding-bottom: 80px;
+  }
+
+  .comparison-table-container:has(.comparison-table.ies) > .default-content-wrapper:first-of-type h2 {
+    margin: 80px auto 40px;
+    font-size: 48px;
+    line-height: 1;
+  }
+
+  .comparison-table-container:has(.comparison-table.ies) > .comparison-table-wrapper {
+    padding: 40px 40px 0;
+  }
+
+  .comparison-table.ies .ci-card {
+    border-radius: 30px;
+  }
+
+  .comparison-table.ies .ci-band {
+    padding: 16px 20px;
+    font-size: 20px;
+  }
+
+  .comparison-table.ies .ci-table .ci-col-label {
+    width: 20%;
+  }
+
+  .comparison-table.ies .ci-table thead tr {
+    height: 68px;
+  }
+
+  .comparison-table.ies .ci-table tbody tr {
+    height: 90px;
+  }
+
+  .comparison-table.ies .ci-table td {
+    font-size: 16px;
+  }
+}

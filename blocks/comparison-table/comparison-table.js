@@ -26,6 +26,9 @@
  *   - Mobile: the table scrolls horizontally within `.cmp-table-scroll`
  *     (see CSS), matching the original rather than reflowing into cards.
  *
+ * Variants: `simple`, `features` and `ies` (see decorateIes) each have their own
+ * decorator below; the default table is the fallback.
+ *
  * CSS: blocks/comparison-table/comparison-table.css
  */
 
@@ -169,7 +172,8 @@ function legendSourceCell(cells) {
  * Renders legend content into `container`, preserving authored line structure.
  * Each authored paragraph becomes its own line. A leading check glyph is swapped
  * for the same CSS `.ck` checkmark the table body uses, so the key matches the
- * symbols it explains; a leading en/em dash becomes `.ct-dash`. Falls back to
+ * symbols it explains; a leading ✗ becomes `.ct-x` (the `.ies` variant draws it
+ * as a cross) and a leading en/em dash becomes `.ct-dash`. Falls back to
  * flat text when the cell has no paragraph children.
  * @param {Element} container `.ct-legend` element to fill
  * @param {Element|null} cell authored legend cell
@@ -195,13 +199,20 @@ function legendLine(sourceP) {
   // Swap a leading marker glyph for the styled equivalent used in the table body.
   const first = line.firstChild;
   if (first && first.nodeType === Node.TEXT_NODE) {
-    const m = first.textContent.match(/^\s*(\u2713|\u2714|\u2013|\u2014|-)\s*/);
+    const m = first.textContent.match(/^\s*(\u2713|\u2714|\u2717|\u2718|\u00d7|\u2013|\u2014|-)\s*/);
     if (m) {
       first.textContent = first.textContent.slice(m[0].length);
+      const [, mark] = m;
       const glyph = document.createElement('span');
-      const isCheck = m[1] === '\u2713' || m[1] === '\u2714';
-      glyph.className = isCheck ? 'ck' : 'ct-dash';
-      if (!isCheck) glyph.innerHTML = '&ndash;';
+      if (mark === '\u2713' || mark === '\u2714') {
+        glyph.className = 'ck';
+      } else if (['\u2717', '\u2718', '\u00d7'].includes(mark)) {
+        glyph.className = 'ct-x';
+        glyph.textContent = mark;
+      } else {
+        glyph.className = 'ct-dash';
+        glyph.innerHTML = '&ndash;';
+      }
       line.prepend(glyph);
     }
   }
@@ -456,12 +467,182 @@ function decorateFeatures(block) {
   block.replaceChildren(wrap);
 }
 
+/**
+ * Builds a value cell for the `.ies` variant. A leading ✓ is a blue check and a
+ * leading ✗ is a cross (any text after either sits beneath), "add-on" is a check
+ * over its label, an empty cell or a dash is the orange "not included" dot, a
+ * leading ●/•/○ is a dot with its text, and anything else is plain text (authored
+ * markup such as `<sup>` kept).
+ * @param {Element} cell
+ * @returns {HTMLTableCellElement}
+ */
+function iesCell(cell) {
+  const td = document.createElement('td');
+  const raw = cell.textContent.trim();
+  const g = raw[0];
+
+  let icon = null;
+  let text = '';
+  if (g === '✓' || g === '✔') {
+    icon = 'check';
+    text = raw.slice(1).trim();
+  } else if (raw.toLowerCase() === 'add-on') {
+    icon = 'check';
+    text = raw;
+  } else if (['', '–', '-', '—'].includes(raw)) {
+    icon = 'dot';
+  } else if ('✗✘×'.includes(g)) {
+    icon = 'x';
+    text = raw.slice(1).trim();
+  } else if ('●•·○'.includes(g)) {
+    icon = 'dot';
+    text = raw.slice(1).trim();
+  }
+
+  if (!icon) {
+    td.innerHTML = cell.innerHTML;
+    return td;
+  }
+  const ic = document.createElement('span');
+  ic.className = `ci-ic ci-${icon}`;
+  ic.setAttribute('role', 'img');
+  ic.setAttribute('aria-label', icon === 'check' ? 'Included' : 'Not included');
+  td.append(ic);
+  if (text) {
+    const p = document.createElement('p');
+    p.textContent = text;
+    td.append(p);
+  }
+  return td;
+}
+
+/**
+ * `.ies` variant — grouped comparison on the IES theme: one rounded white card per
+ * group (blue band, column headers repeated, label + value rows) on a pepper
+ * section. Authored like the default variant (row 1 = ["", col1…], a single-cell
+ * row starts a group, a "legend" row, footnotes as default content starting with a
+ * digit); values render per {@link iesCell}. Below 768px the card bodies scroll
+ * sideways (the band stays put) and scroll together.
+ * @param {Element} block
+ */
+function decorateIes(block) {
+  const rows = [...block.children];
+  if (!rows.length) return;
+
+  const cols = [...rows[0].children].map((c) => c.textContent.trim());
+  const cards = [];
+  let tbody = null;
+  let legendEl = null;
+
+  const newCard = (label) => {
+    const card = document.createElement('div');
+    card.className = 'ci-card';
+    if (label) {
+      const band = document.createElement('p');
+      band.className = 'ci-band';
+      band.textContent = label;
+      card.append(band);
+    }
+
+    const table = document.createElement('table');
+    table.className = 'ci-table';
+    const colgroup = document.createElement('colgroup');
+    colgroup.innerHTML = `<col class="ci-col-label">${'<col>'.repeat(Math.max(0, cols.length - 1))}`;
+    const head = document.createElement('tr');
+    cols.forEach((c, i) => {
+      if (i === 0) { head.append(document.createElement('td')); return; }
+      const th = document.createElement('th');
+      th.scope = 'col';
+      th.textContent = c;
+      head.append(th);
+    });
+    const thead = document.createElement('thead');
+    thead.append(head);
+    tbody = document.createElement('tbody');
+    table.append(colgroup, thead, tbody);
+
+    const body = document.createElement('div');
+    body.className = 'ci-body';
+    body.append(table);
+    card.append(body);
+    cards.push(card);
+  };
+
+  rows.slice(1).forEach((row) => {
+    const cells = [...row.children];
+
+    const legendText = getLegendText(cells);
+    if (legendText !== null) {
+      legendEl = document.createElement('p');
+      legendEl.className = 'ct-legend';
+      renderLegend(legendEl, legendSourceCell(cells), legendText, legendSummaryText(cells));
+      return;
+    }
+
+    const nonEmpty = cells.filter((c) => c.textContent.trim());
+    if (cells.length === 1 || (nonEmpty.length === 1 && cells[0].textContent.trim())) {
+      newCard(cells[0].textContent.trim());
+      return;
+    }
+    if (!tbody) newCard('');
+
+    const tr = document.createElement('tr');
+    const th = document.createElement('th');
+    th.scope = 'row';
+    const tipText = extractTip(cells[0]);
+    th.textContent = cells[0].textContent.trim();
+    if (tipText) {
+      const tipWrapper = buildTooltip(tipText);
+      th.append(tipWrapper);
+      th.setAttribute('aria-describedby', tipWrapper.querySelector('.ct-tip-popover').id);
+    }
+    tr.append(th);
+    cells.slice(1).forEach((c) => tr.append(iesCell(c)));
+    tbody.append(tr);
+  });
+
+  // Footnotes (default content starting with a digit) move into the card whose
+  // values carry the matching <sup>.
+  const section = block.closest('.section');
+  const footPs = section
+    ? [...section.querySelectorAll('.default-content-wrapper p')].filter((p) => /^\s*\d/.test(p.textContent))
+    : [];
+  if (footPs.length && cards.length) {
+    const supEl = cards.map((c) => c.querySelector('sup')).find(Boolean);
+    const target = (supEl && supEl.closest('.ci-card')) || cards[0];
+    const foot = document.createElement('div');
+    foot.className = 'ci-foot';
+    footPs.forEach((p) => foot.append(p)); // append moves the node out of its wrapper
+    target.querySelector('.ci-body').append(foot);
+    section.querySelectorAll('.default-content-wrapper').forEach((w) => {
+      if (!w.textContent.trim() && !w.querySelector('img, picture, svg')) w.remove();
+    });
+  }
+
+  // one swipe moves every card, so the columns stay lined up down the page
+  const bodies = cards.map((c) => c.querySelector('.ci-body'));
+  bodies.forEach((body) => body.addEventListener('scroll', () => {
+    bodies.forEach((other) => {
+      if (Math.abs(other.scrollLeft - body.scrollLeft) > 1) other.scrollLeft = body.scrollLeft;
+    });
+  }, { passive: true }));
+
+  const wrap = document.createElement('div');
+  wrap.className = 'ci-cards';
+  wrap.append(...cards);
+  block.replaceChildren(wrap);
+  if (legendEl) block.append(legendEl);
+}
+
 export default function decorate(block) {
   if (block.classList.contains('simple')) {
     decorateSimple(block); return;
   }
   if (block.classList.contains('features')) {
     decorateFeatures(block); return;
+  }
+  if (block.classList.contains('ies')) {
+    decorateIes(block); return;
   }
 
   const rows = [...block.children];
