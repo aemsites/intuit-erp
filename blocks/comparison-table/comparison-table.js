@@ -26,9 +26,6 @@
  *   - Mobile: the table scrolls horizontally within `.cmp-table-scroll`
  *     (see CSS), matching the original rather than reflowing into cards.
  *
- * Variants: `simple`, `features` and `ies` (see decorateIes) each have their own
- * decorator below; the default table is the fallback.
- *
  * CSS: blocks/comparison-table/comparison-table.css
  */
 
@@ -172,9 +169,9 @@ function legendSourceCell(cells) {
  * Renders legend content into `container`, preserving authored line structure.
  * Each authored paragraph becomes its own line. A leading check glyph is swapped
  * for the same CSS `.ck` checkmark the table body uses, so the key matches the
- * symbols it explains; a leading ✗ becomes `.ct-x` (the `.ies` variant draws it
- * as a cross) and a leading en/em dash becomes `.ct-dash`. Falls back to
- * flat text when the cell has no paragraph children.
+ * symbols it explains; a leading ✗ becomes `.ct-x` and a leading en/em dash
+ * becomes `.ct-dash`. Falls back to flat text when the cell has no paragraph
+ * children.
  * @param {Element} container `.ct-legend` element to fill
  * @param {Element|null} cell authored legend cell
  * @param {string} fallbackText plain-text legend used when `cell` is absent
@@ -468,11 +465,8 @@ function decorateFeatures(block) {
 }
 
 /**
- * Builds a value cell for the `.ies` variant. A leading ✓ is a blue check and a
- * leading ✗ is a cross (any text after either sits beneath), "add-on" is a check
- * over its label, an empty cell or a dash is the orange "not included" dot, a
- * leading ●/•/○ is a dot with its text, and anything else is plain text (authored
- * markup such as `<sup>` kept).
+ * Value cell for the `.ies` variant: ✓ check, ✗ cross (text after either sits
+ * beneath), "add-on" check + label, empty/dash/●•○ dot, else plain text.
  * @param {Element} cell
  * @returns {HTMLTableCellElement}
  */
@@ -517,12 +511,8 @@ function iesCell(cell) {
 }
 
 /**
- * `.ies` variant — grouped comparison on the IES theme: one rounded white card per
- * group (blue band, column headers repeated, label + value rows) on a pepper
- * section. Authored like the default variant (row 1 = ["", col1…], a single-cell
- * row starts a group, a "legend" row, footnotes as default content starting with a
- * digit); values render per {@link iesCell}. Below 768px the card bodies scroll
- * sideways (the band stays put) and scroll together.
+ * `.ies` variant — one card per group, authored like the default variant;
+ * below 768px the card bodies scroll sideways together.
  * @param {Element} block
  */
 function decorateIes(block) {
@@ -601,8 +591,7 @@ function decorateIes(block) {
     tbody.append(tr);
   });
 
-  // Footnotes (default content starting with a digit) move into the card whose
-  // values carry the matching <sup>.
+  // footnotes move into the card whose values carry the <sup>
   const section = block.closest('.section');
   const footPs = section
     ? [...section.querySelectorAll('.default-content-wrapper p')].filter((p) => /^\s*\d/.test(p.textContent))
@@ -619,7 +608,7 @@ function decorateIes(block) {
     });
   }
 
-  // one swipe moves every card, so the columns stay lined up down the page
+  // scroll all card bodies together
   const bodies = cards.map((c) => c.querySelector('.ci-body'));
   bodies.forEach((body) => body.addEventListener('scroll', () => {
     bodies.forEach((other) => {
