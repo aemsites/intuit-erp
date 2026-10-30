@@ -516,6 +516,16 @@ describe('fetchExperience', () => {
     expect(url.pathname).toBe('/api/intuit-orchestrator');
     expect(url.searchParams.get('preview')).toBe('true');
     expect(JSON.parse(url.searchParams.get('previewContext'))).toEqual(ctx);
+    expect(JSON.parse(globalThis.fetch.mock.calls[0][1].body)).toEqual({
+      experimentIds: ['1'],
+      accessPointName: [],
+      context: {
+        ...ctx,
+        mockData: { mockAttributes: ctx },
+        mockExperiments: [],
+      },
+      mockAttributesEnabled: true,
+    });
   });
   it('lets opts.preview win over a stale ?preview=true page query', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('{}', { status: 200 }));
@@ -528,6 +538,8 @@ describe('fetchExperience', () => {
       const url = new URL(globalThis.fetch.mock.calls[0][0], 'http://localhost');
       expect(url.searchParams.get('preview')).toBe('true');
       expect(JSON.parse(url.searchParams.get('previewContext'))).toEqual(edited);
+      expect(JSON.parse(globalThis.fetch.mock.calls[0][1].body).context.mockData.mockAttributes)
+        .toEqual(edited);
     } finally {
       window.history.replaceState({}, '', orig);
     }
@@ -536,14 +548,28 @@ describe('fetchExperience', () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('{}', { status: 200 }));
     const orig = window.location.href;
     try {
-      const previewContext = JSON.stringify({ permalink: '/drafts/amol/accounting' });
+      const attrs = { permalink: '/drafts/amol/accounting', ivid: 'b6c2eeb3-9a89-4d0d-b229-27b5da6d7ac4' };
+      const previewContext = JSON.stringify(attrs);
       window.history.replaceState({}, '', `${orig.split('?')[0]}?preview=true&previewContext=${encodeURIComponent(previewContext)}&utm_source=email&gclid=abc`);
-      await fetchExperience({ experimentIds: ['1'], accessPointNames: [] }, { locale: 'en_US' });
+      const ctx = { locale: 'en_US', deviceType: 'Desktop', ivid: 'kept-from-context' };
+      await fetchExperience({ experimentIds: ['1'], accessPointNames: [] }, ctx);
       const url = new URL(globalThis.fetch.mock.calls[0][0], 'http://localhost');
       expect(url.searchParams.get('preview')).toBe('true');
       expect(url.searchParams.get('previewContext')).toBe(previewContext);
       expect(url.searchParams.has('utm_source')).toBe(false);
       expect(url.searchParams.has('gclid')).toBe(false);
+      expect(JSON.parse(globalThis.fetch.mock.calls[0][1].body)).toEqual({
+        experimentIds: ['1'],
+        accessPointName: [],
+        context: {
+          ...ctx,
+          mockData: {
+            mockAttributes: { ...attrs, locale: 'en_US' },
+          },
+          mockExperiments: [],
+        },
+        mockAttributesEnabled: true,
+      });
     } finally {
       window.history.replaceState({}, '', orig);
     }
