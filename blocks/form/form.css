@@ -473,7 +473,7 @@
 }
 
 .section:has(> .form-wrapper > .form.lead) > .default-content-wrapper p:has(+ p) {
-  margin-bottom: 15.4px;
+  margin-bottom: 14px;
 }
 
 .section:has(> .form-wrapper > .form.lead) > .default-content-wrapper p a {
@@ -482,9 +482,8 @@
   text-decoration: underline;
 }
 
-/* 20px gap minus the 10px margin Marketo sets inline on each column */
 .form-wrapper > .form.lead:not(.hero) .mktoForm > .mktoFormRow {
-  margin-bottom: calc(var(--space-m) - 10px);
+  margin-bottom: var(--space-m);
 }
 
 
