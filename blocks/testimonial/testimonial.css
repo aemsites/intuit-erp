@@ -1175,6 +1175,11 @@
   }
 }
 
+/* .card.feature.blueberry: Blueberry card instead of the default Superblue (opt-in) */
+.testimonial.card.feature.blueberry .testimonial-card {
+  background: #0d0031;
+}
+
 /* .card.feature.ies: IES retheme; optional heading row, carousel for 2+ cards */
 .testimonial.card.feature.ies {
   --ies-muted: #95c2d2;
