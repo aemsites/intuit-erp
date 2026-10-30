@@ -546,7 +546,7 @@ function decorateIes(block) {
     const card = document.createElement('div');
     card.className = 'ci-card';
     if (label) {
-      const band = document.createElement('p');
+      const band = document.createElement('h3');
       band.className = 'ci-band';
       band.textContent = label;
       card.append(band);
