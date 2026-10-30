@@ -603,13 +603,11 @@ export async function fetchExperience({ experimentIds, accessPointNames }, conte
       context,
     };
     // Preview body: keep the real context, add mockAttributes (previewContext + locale).
-    // mockExperiments stays empty until a dedicated preview param exists.
     if (previewActive(opts)) {
       const base = (context && typeof context === 'object' && !Array.isArray(context)) ? context : {};
       body.context = {
         ...base,
         mockData: { mockAttributes: previewMockAttributes(opts, context) },
-        mockExperiments: [],
       };
       body.mockAttributesEnabled = true;
     }

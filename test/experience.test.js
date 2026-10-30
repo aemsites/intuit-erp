@@ -522,7 +522,6 @@ describe('fetchExperience', () => {
       context: {
         ...ctx,
         mockData: { mockAttributes: ctx },
-        mockExperiments: [],
       },
       mockAttributesEnabled: true,
     });
@@ -566,7 +565,6 @@ describe('fetchExperience', () => {
           mockData: {
             mockAttributes: { ...attrs, locale: 'en_US' },
           },
-          mockExperiments: [],
         },
         mockAttributesEnabled: true,
       });
