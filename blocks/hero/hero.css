@@ -1111,3 +1111,56 @@ body.author-guide .hero .hero-copy .hero-lede {
     gap: 80px;
   }
 }
+
+/* .form.lead: One Intuit glow hero + lead card shell */
+.section.hero-container:has(.hero.form.lead) {
+  background: url("./lead-bg.webp") -162.38vw -9.6vw / 480.83vw 291.2vw no-repeat, #0d0031;
+}
+
+.hero.form.lead .hero-grid { gap: var(--space-m); }
+
+.hero.form.lead .hero-copy h1 {
+  font-size: 34px;
+  line-height: 1.1;
+  font-weight: var(--font-weight-medium);
+}
+
+.hero.form.lead .hero-form {
+  padding: var(--space-2xl) var(--space-m);
+  border-radius: 38px;
+  box-shadow: 0 0 16px rgb(135 186 255 / 30%);
+  color: #0d0031;
+}
+
+@media (width >= 768px) {
+  .section.hero-container:has(.hero.form.lead) {
+    background: url("./lead-bg.webp") -71.43vw -1.64vw / 213.06vw 142.43vw no-repeat, #0d0031;
+  }
+
+  .hero.form.lead .hero-grid {
+    gap: var(--space-2xl);
+    padding-block: 60px;
+  }
+
+  .hero.form.lead .hero-copy h1 {
+    font-size: var(--heading-font-size-xxl);
+    line-height: var(--line-height-none);
+  }
+
+  .hero.form.lead .hero-form { padding: var(--space-2xl); }
+}
+
+@media (width >= 1024px) {
+  .section.hero-container:has(.hero.form.lead) {
+    background: url("./lead-bg.webp") 6.13% 71.39% / 195.38% 133.91% no-repeat, #0d0031;
+  }
+
+  .hero.form.lead .hero-grid {
+    grid-template-columns: minmax(0, 600px) minmax(0, 555px);
+    justify-content: space-between;
+    padding-block: var(--space-5xl);
+  }
+
+  .hero.form.lead .hero-copy h1 { font-size: 60px; }
+
+}

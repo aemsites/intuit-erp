@@ -115,6 +115,94 @@
   .stat-band:is(.dark, .light) .stat-desc { width: auto; }
 }
 
+/* --- .stat-band.dark.blueberry: One Intuit stats band (Figma 7918-59027 / 7967-69004) --- */
+.section.stat-band-container:has(.stat-band.dark.blueberry) {
+  --blueberry-bg: #0d0031;
+  --blueberry-ink: #fff;
+  --blueberry-stat: var(--agave-band);
+  --blueberry-section-py: 60px;
+  --blueberry-gutter: var(--space-m);
+  --blueberry-gap: var(--space-2xl);
+  --blueberry-title-size: 34px;
+  --blueberry-title-lh: var(--line-height-xs);
+  --blueberry-grid-cols: 1fr;
+  --blueberry-grid-gap: 40px;
+  --blueberry-num-size: var(--heading-font-size-xxl);
+  --blueberry-num-lh: var(--line-height-none);
+  --blueberry-desc-size: var(--body-font-size-m);
+  --blueberry-desc-lh: var(--line-height-s);
+
+  background: var(--blueberry-bg);
+  padding: var(--blueberry-section-py) 0;
+}
+
+.section.stat-band-container:has(.stat-band.dark.blueberry) > div { padding-inline: var(--blueberry-gutter); }
+.section.stat-band-container:has(.stat-band.dark.blueberry) > .default-content-wrapper { padding-block: 0; }
+
+.stat-band.dark.blueberry { display: flex; flex-direction: column; gap: var(--blueberry-gap); }
+
+.stat-band-container:has(.stat-band.dark.blueberry) .default-content-wrapper :is(h1, h2, h3, h4, h5, h6),
+.stat-band.dark.blueberry .stats-title :is(h1, h2, h3, h4, h5, h6) {
+  font-size: var(--blueberry-title-size); line-height: var(--blueberry-title-lh); font-weight: var(--font-weight-medium);
+  color: var(--blueberry-ink); text-align: center; margin: 0;
+}
+
+.stat-band-container:has(.stat-band.dark.blueberry) .default-content-wrapper :is(h1, h2, h3, h4, h5, h6) { margin-bottom: var(--blueberry-gap); }
+.stat-band.dark.blueberry .stats-title { max-width: 1130px; margin-inline: auto; }
+
+.stat-band.dark.blueberry .stats-grid {
+  grid-template-columns: var(--blueberry-grid-cols); gap: var(--blueberry-grid-gap); width: 100%; max-width: 1132px; margin-inline: auto;
+}
+
+.stat-band.dark.blueberry .stat { text-align: left; }
+.stat-band.dark.blueberry .stat-head { display: flex; flex-direction: column; gap: var(--space-2xs); }
+
+.stat-band.dark.blueberry .stat-num {
+  font-size: var(--blueberry-num-size); line-height: var(--blueberry-num-lh); font-weight: var(--font-weight-normal);
+  letter-spacing: 0; color: var(--blueberry-stat); margin: 0;
+}
+
+.stat-band.dark.blueberry .stat-desc {
+  width: auto; font-size: var(--blueberry-desc-size); line-height: var(--blueberry-desc-lh); color: var(--blueberry-ink); margin: 0;
+}
+
+.stat-band-container:has(.stat-band.dark.blueberry) .default-content-wrapper p,
+.stat-band.dark.blueberry .stats-foot,
+.stat-band.dark.blueberry .stats-foot p {
+  font-size: var(--body-font-size-xxs); line-height: var(--line-height-m); font-weight: var(--font-weight-normal);
+  color: var(--blueberry-ink); text-align: center; margin: 0;
+}
+
+.stat-band-container:has(.stat-band.dark.blueberry) .default-content-wrapper p { margin-top: var(--blueberry-gap); }
+.stat-band.dark.blueberry .stats-foot { max-width: 1210px; margin-inline: auto; }
+.stat-band.dark.blueberry .stats-foot p + p { margin-top: var(--space-2xs); }
+
+/* tablet: two-up grid, third stat wraps under the first (Figma 8129-63821) */
+@media (768px <= width < 1024px) {
+  .section.stat-band-container:has(.stat-band.dark.blueberry) {
+    --blueberry-gutter: var(--space-2xl);
+    --blueberry-grid-cols: repeat(2, 1fr);
+    --blueberry-grid-gap: var(--space-2xl);
+    --blueberry-desc-size: var(--body-font-size-m);
+    --blueberry-desc-lh: var(--line-height-m);
+  }
+}
+
+@media (width >= 1024px) {
+  .section.stat-band-container:has(.stat-band.dark.blueberry) {
+    --blueberry-section-py: var(--space-5xl);
+    --blueberry-gutter: var(--space-2xl);
+    --blueberry-title-size: var(--heading-font-size-xxl);
+    --blueberry-title-lh: var(--line-height-none);
+    --blueberry-grid-cols: repeat(3, 1fr);
+    --blueberry-grid-gap: 78px;
+    --blueberry-num-size: 60px;
+    --blueberry-num-lh: 1.1;
+    --blueberry-desc-size: var(--body-font-size-m);
+    --blueberry-desc-lh: var(--line-height-m);
+  }
+}
+
 /* --- .stat-band.simple: one bordered white box, columns split by dividers --- */
 .stat-band.simple .stats-grid {
   display: grid;
