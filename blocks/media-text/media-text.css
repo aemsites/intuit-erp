@@ -1094,6 +1094,45 @@
   .media-text.checklist .media-visual img { border-radius: 38px; }
 }
 
+/* .checklist.cta: Superblue pill below the checklist
+   (Figma: desktop 7918-61065, mobile 8025-75568 / 8050-100835) */
+.media-text.checklist.cta .media-copy .media-body {
+  margin-bottom: 0;
+  padding-bottom: var(--space-s);
+}
+
+.media-text.checklist.cta .media-copy .button-wrapper { margin: 30px 0 0; }
+
+.media-text.checklist.cta .media-copy .button-wrapper a.button {
+  min-width: 100px;
+  min-height: var(--space-3xl);
+  padding: 0 42px;
+  border: 2px solid var(--info);
+  border-radius: 999px;
+  background-color: var(--info);
+  color: #fff;
+  font-size: var(--body-font-size-xs);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.1;
+}
+
+.media-text.checklist.cta .media-copy .button-wrapper a.button:hover,
+.media-text.checklist.cta .media-copy .button-wrapper a.button:focus-visible {
+  border-color: #1b5be0;
+  background-color: #1b5be0;
+  color: #fff;
+}
+
+@media (width >= 1024px) {
+  .media-text.checklist.cta .media-copy .media-body { padding-bottom: var(--space-m); }
+  .media-text.checklist.cta .media-copy .button-wrapper { margin-top: var(--space-2xl); }
+
+  .media-text.checklist.cta .media-copy .button-wrapper a.button {
+    font-size: var(--body-font-size-m);
+    line-height: var(--line-height-m);
+  }
+}
+
 /* .compare.ies: One Intuit comparison cards (Figma 22428-8494 / 22408-21563 / 22408-20600) */
 .section.media-text-container:has(.media-text.compare.ies) {
   background: #0d0031;
