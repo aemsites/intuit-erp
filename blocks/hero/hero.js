@@ -145,6 +145,87 @@ function buildTeaserVideo(srcs, posters) {
   return media;
 }
 
+// jsdom and some browsers return undefined or throw from play() instead of a promise
+function tryPlay(video) {
+  try {
+    return Promise.resolve(video.play());
+  } catch (e) {
+    return Promise.reject(e);
+  }
+}
+
+/**
+ * Full-bleed looping background video for `.video-bg`, layered over the authored
+ * static fallback. Reduced motion, a missing source, blocked autoplay and load
+ * errors all leave the fallback showing.
+ * @param {string[]} srcs mp4 sources (desktop, then < 1024px)
+ * @param {Element[]} fallbacks authored pictures (desktop, then < 1024px)
+ * @returns {{bg: HTMLDivElement, toggle: HTMLButtonElement|null, start: Function}}
+ */
+function buildBackgroundVideo(srcs, fallbacks) {
+  const compact = window.matchMedia('(width < 1024px)').matches;
+  const bg = document.createElement('div');
+  bg.className = 'hero-bg';
+  bg.setAttribute('aria-hidden', 'true');
+
+  const fallback = (compact && fallbacks[1]) || fallbacks[0];
+  if (fallback) {
+    fallback.classList.add('hero-bg-fallback');
+    bg.append(fallback);
+  }
+
+  const src = (compact && srcs[1]) || srcs[0];
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!src || reduceMotion) {
+    bg.classList.add('is-fallback');
+    return { bg, toggle: null, start: () => {} };
+  }
+
+  const video = document.createElement('video');
+  video.className = 'hero-bg-video';
+  video.muted = true;
+  video.setAttribute('muted', '');
+  video.playsInline = true;
+  video.setAttribute('playsinline', '');
+  video.loop = true;
+  video.autoplay = true;
+  video.preload = 'auto';
+  video.tabIndex = -1;
+  video.src = src;
+  bg.append(video);
+
+  const toggle = document.createElement('button');
+  toggle.type = 'button';
+  toggle.className = 'hero-bg-toggle';
+  const syncToggle = () => {
+    toggle.setAttribute('aria-label', `${video.paused ? 'Play' : 'Pause'} background video`);
+    toggle.dataset.state = video.paused ? 'paused' : 'playing';
+  };
+  const play = () => tryPlay(video).catch((e) => {
+    // eslint-disable-next-line no-console
+    console.debug('hero: background video playback blocked', e);
+    bg.classList.add('is-fallback');
+    syncToggle();
+  });
+
+  toggle.addEventListener('click', () => {
+    if (video.paused) play(); else video.pause();
+  });
+  video.addEventListener('play', syncToggle);
+  video.addEventListener('pause', syncToggle);
+  video.addEventListener('playing', () => bg.classList.remove('is-fallback'));
+  video.addEventListener('error', () => {
+    // eslint-disable-next-line no-console
+    console.warn('hero: background video failed to load', src);
+    bg.classList.add('is-fallback');
+    video.remove();
+    toggle.remove();
+  });
+  syncToggle();
+
+  return { bg, toggle, start: play };
+}
+
 async function leadCard(path) {
   const wrap = document.createElement('div');
   wrap.className = 'hero-form';
@@ -303,6 +384,7 @@ export default async function decorate(block) {
   const isGradient = block.classList.contains('gradient');
   const isVideoLink = block.classList.contains('video-link');
   const isIesVideo = block.classList.contains('ies') && block.classList.contains('video');
+  const isVideoBg = block.classList.contains('video-bg');
   const rows = [...block.children];
 
   if (block.classList.contains('ies') && block.classList.contains('arcs')) extendArcsBackground(block);
@@ -338,6 +420,18 @@ export default async function decorate(block) {
     });
   }
 
+  // .video-bg: authored images are the static fallbacks (desktop, then < 1024px)
+  const fallbackEls = [];
+  if (isVideoBg) {
+    copy.querySelectorAll('img').forEach((img) => {
+      const el = img.closest('picture') || img;
+      const host = el.parentElement;
+      el.remove();
+      fallbackEls.push(el);
+      if (host !== copy && !host.textContent.trim() && !host.querySelector('img, picture')) host.remove();
+    });
+  }
+
   const rawMedia = copy.querySelector('picture, img');
   let mediaEl = null;
   if (rawMedia) {
@@ -363,11 +457,13 @@ export default async function decorate(block) {
   let videoSrc = null;
   const videoSrcs = [];
   ctaParas.forEach((p) => {
-    const a = [...p.querySelectorAll('a')].find((x) => /\.mp4(?:$|\?)/i.test(x.getAttribute('href') || ''));
-    if (!a) return;
-    videoSrc = videoSrc || a.getAttribute('href');
-    videoSrcs.push(a.getAttribute('href'));
-    a.remove();
+    const links = [...p.querySelectorAll('a')].filter((x) => /\.mp4(?:$|\?)/i.test(x.getAttribute('href') || ''));
+    if (!links.length) return;
+    links.forEach((a) => {
+      videoSrc = videoSrc || a.getAttribute('href');
+      videoSrcs.push(a.getAttribute('href'));
+      a.remove();
+    });
     if (!p.textContent.trim() && !p.querySelector('a, img, picture')) p.remove();
   });
 
@@ -444,7 +540,12 @@ export default async function decorate(block) {
 
   block.replaceChildren(grid);
 
-  if (videoSrc && !isIesVideo) {
+  if (isVideoBg) {
+    const { bg, toggle, start } = buildBackgroundVideo(videoSrcs, fallbackEls);
+    block.prepend(bg);
+    if (toggle) block.append(toggle);
+    start();
+  } else if (videoSrc && !isIesVideo) {
     const figure = document.createElement('div');
     figure.className = 'hero-video';
 
