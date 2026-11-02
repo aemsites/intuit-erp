@@ -52,6 +52,20 @@ const embedPdf = (url, title) => `<div class="pdf-frame">
     </div>
     <p class="embed-fallback"><a href="${url.href}" target="_blank" rel="noopener">${title || 'Open the PDF'}</a></p>`;
 
+const embedVev = (url) => {
+  const containerId = `vev-embed-${Math.random().toString(36).substr(2, 9)}`;
+  return `<div id="${containerId}" class="vev-embed-container"></div>
+    <script>
+      (function() {
+        const container = document.getElementById('${containerId}');
+        const script = document.createElement('script');
+        script.src = '${url.href}';
+        script.async = true;
+        container.appendChild(script);
+      })();
+    </script>`;
+};
+
 const getDefaultEmbed = (url) => `<div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;">
     <iframe src="${url.href}" style="border: 0; top: 0; left: 0; width: 100%; height: 100%; position: absolute;" allowfullscreen=""
       scrolling="no" allow="encrypted-media" title="Content from ${url.hostname}" loading="lazy">
@@ -62,6 +76,10 @@ const loadEmbed = (block, link, title) => {
   if (block.classList.contains('embed-is-loaded')) return;
 
   const EMBEDS_CONFIG = [
+    {
+      match: ['embed.vev.page', 'vev'],
+      embed: embedVev,
+    },
     {
       match: ['datawrapper.dwcdn.net', 'datawrapper'],
       embed: embedDatawrapper,
