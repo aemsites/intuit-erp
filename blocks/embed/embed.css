@@ -76,3 +76,12 @@
 @media (width >= 768px) {
   .embed.embed-pdf .pdf-frame { aspect-ratio: 8.5 / 11; }
 }
+
+/* ---- embed-vev ---- */
+.embed .vev-embed-container {
+  display: block;
+}
+
+.embed:has(.vev-embed-container) {
+  max-width: none;
+}
