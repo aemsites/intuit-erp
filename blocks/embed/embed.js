@@ -54,12 +54,13 @@ const embedPdf = (url, title) => `<div class="pdf-frame">
 
 const embedVev = (url) => {
   const containerId = `vev-embed-${Math.random().toString(36).substr(2, 9)}`;
+  const cleanUrl = decodeURIComponent(url.href);
   return `<div id="${containerId}" class="vev-embed-container"></div>
     <script>
       (function() {
         const container = document.getElementById('${containerId}');
         const script = document.createElement('script');
-        script.src = '${url.href}';
+        script.src = '${cleanUrl}';
         script.async = true;
         container.appendChild(script);
       })();
