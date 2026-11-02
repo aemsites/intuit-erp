@@ -281,3 +281,142 @@
     }
   }
 }
+
+/* .ies theme */
+.vertical-scroll-carousel.ies .vsc-heading-wrap { font-size: var(--heading-font-size-m); }
+
+.vertical-scroll-carousel.ies .vsc-heading,
+.vertical-scroll-carousel.ies .vsc-body {
+  color: #0d0031;
+}
+
+.vertical-scroll-carousel.ies .vsc-media {
+  border-radius: 30px;
+  background: var(--agave-band);
+}
+
+.vertical-scroll-carousel.ies .vsc-media img,
+.vertical-scroll-carousel.ies .vsc-media video {
+  object-fit: contain;
+}
+
+@media (width >= 768px) {
+  .vertical-scroll-carousel.ies .vsc-media { border-radius: 40px; }
+}
+
+@media (width >= 1024px) {
+  .vertical-scroll-carousel.ies {
+    grid-template-columns: 515fr 668fr;
+  }
+
+  .vertical-scroll-carousel.ies .vsc-heading-wrap { font-size: 28px; }
+
+  .vertical-scroll-carousel.ies .vsc-heading { color: #5d686f; }
+
+  .vertical-scroll-carousel.ies .vsc-item:hover .vsc-heading,
+  .vertical-scroll-carousel.ies .vsc-item.is-active .vsc-heading {
+    color: #0d0031;
+  }
+
+  .vertical-scroll-carousel.ies .vsc-item.is-active { border-color: #c9d1d6; }
+
+  .vertical-scroll-carousel.ies .vsc-item.is-active::before { background: var(--info); }
+
+  .vertical-scroll-carousel.ies .vsc-stage .vsc-media { border-radius: 48px; }
+}
+
+/* .ies header */
+.vertical-scroll-carousel.ies .vsc-header {
+  order: -1;
+  margin: 0 auto;
+  padding-block: var(--space-m);
+  text-align: center;
+  color: #0d0031;
+}
+
+.vertical-scroll-carousel.ies .vsc-eyebrow {
+  margin: 0 0 var(--space-2xs);
+  font-size: var(--body-font-size-xxs);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+  letter-spacing: 1.56px;
+  text-transform: uppercase;
+}
+
+.vertical-scroll-carousel.ies .vsc-title {
+  max-width: 920px;
+  margin: 0 auto;
+  font-size: 32px;
+  font-weight: var(--font-weight-medium);
+  line-height: 1.1;
+  color: inherit;
+}
+
+.vertical-scroll-carousel.ies .vsc-lede {
+  max-width: 640px;
+  margin: var(--space-s) auto 0;
+  font-size: var(--body-font-size-m);
+  line-height: var(--line-height-m);
+}
+
+@media (width >= 768px) {
+  .vertical-scroll-carousel.ies .vsc-eyebrow {
+    margin-bottom: var(--space-s);
+    font-size: var(--body-font-size-xs);
+    letter-spacing: 1.82px;
+  }
+
+  .vertical-scroll-carousel.ies .vsc-title { font-size: 40px; }
+
+  .vertical-scroll-carousel.ies .vsc-lede {
+    margin-top: var(--space-m);
+    font-size: var(--heading-font-size-xs);
+  }
+}
+
+@media (width >= 1024px) {
+  .vertical-scroll-carousel.ies .vsc-header {
+    grid-column: 1 / -1;
+    margin-bottom: var(--space-2xl);
+    padding-block: 0;
+  }
+
+  .vertical-scroll-carousel.ies .vsc-title { font-size: var(--heading-font-size-xxl); }
+  .vertical-scroll-carousel.ies .vsc-lede { font-size: var(--body-font-size-l); line-height: var(--line-height-s); }
+}
+
+/* .ies below 1024px: tab spacing */
+@media (width < 1024px) {
+  .vertical-scroll-carousel.ies { gap: 0; }
+
+  .vertical-scroll-carousel.ies .vsc-item {
+    gap: var(--space-s);
+    margin-top: var(--space-2xl);
+    padding-top: var(--space-m);
+  }
+
+  .vertical-scroll-carousel.ies:not(:has(.vsc-header)) .vsc-item:first-child { margin-top: 0; }
+
+  .vertical-scroll-carousel.ies .vsc-item:first-child { padding-top: 0; }
+
+  .vertical-scroll-carousel.ies .vsc-media { margin: var(--space-xl) 0 var(--space-m); }
+  .vertical-scroll-carousel.ies .vsc-stage .vsc-media:first-child { margin-bottom: 0; }
+}
+
+/* .ies mobile */
+@media (width < 768px) {
+  .vertical-scroll-carousel.ies:has(.vsc-header) .vsc-item:first-child { margin-top: var(--space-m); }
+
+  .vertical-scroll-carousel.ies .vsc-stage .vsc-media:first-child { margin-bottom: var(--space-m); }
+}
+
+/* .ies tablet */
+@media (768px <= width < 1024px) {
+  .vertical-scroll-carousel.ies .vsc-item:first-child { padding-top: var(--space-m); }
+  .vertical-scroll-carousel.ies .vsc-stage .vsc-media:first-child { margin-bottom: var(--space-m); }
+}
+
+/* .ies below 1024px: last tab image */
+@media (width < 1024px) {
+  .vertical-scroll-carousel.ies .vsc-stage .vsc-media:last-child { margin-bottom: var(--space-m); }
+}

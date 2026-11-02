@@ -203,6 +203,13 @@
   }
 }
 
+/* .stat-band.white: .dark.blueberry skin on white */
+.section.stat-band-container:has(.stat-band.dark.blueberry.white) {
+  --blueberry-bg: var(--background-color);
+  --blueberry-ink: #0d0031;
+  --blueberry-stat: var(--info);
+}
+
 /* --- .stat-band.simple: one bordered white box, columns split by dividers --- */
 .stat-band.simple .stats-grid {
   display: grid;
