@@ -49,6 +49,8 @@ export async function submitChiliPiper(router, lead) {
     Country: lead.Country || '',
     Number_of_Employees__c: lead.NumberOfEmployees || '',
     Language: lead.Language__c || '',
+    Industry: lead.Industry || '',
+    PostalCode: lead.PostalCode || '',
   };
   const cfg = await chilipiperConfig();
   const subdomain = cfg['chilipiper.subdomain'];
