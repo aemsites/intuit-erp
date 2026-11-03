@@ -6,9 +6,9 @@ const HEADINGS = 'h1,h2,h3,h4,h5,h6,p';
 const POSITIONAL_CLASS_RE = new RegExp(
   `^(h[1-6]|p)-([0-9]+)-(?:size-(?:${SIZE_PATTERN})|as-(?:h[1-6]|p))$`,
 );
-// Tag-wide paragraph sizes are written as the bare body class (`body-4`); positional ones keep
-// their tag (`p-1-size-body-4`). The older `p-size-body-4` form is still read.
-const BODY_CLASS_RE = /^body-[1-4]$/;
+// Tag-wide paragraph sizes are written as the bare body class (`body-l`); positional ones keep
+// their tag (`p-1-size-body-l`). The older `p-size-body-l` form is still read.
+const BODY_CLASS_RE = /^body-(?:l|m|s|xs|xxs)$/;
 const tagWideClass = (tag, size) => (tag === 'p' && BODY_CLASS_RE.test(size)
   ? size : `${tag}-size-${size}`);
 const tagWideSize = (tag, token) => (tag === 'p' && BODY_CLASS_RE.test(token) ? token
@@ -300,9 +300,9 @@ function applySizes(doc, targets, size) {
 }
 
 // Any size for `tag`, tag-wide (`h3-size-xs`) or positional (`h3-2-size-xs`, `h3-2-as-h2`).
-// Paragraphs also own the bare tag-wide body class (`body-4`).
+// Paragraphs also own the bare tag-wide body class (`body-l`).
 const tagStyleRe = (tag) => new RegExp(
-  `^${tag}(?:-[0-9]+)?-(?:size|as)-${tag === 'p' ? '|^body-[1-4]$' : ''}`,
+  `^${tag}(?:-[0-9]+)?-(?:size|as)-${tag === 'p' ? '|^body-(?:l|m|s|xs|xxs)$' : ''}`,
 );
 
 // One tag-wide class per container replaces the tag's existing sizes, so applying again or
@@ -332,7 +332,7 @@ function applyTagSize(doc, targets, size) {
 }
 
 // Every size for any tag, tag-wide or positional.
-const ANY_STYLE_RE = /^(?:(?:h[1-6]|p)(?:-[0-9]+)?-(?:size|as)-|body-[1-4]$)/;
+const ANY_STYLE_RE = /^(?:(?:h[1-6]|p)(?:-[0-9]+)?-(?:size|as)-|body-(?:l|m|s|xs|xxs)$)/;
 
 // Clears every size from the targets' blocks and, for default content, the section style row.
 function clearSizes(doc, targets) {

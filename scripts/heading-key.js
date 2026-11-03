@@ -66,12 +66,12 @@ export const parseHeadingKey = (key) => {
 
 export const SIZES = ['xs', 's', 'm', 'l', 'xl', 'xxl'];
 // Paragraphs use the body scale instead of the heading sizes.
-export const BODY_SIZES = ['body-1', 'body-2', 'body-3', 'body-4'];
+export const BODY_SIZES = ['body-l', 'body-m', 'body-s', 'body-xs', 'body-xxs'];
 export const sizesFor = (tag) => (tag.toLowerCase() === 'p' ? BODY_SIZES : SIZES);
 // Alternation for every size a token can carry, for building size class patterns.
-export const SIZE_PATTERN = 'xxl|xl|l|m|s|xs|body-[1-4]';
-// Body sizes are applied as-is (`body-1`); headings use their own tag (`h3-size-xl`).
-export const sizeClass = (el, size) => (/^body-[1-4]$/.test(size)
+export const SIZE_PATTERN = 'xxl|xl|l|m|s|xs|body-(?:l|m|s|xs|xxs)';
+// Body sizes are applied as-is (`body-l`); headings use their own tag (`h3-size-xl`).
+export const sizeClass = (el, size) => (/^body-(?:l|m|s|xs|xxs)$/.test(size)
   ? size : `${el.tagName.toLowerCase()}-size-${size}`);
 
 // Also accepts the legacy `h2sizexxl` form and normalizes it to `h2-size-xxl`.
