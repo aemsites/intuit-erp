@@ -28,6 +28,13 @@ import { createOptimizedPicture } from '../../scripts/aem.js';
 import { trackAs } from '../../scripts/tracking.js';
 
 const SCROLL_SHAPE_CLASSES = ['carousel', 'boxed'];
+const CARD_TONES = {
+  'light-blue': '#d6e8f8',
+  blueberry: '#0d0031',
+  peach: '#ffcec4',
+  brown: '#883f1c',
+};
+const HEX_COLOR_RE = /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i;
 const CARD_BG_COLORS = ['sky', 'agave', 'tofu', 'sky-blue', 'light-gray', 'wintermint', 'navy'];
 
 // The scroll carousel's prev/next arrows report prod's `rw_carousel_control` object with a
@@ -231,10 +238,30 @@ function takeTitleRow(block) {
   return title;
 }
 
+function brightness(hex) {
+  const h = hex.length === 4 ? [...hex.slice(1)].map((c) => c + c).join('') : hex.slice(1);
+  const [r, g, b] = [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16));
+  return (r * 299 + g * 587 + b * 114) / 1000;
+}
+
+function applyCardColors(block) {
+  [...block.children].forEach((card) => {
+    const cell = card.children[2];
+    const value = cell && !cell.querySelector('img, picture, a') ? cell.textContent.trim().toLowerCase() : '';
+    const color = CARD_TONES[value] || (HEX_COLOR_RE.test(value) ? value : '');
+    if (color) cell.remove();
+    const bg = color || CARD_TONES['light-blue'];
+    card.classList.add('cards-card-colored');
+    card.style.setProperty('--card-bg', bg);
+    if (brightness(bg) < 140) card.classList.add('cards-card-dark');
+  });
+}
+
 export default function decorate(block) {
   const isIcons = block.classList.contains('icons') || block.classList.contains('ies');
   const isStat = block.classList.contains('tinted') && block.classList.contains('stat');
   const sectionTitle = isStat ? takeTitleRow(block) : null;
+  if (block.classList.contains('icons') && block.classList.contains('colors')) applyCardColors(block);
 
   [...block.children].forEach((row) => {
     [...row.children].forEach((cell) => {

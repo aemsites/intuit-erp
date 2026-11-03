@@ -48,6 +48,11 @@ Assets:
   a looping video below the copy with a pause/resume button.
 - `gradient`: gradient section background.
 - `video-link`: the first YouTube/Vimeo link becomes a text link with a duration.
+- `ies-gradient`: Blueberry hero on a blue/lavender gradient (CSS, so a section background image
+  still overrides it). Copy left and media right from 1024px; a left-aligned stack below. Images: the
+  media (dashboard stack) can sit in its own row; an image in the same cell as the headline,
+  above it, is the product lockup (e.g. "intuit intelligence"). Without that image, a text
+  eyebrow paragraph is used. Pair with section style `ies, dark-background`.
 - `ies`: Blueberry IES styling; combine with `arcs` or `glow` for the backgrounds.
 - `ies video`: `.mp4` links (desktop, then below 1024px) play a 5-second teaser tile with a
   play button; images are its posters.

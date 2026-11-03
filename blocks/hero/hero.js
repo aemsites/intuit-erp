@@ -375,7 +375,17 @@ function extendArcsBackground(block) {
   }).observe(tail);
 }
 
+function detachMedia(el, copy) {
+  const media = el.closest('picture') || el;
+  const host = media.parentElement;
+  media.remove();
+  if (host !== copy && !host.textContent.trim() && !host.querySelector('img, picture')) host.remove();
+  return media;
+}
+
 export default async function decorate(block) {
+  const isIesGradient = block.classList.contains('ies-gradient');
+  if (isIesGradient) block.classList.add('ies');
   const isForm = block.classList.contains('form');
   // .centered is a single-column hero (ai-agents): the media cell is a small
   // product lockup that belongs ABOVE the headline as a logo/eyebrow, not in a
@@ -405,6 +415,15 @@ export default async function decorate(block) {
       formFragment = cellText;
       return;
     }
+    if (isIesGradient) {
+      const cellHeading = cell.querySelector('h1, h2, h3');
+      if (cellHeading) {
+        cell.querySelectorAll('img').forEach((img) => {
+          // eslint-disable-next-line no-bitwise -- compareDocumentPosition returns a bitmask
+          if (img.compareDocumentPosition(cellHeading) & Node.DOCUMENT_POSITION_FOLLOWING) img.dataset.lockup = '';
+        });
+      }
+    }
     [...cell.childNodes].forEach((n) => copy.append(n));
   });
 
@@ -430,6 +449,15 @@ export default async function decorate(block) {
       fallbackEls.push(el);
       if (host !== copy && !host.textContent.trim() && !host.querySelector('img, picture')) host.remove();
     });
+  }
+
+  let lockupEl = null;
+  if (isIesGradient) {
+    const lockupImg = copy.querySelector('img[data-lockup]');
+    if (lockupImg && copy.querySelectorAll('img').length > 1) {
+      delete lockupImg.dataset.lockup;
+      lockupEl = detachMedia(lockupImg, copy);
+    }
   }
 
   const rawMedia = copy.querySelector('picture, img');
@@ -500,6 +528,13 @@ export default async function decorate(block) {
       ctas[0].replaceWith(videoLink);
     }
     ctas.slice(1).forEach((p) => p.remove());
+  }
+
+  if (lockupEl) {
+    const lockup = document.createElement('div');
+    lockup.className = 'hero-lockup';
+    lockup.append(lockupEl);
+    copy.prepend(lockup);
   }
 
   const grid = document.createElement('div');

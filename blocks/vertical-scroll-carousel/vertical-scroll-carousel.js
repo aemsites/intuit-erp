@@ -109,8 +109,31 @@ export function activate(elements, index) {
   elements.forEach((el, i) => el.classList.toggle('is-active', i === index));
 }
 
+function takeHeader(rows) {
+  const cells = rows[0] ? [...rows[0].children] : [];
+  const [cell] = cells;
+  if (cells.length !== 1 || cell.querySelector('picture, img, video, a[href$=".mp4"]')
+    || !cell.querySelector('h1, h2, h3, h4, h5, h6')) return null;
+
+  const header = document.createElement('div');
+  header.className = 'vsc-header';
+  let seenHeading = false;
+  [...cell.children].forEach((node) => {
+    if (/^H[1-6]$/.test(node.tagName)) {
+      seenHeading = true;
+      node.classList.add('vsc-title');
+    } else if (node.tagName === 'P' && node.textContent.trim()) {
+      node.classList.add(seenHeading ? 'vsc-lede' : 'vsc-eyebrow');
+    }
+    header.append(node);
+  });
+  rows.shift();
+  return header;
+}
+
 export default function decorate(block) {
   const rows = [...block.children];
+  const header = block.classList.contains('ies') ? takeHeader(rows) : null;
 
   const list = document.createElement('div');
   list.className = 'vsc-list';
@@ -140,6 +163,7 @@ export default function decorate(block) {
   });
 
   block.replaceChildren(list);
+  if (header) block.prepend(header);
   // only render the shared media stage if at least one row provided media
   const hasMedia = medias.some((m) => m.childNodes.length);
   if (hasMedia) block.append(stage);

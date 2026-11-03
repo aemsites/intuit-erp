@@ -311,6 +311,7 @@ function buildAutoCarousel(block, track) {
 }
 
 export default function decorate(block) {
+  if (block.classList.contains('white')) block.classList.add('dark', 'blueberry');
   const rows = [...block.children];
 
   if (block.classList.contains('glance')) {

@@ -1276,3 +1276,117 @@ body.author-guide .hero .hero-copy .hero-lede {
 @media (prefers-reduced-motion: reduce) {
   .hero.video-bg .hero-bg-video { display: none; }
 }
+
+.section.hero-container:has(.hero.ies.ies-gradient) {
+  background:
+    radial-gradient(70% 90% at 8% 0%, #b9a9e0 0%, #2f6dff 32%, rgb(47 109 255 / 0%) 72%),
+    radial-gradient(45% 70% at 100% 0%, rgb(47 109 255 / 85%) 0%, rgb(47 109 255 / 0%) 70%),
+    linear-gradient(180deg, #111a6e 0%, #0d0031 100%);
+}
+
+.hero.ies-gradient .hero-grid {
+  gap: var(--space-2xl);
+  padding-top: var(--space-2xl);
+  padding-bottom: var(--space-2xl);
+}
+
+.hero.ies-gradient .hero-lockup { margin-bottom: var(--space-s); }
+
+.hero.ies-gradient .hero-lockup img {
+  display: block;
+  width: auto;
+  height: 22px;
+}
+
+.hero.ies-gradient .hero-copy h1 {
+  max-width: none;
+  margin-bottom: var(--space-s);
+  font-size: 44px;
+  line-height: 1.1;
+}
+
+.hero.ies-gradient .hero-copy .hero-lede {
+  max-width: none;
+  margin: 0 0 var(--space-2xl);
+  font-size: var(--body-font-size-m);
+  line-height: var(--line-height-m);
+}
+
+.hero.ies-gradient .hero-actions {
+  gap: var(--space-m);
+  padding-bottom: 0;
+}
+
+.section.hero-container:has(.hero.ies-gradient) :is(a, button).button {
+  width: 100%;
+  font-size: var(--body-font-size-m);
+  line-height: 1.1;
+}
+
+.section.hero-container:has(.hero.ies-gradient) :is(a, button).button.primary {
+  border-color: var(--info);
+  background-color: var(--info);
+  color: var(--background-color);
+}
+
+.section.hero-container:has(.hero.ies-gradient) :is(a, button).button.primary:hover,
+.section.hero-container:has(.hero.ies-gradient) :is(a, button).button.primary:focus-visible {
+  border-color: #1a56d6;
+  background-color: #1a56d6;
+  color: var(--background-color);
+}
+
+.section.hero-container:has(.hero.ies-gradient) :is(a, button).button.secondary {
+  border: 2px solid var(--background-color);
+  background-color: transparent;
+  color: var(--background-color);
+}
+
+.section.hero-container:has(.hero.ies-gradient) :is(a, button).button.secondary:hover,
+.section.hero-container:has(.hero.ies-gradient) :is(a, button).button.secondary:focus-visible {
+  background-color: var(--background-color);
+  color: #0d0031;
+}
+
+.hero.ies-gradient .hero-media img {
+  display: block;
+  width: 100%;
+  max-height: none;
+  border-radius: 0;
+}
+
+@media (width >= 768px) {
+  .hero.ies-gradient .hero-grid {
+    padding-top: 60px;
+    padding-bottom: 60px;
+  }
+
+  .hero.ies-gradient .hero-lockup img { height: 24px; }
+  .hero.ies-gradient .hero-copy h1 { font-size: var(--heading-font-size-xxl); line-height: 1.05; }
+
+  .hero.ies-gradient .hero-actions {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .section.hero-container:has(.hero.ies-gradient) :is(a, button).button {
+    width: auto;
+    padding-inline: 42px;
+  }
+}
+
+@media (width >= 1024px) {
+  .hero.ies-gradient .hero-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-5xl);
+    padding-block: var(--space-5xl);
+  }
+
+  .hero.ies-gradient .hero-copy h1 { font-size: 56px; line-height: 1.1; }
+
+  .hero.ies-gradient .hero-copy .hero-lede {
+    max-width: 600px;
+    font-size: var(--heading-font-size-xs);
+    line-height: var(--line-height-s);
+  }
+}
