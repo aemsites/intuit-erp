@@ -111,7 +111,6 @@ export function activate(elements, index) {
   elements.forEach((el, i) => el.classList.toggle('is-active', i === index));
 }
 
-// `.ies`: builds the header from a leading single-cell row (removed from `rows`), or null
 function takeHeader(rows) {
   const cells = rows[0] ? [...rows[0].children] : [];
   const [cell] = cells;

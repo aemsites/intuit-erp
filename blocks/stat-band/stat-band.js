@@ -312,7 +312,6 @@ function buildAutoCarousel(block, track) {
 }
 
 export default function decorate(block) {
-  // .white is shorthand for the One Intuit band on white: it takes the .dark.blueberry layout
   if (block.classList.contains('white')) block.classList.add('dark', 'blueberry');
   const rows = [...block.children];
 

@@ -282,7 +282,6 @@
   }
 }
 
-/* .ies theme */
 .vertical-scroll-carousel.ies .vsc-heading-wrap { font-size: var(--heading-font-size-m); }
 
 .vertical-scroll-carousel.ies .vsc-heading,
@@ -325,7 +324,6 @@
   .vertical-scroll-carousel.ies .vsc-stage .vsc-media { border-radius: 48px; }
 }
 
-/* .ies header */
 .vertical-scroll-carousel.ies .vsc-header {
   order: -1;
   margin: 0 auto;
@@ -385,7 +383,6 @@
   .vertical-scroll-carousel.ies .vsc-lede { font-size: var(--body-font-size-l); line-height: var(--line-height-s); }
 }
 
-/* .ies below 1024px: tab spacing */
 @media (width < 1024px) {
   .vertical-scroll-carousel.ies { gap: 0; }
 
@@ -403,20 +400,17 @@
   .vertical-scroll-carousel.ies .vsc-stage .vsc-media:first-child { margin-bottom: 0; }
 }
 
-/* .ies mobile */
 @media (width < 768px) {
   .vertical-scroll-carousel.ies:has(.vsc-header) .vsc-item:first-child { margin-top: var(--space-m); }
 
   .vertical-scroll-carousel.ies .vsc-stage .vsc-media:first-child { margin-bottom: var(--space-m); }
 }
 
-/* .ies tablet */
 @media (768px <= width < 1024px) {
   .vertical-scroll-carousel.ies .vsc-item:first-child { padding-top: var(--space-m); }
   .vertical-scroll-carousel.ies .vsc-stage .vsc-media:first-child { margin-bottom: var(--space-m); }
 }
 
-/* .ies below 1024px: last tab image */
 @media (width < 1024px) {
   .vertical-scroll-carousel.ies .vsc-stage .vsc-media:last-child { margin-bottom: var(--space-m); }
 }

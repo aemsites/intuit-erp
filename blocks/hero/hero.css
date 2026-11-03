@@ -1277,7 +1277,6 @@ body.author-guide .hero .hero-copy .hero-lede {
   .hero.video-bg .hero-bg-video { display: none; }
 }
 
-/* .ies-gradient: Blueberry gradient hero */
 .section.hero-container:has(.hero.ies.ies-gradient) {
   background:
     radial-gradient(70% 90% at 8% 0%, #b9a9e0 0%, #2f6dff 32%, rgb(47 109 255 / 0%) 72%),

@@ -241,14 +241,12 @@ function takeTitleRow(block) {
   return title;
 }
 
-// perceived brightness of a #rgb/#rrggbb colour, 0 (black) to 255 (white)
 function brightness(hex) {
   const h = hex.length === 4 ? [...hex.slice(1)].map((c) => c + c).join('') : hex.slice(1);
   const [r, g, b] = [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16));
   return (r * 299 + g * 587 + b * 114) / 1000;
 }
 
-// .colors: applies each card's optional colour cell as its background
 function applyCardColors(block) {
   [...block.children].forEach((card) => {
     const cell = card.children[2];

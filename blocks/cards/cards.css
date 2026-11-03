@@ -1646,7 +1646,6 @@ main > .section.cards-container:has(.cards.ies-product) > .default-content-wrapp
   }
 }
 
-/* .icons.colors: per-card colour via --card-bg */
 .section .cards.icons.colors > div {
   background: var(--card-bg, var(--agave-band));
   color: #0d0031;

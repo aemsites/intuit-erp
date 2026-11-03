@@ -375,7 +375,6 @@ function extendArcsBackground(block) {
   }).observe(tail);
 }
 
-// detaches a picture/img from the hero copy and tidies the cell it was in
 function detachMedia(el, copy) {
   const media = el.closest('picture') || el;
   const host = media.parentElement;
@@ -385,7 +384,6 @@ function detachMedia(el, copy) {
 }
 
 export default async function decorate(block) {
-  // .ies-gradient is the Blueberry hero on a gradient; it reuses the .ies type and button styling
   const isIesGradient = block.classList.contains('ies-gradient');
   if (isIesGradient) block.classList.add('ies');
   const isForm = block.classList.contains('form');
@@ -417,7 +415,6 @@ export default async function decorate(block) {
       formFragment = cellText;
       return;
     }
-    // .ies-gradient: an image above the headline, in the headline's own cell, is the lockup
     if (isIesGradient) {
       const cellHeading = cell.querySelector('h1, h2, h3');
       if (cellHeading) {
@@ -454,7 +451,6 @@ export default async function decorate(block) {
     });
   }
 
-  // .ies-gradient: the lockup is only taken out when a separate media image remains
   let lockupEl = null;
   if (isIesGradient) {
     const lockupImg = copy.querySelector('img[data-lockup]');

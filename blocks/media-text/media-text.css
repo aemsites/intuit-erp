@@ -1481,7 +1481,6 @@
   }
 }
 
-/* .ies.blueberry */
 .section.media-text-container:has(.media-text.ies.blueberry:not(.center, .compare)) {
   background: #0d0031;
   padding-block: var(--space-m);
@@ -1503,7 +1502,6 @@
   }
 }
 
-/* tablet side gutter */
 @media (768px <= width < 1024px) {
   .section.media-text-container:has(.media-text.ies:is(.reverse, .blueberry):not(.center, .compare)) > div {
     padding-inline: var(--space-2xl);
