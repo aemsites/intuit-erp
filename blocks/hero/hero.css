@@ -723,6 +723,14 @@ body.author-guide .hero .hero-copy .hero-lede {
   max-height: 555px;
 }
 
+/* tablet: 60px top/bottom instead of the shared 40px stacked padding */
+@media (768px <= width < 1024px) {
+  .hero.ies .hero-grid {
+    padding-top: 60px;
+    padding-bottom: 60px;
+  }
+}
+
 @media (width >= 1024px) {
   .hero.ies .hero-copy h1 { font-size: 60px; }
 }
@@ -1061,7 +1069,10 @@ body.author-guide .hero .hero-copy .hero-lede {
   }
 }
 
-/* .homepage: 3:2 tile (688x458 on tablet, 640x426 on desktop), 640 | 80 | 640 lockup on desktop */
+/* .homepage: ~3:2 tile, 335x223 on mobile, 688x458 on tablet, 640x426 on desktop; 640 | 80 | 640 lockup on desktop.
+   Each breakpoint uses its own design ratio so the tile lands on whole pixels at the design widths. */
+.hero.ies.video.homepage .hero-media-video { aspect-ratio: 335 / 223; }
+
 @media (width >= 768px) {
   .hero.ies.video.homepage .hero-copy .hero-eyebrow { margin-bottom: 8px; }
   .hero.ies.video.homepage .hero-copy h1 { margin-bottom: 16px; }
@@ -1072,7 +1083,7 @@ body.author-guide .hero .hero-copy .hero-lede {
   }
 
   .hero.ies.video.homepage .hero-media-video {
-    aspect-ratio: 640 / 426;
+    aspect-ratio: 688 / 458;
     border-radius: 30px;
   }
 }
@@ -1087,7 +1098,10 @@ body.author-guide .hero .hero-copy .hero-lede {
     line-height: 1.3;
   }
 
-  .hero.ies.video.homepage .hero-media-video { border-radius: 38px; }
+  .hero.ies.video.homepage .hero-media-video {
+    aspect-ratio: 640 / 426;
+    border-radius: 38px;
+  }
 
   .hero.ies.video.homepage .hero-actions :is(a, button).button.primary { padding-inline: 42px; }
 
@@ -1104,4 +1118,161 @@ body.author-guide .hero .hero-copy .hero-lede {
     grid-template-columns: 640px 640px;
     gap: 80px;
   }
+}
+
+/* .form.lead: One Intuit glow hero + lead card shell */
+.section.hero-container:has(.hero.form.lead) {
+  background: url("./lead-bg.webp") -162.38vw -9.6vw / 480.83vw 291.2vw no-repeat, #0d0031;
+}
+
+.hero.form.lead .hero-grid { gap: var(--space-m); }
+
+.hero.form.lead .hero-copy h1 {
+  font-size: 34px;
+  line-height: 1.1;
+  font-weight: var(--font-weight-medium);
+}
+
+.hero.form.lead .hero-form {
+  padding: var(--space-2xl) var(--space-m);
+  border-radius: 38px;
+  box-shadow: 0 0 16px rgb(135 186 255 / 30%);
+  color: #0d0031;
+}
+
+@media (width >= 768px) {
+  .section.hero-container:has(.hero.form.lead) {
+    background: url("./lead-bg.webp") -71.43vw -1.64vw / 213.06vw 142.43vw no-repeat, #0d0031;
+  }
+
+  .hero.form.lead .hero-grid {
+    gap: var(--space-2xl);
+    padding-block: 60px;
+  }
+
+  .hero.form.lead .hero-copy h1 {
+    font-size: var(--heading-font-size-xxl);
+    line-height: var(--line-height-none);
+  }
+
+  .hero.form.lead .hero-form { padding: var(--space-2xl); }
+}
+
+@media (width >= 1024px) {
+  .section.hero-container:has(.hero.form.lead) {
+    background: url("./lead-bg.webp") 6.13% 71.39% / 195.38% 133.91% no-repeat, #0d0031;
+  }
+
+  .hero.form.lead .hero-grid {
+    grid-template-columns: minmax(0, 600px) minmax(0, 555px);
+    justify-content: space-between;
+    padding-block: var(--space-5xl);
+  }
+
+  .hero.form.lead .hero-copy h1 { font-size: 60px; }
+
+}
+
+/* .video-bg: full-bleed looping background video behind the copy */
+.section.hero-container:has(.hero.video-bg) {
+  position: relative;
+  isolation: isolate;
+}
+
+/* positioned against the section, not the max-width wrapper, so it runs edge to edge */
+.hero.video-bg .hero-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.hero.video-bg .hero-bg picture {
+  position: absolute;
+  inset: 0;
+}
+
+.hero.video-bg .hero-bg :is(img, video) {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  object-fit: cover;
+  object-position: center;
+}
+
+.hero.video-bg .hero-bg-video { z-index: 1; }
+
+.hero.video-bg .hero-bg.is-fallback .hero-bg-video { visibility: hidden; }
+
+.hero.video-bg .hero-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background:
+    linear-gradient(to right, rgb(4 20 58 / 85%) 0%, rgb(4 20 58 / 55%) 60%, rgb(4 20 58 / 35%) 100%),
+    linear-gradient(to top, rgb(4 20 58 / 60%) 0%, transparent 50%);
+}
+
+.hero.video-bg .hero-grid {
+  position: relative;
+  z-index: 1;
+  grid-template-columns: 1fr;
+  align-content: center;
+  min-height: 480px;
+  padding-block: var(--space-3xl) 80px;
+}
+
+.hero.video-bg .hero-copy { max-width: 720px; }
+
+.hero.video-bg .hero-copy :is(h1, h2, h3, .hero-eyebrow, .hero-lede) { color: #fff; }
+
+.hero.video-bg .hero-bg-toggle {
+  position: absolute;
+  right: 20px;
+  bottom: 20px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-circle);
+  background: rgb(0 0 0 / 45%);
+  color: #fff;
+  font-size: 13px;
+  line-height: var(--line-height-none);
+  cursor: pointer;
+}
+
+.hero.video-bg .hero-bg-toggle:hover { background: rgb(0 0 0 / 65%); }
+
+.hero.video-bg .hero-bg-toggle:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.hero.video-bg .hero-bg-toggle::before { content: '\275A\275A'; }
+
+.hero.video-bg .hero-bg-toggle[data-state="paused"]::before { content: '\25B6'; }
+
+@media (width >= 768px) {
+  .hero.video-bg .hero-grid { min-height: 560px; }
+}
+
+@media (width >= 1024px) {
+  .hero.video-bg .hero-grid {
+    min-height: 640px;
+    padding-block: var(--space-5xl);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero.video-bg .hero-bg-video { display: none; }
 }

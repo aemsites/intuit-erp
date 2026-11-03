@@ -1018,6 +1018,7 @@
 /* .card.feature: photo left, quote right on a Superblue card; stacks below 1024px */
 .testimonial.card.feature {
   --feature-blue: #236cff;
+  --feature-blueberry: #0d0031;
 
   display: block;
   max-width: 1360px;
@@ -1175,6 +1176,10 @@
   }
 }
 
+.testimonial.card.feature.blueberry .testimonial-card {
+  background: var(--feature-blueberry);
+}
+
 /* .card.feature.ies: IES retheme; optional heading row, carousel for 2+ cards */
 .testimonial.card.feature.ies {
   --ies-muted: #95c2d2;
@@ -1265,7 +1270,7 @@
 }
 
 @media (width >= 768px) and (width < 1024px) {
-  .section.testimonial-container:has(.testimonial.card.feature.ies) > .testimonial-wrapper { padding-inline: 10px; }
+  .section.testimonial-container:has(.testimonial.card.feature.ies) > .testimonial-wrapper { padding-inline: var(--space-2xl); }
   .testimonial.card.feature.ies .testimonial-heading { margin-bottom: var(--space-xl); }
 
   .testimonial.card.feature.ies .testimonial-card {

@@ -12,6 +12,8 @@
  * default (index): number/description + attribution — paged carousel
  * .stat-band.dark (pricing "Data-backed performance"): number/description +
  *   optional attribution — static grid
+ * .stat-band.dark.blueberry: One Intuit skin for .dark; title and disclaimer
+ *   may also be authored as block rows
  * .stat-band.light: the same static grid on a white band, stats in super-blue
  * .stat-band.simple: number/description — the same static grid as .dark, but a
  *   single bordered white box on the page background, columns split by dividers.
@@ -381,7 +383,33 @@ export default function decorate(block) {
   const track = document.createElement('div');
   track.className = staticGrid ? 'stats-grid' : 'stats-track';
 
-  rows.forEach((row) => {
+  // .blueberry: a heading row is the title, a row without a bold number is the footnote
+  let title = null;
+  let foot = null;
+  let statRows = rows;
+  if (block.classList.contains('blueberry')) {
+    statRows = rows.filter((row) => {
+      const [cell] = [...row.children];
+      if (!cell) return false;
+      if (!title && cell.querySelector('h1, h2, h3, h4, h5, h6')) {
+        title = document.createElement('div');
+        title.className = 'stats-title';
+        title.append(...cell.childNodes);
+        return false;
+      }
+      if (!parseStatRow(cell).numberText && cell.textContent.trim()) {
+        if (!foot) {
+          foot = document.createElement('div');
+          foot.className = 'stats-foot';
+        }
+        foot.append(...cell.childNodes);
+        return false;
+      }
+      return true;
+    });
+  }
+
+  statRows.forEach((row) => {
     const [cell] = [...row.children];
     if (!cell) return;
     const {
@@ -430,7 +458,7 @@ export default function decorate(block) {
     track.append(stat);
   });
 
-  block.replaceChildren(track);
+  block.replaceChildren(...[title, track, foot].filter(Boolean));
 
   if (carousel) buildAutoCarousel(block, track);
   else if (!staticGrid) buildCarousel(block, track);

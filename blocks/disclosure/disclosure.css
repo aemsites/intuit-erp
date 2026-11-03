@@ -25,9 +25,20 @@
 .disclosure.white .disc-caret { display: inline-block; margin-left: 8px; }
 .disclosure.white .disclosure-body { color: #000730; font-size: 12px; line-height: 1.4; text-align: left; opacity: 1; padding: 0; }
 
+/* expanded variant — static note: plain-text title (no toggle, caret or pointer), body always visible */
+.disclosure.expanded .disclosure-title {
+  margin: 0; color: #fff; text-align: center; padding: var(--space-2xl) 0; font-size: 13.33px; font-weight: var(--font-weight-semibold);
+}
+.disclosure.light.expanded .disclosure-title { color: var(--navy); }
+
+.disclosure.white.expanded .disclosure-title {
+  color: #0d0031; font-size: var(--body-font-size-m); line-height: var(--line-height-m); font-weight: var(--font-weight-medium); padding: 0 0 var(--space-l);
+}
+
 @media (width >= 1024px) {
   .section.disclosure-container:has(.disclosure.white) { padding: 40px 0; }
   .disclosure.white .disclosure-item[open] summary { padding: 0 0 40px; }
+  .disclosure.white.expanded .disclosure-title { padding: 0 0 var(--space-2xl); }
 }
 .disclosure.white .disclosure-body p { margin: 0 0 var(--space-s); }
 

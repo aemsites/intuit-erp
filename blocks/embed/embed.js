@@ -52,6 +52,16 @@ const embedPdf = (url, title) => `<div class="pdf-frame">
     </div>
     <p class="embed-fallback"><a href="${url.href}" target="_blank" rel="noopener">${title || 'Open the PDF'}</a></p>`;
 
+const embedVev = (url) => {
+  const containerId = `vev-embed-${Math.random().toString(36).substr(2, 9)}`;
+  const cleanUrl = decodeURIComponent(url.href).replace(/["']$/g, '');
+  return {
+    html: `<div id="${containerId}" class="vev-embed-container"></div>`,
+    containerId,
+    scriptUrl: cleanUrl,
+  };
+};
+
 const getDefaultEmbed = (url) => `<div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;">
     <iframe src="${url.href}" style="border: 0; top: 0; left: 0; width: 100%; height: 100%; position: absolute;" allowfullscreen=""
       scrolling="no" allow="encrypted-media" title="Content from ${url.hostname}" loading="lazy">
@@ -62,6 +72,10 @@ const loadEmbed = (block, link, title) => {
   if (block.classList.contains('embed-is-loaded')) return;
 
   const EMBEDS_CONFIG = [
+    {
+      match: ['embed.vev.page', 'vev'],
+      embed: embedVev,
+    },
     {
       match: ['datawrapper.dwcdn.net', 'datawrapper'],
       embed: embedDatawrapper,
@@ -79,7 +93,24 @@ const loadEmbed = (block, link, title) => {
     e.test ? e.test(url) : e.match.some((m) => link.includes(m))
   ));
   if (config) {
-    block.innerHTML = config.embed(url, title);
+    const embedResult = config.embed(url, title);
+
+    // Handle Vev's special case with programmatic script injection
+    if (typeof embedResult === 'object' && embedResult.scriptUrl) {
+      block.innerHTML = embedResult.html;
+      // Programmatically inject the script after the container is in the DOM
+      const script = document.createElement('script');
+      script.src = embedResult.scriptUrl;
+      script.async = true;
+      const container = document.getElementById(embedResult.containerId);
+      if (container) {
+        container.appendChild(script);
+      }
+    } else {
+      // Standard HTML string for other embeds
+      block.innerHTML = embedResult;
+    }
+
     block.classList = `block embed embed-${config.match[0].split('.')[0]}`;
   } else {
     block.innerHTML = getDefaultEmbed(url);

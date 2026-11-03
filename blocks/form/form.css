@@ -201,7 +201,7 @@
   width: 100% !important;
   height: 49px;
   box-sizing: border-box;
-  background: var(--light-gray) !important;
+  background: var(--form-field-bg, var(--light-gray)) !important;
   border: 0 !important;
   border-bottom: 1px solid var(--dark-color) !important;
   border-radius: 4px 4px 0 0 !important;
@@ -220,7 +220,7 @@
 .form:not(.hero) .mktoForm select.mktoField:focus,
 .form:not(.hero) .mktoForm textarea.mktoField:focus {
   outline: none !important;
-  border-bottom: 2px solid var(--primary) !important;
+  border-bottom: 2px solid var(--form-field-focus, var(--primary)) !important;
 }
 
 .form .mktoForm .mktoButtonRow {
@@ -244,18 +244,18 @@
 
 .form:not(.hero) .mktoForm .mktoButton {
   height: 49px;
-  padding: 0 30px !important;
+  padding: var(--form-button-padding, 0 30px) !important;
   border: 0 !important;
-  border-radius: var(--radius) !important;
-  background: var(--navy) !important;
+  border-radius: var(--form-button-radius, var(--radius)) !important;
+  background: var(--form-button-bg, var(--navy)) !important;
   color: var(--background-color) !important;
   font-size: 16px !important;
-  font-weight: 600 !important;
+  font-weight: var(--form-button-weight, 600) !important;
   cursor: pointer;
 }
 
 .form:not(.hero) .mktoForm .mktoButton:hover {
-  background: var(--navy-hover) !important;
+  background: var(--form-button-bg-hover, var(--navy-hover)) !important;
 }
 
 .form:not(.hero) .mktoForm .mktoError {
@@ -436,4 +436,124 @@
   font-size: 14px;
   font-family: "Avenir Next forINTUIT", "Avenir Next", Futura, sans-serif;
   color: #000;
+}
+
+/* .lead: One Intuit lead card */
+.form-wrapper > .form.lead {
+  --form-field-bg: var(--pepper);
+  --form-field-focus: var(--info);
+  --form-button-padding: 0 36px;
+  --form-button-radius: 999px;
+  --form-button-bg: var(--info);
+  --form-button-bg-hover: #1b5be0;
+  --form-button-weight: var(--font-weight-medium);
+}
+
+.section:has(> .form-wrapper > .form.lead) > .default-content-wrapper {
+  padding-block: 0;
+  text-align: left;
+}
+
+.section:has(> .form-wrapper > .form.lead) > .default-content-wrapper h2 {
+  margin: 0 0 var(--space-m);
+  font-size: var(--heading-font-size-m);
+  line-height: var(--line-height-s);
+  font-weight: var(--font-weight-medium);
+  color: #0d0031;
+  text-align: left;
+}
+
+.section:has(> .form-wrapper > .form.lead) > .default-content-wrapper p {
+  max-width: none;
+  margin: 0 0 var(--space-m);
+  font-size: var(--body-font-size-m);
+  line-height: var(--line-height-m);
+  color: #0d0031;
+  text-align: left;
+}
+
+.section:has(> .form-wrapper > .form.lead) > .default-content-wrapper p:has(+ p) {
+  margin-bottom: 14px;
+}
+
+.section:has(> .form-wrapper > .form.lead) > .default-content-wrapper p a {
+  color: var(--info);
+  font-weight: var(--font-weight-medium);
+  text-decoration: underline;
+}
+
+.form-wrapper > .form.lead:not(.hero) .mktoForm > .mktoFormRow {
+  margin-bottom: var(--space-m);
+}
+
+
+.form-wrapper > .form.lead:not(.hero) .mktoForm :is(input, select, textarea).mktoField {
+  height: auto;
+
+  /* bottom padding absorbs the border, as Figma strokes sit inside the 54.4px field */
+  padding: var(--space-s) var(--space-2xs) calc(var(--space-s) - 1px);
+  font-size: var(--body-font-size-m);
+  line-height: var(--line-height-m);
+  color: #0d0031;
+}
+
+.form-wrapper > .form.lead:not(.hero) .mktoForm :is(input, textarea).mktoField::placeholder {
+  color: var(--dark-color);
+  opacity: 1;
+}
+
+.form-wrapper > .form.lead:not(.hero) .mktoForm :is(input, select, textarea).mktoField:focus {
+  padding-bottom: calc(var(--space-s) - 2px);
+}
+
+.form-wrapper > .form.lead:not(.hero) .form-disclaimer,
+.form-wrapper > .form.lead:not(.hero) .form-disclaimer p {
+  font-size: var(--body-font-size-xxs);
+  line-height: var(--line-height-m);
+  color: #0d0031;
+  text-align: left;
+}
+
+.form-wrapper > .form.lead:not(.hero) .mktoForm > .form-disclaimer {
+  margin: 0 0 var(--space-m);
+}
+
+.form-wrapper > .form.lead:not(.hero) .form-disclaimer p:not(:last-child) {
+  margin-bottom: 1lh;
+}
+
+.form-wrapper > .form.lead:not(.hero) .form-disclaimer a {
+  color: var(--info);
+  text-decoration: underline;
+}
+
+.form-wrapper > .form.lead:not(.hero) .form-disclaimer p:first-child a {
+  text-decoration: none;
+}
+
+.form-wrapper > .form.lead:not(.hero) .mktoForm .mktoButtonRow {
+  margin-top: 0;
+}
+
+.form-wrapper > .form.lead:not(.hero) .mktoForm .mktoButton {
+  width: 100%;
+  height: auto;
+  min-height: 56px;
+}
+
+.form-wrapper > .form.lead:not(.hero) .mktoForm .mktoButton:focus-visible {
+  --form-button-bg: var(--form-button-bg-hover);
+}
+
+@media (width >= 768px) {
+  .form-wrapper > .form.lead:not(.hero) .mktoForm .mktoButton { width: auto; }
+}
+
+@media (width >= 1024px) {
+  .section:has(> .form-wrapper > .form.lead) > .default-content-wrapper h2 {
+    font-size: 34px;
+    line-height: var(--line-height-xs);
+  }
+
+  .form-wrapper > .form.lead:not(.hero) .mktoForm .mktoButton { width: 100%; }
 }

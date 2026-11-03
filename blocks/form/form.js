@@ -644,6 +644,11 @@ async function embedMarketoForm(formEl, cfg, config, env) {
       }
     }
 
+    // `lead` variant owns its field spacing: drop Marketo's inline column margin
+    if (formEl.closest('.form')?.classList.contains('lead')) {
+      formEl.querySelectorAll('.mktoFormCol').forEach((col) => col.style.removeProperty('margin-bottom'));
+    }
+
     // update the button label
     if (config.buttonLabel) {
       const button = formEl.querySelector('.mktoButton');
