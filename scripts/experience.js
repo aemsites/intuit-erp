@@ -549,6 +549,23 @@ function previewMockAttributes(opts, context) {
   return attrs;
 }
 
+// previewContext.exp [{ id, treatmentId }] -> [{ experimentId, mockTreatmentId }]. Keeps only
+// positive safe-integer ids (number or digit string); first entry per experiment wins.
+function toMockExperiments(exp) {
+  const num = (v) => {
+    const n = typeof v === 'string' && /^\d+$/.test(v) ? Number(v) : v;
+    return Number.isSafeInteger(n) && n > 0 ? n : null;
+  };
+  const seen = new Set();
+  return (Array.isArray(exp) ? exp : []).flatMap((e) => {
+    const experimentId = e && typeof e === 'object' ? num(e.id) : null;
+    const mockTreatmentId = e && typeof e === 'object' ? num(e.treatmentId) : null;
+    if (!experimentId || !mockTreatmentId || seen.has(experimentId)) return [];
+    seen.add(experimentId);
+    return [{ experimentId, mockTreatmentId }];
+  });
+}
+
 // Query string for /intuit-orchestrator when preview mode is active. opts.preview (the
 // Experience Preview tool) wins so an edited context is never shadowed by a stale page URL;
 // else a page loaded with ?preview=true forwards ONLY preview + previewContext (never the
@@ -605,10 +622,13 @@ export async function fetchExperience({ experimentIds, accessPointNames }, conte
     // Preview body: keep the real context, add mockAttributes (previewContext + locale).
     if (previewActive(opts)) {
       const base = (context && typeof context === 'object' && !Array.isArray(context)) ? context : {};
-      body.context = {
-        ...base,
-        mockData: { mockAttributes: previewMockAttributes(opts, context) },
-      };
+      const mockAttributes = previewMockAttributes(opts, context);
+      const mockExperiments = toMockExperiments(mockAttributes.exp);
+      delete mockAttributes.exp;
+      body.context = { ...base, mockData: { mockAttributes } };
+      delete body.context.exp;
+      delete body.context.mockExperiments;
+      if (mockExperiments.length) body.context.mockExperiments = mockExperiments;
       body.mockAttributesEnabled = true;
     }
     // Preview seam: opts.preview or a page-level ?preview=true adds preview=true +
