@@ -201,7 +201,10 @@ function headingControl(h, sdk, status, setLoading, pendingSizes, locked) {
   const select = document.createElement('select');
   select.setAttribute('aria-label', `Size for ${tag}: ${preview.textContent.slice(0, 40)}`);
   const sizes = sizesFor(tag);
-  const value = pendingSizes.has(id) ? pendingSizes.get(id) : cur.size;
+  let value = '';
+  if (!locked) {
+    value = pendingSizes.has(id) ? pendingSizes.get(id) : cur.size;
+  }
   // Keep a size from before the current scale (e.g. `p-size-m`) visible instead of hiding it.
   const options = value && !sizes.includes(value) ? [...sizes, value] : sizes;
   select.append(new Option('Default size', ''), ...options.map((size) => new Option(size, size)));
@@ -304,9 +307,24 @@ function paragraphAllControl(sectionIndex, paragraphs, ui) {
       rerender();
     }
   };
-  checkbox.addEventListener('change', () => {
+  checkbox.addEventListener('change', async () => {
     if (!checkbox.checked) {
+      const globalSize = paragraphAll.get(sectionIndex);
       paragraphAll.delete(sectionIndex);
+
+      // Remove the global size class from the block
+      if (globalSize) {
+        setLoading(true);
+        try {
+          await clearHeadingSizes(sdk, paragraphs);
+          status.textContent = `Removed global paragraph size from section ${sectionIndex}`;
+        } catch (e) {
+          log('clear all error', e);
+          status.textContent = e.message;
+        } finally {
+          setLoading(false);
+        }
+      }
       rerender();
       return;
     }
