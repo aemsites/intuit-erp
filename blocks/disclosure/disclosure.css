@@ -5,6 +5,7 @@
 .disclosure .disclosure-item summary {
   list-style: none; cursor: pointer; color: #fff; text-align: center; padding: var(--space-2xl) 0; font-size: 13.33px; font-weight: var(--font-weight-semibold);
 }
+
 .disclosure .disclosure-item summary p {
   display: inline;
 }
