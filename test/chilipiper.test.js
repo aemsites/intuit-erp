@@ -36,8 +36,6 @@ const LEAD = {
   Country: 'US',
   NumberOfEmployees: '50',
   Language__c: 'English',
-  Industry: 'Technology',
-  PostalCode: '94043',
   formId: '1058',
   IVID__c: 'ivid-123',
 };
@@ -82,29 +80,10 @@ describe('submitChiliPiper', () => {
         Country: 'US',
         Number_of_Employees__c: '50',
         Language: 'English',
-        Industry: 'Technology',
-        PostalCode: '94043',
       },
       disableRelation: true,
       event: { Lead_XRef_ID__c: 'XREF-1' },
     });
-  });
-
-  it('defaults Industry and PostalCode to empty string when absent', async () => {
-    const leadWithoutIndustryZip = { ...LEAD };
-    delete leadWithoutIndustryZip.Industry;
-    delete leadWithoutIndustryZip.PostalCode;
-    await submitChiliPiper('mid-us', leadWithoutIndustryZip);
-    expect(window.ChiliPiper.submit).toHaveBeenCalledWith(
-      'intuitsales',
-      'mid-us',
-      expect.objectContaining({
-        lead: expect.objectContaining({
-          Industry: '',
-          PostalCode: '',
-        }),
-      }),
-    );
   });
 
   it('no-ops (false) without a router or subdomain', async () => {
