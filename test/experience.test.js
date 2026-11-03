@@ -522,8 +522,8 @@ describe('fetchExperience', () => {
       context: {
         ...ctx,
         mockData: { mockAttributes: ctx },
+        mockAttributesEnabled: true,
       },
-      mockAttributesEnabled: true,
     });
   });
   it('lets opts.preview win over a stale ?preview=true page query', async () => {
@@ -565,8 +565,8 @@ describe('fetchExperience', () => {
           mockData: {
             mockAttributes: { ...attrs, locale: 'en_US' },
           },
+          mockAttributesEnabled: true,
         },
-        mockAttributesEnabled: true,
       });
     } finally {
       window.history.replaceState({}, '', orig);
