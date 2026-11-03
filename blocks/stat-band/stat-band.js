@@ -15,7 +15,6 @@
  * .stat-band.dark.blueberry: One Intuit skin for .dark; title and disclaimer
  *   may also be authored as block rows
  * .stat-band.light: the same static grid on a white band, stats in super-blue
- * .stat-band.white: the .dark.blueberry skin on a white band
  * .stat-band.simple: number/description — the same static grid as .dark, but a
  *   single bordered white box on the page background, columns split by dividers.
  * .stat-band.ies: the same static grid as .dark, with the segment shown as an

@@ -13,9 +13,6 @@
  *               "download" promos, e.g. fragments/right-rail)
  *   .ies        One Intuit icon tiles, 1-up / 2-up / 4-up by breakpoint
  *   .ies-product  image + eyebrow + title + body, 1-up / 2-up by breakpoint
- *   .icons.colors  .icons cards with a per-card colour: an optional 3rd cell per row holds a
- *               colour name (light-blue, blueberry, peach, brown) or a #hex; light-blue when
- *               omitted. Text, links and icon flip to white on dark colours.
  *   .tinted.stat  tinted cards; an optional first row with a single heading
  *               cell becomes the section title, a card without an image a stat
  * .carousel/.boxed combine with the .accent/.dark tone classes (section

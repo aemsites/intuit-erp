@@ -13,8 +13,6 @@
  *
  * Content model: each ROW = one item — cell0 = media (`<img>`/video link),
  * cell1 = heading, cell2 = body.
- * `.ies` only: an optional FIRST single-cell row is the header (eyebrow, heading,
- * lede) rendered above the tabs as `.vsc-header`.
  *
  * Structure built: `.vsc-list` column of `.vsc-item` tabs (left) and ONE
  * `.vsc-stage` (right) holding every item's `.vsc-media`, absolutely stacked.
