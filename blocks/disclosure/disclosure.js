@@ -25,10 +25,12 @@ export default function decorate(block) {
   if (expanded) {
     const item = document.createElement('div');
     item.className = 'disclosure-item';
-    const title = document.createElement('p');
-    title.className = 'disclosure-title';
+    const title = rows[0]?.firstElementChild?.firstElementChild?.cloneNode(true) || document.createElement('p');
+    title.classList.add('disclosure-title');
     title.id = `disclosure-title-${disclosureSeq}`;
-    title.innerHTML = summaryContent;
+    if (!rows[0]?.firstElementChild?.firstElementChild) {
+      title.textContent = 'Important pricing details and product information';
+    }
     body.setAttribute('role', 'region');
     body.setAttribute('aria-labelledby', title.id);
     item.append(title, body);
@@ -43,7 +45,14 @@ export default function decorate(block) {
   const details = document.createElement('details');
   details.className = 'disclosure-item';
   const summary = document.createElement('summary');
-  summary.innerHTML = `${summaryContent} <svg class="disc-caret" aria-hidden="true" width="17" height="8" viewBox="0 0 17 8" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 1l7.5 6L16 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  const summaryClone = rows[0]?.firstElementChild?.firstElementChild?.cloneNode(true);
+  if (summaryClone) {
+    summary.appendChild(summaryClone);
+  } else {
+    const fallbackText = document.createTextNode(summaryContent);
+    summary.appendChild(fallbackText);
+  }
+  summary.innerHTML += ' <svg class="disc-caret" aria-hidden="true" width="17" height="8" viewBox="0 0 17 8" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 1l7.5 6L16 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
   // Expose the expandable note as an ARIA disclosure region tied to its summary,
   // matching production's landmark markup (role=region + aria-labelledby). See #685.
