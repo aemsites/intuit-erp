@@ -572,6 +572,95 @@ describe('fetchExperience', () => {
       window.history.replaceState({}, '', orig);
     }
   });
+  describe('preview exp -> mockExperiments', () => {
+    const call = async (ctx, opts) => {
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('{}', { status: 200 }));
+      await fetchExperience({ experimentIds: ['1'], accessPointNames: [] }, ctx, opts);
+      const [rawUrl, init] = globalThis.fetch.mock.calls[0];
+      return {
+        url: new URL(rawUrl, 'http://localhost'),
+        body: JSON.parse(init.body),
+      };
+    };
+    const withPage = async (previewContext, fn) => {
+      const orig = window.location.href;
+      try {
+        window.history.replaceState({}, '', `${orig.split('?')[0]}?preview=true&previewContext=${encodeURIComponent(JSON.stringify(previewContext))}`);
+        await fn();
+      } finally {
+        window.history.replaceState({}, '', orig);
+      }
+    };
+    const exp = [{ id: '434663', treatmentId: 940743 }];
+
+    it('1. opts.preview: maps exp to numeric mockExperiments and strips exp', async () => {
+      const ctx = { locale: 'en_US', exp, deviceType: 'Desktop' };
+      const { url, body } = await call(ctx, { preview: true });
+      expect(body.context.mockExperiments).toEqual([{ experimentId: 434663, mockTreatmentId: 940743 }]);
+      expect(body.context.mockData.mockAttributes).toEqual({ locale: 'en_US', deviceType: 'Desktop' });
+      expect(body.context).not.toHaveProperty('exp');
+      expect(body.context.deviceType).toBe('Desktop');
+      expect(JSON.parse(url.searchParams.get('previewContext')).exp).toEqual(exp);
+      expect(ctx.exp).toEqual(exp); // caller's context not mutated
+    });
+    it('2. page ?preview=true&previewContext: same mapping', async () => {
+      await withPage({ exp, permalink: '/x' }, async () => {
+        const { url, body } = await call({ locale: 'en_US' });
+        expect(body.context.mockExperiments).toEqual([{ experimentId: 434663, mockTreatmentId: 940743 }]);
+        expect(body.context.mockData.mockAttributes).not.toHaveProperty('exp');
+        expect(body.context.mockData.mockAttributes.permalink).toBe('/x');
+        expect(body.context).not.toHaveProperty('exp');
+        expect(JSON.parse(url.searchParams.get('previewContext')).exp).toEqual(exp);
+      });
+    });
+    it('3. no exp: no mockExperiments key, mockAttributes unchanged', async () => {
+      const ctx = { locale: 'fr_FR' };
+      const { body } = await call(ctx, { preview: true });
+      expect(body.context).not.toHaveProperty('mockExperiments');
+      expect(body.context.mockData.mockAttributes).toEqual(ctx);
+    });
+    it('4a. drops invalid entries and keeps valid ones', async () => {
+      const bad = [
+        { id: '', treatmentId: 1 }, { id: null, treatmentId: 1 }, { id: true, treatmentId: 1 },
+        { id: [], treatmentId: 1 }, { id: ' 12 ', treatmentId: 1 }, { id: 1.5, treatmentId: 1 },
+        { id: -3, treatmentId: 1 }, { id: Infinity, treatmentId: 1 }, { id: 0, treatmentId: 1 },
+        { id: 5, treatmentId: 0 }, { id: 5, treatmentId: '' }, { id: 5 },
+        null, 'x', 7, [], { id: 9, treatmentId: 2 },
+      ];
+      const { body } = await call({ exp: bad }, { preview: true });
+      expect(body.context.mockExperiments).toEqual([{ experimentId: 9, mockTreatmentId: 2 }]);
+      expect(body.context).not.toHaveProperty('exp');
+      expect(body.context.mockData.mockAttributes).not.toHaveProperty('exp');
+    });
+    it('4b. all-invalid: key absent, exp still stripped, caller-supplied base ignored', async () => {
+      const ctx = { exp: [{ id: 0, treatmentId: 0 }, null], mockExperiments: [{ experimentId: 1, mockTreatmentId: 1 }] };
+      const { url, body } = await call(ctx, { preview: true });
+      expect(body.context).not.toHaveProperty('mockExperiments');
+      expect(body.context).not.toHaveProperty('exp');
+      expect(body.context.mockData.mockAttributes).not.toHaveProperty('exp');
+      expect(JSON.parse(url.searchParams.get('previewContext')).exp).toEqual(ctx.exp);
+    });
+    it('4c. duplicate id keeps first', async () => {
+      const { body } = await call({
+        exp: [{ id: 1, treatmentId: 2 }, { id: '1', treatmentId: 3 }, { id: 4, treatmentId: 5 }],
+      }, { preview: true });
+      expect(body.context.mockExperiments).toEqual([
+        { experimentId: 1, mockTreatmentId: 2 }, { experimentId: 4, mockTreatmentId: 5 },
+      ]);
+    });
+    it('5. non-preview: body unchanged, exp passes through', async () => {
+      const ctx = { locale: 'en_US', exp };
+      const { url, body } = await call(ctx);
+      expect(url.search).toBe('');
+      expect(body).toEqual({ experimentIds: ['1'], accessPointName: [], context: ctx });
+    });
+    it('6. opts.preview with stale page exp: tool exp wins', async () => {
+      await withPage({ exp: [{ id: 111, treatmentId: 222 }] }, async () => {
+        const { body } = await call({ exp }, { preview: true });
+        expect(body.context.mockExperiments).toEqual([{ experimentId: 434663, mockTreatmentId: 940743 }]);
+      });
+    });
+  });
   it('honors opts.baseUrl and leaves the URL query-free without preview', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('{}', { status: 200 }));
     await fetchExperience({ experimentIds: ['1'], accessPointNames: [] }, {}, {
