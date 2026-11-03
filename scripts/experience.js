@@ -516,6 +516,39 @@ export function hasEagerWork(doc = document) {
 
 // --- The single call --------------------------------------------------------
 
+// True for the Experience Preview tool (opts.preview) or a page loaded with ?preview=true.
+function previewActive(opts) {
+  if (opts.preview) return true;
+  return typeof window !== 'undefined'
+    && new URLSearchParams(window.location.search).get('preview') === 'true';
+}
+
+// Attributes for context.mockData.mockAttributes. opts.preview (tool) wins with the
+// edited context; else parse ?previewContext= from the page URL. locale is always
+// present; previewContext keys are kept.
+function previewMockAttributes(opts, context) {
+  let attrs = {};
+  if (opts.preview) {
+    attrs = (context && typeof context === 'object' && !Array.isArray(context)) ? { ...context } : {};
+  } else if (typeof window !== 'undefined') {
+    const raw = new URLSearchParams(window.location.search).get('previewContext');
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) attrs = { ...parsed };
+      } catch { /* bad previewContext: still send locale */ }
+    }
+  }
+  if (!attrs.locale) {
+    attrs.locale = (context && context.locale) || underscoreLocale(
+      (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('locale'))
+      || (typeof navigator !== 'undefined' && navigator.language)
+      || 'en_US',
+    );
+  }
+  return attrs;
+}
+
 // Query string for /intuit-orchestrator when preview mode is active. opts.preview (the
 // Experience Preview tool) wins so an edited context is never shadowed by a stale page URL;
 // else a page loaded with ?preview=true forwards ONLY preview + previewContext (never the
@@ -569,6 +602,15 @@ export async function fetchExperience({ experimentIds, accessPointNames }, conte
       accessPointName: accessPointNames,
       context,
     };
+    // Preview body: keep the real context, add mockAttributes (previewContext + locale).
+    if (previewActive(opts)) {
+      const base = (context && typeof context === 'object' && !Array.isArray(context)) ? context : {};
+      body.context = {
+        ...base,
+        mockData: { mockAttributes: previewMockAttributes(opts, context) },
+      };
+      body.mockAttributesEnabled = true;
+    }
     // Preview seam: opts.preview or a page-level ?preview=true adds preview=true +
     // previewContext to the target URL so Akamai routes to the preview backend. baseUrl
     // overrides the host. No preview ⇒ identical prod URL.
