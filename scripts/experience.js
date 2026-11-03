@@ -602,14 +602,14 @@ export async function fetchExperience({ experimentIds, accessPointNames }, conte
       accessPointName: accessPointNames,
       context,
     };
-    // Preview body: keep the real context, add mockAttributes (previewContext + locale).
+    // Preview body: keep the real context. mockAttributesEnabled sits with mockData.
     if (previewActive(opts)) {
       const base = (context && typeof context === 'object' && !Array.isArray(context)) ? context : {};
       body.context = {
         ...base,
         mockData: { mockAttributes: previewMockAttributes(opts, context) },
+        mockAttributesEnabled: true,
       };
-      body.mockAttributesEnabled = true;
     }
     // Preview seam: opts.preview or a page-level ?preview=true adds preview=true +
     // previewContext to the target URL so Akamai routes to the preview backend. baseUrl
