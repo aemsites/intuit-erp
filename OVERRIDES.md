@@ -138,6 +138,51 @@ currently present in authored content** — only `Style` and `Background` are us
 > IXP/experiment wins over personalization when both target the same scope (whole-section, or the same
 > named block); scoped to different blocks, both run independently.
 
+### Responsive spacing (`Style` classes)
+
+Pixel-named, per-breakpoint spacing for **sections**, added to the `Style` value like any other
+class. Pattern: `[breakpoint-]{property}-{px}`. Defined in [styles/styles.css](styles/styles.css)
+(`/* responsive spacing */`). Prefer these over the legacy `spacer-*` / `padding-*` tokens for new
+work. The legacy tokens keep working unchanged.
+
+| Property | Sets |
+| --- | --- |
+| `mt` / `mb` / `my` | margin-top / margin-bottom / both |
+| `ml` / `mr` / `mx` | margin-left / margin-right / both (also takes `auto`) |
+| `pt` / `pb` / `py` | padding-top / padding-bottom / both |
+| `pl` / `pr` / `px` | padding-left / padding-right / both |
+| `gutter` | left + right padding of the section's **inner wrappers** (`.section > div`) |
+
+| Breakpoint prefix | Applies at |
+| --- | --- |
+| *(none)* | all viewports |
+| `xs-` | mobile only (`width < 768px`) |
+| `sm-` | `width >= 768px` and up |
+| `md-` | `width >= 1024px` and up |
+| `lg-` | `width >= 1200px` and up |
+| `xl-` | `width >= 1440px` and up |
+
+Values (px): `0`, `8`, `16`, `20`, `24`, `32`, `40`, `48`, `60`, `64`, `80`, `96`, `120`, `160`,
+plus `auto` for `ml` / `mr` / `mx` only. Any other value does nothing. To add one, add it to every
+property and breakpoint.
+
+- **They always win.** Every rule uses `!important`, so it beats a block's own section padding/margin
+  (for example `media-text center ies`). A prefixed class beats an unprefixed one at its breakpoint.
+- **`0` touches only that property.** `pt-0` removes only padding-top. This differs from the legacy
+  `spacer-top-0`, which strips both margin and padding.
+- **`px` and `gutter` are different spaces.** The side space of the content usually comes from
+  the inner wrapper (24px mobile / 32px desktop, or the block's own gutter). `px-*` pads the
+  section and **adds** to that gutter. `gutter-*` **replaces** it. For "0 left/right on the
+  content", use `gutter-0`.
+- **`ml` / `mr` / `mx` move `contained` sections.** A `contained` section centers itself with
+  `margin: auto`, so a side margin pulls it off-center. Use `mx-auto` to center it again.
+- **Write the prefix with a hyphen, not a colon.** The pipeline turns `md:pt-0` into `md-pt-0`
+  anyway, so type `md-pt-0`.
+- **Sections only.** These classes don't apply to blocks.
+
+Example: `contained, md-pt-0` removes the section's top padding only on desktop. Mobile and tablet
+keep their current spacing.
+
 ---
 
 ## Block-level authored attributes (click tracking)
