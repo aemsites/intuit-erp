@@ -1355,9 +1355,9 @@ body.author-guide .hero .hero-copy .hero-lede {
   border-radius: 0;
 }
 
-/* Media tile: radius matches the homepage hero (20px mobile, 30px tablet, 38px desktop) */
+/* Media tile radius: 24px mobile, 30px tablet, 38px desktop */
 .hero.ies-gradient .hero-media {
-  border-radius: 20px;
+  border-radius: 24px;
   overflow: hidden;
 }
 
