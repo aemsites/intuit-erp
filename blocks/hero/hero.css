@@ -1355,9 +1355,13 @@ body.author-guide .hero .hero-copy .hero-lede {
   border-radius: 0;
 }
 
-/* Motion layer (mp4 / Lottie) over the authored image, which stays in flow as sizing box and fallback */
-.hero.ies-gradient .hero-media-motion { position: relative; }
+/* Media tile: radius matches the homepage hero (20px mobile, 30px tablet, 38px desktop) */
+.hero.ies-gradient .hero-media {
+  border-radius: 20px;
+  overflow: hidden;
+}
 
+/* Motion layer (mp4 / Lottie) over the authored image, which stays in flow as sizing box and fallback */
 .hero.ies-gradient .hero-media .hero-motion {
   position: absolute;
   inset: 0;
@@ -1378,37 +1382,44 @@ body.author-guide .hero .hero-copy .hero-lede {
   height: 100%;
 }
 
-.hero.ies-gradient .hero-motion-toggle {
+/* Play overlay shown after the 5s teaser (same as the homepage video hero) */
+.hero.ies-gradient .hero-video-play {
   position: absolute;
-  right: var(--space-s);
-  bottom: var(--space-s);
+  inset: 0;
   z-index: 3;
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
+  width: 100%;
   padding: 0;
   border: 0;
-  border-radius: var(--radius-circle);
-  background: rgb(0 0 0 / 45%);
-  color: var(--background-color);
-  font-size: 13px;
-  line-height: var(--line-height-none);
+  background: rgb(13 0 49 / 25%);
   cursor: pointer;
 }
 
-.hero.ies-gradient .hero-motion-toggle:hover { background: rgb(0 0 0 / 65%); }
+.hero.ies-gradient .hero-video-play[hidden] { display: none; }
 
-.hero.ies-gradient .hero-motion-toggle:focus-visible {
-  outline: 2px solid var(--background-color);
-  outline-offset: 2px;
+.hero.ies-gradient .hero-video-play::before {
+  content: "";
+  width: 72px;
+  height: 72px;
+  border-radius: var(--radius-circle);
+  background:
+    center / 28px no-repeat url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%230d0031" d="M8 5.5v13a1 1 0 0 0 1.5.86l11-6.5a1 1 0 0 0 0-1.72l-11-6.5A1 1 0 0 0 8 5.5Z"/></svg>'),
+    #fff;
+  transition: transform 0.2s ease;
 }
 
-.hero.ies-gradient .hero-motion-toggle::before { content: '\275A\275A'; }
+.hero.ies-gradient .hero-video-play:hover::before,
+.hero.ies-gradient .hero-video-play:focus-visible::before { transform: scale(1.08); }
 
-.hero.ies-gradient .hero-motion-toggle[data-state="paused"]::before { content: '\25B6'; }
+.hero.ies-gradient .hero-video-play:focus-visible {
+  outline: 2px solid var(--background-color);
+  outline-offset: calc(-1 * var(--space-2xs));
+}
 
 @media (width >= 768px) {
+  .hero.ies-gradient .hero-media { border-radius: 30px; }
+
   .hero.ies-gradient .hero-grid {
     padding-top: 60px;
     padding-bottom: 60px;
@@ -1429,6 +1440,8 @@ body.author-guide .hero .hero-copy .hero-lede {
 }
 
 @media (width >= 1024px) {
+  .hero.ies-gradient .hero-media { border-radius: 38px; }
+
   .hero.ies-gradient .hero-grid {
     grid-template-columns: 1fr 1fr;
     gap: var(--space-5xl);

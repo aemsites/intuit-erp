@@ -368,58 +368,78 @@ export function enhanceDashboardAnimation(media, picture, {
 
 /**
  * Motion layer for the `ies-gradient` media slot. The authored image stays in
- * flow as the sizing box and fallback; an mp4 (looping, muted) or a Lottie JSON
- * is layered over it. Reduced motion, blocked autoplay and load errors leave the
- * image showing.
+ * flow as the sizing box and fallback. An mp4 behaves like the homepage teaser:
+ * it autoplays muted for TEASER_SECONDS, then pauses and shows a play button
+ * that restarts it with sound and controls. A Lottie JSON loops over the image.
+ * Reduced motion shows the play button straight away; load errors leave the image.
  * @param {Element} media The .hero-media wrapper (already holds the image)
  * @param {{video?: string, lottie?: string}} motion authored motion sources
  */
 function addMotion(media, { video: videoSrc, lottie: lottieSrc }) {
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  media.classList.add('hero-media-motion');
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   if (videoSrc) {
+    media.classList.add('hero-media-motion');
     const video = document.createElement('video');
     video.className = 'hero-motion';
     video.muted = true;
     video.setAttribute('muted', '');
     video.playsInline = true;
     video.setAttribute('playsinline', '');
-    video.loop = true;
-    video.autoplay = true;
-    video.preload = 'auto';
-    video.tabIndex = -1;
-    video.setAttribute('aria-hidden', 'true');
+    video.preload = reduceMotion ? 'metadata' : 'auto';
+    video.setAttribute('aria-label', 'Product video');
     video.src = videoSrc;
 
-    const toggle = document.createElement('button');
-    toggle.type = 'button';
-    toggle.className = 'hero-motion-toggle';
-    const sync = () => {
-      toggle.setAttribute('aria-label', `${video.paused ? 'Play' : 'Pause'} hero animation`);
-      toggle.dataset.state = video.paused ? 'paused' : 'playing';
-    };
-    toggle.addEventListener('click', () => {
-      if (video.paused) tryPlay(video).catch(() => {}); else video.pause();
-    });
-    video.addEventListener('play', sync);
-    video.addEventListener('pause', sync);
+    const play = document.createElement('button');
+    play.type = 'button';
+    play.className = 'hero-video-play';
+    play.setAttribute('aria-label', 'Play video');
+    play.hidden = true;
+
+    let teasing = !reduceMotion;
+    const showPlay = () => { play.hidden = false; };
+
     video.addEventListener('playing', () => media.classList.add('is-playing'));
+    video.addEventListener('timeupdate', () => {
+      if (teasing && video.currentTime >= TEASER_SECONDS) {
+        teasing = false;
+        video.pause();
+        showPlay();
+      }
+    });
+    video.addEventListener('ended', showPlay);
     video.addEventListener('error', () => {
       // eslint-disable-next-line no-console
       console.warn('hero: video failed to load', videoSrc);
       media.classList.remove('is-playing');
       video.remove();
-      toggle.remove();
+      play.remove();
     });
-    sync();
-    media.append(video, toggle);
-    tryPlay(video).catch((e) => {
-      // eslint-disable-next-line no-console
-      console.debug('hero: video playback blocked', e);
+    play.addEventListener('click', () => {
+      teasing = false;
+      play.hidden = true;
+      video.currentTime = 0;
+      video.muted = false;
+      video.controls = true;
+      tryPlay(video).catch(showPlay);
     });
+
+    media.append(video, play);
+    if (teasing) {
+      tryPlay(video).catch((e) => {
+        // eslint-disable-next-line no-console
+        console.debug('hero: video playback blocked', e);
+        teasing = false;
+        showPlay();
+      });
+    } else {
+      showPlay();
+    }
     return;
   }
+
+  if (reduceMotion) return;
+  media.classList.add('hero-media-motion');
 
   if (lottieSrc) {
     const holder = document.createElement('div');
