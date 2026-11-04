@@ -366,6 +366,90 @@ export function enhanceDashboardAnimation(media, picture, {
   visibleObserver.observe(media);
 }
 
+/**
+ * Motion layer for the `ies-gradient` media slot. The authored image stays in
+ * flow as the sizing box and fallback; an mp4 (looping, muted) or a Lottie JSON
+ * is layered over it. Reduced motion, blocked autoplay and load errors leave the
+ * image showing.
+ * @param {Element} media The .hero-media wrapper (already holds the image)
+ * @param {{video?: string, lottie?: string}} motion authored motion sources
+ */
+function addMotion(media, { video: videoSrc, lottie: lottieSrc }) {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  media.classList.add('hero-media-motion');
+
+  if (videoSrc) {
+    const video = document.createElement('video');
+    video.className = 'hero-motion';
+    video.muted = true;
+    video.setAttribute('muted', '');
+    video.playsInline = true;
+    video.setAttribute('playsinline', '');
+    video.loop = true;
+    video.autoplay = true;
+    video.preload = 'auto';
+    video.tabIndex = -1;
+    video.setAttribute('aria-hidden', 'true');
+    video.src = videoSrc;
+
+    const toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.className = 'hero-motion-toggle';
+    const sync = () => {
+      toggle.setAttribute('aria-label', `${video.paused ? 'Play' : 'Pause'} hero animation`);
+      toggle.dataset.state = video.paused ? 'paused' : 'playing';
+    };
+    toggle.addEventListener('click', () => {
+      if (video.paused) tryPlay(video).catch(() => {}); else video.pause();
+    });
+    video.addEventListener('play', sync);
+    video.addEventListener('pause', sync);
+    video.addEventListener('playing', () => media.classList.add('is-playing'));
+    video.addEventListener('error', () => {
+      // eslint-disable-next-line no-console
+      console.warn('hero: video failed to load', videoSrc);
+      media.classList.remove('is-playing');
+      video.remove();
+      toggle.remove();
+    });
+    sync();
+    media.append(video, toggle);
+    tryPlay(video).catch((e) => {
+      // eslint-disable-next-line no-console
+      console.debug('hero: video playback blocked', e);
+    });
+    return;
+  }
+
+  if (lottieSrc) {
+    const holder = document.createElement('div');
+    holder.className = 'hero-motion hero-motion-lottie';
+    holder.setAttribute('aria-hidden', 'true');
+    scheduleWhenIdle(async () => {
+      try {
+        const [{ default: lottie }, res] = await Promise.all([
+          import(/* webpackIgnore: true */ LOTTIE_PLAYER_URL),
+          fetch(lottieSrc),
+        ]);
+        if (!res.ok) return;
+        const animationData = await res.json();
+        media.append(holder);
+        const animation = lottie.loadAnimation({
+          container: holder,
+          renderer: 'svg',
+          loop: true,
+          autoplay: true,
+          animationData,
+        });
+        animation.addEventListener('DOMLoaded', () => media.classList.add('is-playing'));
+        animation.addEventListener('data_failed', () => holder.remove());
+      } catch {
+        holder.remove();
+      }
+    });
+  }
+}
+
 function extendArcsBackground(block) {
   const section = block.closest('.section');
   const tail = section?.nextElementSibling;
@@ -483,13 +567,22 @@ export default async function decorate(block) {
   });
 
   let videoSrc = null;
+  let lottieSrc = null;
   const videoSrcs = [];
   ctaParas.forEach((p) => {
-    const links = [...p.querySelectorAll('a')].filter((x) => /\.mp4(?:$|\?)/i.test(x.getAttribute('href') || ''));
+    const links = [...p.querySelectorAll('a')].filter((x) => {
+      const href = x.getAttribute('href') || '';
+      return /\.mp4(?:$|\?)/i.test(href) || (isIesGradient && /\.json(?:$|\?)/i.test(href));
+    });
     if (!links.length) return;
     links.forEach((a) => {
-      videoSrc = videoSrc || a.getAttribute('href');
-      videoSrcs.push(a.getAttribute('href'));
+      const href = a.getAttribute('href');
+      if (/\.json(?:$|\?)/i.test(href)) {
+        lottieSrc = lottieSrc || href;
+      } else {
+        videoSrc = videoSrc || href;
+        videoSrcs.push(href);
+      }
       a.remove();
     });
     if (!p.textContent.trim() && !p.querySelector('a, img, picture')) p.remove();
@@ -570,7 +663,11 @@ export default async function decorate(block) {
     media.className = 'hero-media';
     media.append(mediaEl);
     grid.append(media);
-    enhanceDashboardAnimation(media, mediaEl);
+    if (isIesGradient && (videoSrc || lottieSrc)) {
+      addMotion(media, { video: videoSrc, lottie: lottieSrc });
+    } else {
+      enhanceDashboardAnimation(media, mediaEl);
+    }
   }
 
   block.replaceChildren(grid);
@@ -580,7 +677,7 @@ export default async function decorate(block) {
     block.prepend(bg);
     if (toggle) block.append(toggle);
     start();
-  } else if (videoSrc && !isIesVideo) {
+  } else if (videoSrc && !isIesVideo && !isIesGradient) {
     const figure = document.createElement('div');
     figure.className = 'hero-video';
 

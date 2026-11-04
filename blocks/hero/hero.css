@@ -1355,6 +1355,59 @@ body.author-guide .hero .hero-copy .hero-lede {
   border-radius: 0;
 }
 
+/* Motion layer (mp4 / Lottie) over the authored image, which stays in flow as sizing box and fallback */
+.hero.ies-gradient .hero-media-motion { position: relative; }
+
+.hero.ies-gradient .hero-media .hero-motion {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.hero.ies-gradient .hero-media.is-playing .hero-motion { opacity: 1; }
+
+.hero.ies-gradient .hero-motion-lottie svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.hero.ies-gradient .hero-motion-toggle {
+  position: absolute;
+  right: var(--space-s);
+  bottom: var(--space-s);
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-circle);
+  background: rgb(0 0 0 / 45%);
+  color: var(--background-color);
+  font-size: 13px;
+  line-height: var(--line-height-none);
+  cursor: pointer;
+}
+
+.hero.ies-gradient .hero-motion-toggle:hover { background: rgb(0 0 0 / 65%); }
+
+.hero.ies-gradient .hero-motion-toggle:focus-visible {
+  outline: 2px solid var(--background-color);
+  outline-offset: 2px;
+}
+
+.hero.ies-gradient .hero-motion-toggle::before { content: '\275A\275A'; }
+
+.hero.ies-gradient .hero-motion-toggle[data-state="paused"]::before { content: '\25B6'; }
+
 @media (width >= 768px) {
   .hero.ies-gradient .hero-grid {
     padding-top: 60px;
