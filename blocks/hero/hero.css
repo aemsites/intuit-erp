@@ -1301,7 +1301,7 @@ body.author-guide .hero .hero-copy .hero-lede {
 .hero.ies-gradient .hero-copy h1 {
   max-width: none;
   margin-bottom: var(--space-s);
-  font-size: 48px;
+  font-size: var(--heading-font-size-xxl);
   line-height: 1.1;
 }
 
