@@ -1324,16 +1324,16 @@ body.author-guide .hero .hero-copy .hero-lede {
 }
 
 .section.hero-container:has(.hero.ies-gradient) :is(a, button).button.primary {
-  border-color: var(--info);
-  background-color: var(--info);
-  color: var(--background-color);
+  border-color: var(--background-color);
+  background-color: var(--background-color);
+  color: #0d0031;
 }
 
 .section.hero-container:has(.hero.ies-gradient) :is(a, button).button.primary:hover,
 .section.hero-container:has(.hero.ies-gradient) :is(a, button).button.primary:focus-visible {
-  border-color: #1a56d6;
-  background-color: #1a56d6;
-  color: var(--background-color);
+  border-color: #e8e6f0;
+  background-color: #e8e6f0;
+  color: #0d0031;
 }
 
 .section.hero-container:has(.hero.ies-gradient) :is(a, button).button.secondary {
