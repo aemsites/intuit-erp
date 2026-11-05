@@ -366,6 +366,110 @@ export function enhanceDashboardAnimation(media, picture, {
   visibleObserver.observe(media);
 }
 
+/**
+ * Motion layer for the `ies-gradient` media slot. The authored image stays in
+ * flow as the sizing box and fallback. An mp4 behaves like the homepage teaser:
+ * it autoplays muted for TEASER_SECONDS, then pauses and shows a play button
+ * that restarts it with sound and controls. A Lottie JSON loops over the image.
+ * Reduced motion shows the play button straight away; load errors leave the image.
+ * @param {Element} media The .hero-media wrapper (already holds the image)
+ * @param {{video?: string, lottie?: string}} motion authored motion sources
+ */
+function addMotion(media, { video: videoSrc, lottie: lottieSrc }) {
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  if (videoSrc) {
+    media.classList.add('hero-media-motion');
+    const video = document.createElement('video');
+    video.className = 'hero-motion';
+    video.muted = true;
+    video.setAttribute('muted', '');
+    video.playsInline = true;
+    video.setAttribute('playsinline', '');
+    video.preload = reduceMotion ? 'metadata' : 'auto';
+    video.setAttribute('aria-label', 'Product video');
+    video.src = videoSrc;
+
+    const play = document.createElement('button');
+    play.type = 'button';
+    play.className = 'hero-video-play';
+    play.setAttribute('aria-label', 'Play video');
+    play.hidden = true;
+
+    let teasing = !reduceMotion;
+    const showPlay = () => { play.hidden = false; };
+
+    video.addEventListener('playing', () => media.classList.add('is-playing'));
+    video.addEventListener('timeupdate', () => {
+      if (teasing && video.currentTime >= TEASER_SECONDS) {
+        teasing = false;
+        video.pause();
+        showPlay();
+      }
+    });
+    video.addEventListener('ended', showPlay);
+    video.addEventListener('error', () => {
+      // eslint-disable-next-line no-console
+      console.warn('hero: video failed to load', videoSrc);
+      media.classList.remove('is-playing');
+      video.remove();
+      play.remove();
+    });
+    play.addEventListener('click', () => {
+      teasing = false;
+      play.hidden = true;
+      video.currentTime = 0;
+      video.muted = false;
+      video.controls = true;
+      tryPlay(video).catch(showPlay);
+    });
+
+    media.append(video, play);
+    if (teasing) {
+      tryPlay(video).catch((e) => {
+        // eslint-disable-next-line no-console
+        console.debug('hero: video playback blocked', e);
+        teasing = false;
+        showPlay();
+      });
+    } else {
+      showPlay();
+    }
+    return;
+  }
+
+  if (reduceMotion) return;
+  media.classList.add('hero-media-motion');
+
+  if (lottieSrc) {
+    const holder = document.createElement('div');
+    holder.className = 'hero-motion hero-motion-lottie';
+    holder.setAttribute('aria-hidden', 'true');
+    scheduleWhenIdle(async () => {
+      try {
+        const [{ default: lottie }, res] = await Promise.all([
+          import(/* webpackIgnore: true */ LOTTIE_PLAYER_URL),
+          fetch(lottieSrc),
+        ]);
+        if (!res.ok) return;
+        const animationData = await res.json();
+        media.append(holder);
+        const animation = lottie.loadAnimation({
+          container: holder,
+          renderer: 'svg',
+          loop: true,
+          autoplay: true,
+          animationData,
+        });
+        animation.addEventListener('DOMLoaded', () => media.classList.add('is-playing'));
+        animation.addEventListener('data_failed', () => holder.remove());
+      } catch {
+        holder.remove();
+      }
+    });
+  }
+}
+
 function extendArcsBackground(block) {
   const section = block.closest('.section');
   const tail = section?.nextElementSibling;
@@ -483,13 +587,22 @@ export default async function decorate(block) {
   });
 
   let videoSrc = null;
+  let lottieSrc = null;
   const videoSrcs = [];
   ctaParas.forEach((p) => {
-    const links = [...p.querySelectorAll('a')].filter((x) => /\.mp4(?:$|\?)/i.test(x.getAttribute('href') || ''));
+    const links = [...p.querySelectorAll('a')].filter((x) => {
+      const href = x.getAttribute('href') || '';
+      return /\.mp4(?:$|\?)/i.test(href) || (isIesGradient && /\.json(?:$|\?)/i.test(href));
+    });
     if (!links.length) return;
     links.forEach((a) => {
-      videoSrc = videoSrc || a.getAttribute('href');
-      videoSrcs.push(a.getAttribute('href'));
+      const href = a.getAttribute('href');
+      if (/\.json(?:$|\?)/i.test(href)) {
+        lottieSrc = lottieSrc || href;
+      } else {
+        videoSrc = videoSrc || href;
+        videoSrcs.push(href);
+      }
       a.remove();
     });
     if (!p.textContent.trim() && !p.querySelector('a, img, picture')) p.remove();
@@ -570,7 +683,11 @@ export default async function decorate(block) {
     media.className = 'hero-media';
     media.append(mediaEl);
     grid.append(media);
-    enhanceDashboardAnimation(media, mediaEl);
+    if (isIesGradient && (videoSrc || lottieSrc)) {
+      addMotion(media, { video: videoSrc, lottie: lottieSrc });
+    } else {
+      enhanceDashboardAnimation(media, mediaEl);
+    }
   }
 
   block.replaceChildren(grid);
@@ -580,7 +697,7 @@ export default async function decorate(block) {
     block.prepend(bg);
     if (toggle) block.append(toggle);
     start();
-  } else if (videoSrc && !isIesVideo) {
+  } else if (videoSrc && !isIesVideo && !isIesGradient) {
     const figure = document.createElement('div');
     figure.className = 'hero-video';
 
