@@ -162,9 +162,9 @@ work. The legacy tokens keep working unchanged.
 | `lg-` | `width >= 1200px` and up |
 | `xl-` | `width >= 1440px` and up |
 
-Values (px): `0`, `8`, `16`, `20`, `24`, `32`, `40`, `48`, `60`, `64`, `80`, `96`, `120`, `160`,
-plus `auto` for `ml` / `mr` / `mx` only. Any other value does nothing. To add one, add it to every
-property and breakpoint.
+Values (px): `0`, `16`, `20`, `40`, `60`, `80`, `120`, `160`. These are the steps the site's
+other spacing tokens already use. `ml` / `mr` / `mx` also take `auto`. Any other value does nothing.
+To add one, add it to every property and breakpoint.
 
 - **They always win.** Every rule uses `!important`, so it beats a block's own section padding/margin
   (for example `media-text center ies`). A prefixed class beats an unprefixed one at its breakpoint.

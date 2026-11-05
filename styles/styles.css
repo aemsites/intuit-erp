@@ -1524,785 +1524,461 @@ main .fragment-wrapper .section.spacer-0 {
 
 /* responsive spacing (px names): [xs|sm|md|lg|xl-]{mt|mb|my|ml|mr|mx|pt|pb|py|pl|pr|px|gutter}-{px}; see OVERRIDES.md */
 main .section:is(.mt-0, .my-0) { margin-top: 0 !important; }
-main .section:is(.mt-8, .my-8) { margin-top: var(--space-2xs) !important; }
 main .section:is(.mt-16, .my-16) { margin-top: var(--space-s) !important; }
 main .section:is(.mt-20, .my-20) { margin-top: var(--space-m) !important; }
-main .section:is(.mt-24, .my-24) { margin-top: var(--space-l) !important; }
-main .section:is(.mt-32, .my-32) { margin-top: var(--space-xl) !important; }
 main .section:is(.mt-40, .my-40) { margin-top: var(--space-2xl) !important; }
-main .section:is(.mt-48, .my-48) { margin-top: var(--space-3xl) !important; }
 main .section:is(.mt-60, .my-60) { margin-top: 3.75rem !important; }
-main .section:is(.mt-64, .my-64) { margin-top: var(--space-4xl) !important; }
 main .section:is(.mt-80, .my-80) { margin-top: var(--space-5xl) !important; }
-main .section:is(.mt-96, .my-96) { margin-top: 6rem !important; }
 main .section:is(.mt-120, .my-120) { margin-top: 7.5rem !important; }
 main .section:is(.mt-160, .my-160) { margin-top: 10rem !important; }
 main .section:is(.mb-0, .my-0) { margin-bottom: 0 !important; }
-main .section:is(.mb-8, .my-8) { margin-bottom: var(--space-2xs) !important; }
 main .section:is(.mb-16, .my-16) { margin-bottom: var(--space-s) !important; }
 main .section:is(.mb-20, .my-20) { margin-bottom: var(--space-m) !important; }
-main .section:is(.mb-24, .my-24) { margin-bottom: var(--space-l) !important; }
-main .section:is(.mb-32, .my-32) { margin-bottom: var(--space-xl) !important; }
 main .section:is(.mb-40, .my-40) { margin-bottom: var(--space-2xl) !important; }
-main .section:is(.mb-48, .my-48) { margin-bottom: var(--space-3xl) !important; }
 main .section:is(.mb-60, .my-60) { margin-bottom: 3.75rem !important; }
-main .section:is(.mb-64, .my-64) { margin-bottom: var(--space-4xl) !important; }
 main .section:is(.mb-80, .my-80) { margin-bottom: var(--space-5xl) !important; }
-main .section:is(.mb-96, .my-96) { margin-bottom: 6rem !important; }
 main .section:is(.mb-120, .my-120) { margin-bottom: 7.5rem !important; }
 main .section:is(.mb-160, .my-160) { margin-bottom: 10rem !important; }
 main .section:is(.ml-0, .mx-0) { margin-left: 0 !important; }
-main .section:is(.ml-8, .mx-8) { margin-left: var(--space-2xs) !important; }
 main .section:is(.ml-16, .mx-16) { margin-left: var(--space-s) !important; }
 main .section:is(.ml-20, .mx-20) { margin-left: var(--space-m) !important; }
-main .section:is(.ml-24, .mx-24) { margin-left: var(--space-l) !important; }
-main .section:is(.ml-32, .mx-32) { margin-left: var(--space-xl) !important; }
 main .section:is(.ml-40, .mx-40) { margin-left: var(--space-2xl) !important; }
-main .section:is(.ml-48, .mx-48) { margin-left: var(--space-3xl) !important; }
 main .section:is(.ml-60, .mx-60) { margin-left: 3.75rem !important; }
-main .section:is(.ml-64, .mx-64) { margin-left: var(--space-4xl) !important; }
 main .section:is(.ml-80, .mx-80) { margin-left: var(--space-5xl) !important; }
-main .section:is(.ml-96, .mx-96) { margin-left: 6rem !important; }
 main .section:is(.ml-120, .mx-120) { margin-left: 7.5rem !important; }
 main .section:is(.ml-160, .mx-160) { margin-left: 10rem !important; }
 main .section:is(.ml-auto, .mx-auto) { margin-left: auto !important; }
 main .section:is(.mr-0, .mx-0) { margin-right: 0 !important; }
-main .section:is(.mr-8, .mx-8) { margin-right: var(--space-2xs) !important; }
 main .section:is(.mr-16, .mx-16) { margin-right: var(--space-s) !important; }
 main .section:is(.mr-20, .mx-20) { margin-right: var(--space-m) !important; }
-main .section:is(.mr-24, .mx-24) { margin-right: var(--space-l) !important; }
-main .section:is(.mr-32, .mx-32) { margin-right: var(--space-xl) !important; }
 main .section:is(.mr-40, .mx-40) { margin-right: var(--space-2xl) !important; }
-main .section:is(.mr-48, .mx-48) { margin-right: var(--space-3xl) !important; }
 main .section:is(.mr-60, .mx-60) { margin-right: 3.75rem !important; }
-main .section:is(.mr-64, .mx-64) { margin-right: var(--space-4xl) !important; }
 main .section:is(.mr-80, .mx-80) { margin-right: var(--space-5xl) !important; }
-main .section:is(.mr-96, .mx-96) { margin-right: 6rem !important; }
 main .section:is(.mr-120, .mx-120) { margin-right: 7.5rem !important; }
 main .section:is(.mr-160, .mx-160) { margin-right: 10rem !important; }
 main .section:is(.mr-auto, .mx-auto) { margin-right: auto !important; }
 main .section:is(.pt-0, .py-0) { padding-top: 0 !important; }
-main .section:is(.pt-8, .py-8) { padding-top: var(--space-2xs) !important; }
 main .section:is(.pt-16, .py-16) { padding-top: var(--space-s) !important; }
 main .section:is(.pt-20, .py-20) { padding-top: var(--space-m) !important; }
-main .section:is(.pt-24, .py-24) { padding-top: var(--space-l) !important; }
-main .section:is(.pt-32, .py-32) { padding-top: var(--space-xl) !important; }
 main .section:is(.pt-40, .py-40) { padding-top: var(--space-2xl) !important; }
-main .section:is(.pt-48, .py-48) { padding-top: var(--space-3xl) !important; }
 main .section:is(.pt-60, .py-60) { padding-top: 3.75rem !important; }
-main .section:is(.pt-64, .py-64) { padding-top: var(--space-4xl) !important; }
 main .section:is(.pt-80, .py-80) { padding-top: var(--space-5xl) !important; }
-main .section:is(.pt-96, .py-96) { padding-top: 6rem !important; }
 main .section:is(.pt-120, .py-120) { padding-top: 7.5rem !important; }
 main .section:is(.pt-160, .py-160) { padding-top: 10rem !important; }
 main .section:is(.pb-0, .py-0) { padding-bottom: 0 !important; }
-main .section:is(.pb-8, .py-8) { padding-bottom: var(--space-2xs) !important; }
 main .section:is(.pb-16, .py-16) { padding-bottom: var(--space-s) !important; }
 main .section:is(.pb-20, .py-20) { padding-bottom: var(--space-m) !important; }
-main .section:is(.pb-24, .py-24) { padding-bottom: var(--space-l) !important; }
-main .section:is(.pb-32, .py-32) { padding-bottom: var(--space-xl) !important; }
 main .section:is(.pb-40, .py-40) { padding-bottom: var(--space-2xl) !important; }
-main .section:is(.pb-48, .py-48) { padding-bottom: var(--space-3xl) !important; }
 main .section:is(.pb-60, .py-60) { padding-bottom: 3.75rem !important; }
-main .section:is(.pb-64, .py-64) { padding-bottom: var(--space-4xl) !important; }
 main .section:is(.pb-80, .py-80) { padding-bottom: var(--space-5xl) !important; }
-main .section:is(.pb-96, .py-96) { padding-bottom: 6rem !important; }
 main .section:is(.pb-120, .py-120) { padding-bottom: 7.5rem !important; }
 main .section:is(.pb-160, .py-160) { padding-bottom: 10rem !important; }
 main .section:is(.pl-0, .px-0) { padding-left: 0 !important; }
-main .section:is(.pl-8, .px-8) { padding-left: var(--space-2xs) !important; }
 main .section:is(.pl-16, .px-16) { padding-left: var(--space-s) !important; }
 main .section:is(.pl-20, .px-20) { padding-left: var(--space-m) !important; }
-main .section:is(.pl-24, .px-24) { padding-left: var(--space-l) !important; }
-main .section:is(.pl-32, .px-32) { padding-left: var(--space-xl) !important; }
 main .section:is(.pl-40, .px-40) { padding-left: var(--space-2xl) !important; }
-main .section:is(.pl-48, .px-48) { padding-left: var(--space-3xl) !important; }
 main .section:is(.pl-60, .px-60) { padding-left: 3.75rem !important; }
-main .section:is(.pl-64, .px-64) { padding-left: var(--space-4xl) !important; }
 main .section:is(.pl-80, .px-80) { padding-left: var(--space-5xl) !important; }
-main .section:is(.pl-96, .px-96) { padding-left: 6rem !important; }
 main .section:is(.pl-120, .px-120) { padding-left: 7.5rem !important; }
 main .section:is(.pl-160, .px-160) { padding-left: 10rem !important; }
 main .section:is(.pr-0, .px-0) { padding-right: 0 !important; }
-main .section:is(.pr-8, .px-8) { padding-right: var(--space-2xs) !important; }
 main .section:is(.pr-16, .px-16) { padding-right: var(--space-s) !important; }
 main .section:is(.pr-20, .px-20) { padding-right: var(--space-m) !important; }
-main .section:is(.pr-24, .px-24) { padding-right: var(--space-l) !important; }
-main .section:is(.pr-32, .px-32) { padding-right: var(--space-xl) !important; }
 main .section:is(.pr-40, .px-40) { padding-right: var(--space-2xl) !important; }
-main .section:is(.pr-48, .px-48) { padding-right: var(--space-3xl) !important; }
 main .section:is(.pr-60, .px-60) { padding-right: 3.75rem !important; }
-main .section:is(.pr-64, .px-64) { padding-right: var(--space-4xl) !important; }
 main .section:is(.pr-80, .px-80) { padding-right: var(--space-5xl) !important; }
-main .section:is(.pr-96, .px-96) { padding-right: 6rem !important; }
 main .section:is(.pr-120, .px-120) { padding-right: 7.5rem !important; }
 main .section:is(.pr-160, .px-160) { padding-right: 10rem !important; }
 main .section.gutter-0 > div { padding-left: 0 !important; padding-right: 0 !important; }
-main .section.gutter-8 > div { padding-left: var(--space-2xs) !important; padding-right: var(--space-2xs) !important; }
 main .section.gutter-16 > div { padding-left: var(--space-s) !important; padding-right: var(--space-s) !important; }
 main .section.gutter-20 > div { padding-left: var(--space-m) !important; padding-right: var(--space-m) !important; }
-main .section.gutter-24 > div { padding-left: var(--space-l) !important; padding-right: var(--space-l) !important; }
-main .section.gutter-32 > div { padding-left: var(--space-xl) !important; padding-right: var(--space-xl) !important; }
 main .section.gutter-40 > div { padding-left: var(--space-2xl) !important; padding-right: var(--space-2xl) !important; }
-main .section.gutter-48 > div { padding-left: var(--space-3xl) !important; padding-right: var(--space-3xl) !important; }
 main .section.gutter-60 > div { padding-left: 3.75rem !important; padding-right: 3.75rem !important; }
-main .section.gutter-64 > div { padding-left: var(--space-4xl) !important; padding-right: var(--space-4xl) !important; }
 main .section.gutter-80 > div { padding-left: var(--space-5xl) !important; padding-right: var(--space-5xl) !important; }
-main .section.gutter-96 > div { padding-left: 6rem !important; padding-right: 6rem !important; }
 main .section.gutter-120 > div { padding-left: 7.5rem !important; padding-right: 7.5rem !important; }
 main .section.gutter-160 > div { padding-left: 10rem !important; padding-right: 10rem !important; }
 
 @media (width < 768px) {
   main .section:is(.xs-mt-0, .xs-my-0) { margin-top: 0 !important; }
-  main .section:is(.xs-mt-8, .xs-my-8) { margin-top: var(--space-2xs) !important; }
   main .section:is(.xs-mt-16, .xs-my-16) { margin-top: var(--space-s) !important; }
   main .section:is(.xs-mt-20, .xs-my-20) { margin-top: var(--space-m) !important; }
-  main .section:is(.xs-mt-24, .xs-my-24) { margin-top: var(--space-l) !important; }
-  main .section:is(.xs-mt-32, .xs-my-32) { margin-top: var(--space-xl) !important; }
   main .section:is(.xs-mt-40, .xs-my-40) { margin-top: var(--space-2xl) !important; }
-  main .section:is(.xs-mt-48, .xs-my-48) { margin-top: var(--space-3xl) !important; }
   main .section:is(.xs-mt-60, .xs-my-60) { margin-top: 3.75rem !important; }
-  main .section:is(.xs-mt-64, .xs-my-64) { margin-top: var(--space-4xl) !important; }
   main .section:is(.xs-mt-80, .xs-my-80) { margin-top: var(--space-5xl) !important; }
-  main .section:is(.xs-mt-96, .xs-my-96) { margin-top: 6rem !important; }
   main .section:is(.xs-mt-120, .xs-my-120) { margin-top: 7.5rem !important; }
   main .section:is(.xs-mt-160, .xs-my-160) { margin-top: 10rem !important; }
   main .section:is(.xs-mb-0, .xs-my-0) { margin-bottom: 0 !important; }
-  main .section:is(.xs-mb-8, .xs-my-8) { margin-bottom: var(--space-2xs) !important; }
   main .section:is(.xs-mb-16, .xs-my-16) { margin-bottom: var(--space-s) !important; }
   main .section:is(.xs-mb-20, .xs-my-20) { margin-bottom: var(--space-m) !important; }
-  main .section:is(.xs-mb-24, .xs-my-24) { margin-bottom: var(--space-l) !important; }
-  main .section:is(.xs-mb-32, .xs-my-32) { margin-bottom: var(--space-xl) !important; }
   main .section:is(.xs-mb-40, .xs-my-40) { margin-bottom: var(--space-2xl) !important; }
-  main .section:is(.xs-mb-48, .xs-my-48) { margin-bottom: var(--space-3xl) !important; }
   main .section:is(.xs-mb-60, .xs-my-60) { margin-bottom: 3.75rem !important; }
-  main .section:is(.xs-mb-64, .xs-my-64) { margin-bottom: var(--space-4xl) !important; }
   main .section:is(.xs-mb-80, .xs-my-80) { margin-bottom: var(--space-5xl) !important; }
-  main .section:is(.xs-mb-96, .xs-my-96) { margin-bottom: 6rem !important; }
   main .section:is(.xs-mb-120, .xs-my-120) { margin-bottom: 7.5rem !important; }
   main .section:is(.xs-mb-160, .xs-my-160) { margin-bottom: 10rem !important; }
   main .section:is(.xs-ml-0, .xs-mx-0) { margin-left: 0 !important; }
-  main .section:is(.xs-ml-8, .xs-mx-8) { margin-left: var(--space-2xs) !important; }
   main .section:is(.xs-ml-16, .xs-mx-16) { margin-left: var(--space-s) !important; }
   main .section:is(.xs-ml-20, .xs-mx-20) { margin-left: var(--space-m) !important; }
-  main .section:is(.xs-ml-24, .xs-mx-24) { margin-left: var(--space-l) !important; }
-  main .section:is(.xs-ml-32, .xs-mx-32) { margin-left: var(--space-xl) !important; }
   main .section:is(.xs-ml-40, .xs-mx-40) { margin-left: var(--space-2xl) !important; }
-  main .section:is(.xs-ml-48, .xs-mx-48) { margin-left: var(--space-3xl) !important; }
   main .section:is(.xs-ml-60, .xs-mx-60) { margin-left: 3.75rem !important; }
-  main .section:is(.xs-ml-64, .xs-mx-64) { margin-left: var(--space-4xl) !important; }
   main .section:is(.xs-ml-80, .xs-mx-80) { margin-left: var(--space-5xl) !important; }
-  main .section:is(.xs-ml-96, .xs-mx-96) { margin-left: 6rem !important; }
   main .section:is(.xs-ml-120, .xs-mx-120) { margin-left: 7.5rem !important; }
   main .section:is(.xs-ml-160, .xs-mx-160) { margin-left: 10rem !important; }
   main .section:is(.xs-ml-auto, .xs-mx-auto) { margin-left: auto !important; }
   main .section:is(.xs-mr-0, .xs-mx-0) { margin-right: 0 !important; }
-  main .section:is(.xs-mr-8, .xs-mx-8) { margin-right: var(--space-2xs) !important; }
   main .section:is(.xs-mr-16, .xs-mx-16) { margin-right: var(--space-s) !important; }
   main .section:is(.xs-mr-20, .xs-mx-20) { margin-right: var(--space-m) !important; }
-  main .section:is(.xs-mr-24, .xs-mx-24) { margin-right: var(--space-l) !important; }
-  main .section:is(.xs-mr-32, .xs-mx-32) { margin-right: var(--space-xl) !important; }
   main .section:is(.xs-mr-40, .xs-mx-40) { margin-right: var(--space-2xl) !important; }
-  main .section:is(.xs-mr-48, .xs-mx-48) { margin-right: var(--space-3xl) !important; }
   main .section:is(.xs-mr-60, .xs-mx-60) { margin-right: 3.75rem !important; }
-  main .section:is(.xs-mr-64, .xs-mx-64) { margin-right: var(--space-4xl) !important; }
   main .section:is(.xs-mr-80, .xs-mx-80) { margin-right: var(--space-5xl) !important; }
-  main .section:is(.xs-mr-96, .xs-mx-96) { margin-right: 6rem !important; }
   main .section:is(.xs-mr-120, .xs-mx-120) { margin-right: 7.5rem !important; }
   main .section:is(.xs-mr-160, .xs-mx-160) { margin-right: 10rem !important; }
   main .section:is(.xs-mr-auto, .xs-mx-auto) { margin-right: auto !important; }
   main .section:is(.xs-pt-0, .xs-py-0) { padding-top: 0 !important; }
-  main .section:is(.xs-pt-8, .xs-py-8) { padding-top: var(--space-2xs) !important; }
   main .section:is(.xs-pt-16, .xs-py-16) { padding-top: var(--space-s) !important; }
   main .section:is(.xs-pt-20, .xs-py-20) { padding-top: var(--space-m) !important; }
-  main .section:is(.xs-pt-24, .xs-py-24) { padding-top: var(--space-l) !important; }
-  main .section:is(.xs-pt-32, .xs-py-32) { padding-top: var(--space-xl) !important; }
   main .section:is(.xs-pt-40, .xs-py-40) { padding-top: var(--space-2xl) !important; }
-  main .section:is(.xs-pt-48, .xs-py-48) { padding-top: var(--space-3xl) !important; }
   main .section:is(.xs-pt-60, .xs-py-60) { padding-top: 3.75rem !important; }
-  main .section:is(.xs-pt-64, .xs-py-64) { padding-top: var(--space-4xl) !important; }
   main .section:is(.xs-pt-80, .xs-py-80) { padding-top: var(--space-5xl) !important; }
-  main .section:is(.xs-pt-96, .xs-py-96) { padding-top: 6rem !important; }
   main .section:is(.xs-pt-120, .xs-py-120) { padding-top: 7.5rem !important; }
   main .section:is(.xs-pt-160, .xs-py-160) { padding-top: 10rem !important; }
   main .section:is(.xs-pb-0, .xs-py-0) { padding-bottom: 0 !important; }
-  main .section:is(.xs-pb-8, .xs-py-8) { padding-bottom: var(--space-2xs) !important; }
   main .section:is(.xs-pb-16, .xs-py-16) { padding-bottom: var(--space-s) !important; }
   main .section:is(.xs-pb-20, .xs-py-20) { padding-bottom: var(--space-m) !important; }
-  main .section:is(.xs-pb-24, .xs-py-24) { padding-bottom: var(--space-l) !important; }
-  main .section:is(.xs-pb-32, .xs-py-32) { padding-bottom: var(--space-xl) !important; }
   main .section:is(.xs-pb-40, .xs-py-40) { padding-bottom: var(--space-2xl) !important; }
-  main .section:is(.xs-pb-48, .xs-py-48) { padding-bottom: var(--space-3xl) !important; }
   main .section:is(.xs-pb-60, .xs-py-60) { padding-bottom: 3.75rem !important; }
-  main .section:is(.xs-pb-64, .xs-py-64) { padding-bottom: var(--space-4xl) !important; }
   main .section:is(.xs-pb-80, .xs-py-80) { padding-bottom: var(--space-5xl) !important; }
-  main .section:is(.xs-pb-96, .xs-py-96) { padding-bottom: 6rem !important; }
   main .section:is(.xs-pb-120, .xs-py-120) { padding-bottom: 7.5rem !important; }
   main .section:is(.xs-pb-160, .xs-py-160) { padding-bottom: 10rem !important; }
   main .section:is(.xs-pl-0, .xs-px-0) { padding-left: 0 !important; }
-  main .section:is(.xs-pl-8, .xs-px-8) { padding-left: var(--space-2xs) !important; }
   main .section:is(.xs-pl-16, .xs-px-16) { padding-left: var(--space-s) !important; }
   main .section:is(.xs-pl-20, .xs-px-20) { padding-left: var(--space-m) !important; }
-  main .section:is(.xs-pl-24, .xs-px-24) { padding-left: var(--space-l) !important; }
-  main .section:is(.xs-pl-32, .xs-px-32) { padding-left: var(--space-xl) !important; }
   main .section:is(.xs-pl-40, .xs-px-40) { padding-left: var(--space-2xl) !important; }
-  main .section:is(.xs-pl-48, .xs-px-48) { padding-left: var(--space-3xl) !important; }
   main .section:is(.xs-pl-60, .xs-px-60) { padding-left: 3.75rem !important; }
-  main .section:is(.xs-pl-64, .xs-px-64) { padding-left: var(--space-4xl) !important; }
   main .section:is(.xs-pl-80, .xs-px-80) { padding-left: var(--space-5xl) !important; }
-  main .section:is(.xs-pl-96, .xs-px-96) { padding-left: 6rem !important; }
   main .section:is(.xs-pl-120, .xs-px-120) { padding-left: 7.5rem !important; }
   main .section:is(.xs-pl-160, .xs-px-160) { padding-left: 10rem !important; }
   main .section:is(.xs-pr-0, .xs-px-0) { padding-right: 0 !important; }
-  main .section:is(.xs-pr-8, .xs-px-8) { padding-right: var(--space-2xs) !important; }
   main .section:is(.xs-pr-16, .xs-px-16) { padding-right: var(--space-s) !important; }
   main .section:is(.xs-pr-20, .xs-px-20) { padding-right: var(--space-m) !important; }
-  main .section:is(.xs-pr-24, .xs-px-24) { padding-right: var(--space-l) !important; }
-  main .section:is(.xs-pr-32, .xs-px-32) { padding-right: var(--space-xl) !important; }
   main .section:is(.xs-pr-40, .xs-px-40) { padding-right: var(--space-2xl) !important; }
-  main .section:is(.xs-pr-48, .xs-px-48) { padding-right: var(--space-3xl) !important; }
   main .section:is(.xs-pr-60, .xs-px-60) { padding-right: 3.75rem !important; }
-  main .section:is(.xs-pr-64, .xs-px-64) { padding-right: var(--space-4xl) !important; }
   main .section:is(.xs-pr-80, .xs-px-80) { padding-right: var(--space-5xl) !important; }
-  main .section:is(.xs-pr-96, .xs-px-96) { padding-right: 6rem !important; }
   main .section:is(.xs-pr-120, .xs-px-120) { padding-right: 7.5rem !important; }
   main .section:is(.xs-pr-160, .xs-px-160) { padding-right: 10rem !important; }
   main .section.xs-gutter-0 > div { padding-left: 0 !important; padding-right: 0 !important; }
-  main .section.xs-gutter-8 > div { padding-left: var(--space-2xs) !important; padding-right: var(--space-2xs) !important; }
   main .section.xs-gutter-16 > div { padding-left: var(--space-s) !important; padding-right: var(--space-s) !important; }
   main .section.xs-gutter-20 > div { padding-left: var(--space-m) !important; padding-right: var(--space-m) !important; }
-  main .section.xs-gutter-24 > div { padding-left: var(--space-l) !important; padding-right: var(--space-l) !important; }
-  main .section.xs-gutter-32 > div { padding-left: var(--space-xl) !important; padding-right: var(--space-xl) !important; }
   main .section.xs-gutter-40 > div { padding-left: var(--space-2xl) !important; padding-right: var(--space-2xl) !important; }
-  main .section.xs-gutter-48 > div { padding-left: var(--space-3xl) !important; padding-right: var(--space-3xl) !important; }
   main .section.xs-gutter-60 > div { padding-left: 3.75rem !important; padding-right: 3.75rem !important; }
-  main .section.xs-gutter-64 > div { padding-left: var(--space-4xl) !important; padding-right: var(--space-4xl) !important; }
   main .section.xs-gutter-80 > div { padding-left: var(--space-5xl) !important; padding-right: var(--space-5xl) !important; }
-  main .section.xs-gutter-96 > div { padding-left: 6rem !important; padding-right: 6rem !important; }
   main .section.xs-gutter-120 > div { padding-left: 7.5rem !important; padding-right: 7.5rem !important; }
   main .section.xs-gutter-160 > div { padding-left: 10rem !important; padding-right: 10rem !important; }
 }
 
 @media (width >= 768px) {
   main .section:is(.sm-mt-0, .sm-my-0) { margin-top: 0 !important; }
-  main .section:is(.sm-mt-8, .sm-my-8) { margin-top: var(--space-2xs) !important; }
   main .section:is(.sm-mt-16, .sm-my-16) { margin-top: var(--space-s) !important; }
   main .section:is(.sm-mt-20, .sm-my-20) { margin-top: var(--space-m) !important; }
-  main .section:is(.sm-mt-24, .sm-my-24) { margin-top: var(--space-l) !important; }
-  main .section:is(.sm-mt-32, .sm-my-32) { margin-top: var(--space-xl) !important; }
   main .section:is(.sm-mt-40, .sm-my-40) { margin-top: var(--space-2xl) !important; }
-  main .section:is(.sm-mt-48, .sm-my-48) { margin-top: var(--space-3xl) !important; }
   main .section:is(.sm-mt-60, .sm-my-60) { margin-top: 3.75rem !important; }
-  main .section:is(.sm-mt-64, .sm-my-64) { margin-top: var(--space-4xl) !important; }
   main .section:is(.sm-mt-80, .sm-my-80) { margin-top: var(--space-5xl) !important; }
-  main .section:is(.sm-mt-96, .sm-my-96) { margin-top: 6rem !important; }
   main .section:is(.sm-mt-120, .sm-my-120) { margin-top: 7.5rem !important; }
   main .section:is(.sm-mt-160, .sm-my-160) { margin-top: 10rem !important; }
   main .section:is(.sm-mb-0, .sm-my-0) { margin-bottom: 0 !important; }
-  main .section:is(.sm-mb-8, .sm-my-8) { margin-bottom: var(--space-2xs) !important; }
   main .section:is(.sm-mb-16, .sm-my-16) { margin-bottom: var(--space-s) !important; }
   main .section:is(.sm-mb-20, .sm-my-20) { margin-bottom: var(--space-m) !important; }
-  main .section:is(.sm-mb-24, .sm-my-24) { margin-bottom: var(--space-l) !important; }
-  main .section:is(.sm-mb-32, .sm-my-32) { margin-bottom: var(--space-xl) !important; }
   main .section:is(.sm-mb-40, .sm-my-40) { margin-bottom: var(--space-2xl) !important; }
-  main .section:is(.sm-mb-48, .sm-my-48) { margin-bottom: var(--space-3xl) !important; }
   main .section:is(.sm-mb-60, .sm-my-60) { margin-bottom: 3.75rem !important; }
-  main .section:is(.sm-mb-64, .sm-my-64) { margin-bottom: var(--space-4xl) !important; }
   main .section:is(.sm-mb-80, .sm-my-80) { margin-bottom: var(--space-5xl) !important; }
-  main .section:is(.sm-mb-96, .sm-my-96) { margin-bottom: 6rem !important; }
   main .section:is(.sm-mb-120, .sm-my-120) { margin-bottom: 7.5rem !important; }
   main .section:is(.sm-mb-160, .sm-my-160) { margin-bottom: 10rem !important; }
   main .section:is(.sm-ml-0, .sm-mx-0) { margin-left: 0 !important; }
-  main .section:is(.sm-ml-8, .sm-mx-8) { margin-left: var(--space-2xs) !important; }
   main .section:is(.sm-ml-16, .sm-mx-16) { margin-left: var(--space-s) !important; }
   main .section:is(.sm-ml-20, .sm-mx-20) { margin-left: var(--space-m) !important; }
-  main .section:is(.sm-ml-24, .sm-mx-24) { margin-left: var(--space-l) !important; }
-  main .section:is(.sm-ml-32, .sm-mx-32) { margin-left: var(--space-xl) !important; }
   main .section:is(.sm-ml-40, .sm-mx-40) { margin-left: var(--space-2xl) !important; }
-  main .section:is(.sm-ml-48, .sm-mx-48) { margin-left: var(--space-3xl) !important; }
   main .section:is(.sm-ml-60, .sm-mx-60) { margin-left: 3.75rem !important; }
-  main .section:is(.sm-ml-64, .sm-mx-64) { margin-left: var(--space-4xl) !important; }
   main .section:is(.sm-ml-80, .sm-mx-80) { margin-left: var(--space-5xl) !important; }
-  main .section:is(.sm-ml-96, .sm-mx-96) { margin-left: 6rem !important; }
   main .section:is(.sm-ml-120, .sm-mx-120) { margin-left: 7.5rem !important; }
   main .section:is(.sm-ml-160, .sm-mx-160) { margin-left: 10rem !important; }
   main .section:is(.sm-ml-auto, .sm-mx-auto) { margin-left: auto !important; }
   main .section:is(.sm-mr-0, .sm-mx-0) { margin-right: 0 !important; }
-  main .section:is(.sm-mr-8, .sm-mx-8) { margin-right: var(--space-2xs) !important; }
   main .section:is(.sm-mr-16, .sm-mx-16) { margin-right: var(--space-s) !important; }
   main .section:is(.sm-mr-20, .sm-mx-20) { margin-right: var(--space-m) !important; }
-  main .section:is(.sm-mr-24, .sm-mx-24) { margin-right: var(--space-l) !important; }
-  main .section:is(.sm-mr-32, .sm-mx-32) { margin-right: var(--space-xl) !important; }
   main .section:is(.sm-mr-40, .sm-mx-40) { margin-right: var(--space-2xl) !important; }
-  main .section:is(.sm-mr-48, .sm-mx-48) { margin-right: var(--space-3xl) !important; }
   main .section:is(.sm-mr-60, .sm-mx-60) { margin-right: 3.75rem !important; }
-  main .section:is(.sm-mr-64, .sm-mx-64) { margin-right: var(--space-4xl) !important; }
   main .section:is(.sm-mr-80, .sm-mx-80) { margin-right: var(--space-5xl) !important; }
-  main .section:is(.sm-mr-96, .sm-mx-96) { margin-right: 6rem !important; }
   main .section:is(.sm-mr-120, .sm-mx-120) { margin-right: 7.5rem !important; }
   main .section:is(.sm-mr-160, .sm-mx-160) { margin-right: 10rem !important; }
   main .section:is(.sm-mr-auto, .sm-mx-auto) { margin-right: auto !important; }
   main .section:is(.sm-pt-0, .sm-py-0) { padding-top: 0 !important; }
-  main .section:is(.sm-pt-8, .sm-py-8) { padding-top: var(--space-2xs) !important; }
   main .section:is(.sm-pt-16, .sm-py-16) { padding-top: var(--space-s) !important; }
   main .section:is(.sm-pt-20, .sm-py-20) { padding-top: var(--space-m) !important; }
-  main .section:is(.sm-pt-24, .sm-py-24) { padding-top: var(--space-l) !important; }
-  main .section:is(.sm-pt-32, .sm-py-32) { padding-top: var(--space-xl) !important; }
   main .section:is(.sm-pt-40, .sm-py-40) { padding-top: var(--space-2xl) !important; }
-  main .section:is(.sm-pt-48, .sm-py-48) { padding-top: var(--space-3xl) !important; }
   main .section:is(.sm-pt-60, .sm-py-60) { padding-top: 3.75rem !important; }
-  main .section:is(.sm-pt-64, .sm-py-64) { padding-top: var(--space-4xl) !important; }
   main .section:is(.sm-pt-80, .sm-py-80) { padding-top: var(--space-5xl) !important; }
-  main .section:is(.sm-pt-96, .sm-py-96) { padding-top: 6rem !important; }
   main .section:is(.sm-pt-120, .sm-py-120) { padding-top: 7.5rem !important; }
   main .section:is(.sm-pt-160, .sm-py-160) { padding-top: 10rem !important; }
   main .section:is(.sm-pb-0, .sm-py-0) { padding-bottom: 0 !important; }
-  main .section:is(.sm-pb-8, .sm-py-8) { padding-bottom: var(--space-2xs) !important; }
   main .section:is(.sm-pb-16, .sm-py-16) { padding-bottom: var(--space-s) !important; }
   main .section:is(.sm-pb-20, .sm-py-20) { padding-bottom: var(--space-m) !important; }
-  main .section:is(.sm-pb-24, .sm-py-24) { padding-bottom: var(--space-l) !important; }
-  main .section:is(.sm-pb-32, .sm-py-32) { padding-bottom: var(--space-xl) !important; }
   main .section:is(.sm-pb-40, .sm-py-40) { padding-bottom: var(--space-2xl) !important; }
-  main .section:is(.sm-pb-48, .sm-py-48) { padding-bottom: var(--space-3xl) !important; }
   main .section:is(.sm-pb-60, .sm-py-60) { padding-bottom: 3.75rem !important; }
-  main .section:is(.sm-pb-64, .sm-py-64) { padding-bottom: var(--space-4xl) !important; }
   main .section:is(.sm-pb-80, .sm-py-80) { padding-bottom: var(--space-5xl) !important; }
-  main .section:is(.sm-pb-96, .sm-py-96) { padding-bottom: 6rem !important; }
   main .section:is(.sm-pb-120, .sm-py-120) { padding-bottom: 7.5rem !important; }
   main .section:is(.sm-pb-160, .sm-py-160) { padding-bottom: 10rem !important; }
   main .section:is(.sm-pl-0, .sm-px-0) { padding-left: 0 !important; }
-  main .section:is(.sm-pl-8, .sm-px-8) { padding-left: var(--space-2xs) !important; }
   main .section:is(.sm-pl-16, .sm-px-16) { padding-left: var(--space-s) !important; }
   main .section:is(.sm-pl-20, .sm-px-20) { padding-left: var(--space-m) !important; }
-  main .section:is(.sm-pl-24, .sm-px-24) { padding-left: var(--space-l) !important; }
-  main .section:is(.sm-pl-32, .sm-px-32) { padding-left: var(--space-xl) !important; }
   main .section:is(.sm-pl-40, .sm-px-40) { padding-left: var(--space-2xl) !important; }
-  main .section:is(.sm-pl-48, .sm-px-48) { padding-left: var(--space-3xl) !important; }
   main .section:is(.sm-pl-60, .sm-px-60) { padding-left: 3.75rem !important; }
-  main .section:is(.sm-pl-64, .sm-px-64) { padding-left: var(--space-4xl) !important; }
   main .section:is(.sm-pl-80, .sm-px-80) { padding-left: var(--space-5xl) !important; }
-  main .section:is(.sm-pl-96, .sm-px-96) { padding-left: 6rem !important; }
   main .section:is(.sm-pl-120, .sm-px-120) { padding-left: 7.5rem !important; }
   main .section:is(.sm-pl-160, .sm-px-160) { padding-left: 10rem !important; }
   main .section:is(.sm-pr-0, .sm-px-0) { padding-right: 0 !important; }
-  main .section:is(.sm-pr-8, .sm-px-8) { padding-right: var(--space-2xs) !important; }
   main .section:is(.sm-pr-16, .sm-px-16) { padding-right: var(--space-s) !important; }
   main .section:is(.sm-pr-20, .sm-px-20) { padding-right: var(--space-m) !important; }
-  main .section:is(.sm-pr-24, .sm-px-24) { padding-right: var(--space-l) !important; }
-  main .section:is(.sm-pr-32, .sm-px-32) { padding-right: var(--space-xl) !important; }
   main .section:is(.sm-pr-40, .sm-px-40) { padding-right: var(--space-2xl) !important; }
-  main .section:is(.sm-pr-48, .sm-px-48) { padding-right: var(--space-3xl) !important; }
   main .section:is(.sm-pr-60, .sm-px-60) { padding-right: 3.75rem !important; }
-  main .section:is(.sm-pr-64, .sm-px-64) { padding-right: var(--space-4xl) !important; }
   main .section:is(.sm-pr-80, .sm-px-80) { padding-right: var(--space-5xl) !important; }
-  main .section:is(.sm-pr-96, .sm-px-96) { padding-right: 6rem !important; }
   main .section:is(.sm-pr-120, .sm-px-120) { padding-right: 7.5rem !important; }
   main .section:is(.sm-pr-160, .sm-px-160) { padding-right: 10rem !important; }
   main .section.sm-gutter-0 > div { padding-left: 0 !important; padding-right: 0 !important; }
-  main .section.sm-gutter-8 > div { padding-left: var(--space-2xs) !important; padding-right: var(--space-2xs) !important; }
   main .section.sm-gutter-16 > div { padding-left: var(--space-s) !important; padding-right: var(--space-s) !important; }
   main .section.sm-gutter-20 > div { padding-left: var(--space-m) !important; padding-right: var(--space-m) !important; }
-  main .section.sm-gutter-24 > div { padding-left: var(--space-l) !important; padding-right: var(--space-l) !important; }
-  main .section.sm-gutter-32 > div { padding-left: var(--space-xl) !important; padding-right: var(--space-xl) !important; }
   main .section.sm-gutter-40 > div { padding-left: var(--space-2xl) !important; padding-right: var(--space-2xl) !important; }
-  main .section.sm-gutter-48 > div { padding-left: var(--space-3xl) !important; padding-right: var(--space-3xl) !important; }
   main .section.sm-gutter-60 > div { padding-left: 3.75rem !important; padding-right: 3.75rem !important; }
-  main .section.sm-gutter-64 > div { padding-left: var(--space-4xl) !important; padding-right: var(--space-4xl) !important; }
   main .section.sm-gutter-80 > div { padding-left: var(--space-5xl) !important; padding-right: var(--space-5xl) !important; }
-  main .section.sm-gutter-96 > div { padding-left: 6rem !important; padding-right: 6rem !important; }
   main .section.sm-gutter-120 > div { padding-left: 7.5rem !important; padding-right: 7.5rem !important; }
   main .section.sm-gutter-160 > div { padding-left: 10rem !important; padding-right: 10rem !important; }
 }
 
 @media (width >= 1024px) {
   main .section:is(.md-mt-0, .md-my-0) { margin-top: 0 !important; }
-  main .section:is(.md-mt-8, .md-my-8) { margin-top: var(--space-2xs) !important; }
   main .section:is(.md-mt-16, .md-my-16) { margin-top: var(--space-s) !important; }
   main .section:is(.md-mt-20, .md-my-20) { margin-top: var(--space-m) !important; }
-  main .section:is(.md-mt-24, .md-my-24) { margin-top: var(--space-l) !important; }
-  main .section:is(.md-mt-32, .md-my-32) { margin-top: var(--space-xl) !important; }
   main .section:is(.md-mt-40, .md-my-40) { margin-top: var(--space-2xl) !important; }
-  main .section:is(.md-mt-48, .md-my-48) { margin-top: var(--space-3xl) !important; }
   main .section:is(.md-mt-60, .md-my-60) { margin-top: 3.75rem !important; }
-  main .section:is(.md-mt-64, .md-my-64) { margin-top: var(--space-4xl) !important; }
   main .section:is(.md-mt-80, .md-my-80) { margin-top: var(--space-5xl) !important; }
-  main .section:is(.md-mt-96, .md-my-96) { margin-top: 6rem !important; }
   main .section:is(.md-mt-120, .md-my-120) { margin-top: 7.5rem !important; }
   main .section:is(.md-mt-160, .md-my-160) { margin-top: 10rem !important; }
   main .section:is(.md-mb-0, .md-my-0) { margin-bottom: 0 !important; }
-  main .section:is(.md-mb-8, .md-my-8) { margin-bottom: var(--space-2xs) !important; }
   main .section:is(.md-mb-16, .md-my-16) { margin-bottom: var(--space-s) !important; }
   main .section:is(.md-mb-20, .md-my-20) { margin-bottom: var(--space-m) !important; }
-  main .section:is(.md-mb-24, .md-my-24) { margin-bottom: var(--space-l) !important; }
-  main .section:is(.md-mb-32, .md-my-32) { margin-bottom: var(--space-xl) !important; }
   main .section:is(.md-mb-40, .md-my-40) { margin-bottom: var(--space-2xl) !important; }
-  main .section:is(.md-mb-48, .md-my-48) { margin-bottom: var(--space-3xl) !important; }
   main .section:is(.md-mb-60, .md-my-60) { margin-bottom: 3.75rem !important; }
-  main .section:is(.md-mb-64, .md-my-64) { margin-bottom: var(--space-4xl) !important; }
   main .section:is(.md-mb-80, .md-my-80) { margin-bottom: var(--space-5xl) !important; }
-  main .section:is(.md-mb-96, .md-my-96) { margin-bottom: 6rem !important; }
   main .section:is(.md-mb-120, .md-my-120) { margin-bottom: 7.5rem !important; }
   main .section:is(.md-mb-160, .md-my-160) { margin-bottom: 10rem !important; }
   main .section:is(.md-ml-0, .md-mx-0) { margin-left: 0 !important; }
-  main .section:is(.md-ml-8, .md-mx-8) { margin-left: var(--space-2xs) !important; }
   main .section:is(.md-ml-16, .md-mx-16) { margin-left: var(--space-s) !important; }
   main .section:is(.md-ml-20, .md-mx-20) { margin-left: var(--space-m) !important; }
-  main .section:is(.md-ml-24, .md-mx-24) { margin-left: var(--space-l) !important; }
-  main .section:is(.md-ml-32, .md-mx-32) { margin-left: var(--space-xl) !important; }
   main .section:is(.md-ml-40, .md-mx-40) { margin-left: var(--space-2xl) !important; }
-  main .section:is(.md-ml-48, .md-mx-48) { margin-left: var(--space-3xl) !important; }
   main .section:is(.md-ml-60, .md-mx-60) { margin-left: 3.75rem !important; }
-  main .section:is(.md-ml-64, .md-mx-64) { margin-left: var(--space-4xl) !important; }
   main .section:is(.md-ml-80, .md-mx-80) { margin-left: var(--space-5xl) !important; }
-  main .section:is(.md-ml-96, .md-mx-96) { margin-left: 6rem !important; }
   main .section:is(.md-ml-120, .md-mx-120) { margin-left: 7.5rem !important; }
   main .section:is(.md-ml-160, .md-mx-160) { margin-left: 10rem !important; }
   main .section:is(.md-ml-auto, .md-mx-auto) { margin-left: auto !important; }
   main .section:is(.md-mr-0, .md-mx-0) { margin-right: 0 !important; }
-  main .section:is(.md-mr-8, .md-mx-8) { margin-right: var(--space-2xs) !important; }
   main .section:is(.md-mr-16, .md-mx-16) { margin-right: var(--space-s) !important; }
   main .section:is(.md-mr-20, .md-mx-20) { margin-right: var(--space-m) !important; }
-  main .section:is(.md-mr-24, .md-mx-24) { margin-right: var(--space-l) !important; }
-  main .section:is(.md-mr-32, .md-mx-32) { margin-right: var(--space-xl) !important; }
   main .section:is(.md-mr-40, .md-mx-40) { margin-right: var(--space-2xl) !important; }
-  main .section:is(.md-mr-48, .md-mx-48) { margin-right: var(--space-3xl) !important; }
   main .section:is(.md-mr-60, .md-mx-60) { margin-right: 3.75rem !important; }
-  main .section:is(.md-mr-64, .md-mx-64) { margin-right: var(--space-4xl) !important; }
   main .section:is(.md-mr-80, .md-mx-80) { margin-right: var(--space-5xl) !important; }
-  main .section:is(.md-mr-96, .md-mx-96) { margin-right: 6rem !important; }
   main .section:is(.md-mr-120, .md-mx-120) { margin-right: 7.5rem !important; }
   main .section:is(.md-mr-160, .md-mx-160) { margin-right: 10rem !important; }
   main .section:is(.md-mr-auto, .md-mx-auto) { margin-right: auto !important; }
   main .section:is(.md-pt-0, .md-py-0) { padding-top: 0 !important; }
-  main .section:is(.md-pt-8, .md-py-8) { padding-top: var(--space-2xs) !important; }
   main .section:is(.md-pt-16, .md-py-16) { padding-top: var(--space-s) !important; }
   main .section:is(.md-pt-20, .md-py-20) { padding-top: var(--space-m) !important; }
-  main .section:is(.md-pt-24, .md-py-24) { padding-top: var(--space-l) !important; }
-  main .section:is(.md-pt-32, .md-py-32) { padding-top: var(--space-xl) !important; }
   main .section:is(.md-pt-40, .md-py-40) { padding-top: var(--space-2xl) !important; }
-  main .section:is(.md-pt-48, .md-py-48) { padding-top: var(--space-3xl) !important; }
   main .section:is(.md-pt-60, .md-py-60) { padding-top: 3.75rem !important; }
-  main .section:is(.md-pt-64, .md-py-64) { padding-top: var(--space-4xl) !important; }
   main .section:is(.md-pt-80, .md-py-80) { padding-top: var(--space-5xl) !important; }
-  main .section:is(.md-pt-96, .md-py-96) { padding-top: 6rem !important; }
   main .section:is(.md-pt-120, .md-py-120) { padding-top: 7.5rem !important; }
   main .section:is(.md-pt-160, .md-py-160) { padding-top: 10rem !important; }
   main .section:is(.md-pb-0, .md-py-0) { padding-bottom: 0 !important; }
-  main .section:is(.md-pb-8, .md-py-8) { padding-bottom: var(--space-2xs) !important; }
   main .section:is(.md-pb-16, .md-py-16) { padding-bottom: var(--space-s) !important; }
   main .section:is(.md-pb-20, .md-py-20) { padding-bottom: var(--space-m) !important; }
-  main .section:is(.md-pb-24, .md-py-24) { padding-bottom: var(--space-l) !important; }
-  main .section:is(.md-pb-32, .md-py-32) { padding-bottom: var(--space-xl) !important; }
   main .section:is(.md-pb-40, .md-py-40) { padding-bottom: var(--space-2xl) !important; }
-  main .section:is(.md-pb-48, .md-py-48) { padding-bottom: var(--space-3xl) !important; }
   main .section:is(.md-pb-60, .md-py-60) { padding-bottom: 3.75rem !important; }
-  main .section:is(.md-pb-64, .md-py-64) { padding-bottom: var(--space-4xl) !important; }
   main .section:is(.md-pb-80, .md-py-80) { padding-bottom: var(--space-5xl) !important; }
-  main .section:is(.md-pb-96, .md-py-96) { padding-bottom: 6rem !important; }
   main .section:is(.md-pb-120, .md-py-120) { padding-bottom: 7.5rem !important; }
   main .section:is(.md-pb-160, .md-py-160) { padding-bottom: 10rem !important; }
   main .section:is(.md-pl-0, .md-px-0) { padding-left: 0 !important; }
-  main .section:is(.md-pl-8, .md-px-8) { padding-left: var(--space-2xs) !important; }
   main .section:is(.md-pl-16, .md-px-16) { padding-left: var(--space-s) !important; }
   main .section:is(.md-pl-20, .md-px-20) { padding-left: var(--space-m) !important; }
-  main .section:is(.md-pl-24, .md-px-24) { padding-left: var(--space-l) !important; }
-  main .section:is(.md-pl-32, .md-px-32) { padding-left: var(--space-xl) !important; }
   main .section:is(.md-pl-40, .md-px-40) { padding-left: var(--space-2xl) !important; }
-  main .section:is(.md-pl-48, .md-px-48) { padding-left: var(--space-3xl) !important; }
   main .section:is(.md-pl-60, .md-px-60) { padding-left: 3.75rem !important; }
-  main .section:is(.md-pl-64, .md-px-64) { padding-left: var(--space-4xl) !important; }
   main .section:is(.md-pl-80, .md-px-80) { padding-left: var(--space-5xl) !important; }
-  main .section:is(.md-pl-96, .md-px-96) { padding-left: 6rem !important; }
   main .section:is(.md-pl-120, .md-px-120) { padding-left: 7.5rem !important; }
   main .section:is(.md-pl-160, .md-px-160) { padding-left: 10rem !important; }
   main .section:is(.md-pr-0, .md-px-0) { padding-right: 0 !important; }
-  main .section:is(.md-pr-8, .md-px-8) { padding-right: var(--space-2xs) !important; }
   main .section:is(.md-pr-16, .md-px-16) { padding-right: var(--space-s) !important; }
   main .section:is(.md-pr-20, .md-px-20) { padding-right: var(--space-m) !important; }
-  main .section:is(.md-pr-24, .md-px-24) { padding-right: var(--space-l) !important; }
-  main .section:is(.md-pr-32, .md-px-32) { padding-right: var(--space-xl) !important; }
   main .section:is(.md-pr-40, .md-px-40) { padding-right: var(--space-2xl) !important; }
-  main .section:is(.md-pr-48, .md-px-48) { padding-right: var(--space-3xl) !important; }
   main .section:is(.md-pr-60, .md-px-60) { padding-right: 3.75rem !important; }
-  main .section:is(.md-pr-64, .md-px-64) { padding-right: var(--space-4xl) !important; }
   main .section:is(.md-pr-80, .md-px-80) { padding-right: var(--space-5xl) !important; }
-  main .section:is(.md-pr-96, .md-px-96) { padding-right: 6rem !important; }
   main .section:is(.md-pr-120, .md-px-120) { padding-right: 7.5rem !important; }
   main .section:is(.md-pr-160, .md-px-160) { padding-right: 10rem !important; }
   main .section.md-gutter-0 > div { padding-left: 0 !important; padding-right: 0 !important; }
-  main .section.md-gutter-8 > div { padding-left: var(--space-2xs) !important; padding-right: var(--space-2xs) !important; }
   main .section.md-gutter-16 > div { padding-left: var(--space-s) !important; padding-right: var(--space-s) !important; }
   main .section.md-gutter-20 > div { padding-left: var(--space-m) !important; padding-right: var(--space-m) !important; }
-  main .section.md-gutter-24 > div { padding-left: var(--space-l) !important; padding-right: var(--space-l) !important; }
-  main .section.md-gutter-32 > div { padding-left: var(--space-xl) !important; padding-right: var(--space-xl) !important; }
   main .section.md-gutter-40 > div { padding-left: var(--space-2xl) !important; padding-right: var(--space-2xl) !important; }
-  main .section.md-gutter-48 > div { padding-left: var(--space-3xl) !important; padding-right: var(--space-3xl) !important; }
   main .section.md-gutter-60 > div { padding-left: 3.75rem !important; padding-right: 3.75rem !important; }
-  main .section.md-gutter-64 > div { padding-left: var(--space-4xl) !important; padding-right: var(--space-4xl) !important; }
   main .section.md-gutter-80 > div { padding-left: var(--space-5xl) !important; padding-right: var(--space-5xl) !important; }
-  main .section.md-gutter-96 > div { padding-left: 6rem !important; padding-right: 6rem !important; }
   main .section.md-gutter-120 > div { padding-left: 7.5rem !important; padding-right: 7.5rem !important; }
   main .section.md-gutter-160 > div { padding-left: 10rem !important; padding-right: 10rem !important; }
 }
 
 @media (width >= 1200px) {
   main .section:is(.lg-mt-0, .lg-my-0) { margin-top: 0 !important; }
-  main .section:is(.lg-mt-8, .lg-my-8) { margin-top: var(--space-2xs) !important; }
   main .section:is(.lg-mt-16, .lg-my-16) { margin-top: var(--space-s) !important; }
   main .section:is(.lg-mt-20, .lg-my-20) { margin-top: var(--space-m) !important; }
-  main .section:is(.lg-mt-24, .lg-my-24) { margin-top: var(--space-l) !important; }
-  main .section:is(.lg-mt-32, .lg-my-32) { margin-top: var(--space-xl) !important; }
   main .section:is(.lg-mt-40, .lg-my-40) { margin-top: var(--space-2xl) !important; }
-  main .section:is(.lg-mt-48, .lg-my-48) { margin-top: var(--space-3xl) !important; }
   main .section:is(.lg-mt-60, .lg-my-60) { margin-top: 3.75rem !important; }
-  main .section:is(.lg-mt-64, .lg-my-64) { margin-top: var(--space-4xl) !important; }
   main .section:is(.lg-mt-80, .lg-my-80) { margin-top: var(--space-5xl) !important; }
-  main .section:is(.lg-mt-96, .lg-my-96) { margin-top: 6rem !important; }
   main .section:is(.lg-mt-120, .lg-my-120) { margin-top: 7.5rem !important; }
   main .section:is(.lg-mt-160, .lg-my-160) { margin-top: 10rem !important; }
   main .section:is(.lg-mb-0, .lg-my-0) { margin-bottom: 0 !important; }
-  main .section:is(.lg-mb-8, .lg-my-8) { margin-bottom: var(--space-2xs) !important; }
   main .section:is(.lg-mb-16, .lg-my-16) { margin-bottom: var(--space-s) !important; }
   main .section:is(.lg-mb-20, .lg-my-20) { margin-bottom: var(--space-m) !important; }
-  main .section:is(.lg-mb-24, .lg-my-24) { margin-bottom: var(--space-l) !important; }
-  main .section:is(.lg-mb-32, .lg-my-32) { margin-bottom: var(--space-xl) !important; }
   main .section:is(.lg-mb-40, .lg-my-40) { margin-bottom: var(--space-2xl) !important; }
-  main .section:is(.lg-mb-48, .lg-my-48) { margin-bottom: var(--space-3xl) !important; }
   main .section:is(.lg-mb-60, .lg-my-60) { margin-bottom: 3.75rem !important; }
-  main .section:is(.lg-mb-64, .lg-my-64) { margin-bottom: var(--space-4xl) !important; }
   main .section:is(.lg-mb-80, .lg-my-80) { margin-bottom: var(--space-5xl) !important; }
-  main .section:is(.lg-mb-96, .lg-my-96) { margin-bottom: 6rem !important; }
   main .section:is(.lg-mb-120, .lg-my-120) { margin-bottom: 7.5rem !important; }
   main .section:is(.lg-mb-160, .lg-my-160) { margin-bottom: 10rem !important; }
   main .section:is(.lg-ml-0, .lg-mx-0) { margin-left: 0 !important; }
-  main .section:is(.lg-ml-8, .lg-mx-8) { margin-left: var(--space-2xs) !important; }
   main .section:is(.lg-ml-16, .lg-mx-16) { margin-left: var(--space-s) !important; }
   main .section:is(.lg-ml-20, .lg-mx-20) { margin-left: var(--space-m) !important; }
-  main .section:is(.lg-ml-24, .lg-mx-24) { margin-left: var(--space-l) !important; }
-  main .section:is(.lg-ml-32, .lg-mx-32) { margin-left: var(--space-xl) !important; }
   main .section:is(.lg-ml-40, .lg-mx-40) { margin-left: var(--space-2xl) !important; }
-  main .section:is(.lg-ml-48, .lg-mx-48) { margin-left: var(--space-3xl) !important; }
   main .section:is(.lg-ml-60, .lg-mx-60) { margin-left: 3.75rem !important; }
-  main .section:is(.lg-ml-64, .lg-mx-64) { margin-left: var(--space-4xl) !important; }
   main .section:is(.lg-ml-80, .lg-mx-80) { margin-left: var(--space-5xl) !important; }
-  main .section:is(.lg-ml-96, .lg-mx-96) { margin-left: 6rem !important; }
   main .section:is(.lg-ml-120, .lg-mx-120) { margin-left: 7.5rem !important; }
   main .section:is(.lg-ml-160, .lg-mx-160) { margin-left: 10rem !important; }
   main .section:is(.lg-ml-auto, .lg-mx-auto) { margin-left: auto !important; }
   main .section:is(.lg-mr-0, .lg-mx-0) { margin-right: 0 !important; }
-  main .section:is(.lg-mr-8, .lg-mx-8) { margin-right: var(--space-2xs) !important; }
   main .section:is(.lg-mr-16, .lg-mx-16) { margin-right: var(--space-s) !important; }
   main .section:is(.lg-mr-20, .lg-mx-20) { margin-right: var(--space-m) !important; }
-  main .section:is(.lg-mr-24, .lg-mx-24) { margin-right: var(--space-l) !important; }
-  main .section:is(.lg-mr-32, .lg-mx-32) { margin-right: var(--space-xl) !important; }
   main .section:is(.lg-mr-40, .lg-mx-40) { margin-right: var(--space-2xl) !important; }
-  main .section:is(.lg-mr-48, .lg-mx-48) { margin-right: var(--space-3xl) !important; }
   main .section:is(.lg-mr-60, .lg-mx-60) { margin-right: 3.75rem !important; }
-  main .section:is(.lg-mr-64, .lg-mx-64) { margin-right: var(--space-4xl) !important; }
   main .section:is(.lg-mr-80, .lg-mx-80) { margin-right: var(--space-5xl) !important; }
-  main .section:is(.lg-mr-96, .lg-mx-96) { margin-right: 6rem !important; }
   main .section:is(.lg-mr-120, .lg-mx-120) { margin-right: 7.5rem !important; }
   main .section:is(.lg-mr-160, .lg-mx-160) { margin-right: 10rem !important; }
   main .section:is(.lg-mr-auto, .lg-mx-auto) { margin-right: auto !important; }
   main .section:is(.lg-pt-0, .lg-py-0) { padding-top: 0 !important; }
-  main .section:is(.lg-pt-8, .lg-py-8) { padding-top: var(--space-2xs) !important; }
   main .section:is(.lg-pt-16, .lg-py-16) { padding-top: var(--space-s) !important; }
   main .section:is(.lg-pt-20, .lg-py-20) { padding-top: var(--space-m) !important; }
-  main .section:is(.lg-pt-24, .lg-py-24) { padding-top: var(--space-l) !important; }
-  main .section:is(.lg-pt-32, .lg-py-32) { padding-top: var(--space-xl) !important; }
   main .section:is(.lg-pt-40, .lg-py-40) { padding-top: var(--space-2xl) !important; }
-  main .section:is(.lg-pt-48, .lg-py-48) { padding-top: var(--space-3xl) !important; }
   main .section:is(.lg-pt-60, .lg-py-60) { padding-top: 3.75rem !important; }
-  main .section:is(.lg-pt-64, .lg-py-64) { padding-top: var(--space-4xl) !important; }
   main .section:is(.lg-pt-80, .lg-py-80) { padding-top: var(--space-5xl) !important; }
-  main .section:is(.lg-pt-96, .lg-py-96) { padding-top: 6rem !important; }
   main .section:is(.lg-pt-120, .lg-py-120) { padding-top: 7.5rem !important; }
   main .section:is(.lg-pt-160, .lg-py-160) { padding-top: 10rem !important; }
   main .section:is(.lg-pb-0, .lg-py-0) { padding-bottom: 0 !important; }
-  main .section:is(.lg-pb-8, .lg-py-8) { padding-bottom: var(--space-2xs) !important; }
   main .section:is(.lg-pb-16, .lg-py-16) { padding-bottom: var(--space-s) !important; }
   main .section:is(.lg-pb-20, .lg-py-20) { padding-bottom: var(--space-m) !important; }
-  main .section:is(.lg-pb-24, .lg-py-24) { padding-bottom: var(--space-l) !important; }
-  main .section:is(.lg-pb-32, .lg-py-32) { padding-bottom: var(--space-xl) !important; }
   main .section:is(.lg-pb-40, .lg-py-40) { padding-bottom: var(--space-2xl) !important; }
-  main .section:is(.lg-pb-48, .lg-py-48) { padding-bottom: var(--space-3xl) !important; }
   main .section:is(.lg-pb-60, .lg-py-60) { padding-bottom: 3.75rem !important; }
-  main .section:is(.lg-pb-64, .lg-py-64) { padding-bottom: var(--space-4xl) !important; }
   main .section:is(.lg-pb-80, .lg-py-80) { padding-bottom: var(--space-5xl) !important; }
-  main .section:is(.lg-pb-96, .lg-py-96) { padding-bottom: 6rem !important; }
   main .section:is(.lg-pb-120, .lg-py-120) { padding-bottom: 7.5rem !important; }
   main .section:is(.lg-pb-160, .lg-py-160) { padding-bottom: 10rem !important; }
   main .section:is(.lg-pl-0, .lg-px-0) { padding-left: 0 !important; }
-  main .section:is(.lg-pl-8, .lg-px-8) { padding-left: var(--space-2xs) !important; }
   main .section:is(.lg-pl-16, .lg-px-16) { padding-left: var(--space-s) !important; }
   main .section:is(.lg-pl-20, .lg-px-20) { padding-left: var(--space-m) !important; }
-  main .section:is(.lg-pl-24, .lg-px-24) { padding-left: var(--space-l) !important; }
-  main .section:is(.lg-pl-32, .lg-px-32) { padding-left: var(--space-xl) !important; }
   main .section:is(.lg-pl-40, .lg-px-40) { padding-left: var(--space-2xl) !important; }
-  main .section:is(.lg-pl-48, .lg-px-48) { padding-left: var(--space-3xl) !important; }
   main .section:is(.lg-pl-60, .lg-px-60) { padding-left: 3.75rem !important; }
-  main .section:is(.lg-pl-64, .lg-px-64) { padding-left: var(--space-4xl) !important; }
   main .section:is(.lg-pl-80, .lg-px-80) { padding-left: var(--space-5xl) !important; }
-  main .section:is(.lg-pl-96, .lg-px-96) { padding-left: 6rem !important; }
   main .section:is(.lg-pl-120, .lg-px-120) { padding-left: 7.5rem !important; }
   main .section:is(.lg-pl-160, .lg-px-160) { padding-left: 10rem !important; }
   main .section:is(.lg-pr-0, .lg-px-0) { padding-right: 0 !important; }
-  main .section:is(.lg-pr-8, .lg-px-8) { padding-right: var(--space-2xs) !important; }
   main .section:is(.lg-pr-16, .lg-px-16) { padding-right: var(--space-s) !important; }
   main .section:is(.lg-pr-20, .lg-px-20) { padding-right: var(--space-m) !important; }
-  main .section:is(.lg-pr-24, .lg-px-24) { padding-right: var(--space-l) !important; }
-  main .section:is(.lg-pr-32, .lg-px-32) { padding-right: var(--space-xl) !important; }
   main .section:is(.lg-pr-40, .lg-px-40) { padding-right: var(--space-2xl) !important; }
-  main .section:is(.lg-pr-48, .lg-px-48) { padding-right: var(--space-3xl) !important; }
   main .section:is(.lg-pr-60, .lg-px-60) { padding-right: 3.75rem !important; }
-  main .section:is(.lg-pr-64, .lg-px-64) { padding-right: var(--space-4xl) !important; }
   main .section:is(.lg-pr-80, .lg-px-80) { padding-right: var(--space-5xl) !important; }
-  main .section:is(.lg-pr-96, .lg-px-96) { padding-right: 6rem !important; }
   main .section:is(.lg-pr-120, .lg-px-120) { padding-right: 7.5rem !important; }
   main .section:is(.lg-pr-160, .lg-px-160) { padding-right: 10rem !important; }
   main .section.lg-gutter-0 > div { padding-left: 0 !important; padding-right: 0 !important; }
-  main .section.lg-gutter-8 > div { padding-left: var(--space-2xs) !important; padding-right: var(--space-2xs) !important; }
   main .section.lg-gutter-16 > div { padding-left: var(--space-s) !important; padding-right: var(--space-s) !important; }
   main .section.lg-gutter-20 > div { padding-left: var(--space-m) !important; padding-right: var(--space-m) !important; }
-  main .section.lg-gutter-24 > div { padding-left: var(--space-l) !important; padding-right: var(--space-l) !important; }
-  main .section.lg-gutter-32 > div { padding-left: var(--space-xl) !important; padding-right: var(--space-xl) !important; }
   main .section.lg-gutter-40 > div { padding-left: var(--space-2xl) !important; padding-right: var(--space-2xl) !important; }
-  main .section.lg-gutter-48 > div { padding-left: var(--space-3xl) !important; padding-right: var(--space-3xl) !important; }
   main .section.lg-gutter-60 > div { padding-left: 3.75rem !important; padding-right: 3.75rem !important; }
-  main .section.lg-gutter-64 > div { padding-left: var(--space-4xl) !important; padding-right: var(--space-4xl) !important; }
   main .section.lg-gutter-80 > div { padding-left: var(--space-5xl) !important; padding-right: var(--space-5xl) !important; }
-  main .section.lg-gutter-96 > div { padding-left: 6rem !important; padding-right: 6rem !important; }
   main .section.lg-gutter-120 > div { padding-left: 7.5rem !important; padding-right: 7.5rem !important; }
   main .section.lg-gutter-160 > div { padding-left: 10rem !important; padding-right: 10rem !important; }
 }
 
 @media (width >= 1440px) {
   main .section:is(.xl-mt-0, .xl-my-0) { margin-top: 0 !important; }
-  main .section:is(.xl-mt-8, .xl-my-8) { margin-top: var(--space-2xs) !important; }
   main .section:is(.xl-mt-16, .xl-my-16) { margin-top: var(--space-s) !important; }
   main .section:is(.xl-mt-20, .xl-my-20) { margin-top: var(--space-m) !important; }
-  main .section:is(.xl-mt-24, .xl-my-24) { margin-top: var(--space-l) !important; }
-  main .section:is(.xl-mt-32, .xl-my-32) { margin-top: var(--space-xl) !important; }
   main .section:is(.xl-mt-40, .xl-my-40) { margin-top: var(--space-2xl) !important; }
-  main .section:is(.xl-mt-48, .xl-my-48) { margin-top: var(--space-3xl) !important; }
   main .section:is(.xl-mt-60, .xl-my-60) { margin-top: 3.75rem !important; }
-  main .section:is(.xl-mt-64, .xl-my-64) { margin-top: var(--space-4xl) !important; }
   main .section:is(.xl-mt-80, .xl-my-80) { margin-top: var(--space-5xl) !important; }
-  main .section:is(.xl-mt-96, .xl-my-96) { margin-top: 6rem !important; }
   main .section:is(.xl-mt-120, .xl-my-120) { margin-top: 7.5rem !important; }
   main .section:is(.xl-mt-160, .xl-my-160) { margin-top: 10rem !important; }
   main .section:is(.xl-mb-0, .xl-my-0) { margin-bottom: 0 !important; }
-  main .section:is(.xl-mb-8, .xl-my-8) { margin-bottom: var(--space-2xs) !important; }
   main .section:is(.xl-mb-16, .xl-my-16) { margin-bottom: var(--space-s) !important; }
   main .section:is(.xl-mb-20, .xl-my-20) { margin-bottom: var(--space-m) !important; }
-  main .section:is(.xl-mb-24, .xl-my-24) { margin-bottom: var(--space-l) !important; }
-  main .section:is(.xl-mb-32, .xl-my-32) { margin-bottom: var(--space-xl) !important; }
   main .section:is(.xl-mb-40, .xl-my-40) { margin-bottom: var(--space-2xl) !important; }
-  main .section:is(.xl-mb-48, .xl-my-48) { margin-bottom: var(--space-3xl) !important; }
   main .section:is(.xl-mb-60, .xl-my-60) { margin-bottom: 3.75rem !important; }
-  main .section:is(.xl-mb-64, .xl-my-64) { margin-bottom: var(--space-4xl) !important; }
   main .section:is(.xl-mb-80, .xl-my-80) { margin-bottom: var(--space-5xl) !important; }
-  main .section:is(.xl-mb-96, .xl-my-96) { margin-bottom: 6rem !important; }
   main .section:is(.xl-mb-120, .xl-my-120) { margin-bottom: 7.5rem !important; }
   main .section:is(.xl-mb-160, .xl-my-160) { margin-bottom: 10rem !important; }
   main .section:is(.xl-ml-0, .xl-mx-0) { margin-left: 0 !important; }
-  main .section:is(.xl-ml-8, .xl-mx-8) { margin-left: var(--space-2xs) !important; }
   main .section:is(.xl-ml-16, .xl-mx-16) { margin-left: var(--space-s) !important; }
   main .section:is(.xl-ml-20, .xl-mx-20) { margin-left: var(--space-m) !important; }
-  main .section:is(.xl-ml-24, .xl-mx-24) { margin-left: var(--space-l) !important; }
-  main .section:is(.xl-ml-32, .xl-mx-32) { margin-left: var(--space-xl) !important; }
   main .section:is(.xl-ml-40, .xl-mx-40) { margin-left: var(--space-2xl) !important; }
-  main .section:is(.xl-ml-48, .xl-mx-48) { margin-left: var(--space-3xl) !important; }
   main .section:is(.xl-ml-60, .xl-mx-60) { margin-left: 3.75rem !important; }
-  main .section:is(.xl-ml-64, .xl-mx-64) { margin-left: var(--space-4xl) !important; }
   main .section:is(.xl-ml-80, .xl-mx-80) { margin-left: var(--space-5xl) !important; }
-  main .section:is(.xl-ml-96, .xl-mx-96) { margin-left: 6rem !important; }
   main .section:is(.xl-ml-120, .xl-mx-120) { margin-left: 7.5rem !important; }
   main .section:is(.xl-ml-160, .xl-mx-160) { margin-left: 10rem !important; }
   main .section:is(.xl-ml-auto, .xl-mx-auto) { margin-left: auto !important; }
   main .section:is(.xl-mr-0, .xl-mx-0) { margin-right: 0 !important; }
-  main .section:is(.xl-mr-8, .xl-mx-8) { margin-right: var(--space-2xs) !important; }
   main .section:is(.xl-mr-16, .xl-mx-16) { margin-right: var(--space-s) !important; }
   main .section:is(.xl-mr-20, .xl-mx-20) { margin-right: var(--space-m) !important; }
-  main .section:is(.xl-mr-24, .xl-mx-24) { margin-right: var(--space-l) !important; }
-  main .section:is(.xl-mr-32, .xl-mx-32) { margin-right: var(--space-xl) !important; }
   main .section:is(.xl-mr-40, .xl-mx-40) { margin-right: var(--space-2xl) !important; }
-  main .section:is(.xl-mr-48, .xl-mx-48) { margin-right: var(--space-3xl) !important; }
   main .section:is(.xl-mr-60, .xl-mx-60) { margin-right: 3.75rem !important; }
-  main .section:is(.xl-mr-64, .xl-mx-64) { margin-right: var(--space-4xl) !important; }
   main .section:is(.xl-mr-80, .xl-mx-80) { margin-right: var(--space-5xl) !important; }
-  main .section:is(.xl-mr-96, .xl-mx-96) { margin-right: 6rem !important; }
   main .section:is(.xl-mr-120, .xl-mx-120) { margin-right: 7.5rem !important; }
   main .section:is(.xl-mr-160, .xl-mx-160) { margin-right: 10rem !important; }
   main .section:is(.xl-mr-auto, .xl-mx-auto) { margin-right: auto !important; }
   main .section:is(.xl-pt-0, .xl-py-0) { padding-top: 0 !important; }
-  main .section:is(.xl-pt-8, .xl-py-8) { padding-top: var(--space-2xs) !important; }
   main .section:is(.xl-pt-16, .xl-py-16) { padding-top: var(--space-s) !important; }
   main .section:is(.xl-pt-20, .xl-py-20) { padding-top: var(--space-m) !important; }
-  main .section:is(.xl-pt-24, .xl-py-24) { padding-top: var(--space-l) !important; }
-  main .section:is(.xl-pt-32, .xl-py-32) { padding-top: var(--space-xl) !important; }
   main .section:is(.xl-pt-40, .xl-py-40) { padding-top: var(--space-2xl) !important; }
-  main .section:is(.xl-pt-48, .xl-py-48) { padding-top: var(--space-3xl) !important; }
   main .section:is(.xl-pt-60, .xl-py-60) { padding-top: 3.75rem !important; }
-  main .section:is(.xl-pt-64, .xl-py-64) { padding-top: var(--space-4xl) !important; }
   main .section:is(.xl-pt-80, .xl-py-80) { padding-top: var(--space-5xl) !important; }
-  main .section:is(.xl-pt-96, .xl-py-96) { padding-top: 6rem !important; }
   main .section:is(.xl-pt-120, .xl-py-120) { padding-top: 7.5rem !important; }
   main .section:is(.xl-pt-160, .xl-py-160) { padding-top: 10rem !important; }
   main .section:is(.xl-pb-0, .xl-py-0) { padding-bottom: 0 !important; }
-  main .section:is(.xl-pb-8, .xl-py-8) { padding-bottom: var(--space-2xs) !important; }
   main .section:is(.xl-pb-16, .xl-py-16) { padding-bottom: var(--space-s) !important; }
   main .section:is(.xl-pb-20, .xl-py-20) { padding-bottom: var(--space-m) !important; }
-  main .section:is(.xl-pb-24, .xl-py-24) { padding-bottom: var(--space-l) !important; }
-  main .section:is(.xl-pb-32, .xl-py-32) { padding-bottom: var(--space-xl) !important; }
   main .section:is(.xl-pb-40, .xl-py-40) { padding-bottom: var(--space-2xl) !important; }
-  main .section:is(.xl-pb-48, .xl-py-48) { padding-bottom: var(--space-3xl) !important; }
   main .section:is(.xl-pb-60, .xl-py-60) { padding-bottom: 3.75rem !important; }
-  main .section:is(.xl-pb-64, .xl-py-64) { padding-bottom: var(--space-4xl) !important; }
   main .section:is(.xl-pb-80, .xl-py-80) { padding-bottom: var(--space-5xl) !important; }
-  main .section:is(.xl-pb-96, .xl-py-96) { padding-bottom: 6rem !important; }
   main .section:is(.xl-pb-120, .xl-py-120) { padding-bottom: 7.5rem !important; }
   main .section:is(.xl-pb-160, .xl-py-160) { padding-bottom: 10rem !important; }
   main .section:is(.xl-pl-0, .xl-px-0) { padding-left: 0 !important; }
-  main .section:is(.xl-pl-8, .xl-px-8) { padding-left: var(--space-2xs) !important; }
   main .section:is(.xl-pl-16, .xl-px-16) { padding-left: var(--space-s) !important; }
   main .section:is(.xl-pl-20, .xl-px-20) { padding-left: var(--space-m) !important; }
-  main .section:is(.xl-pl-24, .xl-px-24) { padding-left: var(--space-l) !important; }
-  main .section:is(.xl-pl-32, .xl-px-32) { padding-left: var(--space-xl) !important; }
   main .section:is(.xl-pl-40, .xl-px-40) { padding-left: var(--space-2xl) !important; }
-  main .section:is(.xl-pl-48, .xl-px-48) { padding-left: var(--space-3xl) !important; }
   main .section:is(.xl-pl-60, .xl-px-60) { padding-left: 3.75rem !important; }
-  main .section:is(.xl-pl-64, .xl-px-64) { padding-left: var(--space-4xl) !important; }
   main .section:is(.xl-pl-80, .xl-px-80) { padding-left: var(--space-5xl) !important; }
-  main .section:is(.xl-pl-96, .xl-px-96) { padding-left: 6rem !important; }
   main .section:is(.xl-pl-120, .xl-px-120) { padding-left: 7.5rem !important; }
   main .section:is(.xl-pl-160, .xl-px-160) { padding-left: 10rem !important; }
   main .section:is(.xl-pr-0, .xl-px-0) { padding-right: 0 !important; }
-  main .section:is(.xl-pr-8, .xl-px-8) { padding-right: var(--space-2xs) !important; }
   main .section:is(.xl-pr-16, .xl-px-16) { padding-right: var(--space-s) !important; }
   main .section:is(.xl-pr-20, .xl-px-20) { padding-right: var(--space-m) !important; }
-  main .section:is(.xl-pr-24, .xl-px-24) { padding-right: var(--space-l) !important; }
-  main .section:is(.xl-pr-32, .xl-px-32) { padding-right: var(--space-xl) !important; }
   main .section:is(.xl-pr-40, .xl-px-40) { padding-right: var(--space-2xl) !important; }
-  main .section:is(.xl-pr-48, .xl-px-48) { padding-right: var(--space-3xl) !important; }
   main .section:is(.xl-pr-60, .xl-px-60) { padding-right: 3.75rem !important; }
-  main .section:is(.xl-pr-64, .xl-px-64) { padding-right: var(--space-4xl) !important; }
   main .section:is(.xl-pr-80, .xl-px-80) { padding-right: var(--space-5xl) !important; }
-  main .section:is(.xl-pr-96, .xl-px-96) { padding-right: 6rem !important; }
   main .section:is(.xl-pr-120, .xl-px-120) { padding-right: 7.5rem !important; }
   main .section:is(.xl-pr-160, .xl-px-160) { padding-right: 10rem !important; }
   main .section.xl-gutter-0 > div { padding-left: 0 !important; padding-right: 0 !important; }
-  main .section.xl-gutter-8 > div { padding-left: var(--space-2xs) !important; padding-right: var(--space-2xs) !important; }
   main .section.xl-gutter-16 > div { padding-left: var(--space-s) !important; padding-right: var(--space-s) !important; }
   main .section.xl-gutter-20 > div { padding-left: var(--space-m) !important; padding-right: var(--space-m) !important; }
-  main .section.xl-gutter-24 > div { padding-left: var(--space-l) !important; padding-right: var(--space-l) !important; }
-  main .section.xl-gutter-32 > div { padding-left: var(--space-xl) !important; padding-right: var(--space-xl) !important; }
   main .section.xl-gutter-40 > div { padding-left: var(--space-2xl) !important; padding-right: var(--space-2xl) !important; }
-  main .section.xl-gutter-48 > div { padding-left: var(--space-3xl) !important; padding-right: var(--space-3xl) !important; }
   main .section.xl-gutter-60 > div { padding-left: 3.75rem !important; padding-right: 3.75rem !important; }
-  main .section.xl-gutter-64 > div { padding-left: var(--space-4xl) !important; padding-right: var(--space-4xl) !important; }
   main .section.xl-gutter-80 > div { padding-left: var(--space-5xl) !important; padding-right: var(--space-5xl) !important; }
-  main .section.xl-gutter-96 > div { padding-left: 6rem !important; padding-right: 6rem !important; }
   main .section.xl-gutter-120 > div { padding-left: 7.5rem !important; padding-right: 7.5rem !important; }
   main .section.xl-gutter-160 > div { padding-left: 10rem !important; padding-right: 10rem !important; }
 }
