@@ -862,6 +862,38 @@ function buildStory(row, { videoModal = false } = {}) {
   return figure;
 }
 
+function buildQuoteSlide(row) {
+  const cells = [...row.children];
+  const { quoteParas, name, roleParas } = parseQuote(cells[cells.length - 1]);
+  const figure = document.createElement('figure');
+  figure.className = 'testimonial-card quote-slide';
+  const quote = document.createElement('blockquote');
+  quoteParas.forEach((p) => {
+    const q = document.createElement('p');
+    q.innerHTML = p.innerHTML;
+    quote.append(q);
+  });
+  figure.append(quote);
+  const role = roleParas.map((p) => p.textContent.trim()).filter(Boolean).join(', ');
+  if (name || role) {
+    const figcaption = document.createElement('figcaption');
+    if (name) {
+      const n = document.createElement('span');
+      n.className = 'testimonial-name';
+      n.textContent = name;
+      figcaption.append(n);
+    }
+    if (role) {
+      const r = document.createElement('span');
+      r.className = 'testimonial-title';
+      r.textContent = role;
+      figcaption.append(r);
+    }
+    figure.append(figcaption);
+  }
+  return figure;
+}
+
 export default function decorate(block) {
   // Customer proof -> rw_testimonial trail; each story card/frame is an
   // rw_testimonial_item slot (the carousel dots stay at the block level). link_name off.
@@ -909,6 +941,17 @@ export default function decorate(block) {
     const heading = titleRow || extractHeading(rows[0].children[1]);
     const section = buildVideoSection(rows, { ies: block.classList.contains('ies') });
     block.replaceChildren(...(heading ? [heading] : []), section);
+    track();
+    return;
+  }
+
+  if (block.classList.contains('ies')) {
+    const rows = [...block.querySelectorAll(':scope > div')];
+    const heading = takeHeadingRow(rows);
+    if (!rows.length) return;
+    block.classList.add('quote-ies');
+    const figures = rows.map(buildQuoteSlide);
+    block.replaceChildren(...(heading ? [heading] : []), buildCardCarousel(figures));
     track();
     return;
   }
