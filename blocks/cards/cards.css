@@ -1251,7 +1251,6 @@ body.author-guide .cards.icons.icons-sm .cards-card-image img {
   .section.feature-cards { padding: 40px 0; }
   .section.feature-cards > .default-content-wrapper { padding-bottom: 40px; }
 
-  /* section subtitle under the heading: 20px on desktop (16px below 1024px) */
   .section.feature-cards > .default-content-wrapper > h2 + p {
     font-size: 20px;
     line-height: 1.3;
@@ -1653,8 +1652,7 @@ main > .section.cards-container:has(.cards.ies-product) > .default-content-wrapp
   }
 }
 
-/* .ies-product header authored inside the block (eyebrow / heading / subheading).
-   Same values as the default-content header above; subheading 16px, 20px from 1024px. */
+/* .ies-product block header */
 .cards-container .cards-header {
   max-width: 1130px;
   margin: 0 auto var(--space-xl);
@@ -1720,7 +1718,7 @@ main > .section.cards-container:has(.cards.ies-product) > .default-content-wrapp
   }
 }
 
-/* .ies-product.checklist: lists render with blue check bullets (as media-text .checklist) */
+/* .ies-product.checklist bullets */
 .section .cards.ies-product.checklist .cards-card-body > ul:is(ul) {
   display: flex;
   flex-direction: column;
@@ -1749,9 +1747,7 @@ main > .section.cards-container:has(.cards.ies-product) > .default-content-wrapp
   background: url("/icons/icon-check-blue.svg") no-repeat center / 14px 10px;
 }
 
-/* .ies-product.checklist spacing (Figma 8480-108560 / 8480-108564 / 8485-67747):
-   below 1024px one card per row; header -> first card 40px, card -> card 80px,
-   image -> text 20px, title -> list 8px. Desktop: 80px columns, 60px rows. */
+/* .ies-product.checklist spacing */
 @media (width < 1024px) {
   .section .cards.ies-product.checklist {
     grid-template-columns: 1fr;
@@ -1769,8 +1765,7 @@ main > .section.cards-container:has(.cards.ies-product) > .default-content-wrapp
   .section .cards.ies-product.checklist { gap: 60px 80px; }
 }
 
-/* .ies-product with an odd card count (3/5/7): from 1024px the last card becomes a
-   full-width row, image on the chosen side. No class = stays in its grid column. */
+/* .ies-product odd count: last card as a full-width row */
 @media (width >= 1024px) {
   .section .cards.ies-product:is(.image-left, .image-right) > div:last-child:nth-child(odd) {
     flex-direction: row;

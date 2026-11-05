@@ -12,12 +12,8 @@
  *               eyebrow paragraph doubles as a category label (blog rail
  *               "download" promos, e.g. fragments/right-rail)
  *   .ies        One Intuit icon tiles, 1-up / 2-up / 4-up by breakpoint
- *   .ies-product  image + eyebrow + title + body, 1-up / 2-up by breakpoint.
- *               Optional: a first single-cell row (eyebrow paragraph, heading,
- *               subheading paragraph) becomes the section header; `.checklist`
- *               renders lists with check bullets; `.image-left` / `.image-right`
- *               lay the last card of an odd count (3/5/7) out as a full-width
- *               row from 1024px (default = stays in its grid column)
+ *   .ies-product  image + eyebrow + title + body, 1-up / 2-up by breakpoint;
+ *               optional header row, `.checklist`, `.image-left` / `.image-right`
  *   .tinted.stat  tinted cards; an optional first row with a single heading
  *               cell becomes the section title, a card without an image a stat
  * .carousel/.boxed combine with the .accent/.dark tone classes (section
@@ -243,9 +239,7 @@ function takeTitleRow(block) {
   return title;
 }
 
-// .ies-product: an optional leading single-cell row holding an eyebrow paragraph,
-// a heading and subheading paragraph(s) becomes the section header, so it ships
-// with the block instead of living in default content above it.
+// .ies-product: optional leading single-cell row becomes the section header
 function takeProductHeader(block) {
   const row = block.firstElementChild;
   const cells = row ? [...row.children] : [];

@@ -1687,8 +1687,7 @@
   }
 }
 
-/* .ies (text-only quote): rounded Superblue band, centered quote, carousel dots/arrows below.
-   Background is overridable: `.blueberry` / `.light` / `.white`, or --quote-bg / --quote-fg. */
+/* .ies text-only quote; override with .blueberry / .light / .white or --quote-bg / --quote-fg */
 .testimonial.ies.quote-ies {
   --quote-bg: var(--ies-color-primary-superblue, #236cff);
   --quote-fg: #fff;
