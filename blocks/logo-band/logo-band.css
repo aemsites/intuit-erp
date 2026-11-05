@@ -308,9 +308,19 @@ main > .section.logo-band-container:has(.logo-band.marquee) > div { max-width: n
   width: auto;
   max-width: 130px;
   height: auto;
-  max-height: 32px;
   object-fit: contain;
   filter: grayscale(1);
+}
+
+/* mobile/tablet: full-width list so the % slot widths resolve, and slots grow
+   with the logo instead of clipping it */
+@media (width < 1024px) {
+  .logo-band.strip .logoband-list { width: 100%; }
+
+  .logo-band.strip .logoband-list > * {
+    height: auto;
+    min-height: 32px;
+  }
 }
 
 @media (width < 768px) {
