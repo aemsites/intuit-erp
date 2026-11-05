@@ -1811,7 +1811,7 @@
   .section.testimonial-container:has(.testimonial.quote-ies) > .testimonial-wrapper { padding-inline: var(--space-2xl); }
   .testimonial.quote-ies .testimonial-heading { margin-bottom: var(--space-xl); }
 
-  .testimonial.quote-ies .testimonial-card { padding: 80px 100px; }
+  .testimonial.quote-ies .testimonial-card { padding: var(--space-5xl) 100px; }
   .testimonial.quote-ies .testimonial-card blockquote { font-size: 32px; line-height: 1.2; }
 
   .testimonial.quote-ies .testimonial-card figcaption {
@@ -1819,7 +1819,7 @@
     line-height: var(--line-height-m);
   }
 
-  .testimonial.quote-ies .testimonial-carousel-nav { padding-top: 40px; }
+  .testimonial.quote-ies .testimonial-carousel-nav { padding-top: var(--space-2xl); }
 }
 
 @media (width >= 1024px) {
@@ -1832,7 +1832,7 @@
     line-height: var(--line-height-none);
   }
 
-  .testimonial.quote-ies .testimonial-card { padding: 80px 100px; }
+  .testimonial.quote-ies .testimonial-card { padding: var(--space-5xl) 100px; }
   .testimonial.quote-ies .testimonial-card blockquote { font-size: 40px; }
 
   .testimonial.quote-ies .testimonial-card figcaption {
@@ -1842,10 +1842,10 @@
 
   .testimonial.quote-ies .testimonial-carousel-nav {
     justify-content: flex-end;
-    padding-top: 20px;
+    padding-top: var(--space-m);
   }
 
-  .testimonial.quote-ies .testimonial-dots { gap: 20px; }
+  .testimonial.quote-ies .testimonial-dots { gap: var(--space-m); }
 
   .testimonial.quote-ies .testimonial-arrow {
     display: inline-flex;

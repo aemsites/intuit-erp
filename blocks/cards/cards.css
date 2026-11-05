@@ -1661,7 +1661,7 @@ main > .section.cards-container:has(.cards.ies-product) > .default-content-wrapp
 }
 
 .cards-container .cards-header-eyebrow {
-  margin: 0 0 8px;
+  margin: 0 0 var(--space-2xs);
   font-size: 12px;
   font-weight: var(--font-weight-medium);
   line-height: 1.2;
@@ -1751,18 +1751,18 @@ main > .section.cards-container:has(.cards.ies-product) > .default-content-wrapp
 @media (width < 1024px) {
   .section .cards.ies-product.checklist {
     grid-template-columns: 1fr;
-    row-gap: 80px;
+    row-gap: var(--space-5xl);
   }
 
-  .section .cards.ies-product.checklist > div { gap: 20px; }
+  .section .cards.ies-product.checklist > div { gap: var(--space-m); }
 
-  .section .cards.ies-product.checklist .cards-card-body :is(h3, h4) { margin-bottom: 8px; }
+  .section .cards.ies-product.checklist .cards-card-body :is(h3, h4) { margin-bottom: var(--space-2xs); }
 
-  .cards-container:has(.cards.ies-product.checklist) .cards-header { margin-bottom: 40px; }
+  .cards-container:has(.cards.ies-product.checklist) .cards-header { margin-bottom: var(--space-2xl); }
 }
 
 @media (width >= 1024px) {
-  .section .cards.ies-product.checklist { gap: 60px 80px; }
+  .section .cards.ies-product.checklist { gap: 60px var(--space-5xl); }
 }
 
 /* .ies-product odd count: last card as a full-width row */
@@ -1771,7 +1771,7 @@ main > .section.cards-container:has(.cards.ies-product) > .default-content-wrapp
     flex-direction: row;
     grid-column: 1 / -1;
     align-items: center;
-    gap: 80px;
+    gap: var(--space-5xl);
   }
 
   .section .cards.ies-product.image-right > div:last-child:nth-child(odd) { flex-direction: row-reverse; }
