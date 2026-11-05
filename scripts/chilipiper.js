@@ -50,6 +50,10 @@ export async function submitChiliPiper(router, lead) {
     Number_of_Employees__c: lead.NumberOfEmployees || '',
     Language: lead.Language__c || '',
   };
+  // ZI form complete - only add if not empty
+  if (lead.ZI_Industry__c) leadObj.Industry = lead.ZI_Industry__c;
+  if (lead.ZI_Address_Zip_Code__c) leadObj.PostalCode = lead.ZI_Address_Zip_Code__c;
+
   const cfg = await chilipiperConfig();
   const subdomain = cfg['chilipiper.subdomain'];
   if (!router || !subdomain) return false;

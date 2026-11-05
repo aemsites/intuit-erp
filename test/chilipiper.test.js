@@ -86,6 +86,32 @@ describe('submitChiliPiper', () => {
     });
   });
 
+  it('maps ZI Industry and Zip to ChiliPiper Industry and PostalCode when present', async () => {
+    const ok = await submitChiliPiper('mid-us', {
+      ...LEAD,
+      ZI_Industry__c: 'Technology',
+      ZI_Address_Zip_Code__c: '94043',
+    });
+    expect(ok).toBe(true);
+    expect(window.ChiliPiper.submit).toHaveBeenCalledWith(
+      'intuitsales',
+      'mid-us',
+      expect.objectContaining({
+        lead: expect.objectContaining({
+          Industry: 'Technology',
+          PostalCode: '94043',
+        }),
+      }),
+    );
+  });
+
+  it('omits Industry and PostalCode when ZI fields are absent', async () => {
+    await submitChiliPiper('mid-us', LEAD);
+    const submittedLead = window.ChiliPiper.submit.mock.calls[0][2].lead;
+    expect(submittedLead).not.toHaveProperty('Industry');
+    expect(submittedLead).not.toHaveProperty('PostalCode');
+  });
+
   it('no-ops (false) without a router or subdomain', async () => {
     expect(await submitChiliPiper('', LEAD)).toBe(false);
     getSiteConfig.mockResolvedValue({});
