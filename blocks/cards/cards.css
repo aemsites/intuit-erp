@@ -1652,7 +1652,6 @@ main > .section.cards-container:has(.cards.ies-product) > .default-content-wrapp
   }
 }
 
-/* .ies-product block header */
 .cards-container .cards-header {
   max-width: 1130px;
   margin: 0 auto var(--space-xl);
@@ -1718,7 +1717,6 @@ main > .section.cards-container:has(.cards.ies-product) > .default-content-wrapp
   }
 }
 
-/* .ies-product.checklist bullets */
 .section .cards.ies-product.checklist .cards-card-body > ul:is(ul) {
   display: flex;
   flex-direction: column;
@@ -1747,7 +1745,6 @@ main > .section.cards-container:has(.cards.ies-product) > .default-content-wrapp
   background: url("/icons/icon-check-blue.svg") no-repeat center / 14px 10px;
 }
 
-/* .ies-product.checklist spacing */
 @media (width < 1024px) {
   .section .cards.ies-product.checklist {
     grid-template-columns: 1fr;
@@ -1765,7 +1762,6 @@ main > .section.cards-container:has(.cards.ies-product) > .default-content-wrapp
   .section .cards.ies-product.checklist { gap: 60px var(--space-5xl); }
 }
 
-/* .ies-product odd count: last card as a full-width row */
 @media (width >= 1024px) {
   .section .cards.ies-product:is(.image-left, .image-right) > div:last-child:nth-child(odd) {
     flex-direction: row;

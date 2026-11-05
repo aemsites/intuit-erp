@@ -1687,7 +1687,6 @@
   }
 }
 
-/* .ies text-only quote; override with .blueberry / .light / .white or --quote-bg / --quote-fg */
 .testimonial.ies.quote-ies {
   --quote-bg: var(--ies-color-primary-superblue, #236cff);
   --quote-fg: #fff;
@@ -1766,7 +1765,6 @@
 .testimonial.quote-ies .testimonial-card .testimonial-name { font-weight: var(--font-weight-semibold); }
 .testimonial.quote-ies .testimonial-card .testimonial-name:not(:last-child)::after { content: ", "; }
 
-/* pagination */
 .testimonial.quote-ies .testimonial-carousel-nav {
   display: flex;
   align-items: center;

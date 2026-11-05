@@ -21,10 +21,6 @@
  *   .card.feature.ies — IES retheme, same rows. An optional first row with a
  *   single heading cell becomes the section title; 2+ cards render as a carousel.
  *
- * Variant .ies — text-only quote on a Superblue band; one row per quote
- * (quote, bold name, role), 2+ rows carousel. Background: `blueberry`, `light`,
- * `white`, or `--quote-bg` / `--quote-fg`.
- *
  * Variant .story (Figma ACQ-4698 "Desktop migration story") — one or more
  * rows, each a dark Blueberry card: copy left, media tile right. 2-3 cells:
  *   1. content — an optional italic-only eyebrow, a heading (h2-h4), quote
@@ -866,7 +862,6 @@ function buildStory(row, { videoModal = false } = {}) {
   return figure;
 }
 
-// .ies: one text-only slide per row
 function buildQuoteSlide(row) {
   const cells = [...row.children];
   const { quoteParas, name, roleParas } = parseQuote(cells[cells.length - 1]);
