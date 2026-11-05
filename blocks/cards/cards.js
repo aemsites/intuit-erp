@@ -12,7 +12,12 @@
  *               eyebrow paragraph doubles as a category label (blog rail
  *               "download" promos, e.g. fragments/right-rail)
  *   .ies        One Intuit icon tiles, 1-up / 2-up / 4-up by breakpoint
- *   .ies-product  image + eyebrow + title + body, 1-up / 2-up by breakpoint
+ *   .ies-product  image + eyebrow + title + body, 1-up / 2-up by breakpoint.
+ *               Optional: a first single-cell row (eyebrow paragraph, heading,
+ *               subheading paragraph) becomes the section header; `.checklist`
+ *               renders lists with check bullets; `.image-left` / `.image-right`
+ *               lay the last card of an odd count (3/5/7) out as a full-width
+ *               row from 1024px (default = stays in its grid column)
  *   .tinted.stat  tinted cards; an optional first row with a single heading
  *               cell becomes the section title, a card without an image a stat
  * .carousel/.boxed combine with the .accent/.dark tone classes (section
@@ -238,6 +243,37 @@ function takeTitleRow(block) {
   return title;
 }
 
+// .ies-product: an optional leading single-cell row holding an eyebrow paragraph,
+// a heading and subheading paragraph(s) becomes the section header, so it ships
+// with the block instead of living in default content above it.
+function takeProductHeader(block) {
+  const row = block.firstElementChild;
+  const cells = row ? [...row.children] : [];
+  if (cells.length !== 1 || cells[0].querySelector('picture, img')) return null;
+  const nodes = [...cells[0].children];
+  const at = nodes.findIndex((n) => /^H[1-6]$/.test(n.tagName));
+  if (at === -1) return null;
+
+  const header = document.createElement('div');
+  header.className = 'cards-header';
+  const para = (node, cls) => {
+    const text = node.textContent.trim();
+    if (!text) return null;
+    const p = document.createElement('p');
+    p.className = cls;
+    p.innerHTML = node.innerHTML;
+    return p;
+  };
+  const eyebrow = nodes.slice(0, at).filter((n) => n.tagName === 'P').map((n) => para(n, 'cards-header-eyebrow'));
+  const title = document.createElement('h2');
+  title.className = 'cards-header-title';
+  title.innerHTML = nodes[at].innerHTML;
+  const sub = nodes.slice(at + 1).filter((n) => n.tagName === 'P').map((n) => para(n, 'cards-header-sub'));
+  header.append(...eyebrow.filter(Boolean), title, ...sub.filter(Boolean));
+  row.remove();
+  return header;
+}
+
 function brightness(hex) {
   const h = hex.length === 4 ? [...hex.slice(1)].map((c) => c + c).join('') : hex.slice(1);
   const [r, g, b] = [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16));
@@ -261,6 +297,7 @@ export default function decorate(block) {
   const isIcons = block.classList.contains('icons') || block.classList.contains('ies');
   const isStat = block.classList.contains('tinted') && block.classList.contains('stat');
   const sectionTitle = isStat ? takeTitleRow(block) : null;
+  const productHeader = block.classList.contains('ies-product') ? takeProductHeader(block) : null;
   if (block.classList.contains('icons') && block.classList.contains('colors')) applyCardColors(block);
 
   [...block.children].forEach((row) => {
@@ -343,6 +380,7 @@ export default function decorate(block) {
   }
   // the title sits outside the grid so it never becomes a grid item
   if (sectionTitle) block.before(sectionTitle);
+  if (productHeader) block.before(productHeader);
 
   // Trail: rw_cards_container|carousel|rw_card_N (the `carousel` middle only exists
   // for scroll variants; static grids are rw_cards_container|rw_card_N).

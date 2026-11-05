@@ -21,6 +21,14 @@
  *   .card.feature.ies — IES retheme, same rows. An optional first row with a
  *   single heading cell becomes the section title; 2+ cards render as a carousel.
  *
+ * Variant .ies (Figma "One Intuit Page Rethemed" text-only quote) — a rounded
+ * Superblue (#236cff) band with a centered quote; one row per quote, 1 cell:
+ *   quote paragraph(s), a bold-only name line, a plain role line. 2+ rows
+ *   render as a carousel (dots; arrows from 1024px). An optional first
+ *   single-heading row becomes the section title. Background override:
+ *   add `blueberry` or `light` (or `white`) to the block, or set
+ *   `--quote-bg` / `--quote-fg` on the block/section.
+ *
  * Variant .story (Figma ACQ-4698 "Desktop migration story") — one or more
  * rows, each a dark Blueberry card: copy left, media tile right. 2-3 cells:
  *   1. content — an optional italic-only eyebrow, a heading (h2-h4), quote
@@ -862,6 +870,40 @@ function buildStory(row, { videoModal = false } = {}) {
   return figure;
 }
 
+// .ies (text-only quote): one slide per row; the content cell holds the quote
+// paragraph(s), a bold name line and a plain role line. No media.
+function buildQuoteSlide(row) {
+  const cells = [...row.children];
+  const { quoteParas, name, roleParas } = parseQuote(cells[cells.length - 1]);
+  const figure = document.createElement('figure');
+  figure.className = 'testimonial-card quote-slide';
+  const quote = document.createElement('blockquote');
+  quoteParas.forEach((p) => {
+    const q = document.createElement('p');
+    q.innerHTML = p.innerHTML;
+    quote.append(q);
+  });
+  figure.append(quote);
+  const role = roleParas.map((p) => p.textContent.trim()).filter(Boolean).join(', ');
+  if (name || role) {
+    const figcaption = document.createElement('figcaption');
+    if (name) {
+      const n = document.createElement('span');
+      n.className = 'testimonial-name';
+      n.textContent = name;
+      figcaption.append(n);
+    }
+    if (role) {
+      const r = document.createElement('span');
+      r.className = 'testimonial-title';
+      r.textContent = role;
+      figcaption.append(r);
+    }
+    figure.append(figcaption);
+  }
+  return figure;
+}
+
 export default function decorate(block) {
   // Customer proof -> rw_testimonial trail; each story card/frame is an
   // rw_testimonial_item slot (the carousel dots stay at the block level). link_name off.
@@ -909,6 +951,17 @@ export default function decorate(block) {
     const heading = titleRow || extractHeading(rows[0].children[1]);
     const section = buildVideoSection(rows, { ies: block.classList.contains('ies') });
     block.replaceChildren(...(heading ? [heading] : []), section);
+    track();
+    return;
+  }
+
+  if (block.classList.contains('ies')) {
+    const rows = [...block.querySelectorAll(':scope > div')];
+    const heading = takeHeadingRow(rows);
+    if (!rows.length) return;
+    block.classList.add('quote-ies');
+    const figures = rows.map(buildQuoteSlide);
+    block.replaceChildren(...(heading ? [heading] : []), buildCardCarousel(figures));
     track();
     return;
   }
