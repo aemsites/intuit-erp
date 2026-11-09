@@ -860,6 +860,20 @@ body.author-guide .hero .hero-copy .hero-lede {
   color: #0d0031;
 }
 
+/* .form.ies.light-cta: white pill CTA */
+.section.hero-container .hero.form.ies.light-cta .hero-copy :is(a, button).button.primary {
+  border-color: var(--background-color);
+  background-color: var(--background-color);
+  color: #0d0031;
+}
+
+.section.hero-container .hero.form.ies.light-cta .hero-copy :is(a, button).button.primary:hover,
+.section.hero-container .hero.form.ies.light-cta .hero-copy :is(a, button).button.primary:focus-visible {
+  border-color: #eff4f9;
+  background-color: #eff4f9;
+  color: #0d0031;
+}
+
 @media (width >= 768px) {
   .hero.ies.glow .hero-grid {
     gap: 60px;
@@ -1175,6 +1189,89 @@ body.author-guide .hero .hero-copy .hero-lede {
 
   .hero.form.lead .hero-copy h1 { font-size: 60px; }
 
+}
+
+/* .form.lead.ies: lead card with ies copy */
+.hero.form.lead.ies .hero-grid {
+  gap: var(--space-m);
+  padding-block: var(--space-2xl);
+}
+
+.hero.form.lead.ies .hero-copy h1 {
+  margin-bottom: var(--space-m);
+  font-size: var(--heading-font-size-xxl);
+  line-height: var(--line-height-none);
+}
+
+.hero.form.lead.ies .hero-copy .hero-lede { margin-bottom: var(--space-xl); }
+
+.section.hero-container .hero.form.lead.ies .hero-copy :is(a, button).button.primary {
+  min-height: var(--space-3xl);
+  padding: 0 42px;
+  border: 2px solid var(--info);
+  border-radius: 999px;
+  background-color: var(--info);
+  color: var(--background-color);
+  font-size: var(--body-font-size-xs);
+  font-weight: var(--font-weight-medium);
+}
+
+.section.hero-container .hero.form.lead.ies .hero-copy :is(a, button).button.primary:hover,
+.section.hero-container .hero.form.lead.ies .hero-copy :is(a, button).button.primary:focus-visible {
+  border-color: #1b5be0;
+  background-color: #1b5be0;
+}
+
+.hero.form.lead.ies .hero-copy .hero-actions + :is(img, picture) { display: none; }
+
+.hero.form.lead.ies .hero-form .form .form-header {
+  margin: 0 0 var(--space-m);
+  font-size: var(--heading-font-size-m);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-xs);
+  color: #0d0031;
+}
+
+.hero.form.lead.ies .hero-form .form .form-subheader {
+  margin: 0 0 var(--space-m);
+  font-size: var(--body-font-size-m);
+  line-height: var(--line-height-m);
+  color: #0d0031;
+}
+
+@media (width >= 1024px) {
+  .hero.form.lead.ies .hero-grid { padding-block: var(--space-5xl); }
+
+  .hero.form.lead.ies .hero-copy h1 {
+    margin-bottom: var(--space-s);
+    font-size: 60px;
+  }
+
+  .hero.form.lead.ies .hero-copy .hero-lede { margin-bottom: 36px; }
+
+  .section.hero-container .hero.form.lead.ies .hero-copy :is(a, button).button.primary {
+    border-color: var(--background-color);
+    background-color: var(--background-color);
+    color: #0d0031;
+    font-size: var(--body-font-size-m);
+  }
+
+  .section.hero-container .hero.form.lead.ies .hero-copy :is(a, button).button.primary:hover,
+  .section.hero-container .hero.form.lead.ies .hero-copy :is(a, button).button.primary:focus-visible {
+    border-color: #eff4f9;
+    background-color: #eff4f9;
+    color: #0d0031;
+  }
+
+  .hero.form.lead.ies .hero-copy .hero-actions + :is(img, picture) {
+    display: block;
+    width: 170px;
+    margin-top: var(--space-2xl);
+  }
+
+  .hero.form.lead.ies .hero-copy .hero-actions + picture img { width: 100%; }
+
+  .hero.form.lead.ies .hero-form .form .form-header { font-size: 34px; }
 }
 
 /* .video-bg: full-bleed looping background video behind the copy */
