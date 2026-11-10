@@ -9,6 +9,9 @@ const POSITIONAL_CLASS_RE = new RegExp(
 // Tag-wide paragraph sizes are written as the bare body class (`body-l`); positional ones keep
 // their tag (`p-1-size-body-l`). The older `p-size-body-l` form is still read.
 const BODY_CLASS_RE = /^body-(?:l|m|s|xs|xxs)$/;
+const SIZE_CLASS_RE = new RegExp(
+  `^(?:(?:h[1-6]|p)(?:-[0-9]+)?-size-(?:${SIZE_PATTERN})|body-(?:l|m|s|xs|xxs))$`,
+);
 const tagWideClass = (tag, size) => (tag === 'p' && BODY_CLASS_RE.test(size)
   ? size : `${tag}-size-${size}`);
 const tagWideSize = (tag, token) => (tag === 'p' && BODY_CLASS_RE.test(token) ? token
@@ -102,16 +105,30 @@ function removeEmptyMetadata(section) {
   if (meta && !meta.children.length) meta.remove();
 }
 
+/** Use live section classes when the editor folds section metadata into the section element. */
+export function syncLiveSectionStyles(section, liveSection) {
+  const liveStyles = [...liveSection.classList].filter((name) => SIZE_CLASS_RE.test(name));
+  const styleRow = findRow(section, 'style');
+  const tokens = styleRow?.children[1]?.textContent.split(/[\s,]+/).filter(Boolean) || [];
+  const next = [...tokens.filter((token) => !SIZE_CLASS_RE.test(token)), ...liveStyles];
+
+  if (next.length) setRow(section, 'style', [...new Set(next)].join(', '));
+  else {
+    styleRow?.remove();
+    removeEmptyMetadata(section);
+  }
+}
+
 function defaultStyle(section, el) {
   const styleRow = findRow(section, 'style');
   const tokens = styleRow?.children[1]?.textContent.split(/[\s,]+/) || [];
   const tag = tagName(el);
   const key = defaultPositionKey(el, section);
-  const specific = tokens.find((token) => (
-    new RegExp(`^${key}-size-(${SIZE_PATTERN})$`).test(token)
-  ));
+  const specific = tokens.map((token) => (
+    token.match(new RegExp(`^${key}-size-(${SIZE_PATTERN})$`))
+  )).find(Boolean)?.[1];
   const general = tokens.map((token) => tagWideSize(tag, token)).find(Boolean);
-  if (specific) return parseSizeClass(specific);
+  if (specific) return parseSizeClass(`${tag}-size-${specific}`);
   return general ? parseSizeClass(`${tag}-size-${general}`) : null;
 }
 
@@ -272,6 +289,18 @@ export function currentStyle(section, el) {
   return blockStyle(blockOf(el), el)
     || defaultStyle(section, el)
     || parseSizeClass(matchOf(section, el)?.entry.value);
+}
+
+/** Returns the shared tag-wide paragraph size only when it is applied to every paragraph. */
+export function paragraphAllSize(paragraphs) {
+  if (!paragraphs.length) return '';
+  const sizes = paragraphs.map(({ section, el }) => {
+    const block = blockOf(el);
+    if (block) return [...block.classList].map((name) => tagWideSize('p', name)).find(Boolean) || '';
+    const tokens = findRow(section, 'style')?.children[1]?.textContent.split(/[\s,]+/) || [];
+    return tokens.map((token) => tagWideSize('p', token)).find(Boolean) || '';
+  });
+  return sizes[0] && sizes.every((size) => size === sizes[0]) ? sizes[0] : '';
 }
 
 // Resolves every target before changing any, since positions shift once a style row is removed.

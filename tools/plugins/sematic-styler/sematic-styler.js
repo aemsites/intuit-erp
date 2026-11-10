@@ -3,7 +3,7 @@ import DA_SDK from 'https://da.live/nx/utils/sdk.js';
 import { sizesFor } from '../../../scripts/heading-key.js';
 import {
   headingInfo, currentStyle, setHeadingSize, setHeadingSizes, clearHeadingSizes, repairAll,
-  removeOrphan,
+  removeOrphan, syncLiveSectionStyles, paragraphAllSize,
 } from './heading-styler.js';
 
 const POLL_MS = 1000;
@@ -96,8 +96,8 @@ const blockName = (name) => name.replace(/\(.*\)/, '').trim().toLowerCase().repl
 /**
  * Block names listed in the `include` column of this plugin's row in the site config's
  * `library` sheet (the one with `title`, `path` and `ref`). Only those blocks are editable.
- * Returns null, leaving every block editable, when the column is empty or `all`, and undefined
- * when the config can't be read so callers can retry instead of briefly showing every block.
+ * Returns an empty set when no blocks are configured, null only when `include` is `all`, and
+ * undefined when the config can't be read so callers can retry instead of showing every block.
  */
 async function loadEditableBlocks({ actions, context }) {
   try {
@@ -114,8 +114,7 @@ async function loadEditableBlocks({ actions, context }) {
     const row = rows.find((r) => PLUGIN_ROW.test(`${r.path || ''} ${r.ref || ''} ${r.title || ''}`));
     if (!row) log('no library row for this plugin', { sheets: Object.keys(config), rows });
     const include = String(row?.include ?? '').split(/[,\n]/).map(blockName).filter(Boolean);
-    // `all` (or `*`) makes every block and default content editable, same as an empty column.
-    if (!include.length || include.some((name) => name === 'all')) return null;
+    if (include.includes('all')) return null;
     return new Set(include);
   } catch (e) {
     log('config error', e);
@@ -248,11 +247,6 @@ function headingControl(h, sdk, status, setLoading, pendingSizes, locked) {
   return wrap;
 }
 
-const sizeOf = (h, pendingSizes) => {
-  const id = `${h.sectionIndex}:${h.key}`;
-  return pendingSizes.has(id) ? pendingSizes.get(id) : currentStyle(h.section, h.el).size;
-};
-
 /**
  * First row of a section: when "Apply to all Paragraphs" is checked, the chosen size is applied
  * to every paragraph in the section and the paragraphs' own controls are disabled.
@@ -271,12 +265,11 @@ function paragraphAllControl(sectionIndex, paragraphs, ui) {
   wrap.className = 'tree-item apply-all-row';
   label.className = 'apply-all-label';
   checkbox.type = 'checkbox';
-  checkbox.checked = paragraphAll.has(sectionIndex);
   label.append(checkbox, 'Apply to all Paragraphs');
   controls.className = 'tree-item-controls';
-  const current = paragraphs.map((h) => sizeOf(h, pendingSizes));
-  const common = current.every((size) => size === current[0]) ? current[0] : '';
+  const common = paragraphAllSize(paragraphs);
   const value = paragraphAll.get(sectionIndex) || common;
+  checkbox.checked = paragraphAll.has(sectionIndex) || Boolean(common);
   const sizes = sizesFor('p');
   const options = value && !sizes.includes(value) ? [...sizes, value] : sizes;
   const placeholder = new Option('Choose size', '');
@@ -309,7 +302,7 @@ function paragraphAllControl(sectionIndex, paragraphs, ui) {
   };
   checkbox.addEventListener('change', async () => {
     if (!checkbox.checked) {
-      const globalSize = paragraphAll.get(sectionIndex);
+      const globalSize = paragraphAll.get(sectionIndex) || common;
       paragraphAll.delete(sectionIndex);
 
       // Remove the global size class from the block
@@ -431,7 +424,8 @@ function render(
     });
     sectionName.append(sectionLabel, resetSection, sectionChevron);
     const paragraphs = sectionElements.filter((h) => h.el.tagName === 'P');
-    const paragraphsLocked = paragraphAll.has(sectionIndex);
+    const paragraphsLocked = paragraphAll.has(sectionIndex)
+      || Boolean(paragraphAllSize(paragraphs));
     if (paragraphs.length) {
       groupList.append(paragraphAllControl(sectionIndex, paragraphs, {
         sdk, status, setLoading, pendingSizes, paragraphAll, rerender,
@@ -519,8 +513,11 @@ function liveTreeDoc(liveHtml, sourceDoc) {
   const sourceSections = [...sourceDoc.querySelectorAll('main > div')];
   if (liveSections.length !== sourceSections.length) return doc;
   liveSections.forEach((section, i) => {
-    const meta = sourceSections[i].querySelector(':scope > .section-metadata');
-    if (meta) section.append(doc.importNode(meta, true));
+    const liveMeta = section.querySelector(':scope > .section-metadata');
+    if (liveMeta) return;
+    const sourceMeta = sourceSections[i].querySelector(':scope > .section-metadata');
+    if (sourceMeta) section.append(doc.importNode(sourceMeta, true));
+    syncLiveSectionStyles(section, section);
   });
   return doc;
 }
@@ -593,6 +590,10 @@ export default async function init() {
         log('repair error', e);
       }
       sourceDoc = fresh.doc;
+      if (sourceText !== undefined) {
+        liveHtml = null;
+        paragraphAll.clear();
+      }
       const sections = [...sourceDoc.querySelectorAll('main > div')];
       pendingSizes.forEach((size, id) => {
         const [sectionIndex, key] = id.split(':');
