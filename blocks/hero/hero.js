@@ -94,7 +94,7 @@ function buildVideoLink(a, info) {
   return wrap;
 }
 
-function buildTeaserVideo(srcs, posters) {
+function buildTeaserVideo(srcs, posters, loop = false) {
   const media = document.createElement('div');
   media.className = 'hero-media hero-media-video';
 
@@ -105,6 +105,7 @@ function buildTeaserVideo(srcs, posters) {
   if (poster) video.poster = poster;
   video.muted = true;
   video.playsInline = true;
+  video.loop = loop;
   video.preload = 'metadata';
   video.setAttribute('aria-label', 'Product video');
 
@@ -114,7 +115,8 @@ function buildTeaserVideo(srcs, posters) {
   play.setAttribute('aria-label', 'Play video');
   play.hidden = true;
 
-  let teasing = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const playing = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let teasing = playing && !loop;
   const showPlay = () => { play.hidden = false; };
 
   video.addEventListener('timeupdate', () => {
@@ -134,7 +136,7 @@ function buildTeaserVideo(srcs, posters) {
     video.play().catch(showPlay);
   });
 
-  if (teasing) {
+  if (playing) {
     video.autoplay = true;
     video.play().catch(() => { teasing = false; showPlay(); });
   } else {
@@ -375,7 +377,7 @@ export function enhanceDashboardAnimation(media, picture, {
  * @param {Element} media The .hero-media wrapper (already holds the image)
  * @param {{video?: string, lottie?: string}} motion authored motion sources
  */
-function addMotion(media, { video: videoSrc, lottie: lottieSrc }) {
+function addMotion(media, { video: videoSrc, lottie: lottieSrc, loop = false }) {
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   if (videoSrc) {
@@ -386,6 +388,7 @@ function addMotion(media, { video: videoSrc, lottie: lottieSrc }) {
     video.setAttribute('muted', '');
     video.playsInline = true;
     video.setAttribute('playsinline', '');
+    video.loop = loop;
     video.preload = reduceMotion ? 'metadata' : 'auto';
     video.setAttribute('aria-label', 'Product video');
     video.src = videoSrc;
@@ -396,7 +399,7 @@ function addMotion(media, { video: videoSrc, lottie: lottieSrc }) {
     play.setAttribute('aria-label', 'Play video');
     play.hidden = true;
 
-    let teasing = !reduceMotion;
+    let teasing = !reduceMotion && !loop;
     const showPlay = () => { play.hidden = false; };
 
     video.addEventListener('playing', () => media.classList.add('is-playing'));
@@ -425,7 +428,7 @@ function addMotion(media, { video: videoSrc, lottie: lottieSrc }) {
     });
 
     media.append(video, play);
-    if (teasing) {
+    if (!reduceMotion) {
       tryPlay(video).catch((e) => {
         // eslint-disable-next-line no-console
         console.debug('hero: video playback blocked', e);
@@ -499,6 +502,7 @@ export default async function decorate(block) {
   const isVideoLink = block.classList.contains('video-link');
   const isIesVideo = block.classList.contains('ies') && block.classList.contains('video');
   const isVideoBg = block.classList.contains('video-bg');
+  const loopVideo = block.classList.contains('loop');
   const rows = [...block.children];
 
   if (block.classList.contains('ies') && block.classList.contains('arcs')) extendArcsBackground(block);
@@ -677,14 +681,14 @@ export default async function decorate(block) {
     lockup.append(mediaEl);
     copy.prepend(lockup);
   } else if (isIesVideo && videoSrc) {
-    grid.append(buildTeaserVideo(videoSrcs, posterSrcs));
+    grid.append(buildTeaserVideo(videoSrcs, posterSrcs, loopVideo));
   } else if (mediaEl) {
     const media = document.createElement('div');
     media.className = 'hero-media';
     media.append(mediaEl);
     grid.append(media);
     if (isIesGradient && (videoSrc || lottieSrc)) {
-      addMotion(media, { video: videoSrc, lottie: lottieSrc });
+      addMotion(media, { video: videoSrc, lottie: lottieSrc, loop: loopVideo });
     } else {
       enhanceDashboardAnimation(media, mediaEl);
     }
