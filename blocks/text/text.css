@@ -1,2 +1,59 @@
 /* text — baseline layout only. */
 .text > div { max-width: 46em; margin: 0 auto; }
+
+
+.section.text-container:has(.text-header) {
+  padding: 60px 0 var(--space-m);
+}
+
+.text .text-header {
+  max-width: 1130px;
+  margin: 0 auto;
+  padding: 0 var(--space-m);
+  text-align: center;
+  color: #0d0031;
+}
+
+.text .text-header > * { margin: 0; text-align: center; }
+
+.text .text-eyebrow {
+  margin-bottom: var(--space-s);
+  font-size: var(--body-xxs);
+  font-style: normal;
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-s);
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: #0d0031;
+}
+
+.text .text-title {
+  font-size: 34px;
+  font-weight: var(--font-weight-medium);
+  line-height: 1.1;
+  color: #0d0031;
+}
+
+.text .text-subtitle {
+  max-width: 940px;
+  margin-inline: auto;
+  margin-top: var(--space-s);
+  font-size: var(--body-m);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-m);
+  color: #0d0031;
+}
+
+@media (width >= 768px) {
+  .text .text-title { font-size: 40px; line-height: 1.1; }
+
+  .text .text-subtitle { font-size: var(--body-l); line-height: var(--line-height-s); }
+}
+
+@media (width >= 1024px) {
+  .section.text-container:has(.text-header) { padding: var(--space-5xl) 0; }
+
+  .text .text-title { font-size: var(--heading-font-size-xxl); line-height: var(--line-height-none); }
+
+  .text .text-subtitle { margin-top: var(--space-m); }
+}
