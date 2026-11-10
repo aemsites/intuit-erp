@@ -1101,7 +1101,15 @@
   padding-bottom: var(--space-s);
 }
 
+.media-text.checklist.cta .media-copy .media-body:has(+ .button-wrapper) { padding-bottom: 0; }
+
 .media-text.checklist.cta .media-copy .button-wrapper { margin: 30px 0 0; }
+
+.media-text.checklist.cta .media-copy .button-wrapper.buttons-multi {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-m);
+}
 
 .media-text.checklist.cta .media-copy .button-wrapper a.button {
   min-width: 100px;
@@ -1110,17 +1118,31 @@
   border: 2px solid var(--info);
   border-radius: 999px;
   background-color: var(--info);
-  color: #fff;
+  color: var(--background-color);
   font-size: var(--body-font-size-xs);
   font-weight: var(--font-weight-medium);
   line-height: 1.1;
 }
 
-.media-text.checklist.cta .media-copy .button-wrapper a.button:hover,
-.media-text.checklist.cta .media-copy .button-wrapper a.button:focus-visible {
+.media-text.checklist.cta .media-copy .button-wrapper a.button:not(.secondary):hover,
+.media-text.checklist.cta .media-copy .button-wrapper a.button:not(.secondary):focus-visible {
   border-color: #1b5be0;
   background-color: #1b5be0;
-  color: #fff;
+  color: var(--background-color);
+}
+
+/* secondary CTA: outlined navy pill */
+.media-text.checklist.cta .media-copy .button-wrapper a.button.secondary {
+  border-color: #000730;
+  background-color: var(--background-color);
+  color: #000730;
+}
+
+.media-text.checklist.cta .media-copy .button-wrapper a.button.secondary:hover,
+.media-text.checklist.cta .media-copy .button-wrapper a.button.secondary:focus-visible {
+  border-color: #000730;
+  background-color: #000730;
+  color: var(--background-color);
 }
 
 @media (width >= 1024px) {
@@ -1131,6 +1153,34 @@
     font-size: var(--body-font-size-m);
     line-height: var(--line-height-m);
   }
+}
+
+/* dark.reverse.checklist.cta: Blueberry band, white copy, footnote */
+.section.media-text-container:has(.media-text.dark.reverse.checklist.cta) { background: #0d0031; }
+
+.media-text.dark.reverse.checklist.cta .media-copy :is(h2, h3, .media-eyebrow, p, ul > li) {
+  color: var(--background-color);
+}
+
+.media-text.dark.reverse.checklist.cta .media-copy .button-wrapper a.button.primary {
+  border-color: var(--info);
+  background-color: var(--info);
+  color: var(--background-color);
+  text-decoration: none;
+}
+
+.media-text.dark.reverse.checklist.cta .media-copy .button-wrapper a.button.primary:hover,
+.media-text.dark.reverse.checklist.cta .media-copy .button-wrapper a.button.primary:focus-visible {
+  border-color: #1b5be0;
+  background-color: #1b5be0;
+  color: var(--background-color);
+}
+
+.media-text.dark.reverse.checklist.cta .media-copy .button-wrapper ~ p:not(.button-wrapper) {
+  margin: var(--space-2xl) 0 0;
+  padding-bottom: 0;
+  font-size: var(--body-font-size-xxs);
+  line-height: 1.4;
 }
 
 /* .compare.ies: One Intuit comparison cards (Figma 22428-8494 / 22408-21563 / 22408-20600) */
