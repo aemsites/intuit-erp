@@ -1147,7 +1147,7 @@
 
 @media (width >= 1024px) {
   .media-text.checklist.cta .media-copy .media-body { padding-bottom: var(--space-m); }
-  .media-text.checklist.cta .media-copy .button-wrapper { margin-top: var(--space-2xl); }
+  .media-text.checklist.cta .media-copy .button-wrapper { margin-top: 36px; }
 
   .media-text.checklist.cta .media-copy .button-wrapper a.button {
     font-size: var(--body-font-size-m);
