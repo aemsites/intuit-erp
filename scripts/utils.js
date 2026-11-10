@@ -1,3 +1,21 @@
+const STYLE_CLASS = /^(?:(?:h[1-6]|p)(?:-\d+)?-(?:size|as)-|body-(?:[1-4]|l|m|s|xs|xxs)$)/;
+
+/** Normalize a block name, dropping its authored variant (for example `Cards (wide)`). */
+export const normalizeBlockName = (name) => name
+  .replace(/\(.*\)/, '').trim().toLowerCase().replace(/\s+/g, '-');
+
+/** Get a block's name while ignoring generic and semantic style classes. */
+export function blockNameOf(block) {
+  const name = [...block.classList].find((className) => (
+    className !== 'block' && !STYLE_CLASS.test(className)
+  ));
+  return name ? normalizeBlockName(name) : '';
+}
+
+/** Check whether a block is allowed by the configured include set (`null` means all). */
+export const isIncludedBlock = (block, include) => !!block
+  && (include === null || include.has(blockNameOf(block)));
+
 /**
  * Get value of cookie found with accurate key
  * @param {String} cookieName key of the cookie to be retrieved

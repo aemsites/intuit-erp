@@ -5,6 +5,7 @@ import {
   headingInfo, currentStyle, setHeadingSize, setHeadingSizes, clearHeadingSizes, repairAll,
   removeOrphan, syncLiveSectionStyles, paragraphAllSize,
 } from './heading-styler.js';
+import { normalizeBlockName, blockNameOf, isIncludedBlock } from '../../../scripts/utils.js';
 
 const POLL_MS = 1000;
 const TIMEOUT_MS = 900;
@@ -41,9 +42,7 @@ const log = (...args) => console.log('[sematic-styler]', ...args);
 const compact = (s) => s.replace(/\s+/g, '');
 
 function blockLabel(block) {
-  const name = [...block.classList]
-    .find((className) => !/^(?:(?:h[1-6]|p)(?:-\d+)?-(?:size|as)-|body-[1-4]$)/.test(className))
-    || 'block';
+  const name = blockNameOf(block) || 'block';
   return `${name[0].toUpperCase()}${name.slice(1)}`;
 }
 
@@ -90,9 +89,6 @@ async function loadSource({ actions, context }) {
   return { text, doc: new DOMParser().parseFromString(text, 'text/html') };
 }
 
-// `Cards (wide)` -> `cards`: variants don't matter, only the block name.
-const blockName = (name) => name.replace(/\(.*\)/, '').trim().toLowerCase().replace(/\s+/g, '-');
-
 /**
  * Block names listed in the `include` column of this plugin's row in the site config's
  * `library` sheet (the one with `title`, `path` and `ref`). Only those blocks are editable.
@@ -113,7 +109,7 @@ async function loadEditableBlocks({ actions, context }) {
       .map(([k, v]) => [k.trim().toLowerCase(), v])));
     const row = rows.find((r) => PLUGIN_ROW.test(`${r.path || ''} ${r.ref || ''} ${r.title || ''}`));
     if (!row) log('no library row for this plugin', { sheets: Object.keys(config), rows });
-    const include = String(row?.include ?? '').split(/[,\n]/).map(blockName).filter(Boolean);
+    const include = String(row?.include ?? '').split(/[,\n]/).map(normalizeBlockName).filter(Boolean);
     if (include.includes('all')) return null;
     return new Set(include);
   } catch (e) {
@@ -148,15 +144,13 @@ function contentTree(html, doc, editableBlocks) {
     [...section.children].forEach((child) => {
       if (child.matches(METADATA)) return;
       const block = child.matches('div[class]') ? child : null;
-      // With an `include` list only those blocks are editable, so default content is left out too.
-      // The first class of a source block is its name; the rest are variants.
-      if (editableBlocks && !(block && editableBlocks.has(block.classList[0]))) return;
+      if (editableBlocks !== null && !isIncludedBlock(block, editableBlocks)) return;
       const elements = [
         ...(child.matches('h1,h2,h3,h4,h5,h6,p') ? [child] : []),
         ...child.querySelectorAll('h1,h2,h3,h4,h5,h6,p'),
       ].filter((el) => !el.closest(METADATA)
         && (block || !el.closest('main > div > div[class]')));
-      if (block) {
+      if (block && elements.length) {
         groups.push({
           title: blockLabel(block),
           elements: elements.map((el) => {
@@ -175,7 +169,7 @@ function contentTree(html, doc, editableBlocks) {
       }
     });
     return { sectionIndex: index + 1, groups };
-  }).filter(({ groups }) => !editableBlocks || groups.length);
+  }).filter(({ groups }) => groups.length);
 }
 
 function headingControl(h, sdk, status, setLoading, pendingSizes, locked) {
@@ -345,7 +339,13 @@ function render(
   pendingSizes,
   paragraphAll,
 ) {
-  if (!tree.length) { list.replaceChildren(); return; }
+  if (!tree.length) {
+    const empty = document.createElement('li');
+    empty.className = 'tree-empty-state';
+    empty.textContent = 'Add content to use the plugin.';
+    list.replaceChildren(empty);
+    return;
+  }
   const rerender = () => render(
     list,
     tree,
@@ -359,10 +359,40 @@ function render(
   const expanded = new Map([...list.querySelectorAll('.tree-section-details')]
     .map((details) => [Number(details.dataset.sectionIndex), details.open]));
   const card = document.createElement('li');
+  const header = document.createElement('div');
   const title = document.createElement('div');
+  const actions = document.createElement('div');
   const treeList = document.createElement('ul');
+  const toggleAll = document.createElement('button');
+  header.className = 'tree-header';
   title.className = 'tree-title';
   title.textContent = 'Content tree';
+  actions.className = 'tree-actions';
+  toggleAll.className = 'da-ds-button da-ds-button-secondary tree-toggle';
+  toggleAll.type = 'button';
+  toggleAll.setAttribute('aria-label', 'Expand all sections');
+  toggleAll.title = 'Expand all sections';
+  toggleAll.innerHTML = '<svg aria-hidden="true" viewBox="0 0 16 16"><path d="m4 6 4 4 4-4"/></svg>';
+  const updateToggle = () => {
+    const sections = [...treeList.querySelectorAll('.tree-section-details')];
+    const allExpanded = sections.length > 0 && sections.every((details) => details.open);
+    const label = `${allExpanded ? 'Collapse' : 'Expand'} all sections`;
+    toggleAll.setAttribute('aria-expanded', String(allExpanded));
+    toggleAll.setAttribute('aria-label', label);
+    toggleAll.title = label;
+  };
+  const setSectionsExpanded = (open) => {
+    treeList.querySelectorAll('.tree-section-details').forEach((details) => {
+      details.open = open;
+    });
+    updateToggle();
+  };
+  toggleAll.addEventListener('click', () => {
+    const sections = [...treeList.querySelectorAll('.tree-section-details')];
+    setSectionsExpanded(sections.some((details) => !details.open));
+  });
+  actions.append(toggleAll);
+  header.append(title, actions);
   treeList.className = 'content-tree';
   tree.forEach(({ sectionIndex, groups }) => {
     const sectionItem = document.createElement('li');
@@ -374,6 +404,7 @@ function render(
     sectionItem.className = 'tree-section';
     sectionDetails.className = 'tree-section-details';
     sectionDetails.dataset.sectionIndex = sectionIndex;
+    sectionDetails.addEventListener('toggle', updateToggle);
     const selected = groups.some((group) => group.elements.some((element) => element.selected));
     if (expanded.has(sectionIndex)) {
       sectionDetails.open = expanded.get(sectionIndex);
@@ -452,7 +483,8 @@ function render(
     sectionItem.append(sectionDetails);
     treeList.append(sectionItem);
   });
-  card.append(title, treeList);
+  updateToggle();
+  card.append(header, treeList);
   list.replaceChildren(card);
 }
 
@@ -567,11 +599,8 @@ export default async function init() {
     log('selection and document tree', { html: selection, tree });
     render(list, tree, sdk, status, setLoading, selectionChanged, pendingSizes, paragraphAll);
     if (selection === null) status.textContent = 'Select content in the document.';
-    else status.textContent = tree.length ? 'Content tree loaded' : 'No sections found.';
   };
 
-  // Content watcher: re-keys headings and refreshes the tree whenever the source changes,
-  // independent of the editor selection.
   let sourceBusy = false;
   const checkSource = async () => {
     if (sourceBusy || document.hidden) return;

@@ -188,10 +188,52 @@
   background: var(--s2-gray-25);
 }
 
-.tree-title {
+.tree-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s2-spacing-100);
   margin-bottom: 12px;
+}
+
+.tree-title {
+  margin: 0;
   font-size: 14px;
   font-weight: 600;
+}
+
+.tree-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--s2-spacing-75);
+}
+
+.tree-toggle {
+  width: 32px;
+  min-height: 28px;
+  padding: 0;
+}
+
+.tree-toggle svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentcolor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.6;
+  transition: transform 120ms ease;
+}
+
+.tree-toggle[aria-expanded='true'] svg {
+  transform: rotate(180deg);
+}
+
+.tree-empty-state {
+  padding: var(--s2-spacing-300);
+  color: var(--ds-muted);
+  text-align: center;
 }
 
 .content-tree,
