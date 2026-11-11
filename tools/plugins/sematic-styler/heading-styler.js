@@ -6,18 +6,26 @@ const HEADINGS = 'h1,h2,h3,h4,h5,h6,p';
 const POSITIONAL_CLASS_RE = new RegExp(
   `^(h[1-6]|p)-([0-9]+)-(?:size-(?:${SIZE_PATTERN})|as-(?:h[1-6]|p))$`,
 );
-// Tag-wide paragraph sizes are written as the bare body class (`body-l`); positional ones keep
-// their tag (`p-1-size-body-l`). The older `p-size-body-l` form is still read.
 const BODY_CLASS_RE = /^body-(?:l|m|s|xs|xxs)$/;
+const PARAGRAPH_ALL_KEY = 'paragraph-all';
+const PARAGRAPH_GLOBAL_STYLE_RE = /^(?:body-(?:l|m|s|xs|xxs)|p-size-body-(?:l|m|s|xs|xxs))$/;
 const SIZE_CLASS_RE = new RegExp(
   `^(?:(?:h[1-6]|p)(?:-[0-9]+)?-size-(?:${SIZE_PATTERN})|body-(?:l|m|s|xs|xxs))$`,
 );
+const styleFamily = (token) => (token.startsWith('body-') || token.startsWith('p-')
+  ? 'p' : token.match(/^h[1-6]/)?.[0]);
 const tagWideClass = (tag, size) => (tag === 'p' && BODY_CLASS_RE.test(size)
   ? size : `${tag}-size-${size}`);
 const tagWideSize = (tag, token) => (tag === 'p' && BODY_CLASS_RE.test(token) ? token
   : token.match(new RegExp(`^${tag}-size-(${SIZE_PATTERN})$`))?.[1]);
 const rowKey = (row) => row.children[0]?.textContent.trim().toLowerCase();
-const blockOf = (el) => el.closest('main > div > div[class]');
+const blockOf = (el) => {
+  const block = el.closest('main > div > div[class]');
+  if (block && [...block.classList].some((name) => (
+    name === 'default-content-wrapper' || name.endsWith('-wrapper')
+  ))) return null;
+  return block;
+};
 const tagName = (el) => el.tagName.toLowerCase();
 
 function positionKey(el, block) {
@@ -60,7 +68,7 @@ function sourceUrl({ org, repo, path }) {
 }
 
 async function loadDoc({ actions, context }) {
-  const resp = await actions.daFetch(sourceUrl(context));
+  const resp = await actions.daFetch(sourceUrl(context), { cache: 'no-store' });
   if (!resp.ok) throw new Error(`Load failed (${resp.status})`);
   return new DOMParser().parseFromString(await resp.text(), 'text/html');
 }
@@ -85,6 +93,10 @@ function metaOf(section, create = false) {
 const findRow = (section, key) => [...(metaOf(section)?.children || [])]
   .find((r) => rowKey(r) === key);
 
+export function paragraphAllEnabled(section) {
+  return findRow(section, PARAGRAPH_ALL_KEY)?.children[1]?.textContent.trim().toLowerCase() === 'true';
+}
+
 function setRow(section, key, value) {
   const existing = findRow(section, key);
   if (existing) {
@@ -105,18 +117,34 @@ function removeEmptyMetadata(section) {
   if (meta && !meta.children.length) meta.remove();
 }
 
+export function clearParagraphAllStyles(section) {
+  findRow(section, PARAGRAPH_ALL_KEY)?.remove();
+  [...section.querySelectorAll(':scope > div[class]')].forEach((block) => {
+    [...block.classList].filter((name) => PARAGRAPH_GLOBAL_STYLE_RE.test(name))
+      .forEach((name) => block.classList.remove(name));
+  });
+  const styleRow = findRow(section, 'style');
+  const valueCell = styleRow?.children[1];
+  const tokens = valueCell?.textContent.split(/[\s,]+/).filter(Boolean) || [];
+  const next = tokens.filter((token) => !PARAGRAPH_GLOBAL_STYLE_RE.test(token));
+  if (next.length) setRow(section, 'style', next.join(', '));
+  else styleRow?.remove();
+  removeEmptyMetadata(section);
+}
+
 /** Use live section classes when the editor folds section metadata into the section element. */
 export function syncLiveSectionStyles(section, liveSection) {
   const liveStyles = [...liveSection.classList].filter((name) => SIZE_CLASS_RE.test(name));
+  if (!liveStyles.length) return;
+  const liveFamilies = new Set(liveStyles.map(styleFamily));
   const styleRow = findRow(section, 'style');
   const tokens = styleRow?.children[1]?.textContent.split(/[\s,]+/).filter(Boolean) || [];
-  const next = [...tokens.filter((token) => !SIZE_CLASS_RE.test(token)), ...liveStyles];
+  const next = [
+    ...tokens.filter((token) => !liveFamilies.has(styleFamily(token))),
+    ...liveStyles,
+  ];
 
   if (next.length) setRow(section, 'style', [...new Set(next)].join(', '));
-  else {
-    styleRow?.remove();
-    removeEmptyMetadata(section);
-  }
 }
 
 function defaultStyle(section, el) {
@@ -292,8 +320,12 @@ export function currentStyle(section, el) {
 }
 
 /** Returns the shared tag-wide paragraph size only when it is applied to every paragraph. */
-export function paragraphAllSize(paragraphs) {
+export function paragraphAllSize(paragraphs, pendingSizes) {
   if (!paragraphs.length) return '';
+  if (pendingSizes && paragraphs.some(({ sectionIndex, key }) => (
+    pendingSizes.has(`${sectionIndex}:${key}`)
+      && !pendingSizes.get(`${sectionIndex}:${key}`)
+  ))) return '';
   const sizes = paragraphs.map(({ section, el }) => {
     const block = blockOf(el);
     if (block) return [...block.classList].map((name) => tagWideSize('p', name)).find(Boolean) || '';
@@ -301,6 +333,20 @@ export function paragraphAllSize(paragraphs) {
     return tokens.map((token) => tagWideSize('p', token)).find(Boolean) || '';
   });
   return sizes[0] && sizes.every((size) => size === sizes[0]) ? sizes[0] : '';
+}
+
+/** Persists the user-controlled apply-all toggle independently of individual paragraph sizes. */
+export async function setParagraphAllEnabled(sdk, sectionIndex, enabled) {
+  const doc = await loadDoc(sdk);
+  const section = sectionsOf(doc)[sectionIndex - 1];
+  if (!section) throw new Error('Section moved since selection. Refresh the plugin.');
+
+  if (enabled) {
+    setRow(section, PARAGRAPH_ALL_KEY, 'true');
+  } else {
+    clearParagraphAllStyles(section);
+  }
+  await saveDoc(sdk, doc);
 }
 
 // Resolves every target before changing any, since positions shift once a style row is removed.
@@ -328,14 +374,10 @@ function applySizes(doc, targets, size) {
   return found.length;
 }
 
-// Any size for `tag`, tag-wide (`h3-size-xs`) or positional (`h3-2-size-xs`, `h3-2-as-h2`).
-// Paragraphs also own the bare tag-wide body class (`body-l`).
-const tagStyleRe = (tag) => new RegExp(
-  `^${tag}(?:-[0-9]+)?-(?:size|as)-${tag === 'p' ? '|^body-(?:l|m|s|xs|xxs)$' : ''}`,
-);
+const tagStyleRe = (tag) => (tag === 'p' ? PARAGRAPH_GLOBAL_STYLE_RE : new RegExp(
+  `^${tag}(?:-[0-9]+)?-(?:size|as)-`,
+));
 
-// One tag-wide class per container replaces the tag's existing sizes, so applying again or
-// switching size updates the same class instead of adding another.
 function applyTagSize(doc, targets, size) {
   const found = resolveTargets(doc, targets);
   found.forEach(({ section, el }) => matchOf(section, el)?.entry.row.remove());
@@ -360,22 +402,20 @@ function applyTagSize(doc, targets, size) {
   return found.length;
 }
 
-// Every size for any tag, tag-wide or positional.
-const ANY_STYLE_RE = /^(?:(?:h[1-6]|p)(?:-[0-9]+)?-(?:size|as)-|body-(?:l|m|s|xs|xxs)$)/;
-
-// Clears every size from the targets' blocks and, for default content, the section style row.
 function clearSizes(doc, targets) {
   const found = resolveTargets(doc, targets);
   found.forEach(({ section, el }) => matchOf(section, el)?.entry.row.remove());
+  const tags = new Set(found.map(({ el }) => tagName(el)));
+  const matchesTagStyle = (name) => [...tags].some((tag) => tagStyleRe(tag).test(name));
   new Set(found.map(({ el }) => blockOf(el)).filter(Boolean)).forEach((block) => {
-    [...block.classList].filter((name) => ANY_STYLE_RE.test(name))
+    [...block.classList].filter(matchesTagStyle)
       .forEach((name) => block.classList.remove(name));
   });
   const sections = new Set(found.filter(({ el }) => !blockOf(el)).map(({ section }) => section));
   sections.forEach((section) => {
     const styleRow = findRow(section, 'style');
     const tokens = styleRow?.children[1]?.textContent.split(/[\s,]+/).filter(Boolean) || [];
-    const next = tokens.filter((token) => !ANY_STYLE_RE.test(token));
+    const next = tokens.filter((token) => !matchesTagStyle(token));
     if (next.length) setRow(section, 'style', next.join(', '));
     else styleRow?.remove();
   });
@@ -392,10 +432,6 @@ export async function setHeadingSize(sdk, target, size) {
   await saveDoc(sdk, doc);
 }
 
-/**
- * Applies one size to every target's tag as a tag-wide class (`h3-size-xs`) on each block, or in
- * the section style row for default content, in a single save; returns how many were found.
- */
 export async function setHeadingSizes(sdk, targets, size) {
   const doc = await loadDoc(sdk);
   const count = applyTagSize(doc, targets, size);

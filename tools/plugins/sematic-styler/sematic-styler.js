@@ -3,9 +3,12 @@ import DA_SDK from 'https://da.live/nx/utils/sdk.js';
 import { sizesFor } from '../../../scripts/heading-key.js';
 import {
   headingInfo, currentStyle, setHeadingSize, setHeadingSizes, clearHeadingSizes, repairAll,
-  removeOrphan, syncLiveSectionStyles, paragraphAllSize,
+  removeOrphan, syncLiveSectionStyles, paragraphAllSize, paragraphAllEnabled,
+  setParagraphAllEnabled, clearParagraphAllStyles,
 } from './heading-styler.js';
-import { normalizeBlockName, blockNameOf, isIncludedBlock } from '../../../scripts/utils.js';
+import {
+  blockNameOf, isIncludedBlock, normalizeBlockName,
+} from '../../../scripts/utils.js';
 
 const POLL_MS = 1000;
 const TIMEOUT_MS = 900;
@@ -15,8 +18,7 @@ const ACTIVE_REFRESH_MS = 2000;
 const IDLE_REFRESH_MS = 3000;
 const ACTIVE_WINDOW_MS = 10000;
 const CONFIG_REFRESH_MS = 10000;
-// The library sheet row that registers this plugin in the site config.
-const PLUGIN_ROW = /sem(?:an)?tic[\s-]*styler/i;
+const PLUGIN_CONFIG_ID = /sem(?:an)?tic[\s-]*styler/i;
 // Metadata blocks configure the page or section, so they never show in the tree.
 const METADATA = '.section-metadata, .metadata, .library-metadata';
 const ROLES = {
@@ -54,7 +56,6 @@ function describeNode(el) {
   };
 }
 
-// Selections inside a block come back wrapped in a table, so report the cell contents instead.
 function describeContainer(el) {
   const kids = [...el.children];
   if (!kids.length) {
@@ -69,7 +70,6 @@ function describeContainer(el) {
 function describeTable(table) {
   const rows = [...table.querySelectorAll('tr')];
   const first = rows[0]?.querySelectorAll('td, th');
-  // A name row only exists when the whole block (header + content) is selected.
   const hasName = rows.length > 1 && first?.length === 1;
   const out = hasName ? [{ title: `block: ${first[0].textContent.trim()}`, detail: '' }] : [];
   rows.slice(hasName ? 1 : 0).forEach((row) => {
@@ -89,12 +89,21 @@ async function loadSource({ actions, context }) {
   return { text, doc: new DOMParser().parseFromString(text, 'text/html') };
 }
 
-/**
- * Block names listed in the `include` column of this plugin's row in the site config's
- * `library` sheet (the one with `title`, `path` and `ref`). Only those blocks are editable.
- * Returns an empty set when no blocks are configured, null only when `include` is `all`, and
- * undefined when the config can't be read so callers can retry instead of showing every block.
- */
+function editableBlocksFromConfig(config) {
+  const library = Object.entries(config || {})
+    .find(([name]) => name.toLowerCase() === 'library')?.[1];
+  const rows = Array.isArray(library) ? library : library?.data;
+  const plugin = (Array.isArray(rows) ? rows : []).find((row) => (
+    [row.title, row.path, row.ref].some((value) => PLUGIN_CONFIG_ID.test(String(value || '')))
+  ));
+  const include = String(plugin?.include ?? '')
+    .split(/[,\n;]/)
+    .map(normalizeBlockName)
+    .filter(Boolean);
+
+  return include.includes('all') ? null : new Set(include);
+}
+
 async function loadEditableBlocks({ actions, context }) {
   try {
     const resp = await actions.daFetch(`https://admin.da.live/config/${context.org}/${context.repo}/`, { cache: 'no-store' });
@@ -103,15 +112,7 @@ async function loadEditableBlocks({ actions, context }) {
       return undefined;
     }
     const config = await resp.json();
-    // Sheet names and column headers keep the author's casing, so match them case-insensitively.
-    const sheet = Object.entries(config).find(([name]) => name.toLowerCase() === 'library')?.[1];
-    const rows = (sheet?.data || []).map((r) => Object.fromEntries(Object.entries(r)
-      .map(([k, v]) => [k.trim().toLowerCase(), v])));
-    const row = rows.find((r) => PLUGIN_ROW.test(`${r.path || ''} ${r.ref || ''} ${r.title || ''}`));
-    if (!row) log('no library row for this plugin', { sheets: Object.keys(config), rows });
-    const include = String(row?.include ?? '').split(/[,\n]/).map(normalizeBlockName).filter(Boolean);
-    if (include.includes('all')) return null;
-    return new Set(include);
+    return editableBlocksFromConfig(config);
   } catch (e) {
     log('config error', e);
     return undefined;
@@ -194,11 +195,7 @@ function headingControl(h, sdk, status, setLoading, pendingSizes, locked) {
   const select = document.createElement('select');
   select.setAttribute('aria-label', `Size for ${tag}: ${preview.textContent.slice(0, 40)}`);
   const sizes = sizesFor(tag);
-  let value = '';
-  if (!locked) {
-    value = pendingSizes.has(id) ? pendingSizes.get(id) : cur.size;
-  }
-  // Keep a size from before the current scale (e.g. `p-size-m`) visible instead of hiding it.
+  const value = pendingSizes.has(id) ? pendingSizes.get(id) : cur.size;
   const options = value && !sizes.includes(value) ? [...sizes, value] : sizes;
   select.append(new Option('Default size', ''), ...options.map((size) => new Option(size, size)));
   select.value = value;
@@ -209,7 +206,6 @@ function headingControl(h, sdk, status, setLoading, pendingSizes, locked) {
   remove.setAttribute('aria-label', `Remove applied size from ${tag}`);
   remove.title = 'Remove applied size';
   remove.disabled = !select.value;
-  // A section-wide paragraph size owns every paragraph while it's on.
   if (locked) {
     wrap.classList.add('is-locked');
     select.disabled = true;
@@ -261,9 +257,10 @@ function paragraphAllControl(sectionIndex, paragraphs, ui) {
   checkbox.type = 'checkbox';
   label.append(checkbox, 'Apply to all Paragraphs');
   controls.className = 'tree-item-controls';
-  const common = paragraphAllSize(paragraphs);
+  const common = paragraphAllSize(paragraphs, pendingSizes);
   const value = paragraphAll.get(sectionIndex) || common;
-  checkbox.checked = paragraphAll.has(sectionIndex) || Boolean(common);
+  checkbox.checked = paragraphAll.has(sectionIndex)
+    || paragraphAllEnabled(paragraphs[0]?.section);
   const sizes = sizesFor('p');
   const options = value && !sizes.includes(value) ? [...sizes, value] : sizes;
   const placeholder = new Option('Choose size', '');
@@ -296,28 +293,48 @@ function paragraphAllControl(sectionIndex, paragraphs, ui) {
   };
   checkbox.addEventListener('change', async () => {
     if (!checkbox.checked) {
-      const globalSize = paragraphAll.get(sectionIndex) || common;
+      const ids = paragraphs.map((h) => `${h.sectionIndex}:${h.key}`);
+      const previous = new Map(ids.filter((id) => pendingSizes.has(id))
+        .map((id) => [id, pendingSizes.get(id)]));
       paragraphAll.delete(sectionIndex);
-
-      // Remove the global size class from the block
-      if (globalSize) {
-        setLoading(true);
-        try {
-          await clearHeadingSizes(sdk, paragraphs);
-          status.textContent = `Removed global paragraph size from section ${sectionIndex}`;
-        } catch (e) {
-          log('clear all error', e);
-          status.textContent = e.message;
-        } finally {
-          setLoading(false);
-        }
+      setLoading(true);
+      try {
+        await setParagraphAllEnabled(sdk, sectionIndex, false);
+        clearParagraphAllStyles(paragraphs[0].section);
+        ids.forEach((id) => pendingSizes.delete(id));
+        status.textContent = `Disabled apply to all paragraphs in section ${sectionIndex}`;
+      } catch (e) {
+        log('disable apply all error', e);
+        status.textContent = e.message;
+        paragraphAll.set(sectionIndex, common);
+        ids.forEach((id) => {
+          if (previous.has(id)) pendingSizes.set(id, previous.get(id));
+          else pendingSizes.delete(id);
+        });
+      } finally {
+        setLoading(false);
+        rerender();
       }
-      rerender();
       return;
     }
     paragraphAll.set(sectionIndex, select.value);
+    setLoading(true);
+    try {
+      await setParagraphAllEnabled(sdk, sectionIndex, true);
+    } catch (e) {
+      log('enable apply all error', e);
+      status.textContent = e.message;
+      paragraphAll.delete(sectionIndex);
+      checkbox.checked = false;
+      return;
+    } finally {
+      setLoading(false);
+    }
     if (select.value) apply(select.value);
-    else rerender();
+    else {
+      status.textContent = `Enabled apply to all paragraphs in section ${sectionIndex}`;
+      rerender();
+    }
   });
   select.addEventListener('change', () => {
     paragraphAll.set(sectionIndex, select.value);
@@ -456,7 +473,7 @@ function render(
     sectionName.append(sectionLabel, resetSection, sectionChevron);
     const paragraphs = sectionElements.filter((h) => h.el.tagName === 'P');
     const paragraphsLocked = paragraphAll.has(sectionIndex)
-      || Boolean(paragraphAllSize(paragraphs));
+      || paragraphAllEnabled(paragraphs[0]?.section);
     if (paragraphs.length) {
       groupList.append(paragraphAllControl(sectionIndex, paragraphs, {
         sdk, status, setLoading, pendingSizes, paragraphAll, rerender,
@@ -546,9 +563,10 @@ function liveTreeDoc(liveHtml, sourceDoc) {
   if (liveSections.length !== sourceSections.length) return doc;
   liveSections.forEach((section, i) => {
     const liveMeta = section.querySelector(':scope > .section-metadata');
-    if (liveMeta) return;
-    const sourceMeta = sourceSections[i].querySelector(':scope > .section-metadata');
-    if (sourceMeta) section.append(doc.importNode(sourceMeta, true));
+    if (!liveMeta) {
+      const sourceMeta = sourceSections[i].querySelector(':scope > .section-metadata');
+      if (sourceMeta) section.append(doc.importNode(sourceMeta, true));
+    }
     syncLiveSectionStyles(section, section);
   });
   return doc;
