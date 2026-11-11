@@ -57,6 +57,13 @@ Assets:
 - `ies video`: `.mp4` links (desktop, then below 1024px) play a 5-second teaser tile with a
   play button; images are its posters.
 - `homepage`: homepage sizing for `ies video`.
+- `ies video` + `.html` link: a link to a repo-hosted HTML animation (`/widgets/…`,
+  e.g. `/widgets/erp-pages/animations/ies-homepage-hero.html`) replaces the `.mp4`. It plays in a
+  sandboxed, non-interactive iframe (`?chrome=0` is added) over the poster image, which stays
+  for reduced motion or load errors. The file must be self-contained and loop on its own.
+- `loop`: opt-in for `ies video` and `ies-gradient` mp4s. The video loops continuously (no 5-second
+  teaser cut-off, no play button at the end). Reduced motion or blocked autoplay still shows the
+  play button. e.g. `Hero (ies video, homepage, loop)`.
 - `background-image`: the image fills the hero behind the copy.
 - `image-glow`: blue glow behind the hero image.
 - `light` (section style): light background with dark text.
