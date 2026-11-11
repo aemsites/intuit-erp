@@ -1022,7 +1022,11 @@ body.author-guide .hero .hero-copy .hero-lede {
   height: 100%;
 }
 
-.hero.ies.video .hero-media-youtube img { object-fit: cover; }
+.hero.ies.video .hero-media-youtube img {
+  object-fit: cover;
+  border-radius: 0;
+  max-height: none;
+}
 
 .hero.ies.video .hero-media-youtube iframe { border: 0; }
 
