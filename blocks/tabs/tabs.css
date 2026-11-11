@@ -734,6 +734,12 @@ main > .section:where(.tabs-container:has(.tabs.ies)) { margin: 0; padding: var(
   .section.tabs-container:has(.tabs.vertical.ies) > .default-content-wrapper,
   .tabs.vertical.ies .tabs-header { margin-bottom: var(--space-m); }
 
+  /* no extra top/bottom padding around the title block on tablet/mobile */
+  .section.tabs-container:has(.tabs.vertical.ies) > .default-content-wrapper {
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+
   .section.tabs-container:has(.tabs.vertical.ies) > .default-content-wrapper > h6,
   .tabs.vertical.ies .tabs-eyebrow {
     margin-bottom: 8px;
