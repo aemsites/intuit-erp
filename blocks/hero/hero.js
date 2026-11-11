@@ -175,7 +175,7 @@ function buildYouTubeTile(info, href, posterEls, title) {
     img.loading = 'eager';
   } else {
     poster = document.createElement('img');
-    poster.src = `https://i.ytimg.com/vi/${info.id}/sddefault.jpg`;
+    poster.src = `https://i.ytimg.com/vi/${info.id}/hqdefault.jpg`;
     poster.alt = '';
     poster.loading = 'eager';
   }
