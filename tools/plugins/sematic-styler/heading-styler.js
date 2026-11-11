@@ -428,6 +428,7 @@ function applyTagSize(doc, targets, size) {
 function clearSizes(doc, targets) {
   const found = resolveTargets(doc, targets);
   found.forEach(({ section, el }) => matchOf(section, el)?.entry.row.remove());
+  found.forEach(({ section }) => findRow(section, PARAGRAPH_ALL_KEY)?.remove());
   const tags = new Set(found.map(({ el }) => tagName(el)));
   const matchesTagStyle = (name) => [...tags].some((tag) => tagStyleRe(tag).test(name));
   new Set(found.map(({ el }) => blockOf(el)).filter(Boolean)).forEach((block) => {

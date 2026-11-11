@@ -200,8 +200,8 @@ function headingControl(h, sdk, status, setLoading, pendingSizes, locked) {
 }
 
 function applyAllOn(sectionIndex, paragraphs, paragraphAll, pendingSizes) {
-  return paragraphAll.has(sectionIndex)
-    || paragraphAllEnabled(paragraphs[0]?.section)
+  if (paragraphAll.has(sectionIndex)) return paragraphAll.get(sectionIndex) !== null;
+  return paragraphAllEnabled(paragraphs[0]?.section)
     || Boolean(paragraphAllSize(paragraphs, pendingSizes));
 }
 
@@ -259,7 +259,7 @@ function paragraphAllControl(sectionIndex, paragraphs, ui) {
   checkbox.addEventListener('change', async () => {
     if (!checkbox.checked) {
       const ids = paragraphs.map((h) => `${h.sectionIndex}:${h.key}`);
-      paragraphAll.delete(sectionIndex);
+      paragraphAll.set(sectionIndex, null);
       setLoading(true);
       try {
         await setParagraphAllEnabled(sdk, paragraphs, false);
@@ -290,7 +290,7 @@ function paragraphAllControl(sectionIndex, paragraphs, ui) {
     } catch (e) {
       log('enable apply all error', e);
       status.textContent = e.message;
-      paragraphAll.delete(sectionIndex);
+      paragraphAll.set(sectionIndex, null);
       checkbox.checked = false;
       ids.forEach((id) => {
         if (previous.has(id)) pendingSizes.set(id, previous.get(id));
@@ -311,7 +311,11 @@ function paragraphAllControl(sectionIndex, paragraphs, ui) {
   return item;
 }
 
-function render(list, tree, sdk, status, setLoading, selectionChanged, pendingSizes, paragraphAll) {
+/** `rerender` rebuilds from the current documents, so a finished save never redraws stale data. */
+function render(list, tree, ui, selectionChanged) {
+  const {
+    sdk, status, setLoading, pendingSizes, paragraphAll, rerender,
+  } = ui;
   if (!tree.length) {
     const empty = document.createElement('li');
     empty.className = 'tree-empty-state';
@@ -319,8 +323,6 @@ function render(list, tree, sdk, status, setLoading, selectionChanged, pendingSi
     list.replaceChildren(empty);
     return;
   }
-  // eslint-disable-next-line max-len
-  const rerender = () => render(list, tree, sdk, status, setLoading, false, pendingSizes, paragraphAll);
   const expanded = new Map([...list.querySelectorAll('.tree-section-details')]
     .map((details) => [Number(details.dataset.sectionIndex), details.open]));
   const card = document.createElement('li');
@@ -391,7 +393,9 @@ function render(list, tree, sdk, status, setLoading, selectionChanged, pendingSi
       const previous = new Map(ids.filter((id) => pendingSizes.has(id))
         .map((id) => [id, pendingSizes.get(id)]));
       ids.forEach((id) => pendingSizes.set(id, ''));
-      paragraphAll.delete(sectionIndex);
+      const wasAll = paragraphAll.has(sectionIndex) ? paragraphAll.get(sectionIndex) : undefined;
+      // Reset turns apply-all off too.
+      paragraphAll.set(sectionIndex, null);
       setLoading(true);
       try {
         await clearHeadingSizes(sdk, sectionElements);
@@ -399,6 +403,8 @@ function render(list, tree, sdk, status, setLoading, selectionChanged, pendingSi
       } catch (err) {
         log('reset section error', err);
         status.textContent = err.message;
+        if (wasAll === undefined) paragraphAll.delete(sectionIndex);
+        else paragraphAll.set(sectionIndex, wasAll);
         ids.forEach((id) => {
           if (previous.has(id)) pendingSizes.set(id, previous.get(id));
           else pendingSizes.delete(id);
@@ -412,9 +418,7 @@ function render(list, tree, sdk, status, setLoading, selectionChanged, pendingSi
     const paragraphs = sectionElements.filter((h) => h.el.tagName === 'P');
     const paragraphsLocked = applyAllOn(sectionIndex, paragraphs, paragraphAll, pendingSizes);
     if (paragraphs.length) {
-      groupList.append(paragraphAllControl(sectionIndex, paragraphs, {
-        sdk, status, setLoading, pendingSizes, paragraphAll, rerender,
-      }));
+      groupList.append(paragraphAllControl(sectionIndex, paragraphs, ui));
     }
     groups.forEach(({ title: groupTitle, elements }) => {
       const groupItem = document.createElement('li');
@@ -482,12 +486,16 @@ export default async function init() {
   let sourceDoc;
   let sourceText;
   let liveHtml = null;
+  let liveSeen = null;
   const pendingSizes = new Map();
   const paragraphAll = new Map();
 
+  let rendered = '';
+  let picking = false;
+  let deferred = false;
+
   let writing = 0;
   let writeCount = 0;
-  let awaiting = null;
   let awaitingSince = 0;
   const blocksAdded = new Map();
   let blocksAddedSince = 0;
@@ -496,35 +504,37 @@ export default async function init() {
     if (visible === true) {
       writing += 1;
       writeCount += 1;
-      awaiting = null;
+      status.style.color = '';
     } else if (visible === false) {
       writing = Math.max(0, writing - 1);
       if (!writing) {
         // eslint-disable-next-line no-use-before-define
         checkSource();
-        if (hasLive) {
-          awaiting = new Map(pendingSizes);
-          awaitingSince = Date.now();
-          setTimeout(() => setLoading(), LIVE_TIMEOUT_MS);
-        }
+        awaitingSince = Date.now();
+        if (hasLive) setTimeout(() => setLoading(), LIVE_TIMEOUT_MS);
       }
     }
-    if (awaiting && liveHtml) {
+    if (hasLive && liveSeen && pendingSizes.size) {
       // Read the editor's markup as is, without the source metadata liveTreeDoc fills in.
-      const sections = [...new DOMParser().parseFromString(liveHtml, 'text/html')
+      const sections = [...new DOMParser().parseFromString(liveSeen, 'text/html')
         .querySelectorAll('main > div')];
       sections.forEach((section) => syncLiveSectionStyles(section, section));
-      awaiting.forEach((size, id) => {
+      pendingSizes.forEach((size, id) => {
         const [sectionIndex, key] = id.split(':');
         const section = sections[Number(sectionIndex) - 1];
         const el = section && [...section.querySelectorAll('h1,h2,h3,h4,h5,h6,p')]
           .find((candidate) => headingInfo(candidate).key === key);
-        if (!el || currentStyle(section, el).size === size) awaiting.delete(id);
+        if (!el || currentStyle(section, el).size === size) pendingSizes.delete(id);
       });
     }
-    if (awaiting && (!awaiting.size || Date.now() - awaitingSince >= LIVE_TIMEOUT_MS)) {
-      if (awaiting.size) status.textContent = 'Saved. The page is slow to refresh; reload it if the change does not show.';
-      awaiting = null;
+    if (hasLive && !writing && pendingSizes.size
+      && Date.now() - awaitingSince >= LIVE_TIMEOUT_MS) {
+      status.textContent = 'Something went wrong applying the changes; please try again.';
+      status.style.color = 'var(--s2-red-800)';
+      pendingSizes.clear();
+      rendered = '';
+      // eslint-disable-next-line no-use-before-define
+      update(false);
     }
     const blocksSignature = `${editableKey(editableBlocks || new Set())}|${sourceText}|${liveHtml}`;
     if (liveHtml && sourceDoc && editableBlocks !== undefined
@@ -533,8 +543,8 @@ export default async function init() {
       const liveTree = contentTree(null, liveTreeDoc(liveHtml, sourceDoc), editableBlocks);
       contentTree(null, sourceDoc, editableBlocks).forEach(({ sectionIndex, groups }) => {
         const paragraphs = groups.flatMap((g) => g.elements).filter((h) => h.el.tagName === 'P');
-        const on = paragraphAll.get(sectionIndex)
-          || paragraphs.some((h) => paragraphAllSize([h]));
+        const on = paragraphAll.has(sectionIndex) ? Boolean(paragraphAll.get(sectionIndex))
+          : paragraphs.some((h) => paragraphAllSize([h]));
         const saved = groups.filter((g) => g.title !== 'Default content').length;
         const shown = liveTree.find((s) => s.sectionIndex === sectionIndex)?.groups
           .filter((g) => g.title !== 'Default content').length || 0;
@@ -550,25 +560,31 @@ export default async function init() {
       });
     }
     if (blocksAdded.size && Date.now() - blocksAddedSince >= LIVE_TIMEOUT_MS) blocksAdded.clear();
-    const busy = writing > 0 || Boolean(awaiting) || blocksAdded.size > 0;
+    const awaiting = hasLive && pendingSizes.size > 0;
+    const busy = writing > 0 || awaiting || blocksAdded.size > 0;
     loading.hidden = !busy;
     loading.setAttribute('aria-hidden', String(!busy));
     loading.setAttribute('aria-label', (writing && 'Changes in progress')
       || (awaiting && 'Updating the page') || 'Applying styles to the new block');
   };
 
-  let rendered = '';
-  let deferred = false;
   const update = (selectionChanged) => {
     if (!sourceDoc || editableBlocks === undefined) return;
-    deferred = document.hasFocus() && Boolean(document.activeElement?.matches('#list select'));
+    deferred = picking;
     if (deferred) return;
     const signature = `${editableKey(editableBlocks)}|${selection}|${liveHtml ?? sourceText}`;
     if (signature === rendered) return;
     rendered = signature;
     const doc = liveHtml ? liveTreeDoc(liveHtml, sourceDoc) : sourceDoc;
     const tree = contentTree(selection, doc, editableBlocks);
-    render(list, tree, sdk, status, setLoading, selectionChanged, pendingSizes, paragraphAll);
+    render(list, tree, {
+      sdk,
+      status,
+      setLoading,
+      pendingSizes,
+      paragraphAll,
+      rerender: () => { rendered = ''; update(false); },
+    }, selectionChanged);
     if (editableBlocks?.size === 0) {
       status.textContent = 'No blocks are editable. List them in the include column of the library config, or use "all".';
     } else if (selection === null) {
@@ -576,9 +592,11 @@ export default async function init() {
     }
   };
 
-  list.addEventListener('focusout', () => {
+  list.addEventListener('pointerdown', (e) => { picking = e.target.matches('select'); });
+  ['change', 'focusout'].forEach((type) => list.addEventListener(type, () => {
+    picking = false;
     if (deferred) setTimeout(() => update(false));
-  });
+  }));
 
   let sourceBusy = false;
   const checkSource = async () => {
@@ -600,20 +618,20 @@ export default async function init() {
       }
       sourceDoc = fresh.doc;
       sourceText = fresh.text;
-      pendingSizes.forEach((size, id) => {
-        const [sectionIndex, key] = id.split(':');
-        const section = sections[Number(sectionIndex) - 1];
-        const el = section && [...section.querySelectorAll('h1,h2,h3,h4,h5,h6,p')]
-          .find((candidate) => headingInfo(candidate).key === key);
-        if (!el || currentStyle(section, el).size === size) pendingSizes.delete(id);
-      });
-      // A block added to a section with apply-all on takes the section's paragraph size. Only
-      // apply-all writes the tag-wide size, so any paragraph carrying it means the section is on.
+      if (!hasLive) {
+        pendingSizes.forEach((size, id) => {
+          const [sectionIndex, key] = id.split(':');
+          const section = sections[Number(sectionIndex) - 1];
+          const el = section && [...section.querySelectorAll('h1,h2,h3,h4,h5,h6,p')]
+            .find((candidate) => headingInfo(candidate).key === key);
+          if (!el || currentStyle(section, el).size === size) pendingSizes.delete(id);
+        });
+      }
       if (editableBlocks !== undefined) {
         contentTree(null, sourceDoc, editableBlocks).forEach(({ sectionIndex, groups }) => {
           const paragraphs = groups.flatMap((g) => g.elements).filter((h) => h.el.tagName === 'P');
-          const size = paragraphAll.get(sectionIndex)
-            || paragraphs.map((h) => paragraphAllSize([h])).find(Boolean);
+          const size = paragraphAll.has(sectionIndex) ? paragraphAll.get(sectionIndex)
+            : paragraphs.map((h) => paragraphAllSize([h])).find(Boolean);
           const missing = paragraphs.filter((h) => paragraphAllSize([h]) !== size);
           // The source has caught up with the block authoring showed; the write below (if any)
           // keeps the loader up from here.
@@ -679,6 +697,7 @@ export default async function init() {
     sdk.actions.subscribeLiveDocument(({ html }) => {
       if (html === liveHtml) return;
       liveHtml = html;
+      liveSeen = html;
       lastChange = Date.now();
       try {
         update(false);
