@@ -13,6 +13,10 @@
  *               "download" promos, e.g. fragments/right-rail)
  *   .ies        One Intuit icon tiles, 1-up / 2-up / 4-up by breakpoint
  *   .ies-product  image + eyebrow + title + body, 1-up / 2-up by breakpoint
+ *   .ies-grid   image + title + body grid, 3-up / 2-up / 1-up; the section's h2 + p
+ *               above it are the centred title and subtitle
+ *   .ies-carousel  pepper cards with an inset photo and "Read more" link in a
+ *               scrolling row; use on its own, not with .carousel/.dark
  *   .tinted.stat  tinted cards; an optional first row with a single heading
  *               cell becomes the section title, a card without an image a stat
  * .carousel/.boxed combine with the .accent/.dark tone classes (section
@@ -27,7 +31,7 @@
 import { createOptimizedPicture } from '../../scripts/aem.js';
 import { trackAs } from '../../scripts/tracking.js';
 
-const SCROLL_SHAPE_CLASSES = ['carousel', 'boxed'];
+const SCROLL_SHAPE_CLASSES = ['carousel', 'boxed', 'ies-carousel'];
 const CARD_TONES = {
   'light-blue': '#d6e8f8',
   blueberry: '#0d0031',
@@ -86,7 +90,7 @@ function enhanceScroll(block) {
 
   // content-card carousels (icons/editorial) page with dots; photo carousels
   // keep the "X of Y" counter + progress bar
-  const useDots = block.classList.contains('editorial') || block.classList.contains('icons');
+  const useDots = ['editorial', 'icons', 'ies-carousel'].some((c) => block.classList.contains(c));
 
   const counter = document.createElement('p');
   counter.className = 'cards-counter';
@@ -119,7 +123,9 @@ function enhanceScroll(block) {
     const overflowing = maxScroll > 1;
     controls.hidden = !overflowing;
     if (!overflowing) return;
-    const pages = Math.ceil(scrollWidth / clientWidth);
+    const gap = block.classList.contains('ies-carousel')
+      ? parseFloat(getComputedStyle(track).columnGap) || 0 : 0;
+    const pages = Math.ceil((scrollWidth + gap) / (clientWidth + gap));
     const page = Math.min(pages, Math.round(scrollLeft / clientWidth) + 1);
     if (useDots) {
       if (dots.children.length !== pages) {
@@ -329,7 +335,7 @@ export default function decorate(block) {
     });
   }
 
-  if (block.classList.contains('carousel')) {
+  if (block.classList.contains('carousel') || block.classList.contains('ies-carousel')) {
     [...block.children].forEach((card) => {
       const links = card.querySelectorAll('.cards-card-body a');
       if (links.length !== 1) return;
