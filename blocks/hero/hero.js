@@ -33,6 +33,15 @@ function parseVideoUrl(href) {
 }
 
 /**
+ * Plain (unformatted) links render as media; bold/italic ones are buttonized CTAs.
+ * @param {HTMLAnchorElement} a
+ * @returns {boolean}
+ */
+function isPlainLink(a) {
+  return !a.closest('strong, em') && !a.classList.contains('button');
+}
+
+/**
  * Opens the video in a dismissible lightbox modal (autoplay iframe). Self-contained
  * (mirrors video.js/testimonial.js's own copy) so hero stays independent of the
  * video block; see hero.css for the shared `.video-modal-*` styles.
@@ -144,6 +153,50 @@ function buildTeaserVideo(srcs, posters, loop = false) {
   }
 
   media.append(video, play);
+  return media;
+}
+
+/**
+ * Click-to-play YouTube tile: poster + play button; the iframe loads only on click.
+ * @param {{provider:string,id:string,embedUrl:string}} info parsed video URL
+ * @param {string} href authored link
+ * @param {Element[]} posterEls authored posters (desktop, then < 1024px)
+ * @param {string} title accessible video title
+ * @returns {HTMLDivElement}
+ */
+function buildYouTubeTile(info, href, posterEls, title) {
+  const media = document.createElement('div');
+  media.className = 'hero-media hero-media-video hero-media-youtube';
+
+  const compact = window.matchMedia('(width < 1024px)').matches;
+  let poster = (compact && posterEls[1]) || posterEls[0];
+  if (poster) {
+    const img = poster.querySelector('img') || poster;
+    img.loading = 'eager';
+  } else {
+    poster = document.createElement('img');
+    poster.src = `https://i.ytimg.com/vi/${info.id}/sddefault.jpg`;
+    poster.alt = '';
+    poster.loading = 'eager';
+  }
+
+  const play = document.createElement('button');
+  play.type = 'button';
+  play.className = 'hero-video-play';
+  play.setAttribute('aria-label', `Play video: ${title}`);
+  play.setAttribute('data-track-id', `hero:youtube-${info.id}`);
+  play.setAttribute('data-video-src', href);
+  play.addEventListener('click', () => {
+    const iframe = document.createElement('iframe');
+    iframe.src = info.embedUrl;
+    iframe.title = title;
+    iframe.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+    iframe.allowFullscreen = true;
+    media.replaceChildren(iframe);
+    iframe.focus();
+  });
+
+  media.append(poster, play);
   return media;
 }
 
@@ -537,12 +590,14 @@ export default async function decorate(block) {
 
   // .ies.video: authored images are the video posters (desktop, then < 1024px)
   const posterSrcs = [];
+  const posterEls = [];
   if (isIesVideo) {
     copy.querySelectorAll('img').forEach((img) => {
       posterSrcs.push(img.src);
       const el = img.closest('picture') || img;
       const host = el.parentElement;
       el.remove();
+      posterEls.push(el);
       if (host !== copy && !host.textContent.trim() && !host.querySelector('img, picture')) host.remove();
     });
   }
@@ -611,6 +666,22 @@ export default async function decorate(block) {
     });
     if (!p.textContent.trim() && !p.querySelector('a, img, picture')) p.remove();
   });
+
+  // .ies.video without an .mp4: the first plain YouTube link becomes the media tile
+  let youtube = null;
+  if (isIesVideo && !videoSrc) {
+    ctaParas.some((p) => [...p.querySelectorAll('a')].some((a) => {
+      const href = a.getAttribute('href') || '';
+      const info = parseVideoUrl(href);
+      if (info?.provider !== 'youtube' || !isPlainLink(a)) return false;
+      const text = a.textContent.trim();
+      const bareUrl = !text || text === href || /^https?:\/\//i.test(text);
+      youtube = { info, href, label: bareUrl ? '' : text };
+      a.remove();
+      if (!p.textContent.trim() && !p.querySelector('a, img, picture')) p.remove();
+      return true;
+    }));
+  }
 
   const ctas = ctaParas.filter((p) => p.querySelector('a'));
 
@@ -682,6 +753,13 @@ export default async function decorate(block) {
     copy.prepend(lockup);
   } else if (isIesVideo && videoSrc) {
     grid.append(buildTeaserVideo(videoSrcs, posterSrcs, loopVideo));
+  } else if (isIesVideo && youtube) {
+    const headline = heading?.textContent.trim();
+    const title = youtube.label
+      || posterEls[0]?.querySelector('img')?.alt
+      || posterEls[0]?.alt
+      || (headline ? `${headline} video` : 'Video');
+    grid.append(buildYouTubeTile(youtube.info, youtube.href, posterEls, title));
   } else if (mediaEl) {
     const media = document.createElement('div');
     media.className = 'hero-media';
