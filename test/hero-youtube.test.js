@@ -91,7 +91,7 @@ describe('hero — ies video YouTube tile', () => {
     await decorate(block);
 
     expect(block.querySelector('.hero-media-youtube img').src)
-      .toBe(`https://i.ytimg.com/vi/${ID}/sddefault.jpg`);
+      .toBe(`https://i.ytimg.com/vi/${ID}/hqdefault.jpg`);
   });
 
   it('uses the second authored poster below 1024px', async () => {
