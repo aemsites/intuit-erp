@@ -39,6 +39,7 @@ content
 *.html
 !tools/**/*.html
 !widgets/**/*.html
+!blocks/**/animations/*.html
 !head.html
 !404.html
 

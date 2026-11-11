@@ -11,8 +11,8 @@ const DASHBOARD_LOTTIE_FALLBACK_DELAY = 3000;
 const DASHBOARD_LOTTIE_DESKTOP_THRESHOLD = 0.1;
 const DASHBOARD_LOTTIE_MOBILE_THRESHOLD = 0.8;
 const TEASER_SECONDS = 5;
-// authored link to a repo-hosted HTML animation, e.g. /widgets/erp-pages/animations/x.html
-const HTML_ANIMATION_RE = /^(?:https?:\/\/[^/]+)?\/widgets\/[^?#]+\.html(?:$|[?#])/i;
+// authored link to an HTML animation kept in blocks/hero/animations/
+const HTML_ANIMATION_RE = /\/blocks\/hero\/animations\/[^?#]+\.html(?:$|[?#])/i;
 const YOUTUBE_URL_RE = /(?:youtube(?:-nocookie)?\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/;
 const VIMEO_URL_RE = /vimeo\.com\/(?:video\/)?(\d+)/;
 
@@ -256,8 +256,8 @@ function scheduleWhenIdle(callback) {
 }
 
 /**
- * `.ies.video` with an authored `.html` link: a self-contained HTML animation in a
- * sandboxed iframe, layered over the authored poster. The iframe loads when idle
+ * `.ies.video` with an authored `.html` link: a self-contained HTML animation in an
+ * iframe, layered over the authored poster. The iframe loads when idle
  * and fades in once ready; reduced motion, a missing poster-only setup or a load
  * error leave the poster showing. The iframe ignores pointer and keyboard input.
  * @param {string} href authored animation link (same-origin .html)
@@ -289,7 +289,8 @@ function buildHtmlAnimation(href, posters) {
     frame.title = 'Product animation';
     frame.tabIndex = -1;
     frame.setAttribute('aria-hidden', 'true');
-    frame.setAttribute('sandbox', 'allow-scripts');
+    // same-origin repo file; allow-scripts alone renders blank (the animation needs its origin)
+    frame.setAttribute('sandbox', 'allow-scripts allow-same-origin');
     frame.src = `${window.hlx?.codeBasePath || ''}${url.pathname}${url.search}`;
     frame.addEventListener('load', () => media.classList.add('is-playing'));
     frame.addEventListener('error', () => frame.remove());
