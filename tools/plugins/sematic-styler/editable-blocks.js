@@ -27,18 +27,28 @@ function isPluginRow(row, pluginPath) {
   ));
 }
 
+/**
+ * The `?ref=` DA opened this plugin with. The iframe can't read the canvas URL, so it is derived
+ * from where the plugin is served: `local` on localhost, else the branch of `{ref}--{repo}--{org}`.
+ */
+export function currentRef({ hostname } = window.location) {
+  if (hostname === 'localhost' || hostname === '127.0.0.1') return 'local';
+  return hostname.includes('--') ? hostname.split('--')[0] : '';
+}
+
+const rowRef = (row) => String(field(row, 'ref') || '').trim().toLowerCase();
+
 /** Parse an `include` cell: `null` means every block, otherwise the set of block names. */
 export function parseInclude(value) {
   const names = String(value || '').split(/[,;\n]/).map(normalizeBlockName).filter(Boolean);
   return names.includes(ALL) ? null : new Set(names);
 }
 
-/**
- * Editable blocks from a DA config's library sheet: `null` for all, a Set of block names,
- * or `undefined` when the config has no row for this plugin.
- */
-export function editableBlocksFromConfig(config, pluginPath) {
-  const row = libraryRows(config).find((r) => isPluginRow(r, pluginPath));
+export function editableBlocksFromConfig(config, pluginPath, ref = '') {
+  const rows = libraryRows(config).filter((r) => isPluginRow(r, pluginPath));
+  // The row for the active ref wins; a row with no ref is the default for every other ref.
+  const row = rows.find((r) => rowRef(r) === ref.toLowerCase())
+    || rows.find((r) => !rowRef(r));
   return row ? parseInclude(field(row, 'include')) : undefined;
 }
 
@@ -47,6 +57,7 @@ export function editableBlocksFromConfig(config, pluginPath) {
  * config before the org config. Resolves `undefined` when it can't be read so callers retry.
  */
 export async function loadEditableBlocks({ actions, context }, pluginPath) {
+  const ref = context.ref || currentRef();
   const urls = [
     `${DA_CONFIG}/${context.org}/${context.repo}/`,
     `${DA_CONFIG}/${context.org}/`,
@@ -57,7 +68,10 @@ export async function loadEditableBlocks({ actions, context }, pluginPath) {
     if (!url) return read ? new Set() : undefined;
     const resp = await actions.daFetch(url, { cache: 'no-store' }).catch(() => null);
     if (!resp?.ok) return next(rest, read);
-    const blocks = editableBlocksFromConfig(await resp.json().catch(() => null), pluginPath);
+    const config = await resp.json().catch(() => null);
+    // eslint-disable-next-line no-console
+    console.log('[sematic-styler] config received', url, config);
+    const blocks = editableBlocksFromConfig(config, pluginPath, ref);
     return blocks === undefined ? next(rest, true) : blocks;
   };
   return next(urls, false);
