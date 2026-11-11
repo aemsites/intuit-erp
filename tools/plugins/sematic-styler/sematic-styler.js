@@ -17,6 +17,8 @@ const ACTIVE_REFRESH_MS = 2000;
 const IDLE_REFRESH_MS = 3000;
 const ACTIVE_WINDOW_MS = 10000;
 const CONFIG_REFRESH_MS = 10000;
+// Longest the loader waits for authoring to show a saved change before giving up.
+const LIVE_TIMEOUT_MS = 10000;
 const METADATA = '.section-metadata, .metadata, .library-metadata';
 const ROLES = {
   h1: 'heading 1',
@@ -105,6 +107,7 @@ function contentTree(html, doc, editableBlocks) {
     .flatMap((node) => findElements(doc, node))
     .filter((el) => /^(H[1-6]|P)$/.test(el.tagName))
     .map((el) => headingInfo(el).key) : []);
+  const defaultEditable = isEditable(null, editableBlocks);
   return [...doc.querySelectorAll('main > div')].map((section, index) => {
     const groups = [];
     [...section.children].forEach((child) => {
@@ -122,7 +125,7 @@ function contentTree(html, doc, editableBlocks) {
         title: isBlock ? blockLabel(child) : 'Default content',
         elements: elements.map((el) => {
           const heading = headingInfo(el);
-          return { ...heading, selected: selectedKeys.has(heading.key) };
+          return { ...heading, selected: selectedKeys.has(heading.key), defaultEditable };
         }),
       });
     });
@@ -150,6 +153,7 @@ function headingControl(h, sdk, status, setLoading, pendingSizes, locked) {
   const id = `${h.sectionIndex}:${h.key}`;
   const cur = currentStyle(h.section, h.el);
   const select = document.createElement('select');
+  select.dataset.focusKey = id;
   select.setAttribute('aria-label', `Size for ${tag}: ${preview.textContent.slice(0, 40)}`);
   const sizes = sizesFor(tag);
   const value = pendingSizes.has(id) ? pendingSizes.get(id) : cur.size;
@@ -175,14 +179,15 @@ function headingControl(h, sdk, status, setLoading, pendingSizes, locked) {
     try {
       await setHeadingSize(sdk, h, size);
       selectedSize = size;
-      pendingSizes.set(id, size);
-      remove.disabled = !size;
+      remove.disabled = !select.value;
       status.textContent = size ? `Saved ${target}` : `Removed applied size from ${target}`;
     } catch (e) {
       log('save error', e);
       status.textContent = e.message;
-      pendingSizes.set(id, selectedSize);
-      select.value = selectedSize;
+      if (pendingSizes.get(id) === size) {
+        pendingSizes.set(id, selectedSize);
+        select.value = selectedSize;
+      }
     } finally {
       setLoading(false);
     }
@@ -192,6 +197,12 @@ function headingControl(h, sdk, status, setLoading, pendingSizes, locked) {
   controls.append(select, remove);
   wrap.append(content, controls);
   return wrap;
+}
+
+function applyAllOn(sectionIndex, paragraphs, paragraphAll, pendingSizes) {
+  return paragraphAll.has(sectionIndex)
+    || paragraphAllEnabled(paragraphs[0]?.section)
+    || Boolean(paragraphAllSize(paragraphs, pendingSizes));
 }
 
 function paragraphAllControl(sectionIndex, paragraphs, ui) {
@@ -208,12 +219,13 @@ function paragraphAllControl(sectionIndex, paragraphs, ui) {
   wrap.className = 'tree-item apply-all-row';
   label.className = 'apply-all-label';
   checkbox.type = 'checkbox';
+  checkbox.dataset.focusKey = `all-toggle:${sectionIndex}`;
+  select.dataset.focusKey = `all:${sectionIndex}`;
   label.append(checkbox, 'Apply to all Paragraphs');
   controls.className = 'tree-item-controls';
   const common = paragraphAllSize(paragraphs, pendingSizes);
   const value = paragraphAll.get(sectionIndex) || common;
-  checkbox.checked = paragraphAll.has(sectionIndex)
-    || paragraphAllEnabled(paragraphs[0]?.section);
+  checkbox.checked = applyAllOn(sectionIndex, paragraphs, paragraphAll, pendingSizes);
   const sizes = sizesFor('p');
   const options = value && !sizes.includes(value) ? [...sizes, value] : sizes;
   const placeholder = new Option('Default size', '');
@@ -250,9 +262,9 @@ function paragraphAllControl(sectionIndex, paragraphs, ui) {
       paragraphAll.delete(sectionIndex);
       setLoading(true);
       try {
-        await setParagraphAllEnabled(sdk, sectionIndex, false);
-        clearParagraphAllStyles(paragraphs[0].section);
-        ids.forEach((id) => pendingSizes.delete(id));
+        await setParagraphAllEnabled(sdk, paragraphs, false);
+        clearParagraphAllStyles(paragraphs);
+        paragraphs.forEach((h, i) => pendingSizes.set(ids[i], currentStyle(h.section, h.el).size));
         status.textContent = `Disabled apply to all paragraphs in section ${sectionIndex}`;
       } catch (e) {
         log('disable apply all error', e);
@@ -265,20 +277,29 @@ function paragraphAllControl(sectionIndex, paragraphs, ui) {
       return;
     }
     paragraphAll.set(sectionIndex, select.value);
+    const ids = paragraphs.map((h) => `${h.sectionIndex}:${h.key}`);
+    const previous = new Map(ids.filter((id) => pendingSizes.has(id))
+      .map((id) => [id, pendingSizes.get(id)]));
+    ids.forEach((id) => pendingSizes.set(id, ''));
     setLoading(true);
+    const enabled = setParagraphAllEnabled(sdk, paragraphs, true);
+    if (select.value) apply(select.value);
     try {
-      await setParagraphAllEnabled(sdk, sectionIndex, true);
+      await enabled;
+      if (!select.value) status.textContent = `Reset paragraph sizes in section ${sectionIndex}; choose a size to apply to all`;
     } catch (e) {
       log('enable apply all error', e);
       status.textContent = e.message;
       paragraphAll.delete(sectionIndex);
       checkbox.checked = false;
+      ids.forEach((id) => {
+        if (previous.has(id)) pendingSizes.set(id, previous.get(id));
+        else pendingSizes.delete(id);
+      });
+    } finally {
       setLoading(false);
-      return;
+      if (!select.value) rerender();
     }
-    setLoading(false);
-    if (select.value) apply(select.value);
-    else rerender();
   });
   select.addEventListener('change', () => {
     paragraphAll.set(sectionIndex, select.value);
@@ -389,8 +410,7 @@ function render(list, tree, sdk, status, setLoading, selectionChanged, pendingSi
     });
     sectionName.append(sectionLabel, resetSection, sectionChevron);
     const paragraphs = sectionElements.filter((h) => h.el.tagName === 'P');
-    const paragraphsLocked = paragraphAll.has(sectionIndex)
-      || paragraphAllEnabled(paragraphs[0]?.section);
+    const paragraphsLocked = applyAllOn(sectionIndex, paragraphs, paragraphAll, pendingSizes);
     if (paragraphs.length) {
       groupList.append(paragraphAllControl(sectionIndex, paragraphs, {
         sdk, status, setLoading, pendingSizes, paragraphAll, rerender,
@@ -419,7 +439,9 @@ function render(list, tree, sdk, status, setLoading, selectionChanged, pendingSi
   });
   updateToggle();
   card.append(header, treeList);
+  const { focusKey } = document.activeElement?.dataset || {};
   list.replaceChildren(card);
+  if (focusKey) list.querySelector(`[data-focus-key="${CSS.escape(focusKey)}"]`)?.focus();
 }
 
 function readSelection(actions) {
@@ -449,12 +471,9 @@ export default async function init() {
   const status = document.getElementById('status');
   const list = document.getElementById('list');
   const loading = document.getElementById('loading');
-  const setLoading = (visible) => {
-    loading.hidden = !visible;
-    loading.setAttribute('aria-hidden', String(!visible));
-  };
   const sdk = await DA_SDK;
   log('SDK ready', sdk.context, Object.keys(sdk.actions));
+  const hasLive = Boolean(sdk.capabilities?.liveDocument && sdk.actions.subscribeLiveDocument);
 
   // Undefined until first config read; the tree stays empty until then.
   let editableBlocks;
@@ -466,8 +485,87 @@ export default async function init() {
   const pendingSizes = new Map();
   const paragraphAll = new Map();
 
+  let writing = 0;
+  let writeCount = 0;
+  let awaiting = null;
+  let awaitingSince = 0;
+  const blocksAdded = new Map();
+  let blocksAddedSince = 0;
+  let checkedBlocks = '';
+  const setLoading = (visible) => {
+    if (visible === true) {
+      writing += 1;
+      writeCount += 1;
+      awaiting = null;
+    } else if (visible === false) {
+      writing = Math.max(0, writing - 1);
+      if (!writing) {
+        // eslint-disable-next-line no-use-before-define
+        checkSource();
+        if (hasLive) {
+          awaiting = new Map(pendingSizes);
+          awaitingSince = Date.now();
+          setTimeout(() => setLoading(), LIVE_TIMEOUT_MS);
+        }
+      }
+    }
+    if (awaiting && liveHtml) {
+      // Read the editor's markup as is, without the source metadata liveTreeDoc fills in.
+      const sections = [...new DOMParser().parseFromString(liveHtml, 'text/html')
+        .querySelectorAll('main > div')];
+      sections.forEach((section) => syncLiveSectionStyles(section, section));
+      awaiting.forEach((size, id) => {
+        const [sectionIndex, key] = id.split(':');
+        const section = sections[Number(sectionIndex) - 1];
+        const el = section && [...section.querySelectorAll('h1,h2,h3,h4,h5,h6,p')]
+          .find((candidate) => headingInfo(candidate).key === key);
+        if (!el || currentStyle(section, el).size === size) awaiting.delete(id);
+      });
+    }
+    if (awaiting && (!awaiting.size || Date.now() - awaitingSince >= LIVE_TIMEOUT_MS)) {
+      if (awaiting.size) status.textContent = 'Saved. The page is slow to refresh; reload it if the change does not show.';
+      awaiting = null;
+    }
+    const blocksSignature = `${editableKey(editableBlocks || new Set())}|${sourceText}|${liveHtml}`;
+    if (liveHtml && sourceDoc && editableBlocks !== undefined
+      && blocksSignature !== checkedBlocks) {
+      checkedBlocks = blocksSignature;
+      const liveTree = contentTree(null, liveTreeDoc(liveHtml, sourceDoc), editableBlocks);
+      contentTree(null, sourceDoc, editableBlocks).forEach(({ sectionIndex, groups }) => {
+        const paragraphs = groups.flatMap((g) => g.elements).filter((h) => h.el.tagName === 'P');
+        const on = paragraphAll.get(sectionIndex)
+          || paragraphs.some((h) => paragraphAllSize([h]));
+        const saved = groups.filter((g) => g.title !== 'Default content').length;
+        const shown = liveTree.find((s) => s.sectionIndex === sectionIndex)?.groups
+          .filter((g) => g.title !== 'Default content').length || 0;
+        if (!on || shown <= saved) {
+          blocksAdded.delete(sectionIndex);
+          return;
+        }
+        if (!blocksAdded.size) {
+          blocksAddedSince = Date.now();
+          setTimeout(() => setLoading(), LIVE_TIMEOUT_MS);
+        }
+        blocksAdded.set(sectionIndex, shown);
+      });
+    }
+    if (blocksAdded.size && Date.now() - blocksAddedSince >= LIVE_TIMEOUT_MS) blocksAdded.clear();
+    const busy = writing > 0 || Boolean(awaiting) || blocksAdded.size > 0;
+    loading.hidden = !busy;
+    loading.setAttribute('aria-hidden', String(!busy));
+    loading.setAttribute('aria-label', (writing && 'Changes in progress')
+      || (awaiting && 'Updating the page') || 'Applying styles to the new block');
+  };
+
+  let rendered = '';
+  let deferred = false;
   const update = (selectionChanged) => {
     if (!sourceDoc || editableBlocks === undefined) return;
+    deferred = document.hasFocus() && Boolean(document.activeElement?.matches('#list select'));
+    if (deferred) return;
+    const signature = `${editableKey(editableBlocks)}|${selection}|${liveHtml ?? sourceText}`;
+    if (signature === rendered) return;
+    rendered = signature;
     const doc = liveHtml ? liveTreeDoc(liveHtml, sourceDoc) : sourceDoc;
     const tree = contentTree(selection, doc, editableBlocks);
     render(list, tree, sdk, status, setLoading, selectionChanged, pendingSizes, paragraphAll);
@@ -478,18 +576,30 @@ export default async function init() {
     }
   };
 
+  list.addEventListener('focusout', () => {
+    if (deferred) setTimeout(() => update(false));
+  });
+
   let sourceBusy = false;
   const checkSource = async () => {
-    if (sourceBusy || document.hidden) return;
+    if (sourceBusy || writing || document.hidden) return;
     sourceBusy = true;
+    const writesBefore = writeCount;
+    let stale = false;
     try {
       const fresh = await loadSource(sdk);
+      stale = writing > 0 || writeCount !== writesBefore;
+      if (stale) return;
       if (!fresh) { status.textContent = 'Unable to refresh the source. Retrying...'; return; }
       if (fresh.text === sourceText) return;
       lastChange = Date.now();
+      const sections = [...fresh.doc.querySelectorAll('main > div')];
+      if (sourceText !== undefined) {
+        liveHtml = null;
+        if (sections.length !== sourceDoc.querySelectorAll('main > div').length) paragraphAll.clear();
+      }
       sourceDoc = fresh.doc;
-      if (sourceText !== undefined) { liveHtml = null; paragraphAll.clear(); }
-      const sections = [...sourceDoc.querySelectorAll('main > div')];
+      sourceText = fresh.text;
       pendingSizes.forEach((size, id) => {
         const [sectionIndex, key] = id.split(':');
         const section = sections[Number(sectionIndex) - 1];
@@ -497,12 +607,39 @@ export default async function init() {
           .find((candidate) => headingInfo(candidate).key === key);
         if (!el || currentStyle(section, el).size === size) pendingSizes.delete(id);
       });
+      // A block added to a section with apply-all on takes the section's paragraph size. Only
+      // apply-all writes the tag-wide size, so any paragraph carrying it means the section is on.
+      if (editableBlocks !== undefined) {
+        contentTree(null, sourceDoc, editableBlocks).forEach(({ sectionIndex, groups }) => {
+          const paragraphs = groups.flatMap((g) => g.elements).filter((h) => h.el.tagName === 'P');
+          const size = paragraphAll.get(sectionIndex)
+            || paragraphs.map((h) => paragraphAllSize([h])).find(Boolean);
+          const missing = paragraphs.filter((h) => paragraphAllSize([h]) !== size);
+          // The source has caught up with the block authoring showed; the write below (if any)
+          // keeps the loader up from here.
+          const saved = groups.filter((g) => g.title !== 'Default content').length;
+          if (blocksAdded.get(sectionIndex) <= saved) blocksAdded.delete(sectionIndex);
+          if (!size || !missing.length) return;
+          missing.forEach((h) => pendingSizes.set(`${sectionIndex}:${h.key}`, size));
+          setLoading(true);
+          setHeadingSizes(sdk, missing, size)
+            .then((count) => {
+              status.textContent = `Applied ${size} to ${count} new P in section ${sectionIndex}`;
+            })
+            .catch((e) => {
+              log('apply all to new block error', e);
+              missing.forEach((h) => pendingSizes.delete(`${sectionIndex}:${h.key}`));
+            })
+            .finally(() => setLoading(false));
+        });
+        setLoading();
+      }
       update(false);
-      sourceText = fresh.text;
     } catch (e) {
       log('source error', e);
     } finally {
       sourceBusy = false;
+      if (stale) checkSource();
     }
   };
   const watchSource = async () => {
@@ -538,12 +675,16 @@ export default async function init() {
   // Authors edit the config in another tab, so pick up changes as soon as they come back.
   document.addEventListener('visibilitychange', checkConfig);
 
-  if (sdk.capabilities?.liveDocument && sdk.actions.subscribeLiveDocument) {
+  if (hasLive) {
     sdk.actions.subscribeLiveDocument(({ html }) => {
       if (html === liveHtml) return;
       liveHtml = html;
       lastChange = Date.now();
-      try { update(false); } catch (e) { log('live document error', e); }
+      try {
+        update(false);
+        setLoading();
+        if (blocksAdded.size) checkSource();
+      } catch (e) { log('live document error', e); }
     });
   }
 
