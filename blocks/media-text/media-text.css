@@ -1097,6 +1097,7 @@
 /* .checklist.cta: Superblue pill below the checklist
    (Figma: desktop 7918-61065, mobile 8025-75568 / 8050-100835) */
 .media-text.checklist.cta .media-copy .media-body {
+  max-width: none;
   margin-bottom: 0;
   padding-bottom: var(--space-s);
 }
@@ -1147,7 +1148,8 @@
 
 @media (width >= 1024px) {
   .media-text.checklist.cta .media-copy .media-body { padding-bottom: var(--space-m); }
-  .media-text.checklist.cta .media-copy .button-wrapper { margin-top: var(--space-2xl); }
+  .media-text.checklist.cta .media-copy .button-wrapper { margin-top: 36px; }
+  .media-text.checklist.cta .media-copy > ul:has(+ .button-wrapper) > li:last-child { margin-bottom: 0; }
 
   .media-text.checklist.cta .media-copy .button-wrapper a.button {
     font-size: var(--body-font-size-m);
@@ -1527,7 +1529,7 @@
   }
 
   .media-text.ies:not(.center, .compare) .media-copy .button-wrapper {
-    margin-top: var(--space-2xl);
+    margin-top: 36px;
   }
 }
 
