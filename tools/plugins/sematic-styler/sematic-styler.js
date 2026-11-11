@@ -18,7 +18,7 @@ const ACTIVE_REFRESH_MS = 2000;
 const IDLE_REFRESH_MS = 3000;
 const ACTIVE_WINDOW_MS = 10000;
 const CONFIG_REFRESH_MS = 10000;
-const PLUGIN_CONFIG_ID = /sem(?:an)?tic[\s-]*styler/i;
+const PLUGIN_CONFIG_ID = /sem(?:an|a)?ticstyler/i;
 // Metadata blocks configure the page or section, so they never show in the tree.
 const METADATA = '.section-metadata, .metadata, .library-metadata';
 const ROLES = {
@@ -91,12 +91,16 @@ async function loadSource({ actions, context }) {
 
 function editableBlocksFromConfig(config) {
   const library = Object.entries(config || {})
-    .find(([name]) => name.toLowerCase() === 'library')?.[1];
+    .find(([name]) => name.trim().toLowerCase() === 'library')?.[1];
   const rows = Array.isArray(library) ? library : library?.data;
+  const field = (row, name) => Object.entries(row || {})
+    .find(([key]) => key.trim().toLowerCase() === name)?.[1];
   const plugin = (Array.isArray(rows) ? rows : []).find((row) => (
-    [row.title, row.path, row.ref].some((value) => PLUGIN_CONFIG_ID.test(String(value || '')))
+    ['title', 'path', 'ref'].some((key) => PLUGIN_CONFIG_ID.test(
+      String(field(row, key) || '').replace(/[^a-z]/gi, ''),
+    ))
   ));
-  const include = String(plugin?.include ?? '')
+  const include = String(field(plugin, 'include') || '')
     .split(/[,\n;]/)
     .map(normalizeBlockName)
     .filter(Boolean);
@@ -144,8 +148,9 @@ function contentTree(html, doc, editableBlocks) {
     const groups = [];
     [...section.children].forEach((child) => {
       if (child.matches(METADATA)) return;
-      const block = child.matches('div[class]') ? child : null;
-      if (editableBlocks !== null && !isIncludedBlock(block, editableBlocks)) return;
+      const block = child.matches('div[class]') && !child.classList.contains('default-content-wrapper')
+        ? child : null;
+      if (editableBlocks && !isIncludedBlock(block, editableBlocks)) return;
       const elements = [
         ...(child.matches('h1,h2,h3,h4,h5,h6,p') ? [child] : []),
         ...child.querySelectorAll('h1,h2,h3,h4,h5,h6,p'),
