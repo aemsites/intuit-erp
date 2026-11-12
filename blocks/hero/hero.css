@@ -1037,6 +1037,38 @@ body.author-guide .hero .hero-copy .hero-lede {
 
 .hero.ies.video .hero-media-html.is-playing .hero-html-frame { opacity: 1; }
 
+.hero.ies.video .hero-motion-toggle {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-circle);
+  background: rgb(255 255 255 / 20%);
+  color: #fff;
+  font-size: 11px;
+  line-height: var(--line-height-none);
+  cursor: pointer;
+}
+
+.hero.ies.video .hero-motion-toggle[hidden] { display: none; }
+
+.hero.ies.video .hero-motion-toggle:hover { background: rgb(255 255 255 / 35%); }
+
+.hero.ies.video .hero-motion-toggle:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.hero.ies.video .hero-motion-toggle::before { content: '\275A\275A'; }
+
+.hero.ies.video .hero-motion-toggle[data-state="paused"]::before { content: '\25B6'; }
+
 .hero.ies.video .hero-video-play {
   position: absolute;
   inset: 0;

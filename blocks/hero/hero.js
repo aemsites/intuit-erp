@@ -284,9 +284,27 @@ function buildHtmlAnimation(href, posters) {
     // allow-scripts alone renders blank
     frame.setAttribute('sandbox', 'allow-scripts allow-same-origin');
     frame.src = `${window.hlx?.codeBasePath || ''}${url.pathname}${url.search}`;
-    frame.addEventListener('load', () => media.classList.add('is-playing'));
-    frame.addEventListener('error', () => frame.remove());
-    media.append(frame);
+    const toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.className = 'hero-motion-toggle';
+    toggle.hidden = true;
+    let paused = false;
+    const syncToggle = () => {
+      toggle.setAttribute('aria-label', `${paused ? 'Play' : 'Pause'} animation`);
+      toggle.dataset.state = paused ? 'paused' : 'playing';
+    };
+    toggle.addEventListener('click', () => {
+      paused = !paused;
+      frame.contentWindow.setPlaying(!paused);
+      syncToggle();
+    });
+    syncToggle();
+    frame.addEventListener('load', () => {
+      media.classList.add('is-playing');
+      toggle.hidden = typeof frame.contentWindow?.setPlaying !== 'function';
+    });
+    frame.addEventListener('error', () => { frame.remove(); toggle.remove(); });
+    media.append(frame, toggle);
   });
   return media;
 }
