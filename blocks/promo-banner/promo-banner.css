@@ -45,7 +45,7 @@
   font-weight: var(--font-weight-medium);
   line-height: var(--line-height-none);
   font-family: inherit;
-  border: 2px solid var(#fff);
+  border: 2px solid #fff;
   border-radius: var(--radius);
   text-decoration: none;
   cursor: pointer;

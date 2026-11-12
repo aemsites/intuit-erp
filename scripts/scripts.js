@@ -515,7 +515,6 @@ function loadPromoBanner(header) {
   if (!header || !getMetadata('enable-promo-banner').trim()) return;
   const bar = document.createElement('aside');
   bar.className = 'promo-banner-bar';
-  bar.setAttribute('aria-label', 'Promotion');
   const promoBannerBlock = buildBlock('promo-banner', '');
   bar.append(promoBannerBlock);
   header.before(bar);
