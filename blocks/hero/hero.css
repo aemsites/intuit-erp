@@ -727,7 +727,6 @@ body.author-guide .hero .hero-copy .hero-lede {
   max-height: 555px;
 }
 
-/* stacked: image fills the column width */
 @media (width < 1024px) {
   .hero.ies .hero-media img {
     width: 100%;
