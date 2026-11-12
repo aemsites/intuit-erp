@@ -1,0 +1,73 @@
+/* sticky bar scripts.js wraps around the promo-banner block, above the header */
+.promo-banner-bar {
+  position: sticky;
+  z-index: 60;
+  top: 0;
+  color: #fff;
+  background: var(--navy);
+}
+
+.promo-banner {
+  max-width: var(--container);
+  margin: 0 auto;
+  min-height: 136px;
+  padding: var(--space-xs) var(--space-l);
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2xl);
+}
+
+/* keep the CTA beside the message at every width; only the message wraps */
+.promo-banner .promo-banner-cta {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.promo-banner p {
+  margin: 0;
+  font-size: var(--body-font-size-xs);
+  font-weight: var(--font-weight-normal);
+}
+
+.promo-banner .promo-banner-highlight {
+  color: var(--green-bright);
+  font-weight: var(--font-weight-bold);
+}
+
+.promo-banner p a.button {
+  display: inline-flex;
+  align-items: center;
+  height: var(--space-2xl);
+  padding: 0 var(--space-l);
+  font-size: 14px;
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-none);
+  font-family: inherit;
+  border: 2px solid #fff;
+  border-radius: var(--radius);
+  text-decoration: none;
+  cursor: pointer;
+  background: #fff;
+  color: var(--navy);
+}
+
+@media (width >= 768px) {
+  .promo-banner {
+    min-height: 80px;
+    padding: 0;
+    font-size: var(--body-font-size-m);
+    justify-content: center;
+  }
+
+  .promo-banner p {
+    font-size: var(--body-font-size-m);
+  }
+}
+
+@media (width >= 1200px) {
+  .promo-banner p {
+    font-size: var(--body-font-size-l);
+  }
+}
