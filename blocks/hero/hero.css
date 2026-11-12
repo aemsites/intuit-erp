@@ -728,12 +728,13 @@ body.author-guide .hero .hero-copy .hero-lede {
 }
 
 /* stacked (< 1024): fill the column so the image lines up with the buttons
-   above; the 555px max-height crops (cover) instead of shrinking the width,
-   which previously left it narrower and pushed right from ~877px up */
+   above, at its natural ratio (no max-height cap, which previously left it
+   narrower and pushed right from ~877px up) */
 @media (width < 1024px) {
   .hero.ies .hero-media img {
     width: 100%;
-    object-fit: cover;
+    height: auto;
+    max-height: none;
   }
 }
 
