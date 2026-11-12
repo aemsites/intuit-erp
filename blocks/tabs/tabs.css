@@ -1895,6 +1895,10 @@ main > .section.tabs-container:has(.tabs.vertical-panel.dark.blueberry) > .defau
   color: #0d0031;
 }
 
+@media (width < 1024px) {
+  .section.tabs-container:has(.tabs.horizontal.ies) > .tabs-wrapper { padding-inline: 0; }
+}
+
 .tabs.horizontal.ies .tab-nav { display: none; }
 
 .tabs.horizontal.ies .tab-bar {
