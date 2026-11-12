@@ -1014,6 +1014,22 @@ body.author-guide .hero .hero-copy .hero-lede {
   object-fit: cover;
 }
 
+.hero.ies.video .hero-media-youtube picture,
+.hero.ies.video .hero-media-youtube img,
+.hero.ies.video .hero-media-youtube iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.hero.ies.video .hero-media-youtube img {
+  object-fit: cover;
+  border-radius: 0;
+  max-height: none;
+}
+
+.hero.ies.video .hero-media-youtube iframe { border: 0; }
+
 .hero.ies.video .hero-video-play {
   position: absolute;
   inset: 0;
