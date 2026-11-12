@@ -1014,7 +1014,7 @@ body.author-guide .hero .hero-copy .hero-lede {
   object-fit: cover;
 }
 
-/* HTML animation: poster underneath, sandboxed iframe fades in over it */
+/* HTML animation */
 .hero.ies.video .hero-media-html { position: relative; }
 
 .hero.ies.video .hero-html-poster,
