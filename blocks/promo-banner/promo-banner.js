@@ -1,6 +1,10 @@
 import { getMetadata } from '../../scripts/aem.js';
 import { loadFragment } from '../fragment/fragment.js';
 
+function isExternal(href) {
+  return /^https?:\/\//.test(href);
+}
+
 export default async function decorate(block) {
   const promoMeta = getMetadata('enable-promo-banner');
   const promoPath = promoMeta ? new URL(promoMeta, window.location).pathname : '';
@@ -43,6 +47,10 @@ export default async function decorate(block) {
   if (ctaButton) {
     // drop global button variants (primary/accent) so the block's own button styles apply
     ctaButton.className = 'button';
+    if (isExternal(ctaButton.getAttribute('href')) && !ctaButton.hasAttribute('target')) {
+      ctaButton.target = '_blank';
+      ctaButton.relList.add('noopener');
+    }
     const cta = document.createElement('p');
     cta.className = 'promo-banner-cta';
     cta.append(ctaButton);
