@@ -1546,6 +1546,10 @@
 .testimonial.story .story-attr .testimonial-name { font-weight: var(--font-weight-bold); }
 .testimonial.story .story-attr .testimonial-name:not(:last-child)::after { content: ","; }
 
+@media (width < 1024px) {
+  .testimonial.story .story-attr:last-child { margin-bottom: 0; }
+}
+
 .testimonial.story .button-wrapper { margin: 0; }
 
 /* media: the DAM feature asset already carries its tile, so render it plain */
