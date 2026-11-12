@@ -15,7 +15,7 @@
   box-sizing: border-box;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   gap: var(--space-2xl);
 }
 
@@ -58,6 +58,7 @@
     min-height: 80px;
     padding: 0;
     font-size: var(--body-font-size-m);
+    justify-content: center;
   }
 
   .promo-banner p {
