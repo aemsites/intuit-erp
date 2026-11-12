@@ -4,11 +4,13 @@ import {
   loadFooter,
   decorateIcons,
   decorateSections,
+  decorateBlock,
   decorateBlocks,
   decorateTemplateAndTheme,
   waitForFirstImage,
   loadSection,
   loadSections,
+  loadBlock,
   loadCSS,
   buildBlock,
   getMetadata,
@@ -504,12 +506,34 @@ function shouldRenderContactUs() {
 const CONTACT_US_WAIT_MS = 2000;
 
 /**
+ * Loads a block named 'promo-banner' into a sticky bar above the header when the
+ * `enable-promo-banner` metadata is set; the block loads that fragment path itself.
+ * header.js offsets the nav by the bar's height.
+ * @param {Element} header The header element
+ */
+function loadPromoBanner(header) {
+  if (!header || !getMetadata('enable-promo-banner').trim()) return;
+  const bar = document.createElement('aside');
+  bar.className = 'promo-banner-bar';
+  bar.setAttribute('aria-label', 'Promotion');
+  const promoBannerBlock = buildBlock('promo-banner', '');
+  bar.append(promoBannerBlock);
+  header.before(bar);
+  decorateBlock(promoBannerBlock);
+  loadBlock(promoBannerBlock);
+  const notifyResize = () => window.dispatchEvent(new Event('promo-banner-resize'));
+  if (typeof ResizeObserver !== 'undefined') new ResizeObserver(notifyResize).observe(bar);
+}
+
+/**
  * Loads everything needed to get to LCP.
  * @param {Element} doc The container element
  */
 async function loadEager(doc) {
   document.documentElement.lang = 'en';
   decorateTemplateAndTheme();
+
+  loadPromoBanner(doc.querySelector('header'));
 
   // IES Brand: Apply theme-ies class and load theme CSS when theme metadata is 'ies'
   const theme = (getMetadata('theme') || '').trim().toLowerCase();

@@ -33,6 +33,7 @@ ones this site's code actually reads.
 | `hide-footer` | Removes the global footer | `true` / `yes` / `hide` | [scripts/scripts.js](scripts/scripts.js) |
 | `hide-nav-cta` | Removes the header "Schedule a call" CTA (desktop + mobile menu) | `true` / `yes` / `hide` | [blocks/header/header.js](blocks/header/header.js) |
 | `hide-contact-widget` | Skips the persistent bottom-right "Contact us" sales widget | `true` / `yes` / `hide` | [scripts/scripts.js](scripts/scripts.js) |
+| `enable-promo-banner` | Loads a sticky promo banner above the header | fragment path (e.g. `/fragments/promo-banner`) | [blocks/promo-banner/promo-banner.js](blocks/promo-banner/promo-banner.js) |
 | `nav` | Path to the nav fragment | path (default `/nav`) | [blocks/header/header.js](blocks/header/header.js) |
 | `footer` | Path to the footer fragment | path (default `/footer`) | [blocks/footer/footer.js](blocks/footer/footer.js) |
 
