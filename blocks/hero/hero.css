@@ -727,6 +727,16 @@ body.author-guide .hero .hero-copy .hero-lede {
   max-height: 555px;
 }
 
+/* stacked (< 1024): the 555px max-height makes the image narrower than its
+   column from ~877px up; the shared `justify-self: end` pushed it right, so
+   center it instead */
+@media (width < 1024px) {
+  .hero.ies .hero-media img {
+    justify-self: center;
+    margin-inline: auto;
+  }
+}
+
 /* tablet: 60px top/bottom instead of the shared 40px stacked padding */
 @media (768px <= width < 1024px) {
   .hero.ies .hero-grid {
