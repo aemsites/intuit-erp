@@ -94,8 +94,8 @@ describe('hero — ies video YouTube tile', () => {
       .toBe(`https://i.ytimg.com/vi/${ID}/hqdefault.jpg`);
   });
 
-  it('uses the second authored poster below 1024px', async () => {
-    compact = true;
+  it.each([false, true])('art-directs the second authored poster below 1024px (compact: %s)', async (isCompact) => {
+    compact = isCompact;
     const block = mount('hero ies video block', `
       <h1>Close faster</h1>
       <p><picture><img src="/media/poster-desktop.jpg" alt=""></picture></p>
@@ -104,9 +104,46 @@ describe('hero — ies video YouTube tile', () => {
     `);
     await decorate(block);
 
-    const imgs = block.querySelectorAll('.hero-media-youtube img');
-    expect(imgs).toHaveLength(1);
-    expect(imgs[0].getAttribute('src')).toBe('/media/poster-mobile.jpg');
+    const pictures = block.querySelectorAll('.hero-media-youtube picture');
+    expect(pictures).toHaveLength(1);
+    const mobile = pictures[0].querySelector('source[media="(width < 1024px)"]');
+    expect(mobile.getAttribute('srcset')).toBe('/media/poster-mobile.jpg');
+    expect(pictures[0].querySelector('img').getAttribute('src')).toBe('/media/poster-desktop.jpg');
+  });
+
+  it('art-directs EDS pictures when the desktop poster shares the link paragraph', async () => {
+    const eds = (name, alt) => `<picture>
+      <source type="image/webp" srcset="./${name}?width=2000&amp;format=webply" media="(min-width: 600px)">
+      <source type="image/webp" srcset="./${name}?width=750&amp;format=webply">
+      <source type="image/png" srcset="./${name}?width=2000&amp;format=png" media="(min-width: 600px)">
+      <img loading="lazy" alt="${alt}" src="./${name}?width=750&amp;format=png">
+    </picture>`;
+    const block = mount('hero ies video block', `
+      <p>FOR CONSTRUCTIONS</p>
+      <h1>Help protect your profits from bid to closeouts</h1>
+      <p>Discover the financial platform for profitable construction.</p>
+      <p><strong><a href="#schedule">Schedule a call</a></strong> <em><a href="https://erp.intuit.com/accountant/">For accountants</a></em></p>
+      <p><a href="https://www.youtube.com/watch?v=C0DPdy98e4c">https://www.youtube.com/watch?v=C0DPdy98e4c</a><br>${eds('media_desktop.avif', 'thumbnail-construction')}</p>
+      <p>${eds('media_mobile.png', '')}</p>
+    `);
+    await decorate(block);
+
+    const tile = block.querySelector('.hero-media-youtube');
+    const picture = tile.querySelector('picture');
+    const mobile = [...picture.querySelectorAll('source')]
+      .filter((s) => s.getAttribute('media')?.startsWith('(width < 1024px)'));
+    expect(mobile.map((s) => s.getAttribute('srcset'))).toEqual([
+      './media_mobile.png?width=2000&format=webply',
+      './media_mobile.png?width=750&format=webply',
+      './media_mobile.png?width=2000&format=png',
+      './media_mobile.png?width=750&format=png',
+    ]);
+    expect(picture.querySelector('source').getAttribute('media'))
+      .toBe('(width < 1024px) and (min-width: 600px)');
+    expect(picture.querySelectorAll('img')).toHaveLength(1);
+    expect(picture.querySelector('img').getAttribute('src')).toContain('media_desktop.avif');
+    expect(picture.querySelector('img').loading).toBe('eager');
+    expect(block.querySelector('.hero-copy img, .hero-copy br')).toBeNull();
   });
 
   it('titles the iframe from the link text, else the headline', async () => {

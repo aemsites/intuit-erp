@@ -168,11 +168,27 @@ function buildYouTubeTile(info, href, posterEls, title) {
   const media = document.createElement('div');
   media.className = 'hero-media hero-media-video hero-media-youtube';
 
-  const compact = window.matchMedia('(width < 1024px)').matches;
-  let poster = (compact && posterEls[1]) || posterEls[0];
+  let poster = posterEls[0];
   if (poster) {
-    const img = poster.querySelector('img') || poster;
-    img.loading = 'eager';
+    if (poster.tagName !== 'PICTURE') {
+      const picture = document.createElement('picture');
+      picture.append(poster);
+      poster = picture;
+    }
+    const mobile = posterEls[1];
+    if (mobile) {
+      // art-direct the second poster below 1024px so it also follows viewport changes
+      const sources = [...mobile.querySelectorAll('source')].map((source) => {
+        const query = source.getAttribute('media');
+        source.setAttribute('media', query ? `(width < 1024px) and ${query}` : '(width < 1024px)');
+        return source;
+      });
+      const fallback = document.createElement('source');
+      fallback.setAttribute('media', '(width < 1024px)');
+      fallback.setAttribute('srcset', (mobile.querySelector('img') || mobile).getAttribute('src'));
+      poster.prepend(...sources, fallback);
+    }
+    poster.querySelector('img').loading = 'eager';
   } else {
     poster = document.createElement('img');
     poster.src = `https://i.ytimg.com/vi/${info.id}/hqdefault.jpg`;
