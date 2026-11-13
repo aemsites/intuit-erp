@@ -69,8 +69,6 @@ export async function loadEditableBlocks({ actions, context }, pluginPath) {
     const resp = await actions.daFetch(url, { cache: 'no-store' }).catch(() => null);
     if (!resp?.ok) return next(rest, read);
     const config = await resp.json().catch(() => null);
-    // eslint-disable-next-line no-console
-    console.log('[sematic-styler] config received', url, config);
     const blocks = editableBlocksFromConfig(config, pluginPath, ref);
     return blocks === undefined ? next(rest, true) : blocks;
   };
