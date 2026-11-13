@@ -539,10 +539,6 @@
 }
 
 @media (max-width: 360px) {
-  .da-ds-panel-header {
-    align-items: flex-start;
-    flex-direction: column;
-  }
 
   .tree-item {
     grid-template-columns: minmax(0, 1fr);
