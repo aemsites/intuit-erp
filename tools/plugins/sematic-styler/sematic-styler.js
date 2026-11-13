@@ -17,7 +17,7 @@ const IDLE_REFRESH_MS = 3000;
 const ACTIVE_WINDOW_MS = 10000;
 const CONFIG_REFRESH_MS = 10000;
 // Longest the loader waits for authoring to show a saved change before giving up.
-const LIVE_TIMEOUT_MS = 10000;
+const LIVE_TIMEOUT_MS = 15000;
 const METADATA = '.section-metadata, .metadata, .library-metadata';
 const HEADINGS = 'h1,h2,h3,h4,h5,h6,p';
 const DEFAULT_GROUP = 'Default content';
@@ -549,8 +549,7 @@ const hasSize = (h, pendingSizes) => {
 };
 
 /**
- * A block's "Reset all": clears the block's sizes and its block-level apply-all in one save. When
- * the section-level apply-all is on it owns the paragraphs, so only the other elements are reset.
+ * A block's "Reset all": clears the block's sizes and its block-level apply-all in one save.
  */
 function resetBlockButton(group, ui, sectionOn) {
   const {
