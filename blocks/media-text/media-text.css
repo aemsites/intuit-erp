@@ -1670,6 +1670,8 @@
   .media-text.compare.ies-cards .compare-card > p.button-wrapper {
     padding-top: 36px;
   }
+
+  .media-text.compare.ies-cards .compare-card > p.button-wrapper .button { font-size: 16px; }
 }
 
 /* .ies split rows: One Intuit "Why IES" (Figma 7918-54716 / 7933-61615 / 7918-58979; spacing 7918-54779 / 7933-61646) */

@@ -702,7 +702,7 @@ body.author-guide .hero .hero-copy .hero-lede {
 }
 
 .hero.ies .hero-copy .hero-lede {
-  margin: 0 0 var(--space-s);
+  margin: 0 0 var(--space-l);
   max-width: 36em; /* = the h1's 12em at both breakpoints (60/20px and 48/16px), so lede and heading share a width */
   font-size: var(--body-font-size-m);
   line-height: var(--line-height-m);
@@ -735,9 +735,14 @@ body.author-guide .hero .hero-copy .hero-lede {
   }
 }
 
+@media (width < 768px) {
+  .hero.ies .hero-grid { gap: var(--space-2xl); }
+}
+
 /* tablet: 60px top/bottom instead of the shared 40px stacked padding */
 @media (768px <= width < 1024px) {
   .hero.ies .hero-grid {
+    gap: 60px;
     padding-top: 60px;
     padding-bottom: 60px;
   }
