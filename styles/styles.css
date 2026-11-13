@@ -1046,6 +1046,13 @@ main .fragment-wrapper .section.contained.ies.colored-background {
   }
 }
 
+@media (width < 1024px) {
+  main > .section.contained.ies.colored-background > div.default-content-wrapper > :is(h2, h3) + p:not(.button-wrapper),
+  main .fragment-wrapper .section.contained.ies.colored-background > div.default-content-wrapper > :is(h2, h3) + p:not(.button-wrapper) {
+    margin-bottom: 0;
+  }
+}
+
 @media (width >= 768px) {
   main > .section.contained.ies.colored-background,
   main .fragment-wrapper .section.contained.ies.colored-background {
