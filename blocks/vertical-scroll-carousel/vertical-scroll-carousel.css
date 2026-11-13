@@ -47,6 +47,16 @@
   border-radius: inherit;
 }
 
+.vertical-scroll-carousel .vsc-media .vsc-pic-desktop { display: none; }
+
+.vertical-scroll-carousel .vsc-media .vsc-pic-mobile img,
+.vertical-scroll-carousel .vsc-media img.vsc-pic-mobile { aspect-ratio: auto; }
+
+@media (width >= 1024px) {
+  .vertical-scroll-carousel .vsc-media .vsc-pic-desktop { display: block; }
+  .vertical-scroll-carousel .vsc-media .vsc-pic-mobile { display: none; }
+}
+
 /* the h3 only carries heading semantics; the button inside owns all styling, so
    strip the default heading box (margins + font metrics) to leave layout as it
    was when the button was the direct child */

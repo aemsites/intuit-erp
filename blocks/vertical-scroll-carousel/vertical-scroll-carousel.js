@@ -35,15 +35,19 @@ function buildMedia(cell) {
   media.className = 'vsc-media';
   if (!cell) return media;
 
-  const picture = cell.querySelector('picture');
-  const img = cell.querySelector('img');
+  const pictures = [...cell.querySelectorAll('picture')];
+  const images = pictures.length ? pictures : [...cell.querySelectorAll('img')];
   const videoLink = [...cell.querySelectorAll('a')]
     .find((a) => VIDEO_EXT_RE.test(a.getAttribute('href') || ''));
 
-  if (picture) {
-    media.append(picture);
-  } else if (img) {
-    media.append(img);
+  if (images.length) {
+    const [desktop, mobile] = images;
+    media.append(desktop);
+    if (mobile) {
+      desktop.classList.add('vsc-pic-desktop');
+      mobile.classList.add('vsc-pic-mobile');
+      media.append(mobile);
+    }
   } else if (videoLink) {
     const video = document.createElement('video');
     video.className = 'vsc-video';
