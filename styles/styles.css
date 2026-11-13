@@ -905,6 +905,54 @@ main .section.ies:is(.super-blue, [data-background="#236cff" i]) button.button.p
   color: #0d0031;
 }
 
+main .section.ies.button-white a.button.primary,
+main .section.ies.button-white button.button.primary {
+  border-color: var(--background-color);
+  background-color: var(--background-color);
+  color: #0d0031;
+}
+
+main .section.ies.button-blueberry a.button.primary,
+main .section.ies.button-blueberry button.button.primary {
+  border-color: #0d0031;
+  background-color: #0d0031;
+  color: var(--background-color);
+}
+
+main .section.ies.button-blue a.button.primary,
+main .section.ies.button-blue button.button.primary {
+  border-color: var(--info);
+  background-color: var(--info);
+  color: var(--background-color);
+}
+
+main .section.ies.button-white a.button.primary:hover,
+main .section.ies.button-white a.button.primary:focus-visible,
+main .section.ies.button-white button.button.primary:hover,
+main .section.ies.button-white button.button.primary:focus-visible {
+  border-color: var(--wintermint);
+  background-color: var(--wintermint);
+  color: #0d0031;
+}
+
+main .section.ies.button-blueberry a.button.primary:hover,
+main .section.ies.button-blueberry a.button.primary:focus-visible,
+main .section.ies.button-blueberry button.button.primary:hover,
+main .section.ies.button-blueberry button.button.primary:focus-visible {
+  border-color: #2a1a5e;
+  background-color: #2a1a5e;
+  color: var(--background-color);
+}
+
+main .section.ies.button-blue a.button.primary:hover,
+main .section.ies.button-blue a.button.primary:focus-visible,
+main .section.ies.button-blue button.button.primary:hover,
+main .section.ies.button-blue button.button.primary:focus-visible {
+  border-color: #1b5be0;
+  background-color: #1b5be0;
+  color: var(--background-color);
+}
+
 /* outlined pill: Blueberry on light sections, white on dark ones */
 main .section.ies a.button.secondary,
 main .section.ies button.button.secondary {
@@ -995,6 +1043,13 @@ main .fragment-wrapper .section.contained.ies.colored-background {
     padding: 12px 20px;
     font-size: 14px;
     line-height: 1.1;
+  }
+}
+
+@media (width < 1024px) {
+  main > .section.contained.ies.colored-background > div.default-content-wrapper > :is(h2, h3) + p:not(.button-wrapper),
+  main .fragment-wrapper .section.contained.ies.colored-background > div.default-content-wrapper > :is(h2, h3) + p:not(.button-wrapper) {
+    margin-bottom: 0;
   }
 }
 

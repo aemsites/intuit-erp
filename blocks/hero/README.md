@@ -55,7 +55,12 @@ Assets:
   eyebrow paragraph is used. Pair with section style `ies, dark-background`.
 - `ies`: Blueberry IES styling; combine with `arcs` or `glow` for the backgrounds.
 - `ies video`: `.mp4` links (desktop, then below 1024px) play a 5-second teaser tile with a
-  play button; images are its posters.
+  play button; images are its posters. Instead of an `.mp4`, a plain (not bold/italic) YouTube
+  link (`youtube.com/watch?v=`, `youtu.be/` or `youtube.com/embed/`) shows a poster with a play
+  button; the YouTube player loads only when the visitor clicks play and plays in the tile.
+  Posters are the authored images (desktop, then below 1024px), else the YouTube thumbnail.
+  Author one source: if an `.mp4` is present it wins. Bold/italic YouTube links stay CTA buttons
+  that open the video lightbox.
 - `homepage`: homepage sizing for `ies video`.
 - `ies video` + `.html` link: a link to a repo-hosted HTML animation (kept in `blocks/hero/animations/`,
   e.g. `/blocks/hero/animations/ies-homepage-hero.html`) replaces the `.mp4`. It plays in an

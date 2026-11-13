@@ -308,13 +308,39 @@ function renderHorizontalTabs(block, items) {
   tablist.addEventListener('scroll', updateArrows, { passive: true });
   window.addEventListener('resize', updateArrows);
 
+  // .horizontal.ies below 768px stacks every panel, so the strip acts as an index
+  const stacked = block.classList.contains('horizontal') && block.classList.contains('ies');
+  const mqStack = window.matchMedia('(width < 768px)');
+  let spyLock = 0;
+
   tablist.addEventListener('click', (e) => {
     const target = e.target.closest('.tab');
     if (!target) return;
-    select(tabButtons.indexOf(target));
+    const idx = tabButtons.indexOf(target);
+    select(idx);
+    if (stacked && mqStack.matches) {
+      spyLock = Date.now() + 900;
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      panels[idx].scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+    }
   });
 
+  if (stacked && 'IntersectionObserver' in window) {
+    const spy = new IntersectionObserver((entries) => {
+      if (!mqStack.matches || Date.now() < spyLock) return;
+      entries.filter((en) => en.isIntersecting).forEach((en) => {
+        const idx = panels.indexOf(en.target);
+        if (idx === -1 || idx === activeIndex()) return;
+        select(idx, { scroll: false });
+        tablist.scrollTo({ left: tabButtons[idx].offsetLeft - 20, behavior: 'smooth' });
+      });
+    }, { rootMargin: '-30% 0px -60% 0px' });
+    panels.forEach((panel) => spy.observe(panel));
+  }
+
   const syncHeight = () => {
+    // collapse first: absolutely positioned panels can't report less than the wrapper height
+    panelWrap.style.height = '0px';
     const heights = panels.map((p) => p.scrollHeight);
     panelWrap.style.height = `${Math.max(...heights, 0)}px`;
   };
@@ -792,8 +818,9 @@ function extractIesHeader(block) {
 
 export default function decorate(block) {
   const ies = block.classList.contains('ies');
-  // `ies` is authored on its own; it builds on the vertical accordion without the glow
-  if (ies) block.classList.add('vertical', 'no-gradient');
+  const horizontalIes = ies && block.classList.contains('horizontal');
+  // a bare `ies` is the vertical accordion without the glow; `horizontal ies` stays a tab strip
+  if (ies && !horizontalIes) block.classList.add('vertical', 'no-gradient');
   const header = ies ? extractIesHeader(block) : null;
   const items = parseItems(block);
   if (block.classList.contains('pill')) renderPillTabs(block, items);

@@ -702,7 +702,7 @@ body.author-guide .hero .hero-copy .hero-lede {
 }
 
 .hero.ies .hero-copy .hero-lede {
-  margin: 0 0 var(--space-s);
+  margin: 0 0 var(--space-l);
   max-width: 36em; /* = the h1's 12em at both breakpoints (60/20px and 48/16px), so lede and heading share a width */
   font-size: var(--body-font-size-m);
   line-height: var(--line-height-m);
@@ -727,9 +727,22 @@ body.author-guide .hero .hero-copy .hero-lede {
   max-height: 555px;
 }
 
+@media (width < 1024px) {
+  .hero.ies .hero-media img {
+    width: 100%;
+    height: auto;
+    max-height: none;
+  }
+}
+
+@media (width < 768px) {
+  .hero.ies .hero-grid { gap: var(--space-2xl); }
+}
+
 /* tablet: 60px top/bottom instead of the shared 40px stacked padding */
 @media (768px <= width < 1024px) {
   .hero.ies .hero-grid {
+    gap: 60px;
     padding-top: 60px;
     padding-bottom: 60px;
   }
@@ -1079,6 +1092,22 @@ body.author-guide .hero .hero-copy .hero-lede {
   outline: 2px solid #fff;
   outline-offset: 2px;
 }
+
+.hero.ies.video .hero-media-youtube picture,
+.hero.ies.video .hero-media-youtube img,
+.hero.ies.video .hero-media-youtube iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.hero.ies.video .hero-media-youtube img {
+  object-fit: cover;
+  border-radius: 0;
+  max-height: none;
+}
+
+.hero.ies.video .hero-media-youtube iframe { border: 0; }
 
 .hero.ies.video .hero-video-play {
   position: absolute;

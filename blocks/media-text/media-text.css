@@ -1371,6 +1371,309 @@
   }
 }
 
+/* .compare.ies-cards */
+.section.media-text-container:has(.media-text.compare.ies-cards) {
+  background: var(--background-color);
+  padding: var(--space-m) 0;
+}
+
+.section.media-text-container:has(.media-text.compare.ies-cards) > div {
+  padding-inline: var(--space-m);
+}
+
+.media-text.compare.ies-cards {
+  max-width: 1130px;
+  margin-inline: auto;
+  color: #0d0031;
+}
+
+.media-text.compare.ies-cards .compare-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: var(--space-m);
+  text-align: center;
+}
+
+.media-text.compare.ies-cards .compare-head .media-eyebrow {
+  margin: 0 0 var(--space-2xs);
+  font-size: var(--body-font-size-xxs);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+  letter-spacing: 1.56px;
+  text-transform: uppercase;
+  color: #000;
+}
+
+.media-text.compare.ies-cards .compare-head h2 {
+  margin: 0 0 var(--space-s);
+  font-size: 34px;
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-xs);
+  color: inherit;
+}
+
+.media-text.compare.ies-cards .compare-head .media-body {
+  max-width: none;
+  margin: 0;
+  font-size: var(--body-font-size-m);
+  line-height: var(--line-height-m);
+  color: inherit;
+}
+
+.media-text.compare.ies-cards .compare-grid {
+  width: auto;
+  max-width: none;
+  gap: var(--space-m);
+}
+
+.media-text.compare.ies-cards .compare-card {
+  padding: 0 0 var(--space-2xl);
+  border-radius: 30px;
+  overflow: hidden;
+  color: inherit;
+}
+
+.media-text.compare.ies-cards .compare-card:first-child {
+  background: var(--agave-band);
+}
+
+.media-text.compare.ies-cards .compare-card:last-child {
+  background: var(--pepper);
+}
+
+.media-text.compare.ies-cards .compare-card > :not(.compare-visual) {
+  margin-inline: 30px;
+}
+
+.media-text.compare.ies-cards .compare-visual {
+  order: -1;
+  width: auto;
+  margin-bottom: 30px;
+  padding: var(--space-2xs) var(--space-2xs) 0;
+  border-radius: 0;
+}
+
+.media-text.compare.ies-cards .compare-visual picture {
+  display: block;
+}
+
+.media-text.compare.ies-cards .compare-visual img {
+  width: 100%;
+  aspect-ratio: 533 / 311;
+  object-fit: cover;
+  border-radius: 24px;
+}
+
+.media-text.compare.ies-cards .compare-card .media-eyebrow {
+  margin-block: 0 var(--space-2xs);
+  font-size: var(--body-font-size-xxs);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-xs);
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: inherit;
+}
+
+.media-text.compare.ies-cards .compare-card h3 {
+  margin-block: 0 var(--space-s);
+  font-size: 28px;
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-s);
+  letter-spacing: 0;
+  color: inherit;
+}
+
+.media-text.compare.ies-cards .compare-card .media-body {
+  max-width: none;
+  margin-block: 0 var(--space-s);
+  font-size: var(--body-font-size-m);
+  line-height: var(--line-height-m);
+  color: inherit;
+}
+
+.media-text.compare.ies-cards .compare-card ul {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-block: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.media-text.compare.ies-cards .compare-card ul li {
+  position: relative;
+  margin: 0;
+  min-height: 20px;
+  padding-left: 24px;
+  font-size: var(--body-font-size-xs);
+  line-height: var(--line-height-m);
+  color: inherit;
+}
+
+.media-text.compare.ies-cards .compare-card ul li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 20px;
+  height: 20px;
+  background: url("/icons/icon-checkmark-blue.svg") no-repeat center / contain;
+}
+
+.media-text.compare.ies-cards .compare-card > p.button-wrapper {
+  max-width: none;
+  margin-block: auto 0;
+  padding-top: 30px;
+  font-size: var(--body-font-size-xs);
+  line-height: var(--line-height-xs);
+}
+
+.media-text.compare.ies-cards .compare-card > p.button-wrapper .button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 100px;
+  min-height: 48px;
+  height: auto;
+  padding: 0 42px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--info);
+  font-size: var(--body-font-size-xs);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.1;
+  color: var(--background-color);
+  text-decoration: none;
+}
+
+.media-text.compare.ies-cards .compare-card > p.button-wrapper .button:is(:hover, :focus-visible) {
+  background: #1b5be0;
+  color: var(--background-color);
+}
+
+@media (width >= 768px) {
+  .section.media-text-container:has(.media-text.compare.ies-cards) > div {
+    padding-inline: var(--space-2xl);
+  }
+
+  .media-text.compare.ies-cards .compare-head {
+    margin-bottom: var(--space-xl);
+    padding-inline: var(--space-m);
+  }
+
+  .media-text.compare.ies-cards .compare-head .media-eyebrow {
+    font-size: var(--body-font-size-xs);
+    letter-spacing: 1.82px;
+    color: inherit;
+  }
+
+  .media-text.compare.ies-cards .compare-grid {
+    gap: var(--space-m);
+  }
+
+  .media-text.compare.ies-cards .compare-card {
+    border-radius: 30px;
+  }
+
+  .media-text.compare.ies-cards .compare-card > :not(.compare-visual) {
+    margin-inline: var(--space-xl);
+  }
+
+  .media-text.compare.ies-cards .compare-visual {
+    margin-bottom: var(--space-xl);
+  }
+
+  .media-text.compare.ies-cards .compare-card .media-eyebrow {
+    font-size: var(--body-font-size-xs);
+    line-height: 1.25;
+    letter-spacing: 1.82px;
+  }
+
+  .media-text.compare.ies-cards .compare-card > p.button-wrapper {
+    padding-top: 30px;
+  }
+}
+
+@media (width >= 1024px) {
+  .section.media-text-container:has(.media-text.compare.ies-cards) {
+    padding: var(--space-2xl) 0;
+  }
+
+  .section.media-text-container:has(.media-text.compare.ies-cards) > div {
+    padding-inline: var(--space-xl);
+  }
+
+  .media-text.compare.ies-cards .compare-head {
+    margin-bottom: var(--space-2xl);
+    padding-inline: 0;
+  }
+
+  .media-text.compare.ies-cards .compare-head .media-eyebrow {
+    margin-bottom: var(--space-s);
+  }
+
+  .media-text.compare.ies-cards .compare-head h2 {
+    margin-bottom: var(--space-m);
+    font-size: var(--heading-font-size-xxl);
+    line-height: var(--line-height-none);
+  }
+
+  .media-text.compare.ies-cards .compare-head .media-body {
+    padding-inline: 95px;
+    font-size: var(--body-font-size-l);
+    line-height: var(--line-height-s);
+  }
+
+  .media-text.compare.ies-cards .compare-grid {
+    gap: var(--space-xl);
+  }
+
+  .media-text.compare.ies-cards .compare-card {
+    padding-bottom: 60px;
+    border-radius: 38px;
+  }
+
+  .media-text.compare.ies-cards .compare-card > :not(.compare-visual) {
+    margin-inline: 60px;
+  }
+
+  .media-text.compare.ies-cards .compare-visual {
+    margin-bottom: var(--space-2xl);
+  }
+
+  .media-text.compare.ies-cards .compare-visual img {
+    border-radius: 31px;
+  }
+
+  .media-text.compare.ies-cards .compare-card .media-eyebrow {
+    margin-bottom: var(--space-s);
+  }
+
+  .media-text.compare.ies-cards .compare-card h3 {
+    margin-bottom: var(--space-m);
+    font-size: 34px;
+    line-height: var(--line-height-xs);
+  }
+
+  .media-text.compare.ies-cards .compare-card ul li {
+    min-height: 24px;
+    padding-left: 28px;
+    font-size: var(--body-font-size-m);
+  }
+
+  .media-text.compare.ies-cards .compare-card ul li::before {
+    width: 24px;
+    height: 24px;
+  }
+
+  .media-text.compare.ies-cards .compare-card > p.button-wrapper {
+    padding-top: 36px;
+  }
+
+  .media-text.compare.ies-cards .compare-card > p.button-wrapper .button { font-size: 16px; }
+}
+
 /* .ies split rows: One Intuit "Why IES" (Figma 7918-54716 / 7933-61615 / 7918-58979; spacing 7918-54779 / 7933-61646) */
 .media-text.ies:not(.center, .compare) {
   max-width: 1210px;

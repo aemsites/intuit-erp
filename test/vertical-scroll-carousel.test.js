@@ -119,6 +119,34 @@ describe('vertical-scroll-carousel', () => {
     expect(medias[0].classList.contains('is-active')).toBe(false);
     expect(headings[1].getAttribute('aria-selected')).toBe('true');
   });
+  it('keeps a single image as the only image, with no desktop/mobile classes', () => {
+    const block = make();
+    decorate(block);
+    const media = block.querySelector('.vsc-media');
+    expect(media.querySelectorAll('img').length).toBe(1);
+    expect(media.querySelector('.vsc-pic-desktop, .vsc-pic-mobile')).toBeNull();
+  });
+  it('treats a 2nd image as the mobile variant', () => {
+    const block = document.createElement('div');
+    block.className = 'vertical-scroll-carousel block';
+    block.innerHTML = `
+      <div><div><picture><img src="d.png" alt=""></picture><picture><img src="m.png" alt=""></picture></div><div>Heading</div><div>Body.</div></div>`;
+    decorate(block);
+    const media = block.querySelector('.vsc-media');
+    expect(media.querySelector('picture.vsc-pic-desktop img').getAttribute('src')).toBe('d.png');
+    expect(media.querySelector('picture.vsc-pic-mobile img').getAttribute('src')).toBe('m.png');
+  });
+  it('supports a 2nd image authored as bare <img> and ignores a 3rd', () => {
+    const block = document.createElement('div');
+    block.className = 'vertical-scroll-carousel block';
+    block.innerHTML = `
+      <div><div><img src="d.png" alt=""><img src="m.png" alt=""><img src="x.png" alt=""></div><div>Heading</div><div>Body.</div></div>`;
+    decorate(block);
+    const imgs = [...block.querySelectorAll('.vsc-media img')];
+    expect(imgs.map((i) => i.getAttribute('src'))).toEqual(['d.png', 'm.png']);
+    expect(imgs[0].classList.contains('vsc-pic-desktop')).toBe(true);
+    expect(imgs[1].classList.contains('vsc-pic-mobile')).toBe(true);
+  });
   it('activate() marks only the given index active', () => {
     const block = make();
     decorate(block);

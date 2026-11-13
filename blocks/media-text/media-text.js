@@ -21,6 +21,7 @@
  *   .compare   2-up alternating-skin comparison cards, media pinned to the
  *              card bottom (erp-solutions "Move to a modern ERP" / solution-cards)
  *   .compare.ies  One Intuit comparison cards; a trailing link paragraph is a footnote
+ *   .compare.ies-cards  light cards; first row (eyebrow / heading / subcopy) is the in-block head
  *   .ies       One Intuit split rows (e.g. `reverse, ies`): an optional first row with a
  *              single heading-only cell becomes the block title; rows take an optional
  *              eyebrow and an optional trailing text link
@@ -177,6 +178,15 @@ export default function decorate(block) {
   }
 
   if (isCompare) {
+    let head = null;
+    const [headCell, ...headExtra] = rows[0] ? [...rows[0].children] : [];
+    if (block.classList.contains('ies-cards') && headCell && !headExtra.length
+      && headCell.querySelector('h1, h2, h3') && !headCell.querySelector('ul, ol, picture, img')) {
+      head = document.createElement('div');
+      head.className = 'compare-head';
+      [...buildCopy(headCell).children].forEach((el) => head.append(el));
+      rows.shift();
+    }
     const grid = document.createElement('div');
     grid.className = 'compare-grid';
     rows.forEach((row, i) => {
@@ -194,7 +204,7 @@ export default function decorate(block) {
       }
       grid.append(card);
     });
-    block.replaceChildren(grid);
+    if (head) block.replaceChildren(head, grid); else block.replaceChildren(grid);
     // The compare presentation is the migrated two-card carousel. Preserve
     // that structural identity even though EDS renders the slots as static
     // cards: the sheet already keys their residue under `cards:*`, and prod's
