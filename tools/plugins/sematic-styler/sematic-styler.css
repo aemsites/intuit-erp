@@ -336,6 +336,13 @@
   font-weight: 600;
 }
 
+/* Block groups carry a "Reset all" button on the right of their title. */
+.tree-group-title:has(.reset-section) {
+  display: flex;
+  align-items: center;
+  gap: var(--s2-spacing-100);
+}
+
 .tree-group:first-child > .tree-group-title {
   border-top: 0;
 }

@@ -225,10 +225,11 @@ export function syncLiveSectionStyles(section, liveSection) {
   setStyleTokens(section, [...new Set([...kept, ...liveStyles])]);
 }
 
+const isParagraphAll = (name) => PARAGRAPH_ALL_STYLE_RE.test(name);
+
 export function clearParagraphAllStyles(paragraphs) {
   const section = paragraphs[0]?.section;
   if (!section) return;
-  const isParagraphAll = (name) => PARAGRAPH_ALL_STYLE_RE.test(name);
   findRow(section, PARAGRAPH_ALL_KEY)?.remove();
   blocksOf(paragraphs).forEach((block) => removeClasses(block, isParagraphAll));
   if (paragraphs.some(({ el }) => !blockOf(el))) {
@@ -236,6 +237,12 @@ export function clearParagraphAllStyles(paragraphs) {
   }
   removeEmptyMetadata(section);
   resetDocCache(section.ownerDocument);
+}
+
+/** Removes a block-level "apply to all paragraphs" (the paragraphs' blocks only), in place. */
+export function clearBlockParagraphAllStyles(paragraphs) {
+  blocksOf(paragraphs).forEach((block) => removeClasses(block, isParagraphAll));
+  if (paragraphs[0]) resetDocCache(paragraphs[0].el.ownerDocument);
 }
 
 /** The targets' elements in `doc`, matched by section index and heading key. */
@@ -290,11 +297,14 @@ function applyTagSize(doc, targets, size) {
   return found.length;
 }
 
-/** Removes every tag-wide and positional size of the targets' tags, and apply-all. */
-function clearSizes(doc, targets) {
+/**
+ * Removes every tag-wide and positional size of the targets' tags, and (unless `sectionAll` is
+ * false) the section-level apply-all.
+ */
+function clearSizes(doc, targets, { sectionAll = true } = {}) {
   const found = resolveTargets(doc, targets);
   removeLegacyRows(found);
-  found.forEach(({ section }) => findRow(section, PARAGRAPH_ALL_KEY)?.remove());
+  if (sectionAll) found.forEach(({ section }) => findRow(section, PARAGRAPH_ALL_KEY)?.remove());
   const patterns = [...new Set(found.map(({ el }) => tagName(el)))].map(tagStyleRe);
   const isTagStyle = (name) => patterns.some((re) => re.test(name));
   blocksOf(found).forEach((block) => removeClasses(block, isTagStyle));
@@ -370,13 +380,31 @@ export function clearHeadingSizes(sdk, targets) {
   return editCount(sdk, (doc) => clearSizes(doc, targets), 'Elements moved since selection. Reselect them.');
 }
 
+/** Removes every applied size from one block's targets, leaving the section's settings alone. */
+export function clearBlockSizes(sdk, targets) {
+  return editCount(sdk, (doc) => clearSizes(doc, targets, { sectionAll: false }), 'Block moved since selection. Refresh the plugin.');
+}
+
+/**
+ * Turns the section-level "apply to all paragraphs" on (clearing per-paragraph sizes) or off.
+ * The `paragraph-all` row marks it on even when every paragraph is in a block, so it can't be
+ * confused with a block-level apply-all.
+ */
 export function setParagraphAllEnabled(sdk, paragraphs, enabled) {
   return editDoc(sdk, (doc) => {
     const found = resolveTargets(doc, paragraphs);
     if (!found.length) throw new Error('Section moved since selection. Refresh the plugin.');
     if (!enabled) return clearParagraphAllStyles(found);
     clearSizes(doc, paragraphs);
-    if (found.every(({ el }) => blockOf(el))) return undefined;
     return setRow(found[0].section, PARAGRAPH_ALL_KEY, 'true');
   });
+}
+
+/** Turns a block-level "apply to all paragraphs" off: removes that block's tag-wide P size. */
+export function clearBlockParagraphAll(sdk, paragraphs) {
+  return editCount(sdk, (doc) => {
+    const found = resolveTargets(doc, paragraphs);
+    clearBlockParagraphAllStyles(found);
+    return found.length;
+  }, 'Block moved since selection. Refresh the plugin.');
 }
