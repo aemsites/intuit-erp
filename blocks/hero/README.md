@@ -62,6 +62,13 @@ Assets:
   Author one source: if an `.mp4` is present it wins. Bold/italic YouTube links stay CTA buttons
   that open the video lightbox.
 - `homepage`: homepage sizing for `ies video`.
+- `ies video` + `.html` link: a link to a repo-hosted HTML animation (kept in `blocks/hero/animations/`,
+  e.g. `/blocks/hero/animations/ies-homepage-hero.html`) replaces the `.mp4`. It plays in an
+  isolated, non-interactive iframe (`?chrome=0` is added) over the poster image, which stays
+  for reduced motion or load errors. The file must be self-contained and loop on its own.
+- `loop`: opt-in for `ies video` and `ies-gradient` mp4s. The video loops continuously (no 5-second
+  teaser cut-off, no play button at the end). Reduced motion or blocked autoplay still shows the
+  play button. e.g. `Hero (ies video, homepage, loop)`.
 - `background-image`: the image fills the hero behind the copy.
 - `image-glow`: blue glow behind the hero image.
 - `light` (section style): light background with dark text.

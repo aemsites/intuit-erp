@@ -11,6 +11,8 @@ const DASHBOARD_LOTTIE_FALLBACK_DELAY = 3000;
 const DASHBOARD_LOTTIE_DESKTOP_THRESHOLD = 0.1;
 const DASHBOARD_LOTTIE_MOBILE_THRESHOLD = 0.8;
 const TEASER_SECONDS = 5;
+// link to an HTML animation
+const HTML_ANIMATION_RE = /\/blocks\/hero\/animations\/[^?#]+\.html(?:$|[?#])/i;
 const YOUTUBE_URL_RE = /(?:youtube(?:-nocookie)?\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/;
 const VIMEO_URL_RE = /vimeo\.com\/(?:video\/)?(\d+)/;
 
@@ -320,6 +322,60 @@ function scheduleWhenIdle(callback) {
   } else {
     window.setTimeout(callback, DASHBOARD_LOTTIE_FALLBACK_DELAY);
   }
+}
+
+// .ies.video: HTML animation in an idle-loaded iframe over the poster
+function buildHtmlAnimation(href, posters) {
+  const media = document.createElement('div');
+  media.className = 'hero-media hero-media-video hero-media-html';
+
+  const compact = window.matchMedia('(width < 1024px)').matches;
+  const posterSrc = (compact && posters[1]) || posters[0];
+  if (posterSrc) {
+    const poster = document.createElement('img');
+    poster.className = 'hero-html-poster';
+    poster.src = posterSrc;
+    poster.alt = '';
+    poster.setAttribute('aria-hidden', 'true');
+    media.append(poster);
+  }
+
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return media;
+
+  const url = new URL(href, window.location.href);
+  url.searchParams.set('chrome', '0');
+  scheduleWhenIdle(() => {
+    const frame = document.createElement('iframe');
+    frame.className = 'hero-html-frame';
+    frame.title = 'Product animation';
+    frame.tabIndex = -1;
+    frame.setAttribute('aria-hidden', 'true');
+    // allow-scripts alone renders blank
+    frame.setAttribute('sandbox', 'allow-scripts allow-same-origin');
+    frame.src = `${window.hlx?.codeBasePath || ''}${url.pathname}${url.search}`;
+    const toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.className = 'hero-motion-toggle';
+    toggle.hidden = true;
+    let paused = false;
+    const syncToggle = () => {
+      toggle.setAttribute('aria-label', `${paused ? 'Play' : 'Pause'} animation`);
+      toggle.dataset.state = paused ? 'paused' : 'playing';
+    };
+    toggle.addEventListener('click', () => {
+      paused = !paused;
+      frame.contentWindow.setPlaying(!paused);
+      syncToggle();
+    });
+    syncToggle();
+    frame.addEventListener('load', () => {
+      media.classList.add('is-playing');
+      toggle.hidden = typeof frame.contentWindow?.setPlaying !== 'function';
+    });
+    frame.addEventListener('error', () => { frame.remove(); toggle.remove(); });
+    media.append(frame, toggle);
+  });
+  return media;
 }
 
 /*
@@ -663,16 +719,21 @@ export default async function decorate(block) {
 
   let videoSrc = null;
   let lottieSrc = null;
+  let htmlSrc = null;
   const videoSrcs = [];
   ctaParas.forEach((p) => {
     const links = [...p.querySelectorAll('a')].filter((x) => {
       const href = x.getAttribute('href') || '';
-      return /\.mp4(?:$|\?)/i.test(href) || (isIesGradient && /\.json(?:$|\?)/i.test(href));
+      return /\.mp4(?:$|\?)/i.test(href)
+        || (isIesGradient && /\.json(?:$|\?)/i.test(href))
+        || (isIesVideo && HTML_ANIMATION_RE.test(href));
     });
     if (!links.length) return;
     links.forEach((a) => {
       const href = a.getAttribute('href');
-      if (/\.json(?:$|\?)/i.test(href)) {
+      if (HTML_ANIMATION_RE.test(href)) {
+        htmlSrc = htmlSrc || href;
+      } else if (/\.json(?:$|\?)/i.test(href)) {
         lottieSrc = lottieSrc || href;
       } else {
         videoSrc = videoSrc || href;
@@ -767,6 +828,8 @@ export default async function decorate(block) {
     lockup.className = 'hero-lockup';
     lockup.append(mediaEl);
     copy.prepend(lockup);
+  } else if (isIesVideo && htmlSrc) {
+    grid.append(buildHtmlAnimation(htmlSrc, posterSrcs));
   } else if (isIesVideo && videoSrc) {
     grid.append(buildTeaserVideo(videoSrcs, posterSrcs, loopVideo));
   } else if (isIesVideo && youtube) {
