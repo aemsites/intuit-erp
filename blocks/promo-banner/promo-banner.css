@@ -5,18 +5,43 @@
   top: 0;
   color: #fff;
   background: var(--navy);
+  font-family: var(--body-font-family);
+}
+
+.promo-banner-bar.green {
+  color: #fff;
+  background: var(--green);
+}
+
+.promo-banner-bar.light-green {
+  color: var(--ink-teal);
+  background: var(--green-bright);
+}
+
+.promo-banner-bar.sky {
+  color: var(--ink-teal);
+  background: var(--sky);
+}
+
+.promo-banner-bar.tofu {
+  color: var(--ink-teal);
+  background: var(--beige);
+}
+
+.promo-banner-bar.beige {
+  color: var(--ink-teal);
+  background: var(--tofu);
 }
 
 .promo-banner {
   max-width: var(--container);
   margin: 0 auto;
-  min-height: 136px;
+  min-height: 80px;
   padding: var(--space-xs) var(--space-l);
   box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-2xl);
 }
 
 /* keep the CTA beside the message at every width; only the message wraps */
@@ -28,29 +53,63 @@
 .promo-banner p {
   margin: 0;
   font-size: var(--body-font-size-xs);
-  font-weight: var(--font-weight-normal);
+  font-weight: var(--font-weight-semibold);
+  line-height: 28px;
 }
 
 .promo-banner .promo-banner-highlight {
   color: var(--green-bright);
-  font-weight: var(--font-weight-bold);
+  font-weight: var(--font-weight-bolder);
+}
+
+.promo-banner-bar.green .promo-banner-highlight,
+.promo-banner-bar.sky .promo-banner-highlight,
+.promo-banner-bar.tofu .promo-banner-highlight,
+.promo-banner-bar.beige .promo-banner-highlight {
+  color: inherit;
+}
+
+.promo-banner-bar.light-green .promo-banner-highlight {
+  color: var(--ink-teal);
 }
 
 .promo-banner p a.button {
+  min-width: 138px;
+  max-width: 148px;
   display: inline-flex;
   align-items: center;
   height: var(--space-2xl);
-  padding: 0 var(--space-l);
-  font-size: 14px;
-  font-weight: var(--font-weight-medium);
+  font-size: var(--body-font-size-xs);
+  font-weight: var(--font-weight-bold);
   line-height: var(--line-height-none);
   font-family: inherit;
-  border: 2px solid #fff;
   border-radius: var(--radius);
   text-decoration: none;
   cursor: pointer;
   background: #fff;
   color: var(--navy);
+}
+
+.promo-banner-bar .promo-banner p a.button {
+  background: var(--green-bright);
+  color: var(--navy);
+}
+
+.promo-banner-bar.green .promo-banner p a.button {
+  background: #fff;
+  color: var(--green);
+}
+
+.promo-banner-bar.light-green .promo-banner p a.button,
+.promo-banner-bar.tofu .promo-banner p a.button {
+  background: var(--ink-teal);
+  color: #fff;
+}
+
+.promo-banner-bar.sky .promo-banner p a.button,
+.promo-banner-bar.beige .promo-banner p a.button {
+  background: var(--green);
+  color: #fff;
 }
 
 @media (width >= 768px) {

@@ -35,6 +35,7 @@
   --agave: #c2f5ff;
   --light-gray: #f4f5f8;
   --pepper: #f0f4f6;
+  --beige:#e2e0db;
 
   /* section/form "sky" style band fill — distinct from --sky above (same
      word, unrelated token; --sky is the sand-palette teal used by
@@ -139,6 +140,7 @@
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
+  --font-weight-bolder: 900;
 
   /* line heights */
   --line-height-none: 1;
