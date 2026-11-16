@@ -1,0 +1,81 @@
+/* promo-banner — full-bleed navy strip: offer text with green labels and a white primary CTA */
+main .section.promo-banner-container > .promo-banner-wrapper {
+  max-width: none;
+  padding: 0;
+}
+
+.promo-banner {
+  background: var(--navy);
+  color: #fff;
+}
+
+/* mobile: text left, button right; the band grows past 136px for long copy */
+.promo-banner .promo-banner-inner {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-s);
+  min-height: 136px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-s) var(--space-l);
+}
+
+.promo-banner .promo-banner-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  font-size: var(--body-font-size-m);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-m);
+  color: #fff;
+  overflow-wrap: break-word;
+}
+
+.promo-banner .promo-banner-text p {
+  margin: 0;
+  color: inherit;
+}
+
+.promo-banner .promo-banner-label {
+  color: var(--green-bright);
+  font-weight: var(--font-weight-bold);
+}
+
+.promo-banner .promo-banner-cta {
+  flex: 0 0 auto;
+}
+
+/* the section.navy primary, without its chevron */
+.promo-banner a.button.primary {
+  background: #fff;
+  color: var(--navy);
+  border-color: #fff;
+}
+
+.promo-banner a.button.primary:hover,
+.promo-banner a.button.primary:focus-visible {
+  background: rgb(255 255 255 / 90%);
+  border-color: transparent;
+  color: var(--navy);
+}
+
+.promo-banner a.button.primary:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+@media (width >= 768px) {
+  .promo-banner .promo-banner-inner {
+    min-height: 80px;
+    justify-content: center;
+    gap: var(--space-l);
+    padding: var(--space-xs) var(--space-xl);
+  }
+
+  .promo-banner .promo-banner-text {
+    flex: 0 1 auto;
+    font-size: var(--body-font-size-l);
+  }
+}
