@@ -1261,7 +1261,7 @@
   background: none;
   color: #fff;
   font: inherit;
-  font-size: var(--body-font-size-xs);
+  font-size: var(--body-font-size-m);
   font-weight: var(--font-weight-medium);
   line-height: 1.25;
   cursor: pointer;
