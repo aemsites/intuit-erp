@@ -4,7 +4,7 @@
   z-index: 60;
   top: 0;
   color: #fff;
-  background: var(--navy);
+  background: var(--ink-teal);
   font-family: var(--body-font-family);
 }
 
@@ -42,6 +42,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 1rem;
 }
 
 /* keep the CTA beside the message at every width; only the message wraps */
@@ -87,12 +88,12 @@
   text-decoration: none;
   cursor: pointer;
   background: #fff;
-  color: var(--navy);
+  color: var(--ink-teal);
 }
 
 .promo-banner-bar .promo-banner p a.button {
   background: var(--green-bright);
-  color: var(--navy);
+  color: var(--ink-teal);
 }
 
 .promo-banner-bar.green .promo-banner p a.button {
