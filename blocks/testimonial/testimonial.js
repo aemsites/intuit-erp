@@ -757,6 +757,41 @@ function toVideoButton(a) {
   return btn;
 }
 
+// .card.feature.video-cta: a paragraph with only a video link becomes the story modal link
+function takeVideoLink(cell) {
+  const p = [...(cell?.querySelectorAll(':scope > p') || [])].find((node) => {
+    const a = node.querySelector('a');
+    const only = a && node.textContent.trim() === a.textContent.trim();
+    return only && videoInfo(a.getAttribute('href'));
+  });
+  const a = p?.querySelector('a');
+  p?.remove();
+  return a || null;
+}
+
+function buildVideoLink(a) {
+  const info = videoInfo(a.getAttribute('href'));
+  const [, text, duration] = a.textContent.trim().match(/^(.*?)\s*(\(\d{1,2}:\d{2}(?::\d{2})?\))?$/);
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'testimonial-video-link';
+  btn.setAttribute('data-video-src', a.getAttribute('href'));
+  const label = document.createElement('span');
+  label.textContent = text;
+  btn.append(label);
+  if (duration) {
+    const time = document.createElement('span');
+    time.className = 'testimonial-video-link-duration';
+    time.textContent = duration;
+    btn.append(time);
+  }
+  btn.addEventListener('click', () => openVideoModal(info.embedUrl, text));
+  const wrap = document.createElement('p');
+  wrap.className = 'testimonial-cta';
+  wrap.append(btn);
+  return wrap;
+}
+
 function buildStory(row, { videoModal = false } = {}) {
   const [contentCell, mediaCell, noteCell] = [...row.children];
   const figure = document.createElement('figure');
@@ -907,7 +942,13 @@ export default function decorate(block) {
     const ies = block.classList.contains('ies');
     const rows = [...block.querySelectorAll(':scope > div')];
     const heading = ies ? takeHeadingRow(rows) : null;
-    const figures = rows.map((row) => buildCard(row, { feature }));
+    const videoCta = feature && block.classList.contains('video-cta');
+    const figures = rows.map((row) => {
+      const link = videoCta ? takeVideoLink(row.children[1]) : null;
+      const figure = buildCard(row, { feature });
+      if (link) figure.append(buildVideoLink(link));
+      return figure;
+    });
     const carousel = block.classList.contains('carousel') || (ies && figures.length > 1);
     const body = carousel ? [buildCardCarousel(figures)] : figures;
     block.replaceChildren(...(heading ? [heading] : []), ...body);
