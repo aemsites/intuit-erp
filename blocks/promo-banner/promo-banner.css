@@ -17,7 +17,7 @@
   max-width: var(--container);
   min-height: 80px;
   margin: 0 auto;
-  padding: 0 16px;
+  padding: 0;
   box-sizing: border-box;
   display: flex;
   align-items: center;
@@ -66,9 +66,6 @@
 }
 
 @media (width >= 768px) {
-  .promo-banner {
-    padding: 0 24px;
-  }
 
   .promo-banner p a.button {
     width: auto;
