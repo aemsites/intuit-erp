@@ -329,7 +329,16 @@ h6 {
   font-weight: 400;
   line-height: 1.2;
   color: var(--heading-color);
+  text-wrap: balance;
   scroll-margin: 100px;
+}
+
+/* avoid single-word last lines */
+p,
+li,
+blockquote,
+figcaption {
+  text-wrap: pretty;
 }
 
 h1 {
