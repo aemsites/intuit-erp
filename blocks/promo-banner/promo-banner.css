@@ -4,13 +4,13 @@
   z-index: 60;
   top: 0;
   color: #fff;
-  background: #236cff;
+  background: var(--info);
   font-family: var(--body-font-family);
 }
 
 .promo-banner-bar.agave {
   color: #000;
-  background: #81f2fe;
+  background: var(--rail-promo);
 }
 
 .promo-banner {
@@ -22,7 +22,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 24px;
+  gap: var(--space-s);
 }
 
 .promo-banner .promo-banner-cta {
@@ -32,18 +32,18 @@
 
 .promo-banner p {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--body-font-size-xs);
   font-weight: var(--font-weight-semibold);
   line-height: 18px;
 }
 
 .promo-banner .promo-banner-highlight {
-  color: #81f2fe;
+  color: var(--rail-promo);
   font-weight: var(--font-weight-bolder);
 }
 
 .promo-banner-bar.agave .promo-banner-highlight {
-  color: #236cff;
+  color: var(--info);
 }
 
 .promo-banner p a.button {
@@ -53,7 +53,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0 12px;
+  padding: 0;
   font-size: var(--body-font-size-xs);
   font-weight: var(--font-weight-bold);
   line-height: 20px;
@@ -61,7 +61,7 @@
   border-radius: var(--radius);
   text-decoration: none;
   cursor: pointer;
-  background: #00254a;
+  background: var(--navy);
   color: #fff;
 }
 
@@ -73,7 +73,7 @@
   }
 
   .promo-banner p {
-    font-size: 20px;
+    font-size: var(--body-font-size-l);
     line-height: 28px;
   }
 }
