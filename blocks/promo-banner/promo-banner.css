@@ -22,7 +22,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-s);
+  gap: var(--space-2xs);
 }
 
 .promo-banner .promo-banner-cta {
