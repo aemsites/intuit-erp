@@ -4,48 +4,27 @@
   z-index: 60;
   top: 0;
   color: #fff;
-  background: var(--ink-teal);
+  background: #236cff;
   font-family: var(--body-font-family);
 }
 
-.promo-banner-bar.green {
-  color: #fff;
-  background: var(--green);
-}
-
-.promo-banner-bar.light-green {
-  color: var(--ink-teal);
-  background: var(--green-bright);
-}
-
-.promo-banner-bar.sky {
-  color: var(--ink-teal);
-  background: var(--sky);
-}
-
-.promo-banner-bar.tofu {
-  color: var(--ink-teal);
-  background: var(--beige);
-}
-
-.promo-banner-bar.beige {
-  color: var(--ink-teal);
-  background: var(--tofu);
+.promo-banner-bar.agave {
+  color: #000;
+  background: #81f2fe;
 }
 
 .promo-banner {
   max-width: var(--container);
-  margin: 0 auto;
   min-height: 80px;
-  padding: var(--space-xs) var(--space-l);
+  margin: 0 auto;
+  padding: 0 16px;
   box-sizing: border-box;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
+  justify-content: center;
+  gap: 24px;
 }
 
-/* keep the CTA beside the message at every width; only the message wraps */
 .promo-banner .promo-banner-cta {
   flex-shrink: 0;
   white-space: nowrap;
@@ -53,81 +32,52 @@
 
 .promo-banner p {
   margin: 0;
-  font-size: var(--body-font-size-xs);
+  font-size: 14px;
   font-weight: var(--font-weight-semibold);
-  line-height: 28px;
+  line-height: 18px;
 }
 
 .promo-banner .promo-banner-highlight {
-  color: var(--green-bright);
+  color: #81f2fe;
   font-weight: var(--font-weight-bolder);
 }
 
-.promo-banner-bar.green .promo-banner-highlight,
-.promo-banner-bar.sky .promo-banner-highlight,
-.promo-banner-bar.tofu .promo-banner-highlight,
-.promo-banner-bar.beige .promo-banner-highlight {
-  color: inherit;
-}
-
-.promo-banner-bar.light-green .promo-banner-highlight {
-  color: var(--ink-teal);
+.promo-banner-bar.agave .promo-banner-highlight {
+  color: #236cff;
 }
 
 .promo-banner p a.button {
-  min-width: 138px;
-  max-width: 148px;
+  width: 138px;
+  min-height: 40px;
+  box-sizing: border-box;
   display: inline-flex;
   align-items: center;
-  height: var(--space-2xl);
+  justify-content: center;
+  padding: 0 12px;
   font-size: var(--body-font-size-xs);
   font-weight: var(--font-weight-bold);
-  line-height: var(--line-height-none);
+  line-height: 20px;
   font-family: inherit;
   border-radius: var(--radius);
   text-decoration: none;
   cursor: pointer;
-  background: #fff;
-  color: var(--ink-teal);
-}
-
-.promo-banner-bar .promo-banner p a.button {
-  background: var(--green-bright);
-  color: var(--ink-teal);
-}
-
-.promo-banner-bar.green .promo-banner p a.button {
-  background: #fff;
-  color: var(--green);
-}
-
-.promo-banner-bar.light-green .promo-banner p a.button,
-.promo-banner-bar.tofu .promo-banner p a.button {
-  background: var(--ink-teal);
-  color: #fff;
-}
-
-.promo-banner-bar.sky .promo-banner p a.button,
-.promo-banner-bar.beige .promo-banner p a.button {
-  background: var(--green);
+  background: #00254a;
   color: #fff;
 }
 
 @media (width >= 768px) {
   .promo-banner {
-    min-height: 80px;
-    padding: 0;
-    font-size: var(--body-font-size-m);
-    justify-content: center;
+    padding: 0 24px;
+  }
+
+  .promo-banner p a.button {
+    width: auto;
+    min-width: 138px;
+    max-width: 148px;
   }
 
   .promo-banner p {
-    font-size: var(--body-font-size-m);
-  }
-}
-
-@media (width >= 1200px) {
-  .promo-banner p {
-    font-size: var(--body-font-size-l);
+    font-size: 20px;
+    line-height: 28px;
   }
 }

@@ -1,6 +1,6 @@
 import { getMetadata } from '../../scripts/aem.js';
 
-const VARIANTS = ['dark-blue', 'green', 'light-green', 'sky', 'tofu', 'beige'];
+const VARIANTS = ['super-blue', 'agave'];
 
 function isExternal(href) {
   return /^https?:\/\//.test(href);
