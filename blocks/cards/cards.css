@@ -2092,13 +2092,13 @@ main > .section.cards-container:has(.cards.ies-showcase) {
   --showcase-header-inset: 0;
   --showcase-badge-height: 20px;
   --showcase-badge-padding: var(--space-3xs);
-  --showcase-badge-gap: var(--space-2xs);
+  --showcase-eyebrow-gap: var(--space-2xs);
   --showcase-title-size: 34px;
   --showcase-card-title-size: var(--heading-font-size-m);
   --showcase-tile-radius: 38px;
 
   margin: 0;
-  padding: var(--space-2xl) 0 60px;
+  padding: 60px 0;
   background: var(--showcase-ink);
   color: var(--showcase-text);
 }
@@ -2127,7 +2127,7 @@ main > .section.cards-container:has(.cards.ies-showcase) .cards-header-badge {
   box-sizing: border-box;
   width: fit-content;
   height: var(--showcase-badge-height);
-  margin: 0 auto var(--showcase-badge-gap);
+  margin: 0 auto var(--space-s);
   padding: var(--showcase-badge-padding);
   border-radius: 20px;
   background: var(--agave-band);
@@ -2141,7 +2141,7 @@ main > .section.cards-container:has(.cards.ies-showcase) .cards-header-badge {
 }
 
 main > .section.cards-container:has(.cards.ies-showcase) .cards-header-eyebrow {
-  margin: 0 0 var(--showcase-badge-gap);
+  margin: 0 0 var(--showcase-eyebrow-gap);
   font-size: var(--body-font-size-xxs);
   font-style: normal;
   line-height: 1.25;
@@ -2242,7 +2242,7 @@ main > .section.cards-container:has(.cards.ies-showcase) .cards-header-sub {
     --showcase-header-inset: 0;
     --showcase-badge-height: 28px;
     --showcase-badge-padding: var(--space-3xs) var(--space-s);
-    --showcase-badge-gap: var(--space-s);
+    --showcase-eyebrow-gap: var(--space-s);
     --showcase-title-size: var(--heading-font-size-xxl);
     --showcase-card-title-size: 28px;
 
