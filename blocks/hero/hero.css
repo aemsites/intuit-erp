@@ -750,6 +750,7 @@ body.author-guide .hero .hero-copy .hero-lede {
 
 @media (width >= 1024px) {
   .hero.ies .hero-copy h1 { font-size: 60px; }
+  .hero.ies:not(.video, .glow, .arcs, .form) .hero-copy h1 { max-width: 600px; }
 }
 
 .section.hero-container:has(.hero.ies.arcs) {
