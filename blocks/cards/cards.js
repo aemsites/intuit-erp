@@ -13,6 +13,12 @@
  *               "download" promos, e.g. fragments/right-rail)
  *   .ies        One Intuit icon tiles, 1-up / 2-up / 4-up by breakpoint
  *   .ies-product  image + eyebrow + title + body, 1-up / 2-up by breakpoint
+ *   .ies-showcase dark Blueberry band: centered header (optional pill badge paragraph,
+ *               eyebrow paragraph, h2, subcopy) over image tiles (finished 382:325 art,
+ *               gradient + screenshot baked in), each with a title + body; 1-up / 2-up / 3-up
+ *               by breakpoint.
+ *               First row = header cell (badge p, eyebrow p, heading, subcopy p); each
+ *               following row = card (image cell, text cell with h3 + p)
  *   .ies-grid   image + title + body grid, 3-up / 2-up / 1-up; the section's h2 + p
  *               above it are the centred title and subtitle
  *   .ies-carousel  pepper cards with an inset photo and "Read more" link in a
@@ -295,7 +301,14 @@ export default function decorate(block) {
   const isIcons = block.classList.contains('icons') || block.classList.contains('ies');
   const isStat = block.classList.contains('tinted') && block.classList.contains('stat');
   const sectionTitle = isStat ? takeTitleRow(block) : null;
-  const productHeader = block.classList.contains('ies-product') ? takeProductHeader(block) : null;
+  const isShowcase = block.classList.contains('ies-showcase');
+  const productHeader = block.classList.contains('ies-product') || isShowcase
+    ? takeProductHeader(block) : null;
+  // showcase header: with two paragraphs before the title, the first is a pill badge
+  const headerEyebrows = productHeader?.querySelectorAll('.cards-header-eyebrow');
+  if (isShowcase && headerEyebrows?.length > 1) {
+    headerEyebrows[0].classList.replace('cards-header-eyebrow', 'cards-header-badge');
+  }
   if (block.classList.contains('icons') && block.classList.contains('colors')) applyCardColors(block);
 
   [...block.children].forEach((row) => {
