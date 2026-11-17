@@ -17,7 +17,7 @@
   max-width: var(--container);
   min-height: 80px;
   margin: 0 auto;
-  padding: 0;
+  padding: 0 var(--space-l);
   box-sizing: border-box;
   display: flex;
   align-items: center;
