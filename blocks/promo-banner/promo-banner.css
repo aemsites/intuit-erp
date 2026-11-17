@@ -1,0 +1,79 @@
+/* sticky bar scripts.js wraps around the promo-banner block, above the header */
+.promo-banner-bar {
+  position: sticky;
+  z-index: 60;
+  top: 0;
+  color: var(--background-color);
+  background: var(--info);
+  font-family: var(--body-font-family);
+}
+
+.promo-banner-bar.agave {
+  color: #000;
+  background: var(--rail-promo);
+}
+
+.promo-banner {
+  max-width: var(--container);
+  min-height: 80px;
+  margin: 0 auto;
+  padding: 0 var(--space-l);
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2xs);
+}
+
+.promo-banner .promo-banner-cta {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.promo-banner p {
+  margin: 0;
+  font-size: var(--body-font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-s);
+}
+
+.promo-banner .promo-banner-highlight {
+  color: var(--rail-promo);
+  font-weight: var(--font-weight-bolder);
+}
+
+.promo-banner-bar.agave .promo-banner-highlight {
+  color: var(--info);
+}
+
+.promo-banner p a.button {
+  width: 138px;
+  min-height: 40px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  font-size: var(--body-font-size-xs);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-m);
+  font-family: inherit;
+  border-radius: var(--radius);
+  text-decoration: none;
+  cursor: pointer;
+  background: var(--navy);
+  color: var(--background-color);
+}
+
+@media (width >= 768px) {
+  .promo-banner p a.button {
+    width: auto;
+    min-width: 138px;
+    max-width: 148px;
+  }
+
+  .promo-banner p {
+    font-size: var(--body-font-size-l);
+    line-height: var(--line-height-m);
+  }
+}

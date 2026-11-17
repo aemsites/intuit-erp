@@ -326,13 +326,14 @@ export default async function decorate(block) {
     let scrollTicking = false;
     const onScroll = () => {
       const y = window.scrollY;
+      const promoBannerHeight = document.querySelector('.promo-banner-bar')?.offsetHeight || 0;
       if (fixedSecondaryNav) {
         // Resource Center pages (all widths): the secondary nav slides up to
         // top:0 as the primary nav scrolls away, taking its place at the top.
-        fixedSecondaryNav.style.top = `${Math.max(0, (topstripH + navH) - y)}px`;
+        fixedSecondaryNav.style.top = `${promoBannerHeight + Math.max(0, (topstripH + navH) - y)}px`;
       } else {
         const offset = Math.max(0, topstripH - y);
-        nav.style.top = `${offset}px`;
+        nav.style.top = `${promoBannerHeight + offset}px`;
         nav.classList.toggle('scrolled', offset === 0 && y > 0);
       }
       scrollTicking = false;
@@ -356,6 +357,7 @@ export default async function decorate(block) {
     };
     measure();
     window.addEventListener('scroll', requestScrollTick, { passive: true });
+    window.addEventListener('promo-banner-resize', requestScrollTick);
     if (typeof ResizeObserver !== 'undefined') {
       const ro = new ResizeObserver(measure);
       ro.observe(nav);
