@@ -3,7 +3,7 @@
   position: sticky;
   z-index: 60;
   top: 0;
-  color: #fff;
+  color: var(--background-color);
   background: var(--info);
   font-family: var(--body-font-family);
 }
@@ -34,7 +34,7 @@
   margin: 0;
   font-size: var(--body-font-size-xs);
   font-weight: var(--font-weight-semibold);
-  line-height: 18px;
+  line-height: var(--line-height-s);
 }
 
 .promo-banner .promo-banner-highlight {
@@ -56,13 +56,13 @@
   padding: 0;
   font-size: var(--body-font-size-xs);
   font-weight: var(--font-weight-bold);
-  line-height: 20px;
+  line-height: var(--line-height-m);
   font-family: inherit;
   border-radius: var(--radius);
   text-decoration: none;
   cursor: pointer;
   background: var(--navy);
-  color: #fff;
+  color: var(--background-color);
 }
 
 @media (width >= 768px) {
@@ -74,6 +74,6 @@
 
   .promo-banner p {
     font-size: var(--body-font-size-l);
-    line-height: 28px;
+    line-height: var(--line-height-m);
   }
 }
