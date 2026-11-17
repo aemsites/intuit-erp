@@ -5,6 +5,16 @@
 />
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 
+<!-- Preload critical fonts to eliminate render-blocking cascade -->
+<!-- IES Theme: Tally fonts -->
+<link rel="preload" href="/styles/brand/ies/fonts/Tally-Regular.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/styles/brand/ies/fonts/Tally-Bold.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/styles/brand/ies/fonts/TallyDisplay-Bold.woff2" as="font" type="font/woff2" crossorigin>
+<!-- Default Theme: Avenir fonts -->
+<link rel="preload" href="/styles/fonts/avenir-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/styles/fonts/avenir-600.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/styles/fonts/avenir-700.woff2" as="font" type="font/woff2" crossorigin>
+
 <link rel="modulepreload" nonce="aem" href="/blocks/fragment/fragment.js">
 <link rel="modulepreload" nonce="aem" href="/scripts/experience.js">
 <link rel="modulepreload" nonce="aem" href="/scripts/tracking.js">
