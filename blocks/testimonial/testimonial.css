@@ -1824,6 +1824,26 @@
 }
 
 .testimonial.ies.quote-ies.blueberry { --quote-bg: #0d0031; }
+.testimonial.ies.quote-ies.bronze { --quote-bg: #883f1c; }
+
+/* eyebrow */
+.testimonial.quote-ies .testimonial-eyebrow {
+  margin: 0;
+  font-size: 12px;
+  font-weight: var(--font-weight-medium);
+  line-height: 1.2;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--quote-fg);
+}
+
+@media (width >= 768px) {
+  .testimonial.quote-ies .testimonial-eyebrow {
+    font-size: 14px;
+    line-height: 1.25;
+    letter-spacing: 1.82px;
+  }
+}
 
 .testimonial.ies.quote-ies:is(.light, .white) {
   --quote-bg: #eaf2ff;

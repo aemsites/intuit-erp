@@ -2081,3 +2081,191 @@ main > .section.cards-container:has(.cards.ies-product) > .default-content-wrapp
 
   .cards.ies-carousel .cards-track > div { flex-basis: calc((100% - 3 * var(--space-m)) / 4); }
 }
+
+main > .section.cards-container:has(.cards.ies-showcase) {
+  --showcase-ink: #0d0031;
+  --showcase-text: #fff;
+  --showcase-gutter: var(--space-m);
+  --showcase-gap: 50px;
+  --showcase-grid-width: 1210px;
+  --showcase-title-width: 1130px;
+  --showcase-header-inset: 0;
+  --showcase-badge-height: 20px;
+  --showcase-badge-padding: var(--space-3xs);
+  --showcase-badge-gap: var(--space-2xs);
+  --showcase-title-size: 34px;
+  --showcase-card-title-size: var(--heading-font-size-m);
+  --showcase-tile-radius: 38px;
+
+  margin: 0;
+  padding: var(--space-2xl) 0 60px;
+  background: var(--showcase-ink);
+  color: var(--showcase-text);
+}
+
+main > .section.cards-container:has(.cards.ies-showcase) > .cards-wrapper {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--showcase-gap);
+  width: 100%;
+  max-width: calc(var(--showcase-grid-width) + (2 * var(--showcase-gutter)));
+  padding-inline: var(--showcase-gutter);
+}
+
+main > .section.cards-container:has(.cards.ies-showcase) .cards-header {
+  max-width: var(--showcase-title-width);
+  margin: 0 auto;
+  padding-inline: var(--showcase-header-inset);
+  color: var(--showcase-text);
+}
+
+main > .section.cards-container:has(.cards.ies-showcase) .cards-header-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: fit-content;
+  height: var(--showcase-badge-height);
+  margin: 0 auto var(--showcase-badge-gap);
+  padding: var(--showcase-badge-padding);
+  border-radius: 20px;
+  background: var(--agave-band);
+  font-size: var(--body-font-size-xxs);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.1;
+  color: var(--showcase-ink);
+  text-align: center;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+main > .section.cards-container:has(.cards.ies-showcase) .cards-header-eyebrow {
+  margin: 0 0 var(--showcase-badge-gap);
+  font-size: var(--body-font-size-xxs);
+  font-style: normal;
+  line-height: 1.25;
+  letter-spacing: 0.13em;
+  color: var(--showcase-text);
+}
+
+main > .section.cards-container:has(.cards.ies-showcase) .cards-header-eyebrow em {
+  font-style: normal;
+}
+
+main > .section.cards-container:has(.cards.ies-showcase) .cards-header-title {
+  font-size: var(--showcase-title-size);
+  line-height: var(--line-height-xs);
+  color: var(--showcase-text);
+}
+
+main > .section.cards-container:has(.cards.ies-showcase) .cards-header-sub {
+  margin: var(--space-s) 0 0;
+  font-size: var(--body-font-size-m);
+  line-height: var(--line-height-m);
+  color: var(--showcase-text);
+}
+
+.section .cards.ies-showcase {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 30px;
+  max-width: none;
+  margin: 0;
+}
+
+.section .cards.ies-showcase > div {
+  gap: var(--space-m);
+}
+
+.section .cards.ies-showcase .cards-card-image {
+  aspect-ratio: 382 / 325;
+  overflow: hidden;
+  border-radius: var(--showcase-tile-radius);
+  background: var(--agave-band);
+}
+
+.section .cards.ies-showcase .cards-card-image picture,
+.section .cards.ies-showcase .cards-card-image img {
+  width: 100%;
+  height: 100%;
+}
+
+.section .cards.ies-showcase .cards-card-image img {
+  object-fit: cover;
+}
+
+.section .cards.ies-showcase .cards-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+  color: var(--showcase-text);
+}
+
+.section .cards.ies-showcase .cards-card-body :is(h3, h4) {
+  margin: 0;
+  font-size: var(--showcase-card-title-size);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-s);
+  color: var(--showcase-text);
+}
+
+.section .cards.ies-showcase .cards-card-body p {
+  margin: 0;
+  font-size: var(--body-font-size-m);
+  line-height: var(--line-height-m);
+  color: var(--showcase-text);
+}
+
+@media (width >= 768px) {
+  main > .section.cards-container:has(.cards.ies-showcase) {
+    --showcase-gutter: var(--space-2xl);
+    --showcase-gap: 52px;
+    --showcase-header-inset: var(--space-m);
+    --showcase-badge-height: 24px;
+    --showcase-badge-padding: var(--space-3xs) var(--space-2xs);
+    --showcase-title-size: 40px;
+  }
+
+  main > .section.cards-container:has(.cards.ies-showcase) .cards-header-eyebrow {
+    font-size: var(--body-font-size-xs);
+  }
+
+  .section .cards.ies-showcase {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-xl) var(--space-m);
+  }
+}
+
+@media (width >= 1024px) {
+  main > .section.cards-container:has(.cards.ies-showcase) {
+    --showcase-gap: var(--space-2xl);
+    --showcase-header-inset: 0;
+    --showcase-badge-height: 28px;
+    --showcase-badge-padding: var(--space-3xs) var(--space-s);
+    --showcase-badge-gap: var(--space-s);
+    --showcase-title-size: var(--heading-font-size-xxl);
+    --showcase-card-title-size: 28px;
+
+    padding-block: var(--space-5xl);
+  }
+
+  main > .section.cards-container:has(.cards.ies-showcase) .cards-header-badge {
+    font-size: var(--body-font-size-xs);
+  }
+
+  main > .section.cards-container:has(.cards.ies-showcase) .cards-header-title {
+    line-height: var(--line-height-none);
+  }
+
+  main > .section.cards-container:has(.cards.ies-showcase) .cards-header-sub {
+    margin-top: var(--space-m);
+    padding-inline: 95px;
+    font-size: var(--body-font-size-l);
+    line-height: var(--line-height-s);
+  }
+
+  .section .cards.ies-showcase {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-xl);
+  }
+}

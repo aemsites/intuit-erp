@@ -13,6 +13,8 @@
  *               "download" promos, e.g. fragments/right-rail)
  *   .ies        One Intuit icon tiles, 1-up / 2-up / 4-up by breakpoint
  *   .ies-product  image + eyebrow + title + body, 1-up / 2-up by breakpoint
+ *   .ies-showcase dark band: centered header (badge, eyebrow, h2, subcopy) over 1/2/3-up
+ *               image tiles with title + body; the image is the finished tile art
  *   .ies-grid   image + title + body grid, 3-up / 2-up / 1-up; the section's h2 + p
  *               above it are the centred title and subtitle
  *   .ies-carousel  pepper cards with an inset photo and "Read more" link in a
@@ -295,7 +297,14 @@ export default function decorate(block) {
   const isIcons = block.classList.contains('icons') || block.classList.contains('ies');
   const isStat = block.classList.contains('tinted') && block.classList.contains('stat');
   const sectionTitle = isStat ? takeTitleRow(block) : null;
-  const productHeader = block.classList.contains('ies-product') ? takeProductHeader(block) : null;
+  const isShowcase = block.classList.contains('ies-showcase');
+  const productHeader = block.classList.contains('ies-product') || isShowcase
+    ? takeProductHeader(block) : null;
+  // two paragraphs before the title: the first becomes the pill badge
+  const headerEyebrows = productHeader?.querySelectorAll('.cards-header-eyebrow');
+  if (isShowcase && headerEyebrows?.length > 1) {
+    headerEyebrows[0].classList.replace('cards-header-eyebrow', 'cards-header-badge');
+  }
   if (block.classList.contains('icons') && block.classList.contains('colors')) applyCardColors(block);
 
   [...block.children].forEach((row) => {

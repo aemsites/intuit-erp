@@ -899,9 +899,18 @@ function buildStory(row, { videoModal = false } = {}) {
 
 function buildQuoteSlide(row) {
   const cells = [...row.children];
-  const { quoteParas, name, roleParas } = parseQuote(cells[cells.length - 1]);
+  const {
+    quoteParas, name, roleParas, cite,
+  } = parseQuote(cells[cells.length - 1]);
   const figure = document.createElement('figure');
   figure.className = 'testimonial-card quote-slide';
+  // eyebrow
+  if (cite) {
+    const eyebrow = document.createElement('p');
+    eyebrow.className = 'testimonial-eyebrow';
+    eyebrow.textContent = cite;
+    figure.append(eyebrow);
+  }
   const quote = document.createElement('blockquote');
   quoteParas.forEach((p) => {
     const q = document.createElement('p');
