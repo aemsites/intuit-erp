@@ -1,28 +1,30 @@
-/* sticky bar scripts.js wraps around the promo-banner block, above the header */
-.promo-banner-bar {
+.promo-banner-wrapper {
+  max-width: none;
+  padding: 0;
+}
+
+body > .promo-banner-wrapper {
   position: sticky;
   z-index: 60;
   top: 0;
-  color: var(--background-color);
-  background: var(--info);
-  font-family: var(--body-font-family);
-}
-
-.promo-banner-bar.agave {
-  color: #000;
-  background: var(--rail-promo);
 }
 
 .promo-banner {
-  max-width: var(--container);
   min-height: 80px;
-  margin: 0 auto;
-  padding: 0 var(--space-l);
+  padding: 0 calc(max(0px, (100% - var(--container)) / 2) + var(--space-l));
   box-sizing: border-box;
+  color: var(--background-color);
+  background: var(--info);
+  font-family: var(--body-font-family);
   display: flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-2xs);
+}
+
+.promo-banner.agave {
+  color: #000;
+  background: var(--rail-promo);
 }
 
 .promo-banner .promo-banner-cta {
@@ -42,7 +44,7 @@
   font-weight: var(--font-weight-bolder);
 }
 
-.promo-banner-bar.agave .promo-banner-highlight {
+.promo-banner.agave .promo-banner-highlight {
   color: var(--info);
 }
 

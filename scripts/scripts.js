@@ -506,22 +506,22 @@ function shouldRenderContactUs() {
 const CONTACT_US_WAIT_MS = 2000;
 
 /**
- * Loads a block named 'promo-banner' into a sticky bar above the header when the
- * `enable-promo-banner` metadata is set; the block loads that fragment path itself.
- * header.js offsets the nav by the bar's height.
+ * Loads a block named 'promo-banner' above the header when the `enable-promo-banner`
+ * metadata is set; the block loads that fragment path itself. decorateBlock gives the
+ * wrapper its `promo-banner-wrapper` class, and promo-banner.css makes it sticky as a
+ * direct child of body. header.js offsets the nav by the wrapper's height.
  * @param {Element} header The header element
  */
 function loadPromoBanner(header) {
   if (!header || !getMetadata('enable-promo-banner').trim()) return;
-  const bar = document.createElement('aside');
-  bar.className = 'promo-banner-bar';
+  const wrapper = document.createElement('div');
   const promoBannerBlock = buildBlock('promo-banner', '');
-  bar.append(promoBannerBlock);
-  header.before(bar);
+  wrapper.append(promoBannerBlock);
+  header.before(wrapper);
   decorateBlock(promoBannerBlock);
   loadBlock(promoBannerBlock);
   const notifyResize = () => window.dispatchEvent(new Event('promo-banner-resize'));
-  if (typeof ResizeObserver !== 'undefined') new ResizeObserver(notifyResize).observe(bar);
+  if (typeof ResizeObserver !== 'undefined') new ResizeObserver(notifyResize).observe(wrapper);
 }
 
 /**
