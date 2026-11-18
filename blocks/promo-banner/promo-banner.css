@@ -10,7 +10,9 @@ body > .promo-banner-wrapper {
 }
 
 .promo-banner {
+  max-width: var(--container);
   min-height: 80px;
+  margin: 0 auto;
   padding: 0 var(--space-l);
   box-sizing: border-box;
   color: var(--background-color);
