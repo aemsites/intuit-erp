@@ -506,10 +506,6 @@ function shouldRenderContactUs() {
 const CONTACT_US_WAIT_MS = 2000;
 
 /**
- * Loads a block named 'promo-banner' above the header when the `enable-promo-banner`
- * metadata is set; the block loads that fragment path itself. decorateBlock gives the
- * wrapper its `promo-banner-wrapper` class, and promo-banner.css makes it sticky as a
- * direct child of body. header.js offsets the nav by the wrapper's height.
  * @param {Element} header The header element
  */
 function loadPromoBanner(header) {

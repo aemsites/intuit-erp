@@ -11,7 +11,7 @@ body > .promo-banner-wrapper {
 
 .promo-banner {
   min-height: 80px;
-  padding: 0 calc(max(0px, (100% - var(--container)) / 2) + var(--space-l));
+  padding: 0 var(--space-l);
   box-sizing: border-box;
   color: var(--background-color);
   background: var(--info);
