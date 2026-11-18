@@ -736,7 +736,11 @@ body.author-guide .hero .hero-copy .hero-lede {
 }
 
 @media (width < 768px) {
-  .hero.ies .hero-grid { gap: var(--space-2xl); }
+  .hero.ies .hero-grid {
+    gap: var(--space-2xl);
+    padding-top: 60px;
+    padding-bottom: 60px;
+  }
 }
 
 /* tablet: 60px top/bottom instead of the shared 40px stacked padding */

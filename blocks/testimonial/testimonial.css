@@ -1824,7 +1824,13 @@
 }
 
 .testimonial.ies.quote-ies.blueberry { --quote-bg: #0d0031; }
-.testimonial.ies.quote-ies.bronze { --quote-bg: #883f1c; }
+
+.testimonial.ies.quote-ies.bronze {
+  --quote-bg: #883f1c;
+
+  max-width: 1360px;
+  margin: 0 auto;
+}
 
 /* eyebrow */
 .testimonial.quote-ies .testimonial-eyebrow {
@@ -1971,6 +1977,7 @@
 @media (width >= 1024px) {
   .section.testimonial-container:has(.testimonial.quote-ies) { padding-block: var(--space-2xl); }
   .section.testimonial-container:has(.testimonial.quote-ies) > .testimonial-wrapper { padding-inline: 0; }
+  .section.testimonial-container:has(.testimonial.quote-ies.bronze) > .testimonial-wrapper { padding-inline: var(--space-2xl); }
 
   .testimonial.quote-ies .testimonial-heading {
     margin-bottom: var(--space-2xl);
