@@ -326,7 +326,7 @@ export default async function decorate(block) {
     let scrollTicking = false;
     const onScroll = () => {
       const y = window.scrollY;
-      const promoBannerHeight = document.querySelector('.promo-banner-bar')?.offsetHeight || 0;
+      const promoBannerHeight = document.querySelector('body > .promo-banner-wrapper')?.offsetHeight || 0;
       if (fixedSecondaryNav) {
         // Resource Center pages (all widths): the secondary nav slides up to
         // top:0 as the primary nav scrolls away, taking its place at the top.
