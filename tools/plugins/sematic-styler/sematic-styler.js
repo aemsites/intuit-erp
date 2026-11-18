@@ -193,32 +193,27 @@ function blockLabel(block) {
 
 /** The selection-independent tree, memoized per document and editable-block config. */
 function baseTree(doc, editableBlocks) {
-  return memo(doc, `tree:${editableKey(editableBlocks)}`, () => {
-    const defaultEditable = isEditable(null, editableBlocks);
-    return [...doc.querySelectorAll('main > div')].map((section, index) => {
-      const groups = [...section.children].flatMap((child, childIndex) => {
-        if (child.matches(METADATA)) return [];
-        const isBlock = child.matches('div[class]')
-          && !child.classList.contains('default-content-wrapper');
-        if (!isEditable(isBlock ? child : null, editableBlocks)) return [];
-        const elements = [
-          ...(child.matches(HEADINGS) ? [child] : []),
-          ...child.querySelectorAll(HEADINGS),
-        ].filter((el) => !el.closest(METADATA)
-          && (isBlock || !el.closest('main > div > div[class]')));
-        if (!elements.length) return [];
-        return [{
-          title: isBlock ? blockLabel(child) : DEFAULT_GROUP,
-          // Identifies the block for its own "apply to all paragraphs" state.
-          blockKey: isBlock ? `${index + 1}/${childIndex}` : null,
-          elements: elements.map((el) => ({
-            ...headingInfo(el), selected: false, defaultEditable,
-          })),
-        }];
-      });
-      return { sectionIndex: index + 1, groups };
-    }).filter(({ groups }) => groups.length);
-  });
+  return memo(doc, `tree:${editableKey(editableBlocks)}`, () => [...doc.querySelectorAll('main > div')].map((section, index) => {
+    const groups = [...section.children].flatMap((child, childIndex) => {
+      if (child.matches(METADATA)) return [];
+      const isBlock = child.matches('div[class]')
+        && !child.classList.contains('default-content-wrapper');
+      if (!isEditable(isBlock ? child : null, editableBlocks)) return [];
+      const elements = [
+        ...(child.matches(HEADINGS) ? [child] : []),
+        ...child.querySelectorAll(HEADINGS),
+      ].filter((el) => !el.closest(METADATA)
+        && (isBlock || !el.closest('main > div > div[class]')));
+      if (!elements.length) return [];
+      return [{
+        title: isBlock ? blockLabel(child) : DEFAULT_GROUP,
+        // Identifies the block for its own "apply to all paragraphs" state.
+        blockKey: isBlock ? `${index + 1}/${childIndex}` : null,
+        elements: elements.map((el) => ({ ...headingInfo(el), selected: false })),
+      }];
+    });
+    return { sectionIndex: index + 1, groups };
+  }).filter(({ groups }) => groups.length));
 }
 
 /** Sections → groups (block or default content) → headings/paragraphs, flagged when selected. */
@@ -635,7 +630,7 @@ function sectionSignature(sectionIndex, groups, { pendingSizes, paragraphAll, bl
       : 0,
     groups.map((group) => [group.title, blockState(group), group.elements.map((h) => [
       h.key, h.el.tagName, h.blockName, h.position, h.defaultPosition, Boolean(h.block),
-      h.el.textContent.trim(), h.selected, h.defaultEditable,
+      h.el.textContent.trim(), h.selected,
       currentStyle(h.section, h.el).size, pending(h),
     ])]),
   ]);
@@ -953,7 +948,7 @@ export default async function init() {
     rendered = inputs;
     lastTree = contentTree(selection, treeDoc(), editableBlocks, cursorBlock);
     render(list, lastTree, ui, selectionChanged);
-    if (editableBlocks?.size === 0) {
+    if (editableBlocks?.size === 0 && !lastTree.length) {
       status.textContent = 'No blocks are editable. List them in the include column of the library config, or use "all".';
     } else if (selection === null) {
       status.textContent = lastTree.length ? 'Select content in the document.' : '';

@@ -4,8 +4,6 @@ const DA_CONFIG = 'https://admin.da.live/config';
 // This plugin's row in the library sheet, by title or path (handles both spelling variants).
 const PLUGIN_ID = /sem(?:an)?ticstyler/i;
 const ALL = 'all';
-/** Include token that makes default content (text outside any block) editable. */
-export const DEFAULT_CONTENT = 'default-content';
 
 const field = (row, name) => Object.entries(row || {})
   .find(([key]) => key.trim().toLowerCase() === name)?.[1];
@@ -77,8 +75,8 @@ export async function loadEditableBlocks({ actions, context }, pluginPath) {
 
 /** Whether a section child (a block element, or `null` for default content) is editable. */
 export function isEditable(block, editable) {
-  if (editable === null) return true;
-  return editable.has(block ? blockNameOf(block) : DEFAULT_CONTENT);
+  if (editable === null || !block) return true;
+  return editable.has(blockNameOf(block));
 }
 
 /** Stable key for comparing two editable-block results. */

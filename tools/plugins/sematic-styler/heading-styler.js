@@ -247,11 +247,10 @@ export function clearBlockParagraphAllStyles(paragraphs) {
 
 /** The targets' elements in `doc`, matched by section index and heading key. */
 function resolveTargets(doc, targets) {
-  return targets.map(({ sectionIndex, key, defaultEditable }) => {
+  return targets.map(({ sectionIndex, key }) => {
     const section = sectionsOf(doc)[sectionIndex - 1];
     const el = section && [...section.querySelectorAll(HEADINGS)]
       .find((h) => headingKey(h, section) === key);
-    if (el && !blockOf(el) && defaultEditable === false) return null;
     return el && { section, el };
   }).filter(Boolean);
 }
