@@ -107,8 +107,14 @@ Two things make this work:
 2. **Tag the slot with `append` mode.** These widgets attach behavior and render nothing visible, so there
    is nothing to swap — add `pzn-mode` / `exp-mode` = `append` so the runtime **appends** the widget
    fragment to the slot instead of replacing its content. Point the slot at an empty mount (an empty section
-   is fine); its location only controls *when* the widget runs (first section = eager, later = lazy). Works
-   the same for `pzn` and `exp`.
+   is fine); slots run in the lazy phase, after the default page has painted. On pages with
+   page-level `experiment-id` / `personalization-id` metadata, a first-section slot still runs
+   before reveal. Works the same for `pzn` and `exp`.
+
+Because section slots swap after paint, keep each variant the same height as the default content so
+the swap doesn't shift the page. A slot the visitor is already using (focus inside it, or a form
+field they have typed into or changed) keeps its default content, and neither arm is recorded for
+it. This is decided before the fragment loads, so a widget in a skipped variant never runs; sampled perf telemetry counts these as `inUseSkips`.
 
 For a code variant there's usually just **one** treatment fragment — the control is the page as it already
 is, so you don't author a control fragment. Existing widget modules live under `widgets/pzn/…`.

@@ -428,7 +428,10 @@ export function enhanceDashboardAnimation(media, picture, {
     return responsePromise;
   };
 
+  // A personalized hero can replace this one after it painted; skip the player for a hero
+  // that is no longer on the page.
   const start = async () => {
+    if (!media.isConnected) return;
     let holder;
     try {
       const [{ default: lottie }, res] = await Promise.all([loadPlayer(), warmResources()]);
@@ -436,6 +439,7 @@ export function enhanceDashboardAnimation(media, picture, {
       await yieldToMain();
       const animationData = await res.json();
       await yieldToMain();
+      if (!media.isConnected) return;
 
       holder = document.createElement('div');
       holder.className = 'hero-dashboard-lottie is-loading';

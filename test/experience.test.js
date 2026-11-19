@@ -296,9 +296,9 @@ describe('hasEagerWork (above-the-fold gate)', () => {
     setMeta('personalization-id', 'HomeHero');
     expect(hasEagerWork(document)).toBe(true);
   });
-  it('true when the first section carries a target', () => {
+  it('false when only the first section carries a target (default shows, lazy swaps it)', () => {
     document.body.innerHTML = '<main><div class="section" data-pzn="alpha"></div></main>';
-    expect(hasEagerWork(document)).toBe(true);
+    expect(hasEagerWork(document)).toBe(false);
   });
   it('false when targets live only below the first section', () => {
     document.body.innerHTML = '<main>'
@@ -314,11 +314,9 @@ describe('hasEagerWork (above-the-fold gate)', () => {
     setMeta('experiment-id', 'not-a-number');
     expect(hasEagerWork(document)).toBe(true);
   });
-  // Regression: hasEagerWork runs BEFORE decorateMain, so real pages have raw section
-  // divs with NO `.section` class yet — only pipeline-emitted data-pzn/data-exp.
-  it('true when the first RAW (pre-decorate) section carries a target', () => {
+  it('false when the first RAW (pre-decorate) section carries a target', () => {
     document.body.innerHTML = '<main><div data-pzn="alpha"></div><div></div></main>';
-    expect(hasEagerWork(document)).toBe(true);
+    expect(hasEagerWork(document)).toBe(false);
   });
   it('false when RAW targets live only below the first section', () => {
     document.body.innerHTML = '<main>'
@@ -1268,21 +1266,19 @@ describe('phase entry points (applyPageExperience / applyEagerLayers / applyLazy
     await window.hlx.experienceResponsePromise;
   });
 
-  it('applyPageExperience: a first-section target still awaits the decision before reveal', async () => {
+  it('applyPageExperience: a first-section target fires the decision but does not block reveal', async () => {
     document.body.innerHTML = '<main><div class="section" data-pzn="alpha"></div></main>';
     let resolveFetch;
-    vi.spyOn(globalThis, 'fetch').mockImplementationOnce(
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementationOnce(
       () => new Promise((resolve) => { resolveFetch = resolve; }),
     );
-    let settled = false;
-    const p = applyPageExperience(document).then((r) => { settled = true; return r; });
-    await Promise.resolve();
-    expect(settled).toBe(false); // blocked on the pending decision — proves the eager await ran
+    expect(await applyPageExperience(document)).toBe(false);
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(document.querySelector('main').innerHTML).toContain('data-pzn="alpha"');
     resolveFetch(new Response(JSON.stringify(pznResp('alpha', { contentId: null })), {
       status: 200, headers: { 'content-type': 'application/json' },
     }));
-    await p;
-    expect(settled).toBe(true);
+    await window.hlx.experienceResponsePromise;
   });
 
   it('applyEagerLayers: no-op without a cached response', async () => {
@@ -1290,11 +1286,257 @@ describe('phase entry points (applyPageExperience / applyEagerLayers / applyLazy
     await expect(applyEagerLayers(document, false)).resolves.toBeUndefined();
   });
 
-  it('applyEagerLayers: swaps the first section from the cached response', async () => {
+  it('applyEagerLayers: leaves the first section to the lazy phase when the page was not swapped', async () => {
     window.hlx = { experienceResponse: pznResp('alpha', { contentId: '/fragments/pzn/a' }) };
     document.body.innerHTML = '<main><div class="section" data-pzn="alpha"></div></main>';
     await applyEagerLayers(document, false);
+    expect(loadFragment).not.toHaveBeenCalled();
+    expect(window.hlx.experienceFirstSectionHandled).toBeUndefined();
+
+    await applyLazyLayers(document);
     expect(loadFragment).toHaveBeenCalledWith('/fragments/pzn/a');
+    expect(window.appVars.pznRecDetailsArr[0]).toMatchObject({ personalization_placement: 'alpha' });
+  });
+
+  it('applyLazyLayers: hands each swapped target to onApplied without waiting for slower swaps', async () => {
+    window.hlx = {
+      experienceResponse: mergeExperience(
+        pznResp('alpha', { contentId: '/fragments/pzn/a' }),
+        pznResp('beta', { contentId: '/fragments/pzn/b' }),
+      ),
+    };
+    document.body.innerHTML = '<main><div class="section" data-pzn="alpha"></div>'
+      + '<div class="section" data-pzn="beta"></div></main>';
+    const defaultLoad = loadFragment.getMockImplementation();
+    loadFragment.mockImplementation((path) => (path === '/fragments/pzn/b'
+      ? new Promise(() => {})
+      : defaultLoad(path)));
+    const hero = document.querySelector('[data-pzn="alpha"]');
+    const onApplied = vi.fn();
+    applyLazyLayers(document, onApplied);
+    await vi.waitFor(() => expect(onApplied).toHaveBeenCalledWith(hero));
+    expect(hero.querySelector('[data-frag="/fragments/pzn/a"]')).toBeTruthy();
+    expect(onApplied).toHaveBeenCalledTimes(1);
+    expect(loadFragment).toHaveBeenCalledWith('/fragments/pzn/b');
+  });
+
+  it('applyLazyLayers: loads the variant image before swapping a painted first section', async () => {
+    window.hlx = { experienceResponse: pznResp('alpha', { contentId: '/fragments/pzn/a' }) };
+    document.body.innerHTML = '<main><div class="section" data-section-status="loaded" data-pzn="alpha">'
+      + '<p>Default hero</p></div></main>';
+    let img;
+    loadFragment.mockImplementation(async () => {
+      const m = document.createElement('main');
+      m.innerHTML = '<div><img src="/variant.png" loading="lazy" alt=""></div>';
+      img = m.querySelector('img');
+      return m;
+    });
+    const hero = document.querySelector('[data-pzn="alpha"]');
+    const done = applyLazyLayers(document);
+    await vi.waitFor(() => expect(img?.loading).toBe('eager'));
+    expect(hero.textContent).toContain('Default hero');
+
+    img.dispatchEvent(new Event('load'));
+    await done;
+    expect(hero.querySelector('img')).toBe(img);
+  });
+
+  it('applyLazyLayers: waits for every variant image, not just an icon that comes first', async () => {
+    window.hlx = { experienceResponse: pznResp('alpha', { contentId: '/fragments/pzn/a' }) };
+    document.body.innerHTML = '<main><div class="section" data-section-status="loaded" data-pzn="alpha">'
+      + '<p>Default hero</p></div></main>';
+    let icon;
+    let heroImg;
+    loadFragment.mockImplementation(async () => {
+      const m = document.createElement('main');
+      m.innerHTML = '<div><img class="icon" src="/icon.svg" loading="lazy" alt="">'
+        + '<img src="/hero.png" loading="lazy" alt=""></div>';
+      [icon, heroImg] = m.querySelectorAll('img');
+      return m;
+    });
+
+    const done = applyLazyLayers(document);
+    await vi.waitFor(() => expect(heroImg?.loading).toBe('eager'));
+    icon.dispatchEvent(new Event('load'));
+    await new Promise((r) => { setTimeout(r, 20); });
+    expect(document.querySelector('[data-pzn="alpha"]').textContent).toContain('Default hero');
+    heroImg.dispatchEvent(new Event('load'));
+    await done;
+    expect(document.querySelector('[data-pzn="alpha"] img:last-child')).toBe(heroImg);
+  });
+
+  it('applyLazyLayers: leaves a painted section alone while the visitor is using it', async () => {
+    window.hlx = { experienceResponse: pznResp('alpha', { contentId: '/fragments/pzn/a' }) };
+    loadFragment.mockImplementation(async () => {
+      const m = document.createElement('main');
+      m.innerHTML = '<div><p>Variant</p></div>';
+      return m;
+    });
+    const paint = () => {
+      document.body.innerHTML = '<main><div class="section" data-section-status="loaded" data-pzn="alpha">'
+        + '<form><input name="email" value=""><button>Go</button></form></div></main>';
+      return document.querySelector('[data-pzn="alpha"]');
+    };
+
+    let hero = paint();
+    const typed = hero.querySelector('input');
+    typed.value = 'a@b.co';
+    typed.dispatchEvent(new Event('input', { bubbles: true }));
+    await applyLazyLayers(document);
+    expect(typed.value).toBe('a@b.co');
+    expect(hero.dataset.pznPlacement).toBeUndefined();
+
+    hero = paint();
+    hero.querySelector('button').focus();
+    await applyLazyLayers(document);
+    expect(hero.querySelector('button')).not.toBeNull();
+    hero.querySelector('button').blur();
+
+    // A value set by page code is not the visitor using the section.
+    hero = paint();
+    hero.querySelector('input').value = 'prefilled';
+    await applyLazyLayers(document);
+    expect(hero.textContent).toContain('Variant');
+    expect(hero.dataset.pznPlacement).toBe('alpha');
+
+    const paintSelect = () => {
+      document.body.innerHTML = '<main><div class="section" data-section-status="loaded" data-pzn="alpha">'
+        + '<select><option disabled>Pick</option><option>A</option></select></div></main>';
+      return document.querySelector('[data-pzn="alpha"]');
+    };
+    hero = paintSelect();
+    await applyLazyLayers(document);
+    expect(hero.textContent).toContain('Variant');
+
+    hero = paintSelect();
+    hero.querySelector('select').selectedIndex = 1;
+    hero.querySelector('select').dispatchEvent(new Event('change', { bubbles: true }));
+    await applyLazyLayers(document);
+    expect(hero.querySelector('select')).not.toBeNull();
+  });
+
+  it('applyLazyLayers: records neither arm for a painted section the visitor is using', async () => {
+    window.hlx = { experienceResponse: pznResp('alpha', { contentId: null, offerId: 'offer-1' }) };
+    document.body.innerHTML = '<main><div class="section" data-section-status="loaded" data-pzn="alpha">'
+      + '<input name="q"></div></main>';
+    const input = document.querySelector('input');
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    await applyLazyLayers(document);
+    expect(window.appVars?.pznRecDetailsArr ?? []).toHaveLength(0);
+
+    document.body.innerHTML = '<main><div class="section" data-section-status="loaded" data-pzn="alpha">'
+      + '<input name="q"></div></main>';
+    await applyLazyLayers(document);
+    expect(window.appVars.pznRecDetailsArr).toHaveLength(1);
+  });
+
+  it('applyLazyLayers: a block-scoped slot counts focus anywhere in its section, and never loads the fragment', async () => {
+    window.hlx = { experienceResponse: pznResp('alpha', { contentId: '/fragments/pzn/a' }) };
+    const paint = () => {
+      document.body.innerHTML = '<main><div class="section" data-section-status="loaded" data-pzn="alpha" data-pzn-block="cards">'
+        + '<div class="cards" data-block-name="cards"><p>Default</p></div>'
+        + '<div class="form"><button>Go</button></div></div></main>';
+      return document.querySelector('[data-pzn="alpha"]');
+    };
+    loadFragment.mockImplementation(async () => {
+      const m = document.createElement('main');
+      m.innerHTML = '<div><p>Variant</p></div>';
+      return m;
+    });
+
+    let section = paint();
+    section.querySelector('button').focus();
+    await applyLazyLayers(document);
+    expect(loadFragment).not.toHaveBeenCalled();
+    expect(section.textContent).toContain('Default');
+    expect(window.appVars?.pznRecDetailsArr ?? []).toHaveLength(0);
+    section.querySelector('button').blur();
+
+    section = paint();
+    await applyLazyLayers(document);
+    expect(loadFragment).toHaveBeenCalledOnce();
+    expect(section.textContent).toContain('Variant');
+  });
+
+  it('applyLazyLayers: does not wait for the variant image below the first section', async () => {
+    window.hlx = { experienceResponse: pznResp('alpha', { contentId: '/fragments/pzn/a' }) };
+    document.body.innerHTML = '<main><div class="section" data-section-status="loaded"><p>Hero</p></div>'
+      + '<div class="section" data-section-status="loaded" data-pzn="alpha"><p>Default</p></div></main>';
+    let img;
+    loadFragment.mockImplementation(async () => {
+      const m = document.createElement('main');
+      m.innerHTML = '<div><img src="/variant.png" loading="lazy" alt=""></div>';
+      img = m.querySelector('img');
+      return m;
+    });
+
+    await applyLazyLayers(document);
+    expect(img.getAttribute('loading')).toBe('lazy');
+    expect(img.loading).toBeUndefined();
+    expect(document.querySelector('[data-pzn="alpha"] img')).toBe(img);
+  });
+
+  it('applyLazyLayers: swaps a painted first section anyway if the variant image fails or stalls', async () => {
+    window.hlx = { experienceResponse: pznResp('alpha', { contentId: '/fragments/pzn/a' }) };
+    const paint = () => {
+      document.body.innerHTML = '<main><div class="section" data-section-status="loaded" data-pzn="alpha">'
+        + '<p>Default hero</p></div></main>';
+      return document.querySelector('[data-pzn="alpha"]');
+    };
+    let img;
+    loadFragment.mockImplementation(async () => {
+      const m = document.createElement('main');
+      m.innerHTML = '<div><img src="/variant.png" loading="lazy" alt=""></div>';
+      img = m.querySelector('img');
+      return m;
+    });
+
+    let hero = paint();
+    let done = applyLazyLayers(document);
+    await vi.waitFor(() => expect(img?.loading).toBe('eager'));
+    img.dispatchEvent(new Event('error'));
+    await done;
+    expect(hero.querySelector('img')).toBe(img);
+
+    vi.useFakeTimers();
+    try {
+      img = null;
+      hero = paint();
+      done = applyLazyLayers(document);
+      await vi.advanceTimersByTimeAsync(0);
+      expect(img?.loading).toBe('eager');
+      await vi.advanceTimersByTimeAsync(1999);
+      expect(hero.textContent).toContain('Default hero');
+      await vi.advanceTimersByTimeAsync(1);
+      await done;
+      expect(hero.querySelector('img')).toBe(img);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('applyEagerLayers: still applies the first section before reveal when a page-level decision did not swap the page', async () => {
+    setMeta('personalization-id', 'HomeHero');
+    window.hlx = {
+      experienceResponse: mergeExperience(
+        pznResp('HomeHero', { contentId: null }),
+        pznResp('alpha', { contentId: '/fragments/pzn/a' }),
+      ),
+    };
+    document.body.innerHTML = '<main><div class="section" data-pzn="alpha"></div></main>';
+    await applyEagerLayers(document, false);
+    expect(loadFragment).toHaveBeenCalledWith('/fragments/pzn/a');
+    expect(window.hlx.experienceFirstSectionHandled).toBe(true);
+  });
+
+  it('applyLazyLayers: skips the first section once eager handled it after a page swap', async () => {
+    window.hlx = {
+      experienceResponse: pznResp('alpha', { contentId: '/fragments/pzn/a' }),
+      experienceFirstSectionHandled: true,
+    };
+    document.body.innerHTML = '<main><div class="section" data-pzn="alpha"></div></main>';
+    await applyLazyLayers(document);
+    expect(loadFragment).not.toHaveBeenCalled();
   });
 
   it('applyEagerLayers: pageSwapped ⇒ 2nd call resolves swapped-in slots, merges, applies first section', async () => {
@@ -1375,7 +1617,7 @@ describe('phase entry points (applyPageExperience / applyEagerLayers / applyLazy
     }
   });
 
-  it('applyLazyLayers: swaps below-the-fold sections, skipping the first', async () => {
+  it('applyLazyLayers: swaps below-the-fold sections', async () => {
     window.hlx = { experienceResponse: pznResp('gamma', { contentId: '/fragments/pzn/g' }) };
     document.body.innerHTML = '<main>'
       + '<div class="section"></div>'
@@ -1465,6 +1707,7 @@ describe('phase entry points (applyPageExperience / applyEagerLayers / applyLazy
     expect(window.appVars.pznPageRecDetailsArr).toEqual([]);
     expect(window.appVars.ixpDetailsArr).toEqual([]);
     expect(window.appVars.pznRecDetailsArr).toEqual([]);
+    expect(loadFragment).toHaveBeenCalledWith('/fragments/exp/hero');
     expect(loadFragment).toHaveBeenCalledWith('/fragments/pzn/g');
     expect(visualSettled).toBe(false);
   });

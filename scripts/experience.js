@@ -1,7 +1,8 @@
 // The experience layer: ONE consolidated /api/intuit-orchestrator call per page for both
-// experimentation (IXP) and personalization (PZN) — collect ids/names, fetch, cache, swap
-// (whole-page + first section pre-LCP, rest after). A whole-page swap may trigger one more
-// call for the swapped-in content's own section/block slots (recursion-safe).
+// experimentation (IXP) and personalization (PZN) — collect ids/names, fetch, cache, swap. A
+// whole-page swap lands before LCP; sections, including the first, swap in after paint (pages with
+// page-level metadata still swap the first section before reveal). A whole-page swap may trigger
+// one more call for the swapped-in content's own section/block slots (recursion-safe).
 
 import { getMetadata } from './aem.js';
 import { buildIntentContext, getIntentProfile } from './of1-intent.js';
@@ -20,6 +21,9 @@ const PERF_ON = (() => {
 const PERF_SAMPLE_RATE = 0.1;
 // How long after load to let LCP/lazy layers settle before reporting.
 const PERF_REPORT_DELAY_MS = 6000;
+// The consent stack loads in delayed and often finishes after the 6 s mark, so the report waits
+// for it up to this cap (or until the page is hidden) to keep the consent measures.
+const PERF_REPORT_MAX_MS = 20000;
 const PERF_ENABLED = PERF_ON || Math.random() < PERF_SAMPLE_RATE;
 
 const round1 = (n) => Math.round(n * 10) / 10;
@@ -184,6 +188,8 @@ export function buildPerfPayload({
     const field = PERF_MEASURE_FIELDS[e.name];
     if (field) payload[field] = round1(e.duration);
   });
+  const inUseSkips = measures.filter((e) => e.name === 'exp:skip-in-use').length;
+  if (inUseSkips) payload.inUseSkips = inUseSkips;
   Object.assign(payload, summarizeLayoutShifts(layoutShifts, measures));
   // Orchestrator calls: 1st = decision call, 2nd = resolveSwappedSlots follow-up.
   // Resource timings can be absent on a network-error/abort — callMeta still has the call.
@@ -223,6 +229,7 @@ export function buildPerfPayload({
   let lcpEntry;
   let fcpEntry;
   const measures = [];
+  let onConsentMeasured = () => {};
   const orchestrator = [];
   const layoutShifts = [];
   const observe = (type, onEntry) => {
@@ -235,6 +242,7 @@ export function buildPerfPayload({
   observe('paint', (e) => { if (e.name === 'first-contentful-paint') fcpEntry = e; });
   observe('measure', (e) => {
     if (e.name.startsWith('exp:') || e.name.startsWith('consent:')) measures.push(e);
+    if (e.name === 'consent:total' || e.name === 'consent:skipped') onConsentMeasured(e);
   });
   observe('layout-shift', (e) => { layoutShifts.push(e); });
   // The 1st decision call and any 2nd resolveSwappedSlots call each get their own entry.
@@ -283,10 +291,33 @@ export function buildPerfPayload({
 
   window.hlx = window.hlx || {};
   window.hlx.experiencePerf = { report, collect };
-  setTimeout(() => {
+  let finished = false;
+  const finish = () => {
+    if (finished) return;
+    finished = true;
     if (PERF_ON) report();
     sendPerfLog();
+  };
+  const finishAfterTail = (consent) => {
+    const tailEnd = consent.startTime + consent.duration + CONSENT_SHIFT_TAIL_MS;
+    const wait = tailEnd - performance.now();
+    if (wait > 0) setTimeout(finish, wait);
+    else finish();
+  };
+  // Leaving the page only cuts the wait short once the usual 6 s report time has passed.
+  let reportDue = false;
+  const finishIfDue = () => { if (reportDue) finish(); };
+  setTimeout(() => {
+    reportDue = true;
+    const consent = measures.find((e) => e.name === 'consent:total' || e.name === 'consent:skipped');
+    if (consent) finishAfterTail(consent);
+    else onConsentMeasured = finishAfterTail;
   }, PERF_REPORT_DELAY_MS);
+  setTimeout(finish, PERF_REPORT_MAX_MS);
+  window.addEventListener('pagehide', finishIfDue);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') finishIfDue();
+  });
 })();
 
 // --- Endpoint + fetch primitives -------------------------------------------
@@ -355,17 +386,79 @@ export async function swapMain(doc, path, signal) {
   }
 }
 
+// One shared import, so swaps that start together all wait on the same module load.
+let fragmentModule;
+
+const SWAP_IMAGE_WAIT_MS = 2000;
+
+function isPaintedSection(targetEl) {
+  const section = targetEl.closest('.section');
+  return section?.dataset.sectionStatus === 'loaded' ? section : null;
+}
+
+// A section swapped after paint must not throw away what the visitor is doing in it, so note
+// sections they type into or change (user input only; values set by code don't fire these).
+if (typeof document !== 'undefined') {
+  ['input', 'change'].forEach((type) => document.addEventListener(type, (e) => {
+    const section = e.target.closest?.('.section');
+    if (section) section.dataset.expTouched = 'true';
+  }, true));
+}
+
+function isInUse(section) {
+  const active = document.activeElement;
+  if (active && active !== document.body && section.contains(active)) return true;
+  return section.dataset.expTouched === 'true';
+}
+
+// Both arms skip an in-use painted section, so exposures stay comparable across them. Decided
+// before the fragment loads: loading decorates its widgets, whose effects can't be undone.
+function skipInUse(targetEl) {
+  const section = isPaintedSection(targetEl);
+  if (!section || !isInUse(section)) return false;
+  perfMeasure('exp:skip-in-use');
+  return true;
+}
+
+// Fragment images arrive lazy and don't fetch while detached, so a variant swapped into the
+// already-painted first section would show empty image boxes until they loaded. Start them all
+// (the hero image is not always the first one) and swap once they're ready, or after a short bound.
+function waitForVariantImages(section, frag) {
+  if (section !== section.parentElement.querySelector(':scope > .section')) return Promise.resolve();
+  const pending = [...frag.querySelectorAll('img')].filter((img) => !img.complete);
+  if (!pending.length) return Promise.resolve();
+  return Promise.race([
+    Promise.all(pending.map((img) => new Promise((resolve) => {
+      img.addEventListener('load', resolve, { once: true });
+      img.addEventListener('error', resolve, { once: true });
+      img.loading = 'eager';
+    }))),
+    new Promise((resolve) => { setTimeout(resolve, SWAP_IMAGE_WAIT_MS); }),
+  ]);
+}
+
 // Loads a fragment into `targetEl` — replacing children, or appending with opts.append.
+// opts.force swaps a painted section even while the visitor is using it (author preview).
+// A swap that has started is committed, even if the visitor starts using the section meanwhile.
 // Returns true when applied.
 export async function applyFragment(targetEl, path, opts = {}) {
   const p = fragmentPath(path);
   if (!targetEl || !p) return false;
+  if (!opts.force && skipInUse(targetEl)) return false;
   try {
-    const load = opts.loadFragment
+    let load = opts.loadFragment;
+    if (!load) {
       // eslint-disable-next-line import/no-cycle
-      || (await import('../blocks/fragment/fragment.js')).loadFragment;
+      fragmentModule = fragmentModule || import('../blocks/fragment/fragment.js').catch((e) => {
+        fragmentModule = undefined;
+        throw e;
+      });
+      load = (await fragmentModule).loadFragment;
+    }
     const frag = await load(p);
     if (!frag) return false;
+    const painted = isPaintedSection(targetEl);
+    if (painted) await waitForVariantImages(painted, frag);
     if (opts.append) targetEl.append(...frag.childNodes);
     else targetEl.replaceChildren(...frag.childNodes);
     return true;
@@ -503,15 +596,11 @@ export function collectRequest(doc = document) {
   return { experimentIds: [...experimentIds], accessPointNames: [...accessPointNames] };
 }
 
-// True when the eager phase has something to apply before reveal: a page-level target (whole-page
-// swap in applyPageExperience) or a target in the first/LCP section
-export function hasEagerWork(doc = document) {
-  if (getMetadata('experiment-id')) return true;
-  if (getMetadata('personalization-id')) return true;
-  const main = doc.querySelector('main');
-  const firstSection = main?.querySelector('.section') || main?.firstElementChild;
-  if (!firstSection) return false;
-  return collectExperiments(firstSection).length > 0 || collectSlots(firstSection).length > 0;
+// True when the eager phase must wait before reveal: only a page-level target, because a whole-page
+// swap replaces <main> before decoration. Section/block targets (including the first section) show
+// the default content first and are swapped in the lazy phase.
+export function hasEagerWork() {
+  return !!(getMetadata('experiment-id') || getMetadata('personalization-id'));
 }
 
 // --- The single call --------------------------------------------------------
@@ -913,7 +1002,7 @@ async function applyExperiment(response, id, stampTarget, applyContent, record, 
   if (!d) return false;
   const rec = ixpRecord(d, window.location.pathname);
   if (!d.contentId) {
-    if (rec && track) record([rec]);
+    if (rec && track && !skipInUse(stampTarget)) record([rec]);
     return false;
   }
   const path = casToPath(d.contentId);
@@ -931,7 +1020,7 @@ async function applyPznSlot(response, placement, stampTarget, applyContent, reco
   if (!d) return false;
   const rec = pznRecord(placement, d);
   if (!d.contentId) {
-    if (rec && track) record([rec]);
+    if (rec && track && !skipInUse(stampTarget)) record([rec]);
     return false;
   }
   const path = casToPath(d.contentId);
@@ -959,18 +1048,22 @@ export async function applyPage(doc, response, signal, { track = true } = {}) {
   return false;
 }
 
-// Section/block swaps for `root` from the cached response (no network call). Eager for the
-// first/LCP section (awaited), lazy for the rest (skip = first). `track:false` = read-only.
-export async function applyLayer(root, response, { skip, track = true } = {}) {
+// Section/block swaps for `root` from the cached response (no network call). `skip` leaves one
+// element out (lazy skips the first section once eager has handled it). `track:false` = read-only.
+// `onApplied(el)` runs as soon as each target's content lands, without waiting for slower ones.
+export async function applyLayer(root, response, {
+  skip, track = true, onApplied, force = false,
+} = {}) {
   if (!root || !response) return;
   const tasks = [];
+  const notify = (el) => (applied) => { if (applied) onApplied?.(el); };
   collectExperiments(root, skip).forEach(({ el, id, append }) => {
-    const apply = (p) => applyFragment(el, p, { append });
-    tasks.push(applyExperiment(response, id, el, apply, recordIxp, track));
+    const apply = (p) => applyFragment(el, p, { append, force });
+    tasks.push(applyExperiment(response, id, el, apply, recordIxp, track).then(notify(el)));
   });
   collectSlots(root, skip).forEach(({ el, placement, append }) => {
-    const apply = (p) => applyFragment(el, p, { append });
-    tasks.push(applyPznSlot(response, placement, el, apply, recordPzn, track));
+    const apply = (p) => applyFragment(el, p, { append, force });
+    tasks.push(applyPznSlot(response, placement, el, apply, recordPzn, track).then(notify(el)));
   });
   await Promise.all(tasks);
 }
@@ -1054,7 +1147,7 @@ export async function applyPageExperience(doc) {
   }).finally(() => clearTimeout(decisionTimer));
   window.hlx.experienceResponsePromise = responsePromise;
 
-  if (!hasEagerWork(doc)) return false;
+  if (!hasEagerWork()) return false;
 
   const eagerController = new AbortController();
   const eagerTimer = setTimeout(() => eagerController.abort(), EAGER_DEADLINE_MS);
@@ -1073,11 +1166,14 @@ export async function applyPageExperience(doc) {
   }
 }
 
-// EAGER, after decorateMain: on a page swap, resolve the swapped-in content's own slots
-// (blocking paint only if the first section is affected), then swap the first/LCP section.
+// EAGER, after decorateMain, only on pages that already waited for a page-level decision: resolve
+// any swapped-in content's own slots (blocking paint only if the first section is affected), then
+// swap the first/LCP section. Other pages show the default first section and applyLazyLayers
+// swaps it.
 export async function applyEagerLayers(doc, pageSwapped) {
   const main = doc.querySelector('main');
-  if (!main || !window.hlx?.experienceResponse) return;
+  if (!(pageSwapped || hasEagerWork()) || !main || !window.hlx?.experienceResponse) return;
+  window.hlx.experienceFirstSectionHandled = true;
   if (pageSwapped) {
     const swap = resolveSwappedSlots(doc, { timeoutMs: DECISION_DEADLINE_MS });
     window.hlx.experienceSwapResolved = swap.done;
@@ -1109,21 +1205,24 @@ export async function prepareExperienceTracking(application) {
   flushAppVars();
 }
 
-// LAZY: swap every remaining (below-the-fold) section, after any 2nd-call merge has landed.
-export async function applyLazyLayers(doc) {
+// LAZY: swap every section eager did not handle (all of them unless a whole-page swap ran),
+// after any 2nd-call merge has landed. Swaps can land after loadLazy decorated the page's links,
+// so onApplied(el) lets the caller decorate each swapped target as it lands.
+export async function applyLazyLayers(doc, onApplied) {
   const main = doc.querySelector('main');
   if (!main) return;
   const response = await latestExperienceResponse();
   if (!response) return;
   perfMark('exp:lazy-layers:start');
-  await applyLayer(main, response, { skip: main.querySelector('.section') });
+  const skip = window.hlx.experienceFirstSectionHandled ? main.querySelector('.section') : undefined;
+  await applyLayer(main, response, { skip, onApplied });
   perfMark('exp:lazy-layers:end');
   perfMeasure('exp:lazy-layers', 'exp:lazy-layers:start', 'exp:lazy-layers:end');
 }
 
 // Starts lazy application immediately and gives its real exposures the bounded opportunity to
 // reach the one-shot page view. Keeping this wiring here makes the ordering contract testable.
-export async function applyLazyExperience(doc) {
-  const application = applyLazyLayers(doc);
+export async function applyLazyExperience(doc, onApplied) {
+  const application = applyLazyLayers(doc, onApplied);
   await prepareExperienceTracking(application);
 }

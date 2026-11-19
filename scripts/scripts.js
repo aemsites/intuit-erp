@@ -42,9 +42,9 @@ const MARTECH_PARAM = URL_PARAMS.get('martech');
 const MARTECH_PROVIDER = MARTECH_PARAM === 'off' ? 'off' : 'tealium';
 // `?martech=local`: load utag.js + the consent stack from /scripts/martech/ instead of the CDNs.
 const MARTECH_LOCAL = MARTECH_PARAM === 'local';
-// Lab-only: keep most active tags in lazy, but move UIDs 9/15/23/27 to delayed_ready.
+// Lab-only: hold UIDs 9/15/21 out of the initial view and send them at delayed_ready.
 const MARTECH_PHASE_SPLIT = URL_PARAMS.get('martech-phase-split') === 'on';
-// Lab-only: keep OneTrust in lazy while optionally moving utag.js to delayed.
+// Legacy lab switch (`?tealium-phase=`); redundant now that all of Tealium loads in delayed.
 const TEALIUM_LOAD_PHASE = parseTealiumLoadPhase(URL_PARAMS);
 const TEALIUM_TAG_UIDS = parseTealiumTagUids(URL_PARAMS);
 
@@ -58,6 +58,17 @@ let tealium;
  */
 export function getTealium() {
   return tealium;
+}
+
+let experienceTracking;
+
+/**
+ * Resolves once lazy personalization has recorded its exposures (or timed out), so the
+ * delayed-phase page view carries them. Undefined when the page has no experience targets.
+ * @returns {Promise<void>|undefined}
+ */
+export function getExperienceTracking() {
+  return experienceTracking;
 }
 
 let siteConfigPromise;
@@ -583,8 +594,9 @@ async function loadEager(doc) {
       ({ default: buildGuideHeroAutoBlock } = await import('../blocks/guide-hero/guide-hero-autoblock.js'));
     }
     decorateMain(main);
-    // AFTER decorateMain: resolve a swapped page's own section/block slots (recursion-safe)
-    // and swap the first/LCP section — both before reveal. No-op without an experience response.
+    // AFTER decorateMain: only after a whole-page swap, resolve the swapped page's own
+    // section/block slots and swap the first/LCP section before reveal. Otherwise the default
+    // first section shows now and applyLazyExperience swaps it in the lazy phase.
     await applyEagerLayers(doc, pageSwapped);
     document.body.classList.add('appear');
     const firstSection = main.querySelector('.section');
@@ -625,26 +637,27 @@ async function loadLazy(doc) {
   else loadHeader(headerEl).then(() => decorateLinkTitles(headerEl));
 
   const main = doc.querySelector('main');
-  // Below-the-fold personalization/experimentation
+  // Opens external links in a new tab and binds "Schedule a call" links. Runs on each
+  // personalized swap as it lands, and once more over main after every section has loaded.
+  // Safe to repeat on the same links.
+  const decorateLateLinks = (root) => {
+    decorateExternalLinks(root);
+    import('./schedule-modal.js').then(({ bindScheduleLinks }) => bindScheduleLinks(root)).catch(() => {});
+  };
+  // Section/block personalization and experimentation (including the first section unless eager
+  // already handled it)
   let experienceModule;
-  let experienceTracking;
   if (window.hlx?.experienceResponse || window.hlx?.experienceResponsePromise) {
     experienceModule = import('./experience.js');
     experienceTracking = experienceModule
-      .then(({ applyLazyExperience }) => applyLazyExperience(doc))
+      .then(({ applyLazyExperience }) => applyLazyExperience(doc, decorateLateLinks))
       .catch(() => {});
   }
   await loadSections(main);
 
-  // Now that every block and fragment has decorated, open external links in a new
-  // tab site-wide — including inside blocks that don't manage their own links.
-  if (main) decorateExternalLinks(main);
-
-  // Global "Schedule a call" trigger — covers any a[href$="#schedule"] anywhere in
+  // Covers links inside blocks that don't manage their own, and #schedule links anywhere in
   // main (tabs panels, bare default content), not just blocks that opt in individually.
-  if (main) {
-    import('./schedule-modal.js').then(({ bindScheduleLinks }) => bindScheduleLinks(main)).catch(() => {});
-  }
+  if (main) decorateLateLinks(main);
 
   // Click tracking (opt-in `tracking-` blocks) is not render-critical
   if (main) {
@@ -686,12 +699,6 @@ async function loadLazy(doc) {
       .then(() => import('../blocks/contact-us/contact-us.js'))
       .then(({ default: initContactUs }) => initContactUs())
       .catch(() => { /* non-fatal — widget is non-critical chrome */ });
-  }
-
-  // Tealium (default): load utag.js for the resolved env + apply consent. Fail-open.
-  if (MARTECH_PROVIDER === 'tealium') {
-    if (experienceTracking) await experienceTracking;
-    try { await tealium.lazy(); } catch (e) { /* non-fatal */ }
   }
 
   loadCSS(`${window.hlx.codeBasePath}/styles/lazy-styles.css`);
