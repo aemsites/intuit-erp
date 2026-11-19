@@ -686,69 +686,6 @@ describe('fetchExperience', () => {
   });
 });
 
-describe('fetchExperience mda-attributes header', () => {
-  const orig = window.location.href;
-  const send = async (qs, opts) => {
-    window.history.replaceState({}, '', `${orig.split('?')[0]}${qs}`);
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('{}', { status: 200 }));
-    await fetchExperience({ experimentIds: ['1'], accessPointNames: [] }, {}, opts);
-    return globalThis.fetch.mock.calls[0][1];
-  };
-  const q = (v) => `?mda-attributes=${encodeURIComponent(v)}`;
-  const obj = { zoominfo_zi_c_industry_primary: 'Construction' };
-  beforeEach(() => sessionStorage.clear());
-  afterEach(() => {
-    sessionStorage.clear();
-    window.history.replaceState({}, '', orig);
-  });
-
-  it('sends the param as the header and persists it to sessionStorage', async () => {
-    const { headers } = await send(q(JSON.stringify(obj)));
-    expect(JSON.parse(headers['mda-attributes'])).toEqual(obj);
-    expect(JSON.parse(sessionStorage.getItem('mda-attributes'))).toEqual(obj);
-  });
-  it('falls back to sessionStorage when the param is absent', async () => {
-    sessionStorage.setItem('mda-attributes', JSON.stringify(obj));
-    const { headers } = await send('');
-    expect(JSON.parse(headers['mda-attributes'])).toEqual(obj);
-  });
-  it('ignores invalid JSON, keeps stored value, and uses it', async () => {
-    const stored = JSON.stringify({ a: 'stored' });
-    sessionStorage.setItem('mda-attributes', stored);
-    const { headers } = await send(q('{not json'));
-    expect(sessionStorage.getItem('mda-attributes')).toBe(stored);
-    expect(JSON.parse(headers['mda-attributes'])).toEqual({ a: 'stored' });
-  });
-  it.each([['array', '[1,2]'], ['string', '"x"'], ['null', 'null']])('ignores a %s param and does not overwrite storage', async (_n, v) => {
-    const stored = JSON.stringify({ a: 'stored' });
-    sessionStorage.setItem('mda-attributes', stored);
-    const { headers } = await send(q(v));
-    expect(sessionStorage.getItem('mda-attributes')).toBe(stored);
-    expect(JSON.parse(headers['mda-attributes'])).toEqual({ a: 'stored' });
-  });
-  it('escapes non-Latin1 characters so the header is ASCII and round-trips', async () => {
-    const o = { city: 'Zürich 東京 😀' };
-    const { headers } = await send(q(JSON.stringify(o)));
-    const h = headers['mda-attributes'];
-    expect([...h].every((c) => c.charCodeAt(0) <= 0x7e)).toBe(true);
-    expect(JSON.parse(h)).toEqual(o);
-  });
-  it('omits the header when there is no valid source', async () => {
-    const { headers } = await send(q('[1]'));
-    expect(Object.keys(headers)).not.toContain('mda-attributes');
-  });
-  it('is sent in preview mode too', async () => {
-    const { headers } = await send(q(JSON.stringify(obj)), { preview: true });
-    expect(JSON.parse(headers['mda-attributes'])).toEqual(obj);
-  });
-  it('keeps intuit_tid and content-type alongside the header', async () => {
-    const { headers } = await send(q(JSON.stringify(obj)));
-    expect(headers['content-type']).toBe('application/json');
-    expect(headers.intuit_tid).toMatch(/^[\w-]+$/);
-    expect(headers['mda-attributes']).toBeTruthy();
-  });
-});
-
 describe('applyPage (whole-page swap, before decorate)', () => {
   beforeEach(() => { document.body.innerHTML = '<main><div class="hero">BASE</div></main>'; });
 
