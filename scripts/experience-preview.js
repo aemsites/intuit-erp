@@ -263,7 +263,7 @@ export async function applyVariant(target, path) {
   // Start from the authored content each time so switching variants (and append mode)
   // never stacks fragments.
   if (baseline.has(target.key)) restoreBaseline(el, baseline.get(target.key));
-  const ok = await applyFragment(el, p, { append: target.mode === 'append' });
+  const ok = await applyFragment(el, p, { append: target.mode === 'append', force: true });
   bindScheduleLinks(el);
   return { applied: ok, reason: ok ? undefined : await describeFragmentFailure(p) };
 }
@@ -342,7 +342,7 @@ export async function simulateContext(context, opts = {}) {
       decorateMain(main);
       await loadSections(main);
     }
-    await applyLayer(main, response, { track: false });
+    await applyLayer(main, response, { track: false, force: true });
     bindScheduleLinks(main);
   } finally {
     if (window.hlx) window.hlx.experienceResponse = prev; // don't disturb the runtime cache

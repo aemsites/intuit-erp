@@ -252,3 +252,29 @@ describe('footer cookie preferences — scroll pinning', () => {
     expect(scrollTo).not.toHaveBeenCalled();
   });
 });
+
+describe('footer California privacy label', () => {
+  beforeEach(() => {
+    document.head.innerHTML = '';
+    document.body.innerHTML = '';
+    resetTrackingState();
+    delete window.hlx;
+    window.OneTrust = { getGeolocationData: () => ({ country: 'US', state: 'CA' }) };
+    stubFetch();
+  });
+  afterEach(() => { vi.unstubAllGlobals(); delete window.OneTrust; delete window.hlx; });
+
+  it('waits for the delayed phase, when OneTrust loads, before checking the region', async () => {
+    const block = await buildFooter();
+    const link = block.querySelector('a.footer-copy-btn');
+    expect(link.textContent).toBe('Manage cookies');
+    window.dispatchEvent(new Event('aem:delayed'));
+    expect(link.textContent).toContain('Your California Privacy Rights');
+  });
+
+  it('checks right away when the delayed phase has already run', async () => {
+    window.hlx = { delayed: true };
+    const block = await buildFooter();
+    expect(block.querySelector('a.footer-copy-btn').textContent).toContain('Your California Privacy Rights');
+  });
+});

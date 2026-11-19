@@ -39,9 +39,13 @@ id; treatments may also include a replacement content id.
 
 The eager visual budget is 1.5 seconds and the decision window is 5 seconds. Treatment context is
 recorded only after replacement content lands; control context is recorded when its apply phase
-runs. A late page or first-section assignment that misses the paint budget is not reported as an
-exposure. The page view waits within the decision bound for successful below-the-fold applications,
-then proceeds fail-open.
+runs. A late page assignment that misses the paint budget is not reported as an exposure. Section
+assignments, including the first section, apply after paint and are recorded when they land within
+the decision window. A section the visitor is already using (focus inside it, or a form field they
+have typed into or changed) is left as is, and neither the treatment nor the control assignment is
+recorded for it. This is decided when the swap starts, before its fragment loads. On pages with page-level experiment or personalization metadata the first
+section still applies before reveal, within the paint budget. The page view waits within the
+decision window for successful section applications, then proceeds fail-open.
 
 ## ECS enrichment shim
 

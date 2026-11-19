@@ -158,6 +158,21 @@ describe('hero — dashboard animation scheduling', () => {
     expect(loadPlayer).not.toHaveBeenCalled();
   });
 
+  it('does not load the player for a hero that a personalized hero replaced', async () => {
+    const fetchAnimation = vi.fn(() => Promise.resolve({ ok: true, json: vi.fn() }));
+    const loadPlayer = vi.fn();
+    enhanceDashboardAnimation(media, picture, { fetchAnimation, loadPlayer });
+    IntersectionObserverMock.instances
+      .find(({ options }) => options.threshold === 0.1)
+      .intersect({ ratio: 0.25 });
+    await flushPromises();
+
+    media.remove();
+    idleCallbacks.at(-1)();
+    await flushPromises();
+    expect(loadPlayer).not.toHaveBeenCalled();
+  });
+
   // hero.js's decorate() calls enhanceDashboardAnimation(media, mediaEl) BEFORE
   // block.replaceChildren(grid) attaches `grid` (and therefore `media`) anywhere —
   // media's own ancestor chain does NOT reach the document's <main> at call time.

@@ -51,7 +51,8 @@
  * @property {String} account The Tealium account name.
  * @property {String} profile The Tealium profile name.
  * @property {Object} data Extra data used to seed `window.utag_data` (defaults to {}).
- * @property {Boolean} phaseSplit Whether to split selected profile tags across lazy/delayed views.
+ * @property {Boolean} phaseSplit Whether to split selected profile tags across the initial and
+ *   delayed_ready views.
  * @property {'lazy'|'delayed'} loadPhase EDS phase in which utag.js may load.
  * @property {Set<String>|null} tagUids Optional active-tag allowlist; null preserves normal
  * routing.
@@ -63,15 +64,15 @@ export const DEFAULT_CONFIG = {
 };
 
 // Lab-only split derived from the current prod profile and the September 2026 mobile trace:
-// Floodlight (9), Google Ads (15), and Facebook (21). The lazy audience is
+// Floodlight (9), Google Ads (15), and Facebook (21). The initial-view audience is
 // resolved dynamically from Tealium's active cfg so conditional load rules and future tags remain
 // eligible instead of being replaced by a brittle page-owned allowlist.
 export const DELAYED_TAG_UIDS = Object.freeze(['9', '15', '21']);
 const DELAYED_TAG_UID_SET = new Set(DELAYED_TAG_UIDS);
 
 /**
- * Parses the diagnostic Tealium load-phase override. The production default remains lazy and
- * unknown values fail closed to that existing behavior.
+ * Parses the legacy Tealium load-phase override. delayed.js already runs lazy() in the EDS delayed
+ * phase; `delayed` only holds utag.js back until delayed(). Unknown values fail closed to `lazy`.
  * @param {URLSearchParams} params page URL parameters
  * @returns {'lazy'|'delayed'} selected EDS phase
  */
@@ -400,7 +401,7 @@ export async function loadObservabilityRum(env) {
  * Waits for a consistent `OptanonConsent` cookie to exist (as parsed by `readOptanonConsent`),
  * polling roughly every 100ms, or until `timeoutMs` elapses — whichever comes first. This always
  * resolves (never rejects), so a slow, blocked, or misconfigured consent stack never wedges the
- * EDS lazy phase. The caller decides whether to load utag or wait for a later OneTrust event.
+ * Tealium load. The caller decides whether to load utag or wait for a later OneTrust event.
  * @param {Number} [timeoutMs=3000] the maximum time to wait, in milliseconds
  * @returns {Promise<void>}
  */
@@ -462,10 +463,11 @@ const DEBUG_ENVIRONMENTS = ['dev'];
  * where the consent CDN is blocked), the call is dropped, never looped.
  * @param {Function} fn the tracked call to run once consent is resolved
  * @param {Number} [timeoutMs=8000] max time to wait for consent before dropping the call
+ * @param {Function} [onSkip] runs instead of `fn` when the call is dropped
  */
-export function whenConsentResolved(fn, timeoutMs = 8000) {
+export function whenConsentResolved(fn, timeoutMs = 8000, onSkip = () => {}) {
   const gdpr = window.utag && window.utag.gdpr;
-  if (!gdpr || typeof gdpr.getConsentState !== 'function') return;
+  if (!gdpr || typeof gdpr.getConsentState !== 'function') { onSkip(); return; }
   if (gdpr.getConsentState() !== 0) { fn(); return; }
   const start = Date.now();
   const id = window.setInterval(() => {
@@ -474,6 +476,7 @@ export function whenConsentResolved(fn, timeoutMs = 8000) {
       fn();
     } else if (Date.now() - start >= timeoutMs) {
       window.clearInterval(id); // fail-open: consent never resolved — drop the call, never loop
+      onSkip();
     }
   }, 200);
 }
@@ -493,7 +496,7 @@ export default class TealiumMartech {
     this.local = !!cfg.local;
     // Opt-in performance experiment; normal Tealium routing remains the default.
     this.phaseSplit = !!cfg.phaseSplit;
-    // Diagnostic timing override. Consent stays in lazy; only utag.js can move to delayed.
+    // Legacy timing override: with `delayed`, lazy() loads consent but leaves utag.js to delayed().
     this.loadPhase = cfg.loadPhase === 'delayed' ? 'delayed' : 'lazy';
     // A Set activates explicit UID routing. Null/undefined preserves the exact profile-owned path.
     this.tagUids = cfg.tagUids instanceof Set ? new Set(cfg.tagUids) : null;
@@ -510,6 +513,12 @@ export default class TealiumMartech {
     // Tealium's documented noload override halts initialization after Pre Loader extensions.
     if (this.tagUids?.size === 0) window.utag_cfg_ovrd.noload = true;
     this.utagLoadPromise = null;
+    // Resolves once utag.js has loaded, including a load deferred until a later consent decision,
+    // so consent-gated integrations can start then instead of finding utag missing.
+    this.utagReady = new Promise((resolve) => { this.resolveUtagReady = resolve; });
+    // Resolves once the initial view has gone out, which can be later than utagReady while
+    // Tealium consent is still unresolved. delayed_ready is timed from here.
+    this.viewSent = new Promise((resolve) => { this.resolveViewSent = resolve; });
     this.consentListener = null;
     this.consentReady = false;
     this.delayedReached = false;
@@ -525,17 +534,24 @@ export default class TealiumMartech {
    * Sends the single initial view, optionally excluding the active delayed-phase experiment tags.
    */
   sendInitialView() {
-    if (!window.utag?.view) return;
+    if (!window.utag?.view) {
+      this.resolveViewSent();
+      return;
+    }
     whenConsentResolved(() => {
-      if (this.phaseSplit || this.tagUids !== null) {
-        const excluded = new Set(this.phaseSplit ? DELAYED_TAG_UIDS : []);
-        const uids = resolveActiveTagUids(window.utag, excluded, this.tagUids);
-        if (!uids.length) return;
-        window.utag.view(window.utag_data, null, uids);
-      } else {
-        window.utag.view(window.utag_data);
+      try {
+        if (this.phaseSplit || this.tagUids !== null) {
+          const excluded = new Set(this.phaseSplit ? DELAYED_TAG_UIDS : []);
+          const uids = resolveActiveTagUids(window.utag, excluded, this.tagUids);
+          if (!uids.length) return;
+          window.utag.view(window.utag_data, null, uids);
+        } else {
+          window.utag.view(window.utag_data);
+        }
+      } finally {
+        this.resolveViewSent();
       }
-    });
+    }, undefined, this.resolveViewSent);
   }
 
   /**
@@ -587,6 +603,7 @@ export default class TealiumMartech {
       this.utagLoadPromise = loadUtag(this.env, this.local).then(() => {
         // head.html's noview suppresses utag's own auto-view, so this is ours to fire.
         this.sendInitialView();
+        this.resolveUtagReady();
         // If consent held utag past the EDS delayed phase, preserve the phase signal that tags
         // may use as a trigger instead of silently losing it.
         if (this.delayedReached) this.sendDelayedEvent();
@@ -615,9 +632,10 @@ export default class TealiumMartech {
   }
 
   /**
-   * Lazy-phase: load Intuit's OneTrust consent stack and wait briefly for it to settle. Returning
-   * visitors with a consent cookie continue directly to utag. If consent remains unknown, lazy()
-   * returns without loading utag and a one-shot OneTrust listener resumes it after a decision.
+   * Called from delayed.js (the EDS delayed phase): load Intuit's OneTrust consent stack and wait
+   * briefly for it to settle. Returning visitors with a consent cookie continue directly to utag.
+   * If consent remains unknown, lazy() returns without loading utag and a one-shot OneTrust
+   * listener resumes it after a decision.
    * The initial page view still passes through `whenConsentResolved` — never while Tealium consent
    * is unresolved (that seeds the ies-erp recursion; see the CONSENT note in the file header).
    * `head.html`'s `noview:true` suppresses utag's own auto-view, so the initial view is ours.

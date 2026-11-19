@@ -135,8 +135,10 @@ describe('experience perf reporter', () => {
       hadRecentInput: false,
       sources: [{ node: banner }],
     });
+    globalThis.PerformanceObserver.notify('measure', { name: 'exp:skip-in-use', startTime: 0, duration: 400 });
 
     expect(window.hlx.experiencePerf.collect()).toMatchObject({
+      inUseSkips: 1,
       consentTotalMs: 200,
       cls: 0.015,
       onetrustDirectShift: 0.015,
@@ -167,17 +169,140 @@ describe('experience perf reporter', () => {
 
   it('sends experience-perf to Splunk on sampled page views', async () => {
     vi.useFakeTimers();
+    const t0 = Date.now();
+    vi.spyOn(performance, 'now').mockImplementation(() => Date.now() - t0);
     stubLocation('');
     stubSampled(true);
     installPerformanceObserverMock();
     const info = vi.fn();
     window.coreServiceAdapter = { logger: { info } };
     await import('../scripts/experience.js');
+    globalThis.PerformanceObserver.notify('measure', {
+      name: 'consent:total', startTime: 3000, duration: 800,
+    });
     await vi.advanceTimersByTimeAsync(6000);
     expect(info).toHaveBeenCalledWith('experience-perf', expect.objectContaining({
       event: 'experience-perf',
       sampleRate: 0.1,
+      consentTotalMs: 800,
     }));
     vi.useRealTimers();
+  });
+
+  it('holds the Splunk report for a consent stack that finishes after 6 s, up to a cap', async () => {
+    vi.useFakeTimers();
+    const t0 = Date.now();
+    vi.spyOn(performance, 'now').mockImplementation(() => Date.now() - t0);
+    try {
+      stubLocation('');
+      stubSampled(true);
+      installPerformanceObserverMock();
+      const info = vi.fn();
+      window.coreServiceAdapter = { logger: { info } };
+      await import('../scripts/experience.js');
+      await vi.advanceTimersByTimeAsync(8000);
+      expect(info).not.toHaveBeenCalled();
+      globalThis.PerformanceObserver.notify('measure', {
+        name: 'consent:total', startTime: 7000, duration: 1000,
+      });
+      await vi.advanceTimersByTimeAsync(999);
+      expect(info).not.toHaveBeenCalled();
+      await vi.advanceTimersByTimeAsync(1);
+      expect(info).toHaveBeenCalledOnce();
+      expect(info.mock.calls[0][1]).toMatchObject({ consentTotalMs: 1000 });
+      await vi.advanceTimersByTimeAsync(20000);
+      expect(info).toHaveBeenCalledOnce();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('keeps the full consent render tail when consent finishes just before 6 s', async () => {
+    vi.useFakeTimers();
+    const t0 = Date.now();
+    vi.spyOn(performance, 'now').mockImplementation(() => Date.now() - t0);
+    try {
+      stubLocation('');
+      stubSampled(true);
+      installPerformanceObserverMock();
+      const info = vi.fn();
+      window.coreServiceAdapter = { logger: { info } };
+      await import('../scripts/experience.js');
+      await vi.advanceTimersByTimeAsync(5900);
+      globalThis.PerformanceObserver.notify('measure', {
+        name: 'consent:total', startTime: 4900, duration: 1000,
+      });
+      await vi.advanceTimersByTimeAsync(999);
+      expect(info).not.toHaveBeenCalled();
+      await vi.advanceTimersByTimeAsync(1);
+      expect(info).toHaveBeenCalledOnce();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('sends the Splunk report at the cap, or when the page is hidden after 6 s', async () => {
+    vi.useFakeTimers();
+    const t0 = Date.now();
+    vi.spyOn(performance, 'now').mockImplementation(() => Date.now() - t0);
+    try {
+      stubLocation('');
+      stubSampled(true);
+      installPerformanceObserverMock();
+      const info = vi.fn();
+      window.coreServiceAdapter = { logger: { info } };
+      await import('../scripts/experience.js');
+      await vi.advanceTimersByTimeAsync(2000);
+      window.dispatchEvent(new Event('pagehide'));
+      expect(info).not.toHaveBeenCalled();
+      await vi.advanceTimersByTimeAsync(17999);
+      expect(info).not.toHaveBeenCalled();
+      await vi.advanceTimersByTimeAsync(1);
+      expect(info).toHaveBeenCalledOnce();
+
+      vi.resetModules();
+      info.mockClear();
+      await import('../scripts/experience.js');
+      await vi.advanceTimersByTimeAsync(7000);
+      expect(info).not.toHaveBeenCalled();
+      window.dispatchEvent(new Event('pagehide'));
+      expect(info).toHaveBeenCalledWith('experience-perf', expect.anything());
+
+      vi.resetModules();
+      info.mockClear();
+      await import('../scripts/experience.js');
+      await vi.advanceTimersByTimeAsync(7000);
+      expect(info).not.toHaveBeenCalled();
+      vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
+      document.dispatchEvent(new Event('visibilitychange'));
+      expect(info).toHaveBeenCalledWith('experience-perf', expect.anything());
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('sends at 6 s when martech is off and no consent stack will load', async () => {
+    vi.useFakeTimers();
+    const t0 = Date.now();
+    vi.spyOn(performance, 'now').mockImplementation(() => Date.now() - t0);
+    try {
+      stubLocation('');
+      stubSampled(true);
+      installPerformanceObserverMock();
+      const info = vi.fn();
+      window.coreServiceAdapter = { logger: { info } };
+      await import('../scripts/experience.js');
+      await vi.advanceTimersByTimeAsync(3000);
+      globalThis.PerformanceObserver.notify('measure', {
+        name: 'consent:skipped', startTime: 0, duration: 3000,
+      });
+      await vi.advanceTimersByTimeAsync(2999);
+      expect(info).not.toHaveBeenCalled();
+      await vi.advanceTimersByTimeAsync(1);
+      expect(info).toHaveBeenCalledOnce();
+      expect(info.mock.calls[0][1].consentTotalMs).toBeUndefined();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

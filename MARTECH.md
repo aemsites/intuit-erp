@@ -15,20 +15,30 @@ The two data contracts are documented separately:
    prevents Tealium from sending an automatic view before consent resolves.
 2. During eager loading, [`scripts/scripts.js`](scripts/scripts.js) seeds `window.appVars`, installs
    the temporary ECS enrichment and interaction-scheduling shim, and creates `TealiumMartech`.
-3. During lazy loading, the Tealium loader starts prod-only Intuit Observability RUM, loads the
-   OneTrust stack, and waits up to three seconds for consent state. With a pre-existing decision it
-   loads `utag.js` immediately. If consent is still unknown, lazy loading continues without Tealium;
-   a one-shot `OneTrustGroupsUpdated` listener loads it after OneTrust publishes a decision.
-   The loader then sends the single initial `utag.view` through the consent guard.
-4. During delayed loading, the site sends a consent-gated `delayed_ready` event.
+3. Lazy loading does not touch martech, so `lazy-styles.css`, fonts, header, and footer are not held
+   behind consent or the profile.
+4. During delayed loading (about three seconds after lazy loading finishes),
+   [`scripts/delayed.js`](scripts/delayed.js) waits for personalization exposures to be recorded in
+   `window.appVars`, then runs the Tealium loader: it starts prod-only Intuit Observability RUM,
+   loads the OneTrust stack, and waits up to three seconds for consent state. With a pre-existing
+   decision it loads `utag.js` immediately. If consent is still unknown, it continues without
+   Tealium; a one-shot `OneTrustGroupsUpdated` listener loads it after OneTrust publishes a
+   decision. The loader then sends the single initial `utag.view`, and `delayed.js` starts the
+   consent-gated OF1 intent tracker, but only when consent was already known when the wait ended;
+   after a decision made later on the page, OF1 waits for the next page. Three seconds after the view, even one that waited for a later
+   consent decision, it sends a consent-gated `delayed_ready` event. If Tealium consent stays
+   unresolved for eight seconds, the view is dropped and the gap starts from that point instead.
+   This keeps the gap the event had when the view was sent in lazy.
+   `window.utag_data` and `window.appVars` are populated earlier, so the late view still carries
+   the full page data. Clicks made before `utag.js` loads are not tracked.
 
-`?tealium-phase=delayed` is a page-owned diagnostic variant of steps 3–4. Observability and the
-complete OneTrust stack remain in lazy, but `utag.js`, the initial view, and `delayed_ready` wait
-until the EDS delayed phase. The absent/default value is `lazy`; unknown values preserve that
-default. Consent is still required in either phase, and duplicate lifecycle/OneTrust events share
-the same one-shot load promise.
+`?tealium-phase=delayed` predates step 4 and is now redundant: OneTrust, Observability, and the
+whole profile already load in the delayed phase. With it, `utag.js` and the initial view wait for
+`delayed_ready` (about three seconds later). It is kept so existing lab URLs keep working.
+Consent is still required, and duplicate lifecycle/OneTrust events share the same one-shot load
+promise.
 
-The opt-in `?martech-phase-split=on` performance experiment changes only steps 3–4. The initial
+The opt-in `?martech-phase-split=on` performance experiment changes only step 4. The initial
 view targets all tags that are active under the profile's existing load rules except Floodlight
 (UID 9), Google Ads (UID 15), and Facebook (UID 21). At `delayed_ready`, a second targeted view
 sends those three active tags. This cohort comes from the September 2026 mobile leave-one-out and
@@ -64,10 +74,11 @@ to the production profile.
 `?martech-phase-split=on` can be combined with the values above. It is a lab switch for controlled
 performance traces, not a replacement for publishing equivalent event-based rules in Tealium iQ.
 
-`?tealium-phase=delayed` moves the whole Tealium profile, but not OneTrust or Observability RUM,
-from lazy to delayed. It can be combined with `?martech-phase-split=on`; in that combination the
-initial and delayed targeted views occur after the profile loads in delayed, so use it to measure
-whole-profile timing rather than the benefit of spacing the two tag audiences apart.
+`?tealium-phase=delayed` is redundant now that the whole Tealium profile, OneTrust, and
+Observability RUM load in delayed by default. It can still be combined with
+`?martech-phase-split=on`, but then the initial and `delayed_ready` targeted views go out
+back-to-back once the profile loads, so use it to measure whole-profile timing rather than the
+benefit of spacing the two tag audiences apart.
 
 `?onemind=delayed` keeps the page-authored 1Mind launcher off the lazy path until the shared EDS
 delayed signal. `?onemind=off` prevents the launcher from loading for an attribution baseline.
@@ -179,7 +190,10 @@ blocks other origins.
 
 Sampled experience-performance telemetry, and every view with `?perf=on`, records the OneTrust
 stack, consent-settle, and total consent durations as `consentStackMs`, `consentSettleMs`, and
-`consentTotalMs`. It also observes layout shifts without recent input and reports:
+`consentTotalMs`. Because the consent stack loads in delayed, the report waits past its usual
+six seconds for these, sending one second after consent finishes, when the page is hidden after
+those six seconds, or at twenty seconds. When martech is off or the host is not recognized, no consent stack loads, so
+delayed.js marks `consent:skipped` and the report goes at six seconds. It also observes layout shifts without recent input and reports:
 
 - `cls`: browser CLS using the standard one-second-gap/five-second session window;
 - `onetrustDirectShift`: shift value for entries with a source inside OneTrust markup;
