@@ -588,6 +588,27 @@ function previewOrchestratorQuery(opts, context) {
   return '';
 }
 
+const MDA_KEY = 'mda-attributes';
+const parseMda = (raw) => {
+  try {
+    const v = JSON.parse(raw);
+    return v && typeof v === 'object' && !Array.isArray(v) ? v : null;
+  } catch {
+    return null;
+  }
+};
+
+// ?mda-attributes= (persisted for the session) else the stored value; ASCII-escaped for a header.
+function mdaAttributesHeader() {
+  let v = parseMda(new URLSearchParams(window.location.search).get(MDA_KEY));
+  try {
+    if (v) sessionStorage.setItem(MDA_KEY, JSON.stringify(v));
+    else v = parseMda(sessionStorage.getItem(MDA_KEY));
+  } catch { /* storage unavailable: the param still applies */ }
+  // eslint-disable-next-line no-control-regex
+  return v && JSON.stringify(v).replace(/[^\x00-\x7e]/g, (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, '0')}`);
+}
+
 // POSTs the request; returns the parsed response or null (fail-open) on any failure.
 // With `signal` the caller owns the deadline, else `timeoutMs` applies.
 export async function fetchExperience({ experimentIds, accessPointNames }, context, opts = {}) {
@@ -637,10 +658,11 @@ export async function fetchExperience({ experimentIds, accessPointNames }, conte
     const apiRoot = (opts.baseUrl || apiBase()).replace(/\/+$/, '');
     const previewQs = previewOrchestratorQuery(opts, context);
     const target = `${apiRoot}/intuit-orchestrator${previewQs ? `?${previewQs}` : ''}`;
+    const mda = mdaAttributesHeader();
     const res = await fetch(target, {
       method: 'POST',
       credentials: 'include',
-      headers: { intuit_tid: tid, 'content-type': 'application/json' },
+      headers: { intuit_tid: tid, 'content-type': 'application/json', ...(mda && { 'mda-attributes': mda }) },
       body: JSON.stringify(body),
       signal,
     });
