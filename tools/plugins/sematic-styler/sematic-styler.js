@@ -682,6 +682,12 @@ function sectionSignature(sectionIndex, groups, { pendingSizes, paragraphAll, bl
   ]);
 }
 
+/**
+ * Shows the section-level "Reset all" button and "Apply to all Paragraphs" row. Hidden for now;
+ * set to true to bring them back (their code is unchanged).
+ */
+const SECTION_ACTIONS = false;
+
 /** One collapsible section: reset button, apply-all row and a group per block. */
 function sectionNode(sectionIndex, groups, ui, open, updateToggle) {
   const { paragraphAll } = ui;
@@ -696,14 +702,14 @@ function sectionNode(sectionIndex, groups, ui, open, updateToggle) {
   chevron.setAttribute('aria-hidden', 'true');
   chevron.innerHTML = CHEVRON;
   const summary = element('summary', 'tree-section-title');
-  summary.append(
-    element('span', '', `Section ${sectionIndex}`),
-    resetSectionButton(sectionIndex, sectionElements, ui),
-    chevron,
-  );
+  summary.append(element('span', '', `Section ${sectionIndex}`));
+  if (SECTION_ACTIONS) summary.append(resetSectionButton(sectionIndex, sectionElements, ui));
+  summary.append(chevron);
 
   const groupList = element('ul', 'tree-groups');
-  if (paragraphs.length) groupList.append(paragraphAllControl(sectionIndex, paragraphs, ui));
+  if (SECTION_ACTIONS && paragraphs.length) {
+    groupList.append(paragraphAllControl(sectionIndex, paragraphs, ui));
+  }
   const sectionOn = applyAllOn(sectionIndex, paragraphs, paragraphAll);
   groups.forEach((group) => {
     const elementList = element('ul', 'tree-elements');
