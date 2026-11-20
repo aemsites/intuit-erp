@@ -5,17 +5,32 @@ import { blockNameOf } from '../../../scripts/utils.js';
 import {
   headingInfo, currentStyle, setHeadingSize, setHeadingSizes, clearHeadingSizes,
   syncLiveSectionStyles, paragraphAllSize, paragraphAllEnabled,
-  setParagraphAllEnabled, clearParagraphAllStyles, cacheDoc, memo, sourceUrl,
+  setParagraphAllEnabled, clearParagraphAllStyles, cacheDoc, memo, readSource,
   clearBlockParagraphAll, clearBlockParagraphAllStyles, clearBlockSizes,
+  setSectionParagraphSize, sectionParagraphSize, onSourceSaved, blockWithParagraphSize,
+  hasParagraphSize, inSizedBlock, onSaveProgress, singleBlockEdit, setNativeEditor, SaveError,
 } from './heading-styler.js';
+import {
+  recordSync, recordSelection, now, startOp, endOp,
+} from './metrics.js';
 import { loadEditableBlocks, isEditable, editableKey } from './editable-blocks.js';
 
 const POLL_MS = 1000;
 const SELECTION_TIMEOUT_MS = 900;
+// Source polling without the live document, where polling is the only way to see edits.
 const ACTIVE_REFRESH_MS = 2000;
-const IDLE_REFRESH_MS = 3000;
+const IDLE_REFRESH_MS = 5000;
 const ACTIVE_WINDOW_MS = 10000;
-const CONFIG_REFRESH_MS = 10000;
+// With the live document, the editor drives the tree; the source is only re-read once editing
+// pauses, while the editor shows sections or blocks the source doesn't have yet, and as a fallback.
+const SOURCE_SETTLE_MS = 3000;
+const SOURCE_FALLBACK_MS = 30000;
+// Live document broadcasts arrive up to every 150 ms while typing; redraw at most this often.
+const LIVE_THROTTLE_MS = 300;
+// How long a just-saved source can stand in for a read of it.
+const SAVED_FRESH_MS = 2000;
+// The config is also re-read whenever the panel becomes visible again.
+const CONFIG_REFRESH_MS = 60000;
 // Longest the loader waits for authoring to show a saved change before giving up.
 const LIVE_TIMEOUT_MS = 15000;
 const METADATA = '.section-metadata, .metadata, .library-metadata';
@@ -62,11 +77,11 @@ function setPending(pending, ids, size) {
 
 /* ------------------------------------------------------------- documents */
 
-/** Raw source HTML (null on failure); callers parse it only when it changed. */
-async function loadSource({ actions, context }) {
-  const resp = await actions.daFetch(sourceUrl(context), { cache: 'no-store' });
-  if (!resp.ok) { log('source fetch failed', resp.status); return null; }
-  return resp.text();
+/** Raw source HTML (null on failure or timeout); callers parse it only when it changed. */
+async function loadSource(sdk) {
+  const text = await readSource(sdk);
+  if (text === null) log('source fetch failed');
+  return text;
 }
 
 /** The live editor document, with source section metadata filled in where the editor drops it. */
@@ -87,11 +102,17 @@ function liveTreeDoc(liveHtml, sourceDoc) {
 
 /* ------------------------------------------------------------- selection */
 
-function readSelection(actions) {
-  return Promise.race([
+async function readSelection(actions) {
+  const start = now();
+  let timedOut = false;
+  const html = await Promise.race([
     actions.getSelection().catch(() => null),
-    new Promise((resolve) => { setTimeout(() => resolve(null), SELECTION_TIMEOUT_MS); }),
+    new Promise((resolve) => {
+      setTimeout(() => { timedOut = true; resolve(null); }, SELECTION_TIMEOUT_MS);
+    }),
   ]);
+  recordSelection(now() - start, !timedOut);
+  return html;
 }
 
 /** Text runs (with their tag, when known) in the selection HTML, descending into block tables. */
@@ -117,17 +138,15 @@ function tableNodes(table) {
 
 const compactText = (el) => memo(el, 'compact', () => compact(el.textContent));
 
-/** Elements in `doc` whose text matches a selected text run. */
+/** Elements in `doc` (outside metadata) whose text contains a selected text run. */
 function findElements(doc, { tag, full }) {
   const needle = compact(full || '');
   if (!needle) return [];
   const selector = tag ? `main ${tag}` : 'main *';
-  const pool = memo(doc, `pool:${selector}`, () => [...doc.querySelectorAll(selector)]);
+  const pool = memo(doc, `pool:${selector}`, () => [...doc.querySelectorAll(selector)]
+    .filter((e) => !e.closest(METADATA)));
   const hits = pool.filter((e) => compactText(e).includes(needle));
-  if (tag) {
-    const exact = hits.filter((e) => compactText(e) === needle);
-    return exact.length ? exact : hits;
-  }
+  if (tag) return hits;
   // Without a tag, keep only the innermost matches.
   const hitSet = new Set(hits);
   return hits.filter((e) => ![...e.children].some((c) => hitSet.has(c)));
@@ -159,9 +178,12 @@ function cursorScope(doc, blockIndex) {
 let lastSelectedKeys = new Set();
 
 /**
- * Keys of the headings/paragraphs the editor selection covers. The selection is only HTML, so
- * duplicate text can match several elements; each selected text run resolves to one element,
- * preferring the cursor's block (or default content), then the row already highlighted.
+ * Ids (`{sectionIndex}:{key}`) of the headings/paragraphs the editor selection covers. A key
+ * alone repeats across sections (same tag, position and text), so ids keep a selection to
+ * its own section. The selection is only HTML, so duplicate text can match several
+ * elements; each selected text run resolves to exactly one: within the cursor's block (or
+ * default content) first, then an element whose whole text is the run, then the row already
+ * highlighted, then the first in document order.
  */
 function selectedKeysOf(html, doc, blockIndex) {
   const last = memo(doc, 'selection', () => ({}));
@@ -173,11 +195,14 @@ function selectedKeysOf(html, doc, blockIndex) {
     const matches = findElements(doc, node)
       .filter((el) => /^(H[1-6]|P)$/.test(el.tagName) && !taken.has(el));
     const near = inCursor ? matches.filter(inCursor) : [];
-    const pool = near.length ? near : matches;
-    const pick = pool.find((el) => lastSelectedKeys.has(headingInfo(el).key)) || pool[0];
+    const scoped = near.length ? near : matches;
+    const needle = compact(node.full || '');
+    const exact = scoped.filter((el) => compactText(el) === needle);
+    const pool = exact.length ? exact : scoped;
+    const pick = pool.find((el) => lastSelectedKeys.has(idOf(headingInfo(el)))) || pool[0];
     if (pick) taken.add(pick);
   });
-  last.keys = new Set([...taken].map((el) => headingInfo(el).key));
+  last.keys = new Set([...taken].map((el) => idOf(headingInfo(el))));
   last.html = html;
   last.blockIndex = blockIndex;
   lastSelectedKeys = last.keys;
@@ -191,6 +216,12 @@ function blockLabel(block) {
   return `${name[0].toUpperCase()}${name.slice(1)}`;
 }
 
+/**
+ * Whether an element has visible text. DA keeps blank lines as `<p><br></p>` (or `&nbsp;`); those
+ * are left out of the tree but still count for positions, as on the site.
+ */
+const hasText = (el) => el.textContent.trim() !== '';
+
 /** The selection-independent tree, memoized per document and editable-block config. */
 function baseTree(doc, editableBlocks) {
   return memo(doc, `tree:${editableKey(editableBlocks)}`, () => [...doc.querySelectorAll('main > div')].map((section, index) => {
@@ -202,7 +233,7 @@ function baseTree(doc, editableBlocks) {
       const elements = [
         ...(child.matches(HEADINGS) ? [child] : []),
         ...child.querySelectorAll(HEADINGS),
-      ].filter((el) => !el.closest(METADATA)
+      ].filter((el) => hasText(el) && !el.closest(METADATA)
         && (isBlock || !el.closest('main > div > div[class]')));
       if (!elements.length) return [];
       return [{
@@ -226,7 +257,7 @@ function contentTree(html, doc, editableBlocks, blockIndex) {
     sectionIndex,
     groups: groups.map((group) => ({
       ...group,
-      elements: group.elements.map((h) => (keys.has(h.key) ? { ...h, selected: true } : h)),
+      elements: group.elements.map((h) => (keys.has(idOf(h)) ? { ...h, selected: true } : h)),
     })),
   }));
 }
@@ -259,7 +290,7 @@ function prunePending(pendingSizes, sections) {
 /** One heading/paragraph row: title, text preview, size dropdown and reset button. */
 function headingControl(h, ui, locked) {
   const {
-    sdk, status, setLoading, pendingSizes,
+    sdk, say, fail, setLoading, pendingSizes,
   } = ui;
   const tag = h.el.tagName.toLowerCase();
   const id = idOf(h);
@@ -299,10 +330,10 @@ function headingControl(h, ui, locked) {
       await setHeadingSize(sdk, h, size);
       selectedSize = size;
       remove.disabled = !select.value;
-      status.textContent = size ? `Saved ${target}` : `Removed applied size from ${target}`;
+      say(size ? `Saved ${target}` : `Removed applied size from ${target}`);
     } catch (e) {
       log('save error', e);
-      status.textContent = e.message;
+      fail(e);
       if (pendingSizes.get(id) === size) {
         pendingSizes.set(id, selectedSize);
         select.value = selectedSize;
@@ -322,7 +353,7 @@ function headingControl(h, ui, locked) {
 
 /**
  * Whether the section-level "apply to all paragraphs" is on: an explicit choice in this session,
- * else the section's `paragraph-all` row. (A shared tag-wide size alone may be block-level.)
+ * else a tag-wide P size in the section's `style` row. (Block classes alone may be block-level.)
  */
 function applyAllOn(sectionIndex, paragraphs, paragraphAll) {
   if (paragraphAll.has(sectionIndex)) return paragraphAll.get(sectionIndex) !== null;
@@ -363,8 +394,8 @@ function applyAllRow({
 /** The section's "Apply to all Paragraphs" checkbox and size dropdown. */
 function paragraphAllControl(sectionIndex, paragraphs, ui) {
   const {
-    sdk, status, setLoading, pendingSizes, paragraphAll, rerender, forgetDoc, paragraphsOf,
-    clearBlockAll,
+    sdk, say, fail, setLoading, pendingSizes, paragraphAll, blockAll, rerender, forgetDoc,
+    paragraphsOf, clearBlockAll, offBlockAll,
   } = ui;
   const ids = paragraphs.map(idOf);
   const common = paragraphAllSize(paragraphs, pendingSizes);
@@ -380,11 +411,11 @@ function paragraphAllControl(sectionIndex, paragraphs, ui) {
     const restore = setPending(pendingSizes, ids, size);
     setLoading(true);
     try {
-      const count = await setHeadingSizes(sdk, paragraphs, size);
-      status.textContent = `Applied ${size} to ${count} P in section ${sectionIndex}`;
+      const count = await setSectionParagraphSize(sdk, paragraphs, size);
+      say(`Applied ${size} to ${count} P in section ${sectionIndex}`);
     } catch (e) {
       log('apply all error', e);
-      status.textContent = e.message;
+      fail(e);
       restore();
     } finally {
       setLoading(false);
@@ -395,8 +426,16 @@ function paragraphAllControl(sectionIndex, paragraphs, ui) {
   const disable = async () => {
     // This row may be reused from an earlier render; act on the most recently rendered document.
     const latest = paragraphsOf(sectionIndex) || paragraphs;
+    // Checked but no size chosen yet: nothing was saved, so there is nothing to undo.
+    if (!paragraphAll.get(sectionIndex) && !paragraphAllEnabled(latest[0]?.section)) {
+      paragraphAll.delete(sectionIndex);
+      say('');
+      rerender();
+      return;
+    }
+    const wasBlockAll = new Map(blockAll);
     paragraphAll.set(sectionIndex, null);
-    clearBlockAll(sectionIndex);
+    offBlockAll(sectionIndex);
     setLoading(true);
     try {
       await setParagraphAllEnabled(sdk, latest, false);
@@ -404,45 +443,40 @@ function paragraphAllControl(sectionIndex, paragraphs, ui) {
       // That edited the rendered document in place; re-read it fresh on the next render.
       forgetDoc(latest[0]?.section?.ownerDocument);
       latest.forEach((h) => pendingSizes.set(idOf(h), currentStyle(h.section, h.el).size));
-      status.textContent = `Disabled apply to all paragraphs in section ${sectionIndex}`;
+      say(`Disabled apply to all paragraphs in section ${sectionIndex}`);
     } catch (e) {
       log('disable apply all error', e);
-      status.textContent = e.message;
+      fail(e);
       paragraphAll.set(sectionIndex, common);
+      blockAll.clear();
+      wasBlockAll.forEach((value, key) => blockAll.set(key, value));
     } finally {
       setLoading(false);
       rerender();
     }
   };
 
-  const enable = async () => {
-    paragraphAll.set(sectionIndex, select.value);
+  // Choosing the size is what saves: one save sets the size and replaces every other paragraph
+  // size in the section. Checking the box alone only enables the dropdown.
+  const choose = (size) => {
+    paragraphAll.set(sectionIndex, size);
     // The section-level size replaces any block-level one.
     clearBlockAll(sectionIndex);
-    const restore = setPending(pendingSizes, ids, '');
-    setLoading(true);
-    const enabled = setParagraphAllEnabled(sdk, paragraphs, true);
-    if (select.value) apply(select.value);
-    try {
-      await enabled;
-      if (!select.value) status.textContent = `Reset paragraph sizes in section ${sectionIndex}; choose a size to apply to all`;
-    } catch (e) {
-      log('enable apply all error', e);
-      status.textContent = e.message;
-      paragraphAll.set(sectionIndex, null);
-      checkbox.checked = false;
-      restore();
-    } finally {
-      setLoading(false);
-      if (!select.value) rerender();
+    apply(size);
+  };
+
+  const enable = () => {
+    if (select.value) {
+      choose(select.value);
+      return;
     }
+    paragraphAll.set(sectionIndex, '');
+    say(`Choose a size to apply to all paragraphs in section ${sectionIndex}`);
+    rerender();
   };
 
   checkbox.addEventListener('change', () => (checkbox.checked ? enable() : disable()));
-  select.addEventListener('change', () => {
-    paragraphAll.set(sectionIndex, select.value);
-    apply(select.value);
-  });
+  select.addEventListener('change', () => choose(select.value));
 
   const item = element('li', 'tree-group');
   item.append(wrap);
@@ -455,7 +489,7 @@ function paragraphAllControl(sectionIndex, paragraphs, ui) {
  */
 function blockAllControl(group, paragraphs, ui, sectionOn) {
   const {
-    sdk, status, setLoading, pendingSizes, blockAll, rerender, forgetDoc, blockParagraphsOf,
+    sdk, say, fail, setLoading, pendingSizes, blockAll, rerender, forgetDoc, blockParagraphsOf,
   } = ui;
   const { blockKey, title } = group;
   const ids = paragraphs.map(idOf);
@@ -484,10 +518,10 @@ function blockAllControl(group, paragraphs, ui, sectionOn) {
     const restore = setPending(pendingSizes, ids, size);
     setLoading(true);
     try {
-      status.textContent = done(await save());
+      say(done(await save()));
     } catch (e) {
       log(`${label} error`, e);
-      status.textContent = e.message;
+      fail(e);
       revert();
       restore();
     } finally {
@@ -500,16 +534,25 @@ function blockAllControl(group, paragraphs, ui, sectionOn) {
     return run(size, () => setHeadingSizes(sdk, paragraphs, size), (count) => `Applied ${size} to ${count} P in ${title}`, 'block apply all');
   };
 
+  // Like the section-level one, checking only enables the dropdown; choosing a size saves it
+  // (replacing the block's other paragraph sizes in that one save).
   const enable = () => {
     if (select.value) return apply(select.value);
-    // Like the section-level one: clear per-paragraph sizes until a size is chosen.
     blockAll.set(blockKey, '');
-    return run('', () => clearHeadingSizes(sdk, paragraphs), () => `Reset paragraph sizes in ${title}; choose a size to apply to all`, 'block enable apply all');
+    say(`Choose a size to apply to all paragraphs in ${title}`);
+    return rerender();
   };
 
   const disable = async () => {
     // This row may be reused from an earlier render; act on the most recently rendered document.
     const latest = blockParagraphsOf(blockKey) || paragraphs;
+    // Checked but no size chosen yet: nothing was saved, so there is nothing to undo.
+    if (!blockAll.get(blockKey) && !paragraphAllSize(latest)) {
+      blockAll.delete(blockKey);
+      say('');
+      rerender();
+      return;
+    }
     blockAll.set(blockKey, null);
     setLoading(true);
     try {
@@ -518,10 +561,10 @@ function blockAllControl(group, paragraphs, ui, sectionOn) {
       // That edited the rendered document in place; re-read it fresh on the next render.
       forgetDoc(latest[0]?.el.ownerDocument);
       latest.forEach((h) => pendingSizes.set(idOf(h), currentStyle(h.section, h.el).size));
-      status.textContent = `Disabled apply to all paragraphs in ${title}`;
+      say(`Disabled apply to all paragraphs in ${title}`);
     } catch (e) {
       log('block disable apply all error', e);
-      status.textContent = e.message;
+      fail(e);
       revert();
     } finally {
       setLoading(false);
@@ -548,7 +591,7 @@ const hasSize = (h, pendingSizes) => {
  */
 function resetBlockButton(group, ui, sectionOn) {
   const {
-    sdk, status, setLoading, pendingSizes, blockAll, rerender,
+    sdk, say, fail, setLoading, pendingSizes, blockAll, rerender,
   } = ui;
   const { blockKey, title } = group;
   const targets = sectionOn ? group.elements.filter((h) => h.el.tagName !== 'P') : group.elements;
@@ -563,10 +606,10 @@ function resetBlockButton(group, ui, sectionOn) {
     setLoading(true);
     try {
       await clearBlockSizes(sdk, targets);
-      status.textContent = `Removed all applied sizes from ${title}`;
+      say(`Removed all applied sizes from ${title}`);
     } catch (err) {
       log('reset block error', err);
-      status.textContent = err.message;
+      fail(err);
       if (wasAll === undefined) blockAll.delete(blockKey);
       else blockAll.set(blockKey, wasAll);
       restore();
@@ -581,7 +624,7 @@ function resetBlockButton(group, ui, sectionOn) {
 /** The section's "Reset all" button, which clears every size (and apply-all) in one save. */
 function resetSectionButton(sectionIndex, sectionElements, ui) {
   const {
-    sdk, status, setLoading, pendingSizes, paragraphAll, rerender, clearBlockAll,
+    sdk, say, fail, setLoading, pendingSizes, paragraphAll, blockAll, rerender, offBlockAll,
   } = ui;
   const button = element('button', 'da-ds-button da-ds-button-secondary reset-section', 'Reset all');
   button.type = 'button';
@@ -592,18 +635,21 @@ function resetSectionButton(sectionIndex, sectionElements, ui) {
     e.stopPropagation();
     const restore = setPending(pendingSizes, sectionElements.map(idOf), '');
     const wasAll = paragraphAll.has(sectionIndex) ? paragraphAll.get(sectionIndex) : undefined;
+    const wasBlockAll = new Map(blockAll);
     // Reset turns apply-all off too, section- and block-level.
     paragraphAll.set(sectionIndex, null);
-    clearBlockAll(sectionIndex);
+    offBlockAll(sectionIndex);
     setLoading(true);
     try {
       await clearHeadingSizes(sdk, sectionElements);
-      status.textContent = `Removed all applied sizes from section ${sectionIndex}`;
+      say(`Removed all applied sizes from section ${sectionIndex}`);
     } catch (err) {
       log('reset section error', err);
-      status.textContent = err.message;
+      fail(err);
       if (wasAll === undefined) paragraphAll.delete(sectionIndex);
       else paragraphAll.set(sectionIndex, wasAll);
+      blockAll.clear();
+      wasBlockAll.forEach((value, key) => blockAll.set(key, value));
       restore();
     } finally {
       setLoading(false);
@@ -769,6 +815,32 @@ function render(list, tree, ui, selectionChanged) {
   if (focusKey && !list.contains(document.activeElement)) {
     list.querySelector(`[data-focus-key="${CSS.escape(focusKey)}"]`)?.focus();
   }
+  // eslint-disable-next-line no-use-before-define
+  if (selectionChanged) revealSelected(list, tree);
+}
+
+// The selected rows last scrolled to, so a redraw with the same selection leaves the scroll alone.
+let revealed = '';
+
+/**
+ * Scrolls the panel so the first selected row is in view, once per new selection. Only the
+ * panel's own document scrolls (scrollIntoView could also scroll the DA page around it).
+ */
+function revealSelected(list, tree) {
+  const ids = tree.flatMap(({ groups }) => groups.flatMap((g) => g.elements))
+    .filter((h) => h.selected).map(idOf).join('|');
+  if (ids === revealed) return;
+  revealed = ids;
+  const row = ids && list.querySelector('.tree-item.is-selected');
+  if (!row) return;
+  const margin = 16;
+  const { top, bottom } = row.getBoundingClientRect();
+  const height = window.innerHeight;
+  if (top >= margin && bottom <= height - margin) return;
+  // Above, or taller than the view: align its top; below: bring its bottom up.
+  const offset = top < margin || bottom - top > height - 2 * margin
+    ? top - margin : bottom - height + margin;
+  window.scrollBy({ top: offset, behavior: 'smooth' });
 }
 
 /* ------------------------------------------------------------------ init */
@@ -776,7 +848,6 @@ function render(list, tree, ui, selectionChanged) {
 export default async function init() {
   const status = document.getElementById('status');
   const list = document.getElementById('list');
-  const loading = document.getElementById('loading');
   const sdk = await DA_SDK;
   log('SDK ready', sdk.context, Object.keys(sdk.actions));
   const hasLive = Boolean(sdk.capabilities?.liveDocument && sdk.actions.subscribeLiveDocument);
@@ -789,6 +860,9 @@ export default async function init() {
   let sourceText;
   let liveHtml = null;
   let liveSeen = null;
+  // `writeCount` when the live document was last known to include every plugin save (-1: not).
+  // Until the plugin saves again, that document is at least as new as any source read.
+  let liveWrites = -1;
   const pendingSizes = new Map();
   // Explicit "apply to all paragraphs" choices this session: per section, and per block
   // (`{sectionIndex}/{childIndex}`). A size turns it on, null turns it off.
@@ -839,22 +913,44 @@ export default async function init() {
   const clearBlockAll = (sectionIndex) => [...blockAll.keys()]
     .filter((key) => key.startsWith(`${sectionIndex}/`))
     .forEach((key) => blockAll.delete(key));
+  // Turns every block-level apply-all in the section off explicitly. Forgetting them instead
+  // would read them back from the document, which still shows the old block classes until
+  // the editor catches up with the save.
+  const offBlockAll = (sectionIndex) => {
+    clearBlockAll(sectionIndex);
+    lastTree.find((s) => s.sectionIndex === sectionIndex)?.groups
+      .filter((g) => g.blockKey).forEach((g) => blockAll.set(g.blockKey, null));
+  };
 
   /**
    * The section-level apply-all size, or '' when it is off: the explicit choice this session,
-   * else the section's `paragraph-all` row. A tag-wide size alone may be block-level.
+   * else the tag-wide P size in the section's `style` row. Block classes alone may be
+   * block-level; they only count for a legacy `paragraph-all` row.
    */
   const sectionAllSize = (sectionIndex, groups) => {
     if (paragraphAll.has(sectionIndex)) return paragraphAll.get(sectionIndex) || '';
-    if (!paragraphAllEnabled(groups[0].elements[0].section)) return '';
-    return paragraphsIn(groups).map((h) => paragraphAllSize([h])).find(Boolean) || '';
+    const { section } = groups[0].elements[0];
+    if (!paragraphAllEnabled(section)) return '';
+    return sectionParagraphSize(section)
+      || paragraphsIn(groups).map((h) => paragraphAllSize([h])).find(Boolean) || '';
   };
 
   /* -------------------------------------------------------- loader */
 
   let writing = 0;
   let writeCount = 0;
+  // A block replacement in the editor is in flight (no source save involved).
+  let replacing = false;
   let awaitingSince = 0;
+  // When the editor started waiting to show a saved change (0: not waiting), for metrics.
+  let syncSince = 0;
+  // "Retrying…" while a save is being retried after a failure.
+  let retryNote = null;
+  onSaveProgress(({ attempt, attempts }) => {
+    retryNote = `Retrying… (attempt ${attempt} of ${attempts})`;
+    // eslint-disable-next-line no-use-before-define
+    setLoading();
+  });
   // Sections where authoring shows more blocks than the source while apply-all is on.
   const blocksAdded = new Map();
   let blocksAddedSince = 0;
@@ -868,11 +964,15 @@ export default async function init() {
     checkedBlocks = inputs;
     const liveTree = baseTree(treeDoc(), editableBlocks);
     baseTree(sourceDoc, editableBlocks).forEach(({ sectionIndex, groups }) => {
-      const on = Boolean(sectionAllSize(sectionIndex, groups));
+      const size = sectionAllSize(sectionIndex, groups);
       const saved = blockGroupCount(groups);
       const live = liveTree.find((s) => s.sectionIndex === sectionIndex);
       const shown = live ? blockGroupCount(live.groups) : 0;
-      if (!on || shown <= saved) {
+      // Blocks the editor already shows with the size need no save; the editor persists them.
+      // Blocks the author sized (or is sizing) themselves are left alone.
+      const unstyled = live && paragraphsIn(live.groups)
+        .some((h) => paragraphAllSize([h]) !== size && !inSizedBlock(h.el));
+      if (!size || shown <= saved || !unstyled) {
         blocksAdded.delete(sectionIndex);
         return;
       }
@@ -885,26 +985,80 @@ export default async function init() {
     });
   };
 
-  /** `true`/`false` start/end a write; no argument just re-evaluates the loader. */
+  /* -------------------------------------------------------- status */
+
+  // The outcome of the last change ({ message, error }), shown once nothing is in progress and
+  // kept until the next change or selection, so a failure isn't replaced by the idle hint.
+  let outcome = null;
+  let busyPhase = null;
+
+  const idleHint = () => {
+    if (editableBlocks?.size === 0 && !lastTree.length) {
+      return 'No blocks are editable. List them in the include column of the library config, or use "all".';
+    }
+    return selection === null && lastTree.length ? 'Select content in the document.' : '';
+  };
+
+  const showStatus = () => {
+    const error = !busyPhase && Boolean(outcome?.error);
+    status.textContent = busyPhase || outcome?.message || idleHint();
+    status.classList.toggle('is-busy', Boolean(busyPhase));
+    status.classList.toggle('is-error', error);
+  };
+
+  /** Records a change's outcome; `error` marks a failure. */
+  // Set when a change applied in the editor but DA didn't confirm saving it; it replaces the
+  // change's success message, so success is only claimed once the save is confirmed.
+  let unconfirmed = null;
+  const say = (message, { error = false, transient = false } = {}) => {
+    const warning = message && !error ? unconfirmed : null;
+    unconfirmed = null;
+    outcome = message ? { message: warning || message, error: error || Boolean(warning), transient }
+      : null;
+    showStatus();
+  };
+
+  /** Reports a failed change, explaining network failures (CORS, offline) in plain words. */
+  const fail = (e) => {
+    // The save may have landed after all: don't claim the styles weren't applied.
+    if (e?.uncertain) {
+      say(e.message, { error: true });
+      return;
+    }
+    const network = e instanceof TypeError || /failed to fetch|network/i.test(e?.message || '');
+    const reason = network ? 'Could not reach DA; check your connection and try again.'
+      : (e?.message || 'Please try again.');
+    say(`Styles not applied. ${reason}`, { error: true });
+  };
+
+  /** `true`/`false` start/end a write; no argument just re-evaluates the busy state. */
   const setLoading = (visible) => {
     if (visible === true) {
       writing += 1;
       writeCount += 1;
-      status.style.color = '';
+      outcome = null;
     } else if (visible === false) {
       writing = Math.max(0, writing - 1);
       if (!writing) {
+        retryNote = null;
         // eslint-disable-next-line no-use-before-define
         checkSource();
         awaitingSince = Date.now();
+        if (hasLive && pendingSizes.size) syncSince = now();
         if (hasLive) setTimeout(() => setLoading(), LIVE_TIMEOUT_MS);
       }
     }
     if (hasLive && liveSeen && pendingSizes.size) prunePending(pendingSizes, seenSections());
+    if (syncSince && !writing && !pendingSizes.size) {
+      recordSync(now() - syncSince, true);
+      syncSince = 0;
+    }
     if (hasLive && !writing && pendingSizes.size
       && Date.now() - awaitingSince >= LIVE_TIMEOUT_MS) {
-      status.textContent = 'Something went wrong applying the changes; please try again.';
-      status.style.color = 'var(--s2-red-800)';
+      if (syncSince) recordSync(now() - syncSince, false);
+      syncSince = 0;
+      // The save itself was confirmed; only the editor hasn't shown it yet.
+      say('Saved, but the editor has not shown it yet. Reload the page if it does not appear.', { error: true });
       pendingSizes.clear();
       rendered = null;
       // eslint-disable-next-line no-use-before-define
@@ -913,19 +1067,44 @@ export default async function init() {
     trackAddedBlocks();
     if (blocksAdded.size && Date.now() - blocksAddedSince >= LIVE_TIMEOUT_MS) blocksAdded.clear();
 
+    // Saving to DA first, then waiting for the DA page to show it. The panel stays locked
+    // throughout, so no change starts on top of one still landing.
     const awaiting = hasLive && pendingSizes.size > 0;
-    const busy = writing > 0 || awaiting || blocksAdded.size > 0;
-    loading.hidden = !busy;
-    loading.setAttribute('aria-hidden', String(!busy));
-    loading.setAttribute('aria-label', (writing && 'Changes in progress')
-      || (awaiting && 'Updating the page') || 'Applying styles to the new block');
+    const saving = writing > 0 || replacing;
+    busyPhase = (saving && (retryNote || 'Saving…'))
+      || ((awaiting || blocksAdded.size > 0) && 'Applying styles…') || null;
+    list.inert = Boolean(busyPhase);
+    list.setAttribute('aria-busy', String(Boolean(busyPhase)));
+    showStatus();
+    // eslint-disable-next-line no-use-before-define
+    if (!busyPhase && !pendingSizes.size) settleChoices();
+  };
+
+  /**
+   * Once every change has landed, the document is the truth again: drop the apply-all choices
+   * that only stood in for a save in flight, so a later manual edit (or a block added before
+   * this one, shifting its key) shows as it is. A box checked with no size yet ('') stays.
+   */
+  const settleChoices = () => {
+    let changed = false;
+    [paragraphAll, blockAll].forEach((choices) => choices.forEach((value, key) => {
+      if (value === '') return;
+      choices.delete(key);
+      changed = true;
+    }));
+    if (changed) {
+      rendered = null;
+      // eslint-disable-next-line no-use-before-define
+      update(false);
+    }
   };
 
   /* -------------------------------------------------------- update */
 
   const ui = {
     sdk,
-    status,
+    say,
+    fail,
     setLoading,
     pendingSizes,
     paragraphAll,
@@ -934,6 +1113,7 @@ export default async function init() {
     paragraphsOf,
     blockParagraphsOf,
     clearBlockAll,
+    offBlockAll,
     // eslint-disable-next-line no-use-before-define
     rerender: () => { rendered = null; update(false); },
   };
@@ -943,16 +1123,13 @@ export default async function init() {
     // Rebuilding while a dropdown is open would close it; redraw once the pick is done.
     deferred = picking;
     if (deferred) return;
-    const inputs = [editableKey(editableBlocks), selection, cursorBlock, liveHtml ?? sourceText];
+    // The source counts with the live document too: it fills in section metadata the editor drops.
+    const inputs = [editableKey(editableBlocks), selection, cursorBlock, liveHtml, sourceText];
     if (sameInputs(inputs, rendered)) return;
     rendered = inputs;
     lastTree = contentTree(selection, treeDoc(), editableBlocks, cursorBlock);
     render(list, lastTree, ui, selectionChanged);
-    if (editableBlocks?.size === 0 && !lastTree.length) {
-      status.textContent = 'No blocks are editable. List them in the include column of the library config, or use "all".';
-    } else if (selection === null) {
-      status.textContent = lastTree.length ? 'Select content in the document.' : '';
-    }
+    showStatus();
   };
 
   list.addEventListener('pointerdown', (e) => { picking = e.target.matches('select'); });
@@ -963,29 +1140,81 @@ export default async function init() {
 
   /* -------------------------------------------------------- source */
 
-  /** Applies a section's apply-all size to paragraphs that don't have it yet (new blocks). */
-  const applyAllToNewParagraphs = () => {
+  /**
+   * Applies a section's apply-all size to the paragraphs of blocks added since `previous` (the
+   * source before this read). Existing blocks, and blocks with a paragraph size the author set
+   * or is typing, are left as they are, so a manual change is never fought over.
+   */
+  const applyAllToNewParagraphs = (previous) => {
+    if (!previous) return;
+    const previousBlocks = new Map(baseTree(previous, editableBlocks)
+      .map(({ sectionIndex, groups }) => [sectionIndex, blockGroupCount(groups)]));
+    // Paragraphs the editor already shows sized (styled in the editor, not yet saved): the
+    // editor saves them itself, and a save from here would make it reload.
+    const liveSized = new Set();
+    if (liveHtml) {
+      baseTree(treeDoc(), editableBlocks).forEach(({ sectionIndex, groups }) => {
+        const size = sectionAllSize(sectionIndex, groups);
+        paragraphsIn(groups).filter((h) => size && paragraphAllSize([h]) === size)
+          .forEach((h) => liveSized.add(idOf(h)));
+      });
+    }
     baseTree(sourceDoc, editableBlocks).forEach(({ sectionIndex, groups }) => {
       const paragraphs = paragraphsIn(groups);
       const size = sectionAllSize(sectionIndex, groups);
-      const missing = paragraphs.filter((h) => paragraphAllSize([h]) !== size);
+      const saved = blockGroupCount(groups);
+      const grew = saved > (previousBlocks.get(sectionIndex) ?? saved)
+        || blocksAdded.has(sectionIndex);
+      const missing = !grew ? [] : paragraphs.filter((h) => paragraphAllSize([h]) !== size
+        && !liveSized.has(idOf(h)) && !inSizedBlock(h.el));
       // The source has caught up with the block authoring showed; the write below (if any)
       // keeps the loader up from here.
-      const saved = blockGroupCount(groups);
       if (blocksAdded.get(sectionIndex) <= saved) blocksAdded.delete(sectionIndex);
       if (!size || !missing.length) return;
       missing.forEach((h) => pendingSizes.set(idOf(h), size));
       setLoading(true);
-      setHeadingSizes(sdk, missing, size)
+      setSectionParagraphSize(sdk, missing, size)
         .then((count) => {
-          status.textContent = `Applied ${size} to ${count} new P in section ${sectionIndex}`;
+          say(`Applied ${size} to ${count} new P in section ${sectionIndex}`);
         })
         .catch((e) => {
           log('apply all to new block error', e);
+          fail(e);
           missing.forEach((h) => pendingSizes.delete(idOf(h)));
         })
         .finally(() => setLoading(false));
     });
+  };
+
+  // Markup of the plugin's last save, confirmed current; used instead of reading it back.
+  let saved = null;
+  onSourceSaved((html) => { saved = { html, at: Date.now() }; });
+  const takeSaved = () => {
+    const fresh = saved && Date.now() - saved.at < SAVED_FRESH_MS ? saved.html : null;
+    saved = null;
+    return fresh;
+  };
+
+  /** The editor shows a different number of sections than the source has. */
+  const sectionsDiffer = () => Boolean(liveHtml && sourceDoc)
+    && treeDoc().querySelectorAll('main > div').length
+      !== sourceDoc.querySelectorAll('main > div').length;
+  const pollDelay = () => {
+    if (hasLive && !blocksAdded.size && !sectionsDiffer()) return SOURCE_FALLBACK_MS;
+    return Date.now() - lastChange < ACTIVE_WINDOW_MS ? ACTIVE_REFRESH_MS : IDLE_REFRESH_MS;
+  };
+
+  // One pending source read. By default an earlier read already scheduled wins; `restart`
+  // pushes it out instead (debouncing reads while the author keeps editing).
+  let sourceTimer = null;
+  let sourceDue = 0;
+  const scheduleSource = (delay, restart = false) => {
+    const due = Date.now() + delay;
+    if (sourceTimer && !restart && sourceDue <= due) return;
+    clearTimeout(sourceTimer);
+    sourceDue = due;
+    // eslint-disable-next-line no-use-before-define
+    sourceTimer = setTimeout(() => { sourceTimer = null; checkSource(); }, delay);
   };
 
   let sourceBusy = false;
@@ -995,28 +1224,37 @@ export default async function init() {
     const writesBefore = writeCount;
     let stale = false;
     try {
-      const text = await loadSource(sdk);
+      const text = takeSaved() ?? await loadSource(sdk);
       // A save started meanwhile, so this read may predate it; read again once it's done.
       stale = writing > 0 || writeCount !== writesBefore;
       if (stale) return;
-      if (text === null) { status.textContent = 'Unable to refresh the source. Retrying...'; return; }
+      if (text === null) {
+        say('Unable to refresh the page. Retrying…', { error: true, transient: true });
+        return;
+      }
+      // Reading works again: drop the refresh warning, keeping any change's outcome.
+      if (outcome?.transient) say('');
       // Unchanged source (the common poll result): skip parsing entirely.
       if (text === sourceText) return;
       lastChange = Date.now();
       const doc = cacheDoc(new DOMParser().parseFromString(text, 'text/html'));
       const sections = [...doc.querySelectorAll('main > div')];
       if (sourceText !== undefined) {
-        liveHtml = null;
+        // The source catches up with the editor a few seconds late, so a read can be older than
+        // what the editor shows. Only a plugin save since the last live document makes the source
+        // newer; until the editor reloads with it, draw from the source.
+        if (liveWrites !== writeCount) liveHtml = null;
         if (sections.length !== sourceDoc.querySelectorAll('main > div').length) {
           paragraphAll.clear();
           blockAll.clear();
         }
       }
+      const previous = sourceText === undefined ? null : sourceDoc;
       sourceDoc = doc;
       sourceText = text;
       if (!hasLive) prunePending(pendingSizes, sections);
       if (editableBlocks !== undefined) {
-        applyAllToNewParagraphs();
+        applyAllToNewParagraphs(previous);
         setLoading();
       }
       update(false);
@@ -1025,14 +1263,10 @@ export default async function init() {
     } finally {
       sourceBusy = false;
       if (stale) checkSource();
+      else scheduleSource(pollDelay());
     }
   };
-  const watchSource = async () => {
-    await checkSource();
-    setTimeout(watchSource, Date.now() - lastChange < ACTIVE_WINDOW_MS
-      ? ACTIVE_REFRESH_MS : IDLE_REFRESH_MS);
-  };
-  watchSource();
+  checkSource();
 
   /* -------------------------------------------------------- config */
 
@@ -1068,24 +1302,190 @@ export default async function init() {
 
   /* ------------------------------------------ live document & selection */
 
+  /* ------------------------------------- apply-all to new blocks, in the editor */
+
+  const canReplace = hasLive && sdk.capabilities?.sendHTMLReplace === 1
+    && typeof sdk.actions.sendHTML === 'function';
+  // Replacements already sent per block markup, so one that doesn't take is not resent forever.
+  const replaceTries = new Map();
+  const MAX_REPLACE_TRIES = 2;
+
+  /**
+   * Gives the block at the editor cursor its section's "apply to all paragraphs" size by
+   * replacing it in the editor: it shows at once and the editor saves it like any other edit,
+   * with no source save and editor reload. The replacement only applies to the live document
+   * it was built from, so an author edit in between is never overwritten; the next live
+   * document tries again. Blocks away from the cursor still go through a source save.
+   */
+  const styleCursorBlock = async () => {
+    if (!canReplace || replacing || !liveHtml || !sourceDoc || editableBlocks === undefined
+      || !Number.isInteger(cursorBlock)) return;
+    const doc = treeDoc();
+    const block = blocksInOrder(doc)[cursorBlock];
+    if (!block?.querySelector('p') || !isEditable(block, editableBlocks)) return;
+    const sectionIndex = [...doc.querySelectorAll('main > div')]
+      .indexOf(block.closest('main > div')) + 1;
+    // Only a block just added to the section, and never one the author sized or is editing.
+    if (!blocksAdded.has(sectionIndex) || hasParagraphSize(block)) return;
+    const section = baseTree(doc, editableBlocks).find((s) => s.sectionIndex === sectionIndex);
+    const size = section && sectionAllSize(sectionIndex, section.groups);
+    const html = size && blockWithParagraphSize(block, size);
+    if (!html) return;
+    const tries = replaceTries.get(html) || 0;
+    if (tries >= MAX_REPLACE_TRIES) return;
+    if (replaceTries.size > 50) replaceTries.clear();
+    replaceTries.set(html, tries + 1);
+
+    replacing = true;
+    setLoading();
+    try {
+      const result = await sdk.actions.sendHTML(html, {
+        replace: true, expected: { html: liveHtml, blockIndex: cursorBlock },
+      });
+      if (result?.ok && typeof result.html === 'string') {
+        liveHtml = result.html;
+        liveSeen = result.html;
+        if (!writing && !pendingSizes.size) liveWrites = writeCount;
+        lastChange = Date.now();
+        say(`Applied ${size} to the new block in section ${sectionIndex}`);
+      } else if (['STALE_LIVE', 'WRONG_SELECTION'].includes(result?.error)) {
+        // The author kept editing; try again on the next live document.
+        replaceTries.set(html, tries);
+      } else {
+        log('in-editor apply-all failed', result);
+      }
+    } catch (e) {
+      log('in-editor apply-all error', e);
+    } finally {
+      replacing = false;
+      update(false);
+      setLoading();
+    }
+  };
+
+  /* ------------------------------------------ block edits, in the editor */
+
+  // Whether the editor accepts edits, from the live document (undefined: not reported).
+  let liveEditable;
+  // `saveDocument` is only answered by the host that also sends capabilities (the one with
+  // `sendHTMLReplace`); elsewhere it would wait for the SDK's 15 s timeout.
+  const canConfirmSave = canReplace && typeof sdk.actions.saveDocument === 'function';
+  // Replace failures that leave the outcome unknown; every other failure changed nothing.
+  const UNKNOWN_REPLACE = new Set(['timeout', 'REPLACE_FAILED', 'invalid-response']);
+
+  /**
+   * Applies a block edit (sizes, apply-all or reset of one block) in the editor when the
+   * cursor is in that block: the edit runs on a copy of the live document, and only when it
+   * changes nothing but that block is the block replaced, on the condition that the editor
+   * still shows that exact document with the cursor in that block. DA then confirms the save
+   * with `saveDocument`. No source read or save, and no editor reload. Anything else (another
+   * block, section metadata, a moved cursor, an editor that changed) returns null and the
+   * edit goes through the source save as before; an unknown outcome is reported, not retried.
+   */
+  const nativeEdit = async (edit) => {
+    if (!canConfirmSave || replacing || writing > 1 || !liveHtml || !sourceDoc
+      || liveEditable === false || !Number.isInteger(cursorBlock)) return null;
+    const expected = liveHtml;
+    const blockIndex = cursorBlock;
+    const transformStart = now();
+    const doc = liveTreeDoc(expected, sourceDoc);
+    const block = blocksInOrder(doc)[blockIndex];
+    const change = block && singleBlockEdit(doc, block, edit);
+    if (!change) return null;
+
+    const op = startOp();
+    op.path = 'editor';
+    op.attempts = 1;
+    op.transformMs = now() - transformStart;
+    replacing = true;
+    setLoading();
+    try {
+      if (change.html) {
+        const start = now();
+        const result = await sdk.actions.sendHTML(change.html, {
+          replace: true, expected: { html: expected, blockIndex },
+        });
+        op.saveMs = now() - start;
+        if (!result?.ok) {
+          const reason = `replace-${result?.error || 'failed'}`;
+          if (UNKNOWN_REPLACE.has(result?.error)) {
+            endOp(op, 'failed', reason);
+            throw new SaveError('The editor did not confirm the change. Check the block and apply the size again if it is missing.', { uncertain: true, reason });
+          }
+          // Nothing changed (the cursor moved, the author kept typing, …): save the source.
+          endOp(op, 'fallback', reason);
+          return null;
+        }
+        if (typeof result.html === 'string') {
+          liveHtml = result.html;
+          liveSeen = result.html;
+        }
+        lastChange = Date.now();
+      }
+      // No source save happened: the editor stays the newest copy of the page.
+      liveWrites = writeCount;
+      // Success only once DA confirms the editor's document is saved.
+      const t = now();
+      const persisted = await sdk.actions.saveDocument()
+        .catch((e) => ({ ok: false, error: String(e?.message || e) }));
+      op.verifyMs = now() - t;
+      if (!persisted?.ok) {
+        endOp(op, 'unconfirmed', `persist-${persisted?.error || 'failed'}`);
+        unconfirmed = 'Applied in the editor, but DA has not confirmed the save yet. It saves automatically; check the page before publishing.';
+      } else {
+        endOp(op, change.html ? 'saved' : 'already-saved');
+      }
+      return { value: change.value };
+    } finally {
+      replacing = false;
+      setLoading();
+    }
+  };
+  setNativeEditor(nativeEdit);
+
   if (hasLive) {
-    sdk.actions.subscribeLiveDocument(({ html, selection: cursor }) => {
-      // Fires on cursor moves between blocks too; that is what tells duplicate text apart.
-      const blockIndex = cursor?.blockIndex;
-      const cursorMoved = blockIndex !== cursorBlock;
-      cursorBlock = blockIndex;
-      if (html === liveHtml) {
-        if (cursorMoved && selection !== null) update(true);
+    let liveNext = null;
+    let liveTimer = null;
+    const takeLive = () => {
+      liveTimer = null;
+      if (liveNext === liveHtml) {
+        if (selection !== null) update(true);
         return;
       }
-      liveHtml = html;
-      liveSeen = html;
+      liveHtml = liveNext;
+      liveSeen = liveNext;
       lastChange = Date.now();
       try {
         update(false);
         setLoading();
-        if (blocksAdded.size) checkSource();
+        // With nothing saving or waiting to show, this document includes every plugin save.
+        // A change applied in the editor itself keeps the document trusted (no source save
+        // happened since), as long as no other save started.
+        const trusted = liveWrites === writeCount || (!writing && !pendingSizes.size);
+        liveWrites = trusted ? writeCount : -1;
+        styleCursorBlock();
+        // The source catches up with the editor after a delay: read it soon while the editor
+        // shows content the source lacks, otherwise once editing pauses.
+        if (blocksAdded.size || sectionsDiffer()) scheduleSource(ACTIVE_REFRESH_MS);
+        else scheduleSource(SOURCE_SETTLE_MS, true);
       } catch (e) { log('live document error', e); }
+    };
+    sdk.actions.subscribeLiveDocument(({ html, selection: cursor, editable }) => {
+      liveEditable = editable;
+      // Fires on cursor moves between blocks too; that is what tells duplicate text apart.
+      const blockIndex = cursor?.blockIndex;
+      const cursorMoved = blockIndex !== cursorBlock;
+      cursorBlock = blockIndex;
+      liveNext = html;
+      if (html === liveHtml && !liveTimer) {
+        if (cursorMoved && selection !== null) update(true);
+        // The cursor may have moved into a block still missing its section's size.
+        if (cursorMoved) styleCursorBlock();
+        return;
+      }
+      // The first document draws at once; later ones are coalesced while the author types.
+      if (liveHtml === null) takeLive();
+      else if (!liveTimer) liveTimer = setTimeout(takeLive, LIVE_THROTTLE_MS);
     });
   }
 
@@ -1098,8 +1498,11 @@ export default async function init() {
       if (html === selection) return;
       selection = html;
       lastChange = Date.now();
+      // A new selection starts fresh: the last change's outcome no longer applies.
+      if (!busyPhase) outcome = null;
       update(true);
-      checkSource();
+      // Without the live document, a new selection is the first sign the page may have changed.
+      if (!hasLive) checkSource();
     } catch (e) {
       log('selection error', e);
     } finally {

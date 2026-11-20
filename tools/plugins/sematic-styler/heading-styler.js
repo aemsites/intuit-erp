@@ -1,6 +1,7 @@
 import {
   headingKey, parseSizeClass, matchHeadings, KEY_RE, SIZE_PATTERN,
 } from '../../../scripts/heading-key.js';
+import { startOp, endOp, now } from './metrics.js';
 
 /*
  * Reads and writes heading/paragraph sizes in the DA page source.
@@ -37,7 +38,9 @@ const tagWideSize = (tag, token) => (tag === 'p' && BODY_CLASS_RE.test(token)
   ? token : regex(`^${tag}-size-(${SIZE_PATTERN})$`).exec(token)?.[1]);
 const positionSize = (key, token) => regex(`^${key}-size-(${SIZE_PATTERN})$`).exec(token)?.[1];
 // Tag-wide and positional styles of a tag, so applying to all replaces any per-element size.
-const tagStyleRe = (tag) => regex(`^(?:${tag}(?:-[0-9]+)?-(?:size|as)-${tag === 'p' ? `|${BODY}$` : ''})`);
+// For `p` that includes any body token, also incomplete (`body`, `body-`) or legacy (`body-2`)
+// ones left by hand edits, so an apply never leaves them next to the new size.
+const tagStyleRe = (tag) => regex(`^(?:${tag}(?:-[0-9]+)?-(?:size|as)-${tag === 'p' ? '|body(?:-[a-z0-9]*)?$' : ''})`);
 const styleFamily = (token) => (token.startsWith('body-') || token.startsWith('p-')
   ? 'p' : token.match(/^h[1-6]/)?.[0]);
 
@@ -78,6 +81,23 @@ function blockOf(el) {
   const isWrapper = block && [...block.classList].some((name) => name.endsWith('-wrapper'));
   return isWrapper ? null : block;
 }
+
+// A paragraph size token on a block, complete or still being typed (`body`, `body-`, `p-1-…`).
+const PARAGRAPH_SIZE_TOKEN_RE = /^(?:body|p)(?:-|$)/;
+
+/**
+ * Whether the block carries any paragraph size of its own (its first class is the block name).
+ * Such a block was sized by the author, or is being edited, so it is never auto-sized.
+ */
+export function hasParagraphSize(block) {
+  return [...block.classList].slice(1).some((name) => PARAGRAPH_SIZE_TOKEN_RE.test(name));
+}
+
+/** Whether the element sits in a block the author has given a paragraph size. */
+export const inSizedBlock = (el) => {
+  const block = blockOf(el);
+  return Boolean(block) && hasParagraphSize(block);
+};
 
 const blocksOf = (items) => new Set(items.map(({ el }) => blockOf(el)).filter(Boolean));
 const defaultSectionsOf = (items) => new Set(items
@@ -194,8 +214,20 @@ export function currentStyle(section, el) {
   });
 }
 
+/** The section-level "apply to all paragraphs" size: a tag-wide P token in its `style` row. */
+export function sectionParagraphSize(section) {
+  if (!section) return '';
+  return firstOf(styleTokens(section), (token) => tagWideSize('p', token)) || '';
+}
+
+/**
+ * Whether the section-level "apply to all paragraphs" is on: its `style` row has a tag-wide P
+ * size. A legacy `paragraph-all: true` row (no longer written) still counts.
+ */
 export function paragraphAllEnabled(section) {
-  return findRow(section, PARAGRAPH_ALL_KEY)?.children[1]?.textContent.trim().toLowerCase() === 'true';
+  if (!section) return false;
+  return Boolean(sectionParagraphSize(section))
+    || findRow(section, PARAGRAPH_ALL_KEY)?.children[1]?.textContent.trim().toLowerCase() === 'true';
 }
 
 /** Returns the shared tag-wide paragraph size only when it is applied to every paragraph. */
@@ -227,14 +259,19 @@ export function syncLiveSectionStyles(section, liveSection) {
 
 const isParagraphAll = (name) => PARAGRAPH_ALL_STYLE_RE.test(name);
 
+/** Drops the section-level tag-wide P size from the section's `style` row, if it has one. */
+function clearSectionParagraphSize(section) {
+  const tokens = styleTokens(section);
+  const kept = tokens.filter((token) => !isParagraphAll(token));
+  if (kept.length !== tokens.length) setStyleTokens(section, kept);
+}
+
 export function clearParagraphAllStyles(paragraphs) {
   const section = paragraphs[0]?.section;
   if (!section) return;
   findRow(section, PARAGRAPH_ALL_KEY)?.remove();
   blocksOf(paragraphs).forEach((block) => removeClasses(block, isParagraphAll));
-  if (paragraphs.some(({ el }) => !blockOf(el))) {
-    setStyleTokens(section, styleTokens(section).filter((token) => !isParagraphAll(token)));
-  }
+  clearSectionParagraphSize(section);
   removeEmptyMetadata(section);
   resetDocCache(section.ownerDocument);
 }
@@ -275,12 +312,19 @@ function applySizes(doc, targets, size) {
   return found.length;
 }
 
-/** Replaces the targets' per-element sizes with one tag-wide size on their blocks/sections. */
-function applyTagSize(doc, targets, size) {
+/**
+ * Replaces the targets' per-element sizes with one tag-wide size on their blocks and on the
+ * sections of their default content. With `section`, every target's section gets the size in
+ * its `style` row, which also marks the section-level "apply to all paragraphs" as on.
+ */
+function applyTagSize(doc, targets, size, { section: sectionWide = false } = {}) {
   const found = resolveTargets(doc, targets);
   removeLegacyRows(found);
   const blocks = blocksOf(found);
-  const sections = defaultSectionsOf(found);
+  const sections = sectionWide
+    ? new Set(found.map(({ section }) => section)) : defaultSectionsOf(found);
+  // The size in the `style` row replaces the legacy `paragraph-all` marker.
+  if (sectionWide) sections.forEach((section) => findRow(section, PARAGRAPH_ALL_KEY)?.remove());
   new Set(found.map(({ el }) => tagName(el))).forEach((tag) => {
     const isTagStyle = (name) => tagStyleRe(tag).test(name);
     const style = tagWideClass(tag, size);
@@ -303,7 +347,13 @@ function applyTagSize(doc, targets, size) {
 function clearSizes(doc, targets, { sectionAll = true } = {}) {
   const found = resolveTargets(doc, targets);
   removeLegacyRows(found);
-  if (sectionAll) found.forEach(({ section }) => findRow(section, PARAGRAPH_ALL_KEY)?.remove());
+  if (sectionAll) {
+    // Its size lives in the `style` row even when every paragraph is in a block.
+    new Set(found.map(({ section }) => section)).forEach((section) => {
+      findRow(section, PARAGRAPH_ALL_KEY)?.remove();
+      clearSectionParagraphSize(section);
+    });
+  }
   const patterns = [...new Set(found.map(({ el }) => tagName(el)))].map(tagStyleRe);
   const isTagStyle = (name) => patterns.some((re) => re.test(name));
   blocksOf(found).forEach((block) => removeClasses(block, isTagStyle));
@@ -321,6 +371,224 @@ export function sourceUrl({ org, repo, path }) {
   return `https://admin.da.live/source/${org}/${repo}${p}.html`;
 }
 
+/**
+ * Save tuning. `attempts` bounds the read + save cycles per batch, whatever the cause (conflict,
+ * overwrite by a collab flush, network failure, timeout, 429/5xx). Retries after a failure wait
+ * `backoffMs`, doubling up to `maxBackoffMs` (or the server's Retry-After, within that cap).
+ * Exported so tests can shorten the waits.
+ */
+export const SAVE_SETTINGS = {
+  attempts: 4,
+  timeoutMs: { GET: 10000, PUT: 20000, HEAD: 5000 },
+  backoffMs: 400,
+  maxBackoffMs: 3000,
+};
+
+const OVERWRITTEN = 'The page changed while saving. Apply the size again.';
+const UNREACHABLE = 'Could not reach DA; check your connection and try again.';
+const UNCONFIRMED = 'DA did not confirm the save. Check the page and apply the size again if it is missing.';
+const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504]);
+
+const etagOf = (resp) => resp.headers.get('etag')?.replace(/^W\//, '') || null;
+
+/**
+ * A failed save. `network`: DA was unreachable (offline, CORS, timeout); `uncertain`: a save may
+ * have landed even so, since its response never arrived.
+ */
+export class SaveError extends Error {
+  constructor(message, { network = false, uncertain = false, reason = '' } = {}) {
+    super(message);
+    this.name = 'SaveError';
+    this.network = network;
+    this.uncertain = uncertain;
+    this.reason = reason;
+  }
+}
+
+/**
+ * `daFetch` with a timeout. daFetch turns a failed fetch (offline, CORS, abort) into a synthetic
+ * 500 with no URL; that, a timeout, or a throw comes back as `{ failed: true }`.
+ */
+async function request(actions, url, opts = {}) {
+  const method = opts.method || 'GET';
+  const controller = new AbortController();
+  let timer;
+  const timeout = new Promise((resolve) => {
+    timer = setTimeout(() => {
+      controller.abort();
+      resolve({ failed: true, timedOut: true });
+    }, SAVE_SETTINGS.timeoutMs[method]);
+  });
+  const call = Promise.resolve()
+    .then(() => actions.daFetch(url, { ...opts, signal: controller.signal }))
+    .then((resp) => {
+      if (!resp) return { failed: true };
+      const synthetic = resp.status === 500 && !resp.url && Boolean(resp.statusText);
+      return synthetic ? { failed: true, timedOut: controller.signal.aborted } : { resp };
+    }, () => ({ failed: true }));
+  try {
+    return await Promise.race([call, timeout]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/** The page source as text, or null when it can't be read (failure or timeout). */
+export async function readSource({ actions, context }) {
+  const { resp } = await request(actions, sourceUrl(context), { cache: 'no-store' });
+  return resp?.ok ? resp.text() : null;
+}
+
+const sleep = (ms) => new Promise((resolve) => { setTimeout(resolve, ms); });
+
+/** Wait before retry `attempt` + 1: exponential with jitter, or Retry-After, both capped. */
+function backoff(attempt, resp) {
+  const { backoffMs, maxBackoffMs } = SAVE_SETTINGS;
+  const after = Number(resp?.headers.get('retry-after')) * 1000;
+  const base = Number.isFinite(after) && after > 0 ? after : backoffMs * 2 ** (attempt - 1);
+  return Math.min(maxBackoffMs, base * (0.75 + Math.random() * 0.5));
+}
+
+const progressListeners = new Set();
+/** Calls `fn({ attempt, attempts, reason })` before each retry of a save. */
+export function onSaveProgress(fn) {
+  progressListeners.add(fn);
+  return () => progressListeners.delete(fn);
+}
+
+const savedListeners = new Set();
+/**
+ * Calls `fn(html)` after a save confirmed (by ETag) to be the current source, so callers can use
+ * the saved markup instead of reading the source again.
+ */
+export function onSourceSaved(fn) {
+  savedListeners.add(fn);
+  return () => savedListeners.delete(fn);
+}
+
+/**
+ * One read + edit + save cycle. Returns `{ results, outcome }` when done, or `{ retry }` (with
+ * `wait`, `network`, `uncertain`, `resp`) when the cycle should run again; throws when it can't.
+ * `uncertain`: an earlier PUT may have landed without its response reaching us.
+ */
+async function saveOnce(actions, url, edits, op, uncertain) {
+  let t = now();
+  const read = await request(actions, url, { cache: 'no-store' });
+  op.fetchMs += now() - t;
+  if (read.failed) {
+    return {
+      retry: read.timedOut ? 'read-timeout' : 'read-network', wait: true, network: true,
+    };
+  }
+  const { status } = read.resp;
+  if (!read.resp.ok) {
+    if (RETRYABLE_STATUS.has(status)) return { retry: `read-${status}`, wait: true, resp: read.resp };
+    throw new SaveError(`Load failed (${status})`, { reason: `read-${status}` });
+  }
+  const readEtag = etagOf(read.resp);
+  const text = await read.resp.text();
+
+  t = now();
+  const doc = new DOMParser().parseFromString(text, 'text/html');
+  const before = uncertain ? doc.documentElement.outerHTML : null;
+  const results = edits.map((fn) => {
+    try { return { value: fn(doc) }; } catch (error) { return { error }; }
+  });
+  if (results.every(({ error, value }) => error || value === false)) {
+    op.transformMs += now() - t;
+    return { results, outcome: results.some(({ error }) => error) ? 'failed' : 'nothing-to-save' };
+  }
+  const html = doc.documentElement.outerHTML;
+  op.transformMs += now() - t;
+  // The PUT whose response was lost did land: the edits change nothing, so saving again would
+  // only make the editor reload once more.
+  if (before === html) return { results, outcome: 'already-saved' };
+
+  const body = new FormData();
+  body.append('data', new Blob([html], { type: 'text/html' }));
+  t = now();
+  const saved = await request(actions, url, {
+    method: 'PUT', body, headers: readEtag ? { 'If-Match': readEtag } : {},
+  });
+  op.saveMs += now() - t;
+  if (saved.failed) {
+    return {
+      retry: saved.timedOut ? 'save-timeout' : 'save-network', wait: true, network: true, uncertain: true,
+    };
+  }
+  if (saved.resp.status === 412) return { retry: 'conflict' };
+  if (!saved.resp.ok) {
+    const why = `save-${saved.resp.status}`;
+    if (RETRYABLE_STATUS.has(saved.resp.status)) {
+      return {
+        retry: why, wait: true, uncertain: true, resp: saved.resp,
+      };
+    }
+    throw new SaveError(`Save failed (${saved.resp.status})`, { reason: why });
+  }
+
+  const savedEtag = etagOf(saved.resp);
+  if (!savedEtag) return { results, outcome: 'saved' };
+  t = now();
+  const head = await request(actions, url, { method: 'HEAD', cache: 'no-store' });
+  op.verifyMs += now() - t;
+  const currentEtag = head.resp?.ok ? etagOf(head.resp) : null;
+  if (currentEtag === savedEtag) savedListeners.forEach((fn) => fn(html));
+  // The PUT succeeded; without a readable HEAD there is nothing better to go on.
+  if (!currentEtag || currentEtag === savedEtag) return { results, outcome: 'saved' };
+  return { retry: 'overwritten-by-flush' };
+}
+
+/**
+ * Applies `edits` to a fresh read of the source and saves it with `If-Match`, so the save never
+ * replaces a version it didn't read. da-admin then has collab flush the editor's unsaved changes
+ * before the PUT responds, and that flush can replace this save; a HEAD right after shows it as
+ * a different ETag. Either way, and after a network failure, timeout or 429/5xx, the edits
+ * (which only set or clear sizes, so they can run again) are re-applied to a fresh read, with
+ * backoff, up to `SAVE_SETTINGS.attempts` cycles. Every request has a timeout.
+ */
+async function saveEdits(actions, url, edits) {
+  const op = startOp();
+  const { attempts } = SAVE_SETTINGS;
+  let uncertain = false;
+  let last = null;
+  try {
+    for (let attempt = 1; attempt <= attempts; attempt += 1) {
+      op.attempts = attempt;
+      // eslint-disable-next-line no-await-in-loop -- each cycle depends on the one before.
+      const step = await saveOnce(actions, url, edits, op, uncertain);
+      if (step.results) {
+        endOp(op, step.outcome, step.outcome === 'failed' ? 'target-missing' : '');
+        return step.results;
+      }
+      last = step;
+      uncertain ||= Boolean(step.uncertain);
+      if (attempt < attempts) {
+        op.retries.push(step.retry);
+        const progress = { attempt: attempt + 1, attempts, reason: step.retry };
+        progressListeners.forEach((fn) => fn(progress));
+        // eslint-disable-next-line no-await-in-loop
+        if (step.wait) await sleep(backoff(attempt, step.resp));
+      }
+    }
+  } catch (e) {
+    endOp(op, 'failed', e.reason || e.message);
+    throw e;
+  }
+  endOp(op, 'failed', last.retry);
+  // A PUT whose answer never arrived may have landed: say so rather than claim it failed.
+  if (uncertain) {
+    throw new SaveError(UNCONFIRMED, {
+      network: last.network, uncertain: true, reason: last.retry,
+    });
+  }
+  if (last.network) throw new SaveError(UNREACHABLE, { network: true, reason: last.retry });
+  if (/^(?:read|save)-\d+$/.test(last.retry)) {
+    throw new SaveError(`DA is not responding (${last.retry.split('-')[1]}). Try again shortly.`, { reason: last.retry });
+  }
+  throw new SaveError(OVERWRITTEN, { reason: last.retry });
+}
+
 let writes = Promise.resolve();
 let batch = null;
 
@@ -329,24 +597,13 @@ let batch = null;
  * is in flight share the next read + save. Resolves with the edit's return value; an edit that
  * returns `false` (and no other edit in its batch) skips the save.
  */
-function editDoc({ actions, context }, edit) {
+export function editDoc({ actions, context }, edit) {
   if (!batch) {
     const edits = [];
-    const run = writes.then(async () => {
+    const run = writes.then(() => {
       // Edits from here on wait for the next batch, since this one has read the source.
       batch = null;
-      const resp = await actions.daFetch(sourceUrl(context), { cache: 'no-store' });
-      if (!resp.ok) throw new Error(`Load failed (${resp.status})`);
-      const doc = new DOMParser().parseFromString(await resp.text(), 'text/html');
-      const results = edits.map((fn) => {
-        try { return { value: fn(doc) }; } catch (error) { return { error }; }
-      });
-      if (results.every(({ error, value }) => error || value === false)) return results;
-      const body = new FormData();
-      body.append('data', new Blob([doc.documentElement.outerHTML], { type: 'text/html' }));
-      const saved = await actions.daFetch(sourceUrl(context), { method: 'PUT', body });
-      if (!saved.ok) throw new Error(`Save failed (${saved.status})`);
-      return results;
+      return saveEdits(actions, sourceUrl(context), edits);
     });
     batch = { edits, run };
     writes = run.catch(() => {});
@@ -358,20 +615,104 @@ function editDoc({ actions, context }, edit) {
   });
 }
 
-/** Saves `count(doc)`, failing with `message` when it touched nothing. */
-const editCount = (sdk, count, message) => editDoc(sdk, (doc) => {
-  const n = count(doc);
-  if (!n) throw new Error(message);
-  return n;
-});
+let nativeEditor = null;
+/**
+ * Registers `fn(edit)`, which applies `edit` in the editor itself when it can: it resolves with
+ * `{ value }` once applied (the edit's return value), with null when the edit has to go through
+ * a source save instead (nothing was changed), and rejects when the outcome is unknown.
+ */
+export function setNativeEditor(fn) {
+  nativeEditor = fn;
+}
+
+/**
+ * Saves `count(doc)`, failing with `message` when it touched nothing. A `native` edit (one that
+ * may only change a block's classes) is first offered to the editor, then saved to the source.
+ */
+async function editCount(sdk, count, message, { native = false } = {}) {
+  const counted = (doc) => {
+    const n = count(doc);
+    if (!n) throw new Error(message);
+    return n;
+  };
+  if (native && nativeEditor) {
+    const done = await nativeEditor(counted);
+    if (done) return done.value;
+  }
+  return editDoc(sdk, counted);
+}
 
 export function setHeadingSize(sdk, target, size) {
-  return editCount(sdk, (doc) => applySizes(doc, [target], size), 'Element moved since selection. Reselect it.')
+  return editCount(sdk, (doc) => applySizes(doc, [target], size), 'Element moved since selection. Reselect it.', { native: true })
     .then(() => undefined);
 }
 
 export function setHeadingSizes(sdk, targets, size) {
-  return editCount(sdk, (doc) => applyTagSize(doc, targets, size), 'Elements moved since selection. Reselect them.');
+  return editCount(sdk, (doc) => applyTagSize(doc, targets, size), 'Elements moved since selection. Reselect them.', { native: true });
+}
+
+/**
+ * The section-level "apply to all paragraphs" size: tag-wide on the paragraphs' blocks, and in
+ * the section's `style` row, which is what marks the section-level apply-all as on.
+ */
+export function setSectionParagraphSize(sdk, paragraphs, size) {
+  return editCount(sdk, (doc) => applyTagSize(doc, paragraphs, size, { section: true }), 'Elements moved since selection. Reselect them.');
+}
+
+// Attributes the editor adds to its live document for SDK clients; not part of the content.
+const EDITOR_ATTR_RE = /^data-(?:block-index|prose-index|image-index|image-version|cursor-remote(?:-color)?)$/;
+
+/** A copy of a live-document block's markup without the editor's attributes. */
+function editorFreeHtml(block) {
+  const clone = block.cloneNode(true);
+  [clone, ...clone.querySelectorAll('*')].forEach((el) => [...el.attributes]
+    .filter(({ name }) => EDITOR_ATTR_RE.test(name))
+    .forEach(({ name }) => el.removeAttribute(name)));
+  return clone.outerHTML;
+}
+
+/**
+ * Runs `edit(doc)` on a throwaway copy of the live document (`doc`) and checks it only changed
+ * `block`. Returns `{ value, html }` (html: the block's new markup for an in-editor replace, null
+ * when the block already shows the edit), or null when the edit failed or changed anything
+ * outside the block (section metadata, other blocks), which only a source save can carry.
+ */
+export function singleBlockEdit(doc, block, edit) {
+  const main = doc.querySelector('main');
+  if (!main?.contains(block)) return null;
+  const outside = () => {
+    const mark = doc.createComment('');
+    block.replaceWith(mark);
+    const html = main.outerHTML;
+    mark.replaceWith(block);
+    return html;
+  };
+  const before = { block: block.outerHTML, outside: outside() };
+  let value;
+  try {
+    value = edit(doc);
+  } catch {
+    return null;
+  }
+  if (!value || !main.contains(block) || outside() !== before.outside) return null;
+  return { value, html: block.outerHTML === before.block ? null : editorFreeHtml(block) };
+}
+
+/**
+ * A live-document block with the tag-wide paragraph `size` (replacing any other paragraph size),
+ * as markup for the editor's `sendHTML` replace. `null` when the block already has exactly it.
+ */
+export function blockWithParagraphSize(block, size) {
+  const style = tagWideClass('p', size);
+  const isTagStyle = (name) => tagStyleRe('p').test(name);
+  const classes = [...block.classList];
+  if (classes.includes(style) && !classes.some((name) => name !== style && isTagStyle(name))) {
+    return null;
+  }
+  const clone = block.cloneNode(true);
+  removeClasses(clone, isTagStyle);
+  clone.classList.add(style);
+  return editorFreeHtml(clone);
 }
 
 /** Removes every applied size from the targets' blocks and default content in a single save. */
@@ -381,21 +722,20 @@ export function clearHeadingSizes(sdk, targets) {
 
 /** Removes every applied size from one block's targets, leaving the section's settings alone. */
 export function clearBlockSizes(sdk, targets) {
-  return editCount(sdk, (doc) => clearSizes(doc, targets, { sectionAll: false }), 'Block moved since selection. Refresh the plugin.');
+  return editCount(sdk, (doc) => clearSizes(doc, targets, { sectionAll: false }), 'Block moved since selection. Refresh the plugin.', { native: true });
 }
 
 /**
  * Turns the section-level "apply to all paragraphs" on (clearing per-paragraph sizes) or off.
- * The `paragraph-all` row marks it on even when every paragraph is in a block, so it can't be
- * confused with a block-level apply-all.
+ * Turning it on writes no marker: choosing a size (`setSectionParagraphSize`) puts that size in
+ * the section's `style` row, and that is what keeps it on.
  */
 export function setParagraphAllEnabled(sdk, paragraphs, enabled) {
   return editDoc(sdk, (doc) => {
     const found = resolveTargets(doc, paragraphs);
     if (!found.length) throw new Error('Section moved since selection. Refresh the plugin.');
     if (!enabled) return clearParagraphAllStyles(found);
-    clearSizes(doc, paragraphs);
-    return setRow(found[0].section, PARAGRAPH_ALL_KEY, 'true');
+    return clearSizes(doc, paragraphs);
   });
 }
 
@@ -405,5 +745,5 @@ export function clearBlockParagraphAll(sdk, paragraphs) {
     const found = resolveTargets(doc, paragraphs);
     clearBlockParagraphAllStyles(found);
     return found.length;
-  }, 'Block moved since selection. Refresh the plugin.');
+  }, 'Block moved since selection. Refresh the plugin.', { native: true });
 }

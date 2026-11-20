@@ -68,32 +68,6 @@
   -webkit-font-smoothing: antialiased;
 }
 
-.loading-overlay {
-  position: fixed;
-  z-index: 1000;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  background: rgb(0 0 0 / 20%);
-}
-
-.loading-overlay[hidden] {
-  display: none;
-}
-
-.loading-spinner {
-  width: 36px;
-  height: 36px;
-  border: 3px solid var(--ds-border-strong);
-  border-top-color: var(--ds-accent);
-  border-radius: 50%;
-  animation: loading-spin 700ms linear infinite;
-}
-
-@keyframes loading-spin {
-  to { transform: rotate(360deg); }
-}
-
 .da-extension-ds *,
 .da-extension-ds *::before,
 .da-extension-ds *::after {
@@ -144,6 +118,21 @@
   margin: 0;
   color: var(--ds-muted);
   font-size: 12px;
+}
+
+#status.is-busy {
+  color: var(--ds-accent);
+  font-weight: 600;
+}
+
+#status.is-error {
+  color: var(--s2-red-800);
+}
+
+/* Locked while a change is saving or landing on the page (the list is `inert`). */
+#list[inert] {
+  opacity: 0.6;
+  cursor: progress;
 }
 
 .da-ds-button {

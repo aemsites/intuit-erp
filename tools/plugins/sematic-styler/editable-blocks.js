@@ -50,6 +50,9 @@ export function editableBlocksFromConfig(config, pluginPath, ref = '') {
   return row ? parseInclude(field(row, 'include')) : undefined;
 }
 
+// Config URLs this user may not read (403); not retried for the rest of the session.
+const unreadable = new Set();
+
 /**
  * Reads the `include` column of this plugin's row in the DA library config, checking the site
  * config before the org config. Resolves `undefined` when it can't be read so callers retry.
@@ -64,7 +67,9 @@ export async function loadEditableBlocks({ actions, context }, pluginPath) {
   const next = async ([url, ...rest], read) => {
     // Config is readable but has no row for the plugin: nothing is editable until one is added.
     if (!url) return read ? new Set() : undefined;
+    if (unreadable.has(url)) return next(rest, read);
     const resp = await actions.daFetch(url, { cache: 'no-store' }).catch(() => null);
+    if (resp?.status === 403) unreadable.add(url);
     if (!resp?.ok) return next(rest, read);
     const config = await resp.json().catch(() => null);
     const blocks = editableBlocksFromConfig(config, pluginPath, ref);
