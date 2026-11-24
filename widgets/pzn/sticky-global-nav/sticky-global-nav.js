@@ -1,4 +1,5 @@
-/* Sets --sgn-nav-top to the brand strip's visible height so the fixed nav sits under it */
+/* Sets --sgn-nav-top to the sticky promo banner's height plus the brand strip's visible
+   height so the fixed nav sits under both */
 export default function decorate() {
   let stripHeight = 0;
   let ticking = false;
@@ -9,7 +10,9 @@ export default function decorate() {
     ticking = false;
     const el = header();
     if (!el) return;
-    el.style.setProperty('--sgn-nav-top', `${Math.max(0, stripHeight - window.scrollY)}px`);
+    // body > .promo-banner-wrapper is sticky at top:0 with a higher z-index than the nav
+    const promoBannerHeight = document.querySelector('body > .promo-banner-wrapper')?.offsetHeight || 0;
+    el.style.setProperty('--sgn-nav-top', `${promoBannerHeight + Math.max(0, stripHeight - window.scrollY)}px`);
   };
 
   const schedule = () => {
@@ -26,6 +29,7 @@ export default function decorate() {
 
   window.addEventListener('scroll', schedule, { passive: true });
   window.addEventListener('resize', measure, { passive: true });
+  window.addEventListener('promo-banner-resize', schedule);
 
   const observer = new MutationObserver(() => {
     if (!header()?.querySelector('.ies-nav')) return;
