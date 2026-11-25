@@ -161,6 +161,24 @@ describe('buildContext', () => {
   it('omits of1Intent when there is no profile', () => {
     expect(buildContext()).not.toHaveProperty('of1Intent');
   });
+  it('includes cid as context.queryParams for the pzn layer', () => {
+    const orig = window.location.href;
+    try {
+      window.history.replaceState({}, '', `${orig.split('?')[0]}?cid=UBERMOBILITYAPPFATEJOURNEYTV`);
+      expect(buildContext('/sandbox/hp').queryParams).toBe('cid=UBERMOBILITYAPPFATEJOURNEYTV');
+    } finally {
+      window.history.replaceState({}, '', orig);
+    }
+  });
+  it('omits queryParams when neither query param nor cookie provides cid', () => {
+    const orig = window.location.href;
+    try {
+      window.history.replaceState({}, '', orig.split('?')[0]);
+      expect(buildContext('/sandbox/hp')).not.toHaveProperty('queryParams');
+    } finally {
+      window.history.replaceState({}, '', orig);
+    }
+  });
   it('strips preview query params from the default permalink', () => {
     const orig = window.location.href;
     try {

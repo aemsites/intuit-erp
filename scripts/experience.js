@@ -5,6 +5,7 @@
 
 import { getMetadata } from './aem.js';
 import { buildIntentContext, getIntentProfile } from './of1-intent.js';
+import { getCidValue } from './utils.js';
 
 // Perf telemetry is sampled before any observers/marks/measures are installed, keeping
 // unsampled views off the LCP path. `?perf=on` forces instrumentation and console output.
@@ -422,6 +423,8 @@ export function buildContext(permalink = defaultPermalink()) {
   if (width && height) context.screenResolution = `${width}x${height}`;
   const of1Intent = buildIntentContext(getIntentProfile());
   if (of1Intent) context.of1Intent = of1Intent;
+  const cid = getCidValue();
+  if (cid) context.queryParams = `cid=${cid}`;
   return context;
 }
 
