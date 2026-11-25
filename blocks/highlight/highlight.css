@@ -175,3 +175,109 @@ body.author-guide .highlight .highlight-inner {
   padding: 1.5rem;
 }
 
+/* Construction statistics: two cyan figures with supporting copy and a
+   centered closing statement. The explicit placement preserves the authored
+   heading-first order while matching the visual order of the design. The dark
+   variation supplies the full-bleed navy background. */
+.highlight.dark.stats {
+  margin: 0;
+}
+
+.highlight.dark.stats .highlight-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  margin-inline: auto;
+  background: transparent;
+  border-radius: 0;
+  color: var(--background-color);
+}
+
+.highlight.dark.stats .highlight-inner > * {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.highlight.dark.stats .highlight-inner > h2 {
+  margin-top: var(--space-3xl);
+}
+
+.highlight.dark.stats .highlight-inner > p:nth-of-type(1),
+.highlight.dark.stats .highlight-inner > p:nth-of-type(3) {
+  color: var(--rail-promo);
+  font-size: 60px;
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-m);
+  margin: 0 0 var(--space-2xs);
+}
+
+.highlight.dark.stats .highlight-inner > p:nth-of-type(1) {
+  grid-row: 1;
+}
+
+.highlight.dark.stats .highlight-inner > p:nth-of-type(2) {
+  grid-row: 2;
+}
+
+.highlight.dark.stats .highlight-inner > p:nth-of-type(3) {
+  grid-row: 3;
+  margin-top: var(--space-4xl);
+}
+
+.highlight.dark.stats .highlight-inner > p:nth-of-type(4) {
+  grid-row: 4;
+}
+
+.highlight.dark.stats .highlight-inner > p:nth-of-type(2),
+.highlight.dark.stats .highlight-inner > p:nth-of-type(4) {
+  max-width: 16em;
+  margin-inline: auto;
+  color: var(--background-color);
+  font-size: var(--body-font-size-m);
+  line-height: var(--line-height-m);
+}
+
+@media (min-width: 1024px) {
+  .highlight.dark.stats .highlight-inner {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: clamp(var(--space-3xl), 8vw, 150px);
+    max-width: 1000px;
+  }
+
+  .highlight.dark.stats .highlight-inner > p:nth-of-type(1),
+  .highlight.dark.stats .highlight-inner > p:nth-of-type(3) {
+    font-size: 84px;
+    text-align: left;
+  }
+
+  .highlight.dark.stats .highlight-inner > p:nth-of-type(2),
+  .highlight.dark.stats .highlight-inner > p:nth-of-type(4) {
+    max-width: none;
+    margin-inline: 0;
+    font-size: var(--heading-font-size-s);
+    line-height: var(--line-height-m);
+    text-align: left;
+  }
+
+  .highlight.dark.stats .highlight-inner > p:nth-of-type(1) {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .highlight.dark.stats .highlight-inner > p:nth-of-type(2) {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .highlight.dark.stats .highlight-inner > p:nth-of-type(3) {
+    grid-column: 2;
+    grid-row: 1;
+    margin-top: 0;
+  }
+
+  .highlight.dark.stats .highlight-inner > p:nth-of-type(4) {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+}
+
