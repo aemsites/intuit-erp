@@ -234,6 +234,56 @@ describe('Tealium tag UID allowlist', () => {
     expect(window.utag_cfg_ovrd.noload).toBeUndefined();
   });
 
+  it('resolves viewSent only once Tealium consent lets the initial view out', async () => {
+    vi.useFakeTimers();
+    try {
+      stubLocation({ hostname: PROD_HOST });
+      let state = 0;
+      window.utag = { view: vi.fn(), gdpr: { getConsentState: () => state } };
+      const tealium = new TealiumMartech();
+      const viewSent = vi.fn();
+      tealium.viewSent.then(viewSent);
+
+      tealium.sendInitialView();
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(window.utag.view).not.toHaveBeenCalled();
+      expect(viewSent).not.toHaveBeenCalled();
+
+      state = 1;
+      await vi.advanceTimersByTimeAsync(200);
+      expect(window.utag.view).toHaveBeenCalledOnce();
+      expect(viewSent).toHaveBeenCalledOnce();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('settles viewSent when the consent guard drops the initial view, and still gates delayed_ready', async () => {
+    vi.useFakeTimers();
+    try {
+      stubLocation({ hostname: PROD_HOST });
+      let state = 0;
+      window.utag = { view: vi.fn(), link: vi.fn(), gdpr: { getConsentState: () => state } };
+      const tealium = new TealiumMartech();
+      const viewSent = vi.fn();
+      tealium.viewSent.then(viewSent);
+
+      tealium.sendInitialView();
+      await vi.advanceTimersByTimeAsync(8200);
+      expect(viewSent).toHaveBeenCalledOnce();
+      expect(window.utag.view).not.toHaveBeenCalled();
+
+      tealium.sendDelayedEvent();
+      await vi.advanceTimersByTimeAsync(400);
+      expect(window.utag.link).not.toHaveBeenCalled();
+      state = 1;
+      await vi.advanceTimersByTimeAsync(200);
+      expect(window.utag.link).toHaveBeenCalledWith({ tealium_event: 'delayed_ready' });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('constrains lifecycle calls while preserving public event-time load-rule routing', () => {
     stubLocation({ hostname: PROD_HOST });
     window.utag_data = { page_name: 'homepage' };
@@ -892,6 +942,10 @@ describe("enabled instance — lazy() loads the consent stack, settles consent, 
       await vi.advanceTimersByTimeAsync(3100);
       expect(document.querySelectorAll('script[src*="tiqcdn"]').length).toBe(0);
       await expect(lazyPromise).resolves.toBeUndefined();
+      const utagReady = vi.fn();
+      tealium.utagReady.then(utagReady);
+      await vi.advanceTimersByTimeAsync(0);
+      expect(utagReady).not.toHaveBeenCalled();
 
       // OneTrust can publish the groups event more than once. The first event carrying a real
       // decision opens the gate; subsequent events must not inject another utag.js.
@@ -906,6 +960,7 @@ describe("enabled instance — lazy() loads the consent stack, settles consent, 
       await vi.advanceTimersByTimeAsync(0);
       expect(window.utag.view).toHaveBeenCalledTimes(1);
       expect(window.utag.view).toHaveBeenCalledWith(window.utag_data);
+      expect(utagReady).toHaveBeenCalledTimes(1);
     } finally {
       vi.useRealTimers();
     }

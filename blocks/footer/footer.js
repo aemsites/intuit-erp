@@ -218,9 +218,9 @@ const PRIVACY_CHOICES_ICON = '<svg class="privacy-choices-icon" xmlns="http://ww
 // California visitors must get the CCPA/CPRA-compliant "Your California Privacy Rights"
 // opt-out label + icon (production swaps it in by geolocation); everyone else sees
 // "Manage cookies". OneTrust reports the region asynchronously once its consent stack
-// loads, so poll briefly and swap once. Tracking identity stays "Manage cookies" via the
-// footer sheet override, so the geo label never reaches analytics. Non-CA visitors — and
-// hosts where OneTrust never loads — keep the default label.
+// loads in the delayed phase, so poll briefly from then and swap once. Tracking identity stays
+// "Manage cookies" via the footer sheet override, so the geo label never reaches analytics.
+// Non-CA visitors — and hosts where OneTrust never loads — keep the default label.
 function applyCaliforniaPrivacyLabel(link) {
   let tries = 0;
   function check() {
@@ -235,7 +235,8 @@ function applyCaliforniaPrivacyLabel(link) {
     tries += 1;
     if (tries < 20) setTimeout(check, 500);
   }
-  check();
+  if (window.hlx?.delayed) check();
+  else window.addEventListener('aem:delayed', check, { once: true });
 }
 
 // Opening the OneTrust preference centre makes the page jump to the top ~a third of a

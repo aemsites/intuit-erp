@@ -187,4 +187,16 @@ describe('preview scheduling rebinding', () => {
     expect(link.textContent).toBe('/fragments/simulated');
     await expectScheduling(link);
   });
+
+  it('simulates into a painted section even after the author typed in it', async () => {
+    fetchExperience.mockImplementationOnce(async () => {
+      const section = document.querySelector('.section');
+      section.dataset.sectionStatus = 'loaded';
+      section.querySelector('a').dispatchEvent(new Event('input', { bubbles: true }));
+      return { experiments: { 123: { payload: JSON.stringify({ contentId: '/fragments/simulated' }) } } };
+    });
+
+    expect((await preview.simulateContext({})).applied).toBe(true);
+    expect(document.querySelector('a').textContent).toBe('/fragments/simulated');
+  });
 });
