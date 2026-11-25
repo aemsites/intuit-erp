@@ -161,14 +161,56 @@ describe('buildContext', () => {
   it('omits of1Intent when there is no profile', () => {
     expect(buildContext()).not.toHaveProperty('of1Intent');
   });
-  it('strips preview query params from the default permalink', () => {
+  it('passes all URL query params as context.queryParams for the pzn layer', () => {
     const orig = window.location.href;
     try {
-      window.history.replaceState({}, '', `${orig.split('?')[0]}?preview=true&previewContext=%7B%7D&locale=en-US`);
+      window.history.replaceState({}, '', `${orig.split('?')[0]}?cid=UBERMOBILITYAPPFATEJOURNEYTV&utm_source=email`);
+      expect(buildContext('/sandbox/hp').queryParams)
+        .toBe('cid=UBERMOBILITYAPPFATEJOURNEYTV&utm_source=email');
+    } finally {
+      window.history.replaceState({}, '', orig);
+    }
+  });
+  it('omits queryParams when the URL has no search string', () => {
+    const orig = window.location.href;
+    try {
+      window.history.replaceState({}, '', orig.split('?')[0]);
+      expect(buildContext('/sandbox/hp')).not.toHaveProperty('queryParams');
+    } finally {
+      window.history.replaceState({}, '', orig);
+    }
+  });
+  it('strips preview query params from the default permalink and queryParams', () => {
+    const orig = window.location.href;
+    try {
+      window.history.replaceState({}, '', `${orig.split('?')[0]}?preview=true&previewContext=%7B%7D&locale=en-US&cid=ABC`);
       const ctx = buildContext();
       expect(ctx.permalink).not.toContain('preview=true');
       expect(ctx.permalink).not.toContain('previewContext');
       expect(ctx.permalink).toContain('locale=en-US');
+      expect(ctx.queryParams).toBe('locale=en-US&cid=ABC');
+      expect(ctx.queryParams).not.toContain('preview');
+    } finally {
+      window.history.replaceState({}, '', orig);
+    }
+  });
+});
+
+describe('preview + queryParams', () => {
+  // ?preview=true still drives the preview seam; preview keys stay off body queryParams.
+  it('keeps the preview orchestrator flow when the page URL has preview + other params', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('{}', { status: 200 }));
+    const orig = window.location.href;
+    try {
+      window.history.replaceState({}, '', `${orig.split('?')[0]}?preview=true&cid=UBERMOBILITYAPPFATEJOURNEYTV&utm_source=email`);
+      const ctx = buildContext('/sandbox/hp');
+      expect(ctx.queryParams).toBe('cid=UBERMOBILITYAPPFATEJOURNEYTV&utm_source=email');
+      await fetchExperience({ experimentIds: ['1'], accessPointNames: [] }, ctx);
+      const url = new URL(globalThis.fetch.mock.calls[0][0], 'http://localhost');
+      expect(url.searchParams.get('preview')).toBe('true');
+      const body = JSON.parse(globalThis.fetch.mock.calls[0][1].body);
+      expect(body.mockAttributesEnabled).toBe(true);
+      expect(body.context.queryParams).toBe('cid=UBERMOBILITYAPPFATEJOURNEYTV&utm_source=email');
     } finally {
       window.history.replaceState({}, '', orig);
     }

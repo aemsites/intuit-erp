@@ -422,6 +422,13 @@ export function buildContext(permalink = defaultPermalink()) {
   if (width && height) context.screenResolution = `${width}x${height}`;
   const of1Intent = buildIntentContext(getIntentProfile());
   if (of1Intent) context.of1Intent = of1Intent;
+  // Body queryParams for pzn: all page params except preview tool keys. ?preview=true still
+  // triggers the preview seam via previewActive / previewOrchestratorQuery (URL, not here).
+  const params = new URLSearchParams(window.location.search);
+  params.delete('preview');
+  params.delete('previewContext');
+  const queryParams = params.toString();
+  if (queryParams) context.queryParams = queryParams;
   return context;
 }
 
